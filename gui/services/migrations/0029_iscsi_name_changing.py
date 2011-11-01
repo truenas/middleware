@@ -1,9 +1,62 @@
 # encoding: utf-8
+from subprocess import Popen, PIPE
 import datetime
+import re
+
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from freenasUI.middleware.notifier import notifier
+from libxml2 import parseDoc
+
+def geom_confxml():
+    sysctl_proc = Popen(['sysctl', '-b', 'kern.geom.confxml'], stdout=PIPE)
+    return parseDoc(sysctl_proc.communicate()[0][:-1])
+
+def serial_from_device(devname):
+    p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+    output = p1.communicate()[0]
+    search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+    if search:
+        return search.group("serial")
+    return None
+
+def identifier_to_device(ident):
+    doc = geom_confxml()
+
+    search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+    if not search:
+        return None
+
+    tp = search.group("type")
+    value = search.group("value")
+
+    if tp == 'uuid':
+        search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
+        if len(search) > 0:
+            for entry in search:
+                if not entry.content.startswith("label"):
+                    return entry.content
+        return None
+
+    elif tp == 'label':
+        search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+        return None
+
+    elif tp == 'serial':
+        p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
+        output = p1.communicate()[0]
+        for devname in output.split(' '):
+            serial = serial_from_device(devname)
+            if serial == value:
+                return devname
+        return None
+
+    elif tp == 'devicename':
+        return value
+    else:
+        raise NotImplementedError
 
 class Migration(DataMigration):
 
@@ -13,7 +66,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         for d in orm['storage.Disk'].objects.all():
-            dev = notifier().identifier_to_device(d.disk_identifier)
+            dev = identifier_to_device(d.disk_identifier)
             if dev:
                 for e in orm.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=["Disk","ZVOL"],
                                         iscsi_target_extent_path="/dev/%s" % dev):

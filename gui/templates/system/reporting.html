@@ -1,7 +1,7 @@
 {% load i18n %}
-    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "Reporting" %}" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="true">
+    <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, title: '{% trans "Reporting"|force_escape|force_escape %}'{% if focus_form == "system" %}, selected: true{% endif %}, doLayout: true" style="width:100%;">
         {% if graphs.hourly %}
-        <div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Hourly" %}" {% if focus_form == "system" %} selected="true"{% endif %} style="overflow-y:scroll;">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="nested:true, title: '{% trans "Hourly"|force_escape|force_escape %}' {% if focus_form == "system" %}, selected: true{% endif %}" style="overflow-y:scroll;">
             <h3>{% trans "Hourly Graphs" %}</h3>
             <div id="reports">
             {% for img in graphs.hourly %}
@@ -13,7 +13,7 @@
         </div>
         {% endif %}
         {% if graphs.daily %}
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Daily" %}">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Daily"|force_escape|force_escape %}'">
             <h3>{% trans "Daily Graphs" %}</h3>
             <div id="reports">
             {% for img in graphs.daily %}
@@ -25,7 +25,7 @@
         </div>
         {% endif %}
         {% if graphs.weekly %}
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Weekly" %}">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Weekly"|force_escape|force_escape %}'">
             <h3>{% trans "Weekly Graphs" %}</h3>
             <div id="reports">
             {% for img in graphs.weekly %}
@@ -37,7 +37,7 @@
         </div>
         {% endif %}
         {% if graphs.monthly %}
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Monthly" %}">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Monthly"|force_escape|force_escape %}'">
             <h3>{% trans "Monthly Graphs" %}</h3>
             <div id="reports">
             {% for img in graphs.monthly %}
@@ -49,7 +49,7 @@
         </div>
         {% endif %}
         {% if graphs.yearly %}
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Yearly" %}">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Yearly" %}'">
             <h3>{% trans "Yearly Graphs" %}</h3>
             <div id="reports">
             {% for img in graphs.yearly %}

@@ -61,6 +61,15 @@ class bsdUserGroupMixin:
         if invalids:
             raise forms.ValidationError(_("Your name contains invalid characters (%s).") % ", ".join(invalids))
 
+    def pw_checkfullname(self, name):
+        INVALID_CHARS = ':'
+        invalids = []
+        for char in name:
+            if char in INVALID_CHARS and char not in invalids:
+                invalids.append(char)
+        if invalids:
+            raise forms.ValidationError(_("Your full name contains invalid characters (%s).") % ", ".join(invalids))
+
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
@@ -280,6 +289,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     def clean_bsdusr_sshpubkey(self):
         return self.cleaned_data.get('bsdusr_sshpubkey', '')
 
+    def clean_bsdusr_full_name(self):
+        name = self.cleaned_data["bsdusr_full_name"]
+        self.pw_checkfullname(name)
+        return name
+
     def clean(self):
         cleaned_data = self.cleaned_data
 
@@ -344,7 +358,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_builtin=False
             bsduser.save()
             _notifier.reload("user")
-            bsdusr_sshpubkey = str(self.cleaned_data['bsdusr_sshpubkey'])
+            bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
             if bsdusr_sshpubkey:
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
@@ -451,6 +465,11 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
             return self.cleaned_data['bsdusr_home']
         raise forms.ValidationError(_('Home directory has to start with /mnt '
                                       'or be /nonexistent'))
+
+    def clean_bsdusr_full_name(self):
+        name = self.cleaned_data["bsdusr_full_name"]
+        self.pw_checkfullname(name)
+        return name
 
     def clean_bsdusr_password_disabled(self):
         return self.cleaned_data.get("bsdusr_password_disabled", False)
@@ -631,12 +650,18 @@ class PasswordChangeForm(SetPasswordForm):
     A form that lets a user change his/her password by entering
     their old password.
     """
-    old_password = forms.CharField(label=_("Old password"),
-        widget=forms.PasswordInput,
-        required=False)
     change_root = forms.BooleanField(label=_("Change root password as well"),
         initial=True,
         required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(PasswordChangeForm, self).__init__(*args, **kwargs)
+        if self.user.has_usable_password():
+            self.fields['old_password'] = forms.CharField(label=_("Old password"),
+                    widget=forms.PasswordInput)
+            self.fields.keyOrder = ['old_password', 'new_password1', 'new_password2', 'change_root']
+        else:
+            self.fields.keyOrder = ['new_password1', 'new_password2', 'change_root']
 
     def clean_old_password(self):
         """
@@ -648,5 +673,19 @@ class PasswordChangeForm(SetPasswordForm):
         if not self.user.check_password(old_password):
             raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))
         return old_password
-PasswordChangeForm.base_fields.keyOrder = ['old_password', 'new_password1', 'new_password2', 'change_root']
 
+class DeleteGroupForm(forms.Form):
+
+    cascade = forms.BooleanField(
+            label=_("Do you want to delete all users with this primary group?"),
+            required=False,
+            initial=False,
+            )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(DeleteGroupForm, self).__init__(*args, **kwargs)
+
+    def done(self):
+        if self.cleaned_data.get("cascade") is True:
+            models.bsdUsers.objects.filter(bsdusr_group=self.instance).delete()

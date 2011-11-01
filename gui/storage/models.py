@@ -27,7 +27,7 @@
 #####################################################################
 
 from datetime import time
-from os import statvfs
+import os
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -35,7 +35,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
-from freenasUI.storage.evilhack import evil_zvol_destroy
 from freeadmin.models import Model
 
 class Volume(Model):
@@ -49,15 +48,30 @@ class Volume(Model):
             choices=choices.VolumeType_Choices,
             verbose_name = _("File System Type"),
             )
+    def get_disks(self):
+        try:
+            if not hasattr(self, '_disks'):
+                if self.vol_fstype == 'ZFS':
+                    pool = notifier().zpool_parse(self.vol_name)
+                    self._disks = pool.get_disks()
+                else:
+                    prov = notifier().get_label_provider(self.vol_fstype.lower(), self.vol_name)
+                    self._disks = notifier().get_disks_from_provider(prov)
+            return self._disks
+        except:
+            return []
+    def get_datasets(self):
+        if self.vol_fstype == 'ZFS':
+            return notifier().list_zfs_datasets(path=self.vol_name, recursive=True)
+    def get_zvols(self):
+        return notifier().list_zfs_vols(self.vol_name)
     def _get_status(self):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                group_type = DiskGroup.objects.filter(group_volume__exact=\
-                        self).values_list('group_type')
-                self._status = notifier().get_volume_status(self.vol_name, self.vol_fstype, group_type)
+                self._status = notifier().get_volume_status(self.vol_name, self.vol_fstype)
             return self._status
-        except Exception:
+        except Exception, e:
             return _(u"Error")
     status = property(_get_status)
     class Meta:
@@ -94,8 +108,12 @@ class Volume(Model):
 
             zvols = notifier().list_zfs_vols(self.vol_name)
             for zvol in zvols:
-                reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, \
-                            iSCSITargetExtent, Disk, destroy=destroy, WearingSafetyBelt=False)))
+                qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+                if qs.exists():
+                    qs.delete()
+                    if destroy:
+                        retval = notifier().destroy_zfs_vol(name)
+                reloads = map(sum, zip(reloads, (False, False, False, True)))
 
         else:
 
@@ -118,9 +136,9 @@ class Volume(Model):
 
         if destroy:
             notifier().destroy("volume", self)
-        elif self.vol_fstype == 'ZFS':
+        else:
             try:
-                notifier().zfs_export(self.vol_name)
+                notifier().volume_export(self)
             except:
                 pass
 
@@ -136,25 +154,6 @@ class Volume(Model):
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
-
-class DiskGroup(Model):
-    group_name = models.CharField(
-            unique=True,
-            max_length=120,
-            verbose_name = _("Name")
-            )
-    group_type = models.CharField(
-            max_length=120,
-            choices=(),
-            verbose_name = _("Type"),
-            )
-    group_volume = models.ForeignKey(
-            Volume,
-            verbose_name = _("Volume"),
-            help_text = _("Volume this group belongs to"),
-            )
-    def __unicode__(self):
-        return "%s (%s)" % (self.group_name, self.group_type)
 
 class Disk(Model):
     disk_name = models.CharField(
@@ -203,11 +202,9 @@ class Disk(Model):
             verbose_name = _("S.M.A.R.T. extra options"),
             blank=True
             )
-    disk_group = models.ForeignKey(
-            DiskGroup,
-            verbose_name = _("Group Membership"),
-            help_text = _("The disk group containing this disk")
-            )
+    disk_enabled = models.BooleanField(
+            default=True,
+        )
     def get_serial(self):
         return notifier().serial_from_device(
             notifier().identifier_to_device(self.disk_identifier)
@@ -220,21 +217,25 @@ class Disk(Model):
         Get the corresponding device name from disk_identifier field
         """
         return notifier().identifier_to_device(self.disk_identifier)
-    def identifier_to_partition(self):
-        """
-        Get the corresponding partition from disk_identifier field
-        """
-        return notifier().identifier_to_partition(self.disk_identifier)
     def save(self, *args, **kwargs):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
         super(Disk, self).save(args, kwargs)
+    def delete(self):
+        from freenasUI.services.models import iSCSITargetExtent
+        #Delete device extents depending on this Disk
+        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk',
+                                        iscsi_target_extent_path=str(self.id))
+        if qs.exists():
+            qs.delete()
+        super(Disk, self).delete()
     class Meta:
         verbose_name = _("Disk")
     def __unicode__(self):
-        ident = self.identifier_to_device() or _('Unknown')
-        return u"%s (%s)" % (ident, self.disk_description)
+        return unicode(self.disk_name)
+        #ident = self.identifier_to_device() or _('Unknown')
+        #return u"%s" % (ident,)
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
@@ -249,9 +250,6 @@ class MountPoint(Model):
             verbose_name = _("Mount options"),
             help_text = _("Enter Mount Point options here"),
             null=True,
-            )
-    mp_ischild = models.BooleanField(
-            default=False,
             )
     def is_my_path(self, path):
         import os
@@ -293,12 +291,11 @@ class MountPoint(Model):
         # TODO: Refactor this into something not this ugly.  The problem
         #       is that iSCSI Extent is not stored in proper relationship
         #       model.
-        if mypath.startswith('/mnt/'):
-            devpath = 'zvol/%s/' % (mypath[5:])
-            for zvol in Disk.objects.filter(disk_name__startswith=devpath):
-                for iscsiextent in iSCSITargetExtent.objects.filter(
-                    iscsi_target_extent_path=str(zvol.id)):
-                        attachments['iscsiextent'].append(iscsiextent.id)
+        zvols = notifier().list_zfs_vols(self.mp_volume.vol_name)
+        for zvol in zvols:
+            qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+            if qs.exists():
+                attachments['iscsiextent'].append(qs[0].id)
 
         return attachments
 
@@ -335,6 +332,10 @@ class MountPoint(Model):
     def delete(self, do_reload=True):
         reloads = self.delete_attachments()
 
+        if self.mp_volume.vol_fstype == 'ZFS':
+            Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
+            Replication.objects.filter(repl_filesystem=self.mp_path[5:]).delete()
+
         if do_reload:
             svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
             for (svc, dirty) in zip(svcs, reloads):
@@ -347,7 +348,7 @@ class MountPoint(Model):
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
             try:
-                self.__vfs = statvfs(self.mp_path)
+                self.__vfs = os.statvfs(self.mp_path)
             except:
                 self.__vfs = None
         return self.__vfs
@@ -416,9 +417,9 @@ class ReplRemote(Model):
         return self.ssh_remote_hostname
 
 class Replication(Model):
-    repl_mountpoint = models.ForeignKey(MountPoint,
-            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
-            verbose_name = _("Mount Point"),
+    repl_filesystem = models.CharField(max_length=150,
+            verbose_name = _("Filesystem/Volume"),
+            blank = True,
             )
     repl_lastsnapshot = models.CharField(max_length=120,
             blank = True,
@@ -452,7 +453,7 @@ class Replication(Model):
         icon_view = u"ViewAllReplIcon"
         icon_object = u"ReplIcon"
     def __unicode__(self):
-        return '%s -> %s' % (self.repl_mountpoint, self.repl_remote.ssh_remote_hostname)
+        return '%s -> %s' % (self.repl_filesystem, self.repl_remote.ssh_remote_hostname)
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":
@@ -463,9 +464,9 @@ class Replication(Model):
         super(Replication, self).delete()
 
 class Task(Model):
-    task_mountpoint = models.ForeignKey(MountPoint,
-            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
-            verbose_name = _("Mount Point"))
+    task_filesystem = models.CharField(max_length=150,
+            verbose_name = _("Filesystem/Volume"),
+            )
     task_recursive = models.BooleanField(
             default = False,
             verbose_name = _("Recursive"),
@@ -522,7 +523,7 @@ class Task(Model):
 #            blank = True,
 #            )
     def __unicode__(self):
-        return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:],
+        return '%s_%s_%d%s' % (self.task_filesystem,
                 self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
 
     class Meta:

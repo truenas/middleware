@@ -29,33 +29,33 @@
 		{{ u.bsdusr_shell }}
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change Password" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Change Password"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Modify User" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Modify User"|force_escape|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
                     </script>
                 </button>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Auxiliary Groups" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Auxiliary Groups"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Auxiliary Groups"|force_escape|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
                     </script>
                 </button>
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Remove User" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Delete User"|force_escape %}', '{{ u.get_delete_url }}', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Delete User"|force_escape|force_escape %}', '{{ u.get_delete_url }}', [this,]);
                     </script>
                 </button>
 		{% endif %}
@@ -69,10 +69,10 @@
 	<tr>
 	    <td colspan="8">
                 <div style="padding:12px;">
-                    <button dojoType="dijit.form.Button" type="button">
+                    <button data-dojo-type="dijit.form.Button" type="button">
                         {% trans "Add New User" %}
-                        <script type="dojo/method" event="onClick" args="evt">
-                            editObject('{% trans "Add New User"|force_escape %}', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);
+                        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                            editObject('{% trans "Add New User"|force_escape|force_escape %}', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);
                         </script>
                     </button>
                 </div>
@@ -108,32 +108,32 @@
 		{{ u.bsdusr_shell }}
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change Password" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Change Password"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Modify User" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Modify User"|force_escape|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
                     </script>
                 </button>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Auxiliary Groups" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Auxiliary Groups"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Auxiliary Groups"|force_escape|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
                     </script>
                 </button>
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button">
+                <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change E-mail" %}
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Change E-mail"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Change E-mail"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>

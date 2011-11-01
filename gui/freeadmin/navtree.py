@@ -28,12 +28,13 @@
 import re
 
 from django.conf import settings
-from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
 from django.db import models
 from django.forms import ModelForm
 from django.core.urlresolvers import resolve
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
+
+from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
 
 class NavTree(object):
 
@@ -50,7 +51,7 @@ class NavTree(object):
         try:
             mod = __import__('%s.%s' % (where,name), globals(), locals(), [name], -1)
             return mod
-        except ImportError:
+        except ImportError, e:
             return None
 
     """
@@ -349,6 +350,13 @@ class NavTree(object):
         nav.icon = 'TopIcon'
         tree_roots.register(nav)
 
+        nav = TreeRoot('Shell')
+        nav.name = _('Shell')
+        nav.nav_group = 'main'
+        nav.icon = 'TopIcon'
+        nav.action = 'shell'
+        tree_roots.register(nav)
+
         nav = TreeRoot('Reboot')
         nav.name = _('Reboot')
         nav.nav_group = 'main'
@@ -383,13 +391,11 @@ class NavTree(object):
             options.append(option)
         return options
 
-    def sernav(self, o, **kwargs):
-
-        items = []
+    def dehydrate(self, o, level, uid):
 
         # info about current node
         my = {
-            'id': str(kwargs['uid'].new()),
+            'id': str(uid.new()),
             'view': o.get_absolute_url(),
         }
         if hasattr(o, 'append_url'):
@@ -400,39 +406,17 @@ class NavTree(object):
             if hasattr(o, attr):
                 my[attr] = getattr(o, attr)
 
-        # root nodes identified as type app
-        if kwargs['level'] == 0:
-            my['type'] = 'app'
-
-        if not kwargs['parents'].has_key(kwargs['level']):
-            kwargs['parents'][kwargs['level']] = []
-
-        if kwargs['level'] > 0:
-            kwargs['parents'][kwargs['level']].append(my['id'])
-
         # this node has no childs
-        if o.option_list is None:
-            return items
+        if not o.option_list:
+            return my
+        else:
+            my['children'] = []
 
         for i in o.option_list:
-            kwargs['level'] += 1
-            opts = self.sernav(i, **kwargs)
-            kwargs['level'] -= 1
-            items += opts
+            opt = self.dehydrate(i, level+1, uid)
+            my['children'].append(opt)
 
-        # if this node has childs
-        # then we may found then in [parents][level+1]
-        if len(o.option_list) > 0:
-
-            my['children'] = []
-            for all in kwargs['parents'][ kwargs['level']+1 ]:
-                my['children'].append( {'_reference': all } )
-                #kwargs['parents'][ kwargs['level']+1 ].remove(all)
-            kwargs['parents'][ kwargs['level']+1 ] = []
-
-        items.append(my)
-
-        return items
+        return my
 
     def dijitTree(self):
 
@@ -446,28 +430,10 @@ class NavTree(object):
         items = []
         uid = ByRef(1)
         for n in self._build_nav():
-            items += self.sernav(n, level=0, uid=uid, parents={})
-        final = {
-            'items': items,
-            'label': 'name',
-            'identifier': 'id',
-        }
-        return final
+            items.append(self.dehydrate(n, level=0, uid=uid))
+        return items
 
 navtree = NavTree()
-
-def _get_or_create(name, groups):
-
-    for nav in groups['root']:
-        if nav.name == name:
-            return nav
-
-    nav = TreeRoot()
-    nav.name = name
-    nav.nav_group = 'main'
-    groups.register(nav)
-    return nav
-
 
 """
 If a model is delete it may dissapear from menu

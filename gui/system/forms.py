@@ -42,6 +42,8 @@ from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.views import JsonResponse
+from middleware.exceptions import MiddlewareError
 from dojango import forms
 import choices
 
@@ -80,7 +82,10 @@ class FileWizard(FormWizard):
         else:
             form = self.get_form(current_step)
         if form.is_valid():
-            self.process_step(request, form, current_step)
+            try:
+                self.process_step(request, form, current_step)
+            except MiddlewareError, e:
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
             next_step = current_step + 1
 
             if next_step == self.num_steps():
@@ -195,6 +200,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
         self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
+        self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:
@@ -213,6 +219,12 @@ class AdvancedForm(ModelForm):
                 notifier().start("saver")
             notifier().start("loader")
 
+    def done(self, request, events):
+        if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
+            if self.instance.adv_consolemsg:
+                events.append("_msg_start()")
+            else:
+                events.append("_msg_stop()")
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
@@ -402,6 +414,7 @@ class CronJobForm(ModelForm):
     class Meta:
         model = models.CronJob
         widgets = {
+            'cron_command': forms.widgets.TextInput(),
             'cron_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
             'cron_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
             'cron_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),

@@ -47,7 +47,18 @@ class ImportVolume(TreeNode):
         type = 'volumewizard'
         icon = u'ImportVolumeIcon'
         app_name = 'storage'
-        model = 'Volumes'
+        model = 'Volume'
+        append_app = False
+
+class ViewDisks(TreeNode):
+
+        gname = 'storage.Volume.ViewDisks'
+        name = _(u'View Disks')
+        view = 'storage_datagrid_disks'
+        type = 'view'
+        icon = u'ViewAllVolumesIcon'
+        app_name = 'storage'
+        model = 'Disk'
         append_app = False
 
 class AutoImportVolume(TreeNode):
@@ -58,7 +69,7 @@ class AutoImportVolume(TreeNode):
         type = 'volumewizard'
         icon = u'ImportVolumeIcon'
         app_name = 'storage'
-        model = 'Volumes'
+        model = 'Volume'
         append_app = False
 
 class ViewVolumes(TreeNode):
@@ -114,13 +125,15 @@ class Volumes(TreeNode):
         def __init__(self, *args, **kwargs):
 
             super(Volumes, self).__init__(*args, **kwargs)
-            self.append_children([AddVolume(),ImportVolume(),AutoImportVolume(),ViewVolumes()])
+            self.append_children([AddVolume(),
+                                    ImportVolume(),
+                                    AutoImportVolume(),
+                                    ViewVolumes(),
+                                    ViewDisks(),
+                                 ])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
-            if en_dataset:
-                self.append_child(AddDataset)
-                self.append_child(AddZVol)
 
-            mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
+            mp = models.MountPoint.objects.select_related().order_by('-id')
             for i in mp:
                 nav = TreeNode()
                 nav.name = i.mp_path
@@ -129,35 +142,47 @@ class Volumes(TreeNode):
                 nav.kwargs = {'oid': i.mp_volume.id, 'model': 'Volume'}
                 nav.icon = u'VolumesIcon'
 
+                if i.mp_volume.vol_fstype == 'ZFS':
+                    ds = AddDataset()
+                    ds.kwargs = {'fs': i.mp_volume.vol_name}
+                    nav.append_child(ds)
+
+                    zv = AddZVol()
+                    zv.kwargs = {'volume_name': i.mp_volume.vol_name}
+                    nav.append_child(zv)
+
                 subnav = TreeNode()
                 subnav.name = _('Change Permissions')
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
-                subnav.kwargs = {'object_id': i.id}
+                subnav.kwargs = {'path': i.mp_path}
                 subnav.model = 'Volume'
                 subnav.icon = u'ChangePasswordIcon'
                 subnav.app_name = 'storage'
 
-                datasets = models.MountPoint.objects.filter(mp_path__startswith=i.mp_path,mp_ischild=True)
-                for d in datasets:
+                datasets = i.mp_volume.get_datasets()
+                if datasets:
+                    for name, d in datasets.items():
 
-                    nav2 = TreeNode()
-                    nav2.name = d.mp_path
-                    nav2.icon = u'VolumesIcon'
-                    nav2.model = 'MountPoint'
-                    nav2.kwargs = {'oid': d.id, 'model': 'MountPoint'}
+                        nav2 = TreeNode()
+                        nav2.name = d.mountpoint
+                        nav2.icon = u'VolumesIcon'
 
-                    subnav2 = TreeNode()
-                    subnav2.name = _(u'Change Permissions')
-                    subnav2.type = 'editobject'
-                    subnav2.view = 'storage_mp_permission'
-                    subnav2.kwargs = {'object_id': d.id}
-                    subnav2.model = 'Volumes'
-                    subnav2.icon = u'ChangePasswordIcon'
-                    subnav2.app_name = 'storage'
+                        ds = AddDataset()
+                        ds.kwargs = {'fs': d.path}
+                        nav2.append_child(ds)
 
-                    nav.append_child(nav2)
-                    nav2.append_child(subnav2)
+                        subnav2 = TreeNode()
+                        subnav2.name = _(u'Change Permissions')
+                        subnav2.type = 'editobject'
+                        subnav2.view = 'storage_mp_permission'
+                        subnav2.kwargs = {'path': d.mountpoint}
+                        subnav2.model = 'Volumes'
+                        subnav2.icon = u'ChangePasswordIcon'
+                        subnav2.app_name = 'storage'
+
+                        nav.append_child(nav2)
+                        nav2.append_child(subnav2)
 
                 nav.append_child(subnav)
                 self.insert_child(0, nav)

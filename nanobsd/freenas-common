@@ -74,7 +74,8 @@ add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
 #-net/nss_ldap
 add_port net/nss_ldap
-add_port net/rsync 
+add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
+	WITH_ACL=true WITHOUT_ICONV=true WITHOUT_TIMELIMIT=true
 add_port lang/python27 WITH_HUGE_STACK_SIZE=y
 add_port dns/py-dnspython
 #+net/samba
@@ -229,7 +230,7 @@ if [ "${MULTIMEDIA}" = 1 ]; then
 	add_port audio/vorbis-tools
 	add_port multimedia/libkate
 	#add_port databases/sqlite3
-	#-add_port audio/firefly
+	#-add_port audio/firefly || net/minidlna
 	#+add_port net/minidlna
 	#add_port converters/libiconv
 	add_port multimedia/mp4v2
@@ -291,6 +292,16 @@ ${PKG_ONLY_MAKE_CONF}
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
 fi
+
+VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
+
+for var in $VARS; do
+	val=$(eval echo "\$$var")
+	if [ -n "$val" ]; then
+		CONF_INSTALL="${CONF_INSTALL}
+$var=$val"
+	fi
+done
 
 hack_nsswitch_conf ( )
 {
@@ -354,18 +365,6 @@ add_data_to_fstab ( )
 }
 customize_cmd add_data_to_fstab
 
-fix_mt_daapd ( )
-{
-	# Create database directory, for some reason the port/pkg doesn't
-	# do this
-	mkdir -p ${NANO_WORLDDIR}/var/db/mt-daapd
-	# Use the sample config as the actual config
-	# XXX: maybe this should move to common files?
-	cp  ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf.sample \
-	    ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf
-}
-# customize_cmd fix_mt_daapd
-
 afpd_conf_symlink ( )
 {
 	ln -sfh /etc/afpd.conf ${NANO_WORLDDIR}/usr/local/etc/afpd.conf
@@ -401,3 +400,34 @@ save_build ( )
 	fi
 }
 customize_cmd save_build
+
+configure_pbi_manager()
+{
+	local sbin links
+	sbin=${NANO_WORLDDIR}/usr/local/sbin/
+	links="pbi_add pbi_addrepo pbi_browser pbi_autobuild \
+		pbi_delete pbi_deleterepo pbi_icon pbi_info pbi_indextool \
+		pbi_listrepo pbi_makepatch pbi_makeport pbi_makerepo \
+		pbi_metatool pbi_patch pbi_update pbi_update_hashdir \
+		pbid pbi-crashhandler"
+
+	cp ${sbin}/pbi-manager ${sbin}/pbi_create
+	for l in ${links}
+	do
+		ln -f ${sbin}/pbi_create ${sbin}/${l}
+	done	
+	rm ${sbin}/pbi-manager
+}
+customize_cmd configure_pbi_manager
+
+last_orders() {
+
+	if $do_image; then
+
+		xz -f ${NANO_OBJ}/_.disk.image
+		mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
+		sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
+
+	fi
+
+}

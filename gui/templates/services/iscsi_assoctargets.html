@@ -12,16 +12,16 @@
         <td>{{ tte.iscsi_target }}</td>
         <td>{{ tte.iscsi_extent }}</td>
         <td>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Edit"|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Edit"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
             </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Delete" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Delete"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
             </script>
             </button>
         </td>
@@ -33,10 +33,10 @@
     {% endfor %}
     </table>
      <p class="btn">
-        <button id="et_button" dojoType="dijit.form.Button" type="button">
+        <button id="et_button" data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add Extent to Target" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add Extent To Target"|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetToExtent" %}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                addObject('{% trans "Add Extent To Target"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetToExtent" %}', [this,]);
         </script>
         </button>
      </p>

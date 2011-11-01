@@ -1,9 +1,85 @@
 # encoding: utf-8
+from subprocess import Popen, PIPE
 import datetime
+import re
+
+from django.db import models
+
+from libxml2 import parseDoc
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
-from middleware.notifier import notifier
+
+def geom_confxml():
+    sysctl_proc = Popen(['sysctl', '-b', 'kern.geom.confxml'], stdout=PIPE)
+    return parseDoc(sysctl_proc.communicate()[0][:-1])
+
+def serial_from_device(devname):
+    p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+    output = p1.communicate()[0]
+    search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+    if search:
+        return search.group("serial")
+    return None
+
+def device_to_identifier(name):
+    name = str(name)
+    doc = geom_confxml()
+
+    search = doc.xpathEval("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+    if len(search) > 0:
+        return "{uuid}%s" % search[0].content
+    search = doc.xpathEval("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
+    if len(search) > 0:
+        return "{uuid}%s" % search[0].content
+
+    search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % name)
+    if len(search) > 0:
+        return "{label}%s" % search[0].content
+
+    serial = serial_from_device(name)
+    if serial:
+        return "{serial}%s" % serial
+
+    return "{devicename}%s" % name
+
+def identifier_to_device(ident):
+    doc = geom_confxml()
+
+    search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+    if not search:
+        return None
+
+    tp = search.group("type")
+    value = search.group("value")
+
+    if tp == 'uuid':
+        search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
+        if len(search) > 0:
+            for entry in search:
+                if not entry.content.startswith("label"):
+                    return entry.content
+        return None
+
+    elif tp == 'label':
+        search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+        return None
+
+    elif tp == 'serial':
+        p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
+        output = p1.communicate()[0]
+        for devname in output.split(' '):
+            serial = serial_from_device(devname)
+            if serial == value:
+                return devname
+        return None
+
+    elif tp == 'devicename':
+        return value
+    else:
+        raise NotImplementedError
+
 
 class Migration(SchemaMigration):
 
@@ -13,7 +89,7 @@ class Migration(SchemaMigration):
         db.add_column('storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(default='', max_length=42), keep_default=False)
 
         for disk in orm.Disk.objects.all():
-            ident = notifier().device_to_identifier(disk.disk_disks)
+            ident = device_to_identifier(disk.disk_disks)
             if ident:
                 disk.disk_identifier = ident
                 disk.save()
@@ -27,7 +103,7 @@ class Migration(SchemaMigration):
         db.add_column('storage_disk', 'disk_disks', self.gf('django.db.models.fields.CharField')(default='', max_length=120), keep_default=False)
 
         for disk in orm.Disk.objects.all():
-            dname = notifier().identifier_to_device(disk.disk_identifier)
+            dname = identifier_to_device(disk.disk_identifier)
             if dname:
                 disk.disk_disks = dname
                 disk.save()

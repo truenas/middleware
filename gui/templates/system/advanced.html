@@ -1,5 +1,5 @@
-<form dojoType="dijit.form.Form">
-<script type="dojo/event" event="onSubmit" args="e">
+<form data-dojo-type="dijit.form.Form">
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     dojo.stopEvent(e); // prevent the default submit
     dijit.byId("advsubmitform").set('disabled', true);
 
@@ -20,5 +20,5 @@
     <table>
         {{ advanced }}
     </table>
-    <button style="margin-top:16px;" id="advsubmitform" dojoType="dijit.form.Button" type="submit">Save Advanced Settings</button>
+    <button style="margin-top:16px;" id="advsubmitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">Save Advanced Settings</button>
 </form>

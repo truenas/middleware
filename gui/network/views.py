@@ -88,9 +88,7 @@ def summary(request):
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
-
-    if 'lo0' in int_list:
-        int_list.remove('lo0')
+    int_list = filter(lambda y: y not in ('lo0', 'pfsync0', 'pflog0'), int_list)
 
     ifaces = []
     for iface in int_list:
@@ -119,7 +117,7 @@ def summary(request):
                     'name': iface,
                     'inet': line[1],
                     'netmask': netmask,
-                    'broadcast': line[5],
+                    'broadcast': line[5] if len(line) > 5 else None,
                     })
         #else:
         #    ifaces.append({

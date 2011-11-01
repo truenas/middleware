@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 # This script should be called by upssched via the CMDSCRIPT directive.
-# 
+#
 # Here is a quick example to show how to handle a bunch of possible
 # timer names with the help of the case structure.
 #
@@ -12,23 +12,34 @@
 
 . /etc/rc.freenas
 
-f="ups_emailnotify ups_toemail ups_subject"
+IFS=\|
+
+f="ups_emailnotify ups_toemail ups_subject ups_shutdown"
 sf=$(echo $f | sed -e 's/ /, /g')
 ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 "SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 while eval read $f; do
 
 case $1 in
-	"ONBATT"|"LOWBATT"|"SHUTDOWN")
-		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "Shutdown" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+	"ONBATT"|"LOWBATT")
+		if [ "${ups_shutdown}" = "lowbatt" -a "$1" = "LOWBATT" ] || [ "${ups_shutdown}" = "batt" -a "$1" = "ONBATT" ]; then
+			logger -t upssched-cmd "issuing shutdown"
+			/usr/local/sbin/upsmon -c fsd
 		fi
-		logger -t upssched-cmd "issuing shutdown"
-		/usr/local/sbin/upsmon -c fsd
 		;;
-	"EMAIL"|"ONLINE")
+	"SHUTDOWN"|"FSD")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "$NOTIFYTYPE" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+			echo "$1" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+		fi
+		;;
+	"EMAIL"|"ONLINE"|"REPLBATT"|"COMMBAD"|"COMMOK")
+		if [ "${ups_emailnotify}" -eq 1 ]; then
+			if [ "$1" = "ONLINE" ]; then
+				msg="ONLINE"
+			else
+				msg="$NOTIFYTYPE"
+			fi
+			echo "${msg}" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
 		;;
 	*)

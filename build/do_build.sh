@@ -3,10 +3,10 @@
 # Build (either from scratch or using cached files):
 # 	sh build/do_build.sh
 #
-# Force a full rebuild:
-#	sh build/do_build.sh -f
+# Force a full rebuild (ports and source):
+#	sh build/do_build.sh -ff
 #
-# Force an update and rebuild world:
+# Force an update and rebuild FreeBSD (world and kernel):
 #	sh build/do_build.sh -u -f
 #
 # Just pull/update the sources:
@@ -19,10 +19,11 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
-if [ -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
-	FULL_BUILD=false
+CREATE_IMAGE=true
+if [ -s ${NANO_OBJ}/_.iw -a -s ${NANO_OBJ}/_.ik ]; then
+	FORCE_BUILD=0
 else
-	FULL_BUILD=true
+	FORCE_BUILD=2
 fi
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ -f FreeBSD/supfile ]; then
@@ -30,25 +31,32 @@ if [ -f FreeBSD/supfile ]; then
 else
 	UPDATE=true
 fi
-USE_UNIONFS=false
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
+usage: ${0##*/} [-Bifu] [-j make-jobs] [-- nanobsd-options]
 
--j defaults to $MAKE_JOBS
+-B - don't build. Will pull the sources and show you the nanobsd.sh invocation
+     string instead. 
+-f - if not specified, will pass either -b (if prebuilt) to nanobsd.sh, or
+     nothing if not prebuilt. If specified once, force a
+     buildworld / buildkernel (passes -n to nanobsd). If specified twice, this
+     won't pass any options to nanobsd.sh, which will force a pristine build
+-j - number of make jobs to run; defaults to $MAKE_JOBS
+-u - force an update via csup (warning: there are potential issues with
+     newly created files via patch -- use with caution).
 EOF
 	exit 1
 }
 
-while getopts 'Bfj:uU' optch; do
+while getopts 'Bfj:u' optch; do
 	case "$optch" in
 	B)
 		info "will not build"
 		BUILD=false
 		;;
 	f)
-		FULL_BUILD=true
+		: $(( FORCE_BUILD += 1 ))
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
@@ -60,17 +68,6 @@ while getopts 'Bfj:uU' optch; do
 	u)
 		UPDATE=true
 		;;
-	U)
-		# This is undocumented for a very good reason. Use CPUS=1 for
-		# known stability if you wish to try this feature.
-		cat <<EOF
-By pressing enter you understand that this does the unionfs optimization not
-work on all filesystems (e.g. UFS SUJ on 9.x-BETA*) with all -j values.
-EOF
-		read junk
-		UPDATE=true
-		USE_UNIONFS=true
-		;;
 	\?)
 		usage
 		;;
@@ -81,20 +78,6 @@ shift $(( $OPTIND - 1 ))
 set -e
 
 requires_root
-
-if $USE_UNIONFS; then
-	if ! kldstat -v | grep -q unionfs; then
-		error "You must load the unionfs module before executing $0!"
-	fi
-	# System seizes up when using buildworld with -j values greater than 1
-	# with UFS+SUJ on 9.0-BETA2 + unionfs; not sure about other
-	# filesystems/versions of FreeBSD (yet)...
-	if [ ${CPUS:-1} -gt 1 ]; then
-		UNIONFS_UFS_DEADLOCK_HACK=true
-	else
-		UNIONFS_UFS_DEADLOCK_HACK=false
-	fi
-fi
 
 if $UPDATE; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
@@ -117,91 +100,29 @@ src-all tag=RELENG_8_2
 ports-all date=2011.07.17.00.00.00
 EOF
 	csup -L 1 $SUPFILE
-	if $USE_UNIONFS; then
-		if $UNIONFS_UFS_DEADLOCK_HACK; then
-			# reduce potential for filesystem deadlocks
-			sync; sync; sync
-		fi
-	else
-		# Force a repatch because csup pulls pristine sources.
-		: > $FREENAS_ROOT/FreeBSD/src-patches
-		: > $FREENAS_ROOT/FreeBSD/ports-patches
-		# Nuke the newly created files to avoid build errors, as
-		# patch(1) will automatically append to the previously
-		# non-existent file.
-		for file in $(find FreeBSD/ -name '*.orig' -size 0); do
-			rm -f "$(echo "$file" | sed -e 's/.orig//')"
-		done
-	fi
-fi
-
-if $USE_UNIONFS; then
-	# Use unionfs to manage local changes applied via patch to the source.
-	#
-	# This was born out of an annoyance with nuking the entire tree to get
-	# a deterministic state and with other delightfully stupid hacks I
-	# employed to deal with patches being auto-appended.
-	#
-	# Make modifications to $NANO_SRC and $NANO_PORTS, not the files under
-	# $FREENAS_ROOT/FreeBSD/{src,ports} if you use this.
-
-	for uniondir in $NANO_SRC $NANO_PORTS; do
-		type=$(basename $uniondir)
-
-		if $USE_UNIONFS; then
-			md_dev_file=$FREENAS_ROOT/FreeBSD/md-dev.$type
-			if [ -f "$md_dev_file" ]; then
-				mdconfig -d -u "$(cat $md_dev_file)"
-			fi
-			rm -f $md_dev_file
-		fi
-
-		if [ -d $uniondir ]; then
-			while mount | grep $uniondir; do
-				umount $uniondir
-			done
-		fi
-		rm -Rf $FREENAS_ROOT/FreeBSD/touched/$type
-		mkdir -p $FREENAS_ROOT/FreeBSD/touched/$type
-		if [ ! -d $uniondir ]; then
-			mkdir -p $uniondir
-		fi
-
-		mount -t unionfs $FREENAS_ROOT/FreeBSD/$type $uniondir
-
-		if $UNIONFS_UFS_DEADLOCK_HACK; then
-			mdconfig -a -t swap -s 32m > "$md_dev_file"
-			md="/dev/$(cat "$md_dev_file")"
-			newfs -O 1 -n -o time $md
-			mount $md $FREENAS_ROOT/FreeBSD/touched/$type
-		fi
-
-		mount -t unionfs $FREENAS_ROOT/FreeBSD/touched/$type $uniondir
+	# Force a repatch because csup pulls pristine sources.
+	: > $FREENAS_ROOT/FreeBSD/src-patches
+	: > $FREENAS_ROOT/FreeBSD/ports-patches
+	# Nuke the newly created files to avoid build errors, as
+	# patch(1) will automatically append to the previously
+	# non-existent file.
+	for file in $(find FreeBSD/ -name '*.orig' -size 0); do
+		rm -f "$(echo "$file" | sed -e 's/.orig//')"
 	done
 fi
 
 for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
-	if $USE_UNIONFS; then
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
-		(cd $NANO_SRC && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-	else
-		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
-			echo "Applying patch $patch..."
-			(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-			echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
-		fi
+		(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 	fi
 done
 for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
-	if $USE_UNIONFS; then
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
-		(cd $NANO_PORTS && patch -E -p0 < $FREENAS_ROOT/FreeBSD/patches/$patch)
-	else
-		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
-			echo "Applying patch $patch..."
-			(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-			echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
-		fi
+		(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 	fi
 done
 
@@ -214,23 +135,21 @@ if [ -f "$NANO_SRC/include/mk-osreldate.sh.orig" ]; then
 	chmod +x $NANO_SRC/include/mk-osreldate.sh
 fi
 
-if ! $BUILD; then
-	exit 0
-fi
-
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
-# Make installworld a worthy sentinel for determining whether or not to
-# rebuild things by default.
-if ! "$FULL_BUILD"; then
-	extra_args="-b"
+if [ $FORCE_BUILD -eq 0 ]; then
+	extra_args="$extra_args -b"
+elif [ $FORCE_BUILD -eq 1 ]; then
+	extra_args="$extra_args -n"
 fi
-echo $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
-if env MAKE_JOBS=$MAKE_JOBS sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
-	xz -f ${NANO_OBJ}/_.disk.image
-	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
-	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
+cmd="$FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
+echo $cmd
+if ! $BUILD; then
+	exit 0
+fi
+if sh $cmd; then
+	echo "$NANO_LABEL build PASSED"
 else
 	error "$NANO_LABEL build FAILED; please check above log for more details"
 fi

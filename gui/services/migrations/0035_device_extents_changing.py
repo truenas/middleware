@@ -1,9 +1,96 @@
 # encoding: utf-8
+from subprocess import Popen, PIPE
 import datetime
+import re
+
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from freenasUI.middleware import notifier
+from libxml2 import parseDoc
+
+def geom_confxml(self):
+    sysctl_proc = Popen(['sysctl', '-b', 'kern.geom.confxml'], stdout=PIPE)
+    return parseDoc(sysctl_proc.communicate()[0][:-1])
+
+def serial_from_device(self, devname):
+    p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+    output = p1.communicate()[0]
+    search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+    if search:
+        return search.group("serial")
+    return None
+
+def identifier_to_device(self, ident):
+    doc = geom_confxml()
+
+    search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+    if not search:
+        return None
+
+    tp = search.group("type")
+    value = search.group("value")
+
+    if tp == 'uuid':
+        search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
+        if len(search) > 0:
+            for entry in search:
+                if not entry.content.startswith("label"):
+                    return entry.content
+        return None
+
+    elif tp == 'label':
+        search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+        return None
+
+    elif tp == 'serial':
+        p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
+        output = p1.communicate()[0]
+        for devname in output.split(' '):
+            serial = serial_from_device(devname)
+            if serial == value:
+                return devname
+        return None
+
+    elif tp == 'devicename':
+        return value
+    else:
+        raise NotImplementedError
+
+def label_disk(self, label, dev, fstype=None):
+    """
+    Label the disk being manually imported
+    Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
+    """
+
+    if fstype == 'UFS':
+        p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            return True
+    elif fstype == 'NTFS':
+        p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            return True
+    elif fstype == 'MSDOSFS':
+        p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            return True
+    elif fstype == 'EXT2FS':
+        p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            return True
+    elif fstype is None:
+        p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            return True
+
+    return False
 
 class Migration(DataMigration):
 
@@ -25,16 +112,16 @@ class Migration(DataMigration):
                 mp.save()
 
                 if d.iscsi_target_extent_type == 'Disk':
-                    devname = notifier().identifier_to_device(disk.disk_identifier)
+                    devname = identifier_to_device(disk.disk_identifier)
                     if not devname and disk.disk_identifier.startswith('{label}'):
                         devname = disk.disk_identifier.split('{label}label/extent_')[1]
-                        serial = notifier().serial_from_device(devname)
+                        serial = serial_from_device(devname)
                         if serial:
                             disk.disk_identifier = "{serial}%s" % serial
                         else:
                             disk.disk_identifier = "{devicename}%s" % devname
                         disk.save()
-                    notifier().label_disk("extent_%s" % devname, "/dev/%s" % devname)
+                    label_disk("extent_%s" % devname, "/dev/%s" % devname)
             except:
                 pass
 

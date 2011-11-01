@@ -48,6 +48,7 @@ class bsdGroups(Model):
         verbose_name_plural = _("Groups")
 
     class FreeAdmin:
+        delete_form = "DeleteGroupForm"
         object_filters = {'bsdgrp_builtin__exact': False}
         object_num = -1
 
@@ -65,6 +66,9 @@ class bsdGroups(Model):
         super(bsdGroups, self).delete(using)
         if reload:
             notifier().reload("user")
+
+def get_sentinel_group():
+    return bsdGroups.objects.get(bsdgrp_group='nobody')
 
 class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
@@ -91,6 +95,7 @@ class bsdUsers(Model):
             )
     bsdusr_group = models.ForeignKey(
             bsdGroups,
+            on_delete=models.SET(get_sentinel_group),
             verbose_name=_("Primary Group ID")
             )
     bsdusr_home = models.CharField(

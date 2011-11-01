@@ -24,10 +24,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+import syslog
 
 class MiddlewareError(Exception):
     def __init__(self, value):
         self.value = value
+        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.syslog(syslog.LOG_ERR, str(self))
+        syslog.closelog()
+
     def __str__(self):
         return "[%s: %s]" % (type(self).__name__, self.value)
 

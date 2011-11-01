@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import time
 
+
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
@@ -42,10 +43,12 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 
-from freenasUI.system import forms, models
-from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
+from freenasUI.system import forms, models
+from freenasUI.system.terminal import Terminal, Multiplex
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -238,18 +241,18 @@ def shutdown_run(request):
 def testmail(request):
 
     error = False
-    errmsg = ''
     if request.is_ajax():
         sw_name = get_sw_name()
         error, errmsg = send_mail(subject=_('Test message from %s'
                                             % (sw_name)),
                                   text=_('This is a message test from %s'
                                          % (sw_name, )))
+    if error:
+        errmsg = _("Your test email could not be sent: %s") % errmsg
+    else:
+        errmsg = _('Your test email has been sent!')
 
-    return HttpResponse(simplejson.dumps({
-        'error': error,
-        'errmsg': errmsg,
-        }))
+    return JsonResponse(error=error, message=errmsg)
 
 def clearcache(request):
 
@@ -378,3 +381,28 @@ def debug_save(request):
     response['Content-Disposition'] = \
         'attachment; filename=debug-%s-%s.txt' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
     return response
+
+
+multiplex = Multiplex("bash", "xterm-color")
+def terminal(request):
+    try:
+        sid = int(request.GET.get("s"))
+        k = request.GET.get("k")
+        w = int(request.GET.get("w"))
+        h = int(request.GET.get("h"))
+        if multiplex.proc_keepalive(sid, w, h):
+            if k:
+                multiplex.proc_write(sid, k)
+            time.sleep(0.002)
+            content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
+            response = HttpResponse(content_data, content_type='text/xml')
+            return response
+        else:
+            response = HttpResponse('Disconnected')
+            response.status_code = 400
+            return response
+    except (KeyError, ValueError, IndexError):
+        response = HttpResponse('Invalid parameters')
+        response.status_code = 400
+        return response
+

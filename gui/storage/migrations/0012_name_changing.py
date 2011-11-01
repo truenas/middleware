@@ -1,11 +1,109 @@
 # encoding: utf-8
+from subprocess import Popen, PIPE
 import datetime
 import re
-from subprocess import Popen, PIPE
+
+from django.db import models
+
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
-from middleware.notifier import notifier
+from libxml2 import parseDoc
+
+def geom_confxml():
+    sysctl_proc = Popen(['sysctl', '-b', 'kern.geom.confxml'], stdout=PIPE)
+    return parseDoc(sysctl_proc.communicate()[0][:-1])
+
+def serial_from_device(devname):
+    p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+    output = p1.communicate()[0]
+    search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+    if search:
+        return search.group("serial")
+    return None
+
+def device_to_identifier(name):
+    name = str(name)
+    doc = geom_confxml()
+
+    search = doc.xpathEval("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+    if len(search) > 0:
+        return "{uuid}%s" % search[0].content
+    search = doc.xpathEval("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
+    if len(search) > 0:
+        return "{uuid}%s" % search[0].content
+
+    search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % name)
+    if len(search) > 0:
+        return "{label}%s" % search[0].content
+
+    serial = serial_from_device(name)
+    if serial:
+        return "{serial}%s" % serial
+
+    return "{devicename}%s" % name
+
+def identifier_to_device(ident):
+    doc = geom_confxml()
+
+    search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+    if not search:
+        return None
+
+    tp = search.group("type")
+    value = search.group("value")
+
+    if tp == 'uuid':
+        search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
+        if len(search) > 0:
+            for entry in search:
+                if not entry.content.startswith("label"):
+                    return entry.content
+        return None
+
+    elif tp == 'label':
+        search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+        return None
+
+    elif tp == 'serial':
+        p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
+        output = p1.communicate()[0]
+        for devname in output.split(' '):
+            serial = serial_from_device(devname)
+            if serial == value:
+                return devname
+        return None
+
+    elif tp == 'devicename':
+        return value
+    else:
+        raise NotImplementedError
+
+def identifier_to_partition(ident):
+    doc = geom_confxml()
+
+    search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+    if not search:
+        return None
+
+    tp = search.group("type")
+    value = search.group("value")
+
+    if tp == 'uuid':
+        search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+
+    elif tp == 'label':
+        search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+        if len(search) > 0:
+            return search[0].content
+
+    elif tp == 'devicename':
+        return value
+    else:
+        raise NotImplementedError
 
 class Migration(DataMigration):
 
@@ -15,7 +113,7 @@ class Migration(DataMigration):
         status = Popen(["zpool", "import"], stdout=PIPE).communicate()[0]
         i = 0
         for label in RE_GPT.findall(status):
-            part = notifier().identifier_to_partition("{label}%s" % label)
+            part = identifier_to_partition("{label}%s" % label)
             if part:
                 dsk, idx = re.search(r'(.+?)p(\d+)', part, re.I).groups()
                 Popen(["gpart", "modify", "-i", idx, "-l", "disk%d" % i, dsk], stdout=PIPE).wait()
@@ -23,8 +121,8 @@ class Migration(DataMigration):
 
         for d in orm.Disk.objects.filter(disk_identifier__startswith='{devicename}gpt/'):
             name = d.disk_identifier.replace("{devicename}", "{label}")
-            devname = notifier().identifier_to_device(name)
-            d.disk_identifier = notifier().device_to_identifier(devname)
+            devname = identifier_to_device(name)
+            d.disk_identifier = device_to_identifier(devname)
             d.save()
 
     def backwards(self, orm):

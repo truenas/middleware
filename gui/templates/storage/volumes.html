@@ -1,46 +1,38 @@
 {% load i18n %}
-    <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
+    <button id="addVolumeBtn" data-dojo-type="dijit.form.Button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
     <p>{% trans "Create Volume" %}</p>
-    <script type="dojo/method" event="onClick" args="evt">
-        volumeWizard('{% trans "Create Volume"|force_escape %}', '{% url storage_wizard %}', [this,]);
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        volumeWizard('{% trans "Create Volume"|force_escape|force_escape %}', '{% url storage_wizard %}', [this,]);
     </script>
     </button>
 
-{% if en_dataset %}
-    <button id="datasetBtn" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
-        <p>{% trans "Create ZFS Dataset" %}</p>
-        <script type="dojo/method" event="onClick" args="evt">
-            addObject('{% trans "Create ZFS Dataset"|force_escape %}', '{% url storage_dataset %}', [this,]);
-        </script>
-    </button>
-
-    <button id="zvolBtn" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/add_zfs_volume.png">
-        <p>{% trans "Create ZFS Volume" %}</p>
-        <script type="dojo/method" event="onClick" args="evt">
-            addObject('{% trans "Create ZFS Volume"|force_escape %}', '{% url storage_zvol %}', [this,]);
-        </script>
-    </button>
-{% endif %}
-
-    <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
+    <button id="importVolBtn" data-dojo-type="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/import_volume.png">
         <p>{% trans "Import Volume" %}</p>
-        <script type="dojo/method" event="onClick" args="evt">
-            volumeWizard('{% trans "Import Volume"|force_escape %}', '{% url storage_import %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            volumeWizard('{% trans "Import Volume"|force_escape|force_escape %}', '{% url storage_import %}', [this,]);
         </script>
     </button>
 
-    <button id="autoImportVolBtn" dojoType="dijit.form.Button" type="button">
+    <button id="autoImportVolBtn" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/auto_import_volume.png">
         <p>{% trans "Auto Import Volume" %}</p>
-        <script type="dojo/method" event="onClick" args="evt">
-            volumeWizard('{% trans "Auto Import Volume"|force_escape %}', '{% url storage_autoimport %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            volumeWizard('{% trans "Auto Import Volume"|force_escape|force_escape %}', '{% url storage_autoimport %}', [this,]);
         </script>
     </button>
 
+    <button id="viewDisksBtn" dojoType="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png">
+        <p>{% trans "View Disks" %}</p>
+        <script type="dojo/method" event="onClick" args="evt">
+            viewModel('{% trans "View Disks"|force_escape %}', '{% url storage_datagrid_disks %}');
+        </script>
+    </button>
+
+    {% comment %}
+    Since datasets and zvols are not part of mp_list its not trivial to determine it previously
     <h5>
         {% if mp_list %}
             {% trans "Active Volumes" %}: <strong>{{ mp_list|length }}</strong>
@@ -48,6 +40,7 @@
             {% trans "There are no active volumes." %}
         {% endif %}
     </h5>
+    {% endcomment %}
 
     <table class="grid">
         <thead class="ghead">
@@ -60,29 +53,6 @@
         <td>{% trans "Available actions" %}</td>
         </thead>
     <tbody>
-    {% for volname, zvols in zvols.items %}
-        {% for zvol, attrs in zvols.items %}
-        <tr class="{% cycle 'odd' 'even' %}">
-            <td>{{ volname }}</td>
-            <td>/dev/zvol/{{ zvol }}</td>
-            <td>-</td>
-            <td>-</td>
-            <td>{{ attrs.volsize }}</td>
-            <td>-</td>
-            <td>
-                <button id="delZVolBtn{{ volname }}{{ forloop.counter }}" dojoType="dijit.form.Button" type="button">
-                    <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editScaryObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
-                    </script>
-                </button>
-                <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
-                    <strong>{% trans "Destroy ZFS Volume" %}</strong>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    {% endfor %}
 	{% for m in mp_list %}
 	<tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
 	    <td>
@@ -105,100 +75,174 @@
 	    </td>
 	    <td>
 
-{% if m.mp_ischild %}
-    <button id="delDSBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/remove_dataset.png">
-        <script type="dojo/method" event="onClick" args="evt">
-            editScaryObject('{% trans "Destroy Dataset"|force_escape %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);
-        </script>
-    </button>
-    <div dojoType="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
-        <strong>{% trans "Destroy Dataset" %}</strong>
-    </div>
-    <button id="editDataBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/settings.png" />
-        <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Edit ZFS Options"|force_escape %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);
-        </script>
-    </button>
-    <div dojoType="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
-        <strong>{% trans "Edit ZFS Options" %}</strong>
-    </div>
-{% else %}
-    <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+    <button id="delVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
-        <script type="dojo/method" event="onClick" args="evt">
-            editScaryObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editScaryObject('{% trans "Export Volume"|force_escape|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delVolBtn{{ m.id }}', position: 'above'">
         <strong>{% trans "Export Volume" %}</strong>
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
-    <button id="scrubVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+    <button id="scrubVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/scrub.png" />
-        <script type="dojo/method" event="onClick" args="evt">
-            editScaryObject('{% trans "Scrub Volume"|force_escape %}', '{% url storage_scrub vid=m.mp_volume.id %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Scrub Volume"|force_escape|force_escape %}', '{% url storage_scrub vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="scrubVolBtn{{ m.id }}" position="above">
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'scrubVolBtn{{ m.id }}', position: 'above'">
         <strong>{% trans "Scrub Volume" %}</strong>
     </div>
-    <button id="editVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+    <button id="editVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/settings.png" />
-        <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Edit ZFS Options"|force_escape %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Edit ZFS Options"|force_escape|force_escape %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'editVolBtn{{ m.id }}', position: 'above'">
         <strong>{% trans "Edit ZFS Options" %}</strong>
     </div>
-    {% endif %}
-{% endif %}
-    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/permissions.png" width="18px" height="18px">
+    <button id="crdatasetBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
         <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Change Permissions"|force_escape %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);
+            addObject('{% trans "Create ZFS Dataset"|force_escape %}', '{% url storage_dataset fs=m.mp_volume.vol_name %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'crdatasetBtn{{ m.id }}', position: 'above'">
+        <strong>{% trans "Create ZFS Dataset" %}</strong>
+    </div>
+    <button id="zvolBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/add_zfs_volume.png">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            addObject('{% trans "Create ZFS Volume"|force_escape %}', '{% url storage_zvol volume_name=m.mp_volume.vol_name %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'zvolBtn{{ m.id }}', position: 'above'">
+        <strong>{% trans "Create ZFS Volume" %}</strong>
+    </div>
+    {% endif %}
+    <button id="permBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/permissions.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Change Permissions"|force_escape|force_escape %}', '{% url storage_mp_permission path=m.mp_path %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'permBtn{{ m.id }}', position: 'above'">
         <strong>{% trans "Change Permissions" %}</strong>
     </div>
 {% if m.mp_volume.vol_fstype == 'ZFS' %}
-    <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+    <button id="snapBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
-        <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Create Snapshot"|force_escape|force_escape %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'snapBtn{{ m.id }}', position: 'above'">
         <strong>{% trans "Create Snapshot" %}</strong>
     </div>
 {% endif %}
-{% if not m.mp_ischild %}
-    <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png" width="18px" height="18px">
-        <script type="dojo/method" event="onClick" args="evt">
-            viewModel('{% trans "View Disks"|force_escape %}', '{% url storage_datagrid_disks vid=m.mp_volume.id %}');
-        </script>
-    </button>
-    <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
-        <strong>{% trans "View Disks" %}</strong>
-    </div>
-    {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="statusVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
-            viewModel('{% trans "zpool status"|force_escape %}', '{% url storage_zpool_status name=m.mp_volume.vol_name %}');
+            viewModel('{% trans "Volume Status"|force_escape %}', '{% url storage_volume_status vid=m.mp_volume.id %}');
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="statusVolBtn{{ m.id }}" position="above">
-        <strong>{% trans "zpool status" %}</strong>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'statusVolBtn{{ m.id }}', position: 'above'">
+        <strong>{% trans "Volume Status" %}</strong>
     </div>
-    {% endif %}
-{% endif %}
 	    </td>
 	</tr>
+    {% for name, dataset in m.mp_volume.get_datasets.items %}
+	    <tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
+	    <td>
+        {{ dataset.path }}
+	    </td>
+	    <td>
+		{{ dataset.mountpoint }}
+	    </td>
+	    <td>
+		{{ dataset.used_si }} ({{ dataset.used_pct }})
+	    </td>
+	    <td>
+		{{ dataset.avail_si }}
+	    </td>
+	    <td>
+		{{ dataset.total_si }}
+	    </td>
+	    <td>
+		{{ m.status }}
+	    </td>
+	    <td>
+            <button id="delDSBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/remove_dataset.png">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editScaryObject('{% trans "Destroy Dataset"|force_escape %}', '{% url storage_dataset_delete name=dataset.path %}', [this,]);
+                </script>
+            </button>
+            <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delDSBtn{{ m.id }}{{ name }}', position: 'above'">
+                <strong>{% trans "Destroy Dataset" %}</strong>
+            </div>
+            <button id="editDataBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/settings.png" />
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editObject('{% trans "Edit ZFS Options"|force_escape %}', '{% url storage_dataset_edit dataset_name=dataset.path %}', [this,]);
+                </script>
+            </button>
+            <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'editDataBtn{{ m.id }}{{ name }}', position: 'above'">
+                <strong>{% trans "Edit ZFS Options" %}</strong>
+            </div>
+            <button id="crdatasetBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    addObject('{% trans "Create ZFS Dataset"|force_escape %}', '{% url storage_dataset fs=dataset.path %}', [this,]);
+                </script>
+            </button>
+            <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'crdatasetBtn{{ m.id }}{{ name }}', position: 'above'">
+                <strong>{% trans "Create ZFS Dataset" %}</strong>
+            </div>
+            <button id="permBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/permissions.png" width="18px" height="18px">
+                <script type="dojo/method" data-dojo-event="onClick" data-dooj-args="evt">
+                    editObject('{% trans "Change Permissions"|force_escape %}', '{% url storage_mp_permission path=dataset.mountpoint %}', [this,]);
+                </script>
+            </button>
+            <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'permBtn{{ m.id }}{{ name }}', position: 'above'">
+                <strong>{% trans "Change Permissions" %}</strong>
+            </div>
+            <button id="snapBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=dataset.mountpoint %}', [this,]);
+                </script>
+            </button>
+            <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'snapBtn{{ m.id }}{{ name }}', position: 'above'">
+                <strong>{% trans "Create Snapshot" %}</strong>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+        {% for zvol, attrs in m.mp_volume.get_zvols.items %}
+        <tr class="{% cycle 'odd' 'even' %}">
+            <td>{{ m.mp_volume.vol_name }}</td>
+            <td>/dev/zvol/{{ zvol }}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>{{ attrs.volsize }}</td>
+		    <td>{{ m.status }}</td>
+            <td>
+                <button id="delZVolBtn{{ volname }}{{ forloop.counter }}" data-dojo-type="dijit.form.Button" type="button">
+                    <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editScaryObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
+                    </script>
+                </button>
+                <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delZVolBtn{{ forloop.counter }}', position: 'above'">
+                    <strong>{% trans "Destroy ZFS Volume" %}</strong>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
 	{% empty %}
 	<tr>
             <td colspan="7">{% trans "No volumes defined" %}</td>

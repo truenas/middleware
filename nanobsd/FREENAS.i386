@@ -82,7 +82,6 @@ options		KDB			# Enable kernel debugger support.
 options		DDB			# Support DDB.
 
 # FreeNAS modifications
-makeoptions	MODULES_OVERRIDE="ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
 options		GEOM_UZIP
 options		GEOM_ELI
 options		NULLFS
@@ -257,6 +256,7 @@ device		ste		# Sundance ST201 (D-Link DFE-550TX)
 device		stge		# Sundance/Tamarack TC9021 gigabit Ethernet
 device		tl		# Texas Instruments ThunderLAN
 device		tx		# SMC EtherPower II (83c170 ``EPIC'')
+device		vte		# DM&P Vortex86 RDC R6040 Fast Ethernet
 device		vge		# VIA VT612x gigabit Ethernet
 device		vr		# VIA Rhine, Rhine II
 device		wb		# Winbond W89C840F

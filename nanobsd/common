@@ -30,11 +30,6 @@
 # an explicit copyright/license statement, but are implicitly BSDL.
 #
 
-# NB: disable -j3
-
-# XXX: see do_build.sh (should be pushed into nanobsd.sh as a -j option).
-NANO_PMAKE="make -j $MAKE_JOBS"
-
 # Where cust_pkg() finds packages to install
 NANO_PACKAGE_DIR=${NANO_SRC}/${NANO_TOOLS}/Pkg
 NANO_DATADIR=${NANO_OBJ}/_.data
@@ -140,7 +135,9 @@ WITHOUT_PPP=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
 WITHOUT_SENDMAIL=true
-WITHOUT_SHAREDOCS=true
+# Knob needs to be fixed on systems that don't have the docs stuff
+# preinstalled, e.g. 9.x bsdinstall images.
+#WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
 WITHOUT_SYSCONS=true
 WITHOUT_SYSINSTALL=true
@@ -153,6 +150,8 @@ CONF_INSTALL="$CONF_BUILD
 INSTALL_NODEBUG=t
 NOPORTDOCS=t
 NO_INSTALL_MANPAGES=t
+# devel/apr sucks.
+WITH_BDB_VERSION=46
 "
 # The following would help...
 # WITHOUT_TOOLCHAIN=true		can't build ports
@@ -166,13 +165,34 @@ WITHOUT_TOOLCHAIN=true
 WITHOUT_INSTALLLIB=true
 WITHOUT_INFO=true
 WITHOUT_RCS=true
+WITHOUT_SHAREDOCS=true
 "
 
 NANO_PACKAGE_ONLY=1
 
 CR()
 {
-	chroot ${NANO_WORLDDIR} /bin/sh -exc "$*"
+	local newvers revision branch
+
+	newvers="$NANO_SRC/sys/conf/newvers.sh"
+	revision=$(grep -m 1 REVISION= $newvers | cut -f2 -d '"')
+	branch=$(grep -m 1 BRANCH= $newvers | cut -f2 -d '"')
+	# 1. Invoke a subshell so we don't pollute the build environment with
+	#    these variables.
+	# 2. Use sane defaults to avoid polluting the build environment with
+	#    system specific settings that might have been defined via
+	#    /etc/make.conf (LOCALBASE), etc.
+	mount -t devfs none $NANO_WORLDDIR/dev
+	(set -e
+	 env
+	 export UNAME_m=$NANO_ARCH
+	 export UNAME_p=$NANO_ARCH
+	 export UNAME_r="$revision-$branch"
+	 export UNAME_v="$(uname -v | sed -e "s/$(uname -p)/$UNAME_p/" -e "s/$(uname -r)/$UNAME_r/g")"
+	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
+	 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
+	umount $NANO_WORLDDIR/dev
 }
 
 # install a package from a pre-built binary
@@ -218,8 +238,6 @@ do_add_port ()
 	    ${NANO_WORLDDIR}/usr/ports/packages
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
-	mkdir -p ${NANO_WORLDDIR}/dev
-	mount -t devfs devfs ${NANO_WORLDDIR}/dev
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
@@ -233,7 +251,6 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
-	umount ${NANO_WORLDDIR}/dev
 	umount ${NANO_WORLDDIR}/usr/ports/packages
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports
@@ -243,9 +260,6 @@ do_add_port ()
 
 # Need to check if this function works with cross-compiling architecture!!!!
 # Recursive complex function: Generate one function for each ports
-#
-# Note: most nano variables aren't set yet, especially NANO_MAKE_CONF_BUILD, so
-# we can't use that here.  Instead, use no MAKE_CONF to avoid host contamination.
 add_port () {
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
@@ -255,7 +269,8 @@ add_port () {
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF= package-name` 
+    # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "

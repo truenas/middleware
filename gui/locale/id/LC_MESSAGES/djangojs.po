@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-17 17:03+0200\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
+"PO-Revision-Date: 2011-06-22 15:21+0200\n"
 "Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -18,63 +18,47 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "Pelaporan"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "Pengaturan"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "Informasi Sistem"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "Pengaturan Jaringan"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "Layanan"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "Akun"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "Penyimpanan"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "Tugas Cron"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Sesuaikan"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Sesuaikan Cakram"
 
-#: media/lib/js/freeadmin.js:443
-msgid "Replace"
-msgstr "Ganti"
-
-#: media/lib/js/freeadmin.js:444
-msgid "Disk Replacement"
-msgstr "Pergantian Cakram"
-
-#: media/lib/js/freeadmin.js:448
-msgid "Detach"
-msgstr "Melepaskan"
-
-#: media/lib/js/freeadmin.js:449
-msgid "Disk Detach"
-msgstr "Melepaskan Cakram"
-
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Terjadi beberapa kesalahan!"
 
@@ -82,9 +66,21 @@ msgstr "Terjadi beberapa kesalahan!"
 msgid "Each selected"
 msgstr "Masing-masing yang dipilih"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Setiap N"
 
-msgid "Every"
-msgstr "Setiap"
+#~ msgid "Replace"
+#~ msgstr "Ganti"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Pergantian Cakram"
+
+#~ msgid "Detach"
+#~ msgstr "Melepaskan"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Melepaskan Cakram"
+
+#~ msgid "Every"
+#~ msgstr "Setiap"

@@ -17,16 +17,16 @@
         <td>{{ s.get_human_month }}</td>
         <td>{{ s.get_human_dayweek }}</td>
         <td>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Edit"|force_escape %}', '{{ s.get_edit_url }}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Edit"|force_escape|force_escape %}', '{{ s.get_edit_url }}', [this,]);
             </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Delete" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Delete"|force_escape %}', '{{ s.get_delete_url }}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ s.get_delete_url }}', [this,]);
             </script>
             </button>
         </td>
@@ -38,10 +38,10 @@
     {% endfor %}
     </table>
     <p class="btn">
-        <button dojoType="dijit.form.Button" type="button">
+        <button data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add S.M.A.R.T. Test" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add S.M.A.R.T. test"|force_escape %}', '{% url freeadmin_model_add app="system",model="SMARTTest" %}', [this,]);
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                addObject('{% trans "Add S.M.A.R.T. test"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="SMARTTest" %}', [this,]);
         </script>
         </button>
     </p>

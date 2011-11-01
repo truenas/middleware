@@ -11,23 +11,24 @@
 : ${FREENAS_ROOT=$(pwd)}
 
 # The architecture for the machine (amd64, i386, etc).
-if [ -n "$FREENAS_ARCH" ]; then
-	NANO_ARCH=$FREENAS_ARCH
-else
-	: ${NANO_ARCH=$(uname -p)}
-fi
+# NOTE: have to do things this way because nanobsd.sh sets this value
+# explicitly in the script.
+: ${FREENAS_ARCH=$(uname -p)}
+NANO_ARCH=$FREENAS_ARCH
+
 NANO_OBJ=${FREENAS_ROOT}/obj.${NANO_ARCH}
 
 # Where the build configuration files used by nanobsd.sh live.
 NANO_CFG_BASE=$FREENAS_ROOT/nanobsd
 
 # Where the FreeBSD ports tree lives.
-#NANO_PORTS="$FREENAS_ROOT/FreeBSD/union/ports"
 NANO_PORTS="$FREENAS_ROOT/FreeBSD/ports"
 
 # Where the FreeBSD source tree lives.
-#NANO_SRC="$FREENAS_ROOT/FreeBSD/union/src"
 NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
+
+# Where the nanobsd tools live.
+NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 
 # REVISION gets overloaded when doing tagged versions, SVNREVISION allows
 # us to keep the SVN revision number even when the version string is
@@ -37,6 +38,9 @@ NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
+# Modules to build with the kernel.
+NANO_MODULES="cxgb ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
+
 # Feature sets to enable as part of the build.
 SW_FEATURES="DEBUG REPORTING"
 
@@ -44,7 +48,7 @@ SW_FEATURES="DEBUG REPORTING"
 NANO_LABEL="FreeNAS"
 
 # Version of the software.
-VERSION="8.1"
+VERSION="8.2"
 
 # Image prefix, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386.
 NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
@@ -53,7 +57,21 @@ NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
 NANO_IMGNAME="$NANO_NAME.full"
 
 # Export these vars to override the NanoBSD defaults.
-export FREENAS_ROOT NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL NANO_NAME
-export NANO_OBJ NANO_SRC REVISION SVNREVISION
+export FREENAS_ARCH FREENAS_ROOT
+export NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
+export NANO_MODULES NANO_NAME NANO_OBJ NANO_SRC NANO_TOOLS REVISION
+export SVNREVISION
+
+# The following variables are for builders with local package and distfile
+# mirrors. They're intentionally unset here to avoid accidental pollution from
+# one's environment. Please replace these lines with valid values.
+
+# See bsd.port.mk
+unset MASTER_SITE_BACKUP
+unset MASTER_SITE_OVERRIDE
+
+# See pkg_add(1).
+unset PACKAGEROOT
+unset PACKAGESITE
 
 # vim: syntax=sh

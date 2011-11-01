@@ -121,7 +121,7 @@ class Advanced(Model):
             verbose_name = _("Swap size on each drive in GiB, affects new disks only.  Setting this to 0 disables swap creation completely (STRONGLY DISCOURAGED)."),
             default=2)
     adv_consolemsg = models.BooleanField(
-            verbose_name = _("Show console messages in the footer (Requires UI reload)"),
+            verbose_name = _("Show console messages in the footer"),
             default=True)
     adv_traceback = models.BooleanField(
             verbose_name = _("Show tracebacks in case of fatal errors"),
@@ -261,8 +261,7 @@ class CronJob(Model):
             verbose_name=_("User"),
             help_text=_("The user to run the command")
             )
-    cron_command = models.CharField(
-            max_length=120,
+    cron_command = models.TextField(
             verbose_name=_("Command"),
             )
     cron_description = models.CharField(
@@ -336,7 +335,7 @@ class CronJob(Model):
 
     def get_human_month(self):
         months = self.cron_month.split(",")
-        if len(months) == 12:
+        if len(months) == 12 or self.cron_month == '*':
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
@@ -352,7 +351,7 @@ class CronJob(Model):
         #    Mon-Fri + Saturday -> Weekdays + Saturday.
         # 2. Get rid of the duplicate code.
         weeks = self.cron_dayweek.split(',')
-        if len(weeks) == 7:
+        if len(weeks) == 7 or self.cron_dayweek == '*':
             return _('Everyday')
         if weeks == map(str, xrange(1, 6)):
             return _('Weekdays')
@@ -503,7 +502,7 @@ class Rsync(Model):
 
     def get_human_month(self):
         months = self.rsync_month.split(',')
-        if len(months) == 12:
+        if len(months) == 12 or self.rsync_month == '*':
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
@@ -515,7 +514,7 @@ class Rsync(Model):
 
     def get_human_dayweek(self):
         weeks = self.rsync_dayweek.split(',')
-        if len(weeks) == 7:
+        if len(weeks) == 7 or self.rsync_dayweek == '*':
             return _('Everyday')
         if weeks == map(str, xrange(1, 6)):
             return _('Weekdays')
@@ -537,6 +536,7 @@ class Rsync(Model):
 class SMARTTest(Model):
     smarttest_disk = models.ForeignKey(
             Disk,
+            limit_choices_to = {'disk_enabled': True},
             verbose_name=_("Disk"),
             )
     smarttest_type = models.CharField(
