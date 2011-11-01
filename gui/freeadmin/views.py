@@ -81,6 +81,67 @@ class JsonResponse(HttpResponse):
         kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
 
+class JsonResp(HttpResponse):
+
+    error = False
+    type = 'page'
+    force_json = False
+    message = ''
+    events = []
+
+    def __init__(self, request, *args, **kwargs):
+
+        self.error = kwargs.pop('error', False)
+        self.message = kwargs.pop('message', '')
+        self.events = kwargs.pop('events', [])
+        self.force_json = kwargs.pop('force_json', False)
+        self.type = kwargs.pop('type', 'page')
+        self.template = kwargs.pop('template', None)
+        self.form = kwargs.pop('form', None)
+        self.request = request
+
+        data = dict()
+
+        if self.type == 'page':
+            ctx = RequestContext(request, kwargs.pop('ctx', {}))
+            content = render_to_string(self.template, ctx)
+        elif self.type == 'form':
+            data.update({
+                'type': 'form',
+                'formid': request.POST.get("__form_id"),
+                'form_auto_id': self.form.auto_id,
+                })
+            if form.errors:
+                errors = {}
+                for key, val in form.errors.items():
+                    errors[key] = list(val)
+                data.update({
+                    'error': True,
+                    'errors': errors,
+                })
+            else:
+                data.update({
+                    'error': False,
+                })
+        elif self.type == 'message':
+            data.update({
+                'error': self.error,
+                'message': self.message,
+            })
+        else:
+            raise NotImplementedError
+
+        data.update({
+            'events': self.events,
+        })
+
+        if request.is_ajax() or self.force_json:
+            kwargs['content'] = simplejson.dumps(data)
+            kwargs['content_type'] = 'application/json'
+        else:
+            kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
+        super(JsonResp, self).__init__(*args, **kwargs)
+
 def adminInterface(request, objtype = None):
 
     try:

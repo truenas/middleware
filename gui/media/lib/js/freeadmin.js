@@ -531,6 +531,113 @@
         }
     }
 
+    handleJson = function(rnode, data) {
+
+        if(data.type == 'page') {
+            rnode.set('content', data.content);
+        } else if(data.type == 'form') {
+
+            form = dijit.byId(data.formid);
+            dojo.query(".errorlist", form.domNode).forEach(function(item, idx) {
+                dojo.destroy(item);
+            });
+            if(data.error == true) {
+                for(key in data.errors) {
+
+                    fieldid = data.form_auto_id.replace('%s', key);
+                    field = dijit.byId(fieldid);
+                    for(var i=0; i<data.errors[key].length;i++) {
+                        span = dojo.create('span', {innerHTML: data.errors[key][i]}, field.domNode.parentNode);
+                        dojo.attr(span, "class", "errorlist");
+                    }
+
+                }
+            } else {
+                form.reset();
+            }
+
+        }
+
+        if(data.events) {
+            for(i=0;i<data.events.length;i++){
+                try {
+                    eval(data.events[i]);
+                } catch(e) {
+                    console.log(e);
+                }
+            }
+        }
+
+    }
+
+    doSubmit = function(attrs) {
+
+        if(!attrs) {
+            attrs = {};
+        }
+
+        dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+              function(inputElem){
+                   dijit.getEnclosingWidget(inputElem).set('disabled',true);
+               }
+            );
+
+        // prevent the default submit
+        dojo.stopEvent(attrs.event);
+        var newData = attrs.form.get("value");
+        newData['__form_id'] = attrs.form.id;
+
+        var multipart = dojo.query("input[type=file]", attrs.form.domNode).length > 0;
+
+        var rnode = getDialog(attrs.form);
+        if(!rnode) rnode = dijit.getEnclosingWidget(attrs.form.domNode.parentNode);
+
+        loadOk = function(data, req) {
+
+            dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+                  function(inputElem){
+                       dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                   }
+                );
+            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', attrs.form.domNode)[0]);
+            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+            } else {
+                sbtn.set('label', 'Save');
+            }
+            handleJson(rnode, data);
+
+            if('onComplete' in attrs) {
+                attrs.onComplete(data);
+            }
+
+        };
+
+        if( multipart ) {
+
+            dojo.io.iframe.send({
+                url: attrs.url,
+                method: 'POST',
+                content: {__form_id: attrs.form.id},
+                form: attrs.form.id,
+                handleAs: 'json',
+                load: loadOk,
+            });
+
+        } else {
+
+            dojo.xhrPost({
+                url: attrs.url,
+                content: newData,
+                handleAs: 'json',
+                load: loadOk,
+            });
+
+        }
+
+    }
+
+
     formSubmit = function(item, e, url, callback, attrs) {
         dojo.stopEvent(e); // prevent the default submit
         if(!attrs) {
