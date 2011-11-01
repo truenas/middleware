@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-10-29 01:00+0200\n"
+"PO-Revision-Date: 2011-10-31 19:24+0200\n"
 "Last-Translator: swehes <swehes@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -5688,27 +5688,29 @@ msgstr ""
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Volymen %s statusen är NERGRADERAD"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Volymen %(volym)ernas status är %(status)erna"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Du måste byta lösenord för admin användaren (just nu behövs inget lösenord "
+"för att logga in)"
 
 #: tools/alert.py:99
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "WebbGUI adressen kunde inte bindas till %s; använd vildkort"
 
 #: tools/alert.py:127
 msgid "Critical Alerts"
-msgstr ""
+msgstr "Kritiska Alarm"
 
 msgid "successfully deleted"
 msgstr "har tagits bort"

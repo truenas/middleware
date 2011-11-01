@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:10-0700\n"
-"PO-Revision-Date: 2011-07-24 15:05+0200\n"
-"Last-Translator: Simor <batio3pzt@aol.com>\n"
+"PO-Revision-Date: 2011-11-01 10:36+0200\n"
+"Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -48,7 +48,7 @@ msgstr "Depolama"
 
 #: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
-msgstr "CronJobs"
+msgstr "ZamanlanmışGörevler"
 
 #: media/lib/js/freeadmin.js:554
 msgid "Edit"
@@ -70,17 +70,17 @@ msgstr "Seçilen her"
 msgid "Every N"
 msgstr "Her N"
 
-#~ msgid "Replace"
-#~ msgstr "Yer değiştir"
+msgid "Replace"
+msgstr "Yer değiştir"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Disk Değiştirme"
+msgid "Disk Replacement"
+msgstr "Disk Değiştirme"
 
-#~ msgid "Detach"
-#~ msgstr "Ayırma"
+msgid "Detach"
+msgstr "Ayırma"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Disk Ayirma"
+msgid "Disk Detach"
+msgstr "Disk Ayirma"
 
-#~ msgid "Every"
-#~ msgstr "Her"
+msgid "Every"
+msgstr "Her"

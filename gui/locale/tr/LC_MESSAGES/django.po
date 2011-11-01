@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-10-31 10:18+0200\n"
+"PO-Revision-Date: 2011-11-01 10:47+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -285,7 +285,7 @@ msgstr "Aygıt"
 # .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr "ZFS Bölümü"
+msgstr "ZFS Birimi"
 
 #: choices.py:209 storage/models.py:234 system/models.py:540
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -491,7 +491,7 @@ msgstr "Adınız geçersiz karakterler içeriyor (%s)."
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Adınız ve soyadınız geçersiz karakter içeriyor (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -508,17 +508,15 @@ msgid "Username"
 msgstr "Kullanıcı Adı"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Gerekli. 30 veya daha az karakter. Sadece harfler, rakamlar ve @/./+/-/_ "
+"Gerekli. 16 veya daha az karakter. Sadece harfler, rakamlar ve ./-/_ "
 "kullanılabilir."
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Bu değer sadece harfleri, rakamları ve @/./+/-/_ işaretlerini barındırabilir."
+"Bu değer sadece harfleri, rakamları ve /./-/_ işaretlerini barındırabilir."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -540,13 +538,12 @@ msgid "Shell"
 msgstr "Kabuk"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Oturum açmayı devre dışı bırak"
+msgstr "Parolayla oturum açmayı devre dışı bırak"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Kiltli kullanıcı"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -554,12 +551,11 @@ msgstr "Birincil Grup"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Genel Anahtarı"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Aynı kullanıcı adı zaten var."
+msgstr "Bu kimlikle aynı bir kullanıcı zaten var."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -572,18 +568,16 @@ msgid "The two password fields didn't match."
 msgstr "İki parola alanı eşleşmedi."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Ev dizini /mnt/ ile başlamalı"
+msgstr "Ev dizini /mnt/ veya /varolmayan ile başlamalı"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Ev dizini /mnt/ ile başlamalı"
+msgstr "Ev dizini yazılabilir değil bu bölümü boş bırakın"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Bu bölümü boş bırakırsanız parola devre dışı kalır"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -591,28 +585,24 @@ msgid "This field is required."
 msgstr "Bu alan gereklidir."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Paylaşım parolası"
+msgstr "Parolayı devredışı bırak"
 
 #: account/forms.py:466
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Ev dizini /mnt/ ile başlamalı"
+msgstr "Ev dizini /mnt/ ile veya / başlamalı"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Tekrarlanan GID dosyalarına izin ver"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Aynı kullanıcı adı zaten var."
+msgstr "Bu ada sahip bir grup zaten var."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Aynı kullanıcı adı zaten var."
+msgstr "Bu gid ile bir grup zaten var."
 
 #: account/forms.py:582
 msgid "Member users"
@@ -624,7 +614,7 @@ msgstr "Yardımcı gruplar"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Bir kullanıcı en fazla 64 yedek gruba ait olabilir."
 
 # "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
 #: account/forms.py:627
@@ -636,9 +626,8 @@ msgid "New password confirmation"
 msgstr "Yeni şifre onayı"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Parola Değiştir"
+msgstr "root parolasınıda değiştirin"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -650,7 +639,7 @@ msgstr "Eski parolanızı yanlış girdiniz. Lütfen tekrar girin."
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Bu birincil grup ile tüm kullanıcıları silmek istiyor musunuz?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -789,7 +778,7 @@ msgstr "'%s' grubu geçerli değil."
 
 #: freeadmin/forms.py:162
 msgid "The path must reside within a volume mount point"
-msgstr "Yol, bağlanma bölümü noktası içerisinde olmalıdır"
+msgstr "Yol, bağlanma birimi noktası içerisinde olmalıdır"
 
 #: freeadmin/navtree.py:316
 #, python-format
@@ -815,7 +804,7 @@ msgstr "Kapat"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Bu geçerli durumu almak mümkün değil"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -826,9 +815,9 @@ msgstr "%s başarıyla yüklendi"
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Hata"
+msgstr "Hata: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -862,44 +851,43 @@ msgstr "NIC (Ağ arabirim kontrol kartı)"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "IPv4 adresi de belirtilmek zorunda"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "IPv+4 ağ maskeside değiştirln"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "IPv6 adreside belitilmek zorunda"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "IPv4 ağ maskesinde bir seçim yapın"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "IPv4 veya IPv6 arasında bir seçim yapın"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "IPv4 veya IPv6 ile geçerli bir maskbit belitlemlisiniz"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback geçerli bir ad sunucusu değil"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Tanımsız adresler ad sunucuları gibi geçersizdir"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
+msgstr "Bu geçerli bir ad sunucusu adresi değildir"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 alt ağ sunucusu için geçerli değildir"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -940,27 +928,27 @@ msgstr "Bu ağ '%leri' CIDR beklentisi dahilinde geçerli değil."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "IPv4 adreslerinin yanı sıra takma isimlerde belirtilmek zorunda"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "IPv4 alt ağ maskesi için takma isim seçilmek zorunda"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "IPv6 adresi yanı sıra takma isim belirtilmek zorunda"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "IPv6 ağ maskesi için takma isim seçilmek zorunda"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "IPv4 veya IPv6 arasında takma isim seçilmek zorunda"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "IPv4 veya IPv6 ile maskbit için geçerli bir takma isim belirtmelisiniz"
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -1042,7 +1030,7 @@ msgstr "IPv6 Adresleri"
 
 #: network/models.py:125 network/models.py:183
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "IPv6 Önek Uzunluğu"
 
 #: network/models.py:130 network/models.py:286
 #: templates/network/interface.html:11
@@ -1063,7 +1051,6 @@ msgid "Alias"
 msgstr "Takma Ad"
 
 #: network/models.py:195
-#, fuzzy
 msgid "Aliases"
 msgstr "Takma Ad"
 
@@ -1073,9 +1060,8 @@ msgid "Virtual Interface"
 msgstr "Sanal arabirim"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Arabirim adı vlanXX olmalıdır. Buradaki XX sayıdır."
+msgstr " Buradaki XX bir sayıdır. Arabirim adı vlanXX olmalıdır. Örneğin vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1162,9 +1148,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG başarıyla eklendi"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Kullanıcı %s geçerli değil."
+msgstr "Bu geçerli bir maske değil"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1175,9 +1160,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "\"Ana dizin\" etkin ise gerekli alan."
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "NFS hizmeti tekrar yüklenemedi."
+msgstr "CIFS hizmeti yeniden yüklenirken başarısız oldu."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1230,9 +1214,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Bu ad, slash ve köşeli parantez içeremez."
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Parola Değiştir"
+msgstr "Parola Tekrarı"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1240,22 +1223,23 @@ msgstr "DynamicDNS hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:273
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Konum yalnızca alfasayısal karakterler, _ veya - olabilir."
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
+msgstr "Bu geçerli bir e-posta adresi değil"
 
 #: services/forms.py:282
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Geçerli bir e-posta adresi sade alfanumerik karakterler, _, veya - "
+"içermelidir."
 
 #: services/forms.py:287
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Topluluk sadece alfasayısal karakterler, _ veya - içermelidir."
 
 #: services/forms.py:293
 msgid "The SNMP service failed to reload."
@@ -1268,7 +1252,7 @@ msgstr "Bağlantı noktası"
 
 #: services/forms.py:315
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
 
 #: services/forms.py:326 services/forms.py:897
 #, python-format
@@ -1277,14 +1261,12 @@ msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] ""
 
 #: services/forms.py:335
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS hizmeti tekrar yüklenemedi."
+msgstr "UPS hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:340
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Yönetci Parolası"
+msgstr "Yönetci Parolasını Onayla"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
@@ -1335,9 +1317,8 @@ msgid "The peer secret cannot be the same as user secret."
 msgstr "Eş gizli kullanıcı aynı gizli kullanıcı olamaz."
 
 #: services/forms.py:424 services/forms.py:427
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr "Eş kullanıcı seçtiyseniz Eş Şifre Gereklidir."
+msgstr "Gizli bir eş ayarlarsanız gizli bir kullanıcıyada ihtiyaç var."
 
 #: services/forms.py:444 services/forms.py:491 services/forms.py:608
 #: services/forms.py:666 services/forms.py:760 services/forms.py:785
@@ -1382,6 +1363,8 @@ msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
+"Bu alan CHAP veya Ortak CHAP kontrolörü Yetki Yöntemi için ayarlanıp "
+"ayarlanmadığında gereklidir."
 
 #: services/forms.py:620
 msgid "You need to specify a filepath, not a directory."
@@ -1389,12 +1372,12 @@ msgstr "Dosya yolunu girmelisiniz (Klasör adı değil)"
 
 #: services/forms.py:624
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Bölüm/Dataset iniz içinde yer alan bir dosyayı belirtmelisiniz."
+msgstr "Birim/VeriKümesi içinde yer alan bir dosya belirtmelisiniz."
 
 #: services/forms.py:628
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "Yolunuzun bağlanma noktası bölüm/verikümesi içinde bulunmalıdır."
+msgstr "Yolunuzun bağlanma noktası birim/verikümesi içinde bulunmalıdır."
 
 #: services/forms.py:642
 msgid ""
@@ -1405,7 +1388,7 @@ msgstr ""
 
 #: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "Bu dosya mevcut olmalıır eğer dosya boyutu (0) ise otomatik ayarlanır"
 
 #: services/forms.py:671
 msgid "Disk device"
@@ -1422,11 +1405,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "Grup ID niz %d den büyük olamaz"
 
 #: services/forms.py:811
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
+msgstr ""
+"Bu alan geçerli bir IP adresi veya ağ değil. Her şeye izin vermek için "
+"anahtar kelimeyi \"ALL\" olarak kullanılmalıdır."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -1434,16 +1418,15 @@ msgstr "Doğrulama Grup numarası"
 
 #: services/forms.py:849
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Alfasayısal karakterler, \".\", \"-\" ve \":\" kullanın."
 
 #: services/forms.py:875
 msgid "Delete underlying file"
 msgstr "Alttaki dosyayı sil"
 
 #: services/forms.py:906
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SNMP hizmeti yeniden yüklenirken hata oluştu."
+msgstr "S.M.A.R.T. hizmetini yeniden yükleme başarısız oldu."
 
 #: services/models.py:43
 msgid "Service"
@@ -1678,15 +1661,15 @@ msgstr ""
 "ver."
 
 #: services/models.py:204
-#, fuzzy
 msgid "Max. Connections"
-msgstr "Mak. bağlantılar"
+msgstr "Mak. Bağlantılar"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Her bölümdeki en fazla bağlantı sayısı (varsayılan 8)."
+msgstr ""
+"FP aracılığı ile izin verilen maksimum bağlantı sayısı.Varsayılan sınırı "
+"50'dir."
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -2199,13 +2182,12 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "UPS'e bağlı seri veya USB bağlantı noktası nerede."
 
 #: services/models.py:785
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Yardımcı parametreler"
+msgstr "Yardımcı parametreler (ups.conf)"
 
 #: services/models.py:787
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Sürücünün donanımı ile belirli bir kısmına ek parametreler."
 
 #: services/models.py:798
 msgid "Shutdown mode"
@@ -2224,13 +2206,12 @@ msgstr ""
 "bitmeden kapatma iptal edilir."
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "Paylaşım parolası"
+msgstr "UPS Master Kullanıcı Parolası"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Ekstra kullanıcılar (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2251,7 +2232,7 @@ msgstr ""
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "E-posta Konusu"
 
 #: services/models.py:827
 msgid ""
@@ -2589,18 +2570,16 @@ msgid "NetBIOS Name"
 msgstr "Ana Bilgisayar Adı (NetBIOS Adı)"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "hostname of FreeNAS system"
-msgstr "Eski biçimde Ana Bilgisayar Adı örneğin ÖRNEK"
+msgstr "FreeNAS sisteminin ana bilgisayar adı"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
 msgstr "Çalışma Grubu Adı"
 
 #: services/models.py:1090
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Eski biçimde Çalışma Grubu Adı, örneğin ÖRNEK"
+msgstr "Eski biçimde çalışma grubu veya etki alanı adı, örneğin WORKGROUP"
 
 #: services/models.py:1094
 msgid "Administrator Name"
@@ -2720,9 +2699,8 @@ msgstr ""
 "eki belirler. Örneğin ou=Bilgisayarlar"
 
 #: services/models.py:1171
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "Kimlik Doğrulama Biçimi"
+msgstr "Şifreleme Yöntemi"
 
 #: services/models.py:1172
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2762,7 +2740,7 @@ msgstr ""
 
 #: services/models.py:1207 services/models.py:1208
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Rsyncd Yapılandırma"
 
 #: services/models.py:1218
 msgid "Module name"
@@ -2959,9 +2937,8 @@ msgid "Add Rsync Module"
 msgstr "Rsync Modülü Ekle"
 
 #: services/nav.py:164
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Rsync Modülleri"
+msgstr "Rsync Modül Görünümleri"
 
 #: services/views.py:228
 msgid "The service could not be stopped."
@@ -2972,9 +2949,8 @@ msgid "The service could not be started."
 msgstr "Servis balatılamadı."
 
 #: sharing/forms.py:68
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Paylaşım parolası"
+msgstr "Paylaşılan Parola Onayı"
 
 #: sharing/forms.py:117
 msgid "The field is a not a valid IP address or network"
@@ -3013,9 +2989,8 @@ msgid "Browsable to Network Clients"
 msgstr "Ağ İstemcileri için Göz Atılabilir"
 
 #: sharing/models.py:54
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Miras"
+msgstr "Sahipliği Devral"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
@@ -3094,14 +3069,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Bu parametreler smb.conf dosyasında [Share] bölümüne eklenir"
 
 #: sharing/models.py:92
-#, fuzzy
 msgid "CIFS Share"
-msgstr "UNIX Paylaşımları"
+msgstr "CIFS Paylaşımı"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "UNIX Paylaşımları"
+msgstr "CIFS Paylaşımları"
 
 #: sharing/models.py:104
 msgid ""
@@ -3113,13 +3086,12 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
-"Bölüm adı uygun istemciyi temsilen Machintosh'lar üzerinde iletişim "
-"sunucusuna bağlanmak için Chooser'da görünen addır. Bölüm adı belirtilmemiş "
-"ise, dosya yolunun son bileşeni kullanılır. Hayır iki bölüm aynı ada sahip "
-"olamaz. Bölüm adı ':' karakteri içeremez. Bölüm adı çok uzunsa "
-"parçalanabilir. Mac kod sayfası bölüm adı 27 karakterle sınırlıdır. UTF8-MAC "
-"Bölüm adı Hizmetleri 'Bölüm Adı Boyu' parametresi ile sınırlıdır: Apple "
-"Paylaşımı"
+"Birim adı uygun istemciyi temsilen Machintosh'lar üzerinde iletişim "
+"sunucusuna bağlanmak için Seçicide görünen addır. Birim adı belirtilmemiş "
+"ise, dosya yolunun son bileşeni kullanılır. İki birim aynı ada sahip olamaz. "
+"Birim adı ':' karakteri içeremez. Birim adı çok uzunsa parçalanabilir. Mac "
+"kod sayfası birim adı 27 karakterle sınırlıdır. UTF8-MAC Birim adı "
+"Hizmetleri 'Birim Adı Boyu' parametresi ile sınırlıdır: Apple Paylaşımı"
 
 #: sharing/models.py:108
 msgid "Share Comment"
@@ -3135,8 +3107,9 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
-"Bu seçenek en fazla 8 karakterli bir parola belirlemenize olanak sağlar (bu "
-"yazı yazılırken ASCII karakterlerinin kullanılması tavsiye edilir)"
+"Bu seçenek biriminize en fazla 8 karakterli bir parola belirlemenize olanak "
+"sağlar (bu yazı yazılırken ASCII karakterlerinin kullanılması tavsiye "
+"edilir)."
 
 #: sharing/models.py:121
 msgid "Share Character Set"
@@ -3223,8 +3196,8 @@ msgid ""
 "users."
 msgstr ""
 "Not: Birden fazla 'Zaman Makinesi' paylaşımı seçiminde MacOS beklenmedik "
-"davranışlara neden olabilir. Standart mod kullanıcıları için bir veri bölümü "
-"olarak bölüm verir."
+"davranışlara neden olabilir. Standart mod kullanıcıları için bir veri birimi "
+"olarak birim verir."
 
 #: sharing/models.py:162
 msgid "Database Path"
@@ -3235,7 +3208,7 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
-"Kaydedilecek veri tabanı bilgileri yolunu ayarlar. Bölüm salt okunabilir "
+"Kaydedilecek veri tabanı bilgileri yolunu ayarlar. Birim salt okunabilir "
 "olsa bile bir konum belirtmeniz gerekir."
 
 #: sharing/models.py:167
@@ -3249,8 +3222,9 @@ msgid ""
 "AFP clients (NFS/SMB/local)."
 msgstr ""
 "Veritabanı yükünü azaltmak için Afpd ayarlanırsa AppleDouble V2 başlık "
-"dosyalarında depolanan kimlik bilgilerini kullanır. Eğer bölümü olmayan AFP "
-"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın (NFS/SMB/yerel)."
+"dosyalarında depolanan kimlik bilgilerini kullanır. Eğer birimi olmayan AFP "
+"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın "
+"(NFS/SMB/yerel)."
 
 #: sharing/models.py:171
 msgid "Translate CR/LF"
@@ -3347,8 +3321,8 @@ msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
-"Bir preexxec komut dosyası tarafından oluşturulan otomatik bağlanma veya "
-"bölümler için faydalı olabilecek bölüm listelemeleri sırasında kural birimi "
+"Bir preexec komut dosyası tarafından oluşturulan otomatik bağlanma veya "
+"birimler için faydalı olabilecek birim listelemeleri sırasında kural birimi "
 "yolu yok."
 
 #: sharing/models.py:203
@@ -3360,14 +3334,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "AFP3 unix ayrıcalıkları kullan."
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Apple Paylaşımları"
+msgstr "AFP Paylaşımı"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "apple Paylaşımları"
+msgstr "AFP Paylaşımları"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3445,33 +3417,30 @@ msgid "Group to map all users to"
 msgstr "Gruptan tüm harita kullanıcılarına"
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "NFS Paylaşımı Düzenle"
+msgstr "NFS Paylaşımı"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "UNIX Paylaşımları"
+msgstr "NFS Paylaşımları"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
 msgstr "Paylaşım"
 
 #: storage/forms.py:89
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Pozitif sayı (isteğe bağlı ekli M, G, T) veya 0 girin"
+msgstr "Pozitif bir sayı (isteğe bağlı K,  M, G, T) veya 0 girin"
 
 #: storage/forms.py:102
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "Kullanıcı %s geçerli değil."
+msgstr "%s geçerli bir sayı değil"
 
 #: storage/forms.py:197 storage/forms.py:428 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr "Bölüm adı"
+msgstr "Birim adı"
 
 #: storage/forms.py:201 templates/storage/wizard.html:63
 msgid "Force 4096 bytes sector size"
@@ -3479,28 +3448,28 @@ msgstr "4096 bayt sektör boyutuna zorla"
 
 #: storage/forms.py:202 templates/storage/wizard.html:154
 msgid "Specify custom path"
-msgstr ""
+msgstr "Özel yolu belirtin"
 
 #: storage/forms.py:211
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Bu alanı boş bırakırsanız sabit disk için /mnt/${VOLUME_NAME} yolu verilir"
 
 #: storage/forms.py:278
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
-msgstr "Bölüm adı bir harf ile başlamalıdır sayılar, \"-\", \"_\" içerebilir."
+msgstr ""
+"Birim adı bir harf ile başlamalıdır sayılar, \"-\", \"_\" ve \".\" içerebilir."
 
 #: storage/forms.py:292
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Alanın yolu"
+msgstr "Böyle bir yol mevcut değil."
 
 #: storage/forms.py:295
 msgid "Path is not a directory."
-msgstr ""
+msgstr "Bu yol bir dizin değil."
 
 #: storage/forms.py:303
 msgid "You must select a filesystem"
@@ -3513,7 +3482,7 @@ msgstr "Bu alan gereklidir"
 
 #: storage/forms.py:314 storage/forms.py:474 storage/forms.py:571
 msgid "You already have a volume with same name"
-msgstr "Zaten aynı adı taşıyan bir bölümü var"
+msgstr "Zaten aynı adı taşıyan bir birim var"
 
 #: storage/forms.py:320
 msgid "\"log\" is a reserved word and thus cannot be used"
@@ -3521,16 +3490,15 @@ msgstr "\"log\" ayrılmış bir sözcük bu nedenle kullanılamaz"
 
 #: storage/forms.py:325
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Bölüm adları c[-09], mirror, raidz veya boşluk ile başlayamaz"
+msgstr "Birim adları c[-09], mirror, raidz veya boşluk ile başlayamaz"
 
 #: storage/forms.py:330
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "Grup ID niz %d den büyük olamaz"
+msgstr "UFS birim adları 9 karakterden daha fazla olamaz"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "UFS birim isimleri sadece alfanümerik karakterler içerebilir"
 
 #: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
@@ -3546,13 +3514,15 @@ msgstr "Disk etiketlemede bazı hatalar oluştu."
 
 #: storage/forms.py:566
 msgid "You must select a volume."
-msgstr "Bir bölüm seçmelisiniz."
+msgstr "Bir birim seçmelisiniz."
 
 #: storage/forms.py:624
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"Daha fazla detay havuzu durumunu kontrol etmek için birim \"%s\" almak "
+"başarısız oldu"
 
 #: storage/forms.py:650
 msgid "Dataset Name"
@@ -3594,7 +3564,6 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Bu veri kümesi ve tüm çocuklar için ayrılmış alan"
 
 #: storage/forms.py:665
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
@@ -3607,34 +3576,31 @@ msgid "You already have a dataset with the same name"
 msgstr "Zaten aynı isimde bir veri seti var"
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Bu veri kümesi için kota"
+msgstr "Bu birim için kota"
 
 #: storage/forms.py:715
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Bu veri kümesi için ayrılmış alan"
+msgstr "Bu birim için ayrılmış alan"
 
 #: storage/forms.py:740
 msgid "ZFS Volume Name"
-msgstr "ZFS Bölüm Adı"
+msgstr "ZFS Birim Adı"
 
 #: storage/forms.py:741
 msgid "Size for this ZFS Volume"
-msgstr "Bu ZFS Bölümü için boyut"
+msgstr "Bu ZFS Birimi için boyut"
 
 #: storage/forms.py:741
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Yok, örneğin: 1g"
+msgstr "Örneğin: 1g"
 
 #: storage/forms.py:749
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"ZFS Bölüm adları sadece alfasayısal karakter ile başlamalıdır ve (-), (_), "
+"ZFS Birim adları sadece alfasayısal karakter ile başlamalıdır ve (-), (_), "
 "(:) ve (.) içerebilir."
 
 #: storage/forms.py:770
@@ -3651,7 +3617,7 @@ msgstr "Mod"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "ACL Türü"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -3683,7 +3649,7 @@ msgstr "Anlık Durum Görüntüsü"
 
 #: storage/forms.py:871
 msgid "Clone Name (must be on same volume)"
-msgstr "Klon Adı (aynı bölümde olmalıdır)"
+msgstr "Klon Adı (aynı birimde olmalıdır)"
 
 #: storage/forms.py:884
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
@@ -3691,7 +3657,7 @@ msgstr "İzin verilen kloa adı karakterleri [-a-zA-Z0-9_.]"
 
 #: storage/forms.py:890
 msgid "Clone must be within the same volume"
-msgstr "Klon aynı bölüm içinde olmalıdır"
+msgstr "Klon aynı birim içinde olmalıdır"
 
 #: storage/forms.py:976 storage/models.py:403
 msgid "Remote hostname"
@@ -3703,11 +3669,11 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Yeni diskleri (veri yok) işaretle"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Bu birimle ilgili tüm paylaşımları sil"
 
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
@@ -3722,7 +3688,7 @@ msgstr "Dosya Sistemi Türü"
 
 #: storage/models.py:78 templates/storage/volumes.html:48
 msgid "Volume"
-msgstr "Bölüm"
+msgstr "Birim"
 
 #: storage/models.py:176
 msgid "Transfer Mode"
@@ -3774,9 +3740,8 @@ msgstr "Ana Bilgisayarları Uzaktan Kopyalama"
 
 #: storage/models.py:421 storage/models.py:468
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Dosya sistem türü"
+msgstr "DosyaSistem/Birim"
 
 #: storage/models.py:426
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -3802,14 +3767,16 @@ msgstr ""
 #: storage/models.py:440
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Bir defaya mahsus olarak uzak taraftan başlat. (Uzak tarafından veri kaybına "
+"neden olabilir.)"
 
 #: storage/models.py:444
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Sınır (kB/s)"
 
 #: storage/models.py:445
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
-msgstr ""
+msgstr "Çoğaltma hız sınırı. Birimi kilobayt/saniye. 0 = sınırsız."
 
 #: storage/models.py:448
 msgid "Replication Task"
@@ -3888,13 +3855,13 @@ msgstr "Tüm Anlık Durum Görüntülerini Göster"
 #: storage/nav.py:34 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
 msgid "Create Volume"
-msgstr "Bölüm Oluştur"
+msgstr "Birim Oluştur"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
 #: templates/storage/volumes.html.py:14
 msgid "Import Volume"
-msgstr "Bölüm Al"
+msgstr "Birim Al"
 
 #: storage/nav.py:56 templates/storage/volumes.html:28
 #: templates/storage/volumes.html.py:30
@@ -3904,11 +3871,11 @@ msgstr "Diskleri Görüntüle"
 #: storage/nav.py:67 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
 msgid "Auto Import Volume"
-msgstr "Otomatik Bölüm Ekle"
+msgstr "Otomatik Birim Ekle"
 
 #: storage/nav.py:78
 msgid "View All Volumes"
-msgstr "Tüm Bölümleri Göster"
+msgstr "Tüm Birimleri Göster"
 
 #: storage/nav.py:89 templates/storage/volumes.html:110
 #: templates/storage/volumes.html.py:114 templates/storage/volumes.html:199
@@ -3919,7 +3886,7 @@ msgstr "ZFS Veri Kümesi Oluştur"
 #: storage/nav.py:100 templates/storage/volumes.html:119
 #: templates/storage/volumes.html.py:123
 msgid "Create ZFS Volume"
-msgstr "ZFS Bölümü Oluştur"
+msgstr "ZFS Birimi Oluştur"
 
 #: storage/nav.py:111
 msgid "Add Periodic Snapshot"
@@ -3927,7 +3894,7 @@ msgstr "Periyodik Anlık Durum Görüntüsü Ekle"
 
 #: storage/nav.py:122
 msgid "Volumes"
-msgstr "Bölümler"
+msgstr "Birimler"
 
 #: storage/nav.py:155 storage/nav.py:176 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133 templates/storage/volumes.html:208
@@ -3937,7 +3904,7 @@ msgstr "İzinleri Değiştir"
 
 #: storage/views.py:147 storage/views.py:174 storage/views.py:199
 msgid "Volume successfully added."
-msgstr "Bölüm başarıyla eklendi."
+msgstr "Birim başarıyla eklendi."
 
 #: storage/views.py:268 templates/system/smarttest.html:14
 msgid "Unknown"
@@ -3957,7 +3924,7 @@ msgstr "Bazı seçenekleri ayarlarken hata oluştu."
 
 #: storage/views.py:382
 msgid "ZFS Volume successfully added."
-msgstr "ZFS Bölümü başarıyla eklendi."
+msgstr "ZFS Birimi başarıyla eklendi."
 
 #: storage/views.py:397
 msgid "This is in use by the iscsi target, please remove it there first."
@@ -3965,7 +3932,7 @@ msgstr "Bu isci hedefi tarafından kullanılıyor lütfen önce onu kaldırın."
 
 #: storage/views.py:400
 msgid "ZFS Volume successfully destroyed."
-msgstr "ZFS Bölümü başarıyla silindi."
+msgstr "ZFS Birimi başarıyla silindi."
 
 #: storage/views.py:434
 msgid "Native dataset successfully edited."
@@ -3984,7 +3951,6 @@ msgid "Snapshot successfully deleted."
 msgstr "Anlık Durum Görüntüsü başarıyla silindi."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshots successfully deleted."
 msgstr "Anlık Durum Görüntüsü başarıyla silindi."
 
@@ -4017,35 +3983,32 @@ msgid "Disk detach has been successfully done."
 msgstr "Başarıyla disk ayrıldı."
 
 #: storage/views.py:614
-#, fuzzy
 msgid "Disk offline operation has been issued."
 msgstr "Diski değiştirme başlatılmıştır."
 
 #: storage/views.py:633
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disk kaldırıldı."
 
 #: storage/views.py:651
 msgid "The volume has been successfully exported"
-msgstr "Bölüm başarıyla dışa aktarıldı"
+msgstr "Birim başarıyla dışa aktarıldı"
 
 #: storage/views.py:673
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "Temizleme süreci başladı."
 
 #: system/forms.py:158
 msgid "Language (Require UI reload)"
 msgstr "Dil (sayfanın yeniden yüklenmesi gerekmektedir)"
 
 #: system/forms.py:168
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Bu değer, 0 ile 65535 arasında olmalıdır."
+msgstr "Bu değer, 1 ile 65535 arasında olmalıdır."
 
 #: system/forms.py:170
-#, fuzzy
 msgid "Number is required."
-msgstr "Bu alan gereklidir."
+msgstr "Numara gereklidir."
 
 #: system/forms.py:335 system/forms.py:412 system/forms.py:449
 msgid "hour"
@@ -4076,23 +4039,20 @@ msgid "SHA256 sum for the image"
 msgstr "İmaj için toplam SHA256 "
 
 #: system/forms.py:361
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Geçersiz yazılım veya toplama sağlaması"
+msgstr "Geçersiz yazılım"
 
 #: system/forms.py:367 system/forms.py:394
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Geçersiz yazılım veya toplama sağlaması"
+msgstr "Geçersiz toplama sağlaması"
 
 #: system/forms.py:377
 msgid "Service Pack image to be installed"
 msgstr "Hizmet Paketi imajı kuruldu"
 
 #: system/forms.py:388
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "Geçersiz servis paketi veya toplama sağlaması"
+msgstr "Geçersiz servis paketi"
 
 #: system/forms.py:404
 msgid "New config to be installed"
@@ -4104,20 +4064,19 @@ msgstr "dakika"
 
 #: system/forms.py:544 system/forms.py:561
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Tırnak kullanmanıza müsaade edilmez"
 
 #: system/models.py:47
 msgid "Protocol"
 msgstr "Protokol"
 
 #: system/models.py:53
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 Adresleri"
+msgstr "WebGUI Adresleri"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "WebGUI Bağlantı Noktası"
 
 #: system/models.py:65
 msgid "Language"
@@ -4141,7 +4100,7 @@ msgstr "NTP sunucu 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog sunucusu"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4180,13 +4139,13 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Zeroconf/Bonjour Etkinleştir"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Sadece yeni disklerde Gib her sürücüde takas alanı boyutunu etkiler. "
-"Sıfırddan farklı olmalıdır."
+"Sadece yeni disklerde GIB her sürücüde takas alanı boyutunu etkiler. Takas "
+"oluşturma alanını kapatmak için bu alanı 0 olarak ayarlayın (KESİNLİKLE "
+"ÖNERİLMEZ)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4210,13 +4169,12 @@ msgid "From email"
 msgstr "Kimden (e-posta)"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Sistemin mail gönderirken kullanacağı, postanın gönderici kısmında görünecek "
-"eposta adresi, örn: freenas@alanadım.com"
+"Sistemin e-posta gönderirken kullanacağı, postanın gönderici kısmında "
+"görünecek e-posta adresi, örn: freenas@alanadım.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4373,19 +4331,16 @@ msgid "Day of week"
 msgstr "Haftanın Günü"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "AIO etkinleştir"
+msgstr "Etkin"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
-msgstr "CronSüreci"
+msgstr "Zamanlanmış Görev"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
-msgstr "CronSüreçleri"
+msgstr "Zamanlanmış Görev"
 
 #: system/models.py:314 system/models.py:481
 msgid "Every minute"
@@ -4415,14 +4370,12 @@ msgid "Every month"
 msgstr "Her ay"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Çalışma günü"
+msgstr "Hafta içi her gün"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
-#, fuzzy
 msgid "Weekends"
-msgstr "Hafta(lar)"
+msgstr "Hafta sonları"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4530,53 +4483,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Rsync komut satırına ek seçenekler (genellikle boş)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Rsync Görevleri"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Rsync Görevleri"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. Test"
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T Ayarları"
+msgstr "S.M.A.R.T Testleri"
 
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Kullanılabilir"
+msgstr "Değişken"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Değer"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr " Ortalama Yük"
+msgstr "Yükleyici"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr " Ortalama Yük"
+msgstr "Yükleyiciler"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4591,48 +4537,43 @@ msgid "System Information"
 msgstr "Sistem Bilgisi"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "CronSüreçleri"
+msgstr "Zamanlanmış Görevleri Görüntüle"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Diskleri Görüntüle"
+msgstr "Rsync Görevleri Görüntüle"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T Ayarları"
+msgstr "S.M.A.R.T Test Görüntüle"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Diskleri Görüntüle"
+msgstr "Sysctl Görüntüle"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Tüm kullanıcıları göster"
+msgstr "Yükleyicileri Görüntüle"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "Yüklediğiniz dosya geçersiz."
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "'dan test mesajı"
+msgstr "Test mesajı: %s"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Bu mesaj'dan bir test mesajıdır"
+msgstr "Test mesajı: %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Test e-posta gönderilemedi:"
+msgstr "Test e-posta gönderilemedi: %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4796,11 +4737,11 @@ msgstr "Yönetici Parolasını Değiştir"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "UYARI"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "KRİTİK"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4841,7 +4782,7 @@ msgstr "Yaptığınız değişiklikler başarıyla güncellendi!"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "Kaydet"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -5101,7 +5042,7 @@ msgstr "Hoşgeldiniz, %(username)s. Giriş yaptığınız için teşekkürler."
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Hoşgeldiniz %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5121,7 +5062,7 @@ msgstr "Tekrar giriş yap"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Bu hizmeti etkinleştirmek ister misiniz?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -5176,9 +5117,8 @@ msgid "TFTP Settings"
 msgstr "TFTP Ayarları"
 
 #: templates/services/index.html:147
-#, fuzzy
 msgid "UPS Settings"
-msgstr "NFS Ayarları"
+msgstr "UPS Ayarları"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
@@ -5271,7 +5211,7 @@ msgstr "Hedef Ekle"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr "Tanımlanan modüllerin hiçbirinde rsync yok"
+msgstr "Tanımlanan hiçbiri rsync  modülü yok"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -5368,9 +5308,9 @@ msgid "Edit Disk"
 msgstr "Diski Düzenle"
 
 #: templates/storage/dataset_confirm_delete.html:9
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Silmek istediğinizden emin misiniz? - \"%(name)s\""
 
 #: templates/storage/dataset_confirm_delete.html:12
 msgid ""
@@ -5388,9 +5328,9 @@ msgid "Edit Dataset"
 msgstr "Veri Kümesini Düzenle"
 
 #: templates/storage/datasets.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "ZFS Veri Kümesi Oluştur"
+msgstr "%(fs)s içinde ZFS Veri Kümesi Oluştur"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
@@ -5401,19 +5341,17 @@ msgid "Are you sure you want to detach?"
 msgstr "Çıkarmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_offline.html:7
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Çevrimdışı olmak istediğinizden emin misiniz?"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
 msgstr "Silmek istediğinizden emin misiniz?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:9
 msgid "Replacing disk"
-msgstr "Disk değiştirmek"
+msgstr "Disk değiştirme"
 
 #: templates/storage/geom_disk_replace.html:15
 #: templates/storage/zpool_disk_replace.html:15
@@ -5426,7 +5364,7 @@ msgstr "Dosya sistem türü"
 
 #: templates/storage/index.html:3
 msgid "Active Volumes"
-msgstr "Aktif Bölümler"
+msgstr "Aktif Birimler"
 
 #: templates/storage/index.html:9
 msgid "ZFS Snapshots"
@@ -5466,13 +5404,15 @@ msgstr "Kopyalam Ekle"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Açık Anahtarı Görüntüle"
 
 #: templates/storage/replications.html:16
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
+"DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
+"görüntüsünü çoğaltma görevi oluşturmak için gerekli olan alan"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5496,18 +5436,18 @@ msgstr "Hiç ZFS kopyası yok"
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
+"Temizleme şu anda çalışmıyor. Temizleme işlemini DURDURMAK istediğinizden "
+"emin misiniz?"
 
 #: templates/storage/scrub_confirm.html:12
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Çıkarmak istediğinize emin misiniz?"
+msgstr "Temizlemek istediğinize emin misiniz?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "İlerleme sırasında bu sistem yükü artacak"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr "Önceki anlık durum görüntüsüne almak istediğinize emin misiniz?"
 
@@ -5516,28 +5456,24 @@ msgid "Clone snapshot"
 msgstr "Anlık durum görüntüsü klonla"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
-msgstr "Anlık durum görüntüsünü sil"
+msgstr "Anlık Durum Görüntüsünü Sil"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "Anlık durum görüntüsünü sil"
+msgstr "Bu anlık durum görüntüsünü sil"
 
 #: templates/storage/snapshots.html:49
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "Anlık durum görüntüsünü geri al"
+msgstr "Anlık Durum Görüntüsünü Geri Al"
 
 #: templates/storage/snapshots.html:54
 msgid "Rollback to this snapshot"
 msgstr "Anlık durum görüntüsünü geri al"
 
 #: templates/storage/snapshots.html:128
-#, fuzzy
 msgid "Destroy"
-msgstr "Bölümü Sil"
+msgstr "Sil"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5580,22 +5516,21 @@ msgid "on every"
 msgstr "her üzerinde"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "Planlanmış peryodik bir anlık durum görüntüleme takvimi yok"
+msgstr "Planlanmış peryodik bir anlık durum görüntüsü yok."
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr "ZFS Bölümünü Düzenle"
+msgstr "ZFS Birimlerini Düzenle"
 
 #: templates/storage/volume_export.html:9
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "Bu birim içinde kullanılan alan: %(used)s"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
-msgstr "Dışarıya vermek istediğinizden emin misiniz?"
+msgstr "İhraç etmek istediğinizden emin misiniz?"
 
 #: templates/storage/volumes.html:50
 msgid "Used"
@@ -5611,7 +5546,7 @@ msgstr "Durum"
 
 #: templates/storage/volumes.html:82 templates/storage/volumes.html.py:86
 msgid "Export Volume"
-msgstr "Bölümü Export et"
+msgstr "Birimi Dışarı Aktar"
 
 # ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
 # Open solaris sayfasından alıntı: ZFS Volumes
@@ -5622,9 +5557,8 @@ msgstr "Bölümü Export et"
 # 
 # .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS Bölümü"
+msgstr "Birimi Temizle"
 
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
@@ -5632,9 +5566,8 @@ msgid "Edit ZFS Options"
 msgstr "ZFS Seçeneklerini Düzenle"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
-#, fuzzy
 msgid "Volume Status"
-msgstr "Bölümler"
+msgstr "Birim Durumları"
 
 #: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
 msgid "Destroy Dataset"
@@ -5642,11 +5575,11 @@ msgstr "Veri Kümesini Sil"
 
 #: templates/storage/volumes.html:238 templates/storage/volumes.html.py:242
 msgid "Destroy ZFS Volume"
-msgstr " ZFS Bölümünü Sil"
+msgstr "ZFS Birimini Sil"
 
 #: templates/storage/volumes.html:249
 msgid "No volumes defined"
-msgstr "Henüz bir bölüm tanımlı değil"
+msgstr "Henüz bir birim tanımlı değil"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -5678,20 +5611,20 @@ msgstr "Yedek"
 
 #: templates/storage/wizard.html:172
 msgid "Add Volume"
-msgstr "Bölüm Ekle"
+msgstr "Birim Ekle"
 
 #: templates/storage/wizard.html:173
 msgid "Existing data will be cleared"
 msgstr "Mevcut veriler silinecektir"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "ZFS Bölümü Oluştur"
+msgstr "%(name)s üzerinde ZFS birimi oluştur"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
-msgstr "ZFS Bölümü Ekle"
+msgstr "ZFS Birimi Ekle"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
@@ -5707,19 +5640,18 @@ msgstr "Önbellek yeniden oluşturulamadı."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "Hata Ayıklama"
+msgstr "Hata Düzeltmeyi Kaydet"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Firmwire Güncelleme"
+msgstr "Aygıt Yazlımı Güncellemesi"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
 msgid "Apply Service Pack"
-msgstr "Hizmet Paketi Yükle"
+msgstr "Hizmet Paketi Uygula"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -5727,30 +5659,28 @@ msgstr "Yeniden Başlatılıyor..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr "Fabrika ayarlarına dönmek istediğinizden eminmisiniz!"
+msgstr ""
+"Kurulumun varsayılan ayarlarına geri dönmek istediğinizden emin misiniz?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
 msgstr "Güncelle"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "CronJobs henüz tanımlanmamış"
+msgstr "ZamanlanmışGörev henüz tanımlanmamış"
 
 #: templates/system/cronjob.html:46
-#, fuzzy
 msgid "Add a cron job"
-msgstr "CronJob Ekle"
+msgstr "ZamanlanmışGörev Ekle"
 
 #: templates/system/cronjob.html:48
-#, fuzzy
 msgid "Add cron job"
-msgstr "CronJob Ekle"
+msgstr "Zamanlanmış Görev Ekle"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr "Yeniden Boot ediliyor..."
+msgstr "Yeniden Başlatılıyor..."
 
 #: templates/system/email_edit.html:12
 msgid "Send Test Mail"
@@ -5761,21 +5691,20 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"İPUCU: Test e-posta root kullanıcısına  gönderilir. Yapılandırmak için "
+"kullanıcılar Kullanıcılar -> root -> E-posta Değiştir"
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Henüz bir hedef yok"
+msgstr "Yükleyici ayarı yapılandırılmamış."
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "Portal Ekle"
+msgstr "Yükleyici Ekle"
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "Portal Ekle"
+msgstr "Yükleyici Ekle"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5818,14 +5747,12 @@ msgid "Yearly Graphs"
 msgstr "Yıllık Grafikler"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Hiçbir rsync tanımlı değil."
+msgstr "Hiçbir rsync görevi tanımlı değil."
 
 #: templates/system/rsync.html:44
-#, fuzzy
 msgid "Add rsync task"
-msgstr "Rsync Ekle"
+msgstr "Rsync görevi ekle"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5837,7 +5764,7 @@ msgstr "Genel"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Standart Ayarlara Geri Dön"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5850,37 +5777,31 @@ msgstr "Ayarları Kaydet"
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr "Yapılandırmayı Yükle"
+msgstr "Yapılandırmayı Güncelle"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Henüz bir hedef yok"
+msgstr "Tanımlanan S.M.A.R.T. testleri yok"
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. Test Ekle"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. test ekle"
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Hiçbir rsync tanımlı değil."
+msgstr "Hiçbir sysctl tanımlı değil."
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Rsync Ekle"
+msgstr "Sysctl Ekle"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Rsync Ekle"
+msgstr "Sysctl Ekle"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5904,7 +5825,7 @@ msgstr "Çalışma Süresi"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
-msgstr " Ortalama Yük"
+msgstr "Ortalama Yük"
 
 #: templates/system/wizard.html:3
 #, python-format
@@ -5912,49 +5833,49 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "%(step)s - %(step_count)s"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Güncelle"
+msgstr "Güncellemeleri Uygula"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "%s birimi durumu: HATASIZ"
 
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "%s birim durumu: BOZUK"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Birim %(volume)s durumu %(status)s"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Admin kullanıcısı için parola değiştirlmek zorunda (giriş için şu anda "
+"herhangi bir parola gereklidir)"
 
 #: tools/alert.py:99
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "%s WebGUI Adresine bağlanamadı; joker karakter kullanıyorsanız"
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Kritik"
+msgstr "Kritik Uyarılar"
 
 msgid "Volume from which this dataset will be created on"
-msgstr "Bu bölüm hangi veri kümesi üzerinde oluşturulacak"
+msgstr "Bu birim hangi veri kümesi üzerinde oluşturulacak"
 
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Hangi bölüm bu ZFS Bölümü olarak oluşturulur"
+msgstr "Hangi birim bu ZFS Birimi olarak oluşturulur"
 
 msgid "Volume this group belongs to"
-msgstr "Bölüm bu gruba ait"
+msgstr "Birim bu gruba ait"
 
 msgid "Group Membership"
 msgstr "Grup Üyeliği"
@@ -5972,7 +5893,7 @@ msgid "successfully edited"
 msgstr "başarıyla düzenlendi"
 
 msgid "There are no active volumes."
-msgstr "Aktif bölüm yok."
+msgstr "Aktif birim yok."
 
 msgid "%s successfully added."
 msgstr "%s başarıyla eklendi"
@@ -6005,7 +5926,7 @@ msgid "Windows Shares"
 msgstr "Windows Paylaşımları"
 
 msgid "The volume failed to export"
-msgstr "Bölümü vermek başarısız"
+msgstr "Birimi vermek başarısız oldu"
 
 msgid "Cron Scheduler"
 msgstr "Cron Zamanlayıcısı"
@@ -6047,7 +5968,7 @@ msgid "Restore to Factory Defaults"
 msgstr "Kurulumdaki Varsayılan Ayarlara Geri Dön"
 
 msgid "Config"
-msgstr "Ayarla"
+msgstr "Yapılandırma"
 
 msgid "OS Version"
 msgstr "İşletim Sistemi Sürümü"
