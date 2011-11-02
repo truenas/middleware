@@ -58,9 +58,9 @@ class FormRender(template.Node):
                 for field in fields:
                     bf = BoundField(form, form.fields[field], field)
                     bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
-                    html += unicode(bf_errors) + unicode(bf) 
+                    html += unicode(bf_errors) + unicode(bf)
                     #new_fields.remove(field)
-                html += u"</td></tr>"    
+                html += u"</td></tr>"
                 output.append(html)
             else:
                 bf = BoundField(form, form.fields[field], field)
@@ -68,7 +68,11 @@ class FormRender(template.Node):
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))
                 else:
-                    html = u"""<tr><th>%s</th><td>%s%s</td></tr>""" % (bf.label_tag(), bf_errors, bf)
+                    if bf.help_text:
+                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><span id="%shelp">?</span>""" % (bf.auto_id, bf.help_text, bf.auto_id)
+                    else:
+                        help_text = ""
+                    html = u"""<tr><th>%s</th><td>%s%s %s</td></tr>""" % (bf.label_tag(), bf_errors, bf, help_text)
                     output.append(html)
 
         if hidden_fields:
