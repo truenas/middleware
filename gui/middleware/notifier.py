@@ -1360,7 +1360,9 @@ class notifier:
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            status = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False).communicate()[0].strip('\n')
+            p1 = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False)
+            if p1.wait() == 0:
+                status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
 
             provider = self.get_label_provider('ufs', name)
