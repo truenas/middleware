@@ -441,6 +441,9 @@ last_orders() {
 		mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
 		xz --verbose -9 -f "$full_image"
 
+		# GO ISO GO!
+		sh "$FREENAS_ROOT/build/create_iso.sh"
+
 	fi
 
 }
