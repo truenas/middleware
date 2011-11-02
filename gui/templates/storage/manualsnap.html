@@ -1,20 +1,2 @@
-{% load i18n %}
-<form data-dojo-type="dijit.form.Form">
-    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e,  '{% url storage_manualsnap path=path %}');
-    </script>
-    <table>
-        {{ form }}
-    </table>
-        <button data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'" class="submitform">
-    <script type="dojo/method">
-    </script>
-    {% trans "Manually Create Snapshot" %}<br />
-        </button>
-        <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
-            {% trans "Cancel" %}
-            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                cancelDialog(this);
-            </script>
-        </button>
-</form>
+{% extends "freeadmin/generic_form.html" %}
+{% block oklabel %}{% trans "Manually Create Snapshot" %}{% endblock %}
