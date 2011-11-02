@@ -1990,12 +1990,18 @@ class notifier:
         items = []
         uid = 1
         if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
-            ncomponents = int(provider.xpathEval("../config/Components")[0].content)
+            if class_name == 'STRIPE':
+                statepath = "../config/State"
+                status = provider.xpathEval("../config/Status")[0].content
+                ncomponents = int(re.search(r'Total=(?P<total>\d+)', status).group("total"))
+            else:
+                statepath = "./config/State"
+                ncomponents = int(provider.xpathEval("../config/Components")[0].content)
             consumers = provider.xpathEval("../consumer")
             doc = self.__geom_confxml()
             for consumer in consumers:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
-                status = consumer.xpathEval("./config/State")[0].content
+                status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
                 items.append({
                     'type': 'disk',
