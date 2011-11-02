@@ -114,14 +114,18 @@ fi
 for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
 	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
-		(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		(cd FreeBSD/src &&
+		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
+		 patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 	fi
 done
 for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
-		(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		(cd FreeBSD/ports &&
+		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
+		 patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 	fi
 done
