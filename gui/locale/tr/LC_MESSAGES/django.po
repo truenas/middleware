@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-01 10:47+0200\n"
+"PO-Revision-Date: 2011-11-01 16:00+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -4150,7 +4150,7 @@ msgstr ""
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr ""
-"Altbaşlıkta konsol mesajlarını göster (Sayfanın tazelenmesini gerektirir)"
+"Altbaşlıkta konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
 
 #: system/models.py:127
 msgid "Show tracebacks in case of fatal errors"
