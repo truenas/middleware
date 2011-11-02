@@ -74,8 +74,9 @@ from middleware.exceptions import MiddlewareError
 class notifier:
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
+    IDENTIFIER = 'notifier'
     def __system(self, command):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
@@ -86,13 +87,14 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
+            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
+                           % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
 
     def __system_nolog(self, command):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
