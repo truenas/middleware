@@ -113,7 +113,7 @@ class notifier:
 
     def __pipeopen(self, command, log=True):
         if log:
-            syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+            syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
             syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
         return Popen(command, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True, close_fds = True)
 
@@ -121,7 +121,7 @@ class notifier:
         pass
 
     def _simplecmd(self, action, what):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
@@ -1322,7 +1322,7 @@ class notifier:
         return False
 
     def update_firmware(self, path):
-        syslog.openlog('freenas', syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog('updater', syslog.LOG_CONS | syslog.LOG_PID)
         try:
             command = '/usr/bin/xz -cd %s | sh /root/update' % (path, )
             syslog.syslog(syslog.LOG_NOTICE, 'Executing: ' + command)
@@ -1330,7 +1330,7 @@ class notifier:
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
-            os.unlink('/var/tmp/firmware/firmware.xz')
+            os.unlink(path)
             syslog.closelog()
         open('/data/need-update', 'w').close()
 
