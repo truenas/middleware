@@ -1,7 +1,12 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
+    //formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
+    doSubmit({
+       form: this,
+       event: e,
+       url: '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}'
+    });
 </script>
 <table> 
     {% admin_form form %}

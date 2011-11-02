@@ -542,16 +542,27 @@
                 dojo.destroy(item);
             });
             if(data.error == true) {
+                var first = null;
                 for(key in data.errors) {
 
                     fieldid = data.form_auto_id.replace('%s', key);
                     field = dijit.byId(fieldid);
+                    if(!first)
+                        first = field;
+                    var ul = dojo.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
+                    dojo.attr(ul, "class", "errorlist");
                     for(var i=0; i<data.errors[key].length;i++) {
-                        span = dojo.create('span', {innerHTML: data.errors[key][i]}, field.domNode.parentNode);
-                        dojo.attr(span, "class", "errorlist");
+                        var li = dojo.create('li', {innerHTML: data.errors[key][i]}, ul);
                     }
+                    dojo.fx.wipeIn({
+                        node: ul,
+                        duration: 300
+                    }).play();
 
                 }
+
+                first.focus();
+
             } else {
                 form.reset();
             }
@@ -566,6 +577,14 @@
                     console.log(e);
                 }
             }
+        }
+
+        if(data.message) {
+            setMessage(data.message);
+        }
+
+        if(data.error == false && rnode.isInstanceOf(dijit.Dialog)) {
+            rnode.hide();
         }
 
     }
@@ -1050,6 +1069,7 @@
         "dijit/ProgressBar",
         "dijit/Tooltip",
         "dojox/data/JsonRestStore",
+        "dojox/fx/scroll",
         "dojox/grid/EnhancedGrid",
         "dojox/grid/enhanced/plugins/DnD",
         "dojox/grid/enhanced/plugins/Menu",
