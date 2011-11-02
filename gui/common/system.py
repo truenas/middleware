@@ -43,20 +43,22 @@ VERSION_FILE = '/etc/version'
 
 _VERSION = None
 
-def get_sw_version():
-    """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64. """
+def get_sw_version(strip_build_num=False):
+    """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64."""
 
     global _VERSION
 
     if _VERSION is None:
         with open(VERSION_FILE) as fd:
             _VERSION = fd.read().strip()
+    if strip_build_num:
+        return _VERSION.split(' ')[0]
     return _VERSION
 
 def get_sw_login_version():
     """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
 
-    return '-'.join(get_sw_version().split('-')[1:-2])
+    return '-'.join(get_sw_version(strip_build_num=True)[0].split('-')[1:-2])
 
 def get_sw_name():
     """Return the software name, e.g. FreeNAS"""
