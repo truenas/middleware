@@ -1932,13 +1932,16 @@ class notifier:
     def get_disks_from_provider(self, provider):
         disks = []
         geomname = provider.xpathEval("../../name")[0].content
-        if geomname == 'DISK':
+        if geomname in ('DISK', 'PART'):
             disks.append(provider.xpathEval("../name")[0].content)
         elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
             doc = self.__geom_confxml()
             for prov in provider.xpathEval("../consumer/provider/@ref"):
                 prov2 = doc.xpathEval("//provider[@id = '%s']" % prov.content)[0]
                 disks.append(prov2.xpathEval("../name")[0].content)
+        else:
+            #TODO log, could not get disks
+            pass
         return disks
 
     def zpool_parse(self, name):
@@ -1969,10 +1972,13 @@ class notifier:
                 if dskname != disk.disk_name:
                     disk.disk_name = dskname
 
-            if (dskname in in_disks or dskname not in disks) and \
-                    not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
-                #Duplicated disk entries in database
-                disk.delete()
+            if dskname not in disks:
+                disk.disk_enabled = False
+                if not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
+                    #Duplicated disk entries in database
+                    disk.delete()
+                else:
+                    disk.save()
             else:
                 disk.save()
             in_disks[dskname] = disk

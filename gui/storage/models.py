@@ -58,7 +58,7 @@ class Volume(Model):
                     prov = notifier().get_label_provider(self.vol_fstype.lower(), self.vol_name)
                     self._disks = notifier().get_disks_from_provider(prov)
             return self._disks
-        except:
+        except Exception, e:
             return []
     def get_datasets(self):
         if self.vol_fstype == 'ZFS':
