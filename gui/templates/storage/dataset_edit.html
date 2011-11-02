@@ -1,16 +1,3 @@
+{% extends "freeadmin/generic_form.html" %}
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
-    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e, '{% url storage_dataset_edit dataset_name=dataset_name %}');
-    </script>
-<table>
-{{ form }}
-</table>
-<button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">{% trans "Edit Dataset" %}</button>
-        <button data-dojo-type="dijit.form.Button"type="button">
-            {% trans "Cancel" %}
-            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                cancelDialog(this);
-            </script>
-        </button>
-</form>
+{% block oklabel %}{% trans "Edit Dataset" %}{% endblock %}
