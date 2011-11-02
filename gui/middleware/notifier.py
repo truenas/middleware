@@ -1029,15 +1029,15 @@ class notifier:
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
-                if fromdev_swap != '':
-                    self.__system('/sbin/swapon /dev/%s' % (fromdev_swap))
+                if from_swap != '':
+                    self.__system('/sbin/swapon /dev/%s' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
                     self.__system('/sbin/swapoff /dev/%s' % (to_swap))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
-        if todev_swap:
-            self.__system('/sbin/swapon /dev/%s' % (todev_swap))
+        if to_swap:
+            self.__system('/sbin/swapon /dev/%s' % (to_swap))
 
         return ret
 
