@@ -1921,7 +1921,11 @@ class notifier:
         # So we need to recurse one more time
         if class_name == 'PART':
             providerid = provider.xpathEval("../consumer/provider/@ref")[0].content
-            provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
+            newprovider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
+            class_name = newprovider.xpathEval("../../name")[0].content
+            # if this PART is really backed up by softraid the hypothesis was correct
+            if class_name in ('STRIPE', 'MIRROR', 'RAID3'):
+                return newprovider
 
         return provider
 
