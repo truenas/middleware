@@ -37,7 +37,11 @@ class FormRender(template.Node):
         self.arg = arg
     def render(self, context):
         form = context[self.arg]
-        model = form._meta.model
+
+        if hasattr(form, "_meta"):
+            model = form._meta.model
+        else:
+            model = None
 
         new_fields = form.fields.keys()
         output, hidden_fields, composed = [], [], {}
@@ -46,10 +50,11 @@ class FormRender(template.Node):
         if top_errors:
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % force_unicode(top_errors))
 
-        for label, fields in model._admin.composed_fields:
-            for field in fields[1:]:
-                new_fields.remove(field)
-            composed[fields[0]] = (label, fields)
+        if model:
+            for label, fields in model._admin.composed_fields:
+                for field in fields[1:]:
+                    new_fields.remove(field)
+                composed[fields[0]] = (label, fields)
 
         for field in new_fields:
             if composed.has_key(field):
