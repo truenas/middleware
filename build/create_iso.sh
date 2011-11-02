@@ -39,6 +39,8 @@ main()
 
 	cleanup
 
+	cd "$FREENAS_ROOT"
+
 	rm -Rf ${ISODIR}
 	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 
@@ -64,6 +66,7 @@ main()
 	cat > $INSTALLUFSDIR/etc/version-info <<EOF
 SW_ARCH=\$(uname -p)
 SW_NAME="$NANO_LABEL"
+SW_FULL_VERSION="$NANO_NAME"
 SW_VERSION="$VERSION"
 EOF
 
