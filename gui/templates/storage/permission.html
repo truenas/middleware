@@ -1,18 +1,7 @@
-{% load i18n %}
-<form data-dojo-type="dijit.form.Form">
-    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e, '{% url storage_mp_permission path=path %}');
-    </script>
+{% extends "freeadmin/generic_form.html" %}
+{% block oklabel %}{% trans "Change" %}{% endblock %}
+{% block form %}
     <h3>{% trans "Change permission" %}</h3>
-    <p>{% blocktrans with mp.mp_path as path %}Change permission on {{ path }} to{% endblocktrans %}:</p>
-	<table>
-	{{ form }}
-	</table>
-        <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">{% trans "Change" %}</button>
-        <button data-dojo-type="dijit.form.Button" class="cancelform">
-            {% trans "Cancel" %}
-            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                cancelDialog(this);
-            </script>
-        </button>
-    </form>
+    <p>{% blocktrans with path=path %}Change permission on {{ path }} to{% endblocktrans %}:</p>
+{{ block.super }}
+{% endblock %}
