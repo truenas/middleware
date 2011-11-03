@@ -148,16 +148,17 @@ class GroupField(forms.ChoiceField):
 class PathField(forms.CharField):
     def __init__(self, *args, **kwargs):
         dirsonly = kwargs.pop('dirsonly', True)
+        self.abspath = kwargs.pop('abspath', True)
         self.widget = DirectoryBrowser(dirsonly=dirsonly)
         super(PathField, self).__init__(*args, **kwargs)
     def clean(self, value):
         if value not in ('', None):
-            value = os.path.abspath(value)
+            absv = os.path.abspath(value)
             valid = False
             for mp in MountPoint.objects.all().values_list('mp_path',):
-                if value.startswith(mp[0]+'/') or value == mp[0]:
+                if absv.startswith(mp[0]+'/') or absv == mp[0]:
                     valid = True
                     break
             if not valid:
                 raise forms.ValidationError(_("The path must reside within a volume mount point"))
-        return value
+        return value if not self.abspath else absv
