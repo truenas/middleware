@@ -24,11 +24,6 @@
         </tr>
         {% for form in formset %}
         <table>
-            <tr>
-            <td colspan="2">
-            <div data-dojo-type="dijit.layout.ContentPane" id="id_{{ form.prefix}}-__all__"></div>
-            </td>
-            </tr>
         {% admin_form form %}
         </table>
         {% endfor %}

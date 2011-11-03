@@ -49,6 +49,12 @@ class FormRender(template.Node):
         top_errors = form.non_field_errors()
         if top_errors:
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % force_unicode(top_errors))
+        else:
+            if form.prefix:
+                prefix = form.auto_id % form.prefix + "-__all__"
+            else:
+                prefix = form.auto_id % "__all__"
+            output.append("""<tr><td colspan="2"><div data-dojo-type="dijit.layout.ContentPane" id="%s"></div></td></tr>""" % (prefix,))
 
         if model:
             for label, fields in model._admin.composed_fields:
