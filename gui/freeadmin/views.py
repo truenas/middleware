@@ -98,6 +98,7 @@ class JsonResp(HttpResponse):
         self.type = kwargs.pop('type', None)
         self.template = kwargs.pop('template', None)
         self.form = kwargs.pop('form', None)
+        self.formsets = kwargs.pop('formsets', [])
         self.request = request
 
         if self.form:
@@ -118,19 +119,24 @@ class JsonResp(HttpResponse):
                 'formid': request.POST.get("__form_id"),
                 'form_auto_id': self.form.auto_id,
                 })
+            error = False
+            errors = {}
             if self.form.errors:
-                errors = {}
                 for key, val in self.form.errors.items():
-                    errors[key] = list(val)
-                data.update({
-                    'error': True,
-                    'errors': errors,
-                })
-            else:
-                data.update({
-                    'error': False,
-                    'message': self.message,
-                })
+                    errors[self.form.auto_id % key] = [unicode(v) for v in val]
+                error = True
+
+            for name, fs in self.formsets.items():
+                for i, form in enumerate(fs.forms):
+                    if form.errors:
+                        error = True
+                        for key, val in form.errors.items():
+                            errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
+            data.update({
+                'error': error,
+                'errors': errors,
+                'message': self.message,
+            })
         elif self.type == 'message':
             data.update({
                 'error': self.error,
@@ -392,13 +398,13 @@ def generic_model_add(request, app, model, mf=None):
                         mf.done(request=request, events=events)
                     except TypeError:
                         mf.done()
-                return JsonResp(request, form=mf, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except MiddlewareError, e:
                 return JsonResp(request, error=True, message=_("Error: %s") % str(e))
             except ServiceFailed, e:
                 return JsonResp(request, error=True, message=_("The service failed to restart.") % m._meta.verbose_name)
         else:
-            return JsonResp(request, form=mf)
+            return JsonResp(request, form=mf, formsets=formsets)
 
     else:
         mf = mf()
@@ -598,15 +604,15 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     except TypeError:
                         mf.done()
                 if request.GET.has_key("iframe"):
-                    return JsonResp(request, form=mf, message=_("%s successfully updated.") % m._meta.verbose_name)
+                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name)
                 else:
-                    return JsonResp(request, form=mf, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except ServiceFailed, e:
                 return JsonResp(request, form=mf, error=True, message=_("The service failed to restart.") % m._meta.verbose_name, events=["serviceFailed(\"%s\")" % e.service])
             except MiddlewareError, e:
                 return JsonResp(request, form=mf, error=True, message=_("Error: %s") % str(e))
         else:
-            return JsonResp(request, form=mf)
+            return JsonResp(request, form=mf, formsets=formsets)
 
     else:
         mf = mf(instance=instance)

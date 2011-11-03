@@ -16,15 +16,27 @@
     <tr><td colspan="2">
     {% for name, formset in formsets.items %}
     <table>
-        <tr><td colspan="2">
-        Aliases
-        </td></tr>
-    {{ formset }}
-    <tr>
-        <td colspan="2">
-        <a href="javascript:void(0);" onClick="addAlias(this, 'alias_set');">Add extra alias</a>
-        </td>
-    </tr>
+        <tr>
+            <td colspan="2">
+            Aliases
+            {{ formset.management_form }}
+            </td>
+        </tr>
+        {% for form in formset %}
+        <table>
+            <tr>
+            <td colspan="2">
+            <div data-dojo-type="dijit.layout.ContentPane" id="id_{{ form.prefix}}-__all__"></div>
+            </td>
+            </tr>
+        {% admin_form form %}
+        </table>
+        {% endfor %}
+        <tr>
+            <td colspan="2">
+            <a href="javascript:void(0);" onClick="addAlias(this, 'alias_set');">Add extra alias</a>
+            </td>
+        </tr>
     </table>
     {% endfor %}
     {% endblock %}

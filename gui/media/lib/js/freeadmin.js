@@ -355,15 +355,7 @@
                 }, 1500);
             },
         });
-        /*
-        var loc = new String(window.location);
-        if(loc.search("http://") > -1) {
-            loc = loc.replace('http://', 'https://');
-        } else {
-            loc = loc.replace('https://', 'http://');
-        }
-        window.location=loc;
-        */
+
     }
 
     ask_service = function(srv) {
@@ -388,57 +380,72 @@
         var extran = extra.get("value");
         n4a = new dijit.form.TextBox({
             name: name+"-"+extran+"-alias_v4address",
+            id: "id_"+name+"-"+extran+"-alias_v4address",
             value: "",
         });
 
         getid4 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v4netmaskbit");
         n4n = new dijit.form.Select({
             name: name+"-"+extran+"-alias_v4netmaskbit",
+            id: "id_"+name+"-"+extran+"-alias_v4netmaskbit",
             value: "",
             options: getid4.options,
         });
 
         n6a = new dijit.form.TextBox({
             name: name+"-"+extran+"-alias_v6address",
+            id: "id_"+name+"-"+extran+"-alias_v6address",
             value: "",
         });
 
         getid6 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v6netmaskbit");
         n6n = new dijit.form.Select({
             name: name+"-"+extran+"-alias_v6netmaskbit",
+            id: "id_"+name+"-"+extran+"-alias_v6netmaskbit",
             value: "",
             options: getid6.options,
         });
 
         ni = new dijit.form.TextBox({
             name: name+"-"+extran+"-id",
+            id: "id_"+name+"-"+extran+"-id",
             type: "hidden",
         });
+
         var tr = dojo.create("tr");
+        var td = dojo.create("td", null, tr);
+        dojo.attr(td, "colspan", "2");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        var table = dojo.create("table", null, td);
+
+        var tr = dojo.create("tr", null, table);
+        var td = dojo.create("td", null, tr);
+        dojo.attr(td, "colspan", "2");
+        new dijit.layout.ContentPane({
+            id: "id_"+name+"-"+extran+"-__all__"
+        }).placeAt(td);
+
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv4 Address"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n4a.placeAt(td2);
         ni.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv4 Netmask"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n4n.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv6 Address"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n6a.placeAt(td2);
 
         ni.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv6 Netmask"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n6n.placeAt(td2);
 
         extra.set('value', parseInt(extran) + 1);
@@ -545,9 +552,10 @@
                 var first = null;
                 for(key in data.errors) {
 
-                    fieldid = data.form_auto_id.replace('%s', key);
-                    field = dijit.byId(fieldid);
-                    if(!first)
+                    //fieldid = data.form_auto_id.replace('%s', key);
+                    field = dijit.byId(key);
+                    if(!field) continue;
+                    if(!first && field.focus)
                         first = field;
                     var ul = dojo.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
                     dojo.attr(ul, "class", "errorlist");
@@ -561,7 +569,7 @@
 
                 }
 
-                first.focus();
+                if(first) first.focus();
 
             } else {
                 form.reset();
