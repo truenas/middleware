@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-01 16:00+0200\n"
+"PO-Revision-Date: 2011-11-03 11:53+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -97,7 +97,7 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s`"
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
@@ -117,7 +117,7 @@ msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (disk dönüşü duru
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Seviye 64 - Bekleme konumlu orta seviye güç tüketimi"
+msgstr "Seviye 64 - Bekleme konumunda orta seviye güç tüketimi"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
