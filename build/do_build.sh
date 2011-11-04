@@ -29,7 +29,7 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
+usage: ${0##*/} [-Bifu] [-j make-jobs] [-- nanobsd-options]
 
 -B - don't build. Will pull the sources and show you the nanobsd.sh invocation
      string instead. 
@@ -44,13 +44,16 @@ EOF
 	exit 1
 }
 
-while getopts 'Bfj:Pu' optch; do
+while getopts 'Bfj:u' optch; do
 	case "$optch" in
 	B)
 		BUILD=false
 		;;
 	f)
 		: $(( FORCE_BUILD += 1 ))
+		;;
+	i)
+		CREATE_IMAGE=false
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
