@@ -65,7 +65,7 @@ undertaking. Thus, I wouldn't expect this to be enhanced anytime soon :(..
 (but it's annoyed the author of this document enough that it's time to fix
 things properly!).
 
-4. Updating source patches and rebuilding FreeBSD:
+4. Update source and ports, patch, and rebuild FreeBSD:
 
 % sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -fu
 
