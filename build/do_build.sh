@@ -52,9 +52,6 @@ while getopts 'Bfj:u' optch; do
 	f)
 		: $(( FORCE_BUILD += 1 ))
 		;;
-	i)
-		CREATE_IMAGE=false
-		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
 		if [ $? -ne 0 ]; then
