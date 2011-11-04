@@ -1,0 +1,36 @@
+diff -Naur lang/python27~/files/patch-Lib-cmd.py lang/python27/files/patch-Lib-cmd.py
+--- lang/python27~/files/patch-Lib-cmd.py	1969-12-31 16:00:00.000000000 -0800
++++ lang/python27/files/patch-Lib-cmd.py	2011-11-03 21:13:57.984204065 -0700
+@@ -0,0 +1,32 @@
++--- Lib/cmd.py	2011-11-03 21:02:20.039173761 -0700
+++++ Lib/cmd.py	2011-11-03 21:02:31.401215166 -0700
++@@ -281,9 +281,26 @@
++             return None
++ 
++     def get_names(self):
++-        # This method used to pull in base class attributes
++-        # at a time dir() didn't do it yet.
++-        return dir(self.__class__)
+++        """Get completion candidates for commands and help topics.
+++
+++        By default this method returns all 'do_' prefixed methods as command
+++        completion candidates, and all 'help_' prefixed methods as help topic
+++        candidates.
+++
+++        :Returns: a list of zero or more valid command / help completions.
+++        """
+++
+++        filter_fn = lambda name: ((name.startswith('do_') or
+++                                   name.startswith('help_')) and
+++                                   not name.endswith('EOF'))
+++
+++        # NOTE: use dir(self) so one can get all of the dynamic attributes
+++        # associated with a given class, as dir(self.__class__) lists all of
+++        # the static members defined in the class defintion.
+++
+++        # XXX: this really shouldn't have to be recalculated all the time as
+++        #      most classes remain static.
+++        return filter(filter_fn, dir(self))
++ 
++     def complete_help(self, *args):
++         commands = set(self.completenames(*args))
