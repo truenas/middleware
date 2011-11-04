@@ -714,7 +714,11 @@
                 setMessage(json.message);
                 if(json.events) {
                     for(i=0;json.events.length>i;i++){
-                        eval(json.events[i]);
+                        try {
+                            eval(json.events[i]);
+                        } catch (e) {
+                            console.log(e);
+                        }
                     }
                 }
             } catch(err) {
