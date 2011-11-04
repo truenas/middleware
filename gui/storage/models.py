@@ -48,6 +48,10 @@ class Volume(Model):
             choices=choices.VolumeType_Choices,
             verbose_name = _("File System Type"),
             )
+    vol_guid = models.CharField(
+            max_length=50,
+            blank=True,
+            )
     def get_disks(self):
         try:
             if not hasattr(self, '_disks'):

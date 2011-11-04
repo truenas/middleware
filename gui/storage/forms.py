@@ -611,14 +611,17 @@ class VolumeAutoImportForm(forms.Form):
 
         with transaction.commit_on_success():
             volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
-            volume.save()
             self.volume = volume
 
             mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
-            mp.save()
 
             if vol['type'] != 'zfs':
                 notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
+            else:
+                volume.vol_guid = vol['id']
+
+            volume.save()
+            mp.save()
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label'], vol['id']):
                 raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])

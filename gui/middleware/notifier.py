@@ -726,10 +726,20 @@ class notifier:
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
-        p1.wait()
-        if p1.returncode != 0:
+        if p1.wait() != 0:
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
+
+        #We've our pool, lets retrieve the GUID
+        p1 = self.__pipeopen("zpool get guid %s" % z_name)
+        if p1.wait() == 0:
+            line = p1.communicate()[0].split('\n')[1].strip()
+            volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
+            volume.save()
+        else:
+            #FIXME: warn about it?
+            pass
+
         self.zfs_inherit_option(z_name, 'mountpoint')
 
         # If we have 4k hack then restore system to whatever it should be
