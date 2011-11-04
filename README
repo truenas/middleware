@@ -30,7 +30,7 @@ That's it.
 The End Result:
 
 If your build completes successfully, you'll have an image in
-obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.full.xz where:
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.Full_Install.xz where:
 
 - VVVV is the 'release' branch version or.
 - XXXX is the svn revision from the FreeNAS repo.
@@ -40,8 +40,8 @@ obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.full.xz where:
 This is a compressed raw disk image, and needs to be decompressed and
 converted to your favorite VM container format before use, flashed on to a USB
 key fob, etc.  There will also be a CD/DVD image,
-obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.full.iso, that you can use to
-install/upgrade FreeNAS.
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.iso, that you can use to install/upgrade
+FreeNAS.
 
 Common workflows:
 
@@ -72,3 +72,8 @@ things properly!).
 5. Force a build from scratch (nukes packages, rebuild FreeBSD):
 
 % sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -ff
+
+6. Build everything required (src, ports) but don't produce GUI upgrade/CD
+   images:
+
+% sudo sh build/do_build.sh -- -i

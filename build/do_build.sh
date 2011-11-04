@@ -1,16 +1,6 @@
 #!/bin/sh
 #
-# Build (either from scratch or using cached files):
-# 	sh build/do_build.sh
-#
-# Force a full rebuild (ports and source):
-#	sh build/do_build.sh -ff
-#
-# Force an update and rebuild FreeBSD (world and kernel):
-#	sh build/do_build.sh -u -f
-#
-# Just pull/update the sources:
-#	sh build/do_build.sh -B -u
+# See README for up to date usage examples.
 #
 
 cd "$(dirname "$0")/.."
@@ -18,15 +8,20 @@ cd "$(dirname "$0")/.."
 . build/nano_env
 . build/functions.sh
 
+# Should we build?
 BUILD=true
-CREATE_IMAGE=true
-if [ -s ${NANO_OBJ}/_.iw -a -s ${NANO_OBJ}/_.ik ]; then
+# 0 - build only what's required (src, ports, diskimage, etc).
+# 1 - force src build.
+# 2 - nuke obj.* and build from scratch.
+if [ -s ${NANO_OBJ}/_.ik -a -s ${NANO_OBJ}/_.iw ]; then
 	FORCE_BUILD=0
 else
 	FORCE_BUILD=2
 fi
+# Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
-if [ -f FreeBSD/supfile ]; then
+# Should we update src + ports?
+if [ -f $FREENAS_ROOT/FreeBSD/.pulled ]; then
 	UPDATE=false
 else
 	UPDATE=true
@@ -41,18 +36,17 @@ usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
 -f - if not specified, will pass either -b (if prebuilt) to nanobsd.sh, or
      nothing if not prebuilt. If specified once, force a
      buildworld / buildkernel (passes -n to nanobsd). If specified twice, this
-     won't pass any options to nanobsd.sh, which will force a pristine build
--j - number of make jobs to run; defaults to $MAKE_JOBS
+     won't pass any options to nanobsd.sh, which will force a pristine build.
+-j - number of make jobs to run; defaults to $MAKE_JOBS.
 -u - force an update via csup (warning: there are potential issues with
      newly created files via patch -- use with caution).
 EOF
 	exit 1
 }
 
-while getopts 'Bfj:u' optch; do
+while getopts 'Bfj:Pu' optch; do
 	case "$optch" in
 	B)
-		info "will not build"
 		BUILD=false
 		;;
 	f)
@@ -76,8 +70,9 @@ done
 shift $(( $OPTIND - 1 ))
 
 set -e
-
-requires_root
+if $BUILD; then
+	requires_root
+fi
 
 if $UPDATE; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
@@ -106,9 +101,10 @@ EOF
 	# Nuke the newly created files to avoid build errors, as
 	# patch(1) will automatically append to the previously
 	# non-existent file.
-	for file in $(find FreeBSD/ -name '*.orig' -size 0); do
+	for file in $(find $FREENAS_ROOT/FreeBSD/ -name '*.orig' -size 0); do
 		rm -f "$(echo "$file" | sed -e 's/.orig//')"
 	done
+	: > $FREENAS_ROOT/FreeBSD/.pulled
 fi
 
 for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
