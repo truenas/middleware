@@ -25,26 +25,6 @@
  *
  */
 
-    //dojo.require("dojo.data.ItemFileWriteStore");
-    //dojo.require("dojo._base.xhr");
-    //dojo.require("dojox.validate.regexp");
-    //dojo.require("dojox.form.FileInput");
-    //dojo.require("dojox.form.CheckedMultiSelect");
-    //dojo.require("dojox.grid.DataGrid");
-    //dojo.require("dojox.data.JsonRestStore");
-    //dojo.require("dojox.data.FileStore");
-    //dojo.require("dojox.string.sprintf");
-    //dojo.require("dijit.Tree");
-    //dojo.require("dijit.form.ComboBox");
-    //dojo.require("dijit.form.NumberTextBox");
-    //dojo.require("dijit.form.MultiSelect");
-    //dojo.require("dijit.form.HorizontalSlider");
-    //dojo.require("dijit.form.HorizontalRule");
-    //dojo.require("dijit.form.HorizontalRuleLabels");
-
-    //dojo.require("freeadmin.form.Cron");
-
-
     /*
      * Menu Object
      * Responsible for opening menu tabs
@@ -375,15 +355,7 @@
                 }, 1500);
             },
         });
-        /*
-        var loc = new String(window.location);
-        if(loc.search("http://") > -1) {
-            loc = loc.replace('http://', 'https://');
-        } else {
-            loc = loc.replace('https://', 'http://');
-        }
-        window.location=loc;
-        */
+
     }
 
     ask_service = function(srv) {
@@ -408,57 +380,72 @@
         var extran = extra.get("value");
         n4a = new dijit.form.TextBox({
             name: name+"-"+extran+"-alias_v4address",
+            id: "id_"+name+"-"+extran+"-alias_v4address",
             value: "",
         });
 
         getid4 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v4netmaskbit");
         n4n = new dijit.form.Select({
             name: name+"-"+extran+"-alias_v4netmaskbit",
+            id: "id_"+name+"-"+extran+"-alias_v4netmaskbit",
             value: "",
             options: getid4.options,
         });
 
         n6a = new dijit.form.TextBox({
             name: name+"-"+extran+"-alias_v6address",
+            id: "id_"+name+"-"+extran+"-alias_v6address",
             value: "",
         });
 
         getid6 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v6netmaskbit");
         n6n = new dijit.form.Select({
             name: name+"-"+extran+"-alias_v6netmaskbit",
+            id: "id_"+name+"-"+extran+"-alias_v6netmaskbit",
             value: "",
             options: getid6.options,
         });
 
         ni = new dijit.form.TextBox({
             name: name+"-"+extran+"-id",
+            id: "id_"+name+"-"+extran+"-id",
             type: "hidden",
         });
+
         var tr = dojo.create("tr");
+        var td = dojo.create("td", null, tr);
+        dojo.attr(td, "colspan", "2");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        var table = dojo.create("table", null, td);
+
+        var tr = dojo.create("tr", null, table);
+        var td = dojo.create("td", null, tr);
+        dojo.attr(td, "colspan", "2");
+        new dijit.layout.ContentPane({
+            id: "id_"+name+"-"+extran+"-__all__"
+        }).placeAt(td);
+
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv4 Address"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n4a.placeAt(td2);
         ni.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv4 Netmask"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n4n.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv6 Address"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n6a.placeAt(td2);
 
         ni.placeAt(td2);
 
-        var tr = dojo.create("tr");
+        var tr = dojo.create("tr", null, table);
         var td1 = dojo.create("th", {innerHTML: "IPv6 Netmask"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
-        dojo.query(a.parentNode.parentNode).before(tr);
         n6n.placeAt(td2);
 
         extra.set('value', parseInt(extran) + 1);
@@ -551,6 +538,133 @@
         }
     }
 
+    handleJson = function(rnode, data) {
+
+        if(data.type == 'page') {
+            rnode.set('content', data.content);
+        } else if(data.type == 'form') {
+
+            form = dijit.byId(data.formid);
+            dojo.query(".errorlist", form.domNode).forEach(function(item, idx) {
+                dojo.destroy(item);
+            });
+            if(data.error == true) {
+                var first = null;
+                for(key in data.errors) {
+
+                    //fieldid = data.form_auto_id.replace('%s', key);
+                    field = dijit.byId(key);
+                    if(!field) continue;
+                    if(!first && field.focus)
+                        first = field;
+                    var ul = dojo.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
+                    dojo.attr(ul, "class", "errorlist");
+                    for(var i=0; i<data.errors[key].length;i++) {
+                        var li = dojo.create('li', {innerHTML: data.errors[key][i]}, ul);
+                    }
+                    dojo.fx.wipeIn({
+                        node: ul,
+                        duration: 300
+                    }).play();
+
+                }
+
+                if(first) first.focus();
+
+            } else {
+                form.reset();
+            }
+
+        }
+
+        if(data.events) {
+            for(i=0;i<data.events.length;i++){
+                try {
+                    eval(data.events[i]);
+                } catch(e) {
+                    console.log(e);
+                }
+            }
+        }
+
+        if(data.message) {
+            setMessage(data.message);
+        }
+
+        if(data.error == false && rnode.isInstanceOf(dijit.Dialog)) {
+            rnode.hide();
+        }
+
+    }
+
+    doSubmit = function(attrs) {
+
+        if(!attrs) {
+            attrs = {};
+        }
+
+        dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+              function(inputElem){
+                   dijit.getEnclosingWidget(inputElem).set('disabled',true);
+               }
+            );
+
+        // prevent the default submit
+        dojo.stopEvent(attrs.event);
+        var newData = attrs.form.get("value");
+        newData['__form_id'] = attrs.form.id;
+
+        var multipart = dojo.query("input[type=file]", attrs.form.domNode).length > 0;
+
+        var rnode = getDialog(attrs.form);
+        if(!rnode) rnode = dijit.getEnclosingWidget(attrs.form.domNode.parentNode);
+
+        loadOk = function(data, req) {
+
+            dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+                  function(inputElem){
+                       dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                   }
+                );
+            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', attrs.form.domNode)[0]);
+            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+            } else {
+                sbtn.set('label', 'Save');
+            }
+            handleJson(rnode, data);
+
+            if('onComplete' in attrs) {
+                attrs.onComplete(data);
+            }
+
+        };
+
+        if( multipart ) {
+
+            dojo.io.iframe.send({
+                url: attrs.url,
+                method: 'POST',
+                content: {__form_id: attrs.form.id},
+                form: attrs.form.id,
+                handleAs: 'json',
+                load: loadOk,
+            });
+
+        } else {
+
+            dojo.xhrPost({
+                url: attrs.url,
+                content: newData,
+                handleAs: 'json',
+                load: loadOk,
+            });
+
+        }
+
+    }
+
+
     formSubmit = function(item, e, url, callback, attrs) {
         dojo.stopEvent(e); // prevent the default submit
         if(!attrs) {
@@ -569,118 +683,77 @@
         if(!rnode) rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
         if(!rnode) rnode = dijit.byId("edit_dialog");
 
+        var loadOk = function(data) {
+
+            try {
+                var json = dojo.fromJson(data);
+                // TODO, workaound for firefox, it does parse html as JSON!!!
+                if(json.error != true && json.error != false) {
+                    throw "not json"
+                }
+
+                try {
+                    rnode.hide();
+                } catch(err2) {
+                    dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                      function(inputElem){
+                           dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                       }
+                    );
+                    var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
+                    if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                        sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                    } else {
+                        sbtn.set('label', 'Save');
+                    }
+                }
+                if(json.error == false){
+                    dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
+                }
+
+                setMessage(json.message);
+                if(json.events) {
+                    for(i=0;json.events.length>i;i++){
+                        eval(json.events[i]);
+                    }
+                }
+            } catch(err) {
+
+                rnode.set('content', data);
+                try {
+                    if(callback) callback();
+                    var qry = dojo.query('#success', rnode.domNode);
+                    if(qry.length>0)
+                        dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                } catch(err) {}
+            }
+        };
+
         // are there any files to be submited?
         var files = dojo.query("input[type=file]", item.domNode);
         if(files.length > 0) {
 
-            dojo.io.iframe.send( {
+            dojo.io.iframe.send({
                 url: url + '?iframe=true',
                 method: 'POST',
                 form: item.domNode,
                 handleAs: 'text',
                 //headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
-                load: function(data, ioArgs) {
-
-                    try {
-                        var json = dojo.fromJson(data);
-                        // TODO, workaound for firefox, it does parse html as JSON!!!
-                        if(json.error != true && json.error != false) {
-                            throw "not json"
-                        }
-
-                        try {
-                            rnode.hide();
-                        } catch(err2) {
-                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
-                              function(inputElem){
-                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
-                               }
-                            );
-                            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
-                            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
-                            } else {
-                                sbtn.set('label', 'Save');
-                            }
-                        }
-
-                        if(json.error == false){
-                            dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
-                        }
-
-                        setMessage(json.message);
-
-                        //dojo.style(suc, "opacity", "0");
-                        //dojo.fadeIn({ node: suc }).play();
-                    } catch(err) {
-                        rnode.set('content', data);
-                        if(callback) callback();
-                        var qry = dojo.query('#success', rnode.domNode);
-                        if(qry.length>0)
-                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
-                    }
-
-                },
-	        error: function(response, ioArgs) { },
+                load: loadOk,
+	            error: function(response, ioArgs) { },
              });
 
         } else {
 
             var newData = item.get("value");
             if (attrs.progressbar == true) {
-                rnode.set('content', '<div style="width:300px" indeterminate="true" dojoType="dijit.ProgressBar"></div>');
+                rnode.set('content', '<div style="width:300px" data-dojo-props="indeterminate: true" data-dojo-type="dijit.ProgressBar"></div>');
             }
-            dojo.xhrPost( {
+            dojo.xhrPost({
                 url: url,
                 content: newData,
                 handleAs: 'text',
-                load: function(data) {
-
-                    try {
-                        var json = dojo.fromJson(data);
-                        // TODO, workaound for firefox, it does parse html as JSON!!!
-                        if(json.error != true && json.error != false) {
-                            throw "not json"
-                        }
-
-                        try {
-                            rnode.hide();
-                        } catch(err2) {
-                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
-                              function(inputElem){
-                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
-                               }
-                            );
-                            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
-                            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
-                            } else {
-                                sbtn.set('label', 'Save');
-                            }
-                        }
-                        if(json.error == false){
-                            dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
-                        }
-
-                        setMessage(json.message);
-                        //dojo.style(suc, "opacity", "0");
-                        //dojo.fadeIn({ node: suc }).play();
-                        if(json.events) {
-                            for(i=0;json.events.length>i;i++){
-                                eval(json.events[i]);
-                            }
-                        }
-                    } catch(err) {
-
-                        rnode.set('content', data);
-                        try {
-                            if(callback) callback();
-                            var qry = dojo.query('#success', rnode.domNode);
-                            if(qry.length>0)
-                                dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
-                        } catch(err) {}
-                    }
-                },
+                load: loadOk,
                 error: function(data) {
 
                         setMessage(gettext('An error occurred!'), "error");
@@ -1002,7 +1075,9 @@
         "dijit/MenuBar",
         "dijit/MenuBarItem",
         "dijit/ProgressBar",
+        "dijit/Tooltip",
         "dojox/data/JsonRestStore",
+        "dojox/fx/scroll",
         "dojox/grid/EnhancedGrid",
         "dojox/grid/enhanced/plugins/DnD",
         "dojox/grid/enhanced/plugins/Menu",

@@ -74,8 +74,9 @@ from middleware.exceptions import MiddlewareError
 class notifier:
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
+    IDENTIFIER = 'notifier'
     def __system(self, command):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
@@ -86,13 +87,14 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
+            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
+                           % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
 
     def __system_nolog(self, command):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
@@ -111,7 +113,7 @@ class notifier:
 
     def __pipeopen(self, command, log=True):
         if log:
-            syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+            syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
             syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
         return Popen(command, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True, close_fds = True)
 
@@ -119,7 +121,7 @@ class notifier:
         pass
 
     def _simplecmd(self, action, what):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
@@ -1027,15 +1029,15 @@ class notifier:
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
-                if fromdev_swap != '':
-                    self.__system('/sbin/swapon /dev/%s' % (fromdev_swap))
+                if from_swap != '':
+                    self.__system('/sbin/swapon /dev/%s' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
                     self.__system('/sbin/swapoff /dev/%s' % (to_swap))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
-        if todev_swap:
-            self.__system('/sbin/swapon /dev/%s' % (todev_swap))
+        if to_swap:
+            self.__system('/sbin/swapon /dev/%s' % (to_swap))
 
         return ret
 
@@ -1320,7 +1322,7 @@ class notifier:
         return False
 
     def update_firmware(self, path):
-        syslog.openlog('freenas', syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.openlog('updater', syslog.LOG_CONS | syslog.LOG_PID)
         try:
             command = '/usr/bin/xz -cd %s | sh /root/update' % (path, )
             syslog.syslog(syslog.LOG_NOTICE, 'Executing: ' + command)
@@ -1328,7 +1330,7 @@ class notifier:
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
-            os.unlink('/var/tmp/firmware/firmware.xz')
+            os.unlink(path)
             syslog.closelog()
         open('/data/need-update', 'w').close()
 
@@ -1358,7 +1360,9 @@ class notifier:
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            status = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False).communicate()[0].strip('\n')
+            p1 = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False)
+            if p1.wait() == 0:
+                status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
 
             provider = self.get_label_provider('ufs', name)
@@ -1919,20 +1923,27 @@ class notifier:
         # So we need to recurse one more time
         if class_name == 'PART':
             providerid = provider.xpathEval("../consumer/provider/@ref")[0].content
-            provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
+            newprovider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
+            class_name = newprovider.xpathEval("../../name")[0].content
+            # if this PART is really backed up by softraid the hypothesis was correct
+            if class_name in ('STRIPE', 'MIRROR', 'RAID3'):
+                return newprovider
 
         return provider
 
     def get_disks_from_provider(self, provider):
         disks = []
         geomname = provider.xpathEval("../../name")[0].content
-        if geomname == 'DISK':
+        if geomname in ('DISK', 'PART'):
             disks.append(provider.xpathEval("../name")[0].content)
         elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
             doc = self.__geom_confxml()
             for prov in provider.xpathEval("../consumer/provider/@ref"):
                 prov2 = doc.xpathEval("//provider[@id = '%s']" % prov.content)[0]
                 disks.append(prov2.xpathEval("../name")[0].content)
+        else:
+            #TODO log, could not get disks
+            pass
         return disks
 
     def zpool_parse(self, name):
@@ -1963,10 +1974,13 @@ class notifier:
                 if dskname != disk.disk_name:
                     disk.disk_name = dskname
 
-            if (dskname in in_disks or dskname not in disks) and \
-                    not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
-                #Duplicated disk entries in database
-                disk.delete()
+            if dskname not in disks:
+                disk.disk_enabled = False
+                if not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
+                    #Duplicated disk entries in database
+                    disk.delete()
+                else:
+                    disk.save()
             else:
                 disk.save()
             in_disks[dskname] = disk
@@ -1988,12 +2002,18 @@ class notifier:
         items = []
         uid = 1
         if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
-            ncomponents = int(provider.xpathEval("../config/Components")[0].content)
+            if class_name == 'STRIPE':
+                statepath = "../config/State"
+                status = provider.xpathEval("../config/Status")[0].content
+                ncomponents = int(re.search(r'Total=(?P<total>\d+)', status).group("total"))
+            else:
+                statepath = "./config/State"
+                ncomponents = int(provider.xpathEval("../config/Components")[0].content)
             consumers = provider.xpathEval("../consumer")
             doc = self.__geom_confxml()
             for consumer in consumers:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
-                status = consumer.xpathEval("./config/State")[0].content
+                status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
                 items.append({
                     'type': 'disk',

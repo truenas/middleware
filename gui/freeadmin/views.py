@@ -36,9 +36,9 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import debug
 from django.conf import settings
-from django.template.loader import get_template, template_source_loaders
-from django.template import (Context, TemplateDoesNotExist, TemplateSyntaxError)
+from django.template import Context, TemplateDoesNotExist, TemplateSyntaxError, RequestContext
 from django.template.defaultfilters import force_escape, pprint
+from django.template.loader import get_template, template_source_loaders, render_to_string
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode, smart_str
@@ -80,6 +80,81 @@ class JsonResponse(HttpResponse):
             kwargs['content'] = simplejson.dumps(data)
         kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
+
+class JsonResp(HttpResponse):
+
+    error = False
+    type = 'page'
+    force_json = False
+    message = ''
+    events = []
+
+    def __init__(self, request, *args, **kwargs):
+
+        self.error = kwargs.pop('error', False)
+        self.message = kwargs.pop('message', '')
+        self.events = kwargs.pop('events', [])
+        self.force_json = kwargs.pop('force_json', False)
+        self.type = kwargs.pop('type', None)
+        self.template = kwargs.pop('template', None)
+        self.form = kwargs.pop('form', None)
+        self.formsets = kwargs.pop('formsets', [])
+        self.request = request
+
+        if self.form:
+            self.type = 'form'
+        elif self.message:
+            self.type = 'message'
+        if not self.type:
+            self.type = 'page'
+
+        data = dict()
+
+        if self.type == 'page':
+            ctx = RequestContext(request, kwargs.pop('ctx', {}))
+            content = render_to_string(self.template, ctx)
+        elif self.type == 'form':
+            data.update({
+                'type': 'form',
+                'formid': request.POST.get("__form_id"),
+                'form_auto_id': self.form.auto_id,
+                })
+            error = False
+            errors = {}
+            if self.form.errors:
+                for key, val in self.form.errors.items():
+                    errors[self.form.auto_id % key] = [unicode(v) for v in val]
+                error = True
+
+            for name, fs in self.formsets.items():
+                for i, form in enumerate(fs.forms):
+                    if form.errors:
+                        error = True
+                        for key, val in form.errors.items():
+                            errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
+            data.update({
+                'error': error,
+                'errors': errors,
+                'message': self.message,
+            })
+        elif self.type == 'message':
+            data.update({
+                'error': self.error,
+                'message': self.message,
+            })
+        else:
+            raise NotImplementedError
+
+        data.update({
+            'events': self.events,
+        })
+
+        if request.is_ajax() or self.force_json:
+            kwargs['content'] = simplejson.dumps(data)
+            kwargs['content_type'] = 'application/json'
+        else:
+            kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
+        super(JsonResp, self).__init__(*args, **kwargs)
 
 def adminInterface(request, objtype = None):
 
@@ -323,11 +398,13 @@ def generic_model_add(request, app, model, mf=None):
                         mf.done(request=request, events=events)
                     except TypeError:
                         mf.done()
-                return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+                return JsonResp(request, error=True, message=_("Error: %s") % str(e))
             except ServiceFailed, e:
-                return JsonResponse(error=True, message=_("The service failed to restart.") % m._meta.verbose_name)
+                return JsonResp(request, error=True, message=_("The service failed to restart.") % m._meta.verbose_name)
+        else:
+            return JsonResp(request, form=mf, formsets=formsets)
 
     else:
         mf = mf()
@@ -527,13 +604,15 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     except TypeError:
                         mf.done()
                 if request.GET.has_key("iframe"):
-                    return JsonResponse(enclosed=True, message=_("%s successfully updated.") % m._meta.verbose_name)
+                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name)
                 else:
-                    return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except ServiceFailed, e:
-                return JsonResponse(error=True, message=_("The service failed to restart.") % m._meta.verbose_name, events=["serviceFailed(\"%s\")" % e.service])
+                return JsonResp(request, form=mf, error=True, message=_("The service failed to restart.") % m._meta.verbose_name, events=["serviceFailed(\"%s\")" % e.service])
             except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+                return JsonResp(request, form=mf, error=True, message=_("Error: %s") % str(e))
+        else:
+            return JsonResp(request, form=mf, formsets=formsets)
 
     else:
         mf = mf(instance=instance)

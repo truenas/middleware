@@ -30,14 +30,12 @@ from shlex import split as shlex_split
 from subprocess import Popen, PIPE, STDOUT
 from os import system as __system
 
-pipeproc_name = 'freenas'
-
 class info(object):
     _instance = None
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(info, cls).__new__(cls, *args, **kwargs)
-            cls._instance.name = 'freenas'
+            cls._instance.name = 'middleware'
         return cls._instance
     def setname(self, name):
         self.name = name
@@ -55,10 +53,5 @@ def system(command, important=True):
     pipeinfo = info()
     syslog.openlog(pipeinfo.getname(), syslog.LOG_CONS | syslog.LOG_PID)
     syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Executing: " + command)
-    __system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
+    __system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (pipeinfo.name, ))
     syslog.syslog(syslog.LOG_INFO if important else syslog.LOG_DEBUG, "Executed: " + command)
-
-def setname(name):
-    pipeinfo = info()
-    pipeinfo.setname(name)
-

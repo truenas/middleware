@@ -1,7 +1,12 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
+    //formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
+    doSubmit({
+       form: this,
+       event: e,
+       url: '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}'
+    });
 </script>
 <table> 
     {% admin_form form %}
@@ -9,10 +14,17 @@
     <tr><td colspan="2">
     {% for name, formset in formsets.items %}
     <table>
-        <tr><td colspan="2">
-        Aliases
-        </td></tr>
-    {{ formset }}
+        <tr>
+            <td colspan="2">
+            Aliases
+            {{ formset.management_form }}
+            </td>
+        </tr>
+        {% for form in formset %}
+        <table>
+            {% admin_form form %}
+        </table>
+        {% endfor %}
     <tr>
         <td colspan="2">
         <a href="javascript:void(0);" onClick="addAlias(this, 'alias_set');">Add extra alias</a>

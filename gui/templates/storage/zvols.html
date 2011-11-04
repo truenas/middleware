@@ -1,11 +1,11 @@
-{% load i18n %}
+{% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e, '{% url storage_zvol volume_name=volume_name %}');
     </script>
 <table>
 <tr><td>{% blocktrans with name=volume_name %}Create ZFS volume on {{ name }}{% endblocktrans %}</td></tr>
-{{ form }}
+{% admin_form form %}
 </table>
 <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">{% trans "Add ZFS Volume" %}</button>
         <button data-dojo-type="dijit.form.Button"type="button">

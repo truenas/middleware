@@ -2,14 +2,15 @@
 <input data-dojo-type="dijit.form.TextBox" data-dojo-props="name: '{{ name|force_escape }}', value: '{{ value|default_if_none:"" }}'" id="{{ attrs.id }}" />
 <button data-dojo-type="dijit.form.Button" data-dojo-props="label: '{% trans "Browse"|force_escape|force_escape %}'">
     <script type="dojo/connect" data-dojo-event="onClick">
+    cont = dojo.byId('{{ attrs.id }}_container');
     if(this.get('label') == '{% trans "Close"|force_escape|force_escape %}') {
-        dojo.style('{{ attrs.id }}_container', 'display', 'none');
+        dojo.style(cont, 'display', 'none');
         this.set('label', '{% trans "Browse"|force_escape|force_escape %}');
-     } else {
-        dojo.style('{{ attrs.id }}_container', 'display', 'block');
+    } else {
+        dojo.style(cont, 'display', 'block');
         this.set('label', '{% trans "Close"|force_escape|force_escape %}');
-     }
-     </script>
+    }
+    </script>
 </button>
 
 <div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">

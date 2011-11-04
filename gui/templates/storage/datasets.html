@@ -1,11 +1,11 @@
-{% load i18n %}
+{% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e, '{% url storage_dataset fs=fs %}');
     </script>
 <table>
 <tr><td>{% blocktrans with fs=fs %}Create ZFS dataset in {{ fs }}{% endblocktrans %}</td></tr>
-{{ form }}
+{% admin_form form %}
 </table>
 <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">{% trans "Add Dataset" %}</button>
         <button data-dojo-type="dijit.form.Button"type="button">

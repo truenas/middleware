@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2011-08-30 21:27+0200\n"
-"Last-Translator: Chipcius <andri@chipcy.net>\n"
+"PO-Revision-Date: 2011-11-03 00:12+0200\n"
+"Last-Translator: gaujix <gudjon@247.is>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
 "MIME-Version: 1.0\n"
@@ -804,7 +804,7 @@ msgstr "Slökkva"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Ekki var hægt að sækja núverandi stöðu"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -817,7 +817,7 @@ msgstr "%s hefur verið uppfært."
 #: storage/views.py:721 system/forms.py:88
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Villur. %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -851,7 +851,7 @@ msgstr "Netkort"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Þú verður að skilgreina IP tölu (IPV4)"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
@@ -859,7 +859,7 @@ msgstr ""
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Þú verður að skilgreina IP tölu (IPV6)"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
@@ -875,19 +875,19 @@ msgstr ""
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback er ekki nothæfur nafnaþjónn"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Eyður eru ekki nothæfar sem nafnaþjónar"
 
 #: network/forms.py:122
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "Þetta er ekki nothæft nafn fyrir nafnaþjón"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 IPnetið er ekki nothæft fyrir nafnaþjón"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -921,7 +921,7 @@ msgstr "VLAN Tögg eru á bilinu 1 - 4095"
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
-msgstr "Veraldleg NIC í LAGG"
+msgstr "Netkort í LAGG"
 
 #: network/forms.py:276
 #, python-format
@@ -955,12 +955,11 @@ msgstr ""
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr ""
+msgstr "Vélarnafn"
 
 #: network/models.py:46
-#, fuzzy
 msgid "Domain"
-msgstr "Domain"
+msgstr "Lén"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
@@ -1088,7 +1087,7 @@ msgstr "Lýsing"
 
 #: network/models.py:232 templates/network/index.html:24
 msgid "VLAN"
-msgstr "VLAN"
+msgstr "Þráðlaust"
 
 #: network/models.py:233
 #, fuzzy
@@ -1101,7 +1100,7 @@ msgstr "Gerð Reglu"
 
 #: network/models.py:274
 msgid "LAGG Interface group"
-msgstr "LAGG Tengja hópur"
+msgstr "LAGG Viðmótshópur"
 
 #: network/models.py:277
 msgid "LAGG Priority Number"
@@ -1109,11 +1108,11 @@ msgstr "LAGG Forgangs Númer"
 
 #: network/models.py:282
 msgid "Physical NIC"
-msgstr "Vélbúnaðar Netkort"
+msgstr "Netkort"
 
 #: network/models.py:297 templates/network/index.html:14
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Samnýting netkorta"
 
 #: network/models.py:298 network/nav.py:53
 #, fuzzy

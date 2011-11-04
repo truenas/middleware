@@ -189,7 +189,7 @@ def lagg_add(request):
             return JsonResponse(message=_("LAGG successfully added"))
 
     return render(request, 'network/lagg_add.html', {
-        'lagg': lagg,
+        'form': lagg,
     })
 
 def globalconf(request):

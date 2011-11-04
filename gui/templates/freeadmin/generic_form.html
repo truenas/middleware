@@ -1,0 +1,23 @@
+{% load i18n freeadmin %}
+<form data-dojo-type="dijit.form.Form">
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+        formSubmit(this, e, '{% block formpost %}{{ request.path }}{% endblock %}');
+    </script>
+<table>
+    {% block form %}
+    {% admin_form form %}
+    {% endblock %}
+</table>
+    {% block buttons %}
+    <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+        {% block oklabel %}{% trans "OK" %}{% endblock %}
+    </button>
+    <button data-dojo-type="dijit.form.Button"type="button">
+        {% trans "Cancel" %}
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            cancelDialog(this);
+        </script>
+    </button>
+    {% block extra_buttons %}{% endblock %}
+    {% endblock %}
+</form>

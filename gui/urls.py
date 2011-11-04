@@ -29,6 +29,7 @@ import os
 from django.conf.urls.defaults import include, patterns
 from django.views.static import serve
 from django.conf import settings
+from django.template.loader import add_to_builtins
 from django.views.generic import TemplateView
 
 from freeadmin.middleware import public
@@ -39,6 +40,8 @@ navtree.auto_generate()
 
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
+
+add_to_builtins('django.templatetags.i18n')
 
 urlpatterns = patterns('',
     ('^$', adminInterface),
