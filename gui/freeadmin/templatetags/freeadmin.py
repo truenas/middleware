@@ -51,9 +51,9 @@ class FormRender(template.Node):
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % force_unicode(top_errors))
         else:
             if form.prefix:
-                prefix = form.auto_id % form.prefix + "-__all__"
+                prefix = form.auto_id % form.prefix + "-__all__-" + type(form).__name__
             else:
-                prefix = form.auto_id % "__all__"
+                prefix = form.auto_id % "__all__-" + type(form).__name__
             output.append("""<tr><td colspan="2"><div data-dojo-type="dijit.layout.ContentPane" id="%s"></div></td></tr>""" % (prefix,))
 
         if model:
