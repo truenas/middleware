@@ -572,7 +572,7 @@
                 if(first) first.focus();
 
             } else {
-                form.reset();
+                //form.reset();
             }
 
         }
