@@ -70,17 +70,17 @@ msgstr "Alle valgte"
 msgid "Every N"
 msgstr "Hver N"
 
-#~ msgid "Replace"
-#~ msgstr "Erstat"
+msgid "Replace"
+msgstr "Erstat"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Disk erstatning"
+msgid "Disk Replacement"
+msgstr "Disk erstatning"
 
-#~ msgid "Detach"
-#~ msgstr "Frakobel"
+msgid "Detach"
+msgstr "Frakobel"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Frakobl disk"
+msgid "Disk Detach"
+msgstr "Frakobl disk"
 
-#~ msgid "Every"
-#~ msgstr "Hver"
+msgid "Every"
+msgstr "Hver"

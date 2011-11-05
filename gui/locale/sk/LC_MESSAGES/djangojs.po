@@ -70,14 +70,14 @@ msgstr "Každý vybraný"
 msgid "Every N"
 msgstr "Každý N"
 
-#~ msgid "Replace"
-#~ msgstr "Nahradiť"
+msgid "Replace"
+msgstr "Nahradiť"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Výmena disku"
+msgid "Disk Replacement"
+msgstr "Výmena disku"
 
-#~ msgid "Detach"
-#~ msgstr "Odpojiť"
+msgid "Detach"
+msgstr "Odpojiť"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Odpojiť disk"
+msgid "Disk Detach"
+msgstr "Odpojiť disk"

@@ -70,17 +70,17 @@ msgstr "각각 선택됨"
 msgid "Every N"
 msgstr "N번 마다"
 
-#~ msgid "Replace"
-#~ msgstr "교체"
+msgid "Replace"
+msgstr "교체"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "디스크 교체"
+msgid "Disk Replacement"
+msgstr "디스크 교체"
 
-#~ msgid "Detach"
-#~ msgstr "탈착"
+msgid "Detach"
+msgstr "탈착"
 
-#~ msgid "Disk Detach"
-#~ msgstr "디스크 탈착"
+msgid "Disk Detach"
+msgstr "디스크 탈착"
 
-#~ msgid "Every"
-#~ msgstr "매번"
+msgid "Every"
+msgstr "매번"

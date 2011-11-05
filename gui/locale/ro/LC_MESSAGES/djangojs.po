@@ -71,17 +71,17 @@ msgstr "Fiecare selectat"
 msgid "Every N"
 msgstr "Fiecare N"
 
-#~ msgid "Replace"
-#~ msgstr "Înlocuire"
+msgid "Replace"
+msgstr "Înlocuire"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Înlocuire disc"
+msgid "Disk Replacement"
+msgstr "Înlocuire disc"
 
-#~ msgid "Detach"
-#~ msgstr "Scoatere"
+msgid "Detach"
+msgstr "Scoatere"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Scoatere disc"
+msgid "Disk Detach"
+msgstr "Scoatere disc"
 
-#~ msgid "Every"
-#~ msgstr "Fiecare"
+msgid "Every"
+msgstr "Fiecare"
