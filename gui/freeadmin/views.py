@@ -123,7 +123,11 @@ class JsonResp(HttpResponse):
             errors = {}
             if self.form.errors:
                 for key, val in self.form.errors.items():
-                    errors[self.form.auto_id % key] = [unicode(v) for v in val]
+                    if key == '__all__':
+                        field = self.__class__.form_field_all(self.form)
+                        errors[field] = [unicode(v) for v in val]
+                    else:
+                        errors[self.form.auto_id % key] = [unicode(v) for v in val]
                 error = True
 
             for name, fs in self.formsets.items():
@@ -131,7 +135,11 @@ class JsonResp(HttpResponse):
                     if form.errors:
                         error = True
                         for key, val in form.errors.items():
-                            errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
+                            if key == '__all__':
+                                field = self.__class__.form_field_all(form)
+                                errors[field] = [unicode(v) for v in val]
+                            else:
+                                errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
             data.update({
                 'error': error,
                 'errors': errors,
@@ -155,6 +163,14 @@ class JsonResp(HttpResponse):
         else:
             kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
         super(JsonResp, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def form_field_all(form):
+        if form.prefix:
+            field = form.auto_id % form.prefix + "-__all__-" + type(form).__name__
+        else:
+            field = form.auto_id % "__all__-" + type(form).__name__
+        return field
 
 def adminInterface(request, objtype = None):
 

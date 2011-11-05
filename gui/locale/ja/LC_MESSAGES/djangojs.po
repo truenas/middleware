@@ -73,17 +73,17 @@ msgstr "選択したものそれぞれ"
 msgid "Every N"
 msgstr "各 N"
 
-#~ msgid "Replace"
-#~ msgstr "リプレイス"
+msgid "Replace"
+msgstr "リプレイス"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "ディスクのリプレイス"
+msgid "Disk Replacement"
+msgstr "ディスクのリプレイス"
 
-#~ msgid "Detach"
-#~ msgstr "デタッチ"
+msgid "Detach"
+msgstr "デタッチ"
 
-#~ msgid "Disk Detach"
-#~ msgstr "ディスクのデタッチ"
+msgid "Disk Detach"
+msgstr "ディスクのデタッチ"
 
-#~ msgid "Every"
-#~ msgstr "すべて"
+msgid "Every"
+msgstr "すべて"

@@ -70,17 +70,17 @@ msgstr "Masing-masing yang dipilih"
 msgid "Every N"
 msgstr "Setiap N"
 
-#~ msgid "Replace"
-#~ msgstr "Ganti"
+msgid "Replace"
+msgstr "Ganti"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Pergantian Cakram"
+msgid "Disk Replacement"
+msgstr "Pergantian Cakram"
 
-#~ msgid "Detach"
-#~ msgstr "Melepaskan"
+msgid "Detach"
+msgstr "Melepaskan"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Melepaskan Cakram"
+msgid "Disk Detach"
+msgstr "Melepaskan Cakram"
 
-#~ msgid "Every"
-#~ msgstr "Setiap"
+msgid "Every"
+msgstr "Setiap"

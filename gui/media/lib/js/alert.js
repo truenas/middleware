@@ -29,7 +29,7 @@ require(["dojox/timing", "dojo/ready"], function(timing, ready) {
 
     var _alert_status = 'OK';
 
-    function loadalert() {
+    loadalert = function() {
 
         var url = '/admin/alert/status/?' + new Date().getTime();
         dojo.xhrGet({

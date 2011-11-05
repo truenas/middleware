@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
-"%100==4 ? 2 : 3);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
+"n%100==4 ? 2 : 3);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:127
@@ -71,17 +71,17 @@ msgstr "Vsak izbran"
 msgid "Every N"
 msgstr "Vsak N"
 
-#~ msgid "Replace"
-#~ msgstr "Zamenjaj"
+msgid "Replace"
+msgstr "Zamenjaj"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Zamenjava diska"
+msgid "Disk Replacement"
+msgstr "Zamenjava diska"
 
-#~ msgid "Detach"
-#~ msgstr "Odklopi"
+msgid "Detach"
+msgstr "Odklopi"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Odklopi disk"
+msgid "Disk Detach"
+msgstr "Odklopi disk"
 
-#~ msgid "Every"
-#~ msgstr "Vse"
+msgid "Every"
+msgstr "Vse"

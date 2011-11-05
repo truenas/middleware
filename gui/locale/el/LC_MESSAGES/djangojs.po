@@ -70,17 +70,17 @@ msgstr "Κάθε επιλεγμένο"
 msgid "Every N"
 msgstr "Κάθε N"
 
-#~ msgid "Replace"
-#~ msgstr "Αντικατάσταση"
+msgid "Replace"
+msgstr "Αντικατάσταση"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Αντικατάσταση Δίσκου"
+msgid "Disk Replacement"
+msgstr "Αντικατάσταση Δίσκου"
 
-#~ msgid "Detach"
-#~ msgstr "Αποσύνδεση"
+msgid "Detach"
+msgstr "Αποσύνδεση"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Αποσύνδεση Δίσκου"
+msgid "Disk Detach"
+msgstr "Αποσύνδεση Δίσκου"
 
-#~ msgid "Every"
-#~ msgstr "Κάθε"
+msgid "Every"
+msgstr "Κάθε"

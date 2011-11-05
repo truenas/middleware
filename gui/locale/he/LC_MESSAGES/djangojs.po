@@ -70,17 +70,17 @@ msgstr "אחד נבחר"
 msgid "Every N"
 msgstr "כל N"
 
-#~ msgid "Replace"
-#~ msgstr "החלף"
+msgid "Replace"
+msgstr "החלף"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "החלפת כונן"
+msgid "Disk Replacement"
+msgstr "החלפת כונן"
 
-#~ msgid "Detach"
-#~ msgstr "נתק"
+msgid "Detach"
+msgstr "נתק"
 
-#~ msgid "Disk Detach"
-#~ msgstr "נתק כונן"
+msgid "Disk Detach"
+msgstr "נתק כונן"
 
-#~ msgid "Every"
-#~ msgstr "כל"
+msgid "Every"
+msgstr "כל"

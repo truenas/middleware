@@ -128,7 +128,7 @@ def send_mail(subject=None, text=None, interval=timedelta(),
             if em.em_security == 'tls':
                 server.starttls()
         if em.em_smtp:
-            server.login(em.em_user, em.em_pass)
+            server.login(em.em_user.encode('utf-8'), em.em_pass.encode('utf-8'))
         else:
             server.connect()
         server.sendmail(em.em_fromemail, to, msg)

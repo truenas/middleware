@@ -70,17 +70,17 @@ msgstr "Cada selecionado"
 msgid "Every N"
 msgstr "Todos N"
 
-#~ msgid "Replace"
-#~ msgstr "Substituir"
+msgid "Replace"
+msgstr "Substituir"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Substituição de Disco"
+msgid "Disk Replacement"
+msgstr "Substituição de Disco"
 
-#~ msgid "Detach"
-#~ msgstr "Separar"
+msgid "Detach"
+msgstr "Separar"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Separar Disco"
+msgid "Disk Detach"
+msgstr "Separar Disco"
 
-#~ msgid "Every"
-#~ msgstr "Todos"
+msgid "Every"
+msgstr "Todos"

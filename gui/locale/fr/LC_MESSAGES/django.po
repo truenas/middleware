@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:04-0700\n"
-"PO-Revision-Date: 2011-10-28 11:45+0200\n"
-"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2011-11-03 17:19+0200\n"
+"Last-Translator: skimpax <skimpax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3635,7 +3635,7 @@ msgstr ""
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
-msgstr "Vous avez déjà un jeu de données avec le même nom"
+msgstr "Vous avez déjà un jeu de données utilisant le même nom"
 
 #: storage/forms.py:714
 msgid "Quota for this volume"
@@ -5546,8 +5546,8 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Êtes-vous certain de vouloir restaurer ce jeu de données à l'état de "
-"l'instantané ?"
+"Êtes-vous certain de vouloir restaurer le jeu de données à l'état de cet "
+"instantané ?"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"

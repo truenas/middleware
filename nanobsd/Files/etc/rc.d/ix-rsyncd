@@ -51,9 +51,11 @@ EOF
     gid = ${rsyncmod_group}
 EOF
 	    if [ "${rsyncmod_mode}" = "ro" ]; then
+		    echo "    write only = false" >> $cfg
 		    echo "    read only = true" >> $cfg
 	    elif [ "${rsyncmod_mode}" = "wo" ]; then
 		    echo "    write only = true" >> $cfg
+		    echo "    read only = false" >> $cfg
 	    elif [ "${rsyncmod_mode}" = "rw" ]; then
 		    echo "    read only = false" >> $cfg
 		    echo "    write only = false" >> $cfg

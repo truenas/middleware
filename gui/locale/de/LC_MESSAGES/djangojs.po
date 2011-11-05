@@ -70,17 +70,17 @@ msgstr "Alle ausgewählten"
 msgid "Every N"
 msgstr "Alle N"
 
-#~ msgid "Replace"
-#~ msgstr "Ersetzen"
+msgid "Replace"
+msgstr "Ersetzen"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Festplattenersatz"
+msgid "Disk Replacement"
+msgstr "Festplattenersatz"
 
-#~ msgid "Detach"
-#~ msgstr "Trennen"
+msgid "Detach"
+msgstr "Trennen"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Festplatte trennen"
+msgid "Disk Detach"
+msgstr "Festplatte trennen"
 
-#~ msgid "Every"
-#~ msgstr "Alle"
+msgid "Every"
+msgstr "Alle"

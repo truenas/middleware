@@ -619,6 +619,9 @@ class VolumeAutoImportForm(forms.Form):
 
             if vol['type'] != 'zfs':
                 notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
+            else:
+                volume.vol_guid = vol['id']
+                volume.save()
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label'], vol['id']):
                 raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])

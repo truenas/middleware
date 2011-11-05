@@ -70,17 +70,17 @@ msgstr "每个选中的"
 msgid "Every N"
 msgstr "每N个"
 
-#~ msgid "Replace"
-#~ msgstr "替换"
+msgid "Replace"
+msgstr "替换"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "替换硬盘"
+msgid "Disk Replacement"
+msgstr "替换硬盘"
 
-#~ msgid "Detach"
-#~ msgstr "卸载"
+msgid "Detach"
+msgstr "卸载"
 
-#~ msgid "Disk Detach"
-#~ msgstr "卸载硬盘"
+msgid "Disk Detach"
+msgstr "卸载硬盘"
 
-#~ msgid "Every"
-#~ msgstr "每个"
+msgid "Every"
+msgstr "每个"

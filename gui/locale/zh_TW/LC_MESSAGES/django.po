@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-10-30 03:43+0200\n"
-"Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
+"PO-Revision-Date: 2011-11-04 05:09+0200\n"
+"Last-Translator: ahaoa <ahaoa.wang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -3511,7 +3511,7 @@ msgstr "標記為新的磁碟(清除資料)"
 msgid "Delete all shares related to this volume"
 msgstr "刪除此磁區的全部共享"
 
-# 我知道將清除這個資料集內的所有快照
+# 注意，將清除此資料集內的所有快照！
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
 msgid_plural ""
@@ -3826,7 +3826,7 @@ msgstr "磁區匯出成功"
 
 #: storage/views.py:673
 msgid "The scrub process has begun"
-msgstr "已經開始進行抹除處理"
+msgstr "已經開始進行檢查資料完整性( scrub )"
 
 #: system/forms.py:158
 msgid "Language (Require UI reload)"
@@ -4395,7 +4395,7 @@ msgstr "您的測試郵件無法傳送至%s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
-msgstr "您的測試郵件已傳送！"
+msgstr "測試郵件已傳送！"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -5130,6 +5130,7 @@ msgstr "管理磁碟"
 msgid "Are you sure you want to destroy \"%(name)s\"?"
 msgstr "確定刪除 \"%(name)\"？"
 
+# 將刪除此資料集內的所有檔案。
 #: templates/storage/dataset_confirm_delete.html:12
 msgid ""
 "\n"
@@ -5146,9 +5147,9 @@ msgid "Edit Dataset"
 msgstr "管理資料集"
 
 #: templates/storage/datasets.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "建立 ZFS 資料集"
+msgstr "在 %(fs)s 建立 ZFS 資料集"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
@@ -5159,14 +5160,12 @@ msgid "Are you sure you want to detach?"
 msgstr "確定要卸載嗎？"
 
 #: templates/storage/disk_offline.html:7
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "確定刪除？"
+msgstr "確定要將磁碟離線嗎？"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
-msgstr "確定刪除？"
+msgstr "確定要將磁碟移除嗎？"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:9
@@ -5253,7 +5252,7 @@ msgstr "ZFS 複寫無法使用"
 #: templates/storage/scrub_confirm.html:10
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr ""
+msgstr "檢查資料完整性( scrub )正在執行！確定要停止嗎？"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "Are you sure you want to scrub?"
@@ -5374,9 +5373,8 @@ msgid "Edit ZFS Options"
 msgstr "管理 ZFS 選項"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
-#, fuzzy
 msgid "Volume Status"
-msgstr "磁區路徑"
+msgstr "磁區狀態"
 
 #: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
 msgid "Destroy Dataset"
@@ -5427,9 +5425,9 @@ msgid "Existing data will be cleared"
 msgstr "將清除現有的資料"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "建立ZFS 磁區"
+msgstr "在%(name)s 建立ZFS 磁區"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
