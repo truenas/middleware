@@ -85,7 +85,7 @@ add_port devel/popt
 add_port databases/tdb
 add_port sysutils/libsunacl
 #-net/samba
-add_port net/samba35	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
+add_port net/samba36	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
 			WITH_ACL_SUPPORT=y WITH_PAM_SMBPASS=y \
 			WITH_AIO_SUPPORT=y WITH_EXP_MODULES=y
 add_port security/pam_ldap
