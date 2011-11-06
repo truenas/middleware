@@ -30,6 +30,7 @@ from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
 from stat import S_ISDIR
+import types
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -111,23 +112,12 @@ class UnixPermissionWidget(widgets.MultiWidget):
         super(UnixPermissionWidget, self).__init__(widgets, attrs)
 
     def decompress(self, value):
-        if value:
-            if isinstance(value, str) or isinstance(value, unicode):
-                owner = bin(int(value[0]))[2:]
-                group = bin(int(value[1]))[2:]
-                other = bin(int(value[2]))[2:]
-                # make sure we end up with 9 bits
-                mode = "0" * (3-len(owner)) + owner + \
-                        "0" * (3-len(group)) + group + \
-                        "0" * (3-len(other)) + other
-
-                rv = [False, False, False, False, False, False, False, False, False]
-                for i in range(9):
-                    if mode[i] == '1':
-                        rv[i] = True
-
-                return rv
-        return [False, False, False, False, False, False, False, False, False]
+        rv = [False] * 9
+        if value and type(value) in types.StringTypes:
+            mode = int(value, 8)
+            for i in xrange(len(rv)):
+                rv[i] = bool(mode & pow(2, len(rv)-i-1))
+        return rv
 
     def format_output(self, rendered_widgets):
 
@@ -190,7 +180,7 @@ class UnixPermissionField(forms.MultiValueField):
             if value[8] == True:
                 other += 1
 
-            return str(owner*100 + group *10 + other)
+            return ''.join(map(str, [owner, group, other]))
         return None
 
 class VolumeWizardForm(forms.Form):
