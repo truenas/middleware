@@ -121,11 +121,17 @@ class UnixPermissionWidget(widgets.MultiWidget):
 
     def format_output(self, rendered_widgets):
 
-        maprow = {
-                1: __('Read'),
-                2: __('Write'),
-                3: __('Execute'),
-            }
+        maprow = (
+            __('Read'),
+            __('Write'),
+            __('Execute'),
+        )
+
+        mapcol = (
+            __('Owner'),
+            __('Group'),
+            __('Other'),
+        )
 
         html = """<table>
         <thead>
@@ -137,12 +143,13 @@ class UnixPermissionWidget(widgets.MultiWidget):
         </tr>
         </thead>
         <tbody>
-        """ % ( __('Owner'), __('Group'), __('Other') )
-        for i in range(1,4):
+        """ % (mapcol[:])
+
+        for i, mode_type in enumerate(maprow):
             html += "<tr>"
-            html += "<td>%s</td>" % maprow[i]
-            for j in range(1,4):
-                html += "<td>" + rendered_widgets[j*3-3+i-1] + "</td>"
+            html += "<td>%s</td>" % (mode_type, )
+            for j in xrange(len(mapcol)):
+                html += '<td>%s</td>' % (rendered_widgets[j*3+i], )
             html += "</tr>"
         html += "</tbody></table>"
 
