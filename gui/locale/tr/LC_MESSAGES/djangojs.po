@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:10-0700\n"
-"PO-Revision-Date: 2011-11-01 10:36+0200\n"
+"PO-Revision-Date: 2011-11-06 14:56+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -48,7 +48,7 @@ msgstr "Depolama"
 
 #: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
-msgstr "ZamanlanmışGörevler"
+msgstr "Zamanlanmış Görevler"
 
 #: media/lib/js/freeadmin.js:554
 msgid "Edit"
