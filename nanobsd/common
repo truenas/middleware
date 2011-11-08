@@ -151,7 +151,7 @@ INSTALL_NODEBUG=t
 NOPORTDOCS=t
 NO_INSTALL_MANPAGES=t
 # devel/apr sucks.
-WITH_BDB_VERSION=46
+WITH_BDB_VER=46
 "
 # The following would help...
 # WITHOUT_TOOLCHAIN=true		can't build ports
