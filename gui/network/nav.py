@@ -9,45 +9,25 @@ BLACKLIST = ['LAGGInterfaceMembers','Alias']
 
 class NetSummary(TreeNode):
 
-        gname = 'network.NetworkSummary'
-        name = _(u'Network Summary')
-        type = 'opennetwork'
-        icon = u'SettingsIcon'
-        app_name = 'network'
+    gname = 'NetworkSummary'
+    name = _(u'Network Summary')
+    type = 'opennetwork'
+    icon = u'SettingsIcon'
+    app_name = 'network'
 
 class GlobalConf(TreeNode):
 
-        gname = u'network.GlobalConfiguration'
-        name = _(u'Global Configuration')
-        type = 'opennetwork'
-        model = 'GlobalConfiguration'
-        icon = u'SettingsIcon'
-        app_name = 'network'
-
-class AddLagg(TreeNode):
-
-        gname = 'network.LAGGInterfaceMembers.Add'
-        name = _(u'Create Link Aggregation')
-        view = 'network_lagg_add'
-        type = 'object'
-        icon = u'AddLAGGIcon'
-        model = 'LAGGInterface'
-        app_name = 'network'
-        append_app = False
-
-class ViewLagg(TreeNode):
-
-        gname = 'network.LAGGInterfaceMembers.View'
-        name = _(u'View All Link Aggregations')
-        type = 'opennetwork'
-        icon = u'ViewAllLAGGsIcon'
-        model = 'LAGGInterface'
-        app_name = 'network'
-        append_app = False
+    gname = u'network.GlobalConfiguration'
+    name = _(u'Global Configuration')
+    type = 'opennetwork'
+    model = 'GlobalConfiguration'
+    icon = u'SettingsIcon'
+    app_name = 'network'
+    append_app = False
 
 class Linkss(TreeNode):
 
-    gname = 'network.LAGGInterfaceMembers'
+    gname = 'LAGGInterfaceMembers'
     model = 'LAGGInterface'
     app_name = 'network'
     name = _(u'Link Aggregations')
@@ -56,7 +36,23 @@ class Linkss(TreeNode):
     def __init__(self, *args, **kwargs):
 
         super(Linkss, self).__init__(*args, **kwargs)
-        self.append_children([AddLagg(),ViewLagg()])
+
+        laggadd = TreeNode('Add')
+        laggadd.name = _(u'Create Link Aggregation')
+        laggadd.view = 'network_lagg_add'
+        laggadd.type = 'object'
+        laggadd.icon = u'AddLAGGIcon'
+        laggadd.model = 'LAGGInterface'
+        laggadd.app_name = 'network'
+
+        laggview = TreeNode('View')
+        laggview.gname = 'View'
+        laggview.name = _(u'View All Link Aggregations')
+        laggview.type = 'opennetwork'
+        laggview.icon = u'ViewAllLAGGsIcon'
+        laggview.model = 'LAGGInterface'
+        laggview.app_name = 'network'
+        self.append_children([laggadd, laggview])
 
         for value, name in LAGGType:
 
@@ -96,18 +92,18 @@ class Linkss(TreeNode):
 
 class ViewInterfaces(TreeNode):
 
-        gname = 'network.Interfaces.View'
-        type = 'opennetwork'
-        append_app = False
+    gname = 'network.Interfaces.View'
+    type = 'opennetwork'
+    append_app = False
 
 class ViewVLAN(TreeNode):
 
-        gname = 'network.VLAN.View'
-        type = 'opennetwork'
-        append_app = False
+    gname = 'network.VLAN.View'
+    type = 'opennetwork'
+    append_app = False
 
 class ViewSR(TreeNode):
 
-        gname = 'network.StaticRoute.View'
-        type = 'opennetwork'
-        append_app = False
+    gname = 'network.StaticRoute.View'
+    type = 'opennetwork'
+    append_app = False

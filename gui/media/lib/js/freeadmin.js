@@ -1147,9 +1147,9 @@
                                 widgets.push(widget);
                             }
                         });
-                        editObject(item.name, item.view, widgets);
+                        editObject(item.name, item.url, widgets);
                     } else
-                        editObject(item.name, item.view);
+                        editObject(item.name, item.url);
                 } else if(item.type && item.type == 'volumewizard') {
                     var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                     if(data) {
@@ -1160,9 +1160,9 @@
                                 widgets.push(widget);
                             }
                         });
-                        volumeWizard(item.name, item.view, widgets);
+                        volumeWizard(item.name, item.url, widgets);
                     } else
-                        volumeWizard(item.name, item.view);
+                        volumeWizard(item.name, item.url);
                 } else if(item.type && item.type == 'editobject') {
                     var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                     if(data) {
@@ -1173,9 +1173,9 @@
                                 widgets.push(widget);
                             }
                         });
-                        editObject(item.name, item.view, widgets);
+                        editObject(item.name, item.url, widgets);
                     } else
-                        editObject(item.name, item.view);
+                        editObject(item.name, item.url);
                 } else if(item.type && item.type == 'opennetwork') {
                     Menu.openNetwork(item.gname);
                 } else if(item.type && item.type == 'en_dis_services') {
@@ -1211,7 +1211,7 @@
                     }
                     var pane = new dijit.layout.ContentPane({
                         id: "data_"+item.app_name+"_"+item.model,
-                        href: item.view,
+                        href: item.url,
                         title: item.name,
                         closable: true,
                         refreshOnShow: true,
@@ -1230,7 +1230,7 @@
                         }
                     }
                     var pane = new dijit.layout.ContentPane({
-                        href: item.view,
+                        href: item.url,
                         title: item.name,
                         closable: true,
                         parseOnLoad: true,

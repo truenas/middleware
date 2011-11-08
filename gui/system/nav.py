@@ -7,21 +7,21 @@ ICON = u'SystemIcon'
 
 class Reporting(TreeNode):
 
-        gname = 'system.Reporting'
+        gname = 'Reporting'
         name = _(u'Reporting')
         view = 'system_reporting'
         icon = u"ReportingIcon"
 
 class Info(TreeNode):
 
-        gname = 'system.SysInfo'
+        gname = 'SysInfo'
         name = _(u'System Information')
         view = 'system_info'
         icon = u"InfoIcon"
 
 class Settings(TreeNode):
 
-        gname = 'system.Settings'
+        gname = 'Settings'
         name = _(u'Settings')
         view = 'system_settings'
         icon = u"SettingsIcon"
