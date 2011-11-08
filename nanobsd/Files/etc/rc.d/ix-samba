@@ -292,7 +292,10 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = no
 			    winbind refresh tickets = yes
-			    allow trusted domains = yes
+			    # Enable in the global settings if you want to manage
+			    # files in multitiered AD deployments. This doesn't work
+			    # in all configurations. Caveat emptor.
+			    allow trusted domains = no
 
 			    template shell = /bin/sh
 			    template homedir = /home/%D/%U
