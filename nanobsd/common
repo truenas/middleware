@@ -151,7 +151,7 @@ INSTALL_NODEBUG=t
 NOPORTDOCS=t
 NO_INSTALL_MANPAGES=t
 # devel/apr sucks.
-WITH_BDB_VERSION=46
+WITH_BDB_VER=46
 "
 # The following would help...
 # WITHOUT_TOOLCHAIN=true		can't build ports
@@ -279,6 +279,7 @@ add_port () {
     else
 	# No pkg file: Generate add_port_NAME function
 	echo "Package is not yet built: $port"
+	exit 1
         eval "
             add_port_${port} () {
 	        do_add_port ${port_path} $*
