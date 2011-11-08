@@ -279,7 +279,6 @@ add_port () {
     else
 	# No pkg file: Generate add_port_NAME function
 	echo "Package is not yet built: $port"
-	exit 1
         eval "
             add_port_${port} () {
 	        do_add_port ${port_path} $*
