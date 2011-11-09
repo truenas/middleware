@@ -130,7 +130,7 @@ class NavTree(object):
             order = {}
             opts = []
             for opt in nav:
-                if hasattr(opt, 'order'):
+                if opt.order:
                     order[opt.order] = opt
                 else:
                     new[opt.name] = opt
@@ -280,21 +280,19 @@ class NavTree(object):
                         try:
                             navopt.kwargs = {'app': app, 'model': c, 'oid': \
                                 model.objects.order_by("-id")[0].id}
-                            navopt.type = 'editobject'
+                            navopt.type = 'dialog'
                             navopt.view = 'freeadmin_model_edit'
                         except:
-                            navopt.type = 'object'
+                            navopt.type = 'dialog'
                             navopt.view = 'freeadmin_model_add'
                             navopt.kwargs = {'app': app, 'model': c}
 
-                        navopt.app = app
                     else:
                         navopt = TreeNode(str(model._meta.object_name))
                         navopt.name = model._meta.verbose_name_plural
                         navopt.model = c
                         navopt.app_name = app
                         navopt.order_child = False
-                        navopt.app = app
                     for key in model._admin.nav_extra.keys():
                         navopt.__setattr__(key, model._admin.nav_extra.get(key))
                     if model._admin.icon_model is not None:
@@ -331,7 +329,7 @@ class NavTree(object):
                         subopt.name = _(u'Add %s') % model._meta.verbose_name
                         subopt.view = u'freeadmin_model_add'
                         subopt.kwargs = {'app': app, 'model': c}
-                        subopt.type = 'object'
+                        subopt.type = 'dialog'
                         if model._admin.icon_add is not None:
                             subopt.icon = model._admin.icon_add
                         subopt.model = c
@@ -357,28 +355,19 @@ class NavTree(object):
             self.replace_navs(nav)
             self.sort_navoption(nav)
 
-        nav = TreeRoot('display')
-        nav.name = _('Display System Processes')
-        nav.action = 'displayprocs'
-        nav.icon = 'TopIcon'
+        nav = TreeRoot('display',
+            name=_('Display System Processes'),
+            action='displayprocs',
+            icon='TopIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shell')
-        nav.name = _('Shell')
-        nav.icon = 'TopIcon'
-        nav.action = 'shell'
+        nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon', action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('reboot')
-        nav.name = _('Reboot')
-        nav.action = 'reboot'
-        nav.icon = u'RebootIcon'
+        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon ='RebootIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown')
-        nav.name = _('Shutdown')
-        nav.icon = 'ShutdownIcon'
-        nav.action = 'shutdown'
+        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', action='shutdown')
         tree_roots.register(nav)
 
         """
@@ -464,7 +453,9 @@ class NavTree(object):
             my['gname'] = getattr(o, "gname", my['name'])
             if gname:
                 my['gname'] = "%s.%s" % (gname, my['gname'])
-        for attr in ('model', 'app', 'type', 'app_name', 'icon', 'action'):
+        if not o.option_list:
+            my['type'] = getattr(o, 'type', None)
+        for attr in ('model', 'app_name', 'icon', 'action'):
             if hasattr(o, attr):
                 my[attr] = getattr(o, attr)
 

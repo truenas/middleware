@@ -42,17 +42,35 @@ class TreeType(object):
     model = None
     app_name = None
     append_to = None
+    action = None
+    type = None
+    order_child = None
+    order = None
+    append_app = None
+    option_list = []
 
     _children = []
 
-    def __init__(self, gname=None, *args, **kwargs):
+    def __init__(self, gname=None, **kwargs):
         self._children = []
+
+        for key, val in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, val)
+            else:
+                raise Exception("Attribute '%s' is not allowed" % key)
+
         if gname is not None:
             self.gname = gname
         elif self.gname is None:
             self.gname = unicode(self.name)
         #if self.name is None:
         #    raise ValueError(_("You must define a name"))
+
+    def __setattr__(self, name, value):
+        if not hasattr(self, name):
+            raise Exception("Attribute '%s' not allowed" % name)
+        super(TreeType, self).__setattr__(name, value)
 
     def get_absolute_url(self):
         if not self.url and self.view:

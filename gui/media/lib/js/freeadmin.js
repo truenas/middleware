@@ -981,42 +981,66 @@
         }
     }
 
-    commonDialog = function(id, style, name, url, nodes, onload) {
+    commonDialog = function(attrs) {
         canceled = false;
         dialog = new dijit.Dialog({
-            id: id,
-            title: name,
-            href: url,
+            id: attrs.id,
+            title: attrs.name,
+            href: attrs.url,
             parseOnLoad: true,
             closable: true,
-            style: style,
+            style: attrs.style,
             onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-                refreshTabs(nodes);
+                refreshTabs(attrs.nodes);
             },
         });
-        if(onload) {
-            f = dojo.hitch(dialog, onload);
+        if(attrs.onLoad) {
+            f = dojo.hitch(dialog, attrs.onLoad);
             f();
         }
         dialog.show();
     };
 
     addObject = function(name, url, nodes) {
-        commonDialog("add_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes);
+        commonDialog({
+            id: "add_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: name,
+            url: url,
+            nodes: nodes
+            });
     };
 
     editObject = function(name, url, nodes, onload) {
-        commonDialog("edit_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes, onload);
+        commonDialog({
+            id: "edit_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: name,
+            url: url,
+            nodes: nodes,
+            onLoad: onload
+            });
     }
 
 
     editScaryObject = function(name, url, nodes) {
-        commonDialog("editscary_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes);
+        commonDialog({
+            id: "editscary_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: name,
+            url: url,nodes: nodes
+            });
     };
 
     volumeWizard = function(name, url, nodes) {
-        commonDialog("wizard_dialog", "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;", name, url, nodes);
+        commonDialog({
+            id: "wizard_dialog",
+            style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
+            name: name,
+            url: url,
+            nodes: nodes
+            });
     }
 
     viewModel = function(name, url) {
@@ -1129,16 +1153,23 @@
                 childrenAttrs: ["children"]
             });
 
-            geticons = function(item,opened) {
+            var geticons = function(item,opened) {
                 if(item.icon) return item.icon;
                 return (!item || this.model.mayHaveChildren(item)) ? (opened ? "dijitFolderOpened" : "dijitFolderClosed") : "dijitLeaf";
             };
 
-            treeclick = function(item) {
+            var treeclick = function(item) {
                 var p = dijit.byId("content");
 
-                if(item.type && item.type == 'object') {
+                if(item.type == 'object' ||
+                   item.type == 'dialog' ||
+                   item.type == 'editobject' ||
+                   item.type == 'volumewizard'
+                    ) {
                     var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                    var func;
+                    if(item.type == 'volumewizard') func = volumeWizard;
+                    else func = editObject;
                     if(data) {
                         widgets = [];
                         data.forEach(function(item, idx) {
@@ -1147,60 +1178,34 @@
                                 widgets.push(widget);
                             }
                         });
-                        editObject(item.name, item.url, widgets);
+                        func(item.name, item.url, widgets);
                     } else
-                        editObject(item.name, item.url);
-                } else if(item.type && item.type == 'volumewizard') {
-                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
-                    if(data) {
-                        widgets = [];
-                        data.forEach(function(item, idx) {
-                            widget = dijit.getEnclosingWidget(item);
-                            if(widget) {
-                                widgets.push(widget);
-                            }
-                        });
-                        volumeWizard(item.name, item.url, widgets);
-                    } else
-                        volumeWizard(item.name, item.url);
-                } else if(item.type && item.type == 'editobject') {
-                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
-                    if(data) {
-                        widgets = [];
-                        data.forEach(function(item, idx) {
-                            widget = dijit.getEnclosingWidget(item);
-                            if(widget) {
-                                widgets.push(widget);
-                            }
-                        });
-                        editObject(item.name, item.url, widgets);
-                    } else
-                        editObject(item.name, item.url);
-                } else if(item.type && item.type == 'opennetwork') {
+                        func(item.name, item.url);
+                } else if(item.type == 'opennetwork') {
                     Menu.openNetwork(item.gname);
-                } else if(item.type && item.type == 'en_dis_services') {
+                } else if(item.type == 'en_dis_services') {
                     Menu.openServices();
-                } else if(item.type && item.type == 'openaccount') {
+                } else if(item.type == 'openaccount') {
                     Menu.openAccount(item.gname);
-                } else if(item.type && item.type == 'iscsi') {
+                } else if(item.type == 'iscsi') {
                     Menu.openISCSI(item.gname);
-                } else if(item.type && item.type == 'logout') {
+                } else if(item.type == 'logout') {
                     window.location='/account/logout/';
-                } else if(item.action && item.action == 'displayprocs') {
-                        dijit.byId("top_dialog").show();
-                } else if(item.action && item.action == 'shell') {
-                        dijit.byId("shell_dialog").show();
-                } else if(item.action && item.action == 'reboot') {
-                        dijit.byId("rebootDialog").show();
-                } else if(item.action && item.action == 'shutdown') {
-                        dijit.byId("shutdownDialog").show();
-                } else if(item.type && item.type == 'opensharing') {
+                } else if(item.action == 'displayprocs') {
+                    dijit.byId("top_dialog").show();
+                } else if(item.action == 'shell') {
+                    dijit.byId("shell_dialog").show();
+                } else if(item.action == 'reboot') {
+                    dijit.byId("rebootDialog").show();
+                } else if(item.action == 'shutdown') {
+                    dijit.byId("shutdownDialog").show();
+                } else if(item.type == 'opensharing') {
                     Menu.openSharing(item.gname);
-                } else if(item.type && item.type == 'openstorage') {
+                } else if(item.type == 'openstorage') {
                     Menu.openStorage(item.gname);
-                } else if(item.type && item.type == 'opencron') {
+                } else if(item.type == 'opencron') {
                     Menu.openCron();
-                } else if(item.type && item.type == 'viewmodel') {
+                } else if(item.type == 'viewmodel') {
                     //  get the children and make sure we haven't opened this yet.
                     var c = p.getChildren();
                     for(var i=0; i<c.length; i++){
