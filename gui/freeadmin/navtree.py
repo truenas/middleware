@@ -124,7 +124,7 @@ class NavTree(object):
 
     def sort_navoption(self, nav):
 
-        if not (hasattr(nav, 'order_child') and nav.order_child is False):
+        if nav.order_child:
 
             new = {}
             order = {}
@@ -249,7 +249,7 @@ class NavTree(object):
                         obj = navc()
                         obj._gname = obj.gname
 
-                        if not( hasattr(navc, 'append_app') and navc.append_app is False ):
+                        if navc.append_app:
                             self.register_option(obj, nav, True, evaluate=True)
                         else:
                             self._navs[obj.gname] = obj
@@ -273,17 +273,14 @@ class NavTree(object):
                         continue
 
                     if model._admin.deletable is False:
-                        navopt = TreeNode(str(model._meta.object_name))
-                        navopt.name = model._meta.verbose_name
-                        navopt.model = c
-                        navopt.app_name = app
+                        navopt = TreeNode(str(model._meta.object_name),
+                            name= model._meta.verbose_name,
+                            model=c, app_name=app, type='dialog')
                         try:
                             navopt.kwargs = {'app': app, 'model': c, 'oid': \
                                 model.objects.order_by("-id")[0].id}
-                            navopt.type = 'dialog'
                             navopt.view = 'freeadmin_model_edit'
                         except:
-                            navopt.type = 'dialog'
                             navopt.view = 'freeadmin_model_add'
                             navopt.kwargs = {'app': app, 'model': c}
 
@@ -293,17 +290,19 @@ class NavTree(object):
                         navopt.model = c
                         navopt.app_name = app
                         navopt.order_child = False
+
                     for key in model._admin.nav_extra.keys():
                         navopt.__setattr__(key, model._admin.nav_extra.get(key))
                     if model._admin.icon_model is not None:
                         navopt.icon = model._admin.icon_model
 
                     if model._admin.menu_child_of is not None:
-                        reg = self.register_option_byname(navopt, "%s.%s" % (app,model._admin.menu_child_of))
+                        reg = self.register_option_byname(navopt,
+                                "%s.%s" % (app,model._admin.menu_child_of))
                     else:
                         reg = self.register_option(navopt, nav)
 
-                    if reg and not hasattr(navopt, 'type'):
+                    if reg and not navopt.type:
 
                         qs = model.objects.filter(**model._admin.object_filters).order_by('-id')
                         if qs.count() > 0:
@@ -442,10 +441,7 @@ class NavTree(object):
         # info about current node
         my = {
             'id': str(uid.new()),
-            'url': o.get_absolute_url(),
         }
-        if hasattr(o, 'append_url'):
-            my['url'] += o.append_url
         my['name'] = unicode(getattr(o, "rename", o.name))
         if o._gname:
             my['gname'] = o._gname
@@ -455,8 +451,11 @@ class NavTree(object):
                 my['gname'] = "%s.%s" % (gname, my['gname'])
         if not o.option_list:
             my['type'] = getattr(o, 'type', None)
+            my['url'] = o.get_absolute_url()
+            if hasattr(o, 'append_url'):
+                my['url'] += o.append_url
         for attr in ('model', 'app_name', 'icon', 'action'):
-            if hasattr(o, attr):
+            if getattr(o, attr):
                 my[attr] = getattr(o, attr)
 
         # this node has no childs

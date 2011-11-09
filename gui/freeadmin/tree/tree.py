@@ -44,9 +44,9 @@ class TreeType(object):
     append_to = None
     action = None
     type = None
-    order_child = None
+    order_child = True
     order = None
-    append_app = None
+    append_app = True
     option_list = []
 
     _children = []
