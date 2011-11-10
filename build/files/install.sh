@@ -279,15 +279,6 @@ menu_install()
         if [ -d /tmp/.ssh ]; then
             cp -pR /tmp/.ssh /tmp/data_new/root/
         fi
-        if [ -d /tmp/modules ]; then
-            for i in `ls /tmp/modules`
-            do
-                cp -p /tmp/modules/$i /tmp/data_new/boot/modules
-            done
-        fi
-        if [ -d /tmp/fusionio ]; then
-            cp -pR /tmp/fusionio /tmp/data_new/usr/local/
-        fi
         umount /tmp/data_new
         rmdir /tmp/data_new
 	dialog --msgbox "The installer has preserved your database file.
