@@ -75,20 +75,6 @@ if [ -d /root/.ssh ]; then
     cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
 fi
 
-if [ -d /usr/local/fusionio ]; then
-    cp -R /usr/local/fusionio /tmp/upgrade/usr/local/
-fi  
-
-if [ -d /boot/modules ]; then
-    if [ ! -d /tmp/upgrade/boot/modules ]; then
-        mkdir /tmp/upgrade/boot/modules
-    fi  
-    for i in `ls /boot/modules/`
-    do  
-        cp /boot/modules/$i /tmp/upgrade/boot/modules/
-    done
-fi  
-
 umount /tmp/upgrade
 rmdir /tmp/upgrade
 
