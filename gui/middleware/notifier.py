@@ -1334,9 +1334,14 @@ class notifier:
     def update_firmware(self, path):
         syslog.openlog('updater', syslog.LOG_CONS | syslog.LOG_PID)
         try:
-            command = '/usr/bin/xz -cd %s | sh -x /root/update' % (path, )
-            syslog.syslog(syslog.LOG_NOTICE, 'Executing: ' + command)
-            output = subprocess.check_output(shlex.split(command), shell=True)
+            cmd1 = '/usr/bin/xzcat %s' % (path, )
+            cmd2 = 'sh -x /root/update'
+            syslog.syslog(syslog.LOG_NOTICE,
+                          'Executing: %s | %s' % (cmd1, cmd2, ))
+            p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
+            output = subprocess.check_output(shlex.split(cmd2),
+                                             stdin=p1.stdout,
+                                             stderr=subprocess.PIPE)
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
