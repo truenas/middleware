@@ -33,7 +33,9 @@ NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 # REVISION gets overloaded when doing tagged versions, SVNREVISION allows
 # us to keep the SVN revision number even when the version string is
 # overloaded with a name.
-: ${SVNREVISION=r$(svnversion ${NANO_CFG_BASE})}
+#
+# Change this if you were insane and are using an unversioned directory.
+: ${SVNREVISION=r$(svnversion ${NANO_CFG_BASE})} || exit 1
 : ${REVISION=r$(svnversion ${NANO_CFG_BASE})}
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
