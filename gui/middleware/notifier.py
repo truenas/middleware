@@ -1334,7 +1334,7 @@ class notifier:
     def update_firmware(self, path):
         syslog.openlog('updater', syslog.LOG_CONS | syslog.LOG_PID)
         try:
-            command = '/usr/bin/xz -cd %s | sh /root/update' % (path, )
+            command = '/usr/bin/xz -cd %s | sh -x /root/update' % (path, )
             syslog.syslog(syslog.LOG_NOTICE, 'Executing: ' + command)
             output = subprocess.check_output(shlex.split(command), shell=True)
         except subprocess.CalledProcessError, cpe:

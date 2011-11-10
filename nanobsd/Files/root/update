@@ -35,8 +35,8 @@ set -e
 . /etc/nanobsd.conf
 
 if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
-	exec sh /root/updatep2
+	exec sh -x /root/updatep2
 else
-	exec sh /root/updatep1
+	exec sh -x /root/updatep1
 fi
 
