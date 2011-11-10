@@ -31,23 +31,35 @@ from django.utils.translation import ugettext as _
 class TreeType(object):
     parent = None
 
+    _gname = None
     gname = None
     name = None
     view = None
     args = ()
     kwargs ={}
+    url = None
     icon = None
     model = None
     app_name = None
-
-    @property
-    def options(self):
-        raise
+    append_to = None
+    action = None
+    type = None
+    order_child = True
+    order = None
+    append_app = True
+    option_list = []
 
     _children = []
 
-    def __init__(self, gname=None, *args, **kwargs):
+    def __init__(self, gname=None, **kwargs):
         self._children = []
+
+        for key, val in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, val)
+            else:
+                raise Exception("Attribute '%s' is not allowed" % key)
+
         if gname is not None:
             self.gname = gname
         elif self.gname is None:
@@ -55,15 +67,21 @@ class TreeType(object):
         #if self.name is None:
         #    raise ValueError(_("You must define a name"))
 
-    def get_absolute_url(self):
-        if self.view:
-            return reverse(self.view, args=self.args, kwargs=self.kwargs,
-                           prefix='/')
+    def __setattr__(self, name, value):
+        if not hasattr(self, name):
+            raise Exception("Attribute '%s' not allowed" % name)
+        super(TreeType, self).__setattr__(name, value)
 
-        return '#'
+    def get_absolute_url(self):
+        if not self.url and self.view:
+            self.url = reverse(self.view, args=self.args, kwargs=self.kwargs,
+                           prefix='/')
+        elif not self.url and self.view:
+            self.url = '#'
+
+        return self.url
 
     def __iter__(self):
-        #print self, self._children
         for c in list(self._children):
             yield c
 
@@ -124,6 +142,21 @@ class TreeType(object):
         self._setIfNone("app_name", tnode, self)
         self._setIfNone("name", tnode, self)
 
+    def find_place(self, places):
+        if places:
+            current_place = places.pop()
+        else:
+            current_place = None
+        #print cur_node.gname, current_place
+        if self.gname == current_place:
+            for child in self:
+                ret = child.find_place(list(places))
+                if ret is not None:
+                    return ret
+            return self
+        else:
+            return None
+
 class TreeNode(TreeType):
     pass
 
@@ -163,7 +196,33 @@ class TreeRoots(object):
     def __setitem__(self, *args):
         raise AttributeError
 
+    def __iter__(self):
+        for root in list(self._roots['main']):
+            yield root
+
+    def __repr__(self):
+        return u"<TreeRoots: %s>" % repr(self._roots['main'])
+
     def clear(self):
         self._roots.clear()
 
 tree_roots = TreeRoots()
+
+def _unserialize_node(entry):
+    children = entry.pop('children', [])
+    node = TreeNode()
+    for key, val in entry.items():
+        setattr(node, key, val)
+
+    for c in children:
+        child_node = _unserialize_node(c)
+        node.append_child(child_node)
+    return node
+
+def unserialize_tree(data):
+
+    nodes = []
+    for entry in data:
+        node = _unserialize_node(entry)
+        nodes.append(node)
+    return nodes

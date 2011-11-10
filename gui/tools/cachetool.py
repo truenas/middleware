@@ -57,34 +57,21 @@ def cache_fill(**kwargs):
 
 
 def __cache_expire(cachedir):
-    files = os.listdir(cachedir)
-    for f in files:
-        file = os.path.join(cachedir, f)
-        st = os.stat(file)
+    """Nuke everything under cachedir, but preserve the root directory
+       hierarchy so it doesn't screw up certain services like smbd,
+       etc."""
 
-        if stat.S_ISDIR(st.st_mode):
-            __cache_expire(file)
-
+    for ent in os.listdir(cachedir):
+        p = os.path.join(cachedir, ent)
+        if os.path.isdir(p):
+            # Delete all cached information (subdirectories and files)
+            # under /var/tmp/.cache/.{ldap,samba,..}.
+            for root, dirs, files, in os.walk(base_dir, topdown=False):
+                map(lambda f: os.unlink(os.path.join(root, f)), files)
+                map(lambda d: os.rmdir(os.path.join(root, d)), dirs)
         else:
-            os.unlink(file)
-
-
-    #
-    #   The cache is in /var/tmp/.cache, which is a mounted
-    #   ramdisk. When trying to delete this directory after
-    #   recursively removing other directories, this will fail
-    #   with 'Device Busy' errno = 16, so this cheap hack works
-    #   around this ;-)
-    #
-    try:
-        os.rmdir(cachedir)
-
-    except OSError, oe:
-        if oe.errno == errno.EBUSY:
-            pass
-        else:
-            raise
-
+            # Some other random file that probably doesn't belong here.
+            os.unlink(p)
 
 def cache_expire(**kwargs):
     if kwargs.has_key('cachedir') and kwargs['cachedir']:

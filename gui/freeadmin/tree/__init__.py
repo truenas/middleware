@@ -25,6 +25,6 @@
 #
 # $FreeBSD$
 #####################################################################
-__all__ = ['tree_roots', 'TreeRoot', 'TreeNode', 'TreeRoots']
+__all__ = ['tree_roots', 'TreeRoot', 'TreeNode', 'TreeRoots', 'unserialize_tree']
 
-from freeadmin.tree.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
+from freeadmin.tree.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree

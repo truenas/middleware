@@ -440,6 +440,7 @@ def zfsvolume_edit(request, object_id):
     })
 
 def mp_permission(request, path):
+    path = '/' + path
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():

@@ -58,7 +58,7 @@ def get_sw_version(strip_build_num=False):
 def get_sw_login_version():
     """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
 
-    return '-'.join(get_sw_version(strip_build_num=True)[0].split('-')[1:-2])
+    return '-'.join(get_sw_version(strip_build_num=True).split('-')[1:-2])
 
 def get_sw_name():
     """Return the software name, e.g. FreeNAS"""

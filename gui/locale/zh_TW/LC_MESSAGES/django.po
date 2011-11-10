@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-04 05:09+0200\n"
+"PO-Revision-Date: 2011-11-06 20:51+0200\n"
 "Last-Translator: ahaoa <ahaoa.wang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -3511,7 +3511,7 @@ msgstr "標記為新的磁碟(清除資料)"
 msgid "Delete all shares related to this volume"
 msgstr "刪除此磁區的全部共享"
 
-# 注意，將清除此資料集內的所有快照！
+# 注意，將清除此資料集內的所有資料！
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
 msgid_plural ""

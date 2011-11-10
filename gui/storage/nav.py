@@ -20,7 +20,7 @@ class ViewPeriodic(TreeNode):
 
 class ViewSnap(TreeNode):
 
-        gname = 'storage.Snapshots.View'
+        gname = 'View'
         name = _(u'View All Snapshots')
         type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
@@ -30,7 +30,7 @@ class ViewSnap(TreeNode):
 
 class AddVolume(TreeNode):
 
-        gname = 'storage.Volume.Add'
+        gname = 'Add'
         name = _(u'Create Volume')
         view = 'storage_wizard'
         type = 'volumewizard'
@@ -41,7 +41,7 @@ class AddVolume(TreeNode):
 
 class ImportVolume(TreeNode):
 
-        gname = 'storage.Volume.Import'
+        gname = 'Import'
         name = _(u'Import Volume')
         view = 'storage_import'
         type = 'volumewizard'
@@ -52,7 +52,7 @@ class ImportVolume(TreeNode):
 
 class ViewDisks(TreeNode):
 
-        gname = 'storage.Volume.ViewDisks'
+        gname = 'ViewDisks'
         name = _(u'View Disks')
         view = 'storage_datagrid_disks'
         type = 'view'
@@ -63,7 +63,7 @@ class ViewDisks(TreeNode):
 
 class AutoImportVolume(TreeNode):
 
-        gname = 'storage.Volume.AutoImport'
+        gname = 'AutoImport'
         name = _(u'Auto Import Volume')
         view = 'storage_autoimport'
         type = 'volumewizard'
@@ -74,7 +74,7 @@ class AutoImportVolume(TreeNode):
 
 class ViewVolumes(TreeNode):
 
-        gname = 'storage.Volume.View'
+        gname = 'View'
         name = _(u'View All Volumes')
         view = u'storage_home'
         type = 'openstorage'
@@ -83,16 +83,6 @@ class ViewVolumes(TreeNode):
         model = 'Volumes'
         append_app = False
 
-class AddDataset(TreeNode):
-
-        gname = 'storage.Dataset.Add'
-        name = _(u'Create ZFS Dataset')
-        view = 'storage_dataset'
-        icon = u'AddDatasetIcon'
-        type = 'object'
-        app_name = 'storage'
-        model = 'Volumes'
-        append_app = False
 
 class AddZVol(TreeNode):
 
@@ -135,7 +125,7 @@ class Volumes(TreeNode):
 
             mp = models.MountPoint.objects.select_related().order_by('-id')
             for i in mp:
-                nav = TreeNode()
+                nav = TreeNode(i.mp_volume.id)
                 nav.name = i.mp_path
                 nav.order = -i.id
                 nav.model = 'Volume'
@@ -143,7 +133,12 @@ class Volumes(TreeNode):
                 nav.icon = u'VolumesIcon'
 
                 if i.mp_volume.vol_fstype == 'ZFS':
-                    ds = AddDataset()
+                    ds = TreeNode('Dataset')
+                    ds.name = _(u'Create ZFS Dataset')
+                    ds.view = 'storage_dataset'
+                    ds.icon = u'AddDatasetIcon'
+                    ds.type = 'object'
+                    append_app = False
                     ds.kwargs = {'fs': i.mp_volume.vol_name}
                     nav.append_child(ds)
 
@@ -151,7 +146,7 @@ class Volumes(TreeNode):
                     zv.kwargs = {'volume_name': i.mp_volume.vol_name}
                     nav.append_child(zv)
 
-                subnav = TreeNode()
+                subnav = TreeNode('ChangePermissions')
                 subnav.name = _('Change Permissions')
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
@@ -164,15 +159,19 @@ class Volumes(TreeNode):
                 if datasets:
                     for name, d in datasets.items():
 
-                        nav2 = TreeNode()
+                        nav2 = TreeNode(name)
                         nav2.name = d.mountpoint
                         nav2.icon = u'VolumesIcon'
 
-                        ds = AddDataset()
+                        ds = TreeNode('Dataset')
+                        ds.name = _(u'Create ZFS Dataset')
+                        ds.view = 'storage_dataset'
+                        ds.icon = u'AddDatasetIcon'
+                        ds.type = 'object'
                         ds.kwargs = {'fs': d.path}
                         nav2.append_child(ds)
 
-                        subnav2 = TreeNode()
+                        subnav2 = TreeNode('ChangePermissions')
                         subnav2.name = _(u'Change Permissions')
                         subnav2.type = 'editobject'
                         subnav2.view = 'storage_mp_permission'

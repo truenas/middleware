@@ -1,7 +1,7 @@
 """
 The storage CLI.
 
-Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
+Copyright (c) 2011 iXsystems, Inc., All rights reserved.
 
 See COPYING for more details.
 

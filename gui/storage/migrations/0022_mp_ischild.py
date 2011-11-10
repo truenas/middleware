@@ -6,6 +6,10 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    depends_on = (
+        ("sharing", "0006_auto__add_field_afp_share_afp_path2__add_field_nfs_share_nfs_path2__ad"),
+    )
+
     def forwards(self, orm):
 
         orm.MountPoint.objects.filter(mp_ischild=True).delete()

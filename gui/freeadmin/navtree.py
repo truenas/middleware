@@ -34,7 +34,7 @@ from django.core.urlresolvers import resolve
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
+from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree
 
 class NavTree(object):
 
@@ -55,40 +55,57 @@ class NavTree(object):
             return None
 
     """
-    This is used for Mneu Item replacement
+    This is used for Menu Item replacement
 
     Every option added to the tree register its name in a dict
     If the name was already registered before it can be replaced or not
 
     Return Value: Item has been added to the tree or not
     """
-    def register_option(self, opt, parent, replace=False):
+    def register_option(self, opt, parent, replace=False, evaluate=True):
 
-        if self._options.has_key(opt.gname) and opt.gname is not None:
+        if evaluate:
+            current_parent = parent
+            gname = [opt.gname]
+            while True:
+                if current_parent is not None:
+                    gname.insert(0, current_parent.gname)
+                    current_parent = current_parent.parent
+                else:
+                    #print "para", opt, current_parent
+                    break
+            gname = '.'.join(gname)
+            opt._gname = gname
+        else:
+            gname = opt.gname
+            opt._gname = gname
+
+        if self._options.has_key(gname) and opt.gname is not None:
             if replace is True:
-                _opt = self._options[opt.gname]
+                _opt = self._options[gname]
                 _opt.parent.remove_child(_opt)
 
                 opt.attrFrom(_opt)
                 parent.append_child(opt)
-                self._options[opt.gname] = opt
+                self._options[gname] = opt
                 return True
 
         else:
             parent.append_child(opt)
-            self._options[opt.gname] = opt
+            self._options[gname] = opt
             return True
 
         return False
 
     def replace_navs(self, nav):
 
-        if nav.gname is not None and self._navs.has_key(nav.gname) and \
-                hasattr(self._navs[nav.gname], 'append_app') and \
-                self._navs[nav.gname].append_app is False:
-            if self._options.has_key(nav.gname):
-                old  = self._options[nav.gname]
-                self.register_option(self._navs[nav.gname], old.parent, True) 
+        if nav._gname is not None and self._navs.has_key(nav._gname) and \
+                hasattr(self._navs[nav._gname], 'append_app') and \
+                self._navs[nav._gname].append_app is False:
+            if self._options.has_key(nav._gname):
+                #print "replace", self._options[nav._gname]
+                old  = self._options[nav._gname]
+                self.register_option(self._navs[nav._gname], old.parent, True, evaluate=False)
 
         for subnav in nav:
             self.replace_navs(subnav)
@@ -107,13 +124,13 @@ class NavTree(object):
 
     def sort_navoption(self, nav):
 
-        if not (hasattr(nav, 'order_child') and nav.order_child is False):
+        if nav.order_child:
 
             new = {}
             order = {}
             opts = []
             for opt in nav:
-                if hasattr(opt, 'order'):
+                if opt.order:
                     order[opt.order] = opt
                 else:
                     new[opt.name] = opt
@@ -142,56 +159,14 @@ class NavTree(object):
         for opt in nav:
             self.sort_navoption(opt)
 
-    """
-    Tree Menu Auto Generate
-
-    Every app listed at INSTALLED_APPS is scanned
-    1st - app_name.forms is imported. All its objects/classes are scanned
-        looking for ModelForm classes
-    2nd - app_name.nav is imported. TreeNode classes are scanned for hard-coded
-        menu entries or overwriting
-    3rd - app_name.models is imported. models.Model classes are scanned, 
-        if a related ModelForm is found several entries are Added to the Menu 
-            - Objects
-            - Add (Model)
-            - View All (Model)
-    """
-    def auto_generate(self):
-
-        self._generated = True
+    def prepare_modelforms(self):
+        """
+        This piece of code lookup all ModelForm classes from forms.py and record
+        models as a dict key
+        """
         self._modelforms.clear()
-        self._options.clear()
-        tree_roots.clear()
         for app in settings.INSTALLED_APPS:
 
-            # If the app is listed at settings.BLACKLIST_NAV, skip it!
-            if app in getattr(settings, 'BLACKLIST_NAV', []):
-                continue
-
-            # Thats the root node for the app tree menu
-            nav = TreeRoot(app)
-            nav.nav_group = 'main'
-            tree_roots.register(nav) # We register it to the tree root
-
-            modnav = self._get_module(app, 'nav')
-            if hasattr(modnav, 'BLACKLIST'):
-                BLACKLIST = modnav.BLACKLIST
-            else:
-                BLACKLIST = []
-
-            if hasattr(modnav, 'ICON'):
-                nav.icon = modnav.ICON
-
-            if hasattr(modnav, 'NAME'):
-                nav.name = modnav.NAME
-            else:
-                nav.name = self.titlecase(app)
-
-            """
-            BEGIN
-            This piece of code lookup all ModelForm classes from forms.py and record
-            models as a dict key
-            """
             _models = {}
             modforms = self._get_module(app, 'forms')
 
@@ -217,9 +192,49 @@ class NavTree(object):
                         else:
                             _models[form._meta.model] = form
             self._modelforms.update(_models)
-            """
-            END
-            """
+
+    """
+    Tree Menu Auto Generate
+
+    Every app listed at INSTALLED_APPS is scanned
+    1st - app_name.forms is imported. All its objects/classes are scanned
+        looking for ModelForm classes
+    2nd - app_name.nav is imported. TreeNode classes are scanned for hard-coded
+        menu entries or overwriting
+    3rd - app_name.models is imported. models.Model classes are scanned,
+        if a related ModelForm is found several entries are Added to the Menu
+            - Objects
+            - Add (Model)
+            - View All (Model)
+    """
+    def generate(self, request=None):
+
+        self._generated = True
+        self._options.clear()
+        tree_roots.clear()
+        for app in settings.INSTALLED_APPS:
+
+            # If the app is listed at settings.BLACKLIST_NAV, skip it!
+            if app in getattr(settings, 'BLACKLIST_NAV', []):
+                continue
+
+            # Thats the root node for the app tree menu
+            nav = TreeRoot(app)
+            tree_roots.register(nav) # We register it to the tree root
+
+            modnav = self._get_module(app, 'nav')
+            if hasattr(modnav, 'BLACKLIST'):
+                BLACKLIST = modnav.BLACKLIST
+            else:
+                BLACKLIST = []
+
+            if hasattr(modnav, 'ICON'):
+                nav.icon = modnav.ICON
+
+            if hasattr(modnav, 'NAME'):
+                nav.name = modnav.NAME
+            else:
+                nav.name = self.titlecase(app)
 
             self._navs.clear()
             if modnav:
@@ -232,12 +247,12 @@ class NavTree(object):
                         continue
                     if navc.__module__ == modname and subclass:
                         obj = navc()
-                        self._navs[navc.gname] = obj
+                        obj._gname = obj.gname
 
-                        if not( hasattr(navc, 'append_app') and navc.append_app is False ):
-                            self.register_option(obj, nav, True)
-                            #nav.append_child( navc() )
-                            #continue
+                        if navc.append_app:
+                            self.register_option(obj, nav, True, evaluate=True)
+                        else:
+                            self._navs[obj.gname] = obj
 
             modmodels = self._get_module(app, 'models')
             if modmodels:
@@ -248,56 +263,53 @@ class NavTree(object):
                         continue
                     model = getattr(modmodels, c)
                     try:
-                        subclass = issubclass(model, models.Model) 
+                        subclass = issubclass(model, models.Model)
                     except TypeError:
                         continue
 
                     if not(model.__module__ == modname and subclass \
-                            and _models.has_key(model)
+                            and self._modelforms.has_key(model)
                           ):
                         continue
 
                     if model._admin.deletable is False:
-                        navopt = TreeNode(u'%s.%s' % (app, str(model._meta.object_name)))
-                        navopt.name = model._meta.verbose_name
-                        navopt.model = c
-                        navopt.app_name = app
+                        navopt = TreeNode(str(model._meta.object_name),
+                            name= model._meta.verbose_name,
+                            model=c, app_name=app, type='dialog')
                         try:
                             navopt.kwargs = {'app': app, 'model': c, 'oid': \
                                 model.objects.order_by("-id")[0].id}
-                            navopt.type = 'editobject'
                             navopt.view = 'freeadmin_model_edit'
                         except:
-                            navopt.type = 'object'
                             navopt.view = 'freeadmin_model_add'
                             navopt.kwargs = {'app': app, 'model': c}
 
-                        navopt.app = app
                     else:
-                        navopt = TreeNode(u'%s.%s' % (app, str(model._meta.object_name)))
+                        navopt = TreeNode(str(model._meta.object_name))
                         navopt.name = model._meta.verbose_name_plural
                         navopt.model = c
                         navopt.app_name = app
                         navopt.order_child = False
-                        navopt.app = app
+
                     for key in model._admin.nav_extra.keys():
                         navopt.__setattr__(key, model._admin.nav_extra.get(key))
                     if model._admin.icon_model is not None:
                         navopt.icon = model._admin.icon_model
 
                     if model._admin.menu_child_of is not None:
-                        reg = self.register_option_byname(navopt, model._admin.menu_child_of)
+                        reg = self.register_option_byname(navopt,
+                                "%s.%s" % (app,model._admin.menu_child_of))
                     else:
                         reg = self.register_option(navopt, nav)
 
-                    if reg and not hasattr(navopt, 'type'):
+                    if reg and not navopt.type:
 
                         qs = model.objects.filter(**model._admin.object_filters).order_by('-id')
                         if qs.count() > 0:
                             if model._admin.object_num > 0:
                                 qs = qs[:model._admin.object_num]
                             for e in qs:
-                                subopt = TreeNode('%s.%s.Edit' % (app, str(model._meta.object_name)))
+                                subopt = TreeNode('Edit')
                                 subopt.type = 'editobject'
                                 subopt.view = u'freeadmin_model_edit'
                                 if model._admin.icon_object is not None:
@@ -312,11 +324,11 @@ class NavTree(object):
                                 navopt.append_child(subopt)
 
                         # Node to add an instance of model
-                        subopt = TreeNode('%s.%s.Add' % (app, str(model._meta.object_name)))
+                        subopt = TreeNode('Add')
                         subopt.name = _(u'Add %s') % model._meta.verbose_name
                         subopt.view = u'freeadmin_model_add'
                         subopt.kwargs = {'app': app, 'model': c}
-                        subopt.type = 'object'
+                        subopt.type = 'dialog'
                         if model._admin.icon_add is not None:
                             subopt.icon = model._admin.icon_add
                         subopt.model = c
@@ -324,7 +336,7 @@ class NavTree(object):
                         self.register_option(subopt, navopt)
 
                         # Node to view all instances of model
-                        subopt = TreeNode('%s.%s.View' % (app, str(model._meta.object_name)))
+                        subopt = TreeNode('View')
                         subopt.name = _(u'View All %s') % model._meta.verbose_name_plural
                         subopt.view = u'freeadmin_model_datagrid'
                         if model._admin.icon_view is not None:
@@ -339,37 +351,70 @@ class NavTree(object):
                             if self._navs.has_key(child):
                                 self.register_option(self._navs[child], navopt)
 
-
             self.replace_navs(nav)
             self.sort_navoption(nav)
 
-        nav = TreeRoot('Display')
-        nav.name = _('Display System Processes')
-        nav.nav_group = 'main'
-        nav.action = 'displayprocs'
-        nav.icon = 'TopIcon'
+        nav = TreeRoot('display',
+            name=_('Display System Processes'),
+            action='displayprocs',
+            icon='TopIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('Shell')
-        nav.name = _('Shell')
-        nav.nav_group = 'main'
-        nav.icon = 'TopIcon'
-        nav.action = 'shell'
+        nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon', action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('Reboot')
-        nav.name = _('Reboot')
-        nav.nav_group = 'main'
-        nav.action = 'reboot'
-        nav.icon = u'RebootIcon'
+        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon ='RebootIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('Shutdown')
-        nav.name = _('Shutdown')
-        nav.nav_group = 'main'
-        nav.icon = 'ShutdownIcon'
-        nav.action = 'shutdown'
+        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', action='shutdown')
         tree_roots.register(nav)
+
+        """
+        Plugin nodes
+        """
+        import urllib2
+        from django.utils import simplejson
+        for x in range(1):
+            try:
+                response = urllib2.urlopen('http://10.1.1.1/', None, 1)
+                data = response.read()
+            except urllib2.HTTPError, e:
+                data = None
+            except Exception, e:
+                #TODO LOG
+                print type(e), e
+                data = None
+
+            if not data:
+                #TODO LOG
+                continue
+
+            try:
+                data = simplejson.loads(data)
+
+                nodes = unserialize_tree(data)
+                for node in nodes:
+                    #We have or TreeNode's, find out where to place them
+
+                    found = False
+                    if node.append_to:
+                        places = node.append_to.split('.')
+                        places.reverse()
+                        for root in tree_roots:
+                            find = root.find_place(list(places))
+                            if find:
+                                find.append_child(node)
+                                found = True
+                                break
+
+                    if not found:
+                        node.tree_root = 'main'
+                        tree_roots.register(node)
+
+            except Exception, e:
+                #TODO LOG
+                print type(e), e
+                continue
 
     def _build_nav(self):
         navs = []
@@ -391,19 +436,26 @@ class NavTree(object):
             options.append(option)
         return options
 
-    def dehydrate(self, o, level, uid):
+    def dehydrate(self, o, level, uid, gname=None):
 
         # info about current node
         my = {
             'id': str(uid.new()),
-            'view': o.get_absolute_url(),
         }
-        if hasattr(o, 'append_url'):
-            my['view'] += o.append_url
         my['name'] = unicode(getattr(o, "rename", o.name))
-        my['gname'] = getattr(o, "gname", my['name'])
-        for attr in ('model', 'app', 'type', 'app_name', 'icon', 'action'):
-            if hasattr(o, attr):
+        if o._gname:
+            my['gname'] = o._gname
+        else:
+            my['gname'] = getattr(o, "gname", my['name'])
+            if gname:
+                my['gname'] = "%s.%s" % (gname, my['gname'])
+        if not o.option_list:
+            my['type'] = getattr(o, 'type', None)
+            my['url'] = o.get_absolute_url()
+            if hasattr(o, 'append_url'):
+                my['url'] += o.append_url
+        for attr in ('model', 'app_name', 'icon', 'action'):
+            if getattr(o, attr):
                 my[attr] = getattr(o, attr)
 
         # this node has no childs
@@ -413,7 +465,7 @@ class NavTree(object):
             my['children'] = []
 
         for i in o.option_list:
-            opt = self.dehydrate(i, level+1, uid)
+            opt = self.dehydrate(i, level+1, uid, gname=my['gname'])
             my['children'].append(opt)
 
         return my

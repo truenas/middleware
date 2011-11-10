@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-03 11:53+0200\n"
+"PO-Revision-Date: 2011-11-06 15:12+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -505,7 +505,7 @@ msgstr "Seçilen"
 #: services/models.py:700 services/models.py:975 system/models.py:179
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Kullanıcı Adı"
+msgstr "Kullanıcı adı"
 
 #: account/forms.py:199
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -522,7 +522,7 @@ msgstr ""
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr "Şifre"
+msgstr "Parola"
 
 #: account/forms.py:223 account/forms.py:368 system/forms.py:224
 msgid "Password confirmation"
@@ -547,7 +547,7 @@ msgstr "Kiltli kullanıcı"
 
 #: account/forms.py:228
 msgid "Primary Group"
-msgstr "Birincil Grup"
+msgstr "Birincil grup"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
@@ -606,7 +606,7 @@ msgstr "Bu gid ile bir grup zaten var."
 
 #: account/forms.py:582
 msgid "Member users"
-msgstr "Üye kullanıcılar,"
+msgstr "Üye kullanıcılar"
 
 #: account/forms.py:600
 msgid "Auxiliary groups"
@@ -619,11 +619,11 @@ msgstr "Bir kullanıcı en fazla 64 yedek gruba ait olabilir."
 # "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
 #: account/forms.py:627
 msgid "New password"
-msgstr "Yeni şifre"
+msgstr "Yeni parola"
 
 #: account/forms.py:628
 msgid "New password confirmation"
-msgstr "Yeni şifre onayı"
+msgstr "Yeni parola onayı"
 
 #: account/forms.py:653
 msgid "Change root password as well"
@@ -631,7 +631,7 @@ msgstr "root parolasınıda değiştirin"
 
 #: account/forms.py:660
 msgid "Old password"
-msgstr "Eski şifre"
+msgstr "Eski parola"
 
 #: account/forms.py:674
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -650,7 +650,7 @@ msgstr "Grup kimliği"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Grup Adı"
+msgstr "Grup adı"
 
 #: account/models.py:47 account/models.py:159 services/models.py:1250
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -693,7 +693,7 @@ msgstr "Ev Dizini"
 
 #: account/models.py:113
 msgid "Full Name"
-msgstr "Tam Adı"
+msgstr "Tam adı"
 
 #: account/models.py:119 templates/account/bsdusers.html:90
 msgid "E-mail"
@@ -744,7 +744,7 @@ msgstr "Tüm Grupları Göster"
 
 #: account/views.py:96
 msgid "Password successfully updated."
-msgstr "Şifre başarıyla güncellendi."
+msgstr "Parola başarıyla güncellendi."
 
 #: account/views.py:110
 msgid "Admin user successfully updated."
@@ -953,7 +953,7 @@ msgstr "IPv4 veya IPv6 ile maskbit için geçerli bir takma isim belirtmelisiniz
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Sunucu Adı"
+msgstr "Sunucu adı"
 
 #: network/models.py:46
 msgid "Domain"
@@ -1061,7 +1061,7 @@ msgstr "Sanal arabirim"
 
 #: network/models.py:206
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr " Buradaki XX bir sayıdır. Arabirim adı vlanXX olmalıdır. Örneğin vlan0."
+msgstr "Buradaki XX bir sayıdır. Arabirim adı vlanXX olmalıdır. Örneğin vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1254,6 +1254,7 @@ msgstr "Bağlantı noktası"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
 
+# Burası neden çevrile miyor?
 #: services/forms.py:326 services/forms.py:897
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1282,19 +1283,19 @@ msgstr "Gizli"
 
 #: services/forms.py:384 services/models.py:541
 msgid "Target side secret."
-msgstr "Hedef tarafı şifreli."
+msgstr "Hedef tarafı parolalı."
 
 #: services/forms.py:385
 msgid "Secret (Confirm)"
-msgstr "Şifre (Onayla)"
+msgstr "Parola (Onayla)"
 
 #: services/forms.py:387 services/forms.py:395
 msgid "Enter the same secret above for verification."
-msgstr "Doğrulama için yukarıdaki ile aynı şifreyi giriniz."
+msgstr "Doğrulama için yukarıdaki ile aynı parolayı giriniz."
 
 #: services/forms.py:388
 msgid "Initiator Secret"
-msgstr "Başlatıcı Şifre"
+msgstr "Başlatıcı Parola"
 
 #: services/forms.py:390 services/models.py:547 services/models.py:552
 msgid "Initiator side secret. (for mutual CHAP authentication)"
@@ -1302,15 +1303,15 @@ msgstr "Başlatıcı tarafı gizli. (Ortak CHAP kimlik doğrulamaları için)"
 
 #: services/forms.py:393
 msgid "Initiator Secret (Confirm)"
-msgstr "Başlatıcı şifre (Onayla)"
+msgstr "Başlatıcı parola (Onayla)"
 
 #: services/forms.py:402
 msgid "Secret does not match"
-msgstr "Şifreler birbirinin aynısı değil"
+msgstr "Parolalar birbirinin aynısı değil"
 
 #: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
-msgstr "Eş kullanıcı seçtiyseniz Eş Şifre Gereklidir."
+msgstr "Eş kullanıcı seçtiyseniz eş parola gereklidir."
 
 #: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
@@ -1340,7 +1341,7 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol hedeflere özel Onay Grubu kullanıcı adı ve şifresi ile "
+"Istgtcontrol ile hedeflere özel onay grubu, kullanıcı adı ve parolası ile "
 "erişebilir."
 
 #: services/forms.py:496 services/models.py:253
@@ -1511,7 +1512,7 @@ msgstr ""
 "kullanıcı adını (varsayılan 'nobody') geçersiz kılmak için bu seçeneği "
 "kullanın. Bu seçenek misafir servisine bağlanmadan müşteriye sunulacak olan "
 "ayrıcalıkları içermektedir. Bu kullanıcının geçerli giriş gerçekleştirmesi "
-"için şifre dosyasında olması gerekmektedir. root misafir hesabı olarak "
+"için parola dosyasında olması gerekmektedir. root misafir hesabı olarak "
 "kullanılamaz."
 
 #: services/models.py:111
@@ -1634,7 +1635,7 @@ msgstr "CIFS"
 
 #: services/models.py:184
 msgid "Server Name"
-msgstr "Sunucu Adı"
+msgstr "Sunucu adı"
 
 #: services/models.py:185
 msgid ""
@@ -3019,7 +3020,7 @@ msgstr ""
 "Misafir olarak belirtilen hizmetlere erişim için kullanılacak kullanıcı adı "
 "(varsayılan 'ftp') geçersiz kılmak için bu seçeneği kullanın. Ne olursa "
 "olsun bu kullanıcı konuk servisine bağlanmadan herhangi bir istemciye "
-"sunulacak olan ayrıcalıklar. Bu kullanıcının giriş yapabilmesi için şifre "
+"sunulacak olan ayrıcalıklar. Bu kullanıcının giriş yapabilmesi için parola "
 "dosyasında olmalıdır yoksa girişi geçersizdir."
 
 #: sharing/models.py:69
@@ -3675,6 +3676,7 @@ msgstr "Yeni diskleri (veri yok) işaretle"
 msgid "Delete all shares related to this volume"
 msgstr "Bu birimle ilgili tüm paylaşımları sil"
 
+# Burası neden çevrile miyor?
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
 msgid_plural ""
@@ -3752,7 +3754,7 @@ msgstr ""
 #: storage/models.py:429 system/models.py:379
 #: templates/storage/replications.html:22
 msgid "Remote Host"
-msgstr "Uzak Ana bilgisayar"
+msgstr "Uzak ana bilgisayar"
 
 #: storage/models.py:432 templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
@@ -4056,7 +4058,7 @@ msgstr "Geçersiz servis paketi"
 
 #: system/forms.py:404
 msgid "New config to be installed"
-msgstr "Yeni yapılandırma kuruldu"
+msgstr "Yeni yapılandırma dosyası"
 
 #: system/forms.py:411 system/forms.py:448
 msgid "minute"
@@ -4072,11 +4074,11 @@ msgstr "Protokol"
 
 #: system/models.py:53
 msgid "WebGUI Address"
-msgstr "WebGUI Adresleri"
+msgstr "WebGUI adresi"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr "WebGUI Bağlantı Noktası"
+msgstr "WebGUI bağlantı noktası"
 
 #: system/models.py:65
 msgid "Language"
@@ -4112,7 +4114,7 @@ msgstr "Konsol menüsünü etkinleştir"
 
 #: system/models.py:106
 msgid "Use Serial Console"
-msgstr "Seri Konsol Kullanımı"
+msgstr "Seri konsol kullanımı"
 
 #: system/models.py:108
 msgid "Enable screen saver"
@@ -4194,7 +4196,7 @@ msgstr "1 - 65535 arasında bir tamsayı. Genellikle 25, 465 veya 587."
 
 #: system/models.py:162
 msgid "Port to connect to"
-msgstr "Bağlanacağı bağlantı numarası numarası."
+msgstr "Bağlanılacak bağlantı nokatası numarası"
 
 #: system/models.py:168
 msgid "encryption of the connection"
@@ -4206,7 +4208,7 @@ msgstr "TLS/SSL"
 
 #: system/models.py:172
 msgid "Use SMTP Authentication"
-msgstr "SMTP İçin Kimlik Doğrulaması Kullan"
+msgstr "SMTP için kimlik doğrulaması kullan"
 
 #: system/models.py:180
 msgid "A username to authenticate to the remote server"
@@ -4230,7 +4232,7 @@ msgstr "Kuruluş Adı (örnek: şirket)"
 
 #: system/models.py:207
 msgid "Organizational Unit"
-msgstr "Kuruluş Birimi"
+msgstr "Kuruluş birimi"
 
 #: system/models.py:208
 msgid "Organizational Unit Name (eg, section)"
@@ -4238,7 +4240,7 @@ msgstr "Kuruluş Birim Adı (örn: bölüm)"
 
 #: system/models.py:214 system/models.py:215
 msgid "Email Address"
-msgstr "E-posta Adresi"
+msgstr "E-posta adresi"
 
 #: system/models.py:221
 msgid "Locality"
@@ -4266,7 +4268,7 @@ msgstr "Ülke Adı (2 harflik ülke kodu)"
 
 #: system/models.py:242
 msgid "Common Name"
-msgstr "Ortak Adı"
+msgstr "Ortak ad"
 
 #: system/models.py:243
 msgid "Common Name (eg, YOUR name)"
@@ -4274,7 +4276,7 @@ msgstr "Ortak Adı (Örneğin ADINIZ)"
 
 #: system/models.py:248
 msgid "SSL Certificate"
-msgstr "SSL Sertifikası"
+msgstr "SSL sertifikası"
 
 #: system/models.py:249
 msgid ""
@@ -4328,7 +4330,7 @@ msgstr "Ay"
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 #: templates/system/smarttest.html:9
 msgid "Day of week"
-msgstr "Haftanın Günü"
+msgstr "Haftanın günü"
 
 #: system/models.py:299
 msgid "Enabled"
@@ -4340,7 +4342,7 @@ msgstr "Zamanlanmış Görev"
 
 #: system/models.py:303
 msgid "Cron Jobs"
-msgstr "Zamanlanmış Görev"
+msgstr "Zamanlanmış Görevler"
 
 #: system/models.py:314 system/models.py:481
 msgid "Every minute"
@@ -4383,7 +4385,7 @@ msgstr "IP Adresi veya bilgisayar adı"
 
 #: system/models.py:384
 msgid "Remote Module Name"
-msgstr "Uzak Modül Adı"
+msgstr "Uzak modül adı"
 
 #: system/models.py:388 system/models.py:550
 msgid "Short description"
@@ -4456,7 +4458,7 @@ msgstr "Olmayan hata mesajlarını durdur"
 
 #: system/models.py:452
 msgid "Preserve permissions"
-msgstr "Dizin Yetkisi"
+msgstr "Dizin yetkisi"
 
 #: system/models.py:453
 msgid ""
@@ -4699,7 +4701,7 @@ msgstr "Yeni Grup Ekle"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
-msgstr "Ev"
+msgstr "Ev dizini"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5046,7 +5048,7 @@ msgstr "Hoşgeldiniz %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr "Lütfen Giriş Yapın."
+msgstr "Lütfen Giriş Yapın"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5312,6 +5314,7 @@ msgstr "Diski Düzenle"
 msgid "Are you sure you want to destroy \"%(name)s\"?"
 msgstr "Silmek istediğinizden emin misiniz? - \"%(name)s\""
 
+# Burası neden çevrile miyor?
 #: templates/storage/dataset_confirm_delete.html:12
 msgid ""
 "\n"
@@ -5668,11 +5671,11 @@ msgstr "Güncelle"
 
 #: templates/system/cronjob.html:40
 msgid "No cron jobs defined."
-msgstr "ZamanlanmışGörev henüz tanımlanmamış"
+msgstr "Henüz tanımlanmış bir zamanlanmış görev yok"
 
 #: templates/system/cronjob.html:46
 msgid "Add a cron job"
-msgstr "ZamanlanmışGörev Ekle"
+msgstr "Zamanlanmış Görev Ekle"
 
 #: templates/system/cronjob.html:48
 msgid "Add cron job"
@@ -5772,7 +5775,7 @@ msgstr "Geri Yüklemeyi Yapılandırma"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
-msgstr "Ayarları Kaydet"
+msgstr "Yapılandırmayı Kaydet"
 
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
@@ -5817,15 +5820,15 @@ msgstr "Hafıza"
 
 #: templates/system/system_info.html:21
 msgid "System Time"
-msgstr "Sistem Saati"
+msgstr "Sistem saati"
 
 #: templates/system/system_info.html:25
 msgid "Uptime"
-msgstr "Çalışma Süresi"
+msgstr "Çalışma süresi"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
-msgstr "Ortalama Yük"
+msgstr "Ortalama yük"
 
 #: templates/system/wizard.html:3
 #, python-format
@@ -5971,7 +5974,7 @@ msgid "Config"
 msgstr "Yapılandırma"
 
 msgid "OS Version"
-msgstr "İşletim Sistemi Sürümü"
+msgstr "İşletim sistemi sürümü"
 
 msgid "%s successfully update."
 msgstr "%s başarıyla güncellendi."
