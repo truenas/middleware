@@ -208,6 +208,7 @@ add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
+add_port sysutils/ipmitool
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
