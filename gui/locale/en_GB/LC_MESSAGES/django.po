@@ -2463,7 +2463,7 @@ msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr ""
 
 #: services/models.py:1089

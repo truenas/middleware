@@ -2614,7 +2614,7 @@ msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "Όνομα υπολογιστή στην παλιά μορφή, πχ EXAMPLE"
 
 #: services/models.py:1089

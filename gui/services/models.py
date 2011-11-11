@@ -1082,7 +1082,7 @@ class ActiveDirectory(Model):
     ad_netbiosname = models.CharField(
             max_length=120,
             verbose_name = _("NetBIOS Name"),
-            help_text = _("hostname of FreeNAS system")
+            help_text = _("System hostname")
             )
     ad_workgroup = models.CharField(
             max_length=120,
@@ -1092,12 +1092,12 @@ class ActiveDirectory(Model):
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name = _("Administrator Name"),
-            help_text = _("Username of Domain Administrator Account")
+            help_text = _("Domain Administrator account name")
             )
     ad_adminpw = models.CharField(
             max_length=120,
             verbose_name = _("Administrator Password"),
-            help_text = _("Password of Domain Administrator account.")
+            help_text = _("Domain Administrator account password.")
             )
 
     class Meta:

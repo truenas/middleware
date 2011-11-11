@@ -2482,7 +2482,7 @@ msgid "NetBIOS Name"
 msgstr "NetBIOS 名稱"
 
 #: services/models.py:1085
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "舊格式的主機名稱(例如：FREENAS)"
 
 #: services/models.py:1089

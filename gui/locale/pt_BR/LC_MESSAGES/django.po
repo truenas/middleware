@@ -2580,7 +2580,7 @@ msgstr "Nome do Host (Nome NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "Nome do Host em formato antigo, ex: EXEMPLO"
 
 #: services/models.py:1089

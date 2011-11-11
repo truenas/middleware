@@ -2565,7 +2565,7 @@ msgstr "Saimnieka Vārds (NetBIOS-Vārds)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "Saimnieka vārds vecajā formātā, piem. EXAMPLE"
 
 #: services/models.py:1089

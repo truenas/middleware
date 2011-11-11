@@ -2571,7 +2571,7 @@ msgid "NetBIOS Name"
 msgstr "Ana Bilgisayar Adı (NetBIOS Adı)"
 
 #: services/models.py:1085
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "FreeNAS sisteminin ana bilgisayar adı"
 
 #: services/models.py:1089

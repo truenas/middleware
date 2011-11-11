@@ -2593,7 +2593,7 @@ msgstr "Ім'я комп'ютера (NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "hostname of FreeNAS system"
+msgid "system hostname"
 msgstr "Ім'я комп'ютера в старому форматі, наприклад \"EXAMPLE\""
 
 #: services/models.py:1089
