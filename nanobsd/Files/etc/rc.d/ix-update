@@ -101,6 +101,9 @@ db_update()
 	set -e
 
 	rm -f /data/need-update
+	if [ -f /data/cd_upgrade ]; then
+		rm /data/cd_upgrade
+	fi
 	umount /data
 	echo "Database upgrade complete.  Rebooting."
 	cd /
