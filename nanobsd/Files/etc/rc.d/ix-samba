@@ -414,14 +414,16 @@ generate_exports()
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
-			mp_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM storage_mountpoint WHERE mp_path=\"${mountpoint}\";"`
-			if [ -n "${mp_id}" ]; then
-				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;"`
-				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;" | /usr/bin/cut -c1`
+
+			fs=$(zfs list -H -o mountpoint,name|grep -E "${mountpoint}	"|awk '{print $2}')
+			if [ -n "${fs}" ]; then
+				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_filesystem='${fs}' LIMIT 1;"`
+				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_filesystem=\"${fs}\" LIMIT 1;" | /usr/bin/cut -c1`
 				if [ -n "${task_rint}" ]; then
 					vfsobj_shadow=" shadow_copy2"
 				fi
 			fi
+
 			echo "[${name}]"
 			echo "    path = ${mountpoint}"
 			echo "    printable = no"
