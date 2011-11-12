@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-27 02:10-0700\n"
+"POT-Creation-Date: 2011-11-11 02:01-0800\n"
 "PO-Revision-Date: 2011-06-22 15:21+0200\n"
 "Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,55 +18,55 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:127
+#: media/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Pelaporan"
 
-#: media/lib/js/freeadmin.js:139
+#: media/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Pengaturan"
 
-#: media/lib/js/freeadmin.js:150
+#: media/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Informasi Sistem"
 
-#: media/lib/js/freeadmin.js:190
+#: media/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Pengaturan Jaringan"
 
-#: media/lib/js/freeadmin.js:254
+#: media/lib/js/freeadmin.js:183
 msgid "Services"
 msgstr "Layanan"
 
-#: media/lib/js/freeadmin.js:295
+#: media/lib/js/freeadmin.js:224
 msgid "Account"
 msgstr "Akun"
 
-#: media/lib/js/freeadmin.js:334
+#: media/lib/js/freeadmin.js:263
 msgid "Storage"
 msgstr "Penyimpanan"
 
-#: media/lib/js/freeadmin.js:401
+#: media/lib/js/freeadmin.js:330
 msgid "CronJobs"
 msgstr "Tugas Cron"
 
-#: media/lib/js/freeadmin.js:554
+#: media/lib/js/freeadmin.js:490
 msgid "Edit"
 msgstr "Sesuaikan"
 
-#: media/lib/js/freeadmin.js:556
+#: media/lib/js/freeadmin.js:492
 msgid "Edit Disk"
 msgstr "Sesuaikan Cakram"
 
-#: media/lib/js/freeadmin.js:735
+#: media/lib/js/freeadmin.js:760
 msgid "An error occurred!"
 msgstr "Terjadi beberapa kesalahan!"
 
-#: media/lib/js/freeadmin/form/Cron.js:45
+#: media/lib/js/freeadmin/form/Cron.js:47
 msgid "Each selected"
 msgstr "Masing-masing yang dipilih"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:98
 msgid "Every N"
 msgstr "Setiap N"
 

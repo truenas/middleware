@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-27 02:10-0700\n"
+"POT-Creation-Date: 2011-11-11 02:02-0800\n"
 "PO-Revision-Date: 2011-09-16 16:49+0200\n"
 "Last-Translator: ikhwan <ikhwan@098.co.kr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,55 +18,55 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:127
+#: media/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "보고서 작성"
 
-#: media/lib/js/freeadmin.js:139
+#: media/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "설정"
 
-#: media/lib/js/freeadmin.js:150
+#: media/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "시스템 정보"
 
-#: media/lib/js/freeadmin.js:190
+#: media/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "네트워크 설정"
 
-#: media/lib/js/freeadmin.js:254
+#: media/lib/js/freeadmin.js:183
 msgid "Services"
 msgstr "서비스"
 
-#: media/lib/js/freeadmin.js:295
+#: media/lib/js/freeadmin.js:224
 msgid "Account"
 msgstr "계정"
 
-#: media/lib/js/freeadmin.js:334
+#: media/lib/js/freeadmin.js:263
 msgid "Storage"
 msgstr "저장소"
 
-#: media/lib/js/freeadmin.js:401
+#: media/lib/js/freeadmin.js:330
 msgid "CronJobs"
 msgstr "복제작업"
 
-#: media/lib/js/freeadmin.js:554
+#: media/lib/js/freeadmin.js:490
 msgid "Edit"
 msgstr "편집"
 
-#: media/lib/js/freeadmin.js:556
+#: media/lib/js/freeadmin.js:492
 msgid "Edit Disk"
 msgstr "디스크 편집"
 
-#: media/lib/js/freeadmin.js:735
+#: media/lib/js/freeadmin.js:760
 msgid "An error occurred!"
 msgstr "오류 발생!"
 
-#: media/lib/js/freeadmin/form/Cron.js:45
+#: media/lib/js/freeadmin/form/Cron.js:47
 msgid "Each selected"
 msgstr "각각 선택됨"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:98
 msgid "Every N"
 msgstr "N번 마다"
 
