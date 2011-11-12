@@ -30,13 +30,44 @@ NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
 # Where the nanobsd tools live.
 NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 
+if [ -z "${SVNVERSION}" ]; then
+	svnversion=$(command -v svnversion)
+	git_cmd=$(command -v git)
+
+	if [ -n "$svnversion" ] ; then
+		# svn prints out errors to stdout. Bad svn! No cookie for you!
+		svn="r`cd ${FREENAS_ROOT} && $svnversion; cd -`" || svn=""
+	fi
+	if [ -z "$svn" ]; then
+		if [ -n "$git_cmd" ] ; then
+			git=`$git_cmd rev-parse --verify --short HEAD 2>/dev/null`
+			svn=`$git_cmd svn find-rev $git 2>/dev/null`
+			if [ -n "$svn" ] ; then
+				svn="r${svn}"
+				git="=${git}"
+			else
+				svn=`$git_cmd log | fgrep 'git-svn-id:' | head -1 | \
+				    sed -n 's/^.*@\([0-9][0-9]*\).*$/\1/p'`
+				if [ -n $svn ] ; then
+					svn="r${svn}"
+					git="+${git}"
+				else
+					git="${git}"
+				fi
+			fi
+			if $git_cmd --work-tree=${FREENAS_ROOT} diff-index \
+			    --name-only HEAD | read dummy; then
+				git="${git}-dirty"
+			fi
+		fi
+	fi
+fi
+
 # REVISION gets overloaded when doing tagged versions, SVNREVISION allows
 # us to keep the SVN revision number even when the version string is
 # overloaded with a name.
-#
-# Change this if you were insane and are using an unversioned directory.
-: ${SVNREVISION=r$(svnversion ${NANO_CFG_BASE})} || exit 1
-: ${REVISION=r$(svnversion ${NANO_CFG_BASE})}
+SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
+REVISION=${REVISION:-$(echo ${svn}${git})}
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
