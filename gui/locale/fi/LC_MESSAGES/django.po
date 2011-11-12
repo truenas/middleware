@@ -2442,7 +2442,7 @@ msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085
-msgid "system hostname"
+msgid "System hostname"
 msgstr ""
 
 #: services/models.py:1089

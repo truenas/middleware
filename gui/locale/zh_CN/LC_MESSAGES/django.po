@@ -2499,7 +2499,7 @@ msgstr "NetBIOS 名称"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "旧格式主机名，例如：EXAMPLE"
 
 #: services/models.py:1089

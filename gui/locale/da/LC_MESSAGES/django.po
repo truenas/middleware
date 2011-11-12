@@ -2479,7 +2479,7 @@ msgstr ""
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Navn på netværksgruppe i gammelt format, eks. EXAMPLE"
 
 #: services/models.py:1089

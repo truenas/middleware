@@ -2692,7 +2692,7 @@ msgstr "ホスト名（NetBIOS名）"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "古い形式のホスト名を指定します。（例: EXAMPLE）"
 
 #: services/models.py:1089

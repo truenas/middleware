@@ -2536,7 +2536,7 @@ msgstr "Host név (NetBIOS-név)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Host név régebbi formában, pl VALAMI"
 
 #: services/models.py:1089

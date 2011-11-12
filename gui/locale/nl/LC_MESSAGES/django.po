@@ -2578,7 +2578,7 @@ msgstr "NetBIOS Naam"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Host Naam in oud formaat, bijv. VOORBEELD"
 
 #: services/models.py:1089

@@ -2613,7 +2613,7 @@ msgstr "Nome Host (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Nome Host nel vecchi formato, es. EXAMPLE"
 
 #: services/models.py:1089

@@ -2590,7 +2590,7 @@ msgstr "Nombre de NetBIOS"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Nombre del Host (Ej: MIPC)"
 
 #: services/models.py:1089

@@ -2600,7 +2600,7 @@ msgstr "Názov počítača (NetBIOS názov)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Názov hostitela v starom formáte, napr. NIECO"
 
 #: services/models.py:1089

@@ -2597,7 +2597,7 @@ msgstr "Nom del Servidor (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Nom de Servidor en format antic, p.e. EXEMPLE"
 
 #: services/models.py:1089

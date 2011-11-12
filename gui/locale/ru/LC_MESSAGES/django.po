@@ -2612,7 +2612,7 @@ msgstr "Имя компьютера (NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Имя компьютера в старом формате, например \"EXAMPLE\""
 
 #: services/models.py:1089

@@ -2590,7 +2590,7 @@ msgstr "Nazwa NetBIOS"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Nazwa komputera w starym formacie, np. EXAMPLE"
 
 #: services/models.py:1089

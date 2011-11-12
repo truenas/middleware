@@ -2611,7 +2611,7 @@ msgid "NetBIOS Name"
 msgstr "Nom NetBIOS"
 
 #: services/models.py:1085
-msgid "system hostname"
+msgid "System hostname"
 msgstr "Nom d'hôte dans l'ancien format, e.g. FREENAS"
 
 # Préciser WORKGROUP ?
