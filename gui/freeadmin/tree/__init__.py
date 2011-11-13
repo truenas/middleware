@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 __all__ = ['tree_roots', 'TreeRoot', 'TreeNode', 'TreeRoots', 'unserialize_tree']
 

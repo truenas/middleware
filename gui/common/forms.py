@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F

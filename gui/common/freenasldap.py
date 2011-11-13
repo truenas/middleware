@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
 from freenasUI.common.system import get_freenas_var, service_enabled

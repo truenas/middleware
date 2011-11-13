@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
