@@ -184,7 +184,11 @@ disk_is_freenas()
     fi
     rmdir /tmp/data_old
 
-    return ${_rv}
+    if [ -f /tmp/hostid ]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 menu_install()
