@@ -52,11 +52,11 @@ EOF
 
 	LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
 	if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
-		PARTNUM=2
-		OTHER_PARTNUM=1
-	else
 		PARTNUM=1
 		OTHER_PARTNUM=2
+	else
+		PARTNUM=2
+		OTHER_PARTNUM=1
 	fi
 	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}s${PARTNUM}'a/ { print $3; }' | sed -e 's/s.a//'`
 	gpart set -a active -i $OTHER_PARTNUM ${TARGET_DRIVE}
