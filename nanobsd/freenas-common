@@ -276,7 +276,7 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/subversion
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
-	add_port devel/ipython
+	add_port devel/ipython WITHOUT_X11=y
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
