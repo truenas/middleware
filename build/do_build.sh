@@ -112,7 +112,7 @@ for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
 		echo "Applying patch $patch..."
 		(cd FreeBSD/src &&
 		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 < $FREENAS_ROOT/patches/$patch >/dev/null)
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 	fi
 done
@@ -121,7 +121,7 @@ for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
 		echo "Applying patch $patch..."
 		(cd FreeBSD/ports &&
 		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 < $FREENAS_ROOT/patches/$patch >/dev/null)
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 	fi
 done
