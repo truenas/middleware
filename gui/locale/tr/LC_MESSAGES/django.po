@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-06 15:12+0200\n"
+"PO-Revision-Date: 2011-11-14 11:47+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -378,23 +378,23 @@ msgstr "gzip (en yüksek, yavaş)"
 
 #: choices.py:454
 msgid "Hour(s)"
-msgstr "Saat(ler)"
+msgstr "Saat"
 
 #: choices.py:455
 msgid "Day(s)"
-msgstr "Gün(ler)"
+msgstr "Gün"
 
 #: choices.py:456
 msgid "Week(s)"
-msgstr "Hafta(lar)"
+msgstr "Hafta"
 
 #: choices.py:457
 msgid "Month(s)"
-msgstr "Ay(lar)"
+msgstr "Ay"
 
 #: choices.py:458
 msgid "Year(s)"
-msgstr "Yıl(lar)"
+msgstr "Yıl"
 
 #: choices.py:462 system/models.py:330 system/models.py:355
 #: system/models.py:497 system/models.py:518 system/models.py:582
@@ -788,7 +788,7 @@ msgstr "Ekle %s"
 #: freeadmin/navtree.py:328
 #, python-format
 msgid "View All %s"
-msgstr "Tümünü Göster %s"
+msgstr "%s Tümünü Göster "
 
 #: freeadmin/navtree.py:347
 msgid "Display System Processes"
@@ -891,23 +891,23 @@ msgstr "169.254/16 alt ağ sunucusu için geçerli değildir"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Adsunucusu 3'den önce Adsunucusu 2'yi doldurmalısınız"
+msgstr "Ad sunucusu 3'den önce Ad sunucusu 2'yi doldurmalısınız"
 
 #: network/forms.py:147 network/forms.py:154 network/forms.py:165
 msgid "Required when using nameserver 3"
-msgstr "Adsunucusu 3 kullanıldığında gerekli"
+msgstr "Ad sunucusu 3 kullanıldığında gerekli"
 
 #: network/forms.py:151
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Adsunucusu 3'den önce Adsunucusu 1'i doldurmalısınız"
+msgstr "Ad sunucusu 3'den önce Ad sunucusu 1'i doldurmalısınız"
 
 #: network/forms.py:162
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Adsunucusu 2'den önce Adsuncusu 1'i doldurmalısınız"
+msgstr "Ad sunucusu 2'den önce Ad suncusu 1'i doldurmalısınız"
 
 #: network/forms.py:177
 msgid "Parent Interface"
-msgstr "Tüm Arabirimleri Göster"
+msgstr "Tüm arabirimleri göster"
 
 #: network/forms.py:186
 msgid "The name must be vlanXX where XX is a integer"
@@ -961,28 +961,28 @@ msgstr "Alan adı"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr "IPV4 Varsayılan Ağ Geçidi"
+msgstr "IPv4 varsayılan ağ geçidi"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr "IPV6 Varsayılan Ağ Geçidi"
+msgstr "IPv6 varsayılan ağ geçidi"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "DNS Sunucusu 1"
+msgstr "DNS sunucusu 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "DNS Sunucusu 2"
+msgstr "DNS sunucusu 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "DNS Sunucusu 3"
+msgstr "DNS sunucusu 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr "Küresel Yapılandırma"
+msgstr "Genel Yapılandırma"
 
 #: network/models.py:87
 msgid "Pick your NIC"
@@ -990,7 +990,7 @@ msgstr "Ağ kartınızı seçin"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr "Arabirim Adı"
+msgstr "Arabirim adı"
 
 #: network/models.py:92
 msgid "Name your NIC."
@@ -1009,11 +1009,11 @@ msgstr ""
 #: network/models.py:99 network/models.py:161
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4 Adresleri"
+msgstr "IPv4 adresi"
 
 #: network/models.py:108 network/models.py:170
 msgid "IPv4 Netmask"
-msgstr "IPv4 Ağ Maskesi"
+msgstr "IPv4 ağ maskesi"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
@@ -1026,7 +1026,7 @@ msgstr "Aktif ettğinizde IPv6 adresiniz rtsol(8) üzerinden otomatik ayarlanır
 #: network/models.py:116 network/models.py:174
 #: templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr "IPv6 Adresleri"
+msgstr "IPv6 adresi"
 
 #: network/models.py:125 network/models.py:183
 msgid "IPv6 Prefix Length"
@@ -1057,7 +1057,7 @@ msgstr "Takma Ad"
 #: network/models.py:205 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr "Sanal arabirim"
+msgstr "Sanal Arabirim"
 
 #: network/models.py:206
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
@@ -1070,7 +1070,7 @@ msgstr "Fiziksel Arabirim"
 
 #: network/models.py:214 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr "VLAN Etiketi"
+msgstr "VLAN etiketi"
 
 #: network/models.py:218 network/models.py:315 services/models.py:77
 #: services/models.py:791 storage/models.py:169 system/models.py:269
@@ -1085,7 +1085,7 @@ msgstr "VLAN"
 
 #: network/models.py:233
 msgid "VLANs"
-msgstr "VLAN'lar"
+msgstr "VLAN"
 
 #: network/models.py:253
 msgid "Protocol Type"
@@ -1121,11 +1121,11 @@ msgstr "Ağ geçidi"
 
 #: network/models.py:320
 msgid "Static Route"
-msgstr "Statik Yönlendirme"
+msgstr "Sabit Yönlendirme"
 
 #: network/models.py:321 templates/network/index.html:19
 msgid "Static Routes"
-msgstr "Sabit Yollar"
+msgstr "Sabit Yolların"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
@@ -2947,7 +2947,7 @@ msgstr "Servis durdurulamadı."
 
 #: services/views.py:235
 msgid "The service could not be started."
-msgstr "Servis balatılamadı."
+msgstr "Servis başlatılamadı."
 
 #: sharing/forms.py:68
 msgid "Confirm Share Password"
@@ -3802,7 +3802,7 @@ msgstr "Anlık Durum Görüntüsü yaşam boyu birimi"
 
 #: storage/models.py:486
 msgid "Begin"
-msgstr "Başla"
+msgstr "Başlangıç"
 
 #: storage/models.py:487
 msgid "When in a day should we start making snapshots, e.g. 8:00"
@@ -4022,15 +4022,15 @@ msgstr "ayın günü"
 
 #: system/forms.py:342
 msgid "Place to temporarily place firmware file"
-msgstr "Geçici olarak yazılım dosyasını bir yere yerleştirin"
+msgstr "Geçici olarak donanım yazılım dosyasını bir yere yerleştirin"
 
 #: system/forms.py:342
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
-"Sistemin uygulandığı yer geçici olarak yazılım dosyalarını saklamak için bu "
-"yeri kullanacak."
+"Sisteme uygulamadan önce donanım yazılımı güncelleme dosyasını saklamak için "
+"geçici olarak burayı kullanabilirsiniz."
 
 #: system/forms.py:350
 msgid "New image to be installed"
@@ -4042,7 +4042,7 @@ msgstr "İmaj için toplam SHA256 "
 
 #: system/forms.py:361
 msgid "Invalid firmware"
-msgstr "Geçersiz yazılım"
+msgstr "Geçersiz donanım yazılımı"
 
 #: system/forms.py:367 system/forms.py:394
 msgid "Invalid checksum"
@@ -4122,7 +4122,7 @@ msgstr "Ekran koruyucuyu etkinleştir"
 
 #: system/models.py:110
 msgid "Automatically Check for New Firmware"
-msgstr "Yeni aygıt yazılımını otomatik kontrol et"
+msgstr "Yeni donanım yazılımını otomatik kontrol et"
 
 #: system/models.py:112
 msgid "Beep on boot"
@@ -4611,7 +4611,7 @@ msgstr "Giriş Yap"
 #: templates/freeadmin/generic_model_edit.html:36
 #: templates/network/lagg_add.html:10
 msgid "OK"
-msgstr "TAMAM"
+msgstr "Tamam"
 
 #: templates/account/bsdgroup2user_form.html:12
 #: templates/account/changeform.html:29 templates/account/passform.html:29
@@ -4920,7 +4920,7 @@ msgstr "Kullanılabilir işlemler"
 #: templates/system/smarttest.html:21 templates/system/smarttest.html.py:23
 #: templates/system/sysctl.html:17 templates/system/sysctl.html.py:19
 msgid "Edit"
-msgstr "düzenle"
+msgstr "Düzenle"
 
 #: templates/network/interface.html:36 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
@@ -5002,7 +5002,7 @@ msgstr "Sabit Yol Ekle"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr "AdSunucusu"
+msgstr "Ad Sunucusu"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
@@ -5586,7 +5586,7 @@ msgstr "Henüz bir birim tanımlı değil"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr "Üye diskleri"
+msgstr "Kullanıcı diskleri"
 
 #: templates/storage/wizard.html:71
 msgid "Group type"
@@ -5649,7 +5649,7 @@ msgstr "Hata Düzeltmeyi Kaydet"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Aygıt Yazlımı Güncellemesi"
+msgstr "Donanım Yazılımı Güncellemesi"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -5995,4 +5995,4 @@ msgid "Level"
 msgstr "Seviye"
 
 msgid "View All VLANs"
-msgstr "Tüm VLAN'ları Gör"
+msgstr "Tüm VLAN'ları Göster"
