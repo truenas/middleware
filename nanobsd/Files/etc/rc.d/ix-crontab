@@ -11,70 +11,69 @@
 
 generate_crontab()
 {
-    local IFS=\|
-    local minute hour daymonth month dayweek user command
-    cp /conf/base/etc/crontab /etc/crontab
-    # Generate cronjobs
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	local IFS=\|
+	local minute hour daymonth month dayweek user command
+	cp /conf/base/etc/crontab /etc/crontab
+	# Generate cronjobs
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while read -r minute hour daymonth month dayweek user command; do
-        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
-    done
+		echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
+	done
 
-    local user host module recursive times compress archive delete quiet preserveperm preserveattr extra
-    # Gnerate rsync
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT rsync_path,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync ORDER BY id" | \
+	local user host module recursive times compress archive delete quiet preserveperm preserveattr extra
+	# Gnerate rsync
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT rsync_path,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 	while read -r path minute hour daymonth month dayweek user host module recursive times compress archive delete quiet preserveperm preserveattr extra; do
-        command=$(
+		command=$(
 
-            echo -n "lockf -s -t 0 -k /mnt rsync "
+			echo -n "lockf -s -t 0 -k /mnt rsync "
 
-            if [ ${recursive} -gt 0 ]; then
-                echo -n "-r "
-            fi
+			if [ ${recursive} -gt 0 ]; then
+				echo -n "-r "
+			fi
 
-            if [ ${times} -gt 0 ]; then
-                echo -n "-t "
-            fi
+			if [ ${times} -gt 0 ]; then
+				echo -n "-t "
+			fi
 
-            if [ ${compress} -gt 0 ]; then
-                echo -n "-z "
-            fi
+			if [ ${compress} -gt 0 ]; then
+				echo -n "-z "
+			fi
 
-            if [ ${archive} -gt 0 ]; then
-                echo -n "-a "
-            fi
+			if [ ${archive} -gt 0 ]; then
+				echo -n "-a "
+			fi
 
-            if [ ${delete} -gt 0 ]; then
-                echo -n "--delete "
-            fi
+			if [ ${delete} -gt 0 ]; then
+				echo -n "--delete "
+			fi
 
-            if [ ${preserveperm} -gt 0 ]; then
-                echo -n "-p "
-            fi
+			if [ ${preserveperm} -gt 0 ]; then
+				echo -n "-p "
+			fi
 
-            if [ ${preserveattr} -gt 0 ]; then
-                echo -n "-X "
-            fi
+			if [ ${preserveattr} -gt 0 ]; then
+				echo -n "-X "
+			fi
 
-            echo -n "${extra} "
+			echo -n "${extra} "
 
-            echo -n "${path} ${host}::${module}"
+			echo -n "${path} ${host}::${module}"
 
-            if [ ${quiet} -gt 0 ]; then
-                echo -n " >/dev/null 2>&1"
-            fi
+			if [ ${quiet} -gt 0 ]; then
+				echo -n " >/dev/null 2>&1"
+			fi
 
-        )
-        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
-    done
+		)
+		echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
+	done
 }
 
 original_crontab()
 {
-    cp /conf/base/etc/crontab /etc/crontab
-
+	cp /conf/base/etc/crontab /etc/crontab
 }
 
 name="ix-crontab"

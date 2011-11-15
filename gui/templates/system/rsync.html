@@ -8,6 +8,7 @@
             <td>{% trans "Month" %}</td>
             <td>{% trans "Day of week" %}</td>
             <td>{% trans "User" %}</td>
+            <td>{% trans "Short description" %}</td>
             <td>{% trans "Available actions" %}</td>
           </tr>
         </thead>
@@ -18,6 +19,7 @@
         <td>{{ c.get_human_month }}</td>
         <td>{{ c.get_human_dayweek }}</td>
         <td>{{ c.rsync_user }}</td>
+        <td>{{ c.rsync_desc|default:_("None") }}</td>
         <td>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}

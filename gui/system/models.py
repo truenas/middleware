@@ -464,6 +464,10 @@ class Rsync(Model):
             help_text=_("Extra options to rsync command line (usually empty)"),
             blank=True
             )
+    rsync_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
@@ -474,6 +478,8 @@ class Rsync(Model):
         icon_view = u"ViewrsyncTaskIcon"
 
     def __unicode__(self):
+        if self.rsync_desc:
+            return self.rsync_desc
         return u"%d (%s)" % (self.id, self.rsync_user)
 
     def get_human_minute(self):
