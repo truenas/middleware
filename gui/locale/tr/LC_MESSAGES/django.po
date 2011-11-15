@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-14 11:47+0200\n"
+"PO-Revision-Date: 2011-11-14 12:04+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3449,7 +3449,7 @@ msgstr "4096 bayt sektör boyutuna zorla"
 
 #: storage/forms.py:202 templates/storage/wizard.html:154
 msgid "Specify custom path"
-msgstr "Özel yolu belirtin"
+msgstr "Özel yol belirt"
 
 #: storage/forms.py:211
 msgid ""
