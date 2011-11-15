@@ -84,6 +84,7 @@ class Migration(DataMigration):
         },
         'services.afp': {
             'Meta': {'object_name': 'AFP'},
+            'afp_srv_connections_limit': ('django.db.models.fields.IntegerField', [], {'default': '50', 'max_length': '120'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
