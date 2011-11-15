@@ -36,8 +36,9 @@ if [ -z "${SVNVERSION}" ]; then
 
 	if [ -n "$svnversion" ] ; then
 		# svn prints out errors to stdout. Bad svn! No cookie for you!
-		svn="r`cd ${FREENAS_ROOT} && $svnversion; cd -`" || svn=""
+		svn="r`cd ${FREENAS_ROOT} && /usr/bin/env LANG=C $svnversion; cd -`" || svn=""
 	fi
+	[ "${svn}" = "Unversioned directory" ] && svn=""
 	if [ -z "$svn" ]; then
 		if [ -n "$git_cmd" ] ; then
 			git=`$git_cmd rev-parse --verify --short HEAD 2>/dev/null`
