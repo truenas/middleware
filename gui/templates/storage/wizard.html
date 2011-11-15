@@ -44,19 +44,10 @@
             </td>
             <td>
                 {{ form.volume_fstype.errors }}
-                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'UFS'{% if form.data.volume_fstype == "UFS" %}, checked: true{%endif%}">
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    wizardcheckings(true);
-                </script>
-                UFS
-                </input>
+                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'UFS'{% if form.data.volume_fstype == "UFS" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" /> UFS
                 <br />
-                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'ZFS'{% if form.data.volume_fstype == "ZFS" %}, checked: true{%endif%}">
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    wizardcheckings(true);
-                </script>
+                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'ZFS'{% if form.data.volume_fstype == "ZFS" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                 ZFS
-                </input>
             </td>
         </tr>
         <tr id="zfssectorsize" style="display: none">
@@ -73,48 +64,28 @@
             <td style="width:250px;">
                 {{ form.group_type.errors }}
                 <span id="grpmirror">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'mirror'{% if form.data.group_type == "mirror" %}, checked: true{%endif%}">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        wizardcheckings(true);
-                    </script>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'mirror'{% if form.data.group_type == "mirror" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                     mirror
-                    </input>
                     <br />
                 </span>
                 <span id="grpstripe">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'stripe'{% if form.data.group_type == "stripe" %}, checked: true{%endif%}">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        wizardcheckings(true);
-                    </script>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'stripe'{% if form.data.group_type == "stripe" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                     stripe
-                    </input>
                     <br/>
                 </span>
                 <span id="grpraid3">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raid3'{% if form.data.group_type == "raid3" %}, checked: true{%endif%}">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        wizardcheckings(true);
-                    </script>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raid3'{% if form.data.group_type == "raid3" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                     raid3
-                    </input>
                     <br />
                 </span>
                 <span id="grpraidz">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz'{% if form.data.group_type == "raidz" %}, checked: true{%endif%}">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        wizardcheckings(true);
-                    </script>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz'{% if form.data.group_type == "raidz" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                     RAID-Z
-                    </input>
                     <br />
                 </span>
                 <span id="grpraidz2">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz2'{% if form.data.group_type == "raidz2" %}, checked: true{%endif%}">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        wizardcheckings(true);
-                    </script>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz2'{% if form.data.group_type == "raidz2" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
                     RAID-Z2
-                    </input>
                 </span>
             </td>
         </tr>
