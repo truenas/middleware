@@ -1088,6 +1088,10 @@ class ActiveDirectory(Model):
             verbose_name = _("Workgroup Name"),
             help_text = _("Workgroup or domain name in old format, eg WORKGROUP")
             )
+    ad_allow_trusted_doms = models.BooleanField(
+            default=False,
+            verbose_name=_("Allow Trusted Domains"),
+            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name = _("Administrator Name"),

@@ -84,6 +84,7 @@ generate_smbconf()
 		ad_domainname,
 		ad_netbiosname,
 		ad_workgroup,
+		ad_allow_trusted_doms,
 		ad_adminname,
 		ad_adminpw,
 		ldap_hostname,
@@ -117,10 +118,10 @@ generate_smbconf()
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
-		ad_domainname ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
-		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
-		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
-		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
+		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
+		ad_adminname ad_adminpw ldap_hostname ldap_basedn ldap_anonbind \
+		ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
+		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
@@ -266,14 +267,14 @@ EOF
 			    netbios name = ${ad_netbiosname}
 			    client use spnego = yes
 			    cache directory = ${FREENAS_CACHEDIR}/.samba
-			    
+
 			    wins server = $(AD_get dcname)
 			    password server = $(AD_get dcname)
-			    
+
 			    local master = no
 			    domain master = no
 			    preferred master = no
-		
+
 			    inherit acls = yes
 			    acl compatibility = auto
 			    acl check permissions = true
@@ -295,8 +296,14 @@ EOF
 			    # Enable in the global settings if you want to manage
 			    # files in multitiered AD deployments. This doesn't work
 			    # in all configurations. Caveat emptor.
-			    allow trusted domains = no
+EOF
+			if [ "${ad_allow_trusted_doms}" = "1" ]; then
+				echo -e "\t\t\t    allow trusted domains = yes"
+			else
+				echo -e "\t\t\t    allow trusted domains = no"
+			fi
 
+			cat<<-EOF
 			    template shell = /bin/sh
 			    template homedir = /home/%D/%U
 
