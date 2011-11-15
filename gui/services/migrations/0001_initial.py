@@ -287,7 +287,7 @@ class Migration(SchemaMigration):
 
         cifs = orm.CIFS()
         cifs.cifs_srv_netbiosname='freenas'
-        cifs.cifs_srv_workgroup='FREENAS'
+        cifs.cifs_srv_workgroup='WORKGROUP'
         cifs.cifs_srv_description='FreeNAS Server'
         cifs.cifs_srv_doscharset='CP437'
         cifs.cifs_srv_unixcharset='UTF-8'
