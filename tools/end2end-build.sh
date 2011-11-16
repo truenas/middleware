@@ -43,9 +43,9 @@ post_images() {
 	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
 	 if [ "${RELEASE_BUILD:-}" = yes ]; then
 		cp ../ReleaseNotes README
-		set -- *.iso *.xz $release-ReleaseNotes
+		set -- *.iso *.xz README
 	 else
-		set -- *.iso *.xz $release-ReleaseNotes
+		set -- *.iso *.xz
 	 fi
 	 for file in $*; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
