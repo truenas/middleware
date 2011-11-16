@@ -604,9 +604,16 @@
         }
 
         dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
-              function(inputElem){
-                   dijit.getEnclosingWidget(inputElem).set('disabled',true);
-               }
+            function(inputElem){
+                if(inputElem.type == 'submit') {
+                    var dj = dijit.getEnclosingWidget(inputElem);
+                    if(dj) {
+                        dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                        dj.set('label', gettext('Please wait...'));
+                    }
+                }
+                dijit.getEnclosingWidget(inputElem).set('disabled',true);
+            }
             );
 
         // prevent the default submit
@@ -675,6 +682,13 @@
 
         dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
           function(inputElem){
+               if(inputElem.type == 'submit') {
+                   var dj = dijit.getEnclosingWidget(inputElem);
+                   if(dj) {
+                       dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                       dj.set('label', gettext('Please wait...'));
+                   }
+               }
                dijit.getEnclosingWidget(inputElem).set('disabled',true);
            }
         );

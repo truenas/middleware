@@ -14,9 +14,6 @@
         <td>
             <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
                 {% trans "Yes" %}
-                <script type="dojo/method" event="onClick" args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
             </button>
 
             <button data-dojo-type="dijit.form.Button" class="cancelform">

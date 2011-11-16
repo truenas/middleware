@@ -40,10 +40,6 @@
             {{ extra_js }}
         </script>
         {% trans "OK" %}
-        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            dojo.attr(this.domNode, "oldlabel", this.get('label'));
-            this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-        </script>
     </button>
     <button data-dojo-type="dijit.form.Button" class="cancelform">
         {% trans "Cancel" %}
