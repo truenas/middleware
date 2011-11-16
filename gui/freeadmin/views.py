@@ -211,7 +211,7 @@ def alert_status(request):
         for entry in entries:
             if not entry:
                 continue
-            status, message = entry.split(': ')
+            status, message = entry.split(': ', 1)
             if (status == 'WARN' and current == 'OK') or \
               status == 'CRIT' and current in ('OK','WARN'):
                 current = status
@@ -227,7 +227,7 @@ def alert_detail(request):
         for entry in entries:
             if not entry:
                 continue
-            status, message = entry.split(': ')
+            status, message = entry.split(': ', 1)
             alerts.append({
                 'status': status,
                 'message': message,
