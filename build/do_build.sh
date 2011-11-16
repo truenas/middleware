@@ -69,6 +69,15 @@ while getopts 'Bfj:u' optch; do
 done
 shift $(( $OPTIND - 1 ))
 
+case "$-" in
+*x*)
+	trace="-x"
+	;;
+*)
+	trace=
+	;;
+esac
+
 set -e
 if $BUILD; then
 	requires_root
@@ -148,7 +157,7 @@ echo $cmd
 if ! $BUILD; then
 	exit 0
 fi
-if sh $cmd; then
+if sh $trace $cmd; then
 	echo "$NANO_LABEL build PASSED"
 else
 	error "$NANO_LABEL build FAILED; please check above log for more details"
