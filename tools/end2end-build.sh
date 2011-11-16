@@ -16,12 +16,13 @@ tmpdir=/dev/null
 branch=trunk
 cvsup_host=cvsup1.freebsd.org
 default_archs="amd64 i386"
+tmpdir_template=e2e-bld.XXXXXXXX
 
 setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	export SHELL=/bin/sh
 
-	tmpdir=$(mktemp -d e2e-bld.XXXXXXXX)
+	tmpdir=$(realpath "$(mktemp -d $tmpdir_template)")
 	chmod 0755 $tmpdir
 	pull $tmpdir
 	cd $tmpdir
@@ -39,7 +40,14 @@ pull() {
 
 post_images() {
 	(cd obj.$arch
-	 for img in *.iso *.xz; do
+	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
+	 if [ "${RELEASE_BUILD:-}" = yes ]; then
+		cp ../ReleaseNotes README
+		set -- *.iso *.xz $release-ReleaseNotes
+	 else
+		set -- *.iso *.xz $release-ReleaseNotes
+	 fi
+	 for file in $*; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
 
 		scp -o BatchMode=yes $img* \
@@ -51,13 +59,17 @@ post_images() {
 while getopts 'A:b:c:t:' optch; do
 	case "$optch" in
 	A)
-		case "$OPTARG" in
-		amd64|i386)
-			;;
-		*)
+		_arch=
+		for arch in $default_archs; do
+			if [ "$arch" = "$OPTARG" ]; then
+				_arch=$OPTARG
+				break
+			fi
+		done
+		if [ -z "$_arch" ]; then
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
-			;;
-		esac
+			exit 1
+		fi
 		archs="$archs $OPTARG"
 		;;
 	b)
@@ -98,5 +110,5 @@ for arch in $archs; do
 
 done
 if $clean; then
-	cleanup
+	cd /; cleanup
 fi
