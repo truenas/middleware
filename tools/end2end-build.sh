@@ -15,9 +15,9 @@ tmpdir=/dev/null
 # Values you can and should change.
 
 branch=trunk
-cvsup_host=cvsup1.freebsd.org
+cvsup_host=cvsup.ixsystems.com
 default_archs="amd64 i386"
-postdir_base=/dev/null
+postdir_base=/freenas/OS/FreeNAS/nightlies
 tmpdir_template=e2e-bld.XXXXXXXX
 
 setup() {
@@ -59,7 +59,7 @@ post_images() {
 		sudo sh -c "sha256 $img > $img.sha256.txt"
 
 		if [ -d "$postdir" ]; then
-			cp $file* "$post_dir"/.
+			cp $file* "$postdir"/.
 		fi
 
 		scp -o BatchMode=yes $img* \
