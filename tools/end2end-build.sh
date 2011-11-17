@@ -15,9 +15,9 @@ tmpdir=/dev/null
 # Values you can and should change.
 
 branch=trunk
-cvsup_host=cvsup.ixsystems.com
+cvsup_host=cvsup1.freebsd.org
 default_archs="amd64 i386"
-postdir_base=/freenas/OS/FreeNAS/nightlies
+postdir_base=/dev/null
 tmpdir_template=e2e-bld.XXXXXXXX
 
 setup() {
