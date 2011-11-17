@@ -18,7 +18,7 @@ db_update_real()
 
 	for i in account freeadmin network services sharing storage system; do
 		yes | /usr/local/bin/python \
-		    /usr/local/www/freenasUI/manage.py migrate $i > \
+		    /usr/local/www/freenasUI/manage.py migrate --merge $i > \
 		    $UPDATE_FAILED_LOG
 		if [ $? -ne 0 ]; then
 			echo "manage.py migrate $i failed"
