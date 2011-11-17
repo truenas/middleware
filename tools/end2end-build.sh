@@ -9,6 +9,7 @@
 
 clean=true
 # Define beforehand to work around shell bugs.
+postdir=/dev/null
 tmpdir=/dev/null
 
 # Values you can and should change.
@@ -16,6 +17,7 @@ tmpdir=/dev/null
 branch=trunk
 cvsup_host=cvsup1.freebsd.org
 default_archs="amd64 i386"
+postdir_base=/dev/null
 tmpdir_template=e2e-bld.XXXXXXXX
 
 setup() {
@@ -26,6 +28,12 @@ setup() {
 	chmod 0755 $tmpdir
 	pull $tmpdir
 	cd $tmpdir
+	if [ -d "$postdir_base" ]; then
+		mkdir -p "$postdir"
+		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
+	else
+		postdir=
+	fi
 }
 
 cleanup() {
@@ -49,6 +57,10 @@ post_images() {
 	 fi
 	 for file in $*; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
+
+		if [ -d "$postdir" ]; then
+			cp $file* "$post_dir"/.
+		fi
 
 		scp -o BatchMode=yes $img* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
