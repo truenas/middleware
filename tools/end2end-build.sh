@@ -29,8 +29,8 @@ setup() {
 	pull $tmpdir
 	cd $tmpdir
 	if [ -d "$postdir_base" ]; then
-		mkdir -p "$postdir"
 		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
+		mkdir -p "$postdir"
 	else
 		postdir=
 	fi
