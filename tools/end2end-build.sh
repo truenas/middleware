@@ -56,13 +56,13 @@ post_images() {
 		set -- *.iso *.xz
 	 fi
 	 for file in $*; do
-		sudo sh -c "sha256 $img > $img.sha256.txt"
+		sudo sh -c "sha256 $file > $file.sha256.txt"
 
 		if [ -d "$postdir" ]; then
 			cp $file* "$postdir"/.
 		fi
 
-		scp -o BatchMode=yes $img* \
+		scp -o BatchMode=yes $file* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
 
 	done)
