@@ -7,7 +7,7 @@
                <strong>{% trans "AFP" %}</strong>
            </td>
            <td>
-   	    <img id="afp_toggle" name="afp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="afp_toggle" name="afp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="afp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "AFP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="AFP",oid=afp.id %}');" title="{% trans "AFP Settings" %}">
@@ -18,7 +18,7 @@
                <strong>{% trans "Active Directory" %}</strong>
            </td>
            <td>
-   	    <img id="activedirectory_toggle" name="activedirectory_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="activedirectory_toggle" name="activedirectory_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="ad_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Active Directory Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="ActiveDirectory",oid=activedirectory.id %}');" title="{% trans "Active Directory Settings" %}">
@@ -29,7 +29,7 @@
                <strong>{% trans "CIFS" %}</strong>
            </td>
            <td>
-   	    <img id="cifs_toggle" name="cifs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="cifs_toggle" name="cifs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "CIFS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="CIFS",oid=cifs.id %}');" title="{% trans "CIFS Settings" %}">
@@ -40,7 +40,7 @@
                <strong>{% trans "Dynamic DNS" %}</strong>
            </td>
            <td>
-   	    <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="dynamicdns_settings"
@@ -53,10 +53,23 @@
                <strong>{% trans "FTP" %}</strong>
            </td>
            <td>
-   	    <img id="ftp_toggle" name="ftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="ftp_toggle" name="ftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="ftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "FTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="FTP",oid=ftp.id %}');" title="{% trans "FTP Settings" %}">
+           </td>
+       </tr>
+      <tr>
+           <td>
+               <strong>{% trans "iSCSI" %}</strong>
+           </td>
+           <td>
+           <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           </td>
+           <td>
+               <img id="istgt_settings"
+               src="{{ STATIC_URL }}images/ui/buttons/settings.png"
+               onClick="Menu.openISCSI();" title="{% trans "ISCSI Settings" %}">
            </td>
        </tr>
        <tr>
@@ -64,7 +77,7 @@
                <strong>{% trans "LDAP" %}</strong>
            </td>
            <td>
-   	    <img id="ldap_toggle" name="ldap_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="ldap_toggle" name="ldap_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="ldap_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "LDAP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="LDAP",oid=ldap.id %}');" title="{% trans "LDAP Settings" %}">
@@ -75,7 +88,7 @@
                <strong>{% trans "NFS" %}</strong>
            </td>
            <td>
-   	            <img id="nfs_toggle" name="nfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                   <img id="nfs_toggle" name="nfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="nfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "NFS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="NFS",oid=nfs.id %}');" title="{% trans "NFS Settings" %}">
@@ -86,18 +99,18 @@
                <strong>{% trans "Rsync" %}</strong>
            </td>
            <td>
-   	    <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "rsync" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "rsync" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="rsync_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Rsync Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="Rsyncd",oid=rsyncd.id %}');" title="{% trans "Rsync Settings" %}">
            </td>
-       </tr> 
+       </tr>
       <tr>
            <td>
                <strong>{% trans "SNMP" %}</strong>
            </td>
            <td>
-   	    <img id="snmp_toggle" name="snmp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="snmp_toggle" name="snmp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="snmp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SNMP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="SNMP",oid=snmp.id %}');" title="{% trans "SNMP Settings" %}">
@@ -119,7 +132,7 @@
                <strong>{% trans "SSH" %}</strong>
            </td>
            <td>
-   	    <img id="ssh_toggle" name="ssh_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="ssh_toggle" name="ssh_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="ssh_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SSH Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="SSH",oid=ssh.id %}');" title="{% trans "SSH Settings" %}">
@@ -130,7 +143,7 @@
                <strong>{% trans "TFTP" %}</strong>
            </td>
            <td>
-   	    <img id="tftp_toggle" name="tftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           <img id="tftp_toggle" name="tftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="TFTP",oid=tftp.id %}');" title="{% trans "TFTP Settings" %}">
@@ -147,18 +160,5 @@
                <img id="ups_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "UPS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="UPS",oid=ups.id %}');" title="{% trans "UPS Settings" %}">
            </td>
       </tr>
-      <tr>
-           <td>
-               <strong>{% trans "iSCSI" %}</strong>
-           </td>
-           <td>
-   	    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="istgt_settings"
-               src="{{ STATIC_URL }}images/ui/buttons/settings.png"
-               onClick="Menu.openISCSI();" title="{% trans "ISCSI Settings" %}">
-           </td>
-       </tr>
     </table>
 {% endblock %}
