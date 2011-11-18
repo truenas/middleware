@@ -973,6 +973,7 @@ class UFSDiskReplacementForm(DiskReplacementForm):
 
 class ReplicationForm(ModelForm):
     remote_hostname = forms.CharField(_("Remote hostname"),)
+    remote_port = forms.CharField(_("Remote port"), initial=22)
     remote_hostkey = forms.CharField(_("Remote hostkey"),widget=forms.Textarea())
     class Meta:
         model = models.Replication
@@ -988,8 +989,9 @@ class ReplicationForm(ModelForm):
                 for task in models.Task.objects.all()
              ]))
         self.fields['repl_filesystem'].choices = fs
-        if repl != None and repl.id != None:
+        if repl and repl.id:
             self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
+            self.fields['remote_port'].initial = repl.repl_remote.ssh_remote_port
             self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey
     def save(self):
         if self.instance.id == None:

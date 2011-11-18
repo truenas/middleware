@@ -405,6 +405,10 @@ class ReplRemote(Model):
             max_length=120,
             verbose_name=_("Remote hostname"),
             )
+    ssh_remote_port = models.IntegerField(
+            default=22,
+            verbose_name=_("Remote port"),
+            )
     ssh_remote_hostkey = models.CharField(
             max_length=2048,
             verbose_name=_("Remote hostkey"),
