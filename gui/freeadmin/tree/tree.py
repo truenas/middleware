@@ -46,6 +46,7 @@ class TreeType(object):
     order_child = True
     order = None
     append_app = True
+    append_url = None
     option_list = []
 
     _children = []
