@@ -396,7 +396,7 @@ class IPChoices(NICChoices):
 class TimeZoneChoices:
     """Populate timezone from /usr/share/zoneinfo choices"""
     def __init__(self):
-        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab')
+        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'')
         self._TimeZoneList = pipe.read().strip().split('\n')
         self._TimeZoneList = [ x[20:] for x in self._TimeZoneList ]
         self._TimeZoneList.sort()
