@@ -507,11 +507,15 @@ class notifier:
         self.__system("/usr/sbin/service mountd reload")
 
     def _restart_nfs(self):
+        self.__system("/usr/sbin/service lockd forcestop")
+        self.__system("/usr/sbin/service statd forcestop")
         self.__system("/usr/sbin/service mountd forcestop")
         self.__system("/usr/sbin/service nfsd forcestop")
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service mountd quietstart")
         self.__system("/usr/sbin/service nfsd quietstart")
+        self.__system("/usr/sbin/service statd quietstart")
+        self.__system("/usr/sbin/service lockd quietstart")
 
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
