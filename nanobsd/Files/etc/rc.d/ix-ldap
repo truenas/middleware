@@ -90,7 +90,7 @@ generate_ldapconf()
 	do
 		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
 
-		cat > "${nssconf}" <<-EOF
+		cat<<-EOF>"${nssconf}"
 		host ${hostname}
 		base ${basedn}
 		rootbinddn ${rootbasedn}
@@ -102,14 +102,14 @@ EOF
 		if [ "${ssl}" = "start_tls" ]; then
 			save_certificate "${id}"
 
-			cat >> "${nssconf}" <<-EOF
+			cat<<-EOF>>"${nssconf}"
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
 		elif [ "${ssl}" = "on" ]; then
 			save_certificate "${id}"
 
-			cat >> "${nssconf}" <<-EOF
+			cat<<-EOF>>"${nssconf}"
 			uri ldaps://${hostname}
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
@@ -130,13 +130,13 @@ EOF
 		echo "BASE ${basedn}" >> "${ldapconf}"
 		case "$ssl" in
 		start_tls)
-			cat >> "${ldapconf}" <<-EOF
+			cat<<-EOF>>"${ldapconf}"
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
 			;;
 		on)
-			cat >> "${ldapconf}" <<-EOF
+			cat<<-EOF>>"${ldapconf}"
 			URI ldaps://${hostname}
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
