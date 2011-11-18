@@ -37,7 +37,7 @@ generate_nss_ldap_conf()
 
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 
 
-	cat<<-EOF>"${nssconf}"
+	cat "${nssconf}" <<-EOF
 	host ${dcname}
 	base ${base}
 	uri ldap://${dcname}/
