@@ -63,7 +63,7 @@ generate_crontab()
 			if [ "${mode}" = "module" ]; then
 				echo -n "${path} ${host}::${module}"
 			else
-				echo -n "-e ssh ${path} ${host}:${remotepath}"
+				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' ${path} ${host}:${remotepath}"
 			fi
 
 			if [ ${quiet} -gt 0 ]; then
