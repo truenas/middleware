@@ -511,6 +511,22 @@
             dijit.byId(farray[i]).set('disabled', toset);
         }
 
+    }
+
+    rsyncModeToggle = function() {
+
+        var select = dijit.byId("id_rsync_mode");
+        var modname = dijit.byId("id_rsync_remotemodule");
+        var path = dijit.byId("id_rsync_remotepath");
+        var trm = modname.domNode.parentNode.parentNode;
+        var trp = path.domNode.parentNode.parentNode;
+        if(select.get('value') == 'ssh') {
+            dojo.style(trm, "display", "none");
+            dojo.style(trp, "display", "table-row");
+        } else {
+            dojo.style(trm, "display", "table-row");
+            dojo.style(trp, "display", "none");
+        }
 
     }
 
@@ -995,6 +1011,24 @@
         }
     }
 
+    __stack = [];
+    addToStack = function(f) {
+        __stack.push(f);
+    }
+
+    processStack = function() {
+
+        while(__stack.length > 0) {
+            f = __stack.pop();
+            try {
+                f();
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+    }
+
     commonDialog = function(attrs) {
         canceled = false;
         dialog = new dijit.Dialog({
@@ -1008,6 +1042,10 @@
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(attrs.nodes);
             },
+            onLoad: function() {
+                processStack();
+                this.layout();
+            }
         });
         if(attrs.onLoad) {
             f = dojo.hitch(dialog, attrs.onLoad);

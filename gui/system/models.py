@@ -379,9 +379,21 @@ class Rsync(Model):
             verbose_name=_("Remote Host"),
             help_text=_("IP Address or hostname"),
             )
+    rsync_mode = models.CharField(
+            max_length=20,
+            choices=choices.RSYNC_MODE_CHOICES,
+            default='module',
+            )
     rsync_remotemodule = models.CharField(
             max_length=120,
             verbose_name=_("Remote Module Name"),
+            blank=True,
+            help_text=_("Name of the module defined in the remote rsync daemon"),
+            )
+    rsync_remotepath = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote Path"),
+            blank=True,
             )
     rsync_desc = models.CharField(
             max_length=120,
