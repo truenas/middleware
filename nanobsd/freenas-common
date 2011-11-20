@@ -295,20 +295,6 @@ ${PKG_ONLY_MAKE_CONF}
 	echo "Automatically building a thin image with packages"
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
-	if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
-		# Optimization to avoid additional 20+ minutes of overhead
-		# when building unnecessary disk images.
-		#
-		# XXX: if this can be articulated better (along with the
-		# package build steps), this should be rolled into
-		# nanobsd.sh .
-		package_prep_build() {
-			pprint 2 "Skipping disk image build (exiting..)."
-			exit 0
-		}
-		customize_cmd package_prep_build
-		echo "Will terminate before disk images are built."
-	fi
 fi
 
 VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
@@ -321,6 +307,10 @@ $var=$val"
 	fi
 done
 
+if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
+	echo "Skipping post-package customize steps"
+	do_image=false
+else
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
@@ -522,7 +512,9 @@ remove_var_db_pkg()
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
 }
 late_customize_cmd remove_var_db_pkg
+fi # [ $PACKAGE_PREP_BUILD = 1 ]
 
+if $do_image; then
 last_orders() {
 	local cd_image_log
 	local full_image full_image_log
@@ -575,3 +567,4 @@ last_orders() {
 	fi
 
 }
+fi # $do_image
