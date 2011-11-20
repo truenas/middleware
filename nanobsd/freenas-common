@@ -301,7 +301,7 @@ else
 		#
 		# XXX: if this can be articulated better (along with the
 		# package build steps), this should be rolled into
-		# nanobsd.conf.
+		# nanobsd.sh .
 		package_prep_build() {
 			pprint 2 "Skipping disk image build (exiting..)."
 			exit 0
