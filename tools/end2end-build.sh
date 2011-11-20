@@ -117,7 +117,7 @@ for arch in $archs; do
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	if sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD -- -fi && env $BUILD_PASS2_ENV $BUILD"; then
+	if sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD"; then
 		post_images
 	else
 		clean=false
