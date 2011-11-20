@@ -46,6 +46,8 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
 NANO_IMAGES=2
+# Remove X11 crud too.
+NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11)/')
 FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
@@ -293,6 +295,20 @@ ${PKG_ONLY_MAKE_CONF}
 	echo "Automatically building a thin image with packages"
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
+	if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
+		# Optimization to avoid additional 20+ minutes of overhead
+		# when building unnecessary disk images.
+		#
+		# XXX: if this can be articulated better (along with the
+		# package build steps), this should be rolled into
+		# nanobsd.conf.
+		package_prep_build() {
+			pprint 2 "Skipping disk image build (exiting..)."
+			exit 0
+		}
+		customize_cmd package_prep_build
+		echo "Will terminate before disk images are built."
+	fi
 fi
 
 VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
@@ -313,12 +329,6 @@ hack_nsswitch_conf ( )
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 customize_cmd hack_nsswitch_conf
-
-default_root_password ( )
-{
-	CR "echo freenas | pw usermod root -h 0"
-}
-customize_cmd default_root_password
 
 add_gui()
 {
@@ -480,7 +490,9 @@ freenas_custom()
 	if [ "${DEBUG}" != 1 ]; then
 		pprint 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
-			find $dir -type f | xargs -n 1 strip 2>/dev/null || :
+			for f in $(find $dir -type f); do
+				strip 2>/dev/null $f || :
+			done
 		done
 	fi
 
