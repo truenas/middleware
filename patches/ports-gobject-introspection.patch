@@ -1,18 +1,17 @@
---- devel/gobject-introspection/Makefile	2011-03-05 04:05:28.000000000 -0800
-+++ devel/gobject-introspection/Makefile	2011-10-01 02:03:18.000000000 -0700
-@@ -8,7 +8,7 @@
+--- devel/gobject-introspection/Makefile~	2011-11-20 13:42:24.555693523 -0800
++++ devel/gobject-introspection/Makefile	2011-11-20 13:42:40.575690618 -0800
+@@ -8,6 +8,7 @@
  
  PORTNAME=	gobject-introspection
- PORTVERSION=	0.9.12
--PORTREVISION=	1
-+PORTREVISION=	2
+ PORTVERSION=	0.10.8
++PORTREVISION=	1
  CATEGORIES=	devel
  MASTER_SITES=	GNOME
- DIST_SUBDIR=	gnome2
-@@ -17,8 +17,7 @@
+ DIST_SUBDIR=	gnome3
+@@ -15,8 +16,7 @@
+ MAINTAINER=	gnome@FreeBSD.org
  COMMENT=	Generate interface introspection data for GObject libraries
  
- BUILD_DEPENDS=	flex:${PORTSDIR}/textproc/flex
 -LIB_DEPENDS=	ffi.5:${PORTSDIR}/devel/libffi \
 -		cairo.2:${PORTSDIR}/graphics/cairo
 +LIB_DEPENDS=	ffi.5:${PORTSDIR}/devel/libffi
