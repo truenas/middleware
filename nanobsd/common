@@ -55,33 +55,27 @@ NANO_PORTS=${NANO_PORTS:-/usr/ports}
 
 customize_cmd cust_allow_ssh_root
 
-add_etc_make_conf()
-{
-	touch ${NANO_WORLDDIR}/etc/make.conf
-}
-customize_cmd add_etc_make_conf
-
-clean_usr_local()
+clean_packages()
 {
 	LOCAL_DIR=${NANO_WORLDDIR}/usr/local
 	pprint 2 "Clean and create world directory (${LOCAL_DIR})"
-	if rm -rf ${LOCAL_DIR}/ > /dev/null 2>&1 ; then
-		true
-	else
-		chflags -R noschg ${LOCAL_DIR}/
-		rm -rf ${LOCAL_DIR}/
+	if [ -d "$LOCAL_DIR" ]; then
+		rm -Rf ${LOCAL_DIR} >/dev/null 2>&1
+		chflags -R noschg ${LOCAL_DIR}/ || :
+		rm -rf ${LOCAL_DIR}
 	fi
 	for f in bin etc lib libdata libexec sbin share; do
 		mkdir -p ${LOCAL_DIR}/$f
 	done
+	find /var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
 }
-customize_cmd clean_usr_local
+customize_cmd clean_packages
 
 cust_install_machine_files()
 {
 	echo "cd ${NANO_CFG_BASE}/Files"
 	cd ${NANO_CFG_BASE}/Files
-	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${NANO_WORLDDIR}
+	find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -dumpv ${NANO_WORLDDIR}
 }
 customize_cmd cust_install_files
 customize_cmd cust_install_machine_files 
@@ -257,7 +251,8 @@ do_add_port ()
 
 # Need to check if this function works with cross-compiling architecture!!!!
 # Recursive complex function: Generate one function for each ports
-add_port () {
+add_port ()
+{
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
     shift
@@ -288,90 +283,6 @@ add_port () {
 	NANO_PACKAGE_ONLY=0
     fi
 }
-
-compress_ko()
-{
-	if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]
-	then
-		gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
-	fi
-}
-
-freenas_custom()
-{
-	# Compress the kernel and preloaded modules
-	compress_ko kernel
-	compress_ko geom_mirror.ko
-	compress_ko geom_stripe.ko
-	compress_ko geom_raid3.ko
-	compress_ko geom_gate.ko
-	compress_ko ntfs.ko
-	compress_ko smbfs.ko
-
-	# nuke .pyc files (saves ~25MB on a fresh install)
-	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
-
-	# kill includes (saves 14MB)
-	find ${NANO_WORLDDIR}/usr/local/include \! -name 'pyconfig.h' -type f | xargs rm -f
-
-	# kill docs (saves 22MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
-
-	# and info (2MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/info
-
-	# and man pages (4.4MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/man
-
-	# and examples (1.7M)
-	rm -rf ${NANO_WORLDDIR}/usr/local/share/examples
-
-	# and groff_fonts junk (3MB)
-	rm -rf ${NANO_WORLDDIR}/usr/share/groff_font
-	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
-	rm -rf ${NANO_WORLDDIR}/usr/share/me
-
-	# Perl seems to be needed for build, but nothing after the
-	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 45MB)
-	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl*"
-	fi
-
-	# Kill all .a's that are installed (15MB)
-	find ${NANO_WORLDDIR} -name \*.a -delete
-
-	# magic.mgc is just a speed optimization.  Kill it for 1.7MB
-	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc
-
-	# strip binaries for ports (saves 10MB)
-	(strip ${NANO_WORLDDIR}/usr/local/*bin/* > /dev/null 2>&1) || true
-
-	# Last second tweaks
-	chown -R root:wheel ${NANO_WORLDDIR}/root
-	chmod 0755 ${NANO_WORLDDIR}/root/*
-	chmod 0755 ${NANO_WORLDDIR}/*
-	chown -R root:wheel ${NANO_WORLDDIR}/etc
-	chown -R root:wheel ${NANO_WORLDDIR}/boot
-	chown root:wheel ${NANO_WORLDDIR}/
-	chown root:wheel ${NANO_WORLDDIR}/usr
-        find ${NANO_WORLDDIR} -type f -name "*~" -delete
-        find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
-	mkdir ${NANO_WORLDDIR}/data/zfs
-        ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
-	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
-	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
-	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
-	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
-	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
-}
-late_customize_cmd freenas_custom
-
-remove_var_db_pkg() {
-	# Eats up ~7 MB on the install image.
-	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
-}
-late_customize_cmd remove_var_db_pkg
 
 __a=`mount | grep ${NANO_OBJ}/ | awk '{print length($3), $3;}' | sort -rn | awk '{$1=""; print;}'`
 if [ -n "$__a" ]; then

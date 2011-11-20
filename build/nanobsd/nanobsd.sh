@@ -166,6 +166,9 @@ SRCCONF=${SRCCONF:=/dev/null}
 # Where to put the obj files. Defaults to /usr/obj.
 MAKEOBJDIRPREFIX=/usr/obj
 
+# Files to exclude via find(1)
+NANO_IGNORE_FILES_EXPR='/CVS|\.git|\.svn'
+
 #######################################################################
 #
 # The functions which do the real work.
@@ -359,7 +362,7 @@ setup_nanobsd ( ) (
 		(
 		mkdir -p etc/local
 		cd usr/local/etc
-		find . -print | cpio -dumpl ../../../etc/local
+		find . | cpio -dumpl ../../../etc/local
 		cd ..
 		rm -rf etc
 		ln -s ../../etc/local etc
@@ -373,7 +376,7 @@ setup_nanobsd ( ) (
 		# the files in /$d will be hidden by the mount.
 		# XXX: configure /$d ramdisk size
 		mkdir -p conf/base/$d conf/default/$d
-		find $d -print | cpio -dumpl conf/base/
+		find $d | cpio -dumpl conf/base/
 	done
 
 	echo "$NANO_RAM_ETCSIZE" > conf/base/etc/md_size
@@ -414,7 +417,7 @@ setup_nanobsd_etc ( ) (
 prune_usr() (
 
 	# Remove all empty directories in /usr 
-	find ${NANO_WORLDDIR}/usr -type d -depth -print |
+	find ${NANO_WORLDDIR}/usr -type d -depth |
 		while read d
 		do
 			rmdir $d > /dev/null 2>&1 || true 
@@ -442,7 +445,7 @@ populate_slice ( ) (
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${mnt}
+	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
@@ -702,7 +705,8 @@ cust_allow_ssh_root () (
 
 cust_install_files () (
 	cd ${NANO_TOOLS}/Files
-	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -Ldumpv ${NANO_WORLDDIR}
+	find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | \
+	    cpio -Ldumpv ${NANO_WORLDDIR}
 )
 
 #######################################################################
@@ -720,8 +724,7 @@ cust_pkg () (
 	mkdir -p ${NANO_WORLDDIR}/Pkg
 	(
 		cd ${NANO_PACKAGE_DIR}
-		find ${NANO_PACKAGE_LIST} -print |
-		    cpio -Ldumpv ${NANO_WORLDDIR}/Pkg
+		find ${NANO_PACKAGE_LIST} | cpio -Ldumpv ${NANO_WORLDDIR}/Pkg
 	)
 
 	# Count & report how many we have to install
