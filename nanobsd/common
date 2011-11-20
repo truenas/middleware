@@ -52,8 +52,6 @@ PKGNAME_HACK=PYTHON_CMD=/bin/true
 # this to go into nanobsd.sh
 NANO_PORTS=${NANO_PORTS:-/usr/ports}
 
-customize_cmd cust_allow_ssh_root
-
 clean_packages()
 {
 	LOCAL_DIR=${NANO_WORLDDIR}/usr/local
