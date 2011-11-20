@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-15 16:44+0200\n"
+"PO-Revision-Date: 2011-11-19 22:38+0200\n"
 "Last-Translator: ahaoa <ahaoa.wang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -2863,7 +2863,7 @@ msgstr "名稱"
 
 #: sharing/models.py:50
 msgid "Export Read Only"
-msgstr "唯讀匯出"
+msgstr "提供唯讀"
 
 #: sharing/models.py:52
 msgid "Browsable to Network Clients"
@@ -2879,7 +2879,7 @@ msgstr "繼承權限"
 
 #: sharing/models.py:58
 msgid "Export Recycle Bin"
-msgstr "匯出資源回收筒"
+msgstr "提供資源回收筒"
 
 #: sharing/models.py:60
 msgid "Show Hidden Files"
@@ -3056,9 +3056,7 @@ msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
-msgstr ""
-"注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模"
-"式將匯出磁區作為資料磁區使用。"
+msgstr "注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模式將磁區作為資料磁區使用。"
 
 #: sharing/models.py:162
 msgid "Database Path"
@@ -3217,7 +3215,7 @@ msgstr "唯獨"
 
 #: sharing/models.py:238
 msgid "Export the share read only. Writes are not permitted."
-msgstr "唯讀匯出共享。無法寫入。"
+msgstr "共享唯讀。無法寫入。"
 
 #: sharing/models.py:241 system/models.py:447
 msgid "Quiet"
@@ -3226,7 +3224,7 @@ msgstr "靜音"
 #: sharing/models.py:242
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr "如果匯出共享有問題，不要在系統日誌出現警告。"
+msgstr "如果共享有問題，則不要在系統日誌出現警告。"
 
 #: sharing/models.py:246
 msgid "Maproot User"
@@ -3822,7 +3820,7 @@ msgstr "已經移除磁碟"
 
 #: storage/views.py:651
 msgid "The volume has been successfully exported"
-msgstr "磁區匯出成功"
+msgstr "磁區更新成功"
 
 #: storage/views.py:673
 msgid "The scrub process has begun"
@@ -5733,7 +5731,7 @@ msgid "Windows Shares"
 msgstr "Windows 檔案共享"
 
 msgid "The volume failed to export"
-msgstr "磁區無法匯出"
+msgstr "磁區無法提供服務"
 
 msgid "Cron Scheduler"
 msgstr "例行工作排程"
