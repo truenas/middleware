@@ -167,7 +167,7 @@ SRCCONF=${SRCCONF:=/dev/null}
 MAKEOBJDIRPREFIX=/usr/obj
 
 # Files to exclude via find(1)
-NANO_IGNORE_FILES_EXPR='/CVS|\.git|\.svn'
+NANO_IGNORE_FILES_EXPR='/(CVS|\.git|\.svn)'
 
 #######################################################################
 #
