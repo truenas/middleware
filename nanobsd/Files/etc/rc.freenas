@@ -445,6 +445,7 @@ var_to_sf()
 
 # Is a service enabled?
 #
+# Parameters:
 # 1 - service name, e.g. afp, cifs, etc.
 #
 # Returns:
