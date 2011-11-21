@@ -161,4 +161,5 @@ class PathField(forms.CharField):
                     break
             if not valid:
                 raise forms.ValidationError(_("The path must reside within a volume mount point"))
-        return value if not self.abspath else absv
+            return value if not self.abspath else absv
+        return value
