@@ -2014,6 +2014,7 @@ class notifier:
         #FIXME: This should not be here
         from django.core.urlresolvers import reverse
         from django.utils import simplejson
+        from storage.models import Disk
         provider = self.get_label_provider('ufs', volume.vol_name)
         class_name = provider.xpathEval("../../name")[0].content
 
@@ -2033,11 +2034,22 @@ class notifier:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
                 status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
+                qs = Disk.objects.filter(disk_name=name)
+                if qs:
+                    actions = {'edit_url': reverse('freeadmin_model_edit',
+                        kwargs={
+                        'app':'storage',
+                        'model': 'Disk',
+                        'oid': qs.get().id,
+                        })+'?deletable=false'}
+                else:
+                    actions = {}
                 items.append({
                     'type': 'disk',
                     'name': name,
                     'id': uid,
                     'status': status,
+                    'actions': simplejson.dumps(actions),
                 })
                 uid += 1
             for i in xrange(len(consumers), ncomponents):
@@ -2055,11 +2067,22 @@ class notifier:
                 uid += 1
         elif class_name == 'PART':
             name = provider.xpathEval("../name")[0].content
+            qs = Disk.objects.filter(disk_name=name)
+            if qs:
+                actions = {'edit_url': reverse('freeadmin_model_edit',
+                    kwargs={
+                    'app':'storage',
+                    'model': 'Disk',
+                    'oid': qs.get().id,
+                    })+'?deletable=false'}
+            else:
+                actions = {}
             items.append({
                 'type': 'disk',
                 'name': name,
                 'id': uid,
                 'status': 'ONLINE',
+                'actions': simplejson.dumps(actions),
             })
         return items
 
