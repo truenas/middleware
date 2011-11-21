@@ -21,7 +21,7 @@ generate_crontab()
 		echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
 	done
 
-	local user host module recursive times compress archive delete quiet preserveperm preserveattr extra mode remotepath
+	local user host module recursive times compress archive delete quiet preserveperm preserveattr extra mode remotepath direc
 	# Gnerate rsync
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT rsync_path,rsync_mode,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_remotepath,rsync_direction,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
