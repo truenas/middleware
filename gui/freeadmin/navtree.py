@@ -371,9 +371,10 @@ class NavTree(object):
         """
         Plugin nodes
         """
-        import urllib2
-        from django.utils import simplejson
-        for x in range(1):
+        #HACK: unused code yet
+        #import urllib2
+        #from django.utils import simplejson
+        for x in range(0):
             try:
                 response = urllib2.urlopen('http://10.1.1.1/', None, 1)
                 data = response.read()
