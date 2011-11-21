@@ -24,8 +24,8 @@ generate_crontab()
 	local user host module recursive times compress archive delete quiet preserveperm preserveattr extra mode remotepath
 	# Gnerate rsync
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT rsync_path,rsync_mode,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_remotepath,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
-	while read -r path mode minute hour daymonth month dayweek user host module remotepath recursive times compress archive delete quiet preserveperm preserveattr extra; do
+	"SELECT rsync_path,rsync_mode,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_remotepath,rsync_direction,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
+	while read -r path mode minute hour daymonth month dayweek user host module remotepath direc recursive times compress archive delete quiet preserveperm preserveattr extra; do
 		command=$(
 
 			echo -n "lockf -s -t 0 -k /mnt rsync "
@@ -61,9 +61,18 @@ generate_crontab()
 			echo -n "${extra} "
 
 			if [ "${mode}" = "module" ]; then
-				echo -n "${path} ${host}::${module}"
+				if [ "${direc}" = "push" ]; then
+					echo -n "${path} ${host}::${module}"
+				else
+					echo -n "${host}::${module} ${path}"
+				fi
 			else
-				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' ${path} ${host}:${remotepath}"
+				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' "
+				if [ "${direc}" = "push" ]; then
+					echo -n "${path} ${host}:${remotepath}"
+				else
+					echo -n "${host}:${remotepath} ${path}"
+				fi
 			fi
 
 			if [ ${quiet} -gt 0 ]; then

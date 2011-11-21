@@ -526,3 +526,8 @@ RSYNC_MODE_CHOICES = (
         ('module', _('Rsync module')),
         ('ssh', _('Rsync over SSH')),
 )
+
+RSYNC_DIRECTION = (
+        ('push', _('Push')),
+        ('pull', _('Pull')),
+)

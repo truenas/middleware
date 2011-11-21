@@ -395,6 +395,13 @@ class Rsync(Model):
             verbose_name=_("Remote Path"),
             blank=True,
             )
+    rsync_direction = models.CharField(
+            max_length=10,
+            verbose_name=_("Direction"),
+            help_text=_("Push - From local to remote machine. Pull - From remote to local machine."),
+            default='push',
+            choices=choices.RSYNC_DIRECTION,
+            )
     rsync_desc = models.CharField(
             max_length=120,
             verbose_name=_("Short description"),
