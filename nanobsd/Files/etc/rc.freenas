@@ -430,3 +430,33 @@ __SQL__
 	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
 	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
 }
+
+#
+#	General purpose utility functions.
+#
+
+# 'var to SQL Fields'
+#
+# sh vars don't work with ',', but SQL fields require use them as required separators.
+var_to_sf()
+{
+	echo $* | sed -e 's/ /, /g'
+}
+
+# Is a service enabled?
+#
+# 1 - service name, e.g. afp, cifs, etc.
+#
+# Returns:
+# 0 - enabled
+# 1 - disabled
+# 2 - not found
+srv_enabled()
+{
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	    "SELECT srv_enable from services_services where srv_service = '$1'" \
+	    2>/dev/null)
+	if [ $? -eq 0 -a "$enabled" -eq 1 ]; then
+	
+	fi
+}
