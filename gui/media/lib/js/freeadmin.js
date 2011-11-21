@@ -679,8 +679,17 @@
             dojo.xhrPost({
                 url: attrs.url,
                 content: newData,
-                handleAs: 'json',
-                load: loadOk,
+                handleAs: 'text',
+                handle: function(data, ioArgs) {
+                    var json;
+                    try {
+                        json = dojo.toJson(data);
+                        if(json.error != true && json.error != false) throw "toJson error";
+                    } catch(e) {
+                        rnode.set('content', data);
+                    }
+                    loadOk(json, ioArgs);
+                },
             });
 
         }
