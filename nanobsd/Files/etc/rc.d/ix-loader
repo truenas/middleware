@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-loader
+# REQUIRE: ix-update
 
 . /etc/rc.subr
 
