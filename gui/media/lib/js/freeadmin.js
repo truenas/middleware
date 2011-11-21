@@ -650,10 +650,12 @@
                    }
                 );
             var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', attrs.form.domNode)[0]);
-            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
-            } else {
-                sbtn.set('label', 'Save');
+            if(sbtn) {
+                if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                    sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                } else {
+                    sbtn.set('label', 'Save');
+                }
             }
             handleJson(rnode, data);
 
@@ -663,6 +665,18 @@
 
         };
 
+        var handleReq = function(data, ioArgs) {
+            var json;
+            try {
+                json = dojo.fromJson(data);
+                if(json.error != true && json.error != false) throw "toJson error";
+                loadOk(json, ioArgs);
+            } catch(e) {
+                console.log(e);
+                rnode.set('content', data);
+            }
+        };
+
         if( multipart ) {
 
             dojo.io.iframe.send({
@@ -670,8 +684,8 @@
                 method: 'POST',
                 content: {__form_id: attrs.form.id},
                 form: attrs.form.id,
-                handleAs: 'json',
-                load: loadOk,
+                handleAs: 'text',
+                handle: handleReq,
             });
 
         } else {
@@ -680,16 +694,7 @@
                 url: attrs.url,
                 content: newData,
                 handleAs: 'text',
-                handle: function(data, ioArgs) {
-                    var json;
-                    try {
-                        json = dojo.toJson(data);
-                        if(json.error != true && json.error != false) throw "toJson error";
-                    } catch(e) {
-                        rnode.set('content', data);
-                    }
-                    loadOk(json, ioArgs);
-                },
+                handle: handleReq,
             });
 
         }
