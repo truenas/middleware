@@ -529,9 +529,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
-        else:
+        if not (instance and instance.id):
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
             self.fields['allow'] = forms.BooleanField(
                                         label=_("Allow repeated GIDs"),
@@ -540,23 +538,16 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                                     )
 
     def clean_bsdgrp_group(self):
-        if self.instance.id is None:
-            bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
-            self.pw_checkname(bsdgrp_group)
-            try:
-                models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
-            except models.bsdGroups.DoesNotExist:
-                return bsdgrp_group
-            raise forms.ValidationError(_("A group with that name already exists."))
-        else:
-            return self.instance.bsdgrp_group
-
-    def clean_bsdgrp_gid(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            return self.instance.bsdgrp_gid
-        else:
-            return self.cleaned_data['bsdgrp_gid']
+        bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
+        self.pw_checkname(bsdgrp_group)
+        try:
+            qs = models.bsdGroups.objects.all()
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            qs.get(bsdgrp_group=bsdgrp_group)
+        except models.bsdGroups.DoesNotExist:
+            return bsdgrp_group
+        raise forms.ValidationError(_("A group with that name already exists."))
 
     def clean(self):
         cdata = self.cleaned_data
