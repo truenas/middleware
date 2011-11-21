@@ -10,14 +10,21 @@
 
 load_fusionio()
 {
-	if [ -f /boot/modules/iomemory-vsl.ko ]; then
-		kldload /boot/modules/iomemory-vsl.ko
+	if ! kldstat -v | grep -q iomemory-vsl; then
+		kldload iomemory-vsl
 	fi
+}
+
+unload_fusionio()
+{
+	# TODO: Insert fun fio_detach stuff here.
+
+	kldunload iomemory-vsl
 }
 
 name="ix-fusionio"
 start_cmd='load_fusionio'
-stop_cmd=':'
+stop_cmd='unload_fusionio'
 
 load_rc_config $name
 run_rc_command "$1"
