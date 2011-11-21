@@ -460,6 +460,7 @@ def dataset_delete(request, name):
         if form.is_valid():
             retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
             if retval == '':
+                notifier().restart("collectd")
                 return JsonResponse(message=_("Dataset successfully destroyed."))
             else:
                 return JsonResponse(error=True, message=retval)
@@ -476,6 +477,7 @@ def snapshot_delete(request, dataset, snapname):
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path=str(snapshot))
         if retval == '':
+            notifier().restart("collectd")
             return JsonResponse(message=_("Snapshot successfully deleted."))
         else:
             return JsonResponse(error=True, message=retval)
@@ -495,6 +497,7 @@ def snapshot_delete_bulk(request):
             retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
             if retval != '':
                 return JsonResponse(error=True, message=retval)
+        notifier().restart("collectd")
         return JsonResponse(message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {

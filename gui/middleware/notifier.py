@@ -902,7 +902,6 @@ class notifier:
                 from storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
-                self.restart("collectd")
         return retval
 
     def destroy_zfs_vol(self, name):
