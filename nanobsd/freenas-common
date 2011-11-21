@@ -193,10 +193,8 @@ add_port sysutils/tw_cli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
-add_port x11/libICE
-add_port x11/libSM
-add_port devel/dbus
-add_port devel/dbus-glib
+add_port devel/dbus WITHOUT_X11=y
+add_port devel/dbus-glib WITHOUT_X11=y
 add_port devel/libdaemon
 add_port databases/gdbm
 add_port net/avahi-app
