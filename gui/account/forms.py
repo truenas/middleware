@@ -488,7 +488,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
     def save(self):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
         bsduser_locked = self.cleaned_data['bsdusr_locked']
-	bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
+        bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
         instance = getattr(self, 'instance', None)
         _notifier = notifier()
         if bsduser_locked and instance.bsdusr_unixhash.startswith('*LOCKED*'):
@@ -574,8 +574,6 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         ins = super(bsdGroupsForm, self).save()
         notifier().reload("user")
         return ins
-
-attrs_dict = { 'class': 'required' }
 
 class bsdGroupToUserForm(Form):
     bsdgroup_to_user = FilteredSelectField(label = _('Member users'), choices=(), required=False)
