@@ -635,7 +635,7 @@ class SMARTTest(Model):
         return ', '.join(labels)
 
     def __unicode__(self):
-        return unicode(self.smarttest_disk)
+        return "%s (%s) " % (unicode(self.smarttest_disk), self.get_smarttest_type_display())
 
     def delete(self):
         super(SMARTTest, self).delete()
