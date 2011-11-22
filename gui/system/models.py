@@ -637,6 +637,13 @@ class SMARTTest(Model):
     def __unicode__(self):
         return unicode(self.smarttest_disk)
 
+    def delete(self):
+        super(SMARTTest, self).delete()
+        try:
+            notifier().restart("smartd")
+        except:
+            pass
+
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
