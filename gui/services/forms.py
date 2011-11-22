@@ -48,8 +48,6 @@ from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
 """ Services """
 
-attrs_dict = { 'class': 'required' }
-
 class servicesForm(ModelForm):
     class Meta:
         model = models.services
@@ -667,7 +665,7 @@ class iSCSITargetFileExtentForm(ModelForm):
 
 class iSCSITargetDeviceExtentForm(ModelForm):
     iscsi_extent_disk = forms.ChoiceField(choices=(),
-            widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
+            widget=forms.Select(), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
         if kwargs.has_key("instance"):
