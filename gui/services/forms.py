@@ -108,6 +108,16 @@ class NFSForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
+class PluginsForm(ModelForm):
+    class Meta:
+        model = models.Plugins
+    def save(self):
+        super(PluginsForm, self).save()
+        started = notifier().restart("plugins")
+        if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
+            raise ServiceFailed("plugins", _("The Plugins service failed to reload."))
+
+
 class FTPForm(ModelForm):
 
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
@@ -332,7 +342,6 @@ class UPSForm(ModelForm):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
 
 class ActiveDirectoryForm(ModelForm):
-    #file = forms.FileField(label="Kerberos Keytab File", required=False)
     ad_adminpw2 = forms.CharField(max_length=50,
             label=_("Confirm Administrator Password"),
             widget=forms.widgets.PasswordInput(),
@@ -354,8 +363,6 @@ class ActiveDirectoryForm(ModelForm):
             cdata['ad_adminpw'] = self.instance.ad_adminpw
         return cdata
     def save(self):
-        #if self.files.has_key('file'):
-        #    self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:

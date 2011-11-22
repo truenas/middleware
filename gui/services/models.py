@@ -727,6 +727,50 @@ class DynamicDNS(Model):
         deletable = False
         icon_model = u"DDNSIcon"
 
+class Plugins(Model):
+    jail_path = PathField(
+            verbose_name=_("Plugins jail path"),
+            help_text = _("Path to the plugins jail"),
+            default='',
+            blank=True
+            )
+    jail_name = models.CharField(
+            max_length=120,
+            verbose_name = _("Jail name"),
+            help_text = _("Name of the plugins jail"),
+            default='',
+            blank=True
+            )
+    jail_ip = models.IPAddressField(
+            max_length=120,
+            verbose_name=_("Jail IP address"),
+            help_text=_("Plugins jail IP address"),
+            default='',
+            blank=True
+            )
+    jail_netmask = models.IPAddressField(
+            max_length=120,
+            verbose_name=_("Jail netmask"),
+            help_text=_("Plugins jail netmask"),
+            default='',
+            blank=True
+            )
+    plugins_path = PathField(
+            verbose_name=_("Plugins Path"),
+            help_text = _("Path to the plugins directory"),
+            default='',
+            blank=True
+            )
+
+    class Meta:
+        verbose_name = _("Plugins")
+        verbose_name_plural = _("Plugins")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"SettingsIcon"
+
+
 class SNMP(Model):
     snmp_location = models.CharField(
             max_length=120,

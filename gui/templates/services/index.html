@@ -94,6 +94,17 @@
                <img id="nfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "NFS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="NFS",oid=nfs.id %}');" title="{% trans "NFS Settings" %}">
            </td>
        </tr>
+       <tr>
+           <td>
+               <strong>{% trans "Plugins" %}</strong>
+           </td>
+           <td>
+                   <img id="plugins_toggle" name="plugins_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "plugins" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           </td>
+           <td>
+               <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Plugins Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="Plugins",oid=plugins.id %}');" title="{% trans "Plugins Settings" %}">
+           </td>
+       </tr>
       <tr>
            <td>
                <strong>{% trans "Rsync" %}</strong>

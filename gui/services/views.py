@@ -100,6 +100,11 @@ def home(request):
     except IndexError:
         ldap = models.LDAP.objects.create()
 
+    try:
+        plugins = models.Plugins.objects.order_by("-id")[0]
+    except IndexError:
+        plugins = models.Plugins.objects.create()
+
     srv = models.services.objects.all()
     return render(request, 'services/index.html', {
         'srv': srv,
@@ -119,6 +124,7 @@ def home(request):
         'ssh': ssh,
         'activedirectory': activedirectory,
         'ldap': ldap,
+        'plugins': plugins,
         })
 
 def iscsi(request):
@@ -187,6 +193,7 @@ def servicesToggleView(request, formname):
         'rsync_toggle' : 'rsync',
         'smartd_toggle' : 'smartd',
         'ups_toggle' : 'ups',
+        'plugins_toggle' : 'plugins',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
