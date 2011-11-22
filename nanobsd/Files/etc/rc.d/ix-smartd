@@ -50,6 +50,8 @@ EOF
 					if(i+num < 24) printf "|"
 				}
 				printf ")"
+			} else if($0 == "*") {
+				printf "..";
 			} else if($0 != "..") {
 				printf "(";
 				for(i=1;i<NF+1;i++) {
@@ -75,6 +77,8 @@ EOF
 					if(i+num < 32) printf "|"
 				}
 				printf ")"
+			} else if($0 == "*") {
+				printf "..";
 			} else if($0 != "..") {
 				printf "(";
 				for(i=1;i<NF+1;i++) {
