@@ -597,14 +597,18 @@ class SMARTTest(Model):
             )
 
     def get_human_hour(self):
-        if self.smarttest_hour == '..':
+        if self.smarttest_hour in ('..', '*'):
             return _(u'Every hour')
+        elif self.smarttest_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.smarttest_hour.split('*/')[1]
         else:
             return self.smarttest_hour
 
     def get_human_daymonth(self):
-        if self.smarttest_daymonth == '..':
+        if self.smarttest_daymonth in ('..', '*'):
             return _(u'Everyday')
+        elif self.smarttest_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.smarttest_daymonth.split('*/')[1]
         else:
             return self.smarttest_daymonth
 
