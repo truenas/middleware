@@ -5,7 +5,7 @@ diff --exclude '*CVS*' -ur net/avahi-app/Makefile net/avahi-app/Makefile
  
  PORTNAME=	avahi
  PORTVERSION=	0.6.29
--PORTREVISION?=	0
+-PORTREVISION?=	1
 +PORTREVISION?=	2
  CATEGORIES?=	net dns
  MASTER_SITES=	http://www.avahi.org/download/
