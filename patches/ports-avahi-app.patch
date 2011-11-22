@@ -1,5 +1,5 @@
-diff --exclude CVS -ur net/avahi-app~~/Makefile net/avahi-app/Makefile
---- net/avahi-app~~/Makefile	2011-11-21 23:33:18.038691915 -0800
+diff --exclude '*CVS*' -ur net/avahi-app/Makefile net/avahi-app/Makefile
+--- net/avahi-app/Makefile	2011-11-21 23:33:18.038691915 -0800
 +++ net/avahi-app/Makefile	2011-11-21 23:58:36.487693255 -0800
 @@ -8,7 +8,7 @@
  
@@ -10,8 +10,43 @@ diff --exclude CVS -ur net/avahi-app~~/Makefile net/avahi-app/Makefile
  CATEGORIES?=	net dns
  MASTER_SITES=	http://www.avahi.org/download/
  PKGNAMESUFFIX?=	-app
-diff --exclude CVS -ur net/avahi-app~~/files/patch-initscript_freebsd_avahi-daemon.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in
---- net/avahi-app~~/files/patch-initscript_freebsd_avahi-daemon.sh.in	2011-11-21 23:39:41.429690911 -0800
+diff --exclude '*CVS*' -ur net/avahi-app/files/patch-avahi-daemon_main.c net/avahi-app/files/patch-avahi-daemon_main.c
+--- net/avahi-app/files/patch-avahi-daemon_main.c	2007-10-24 16:37:22.000000000 -0700
++++ net/avahi-app/files/patch-avahi-daemon_main.c	2011-11-22 00:28:26.597718901 -0800
+@@ -1,8 +1,8 @@
+---- avahi-daemon/main.c.orig	2007-08-26 00:48:40.000000000 -0400
+-+++ avahi-daemon/main.c	2007-08-26 00:49:04.000000000 -0400
+-@@ -317,6 +317,11 @@ static void update_browse_domains(void) 
+-     int n;
+-     char **p;
++--- avahi-daemon/main.c.orig	2011-02-23 05:10:07.000000000 -0800
+++++ avahi-daemon/main.c	2011-11-22 00:25:52.035691394 -0800
++@@ -320,6 +320,11 @@
++         return;
++     }
+  
+ +    if (!resolv_conf_search_domains) {
+ +	    avahi_server_set_browse_domains(avahi_server, NULL);
+@@ -10,5 +10,16 @@
+ +    }
+ +
+      l = avahi_string_list_copy(config.server_config.browse_domains);
+-     
++ 
+      for (p = resolv_conf_search_domains, n = 0; *p && n < BROWSE_DOMAINS_MAX; p++, n++) {
++@@ -1101,8 +1106,10 @@
++ 
++     ignore_signal(SIGPIPE);
++ 
+++#if 0
++     if (!(nss_support = avahi_nss_support()))
++         avahi_log_warn("WARNING: No NSS support for mDNS detected, consider installing nss-mdns!");
+++#endif
++ 
++     if (!(simple_poll_api = avahi_simple_poll_new())) {
++         avahi_log_error("Failed to create main loop object.");
+diff --exclude '*CVS*' -ur net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in
+--- net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in	2011-11-21 23:39:41.429690911 -0800
 +++ net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in	2011-11-21 23:42:47.054705193 -0800
 @@ -1,17 +1,49 @@
 ---- initscript/freebsd/avahi-daemon.sh.in.orig	Sun Nov  5 12:35:16 2006
@@ -70,8 +105,8 @@ diff --exclude CVS -ur net/avahi-app~~/files/patch-initscript_freebsd_avahi-daem
 + }
 + 
 + load_rc_config ${name}
-diff --exclude CVS -ur net/avahi-app~~/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in
---- net/avahi-app~~/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in	2011-11-21 23:39:41.439690855 -0800
+diff --exclude '*CVS*' -ur net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in
+--- net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in	2011-11-21 23:39:41.439690855 -0800
 +++ net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in	2011-11-21 23:42:20.242719313 -0800
 @@ -1,17 +1,49 @@
 ---- initscript/freebsd/avahi-dnsconfd.sh.in.orig	Sun Nov  5 12:35:20 2006
