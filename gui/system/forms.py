@@ -318,12 +318,6 @@ class SMARTTestForm(ModelForm):
             each = int(h.split('*/')[1])
             if each == 1:
                 return ".."
-            else:
-                minutes = []
-                for i in range(24):
-                    if i % each == 0:
-                        minutes.append("%.2d" % i)
-                return ",".join(minutes)
         return h
     def clean_smarttest_daymonth(self):
         h = self.cleaned_data.get("smarttest_daymonth")
@@ -331,12 +325,6 @@ class SMARTTestForm(ModelForm):
             each = int(h.split('*/')[1])
             if each == 1:
                 return ".."
-            else:
-                days = []
-                for i in range(1,32):
-                    if i % each == 0:
-                        days.append("%.2d" % i)
-                return ",".join(days)
         return h
     def clean_smarttest_month(self):
         m = eval(self.cleaned_data.get("smarttest_month"))

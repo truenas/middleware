@@ -42,7 +42,15 @@ EOF
 			fi
 			if [ -n "${type}" ]; then
 
-			nhour=$(echo "${hour}"|awk -F ',' '{ if($0 != "..") {
+			nhour=$(echo "${hour}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
+				printf "(";
+				num = int(substr($0, 3));
+				for(i=0;i<24;i+=num) {
+					printf "%.2d", i;
+					if(i+num < 24) printf "|"
+				}
+				printf ")"
+			} else if($0 != "..") {
 				printf "(";
 				for(i=1;i<NF+1;i++) {
 					printf "%.2d", $i;
@@ -59,7 +67,15 @@ EOF
 				};
 				printf ")"
 			} else printf $0 }')
-			ndaymonth=$(echo "${daymonth}"|awk -F ',' '{if($0 != "..") {
+			ndaymonth=$(echo "${daymonth}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
+				printf "(";
+				num = int(substr($0, 3));
+				for(i=1;i<32;i+=num) {
+					printf "%.2d", i;
+					if(i+num < 32) printf "|"
+				}
+				printf ")"
+			} else if($0 != "..") {
 				printf "(";
 				for(i=1;i<NF+1;i++) {
 					printf "%.2d", $i;
