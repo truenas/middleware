@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-14 12:04+0200\n"
+"PO-Revision-Date: 2011-11-22 08:43+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3527,7 +3527,7 @@ msgstr ""
 
 #: storage/forms.py:650
 msgid "Dataset Name"
-msgstr "Veri kümesi Adı"
+msgstr "Veri kümesi adı"
 
 #: storage/forms.py:651 storage/forms.py:683 storage/forms.py:712
 #: storage/forms.py:742
@@ -3562,7 +3562,7 @@ msgstr "0=Yok, örneğin: 1g"
 
 #: storage/forms.py:656 storage/forms.py:688
 msgid "Reserved space for this dataset and all children"
-msgstr "Bu veri kümesi ve tüm çocuklar için ayrılmış alan"
+msgstr "Bu veri kümesi ve tüm çocukları için ayrılmış alan"
 
 #: storage/forms.py:665
 msgid ""
@@ -3586,11 +3586,11 @@ msgstr "Bu birim için ayrılmış alan"
 
 #: storage/forms.py:740
 msgid "ZFS Volume Name"
-msgstr "ZFS Birim Adı"
+msgstr "ZFS birim adı"
 
 #: storage/forms.py:741
 msgid "Size for this ZFS Volume"
-msgstr "Bu ZFS Birimi için boyut"
+msgstr "Bu ZFS birimi için boyut"
 
 #: storage/forms.py:741
 msgid "Example: 1g"
@@ -3618,7 +3618,7 @@ msgstr "Mod"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr "ACL Türü"
+msgstr "ACL türü"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -5875,7 +5875,7 @@ msgid "Volume from which this dataset will be created on"
 msgstr "Bu birim hangi veri kümesi üzerinde oluşturulacak"
 
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Hangi birim bu ZFS Birimi olarak oluşturulur"
+msgstr "Oluşturulacak ZFS birimini seçin"
 
 msgid "Volume this group belongs to"
 msgstr "Birim bu gruba ait"
