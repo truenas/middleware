@@ -741,6 +741,12 @@ class Plugins(Model):
             default='',
             blank=True
             )
+    jail_interface = models.CharField(
+            max_length=300,
+            blank=False,
+            verbose_name=_("Jail interface"),
+            help_text=_("Interface for ths plugins jail")
+            )
     jail_ip = models.IPAddressField(
             max_length=120,
             verbose_name=_("Jail IP address"),
