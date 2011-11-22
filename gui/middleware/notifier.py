@@ -34,6 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
+from collections import OrderedDict
 import ctypes
 import glob
 import grp
@@ -63,7 +64,6 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
-from django.utils.datastructures import SortedDict
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -843,7 +843,7 @@ class notifier:
         proc = self.__pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
         out, err = proc.communicate()
         out = out.split('\n')
-        retval = SortedDict()
+        retval = OrderedDict()
         if proc.returncode == 0:
             for line in out:
                 if not line:

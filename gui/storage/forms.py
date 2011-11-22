@@ -25,6 +25,7 @@
 #
 #####################################################################
 import re
+from collections import OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
@@ -34,7 +35,6 @@ import types
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import QueryDict
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
 
 from dojango import forms
@@ -373,7 +373,7 @@ class VolumeWizardForm(forms.Form):
 
 
             zpoolfields = re.compile(r'zpool_(.+)')
-            grouped = SortedDict()
+            grouped = OrderedDict()
             grouped['root'] = {'type': group_type, 'disks': disk_list}
             for i, gtype in request.POST.items():
                 if zpoolfields.match(i):
