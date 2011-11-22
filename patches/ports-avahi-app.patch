@@ -1,0 +1,132 @@
+diff --exclude CVS -ur net/avahi-app~~/Makefile net/avahi-app/Makefile
+--- net/avahi-app~~/Makefile	2011-11-21 23:33:18.038691915 -0800
++++ net/avahi-app/Makefile	2011-11-21 23:58:36.487693255 -0800
+@@ -8,7 +8,7 @@
+ 
+ PORTNAME=	avahi
+ PORTVERSION=	0.6.29
+-PORTREVISION?=	0
++PORTREVISION?=	2
+ CATEGORIES?=	net dns
+ MASTER_SITES=	http://www.avahi.org/download/
+ PKGNAMESUFFIX?=	-app
+diff --exclude CVS -ur net/avahi-app~~/files/patch-initscript_freebsd_avahi-daemon.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in
+--- net/avahi-app~~/files/patch-initscript_freebsd_avahi-daemon.sh.in	2011-11-21 23:39:41.429690911 -0800
++++ net/avahi-app/files/patch-initscript_freebsd_avahi-daemon.sh.in	2011-11-21 23:42:47.054705193 -0800
+@@ -1,17 +1,49 @@
+---- initscript/freebsd/avahi-daemon.sh.in.orig	Sun Nov  5 12:35:16 2006
+-+++ initscript/freebsd/avahi-daemon.sh.in	Sun Nov  5 12:36:51 2006
+-@@ -9,10 +9,12 @@
++--- initscript/freebsd/avahi-daemon.sh.in	2011-11-21 23:21:53.516716427 -0800
+++++ initscript/freebsd/avahi-daemon.sh.in	2011-11-21 23:23:30.408691175 -0800
++@@ -9,27 +9,34 @@
+  # Avahi's mDNSResponder, a Zeroconf (Bonjour) service advertisement daemon.
+  #
+  
+ -avahi_daemon_enable=${avahi_daemon_enable-"NO"}
+- avahi_daemon_flags=${avahi_daemon_flags-"-D"}
+- 
+--. /etc/rc.subr
+-+. /etc/rc.subr
++-avahi_daemon_flags=${avahi_daemon_flags-"-D"}
++-
++ . /etc/rc.subr
+ +. %%GNOME_SUBR%%
+ +
+ +avahi_daemon_enable=${avahi_daemon_enable-${gnome_enable}}
+  
+  name=avahi_daemon
+  rcvar=`set_rcvar`
+++command="/usr/local/sbin/avahi-daemon"
+++pidfile="/var/run/avahi-daemon/pid"
++ 
++-start_cmd=avahi_daemon_start
+++start_precmd=avahi_daemon_prestart
++ stop_cmd=avahi_daemon_stop
++ 
++-avahi_daemon_bin=@sbindir@/avahi-daemon
++-
++-avahi_daemon_start() {
++-    checkyesno avahi_daemon_enable && echo "Starting avahi-daemon." && \
++-    	${avahi_daemon_bin} ${avahi_daemon_flags}
+++avahi_daemon_prestart()
+++{
+++	rc_flags="-D $rc_flags"
+++	return 0
++ }
++ 
++-avahi_daemon_stop() {
++-    checkyesno avahi_daemon_enable && echo "Stopping avahi-daemon." && \
++-    	${avahi_daemon_bin} -k
+++avahi_daemon_stop()
+++{
+++	if [ ! -f "$pidfile" ]; then
+++		[ -n "$rc_fast" ] && return 0
+++		_run_rc_notrunning
+++		return 1
+++	fi
+++	echo 'Stopping avahi-daemon.'
+++	${command} -k
++ }
++ 
++ load_rc_config ${name}
+diff --exclude CVS -ur net/avahi-app~~/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in
+--- net/avahi-app~~/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in	2011-11-21 23:39:41.439690855 -0800
++++ net/avahi-app/files/patch-initscript_freebsd_avahi-dnsconfd.sh.in	2011-11-21 23:42:20.242719313 -0800
+@@ -1,17 +1,49 @@
+---- initscript/freebsd/avahi-dnsconfd.sh.in.orig	Sun Nov  5 12:35:20 2006
+-+++ initscript/freebsd/avahi-dnsconfd.sh.in	Sun Nov  5 12:36:24 2006
+-@@ -12,10 +12,12 @@
++--- initscript/freebsd/avahi-dnsconfd.sh.in	2011-11-21 23:21:53.526747031 -0800
+++++ initscript/freebsd/avahi-dnsconfd.sh.in	2011-11-21 23:24:13.279691051 -0800
++@@ -12,27 +12,34 @@
+  # DNS servers in a DHCP-like fashion with mDNS.
+  #
+  
+ -avahi_dnsconfd_enable=${avahi_dnsconfd_enable-"NO"}
+- avahi_dnsconfd_flags=${avahi_dnsconfd_flags-"-D"}
+- 
+--. /etc/rc.subr
+-+. /etc/rc.subr
++-avahi_dnsconfd_flags=${avahi_dnsconfd_flags-"-D"}
++-
++ . /etc/rc.subr
+ +. %%GNOME_SUBR%%
+ +
+ +avahi_dnsconfd_enable=${avahi_dnsconfd_enable-${gnome_enable}}
+  
+  name=avahi_dnsconfd
+  rcvar=`set_rcvar`
+++command=/usr/local/sbin/avahi-dnsconfd
+++pidfile="/var/run/avahi-dnsconfd.pid"
++ 
++-start_cmd=avahi_dnsconfd_start
+++start_precmd=avahi_dnsconfd_prestart
++ stop_cmd=avahi_dnsconfd_stop
++ 
++-avahi_dnsconfd_bin=@sbindir@/avahi-dnsconfd
++-
++-avahi_dnsconfd_start() {
++-    checkyesno avahi_dnsconfd_enable && echo "Starting avahi-dnsconfd." && \
++-    	${avahi_dnsconfd_bin} ${avahi_dnsconfd_flags}
+++avahi_dnsconfd_prestart()
+++{
+++	rc_flags="-D $rc_flags"
+++	return 0
++ }
++ 
++-avahi_dnsconfd_stop() {
++-    checkyesno avahi_dnsconfd_enable && echo "Stopping avahi-dnsconfd." && \
++-    	${avahi_dnsconfd_bin} -k
+++avahi_dnsconfd_stop()
+++{
+++	if [ ! -f "$pidfile" ]; then
+++		[ -n "$rc_fast" ] && return 0
+++		_run_rc_notrunning
+++		return 1
+++	fi
+++	echo 'Stopping avahi-dnsconfd.'
+++	${command} -k
++ }
++ 
++ load_rc_config ${name}
