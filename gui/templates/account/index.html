@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="title: '{% trans "My Account"|force_escape|force_escape %}', nested: true, doLayout: true" style="width:100%;" id="tab_account">
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Change Admin User"|force_escape|force_escape %}'
     {% if focus_form == "account.ChangeAdmin" %}, selected: true{% endif %},

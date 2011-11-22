@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <form data-dojo-type="dijit.form.Form" enctype="multipart/form-data" id="uploadconfigform" name="uploadconfigform" method="post">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     formSubmit(this, e, '{% url system_configupload %}');

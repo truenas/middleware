@@ -208,20 +208,17 @@ class VLANForm(ModelForm):
         notifier().start("network")
         return retval
 
-attrs_dict = { 'class': 'required' }
-
 class LAGGInterfaceForm(forms.Form):
     lagg_protocol = forms.ChoiceField(choices=choices.LAGGType,
-                          widget=forms.RadioSelect(attrs=attrs_dict))
+                          widget=forms.RadioSelect())
     lagg_interfaces = forms.MultipleChoiceField(
-                            widget=forms.SelectMultiple(attrs=attrs_dict),
+                            widget=forms.SelectMultiple(),
                             label = _('Physical NICs in the LAGG')
                             )
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
         self.fields['lagg_interfaces'].choices = list(choices.NICChoices(nolagg = True))
-
 
 class LAGGInterfaceMemberForm(ModelForm):
     lagg_physnic = forms.ChoiceField()

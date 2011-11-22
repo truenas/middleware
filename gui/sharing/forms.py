@@ -39,8 +39,6 @@ from freenasUI.services.models import services
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 
-attrs_dict = { 'class': 'required', 'maxHeight': 200 }
-
 """ Shares """
 
 class CIFS_ShareForm(ModelForm):

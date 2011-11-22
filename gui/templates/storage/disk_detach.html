@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     formSubmit(this, e, '{% url storage_disk_detach vname=vname label=label %}');

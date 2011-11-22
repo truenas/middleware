@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url storage_zpool_disk_remove vname=vname label=label %}');
