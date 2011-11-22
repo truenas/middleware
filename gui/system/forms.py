@@ -294,8 +294,20 @@ class SMARTTestForm(ModelForm):
             ins.smarttest_month = ins.smarttest_month.replace("10", "a").replace("11", "b").replace("12", "c")
             if ins.smarttest_daymonth == "..":
                 ins.smarttest_daymonth = '*/1'
+            elif ',' in ins.smarttest_daymonth:
+                days = [int(day) for day in ins.smarttest_daymonth.split(',')]
+                gap = days[1] - days[0]
+                everyx = range(0, 32, gap)[1:]
+                if everyx == days:
+                    ins.smarttest_daymonth = '*/%d' % gap
             if ins.smarttest_hour == "..":
                 ins.smarttest_hour = '*/1'
+            elif ',' in ins.smarttest_hour:
+                hours = [int(hour) for hour in ins.smarttest_hour.split(',')]
+                gap = hours[1] - hours[0]
+                everyx = range(0, 24, gap)
+                if everyx == hours:
+                    ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
     def save(self):
         super(SMARTTestForm, self).save()
