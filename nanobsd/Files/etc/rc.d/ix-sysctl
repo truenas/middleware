@@ -4,36 +4,26 @@
 #
 
 # PROVIDE: ix-sysctl
-# BEFORE: sysctl
+# REQUIRE: ix-update sysctl
 
 . /etc/rc.subr
 
-generate_sysctl()
+set_sysctl()
 {
-    local IFS=\|
-    local var value comment
-    cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
-    # Generate sysctls
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-    	"SELECT sysctl_mib,sysctl_value,sysctl_comment FROM system_sysctl ORDER BY id" | \
-	while read var value comment; do
-            (echo -n "${var}=\"${value}\""
-             if [ -n "$comment" ]; then
-                 echo -e " # $comment"
-             else
-                 echo
-             fi) >> /etc/sysctl.conf
-    done
-}
+	local IFS=\|
+	local var value
 
-original_sysctl()
-{
-    cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
+	# Generate sysctls
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		"SELECT sysctl_mib, sysctl_value FROM system_sysctl ORDER BY id" | \
+	while read var value; do
+		sysctl ${var}=\"${value}\"
+	done
 }
 
 name="ix-sysctl"
-start_cmd='generate_sysctl'
-stop_cmd='original_sysctl'
+start_cmd='set_sysctl'
+stop_cmd=':'
 
 load_rc_config $name
 run_rc_command "$1"
