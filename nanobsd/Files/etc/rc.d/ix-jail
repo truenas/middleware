@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-jail
+# BEFORE: jail
+
+. /etc/rc.freenas
+
+get_plugins_jail_name()
+{
+	jail_name=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jail_name
+
+	FROM
+		services_plugins
+
+	ORDER BY	
+		-id
+
+	LIMIT 1;
+	")
+
+	echo "${jail_name}"
+}
+    
+generate_plugins_jail_config()
+{
+	local IFS="|"
+	local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
+
+	grep -v "jail_" /etc/rc.conf > "${tmpfile}"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jail_path,
+		jail_name,
+		jail_ip,
+		jail_netmask,
+		jail_interface
+
+	FROM
+		services_plugins
+
+	ORDER BY	
+		-id
+
+	LIMIT 1
+	" | \
+	while read path name ip netmask iface
+	do
+		touch "/etc/fstab.${name}"
+
+		# No VIM colors needed here
+		cat<<-__EOF__>>"${tmpfile}"
+
+		# do this through alias code
+		#ifconfig_${iface}_alias0="inet ${ip} netmask ${netmask}"
+
+		jail_${name}_rootdir="${path}"
+		jail_${name}_hostname="${name}"
+		jail_${name}_ip="${ip}"
+		jail_${name}_devfs_enable="YES"
+		jail_${name}_devfs_enable="YES"
+		jail_${name}_devfs_ruleset="devfsrules_jail"
+		jail_${name}_fdescfs_enable="YES"
+		jail_${name}_procfs_enable="YES"
+		jail_${name}_mount_enable="YES"
+		jail_sysvipc_allow="YES"
+		jail_list="${name}"
+		jail_enable="YES"
+__EOF__
+	done	
+
+	mv "${tmpfile}" /etc/rc.conf
+	return $?
+}
+
+
+plugins_jail_start()
+{
+	if srv_enabled plugins
+	then
+		generate_plugins_jail_config
+	fi
+}
+
+plugins_jail_stop()
+{
+	if srv_enabled plugins
+	then
+		jail_name="$(get_plugins_jail_name)"
+		if [ -n "${jail_name}" ]
+		then
+			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
+
+			grep -v "jail_" /etc/rc.conf > "${tmpfile}"
+			mv "${tmpfile}" /etc/rc.conf
+
+			rm -f "/etc/fstab.${jail_name}"
+		fi
+	fi
+}
+
+
+
+name="ix-jail"
+start_cmd='plugins_jail_start'
+stop_cmd='plugins_jail_stop'
+            
+load_rc_config $name
+run_rc_command "$1"
