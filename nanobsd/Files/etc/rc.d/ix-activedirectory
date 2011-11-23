@@ -10,10 +10,6 @@
 
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
 
-: ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="100m"}
-
-
 generate_nss_ldap_conf()
 {
 	local IFS="|"
@@ -37,7 +33,7 @@ generate_nss_ldap_conf()
 
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 
 
-	cat<<-EOF>"${nssconf}"
+	cat > "${nssconf}" <<-EOF
 	host ${dcname}
 	base ${base}
 	uri ldap://${dcname}/
@@ -75,32 +71,6 @@ setup_homedirs()
 
 	mount -ur /
 }
-
-create_cache_filesystem()
-{
-	res=1
-	if mount | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}" 2>/dev/null
-	then
-		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
-			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
-
-		if ! umount "${FREENAS_CACHEDIR}" >/dev/null 2>&1
-		then
-			return ${res}
-		fi
-
-		mdconfig -d -u "${mddev}"
-	fi
-
-	mkdir -p "${FREENAS_CACHEDIR}"
-	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"
-	then
-		res=0
-	fi
-
-	return ${res}
-}
-
 
 activedirectory_start()
 {

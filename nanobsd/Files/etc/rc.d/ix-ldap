@@ -14,9 +14,6 @@
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 
-: ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="100m"}
-
 save_certificate()
 {
 	local ldap_id="${1}"
@@ -90,7 +87,7 @@ generate_ldapconf()
 	do
 		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
 
-		cat<<-EOF>"${nssconf}"
+		cat>"${nssconf}" <<-EOF
 		host ${hostname}
 		base ${basedn}
 		rootbinddn ${rootbasedn}
@@ -102,14 +99,14 @@ EOF
 		if [ "${ssl}" = "start_tls" ]; then
 			save_certificate "${id}"
 
-			cat<<-EOF>>"${nssconf}"
+			cat >>"${nssconf}" <<-EOF
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
 		elif [ "${ssl}" = "on" ]; then
 			save_certificate "${id}"
 
-			cat<<-EOF>>"${nssconf}"
+			cat >>"${nssconf}" <<-EOF
 			uri ldaps://${hostname}
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
@@ -130,13 +127,13 @@ EOF
 		echo "BASE ${basedn}" >> "${ldapconf}"
 		case "$ssl" in
 		start_tls)
-			cat<<-EOF>>"${ldapconf}"
+			cat >>"${ldapconf}" <<-EOF
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
 			;;
 		on)
-			cat<<-EOF>>"${ldapconf}"
+			cat >>"${ldapconf}" <<-EOF
 			URI ldaps://${hostname}
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
@@ -174,29 +171,6 @@ setup_homedirs()
 	mount -uw /
 	ln -sfh "${hdir}" /home 2>/dev/null
 	mount -ur /
-}
-
-create_cache_filesystem()
-{
-	res=1
-	mount 2>/dev/null | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"
-	if [ $? -eq 0 ]; then
-		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
-			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
-
-		if ! umount "${FREENAS_CACHEDIR}" >/dev/null 2>&1; then
-			return ${res}
-		fi
-
-		mdconfig -d -u "${mddev}"
-	fi
-
-	mkdir -p "${FREENAS_CACHEDIR}"
-	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"; then
-		res=0
-	fi
-
-	return ${res}
 }
 
 ldap_enabled()

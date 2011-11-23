@@ -82,12 +82,8 @@ class FreeNAS_BaseCache(object):
         return pickle.loads(self.__cache.get(key))
 
     def __setitem__(self, key, value, overwrite=False):
-        haskey = self.__cache.has_key(key)
-        if (haskey and overwrite) or (not haskey):
+        if overwrite or key not in self.__cache:
             self.__cache[key] = pickle.dumps(value)
-
-    def has_key(self, key):
-        return self.__cache.has_key(key)
 
     def keys(self):
         return self.__cache.keys()
