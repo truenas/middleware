@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-06-16 13:52+0200\n"
-"Last-Translator: Pere <pedro.cerdan@uab.cat>\n"
+"PO-Revision-Date: 2011-11-22 14:47+0200\n"
+"Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -138,7 +138,7 @@ msgstr "Nivell 254 - Màxim rendiment, màxim ús d'energia"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "mínim"
+msgstr "Mínim"
 
 #: choices.py:97
 msgid "Medium"
@@ -377,11 +377,11 @@ msgstr "Dia(es)"
 
 #: choices.py:456
 msgid "Week(s)"
-msgstr "Mes(sos)"
+msgstr "Setmana(es)"
 
 #: choices.py:457
 msgid "Month(s)"
-msgstr "Any(s)"
+msgstr "Mes(sos)"
 
 #: choices.py:458
 msgid "Year(s)"
@@ -472,21 +472,21 @@ msgstr "Comprovació inmediata fora de línea (només ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "El nom no pot començar amb \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "El caràcter $ només està permès com caràcter final"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "El nom conté caràcters invàlids (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "El nom complert conté caràcters invàlids (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -503,15 +503,12 @@ msgid "Username"
 msgstr "Nom d'usuari"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Requeriment: 30 caràcters o menys. només lletres, dígits i @/./+/-/_ "
+msgstr "Requeriment: 16 caràcters o menys. només lletres, dígits i ./-/_ "
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Aquest valor només pot contenir lletres, números i caràcters @/./+/-/_ "
+msgstr "Aquest valor només pot contenir lletres, números i caràcters ./-/_ "
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -533,9 +530,8 @@ msgid "Shell"
 msgstr "Terminal"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Desactiva els logins"
+msgstr "Desactiva les contrasenyes al logins"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
@@ -547,10 +543,9 @@ msgstr "Grup primari"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Clau Pública SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
 msgstr "Un usuari amb aquest nom d'usuari ja existeix."
 
@@ -565,18 +560,16 @@ msgid "The two password fields didn't match."
 msgstr "Els dos camps de contrasenya no coincideixen."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "El directori home ha de començar amb /mnt/"
+msgstr "El directori home ha de començar amb /mnt/ o ser /noexistent"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "El directori home ha de començar amb /mnt/"
+msgstr "El directori home és no-escriptura, deixa-ho en blanc"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Contrasenya desactivada, deixa-ho en blanc"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -584,28 +577,24 @@ msgid "This field is required."
 msgstr "Aquest camp és requereix."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Contrasenya de la compartició"
+msgstr "Desactivar contrasenya"
 
 #: account/forms.py:466
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "El directori home ha de començar amb /mnt/"
+msgstr "El directori home ha de començar amb /mnt/ o ser /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Permet GIDs repetides"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Un usuari amb aquest nom d'usuari ja existeix."
+msgstr "Un grup amb aquest nom ja existeix."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Un usuari amb aquest nom d'usuari ja existeix."
+msgstr "Un grup amb aquest gid ja existeix"
 
 #: account/forms.py:582
 msgid "Member users"
@@ -617,7 +606,7 @@ msgstr "Grups auxiliars"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Un usuari no pot pertanya a més de 64 grups auxiliars"
 
 #: account/forms.py:627
 msgid "New password"
@@ -628,9 +617,8 @@ msgid "New password confirmation"
 msgstr "Confirmació de la nova contrasenya"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Canviar Contrasenya"
+msgstr "Canviar també la contrasenya de root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -644,7 +632,7 @@ msgstr ""
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Vols esborrar tots els usuaris amb aquest grup primari?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -809,7 +797,7 @@ msgstr "Apagar sistema"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "No ha estat possible recuperar l'estat actual"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -820,9 +808,9 @@ msgstr "%s actualitzat amb èxit."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Error"
+msgstr "Error: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -852,27 +840,27 @@ msgstr "Error"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "Connexió de xarxa (NIC)"
+msgstr "Connexió de xarxa NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Has d'especificar una adreça IPv4"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Has d'escollir una màscara IPv4"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Has d'especificar una adreça IPv6"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Has d'escollir una màscara de xarxa IPv6"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Has d'escollir entre Ipv4 o IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
@@ -925,7 +913,7 @@ msgstr "Etiquetes VLAN van de 1 - 4095 incloses"
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
-msgstr "Tarjes de xarxa físiques (NICs) al LAGG"
+msgstr "Tarjes de xarxa físiques NICs al LAGG"
 
 #: network/forms.py:276
 #, python-format
@@ -950,7 +938,7 @@ msgstr ""
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Has d'escollir entre IPv4 o IPv6 per l'alias"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -992,7 +980,7 @@ msgstr "Configuració Global"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Escull connexió de xarxa (NIC)"
+msgstr "Escull connexió de xarxa NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
@@ -1069,9 +1057,10 @@ msgid "Virtual Interface"
 msgstr "Interfície virtual"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Els noms de les interfícies han d'esser vlanXX on XX és un número"
+msgstr ""
+"Els noms de les interfícies han d'esser vlanXX on XX és un número. Exemple "
+"vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1158,9 +1147,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG afegit amb èxit"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "L'usuari %s no és vàlid."
+msgstr "Això no és una màscara valida"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1171,17 +1159,16 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Aquest camp és requereix per \"Home directories\"."
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "El servei NFS ha fallat la recàrrega"
+msgstr "El servei CIFS ha fallat la recàrrega."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
-msgstr "El servei AFP ha fallat la recàrrega"
+msgstr "El servei AFP ha fallat de recàrrega-se"
 
 #: services/forms.py:112
 msgid "The NFS service failed to reload."
-msgstr "El servei NFS ha fallat la recàrrega"
+msgstr "El servei NFS ha fallat de recàrrega-se"
 
 #: services/forms.py:116
 msgid "File Permission"
@@ -1195,7 +1182,7 @@ msgstr "Permís de directori"
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
 "Aquest valor ha d'estar entre 1024 i 65535, inclusivament. Poseu 0 pel valor "
-"per defecte."
+"per defecte"
 
 #: services/forms.py:151
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1209,30 +1196,29 @@ msgstr "Aquest camp es requereix per fer login anònim"
 
 #: services/forms.py:177
 msgid "The ftp service failed to start."
-msgstr "El servei FTP no ha pogut iniciar-se"
+msgstr "El servei FTP no ha pogut iniciar-se."
 
 #: services/forms.py:189
 msgid "The tftp service failed to reload."
-msgstr "El servei TFTP ha fallat la recàrrega"
+msgstr "El servei TFTP ha fallat la recàrrega."
 
 #: services/forms.py:196
 msgid "The SSH service failed to reload."
-msgstr "El servei SSH ha fallat la recàrrega"
+msgstr "El servei SSH ha fallat de recàrrega-se."
 
 #: services/forms.py:208 services/forms.py:233
 msgid "The Rsync service failed to reload."
-msgstr "El servei Rsync ha fallat la recàrrega"
+msgstr "El servei Rsync ha fallat de recàrrega-se."
 
 #: services/forms.py:218
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
 "El nom no pot contenir la barra inclinada (slash) o  tancament de corxets "
-"(closing square backet)"
+"(closing square backet)."
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Canviar Contrasenya"
+msgstr "Confirmar contrasenya"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1243,9 +1229,8 @@ msgid "The location must contain only alphanumeric characters, _ or -"
 msgstr ""
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "Al camp no té una adreça IP o xarxa vàlides"
+msgstr "Això no és adreça de correu vàlida"
 
 #: services/forms.py:282
 msgid ""
@@ -1259,7 +1244,7 @@ msgstr ""
 
 #: services/forms.py:293
 msgid "The SNMP service failed to reload."
-msgstr "El servei SNMP ha fallat la recàrrega"
+msgstr "El servei SNMP ha fallat la recàrrega."
 
 #: services/forms.py:305 services/models.py:780 services/models.py:841
 #: services/models.py:968
@@ -1278,9 +1263,8 @@ msgstr[0] "El correu %(email)s no és vàlid"
 msgstr[1] "Els següents correus no son vàlids: %(email)s"
 
 #: services/forms.py:335
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "El servei NFS ha fallat la recàrrega"
+msgstr "El servei UPS ha fallat la recàrrega."
 
 #: services/forms.py:340
 #, fuzzy
@@ -1289,11 +1273,11 @@ msgstr "Contrasenya de l'Administrador"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
-msgstr "El servei d'activedirectory ha fallat la recàrrega"
+msgstr "El servei d'activedirectory ha fallat la recàrrega."
 
 #: services/forms.py:376
 msgid "The ldap service failed to reload."
-msgstr "El servei d'LDAP ha fallat la recàrrega"
+msgstr "El servei d'LDAP ha fallat la recàrrega."
 
 #: services/forms.py:382 services/models.py:540
 msgid "Secret"
@@ -1309,7 +1293,7 @@ msgstr "Secret (Confirmar)"
 
 #: services/forms.py:387 services/forms.py:395
 msgid "Enter the same secret above for verification."
-msgstr "Introdueix el mateix secret que a dalt per verificar-lo"
+msgstr "Introdueix el mateix secret que a dalt per verificar-lo."
 
 #: services/forms.py:388
 msgid "Initiator Secret"
@@ -1329,29 +1313,26 @@ msgstr "El secret no coincideix"
 
 #: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
-"El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\""
+msgstr "El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\"."
 
 #: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
 msgstr "El secret del \"pper\" no pot ser el mateix que el secret d'usuari."
 
 #: services/forms.py:424 services/forms.py:427
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr ""
-"El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\""
+msgstr "El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\"."
 
 #: services/forms.py:444 services/forms.py:491 services/forms.py:608
 #: services/forms.py:666 services/forms.py:760 services/forms.py:785
 #: services/forms.py:817 services/forms.py:872 services/models.py:480
 #: services/models.py:676
 msgid "The iSCSI service failed to reload."
-msgstr "El servei iSCSI ha fallat la recàrrega"
+msgstr "El servei iSCSI ha fallat la recàrrega."
 
 #: services/forms.py:483
 msgid "LUN already exists in the same target."
-msgstr "El LUN ja existeix en el mateix target"
+msgstr "El LUN ja existeix en el mateix target."
 
 #: services/forms.py:494 services/models.py:359
 msgid "Controller Auth Group"
@@ -1372,14 +1353,14 @@ msgstr "Grup d'autenticació Discovery"
 #: services/forms.py:526
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Aquest valor ha de estar entre %(start) i %(end), inclosos"
+msgstr "Aquest valor ha de estar entre %(start) i %(end), inclosos."
 
 #: services/forms.py:534
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Aquest camp es requerit si el mètode de descobriment està posat a  CHAP o "
-"CHAP Mutual"
+"CHAP Mutual."
 
 #: services/forms.py:582
 msgid ""
@@ -1389,18 +1370,18 @@ msgstr ""
 
 #: services/forms.py:620
 msgid "You need to specify a filepath, not a directory."
-msgstr "Necesites especificar una ruta a fitxer, no un directori"
+msgstr "Necesites especificar una ruta a fitxer, no un directori."
 
 #: services/forms.py:624
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Necessites especificar un fitxer dins el teu volum/dataset"
+msgstr "Necessites especificar un fitxer dins el teu volum/dataset."
 
 #: services/forms.py:628
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"La teva ruta al Extent ha de estar dintre un punt de muntatge d'un volum/"
-"dataset"
+"La teva ruta al Extent ha de estar dintre un punt de muntatge d'un "
+"volum/dataset."
 
 #: services/forms.py:642
 msgid ""
@@ -1458,7 +1439,8 @@ msgstr "Servei"
 #: services/models.py:44
 msgid "Name of Service, should be auto-generated at build time"
 msgstr ""
-"El nom del servei ha de ser generat automàticament a l'hora de fer el build"
+"El nom del servei hauria de ser generat automàticament a l'hora de fer la "
+"compilació"
 
 #: services/models.py:47
 msgid "Enable Service"
@@ -1493,11 +1475,11 @@ msgid ""
 "15 characters)."
 msgstr ""
 "El nom del grup de treball apareixerá al ser demanat pels clients (màxim 15 "
-"caràcters)"
+"caràcters)."
 
 #: services/models.py:79
 msgid "Server description. This can usually be left blank."
-msgstr "Descripció del servidor. Es pot deixar en blanc"
+msgstr "Descripció del servidor. Es pot deixar en blanc."
 
 #: services/models.py:85
 msgid "DOS charset"
@@ -1664,7 +1646,7 @@ msgid ""
 "specified."
 msgstr ""
 "Nom del servidor. Si el camp es deixa buit, s'especifica el servidor per "
-"defecte"
+"defecte."
 
 #: services/models.py:188
 msgid "Guest Access"
@@ -1682,7 +1664,7 @@ msgstr "Accés local"
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
 "Permet a usuaris amb comptes locals a accedir a share d'Apple en aquesta "
-"caixa"
+"capsa (box)."
 
 #: services/models.py:204
 #, fuzzy
@@ -1711,7 +1693,7 @@ msgid ""
 msgstr ""
 "Especifica quant servidors s'han de crear. Hi ha d'haver suficients per "
 "manejar el nivell màxim de concurrencies dels seus clients, normament entre "
-"4 i 6"
+"4 i 6."
 
 #: services/models.py:226
 msgid "Asynchronous mode"
@@ -1723,7 +1705,7 @@ msgid ""
 "speed."
 msgstr ""
 "Habilita el mode asíncron, que ajudarà en el rendiment a la xarxa de "
-"velocitat per sobre de gigabit"
+"velocitat per sobre de gigabit."
 
 #: services/models.py:232 services/models.py:233
 #: templates/services/index.html:75
@@ -1739,8 +1721,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"El nom base (ex. iqn.2007-09.jp.ne.peach.istgt, mirar RFC 3720 i 3721 per "
-"detalls)  s'afegira al nom de destí que no comenci per 'iqn'."
+"El nom base (ex. iqn.2007-09.jp.ne.peach.istgt, mirar RFC 3720 3721 per "
+"detalls) s'afegira al nom de destí que no comenci per 'iqn.'"
 
 #: services/models.py:249
 msgid "Discovery Auth Method"
@@ -1768,7 +1750,7 @@ msgstr "Sessions màximes"
 
 #: services/models.py:273
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "Nombre màxim de sessions al mateix moment (16 per defecte)"
+msgstr "Nombre màxim de sessions al mateix moment (16 per defecte)."
 
 #: services/models.py:278
 msgid "Max. connections"
@@ -1788,7 +1770,7 @@ msgid ""
 "actual number is limited to QueueDepth of the target."
 msgstr ""
 "Nombre màxim de pre envimaents R2T en cada conexió (32 per defecte). El "
-"nombre actual és limitat la Profunditat de la cua (QueueDepth) del target"
+"nombre actual és limitat la Profunditat de la cua (QueueDepth) del target."
 
 #: services/models.py:290
 msgid "MaxOutstandingR2T"
@@ -1804,7 +1786,7 @@ msgstr "Longitud del primer buffer"
 
 #: services/models.py:297
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "Paràmetre d'inici iSCSI (65536 per defecte)"
+msgstr "paràmetre d'inici iSCSI (65536 per defecte)."
 
 #: services/models.py:302
 msgid "Max burst length"
@@ -3108,9 +3090,8 @@ msgid "CIFS Share"
 msgstr "UNIX Share"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "Comparticions UNIX"
+msgstr "Comparticions CIFS"
 
 #: sharing/models.py:104
 msgid ""
@@ -3369,14 +3350,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Utilitzar privilegis unix AFP3"
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Compartició d'Apple"
+msgstr "Compartició AFP"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "Compartició d'Apple"
+msgstr "Compartició FP"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3459,28 +3438,25 @@ msgid "Group to map all users to"
 msgstr "Grup per assignar a tots els usuaris"
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "Edita la compartició (share) de NFS (sistema de fitxers)"
+msgstr "Compartició NFS"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "Comparticions UNIX"
+msgstr "Comparticions NFS"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
 msgstr "Compartició"
 
 #: storage/forms.py:89
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Introdueix un numero positiu (sufix opcional M, G, T) o, 0"
+msgstr "Introdueix un numero positiu (sufix opcional K, M, G, T) o, 0"
 
 #: storage/forms.py:102
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "L'usuari %s no és vàlid."
+msgstr "El nombre %s no és vàlid"
 
 #: storage/forms.py:197 storage/forms.py:428 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3493,30 +3469,29 @@ msgstr "Forçar la mida del sector a 4096 bytes"
 
 #: storage/forms.py:202 templates/storage/wizard.html:154
 msgid "Specify custom path"
-msgstr ""
+msgstr "Especifíca una ruta (path) a mida"
 
 #: storage/forms.py:211
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Deixant això buit donarà al volum la ruta per defecte /mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:278
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"El nom del volum ha de començar amb una lletra i pot incloure nombres, \"-"
-"\", \"_\"."
+"El nom del volum ha de començar amb lletres i pot incloure nombres, \"-\", \"_\" "
+"i \".\"."
 
 #: storage/forms.py:292
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Ruta a l'Extent"
+msgstr "La ruta no existeix."
 
 #: storage/forms.py:295
 msgid "Path is not a directory."
-msgstr ""
+msgstr "La ruta no és un directori."
 
 #: storage/forms.py:303
 msgid "You must select a filesystem"
@@ -3540,13 +3515,12 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "El nom del volum NO pot començar amb c[0-9], mirror, raidz o spare"
 
 #: storage/forms.py:330
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "El teu grop ID no pot set superior de %d"
+msgstr "Els noms dels volums UFS no poden ser més grans de 9 caràcters"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "Els noms de volums UFS només poden contenir caràcters alfanumérics"
 
 #: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
@@ -3570,6 +3544,7 @@ msgstr "Has de seleccionar un volum."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"El volum \"%s\" no ha pogut importar-se, per més detalls mira l'estat del pool"
 
 #: storage/forms.py:650
 msgid "Dataset Name"
@@ -3611,22 +3586,20 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Espai reservat per aquest dataset i els seus fills"
 
 #: storage/forms.py:665
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"El nom del dataset ha de començar amb un caràcter alfanuméric i pot contenir "
-"només (-),(_) i (.)."
+"Els noms dels datasets han de començar amb un caràcter alfanuméric i poden "
+"contenir només  \"-\", \"_\", \":\" i \".\"."
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
 msgstr "Ja tens un dataset amb el mateix nom"
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Quota per aquest dataset"
+msgstr "Quota per aquest volum"
 
 #: storage/forms.py:715
 #, fuzzy
@@ -3642,9 +3615,8 @@ msgid "Size for this ZFS Volume"
 msgstr "Tamany per aquest volum ZFS"
 
 #: storage/forms.py:741
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Cap; exemple: 1g"
+msgstr "Exemple: 1g"
 
 #: storage/forms.py:749
 msgid ""
@@ -4069,7 +4041,7 @@ msgstr "Hora"
 
 #: system/forms.py:336 system/forms.py:413 system/forms.py:450
 msgid "day of month"
-msgstr "Dia del mes"
+msgstr "dia del mes"
 
 #: system/forms.py:342
 msgid "Place to temporarily place firmware file"
@@ -5887,14 +5859,12 @@ msgid "No sysctl defined."
 msgstr "No hi ha rsyncs definits"
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Afegir un rsync"
+msgstr "Afegir sysctl"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Afegir un rsync"
+msgstr "Afegir sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5926,40 +5896,40 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "Pas %(step)s of %(step_count)s"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Actualitzar"
+msgstr "Aplicar Actualització"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "L'estat del volum %s és SALUDABLE"
 
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "L'estat del volum %s és DEGRADAT"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "L'estat del %(volume)s és %(status)s"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Has de canviar la contrasenya de l'usuari admin (actualment no es requereix "
+"contrasenya per validar-se)"
 
 #: tools/alert.py:99
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "L'adreça del WebGUI no es pot enllaçar a %s; utilitzant comodins"
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Crític"
+msgstr "Alertes Crítiques"
 
 msgid "Volume from which this dataset will be created on"
 msgstr "Volum a partir del qual es crearà el dataset"
@@ -6088,9 +6058,9 @@ msgstr ""
 "Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
 "que serà utilitzat per accedir als serveis que son especificats pels "
 "convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
-"per a qualsevol client que es connecti al servei convidat. Aquest usuari "
-"a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
-"sessió valid"
+"per a qualsevol client que es connecti al servei convidat. Aquest usuari a "
+"d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
+"sessió valid."
 
 msgid "ZVol Name"
 msgstr "Nom ZVol"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2011-07-27 21:13+0200\n"
-"Last-Translator: nomentero <toni7@telecable.es>\n"
+"PO-Revision-Date: 2011-11-22 14:50+0200\n"
+"Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -476,7 +476,7 @@ msgstr "Prueba Fuera de línea Inmediata (ATA sólo)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Tú nombre no puede empezar con \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"

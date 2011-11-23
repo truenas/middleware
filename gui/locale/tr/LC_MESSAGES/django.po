@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-22 08:43+0200\n"
+"PO-Revision-Date: 2011-11-23 11:03+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -855,7 +855,7 @@ msgstr "IPv4 adresi de belirtilmek zorunda"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr "IPv+4 ağ maskeside değiştirln"
+msgstr "IPv4 ağ maskesinide değiştirln"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
@@ -3096,7 +3096,7 @@ msgstr ""
 
 #: sharing/models.py:108
 msgid "Share Comment"
-msgstr "Paylaşım Yorumu"
+msgstr "Paylaşım yorumu"
 
 #: sharing/models.py:115
 msgid "Share password"
@@ -3114,7 +3114,7 @@ msgstr ""
 
 #: sharing/models.py:121
 msgid "Share Character Set"
-msgstr "Paylaşılan Karakter Ayarları"
+msgstr "Paylaşım karakter kodlaması"
 
 #: sharing/models.py:123
 msgid ""
@@ -3126,7 +3126,7 @@ msgstr ""
 
 #: sharing/models.py:127
 msgid "Allow List"
-msgstr "İzin Verilen Liste"
+msgstr "İzin verilen liste"
 
 #: sharing/models.py:129
 msgid ""
@@ -3140,7 +3140,7 @@ msgstr ""
 
 #: sharing/models.py:133
 msgid "Deny List"
-msgstr "Reddedilen Listesi"
+msgstr "Reddedilen liste"
 
 #: sharing/models.py:135
 msgid ""
@@ -3152,7 +3152,7 @@ msgstr ""
 
 #: sharing/models.py:139
 msgid "Read-only Access"
-msgstr "Sadece-Okuma Erişimi"
+msgstr "Sadece-Okuma erişimi"
 
 #: sharing/models.py:141
 msgid ""
@@ -3164,7 +3164,7 @@ msgstr ""
 
 #: sharing/models.py:145
 msgid "Read-write Access"
-msgstr "Okuma-Yazma Erişimi"
+msgstr "Okuma-Yazma erişimi"
 
 #: sharing/models.py:147
 msgid ""
@@ -3176,7 +3176,7 @@ msgstr ""
 
 #: sharing/models.py:150
 msgid "Disk Discovery"
-msgstr "Disk Bulma"
+msgstr "Disk bulma"
 
 #: sharing/models.py:151
 msgid ""
@@ -3202,7 +3202,7 @@ msgstr ""
 
 #: sharing/models.py:162
 msgid "Database Path"
-msgstr "Veritabanı Yolu"
+msgstr "Veri tabanı yolu"
 
 #: sharing/models.py:164
 msgid ""
@@ -3214,7 +3214,7 @@ msgstr ""
 
 #: sharing/models.py:167
 msgid "Cache CNID"
-msgstr "CNID Önbelleği"
+msgstr "CNID önbelleği"
 
 #: sharing/models.py:168
 msgid ""
@@ -3229,7 +3229,7 @@ msgstr ""
 
 #: sharing/models.py:171
 msgid "Translate CR/LF"
-msgstr "CR/LF Çevirisi"
+msgstr "CR/LF çevirisi"
 
 #: sharing/models.py:172
 msgid ""
@@ -3248,7 +3248,7 @@ msgstr ""
 
 #: sharing/models.py:175
 msgid "Windows File Names"
-msgstr "Windows Dosya Adları"
+msgstr "Windows dosya adları"
 
 #: sharing/models.py:176
 msgid ""
@@ -3261,7 +3261,7 @@ msgstr ""
 
 #: sharing/models.py:179
 msgid "No .AppleDouble"
-msgstr "Hayır .ÇiftApple"
+msgstr ".AppleDouble yok"
 
 #: sharing/models.py:180
 msgid ""
@@ -3273,7 +3273,7 @@ msgstr ""
 
 #: sharing/models.py:183
 msgid "Zero Device Numbers"
-msgstr "Sıfır Aygıt Numaraları"
+msgstr "Sıfır aygıt numaraları"
 
 #: sharing/models.py:184
 msgid ""
@@ -3285,7 +3285,7 @@ msgstr ""
 
 #: sharing/models.py:187
 msgid "Disable File ID"
-msgstr "Dosya Kimlik Numaralarını (ID) Devre Dışı Bırak"
+msgstr "Dosya kimlik numaralarını (ID) devre dışı bırak"
 
 #: sharing/models.py:188
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -3315,7 +3315,7 @@ msgstr "Apple II istemcileri ile uyumluluğu sağlayın."
 
 #: sharing/models.py:199
 msgid "No Stat"
-msgstr "Kural Yok"
+msgstr "Kural yok"
 
 #: sharing/models.py:200
 msgid ""
@@ -3328,11 +3328,11 @@ msgstr ""
 
 #: sharing/models.py:203
 msgid "AFP3 Unix Privs"
-msgstr "AFP3 Unix Ayrıcalıkları"
+msgstr "AFP3 unix ayrıcalıkları"
 
 #: sharing/models.py:204
 msgid "Use AFP3 unix privileges."
-msgstr "AFP3 unix ayrıcalıkları kullan."
+msgstr "AFP3 unix ayrıcalıklarını kullan."
 
 #: sharing/models.py:211
 msgid "AFP Share"
@@ -3634,7 +3634,7 @@ msgstr "Yinelemeli anlık durum görüntüsü"
 
 #: storage/forms.py:847
 msgid "Snapshot Name"
-msgstr "Anlık Durum Görüntüsü Adı"
+msgstr "Anlık durum görüntüsü adı"
 
 #: storage/forms.py:854
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
@@ -3670,7 +3670,7 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr "Yeni diskleri (veri yok) işaretle"
+msgstr "Yeni diskleri işaretle (verileri siler)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -3694,23 +3694,23 @@ msgstr "Birim"
 
 #: storage/models.py:176
 msgid "Transfer Mode"
-msgstr "Aktarım Modu"
+msgstr "Aktarım modu"
 
 #: storage/models.py:182
 msgid "HDD Standby"
-msgstr "HDD Beklemede"
+msgstr "HDD beklemede"
 
 #: storage/models.py:188
 msgid "Advanced Power Management"
-msgstr "Gelişmiş Güç Yönetimi"
+msgstr "Gelişmiş güç yönetimi"
 
 #: storage/models.py:194
 msgid "Acoustic Level"
-msgstr "Akustik Seviye"
+msgstr "Akustik seviye"
 
 #: storage/models.py:198
 msgid "Enable S.M.A.R.T."
-msgstr "S.M.A.R.T. Etkinleştir"
+msgstr "S.M.A.R.T. etkinleştir"
 
 #: storage/models.py:202
 msgid "S.M.A.R.T. extra options"
@@ -5448,7 +5448,7 @@ msgstr "Temizlemek istediğinize emin misiniz?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
-msgstr "İlerleme sırasında bu sistem yükü artacak"
+msgstr "İlerleme sırasında sistem yükü artacaktır"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
@@ -5533,7 +5533,7 @@ msgstr "Bu birim içinde kullanılan alan: %(used)s"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
-msgstr "İhraç etmek istediğinizden emin misiniz?"
+msgstr "Silmek istediğinizden emin misiniz?"
 
 #: templates/storage/volumes.html:50
 msgid "Used"
@@ -5881,7 +5881,7 @@ msgid "Volume this group belongs to"
 msgstr "Birim bu gruba ait"
 
 msgid "Group Membership"
-msgstr "Grup Üyeliği"
+msgstr "Grup üyeliği"
 
 msgid "The disk group containing this disk"
 msgstr "Bu diskin bulunduğu disk grubu"
