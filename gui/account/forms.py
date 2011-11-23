@@ -422,36 +422,40 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance:
-            if instance.id:
-                self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            if instance.bsdusr_builtin:
-                self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
-                self.fields['bsdusr_group'].widget.attrs['readonly'] = True
-                self.fields['bsdusr_home'].widget.attrs['readonly'] = True
-            if instance.bsdusr_unixhash == '*':
-                self.fields['bsdusr_password_disabled'].initial = True
-            if instance.bsdusr_unixhash.startswith('*LOCKED*'):
-                self.fields['bsdusr_locked'].initial = True
-            try:
-                self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (instance.bsdusr_home)).read()
-            except:
-                self.fields['bsdusr_sshpubkey'].initial = ''
+        if self.instance.id:
+            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_username'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        if self.instance.bsdusr_builtin:
+            self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_uid'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdusr_group'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_group'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
+            self.fields['bsdusr_home'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_home'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        if self.instance.bsdusr_unixhash == '*':
+            self.fields['bsdusr_password_disabled'].initial = True
+        if self.instance.bsdusr_unixhash.startswith('*LOCKED*'):
+            self.fields['bsdusr_locked'].initial = True
+        try:
+            self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (self.instance.bsdusr_home)).read()
+        except:
+            self.fields['bsdusr_sshpubkey'].initial = ''
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
 
     def clean_bsdusr_uid(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_uid
         else:
             return self.cleaned_data.get("bsdusr_uid")
 
     def clean_bsdusr_group(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_group
         else:
             return self.cleaned_data.get("bsdusr_group")
@@ -460,8 +464,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_home(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_home
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
