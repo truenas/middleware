@@ -1413,21 +1413,18 @@ class notifier:
         return sum
 
     def get_disks(self):
-        disks = self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' ')
-        regexp_nocamcdrom = re.compile('^cd[0-9]')
 
         disksd = {}
 
-        for disk in disks:
-            if regexp_nocamcdrom.match(disk) == None:
-                info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
-                if len(info) > 3:
-                    disksd.update({
-                        disk: {
-                            'devname': info[0],
-                            'capacity': info[2]
-                        },
-                    })
+        for disk in self.__get_disks():
+            info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
+            if len(info) > 3:
+                disksd.update({
+                    disk: {
+                        'devname': info[0],
+                        'capacity': info[2]
+                    },
+                })
 
         return disksd
 
@@ -1898,9 +1895,7 @@ class notifier:
             return None
 
         elif tp == 'serial':
-            p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
-            output = p1.communicate()[0][:-1]
-            for devname in output.split(' '):
+            for devname in self.__get_disks():
                 serial = self.serial_from_device(devname)
                 if serial == value:
                     return devname
@@ -1973,8 +1968,8 @@ class notifier:
 
     def sync_disks(self):
         from storage.models import Disk
-        regexp_nocamcdrom = re.compile('^cd[0-9]')
-        disks = filter(lambda y: not regexp_nocamcdrom.match(y), self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' '))
+
+        disks = self.__get_disks()
 
         in_disks = {}
         for disk in Disk.objects.all():
@@ -2085,6 +2080,43 @@ class notifier:
                 'actions': simplejson.dumps(actions),
             })
         return items
+
+
+    def __find_root_dev(self):
+        """Find the root device from glabel status -s output.
+
+        NOTE: algorithm adapted from /root/updatep*.
+        """
+        # XXX: circular dependency
+        import common.system
+
+        sw_name = common.system.get_sw_name()
+
+        output = self.__pipeopen('glabel status -s'.split()).communicate()[0]
+
+        # e.g. ufs/FreeNASs, ufs/FreeNASp
+        root_label_re = re.compile('ufs/%s[ps][0-9]+.+\s+(\w+)[ps][0-9]+'
+                                   % (sw_name, ))
+        # Filter out lines like 'ufs/FreeNASs1a  N/A  da0s1a'
+        root_label_line = filter(lambda x: root_label_re.match(x),
+                                 map(str.strip, output.splitlines()))[0]
+        match = root_label_re.match(root_label_line)
+        return match.groups()[0]
+
+
+    def __get_disks(self):
+        """Return a list of available storage disks, e.g. not cds, the root
+           media device, etc."""
+
+        disks = \
+            self.__pipeopen('sysctl -n kern.disks'.split()).communicate()[0].split()
+
+        root_dev = self.__find_root_dev()
+
+        device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
+
+        return filter(lambda x: not device_blacklist_re.match(x), disks)
+
 
 def usage():
     usage_str = """usage: %s action command
