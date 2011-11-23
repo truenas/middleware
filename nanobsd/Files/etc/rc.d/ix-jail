@@ -59,7 +59,7 @@ generate_plugins_jail_config()
 		# do this through alias code
 		#ifconfig_${iface}_alias0="inet ${ip} netmask ${netmask}"
 
-		jail_${name}_rootdir="${path}"
+		jail_${name}_rootdir="${path}/${name}"
 		jail_${name}_hostname="${name}"
 		jail_${name}_ip="${ip}"
 		jail_${name}_devfs_enable="YES"
