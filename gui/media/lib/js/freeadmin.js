@@ -1316,11 +1316,12 @@
 
             require([
                 "freeadmin/tree/Tree",
+                "freeadmin/ESCDialog",
                 "freeadmin/tree/TreeLazy",
                 "freeadmin/tree/JsonRestStore",
                 "freeadmin/tree/ForestStoreModel",
                 "freeadmin/form/Cron",
-                ], function(Tree) {
+                ], function(Tree, ESCDialog) {
                 mytree = new freeadmin.tree.Tree({
                     id: "fntree",
                     model: treeModel,
@@ -1337,6 +1338,49 @@
                 }
                 );
                 dijit.byId("menupane").set('content', mytree);
+
+                var shell = new ESCDialog({
+                    id: "shell_dialog",
+                    content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
+                    style: "min-height:400px;background-color: black;",
+                    onShow: function() {
+
+                        function handler(msg,value) {
+                            switch(msg) {
+                            case 'conn':
+                                //startMsgAnim('Tap for keyboard',800,false);
+                                break;
+                            case 'disc':
+                                //startMsgAnim('Disconnected',0,true);
+                                _webshell = undefined;
+                                dijit.byId("shell_dialog").hide();
+                                break;
+                            case 'curs':
+                                cy=value;
+                                //scroll(cy);
+                                break;
+                            }
+                        }
+
+                        try {
+                            _webshell.islocked=false;
+                            _webshell.update();
+                        } catch(e) {
+                            _webshell=new webshell("shell_output", 80, 24, handler);
+                        }
+                        document.onkeypress=_webshell.keypress;
+                        document.onkeydown=_webshell.keydown;
+
+                    },
+                    onHide: function(e) {
+                        if(_webshell)
+                            _webshell.islocked=true;
+                        document.onkeypress=null;
+                        document.onkeydown=null;
+                    }
+                });
+                shell.placeAt("shell_dialog_holder");
+
             });
 
         });
