@@ -236,20 +236,9 @@ class VolumeWizardForm(forms.Form):
         disks = []
 
         # Grab disk list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        pipe = popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks | tr ' ' '\n' | grep -v '^cd[0-9]'` | /usr/bin/cut -f1,3")
-        diskinfo = pipe.read().strip().split('\n')
-        for disk in diskinfo:
-            devname, capacity = disk.split('\t')
-            disks.append(Disk(devname, capacity))
-
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base:
-            for d in list(disks):
-                if d.dev == rootdev_base.group(0):
-                    disks.remove(d)
+        # Root device already ruled out
+        for disk, info in notifier().get_disks().items():
+            disks.append(Disk(info['devname'], info['capacity']))
 
         # Exclude what's already added
         used_disks = []
