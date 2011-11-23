@@ -65,7 +65,6 @@ generate_plugins_jail_config()
 		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_ruleset="devfsrules_jail"
-		jail_${name}_fdescfs_enable="YES"
 		jail_${name}_procfs_enable="YES"
 		jail_${name}_mount_enable="YES"
 		jail_sysvipc_allow="YES"
