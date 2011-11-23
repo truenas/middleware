@@ -535,9 +535,10 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 }
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
+            self.fields['bsdgrp_gid'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         else:
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
             self.fields['allow'] = forms.BooleanField(
@@ -559,8 +560,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
             return self.instance.bsdgrp_group
 
     def clean_bsdgrp_gid(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             return self.instance.bsdgrp_gid
         else:
             return self.cleaned_data['bsdgrp_gid']
