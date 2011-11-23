@@ -639,7 +639,11 @@ class DiskFormPartial(ModelForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['disk_name'].widget.attrs['readonly'] = True
+            self.fields['disk_name'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
             self.fields['disk_identifier'].widget.attrs['readonly'] = True
+            self.fields['disk_identifier'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
     def clean_disk_name(self):
         return self.instance.disk_name
     def clean_disk_identifier(self):
@@ -871,6 +875,8 @@ class CloneSnapshotForm(Form):
     def __init__(self, *args, **kwargs):
         super(CloneSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['cs_snapshot'].widget.attrs['readonly'] = True
+        self.fields['cs_snapshot'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         self.fields['cs_snapshot'].initial = kwargs['initial']['cs_snapshot']
         self.fields['cs_snapshot'].value = kwargs['initial']['cs_snapshot']
         dataset, snapname = kwargs['initial']['cs_snapshot'].split('@')

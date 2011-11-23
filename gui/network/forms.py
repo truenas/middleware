@@ -221,15 +221,18 @@ class LAGGInterfaceForm(forms.Form):
         self.fields['lagg_interfaces'].choices = list(choices.NICChoices(nolagg = True))
 
 class LAGGInterfaceMemberForm(ModelForm):
-    lagg_physnic = forms.ChoiceField()
+    lagg_physnic = forms.ChoiceField(label=_("LAGG Physical NIC"))
     class Meta:
         model = models.LAGGInterfaceMembers
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceMemberForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             self.fields['lagg_interfacegroup'].widget.attrs['readonly'] = True
+            self.fields['lagg_interfacegroup'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
             self.fields['lagg_physnic'].widget.attrs['readonly'] = True
+            self.fields['lagg_physnic'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
             self.fields['lagg_physnic'].choices = ( (self.instance.lagg_physnic, self.instance.lagg_physnic), )
         else:
             self.fields['lagg_physnic'].choices = list(choices.NICChoices(nolagg=True, novlan=True))
@@ -243,11 +246,17 @@ class InterfaceEditForm(InterfacesForm):
         super(InterfaceEditForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
-            self.fields['int_interface'] = (
+            self.fields['int_interface'] = \
                 forms.CharField(label=self.fields['int_interface'].label,
-                                initial = instance.int_interface,
-                                widget = forms.TextInput(
-                                attrs = { 'readonly' : True })))
+                    initial = instance.int_interface,
+                    widget = forms.TextInput(
+                    attrs = {
+                        'readonly' : True,
+                        'class': 'dijitDisabled dijitTextBoxDisabled' \
+                                 ' dijitValidationTextBoxDisabled',
+                        },
+                    )
+                )
     def clean(self):
         super(InterfaceEditForm, self).clean()
         if 'int_interface' in self._errors:
