@@ -2109,7 +2109,7 @@ class notifier:
            media device, etc."""
 
         disks = \
-            self.__pipeopen('sysctl -n kern.disks'.split()).communicate()[0].split()
+            self.__pipeopen('sysctl -n kern.disks').communicate()[0].split()
 
         root_dev = self.__find_root_dev()
 
