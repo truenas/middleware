@@ -2092,7 +2092,7 @@ class notifier:
 
         sw_name = common.system.get_sw_name()
 
-        output = self.__pipeopen('glabel status -s'.split()).communicate()[0]
+        output = self.__pipeopen('glabel status -s').communicate()[0]
 
         # e.g. ufs/FreeNASs, ufs/FreeNASp
         root_label_re = re.compile('ufs/%s[ps][0-9]+.+\s+(\w+)[ps][0-9]+'
