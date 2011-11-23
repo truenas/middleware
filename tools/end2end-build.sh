@@ -30,7 +30,7 @@ setup() {
 	cd $tmpdir
 	if [ -d "$postdir_base" ]; then
 		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
-		mkdir -p "$postdir"
+		sudo mkdir -p "$postdir"
 	else
 		postdir=
 	fi
@@ -59,7 +59,7 @@ post_images() {
 		sudo sh -c "sha256 $file > $file.sha256.txt"
 
 		if [ -d "$postdir" ]; then
-			cp $file* "$postdir"/.
+			sudo cp $file* "$postdir"/.
 		fi
 
 		scp -o BatchMode=yes $file* \
