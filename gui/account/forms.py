@@ -363,6 +363,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         return bsduser
 
 class bsdUserPasswordForm(ModelForm):
+    bsdusr_username2 = forms.CharField(label=_("Username"), required=False)
     bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."))
@@ -370,12 +371,15 @@ class bsdUserPasswordForm(ModelForm):
     class Meta:
         model = models.bsdUsers
         fields = ('bsdusr_username',)
+        widgets = {
+            'bsdusr_username': forms.widgets.HiddenInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(bsdUserPasswordForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+        self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+        self.fields['bsdusr_username2'].widget.attrs['disabled'] = 'disabled'
+        self.fields['bsdusr_username2'].initial = self.instance.bsdusr_username
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
