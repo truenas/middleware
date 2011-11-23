@@ -386,8 +386,8 @@ setup_nanobsd ( ) (
 	echo "mount -o ro /dev/${NANO_DRIVE}s3" > conf/default/etc/remount
 
 	# Put /tmp on the /var ramdisk (could be symlink already)
-	rmdir tmp || true
-	rm tmp || true
+	rm -f tmp || :
+	rm -Rf tmp
 	ln -s var/tmp tmp
 
 	) > ${NANO_OBJ}/_.dl 2>&1
