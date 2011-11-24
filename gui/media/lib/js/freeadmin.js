@@ -1150,6 +1150,7 @@
         "dojo/parser",
         "dojo/NodeList-traverse",
         "dojo/NodeList-manipulate",
+        "dojo/fx",
         "dijit/_base/manager",
         "dijit/form/CheckBox",
         "dijit/form/FilteringSelect",

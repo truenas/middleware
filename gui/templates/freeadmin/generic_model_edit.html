@@ -86,23 +86,22 @@
                     var form = getForm(this);
                     var mode = this;
                     dojo.forEach(dojo.query(".advancedField", form.domNode), function(node, idx) {
-                        console.log(node);
-                        //var dj = dijit.getEnclosingWidget(node);
                         var tr = dojo.query(node).parents("tr")[0];
-                        if(mode.mode == 'basic')
+                        if(mode.mode == 'basic') {
                             dojo.style(tr, "display", "table-row");
-                        else
+                        } else {
                             dojo.style(tr, "display", "none");
+                        }
                     });
                     if(this.mode == 'basic') {
                         this.mode = 'advanced';
-                        this.set('label', 'Basic Mode');
+                        this.set('label', gettext('Basic Mode'));
                     } else {
                         this.mode = 'basic';
-                        this.set('label', 'Advanced Mode');
+                        this.set('label', gettext('Advanced Mode'));
                     }
                 </script>
-                Advanced Mode
+                {% trans "Advanced Mode" %}
             </button>
             {% endif %}
             {% block buttons_extra %}
