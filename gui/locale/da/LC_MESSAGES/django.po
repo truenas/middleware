@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-08-29 17:27+0200\n"
-"Last-Translator: Lego399 <lego399@gmail.com>\n"
+"PO-Revision-Date: 2011-11-23 12:27+0200\n"
+"Last-Translator: Spiffy <me@spiffy.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -471,7 +471,7 @@ msgstr "Øjeblikkelig offline test (kun ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Du navn må ikke starte med \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
@@ -502,9 +502,8 @@ msgid "Username"
 msgstr "Brugernavn"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Påkrævet. 30 tegn eller færre. Kun bogstaver, tal og tegnene @/./+/-/_"
+msgstr "Påkrævet. 16 tegn eller færre. Kun bogstaver, tal og tegnene @/./+/-/_"
 
 #: account/forms.py:200
 #, fuzzy

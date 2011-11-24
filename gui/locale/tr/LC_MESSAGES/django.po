@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-23 11:03+0200\n"
+"PO-Revision-Date: 2011-11-24 11:39+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1498,7 +1498,7 @@ msgstr "Domain için Zaman Sunucusu"
 
 #: services/models.py:107 services/models.py:195
 msgid "Guest account"
-msgstr "Misafir Hesabı"
+msgstr "Misafir hesabı"
 
 #: services/models.py:108 services/models.py:196
 msgid ""
@@ -2719,7 +2719,7 @@ msgstr "Buraya kendinden imzalı sertifika dosyasının içeriğini yerleştirin
 
 #: services/models.py:1181 sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr "Yardımcı Parametreler"
+msgstr "Yardımcı parametreler"
 
 #: services/models.py:1183
 msgid "These parameters are added to ldap.conf."
@@ -2964,7 +2964,8 @@ msgstr "'%s' IP'si geçerli değil."
 
 #: sharing/forms.py:134
 msgid "Maproot group requires Maproot user"
-msgstr "Harita Yöneticisi Kullanıcısı Harita Yöneticisi Grubunu gerektirir"
+msgstr ""
+"Yönetici haritası kullanıcısı yönetici haritası kullanıcı grubunu gerektirir"
 
 #: sharing/forms.py:136
 msgid "Mapall group requires Mapall user"
@@ -2983,31 +2984,31 @@ msgstr "Adı"
 
 #: sharing/models.py:50
 msgid "Export Read Only"
-msgstr "İhraç edilenler Sadece Okunabilir"
+msgstr "Sadece okunabilirleri ihraç et"
 
 #: sharing/models.py:52
 msgid "Browsable to Network Clients"
-msgstr "Ağ İstemcileri için Göz Atılabilir"
+msgstr "Ağ istemcileri bakabilir"
 
 #: sharing/models.py:54
 msgid "Inherit Owner"
-msgstr "Sahipliği Devral"
+msgstr "İzinleri devral"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
-msgstr "Kalıtsallık İzinleri"
+msgstr "Kalıtsallık izinleri"
 
 #: sharing/models.py:58
 msgid "Export Recycle Bin"
-msgstr "İhraç Geri Dönüşüm Kutusu"
+msgstr "Geri dönüşüm kutusuna taşı"
 
 #: sharing/models.py:60
 msgid "Show Hidden Files"
-msgstr "Gizli Dosyaları Göster"
+msgstr "Gizli dosyaları göster"
 
 #: sharing/models.py:65
 msgid "Guest Account"
-msgstr "Misafir Hesabı"
+msgstr "Misafir hesabı"
 
 #: sharing/models.py:66
 msgid ""
@@ -3025,15 +3026,15 @@ msgstr ""
 
 #: sharing/models.py:69
 msgid "Allow Guest Access"
-msgstr "Misafir Erişime İzin Ver"
+msgstr "Misafir erişimine izin ver"
 
 #: sharing/models.py:71
 msgid "Only Allow Guest Access"
-msgstr "Sadece Misafir Erişime İzin Ver"
+msgstr "Sadece misafir erişimine izin ver"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr "Ana Bilgisayarlara İzin Ver"
+msgstr "Ana bilgisayarlara izin ver"
 
 #: sharing/models.py:75
 msgid ""
@@ -3047,7 +3048,7 @@ msgstr ""
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr "Reddediecek Ana Bilgisayarlar"
+msgstr "Reddedilecek ana bilgisayarlar"
 
 #: sharing/models.py:80
 msgid ""
@@ -3358,7 +3359,7 @@ msgstr ""
 
 #: sharing/models.py:233
 msgid "All Directories"
-msgstr "Tüm Dizinler"
+msgstr "Tüm dizinler"
 
 #: sharing/models.py:234
 msgid ""
@@ -3370,7 +3371,7 @@ msgstr ""
 
 #: sharing/models.py:237
 msgid "Read Only"
-msgstr "Sadece Okunabilir"
+msgstr "Sadece okunabilir"
 
 #: sharing/models.py:238
 msgid "Export the share read only. Writes are not permitted."
@@ -3387,7 +3388,7 @@ msgstr "Paylaşılan, engellenen günlük uyarılarını dışa aktarmada sorun 
 
 #: sharing/models.py:246
 msgid "Maproot User"
-msgstr "Harita Yöneticisi Kullanıcısı"
+msgstr "Yönetici haritası kullanıcısı"
 
 #: sharing/models.py:250
 msgid "User to map root to"
@@ -3395,7 +3396,7 @@ msgstr "Kullanıcıdan harita yetkilisine"
 
 #: sharing/models.py:254
 msgid "Maproot Group"
-msgstr "Harita Yöneticisi Grubu"
+msgstr "Yönetici haritası grubu"
 
 #: sharing/models.py:258
 msgid "Group to map root to"
@@ -4748,7 +4749,7 @@ msgstr "KRİTİK"
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr "Tara"
+msgstr "Gözat"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10

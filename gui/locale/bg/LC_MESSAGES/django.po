@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-10-08 10:58+0200\n"
-"Last-Translator: Crazy <vmishev07051@gmail.com>\n"
+"PO-Revision-Date: 2011-11-23 18:58+0200\n"
+"Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -320,11 +320,11 @@ msgstr "Споделен CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "Батерията на UPS-a се изтощава"
+msgstr "Батерията на UPS-a е изтощена."
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS-ът преминава на батерия"
+msgstr "UPS-ът работи на батерия"
 
 #: choices.py:250
 msgid "Preferred"
@@ -461,7 +461,7 @@ msgstr "Кратка самодиагностика"
 
 #: choices.py:497
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Провежда вътрешен тест \"Self-Test\" (само за ATA)"
 
 #: choices.py:498
 msgid "Offline Immediate Test (ATA only)"
@@ -469,21 +469,21 @@ msgstr "Непосредствен офлайн тест (само за ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Вашето име не може да започне с \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Знак $ е разрешен само като последен знак"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Вашето име съдържа невалидни знаци (%)"
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Вашето пълно име съдържа невалидни знаци (%)"
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -500,18 +500,15 @@ msgid "Username"
 msgstr "Потребителско име"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Задължителен. 30 символа или по-малко. Само букви, цифри и следните "
-"специални символи: @/./+/-/_."
+"Задължително изискват се 16 или повече символа. Разрешени са букви, символи "
+" \".\"  \"-\"  \"_\" или цифри."
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Тази стойност може да съдържа само букви, цифри и следните специални "
-"символи: @/./+/-/_."
+"Тази стойност може да съдържа само  букви, символи \".\" \"-\" \"_\" или цифри."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -533,13 +530,12 @@ msgid "Shell"
 msgstr "Обвивка (среда)"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Забрани логването"
+msgstr "Забрани логването с парола"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Заключване потребител"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -547,12 +543,11 @@ msgstr "Главна група"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "публичен ключ за SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Потребителското име е заето."
+msgstr "Вече съществува потребител с този потребителски номер (UID)."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -570,9 +565,8 @@ msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "Главната директория трябва да започва с /mnt/"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Главната директория трябва да започва с /mnt/"
+msgstr "Не може да се пише в главната директория, оствете това празно."
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
@@ -584,28 +578,25 @@ msgid "This field is required."
 msgstr "Попълването на това поле е задължително."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Сподели паролата"
+msgstr "Изключване на паролата"
 
 #: account/forms.py:466
 #, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Главната директория трябва да започва с /mnt/"
+msgstr "Главната директория трябва да започва с /mnt/ или е  /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
 msgstr ""
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Потребителското име е заето."
+msgstr "Вече съществува група с това име."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Потребителското име е заето."
+msgstr "Вече съществува група с такъв групов номер (GID)."
 
 #: account/forms.py:582
 msgid "Member users"
@@ -628,9 +619,8 @@ msgid "New password confirmation"
 msgstr "Потвърдете новата парола"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Смяна на паролата"
+msgstr "Също така промяна на root паролата"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -642,7 +632,7 @@ msgstr "Старата Ви парола е въведена погрешно. �
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Искате ли да изтриете всички потребители ot тази основна група?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -781,7 +771,7 @@ msgstr "Групата %s е невалидна."
 
 #: freeadmin/forms.py:162
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Пътят трябва да съдържа точката на монтиране на диска."
 
 #: freeadmin/navtree.py:316
 #, python-format
@@ -911,7 +901,7 @@ msgstr "Необходимо е да попълните полето сървъ�
 
 #: network/forms.py:177
 msgid "Parent Interface"
-msgstr ""
+msgstr "Родителски интерфейс"
 
 #: network/forms.py:186
 msgid "The name must be vlanXX where XX is a integer"
@@ -973,15 +963,15 @@ msgstr "IPv6 шлюз по подразбиране"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Сървър 1"
+msgstr "Нейм сървър 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Сървър 2"
+msgstr "Нейм сървър 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Сървър 3"
+msgstr "Нейм сървър 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:21
 #: templates/network/index.html:3
@@ -4911,7 +4901,7 @@ msgstr ""
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Добре дошли в %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -4931,7 +4921,7 @@ msgstr "Влез обратно"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Наистина ли искате да активирате тази услуга?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -4986,9 +4976,8 @@ msgid "TFTP Settings"
 msgstr "TFTP настройки"
 
 #: templates/services/index.html:147
-#, fuzzy
 msgid "UPS Settings"
-msgstr "NFS настройки"
+msgstr "Настройки на UPS"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
@@ -5307,6 +5296,8 @@ msgstr "Репликацията на ZFS не е достъпна"
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
+"В моментасе изпълнява прочистване !  Сигурни ли сте, че искате да СПРЕТЕ "
+"процеса на триене?"
 
 #: templates/storage/scrub_confirm.html:12
 #, fuzzy
@@ -5318,27 +5309,24 @@ msgid "This will increase system overhead while in progress"
 msgstr ""
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Сигурни ли сте че искате да върнете моментната снимка към предишно състояние?"
+"Сигурни ли сте че искате да върнете масива към това заснето предишно "
+"състояние?"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"
 msgstr "Клонирай моментната снимка"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "Унищожи моментната снимка"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "Унищожи моментната снимка"
+msgstr "Унищожи тази моментна снимка"
 
 #: templates/storage/snapshots.html:49
-#, fuzzy
 msgid "Rollback Snapshot"
 msgstr "Върни се към тази моментна снимка"
 
@@ -5347,9 +5335,8 @@ msgid "Rollback to this snapshot"
 msgstr "Върни се към тази моментна снимка"
 
 #: templates/storage/snapshots.html:128
-#, fuzzy
 msgid "Destroy"
-msgstr "Изтриване на дял"
+msgstr "Изтриване"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5392,9 +5379,8 @@ msgid "on every"
 msgstr "на всеки"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "Няма планирани периодични моментни снимки"
+msgstr "Няма планирани периодични моментни снимки."
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -5403,7 +5389,7 @@ msgstr "Редактиране на ZFS дял"
 #: templates/storage/volume_export.html:9
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "Имате %(used)s използвано пространство в рамките на този масив."
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
@@ -5426,9 +5412,8 @@ msgid "Export Volume"
 msgstr "Експортиране на дял"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS дял"
+msgstr "Прочистен дял."
 
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
@@ -5436,9 +5421,8 @@ msgid "Edit ZFS Options"
 msgstr "Редактирай ZFS опциите"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
-#, fuzzy
 msgid "Volume Status"
-msgstr "Томове"
+msgstr "Статус на масива"
 
 #: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
 msgid "Destroy Dataset"
@@ -5489,9 +5473,9 @@ msgid "Existing data will be cleared"
 msgstr "Съществуващата информация ще бъде премахната"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Създаване на ZFS дял"
+msgstr "Създаване на ZFS дял върху %(name)s"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
@@ -5511,9 +5495,8 @@ msgstr "Кешът не може да бъде възстановен"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "Отстраняване на дефекти"
+msgstr "Запис на Debug"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -5538,19 +5521,16 @@ msgid "Update"
 msgstr "Обнови"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Няма дефинирани задачи"
+msgstr "Няма дефинирани периодични задачи"
 
 #: templates/system/cronjob.html:46
-#, fuzzy
 msgid "Add a cron job"
-msgstr "Добави задача"
+msgstr "Добави периодична задача"
 
 #: templates/system/cronjob.html:48
-#, fuzzy
 msgid "Add cron job"
-msgstr "Добави задача"
+msgstr "Добави периодична задача"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5565,21 +5545,20 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"Съвет: Тест имейли се изпращат до  потребител \"root\" . За да го "
+"конфигурирате използвайте \"Потребители\" -> \"root\" -> \"Промяна E-mail\""
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Няма дефинирани потребители"
+msgstr "Няма дефинирани настройки за лоудера."
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "Добавяне на портал"
+msgstr "Добави лоудер."
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "Добавяне на портал"
+msgstr "Добави лоудер"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5622,14 +5601,12 @@ msgid "Yearly Graphs"
 msgstr "Годишни графики"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Няма дефинирана синхронизация"
+msgstr "Няма дефинирана задача за RSYNC"
 
 #: templates/system/rsync.html:44
-#, fuzzy
 msgid "Add rsync task"
-msgstr "Добави синхронизация на файлове"
+msgstr "Добави RSYNC задача"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5641,7 +5618,7 @@ msgstr "Обща информация"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Възстановяване към изходно състояние"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5657,34 +5634,28 @@ msgid "Upload Config"
 msgstr "Качи конфигурация"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "S.M.A.R.T. настройки"
+msgstr "Няма дефинирани S.M.A.R.T. тестове"
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Добави S.M.A.R.T. Тест"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Добави S.M.A.R.T. тест"
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Няма дефинирана синхронизация"
+msgstr "Няма дефиниран SYSCTL."
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Добави синхронизация на файлове"
+msgstr "Добави SYSCTL"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Добави синхронизация на файлове"
+msgstr "Добави SYSCTL"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5716,30 +5687,31 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "Стъпка %(step)s от %(step_count)s"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Обнови"
+msgstr "Активира актуализация"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "Масива е %s празен"
 
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Масива е %s деградиран"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Статуса на масив %(volume)s е %(status)s"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Вие трябва да промените паролата на администратора (в момента не е "
+"необходима парола за вход)"
 
 #: tools/alert.py:99
 #, python-format
@@ -5747,9 +5719,8 @@ msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr ""
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Критичен"
+msgstr "Критични сигнали"
 
 msgid "Volume from which this ZFS Volume will be created on"
 msgstr "Том от който този ZFS том ще бъде създаден"

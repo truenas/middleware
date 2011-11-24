@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:09-0700\n"
-"PO-Revision-Date: 2011-11-07 14:13+0200\n"
-"Last-Translator: dgrossato.101 <dgrossato.101@gmail.com>\n"
+"PO-Revision-Date: 2011-11-24 00:39+0200\n"
+"Last-Translator: ilpelle <alessandro.pellegrini@tin.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -472,21 +472,21 @@ msgstr "Test offline immediato (solo ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Il tuo nome non può iniziare con \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Il carattere $ è consentito solo come carattere finale"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Il tuo nome contiene caratteri non validi (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Il tuo nome completo contiene caratteri non validi (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -503,18 +503,16 @@ msgid "Username"
 msgstr "Nome utente"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Obbligatorio. Massimo 30 caratteri. Solo lettere, cifre e i seguenti "
-"caratteri speciali: @/./+/-/_ ."
+"Obbligatorio. Massimo 16 caratteri. Solo lettere, numeri ed i seguenti "
+"caratteri speciali: ./-/_"
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
 "Questo campo può contenere solo lettere, numeri e i seguenti caratteri "
-"speciali: @/./+/-/_ ."
+"speciali: ./-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -542,7 +540,7 @@ msgstr "Disabilita login"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Blocca utente"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -550,7 +548,7 @@ msgstr "Gruppo primario"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Chiave Pubblica SSH"
 
 #: account/forms.py:260
 #, fuzzy
@@ -568,18 +566,16 @@ msgid "The two password fields didn't match."
 msgstr "Le due password non corrispondono."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "La home directory deve iniziare con /mnt/"
+msgstr "La cartella home deve iniziare con /mnt/ oppure essere /nonexistent"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "La home directory deve iniziare con /mnt/"
+msgstr "La cartella home non è scrivibile, lasciare il campo vuoto"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Password disabilitate, lasciare il campo vuoto"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -587,14 +583,12 @@ msgid "This field is required."
 msgstr "Campo richiesto."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Password condivisione"
+msgstr "Disabilita password"
 
 #: account/forms.py:466
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "La home directory deve iniziare con /mnt/"
+msgstr "La home directory deve iniziare con /mnt/ oppure essere /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
