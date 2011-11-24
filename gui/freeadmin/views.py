@@ -558,6 +558,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
     context = {
         'app': app,
         'model': model,
+        'modeladmin': m._admin,
         'mf': mf,
         'oid': oid,
         'inline': inline,
