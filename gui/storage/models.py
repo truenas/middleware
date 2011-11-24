@@ -167,6 +167,11 @@ class Disk(Model):
             max_length=42,
             verbose_name = _("Identifier")
             )
+    disk_serial = models.CharField(
+            max_length=30,
+            verbose_name = _("Serial"),
+            blank=True
+            )
     disk_description = models.CharField(
             max_length=120,
             verbose_name = _("Description"),

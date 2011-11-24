@@ -2010,6 +2010,7 @@ class notifier:
                     disk.disk_enabled = False
                 else:
                     disk.disk_enabled = True
+                    disk.disk_serial = self.serial_from_device(dskname)
             else:
                 disk.disk_enabled = True
                 if dskname != disk.disk_name:
@@ -2031,6 +2032,7 @@ class notifier:
                 d = Disk()
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
+                d.disk_serial = self.serial_from_device(disk)
                 d.save()
 
     def geom_disks_dump(self, volume):
