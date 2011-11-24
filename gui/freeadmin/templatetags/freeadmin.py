@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django import forms
 from django import template
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
@@ -62,18 +63,21 @@ class FormRender(template.Node):
                 composed[fields[0]] = (label, fields)
 
         for field in new_fields:
+            if model:
+                if field in model._admin.advanced_fields:
+                    form.fields.get(field).widget = forms.widgets.HiddenInput(attrs={'class': 'advancedField'})
             if composed.has_key(field):
                 label, fields = composed.get(field)
                 html = u"""<tr><th><label>%s</label></th><td>""" % (label)
                 for field in fields:
-                    bf = BoundField(form, form.fields[field], field)
+                    bf = BoundField(form, form.fields.get(field), field)
                     bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
                     html += unicode(bf_errors) + unicode(bf)
                     #new_fields.remove(field)
                 html += u"</td></tr>"
                 output.append(html)
             else:
-                bf = BoundField(form, form.fields[field], field)
+                bf = BoundField(form, form.fields.get(field), field)
                 bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))

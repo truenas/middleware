@@ -810,6 +810,7 @@ class SNMP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SNMPIcon"
+        advanced_fields = ('snmp_traps',)
 
 class UPS(Model):
     ups_identifier = models.CharField(

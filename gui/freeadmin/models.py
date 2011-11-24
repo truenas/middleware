@@ -82,6 +82,8 @@ class FreeAdminWrapper(object):
     menu_child_of = None
     menu_children = []
 
+    advanced_fields = []
+
     inlines = []
 
     nav_extra = {}
