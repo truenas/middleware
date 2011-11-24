@@ -633,6 +633,9 @@ class DiskFormPartial(ModelForm):
             self.fields['disk_identifier'].widget.attrs['readonly'] = True
             self.fields['disk_identifier'].widget.attrs['class'] = 'dijitDisabled' \
                         ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_serial'].widget.attrs['readonly'] = True
+            self.fields['disk_serial'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
     def clean_disk_name(self):
         return self.instance.disk_name
     def clean_disk_identifier(self):
