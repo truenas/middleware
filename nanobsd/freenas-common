@@ -190,7 +190,7 @@ add_port converters/base64
 add_port emulators/mtools WITHOUT_X11=y
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port sysutils/megacli
+#add_port sysutils/megacli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
