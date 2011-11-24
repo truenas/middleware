@@ -221,8 +221,6 @@ def disks_datagrid(request):
     names.remove('disk enabled')
     _n.remove('disk_enabled')
 
-    names.insert(2, _('Serial'))
-    _n.insert(2, 'serial')
     """
     Nasty hack to calculate the width of the datagrid column
     dojo DataGrid width="auto" doesnt work correctly and dont allow
@@ -264,7 +262,6 @@ def disks_datagrid_json(request):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
-        ret['serial'] = data.get_serial() or _('Unknown')
         #fields = dir(data.__class__) + ret.keys()
         #add_ons = [k for k in dir(data) if k not in fields]
         #for k in add_ons:
