@@ -4,6 +4,8 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+SW_NAME = 'FreeNAS'
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -279,16 +281,16 @@ class Migration(SchemaMigration):
         db.send_create_signal('services', ['LDAP'])
 
         afp = orm.AFP()
-        afp.afp_srv_name = 'freenas'
+        afp.afp_srv_name = SW_NAME.lower()
         afp.afp_srv_guest = False
         afp.afp_srv_local = True
         afp.afp_srv_ddp = False
         afp.save()
 
         cifs = orm.CIFS()
-        cifs.cifs_srv_netbiosname='freenas'
+        cifs.cifs_srv_netbiosname=SW_NAME.lower()
         cifs.cifs_srv_workgroup='WORKGROUP'
-        cifs.cifs_srv_description='FreeNAS Server'
+        cifs.cifs_srv_description='%s Server' % (SW_NAME, )
         cifs.cifs_srv_doscharset='CP437'
         cifs.cifs_srv_unixcharset='UTF-8'
         cifs.cifs_srv_loglevel=True
@@ -305,7 +307,7 @@ class Migration(SchemaMigration):
         ddns = orm.DynamicDNS()
         ddns.ddns_provider='dyndns'
         ddns.ddns_username='admin'
-        ddns.ddns_password='freenas'
+        ddns.ddns_password=SW_NAME.lower()
         ddns.ddns_wildcard=False
         ddns.save()
 
