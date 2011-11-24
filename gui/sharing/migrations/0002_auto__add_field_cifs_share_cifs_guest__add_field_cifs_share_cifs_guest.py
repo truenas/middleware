@@ -12,10 +12,10 @@ class Migration(SchemaMigration):
         db.add_column('sharing_cifs_share', 'cifs_guest', self.gf('django.db.models.fields.CharField')(default='www', max_length=120), keep_default=False)
 
         # Adding field 'CIFS_Share.cifs_guestok'
-        db.add_column('sharing_cifs_share', 'cifs_guestok', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('sharing_cifs_share', 'cifs_guestok', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Adding field 'CIFS_Share.cifs_guestonly'
-        db.add_column('sharing_cifs_share', 'cifs_guestonly', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('sharing_cifs_share', 'cifs_guestonly', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

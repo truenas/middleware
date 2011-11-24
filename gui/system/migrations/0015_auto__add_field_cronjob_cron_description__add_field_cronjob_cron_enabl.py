@@ -12,8 +12,7 @@ class Migration(SchemaMigration):
         db.add_column('system_cronjob', 'cron_description', self.gf('django.db.models.fields.CharField')(default='', max_length=200, blank=True), keep_default=False)
 
         # Adding field 'CronJob.cron_enabled'
-        db.add_column('system_cronjob', 'cron_enabled', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=True)
-        orm.CronJob.objects.all().update(cron_enabled=True)
+        db.add_column('system_cronjob', 'cron_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=True)
 
 
     def backwards(self, orm):

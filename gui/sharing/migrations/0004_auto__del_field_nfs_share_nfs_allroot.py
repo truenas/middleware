@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         
         # Adding field 'NFS_Share.nfs_allroot'
-        db.add_column('sharing_nfs_share', 'nfs_allroot', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('sharing_nfs_share', 'nfs_allroot', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     models = {

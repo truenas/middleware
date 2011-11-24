@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Advanced.adv_consolemsg'
-        db.add_column('system_advanced', 'adv_consolemsg', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
+        db.add_column('system_advanced', 'adv_consolemsg', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

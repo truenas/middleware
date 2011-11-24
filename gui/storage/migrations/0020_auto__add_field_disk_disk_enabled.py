@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Disk.disk_enabled'
-        db.add_column('storage_disk', 'disk_enabled', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
+        db.add_column('storage_disk', 'disk_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
 
 
     def backwards(self, orm):

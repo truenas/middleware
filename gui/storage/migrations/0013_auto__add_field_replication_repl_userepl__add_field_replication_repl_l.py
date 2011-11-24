@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Adding field 'Replication.repl_userepl'
-        db.add_column('storage_replication', 'repl_userepl', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('storage_replication', 'repl_userepl', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Adding field 'Replication.repl_limit'
         db.add_column('storage_replication', 'repl_limit', self.gf('django.db.models.fields.IntegerField')(default=0), keep_default=False)

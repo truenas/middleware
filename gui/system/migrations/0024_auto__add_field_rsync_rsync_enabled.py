@@ -9,8 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Rsync.rsync_enabled'
-        db.add_column('system_rsync', 'rsync_enabled', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
-        orm.Rsync.objects.all().update(rsync_enabled=True)
+        db.add_column('system_rsync', 'rsync_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
 
 
     def backwards(self, orm):
