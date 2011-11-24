@@ -2121,18 +2121,16 @@ class notifier:
         import common.system
 
         sw_name = common.system.get_sw_name()
+        doc = self.__geom_confxml()
 
-        output = self.__pipeopen('glabel status -s').communicate()[0]
-
-        # e.g. ufs/FreeNASs, ufs/FreeNASp
-        root_label_re = re.compile('ufs/%s[ps][0-9]+.+\s+(\w+)[ps][0-9]+'
-                                   % (sw_name, ))
-        # Filter out lines like 'ufs/FreeNASs1a  N/A  da0s1a'
-        root_label_line = filter(lambda x: root_label_re.match(x),
-                                 map(str.strip, output.splitlines()))[0]
-        match = root_label_re.match(root_label_line)
-        return match.groups()[0]
-
+        for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
+                "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
+                % sw_name):
+            prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
+            pid = prov.xpathEval("../consumer/provider/@ref")[0].content
+            prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
+            name = prov.xpathEval("../name")[0].content
+            return name
 
     def __get_disks(self):
         """Return a list of available storage disks, e.g. not cds, the root
