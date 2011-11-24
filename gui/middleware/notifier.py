@@ -517,6 +517,34 @@ class notifier:
         self.__system("/usr/sbin/service statd quietstart")
         self.__system("/usr/sbin/service lockd quietstart")
 
+    def _start_plugins(self):
+        self.__system("/usr/sbin/service ix-jail quietstart")
+        self.__system("/usr/sbin/service jail quietstart")
+
+    def _stop_plugins(self):
+        self.__system("/usr/sbin/service jail forcestop")
+        self.__system("/usr/sbin/service ix-jail forcestop")
+
+    def _restart_plugins(self):
+        self._stop_plugins()
+        self._start_plugins()
+    
+    def _started_plugins(self):
+        c = self.__open_db()
+        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        jail_name = c.fetchone()[0]
+
+        retval = 1
+        idfile = "/var/run/jail_%s.id" % jail_name
+        if os.access(idfile, os.F_OK):
+            jail_id = int(open(idfile).read().strip())
+            retval = self.__system_nolog("jls -j %d" % jail_id)
+
+        if retval == 0:
+            return True
+        else:
+            return False
+
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
         self.__system("/usr/sbin/service inadyn restart")
