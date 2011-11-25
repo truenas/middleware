@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'CIFS.cifs_srv_unixext'
-        db.add_column('services_cifs', 'cifs_srv_unixext', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_unixext', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
 
 
     def backwards(self, orm):
