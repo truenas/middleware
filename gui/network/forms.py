@@ -305,6 +305,7 @@ class AliasForm(ModelForm):
 
     def clean_alias_v4address(self):
         ip = self.cleaned_data.get("alias_v4address")
+
         if ip:
             qs = models.Interfaces.objects.filter(int_ipv4address=ip)
             qs2 = models.Alias.objects.filter(alias_v4address=ip)
