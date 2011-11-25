@@ -17,7 +17,7 @@ set_sysctl()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT sysctl_mib, sysctl_value FROM system_sysctl ORDER BY id" | \
 	while read var value; do
-		sysctl ${var}=\"${value}\"
+		sysctl ${var}="${value}"
 	done
 }
 
