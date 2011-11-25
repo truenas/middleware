@@ -53,6 +53,7 @@ generate_smbconf()
 		cifs_srv_easupport,
 		cifs_srv_dosattr,
 		cifs_srv_nullpw,
+		cifs_srv_unixext,
 		cifs_srv_aio_enable,
 		cifs_srv_aio_rs,
 		cifs_srv_aio_ws,
@@ -115,7 +116,7 @@ generate_smbconf()
 	while read -r authmodel netbiosname workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest guestok guestonly \
 		cifs_filemask cifs_dirmask \
-		largerw sendfile easupport dosattr nullpw \
+		largerw sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
 		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
@@ -184,6 +185,11 @@ EOF
 
 		if [ "${dosattr}" = "1" ]; then
 			echo "    store dos attributes = yes"
+		fi
+
+		#Default is yes
+		if [ "${unixext}" = "0" ]; then
+			echo "    unix extensions = no"
 		fi
 
 		if [ "${localmaster}" = "1" -a "${ad_enable}" !=  "1" ]; then

@@ -151,6 +151,11 @@ class CIFS(Model):
             verbose_name=_("Home directories"),
             blank=True,
             )
+    cifs_srv_unixext = models.BooleanField(
+            verbose_name=_("Unix Extensions"),
+            default=True,
+            help_text=_("These extensions enable Samba to better serve UNIX CIFS clients by supporting features such as symbolic links, hard links, etc..."),
+            )
     cifs_srv_aio_enable = models.BooleanField(
             default=True,
             verbose_name=_("Enable AIO"),
