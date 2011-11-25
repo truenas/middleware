@@ -1,3 +1,4 @@
+            {% if advfields %}
             <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: 'basic'">
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                     var form = getForm(this);
@@ -20,3 +21,4 @@
                 </script>
                 {% trans "Advanced Mode" %}
             </button>
+            {% endif %}

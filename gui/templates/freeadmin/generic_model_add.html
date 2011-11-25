@@ -49,9 +49,9 @@
                     cancelDialog(this);
                 </script>
             </button>
-            {% if modeladmin.advanced_fields %}
+            {% with modeladmin.advanced_fields as advfields %}
             {% include "freeadmin/advanced_btn.html" %}
-            {% endif %}
+            {% endwith %}
         </td></tr>
 </table>
 </form>

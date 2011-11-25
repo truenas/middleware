@@ -80,9 +80,9 @@
                      });
                 </script>{% trans "Delete" %}</button>
             {% endif %}
-            {% if modeladmin.advanced_fields %}
+            {% with modeladmin.advanced_fields as advfields %}
             {% include "freeadmin/advanced_btn.html" %}
-            {% endif %}
+            {% endwith %}
             {% block buttons_extra %}
             {% endblock %}
         </td>
