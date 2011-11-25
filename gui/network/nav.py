@@ -88,8 +88,6 @@ class Linkss(TreeNode):
                     subsubnav._children = []
                     subnav.append_child(subsubnav)
 
-        laggs = models.LAGGInterface
-
 class ViewInterfaces(TreeNode):
 
     gname = 'network.Interfaces.View'

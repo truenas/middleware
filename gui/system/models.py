@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 from django.utils.translation import ugettext_lazy as _
@@ -380,9 +379,28 @@ class Rsync(Model):
             verbose_name=_("Remote Host"),
             help_text=_("IP Address or hostname"),
             )
+    rsync_mode = models.CharField(
+            max_length=20,
+            choices=choices.RSYNC_MODE_CHOICES,
+            default='module',
+            )
     rsync_remotemodule = models.CharField(
             max_length=120,
             verbose_name=_("Remote Module Name"),
+            blank=True,
+            help_text=_("Name of the module defined in the remote rsync daemon"),
+            )
+    rsync_remotepath = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote Path"),
+            blank=True,
+            )
+    rsync_direction = models.CharField(
+            max_length=10,
+            verbose_name=_("Direction"),
+            help_text=_("Push - From local to remote machine. Pull - From remote to local machine."),
+            default='push',
+            choices=choices.RSYNC_DIRECTION,
             )
     rsync_desc = models.CharField(
             max_length=120,
@@ -465,6 +483,10 @@ class Rsync(Model):
             help_text=_("Extra options to rsync command line (usually empty)"),
             blank=True
             )
+    rsync_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
@@ -475,6 +497,8 @@ class Rsync(Model):
         icon_view = u"ViewrsyncTaskIcon"
 
     def __unicode__(self):
+        if self.rsync_desc:
+            return self.rsync_desc
         return u"%d (%s)" % (self.id, self.rsync_user)
 
     def get_human_minute(self):
@@ -573,14 +597,18 @@ class SMARTTest(Model):
             )
 
     def get_human_hour(self):
-        if self.smarttest_hour == '..':
+        if self.smarttest_hour in ('..', '*'):
             return _(u'Every hour')
+        elif self.smarttest_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.smarttest_hour.split('*/')[1]
         else:
             return self.smarttest_hour
 
     def get_human_daymonth(self):
-        if self.smarttest_daymonth == '..':
+        if self.smarttest_daymonth in ('..', '*'):
             return _(u'Everyday')
+        elif self.smarttest_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.smarttest_daymonth.split('*/')[1]
         else:
             return self.smarttest_daymonth
 
@@ -611,7 +639,14 @@ class SMARTTest(Model):
         return ', '.join(labels)
 
     def __unicode__(self):
-        return unicode(self.smarttest_disk)
+        return "%s (%s) " % (unicode(self.smarttest_disk), self.get_smarttest_type_display())
+
+    def delete(self):
+        super(SMARTTest, self).delete()
+        try:
+            notifier().restart("smartd")
+        except:
+            pass
 
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")

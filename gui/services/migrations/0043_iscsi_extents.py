@@ -44,7 +44,9 @@ def identifier_to_device(self, ident):
     elif tp == 'serial':
         p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
         output = p1.communicate()[0]
-        for devname in output.split(' '):
+        RE_NOCD = re.compile('^a?cd[0-9]+$')
+        devs = filter(lambda y: not RE_NOCD.match(y), output.split(' '))
+        for devname in devs:
             serial = serial_from_device(devname)
             if serial == value:
                 return devname
@@ -84,6 +86,7 @@ class Migration(DataMigration):
         },
         'services.afp': {
             'Meta': {'object_name': 'AFP'},
+            'afp_srv_connections_limit': ('django.db.models.fields.IntegerField', [], {'default': '50', 'max_length': '120'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'CIFS_Share.cifs_inheritowner'
-        db.add_column('sharing_cifs_share', 'cifs_inheritowner', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('sharing_cifs_share', 'cifs_inheritowner', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

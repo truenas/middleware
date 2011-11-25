@@ -23,12 +23,13 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 from django import template
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
+
+from dojango import forms
 
 register = template.Library()
 
@@ -63,18 +64,22 @@ class FormRender(template.Node):
                 composed[fields[0]] = (label, fields)
 
         for field in new_fields:
+            _hide = field in model._admin.advanced_fields if model else False
+            if _hide:
+                _hide = ' style="display: none;"'
+                form.fields.get(field).widget.attrs['class'] = 'advancedField'
             if composed.has_key(field):
                 label, fields = composed.get(field)
-                html = u"""<tr><th><label>%s</label></th><td>""" % (label)
+                html = u"""<tr%s><th><label>%s</label></th><td>""" % (_hide, label)
                 for field in fields:
-                    bf = BoundField(form, form.fields[field], field)
+                    bf = BoundField(form, form.fields.get(field), field)
                     bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
                     html += unicode(bf_errors) + unicode(bf)
                     #new_fields.remove(field)
                 html += u"</td></tr>"
                 output.append(html)
             else:
-                bf = BoundField(form, form.fields[field], field)
+                bf = BoundField(form, form.fields.get(field), field)
                 bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))
@@ -83,7 +88,7 @@ class FormRender(template.Node):
                         help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><span id="%shelp">?</span>""" % (bf.auto_id, bf.help_text, bf.auto_id)
                     else:
                         help_text = ""
-                    html = u"""<tr><th>%s</th><td>%s%s %s</td></tr>""" % (bf.label_tag(), bf_errors, bf, help_text)
+                    html = u"""<tr%s><th>%s</th><td>%s%s %s</td></tr>""" % (_hide, bf.label_tag(), bf_errors, bf, help_text)
                     output.append(html)
 
         if hidden_fields:

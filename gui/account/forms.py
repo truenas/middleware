@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 import os
 
@@ -364,6 +363,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         return bsduser
 
 class bsdUserPasswordForm(ModelForm):
+    bsdusr_username2 = forms.CharField(label=_("Username"), required=False)
     bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."))
@@ -371,12 +371,15 @@ class bsdUserPasswordForm(ModelForm):
     class Meta:
         model = models.bsdUsers
         fields = ('bsdusr_username',)
+        widgets = {
+            'bsdusr_username': forms.widgets.HiddenInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(bsdUserPasswordForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+        self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+        self.fields['bsdusr_username2'].widget.attrs['disabled'] = 'disabled'
+        self.fields['bsdusr_username2'].initial = self.instance.bsdusr_username
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
@@ -419,36 +422,40 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance:
-            if instance.id:
-                self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            if instance.bsdusr_builtin:
-                self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
-                self.fields['bsdusr_group'].widget.attrs['readonly'] = True
-                self.fields['bsdusr_home'].widget.attrs['readonly'] = True
-            if instance.bsdusr_unixhash == '*':
-                self.fields['bsdusr_password_disabled'].initial = True
-            if instance.bsdusr_unixhash.startswith('*LOCKED*'):
-                self.fields['bsdusr_locked'].initial = True
-            try:
-                self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (instance.bsdusr_home)).read()
-            except:
-                self.fields['bsdusr_sshpubkey'].initial = ''
+        if self.instance.id:
+            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_username'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        if self.instance.bsdusr_builtin:
+            self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_uid'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdusr_group'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_group'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
+            self.fields['bsdusr_home'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_home'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        if self.instance.bsdusr_unixhash == '*':
+            self.fields['bsdusr_password_disabled'].initial = True
+        if self.instance.bsdusr_unixhash.startswith('*LOCKED*'):
+            self.fields['bsdusr_locked'].initial = True
+        try:
+            self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (self.instance.bsdusr_home)).read()
+        except:
+            self.fields['bsdusr_sshpubkey'].initial = ''
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
 
     def clean_bsdusr_uid(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_uid
         else:
             return self.cleaned_data.get("bsdusr_uid")
 
     def clean_bsdusr_group(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_group
         else:
             return self.cleaned_data.get("bsdusr_group")
@@ -457,8 +464,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_home(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.bsdusr_builtin:
+        if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_home
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
@@ -489,7 +495,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
     def save(self):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
         bsduser_locked = self.cleaned_data['bsdusr_locked']
-	bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
+        bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
         instance = getattr(self, 'instance', None)
         _notifier = notifier()
         if bsduser_locked and instance.bsdusr_unixhash.startswith('*LOCKED*'):
@@ -529,9 +535,10 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 }
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
+            self.fields['bsdgrp_gid'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         else:
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
             self.fields['allow'] = forms.BooleanField(
@@ -553,8 +560,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
             return self.instance.bsdgrp_group
 
     def clean_bsdgrp_gid(self):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             return self.instance.bsdgrp_gid
         else:
             return self.cleaned_data['bsdgrp_gid']
@@ -575,8 +581,6 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         ins = super(bsdGroupsForm, self).save()
         notifier().reload("user")
         return ins
-
-attrs_dict = { 'class': 'required' }
 
 class bsdGroupToUserForm(Form):
     bsdgroup_to_user = FilteredSelectField(label = _('Member users'), choices=(), required=False)

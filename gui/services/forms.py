@@ -22,7 +22,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 import glob
@@ -48,8 +47,6 @@ from freeadmin.forms import DirectoryBrowser
 from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
 """ Services """
-
-attrs_dict = { 'class': 'required' }
 
 class servicesForm(ModelForm):
     class Meta:
@@ -110,6 +107,22 @@ class NFSForm(ModelForm):
         started = notifier().restart("nfs")
         if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
+
+class PluginsForm(ModelForm):
+    jail_interface = forms.ChoiceField(label = _("Jail interface"))
+
+    def __init__(self, *args, **kwargs):
+        super(PluginsForm, self).__init__(*args, **kwargs)
+        self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
+
+    class Meta:
+        model = models.Plugins
+    def save(self):
+        super(PluginsForm, self).save()
+        started = notifier().restart("plugins")
+        if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
+            raise ServiceFailed("plugins", _("The Plugins service failed to reload."))
+
 
 class FTPForm(ModelForm):
 
@@ -335,7 +348,6 @@ class UPSForm(ModelForm):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
 
 class ActiveDirectoryForm(ModelForm):
-    #file = forms.FileField(label="Kerberos Keytab File", required=False)
     ad_adminpw2 = forms.CharField(max_length=50,
             label=_("Confirm Administrator Password"),
             widget=forms.widgets.PasswordInput(),
@@ -357,8 +369,6 @@ class ActiveDirectoryForm(ModelForm):
             cdata['ad_adminpw'] = self.instance.ad_adminpw
         return cdata
     def save(self):
-        #if self.files.has_key('file'):
-        #    self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
@@ -668,7 +678,7 @@ class iSCSITargetFileExtentForm(ModelForm):
 
 class iSCSITargetDeviceExtentForm(ModelForm):
     iscsi_extent_disk = forms.ChoiceField(choices=(),
-            widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
+            widget=forms.Select(), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
         if kwargs.has_key("instance"):

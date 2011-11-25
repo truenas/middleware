@@ -66,7 +66,7 @@ def __cache_expire(cachedir):
         if os.path.isdir(p):
             # Delete all cached information (subdirectories and files)
             # under /var/tmp/.cache/.{ldap,samba,..}.
-            for root, dirs, files, in os.walk(base_dir, topdown=False):
+            for root, dirs, files, in os.walk(p, topdown=False):
                 map(lambda f: os.unlink(os.path.join(root, f)), files)
                 map(lambda d: os.rmdir(os.path.join(root, d)), dirs)
         else:

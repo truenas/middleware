@@ -110,6 +110,7 @@ syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
 replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
+    remote_port = replication.repl_remote.ssh_remote_port
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
@@ -193,7 +194,7 @@ for replication in replication_tasks:
     if known_latest_snapshot != '' and not resetonce:
         # Check if it matches remote snapshot
         rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 1 %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
-        sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
+        sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':
             expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
@@ -238,13 +239,13 @@ Hello,
             known_latest_snapshot = ''
     if resetonce:
         syslog.syslog(syslog.LOG_NOTICE, "Destroying remote %s" % (remotefs_final))
-        destroycmd = '%s %s /sbin/zfs destroy -rRf %s' % (sshcmd, remote, remotefs_final)
+        destroycmd = '%s -p %d %s /sbin/zfs destroy -rRf %s' % (sshcmd, remote_port, remote, remotefs_final)
         system(destroycmd)
         known_latest_snapshot = ''
     if known_latest_snapshot == '':
         # Create remote filesystem
         syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs_parent))
-        replcmd = '%s %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote, remotefs_parent)
+        replcmd = '%s -p %d %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote_port, remote, remotefs_parent)
         system(replcmd)
         last_snapshot = ''
     else:
@@ -257,9 +258,9 @@ Hello,
         #    limit = ''
         limit = ''
         if last_snapshot == '':
-            replcmd = '(/sbin/zfs send %s%s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, snapname, limit, sshcmd, remote, remotefs, templog)
+            replcmd = '(/sbin/zfs send %s%s%s | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
         else:
-            replcmd = '(/sbin/zfs send %s-I %s %s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote, remotefs, templog)
+            replcmd = '(/sbin/zfs send %s-I %s %s%s | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
         system(replcmd)
         with open(templog) as f:
             msg = f.read()
@@ -268,12 +269,12 @@ Hello,
 
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 1 %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
-        sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
+        sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':
             expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
             if expected_local_snapshot == snapname:
-                system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs_final))
+                system('%s -p %d %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote_port, remote, remotefs_final))
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
                 if last_snapshot != '':
@@ -289,13 +290,13 @@ Hello,
             else:
                 syslog.syslog(syslog.LOG_ALERT, "Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
                 rzfscmd = '"zfs list -Ho name -t snapshot %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
-                sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
+                sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
                 output = sshproc.communicate()[0]
                 if output != '':
                     expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
                     if expected_local_snapshot == snapname:
                         syslog.syslog(syslog.LOG_ALERT, "Snapshot %s already exist on remote, marking as such" % (snapname))
-                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs_final))
+                        system('%s -p %d %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote_port, remote, remotefs_final))
                         # Replication was successful, mark as such
                         MNTLOCK.lock()
                         system('/sbin/zfs inherit freenas:state %s' % (snapname))

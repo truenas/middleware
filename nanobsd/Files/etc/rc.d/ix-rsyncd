@@ -22,7 +22,7 @@ generate_rsyncd()
     cfg=/usr/local/etc/rsyncd.conf
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncd ORDER BY -id LIMIT 1" | \
-	while eval read $f; do
+	while eval read -r $f; do
 	    cat > $cfg <<EOF
 use chroot = yes
 max connections = 4
@@ -41,7 +41,7 @@ EOF
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncmod ORDER BY id" | \
-	while eval read $f; do
+	while eval read -r $f; do
 	    cat >> $cfg <<EOF
 [${rsyncmod_name}]
     comment = ${rsyncmod_comment}

@@ -1,3 +1,4 @@
+#!/bin/sh
 #-
 # Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
 #
@@ -45,6 +46,8 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
 NANO_IMAGES=2
+# Remove X11 crud too.
+NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11)/')
 FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
@@ -122,6 +125,7 @@ add_port devel/py-asn1-modules
 add_port www/spawn-fcgi
 #-add_port www/lighttpd
 add_port www/lighttpd
+add_port www/nginx
 #+add_port www/py-flup
 #-add_port www/py-flup
 add_port www/py-flup
@@ -186,11 +190,12 @@ add_port converters/base64
 add_port emulators/mtools WITHOUT_X11=y
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
+#add_port sysutils/megacli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
-add_port devel/dbus
-add_port devel/dbus-glib
+add_port devel/dbus WITHOUT_X11=y
+add_port devel/dbus-glib WITHOUT_X11=y
 add_port devel/libdaemon
 add_port databases/gdbm
 add_port net/avahi-app
@@ -208,6 +213,10 @@ add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
+add_port sysutils/ipmitool
+add_port devel/py-zope.interface
+add_port devel/py-twistedCore
+add_port devel/py-ujson
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
@@ -275,7 +284,9 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/subversion
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
-	add_port devel/ipython
+	add_port devel/zmq
+	add_port devel/py-pyzmq
+	add_port devel/ipython WITHOUT_X11=y
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
@@ -303,6 +314,10 @@ $var=$val"
 	fi
 done
 
+if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
+	echo "Skipping post-package customize steps"
+	do_image=false
+else
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
@@ -311,12 +326,6 @@ hack_nsswitch_conf ( )
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 customize_cmd hack_nsswitch_conf
-
-default_root_password ( )
-{
-	CR "echo freenas | pw usermod root -h 0"
-}
-customize_cmd default_root_password
 
 add_gui()
 {
@@ -328,7 +337,7 @@ add_gui()
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
 	( cd ${gui}
-	  find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${dst} )
+	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
@@ -420,30 +429,149 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
-last_orders() {
+freenas_custom()
+{
+	compress_ko()
+	{
+		if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]; then
+			gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
+		fi
+	}
 
-	local full_image gui_upgrade
+	# Compress the kernel and preloaded modules
+	compress_ko kernel
+	compress_ko geom_mirror.ko
+	compress_ko geom_stripe.ko
+	compress_ko geom_raid3.ko
+	compress_ko geom_gate.ko
+	compress_ko ntfs.ko
+	compress_ko smbfs.ko
+
+	# nuke .pyc files (saves ~25MB on a fresh install)
+	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
+
+	# kill includes (saves 14MB)
+	find ${NANO_WORLDDIR}/usr/local/include \! -name 'pyconfig.h' -type f | xargs rm -f
+
+	# kill docs (saves 22MB)
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
+
+	# and info (2MB)
+	rm -rf ${NANO_WORLDDIR}/usr/local/info
+
+	# and man pages (4.4MB)
+	rm -rf ${NANO_WORLDDIR}/usr/local/man
+
+	# and examples (1.7M)
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/examples
+
+	# and groff_fonts junk (3MB)
+	rm -rf ${NANO_WORLDDIR}/usr/share/groff_font
+	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
+	rm -rf ${NANO_WORLDDIR}/usr/share/me
+
+	# Perl seems to be needed for build, but nothing after the
+	# build.  cope with bad dependencies (or misunderstood) and
+	# blow it away (saves 45MB)
+	if [ "${DEBUG}" != 1 ]; then
+		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl*"
+	fi
+
+	# Kill all .a's that are installed (15MB)
+	find ${NANO_WORLDDIR} -name \*.a -delete
+
+	# magic.mgc is just a speed optimization.  Kill it for 1.7MB
+	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc
+
+	# strip binaries (saves spaces on non-debug images).
+	if [ "${DEBUG}" != 1 ]; then
+		pprint 4 "Stripping binaries and libraries"
+		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
+			for f in $(find $dir -type f); do
+				strip 2>/dev/null $f || :
+			done
+		done
+	fi
+
+	# Last second tweaks
+	chown -R root:wheel ${NANO_WORLDDIR}/root
+	chmod 0755 ${NANO_WORLDDIR}/root/*
+	chmod 0755 ${NANO_WORLDDIR}/*
+	chown -R root:wheel ${NANO_WORLDDIR}/etc
+	chown -R root:wheel ${NANO_WORLDDIR}/boot
+	chown root:wheel ${NANO_WORLDDIR}/
+	chown root:wheel ${NANO_WORLDDIR}/usr
+        find ${NANO_WORLDDIR} -type f -name "*~" -delete
+        find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
+	mkdir ${NANO_WORLDDIR}/data/zfs
+        ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
+	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
+	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
+	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
+	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
+	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
+}
+late_customize_cmd freenas_custom
+
+remove_var_db_pkg()
+{
+	# Eats up ~7 MB on the install image.
+	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
+}
+late_customize_cmd remove_var_db_pkg
+fi # [ $PACKAGE_PREP_BUILD = 1 ]
+
+if $do_image; then
+last_orders() {
+	local cd_image_log
+	local full_image full_image_log
+	local gui_upgrade gui_upgrade_image_log
+
+	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
+	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
+	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install"
 	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 
 	if $do_image && $do_copyout_partition; then
 
+		pprint 2 "Compressing GUI upgrade image"
+		pprint 3 "log: ${gui_image_log}"
+
+		(
+
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$gui_upgrade"
 		xz --verbose -9 -f "$gui_upgrade"
+
+		) > "${gui_image_log}" 2>&1
 
 	fi
 
 	if $do_image; then
 
+		pprint 2 "Compressing full disk image"
+		pprint 3 "log: ${full_image_log}"
+
+		(
+
 		# NOTE: keep in synch with create_iso.sh.
 		mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
 		xz --verbose -9 -f "$full_image"
 
-		# GO ISO GO!
+		) > "${full_image_log}" 2>&1
+
+		pprint 2 "Creating ISO image"
+		pprint 3 "log: ${cd_image_log}"
+
+		(
+
 		sh "$FREENAS_ROOT/build/create_iso.sh"
+
+		) > "${cd_image_log}" 2>&1
 
 	fi
 
 }
+fi # $do_image

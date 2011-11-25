@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_storage">
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Active Volumes"|force_escape|force_escape %}'
     {% if focused_tab == "storage.Volume.View" %}, selected:true{% endif %},

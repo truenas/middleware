@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-27 02:09-0700\n"
+"POT-Creation-Date: 2011-11-11 02:01-0800\n"
 "PO-Revision-Date: 2011-07-17 06:09+0200\n"
 "Last-Translator: ef <fumihiko.kimura@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,57 +18,57 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:127
+#: media/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "リポート"
 
-#: media/lib/js/freeadmin.js:139
+#: media/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "設定"
 
-#: media/lib/js/freeadmin.js:150
+#: media/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "システム情報"
 
-#: media/lib/js/freeadmin.js:190
+#: media/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "ネットワーク設定"
 
-#: media/lib/js/freeadmin.js:254
+#: media/lib/js/freeadmin.js:183
 msgid "Services"
 msgstr "サービス"
 
-#: media/lib/js/freeadmin.js:295
+#: media/lib/js/freeadmin.js:224
 msgid "Account"
 msgstr "アカウント"
 
-#: media/lib/js/freeadmin.js:334
+#: media/lib/js/freeadmin.js:263
 msgid "Storage"
 msgstr "ストレージ"
 
-#: media/lib/js/freeadmin.js:401
+#: media/lib/js/freeadmin.js:330
 msgid "CronJobs"
 msgstr "CronJobs（定期的なコマンドの実行）"
 
-#: media/lib/js/freeadmin.js:554
+#: media/lib/js/freeadmin.js:490
 #, fuzzy
 msgid "Edit"
 msgstr "ディスクの編集"
 
-#: media/lib/js/freeadmin.js:556
+#: media/lib/js/freeadmin.js:492
 msgid "Edit Disk"
 msgstr "ディスクの編集"
 
-#: media/lib/js/freeadmin.js:735
+#: media/lib/js/freeadmin.js:760
 msgid "An error occurred!"
 msgstr "エラーが発生しました！"
 
-#: media/lib/js/freeadmin/form/Cron.js:45
+#: media/lib/js/freeadmin/form/Cron.js:47
 #, fuzzy
 msgid "Each selected"
 msgstr "選択したものそれぞれ"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:98
 #, fuzzy
 msgid "Every N"
 msgstr "各 N"

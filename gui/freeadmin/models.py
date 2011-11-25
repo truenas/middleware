@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 from django.db import models
 from django.db.models.base import ModelBase
@@ -82,6 +81,8 @@ class FreeAdminWrapper(object):
     deletable = True
     menu_child_of = None
     menu_children = []
+
+    advanced_fields = []
 
     inlines = []
 

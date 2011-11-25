@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 import re
@@ -295,8 +294,20 @@ class SMARTTestForm(ModelForm):
             ins.smarttest_month = ins.smarttest_month.replace("10", "a").replace("11", "b").replace("12", "c")
             if ins.smarttest_daymonth == "..":
                 ins.smarttest_daymonth = '*/1'
+            elif ',' in ins.smarttest_daymonth:
+                days = [int(day) for day in ins.smarttest_daymonth.split(',')]
+                gap = days[1] - days[0]
+                everyx = range(0, 32, gap)[1:]
+                if everyx == days:
+                    ins.smarttest_daymonth = '*/%d' % gap
             if ins.smarttest_hour == "..":
                 ins.smarttest_hour = '*/1'
+            elif ',' in ins.smarttest_hour:
+                hours = [int(hour) for hour in ins.smarttest_hour.split(',')]
+                gap = hours[1] - hours[0]
+                everyx = range(0, 24, gap)
+                if everyx == hours:
+                    ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
     def save(self):
         super(SMARTTestForm, self).save()
@@ -307,12 +318,6 @@ class SMARTTestForm(ModelForm):
             each = int(h.split('*/')[1])
             if each == 1:
                 return ".."
-            else:
-                minutes = []
-                for i in range(24):
-                    if i % each == 0:
-                        minutes.append("%.2d" % i)
-                return ",".join(minutes)
         return h
     def clean_smarttest_daymonth(self):
         h = self.cleaned_data.get("smarttest_daymonth")
@@ -320,12 +325,6 @@ class SMARTTestForm(ModelForm):
             each = int(h.split('*/')[1])
             if each == 1:
                 return ".."
-            else:
-                days = []
-                for i in range(1,32):
-                    if i % each == 0:
-                        days.append("%.2d" % i)
-                return ",".join(days)
         return h
     def clean_smarttest_month(self):
         m = eval(self.cleaned_data.get("smarttest_month"))
@@ -468,6 +467,19 @@ class RsyncForm(ModelForm):
             if ins.rsync_dayweek == '*':
                 ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
+        self.fields['rsync_mode'].widget.attrs['onChange'] = "rsyncModeToggle();"
+    def clean_rsync_remotemodule(self):
+        mode = self.cleaned_data.get("rsync_mode")
+        val = self.cleaned_data.get("rsync_remotemodule")
+        if mode == 'module' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val
+    def clean_rsync_remotepath(self):
+        mode = self.cleaned_data.get("rsync_mode")
+        val = self.cleaned_data.get("rsync_remotepath")
+        if mode == 'ssh' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val
     def clean_rsync_month(self):
         m = eval(self.cleaned_data.get("rsync_month"))
         if len(m) == 12:

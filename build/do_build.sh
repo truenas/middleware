@@ -69,6 +69,15 @@ while getopts 'Bfj:u' optch; do
 done
 shift $(( $OPTIND - 1 ))
 
+case "$-" in
+*x*)
+	trace="-x"
+	;;
+*)
+	trace=
+	;;
+esac
+
 set -e
 if $BUILD; then
 	requires_root
@@ -92,7 +101,7 @@ if $UPDATE; then
 *default compress
 
 src-all tag=RELENG_8_2
-ports-all date=2011.07.17.00.00.00
+ports-all date=2011.11.14.00.00.00
 EOF
 	csup -L 1 $SUPFILE
 	# Force a repatch because csup pulls pristine sources.
@@ -112,7 +121,7 @@ for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
 		echo "Applying patch $patch..."
 		(cd FreeBSD/src &&
 		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 	fi
 done
@@ -121,7 +130,7 @@ for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
 		echo "Applying patch $patch..."
 		(cd FreeBSD/ports &&
 		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
 		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 	fi
 done
@@ -148,7 +157,7 @@ echo $cmd
 if ! $BUILD; then
 	exit 0
 fi
-if sh $cmd; then
+if sh $trace $cmd; then
 	echo "$NANO_LABEL build PASSED"
 else
 	error "$NANO_LABEL build FAILED; please check above log for more details"

@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 import re
 
@@ -39,8 +38,6 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.services.models import services
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
-
-attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
 """ Shares """
 

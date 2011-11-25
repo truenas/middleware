@@ -144,7 +144,7 @@ with open('/var/run/autosnap.pid', 'w') as pidfile:
 MNTLOCK.unlock()
 
 now = datetime.now().replace(microsecond = 0)
-if now.second < 30:
+if now.second < 30 or now.minute == 59:
     snaptime = now.replace(second = 0)
 else:
     snaptime = now.replace(minute = now.minute  + 1, second = 0)

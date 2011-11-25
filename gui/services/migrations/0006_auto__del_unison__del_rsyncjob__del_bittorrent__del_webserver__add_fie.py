@@ -21,10 +21,10 @@ class Migration(SchemaMigration):
         db.delete_table('services_webserver')
 
         # Adding field 'CIFS.cifs_srv_guestok'
-        db.add_column('services_cifs', 'cifs_srv_guestok', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_guestok', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Adding field 'CIFS.cifs_srv_guestonly'
-        db.add_column('services_cifs', 'cifs_srv_guestonly', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_guestonly', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

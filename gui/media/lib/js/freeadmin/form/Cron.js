@@ -21,6 +21,7 @@ define([
         start: "0",
         postCreate : function() {
 
+            var cron = this;
             if(!gettext) {
                 gettext = function(s) { return s; }
             }
@@ -29,10 +30,6 @@ define([
             }
             this.numChoices = parseInt(this.numChoices);
             this.start = parseInt(this.start);
-            var field = new dijit.form.TextBox({
-                name: this.name,
-                type: 'hidden',
-                }, this.fieldValue);
             var sldval = this.sliderValue;
 
             setSelected = function() {
@@ -40,7 +37,7 @@ define([
                  dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
                      varr.push(dijit.getEnclosingWidget(node).get('label'));
                  });
-                 field.set('value', varr.join(','));
+                 cron.set('value', varr.join(','));
             }
 
             var sel = new dijit.layout.ContentPane({
@@ -50,7 +47,7 @@ define([
                  dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
                      varr.push(dijit.getEnclosingWidget(node).get('label'));
                  });
-                 field.set('value', varr.join(','));
+                 cron.set('value', varr.join(','));
                  },
             }, this.selectedNode);
 
@@ -85,10 +82,11 @@ define([
                 style: "width:300px;",
                 onChange: function(value) {
                     sldval.innerHTML = Math.floor(value);
-                    if(Math.floor(value) == 1)
-                        field.set('value', '*');
-                    else
-                        field.set('value', '*/'+Math.floor(value).toString());
+                    if(Math.floor(value) == 1) {
+                        cron.set('value', '*');
+                    } else {
+                        cron.set('value', '*/'+Math.floor(value).toString());
+                    }
                 }
             }, this.sliderNode);
             //slider.domNode.appendChild(sliderRule);
@@ -101,9 +99,9 @@ define([
                     var value = slider.get('value');
                     sldval.innerHTML = Math.floor(value);
                     if(Math.floor(value) == 1)
-                        field.set('value', '*');
+                        cron.set('value', '*');
                     else
-                        field.set('value', '*/'+Math.floor(value).toString());
+                        cron.set('value', '*/'+Math.floor(value).toString());
                  },
             }, this.everyNode);
 
@@ -121,7 +119,7 @@ define([
                  dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
                      varr.push(dijit.getEnclosingWidget(node).get('label'));
                  });
-                 field.set('value', varr.join(','));
+                 cron.set('value', varr.join(','));
                     },
                     label: dojox.string.sprintf("%.2d", i+this.start),
                 });

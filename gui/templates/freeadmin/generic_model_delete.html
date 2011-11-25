@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     {% block onsubmit %}
@@ -14,9 +14,6 @@
         <td>
             <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
                 {% trans "Yes" %}
-                <script type="dojo/method" event="onClick" args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
             </button>
 
             <button data-dojo-type="dijit.form.Button" class="cancelform">

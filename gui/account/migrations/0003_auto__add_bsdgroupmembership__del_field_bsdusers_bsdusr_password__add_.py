@@ -29,13 +29,13 @@ class Migration(SchemaMigration):
         db.add_column('account_bsdusers', 'bsdusr_group', self.gf('django.db.models.fields.related.ForeignKey')(default=-1, to=orm['account.bsdGroups']), keep_default=False)
 
         # Adding field 'bsdUsers.bsdusr_builtin'
-        db.add_column('account_bsdusers', 'bsdusr_builtin', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('account_bsdusers', 'bsdusr_builtin', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Removing M2M table for field bsdusr_gid on 'bsdUsers'
         db.delete_table('account_bsdusers_bsdusr_gid')
 
         # Adding field 'bsdGroups.bsdgrp_builtin'
-        db.add_column('account_bsdgroups', 'bsdgrp_builtin', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('account_bsdgroups', 'bsdgrp_builtin', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

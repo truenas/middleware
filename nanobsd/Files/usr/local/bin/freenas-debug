@@ -41,7 +41,7 @@ usage()
 		return 0
 	fi
 
-	cat <<__EOF__
+	cat<<-__EOF__
 	usage: $0 <options>
 	Where options is:
     -$email_opt		A list of comma delimited list of email
@@ -74,7 +74,7 @@ send_email()
 		afile=$(basename ${FREENAS_DEBUG_FILE})
 		boundary="@@@_beer_@@@"
 
-		cat > "${mfile}" <<-EOF
+		cat<<-EOF>"${mfile}"
 		Content-Transfer-Encoding: 7bit
 		Content-Type: multipart/mixed; boundary="${boundary}"
 		MIME-Version: 1.0

@@ -1,4 +1,4 @@
-{% load i18n %}
+
     <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, title: '{% trans "Reporting"|force_escape|force_escape %}'{% if focus_form == "system" %}, selected: true{% endif %}, doLayout: true" style="width:100%;">
         {% if graphs.hourly %}
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="nested:true, title: '{% trans "Hourly"|force_escape|force_escape %}' {% if focus_form == "system" %}, selected: true{% endif %}" style="overflow-y:scroll;">

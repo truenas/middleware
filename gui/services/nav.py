@@ -104,21 +104,21 @@ class ISCSIExt(TreeNode):
             nav.icon = u'ExtentIcon'
             self.append_child(nav)
 
-            extadd = TreeNode('Add')
-            extadd.name = _(u'Add Extent')
-            extadd.type = u'object'
-            extadd.view = u'freeadmin_model_add'
-            extadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
-            extadd.icon = u'AddExtentIcon'
+        extadd = TreeNode('Add')
+        extadd.name = _(u'Add Extent')
+        extadd.type = u'object'
+        extadd.view = u'freeadmin_model_add'
+        extadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
+        extadd.icon = u'AddExtentIcon'
 
-            extview = TreeNode('View')
-            extview.name = _(u'View All Extents')
-            extview.type = u'iscsi'
-            extview.view = u'freeadmin_model_datagrid'
-            extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
-            extview.icon = u'ViewAllExtentsIcon'
-            extview.app_name = 'services'
-            extview.model = 'Extents'
+        extview = TreeNode('View')
+        extview.name = _(u'View All Extents')
+        extview.type = u'iscsi'
+        extview.view = u'freeadmin_model_datagrid'
+        extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
+        extview.icon = u'ViewAllExtentsIcon'
+        extview.app_name = 'services'
+        extview.model = 'Extents'
 
         self.append_children([extadd, extview])
 

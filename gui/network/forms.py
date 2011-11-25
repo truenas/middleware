@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 import re
@@ -48,7 +47,6 @@ class InterfacesForm(ModelForm):
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", "id_int_v4netmaskbit"]);'
         self.fields['int_ipv6auto'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_ipv6auto", ["id_int_ipv6address", "id_int_v6netmaskbit"]);'
-        ins = kwargs.get("instance", None)
         dhcp = False
         ipv6auto = False
         if self.data:
@@ -56,10 +54,10 @@ class InterfacesForm(ModelForm):
                 dhcp = True
             if self.data.get("int_ipv6auto"):
                 ipv6auto = True
-        elif ins and ins.id:
-            if ins.int_dhcp:
+        elif self.instance.id:
+            if self.instance.int_dhcp:
                 dhcp = True
-            if ins.int_ipv6auto:
+            if self.instance.int_ipv6auto:
                 ipv6auto = True
         if dhcp:
             self.fields['int_ipv4address'].widget.attrs['disabled'] = 'disabled'
@@ -67,6 +65,28 @@ class InterfacesForm(ModelForm):
         if ipv6auto:
             self.fields['int_ipv6address'].widget.attrs['disabled'] = 'disabled'
             self.fields['int_v6netmaskbit'].widget.attrs['disabled'] = 'disabled'
+
+    def clean_int_ipv4address(self):
+        ip = self.cleaned_data.get("int_ipv4address")
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists():
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
+
+    def clean_int_ipv6address(self):
+        ip = self.cleaned_data.get("int_ipv6address")
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv6address=ip)
+            qs2 = models.Alias.objects.filter(alias_v6address=ip)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists():
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
 
     def clean(self):
         cdata = self.cleaned_data
@@ -82,14 +102,14 @@ class InterfacesForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr:
+            if not ipv4addr and not self._errors.get('int_ipv4address'):
                 self._errors['int_ipv4address'] = self.error_class([_("You have to specify IPv4 address as well")])
             if not ipv4net:
                 self._errors['int_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well")])
 
         # IF one field of ipv6 is entered, require the another
         if (ipv6addr or ipv6net) and not ipv6:
-            if not ipv6addr:
+            if not ipv6addr and not self._errors.get('int_ipv6address'):
                 self._errors['int_ipv6address'] = self.error_class([_("You have to specify IPv6 address as well")])
             if not ipv6net:
                 self._errors['int_v6netmaskbit'] = self.error_class([_("You have to choose IPv6 netmask as well")])
@@ -209,13 +229,11 @@ class VLANForm(ModelForm):
         notifier().start("network")
         return retval
 
-attrs_dict = { 'class': 'required' }
-
 class LAGGInterfaceForm(forms.Form):
     lagg_protocol = forms.ChoiceField(choices=choices.LAGGType,
-                          widget=forms.RadioSelect(attrs=attrs_dict))
+                          widget=forms.RadioSelect())
     lagg_interfaces = forms.MultipleChoiceField(
-                            widget=forms.SelectMultiple(attrs=attrs_dict),
+                            widget=forms.SelectMultiple(),
                             label = _('Physical NICs in the LAGG')
                             )
 
@@ -223,17 +241,19 @@ class LAGGInterfaceForm(forms.Form):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
         self.fields['lagg_interfaces'].choices = list(choices.NICChoices(nolagg = True))
 
-
 class LAGGInterfaceMemberForm(ModelForm):
-    lagg_physnic = forms.ChoiceField()
+    lagg_physnic = forms.ChoiceField(label=_("LAGG Physical NIC"))
     class Meta:
         model = models.LAGGInterfaceMembers
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceMemberForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if self.instance.id:
             self.fields['lagg_interfacegroup'].widget.attrs['readonly'] = True
+            self.fields['lagg_interfacegroup'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
             self.fields['lagg_physnic'].widget.attrs['readonly'] = True
+            self.fields['lagg_physnic'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitSelectDisabled'
             self.fields['lagg_physnic'].choices = ( (self.instance.lagg_physnic, self.instance.lagg_physnic), )
         else:
             self.fields['lagg_physnic'].choices = list(choices.NICChoices(nolagg=True, novlan=True))
@@ -247,11 +267,17 @@ class InterfaceEditForm(InterfacesForm):
         super(InterfaceEditForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
-            self.fields['int_interface'] = (
+            self.fields['int_interface'] = \
                 forms.CharField(label=self.fields['int_interface'].label,
-                                initial = instance.int_interface,
-                                widget = forms.TextInput(
-                                attrs = { 'readonly' : True })))
+                    initial = instance.int_interface,
+                    widget = forms.TextInput(
+                    attrs = {
+                        'readonly' : True,
+                        'class': 'dijitDisabled dijitTextBoxDisabled' \
+                                 ' dijitValidationTextBoxDisabled',
+                        },
+                    )
+                )
     def clean(self):
         super(InterfaceEditForm, self).clean()
         if 'int_interface' in self._errors:
@@ -287,6 +313,34 @@ class AliasForm(ModelForm):
         model = models.Alias
         fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
 
+    def clean_alias_v4address(self):
+        ip = self.cleaned_data.get("alias_v4address")
+        par_ip = self.parent.cleaned_data.get("int_ipv4address") \
+            if hasattr(self, 'parent') and \
+            hasattr(self.parent, 'cleaned_data') else None
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            if self.instance.id:
+                qs2 = qs2.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists() or par_ip == ip:
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
+
+    def clean_alias_v6address(self):
+        ip = self.cleaned_data.get("alias_v6address")
+        par_ip = self.parent.cleaned_data.get("int_ipv6address") \
+            if hasattr(self, 'parent') and \
+            hasattr(self.parent, 'cleaned_data') else None
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv6address=ip)
+            qs2 = models.Alias.objects.filter(alias_v6address=ip)
+            if self.instance.id:
+                qs2 = qs2.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists() or par_ip == ip:
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
+
     def clean(self):
         cdata = self.cleaned_data
 
@@ -299,14 +353,14 @@ class AliasForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr:
+            if not ipv4addr and not self._errors.get('alias_v4address'):
                 self._errors['alias_v4address'] = self.error_class([_("You have to specify IPv4 address as well per alias")])
             if not ipv4net:
                 self._errors['alias_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well per alias")])
 
         # IF one field of ipv6 is entered, require the another
         if (ipv6addr or ipv6net) and not ipv6:
-            if not ipv6addr:
+            if not ipv6addr and not self._errors.get('alias_v6address'):
                 self._errors['alias_v6address'] = self.error_class([_("You have to specify IPv6 address as well per alias")])
             if not ipv6net:
                 self._errors['alias_v6netmaskbit'] = self.error_class([_("You have to choose IPv6 netmask as well per alias")])

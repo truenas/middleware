@@ -10,7 +10,7 @@
 #
 # Save the hostid file to our persistent store.
 #
-ix_save_hostid()()
+ix_save_hostid()
 {
 	# This is a hack to save the hostid.  We should save it in the
 	# database, but we don't have an easy way to upgrade people from

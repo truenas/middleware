@@ -23,9 +23,9 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 import re
+from collections import OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
@@ -35,7 +35,6 @@ import types
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import QueryDict
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
 
 from dojango import forms
@@ -237,20 +236,9 @@ class VolumeWizardForm(forms.Form):
         disks = []
 
         # Grab disk list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        pipe = popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks | tr ' ' '\n' | grep -v '^cd[0-9]'` | /usr/bin/cut -f1,3")
-        diskinfo = pipe.read().strip().split('\n')
-        for disk in diskinfo:
-            devname, capacity = disk.split('\t')
-            disks.append(Disk(devname, capacity))
-
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base:
-            for d in list(disks):
-                if d.dev == rootdev_base.group(0):
-                    disks.remove(d)
+        # Root device already ruled out
+        for disk, info in notifier().get_disks().items():
+            disks.append(Disk(info['devname'], info['capacity']))
 
         # Exclude what's already added
         used_disks = []
@@ -374,7 +362,7 @@ class VolumeWizardForm(forms.Form):
 
 
             zpoolfields = re.compile(r'zpool_(.+)')
-            grouped = SortedDict()
+            grouped = OrderedDict()
             grouped['root'] = {'type': group_type, 'disks': disk_list}
             for i, gtype in request.POST.items():
                 if zpoolfields.match(i):
@@ -640,7 +628,14 @@ class DiskFormPartial(ModelForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['disk_name'].widget.attrs['readonly'] = True
+            self.fields['disk_name'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
             self.fields['disk_identifier'].widget.attrs['readonly'] = True
+            self.fields['disk_identifier'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_serial'].widget.attrs['readonly'] = True
+            self.fields['disk_serial'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
     def clean_disk_name(self):
         return self.instance.disk_name
     def clean_disk_identifier(self):
@@ -872,6 +867,8 @@ class CloneSnapshotForm(Form):
     def __init__(self, *args, **kwargs):
         super(CloneSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['cs_snapshot'].widget.attrs['readonly'] = True
+        self.fields['cs_snapshot'].widget.attrs['class'] = 'dijitDisabled' \
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         self.fields['cs_snapshot'].initial = kwargs['initial']['cs_snapshot']
         self.fields['cs_snapshot'].value = kwargs['initial']['cs_snapshot']
         dataset, snapname = kwargs['initial']['cs_snapshot'].split('@')
@@ -974,6 +971,7 @@ class UFSDiskReplacementForm(DiskReplacementForm):
 
 class ReplicationForm(ModelForm):
     remote_hostname = forms.CharField(_("Remote hostname"),)
+    remote_port = forms.CharField(_("Remote port"), initial=22)
     remote_hostkey = forms.CharField(_("Remote hostkey"),widget=forms.Textarea())
     class Meta:
         model = models.Replication
@@ -989,8 +987,9 @@ class ReplicationForm(ModelForm):
                 for task in models.Task.objects.all()
              ]))
         self.fields['repl_filesystem'].choices = fs
-        if repl != None and repl.id != None:
+        if repl and repl.id:
             self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
+            self.fields['remote_port'].initial = repl.repl_remote.ssh_remote_port
             self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey
     def save(self):
         if self.instance.id == None:

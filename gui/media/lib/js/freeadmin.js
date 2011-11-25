@@ -511,6 +511,22 @@
             dijit.byId(farray[i]).set('disabled', toset);
         }
 
+    }
+
+    rsyncModeToggle = function() {
+
+        var select = dijit.byId("id_rsync_mode");
+        var modname = dijit.byId("id_rsync_remotemodule");
+        var path = dijit.byId("id_rsync_remotepath");
+        var trm = modname.domNode.parentNode.parentNode;
+        var trp = path.domNode.parentNode.parentNode;
+        if(select.get('value') == 'ssh') {
+            dojo.style(trm, "display", "none");
+            dojo.style(trp, "display", "table-row");
+        } else {
+            dojo.style(trm, "display", "table-row");
+            dojo.style(trp, "display", "none");
+        }
 
     }
 
@@ -604,9 +620,16 @@
         }
 
         dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
-              function(inputElem){
-                   dijit.getEnclosingWidget(inputElem).set('disabled',true);
-               }
+            function(inputElem){
+                if(inputElem.type == 'submit') {
+                    var dj = dijit.getEnclosingWidget(inputElem);
+                    if(dj) {
+                        dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                        dj.set('label', gettext('Please wait...'));
+                    }
+                }
+                dijit.getEnclosingWidget(inputElem).set('disabled',true);
+            }
             );
 
         // prevent the default submit
@@ -627,10 +650,12 @@
                    }
                 );
             var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', attrs.form.domNode)[0]);
-            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
-            } else {
-                sbtn.set('label', 'Save');
+            if(sbtn) {
+                if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                    sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                } else {
+                    sbtn.set('label', 'Save');
+                }
             }
             handleJson(rnode, data);
 
@@ -640,6 +665,18 @@
 
         };
 
+        var handleReq = function(data, ioArgs) {
+            var json;
+            try {
+                json = dojo.fromJson(data);
+                if(json.error != true && json.error != false) throw "toJson error";
+                loadOk(json, ioArgs);
+            } catch(e) {
+                console.log(e);
+                rnode.set('content', data);
+            }
+        };
+
         if( multipart ) {
 
             dojo.io.iframe.send({
@@ -647,8 +684,8 @@
                 method: 'POST',
                 content: {__form_id: attrs.form.id},
                 form: attrs.form.id,
-                handleAs: 'json',
-                load: loadOk,
+                handleAs: 'text',
+                handle: handleReq,
             });
 
         } else {
@@ -656,8 +693,8 @@
             dojo.xhrPost({
                 url: attrs.url,
                 content: newData,
-                handleAs: 'json',
-                load: loadOk,
+                handleAs: 'text',
+                handle: handleReq,
             });
 
         }
@@ -675,6 +712,13 @@
 
         dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
           function(inputElem){
+               if(inputElem.type == 'submit') {
+                   var dj = dijit.getEnclosingWidget(inputElem);
+                   if(dj) {
+                       dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                       dj.set('label', gettext('Please wait...'));
+                   }
+               }
                dijit.getEnclosingWidget(inputElem).set('disabled',true);
            }
         );
@@ -981,6 +1025,24 @@
         }
     }
 
+    __stack = [];
+    addToStack = function(f) {
+        __stack.push(f);
+    }
+
+    processStack = function() {
+
+        while(__stack.length > 0) {
+            f = __stack.pop();
+            try {
+                f();
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+    }
+
     commonDialog = function(attrs) {
         canceled = false;
         dialog = new dijit.Dialog({
@@ -994,6 +1056,10 @@
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(attrs.nodes);
             },
+            onLoad: function() {
+                processStack();
+                this.layout();
+            }
         });
         if(attrs.onLoad) {
             f = dojo.hitch(dialog, attrs.onLoad);
@@ -1084,6 +1150,7 @@
         "dojo/parser",
         "dojo/NodeList-traverse",
         "dojo/NodeList-manipulate",
+        "dojo/fx",
         "dijit/_base/manager",
         "dijit/form/CheckBox",
         "dijit/form/FilteringSelect",
@@ -1250,11 +1317,12 @@
 
             require([
                 "freeadmin/tree/Tree",
+                "freeadmin/ESCDialog",
                 "freeadmin/tree/TreeLazy",
                 "freeadmin/tree/JsonRestStore",
                 "freeadmin/tree/ForestStoreModel",
                 "freeadmin/form/Cron",
-                ], function(Tree) {
+                ], function(Tree, ESCDialog) {
                 mytree = new freeadmin.tree.Tree({
                     id: "fntree",
                     model: treeModel,
@@ -1271,6 +1339,49 @@
                 }
                 );
                 dijit.byId("menupane").set('content', mytree);
+
+                var shell = new ESCDialog({
+                    id: "shell_dialog",
+                    content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
+                    style: "min-height:400px;background-color: black;",
+                    onShow: function() {
+
+                        function handler(msg,value) {
+                            switch(msg) {
+                            case 'conn':
+                                //startMsgAnim('Tap for keyboard',800,false);
+                                break;
+                            case 'disc':
+                                //startMsgAnim('Disconnected',0,true);
+                                _webshell = undefined;
+                                dijit.byId("shell_dialog").hide();
+                                break;
+                            case 'curs':
+                                cy=value;
+                                //scroll(cy);
+                                break;
+                            }
+                        }
+
+                        try {
+                            _webshell.islocked=false;
+                            _webshell.update();
+                        } catch(e) {
+                            _webshell=new webshell("shell_output", 80, 24, handler);
+                        }
+                        document.onkeypress=_webshell.keypress;
+                        document.onkeydown=_webshell.keydown;
+
+                    },
+                    onHide: function(e) {
+                        if(_webshell)
+                            _webshell.islocked=true;
+                        document.onkeypress=null;
+                        document.onkeydown=null;
+                    }
+                });
+                shell.placeAt("shell_dialog_holder");
+
             });
 
         });

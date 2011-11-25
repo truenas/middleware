@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 import datetime
@@ -212,7 +211,7 @@ def alert_status(request):
         for entry in entries:
             if not entry:
                 continue
-            status, message = entry.split(': ')
+            status, message = entry.split(': ', 1)
             if (status == 'WARN' and current == 'OK') or \
               status == 'CRIT' and current in ('OK','WARN'):
                 current = status
@@ -228,7 +227,7 @@ def alert_detail(request):
         for entry in entries:
             if not entry:
                 continue
-            status, message = entry.split(': ')
+            status, message = entry.split(': ', 1)
             alerts.append({
                 'status': status,
                 'message': message,
@@ -358,6 +357,7 @@ def generic_model_add(request, app, model, mf=None):
     context = {
         'app': app,
         'model': model,
+        'modeladmin': m._admin,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
@@ -400,6 +400,8 @@ def generic_model_add(request, app, model, mf=None):
                     pass
 
         for name, fs in formsets.items():
+            for frm in fs.forms:
+                frm.parent  = mf
             valid &= fs.is_valid()
 
         if valid:
@@ -559,6 +561,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
     context = {
         'app': app,
         'model': model,
+        'modeladmin': m._admin,
         'mf': mf,
         'oid': oid,
         'inline': inline,
@@ -605,6 +608,8 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     pass
 
         for name, fs in formsets.items():
+            for frm in fs.forms:
+                frm.parent  = mf
             valid &= fs.is_valid()
 
         if valid:

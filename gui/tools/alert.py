@@ -28,6 +28,8 @@
 from cStringIO import StringIO
 import hashlib
 import os
+import re
+import subprocess
 import sys
 
 sys.path.extend([
@@ -71,15 +73,40 @@ class Alert(object):
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS', 'UFS']):
-            if vol.status == 'HEALTHY':
+            status = vol.status
+            message = ""
+            if  vol.vol_fstype == 'ZFS':
+                p1 = subprocess.Popen(["zpool", "status", "-x", vol.vol_name],
+                        stdout=subprocess.PIPE)
+                stdout, stderr = p1.communicate()
+                reg1 = re.search(r'^\s*status: (.*?)\n\s*\w+:', stdout, re.S|re.M)
+                reg2 = re.search(r'^\s*action: (.*?)\n\s*\w+:', stdout, re.S|re.M)
+                if reg1:
+                    status = 'UNKNOWN'
+                    msg = reg1.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+                if reg2:
+                    status = 'UNKNOWN'
+                    msg = reg2.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+
+            if status == 'HEALTHY':
                 self.log(self.LOG_OK,
                          _('The volume %s status is HEALTHY') % (vol, ))
-            elif vol.status == 'DEGRADED':
+            elif status == 'DEGRADED':
                 self.log(self.LOG_CRIT,
                          _('The volume %s status is DEGRADED') % (vol, ))
             else:
-                self.log(self.LOG_WARN,
-                         _('The volume %(volume)s status is %(status)s') % {'volume': vol, 'status': vol.status})
+                if message:
+                    self.log(self.LOG_WARN,
+                             _('The volume %(volume)s status is %(status)s: %(message)s') % \
+                                    {'volume': vol, 'status': status, 'message': message})
+                else:
+                    self.log(self.LOG_WARN,
+                             _('The volume %(volume)s status is %(status)s') % \
+                                    {'volume': vol, 'status': status})
 
     def admin_password(self):
         user = User.objects.filter(password=UNUSABLE_PASSWORD)

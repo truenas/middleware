@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 import re
 
@@ -372,9 +371,10 @@ class NavTree(object):
         """
         Plugin nodes
         """
-        import urllib2
-        from django.utils import simplejson
-        for x in range(1):
+        #HACK: unused code yet
+        #import urllib2
+        #from django.utils import simplejson
+        for x in range(0):
             try:
                 response = urllib2.urlopen('http://10.1.1.1/', None, 1)
                 data = response.read()
@@ -452,7 +452,7 @@ class NavTree(object):
         if not o.option_list:
             my['type'] = getattr(o, 'type', None)
             my['url'] = o.get_absolute_url()
-            if hasattr(o, 'append_url'):
+            if o.append_url:
                 my['url'] += o.append_url
         for attr in ('model', 'app_name', 'icon', 'action'):
             if getattr(o, attr):

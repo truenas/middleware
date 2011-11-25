@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 from django.db import models
@@ -151,6 +150,11 @@ class CIFS(Model):
     cifs_srv_homedir = PathField(
             verbose_name=_("Home directories"),
             blank=True,
+            )
+    cifs_srv_unixext = models.BooleanField(
+            verbose_name=_("Unix Extensions"),
+            default=True,
+            help_text=_("These extensions enable Samba to better serve UNIX CIFS clients by supporting features such as symbolic links, hard links, etc..."),
             )
     cifs_srv_aio_enable = models.BooleanField(
             default=True,
@@ -728,6 +732,56 @@ class DynamicDNS(Model):
         deletable = False
         icon_model = u"DDNSIcon"
 
+class Plugins(Model):
+    jail_path = PathField(
+            verbose_name=_("Plugins jail path"),
+            help_text = _("Path to the plugins jail"),
+            default='',
+            blank=True
+            )
+    jail_name = models.CharField(
+            max_length=120,
+            verbose_name = _("Jail name"),
+            help_text = _("Name of the plugins jail"),
+            default='',
+            blank=True
+            )
+    jail_interface = models.CharField(
+            max_length=300,
+            blank=False,
+            verbose_name=_("Jail interface"),
+            help_text=_("Interface for ths plugins jail")
+            )
+    jail_ip = models.IPAddressField(
+            max_length=120,
+            verbose_name=_("Jail IP address"),
+            help_text=_("Plugins jail IP address"),
+            default='',
+            blank=True
+            )
+    jail_netmask = models.IPAddressField(
+            max_length=120,
+            verbose_name=_("Jail netmask"),
+            help_text=_("Plugins jail netmask"),
+            default='',
+            blank=True
+            )
+    plugins_path = PathField(
+            verbose_name=_("Plugins Path"),
+            help_text = _("Path to the plugins directory"),
+            default='',
+            blank=True
+            )
+
+    class Meta:
+        verbose_name = _("Plugins")
+        verbose_name_plural = _("Plugins")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"SettingsIcon"
+
+
 class SNMP(Model):
     snmp_location = models.CharField(
             max_length=120,
@@ -761,6 +815,7 @@ class SNMP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SNMPIcon"
+        advanced_fields = ('snmp_traps',)
 
 class UPS(Model):
     ups_identifier = models.CharField(
@@ -1082,22 +1137,26 @@ class ActiveDirectory(Model):
     ad_netbiosname = models.CharField(
             max_length=120,
             verbose_name = _("NetBIOS Name"),
-            help_text = _("hostname of FreeNAS system")
+            help_text = _("System hostname")
             )
     ad_workgroup = models.CharField(
             max_length=120,
             verbose_name = _("Workgroup Name"),
             help_text = _("Workgroup or domain name in old format, eg WORKGROUP")
             )
+    ad_allow_trusted_doms = models.BooleanField(
+            default=False,
+            verbose_name=_("Allow Trusted Domains"),
+            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name = _("Administrator Name"),
-            help_text = _("Username of Domain Administrator Account")
+            help_text = _("Domain Administrator account name")
             )
     ad_adminpw = models.CharField(
             max_length=120,
             verbose_name = _("Administrator Password"),
-            help_text = _("Password of Domain Administrator account.")
+            help_text = _("Domain Administrator account password.")
             )
 
     class Meta:

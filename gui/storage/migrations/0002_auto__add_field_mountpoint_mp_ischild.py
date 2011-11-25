@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'MountPoint.mp_ischild'
-        db.add_column('storage_mountpoint', 'mp_ischild', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('storage_mountpoint', 'mp_ischild', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

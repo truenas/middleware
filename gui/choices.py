@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 import csv
@@ -397,7 +396,7 @@ class IPChoices(NICChoices):
 class TimeZoneChoices:
     """Populate timezone from /usr/share/zoneinfo choices"""
     def __init__(self):
-        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab')
+        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'')
         self._TimeZoneList = pipe.read().strip().split('\n')
         self._TimeZoneList = [ x[20:] for x in self._TimeZoneList ]
         self._TimeZoneList.sort()
@@ -522,3 +521,13 @@ LDAP_SSL_CHOICES = (
         ('on', _('SSL')),
         ('start_tls', _('TLS')),
         )
+
+RSYNC_MODE_CHOICES = (
+        ('module', _('Rsync module')),
+        ('ssh', _('Rsync over SSH')),
+)
+
+RSYNC_DIRECTION = (
+        ('push', _('Push')),
+        ('pull', _('Pull')),
+)

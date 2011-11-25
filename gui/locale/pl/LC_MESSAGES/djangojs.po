@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-27 02:10-0700\n"
+"POT-Creation-Date: 2011-11-11 02:01-0800\n"
 "PO-Revision-Date: 2011-09-09 14:13+0200\n"
 "Last-Translator: k278 <k278@wp.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,55 +19,55 @@ msgstr ""
 "|| n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:127
+#: media/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Raporty"
 
-#: media/lib/js/freeadmin.js:139
+#: media/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: media/lib/js/freeadmin.js:150
+#: media/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Informacje o systemie"
 
-#: media/lib/js/freeadmin.js:190
+#: media/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Ustawienia sieciowe"
 
-#: media/lib/js/freeadmin.js:254
+#: media/lib/js/freeadmin.js:183
 msgid "Services"
 msgstr "Usługi"
 
-#: media/lib/js/freeadmin.js:295
+#: media/lib/js/freeadmin.js:224
 msgid "Account"
 msgstr "Konto"
 
-#: media/lib/js/freeadmin.js:334
+#: media/lib/js/freeadmin.js:263
 msgid "Storage"
 msgstr "Magazyn"
 
-#: media/lib/js/freeadmin.js:401
+#: media/lib/js/freeadmin.js:330
 msgid "CronJobs"
 msgstr "Zadania cron"
 
-#: media/lib/js/freeadmin.js:554
+#: media/lib/js/freeadmin.js:490
 msgid "Edit"
 msgstr "Edytuj"
 
-#: media/lib/js/freeadmin.js:556
+#: media/lib/js/freeadmin.js:492
 msgid "Edit Disk"
 msgstr "Edytuj dysk"
 
-#: media/lib/js/freeadmin.js:735
+#: media/lib/js/freeadmin.js:760
 msgid "An error occurred!"
 msgstr "Wystąpił błąd!"
 
-#: media/lib/js/freeadmin/form/Cron.js:45
+#: media/lib/js/freeadmin/form/Cron.js:47
 msgid "Each selected"
 msgstr "Każdy wybrany"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:98
 msgid "Every N"
 msgstr "Każdy N"
 

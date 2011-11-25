@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
 from datetime import time
@@ -167,6 +166,11 @@ class Disk(Model):
     disk_identifier = models.CharField(
             max_length=42,
             verbose_name = _("Identifier")
+            )
+    disk_serial = models.CharField(
+            max_length=30,
+            verbose_name = _("Serial"),
+            blank=True
             )
     disk_description = models.CharField(
             max_length=120,
@@ -405,6 +409,10 @@ class ReplRemote(Model):
     ssh_remote_hostname = models.CharField(
             max_length=120,
             verbose_name=_("Remote hostname"),
+            )
+    ssh_remote_port = models.IntegerField(
+            default=22,
+            verbose_name=_("Remote port"),
             )
     ssh_remote_hostkey = models.CharField(
             max_length=2048,

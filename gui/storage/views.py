@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 import os
 import re
@@ -222,8 +221,6 @@ def disks_datagrid(request):
     names.remove('disk enabled')
     _n.remove('disk_enabled')
 
-    names.insert(2, _('Serial'))
-    _n.insert(2, 'serial')
     """
     Nasty hack to calculate the width of the datagrid column
     dojo DataGrid width="auto" doesnt work correctly and dont allow
@@ -265,7 +262,6 @@ def disks_datagrid_json(request):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
-        ret['serial'] = data.get_serial() or _('Unknown')
         #fields = dir(data.__class__) + ret.keys()
         #add_ons = [k for k in dir(data) if k not in fields]
         #for k in add_ons:
@@ -461,6 +457,7 @@ def dataset_delete(request, name):
         if form.is_valid():
             retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
             if retval == '':
+                notifier().restart("collectd")
                 return JsonResponse(message=_("Dataset successfully destroyed."))
             else:
                 return JsonResponse(error=True, message=retval)
@@ -477,6 +474,7 @@ def snapshot_delete(request, dataset, snapname):
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path=str(snapshot))
         if retval == '':
+            notifier().restart("collectd")
             return JsonResponse(message=_("Snapshot successfully deleted."))
         else:
             return JsonResponse(error=True, message=retval)
@@ -496,6 +494,7 @@ def snapshot_delete_bulk(request):
             retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
             if retval != '':
                 return JsonResponse(error=True, message=retval)
+        notifier().restart("collectd")
         return JsonResponse(message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {

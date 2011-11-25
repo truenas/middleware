@@ -9,6 +9,7 @@
 
 clean=true
 # Define beforehand to work around shell bugs.
+postdir=/dev/null
 tmpdir=/dev/null
 
 # Values you can and should change.
@@ -16,15 +17,23 @@ tmpdir=/dev/null
 branch=trunk
 cvsup_host=cvsup1.freebsd.org
 default_archs="amd64 i386"
+postdir_base=/dev/null
+tmpdir_template=e2e-bld.XXXXXXXX
 
 setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	export SHELL=/bin/sh
 
-	tmpdir=$(mktemp -d e2e-bld.XXXXXXXX)
+	tmpdir=$(realpath "$(mktemp -d $tmpdir_template)")
 	chmod 0755 $tmpdir
 	pull $tmpdir
 	cd $tmpdir
+	if [ -d "$postdir_base" ]; then
+		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
+		sudo mkdir -p "$postdir"
+	else
+		postdir=
+	fi
 }
 
 cleanup() {
@@ -39,10 +48,21 @@ pull() {
 
 post_images() {
 	(cd obj.$arch
-	 for img in *.iso *.xz; do
-		sudo sh -c "sha256 $img > $img.sha256.txt"
+	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
+	 if [ "${RELEASE_BUILD:-}" = yes ]; then
+		cp ../ReleaseNotes README
+		set -- *.iso *.xz README
+	 else
+		set -- *.iso *.xz
+	 fi
+	 for file in $*; do
+		sudo sh -c "sha256 $file > $file.sha256.txt"
 
-		scp -o BatchMode=yes $img* \
+		if [ -d "$postdir" ]; then
+			sudo cp $file* "$postdir"/.
+		fi
+
+		scp -o BatchMode=yes $file* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
 
 	done)
@@ -51,13 +71,17 @@ post_images() {
 while getopts 'A:b:c:t:' optch; do
 	case "$optch" in
 	A)
-		case "$OPTARG" in
-		amd64|i386)
-			;;
-		*)
+		_arch=
+		for arch in $default_archs; do
+			if [ "$arch" = "$OPTARG" ]; then
+				_arch=$OPTARG
+				break
+			fi
+		done
+		if [ -z "$_arch" ]; then
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
-			;;
-		esac
+			exit 1
+		fi
 		archs="$archs $OPTARG"
 		;;
 	b)
@@ -85,12 +109,15 @@ set +e
 for arch in $archs; do
 
 	# Build
-	BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host sh build/do_build.sh"
+	BUILD="sh build/do_build.sh"
+	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$cvsup_host PACKAGE_PREP_BUILD=1"
+	BUILD_PASS2_ENV=""
+
 	# Build twice so the resulting image is smaller than the fat image
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	if sudo sh -c "export FREENAS_ARCH=$arch; $BUILD -- -fi && $BUILD"; then
+	if sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD"; then
 		post_images
 	else
 		clean=false
@@ -98,5 +125,5 @@ for arch in $archs; do
 
 done
 if $clean; then
-	cleanup
+	cd /; cleanup
 fi

@@ -6,7 +6,8 @@ dir=$(dirname $0)
 db=${1-/data/freenas-v1.db}
 
 if [ -f ${db} ]; then
-    rm ${db}
+    mv ${db} "${db}.old"
 fi
 
-python manage.py syncdb --migrate
+python manage.py syncdb --migrate --noinput
+python manage.py createadmin

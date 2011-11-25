@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Advanced.adv_traceback'
-        db.add_column('system_advanced', 'adv_traceback', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        db.add_column('system_advanced', 'adv_traceback', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
 
     def backwards(self, orm):

@@ -34,6 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
+from collections import OrderedDict
 import ctypes
 import glob
 import grp
@@ -63,7 +64,6 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
-from django.utils.datastructures import SortedDict
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -507,11 +507,43 @@ class notifier:
         self.__system("/usr/sbin/service mountd reload")
 
     def _restart_nfs(self):
+        self.__system("/usr/sbin/service lockd forcestop")
+        self.__system("/usr/sbin/service statd forcestop")
         self.__system("/usr/sbin/service mountd forcestop")
         self.__system("/usr/sbin/service nfsd forcestop")
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service mountd quietstart")
         self.__system("/usr/sbin/service nfsd quietstart")
+        self.__system("/usr/sbin/service statd quietstart")
+        self.__system("/usr/sbin/service lockd quietstart")
+
+    def _start_plugins(self):
+        self.__system("/usr/sbin/service ix-jail quietstart")
+        self.__system("/usr/sbin/service jail quietstart")
+
+    def _stop_plugins(self):
+        self.__system("/usr/sbin/service jail forcestop")
+        self.__system("/usr/sbin/service ix-jail forcestop")
+
+    def _restart_plugins(self):
+        self._stop_plugins()
+        self._start_plugins()
+    
+    def _started_plugins(self):
+        c = self.__open_db()
+        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        jail_name = c.fetchone()[0]
+
+        retval = 1
+        idfile = "/var/run/jail_%s.id" % jail_name
+        if os.access(idfile, os.F_OK):
+            jail_id = int(open(idfile).read().strip())
+            retval = self.__system_nolog("jls -j %d" % jail_id)
+
+        if retval == 0:
+            return True
+        else:
+            return False
 
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
@@ -839,7 +871,7 @@ class notifier:
         proc = self.__pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
         out, err = proc.communicate()
         out = out.split('\n')
-        retval = SortedDict()
+        retval = OrderedDict()
         if proc.returncode == 0:
             for line in out:
                 if not line:
@@ -898,7 +930,6 @@ class notifier:
                 from storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
-                self.restart("collectd")
         return retval
 
     def destroy_zfs_vol(self, name):
@@ -1410,21 +1441,18 @@ class notifier:
         return sum
 
     def get_disks(self):
-        disks = self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' ')
-        regexp_nocamcdrom = re.compile('^cd[0-9]')
 
         disksd = {}
 
-        for disk in disks:
-            if regexp_nocamcdrom.match(disk) == None:
-                info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
-                if len(info) > 3:
-                    disksd.update({
-                        disk: {
-                            'devname': info[0],
-                            'capacity': info[2]
-                        },
-                    })
+        for disk in self.__get_disks():
+            info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
+            if len(info) > 3:
+                disksd.update({
+                    disk: {
+                        'devname': info[0],
+                        'capacity': info[2]
+                    },
+                })
 
         return disksd
 
@@ -1895,9 +1923,7 @@ class notifier:
             return None
 
         elif tp == 'serial':
-            p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
-            output = p1.communicate()[0][:-1]
-            for devname in output.split(' '):
+            for devname in self.__get_disks():
                 serial = self.serial_from_device(devname)
                 if serial == value:
                     return devname
@@ -1970,8 +1996,8 @@ class notifier:
 
     def sync_disks(self):
         from storage.models import Disk
-        regexp_nocamcdrom = re.compile('^cd[0-9]')
-        disks = filter(lambda y: not regexp_nocamcdrom.match(y), self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' '))
+
+        disks = self.__get_disks()
 
         in_disks = {}
         for disk in Disk.objects.all():
@@ -1984,6 +2010,7 @@ class notifier:
                     disk.disk_enabled = False
                 else:
                     disk.disk_enabled = True
+                    disk.disk_serial = self.serial_from_device(dskname)
             else:
                 disk.disk_enabled = True
                 if dskname != disk.disk_name:
@@ -2005,12 +2032,14 @@ class notifier:
                 d = Disk()
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
+                d.disk_serial = self.serial_from_device(disk)
                 d.save()
 
     def geom_disks_dump(self, volume):
         #FIXME: This should not be here
         from django.core.urlresolvers import reverse
         from django.utils import simplejson
+        from storage.models import Disk
         provider = self.get_label_provider('ufs', volume.vol_name)
         class_name = provider.xpathEval("../../name")[0].content
 
@@ -2030,11 +2059,22 @@ class notifier:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
                 status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
+                qs = Disk.objects.filter(disk_name=name)
+                if qs:
+                    actions = {'edit_url': reverse('freeadmin_model_edit',
+                        kwargs={
+                        'app':'storage',
+                        'model': 'Disk',
+                        'oid': qs.get().id,
+                        })+'?deletable=false'}
+                else:
+                    actions = {}
                 items.append({
                     'type': 'disk',
                     'name': name,
                     'id': uid,
                     'status': status,
+                    'actions': simplejson.dumps(actions),
                 })
                 uid += 1
             for i in xrange(len(consumers), ncomponents):
@@ -2052,13 +2092,59 @@ class notifier:
                 uid += 1
         elif class_name == 'PART':
             name = provider.xpathEval("../name")[0].content
+            qs = Disk.objects.filter(disk_name=name)
+            if qs:
+                actions = {'edit_url': reverse('freeadmin_model_edit',
+                    kwargs={
+                    'app':'storage',
+                    'model': 'Disk',
+                    'oid': qs.get().id,
+                    })+'?deletable=false'}
+            else:
+                actions = {}
             items.append({
                 'type': 'disk',
                 'name': name,
                 'id': uid,
                 'status': 'ONLINE',
+                'actions': simplejson.dumps(actions),
             })
         return items
+
+
+    def __find_root_dev(self):
+        """Find the root device from glabel status -s output.
+
+        NOTE: algorithm adapted from /root/updatep*.
+        """
+        # XXX: circular dependency
+        import common.system
+
+        sw_name = common.system.get_sw_name()
+        doc = self.__geom_confxml()
+
+        for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
+                "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
+                % sw_name):
+            prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
+            pid = prov.xpathEval("../consumer/provider/@ref")[0].content
+            prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
+            name = prov.xpathEval("../name")[0].content
+            return name
+
+    def __get_disks(self):
+        """Return a list of available storage disks, e.g. not cds, the root
+           media device, etc."""
+
+        disks = \
+            self.__pipeopen('sysctl -n kern.disks').communicate()[0].split()
+
+        root_dev = self.__find_root_dev()
+
+        device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
+
+        return filter(lambda x: not device_blacklist_re.match(x), disks)
+
 
 def usage():
     usage_str = """usage: %s action command

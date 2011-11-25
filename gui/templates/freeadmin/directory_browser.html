@@ -1,4 +1,4 @@
-{% load i18n %}
+
 <input data-dojo-type="dijit.form.TextBox" data-dojo-props="name: '{{ name|force_escape }}', value: '{{ value|default_if_none:"" }}'" id="{{ attrs.id }}" />
 <button data-dojo-type="dijit.form.Button" data-dojo-props="label: '{% trans "Browse"|force_escape|force_escape %}'">
     <script type="dojo/connect" data-dojo-event="onClick">

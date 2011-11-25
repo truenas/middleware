@@ -23,7 +23,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
@@ -47,6 +46,7 @@ class TreeType(object):
     order_child = True
     order = None
     append_app = True
+    append_url = None
     option_list = []
 
     _children = []
