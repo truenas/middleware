@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-24 11:39+0200\n"
+"PO-Revision-Date: 2011-11-25 10:29+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -137,7 +137,7 @@ msgstr "Seviye 254 - En yüksek güç tüketimi, en yüksek performans"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "En düşük"
+msgstr "En az"
 
 #: choices.py:97
 msgid "Medium"
@@ -1267,7 +1267,7 @@ msgstr "UPS hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:340
 msgid "Confirm Administrator Password"
-msgstr "Yönetci Parolasını Onayla"
+msgstr "Yönetci parolasını onayla"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
@@ -1448,7 +1448,7 @@ msgstr "Hizmetler"
 
 #: services/models.py:63
 msgid "Authentication Model"
-msgstr "Kimlik Doğrulama Biçimi"
+msgstr "Kimlik doğrulama biçimi"
 
 #: services/models.py:64
 msgid ""
@@ -1462,7 +1462,7 @@ msgstr "NetBIOS ismi"
 
 #: services/models.py:72
 msgid "Workgroup"
-msgstr "Çalışma Grubu"
+msgstr "Çalışma grubu"
 
 #: services/models.py:73
 msgid ""
@@ -1490,11 +1490,11 @@ msgstr "Kayıt seviyesi"
 
 #: services/models.py:100
 msgid "Local Master"
-msgstr "Yerel Yönetici"
+msgstr "Yerel yönetici"
 
 #: services/models.py:102
 msgid "Time Server for Domain"
-msgstr "Domain için Zaman Sunucusu"
+msgstr "Etki alanı için zaman sunucusu"
 
 #: services/models.py:107 services/models.py:195
 msgid "Guest account"
@@ -1525,7 +1525,7 @@ msgstr "Sadece misafir erişimine izin ver"
 
 #: services/models.py:116 services/models.py:887
 msgid "File mask"
-msgstr "Dosya Maskesi"
+msgstr "Dosya maskesi"
 
 #: services/models.py:118
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1550,19 +1550,19 @@ msgstr "Büyük RW desteği"
 
 #: services/models.py:129
 msgid "Send files with sendfile(2)"
-msgstr "Dosyaları sendfile(2) ile gönder."
+msgstr "Dosyaları sendfile(2) ile gönder"
 
 #: services/models.py:131
 msgid "EA Support"
-msgstr "EA Desteği"
+msgstr "EA desteği"
 
 #: services/models.py:133
 msgid "Support DOS File Attributes"
-msgstr "DOS Dosya Özniteliklerini destekle"
+msgstr "DOS dosya özniteliklerini destekle"
 
 #: services/models.py:135
 msgid "Allow Empty Password"
-msgstr "Boş Parolaya İzin Ver"
+msgstr "Boş parolaya izin ver"
 
 #: services/models.py:138 services/models.py:718 services/models.py:752
 #: services/models.py:946 services/models.py:1202 services/models.py:1265
@@ -1575,26 +1575,26 @@ msgstr "Bu parametreler smb.conf'un [Global] bölümüne eklenmiştir"
 
 #: services/models.py:143
 msgid "Enable home directories"
-msgstr "Home dizinleri etkinleştir"
+msgstr "Ev dizinlerini etkinleştir"
 
 #: services/models.py:144
 msgid "Enable/disable home directories for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için home dizinlerini etkinleştirir\\etkisizleştirir"
+"Bu, samba kullanıcıları için ev dizinlerini etkinleştirir\\etkisizleştirir"
 
 #: services/models.py:147
 msgid "Enable home directories browsing"
-msgstr "Home dizinlerini taramayı etkinleştir"
+msgstr "Ev dizinlerini taramayı etkinleştir"
 
 #: services/models.py:148
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için home dizinlerini taramayı etkinleştirir"
-"\\etkisizleştirir"
+"Bu, samba kullanıcıları için ev dizinlerini taramayı "
+"etkinleştirir\\etkisizleştirir"
 
 #: services/models.py:152
 msgid "Home directories"
-msgstr "Home dizinleri"
+msgstr "Ev dizinleri"
 
 #: services/models.py:157
 msgid "Enable AIO"
@@ -1645,7 +1645,7 @@ msgstr "Sunucu'nun adı. Bu alan boş bırakılırsa varsayılan sunucu belirtil
 
 #: services/models.py:188
 msgid "Guest Access"
-msgstr "Misafir Erişimi"
+msgstr "Misafir erişimi"
 
 #: services/models.py:189
 msgid "Allows guest access to all apple shares on this box."
@@ -1653,7 +1653,7 @@ msgstr "Bu kutu ile bütün apple paylaşımlarına misafir erişimi izni ver."
 
 #: services/models.py:199
 msgid "Local Access"
-msgstr "Yerel Erişim"
+msgstr "Yerel erişim"
 
 #: services/models.py:200
 msgid "Allow users with local accounts to access apple shares on this box."
@@ -2552,7 +2552,7 @@ msgstr "SSH"
 
 #: services/models.py:1074
 msgid "Domain Controller Name"
-msgstr "Alan Adı Kontrolcüsünün Adı"
+msgstr "Alan adı kontrolcüsünün adı"
 
 #: services/models.py:1075
 msgid "AD or PDC name."
@@ -2560,7 +2560,7 @@ msgstr "AD veya PDC adı."
 
 #: services/models.py:1079
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr "Alan Adı (DNS/Güvenlik etki alanı-Adı)"
+msgstr "Alan adı (DNS/Güvenlik etki alanı-adı)"
 
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
@@ -2568,7 +2568,7 @@ msgstr "Alan Adı, örneğin ornek.com"
 
 #: services/models.py:1084
 msgid "NetBIOS Name"
-msgstr "Ana Bilgisayar Adı (NetBIOS Adı)"
+msgstr "Ana bilgisayar adı (NetBIOS adı)"
 
 #: services/models.py:1085
 msgid "System hostname"
@@ -2576,7 +2576,7 @@ msgstr "FreeNAS sisteminin ana bilgisayar adı"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
-msgstr "Çalışma Grubu Adı"
+msgstr "Çalışma grubu adı"
 
 #: services/models.py:1090
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
@@ -2584,7 +2584,7 @@ msgstr "Eski biçimde çalışma grubu veya etki alanı adı, örneğin WORKGROU
 
 #: services/models.py:1094
 msgid "Administrator Name"
-msgstr "Yönetici Adı"
+msgstr "Yönetici adı"
 
 #: services/models.py:1095
 msgid "Username of Domain Administrator Account"
@@ -2592,7 +2592,7 @@ msgstr "Alan Adı Yönetici Hesabının Kullanıcı Adı"
 
 #: services/models.py:1099
 msgid "Administrator Password"
-msgstr "Yönetci Parolası"
+msgstr "Yönetci parolası"
 
 #: services/models.py:1100
 msgid "Password of Domain Administrator account."
@@ -2969,7 +2969,7 @@ msgstr ""
 
 #: sharing/forms.py:136
 msgid "Mapall group requires Mapall user"
-msgstr "Tüm harita kullanıcısı Tüm Harita grubunu gerektirir"
+msgstr "Tüm harita kullanıcısı tüm harita grubunu gerektirir"
 
 #: sharing/forms.py:139 sharing/forms.py:142
 msgid "Maproot user/group disqualifies Mapall"
@@ -3404,7 +3404,7 @@ msgstr "Gruptan harita yetkilisine"
 
 #: sharing/models.py:262
 msgid "Mapall User"
-msgstr "Tüm Harita Kullanıcısı"
+msgstr "Tüm harita kullanıcısı"
 
 #: sharing/models.py:266
 msgid "User to map all users to"
@@ -3412,7 +3412,7 @@ msgstr "Kullanıcıdan tüm harita kullanıcılarına"
 
 #: sharing/models.py:270
 msgid "Mapall Group"
-msgstr "Tüm Harita Grubu"
+msgstr "Tüm harita grubu"
 
 #: sharing/models.py:274
 msgid "Group to map all users to"
@@ -4153,7 +4153,7 @@ msgstr ""
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr ""
-"Altbaşlıkta konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
+"Alt başlıkta konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
 
 #: system/models.py:127
 msgid "Show tracebacks in case of fatal errors"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:09-0700\n"
-"PO-Revision-Date: 2011-11-24 00:39+0200\n"
+"PO-Revision-Date: 2011-11-25 01:28+0200\n"
 "Last-Translator: ilpelle <alessandro.pellegrini@tin.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -551,9 +551,8 @@ msgid "SSH Public Key"
 msgstr "Chiave Pubblica SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Un utente con questo nome utente già esiste."
+msgstr "Un utente con questo uid utente esiste già."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -592,17 +591,15 @@ msgstr "La home directory deve iniziare con /mnt/ oppure essere /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Consenti GID ripetuti"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Un utente con questo nome utente già esiste."
+msgstr "Un gruppo con questo nome esiste già."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Un utente con questo nome utente già esiste."
+msgstr "Un gruppo con questo gid esiste già"
 
 #: account/forms.py:582
 msgid "Member users"
@@ -614,7 +611,7 @@ msgstr "Gruppo ausiliario"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Un utente non può appartenere a più di 64 gruppi ausiliari"
 
 #: account/forms.py:627
 msgid "New password"
@@ -625,9 +622,8 @@ msgid "New password confirmation"
 msgstr "Conferma nuova password"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Cambia Password"
+msgstr "Cambia anche la password di root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -640,7 +636,7 @@ msgstr ""
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Vuoi eliminare tutti gli utenti appartenenti a questo gruppo primario?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -690,7 +686,7 @@ msgstr "ID gruppo primario"
 
 #: account/models.py:104
 msgid "Home Directory"
-msgstr "Directory base"
+msgstr "Directory Home"
 
 #: account/models.py:113
 msgid "Full Name"
@@ -805,7 +801,7 @@ msgstr "Spegni"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Non è stato possibile recuperare lo stato attuale"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -816,9 +812,9 @@ msgstr "%s aggiornato con successo."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Errore"
+msgstr "Errore: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -852,44 +848,43 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "È necessario specificare anche un indirizzo IPv4"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "È necessario scegliere anche la maschera di rete IPv4"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "È necessario specificare anche un indirizzo IPv6"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "È necessario scegliere anche la maschera di rete IPv6"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Devi scegliere tra IPv4 o IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "Devi specificare un IPv4 valido oppure un IPv6 con maschera di bit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback non è un nameserver valido"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Indirizzi non specificati non sono validi come nameserver"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Il campo non è un indirizzo IP valido o rete valida"
+msgstr "Non è un indirizzo di nameserver valido"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "La sottorete 169.254/16 non è valida per i nameserver"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -1036,7 +1031,7 @@ msgstr "Indirizzo IPv6"
 
 #: network/models.py:125 network/models.py:183
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "Lunghezza del prefisso IPv6"
 
 #: network/models.py:130 network/models.py:286
 #: templates/network/interface.html:11
@@ -1057,7 +1052,6 @@ msgid "Alias"
 msgstr "Alias"
 
 #: network/models.py:195
-#, fuzzy
 msgid "Aliases"
 msgstr "Alias"
 
@@ -1067,9 +1061,10 @@ msgid "Virtual Interface"
 msgstr "Interfaccia virtuale"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Il nome dell'interfaccia deve essere vlanXX dove XX sono dei numeri"
+msgstr ""
+"Il nome dell'interfaccia deve essere vlanXX in cui XX sono dei numeri. "
+"Esempio: vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1093,7 +1088,7 @@ msgstr "VLAN"
 
 #: network/models.py:233
 msgid "VLANs"
-msgstr "VLANs"
+msgstr "VLAN"
 
 #: network/models.py:253
 msgid "Protocol Type"
@@ -1156,9 +1151,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG aggiunto con successo"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "L'utente %s non è valido."
+msgstr "Non è una maschera valida"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1170,9 +1164,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Questo campo è obbligatorio per \"directory base\"."
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Riavvio del servizio NFS fallito."
+msgstr "Riavvio del servizio CIFS fallito."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1227,9 +1220,8 @@ msgstr ""
 "Il nome non può contenere i caratteri slash (/) o chiusa parentesi (])."
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Cambia Password"
+msgstr "Conferma Password"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1237,22 +1229,23 @@ msgstr "Riavvio del servizio DynamicDNS fallito."
 
 #: services/forms.py:273
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "La posizione deve contenere solo caratteri alfanumerici, _ o -"
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "Il campo non è un indirizzo IP valido o rete valida"
+msgstr "Non è un indirizzo e-mail valido"
 
 #: services/forms.py:282
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Il contatto deve contenere solo caratteri alfanumerici, _, - o un indirizzo "
+"e-mail valido"
 
 #: services/forms.py:287
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "La comunità deve contenere solo caratteri alfanumerici, _ o -"
 
 #: services/forms.py:293
 msgid "The SNMP service failed to reload."
@@ -1265,7 +1258,7 @@ msgstr "Porta"
 
 #: services/forms.py:315
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Utilizzare caratteri alfanumerici, \".\", \"-\" e \"_\"."
 
 #: services/forms.py:326 services/forms.py:897
 #, python-format
@@ -1275,14 +1268,12 @@ msgstr[0] "L'email %(email)s non è valida"
 msgstr[1] "Le seguenti email non sono valide: %(email)s"
 
 #: services/forms.py:335
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "Riavvio del servizio NFS fallito."
+msgstr "Riavvio del servizio UPS fallito."
 
 #: services/forms.py:340
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Password Amministratore"
+msgstr "Conferma Password di amministratore"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
@@ -1382,6 +1373,8 @@ msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
+"Questo campo è obbligatorio se CHAP o Mutual CHAP sono selezionati come "
+"metodo di controllo di autorizzazione."
 
 #: services/forms.py:620
 msgid "You need to specify a filepath, not a directory."
@@ -1408,6 +1401,8 @@ msgstr ""
 #: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
+"Il file deve esistere se la dimensione di estensione è impostata ad "
+"automatico (0)"
 
 #: services/forms.py:671
 msgid "Disk device"
@@ -1424,11 +1419,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "Il tuo Gruppo ID non può essere più grande di %d"
 
 #: services/forms.py:811
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "Il campo non è un indirizzo IP valido o rete valida"
+msgstr ""
+"Il campo non è un indirizzo IP o una rete validi. La parola chiave \"ALL\" può "
+"essere utilizzata per consentire tutto."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -1436,16 +1432,15 @@ msgstr "Numero del gruppo di autenticazione"
 
 #: services/forms.py:849
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Usa caratteri alfanumerici, \".\", \"-\" e \":\"."
 
 #: services/forms.py:875
 msgid "Delete underlying file"
 msgstr "Cancella file sottostante"
 
 #: services/forms.py:906
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "Riavvio del servizio SNMP fallito."
+msgstr "Riavvio del servizio S.M.A.R.T. fallito."
 
 #: services/models.py:43
 msgid "Service"
@@ -1690,10 +1685,11 @@ msgid "Max. Connections"
 msgstr "Connessioni massime"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Numero massimo di connessioni in ogni sessione (8 di default)."
+msgstr ""
+"Numero massimo di connessioni consentite tramite AFP. Il limite predefinito "
+"è 50."
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -2213,13 +2209,13 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "Porta Seriale o USB alla quale è collegato l'UPS."
 
 #: services/models.py:785
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Parametri ausiliari"
+msgstr "Parametri ausiliari (ups.conf)"
 
 #: services/models.py:787
 msgid "Additional parameters to the hardware-specific part of the driver."
 msgstr ""
+"Parametri addizionali per la porzione di driver dipendente dall'hardware."
 
 #: services/models.py:798
 msgid "Shutdown mode"
@@ -2244,7 +2240,7 @@ msgstr "Password condivisione"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Utenti aggiuntivi (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2266,7 +2262,7 @@ msgstr ""
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "Oggetto dell'email"
 
 #: services/models.py:827
 msgid ""
@@ -2606,18 +2602,16 @@ msgid "NetBIOS Name"
 msgstr "Nome Host (NetBIOS-Name)"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "System hostname"
-msgstr "Nome Host nel vecchi formato, es. EXAMPLE"
+msgstr "Home host di sistema"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
 msgstr "Nome Workgroup"
 
 #: services/models.py:1090
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Nome Workgroup nel vecchi formato, es. EXAMPLE"
+msgstr "Nome del Workgroup o del dominio nel vecchio formato, es. WORKGROUP"
 
 #: services/models.py:1094
 msgid "Administrator Name"
@@ -2738,9 +2732,8 @@ msgstr ""
 "Computers"
 
 #: services/models.py:1171
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "Modello di autenticazione"
+msgstr "Modalità di crittazione"
 
 #: services/models.py:1172
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2780,7 +2773,7 @@ msgstr ""
 
 #: services/models.py:1207 services/models.py:1208
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Configura Rsyncd"
 
 #: services/models.py:1218
 msgid "Module name"
@@ -2981,9 +2974,8 @@ msgid "Add Rsync Module"
 msgstr "Aggiungi modulo rsync"
 
 #: services/nav.py:164
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Moduli rsync"
+msgstr "Mostra moduli Rsync"
 
 #: services/views.py:228
 msgid "The service could not be stopped."
@@ -2994,9 +2986,8 @@ msgid "The service could not be started."
 msgstr "Il servizio non ha potuto essere avviato."
 
 #: sharing/forms.py:68
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Password condivisione"
+msgstr "Conferma password di condivisione"
 
 #: sharing/forms.py:117
 msgid "The field is a not a valid IP address or network"
@@ -3035,9 +3026,8 @@ msgid "Browsable to Network Clients"
 msgstr "Navigabile dai client di rete"
 
 #: sharing/models.py:54
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Ereditato"
+msgstr "Eredita proprietario"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
@@ -3053,7 +3043,7 @@ msgstr "Mostra Files Nascosti"
 
 #: sharing/models.py:65
 msgid "Guest Account"
-msgstr "Account Guest"
+msgstr "Account Ospite"
 
 #: sharing/models.py:66
 msgid ""
@@ -3119,14 +3109,12 @@ msgstr ""
 "Questi parametri saranno aggiunti alla sezione [Share] del file smb.conf"
 
 #: sharing/models.py:92
-#, fuzzy
 msgid "CIFS Share"
-msgstr "Condivisioni UNIX"
+msgstr "Condivisione CIFS"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "Condivisioni UNIX"
+msgstr "Condivisioni CIFS"
 
 #: sharing/models.py:104
 msgid ""
@@ -3392,14 +3380,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Utilizza i privilegi unix AFP3."
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Condivisioni Apple"
+msgstr "Condivisione AFP"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "Condivisioni Apple"
+msgstr "Condivisioni AFP"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3481,29 +3467,27 @@ msgid "Group to map all users to"
 msgstr "Gruppo verso cui mappare tutti gli utenti"
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "Modifica condivisione NFS"
+msgstr "Condivisione NFS"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "Condivisioni UNIX"
+msgstr "Condivisioni NFS"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
 msgstr "Condivisione"
 
 #: storage/forms.py:89
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr ""
-"Immettere un numero positivo (opzionalmente preceduto da M, G, T), oppure 0"
+"Inserire un numero positivo (eventualmente con il suffisso K, M, G, T) "
+"oppure 0"
 
 #: storage/forms.py:102
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "L'utente %s non è valido."
+msgstr "%s non è un numero valido"
 
 #: storage/forms.py:197 storage/forms.py:428 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3516,12 +3500,14 @@ msgstr "Forza la dimensione dei settori a 4096 bytes"
 
 #: storage/forms.py:202 templates/storage/wizard.html:154
 msgid "Specify custom path"
-msgstr ""
+msgstr "Specificare un percorso personalizzato"
 
 #: storage/forms.py:211
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Lasciando vuoto questo campo il volume assumerà il percorso predefinito "
+"/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:278
 #, fuzzy
@@ -6181,7 +6167,7 @@ msgid "Add Link Aggregation"
 msgstr "Aggiungi Link Aggregation"
 
 msgid "View All Interfaces"
-msgstr "Visualizza tutte le interfacce"
+msgstr "Mostra tutte le interfacce"
 
 msgid "View All VLANs"
 msgstr "Visualizza tutte le VLAN"
