@@ -36,20 +36,22 @@
     {% endfor %}
     {% endblock %}
     </td></tr>
-<tr><td colspan="2">
-    <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
-        <script type="dojo/method">
-            {{ extra_js }}
-        </script>
-        {% trans "OK" %}
-    </button>
-    <button data-dojo-type="dijit.form.Button" class="cancelform">
-        {% trans "Cancel" %}
-        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            cancelDialog(this);
-        </script>
-    </button>
-
+        <tr><td colspan="2">
+            <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
+                <script type="dojo/method">
+                    {{ extra_js }}
+                </script>
+                {% trans "OK" %}
+            </button>
+            <button data-dojo-type="dijit.form.Button" class="cancelform">
+                {% trans "Cancel" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    cancelDialog(this);
+                </script>
+            </button>
+            {% if modeladmin.advanced_fields %}
+            {% include "freeadmin/advanced_btn.html" %}
+            {% endif %}
         </td></tr>
 </table>
 </form>

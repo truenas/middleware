@@ -1,0 +1,22 @@
+            <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: 'basic'">
+                <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+                    var form = getForm(this);
+                    var mode = this;
+                    dojo.forEach(dojo.query(".advancedField", form.domNode), function(node, idx) {
+                        var tr = dojo.query(node).parents("tr")[0];
+                        if(mode.mode == 'basic') {
+                            dojo.style(tr, "display", "table-row");
+                        } else {
+                            dojo.style(tr, "display", "none");
+                        }
+                    });
+                    if(this.mode == 'basic') {
+                        this.mode = 'advanced';
+                        this.set('label', gettext('Basic Mode'));
+                    } else {
+                        this.mode = 'basic';
+                        this.set('label', gettext('Advanced Mode'));
+                    }
+                </script>
+                {% trans "Advanced Mode" %}
+            </button>

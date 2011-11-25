@@ -357,6 +357,7 @@ def generic_model_add(request, app, model, mf=None):
     context = {
         'app': app,
         'model': model,
+        'modeladmin': m._admin,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
