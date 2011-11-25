@@ -47,7 +47,6 @@ class InterfacesForm(ModelForm):
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", "id_int_v4netmaskbit"]);'
         self.fields['int_ipv6auto'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_ipv6auto", ["id_int_ipv6address", "id_int_v6netmaskbit"]);'
-        ins = kwargs.get("instance", None)
         dhcp = False
         ipv6auto = False
         if self.data:
@@ -55,10 +54,10 @@ class InterfacesForm(ModelForm):
                 dhcp = True
             if self.data.get("int_ipv6auto"):
                 ipv6auto = True
-        elif ins and ins.id:
-            if ins.int_dhcp:
+        elif self.instance.id:
+            if self.instance.int_dhcp:
                 dhcp = True
-            if ins.int_ipv6auto:
+            if self.instance.int_ipv6auto:
                 ipv6auto = True
         if dhcp:
             self.fields['int_ipv4address'].widget.attrs['disabled'] = 'disabled'
@@ -66,6 +65,18 @@ class InterfacesForm(ModelForm):
         if ipv6auto:
             self.fields['int_ipv6address'].widget.attrs['disabled'] = 'disabled'
             self.fields['int_v6netmaskbit'].widget.attrs['disabled'] = 'disabled'
+
+    def clean_int_ipv4address(self):
+        ip = self.cleaned_data.get("int_ipv4address")
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists():
+                print "yeah"
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
 
     def clean(self):
         cdata = self.cleaned_data
@@ -81,7 +92,7 @@ class InterfacesForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr:
+            if not ipv4addr and not self._errors['int_ipv4address']:
                 self._errors['int_ipv4address'] = self.error_class([_("You have to specify IPv4 address as well")])
             if not ipv4net:
                 self._errors['int_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well")])
@@ -292,6 +303,17 @@ class AliasForm(ModelForm):
         model = models.Alias
         fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
 
+    def clean_alias_v4address(self):
+        ip = self.cleaned_data.get("alias_v4address")
+        if ip:
+            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            if self.instance.id:
+                qs2 = qs2.exclude(id=self.instance.id)
+            if qs.exists() or qs2.exists():
+                raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
+        return ip
+
     def clean(self):
         cdata = self.cleaned_data
 
@@ -304,7 +326,7 @@ class AliasForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr:
+            if not ipv4addr and not self._errors['alias_v4address']:
                 self._errors['alias_v4address'] = self.error_class([_("You have to specify IPv4 address as well per alias")])
             if not ipv4net:
                 self._errors['alias_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well per alias")])
