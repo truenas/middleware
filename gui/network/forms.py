@@ -315,25 +315,29 @@ class AliasForm(ModelForm):
 
     def clean_alias_v4address(self):
         ip = self.cleaned_data.get("alias_v4address")
-
+        par_ip = self.parent.cleaned_data.get("int_ipv4address") \
+            if hasattr(self, 'parent') and \
+            hasattr(self.parent, 'cleaned_data') else None
         if ip:
             qs = models.Interfaces.objects.filter(int_ipv4address=ip)
             qs2 = models.Alias.objects.filter(alias_v4address=ip)
             if self.instance.id:
                 qs2 = qs2.exclude(id=self.instance.id)
-            if qs.exists() or qs2.exists():
+            if qs.exists() or qs2.exists() or par_ip == ip:
                 raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
         return ip
 
     def clean_alias_v6address(self):
         ip = self.cleaned_data.get("alias_v6address")
-
+        par_ip = self.parent.cleaned_data.get("int_ipv6address") \
+            if hasattr(self, 'parent') and \
+            hasattr(self.parent, 'cleaned_data') else None
         if ip:
             qs = models.Interfaces.objects.filter(int_ipv6address=ip)
             qs2 = models.Alias.objects.filter(alias_v6address=ip)
             if self.instance.id:
                 qs2 = qs2.exclude(id=self.instance.id)
-            if qs.exists() or qs2.exists():
+            if qs.exists() or qs2.exists() or par_ip == ip:
                 raise forms.ValidationError(_("You cannot configure multiple interfaces with the same IP address (%s)") % ip)
         return ip
 

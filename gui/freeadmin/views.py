@@ -400,6 +400,8 @@ def generic_model_add(request, app, model, mf=None):
                     pass
 
         for name, fs in formsets.items():
+            for frm in fs.forms:
+                frm.parent  = mf
             valid &= fs.is_valid()
 
         if valid:
@@ -606,6 +608,8 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     pass
 
         for name, fs in formsets.items():
+            for frm in fs.forms:
+                frm.parent  = mf
             valid &= fs.is_valid()
 
         if valid:
