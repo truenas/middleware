@@ -150,12 +150,12 @@ update_ttys()
 	" | \
 	while read console_menu serial
 	do
-		case "${serial}" in 
+		case "${adv_serialconsole}" in 
 			0) serial_disable ;;
 			1) serial_enable ;;
 		esac
 
-		case "${console_menu}" in
+		case "${adv_consolemenu}" in
 			0) netcli_disable; netcli_serial_disable ;;
 			1) netcli_enable; netcli_serial_enable ;;
 		esac
