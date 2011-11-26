@@ -14,7 +14,7 @@
 #
 import_zpools()
 {
-	local IFS=\|
+	local IFS="|"
 	local f="
 		vol_name
 		vol_guid
