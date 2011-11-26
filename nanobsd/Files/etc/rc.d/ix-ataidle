@@ -26,9 +26,13 @@ ataidle_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM storage_disk" | \
 	while eval read $f; do
-        if [ -z `echo "${disk_name}"|egrep "^ada|^ad"` ]; then
-            continue
-        fi
+		case "$disk_name" in
+		ad*)
+			;;
+		*)
+			continue
+			;;
+		esac
 		ataidle_args=""
 		if [ "${disk_advpowermgmt}" != "Disabled" ]; then
 			ataidle_args="-P ${disk_advpowermgmt}"
