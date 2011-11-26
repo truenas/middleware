@@ -24,11 +24,11 @@ generate_tftp()
     local sf=$(var_to_sf $f)
     local cmd
     local enabled
-    enabled=$(svc_enabled tftp)
+    svc_enabled tftp; enabled=$?
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
-	if [ "$enabled" -eq 1 ]; then
+	if [ $enabled -ne 0 ]; then
 	    if [ "$tftp_port" -eq 69 ]; then
 		service="tftp"
 	    else

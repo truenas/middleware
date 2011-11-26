@@ -74,7 +74,7 @@ setup_homedirs()
 
 activedirectory_start()
 {
-	if AD_enabled
+	if srv_enabled activedirectory
 	then
 		AD_init
 		AD_join_domain

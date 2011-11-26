@@ -30,13 +30,13 @@ generate_inadyn_real()
 		if [ -n "${ddns_provider}" ]; then
 			echo "dyndns_system ${ddns_provider}"
 		fi
-		cat << E*O*F
+		cat << EOF
 background
 syslog
 username ${ddns_username}
 password ${ddns_password}
 alias ${ddns_domain}
-E*O*F
+EOF
 		if [ -n "${ddns_updateperiod}" ]; then
 			echo "update_period_sec ${ddns_updateperiod}"
 		fi
