@@ -8,73 +8,13 @@
 
 . /etc/rc.freenas
 
-ldap_enabled()
-{
-	local res=1
-	local enabled
-
-	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		count(*)
-
-	FROM
-		services_services
-
-	WHERE (
-		srv_service = 'ldap' and
-		srv_enable = 1
-	)
-
-	ORDER BY
-		-services_services.id
-
-	LIMIT 1")
-
-	if [ "${enabled}" = "1" ]
-	then
-		res=0
-	fi
-
-	return ${res}
-}
-
-activedirectory_enabled()
-{
-	local res=1
-	local enabled
-
-	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		count(*)
-
-	FROM
-		services_services
-
-	WHERE (
-		srv_service = 'activedirectory' and
-		srv_enable = 1
-	)
-
-	ORDER BY
-		-services_services.id
-
-	LIMIT 1")
-
-	if [ "${enabled}" = "1" ]
-	then
-		res=0
-	fi
-
-	return ${res}
-}
-
 populate_cache()
 {
-	if ldap_enabled
+	if srv_enabled ldap
 	then
 		/usr/local/www/freenasUI/tools/cachetool.py fill
 
-	elif activedirectory_enabled
+	elif srv_enabled activedirectory
 	then
 		/usr/local/www/freenasUI/tools/cachetool.py fill
 	fi
