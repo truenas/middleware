@@ -353,11 +353,6 @@ AD_leave_domain()
 	return $?
 }
 
-AD_enabled()
-{
-	srv_enabled activedirectory
-}
-
 AD_init()
 {
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
