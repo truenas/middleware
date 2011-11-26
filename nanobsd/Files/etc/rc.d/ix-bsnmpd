@@ -33,7 +33,7 @@ generate_snmpconf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
 	while read $f; do
-		cat << E*O*F > ${bsnmp_config}
+		cat > "${bsnmp_config}" << EOF
 # Set some common variables
 host := ${hostname}
 contact := "${snmp_contact}"
@@ -64,7 +64,7 @@ sysObjectId = 1.3.6.1.4.1.12325.1.1.2.1.\$(system)
 sysDescr = \$(description)
 
 begemotSnmpdModulePath."mibII" = "/usr/lib/snmp_mibII.so"
-E*O*F
+EOF
 	done
 	echo "$snmp_options" >> ${bsnmp_config}
 }
