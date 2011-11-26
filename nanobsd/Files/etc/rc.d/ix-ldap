@@ -38,25 +38,34 @@ save_certificate()
 
 generate_ldapconf()
 {
-	local IFS=\|
+	local IFS="|"
+	local f="
+		ldap_id
+		ldap_hostname
+		ldap_basedn
+		ldap_anonbind
+		ldap_rootbasedn
+		ldap_rootbindpw
+		ldap_pwencryption
+		ldap_usersuffix
+		ldap_groupsuffix
+		ldap_passwordsuffix
+		ldap_machinesuffix
+		ldap_ssl
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
 	local nssconf="${NSS_LDAP_CONF}"
 	local ldapconf="${LDAP_CONF}"
 	local secret="${NSS_LDAP_SECRET}"
 
+	if ! secret=$(mktemp /tmp/tmp.XXXXXXXX); then
+		return $?
+	fi
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		services_ldap.id as ldap_id,
-		ldap_hostname,
-		ldap_basedn,
-		ldap_anonbind,
-		ldap_rootbasedn,
-		ldap_rootbindpw,
-		ldap_pwencryption,
-		ldap_usersuffix,
-		ldap_groupsuffix,
-		ldap_passwordsuffix,
-		ldap_machinesuffix,
-		ldap_ssl,
+		services_ldap.id as $sf,
 		trim(
 			rtrim(
 				replace(
@@ -81,60 +90,62 @@ generate_ldapconf()
 
 	LIMIT 1
 	" | \
-	while read id hostname basedn anonbind rootbasedn \
-		rootbindpw pwencryption usersuffix groupsuffix \
-		passwordsuffix machinesuffix ssl options;
-	do
-		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
+	while read $f; do
+		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
 
-		cat>"${nssconf}" <<-EOF
-		host ${hostname}
-		base ${basedn}
-		rootbinddn ${rootbasedn}
-		pam_password ${pwencryption}
-		nss_base_passwd ${usersuffix},${basedn}
-		nss_base_group ${groupsuffix},${basedn}
+		cat >"${nssconf}" <<-EOF
+		host ${ldap_hostname}
+		base ${ldap_basedn}
+		rootbinddn ${ldap_rootbasedn}
+		pam_password ${ldap_pwencryption}
+		nss_base_passwd ${ldap_usersuffix},${ldap_basedn}
+		nss_base_group ${ldap_groupsuffix},${ldap_basedn}
 		nss_override_attribute_value loginShell /bin/sh
 EOF
-		if [ "${ssl}" = "start_tls" ]; then
-			save_certificate "${id}"
+		if [ "${ldap_ssl}" = "start_tls" ]; then
+			save_certificate "${ldap_id}"
 
 			cat >>"${nssconf}" <<-EOF
-			ssl ${ssl}
+			ssl ${ldap_ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
-		elif [ "${ssl}" = "on" ]; then
-			save_certificate "${id}"
+		elif [ "${ldap_ssl}" = "on" ]; then
+			save_certificate "${ldap_id}"
 
 			cat >>"${nssconf}" <<-EOF
 			uri ldaps://${hostname}
-			ssl ${ssl}
+			ssl ${ldap_ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
 		fi
 
-		for opt in ${options}; do
+		for opt in ${ldap_options}; do
 			echo ${opt} >> "${nssconf}"
 		done
 
-		echo "${rootbindpw}" > "${secret}"
-		chmod 600 "${secret}"
+		secret=$(mktemp /tmp/tmp.XXXXXXXX)
+		if [ "$ldap_anonbind" != 1 ]; then
+			echo "${ldap_rootbindpw}" > "${secret}"
+			chmod 600 "${secret}"
+		fi
 
-		ln -s ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
-		ln -s ${secret} "$(dirname ${secret})/ldap.secret" 2>/dev/null
+		ln -sf ${nssconf} "$(dirname ${nssconf})/ldap.conf"
+		if [ "$ldap_anonbind" != 1 ]; then
+			ln -sf ${secret} "$(dirname ${secret})/ldap.secret"
+		fi
 
-		echo "HOST ${hostname}" > "${ldapconf}"
-		echo "BASE ${basedn}" >> "${ldapconf}"
-		case "$ssl" in
+		echo "HOST ${ldap_hostname}" > "${ldapconf}"
+		echo "BASE ${ldap_basedn}" >> "${ldapconf}"
+		case "$ldap_ssl" in
 		start_tls)
-			cat >>"${ldapconf}" <<-EOF
+			cat >> "${ldapconf}" <<-EOF
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
 			;;
 		on)
-			cat >>"${ldapconf}" <<-EOF
-			URI ldaps://${hostname}
+			cat >> "${ldapconf}" <<-EOF
+			URI ldaps://${ldap_hostname}
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
@@ -173,40 +184,11 @@ setup_homedirs()
 	mount -ur /
 }
 
-ldap_enabled()
-{
-	local res=1
-	local enabled
-
-	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		count(*)
-
-	FROM
-		services_services
-
-	WHERE (
-		srv_service = 'ldap' and
-		srv_enable = 1
-	)
-
-	ORDER BY
-		-services_services.id
-
-	LIMIT 1")
-
-	if [ "${enabled}" -eq "1" ]; then
-		res=0
-	fi
-
-	return ${res}
-}
-
 generate_ldap_config()
 {
-	if ldap_enabled; then
-		generate_ldapconf
-		setup_homedirs
+	if srv_enabled ldap; then
+		generate_ldapconf &&
+		setup_homedirs &&
 		create_cache_filesystem
 	fi
 }

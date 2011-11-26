@@ -13,7 +13,7 @@
 #
 generate_fstab_real()
 {
-	local IFS=\|
+	local IFS="|"
 	local fstype volumename newmp mountpoint mpoptions device fs
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "

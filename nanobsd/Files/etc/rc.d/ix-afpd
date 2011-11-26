@@ -28,27 +28,15 @@ bool_on()
     fi
 }
 
-# If $1 == 1, return $2, otherwise return nothing
-bool_off()
-{
-    if [ $1 -eq 0 ]; then
-       echo -n $2
-    fi
-}
-
-# Return "on" for '1' and "off" for '0'
-on_off()
-{
-    case $1 in
-       0) echo "off";;
-       1) echo "on";;
-    esac
-}
-
 generate_afpd_config()
 {
-    local IFS=\|
-    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_guest_user"
+    local IFS="|"
+    local f="
+	afp_srv_name
+	afp_srv_guest
+	afp_srv_local
+	afp_srv_guest_user
+	"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 
@@ -74,10 +62,32 @@ EOF
 
 generate_av_default()
 {
-    local IFS=\|
-    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_noadouble afp_nodev afp_nofileid afp_nohex afp_prodos afp_nostat afp_upriv"
+    local IFS="|"
+    local f="
+	afp_name 
+	afp_comment
+	afp_sharepw
+	afp_sharecharset
+	afp_allow
+	afp_deny
+	afp_ro
+	afp_rw
+	afp_diskdiscovery
+	afp_discoverymode
+	afp_dbpath
+	afp_cachecnid
+	afp_crlf
+	afp_mswindows
+	afp_noadouble
+	afp_nodev
+	afp_nofileid
+	afp_nohex
+	afp_prodos	
+	afp_nostat
+	afp_upriv
+	"
     eval local $f
-    local sf=$(echo $f | sed -e 's/ /, /g')
+    local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT ${sf}, afp_path FROM sharing_afp_share AS aps ORDER BY aps.id DESC" | \
     while eval read $f mountpoint; do
@@ -107,11 +117,14 @@ generate_av_default()
 
 generate_avahi_daemon_config()
 {
-    local IFS=\|
-    local afp_srv_name
+    local IFS="|"
+    local f="
+	afp_srv_name
+	"
+    local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT afp_srv_name FROM services_afp ORDER BY -id LIMIT 1" | \
-    while read afp_srv_name; do
+        "SELECT $sf FROM services_afp ORDER BY -id LIMIT 1" | \
+    while read $sf; do
 	cat << EOF
 [server]
 host-name=${afp_srv_name}
@@ -144,8 +157,7 @@ generate_avahi_afpd_service()
 {
 	local srv_name
 
-	afpd_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'afp'" 2>/dev/null || echo 0)
-	if [ "x$afpd_enabled" = x1 ]; then
+	if srv_enabled afp; then
 		cat > "$avahi_afpd_service" <<EOF
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
@@ -169,10 +181,13 @@ EOF
 
 generate_netatalk_conf()
 {
-	local IFS=\|
-	local f="afp_srv_connections_limit afp_srv_guest_user"
+	local IFS="|"
+	local f="
+		afp_srv_connections_limit
+		afp_srv_guest_user
+	"
 	eval local $f
-	local sf=$(echo $f | sed -e 's/ /, /g')
+	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $f FROM services_afp ORDER BY -id LIMIT 1" | \

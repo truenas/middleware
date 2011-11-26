@@ -10,14 +10,19 @@
 
 set_sysctl()
 {
-	local IFS=\|
-	local var value
+	local IFS="|"
+	local f="
+		sysctl_mib
+		sysctl_value
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
 	# Generate sysctls
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT sysctl_mib, sysctl_value FROM system_sysctl ORDER BY id" | \
-	while read var value; do
-		sysctl ${var}="${value}"
+		"SELECT $sf FROM system_sysctl ORDER BY id" | \
+	while read $f; do
+		sysctl ${sysctl_mib}="${sysctl_value}"
 	done
 }
 

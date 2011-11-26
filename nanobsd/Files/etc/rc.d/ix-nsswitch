@@ -64,7 +64,7 @@ EOF
 		fi
 	fi
 	
-	cat<<-EOF>"${conf}"
+	cat >"${conf}" <<-EOF
 	group: ${g}
 	hosts: files dns
 	networks: files

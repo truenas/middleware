@@ -10,13 +10,18 @@
 
 generate_hostname()
 {
-    local IFS=\|
-    local hostname domain
+    local IFS="|"
+    local f="
+	gc_hostname
+	gc_domain
+	"
+    eval local $f
+    local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT gc_hostname,gc_domain FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
-	while read hostname domain; do
+	"SELECT $sf FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
+	while read $f; do
         cp /conf/base/etc/hosts /etc/hosts
-        echo -e "127.0.0.1\t${hostname}.${domain}" >> /etc/hosts
+        echo -e "127.0.0.1\t${gc_hostname}.${gc_domain}" >> /etc/hosts
     done
 }
 

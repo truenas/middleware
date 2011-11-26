@@ -12,12 +12,16 @@
 
 ataidle_start()
 {
-	local IFS=\|
-
-	local f="disk_name disk_hddstandby disk_advpowermgmt disk_acousticlevel"
+	local IFS="|"
+	local f="
+		disk_name
+		disk_hddstandby
+		disk_advpowermgmt
+		disk_acousticlevel
+	"
 	eval local $f
-	local cmd sf
-	sf=$(echo $f | sed -e 's/ /, /g')
+	local sf=$(var_to_sf $f)
+	local cmd
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM storage_disk" | \

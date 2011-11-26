@@ -14,11 +14,13 @@
 #
 generate_rsyncd()
 {
-    local IFS=\|
-    local f="rsyncd_port"
+    local IFS="|"
+    local f="
+	rsyncd_port
+	"
     eval local $f
-    local cmd sf cfg
-    sf=$(echo $f | sed -e 's/ /, /g')
+    local cmd cfg
+    local sf=$(var_to_sf $f)
     cfg=/usr/local/etc/rsyncd.conf
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncd ORDER BY -id LIMIT 1" | \
@@ -35,9 +37,21 @@ EOF
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT rsyncd_auxiliary FROM services_rsyncd ORDER BY -id LIMIT 1" >> $cfg
 
-    local f="id rsyncmod_name rsyncmod_comment rsyncmod_path rsyncmod_mode rsyncmod_maxconn rsyncmod_user rsyncmod_group rsyncmod_hostsallow rsyncmod_hostsdeny"
+    local f="
+	id
+	rsyncmod_name
+	rsyncmod_comment
+	rsyncmod_path
+	rsyncmod_mode
+	rsyncmod_maxconn
+	rsyncmod_user
+	rsyncmod_group
+	rsyncmod_hostsallow
+	rsyncmod_hostsdeny
+	"
     eval local $f
-    local cmd sf cfg
+    local sf=$(var_to_sf $f)
+    local cmd cfg
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncmod ORDER BY id" | \

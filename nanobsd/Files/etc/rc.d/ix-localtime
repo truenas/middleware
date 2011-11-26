@@ -13,17 +13,20 @@
 #
 install_timezone()
 {
-	local IFS=\|
-
-	local timezone
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1" | \
-	while read timezone; do
-		timezone=$(echo ${timezone} | sed -es=america-los_angeles=America/Los_Angeles=)
-		if [ -z "${timezone}" ]; then
-			timezone=America/Los_Angeles
+	local IFS="|"
+	local f="
+		stg_timezone
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
+	while read $f; do
+		timezone=$(echo ${stg_timezone} | sed -es=america-los_angeles=America/Los_Angeles=)
+		if [ -z "${stg_timezone}" ]; then
+			stg_timezone=America/Los_Angeles
 		fi
-		cp /usr/share/zoneinfo/${timezone} /etc/localtime
-		echo ${timezone} > /var/db/zoneinfo
+		cp /usr/share/zoneinfo/${stg_timezone} /etc/localtime
+		echo ${stg_timezone} > /var/db/zoneinfo
 	done
 }
 

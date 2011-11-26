@@ -130,11 +130,16 @@ serial_disable()
 update_ttys()
 {
 	local IFS="|"
+	local f="
+		adv_consolemenu
+		adv_serialconsole
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		adv_consolemenu,
-		adv_serialconsole
+		$sf
 
 	FROM
 		system_advanced

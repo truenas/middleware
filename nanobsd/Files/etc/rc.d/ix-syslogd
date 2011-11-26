@@ -11,9 +11,18 @@
 
 generate_syslog_conf()
 {
+	local IFS="|"
+	local f="
+		stg_syslogserver
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
+
+	cp /conf/base/etc/syslog.conf /etc/syslog.conf
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		stg_syslogserver
+		$sf
 
 	FROM
 		system_settings
@@ -23,15 +32,11 @@ generate_syslog_conf()
 
 	LIMIT 1
 	" | \
-	while read syslogserver
-	do
-		if [ -n "${syslogserver}" ]
-		then
+	while read $f; do
+		if [ -n "${stg_syslogserver}" ]; then
 			echo -e "*.err;kern.warning;auth.notice;mail.crit\t/dev/console" > /etc/syslog.conf
 			echo -e "*.err;kern.warning;auth.notice;mail.crit\t/var/log/messages" > /etc/syslog.conf
-			echo -e "*.*\t@${syslogserver}" >> /etc/syslog.conf
-		else
-			cp /conf/base/etc/syslog.conf /etc/syslog.conf
+			echo -e "*.*\t@${stg_syslogserver}" >> /etc/syslog.conf
 		fi
 	done
 }

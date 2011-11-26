@@ -40,10 +40,15 @@ setgroup()
 
 set_sysctl()
 {
-	local async
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_async FROM services_nfs ORDER BY id DESC LIMIT 1" | \
-	while read async; do
-		/sbin/sysctl vfs.nfsrv.async=${async}
+	local IFS="|"
+	local f="
+		nfs_srv_async
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_nfs ORDER BY id DESC LIMIT 1" | \
+	while read $f; do
+		/sbin/sysctl vfs.nfsrv.async=${nfs_srv_async}
 	done
 }
 
@@ -53,37 +58,48 @@ set_sysctl()
 #
 generate_exports()
 {
-	local IFS=\|
-
-	local mountpoint network alldirs nfsro quiet
-        local maproot_user maproot_group mapall_user mapall_group
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_path, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet, nfs_maproot_user, nfs_maproot_group, nfs_mapall_user, nfs_mapall_group FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
-	while read -r mountpoint network alldirs nfsro quiet maproot_user maproot_group mapall_user mapall_group ; do
-		if [ -d "${mountpoint}" ]; then
-			echo -n ${mountpoint}
-			if [ "${alldirs}" = "1" ]; then
+	local IFS="|"
+	local f="
+		nfs_path
+		nfs_network
+		nfs_alldirs
+		nfs_ro
+		nfs_quiet
+		nfs_maproot_user
+		nfs_maproot_group
+		nfs_mapall_user
+		nfs_mapall_group
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
+	while read -r $f; do
+		if [ -d "${nfs_path}" ]; then
+			echo -n ${nfs_path}
+			if [ "${nfs_alldirs}" = "1" ]; then
 				echo -n " -alldirs"
 			fi
-			if [ "${nfsro}" = "1" ]; then
+			if [ "${nfs_ro}" = "1" ]; then
 				echo -n " -ro"
 			fi
-			if [ "${quiet}" = "1" ]; then
+			if [ "${nfs_quiet}" = "1" ]; then
 				echo -n " -quiet"
 			fi
-                        if [ -n "${mapall_user}" -o -n "${mapall_group}" ]; then
-				mapall_user=$(setuser "${mapall_user}")
-				mapall_group=$(setgroup "${mapall_group}")
-				echo -n " -mapall=${mapall_user}:${mapall_group}"
+                        if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
+				mapall_user=$(setuser "${nfs_mapall_user}")
+				mapall_group=$(setgroup "${nfs_mapall_group}")
+				echo -n " -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
                         else
-                                if [ -n "${maproot_user}" -o -n "${maproot_group}" ]; then
-					maproot_user=$(setuser "${maproot_user}")
-					maproot_group=$(setgroup "${maproot_group}")
-				        echo -n " -maproot=${maproot_user}:${maproot_group}"
+                                if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
+					maproot_user=$(setuser "${nfs_maproot_user}")
+					maproot_group=$(setgroup "${nfs_maproot_group}")
+				        echo -n " -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
                                 fi
 			fi
-			if [ -n "${network}" ]; then
+			if [ -n "${nfs_network}" ]; then
                 echo -n " "
-				echo -n "${network}" | awk -F" " '{ if ($0 !~ /\//) print $0; else printf "-network %s",$0 }'
+				echo -n "${nfs_network}" | \
+				    awk -F" " '{ if ($0 !~ /\//) print $0; else printf "-network %s",$0 }'
 			fi
 			echo
 		fi

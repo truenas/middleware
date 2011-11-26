@@ -399,8 +399,6 @@ EOF
 
 generate_exports()
 {
-	local IFS=\|
-
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		cifs_name,

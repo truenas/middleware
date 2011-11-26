@@ -19,11 +19,17 @@ UPS_VARPATH="/var/db/nut"
 
 generate_ups()
 {
-    local IFS=\|
-    local f="id ups_identifier ups_driver ups_port ups_description"
+    local IFS="|"
+    local f="
+	id
+	ups_identifier
+	ups_driver
+	ups_port
+	ups_description
+	"
     eval local $f
-    local cmd sf cfg
-    sf=$(echo $f | sed -e 's/ /, /g')
+    local sf=$(var_to_sql_cd $f)
+    local cmd cfg
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
@@ -40,11 +46,19 @@ EOF
 
 generate_upsmon()
 {
-    local IFS=\|
-    local f="ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
+    local IFS="|"
+    local f="
+	ups_identifier
+	ups_shutdown
+	ups_shutdowntimer
+	ups_emailnotify
+	ups_toemail
+	ups_subject
+	ups_masterpwd
+	"
     eval local $f
-    local cmd sf cfg
-    sf=$(echo $f | sed -e 's/ /, /g')
+    local sf=$(f_to_sf $f)
+    local cmd cfg
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
@@ -84,8 +98,10 @@ EOF
 generate_upsd()
 {
 
-    local IFS=\|
-    local f="ups_rmonitor"
+    local IFS="|"
+    local f="
+	ups_rmonitor
+    "
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -104,8 +120,11 @@ generate_upsd()
 generate_upssched()
 {
 
-    local IFS=\|
-    local f="ups_shutdown ups_shutdowntimer"
+    local IFS="|"
+    local f="
+	ups_shutdown
+	ups_shutdowntimer
+	"
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')

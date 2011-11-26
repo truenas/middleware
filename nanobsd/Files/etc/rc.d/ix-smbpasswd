@@ -10,7 +10,7 @@
 
 generate_smbpasswd()
 {
-	local IFS=\|
+	local IFS="|"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT

@@ -13,8 +13,16 @@ bsnmp_config=/etc/snmpd.config
 
 generate_snmpconf()
 {
-	local IFS=\|
-	local snmp_location snmp_contact snmp_community snmp_traps
+	local IFS="|"
+	local f="
+		snmp_location
+		snmp_contact
+		snmp_community
+		snmp_traps
+		snmp_options
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
         hw_machine=`/sbin/sysctl -n hw.machine`
         hw_model=`/sbin/sysctl -n hw.model`
@@ -23,8 +31,8 @@ generate_snmpconf()
         kern_osrelease=`/sbin/sysctl -n kern.osrelease`
         kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_location, snmp_contact, snmp_community, snmp_traps FROM services_snmp ORDER BY -id LIMIT 1" | \
-	while read snmp_location snmp_contact snmp_community snmp_traps; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
+	while read $f; do
 		cat << E*O*F > ${bsnmp_config}
 # Set some common variables
 host := ${hostname}
@@ -58,7 +66,7 @@ sysDescr = \$(description)
 begemotSnmpdModulePath."mibII" = "/usr/lib/snmp_mibII.so"
 E*O*F
 	done
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${bsnmp_config}
+	echo "$snmp_options" >> ${bsnmp_config}
 }
 
 name="ix-snmpd"

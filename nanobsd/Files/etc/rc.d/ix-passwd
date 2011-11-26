@@ -23,13 +23,19 @@ generate_master.passwd()
 	FROM
 		account_bsdusers AS u
 	INNER JOIN account_bsdgroups AS g
-		ON u.bsdusr_group_id=g.id;" | tr \| : > /etc/master.passwd
+		ON u.bsdusr_group_id=g.id;" | tr "|" ":" > /etc/master.passwd
 }
 
 group_membership()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+	local IFS="|"
+	local f="
 		bsdusr_username
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+		$sf
 	FROM
 		account_bsdgroupmembership AS m
 	CROSS JOIN
@@ -41,16 +47,21 @@ group_membership()
 
 generate_group()
 {
-	local IFS=\|
-
-	local groupname groupid
+	local IFS="|"
+	local f="
+		bsdgrp_group
+		bsdgrp_gid
+		id
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
-		bsdgrp_group, bsdgrp_gid, id
+		$sf
 	FROM
 		account_bsdgroups" | \
-	while read groupname groupid id; do
-		echo -n "${groupname}:*:${groupid}:"
+	while read ${f}; do
+		echo -n "${bsdgrp_group}:*:${bsdgrp_gid}:"
 		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
 		echo
 	done > /etc/group

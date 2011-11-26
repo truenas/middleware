@@ -11,76 +11,111 @@
 
 generate_crontab()
 {
-	local IFS=\|
-	local minute hour daymonth month dayweek user command
+	local IFS="|"
+	local f="
+		cron_minute
+		cron_hour
+		cron_daymonth
+		cron_month
+		cron_dayweek
+		cron_user
+		cron_command
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	local cron_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"
 	cp /conf/base/etc/crontab /etc/crontab
 	# Generate cronjobs
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
-	while read -r minute hour daymonth month dayweek user command; do
-		echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
+	"SELECT $sf FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
+	while read -r $f; do
+		echo -e "${cron_minute}\t${cron_hour}\t${cron_daymonth}\t${cron_month}\t${cron_dayweek}\t${cron_user}\tPATH=\"$cron_PATH\" ${cron_command} >/dev/null 2>&1" >> /etc/crontab
 	done
 
-	local user host module recursive times compress archive delete quiet preserveperm preserveattr extra mode remotepath direc
+	local f="
+		rsync_path
+		rsync_mode
+		rsync_minute
+		rsync_hour
+		rsync_daymonth
+		rsync_month
+		rsync_dayweek
+		rsync_user
+		rsync_remotehost
+		rsync_remotemodule
+		rsync_remotepath
+		rsync_direction
+		rsync_recursive
+		rsync_times
+		rsync_compress
+		rsync_archive
+		rsync_delete
+		rsync_quiet
+		rsync_preserveperm
+		rsync_preserveattr
+		rsync_extra
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	local rsync_command
 	# Gnerate rsync
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT rsync_path,rsync_mode,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_remotepath,rsync_direction,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
-	while read -r path mode minute hour daymonth month dayweek user host module remotepath direc recursive times compress archive delete quiet preserveperm preserveattr extra; do
-		command=$(
-
+	"SELECT $sf FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
+	while read -r $f; do
+		rsync_command=$(
 			echo -n "lockf -s -t 0 -k /mnt rsync "
 
-			if [ ${recursive} -gt 0 ]; then
+			if [ ${rsync_recursive} -gt 0 ]; then
 				echo -n "-r "
 			fi
 
-			if [ ${times} -gt 0 ]; then
+			if [ ${rsync_times} -gt 0 ]; then
 				echo -n "-t "
 			fi
 
-			if [ ${compress} -gt 0 ]; then
+			if [ ${rsync_compress} -gt 0 ]; then
 				echo -n "-z "
 			fi
 
-			if [ ${archive} -gt 0 ]; then
+			if [ ${rsync_archive} -gt 0 ]; then
 				echo -n "-a "
 			fi
 
-			if [ ${delete} -gt 0 ]; then
+			if [ ${rsync_delete} -gt 0 ]; then
 				echo -n "--delete "
 			fi
 
-			if [ ${preserveperm} -gt 0 ]; then
+			if [ ${rsync_preserveperm} -gt 0 ]; then
 				echo -n "-p "
 			fi
 
-			if [ ${preserveattr} -gt 0 ]; then
+			if [ ${rsync_preserveattr} -gt 0 ]; then
 				echo -n "-X "
 			fi
 
-			echo -n "${extra} "
+			echo -n "${rsync_extra} "
 
-			if [ "${mode}" = "module" ]; then
-				if [ "${direc}" = "push" ]; then
-					echo -n "${path} ${host}::${module}"
+			if [ "${rsync_mode}" = "module" ]; then
+				if [ "${rsync_direction}" = "push" ]; then
+					echo -n "${rsync_remotepath} ${rsync_remotehost}::${rsync_module}"
 				else
-					echo -n "${host}::${module} ${path}"
+					echo -n "${rsync_remotehost}::${rsync_module} ${rsync_path}"
 				fi
 			else
 				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' "
-				if [ "${direc}" = "push" ]; then
-					echo -n "${path} ${host}:${remotepath}"
+				if [ "${rsync_direction}" = "push" ]; then
+					echo -n "${rsync_path} ${rsync_remotehost}:${rsync_remotepath}"
 				else
-					echo -n "${host}:${remotepath} ${path}"
+					echo -n "${rsync_remotehost}:${rsync_remotepath} ${rsync_path}"
 				fi
 			fi
 
-			if [ ${quiet} -gt 0 ]; then
+			if [ ${rsync_quiet} -gt 0 ]; then
 				echo -n " >/dev/null 2>&1"
 			fi
 
 		)
-		echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
+		echo -e "${rsync_minute}\t${rsync_hour}\t${rsync_daymonth}\t${rsync_month}\t${rsync_dayweek}\t${rsync_user}\tPATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
 	done
 }
 

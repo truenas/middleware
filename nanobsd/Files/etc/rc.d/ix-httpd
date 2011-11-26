@@ -151,12 +151,16 @@ set_stg_guiprotocol()
 do_httpd_config()
 {
 	local IFS="|"
-
+	local f="
+		stg_guiprotocol
+		stg_guiaddress
+		stg_guiport
+	"
+	eval local $f
+	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		stg_guiprotocol,
-		stg_guiaddress,
-		stg_guiport
+		$sf
 
 	FROM
 		system_settings
@@ -166,12 +170,12 @@ do_httpd_config()
 
 	LIMIT 1
 	" | \
-	while read proto addr port
+	while read stg_guiprotocol stg_guiaddress stg_guiport
 	do
 		local ssl_enable=0
 
 		proto=$(echo "${proto}"|tr a-z A-Z)
-		case "${proto}" in
+		case "${stg_guiprotocol}" in
 			HTTP) ssl_enable=0; ;;
 			HTTPS) ssl_enable=1; ;;
 		esac
@@ -182,8 +186,8 @@ do_httpd_config()
 			ssl_enable=0
 		fi
 
-		generate_httpd_conf "${ssl_enable}" "${addr}" "${port}"
-		if ! test_httpd_config "${ssl_enable}" "${port}"
+		generate_httpd_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
+		if ! test_httpd_config "${ssl_enable}" "${stg_guiport}"
 		then
 
 			if [ "${ssl_enable}" = "1" ]
@@ -192,7 +196,7 @@ do_httpd_config()
 				set_stg_guiprotocol "http"
 			fi
 
-			generate_httpd_conf "${ssl_enable}" "${addr}" "${port}"
+			generate_httpd_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
 			${HTTPDSCRIPT} start
 		fi
 	done

@@ -18,16 +18,21 @@ AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services/
 #
 generate_sshd()
 {
-    local IFS=\|
-    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression"
+    local IFS="|"
+    local f="
+	ssh_tcpport
+	ssh_rootlogin
+	ssh_passwordauth
+	ssh_tcpfwd
+	ssh_compression
+	"
     eval local $f
-    local cmd sf cfg
-    sf=$(echo $f | sed -e 's/ /, /g')
+    local sf=$(var_to_sf $f)
+    local cmd cfg
     cfg=/etc/ssh/sshd_config
 
-    sshd_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'ssh'" 2>/dev/null || echo 0)
     for file in $AVAHI_SFTP_SERVICE $AVAHI_SSH_SERVICE; do
-        if [ "x$sshd_enabled" = x1 ]; then
+        if srv_enabled sshd; then
 	    cat > $file <<EOF
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
