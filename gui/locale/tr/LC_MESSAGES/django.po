@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-25 10:29+0200\n"
+"PO-Revision-Date: 2011-11-25 14:21+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1173,11 +1173,11 @@ msgstr "NFS hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:116
 msgid "File Permission"
-msgstr "Dosya İzni"
+msgstr "Dosya iznleri"
 
 #: services/forms.py:117
 msgid "Directory Permission"
-msgstr "Dizin İzni"
+msgstr "Dizin iznleri"
 
 #: services/forms.py:145
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
@@ -2271,7 +2271,7 @@ msgstr "IP adresi başına bağlantı sayısı (0 = sınırsız)."
 
 #: services/models.py:859
 msgid "Login Attempts"
-msgstr "Giriş Denemeleri"
+msgstr "Giriş denemesi"
 
 #: services/models.py:861
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -2279,7 +2279,7 @@ msgstr "Bağlantı kesilmesinden önce verilen en fazla bağlantı deneme sayıs
 
 #: services/models.py:865
 msgid "Timeout"
-msgstr "Zaman Aşımı"
+msgstr "Zaman aşımı"
 
 #: services/models.py:867
 msgid "Maximum idle time in seconds."
@@ -2287,11 +2287,11 @@ msgstr "En fazla saniye cinsinden boşta durma."
 
 #: services/models.py:870
 msgid "Allow Root Login"
-msgstr "Root Girişine İzin Ver"
+msgstr "Root girişine izin ver"
 
 #: services/models.py:872
 msgid "Allow Anonymous Login"
-msgstr "Anonim Girişe İzin Ver"
+msgstr "Anonim girişe izin ver"
 
 #: services/models.py:875 services/models.py:1225 sharing/models.py:48
 #: sharing/models.py:112 sharing/models.py:226 storage/forms.py:203
@@ -2304,7 +2304,7 @@ msgstr "Yol"
 
 #: services/models.py:877
 msgid "Allow Local User Login"
-msgstr "Yerel Üye Girişine İzin Ver"
+msgstr "Yerel kullanıcı girişine izin ver"
 
 #: services/models.py:880
 msgid "Banner"
@@ -2322,11 +2322,11 @@ msgstr ""
 
 #: services/models.py:897
 msgid "Enable FXP"
-msgstr "FXP Etkinleştir"
+msgstr "FXP etkinleştir"
 
 #: services/models.py:899
 msgid "Allow Transfer Resumption"
-msgstr "Yeniden Başlama Aktarımına İzin Ver"
+msgstr "Yeniden başlama aktarımına izin ver"
 
 #: services/models.py:901
 msgid "Always Chroot"
@@ -2334,11 +2334,11 @@ msgstr "Her zaman Chroot"
 
 #: services/models.py:903
 msgid "Require IDENT Authentication"
-msgstr "IDENT Kimlik Doğrulama Gerekir"
+msgstr "IDENT kimlik doğrulama gerekir"
 
 #: services/models.py:905
 msgid "Require Reverse DNS for IP"
-msgstr "IP için Ters DNS Gerekir"
+msgstr "IP için ters DNS gerekir"
 
 #: services/models.py:907
 msgid "Masquerade address"
@@ -2393,12 +2393,12 @@ msgstr ""
 
 #: services/models.py:924
 msgid "Local user upload bandwidth"
-msgstr "Yerel kullanıcı bant genişliği yükleme"
+msgstr "Yerel kullanıcının yükleme bant genişliği"
 
 #: services/models.py:925
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
-"Yerel kullanıcının KB/s olarak bant genişliği yükleme değeri. Sıfır sınırsız "
+"Yerel kullanıcının KB/s olarak yükleme bant genişliği değeri. Sıfır sınırsız "
 "demektir."
 
 #: services/models.py:929
@@ -2433,7 +2433,7 @@ msgstr ""
 
 #: services/models.py:943
 msgid "Enable SSL/TLS"
-msgstr "SSL/TLS Etkinleştir"
+msgstr "SSL/TLS etkinleştir"
 
 #: services/models.py:948
 msgid "These parameters are added to proftpd.conf."
@@ -3615,7 +3615,7 @@ msgstr "Sahibi (grup)"
 
 #: storage/forms.py:772
 msgid "Mode"
-msgstr "Mod"
+msgstr "İzinler"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
@@ -5085,7 +5085,7 @@ msgstr "CIFS Ayarları"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr "Dynamic DNS Ayarları"
+msgstr "Dinamik DNS Ayarları"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
