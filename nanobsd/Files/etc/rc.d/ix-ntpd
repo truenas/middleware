@@ -24,14 +24,14 @@ generate_ntp_conf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
 	while read $f; do
-		if [ -n "${ntpserver1}" ]; then
-			echo "server ${ntpserver1}"
+		if [ -n "${stg_ntpserver1}" ]; then
+			echo "server ${stg_ntpserver1}"
 		fi
-		if [ -n "${ntpserver2}" ]; then
-			echo "server ${ntpserver2}"
+		if [ -n "${stg_ntpserver2}" ]; then
+			echo "server ${stg_ntpserver2}"
 		fi
-		if [ -n "${ntpserver3}" ]; then
-			echo "server ${ntpserver3}"
+		if [ -n "${stg_ntpserver3}" ]; then
+			echo "server ${stg_ntpserver3}"
 		fi
 	done > /etc/ntp.conf
 }
