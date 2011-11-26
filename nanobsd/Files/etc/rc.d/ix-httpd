@@ -170,11 +170,11 @@ do_httpd_config()
 
 	LIMIT 1
 	" | \
-	while read stg_guiprotocol stg_guiaddress stg_guiport
+	while read $f
 	do
 		local ssl_enable=0
 
-		proto=$(echo "${proto}"|tr a-z A-Z)
+		stg_guiprotocol=$(echo "${stg_guiprotocol}"|tr a-z A-Z)
 		case "${stg_guiprotocol}" in
 			HTTP) ssl_enable=0; ;;
 			HTTPS) ssl_enable=1; ;;
