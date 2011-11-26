@@ -113,7 +113,7 @@ EOF
 			save_certificate "${ldap_id}"
 
 			cat >>"${nssconf}" <<-EOF
-			uri ldaps://${hostname}
+			uri ldaps://${ldap_hostname}
 			ssl ${ldap_ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
