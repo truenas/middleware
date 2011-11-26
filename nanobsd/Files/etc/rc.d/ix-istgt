@@ -189,16 +189,16 @@ generate_istgt_config()
 			    AS t ON e.id = t.iscsi_extent_id
 		    WHERE t.iscsi_target_id = ${id}" | \
 		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type; do
-            if [ "${iscsi_target_extent_type}" = "Disk" ]; then
-                ident=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE id = ${iscsi_target_extent_path}"|sed 's/{label}/{devicename}/')
+			if [ "${iscsi_target_extent_type}" = "Disk" ]; then
+				ident=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE id = ${iscsi_target_extent_path}"|sed 's/{label}/{devicename}/')
 
-                devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
-			    echo -n "  LUN${iscsi_target_lun} Storage /dev/${devname}"
-            elif [ "${iscsi_target_extent_type}" = "ZVOL" ]; then
-			    echo -n "  LUN${iscsi_target_lun} Storage /dev/${iscsi_target_extent_path}"
-            else
-			    echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
-            fi
+				devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
+				echo -n "  LUN${iscsi_target_lun} Storage /dev/${devname}"
+			elif [ "${iscsi_target_extent_type}" = "ZVOL" ]; then
+				echo -n "  LUN${iscsi_target_lun} Storage /dev/${iscsi_target_extent_path}"
+			else
+				echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
+			fi
 			if [ -c "${iscsi_target_extent_path}" ]; then
 				echo " auto"
 			elif [ "${iscsi_target_extent_filesize}" = "0" ]; then
@@ -226,7 +226,6 @@ generate_istgt_auth()
 		iscsi_target_auth_peersecret
 		"
 	local sf2=$(var_to_sf $f2)
-	local groupid user pass peeruser peerpass
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT iscsi_target_auth_tag FROM services_iscsitargetauthcredential ORDER BY iscsi_target_auth_tag" | \
 	while read $f; do
 		echo "[AuthGroup${iscsi_target_auth_tag}]"
