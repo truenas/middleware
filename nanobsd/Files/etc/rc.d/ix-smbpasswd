@@ -11,10 +11,14 @@
 generate_smbpasswd()
 {
 	local IFS="|"
-
+	local f="
+		ldap_rootbindpw
+		"
+	eval local $f
+	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ldap_rootbindpw
+		$sf
 
 	FROM
 		services_services,
@@ -29,11 +33,11 @@ generate_smbpasswd()
 		-services_ldap.id
 
 	LIMIT 1 " | \
-	while read rootbindpw
+	while read $f
 	do
-		if [ -n "${rootbindpw}" ]; then
+		if [ -n "${ldap_rootbindpw}" ]; then
 			mount -u /
-			/usr/local/bin/smbpasswd -w "${rootbindpw}" >/dev/null 2>&1
+			/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
 			mount -ur /
 		fi
 	done
