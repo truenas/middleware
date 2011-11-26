@@ -103,16 +103,21 @@ if $UPDATE; then
 src-all tag=RELENG_8_2
 ports-all date=2011.11.14.00.00.00
 EOF
+	# Nuke the newly created files to avoid build errors.
+	#
+	# patch(1) will automatically append to the previously non-existent
+	# file, which causes problems with .c, .h, .s, etc files.
+	#
+	# Do this here before running csup because it will pave over all files
+	# that were previously added via a patch if it turns out that a change
+	# was rolled into src or ports.
+	for file in $(find $FREENAS_ROOT/FreeBSD -name '*.orig' -size 0); do
+		rm -f "$(echo $file | sed -e 's/.orig$//')"
+	done
 	csup -L 1 $SUPFILE
 	# Force a repatch because csup pulls pristine sources.
 	: > $FREENAS_ROOT/FreeBSD/src-patches
 	: > $FREENAS_ROOT/FreeBSD/ports-patches
-	# Nuke the newly created files to avoid build errors, as
-	# patch(1) will automatically append to the previously
-	# non-existent file.
-	for file in $(find $FREENAS_ROOT/FreeBSD/ -name '*.orig' -size 0); do
-		rm -f "$(echo "$file" | sed -e 's/.orig//')"
-	done
 	: > $FREENAS_ROOT/FreeBSD/.pulled
 fi
 
