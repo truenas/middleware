@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-21 14:41+0200\n"
-"Last-Translator: Kichnap <kichnap@gmail.com>\n"
+"PO-Revision-Date: 2011-11-26 16:36+0200\n"
+"Last-Translator: Anton <tesla_85@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,7 @@ msgstr "HTTPS"
 # или Автоматический, или Авто
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr "Автоматически"
+msgstr "Автоматический"
 
 #: choices.py:54
 msgid "PIO0"
@@ -490,7 +490,7 @@ msgstr "Символ $ допускается только в качестве �
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "В имени присутствуют недопустимые символы (%s)"
 
 #: account/forms.py:71
 #, python-format
@@ -655,7 +655,7 @@ msgstr "Вы хотите удалить всех пользователей э�
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "Идентификатор группы"
+msgstr "ID группы"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -678,7 +678,7 @@ msgstr "Группа %s является встроеной и не может �
 
 #: account/models.py:76
 msgid "User ID"
-msgstr "Идентификатор пользователя"
+msgstr "ID пользователя"
 
 #: account/models.py:81
 msgid "User &"

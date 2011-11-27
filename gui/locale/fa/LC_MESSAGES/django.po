@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-24 12:44+0200\n"
+"PO-Revision-Date: 2011-11-27 11:57+0200\n"
 "Last-Translator: alamati <alamati@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
@@ -4318,17 +4318,17 @@ msgstr ""
 #: system/views.py:244
 #, python-format
 msgid "Test message from %s"
-msgstr ""
+msgstr "پیغام آزمون از s%"
 
 #: system/views.py:246
 #, python-format
 msgid "This is a message test from %s"
-msgstr ""
+msgstr "این یک پیغام آزمون از s% است"
 
 #: system/views.py:249
 #, python-format
 msgid "Your test email could not be sent: %s"
-msgstr ""
+msgstr "رایانامه‌ی آزمون شما قابل ارسال نیست: s%"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4492,11 +4492,11 @@ msgstr ""
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "هشدار"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "بحرانی"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4537,7 +4537,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "ذخیره"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -4861,7 +4861,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "تنظیمات .S.M.A.R.T"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -5389,7 +5389,7 @@ msgstr ""
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr ""
+msgstr "به‌روز رسانی سفت‌افزار"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -5422,7 +5422,7 @@ msgstr ""
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "راه‌اندازی مجدد..."
 
 #: templates/system/email_edit.html:12
 msgid "Send Test Mail"
@@ -5448,43 +5448,43 @@ msgstr ""
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "هر ساعت"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "نمودارها به ساعت"
 
 #: templates/system/reporting.html:16
 msgid "Daily"
-msgstr ""
+msgstr "روزانه"
 
 #: templates/system/reporting.html:17
 msgid "Daily Graphs"
-msgstr ""
+msgstr "نمودارهای روزانه"
 
 #: templates/system/reporting.html:28
 msgid "Weekly"
-msgstr ""
+msgstr "هفتگی"
 
 #: templates/system/reporting.html:29
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "نمودارهای هفتگی"
 
 #: templates/system/reporting.html:40
 msgid "Monthly"
-msgstr ""
+msgstr "ماهانه"
 
 #: templates/system/reporting.html:41
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "نمودارهای ماهانه"
 
 #: templates/system/reporting.html:52
 msgid "Yearly"
-msgstr ""
+msgstr "سالانه"
 
 #: templates/system/reporting.html:53
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "نمودارهای سالانه"
 
 #: templates/system/rsync.html:38
 msgid "No rsync tasks defined."
@@ -5500,7 +5500,7 @@ msgstr ""
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "عمومی"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
@@ -5549,7 +5549,7 @@ msgstr ""
 
 #: templates/system/system_info.html:13
 msgid "Platform"
-msgstr ""
+msgstr "سکو"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
@@ -5557,7 +5557,7 @@ msgstr ""
 
 #: templates/system/system_info.html:21
 msgid "System Time"
-msgstr ""
+msgstr "زمان سامانه"
 
 #: templates/system/system_info.html:25
 msgid "Uptime"
