@@ -7,7 +7,7 @@
 # REQUIRE: FILESYSTEMS
 # BEFORE: inetd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 generate_tftp()
 {
@@ -17,7 +17,7 @@ generate_tftp()
     local sf=$(var_to_sf $f)
     local cmd
     local enabled
-    svc_enabled tftp; enabled=$?
+    srv_enabled tftp; enabled=$?
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
