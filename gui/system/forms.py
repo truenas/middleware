@@ -200,6 +200,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
+        self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:
@@ -224,6 +225,9 @@ class AdvancedForm(ModelForm):
                 events.append("_msg_start()")
             else:
                 events.append("_msg_stop()")
+        if self.instance._original_adv_advancedmode != self.instance.adv_advancedmode:
+            #Invalidate cache
+            request.session.pop("adv_mode", None)
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)

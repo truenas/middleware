@@ -354,8 +354,10 @@ def generic_model_add(request, app, model, mf=None):
     except ImportError:
         raise
 
-    #TODO: cache
-    adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+    adv_mode = request.session.get("adv_mode")
+    if adv_mode is None:
+        adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+        request.session['adv_mode'] = adv_mode
 
     m = getattr(_temp, model)
     context = {
@@ -563,8 +565,10 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         inline = False
 
-    #TODO: cache
-    adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+    adv_mode = request.session.get("adv_mode")
+    if adv_mode is None:
+        adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+        request.session['adv_mode'] = adv_mode
 
     context = {
         'app': app,
