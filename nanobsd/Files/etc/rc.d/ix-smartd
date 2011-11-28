@@ -41,10 +41,10 @@ EOF
 	local ndaymonth ndayweek nhour nmonth
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_smart ORDER by -id LIMIT 1" |
-	while read $sf; do
+	while eval read $f; do
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM storage_disk d LEFT JOIN system_smarttest s ON d.id=s.smarttest_disk_id WHERE disk_togglesmart=1 AND disk_enabled=1" |
-		while read $sf2; do
+		while eval read $f2; do
 			case "$disk_name" in
 			None|*zvol*)
 				continue

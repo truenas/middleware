@@ -32,7 +32,7 @@ generate_snmpconf()
         kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
-	while read $f; do
+	while eval read $f; do
 		cat > "${bsnmp_config}" << EOF
 # Set some common variables
 host := ${hostname}

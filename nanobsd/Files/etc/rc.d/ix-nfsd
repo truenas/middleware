@@ -47,7 +47,7 @@ set_sysctl()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_nfs ORDER BY id DESC LIMIT 1" | \
-	while read $f; do
+	while eavl read $f; do
 		/sbin/sysctl vfs.nfsrv.async=${nfs_srv_async}
 	done
 }
@@ -73,7 +73,7 @@ generate_exports()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
-	while read -r $f; do
+	while eval read -r $f; do
 		if [ -d "${nfs_path}" ]; then
 			echo -n ${nfs_path}
 			if [ "${nfs_alldirs}" = "1" ]; then

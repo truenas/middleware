@@ -170,7 +170,7 @@ do_httpd_config()
 
 	LIMIT 1
 	" | \
-	while read $f
+	while eval read $f
 	do
 		local ssl_enable=0
 

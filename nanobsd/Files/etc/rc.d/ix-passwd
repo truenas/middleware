@@ -60,7 +60,7 @@ generate_group()
 		$sf
 	FROM
 		account_bsdgroups" | \
-	while read ${f}; do
+	while eavl read $f; do
 		echo -n "${bsdgrp_group}:*:${bsdgrp_gid}:"
 		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
 		echo

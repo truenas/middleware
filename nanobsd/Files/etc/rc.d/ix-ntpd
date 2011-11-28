@@ -23,7 +23,7 @@ generate_ntp_conf()
 	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
-	while read $f; do
+	while eval read $f; do
 		if [ -n "${stg_ntpserver1}" ]; then
 			echo "server ${stg_ntpserver1}"
 		fi

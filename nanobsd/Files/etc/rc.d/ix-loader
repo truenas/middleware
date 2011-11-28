@@ -63,7 +63,7 @@ loader_user() {
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM system_loader ORDER BY id" | \
-	while read $f; do
+	while eval read $f; do
 		(echo -n "${ldr_var}=\"${ldr_value}\""
 		 if [ -n "$ldr_comment" ]; then
 			echo -e " # $ldr_comment"

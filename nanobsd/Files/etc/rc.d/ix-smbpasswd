@@ -33,7 +33,7 @@ generate_smbpasswd()
 		-services_ldap.id
 
 	LIMIT 1 " | \
-	while read $f
+	while eval read $f
 	do
 		if [ -n "${ldap_rootbindpw}" ]; then
 			mount -u /

@@ -101,7 +101,7 @@ generate_istgt_config()
         while eval read ${f}; do
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM services_iscsitargetportal WHERE iscsi_target_portal_tag=${iscsi_target_portal_tag}" | \
-		while read $f2; do
+		while eval read $f2; do
 			if [ ! -z "${iscsi_target_portal_listen}" ]; then
 				echo "  Portal DA1 ${iscsi_target_portal_listen}"
 			fi
@@ -227,7 +227,7 @@ generate_istgt_auth()
 		"
 	local sf2=$(var_to_sf $f2)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT iscsi_target_auth_tag FROM services_iscsitargetauthcredential ORDER BY iscsi_target_auth_tag" | \
-	while read $f; do
+	while eval read $f; do
 		echo "[AuthGroup${iscsi_target_auth_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		     "SELECT $sf2
@@ -283,7 +283,7 @@ generate_istgt_ctlfile()
 				     FROM services_iscsitargetauthcredential
 				     WHERE iscsi_target_auth_tag=${iscsi_target_auth_tag}
 				     ORDER BY id" | \
-				while read $f2; do
+				while eval read $f2; do
 					echo "  Auth \"${iscsi_target_auth_user}\" \"${iscsi_target_auth_secret}\" \"${iscsi_target_auth_peeruser}\" \"${iscsi_target_auth_peersecret}\""
 				done
 			fi

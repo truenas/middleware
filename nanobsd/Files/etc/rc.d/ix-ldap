@@ -90,7 +90,7 @@ generate_ldapconf()
 
 	LIMIT 1
 	" | \
-	while read $f; do
+	while eval read $f; do
 		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
 
 		cat >"${nssconf}" <<-EOF

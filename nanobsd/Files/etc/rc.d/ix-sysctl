@@ -21,7 +21,7 @@ set_sysctl()
 	# Generate sysctls
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM system_sysctl ORDER BY id" | \
-	while read $f; do
+	while eval read $f; do
 		sysctl ${sysctl_mib}="${sysctl_value}"
 	done
 }

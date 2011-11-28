@@ -148,7 +148,7 @@ update_ttys()
 		-id
 	LIMIT 1
 	" | \
-	while read $f
+	while eval read $f
 	do
 		case "${adv_serialconsole}" in 
 			0) serial_disable ;;
