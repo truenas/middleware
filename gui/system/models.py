@@ -125,6 +125,9 @@ class Advanced(Model):
     adv_traceback = models.BooleanField(
             verbose_name = _("Show tracebacks in case of fatal errors"),
             default=False)
+    adv_advancedmode = models.BooleanField(
+            verbose_name = _("Show advanced fields by default"),
+            default=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),

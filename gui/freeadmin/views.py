@@ -52,8 +52,6 @@ from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 
-#TODO: move to advances settings
-ADVANCED_VIEW = False
 
 class JsonResponse(HttpResponse):
 
@@ -356,12 +354,15 @@ def generic_model_add(request, app, model, mf=None):
     except ImportError:
         raise
 
+    #TODO: cache
+    adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+
     m = getattr(_temp, model)
     context = {
         'app': app,
         'model': model,
         'modeladmin': m._admin,
-        'advanced_mode': ADVANCED_VIEW,
+        'advanced_mode': adv_mode,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
@@ -562,11 +563,14 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         inline = False
 
+    #TODO: cache
+    adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+
     context = {
         'app': app,
         'model': model,
         'modeladmin': m._admin,
-        'advanced_mode': ADVANCED_VIEW,
+        'advanced_mode': adv_mode,
         'mf': mf,
         'oid': oid,
         'inline': inline,
