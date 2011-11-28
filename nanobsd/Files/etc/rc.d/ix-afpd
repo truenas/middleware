@@ -58,7 +58,7 @@ EOF
 generate_av_default()
 {
     local IFS="|"
-    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_noadouble afp_nodev afp_nofileid afp_nohex afp_prodo afp_nostat afp_upriv"
+    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_noadouble afp_nodev afp_nofileid afp_nohex afp_proto afp_nostat afp_upriv"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
