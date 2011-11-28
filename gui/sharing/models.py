@@ -95,6 +95,11 @@ class CIFS_Share(Model):
         icon_add = u"AddWindowsShareIcon"
         icon_view = u"ViewAllWindowsSharesIcon"
         icon_object = u"WindowsShareIcon"
+        advanced_fields = (
+            'cifs_hostsallow',
+            'cifs_hostsdeny',
+            'cifs_auxsmbconf',
+        )
 
 class AFP_Share(Model):
     afp_name = models.CharField(
@@ -202,7 +207,7 @@ class AFP_Share(Model):
             verbose_name = _("AFP3 Unix Privs"),
             help_text = _("Use AFP3 unix privileges.")
             )
-   
+
     def __unicode__(self):
         return unicode(self.afp_name)
 
@@ -214,6 +219,15 @@ class AFP_Share(Model):
         icon_add = u"AddAppleShareIcon"
         icon_view = u"ViewAllAppleSharesIcon"
         icon_object = u"AppleShareIcon"
+        advanced_fields = (
+            'afp_sharecharset',
+            'afp_nofileid',
+            'afp_nodev',
+            'afp_nohex',
+            'afp_prodos',
+            'afp_nostat',
+            'afp_upriv',
+        )
 
 class NFS_Share(Model):
     nfs_comment = models.CharField(
