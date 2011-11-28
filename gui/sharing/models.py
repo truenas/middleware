@@ -220,6 +220,7 @@ class AFP_Share(Model):
         icon_view = u"ViewAllAppleSharesIcon"
         icon_object = u"AppleShareIcon"
         advanced_fields = (
+            'afp_cachecnid',
             'afp_sharecharset',
             'afp_nofileid',
             'afp_nodev',
@@ -254,7 +255,6 @@ class NFS_Share(Model):
             verbose_name = _("Quiet"),
             help_text = _("Inhibit syslog warnings if there are problems with exporting this share.")
             )
-
     nfs_maproot_user = UserField(
             verbose_name = _("Maproot User"),
             max_length = 120,

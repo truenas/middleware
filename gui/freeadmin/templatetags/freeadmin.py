@@ -39,7 +39,7 @@ class FormRender(template.Node):
         self.adv_mode = adv_mode
     def render(self, context):
         form = context[self.arg]
-        adv_mode = context[self.adv_mode]
+        adv_mode = context.get(self.adv_mode)
 
         if hasattr(form, "_meta"):
             model = form._meta.model
