@@ -176,7 +176,7 @@ generate_istgt_auth()
 	local sf=$(var_to_sf $f)
 	local f2="iscsi_target_auth_user iscsi_target_auth_secret iscsi_target_auth_peeruser iscsi_target_auth_peersecret"
 	local sf2=$(var_to_sf $f2)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT iscsi_target_auth_tag FROM services_iscsitargetauthcredential ORDER BY iscsi_target_auth_tag" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT $sf FROM services_iscsitargetauthcredential ORDER BY iscsi_target_auth_tag" | \
 	while eval read $f; do
 		echo "[AuthGroup${iscsi_target_auth_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -201,7 +201,7 @@ generate_istgt_ctlfile()
 	local sf2=$(var_to_sf $f2)
 
 	# Generate [Global] section
-        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${sf2} FROM services_iscsitargetglobalconfiguration ORDER BY -id LIMIT 1" | \
+        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_iscsitargetglobalconfiguration ORDER BY -id LIMIT 1" | \
         while eval read ${f}; do
 		if [ "${iscsi_toggleluc}" = "1" ]; then
 			echo "# Global section"
