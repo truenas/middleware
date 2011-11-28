@@ -31,7 +31,7 @@ generate_crontab()
 	# Gnerate rsync
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
-	while read -r $f; do
+	while eval read -r $f; do
 		rsync_command=$(
 			echo -n "lockf -s -t 0 -k /mnt rsync "
 
