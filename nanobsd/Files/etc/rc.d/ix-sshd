@@ -26,7 +26,7 @@ generate_sshd()
     cfg=/etc/ssh/sshd_config
 
     for file in $AVAHI_SFTP_SERVICE $AVAHI_SSH_SERVICE; do
-        if srv_enabled sshd; then
+        if srv_enabled ssh; then
 	    cat > $file <<EOF
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
