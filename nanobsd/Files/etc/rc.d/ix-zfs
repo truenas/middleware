@@ -19,7 +19,7 @@ import_zpools()
 		vol_name
 		vol_guid
 	"
-	local sf=$(var_to_sql_cd $f)
+	local sf=$(var_to_sf $f)
 	if [ ! -d "/data/zfs" ]; then
 		mkdir /data/zfs || true
 	fi

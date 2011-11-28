@@ -28,7 +28,7 @@ generate_ups()
 	ups_description
 	"
     eval local $f
-    local sf=$(var_to_sql_cd $f)
+    local sf=$(var_to_sf $f)
     local cmd cfg
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
