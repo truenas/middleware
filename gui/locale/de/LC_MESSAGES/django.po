@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-08-16 01:10+0200\n"
-"Last-Translator: Christoph <christoph-caina@arcor.de>\n"
+"PO-Revision-Date: 2011-11-27 13:49+0200\n"
+"Last-Translator: fuubah <fuubah@googlemail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -486,21 +486,21 @@ msgstr "\"Sofort Offline\"-Test (nur ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Ihr Name darf nicht mit \"-\" beginnen"
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Das Zeichen \"$\" darf nur als das letzte Zeichen verwendet werden"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Ihr Name beinhaltet ungültige Zeichen (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Ihr vollständiger Name beinhaltet ungültige Zeichen (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -517,19 +517,16 @@ msgid "Username"
 msgstr "Benutzername"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Erforderlich. 30 Zeichen oder weniger. Nur Buchstaben, Zahlen und @/./+/-/_ "
-"erlaubt."
+"Erforderlich. 16 Zeichen oder weniger. Nur Buchstaben, Zahlen und . / - / _"
 
 # Dieser Wert = Dieses Feld?
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
 "Dieser Wert darf nur Buchstaben, Nummern, sowie folgende Zeichen enthalten: "
-"@/./+/-/_"
+"./+/-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -552,13 +549,12 @@ msgstr "Shell"
 
 # könnte je nach Kontext auch heißen: Anmeldungen (aller Benutzer) deaktivieren
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Login deaktivieren"
+msgstr "Passwortgeschützte Logins deaktivieren"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "User sperren"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -566,12 +562,11 @@ msgstr "Hauptgruppe"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Öffentlicher SSH Schlüssel"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Es existiert bereits ein Benutzer mit diesem Benutzernamen."
+msgstr "Es existiert bereits ein Benutzer mit dieser UID."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -584,18 +579,17 @@ msgid "The two password fields didn't match."
 msgstr "Die beiden Passwörter stimmen nicht überein."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Das Home-Verzeichnis muss mit /mnt/ beginnen."
+msgstr ""
+"Das Home-Verzeichnis muss mit /mnt/ beginnen oder darf nicht existieren."
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Das Home-Verzeichnis muss mit /mnt/ beginnen."
+msgstr "Das Home-Verzeichnis ist nicht beschreibar, Eingabe leer lassen"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Passwort ist deaktiviert, Eingabe leer lassen"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -603,9 +597,8 @@ msgid "This field is required."
 msgstr "Dieses Feld wird benötigt."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Freigabepasswort"
+msgstr "Passwort deaktivieren"
 
 #: account/forms.py:466
 #, fuzzy

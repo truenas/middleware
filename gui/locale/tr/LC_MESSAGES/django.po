@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-25 14:21+0200\n"
+"PO-Revision-Date: 2011-11-28 10:44+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -792,11 +792,11 @@ msgstr "%s Tümünü Göster "
 
 #: freeadmin/navtree.py:347
 msgid "Display System Processes"
-msgstr "Sistem Süreçlerini Görüntüleme"
+msgstr "Sistem Süreçlerini Görüntüle"
 
 #: freeadmin/navtree.py:354 templates/freeadmin/index.html:61
 msgid "Reboot"
-msgstr "Yeniden başlat"
+msgstr "Yeniden Başlat"
 
 #: freeadmin/navtree.py:361 templates/freeadmin/index.html:78
 msgid "Shutdown"
@@ -1279,7 +1279,7 @@ msgstr "Ldap hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:382 services/models.py:540
 msgid "Secret"
-msgstr "Gizli"
+msgstr "Şifre"
 
 #: services/forms.py:384 services/models.py:541
 msgid "Target side secret."
@@ -1334,7 +1334,7 @@ msgstr "Aynı hedefte bu LUN zaten mevcut."
 
 #: services/forms.py:494 services/models.py:359
 msgid "Controller Auth Group"
-msgstr "Kontrolcü Onay Grubu"
+msgstr "Kontrolör onay gurubu"
 
 #: services/forms.py:495 services/models.py:360
 msgid ""
@@ -1346,7 +1346,7 @@ msgstr ""
 
 #: services/forms.py:496 services/models.py:253
 msgid "Discovery Auth Group"
-msgstr "Grup Yetkisine Gözat"
+msgstr "Grup bulma yöntemi"
 
 #: services/forms.py:526
 #, python-format
@@ -1663,7 +1663,7 @@ msgstr ""
 
 #: services/models.py:204
 msgid "Max. Connections"
-msgstr "Mak. Bağlantılar"
+msgstr "En fazla bağlantı sayısı"
 
 #: services/models.py:206
 msgid ""
@@ -1679,7 +1679,7 @@ msgstr "AFP"
 
 #: services/models.py:221
 msgid "Number of servers"
-msgstr "Sunucuların sayısı"
+msgstr "Sunucu sayısı"
 
 #: services/models.py:222
 msgid ""
@@ -1708,7 +1708,7 @@ msgstr "NFS"
 
 #: services/models.py:242
 msgid "Base Name"
-msgstr "Temel Ad"
+msgstr "Temel ad"
 
 #: services/models.py:243
 msgid ""
@@ -1720,11 +1720,11 @@ msgstr ""
 
 #: services/models.py:249
 msgid "Discovery Auth Method"
-msgstr "Yetki Bulma Yöntemi"
+msgstr "Yetki bulma yöntemi"
 
 #: services/models.py:260
 msgid "I/O Timeout"
-msgstr "G/Ç Zaman aşımı"
+msgstr "G/Ç zaman aşımı"
 
 #: services/models.py:261
 msgid "I/O timeout in seconds (30 by default)."
@@ -1732,7 +1732,7 @@ msgstr "Saniye cinsinden G/Ç zaman aşımı (varsayılan değer 30)."
 
 #: services/models.py:266
 msgid "NOPIN Interval"
-msgstr "NOPIN Aralığı"
+msgstr "NOPIN aralığı"
 
 #: services/models.py:267
 msgid "NOPIN sending interval in seconds (20 by default)."
@@ -1741,7 +1741,7 @@ msgstr ""
 
 #: services/models.py:272
 msgid "Max. sessions"
-msgstr "Mak. oturumlar"
+msgstr "En fazla oturum sayısı"
 
 #: services/models.py:273
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1749,7 +1749,7 @@ msgstr "Aynı zamandaki sahip oturumların sayısı (varsayılan 16)."
 
 #: services/models.py:278
 msgid "Max. connections"
-msgstr "Mak. bağlantılar"
+msgstr "En fazla bağlantı sayısı"
 
 #: services/models.py:279
 msgid "Maximum number of connections in each session (8 by default)."
@@ -1757,7 +1757,7 @@ msgstr "Her bölümdeki en fazla bağlantı sayısı (varsayılan 8)."
 
 #: services/models.py:284
 msgid "Max. pre-send R2T"
-msgstr "Mak. R2T ön-gönderim"
+msgstr "En fazla ön-gönderim R2T sayısı"
 
 #: services/models.py:285
 msgid ""
@@ -1793,7 +1793,7 @@ msgstr "iSCSI başlangıç parametresi (varsayılan değer 262144)"
 
 #: services/models.py:308
 msgid "Max receive data segment length"
-msgstr "Mak veri bölüm uzunluğu al"
+msgstr "Alınacak en fazla veri bölüm uzunluğu"
 
 #: services/models.py:314
 msgid "DefaultTime2Wait"
@@ -1813,7 +1813,7 @@ msgstr "iSCSI başlangıç parametresi (varsayılan değer 60)"
 
 #: services/models.py:326
 msgid "Enable LUC"
-msgstr "LUC Etkinleştir"
+msgstr "LUC etkinleştir"
 
 #: services/models.py:330
 msgid "Controller IP address"
@@ -1843,7 +1843,7 @@ msgstr ""
 
 #: services/models.py:353
 msgid "Controller Auth Method"
-msgstr "Kontrolör Yetki Yöntemi"
+msgstr "Kontrolör yetki yöntemi"
 
 #: services/models.py:354
 msgid "The method can be accepted in the controller."
@@ -1852,7 +1852,7 @@ msgstr "Bu yöntem kontrolör olarak kabul edilebilir."
 #: services/models.py:366 services/models.py:367
 #: templates/services/iscsi.html:3
 msgid "Target Global Configuration"
-msgstr "Genel Hedef Yapılandırma"
+msgstr "Hedef Genel Yapılandırma"
 
 #: services/models.py:379
 msgid "Extent Name"
@@ -1980,7 +1980,7 @@ msgstr "Yetkili Giriş"
 
 #: services/models.py:556
 msgid "Authorized Accesses"
-msgstr "Yetkili Girişler"
+msgstr "Yetkili Girişlerin"
 
 #: services/models.py:571
 msgid "Target Name"
@@ -2154,7 +2154,7 @@ msgstr "Çoğu durumda burada 'genel' kullanılır."
 
 #: services/models.py:750
 msgid "Send SNMP Traps"
-msgstr "SNMP Tuzakları Gönder"
+msgstr "SNMP tuzaklarını gönder"
 
 #: services/models.py:758 services/models.py:759
 #: templates/services/index.html:97
@@ -2208,7 +2208,7 @@ msgstr ""
 
 #: services/models.py:808
 msgid "UPS Master User Password"
-msgstr "UPS Master Kullanıcı Parolası"
+msgstr "UPS master kullanıcı parolası"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
@@ -2216,11 +2216,11 @@ msgstr "Ekstra kullanıcılar (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
-msgstr "Uzak İzleme"
+msgstr "Uzaktan izleme"
 
 #: services/models.py:817
 msgid "Send Email Status Updates"
-msgstr "Durum Güncellemelerini E-postayla Gönder"
+msgstr "Durum güncellemelerini e-postayla gönder"
 
 #: services/models.py:820
 msgid "To email"
@@ -2233,7 +2233,7 @@ msgstr ""
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr "E-posta Konusu"
+msgstr "E-posta konusu"
 
 #: services/models.py:827
 msgid ""
@@ -2458,7 +2458,7 @@ msgstr ""
 
 #: services/models.py:966
 msgid "Allow New Files"
-msgstr "Yeni Dosyalara İzin Ver"
+msgstr "Yeni dosyalara izin ver"
 
 #: services/models.py:970
 msgid ""
@@ -2499,7 +2499,7 @@ msgstr "TFTP"
 
 #: services/models.py:1000 services/models.py:1197
 msgid "TCP Port"
-msgstr "TCP Bağlantı Noktası"
+msgstr "TCP bağlantı noktası"
 
 #: services/models.py:1002
 msgid "Alternate TCP port. Default is 22"
@@ -2507,7 +2507,7 @@ msgstr "Alternatif TCP bağlantı noktası. Varsayılan değer 22'dir"
 
 #: services/models.py:1005
 msgid "Login as Root with password"
-msgstr "Parola ile Root olarak giriş"
+msgstr "Root parolası ile giriş"
 
 #: services/models.py:1006
 msgid ""
@@ -2519,19 +2519,19 @@ msgstr ""
 
 #: services/models.py:1009
 msgid "Allow Password Authentication"
-msgstr "Parola Doğrulamasına İzin Ver"
+msgstr "Parola doğrulamasına izin ver"
 
 #: services/models.py:1011
 msgid "Allow TCP Port Forwarding"
-msgstr "TCP Bağlantı Noktası Yönlendirmesine İzin Ver"
+msgstr "TCP bağlantı noktası yönlendirmesine izin ver"
 
 #: services/models.py:1013
 msgid "Compress Connections"
-msgstr "Sıkıştırma Bağlantıları"
+msgstr "Bağlantıları sıkıştır"
 
 #: services/models.py:1016
 msgid "Host Private Key"
-msgstr "Ana Bilgisayar Özel Anahtarı"
+msgstr "Ana bilgisayar özel anahtarı"
 
 #: services/models.py:1018
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
@@ -2621,7 +2621,7 @@ msgstr ""
 
 #: services/models.py:1125
 msgid "Allow Anonymous Binding"
-msgstr "Anonim kullanıcı için Bağlama İzni"
+msgstr "Anonim kullanıcı için bağlama izni ver"
 
 #: services/models.py:1128
 msgid "Root bind DN"
@@ -2645,7 +2645,7 @@ msgstr "Bağlanmak için kimlik bilgileri."
 
 #: services/models.py:1141
 msgid "Password Encryption"
-msgstr "Parola ile Şifreleme"
+msgstr "Parola ile şifreleme"
 
 #: services/models.py:1142
 msgid "The password change protocol to use."
@@ -2653,7 +2653,7 @@ msgstr "Parola değiştirme kuralını kullanmak."
 
 #: services/models.py:1146
 msgid "User Suffix"
-msgstr "Kullanıcı Soneki"
+msgstr "Kullanıcı soneki"
 
 #: services/models.py:1148
 msgid ""
@@ -2665,7 +2665,7 @@ msgstr ""
 
 #: services/models.py:1152
 msgid "Group Suffix"
-msgstr "Grup Soneki"
+msgstr "Grup soneki"
 
 #: services/models.py:1154
 msgid ""
@@ -2677,7 +2677,7 @@ msgstr ""
 
 #: services/models.py:1158
 msgid "Password Suffix"
-msgstr "Parola Soneki"
+msgstr "Parola soneki"
 
 #: services/models.py:1160
 msgid ""
@@ -2689,7 +2689,7 @@ msgstr ""
 
 #: services/models.py:1164
 msgid "Machine Suffix"
-msgstr "Bilgisayar Soneki"
+msgstr "Bilgisayar soneki"
 
 #: services/models.py:1166
 msgid ""
@@ -2701,7 +2701,7 @@ msgstr ""
 
 #: services/models.py:1171
 msgid "Encryption Mode"
-msgstr "Şifreleme Yöntemi"
+msgstr "Şifreleme türü"
 
 #: services/models.py:1172
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2753,7 +2753,7 @@ msgstr "Paylaşılacak olan yol"
 
 #: services/models.py:1232
 msgid "Access Mode"
-msgstr "Erişim Durumu"
+msgstr "Erişim türü"
 
 #: services/models.py:1233
 msgid "This controls the access a remote host has to this module"
@@ -2790,7 +2790,7 @@ msgstr ""
 
 #: services/models.py:1255
 msgid "Hosts allow"
-msgstr "Ana bilgisayarlara izin ver"
+msgstr "İzin verilecek ana bilgisayarlar"
 
 #: services/models.py:1256
 msgid ""
@@ -2804,7 +2804,7 @@ msgstr ""
 
 #: services/models.py:1260
 msgid "Hosts deny"
-msgstr "Reddedilecek Ana Bilgisayarlar"
+msgstr "Reddedilecek ana bilgisayarlar"
 
 #: services/models.py:1261
 msgid ""
@@ -2881,7 +2881,7 @@ msgstr "Kritik"
 
 #: services/models.py:1309
 msgid "Email to report"
-msgstr "E-posta raporu"
+msgstr "E-posta"
 
 #: services/models.py:1312
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -3034,7 +3034,7 @@ msgstr "Sadece misafir erişimine izin ver"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr "Ana bilgisayarlara izin ver"
+msgstr "İzin verilecek ana bilgisayarlar"
 
 #: sharing/models.py:75
 msgid ""
@@ -4808,7 +4808,7 @@ msgstr "Uyarı!"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr "Sistemi <strong>YENİDEN BAŞLATMAK</strong>ile ilgili tercihiniz nedir?"
+msgstr "Sistemi <strong>YENİDEN BAŞLATMAK</strong> ile ilgili tercihiniz nedir?"
 
 #: templates/freeadmin/index.html:65
 msgid "Shutdown the System"

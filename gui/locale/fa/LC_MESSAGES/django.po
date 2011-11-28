@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-27 11:57+0200\n"
+"PO-Revision-Date: 2011-11-28 07:02+0200\n"
 "Last-Translator: alamati <alamati@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
@@ -267,8 +267,9 @@ msgid "Default"
 msgstr "پیش‌فرض"
 
 #: choices.py:192
+#, fuzzy
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
