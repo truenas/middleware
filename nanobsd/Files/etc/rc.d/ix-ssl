@@ -16,7 +16,7 @@ generate_openssl_conf()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-	read $f <<-__SSL__
+	eval read $f <<-__SSL__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		$f
