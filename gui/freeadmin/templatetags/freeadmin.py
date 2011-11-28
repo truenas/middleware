@@ -34,10 +34,12 @@ from dojango import forms
 register = template.Library()
 
 class FormRender(template.Node):
-    def __init__(self, arg):
+    def __init__(self, arg, adv_mode):
         self.arg = arg
+        self.adv_mode = adv_mode
     def render(self, context):
         form = context[self.arg]
+        adv_mode = context[self.adv_mode]
 
         if hasattr(form, "_meta"):
             model = form._meta.model
@@ -64,9 +66,11 @@ class FormRender(template.Node):
                 composed[fields[0]] = (label, fields)
 
         for field in new_fields:
-            _hide = field in model._admin.advanced_fields if model else False
+            is_adv = field in model._admin.advanced_fields
+            _hide = is_adv if model and not adv_mode else False
             if _hide:
                 _hide = ' style="display: none;"'
+            if is_adv:
                 form.fields.get(field).widget.attrs['class'] = 'advancedField'
             if composed.has_key(field):
                 label, fields = composed.get(field)
@@ -101,12 +105,16 @@ class FormRender(template.Node):
 @register.tag(name="admin_form")
 def do_admin_form(parser, token):
     # This version uses a regular expression to parse tag contents.
+    adv_mode = True
     try:
-        # Splitting by None == splitting by spaces.
-        tag_name, arg = token.contents.split(None, 1)
+        try:
+            # Splitting by None == splitting by spaces.
+            tag_name, arg, adv_mode = token.contents.split(None, 2)
+        except ValueError:
+            tag_name, arg = token.contents.split(None, 1)
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
 
     #if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
     #    raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return FormRender(arg)
+    return FormRender(arg, adv_mode)

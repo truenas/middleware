@@ -13,7 +13,7 @@
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
 <table>
     {% block form %}
-{% admin_form form %}
+{% admin_form form advanced_mode %}
     {% endblock %}
     {% block formset %}
     <tr><td colspan="2">

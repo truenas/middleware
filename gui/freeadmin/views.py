@@ -52,6 +52,9 @@ from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 
+#TODO: move to advances settings
+ADVANCED_VIEW = False
+
 class JsonResponse(HttpResponse):
 
     error = False
@@ -358,6 +361,7 @@ def generic_model_add(request, app, model, mf=None):
         'app': app,
         'model': model,
         'modeladmin': m._admin,
+        'advanced_mode': ADVANCED_VIEW,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
@@ -562,6 +566,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         'app': app,
         'model': model,
         'modeladmin': m._admin,
+        'advanced_mode': ADVANCED_VIEW,
         'mf': mf,
         'oid': oid,
         'inline': inline,
