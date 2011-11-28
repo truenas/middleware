@@ -41,13 +41,11 @@ setgroup()
 set_sysctl()
 {
 	local IFS="|"
-	local f="
-		nfs_srv_async
-		"
+	local f="nfs_srv_async"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_nfs ORDER BY id DESC LIMIT 1" | \
-	while eavl read $f; do
+	while eval read $f; do
 		/sbin/sysctl vfs.nfsrv.async=${nfs_srv_async}
 	done
 }
@@ -59,17 +57,7 @@ set_sysctl()
 generate_exports()
 {
 	local IFS="|"
-	local f="
-		nfs_path
-		nfs_network
-		nfs_alldirs
-		nfs_ro
-		nfs_quiet
-		nfs_maproot_user
-		nfs_maproot_group
-		nfs_mapall_user
-		nfs_mapall_group
-		"
+	local f="nfs_path nfs_network nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \

@@ -29,9 +29,7 @@ generate_master.passwd()
 group_membership()
 {
 	local IFS="|"
-	local f="
-		bsdusr_username
-		"
+	local f="bsdusr_username"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
@@ -48,11 +46,7 @@ group_membership()
 generate_group()
 {
 	local IFS="|"
-	local f="
-		bsdgrp_group
-		bsdgrp_gid
-		id
-		"
+	local f="bsdgrp_group bsdgrp_gid id"
 	eval local $f
 	local sf=$(var_to_sf $f)
 
@@ -60,7 +54,7 @@ generate_group()
 		$sf
 	FROM
 		account_bsdgroups" | \
-	while eavl read $f; do
+	while eval read $f; do
 		echo -n "${bsdgrp_group}:*:${bsdgrp_gid}:"
 		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
 		echo

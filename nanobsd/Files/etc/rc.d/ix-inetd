@@ -12,14 +12,7 @@
 generate_tftp()
 {
     local IFS="|"
-    local f="
-	tftp_directory
-	tftp_newfiles
-	tftp_port
-	tftp_username
-	tftp_umask
-	tftp_options
-	"
+    local f="tftp_directory tftp_newfiles tftp_port tftp_username tftp_umask tftp_options"
     eval local $f
     local sf=$(var_to_sf $f)
     local cmd

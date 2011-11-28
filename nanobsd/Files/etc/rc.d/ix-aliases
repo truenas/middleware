@@ -12,10 +12,7 @@
 generate_aliases()
 {
 	local IFS="|"
-	local f="
-		bsdusr_username
-		bsdusr_email
-	"
+	local f="bsdusr_username bsdusr_email"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local user email

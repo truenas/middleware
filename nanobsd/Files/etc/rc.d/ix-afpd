@@ -31,12 +31,7 @@ bool_on()
 generate_afpd_config()
 {
     local IFS="|"
-    local f="
-	afp_srv_name
-	afp_srv_guest
-	afp_srv_local
-	afp_srv_guest_user
-	"
+    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_guest_user"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 
@@ -63,29 +58,7 @@ EOF
 generate_av_default()
 {
     local IFS="|"
-    local f="
-	afp_name 
-	afp_comment
-	afp_sharepw
-	afp_sharecharset
-	afp_allow
-	afp_deny
-	afp_ro
-	afp_rw
-	afp_diskdiscovery
-	afp_discoverymode
-	afp_dbpath
-	afp_cachecnid
-	afp_crlf
-	afp_mswindows
-	afp_noadouble
-	afp_nodev
-	afp_nofileid
-	afp_nohex
-	afp_prodos	
-	afp_nostat
-	afp_upriv
-	"
+    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_noadouble afp_nodev afp_nofileid afp_nohex afp_prodo afp_nostat afp_upriv"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -118,9 +91,7 @@ generate_av_default()
 generate_avahi_daemon_config()
 {
     local IFS="|"
-    local f="
-	afp_srv_name
-	"
+    local f="afp_srv_name"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -183,10 +154,7 @@ EOF
 generate_netatalk_conf()
 {
 	local IFS="|"
-	local f="
-		afp_srv_connections_limit
-		afp_srv_guest_user
-	"
+	local f="afp_srv_connections_limit afp_srv_guest_user"
 	eval local $f
 	local sf=$(var_to_sf $f)
 

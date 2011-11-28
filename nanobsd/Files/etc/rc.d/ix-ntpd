@@ -14,10 +14,7 @@ FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
 generate_ntp_conf()
 {
 	local IFS="|"
-	local f="
-		stg_ntpserver1
-		stg_ntpserver2
-		stg_ntpserver3
+	local f="stg_ntpserver1 stg_ntpserver2 stg_ntpserver3
 		"
 	eval local $f
 	local sf=$(var_to_sf $f)

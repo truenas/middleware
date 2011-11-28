@@ -14,13 +14,7 @@ bsnmp_config=/etc/snmpd.config
 generate_snmpconf()
 {
 	local IFS="|"
-	local f="
-		snmp_location
-		snmp_contact
-		snmp_community
-		snmp_traps
-		snmp_options
-	"
+	local f="snmp_location snmp_contact snmp_community snmp_traps snmp_options"
 	eval local $f
 	local sf=$(var_to_sf $f)
 

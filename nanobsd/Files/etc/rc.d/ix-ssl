@@ -12,15 +12,7 @@
 generate_openssl_conf()
 {
 	local IFS="|"
-	local f="
-		ssl_org
-		ssl_unit
-		ssl_email
-		ssl_city
-		ssl_state
-		ssl_country
-		ssl_common
-		"
+	local f="ssl_org ssl_unit ssl_email ssl_city ssl_state ssl_country ssl_common"
 	eval local $f
 	local sf=$(var_to_sf $f)
 

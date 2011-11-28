@@ -151,11 +151,7 @@ set_stg_guiprotocol()
 do_httpd_config()
 {
 	local IFS="|"
-	local f="
-		stg_guiprotocol
-		stg_guiaddress
-		stg_guiport
-	"
+	local f="stg_guiprotocol stg_guiaddress stg_guiport"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "

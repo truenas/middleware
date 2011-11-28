@@ -12,15 +12,7 @@
 generate_crontab()
 {
 	local IFS="|"
-	local f="
-		cron_minute
-		cron_hour
-		cron_daymonth
-		cron_month
-		cron_dayweek
-		cron_user
-		cron_command
-	"
+	local f="cron_minute cron_hour cron_daymonth cron_month cron_dayweek cron_user cron_command"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local cron_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"
@@ -32,29 +24,7 @@ generate_crontab()
 		echo -e "${cron_minute}\t${cron_hour}\t${cron_daymonth}\t${cron_month}\t${cron_dayweek}\t${cron_user}\tPATH=\"$cron_PATH\" ${cron_command} >/dev/null 2>&1" >> /etc/crontab
 	done
 
-	local f="
-		rsync_path
-		rsync_mode
-		rsync_minute
-		rsync_hour
-		rsync_daymonth
-		rsync_month
-		rsync_dayweek
-		rsync_user
-		rsync_remotehost
-		rsync_remotemodule
-		rsync_remotepath
-		rsync_direction
-		rsync_recursive
-		rsync_times
-		rsync_compress
-		rsync_archive
-		rsync_delete
-		rsync_quiet
-		rsync_preserveperm
-		rsync_preserveattr
-		rsync_extra
-	"
+	local f="rsync_path rsync_mode rsync_minute rsync_hour rsync_daymonth rsync_month rsync_dayweek rsync_user rsync_remotehost rsync_remotemodule rsync_remotepath rsync_direction rsync_recursive rsync_times rsync_compress rsync_archive rsync_delete rsync_quiet rsync_preserveperm rsync_preserveattr rsync_extra"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local rsync_command

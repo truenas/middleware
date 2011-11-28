@@ -12,15 +12,7 @@ generate_inadyn_real()
 {
 	local IFS="|"
 
-	local f="
-		id
-		ddns_provider
-		ddns_domain
-		ddns_username
-		ddns_password
-		ddns_updateperiod
-		ddns_fupdateperiod
-	"
+	local f="id ddns_provider ddns_domain ddns_username ddns_password ddns_updateperiod ddns_fupdateperiod"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local cmd

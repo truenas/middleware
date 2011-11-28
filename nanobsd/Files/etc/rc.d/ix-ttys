@@ -130,10 +130,7 @@ serial_disable()
 update_ttys()
 {
 	local IFS="|"
-	local f="
-		adv_consolemenu
-		adv_serialconsole
-	"
+	local f="adv_consolemenu adv_serialconsole"
 	eval local $f
 	local sf=$(var_to_sf $f)
 

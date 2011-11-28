@@ -39,20 +39,7 @@ save_certificate()
 generate_ldapconf()
 {
 	local IFS="|"
-	local f="
-		ldap_id
-		ldap_hostname
-		ldap_basedn
-		ldap_anonbind
-		ldap_rootbasedn
-		ldap_rootbindpw
-		ldap_pwencryption
-		ldap_usersuffix
-		ldap_groupsuffix
-		ldap_passwordsuffix
-		ldap_machinesuffix
-		ldap_ssl
-		"
+	local f="ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix ldap_ssl"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local nssconf="${NSS_LDAP_CONF}"
