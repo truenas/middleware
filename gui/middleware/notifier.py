@@ -270,16 +270,12 @@ class notifier:
 
     def _start_network(self):
         c = self.__open_db()
-        c.execute("SELECT COUNT(id) FROM network_interfaces WHERE int_ipv6auto = 1 OR int_ipv6address != ''")
+        c.execute("SELECT COUNT(n.id) FROM network_interfaces n LEFT JOIN network_alias a ON a.alias_interface_id=n.id WHERE int_ipv6auto = 1 OR int_ipv6address != '' OR alias_v6address != ''")
         ipv6_interfaces = c.fetchone()[0]
         if ipv6_interfaces > 0:
-            libc = ctypes.cdll.LoadLibrary("libc.so.7")
-            auto_linklocal = ctypes.c_uint(0)
-            auto_linklocal_size = ctypes.c_uint(4)
-            rv = libc.sysctlbyname("net.inet6.ip6.auto_linklocal", ctypes.byref(auto_linklocal), ctypes.byref(auto_linklocal_size), None, 0)
-            if rv == 0:
-                auto_linklocal = auto_linklocal.value
-            else:
+            try:
+                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal", _type='INT')
+            except AssertionError:
                 auto_linklocal = 0
             if auto_linklocal == 0:
                 self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
@@ -1835,8 +1831,7 @@ class notifier:
     def __geom_confxml(self):
         if self.__confxml == None:
             from libxml2 import parseDoc
-            sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml', log=False)
-            self.__confxml = parseDoc(sysctl_proc.communicate()[0][:-1])
+            self.__confxml = parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
 
     def serial_from_device(self, devname):
@@ -2153,8 +2148,7 @@ class notifier:
             no devices could be divined from the system.
         """
 
-        disks = \
-            self.__pipeopen('sysctl -n kern.disks').communicate()[0].split()
+        disks = self.sysctl('kern.disks').split()
 
         root_dev = self.__find_root_dev()
 
@@ -2177,8 +2171,7 @@ class notifier:
         """
 
         try:
-            p = self.__pipeopen('sysctl -n vfs.zfs.version.spa')
-            version = int(p.communicate()[0])
+            version = self.sysctl('vfs.zfs.version.spa', _type='INT')
         except ValueError, ve:
             raise ValueError('Could not determine ZFS version: %s'
                              % (str(ve), ))
@@ -2186,6 +2179,59 @@ class notifier:
             return version
         raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
 
+    def __sysctl_error(self, libc, name):
+        import errno
+        errloc = getattr(libc,'__error')
+        errloc.restype = ctypes.POINTER(ctypes.c_int)
+        error = errloc().contents.value
+        if error == errno.ENOENT:
+            msg = "The name is unknown."
+        elif error == errno.ENOMEM:
+            msg = "The length pointed to by oldlenp is too short to hold " \
+                  "the requested value."
+        else:
+            msg = "Unknown error (%d)" % (error, )
+        raise AssertionError("Sysctl by name (%s) failed: %s" % (name, msg))
+
+    def sysctl(self, name, value=None, _type='CHAR'):
+        """Get any sysctl value using libc call
+
+        This cut down the overhead of lunching subprocesses
+
+        Returns:
+            The value of the given ``name'' sysctl
+
+        Raises:
+            AssertionError: sysctlbyname(3) returned an error
+        """
+
+        if value:
+            #TODO: set sysctl
+            raise NotImplementedError
+
+        libc = ctypes.CDLL('libc.so.7')
+        size = ctypes.c_size_t()
+
+        if _type == 'CHAR':
+            #We need find out the size
+            rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
+            if rv != 0:
+                self.__sysctl_error(libc, name)
+
+            buf = ctypes.create_string_buffer(size.value)
+            arg = buf
+
+        else:
+            buf = ctypes.c_int()
+            size.value = ctypes.sizeof(buf)
+            arg = ctypes.byref(buf)
+
+        # Grab the sysctl value
+        rv = libc.sysctlbyname(str(name), arg, ctypes.byref(size), None, 0)
+        if rv != 0:
+            self.__sysctl_error(libc, name)
+
+        return buf.value
 
 def usage():
     usage_str = """usage: %s action command
