@@ -1995,9 +1995,10 @@ class notifier:
         disks = self.__get_disks()
 
         in_disks = {}
+        serials = []
         for disk in Disk.objects.all():
 
-            dskname = disk.identifier_to_device()
+            dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname:
                 dskname = disk.disk_name
                 disk.disk_identifier = self.device_to_identifier(dskname)
@@ -2006,10 +2007,17 @@ class notifier:
                 else:
                     disk.disk_enabled = True
                     disk.disk_serial = self.serial_from_device(dskname)
+            elif dskname in in_disks:
+                # We are probably dealing with with multipath here
+                disk.disk_enabled = False
+                continue
             else:
                 disk.disk_enabled = True
                 if dskname != disk.disk_name:
                     disk.disk_name = dskname
+
+            if disk.disk_serial:
+                serials.append(disk.disk_serial)
 
             if dskname not in disks:
                 disk.disk_enabled = False
@@ -2028,6 +2036,9 @@ class notifier:
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
                 d.disk_serial = self.serial_from_device(disk)
+                if d.disk_serial and d.disk_serial in serials:
+                    #Probably dealing with multipath here, do not add another
+                    continue
                 d.save()
 
     def geom_disks_dump(self, volume):
