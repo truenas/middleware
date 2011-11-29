@@ -2205,6 +2205,9 @@ class notifier:
             AssertionError: sysctlbyname(3) returned an error
         """
 
+        syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
+        syslog.syslog(syslog.LOG_NOTICE, "sysctlbyname: %s" % (name, ))
+
         if value:
             #TODO: set sysctl
             raise NotImplementedError
