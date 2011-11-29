@@ -302,20 +302,6 @@ ${PKG_ONLY_MAKE_CONF}
 	echo "Automatically building a thin image with packages"
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
-	if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
-		# Optimization to avoid additional 20+ minutes of overhead
-		# when building unnecessary disk images.
-		#
-		# XXX: if this can be articulated better (along with the
-		# package build steps), this should be rolled into
-		# nanobsd.conf.
-		package_prep_build() {
-			pprint 2 "Skipping disk image build (exiting..)."
-			exit 0
-		}
-		customize_cmd package_prep_build
-		echo "Will terminate before disk images are built."
-	fi
 fi
 
 VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
