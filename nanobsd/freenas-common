@@ -487,9 +487,7 @@ freenas_custom()
 	if [ "${DEBUG}" != 1 ]; then
 		pprint 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
-			for f in $(find $dir -type f); do
-				strip 2>/dev/null $f || :
-			done
+			find $dir -type f | xargs -n 1 strip 2>/dev/null || :
 		done
 	fi
 
