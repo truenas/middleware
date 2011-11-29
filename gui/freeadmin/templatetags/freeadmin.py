@@ -66,12 +66,12 @@ class FormRender(template.Node):
                 composed[fields[0]] = (label, fields)
 
         for field in new_fields:
-            is_adv = field in model._admin.advanced_fields
-            _hide = is_adv if model and not adv_mode else False
-            if _hide:
-                _hide = ' style="display: none;"'
-            if is_adv:
-                form.fields.get(field).widget.attrs['class'] = 'advancedField'
+            _hide, is_adv = '', False
+            if model:
+                is_adv = field in model._admin.advanced_fields
+                _hide = ' style="display: none;"' if not adv_mode and is_adv else False
+                if is_adv:
+                    form.fields.get(field).widget.attrs['class'] = 'advancedField'
             if composed.has_key(field):
                 label, fields = composed.get(field)
                 html = u"""<tr%s><th><label>%s</label></th><td>""" % (_hide, label)
