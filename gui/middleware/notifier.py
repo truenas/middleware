@@ -2113,9 +2113,17 @@ class notifier:
 
 
     def __find_root_dev(self):
-        """Find the root device from glabel status -s output.
+        """Find the root device.
 
-        NOTE: algorithm adapted from /root/updatep*.
+        The original algorithm was adapted from /root/updatep*, but this
+        grabs the relevant information from geom's XML facility.
+
+        Returns:
+             The root device name in string format, e.g. FreeNASp1,
+             FreeNASs2, etc.
+
+        Raises:
+             AssertionError: the root device couldn't be determined.
         """
         # XXX: circular dependency
         import common.system
@@ -2125,16 +2133,25 @@ class notifier:
 
         for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
                 "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
-                % sw_name):
+                % (sw_name, )):
             prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
             pid = prov.xpathEval("../consumer/provider/@ref")[0].content
             prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
             name = prov.xpathEval("../name")[0].content
             return name
+        raise AssertionError('Root device not found (!)')
+
 
     def __get_disks(self):
-        """Return a list of available storage disks, e.g. not cds, the root
-           media device, etc."""
+        """Return a list of available storage disks.
+
+        The list excludes all devices that cannot be reserved for storage,
+        e.g. the root device, CD drives, etc.
+
+        Returns:
+            A list of available devices (ada0, da0, etc), or an empty list if
+            no devices could be divined from the system.
+        """
 
         disks = \
             self.__pipeopen('sysctl -n kern.disks').communicate()[0].split()
@@ -2144,6 +2161,30 @@ class notifier:
         device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
 
         return filter(lambda x: not device_blacklist_re.match(x), disks)
+
+
+    def zfs_get_version(self):
+        """Get the ZFS (SPA) version reported via zfs(4).
+
+        This allows us to better tune warning messages and provide
+        conditional support for features in the GUI/CLI.
+
+        Returns:
+            An integer corresponding to the version retrieved from zfs(4).
+
+        Raises:
+            ValueError: the ZFS version could not be parsed from sysctl(8).
+        """
+
+        try:
+            p = self.__pipeopen('sysctl -n vfs.zfs.version.spa')
+            version = int(p.communicate()[0])
+        except ValueError, ve:
+            raise ValueError('Could not determine ZFS version: %s'
+                             % (str(ve), ))
+        if 0 < version:
+            return version
+        raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
 
 
 def usage():
