@@ -161,6 +161,7 @@ def wizard(request):
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
+        'zfsversion': notifier().zfs_get_version(),
     })
 
 def volimport(request):

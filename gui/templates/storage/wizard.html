@@ -94,7 +94,9 @@
                 {% trans "ZFS Extra" %}
             </td>
             <td style="width:250px;" id="disks_unselected">
-                <span id="lowlog" style="display:none;color:red;">{% trans "The use of only 1 log disk is highly discouraged" %}</span>
+                {% if zfsversion < 28 %}
+                    <span id="lowlog" style="display:none;color:red;">{% trans "The use of only 1 log disk is highly discouraged" %}</span>
+                {% endif %}
                 <table>
                     <thead>
                         <tr>
