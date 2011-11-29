@@ -280,11 +280,6 @@ class DynamicDNSForm(ModelForm):
 class SNMPForm(ModelForm):
     class Meta:
         model = models.SNMP
-    def clean_snmp_location(self):
-        location = self.cleaned_data['snmp_location']
-        if not re.match(r'^[-_a-zA-Z0-9\s]+$', location):
-            raise forms.ValidationError(_(u"The location must contain only alphanumeric characters, _ or -"))
-        return location
     def clean_snmp_contact(self):
         from django.core.validators import email_re
         contact = self.cleaned_data['snmp_contact']
