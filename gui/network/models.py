@@ -133,6 +133,8 @@ class Interfaces(Model):
     def __unicode__(self):
             return u'%s' % self.int_name
     def delete(self):
+        for lagg in self.lagginterface_set.all():
+            lagg.delete()
         super(Interfaces, self).delete()
         notifier().stop("netif")
         notifier().start("network")
@@ -225,7 +227,7 @@ class VLAN(Model):
         vint = self.vlan_vint
         super(VLAN, self).delete()
         Interfaces.objects.filter(int_interface=vint).delete()
-        notifier().vlan_delete(vint)
+        notifier().iface_destroy(vint)
 
     class Meta:
         verbose_name = _("VLAN")
@@ -259,6 +261,10 @@ class LAGGInterface(Model):
         else:
             interfaces = 'None'
         return "%s (%s: %s)" % (self.lagg_interface, self.lagg_protocol, interfaces)
+
+    def delete(self):
+        super(LAGGInterface, self).delete()
+        notifier().iface_destroy(self.lagg_interface.int_interface)
 
     class FreeAdmin:
         icon_object = u"VLANIcon"
@@ -295,7 +301,7 @@ class LAGGInterfaceMembers(Model):
     class Meta:
         verbose_name = _("Link Aggregation")
         verbose_name_plural = _("Link Aggregations")
-   
+
     class FreeAdmin:
         icon_object = u"LAGGIcon"
         icon_model = u"LAGGIcon"

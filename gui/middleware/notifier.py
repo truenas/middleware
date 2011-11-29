@@ -1826,8 +1826,8 @@ class notifier:
 
         return 1
 
-    def vlan_delete(self, vint):
-        self.__system("ifconfig %s destroy" % vint)
+    def iface_destroy(self, name):
+        self.__system("ifconfig %s destroy" % name)
 
     def __init__(self):
         self.__confxml = None
