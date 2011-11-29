@@ -784,7 +784,7 @@ class Plugins(Model):
 
 class SNMP(Model):
     snmp_location = models.CharField(
-            max_length=120,
+            max_length=255,
             verbose_name = _("Location"),
             blank=True,
             help_text = _("Location information, e.g. physical location of this system: 'Floor of building, Room xyzzy'.")
