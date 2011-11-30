@@ -33,6 +33,7 @@ from subprocess import Popen, PIPE
 from syslog import syslog, LOG_DEBUG
 
 PBI_PATH = "/usr/local/sbin"
+JEXEC_PATH = "/usr/sbin/jexec"
 
 class pbi_arg(object):
     def __init__(self, int, string, arg=False, argname=None):
@@ -448,18 +449,24 @@ class pbi_base(object):
 
         syslog(LOG_DEBUG, "pbi_base.__init__: leave")
 
-    def run(self):
+    def run(self, jail=False, jid=0):
         syslog(LOG_DEBUG, "pbi_base.run: enter")
 
         cmd = self.path
         if self.args is not None:
             cmd += " %s" % self.args
 
+        if jail == True and jid > 0:
+            cmd = "%s %d '%s'" % (JEXEC_PATH, jid, cmd.strip())
+
         syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
 
         syslog(LOG_DEBUG, "pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
+
+    def __str__(self):
+        return self.args
 
 
 class pbi_add(pbi_base):
