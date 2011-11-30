@@ -1,10 +1,12 @@
---- etc/rc.d/sshd	2011-01-18 09:39:38.597948153 -0600
-+++ etc/rc.d/sshd	2011-01-18 08:24:02.951617758 -0600
-@@ -76,11 +76,30 @@
+Index: etc/rc.d/sshd
+===================================================================
+--- etc/rc.d/sshd	(revision 228148)
++++ etc/rc.d/sshd	(working copy)
+@@ -84,11 +84,30 @@ sshd_keygen()
  	else
- 		/usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
+ 		/usr/bin/ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''
  	fi
-+	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
++	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
 +	do
 +		if [ -f /etc/ssh/${i} ] ; then
 +			_tmp=`cat /etc/ssh/${i} | /usr/local/bin/base64`
@@ -18,7 +20,7 @@
  
  sshd_precmd()
  {
-+	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
++	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
 +	do
 +		column=`echo ${i} | tr "." "_"`
 +		_tmp=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${column} from services_ssh"`
@@ -30,4 +32,4 @@
 +	chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key
  	if [ ! -f /etc/ssh/ssh_host_key -o \
  	    ! -f /etc/ssh/ssh_host_dsa_key -o \
- 	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
+ 	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
