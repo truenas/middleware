@@ -412,7 +412,7 @@ customize_cmd save_build
 
 configure_pbi_manager()
 {
-	local sbin links
+	local sbin links l
 	sbin=${NANO_WORLDDIR}/usr/local/sbin/
 	links="pbi_add pbi_addrepo pbi_browser pbi_autobuild \
 		pbi_delete pbi_deleterepo pbi_icon pbi_info pbi_indextool \
@@ -420,14 +420,54 @@ configure_pbi_manager()
 		pbi_metatool pbi_patch pbi_update pbi_update_hashdir \
 		pbid pbi-crashhandler"
 
-	cp ${sbin}/pbi-manager ${sbin}/pbi_create
+	mkdir -p ${sbin}
+	cd ${sbin}
+	cp pbi-manager pbi_create
 	for l in ${links}
 	do
-		ln -f ${sbin}/pbi_create ${sbin}/${l}
+		ln -f pbi_create ${l}
 	done	
-	rm ${sbin}/pbi-manager
+	rm pbi-manager
 }
 customize_cmd configure_pbi_manager
+
+configure_nginx()
+{
+	local nginx_dir="${NANO_WORLDDIR}/usr/local/etc/nginx"
+	local nginx_conf="${nginx_dir}/nginx.conf"
+	local nginx_temp="$(mktemp /tmp/nginx.XXXXXX)"
+	local plugins_conf="${nginx_dir}/plugins.conf"
+
+	awk '
+	BEGIN { server = 0; b = 0; nlines = 0; lines[0] = null; }
+	{
+		lines[nlines++] = $0;
+		if (/(\t| )+(#|$)/) {
+			next;
+		}
+		if (/^(\t| )+server(\t| )+/) {
+			server++;
+		}
+		if (/{/ && server > 0) {
+			b++;
+		}
+		if (/}/ && server > 0) {
+			b--;
+		}
+		if (server > 0 && b == 0) {
+			save = lines[--nlines];
+			lines[nlines++] = "\tinclude plugins.conf";
+			lines[nlines++] = save;
+			server = 0;
+			}
+	}
+	END { for (i = 0;i < nlines;i++) { printf("%s\n", lines[i]); } }
+	' < "${nginx_conf}" > "${nginx_temp}"
+
+	mv "${nginx_temp}" "${nginx_conf}"
+	touch "${plugins_conf}"
+}
+customize_cmd configure_nginx
 
 freenas_custom()
 {
