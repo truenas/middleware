@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:09-0700\n"
-"PO-Revision-Date: 2011-11-25 01:28+0200\n"
-"Last-Translator: ilpelle <alessandro.pellegrini@tin.it>\n"
+"PO-Revision-Date: 2011-11-30 11:40+0200\n"
+"Last-Translator: Alessandro <alessandro.pellegrini@tin.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1680,7 +1680,6 @@ msgstr ""
 "in questa macchina."
 
 #: services/models.py:204
-#, fuzzy
 msgid "Max. Connections"
 msgstr "Connessioni massime"
 
@@ -3510,22 +3509,20 @@ msgstr ""
 "/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:278
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Il nome del volume deve iniziare con una lettera e può includere numeri, \"-"
-"\" e \"_\"."
+"Il nome del volume deve iniziare con una lettera e può includere numeri, "
+"\"-\", \"_\" e \".\" ."
 
 #: storage/forms.py:292
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Percorso per l'extent"
+msgstr "Il percorso non esiste."
 
 #: storage/forms.py:295
 msgid "Path is not a directory."
-msgstr ""
+msgstr "Il percorso non è una cartella."
 
 #: storage/forms.py:303
 msgid "You must select a filesystem"
@@ -3549,13 +3546,14 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "Il nome volume NON può iniziare con c[0-9], mirror, raidz o spare"
 
 #: storage/forms.py:330
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "Il tuo Gruppo ID non può essere più grande di %d"
+msgstr "I nomi dei volumi UFS non possono essere più lunghi di 9 caratteri"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
 msgstr ""
+"I nomi dei volumi UFS possono contenere esclusivamente caratteri "
+"alfanumerici"
 
 #: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
@@ -3580,6 +3578,8 @@ msgstr "Selezionare in volume."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"Errore nell'importazione del volume \"%s\", controllare lo stato del pool per "
+"maggiori dettagli"
 
 #: storage/forms.py:650
 msgid "Dataset Name"
@@ -3634,14 +3634,12 @@ msgid "You already have a dataset with the same name"
 msgstr "Hai già un dataset con lo stesso nome"
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Quota per questo dataset"
+msgstr "Quota per questo volume"
 
 #: storage/forms.py:715
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Spazio riservato per questo dataset"
+msgstr "Spazio riservato per questo volume"
 
 #: storage/forms.py:740
 msgid "ZFS Volume Name"
@@ -3652,9 +3650,8 @@ msgid "Size for this ZFS Volume"
 msgstr "Dimensione di questo volume ZFS"
 
 #: storage/forms.py:741
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Nessuno; esempio: 1g"
+msgstr "Esempio: 1g"
 
 #: storage/forms.py:749
 msgid ""
@@ -3678,7 +3675,7 @@ msgstr "Modalità"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tipo di ACL"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -3730,11 +3727,11 @@ msgstr "Chiave host remoto"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Segna i dischi come nuovi (distruggi dati)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Elimina tutte le condivisioni legate a questo volume"
 
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
@@ -3802,9 +3799,8 @@ msgstr "Hosts di Replica Remota"
 
 #: storage/models.py:421 storage/models.py:468
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Tipo di filesystem"
+msgstr "Filesystem/Volume"
 
 #: storage/models.py:426
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -3832,11 +3828,13 @@ msgstr ""
 
 #: storage/models.py:444
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Limite (kB/s)"
 
 #: storage/models.py:445
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
+"Limita la velocità di replicazione. Unità in kilobyte/secondo. 0 = "
+"illimitato."
 
 #: storage/models.py:448
 msgid "Replication Task"
@@ -4013,9 +4011,8 @@ msgid "Snapshot successfully deleted."
 msgstr "Snapshot eliminato con successo."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshots successfully deleted."
-msgstr "Snapshot eliminato con successo."
+msgstr "Snapshot eliminati con successo."
 
 #: storage/views.py:509
 msgid "Rollback successful."
@@ -4052,7 +4049,7 @@ msgstr "Sostituzione disco iniziata."
 
 #: storage/views.py:633
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Il disco è stato rimosso."
 
 #: storage/views.py:651
 msgid "The volume has been successfully exported"
@@ -4060,21 +4057,19 @@ msgstr "Il volume è stato esportato con successo"
 
 #: storage/views.py:673
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "Il processo di pulizia è stato avviato"
 
 #: system/forms.py:158
 msgid "Language (Require UI reload)"
 msgstr "Lingua (necessita il ricaricamento dell'interfaccia)"
 
 #: system/forms.py:168
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Questo valore deve essere compreso tra 0 e 65535, estremi inclusi."
+msgstr "Questo valore deve essere compreso tra 1 e 65535, estremi inclusi."
 
 #: system/forms.py:170
-#, fuzzy
 msgid "Number is required."
-msgstr "Campo richiesto."
+msgstr "Il numero è richiesto."
 
 #: system/forms.py:335 system/forms.py:412 system/forms.py:449
 msgid "hour"
@@ -4105,23 +4100,20 @@ msgid "SHA256 sum for the image"
 msgstr "SHA256 sum dell'immagine"
 
 #: system/forms.py:361
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Firmware o checksum non valido"
+msgstr "Firmware non valido"
 
 #: system/forms.py:367 system/forms.py:394
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Firmware o checksum non valido"
+msgstr "Checksum non valido"
 
 #: system/forms.py:377
 msgid "Service Pack image to be installed"
 msgstr "Immagine del service pack da installare"
 
 #: system/forms.py:388
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "Service pack o checksum non valido"
+msgstr "Service pack non valido"
 
 #: system/forms.py:404
 msgid "New config to be installed"
@@ -4133,20 +4125,19 @@ msgstr "minuti"
 
 #: system/forms.py:544 system/forms.py:561
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Virgolette non consentite"
 
 #: system/models.py:47
 msgid "Protocol"
 msgstr "Protocollo"
 
 #: system/models.py:53
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "Indirizzo IPv4"
+msgstr "Indirizzo WebGUI"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Porta WebGUI"
 
 #: system/models.py:65
 msgid "Language"
@@ -4170,7 +4161,7 @@ msgstr "NTP server 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Server syslog"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4209,13 +4200,13 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Attiva Zeroconf/Bonjour"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Dimensione del file di scambio (swap) su ogni disco in GiB, valida solo per "
-"i nuovi dischi. Deve essere diversa da zero"
+"Dimensione dell'area di swap su ogni disco in GiB, riguarda solo i nuovi "
+"dischi.  Impostando questo campo a 0, la creazione dello swap viene "
+"disabilitata completamente (FORTEMENTE SCONSIGLIATO)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4240,13 +4231,12 @@ msgid "From email"
 msgstr "Indirizzo email d'origine"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Un indirizzo email che il sistema utilizzerà come indirizzo di origine dei "
-"messaggi inviati, ad esempio: freenas@mydomain.com"
+"Un indirizzo email che il sistema utilizzerà come indirizzo mittente dei "
+"messaggi inviati, ad esempio: freenas@esempio.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4405,19 +4395,16 @@ msgid "Day of week"
 msgstr "Giorno della settimana"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Abilita AIO"
+msgstr "Abilitato"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
-msgstr "CronJob"
+msgstr "Cron Job"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
-msgstr "CronJobs"
+msgstr "Cron Job"
 
 #: system/models.py:314 system/models.py:481
 msgid "Every minute"
@@ -4447,14 +4434,12 @@ msgid "Every month"
 msgstr "Ogni mese"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Giorno Feriale"
+msgstr "Giorni feriali"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
-#, fuzzy
 msgid "Weekends"
-msgstr "Settimana(e)"
+msgstr "Fine settimana"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4562,53 +4547,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Opzioni supplementari della riga comando di rsync (solitamente vuoto)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Task di rsync"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Task di rsync"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Test S.M.A.R.T."
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "Impostazioni S.M.A.R.T."
+msgstr "Test S.M.A.R.T."
 
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Disponibile"
+msgstr "Variabile"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Valore"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr "Carico Medio"
+msgstr "Caricatore"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr "Carico Medio"
+msgstr "Caricatori"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4623,48 +4601,43 @@ msgid "System Information"
 msgstr "Informazioni del sistema"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "CronJobs"
+msgstr "Mostra i Cron Job"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Visualizza Dischi"
+msgstr "Mostra Task di rsync"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "Impostazioni S.M.A.R.T."
+msgstr "Mostra Test S.M.A.R.T."
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Visualizza Dischi"
+msgstr "Mostra sysctl"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Visualizza tutti gli utenti"
+msgstr "Mostra Caricatori"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "Il file caricato non è valido."
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Messaggio di test da"
+msgstr "Messaggio di test da %s"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Questo è un messaggio di test da"
+msgstr "Questo è un messaggio di test da %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "L'email di test non ha potuto essere inviata:"
+msgstr "Impossibile inviare l'email di prova: %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4828,11 +4801,11 @@ msgstr "Cambia la password di amministratore"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "AVVISO"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "CRITICO"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4873,7 +4846,7 @@ msgstr "I cambiamenti sono stati applicati con successo!"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "Salva"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -5134,7 +5107,7 @@ msgstr "Benvenuto, %(username)s. Grazie di esserti connesso."
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Benvenuto in %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5154,7 +5127,7 @@ msgstr "Riconnettersi"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Si desidera abilitare questo servizio?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -5209,9 +5182,8 @@ msgid "TFTP Settings"
 msgstr "Impostazioni TFTP"
 
 #: templates/services/index.html:147
-#, fuzzy
 msgid "UPS Settings"
-msgstr "Impostazioni NFS"
+msgstr "Impostazioni UPS"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
@@ -5401,9 +5373,9 @@ msgid "Edit Disk"
 msgstr "Modifica Disco"
 
 #: templates/storage/dataset_confirm_delete.html:9
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Sei sicuro di voler cancellare?"
+msgstr "Sei sicuro di voler eliminare \"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:12
 msgid ""
@@ -5422,9 +5394,9 @@ msgid "Edit Dataset"
 msgstr "Modifica dataset"
 
 #: templates/storage/datasets.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Crea un Dataset ZFS"
+msgstr "Crea un Dataset ZFS in %(fs)s"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
@@ -5435,14 +5407,12 @@ msgid "Are you sure you want to detach?"
 msgstr "Sei sicuro di voler scollegare?"
 
 #: templates/storage/disk_offline.html:7
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Sei sicuro di voler cancellare?"
+msgstr "Sei sicuro di voler disconnettere?"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
-msgstr "Sei sicuro di voler cancellare?"
+msgstr "Sei sicuro di voler rimuovere?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:9
@@ -5500,13 +5470,15 @@ msgstr "Aggiungi replicazione"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Mostra Chiave Pubblica"
 
 #: templates/storage/replications.html:16
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
+"ATTENZIONE: uno snapshot periodico di un dato filesystem/volume ZFS è "
+"necessario per creare un task di replicazione"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5530,50 +5502,45 @@ msgstr "Nessuna replicazione ZFS disponibile"
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
+"La pulizia è attualmente in corso! Sei sicuro di voler ARRESTARE questa "
+"operazione di pulizia?"
 
 #: templates/storage/scrub_confirm.html:12
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Sei sicuro di voler scollegare?"
+msgstr "Sei sicuro di voler ripulire?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "Il carico del sistema aumenterà, mentre l'operazione è in corso"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Sei sicuro di voler ripristinare lo snapshot e tornare a uno stato "
-"precedente?"
+"Sei sicuro di voler ripristinare il dataset a questa fotografia di stato?"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"
 msgstr "Clona lo snapshot"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "Distruggi lo snapshot"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "Distruggi lo snapshot"
+msgstr "Distruggi questo snapshot"
 
 #: templates/storage/snapshots.html:49
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "Ripristina questo snapshot"
+msgstr "Ripristina Snapshot"
 
 #: templates/storage/snapshots.html:54
 msgid "Rollback to this snapshot"
 msgstr "Ripristina questo snapshot"
 
 #: templates/storage/snapshots.html:128
-#, fuzzy
 msgid "Destroy"
-msgstr "Distruggi Volume"
+msgstr "Distruggi"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5616,7 +5583,6 @@ msgid "on every"
 msgstr "in ogni"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
 msgstr "Non sono pianificati snapshot periodici"
 
@@ -5627,7 +5593,7 @@ msgstr "Modifica Volume ZFS"
 #: templates/storage/volume_export.html:9
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "Hai %(used)s di spazio utilizzato in questo volume"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
@@ -5650,9 +5616,8 @@ msgid "Export Volume"
 msgstr "Esporta Volume"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "Volume ZFS"
+msgstr "Pulisci Volume"
 
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
@@ -5660,9 +5625,8 @@ msgid "Edit ZFS Options"
 msgstr "Modifica Opzioni ZFS"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
-#, fuzzy
 msgid "Volume Status"
-msgstr "Percorso del volume"
+msgstr "Stato del Volume"
 
 #: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
 msgid "Destroy Dataset"
@@ -5713,9 +5677,9 @@ msgid "Existing data will be cleared"
 msgstr "I dati esistenti saranno cancellati"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Crea Volume ZFS"
+msgstr "Crea Volume ZFS su %(name)s"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
@@ -5735,9 +5699,8 @@ msgstr "La cache non ha potuto essere ricostruita"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "Debug"
+msgstr "Salva Debug"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -5763,19 +5726,16 @@ msgid "Update"
 msgstr "Aggiorna"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Nessun CronJob definito"
+msgstr "Nessun Cron Job definito."
 
 #: templates/system/cronjob.html:46
-#, fuzzy
 msgid "Add a cron job"
-msgstr "Aggiungi CronJob"
+msgstr "Aggiungi Cron Job"
 
 #: templates/system/cronjob.html:48
-#, fuzzy
 msgid "Add cron job"
-msgstr "Aggiungi CronJob"
+msgstr "Aggiungi cron job"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5790,21 +5750,20 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"SUGGERIMENTO: le email di prova sono inviate all'utente root. Per "
+"configurarla utilizza Utenti -> root -> Modifica E-mail"
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Nessun target definito"
+msgstr "Nessuna impostazione definita per il caricatore."
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "Aggiungi portale"
+msgstr "Aggiungi caricatore"
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "Aggiungi portale"
+msgstr "Aggiungi Caricatore"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5847,14 +5806,12 @@ msgid "Yearly Graphs"
 msgstr "Grafici Annuali"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Nessuna replica rsync definita"
+msgstr "Nessun task di rsync definito."
 
 #: templates/system/rsync.html:44
-#, fuzzy
 msgid "Add rsync task"
-msgstr "Aggiungi replica Rsync"
+msgstr "Aggiungi task di Rsync"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5866,7 +5823,7 @@ msgstr "Generale"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Ripristina impostazioni di fabbrica"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5882,34 +5839,28 @@ msgid "Upload Config"
 msgstr "Carica Configurazione"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Nessun target definito"
+msgstr "Nessun test S.M.A.R.T. definito"
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Aggiungi test S.M.A.R.T."
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Aggiungi test S.M.A.R.T."
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Nessuna replica rsync definita"
+msgstr "Nessun sysctl definito."
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Aggiungi replica Rsync"
+msgstr "Aggiungi sysctl"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Aggiungi replica Rsync"
+msgstr "Aggiungi sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5941,40 +5892,40 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "Passo %(step)s di %(step_count)s"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Aggiorna"
+msgstr "Applica aggiornamento"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "Lo stato del volume %s è SANO"
 
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Lo stato del volume %s è DEGRADATO"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Lo stato del volume %(volume)s è %(status)s"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Devi modificare la password per l'utente amministratore (attualmente nessuna "
+"password è richiesta per effettuare il login)"
 
 #: tools/alert.py:99
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "L'indirizzo WebGUI non può essere collegato a %s; utilizzo le wildcard"
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Critico"
+msgstr "Avvisi Critici"
 
 msgid "Volume from which this dataset will be created on"
 msgstr "Volume su cui sarà creato questo dataset"
@@ -6091,7 +6042,7 @@ msgid "%s successfully added"
 msgstr "%s aggiunto con successo"
 
 msgid "N/A"
-msgstr "N/A"
+msgstr "N/D"
 
 msgid ""
 "Use this option to override the username ('www' by default) which will be "

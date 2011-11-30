@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-29 09:25+0200\n"
+"PO-Revision-Date: 2011-11-30 11:41+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -326,7 +326,7 @@ msgstr "CHAP"
 # http://technet.microsoft.com/en-us/library/cc786456%28WS.10%29.aspx
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr "Ortak CHAP"
+msgstr "Karşılıklı CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
@@ -1299,7 +1299,7 @@ msgstr "Başlatıcı Parola"
 
 #: services/forms.py:390 services/models.py:547 services/models.py:552
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Başlatıcı tarafı gizli. (Ortak CHAP kimlik doğrulamaları için)"
+msgstr "Başlatıcı tarafı gizli. (Karşılıklı CHAP kimlik doğrulamaları için)"
 
 #: services/forms.py:393
 msgid "Initiator Secret (Confirm)"
@@ -1346,7 +1346,7 @@ msgstr ""
 
 #: services/forms.py:496 services/models.py:253
 msgid "Discovery Auth Group"
-msgstr "Grup bulma yöntemi"
+msgstr "Grup doğrulama yöntemi"
 
 #: services/forms.py:526
 #, python-format
@@ -1357,14 +1357,15 @@ msgstr "Bu değer %(start) ve %(end) arasında olmalıdır."
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Keşif yöntemi CHAP veya CHAP Ortak olarak ayarlanırsa bu alan gereklidir."
+"Keşif yöntemi CHAP veya Karşılıklı CHAP olarak ayarlanırsa bu alan "
+"gereklidir."
 
 #: services/forms.py:582
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
-"Bu alan CHAP veya Ortak CHAP kontrolörü Yetki Yöntemi için ayarlanıp "
+"Bu alan CHAP veya Karşılıklı CHAP kontrolörü Yetki Yöntemi için ayarlanıp "
 "ayarlanmadığında gereklidir."
 
 #: services/forms.py:620
@@ -1378,7 +1379,8 @@ msgstr "Birim/VeriKümesi içinde yer alan bir dosya belirtmelisiniz."
 #: services/forms.py:628
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "Yolunuzun bağlanma noktası birim/verikümesi içinde bulunmalıdır."
+msgstr ""
+"Boyut yolunuzun bir bağlanma noktası birim/verikümesi içinde bulunmalıdır."
 
 #: services/forms.py:642
 msgid ""
@@ -1389,7 +1391,9 @@ msgstr ""
 
 #: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr "Bu dosya mevcut olmalıır eğer dosya boyutu (0) ise otomatik ayarlanır"
+msgstr ""
+"Boyut kapasitesi otomatik olarak sıfır ayarlanır. Eğer bir dosya olacaksa "
+"bir değer girilmelidir."
 
 #: services/forms.py:671
 msgid "Disk device"
@@ -1720,7 +1724,7 @@ msgstr ""
 
 #: services/models.py:249
 msgid "Discovery Auth Method"
-msgstr "Yetki bulma yöntemi"
+msgstr "Kimlik doğrulama yöntemi"
 
 #: services/models.py:260
 msgid "I/O Timeout"
@@ -1777,7 +1781,7 @@ msgstr "iSCSI başlangıç parametresi (varsayılan 16)"
 
 #: services/models.py:296
 msgid "First burst length"
-msgstr "İlk patlama uzunluğu"
+msgstr "Birinci veri blok uzunluğu"
 
 #: services/models.py:297
 msgid "iSCSI initial parameter (65536 by default)."
@@ -1785,7 +1789,7 @@ msgstr "iSCSI başlangıç parametresi (varsayılan değer 65536)"
 
 #: services/models.py:302
 msgid "Max burst length"
-msgstr "Mak patlama uzunluğu"
+msgstr "En fazla veri blok uzunluğu"
 
 #: services/models.py:303 services/models.py:309
 msgid "iSCSI initial parameter (262144 by default)."
@@ -1797,7 +1801,7 @@ msgstr "Alınacak en fazla veri bölüm uzunluğu"
 
 #: services/models.py:314
 msgid "DefaultTime2Wait"
-msgstr "VarsayılanZaman2Bekleyin"
+msgstr "Beklenecek varsayılan zaman"
 
 #: services/models.py:315
 msgid "iSCSI initial parameter (2 by default)."
@@ -1805,7 +1809,7 @@ msgstr "iSCSI başlangıç parametresi (varsayılan değer 2)"
 
 #: services/models.py:320
 msgid "DefaultTime2Retain"
-msgstr "VarsayılanZaman2Koruyun"
+msgstr "Muhafaza edilecek varsayılan zaman"
 
 #: services/models.py:321
 msgid "iSCSI initial parameter (60 by default)."
@@ -1834,7 +1838,7 @@ msgstr "Mantıksal Birim Kontrolörü TCP bağlantı noktası (varsayılan 3261)
 
 #: services/models.py:344
 msgid "Controller Authorized netmask"
-msgstr "Yetkili Kontrolör ağ maskesi"
+msgstr "Yetkili kontrolör ağ maskesi"
 
 #: services/models.py:346
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
@@ -1856,7 +1860,7 @@ msgstr "Hedef Genel Yapılandırma"
 
 #: services/models.py:379
 msgid "Extent Name"
-msgstr "Alan Adı"
+msgstr "Boyut adı"
 
 #: services/models.py:380
 msgid "String identifier of the extent."
@@ -1872,12 +1876,11 @@ msgstr "Alan türü kullan."
 
 #: services/models.py:390
 msgid "Path to the extent"
-msgstr "Alanın yolu"
+msgstr "Boyutun yolu"
 
 #: services/models.py:391
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr ""
-"Alanın dosya yolu kullanılmalıdır (örneğin /mnt/sharename/extent/extent0)."
+msgstr "Kullanılan dosya boyutu yolu (örneğin /mnt/sharename/extent/extent0)."
 
 #: services/models.py:396
 msgid "Extent size"
@@ -1888,8 +1891,8 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Alan boyutunda, 0 otomatik anlamına, bayt olarak bir sayı ve son ek olarakta "
-"KB, MB veya TB kullanılabilir."
+"Boyut kapasitesi, 0 otomatik anlamına gelir , bayt olarak bir sayı ve son ek "
+"olarakta KB, MB veya TB kullanılabilir."
 
 #: services/models.py:402 services/models.py:456 services/models.py:503
 #: services/models.py:1222 sharing/models.py:44 sharing/models.py:222
@@ -1915,7 +1918,7 @@ msgstr "Alan"
 
 #: services/models.py:445 services/models.py:602
 msgid "Portal Group ID"
-msgstr "Portal Grup Kimliği"
+msgstr "Portal grup kimliği"
 
 #: services/models.py:450 services/models.py:460
 msgid "Portal"
@@ -1984,7 +1987,7 @@ msgstr "Yetkili Girişlerin"
 
 #: services/models.py:571
 msgid "Target Name"
-msgstr "Hedef Adı"
+msgstr "Hedef adı"
 
 #: services/models.py:572
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -1992,7 +1995,7 @@ msgstr "Temel isimlerin başına otomatik olarak 'iqn.é eklenir."
 
 #: services/models.py:579
 msgid "Target Alias"
-msgstr "Hedef Takma Adı"
+msgstr "Hedef takma adı"
 
 #: services/models.py:580
 msgid "Optional user-friendly string of the target."
@@ -2019,7 +2022,7 @@ msgstr "Eşleşen Mantıksal Birim Türü LUN."
 
 #: services/models.py:598
 msgid "Target Flags"
-msgstr "Hedef Bayraklar"
+msgstr "Hedef Bayrakları"
 
 #: services/models.py:606
 msgid "Initiator Group ID"
