@@ -21,6 +21,8 @@ generate_crontab()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
+		# Note that echo -e will do the wrong thing with certain characters. Read the commit
+		# history for more details.
 		echo "${cron_minute}	${cron_hour}	${cron_daymonth}	${cron_month}	${cron_dayweek}	${cron_user}	PATH=\"$cron_PATH\" ${cron_command} >/dev/null 2>&1" >> /etc/crontab
 	done
 
@@ -85,6 +87,8 @@ generate_crontab()
 			fi
 
 		)
+		# Note that echo -e will do the wrong thing with certain characters. Read the commit
+		# history for more details.
 		echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
 	done
 }
