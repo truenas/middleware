@@ -456,10 +456,10 @@ configure_nginx()
 		}
 		if (server > 0 && b == 0) {
 			save = lines[--nlines];
-			lines[nlines++] = "\tinclude plugins.conf";
+			lines[nlines++] = "\tinclude plugins.conf;";
 			lines[nlines++] = save;
 			server = 0;
-			}
+		}
 	}
 	END { for (i = 0;i < nlines;i++) { printf("%s\n", lines[i]); } }
 	' < "${nginx_conf}" > "${nginx_temp}"
