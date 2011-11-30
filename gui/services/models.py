@@ -1012,10 +1012,9 @@ class FTP(Model):
         icon_model = "FTPIcon"
 
 class TFTP(Model):
-    tftp_directory = models.CharField(
-            max_length=120,
+    tftp_directory = PathField(
             verbose_name = _("Directory"),
-            help_text = _("The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer.")
+            help_text = _("The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer."),
             )
     tftp_newfiles = models.BooleanField(
             verbose_name = _("Allow New Files"))
