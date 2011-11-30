@@ -763,11 +763,17 @@ def show_ip():
                              (proto == 'https' and port == '443') else False
             if ip == '*':
                 if hide_port:
-                    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,/,g' % proto)
+                    p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+                      'sed -e s,^,%s://,g -e s,$,/,g' % proto], shell=True, stdout=subprocess.PIPE)
                 else:
-                    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (proto, port))
+                    p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (proto, port)], shell=True, stdout=subprocess.PIPE)
+                out = p1.communicate()[1]
+                if out:
+                    print out
+                else:
+                    print _("No configured interfaces were found. Try to do it manually.")
+
             else:
                 if hide_port:
                     print "%s://%s/" % (proto, ip)
