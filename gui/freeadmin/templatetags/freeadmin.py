@@ -41,7 +41,7 @@ class FormRender(template.Node):
         form = context[self.arg]
         adv_mode = context.get(self.adv_mode)
 
-        if hasattr(form, "_meta"):
+        if hasattr(form, "_meta") and hasattr(form._meta.model, '_admin'):
             model = form._meta.model
         else:
             model = None

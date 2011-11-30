@@ -12,12 +12,14 @@
     <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
+    {% if not inline %}
     <button data-dojo-type="dijit.form.Button"type="button">
         {% trans "Cancel" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             cancelDialog(this);
         </script>
     </button>
+    {% endif %}
     {% block extra_buttons %}{% endblock %}
     {% endblock %}
 </form>
