@@ -188,6 +188,30 @@ def configure_interface():
     else:
         iface = Interfaces()
 
+    while True and iface.id:
+        _input = raw_input(_("Delete network configuration? (y/n) ")).lower()
+        if _input.startswith("y"):
+            print _("Deleting interface configuration:"),
+            iface.delete()
+            print _("Ok")
+            print _("Restarting network:"),
+            try:
+                notifier().start("network")
+            except:
+                print _("Failed")
+            print _("ok")
+            print _("Restarting routing:"),
+            try:
+                notifier().restart("routing")
+            except:
+                print _("Failed")
+            print _("ok")
+            return True
+        elif _input.startswith('n'):
+            break
+        else:
+            continue
+
     while True:
         _input = raw_input(_("Reset network configuration? (y/n) ")).lower()
         if _input.startswith("y"):
