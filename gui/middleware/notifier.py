@@ -1827,6 +1827,7 @@ class notifier:
 
     def __init__(self):
         self.__confxml = None
+        self.__diskserial = {}
 
     def __geom_confxml(self):
         if self.__confxml == None:
@@ -1835,11 +1836,15 @@ class notifier:
         return self.__confxml
 
     def serial_from_device(self, devname):
+        if devname in self.__diskserial:
+            return self.__diskserial.get(devname)
         p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
         output = p1.communicate()[0]
         search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
         if search:
-            return search.group("serial")
+            serial = search.group("serial")
+            self.__diskserial[devname] = serial
+            return serial
         return None
 
     def label_to_disk(self, name):
@@ -1993,6 +1998,7 @@ class notifier:
         from storage.models import Disk
 
         disks = self.__get_disks()
+        self.__diskserial.clear()
 
         in_disks = {}
         serials = []
