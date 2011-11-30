@@ -189,7 +189,7 @@ def configure_interface():
         iface = Interfaces()
 
     while True and iface.id:
-        _input = raw_input(_("Delete network configuration? (y/n) ")).lower()
+        _input = raw_input(_("Delete interface? (y/n) ")).lower()
         if _input.startswith("y"):
             print _("Deleting interface configuration:"),
             iface.delete()
