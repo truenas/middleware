@@ -56,12 +56,13 @@ class Disk(object):
     dtype = None
     number = None
     size = None
-    def __init__(self, devname, size):
+    def __init__(self, devname, size, serial=None):
         reg = re.search(r'^(.*?)([0-9]+)', devname)
         if reg:
             self.dtype, number = reg.groups()
         self.number = int(number)
         self.size = size
+        self.serial = serial
         self.human_size = humanize_number_si(size)
         self.dev = devname
     def __lt__(self, other):
@@ -73,7 +74,8 @@ class Disk(object):
     def __repr__(self):
         return u'<Disk: %s>' % str(self)
     def __str__(self):
-        return u'%s (%s)' % (self.dev, humanize_number_si(self.size))
+        extra = ' %s' % (self.serial,) if self.serial else ''
+        return u'%s (%s)%s' % (self.dev, humanize_number_si(self.size), extra)
     def __iter__(self):
         yield self.dev
         yield str(self)
@@ -235,10 +237,15 @@ class VolumeWizardForm(forms.Form):
 
         disks = []
 
+        serials = {}
+        #Get cached serials
+        for d in models.Disk.objects.all():
+            serials[d.disk_name] = d.disk_serial
+
         # Grab disk list
         # Root device already ruled out
         for disk, info in notifier().get_disks().items():
-            disks.append(Disk(info['devname'], info['capacity']))
+            disks.append(Disk(info['devname'], info['capacity'], serial=serials.get(disk)))
 
         # Exclude what's already added
         used_disks = []
