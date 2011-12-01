@@ -98,6 +98,43 @@ class Settings(Model):
     class FreeAdmin:
         deletable = False
 
+class NTPServer(Model):
+    ntp_address = models.CharField(
+            verbose_name=_("Address"),
+            max_length=120,
+            )
+    ntp_burst = models.BooleanField(
+            verbose_name=_("Burst"),
+            max_length=120,
+            default=False,
+            )
+    ntp_iburst = models.BooleanField(
+            verbose_name=_("IBurst"),
+            max_length=120,
+            default=True,
+            )
+    ntp_prefer = models.BooleanField(
+            verbose_name=_("IBurst"),
+            max_length=120,
+            default=False,
+            )
+    ntp_minpoll = models.IntegerField(
+            verbose_name=_("Min. Poll"),
+            default=6,
+            validators=[MinValueValidator(4)],
+            )
+    ntp_maxpoll = models.IntegerField(
+            verbose_name=_("Max. Poll"),
+            default=10,
+            )
+
+    class Meta:
+        verbose_name = _("NTP Server")
+        verbose_name_plural = _("NTP Servers")
+
+    class FreeAdmin:
+        pass
+
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
             verbose_name = _("Enable Console Menu"))

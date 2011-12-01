@@ -188,6 +188,18 @@ class SettingsForm(ModelForm):
                 newurl += ":" + self.instance.stg_guiport
             events.append("restartHttpd('%s')" % newurl)
 
+class NTPForm(ModelForm):
+    class Meta:
+        model = models.NTPServer
+    def __init__(self, *args, **kwargs):
+        super(NTPForm, self).__init__( *args, **kwargs)
+    def clean_ntp_maxpoll(self):
+        maxp = self.cleaned_data.get("ntp_maxpoll")
+        minp = self.cleaned_data.get("ntp_minpoll")
+        if not maxp > minp:
+            raise forms.ValidationError(_("Max Poll should be higher than Min Poll"))
+        return maxp
+
 class AdvancedForm(ModelForm):
     class Meta:
         exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
