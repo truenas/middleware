@@ -457,7 +457,7 @@ class pbi_base(object):
             cmd += " %s" % self.args
 
         if jail == True and jid > 0:
-            cmd = "%s %d '%s'" % (JEXEC_PATH, jid, cmd.strip())
+            cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
         syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
