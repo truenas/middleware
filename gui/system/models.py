@@ -131,6 +131,9 @@ class NTPServer(Model):
             help_text=_("The maximum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 h)"),
             )
 
+    def __unicode__(self):
+        return self.ntp_address
+
     class Meta:
         verbose_name = _("NTP Server")
         verbose_name_plural = _("NTP Servers")

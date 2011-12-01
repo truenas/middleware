@@ -26,6 +26,7 @@
 #####################################################################
 
 import re
+import subprocess
 
 from django.forms import FileField
 from django.conf import settings
@@ -189,16 +190,33 @@ class SettingsForm(ModelForm):
             events.append("restartHttpd('%s')" % newurl)
 
 class NTPForm(ModelForm):
+    force = forms.BooleanField(label=_("Force"), required=False)
     class Meta:
         model = models.NTPServer
     def __init__(self, *args, **kwargs):
         super(NTPForm, self).__init__( *args, **kwargs)
+        self.usable = True
+    def clean_ntp_address(self):
+        addr = self.cleaned_data.get("ntp_address")
+        p1 = subprocess.Popen(["ntpq", "-c", "rv", addr],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        data = p1.communicate()[0]
+        #TODO: ntpq does not return error code in case of errors
+        if not re.search(r'version=', data):
+            self.usable = False
+        return addr
     def clean_ntp_maxpoll(self):
         maxp = self.cleaned_data.get("ntp_maxpoll")
         minp = self.cleaned_data.get("ntp_minpoll")
         if not maxp > minp:
             raise forms.ValidationError(_("Max Poll should be higher than Min Poll"))
         return maxp
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("force", False) and not self.usable:
+            self._errors['ntp_address'] = self.error_class([_("Server could not be reached. Check \"Force\" to continue regardless.")])
+            del cdata['ntp_address']
+        return cdata
 
 class AdvancedForm(ModelForm):
     class Meta:
