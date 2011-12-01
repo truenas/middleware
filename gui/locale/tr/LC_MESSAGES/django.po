@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-30 11:41+0200\n"
+"PO-Revision-Date: 2011-11-30 13:02+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1419,7 +1419,7 @@ msgstr ""
 
 #: services/forms.py:820
 msgid "Authentication Group number"
-msgstr "Doğrulama Grup numarası"
+msgstr "Kimlik doğrulama grup numarası"
 
 #: services/forms.py:849
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1864,15 +1864,15 @@ msgstr "Boyut adı"
 
 #: services/models.py:380
 msgid "String identifier of the extent."
-msgstr "Alan kimliğinin dizilimi."
+msgstr "Boyutun karakter dizisi tanımlayıcısı."
 
 #: services/models.py:384
 msgid "Extent Type"
-msgstr "Alan Türü"
+msgstr "Boyut türü"
 
 #: services/models.py:385
 msgid "Type used as extent."
-msgstr "Alan türü kullan."
+msgstr "Boyut türü kullan."
 
 #: services/models.py:390
 msgid "Path to the extent"
@@ -1914,7 +1914,7 @@ msgstr "Referans için buraya bir açıklama girebilirsiniz."
 #: templates/services/iscsi_dextents.html:5
 #: templates/services/iscsi_extents.html:5
 msgid "Extent"
-msgstr "Alan"
+msgstr "Boyut"
 
 #: services/models.py:445 services/models.py:602
 msgid "Portal Group ID"
@@ -2026,11 +2026,11 @@ msgstr "Hedef Bayrakları"
 
 #: services/models.py:606
 msgid "Initiator Group ID"
-msgstr "Başlatıcı Grup Kimliği"
+msgstr "Başlatıcı grup kimliği"
 
 #: services/models.py:612 services/models.py:624
 msgid "Auth Method"
-msgstr "Yetki Yönetimi"
+msgstr "Yetki yönetimi"
 
 #: services/models.py:613 services/models.py:625
 msgid ""
@@ -2058,7 +2058,7 @@ msgstr ""
 
 #: services/models.py:636
 msgid "Logical Block Size"
-msgstr "Mantıksal Blok Boyutu"
+msgstr "Mantıksal blok kapasitesi"
 
 #: services/models.py:637
 msgid ""
@@ -2076,7 +2076,7 @@ msgstr "Hedef"
 
 #: services/models.py:660
 msgid "Target this extent belongs to"
-msgstr "Bu ölçüye ait olan hedef"
+msgstr "Bu boyuta ait olan hedef"
 
 #: services/models.py:668
 msgid "Target / Extent"
@@ -2910,7 +2910,7 @@ msgstr "Aygıt Boyutlarının Tümünü Görüntüle"
 
 #: services/nav.py:70 templates/services/iscsi.html:15
 msgid "Device Extents"
-msgstr "Aygıt Boyutlar"
+msgstr "Aygıt Boyutları"
 
 #: services/nav.py:92 templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41

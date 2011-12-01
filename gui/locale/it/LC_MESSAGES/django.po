@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:09-0700\n"
-"PO-Revision-Date: 2011-11-30 11:40+0200\n"
+"PO-Revision-Date: 2011-11-30 17:49+0200\n"
 "Last-Translator: Alessandro <alessandro.pellegrini@tin.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -534,9 +534,8 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Disabilita login"
+msgstr "Disabilita login con password"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
@@ -925,27 +924,29 @@ msgstr "La rete %s' non è valida, CIDR previsto."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Devi specificare anche un indirizzo IPv4 per ogni alias"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Devi scegliere anche una maschera di rete IPv4 per ogni alias"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Devi specificare anche un indirizzo IPv6 per ogni alias"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Devi scegliere anche una maschera di rete IPv6 per ogni alias"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Devi scegliere tra IPv4 ed IPv6 per ogni alias"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Devi spercificare un indirizzo IPv4 o IPv6 con una maschera di bit per ogni "
+"alias"
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -3621,13 +3622,12 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Spazio riservato per questo dataset e tutti i suoi figli"
 
 #: storage/forms.py:665
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Il nome del dataset deve iniziare con un carattere alfanumerico e può "
-"contenete solo (-), (_), (:) e (.)."
+"I nomi dei dataset devono iniziare con un carattere alfanumerico e possono "
+"contenere solo \"-\", \"_\", \":\" e \".\" ."
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
@@ -3739,7 +3739,11 @@ msgid_plural ""
 "I'm aware this will destroy all child datasets and snapshots within this "
 "dataset"
 msgstr[0] ""
+"Sono consapevole che questa scelta distruggerà gli snapshot di questo "
+"dataset"
 msgstr[1] ""
+"Sono consapevole che questa scelta distruggerà tutti i dataset discendenti e "
+"gli snapshot di questo dataset"
 
 #: storage/models.py:49
 msgid "File System Type"
