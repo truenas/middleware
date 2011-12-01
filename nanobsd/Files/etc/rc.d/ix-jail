@@ -39,7 +39,8 @@ generate_plugins_jail_config()
 		jail_name,
 		jail_ip,
 		jail_netmask,
-		jail_interface
+		jail_interface,
+		plugins_path
 
 	FROM
 		services_plugins
@@ -49,9 +50,9 @@ generate_plugins_jail_config()
 
 	LIMIT 1
 	" | \
-	while read path name ip netmask iface
+	while read path name ip netmask iface plugins
 	do
-		touch "/etc/fstab.${name}"
+		echo "${plugins} ${path}/${name}/mnt nullfs ro 0 0" > "/etc/fstab.${name}"
 
 		# No VIM colors needed here
 		cat<<-__EOF__>>"${tmpfile}"
@@ -62,7 +63,6 @@ generate_plugins_jail_config()
 		jail_${name}_rootdir="${path}/${name}"
 		jail_${name}_hostname="${name}"
 		jail_${name}_ip="${ip}"
-		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_ruleset="devfsrules_jail"
 		jail_${name}_procfs_enable="YES"
