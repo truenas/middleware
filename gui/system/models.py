@@ -105,27 +105,30 @@ class NTPServer(Model):
             )
     ntp_burst = models.BooleanField(
             verbose_name=_("Burst"),
-            max_length=120,
             default=False,
+            help_text=_("When the server is reachable, send a burst of eight packets instead of the usual one. This is designed to improve timekeeping quality with the server command and s addresses."),
             )
     ntp_iburst = models.BooleanField(
             verbose_name=_("IBurst"),
-            max_length=120,
             default=True,
+            help_text=_("When the server is unreachable, send a burst of eight packets instead of the usual one. This is designed to speed the initial synchronization acquisition with the server command and s addresses."),
             )
     ntp_prefer = models.BooleanField(
-            verbose_name=_("IBurst"),
-            max_length=120,
+            verbose_name=_("Prefer"),
             default=False,
+            help_text=_("Marks the server as preferred. All other things being equal, this host will be chosen for synchronization among a set of correctly operating hosts."),
             )
     ntp_minpoll = models.IntegerField(
             verbose_name=_("Min. Poll"),
             default=6,
             validators=[MinValueValidator(4)],
+            help_text=_("The minimum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"),
             )
     ntp_maxpoll = models.IntegerField(
             verbose_name=_("Max. Poll"),
             default=10,
+            validators=[MaxValueValidator(17)],
+            help_text=_("The maximum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 h)"),
             )
 
     class Meta:
