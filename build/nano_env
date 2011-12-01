@@ -74,8 +74,8 @@ REVISION=${REVISION:-$(echo ${svn}${git})}
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
-# Local directories to install via buildworld / buildkernel; see LOCAL_DIRS
-# in Makefile.inc1, e.g. tools/regression/netinet6/ip6_sockets .
+# Local directories to install via buildworld and installworld respectively;
+# see LOCAL_DIRS in Makefile.inc1, e.g. tools/regression/netinet6/ip6_sockets .
 #NANO_LOCAL_DIRS=
 
 # Modules to build with the kernel.
