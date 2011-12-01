@@ -12,9 +12,9 @@ class Migration(SchemaMigration):
         db.create_table('system_ntpserver', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('ntp_address', self.gf('django.db.models.fields.CharField')(max_length=120)),
-            ('ntp_burst', self.gf('django.db.models.fields.BooleanField')(default=False, max_length=120)),
-            ('ntp_iburst', self.gf('django.db.models.fields.BooleanField')(default=True, max_length=120)),
-            ('ntp_prefer', self.gf('django.db.models.fields.BooleanField')(default=False, max_length=120)),
+            ('ntp_burst', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('ntp_iburst', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('ntp_prefer', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('ntp_minpoll', self.gf('django.db.models.fields.IntegerField')(default=6)),
             ('ntp_maxpoll', self.gf('django.db.models.fields.IntegerField')(default=10)),
         ))
@@ -95,11 +95,11 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'NTPServer'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ntp_address': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ntp_burst': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'max_length': '120'}),
-            'ntp_iburst': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'max_length': '120'}),
+            'ntp_burst': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ntp_iburst': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'ntp_maxpoll': ('django.db.models.fields.IntegerField', [], {'default': '10'}),
             'ntp_minpoll': ('django.db.models.fields.IntegerField', [], {'default': '6'}),
-            'ntp_prefer': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'max_length': '120'})
+            'ntp_prefer': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         'system.rsync': {
             'Meta': {'object_name': 'Rsync'},
