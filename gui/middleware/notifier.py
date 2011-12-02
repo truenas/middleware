@@ -68,7 +68,7 @@ from django.db import models
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import pbi_add, PBI_ADD_FLAGS_NOCHECKSIG
+from freenasUI.common.pbi import pbi_add, PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO
 from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
@@ -1409,7 +1409,7 @@ class notifier:
         ret = False
 
         if self._started_plugins():
-            c = self.__open_db()
+            (c, conn) = self.__open_db(ret_conn=True)
             c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
             jail_name = c.fetchone()[0]
 
@@ -1419,11 +1419,60 @@ class notifier:
                     jail = j 
                     break
 
+            # this stuff needs better error checking.. .. ..
             if jail is not None:
+                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
+                out = p.info(True, j.jid, 'Prefix')[0]
+                prefix = out.split('=')[1]
+
                 p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/.freenas/pbifile.pbi")
-                res = p.run(jail=True, jid=int(j.jid))
+                res = p.run(jail=True, jid=j.jid)
                 if res and res[0] == 0:
-                    ret = True
+
+                    kwargs = {}
+                    kwargs['path'] = prefix
+                    kwargs['enabled'] = False
+                    kwargs['ip'] = jail.ip
+
+                    # icky, icky icky, this is how we roll though.
+                    port = 12345
+                    c.execute("SELECT count(*) FROM plugins_plugins")
+                    count = c.fetchone()[0]
+                    if count > 0: 
+                        c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
+                        port = c.fetchone()[0] 
+
+                    kwargs['port'] = port
+
+                    out = Jexec(jid=j.jid, command="cat %s/freenas" % prefix).run()
+                    if out and out[0] == 0:
+                        out = out[1]
+                        for line in out.splitlines():
+                            parts = line.split(':')
+                            key = parts[0].strip().lower()
+                            if key in ('uname', 'name', 'icon'):
+                                kwargs[key] = parts[1].strip()
+                                if key == 'name':
+                                    kwargs['view'] = "/plugins/%s" % kwargs[key]
+
+                    sqlvars = ""
+                    sqlvals = ""
+                    for key in kwargs:
+                        sqlvars += "plugin_%s," % key
+                        sqlvals += ":%s," % key
+
+                    sqlvars = sqlvars.rstrip(',')
+                    sqlvals = sqlvals.rstrip(',')
+
+                    sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
+                    syslog.syslog(syslog.LOG_INFO, "install_pbi: sql = %s" % sql)
+                    try:
+                        c.execute(sql, kwargs)
+                        conn.commit()
+                        ret = True
+
+                    except:
+                        ret = False                     
 
         return ret
 
