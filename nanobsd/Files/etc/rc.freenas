@@ -341,6 +341,18 @@ AD_join_domain()
 	return $?
 }
 
+AD_status_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+
+	/usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	return $?
+}
+
 AD_leave_domain()
 {
 	local adminname="${1}"

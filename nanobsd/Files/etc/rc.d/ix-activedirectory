@@ -77,7 +77,9 @@ activedirectory_start()
 	if srv_enabled activedirectory
 	then
 		AD_init
-		AD_join_domain
+		if ! AD_join_domain; then
+			return $?
+		fi
 
 		#generate_nss_ldap_conf
 
@@ -88,6 +90,12 @@ activedirectory_start()
 		sleep 10
 		/usr/sbin/service samba restart >/dev/null 2>&1
 	fi
+}
+
+activedirectory_status()
+{
+	AD_init
+	AD_status_domain >/dev/null
 }
 
 activedirectory_stop()
@@ -101,6 +109,7 @@ activedirectory_stop()
 
 name="ix-activedirectory"
 start_cmd='activedirectory_start'
+status_cmd='activedirectory_status'
 stop_cmd='activedirectory_stop'
             
 load_rc_config $name
