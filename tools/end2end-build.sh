@@ -108,6 +108,8 @@ set +e
 
 for arch in $archs; do
 
+	log=build-$arch.log
+
 	# Build
 	BUILD="sh build/do_build.sh"
 	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$cvsup_host PACKAGE_PREP_BUILD=1"
@@ -117,9 +119,14 @@ for arch in $archs; do
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	if sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD"; then
+	sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $log 2>&1
+	ec=$?
+	# Build success / failure is printed out in the last line :)...
+	tail -n 1 $log
+	if [ $ec -eq 0 ]; then
 		post_images
 	else
+		tail -n 10 $log | head -n 9
 		clean=false
 	fi
 
