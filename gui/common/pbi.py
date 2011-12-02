@@ -483,6 +483,18 @@ class pbi_add(pbi_base):
         syslog(LOG_DEBUG, "pbi_add.__init__: pbi = %s" % self.pbi)
         syslog(LOG_DEBUG, "pbi_add.__init__: leave")
 
+    def info(self, jail=False, jid=0, *args):
+         ret = []
+         out = super(pbi_add, self).run(jail, jid)
+         if out and out[0] == 0:
+             out = out[1]
+             for line in out.splitlines():
+                 parts = line.split(':')
+                 for arg in args:
+                     if parts[0] == arg:
+                         ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+         return ret
+
 
 class pbi_addrepo(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
