@@ -371,6 +371,11 @@ class notifier:
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled, FLAGS_DBINIT
 
+        for srv in ('kinit', 'activedirectory', ):
+            if (self.__system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
+                != 0):
+                return False
+
         ret = False
         if ActiveDirectoryEnabled():
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
@@ -389,7 +394,16 @@ class notifier:
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service ix-kinit quietstart")
+        if self.__system_nolog('/usr/sbin/service ix-kinit status') != 0:
+            # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
+            #raise Exception('Failed to get a kerberos ticket.')
+            return
         self.__system("/usr/sbin/service ix-activedirectory quietstart")
+        if (self.__system_nolog('/usr/sbin/service ix-activedirectory status')
+            != 0):
+            # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
+            #raise Exception('Failed to associate with the domain.')
+            return
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
         self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/bin/killall nmbd")
@@ -402,8 +416,8 @@ class notifier:
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service ix-kinit quietstart")
-        self.__system("/usr/sbin/service ix-activedirectory quietrestart")
+        self.__system("/usr/sbin/service ix-kinit forcestop")
+        self.__system("/usr/sbin/service ix-activedirectory forcestop")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
         self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/bin/killall nmbd")
