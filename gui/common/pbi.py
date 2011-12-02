@@ -496,7 +496,7 @@ class pbi_add(pbi_base):
                          ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
                  else: 
                      for arg in args:
-                         if parts[0].strip().upper() == arg.strip().upper():
+                         if parts[0].strip().lower() == arg.strip().lower():
                              ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
          return ret
 
