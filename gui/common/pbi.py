@@ -491,7 +491,7 @@ class pbi_add(pbi_base):
              for line in out.splitlines():
                  parts = line.split(':')
                  for arg in args:
-                     if parts[0] == arg:
+                     if parts[0].upper() == arg.upper():
                          ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
          return ret
 
