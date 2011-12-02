@@ -485,14 +485,19 @@ class pbi_add(pbi_base):
 
     def info(self, jail=False, jid=0, *args):
          ret = []
+
          out = super(pbi_add, self).run(jail, jid)
          if out and out[0] == 0:
              out = out[1]
              for line in out.splitlines():
                  parts = line.split(':')
-                 for arg in args:
-                     if parts[0].strip().upper() == arg.strip().upper():
+                 if not args:
+                     if len(parts) > 1:
                          ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+                 else: 
+                     for arg in args:
+                         if parts[0].strip().upper() == arg.strip().upper():
+                             ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
          return ret
 
 
