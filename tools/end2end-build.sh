@@ -106,6 +106,26 @@ set -e
 setup
 set +e
 
+if $clean; then
+	clean_s='yes'
+else
+	clean_s='no'
+fi
+
+cat <<EOF
+=========================================================
+SETTINGS SUMMARY
+=========================================================
+Will build these archs:		$archs
+Branch:				$branch
+cvsup host:			$cvsup_host
+---------------------------------------------------------
+Image directory:		$postdir
+Build directory:		$tmpdir
+Clean if successful:		$clean_s
+---------------------------------------------------------
+EOF
+
 for arch in $archs; do
 
 	log=build-$arch.log
