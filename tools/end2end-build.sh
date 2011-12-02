@@ -68,7 +68,7 @@ post_images() {
 	done)
 }
 
-while getopts 'A:b:c:t:' optch; do
+while getopts 'A:b:c:C:p:' optch; do
 	case "$optch" in
 	A)
 		_arch=
@@ -92,6 +92,9 @@ while getopts 'A:b:c:t:' optch; do
 		;;
 	C)
 		clean=false
+		;;
+	p)
+		postdir_base=$OPTARG
 		;;
 	*)
 		echo "${0##*/}: ERROR: unhandled/unknown option: $optch"
