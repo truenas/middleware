@@ -26,7 +26,7 @@ setup() {
 
 	tmpdir=$(realpath "$(mktemp -d $tmpdir_template)")
 	chmod 0755 $tmpdir
-	pull $tmpdir
+	pull $tmpdir 2>&1 | tail -n 30
 	cd $tmpdir
 	if [ -d "$postdir_base" ]; then
 		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
