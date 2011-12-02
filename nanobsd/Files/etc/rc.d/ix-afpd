@@ -14,7 +14,6 @@ afpd_enable=${afpd_enable:-"NO"}
 afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
-avahi_daemon_config=${avahi_daemon_config:-"/usr/local/etc/avahi/avahi-daemon.conf"}
 # XXX: make netatalk_conf tunable..
 netatalk_conf=/usr/local/etc/netatalk.conf
 AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
@@ -31,16 +30,15 @@ bool_on()
 generate_afpd_config()
 {
     local IFS="|"
-    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_guest_user"
+    local f="afp_srv_guest afp_srv_local afp_srv_guest_user"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM services_afp ORDER BY -id LIMIT 1" | \
     while eval read -r $f; do
-	: ${afp_srv_name:=-}
 	cat <<EOF
-"${afp_srv_name}" -noddp -nosavepassword \\
+-noddp -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
 -uservol -uampath /usr/local/libexec/netatalk-uams \\
 -guestname ${afp_srv_guest_user} \\
@@ -86,45 +84,6 @@ generate_av_default()
 		echo ""
 	fi
     done
-}
-
-generate_avahi_daemon_config()
-{
-    local IFS="|"
-    local f="afp_srv_name"
-    eval local $f
-    local sf=$(var_to_sf $f)
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM services_afp ORDER BY -id LIMIT 1" | \
-    while eval read $sf; do
-	cat << EOF
-[server]
-# Don't do this.. it generates the potential for inconsistencies between
-# different services that avahi advertises, like AFP, CIFS, etc.
-#host-name=${afp_srv_name}
-domain-name=local
-use-ipv4=yes
-use-ipv6=yes
-ratelimit-interval-usec=1000000
-ratelimit-burst=1000
-
-[wide-area]
-enable-wide-area=yes
-
-[publish]
-#disable-publishing=no
-#disable-user-service-publishing=no
-#add-service-cookie=no
-#publish-addresses=yes
-#publish-hinfo=yes
-#publish-workstation=yes
-#publish-domain=yes
-#publish-dns-servers=192.168.50.1, 192.168.50.2
-#publish-resolv-conf-dns-servers=yes
-#publish-aaaa-on-ipv4=yes
-#publish-a-on-ipv6=no
-EOF
-	done
 }
 
 generate_avahi_afpd_service()
@@ -176,7 +135,6 @@ generate_afpd()
 {
     generate_afpd_config > ${afpd_config} 
     generate_av_default > ${afpd_avdefault}
-    generate_avahi_daemon_config > ${avahi_daemon_config}
     generate_avahi_afpd_service
     (awk 'NF > 0 && $0 !~ /^#/' ${netatalk_conf}.dist
      generate_netatalk_conf) > ${netatalk_conf}
