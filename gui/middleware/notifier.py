@@ -1427,6 +1427,9 @@ class notifier:
             c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
             jail_name = c.fetchone()[0]
 
+            c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
+            plugins_path = c.fetchone()[0]
+
             jail = None
             for j in Jls():
                 if j.hostname == jail_name:
@@ -1435,11 +1438,29 @@ class notifier:
 
             # this stuff needs better error checking.. .. ..
             if jail is not None:
-                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
-                out = p.info(True, j.jid, 'Prefix')[0]
-                prefix = out.split('=')[1]
+                pbi = prefix = name = version = None
 
-                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/.freenas/pbifile.pbi")
+                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
+                out = p.info(True, j.jid, 'pbi information for', 'prefix', 'name', 'version')
+                for pair in out:
+                    (var, val) = pair.split('=')
+
+                    var = var.lower()
+                    if var == 'pbi information for':
+                        pbi = "%s.pbi" % val
+
+                    elif var == 'prefix':
+                        prefix = val
+
+                    elif var == 'name':
+                        name = val
+
+                    elif var == 'version':
+                        version = val
+
+                self.__system("/bin/mv /var/tmp/pbi/pbifile.pbi %s/%s" % (plugins_path, pbi))
+
+                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/%s" % pbi)
                 res = p.run(jail=True, jid=j.jid)
                 if res and res[0] == 0:
 
@@ -1467,7 +1488,7 @@ class notifier:
                             if key in ('uname', 'name', 'icon'):
                                 kwargs[key] = parts[1].strip()
                                 if key == 'name':
-                                    kwargs['view'] = "/plugins/%s" % kwargs[key]
+                                    kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
                     sqlvars = ""
                     sqlvals = ""
@@ -1487,7 +1508,6 @@ class notifier:
 
                     except:
                         ret = False                     
-
         return ret
 
 
