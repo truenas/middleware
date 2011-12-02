@@ -68,6 +68,8 @@ from django.db import models
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pbi import pbi_add, PBI_ADD_FLAGS_NOCHECKSIG
+from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
 
@@ -1346,11 +1348,14 @@ class notifier:
             return (user, group, )
         raise OSError('Invalid mountpoint %s' % (path, ))
 
-    def change_upload_location(self, path):
-        self.__system("/bin/rm -rf /var/tmp/firmware")
+    def change_upload_location(self, path, pbi=False):
+        dir = "pbi" if pbi is True else "firmware"
+        vardir = "/var/tmp/%s" % dir
+
+        self.__system("/bin/rm -rf %s" % vardir)
         self.__system("/bin/mkdir -p %s/.freenas" % path)
         self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
-        self.__system("/bin/ln -s %s/.freenas /var/tmp/firmware" % path)
+        self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
     def validate_xz(self, path):
         ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
@@ -1398,6 +1403,30 @@ class notifier:
         self.__system("/bin/sh /etc/servicepack/post-install")
         self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.txz")
         self.__system("/bin/rm -fr /var/tmp/firmware/etc")
+
+
+    def install_pbi(self):
+        ret = False
+
+        if self._started_plugins():
+            c = self.__open_db()
+            c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+            jail_name = c.fetchone()[0]
+
+            jail = None
+            for j in Jls():
+                if j.hostname == jail_name:
+                    jail = j 
+                    break
+
+            if jail is not None:
+                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/.freenas/pbifile.pbi")
+                res = p.run(jail=True, jid=int(j.jid))
+                if res and res[0] == 0:
+                    ret = True
+
+        return ret
+
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
