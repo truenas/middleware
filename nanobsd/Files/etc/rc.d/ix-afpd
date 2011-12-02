@@ -99,7 +99,9 @@ generate_avahi_daemon_config()
     while eval read $sf; do
 	cat << EOF
 [server]
-host-name=${afp_srv_name}
+# Don't do this.. it generates the potential for inconsistencies between
+# different services that avahi advertises, like AFP, CIFS, etc.
+#host-name=${afp_srv_name}
 domain-name=local
 use-ipv4=yes
 use-ipv6=yes
