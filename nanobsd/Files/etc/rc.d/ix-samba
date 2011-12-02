@@ -543,8 +543,7 @@ generate_avahi_cifs_service()
 {
 	local samba_enabled
 
-	samba_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'cifs'" 2>/dev/null || echo 0)
-        if [ "x$samba_enabled" = x1 ]; then
+        if srv_enabled cifs; then
 		cat > ${AVAHI_CIFS_SERVICE} <<EOF
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
