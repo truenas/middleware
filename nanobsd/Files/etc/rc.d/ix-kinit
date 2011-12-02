@@ -13,7 +13,9 @@
 
 kerberos_start()
 {
-	local pwfile
+	local ec pwfile
+
+	ec=1
 
 	if srv_enabled activedirectory
 	then
@@ -30,13 +32,37 @@ kerberos_start()
 			domainname=$(echo "${domainname}" | tr a-z A-Z)
 			kinit --password-file="${pwfile}" \
 			    "${adminname}@${domainname}"
-			rc=$?
+			ec=$?
 			rm -f "${pwfile}"
 
 			sleep 10
-			return $rc
 		fi
 	fi
+	return $ec
+}
+
+kerberos_status()
+{
+	local ec
+
+	ec=1
+
+	if AD_enabled
+	then
+		AD_init
+
+		domainname=$(AD_get domainname)
+		adminname=$(AD_get adminname)
+		adminpw=$(AD_get adminpw)
+
+		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
+		then
+			domainname=$(echo "${domainname}"|tr a-z A-Z)
+			klist -l | grep -q "^${adminname}@${domainname}"
+			ec=$?
+		fi
+	fi
+	return $ec
 }
 
 kerberos_stop()
@@ -46,7 +72,8 @@ kerberos_stop()
 
 name="ix-kinit"
 start_cmd='kerberos_start'
+status_cmd='kerberos_status'
 stop_cmd='kerberos_stop'
-        
+
 load_rc_config $name
 run_rc_command "$1"
