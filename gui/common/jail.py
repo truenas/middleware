@@ -268,8 +268,8 @@ class Jexec(Jail_bait):
 
         self.jid = None
         if kwargs.has_key("jid") and kwargs["jid"] is not None:
-            self.jid = kwargs["jid"]
-            self.args += " %s" % self.jid
+            self.jid = int(kwargs["jid"])
+            self.args += " %s" % str(self.jid)
 
         if kwargs.has_key("command") and kwargs["command"] is not None:
             self.args += " %s" % kwargs["command"]
@@ -286,7 +286,10 @@ class JailObject(object):
 
         for key in kwargs:
             if key in ('jid', 'ip', 'hostname', 'path'):
-                self.__dict__[key] = kwargs[key]
+                if key == 'jid':
+                    self.jid = int(kwargs[key])
+                else:
+                    self.__dict__[key] = kwargs[key]
 
 
 class Jls(Jail_bait):
