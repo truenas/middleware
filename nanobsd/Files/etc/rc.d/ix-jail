@@ -53,6 +53,8 @@ generate_plugins_jail_config()
 	while read path name ip netmask iface plugins
 	do
 		echo "${plugins} ${path}/${name}/mnt nullfs ro 0 0" > "/etc/fstab.${name}"
+		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
+		sysctl security.jail.allow_raw_sockets=1
 
 		# No VIM colors needed here
 		cat<<-__EOF__>>"${tmpfile}"
