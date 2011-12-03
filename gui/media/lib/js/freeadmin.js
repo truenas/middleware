@@ -165,6 +165,34 @@
             }
 
         },
+
+	openPlugins: function(onload) {
+            if(!onload) onload = function() {};
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'plugins'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(onload) onload();
+                }
+            }
+            if(opened != true) {
+                var pane = new dijit.layout.ContentPane({
+                    title: gettext('Plugins'),
+                    closable: true,
+                    href: this.urlPlugins,
+                    onLoad: onload,
+                });
+                pane.tab = 'plugins';
+                p.addChild(pane);
+                p.selectChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
+            }
+	},
+
         openServices: function(onload) {
             if(!onload) onload = function() {};
             var opened = false;
@@ -1252,6 +1280,8 @@
                     Menu.openNetwork(item.gname);
                 } else if(item.type == 'en_dis_services') {
                     Menu.openServices();
+                } else if(item.type == 'en_dis_plugins') {
+                    Menu.openPlugins();
                 } else if(item.type == 'openaccount') {
                     Menu.openAccount(item.gname);
                 } else if(item.type == 'iscsi') {
