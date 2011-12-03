@@ -1,0 +1,33 @@
+
+
+{% block dojango_content %}
+<div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Plugins" %}" data-dojo-props="doLayout: false">
+    <table class="plugins_list">
+        {% for p in plugins_list %}
+        <tr class="{% cycle 'odd' 'even' %}" id="{{ p.id }}">
+            <td>
+                <strong>{{ p.plugin_name }}</strong>
+            </td>
+            <td> &nbsp;
+            {% comment %}
+            <img id="{{ p.plugin_name }}_toggle" name="{{ p.plugin_name }}_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for p in plugins_list %}{% if p.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+            {% endcomment %}
+            </td>
+        <tr>
+
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
+
+<strong>Plugins</strong>
+<br>
+<br>
+<br>
+<button data-dojo-type="dijit.form.Button" type="button">
+    {% trans "Install PBI" %}
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        addObject('{% trans "Install PBI"|force_escape|force_escape %}', '{% url plugins_pbiwizard %}');
+    </script>
+</button>
+
