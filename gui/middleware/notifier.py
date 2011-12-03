@@ -1475,9 +1475,9 @@ class notifier:
                     count = c.fetchone()[0]
                     if count > 0: 
                         c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
-                        port = c.fetchone()[0] 
+                        port = int(c.fetchone()[0])
 
-                    kwargs['port'] = port
+                    kwargs['port'] = port + 1
 
                     out = Jexec(jid=j.jid, command="cat %s/freenas" % prefix).run()
                     if out and out[0] == 0:
