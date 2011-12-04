@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-22 04:42+0200\n"
-"Last-Translator: gcooper <yanegomi@gmail.com>\n"
+"PO-Revision-Date: 2011-12-04 07:36+0200\n"
+"Last-Translator: shirayuki <shirayuking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -105,21 +105,19 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "常にオン"
+msgstr "常にON"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
 msgstr "無効"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "スタンバイ（スピンダウン）を使った最小の消費電力"
+msgstr "Level 1 - スタンバイ（スピンダウン）を使った最小の消費電力"
 
 #: choices.py:88
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "スタンバイを使った中間的な消費電力"
+msgstr "Level 64 - スタンバイを使った中間的な消費電力"
 
 #: choices.py:89
 #, fuzzy
@@ -127,9 +125,8 @@ msgid "Level 127 - Intermediate power usage with Standby"
 msgstr "スタンバイを使った中間的な消費電力"
 
 #: choices.py:90
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "スタンバイ（スピンダウン）を使わない最小の消費電力"
+msgstr "Level 128 - スタンバイ（スピンダウン）を使わない最小の消費電力"
 
 #: choices.py:91
 #, fuzzy
@@ -137,9 +134,8 @@ msgid "Level 192 - Intermediate power usage without Standby"
 msgstr "スタンバイを使わない中間的な消費電力"
 
 #: choices.py:92
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "最大のパフォーマンス 最大の消費電力"
+msgstr "Level 254 - 最大のパフォーマンス 最大の消費電力"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -258,7 +254,7 @@ msgstr "デバッグ（Debug）"
 
 #: choices.py:191
 msgid "Default"
-msgstr "デフォルト"
+msgstr "既定値"
 
 #: choices.py:192
 msgid "Time Machine"
@@ -313,11 +309,11 @@ msgstr "パススルー"
 # 文字のゆれ 読込/読込み/読み込み
 #: choices.py:216
 msgid "read-write"
-msgstr "読込み/書込み"
+msgstr "読み書き"
 
 #: choices.py:217
 msgid "read-only"
-msgstr "読込み専用"
+msgstr "読み取り専用"
 
 #: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
 #: services/forms.py:844 templates/storage/wizard.html:131
@@ -358,30 +354,27 @@ msgstr "継承"
 
 #: choices.py:280
 msgid "On"
-msgstr "オン"
+msgstr "ON"
 
 #: choices.py:281 choices.py:286 choices.py:521
 msgid "Off"
-msgstr "オフ"
+msgstr "OFF"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
 msgstr "lzjb（推奨）"
 
 #: choices.py:288
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "デフォルト"
+msgstr "gzip (既定のレベル, 6)"
 
 #: choices.py:289
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "最も高速な圧縮"
+msgstr "gzip（最も高速な圧縮）"
 
 #: choices.py:290
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "最大の圧縮率（低速）"
+msgstr "gzip（最大の圧縮率、低速）"
 
 #: choices.py:454
 msgid "Hour(s)"
@@ -424,64 +417,64 @@ msgstr "書き込み専用"
 
 #: choices.py:471
 msgid "Read and Write"
-msgstr "読み込み/書き込み"
+msgstr "読み書き"
 
 #: choices.py:475 choices.py:476
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s 分"
 
 #: choices.py:477
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s 時間"
 
 #: choices.py:478 choices.py:479 choices.py:480 choices.py:481 choices.py:482
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hour)s 時間"
 
 #: choices.py:483
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) 日"
 
 #: choices.py:484
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s 週間"
 
 #: choices.py:488
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Never - 電源モードにかかわらずデバイスをチェック"
 
 #: choices.py:489
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "スリープ - スリープモードでなければデバイスをチェック"
 
 #: choices.py:490
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "スタンバイ - スリープまたはスタンバイモードでなければデバイスをチェック"
 
 #: choices.py:491
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "アイドル - スリープ、スタンバイまたはアイドルモードでなければデバイスをチェック"
 
 #: choices.py:495
 msgid "Long Self-Test"
-msgstr ""
+msgstr "詳細自己診断"
 
 #: choices.py:496
 msgid "Short Self-Test"
-msgstr ""
+msgstr "簡易自己診断"
 
 #: choices.py:497
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Conveyance自己診断（ATAのみ）"
 
 #: choices.py:498
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "オフライン即時診断（ATAのみ）"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
@@ -625,7 +618,7 @@ msgstr "同じユーザ名が存在します。"
 
 #: account/forms.py:582
 msgid "Member users"
-msgstr "メンバユーザ"
+msgstr "メンバーユーザ"
 
 #: account/forms.py:600
 msgid "Auxiliary groups"
@@ -696,7 +689,7 @@ msgstr "ユーザ &"
 
 #: account/models.py:88
 msgid "Hashed UNIX password"
-msgstr "ハッシュされたUnix パスワード"
+msgstr "ハッシュされたUNIXパスワード"
 
 #: account/models.py:94
 msgid "Hashed SMB password"
@@ -717,7 +710,7 @@ msgstr "フルネーム"
 # 表記の揺れ。
 #: account/models.py:119 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "メール"
 
 #: account/models.py:124 account/models.py:163 services/models.py:535
 #: services/models.py:1243 system/models.py:261 system/models.py:418
@@ -733,7 +726,7 @@ msgstr "ユーザ"
 #: account/models.py:142
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "%s は組み込みユーザのため削除できません！"
+msgstr "ユーザ %s は組み込みユーザのため削除できません!"
 
 #: account/nav.py:5 templates/menubar.html:48
 msgid "Account"
@@ -763,30 +756,26 @@ msgid "View All Groups"
 msgstr "すべてグループを表示"
 
 #: account/views.py:96
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s を更新しました。"
+msgstr "パスワードを正しく更新しました。"
 
 #: account/views.py:110
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s を更新しました。"
+msgstr "管理者ユーザを正しく更新しました。"
 
 #: account/views.py:120
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s を更新しました。"
+msgstr "ユーザを正しく更新しました。"
 
 #: account/views.py:133
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s を更新しました。"
+msgstr "グループを正しく更新しました。"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr "入力内容が失効しました。このページから入力し直して下さい。"
+msgstr "すみません、入力内容が失効しました。このページから入力し直してください。"
 
 #: freeadmin/forms.py:111
 #, python-format
@@ -807,9 +796,9 @@ msgstr ""
 "る必要があります。"
 
 #: freeadmin/navtree.py:316
-#, fuzzy, python-format
+#, python-format
 msgid "Add %s"
-msgstr "%s の追加"
+msgstr "%s を追加"
 
 #: freeadmin/navtree.py:328
 #, python-format
@@ -946,17 +935,16 @@ msgstr ""
 "ネームサーバ 2 を指定する前に、ネームサーバ 1 を指定する必要があります。"
 
 #: network/forms.py:177
-#, fuzzy
 msgid "Parent Interface"
-msgstr "インタフェースの削除"
+msgstr "親インタフェース"
 
 #: network/forms.py:186
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります。"
+msgstr "名前はvlanXX（XXは数字）の形式である必要があります"
 
 #: network/forms.py:192
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "VLANのタグは1-4095の数値で指定して下さい。"
+msgstr "VLANのタグは1-4095の数値で指定してください"
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
@@ -4868,7 +4856,7 @@ msgstr "アップロードされたファイルは正しくありません。"
 #: system/views.py:244
 #, python-format
 msgid "Test message from %s"
-msgstr ""
+msgstr "%s からのテストメッセージ"
 
 #: system/views.py:246
 #, python-format
@@ -5045,7 +5033,7 @@ msgstr "管理パスワードの変更"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
@@ -5095,7 +5083,7 @@ msgstr "変更内容への更新が成功しました。"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -5172,7 +5160,7 @@ msgstr "Commit"
 
 #: templates/freeadmin/index.html:103
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:104
@@ -5182,7 +5170,7 @@ msgstr "Testing"
 
 #: templates/freeadmin/index.html:105
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Docs"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:106
@@ -6058,7 +6046,7 @@ msgstr "テストメールの送信"
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
-msgstr ""
+msgstr "ヒント: テストメールをrootユーザに送りました。設定するには ユーザ→root→メールの変更 を開いてください"
 
 #: templates/system/loader.html:32
 #, fuzzy

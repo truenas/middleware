@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-07-17 06:09+0200\n"
-"Last-Translator: ef <fumihiko.kimura@gmail.com>\n"
+"PO-Revision-Date: 2011-12-04 06:58+0200\n"
+"Last-Translator: shirayuki <shirayuking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "リポート"
+msgstr "レポート"
 
 #: media/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -48,20 +48,19 @@ msgstr "ストレージ"
 
 #: media/lib/js/freeadmin.js:330
 msgid "CronJobs"
-msgstr "CronJobs（定期的なコマンドの実行）"
+msgstr "cron ジョブ (定期的なコマンドの実行)"
 
 #: media/lib/js/freeadmin.js:490
-#, fuzzy
 msgid "Edit"
-msgstr "ディスクの編集"
+msgstr "編集"
 
 #: media/lib/js/freeadmin.js:492
 msgid "Edit Disk"
-msgstr "ディスクの編集"
+msgstr "ディスクを編集"
 
 #: media/lib/js/freeadmin.js:760
 msgid "An error occurred!"
-msgstr "エラーが発生しました！"
+msgstr "エラーが発生しました!"
 
 #: media/lib/js/freeadmin/form/Cron.js:47
 #, fuzzy
@@ -74,10 +73,10 @@ msgid "Every N"
 msgstr "各 N"
 
 msgid "Replace"
-msgstr "リプレイス"
+msgstr "置換"
 
 msgid "Disk Replacement"
-msgstr "ディスクのリプレイス"
+msgstr "ディスクの置換"
 
 msgid "Detach"
 msgstr "デタッチ"
