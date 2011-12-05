@@ -121,6 +121,7 @@ DOJANGO_DATAGRID_ACCESS = (
     'system',
     'network',
     'storage',
+    'plugins',
     'sharing',
     'services',
 )
@@ -163,6 +164,7 @@ INSTALLED_APPS = (
     'system',
     'network',
     'storage',
+    'plugins',
     'sharing',
     'services',
 )

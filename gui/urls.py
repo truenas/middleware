@@ -62,4 +62,5 @@ urlpatterns = patterns('',
     (r'^storage/', include('storage.urls')),
     (r'^sharing/', include('sharing.urls')),
     (r'^services/', include('services.urls')),
+    (r'^plugins/', include('plugins.urls')),
     )
