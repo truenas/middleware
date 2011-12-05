@@ -45,13 +45,11 @@ generate_afpd_config()
 -uservol -uampath /usr/local/libexec/netatalk-uams \\
 -guestname ${afp_srv_guest_user} \\
 EOF
-	if [ ${afp_srv_guest} -eq 1 -a ${afp_srv_local} -eq 0 ]; then
-	    echo "-uamlist uams_guest.so"
-	elif [ ${afp_srv_local} -eq 1 ]; then
-	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so,uams_dhx2.so"
-	else
-	    echo
+	echo -n "-uamlist "
+	if [ ${afp_srv_guest} -eq 1 ]; then
+	    echo -n "uams_guest.so,"
 	fi
+	echo "uams_dhx2.so,uams_dhx.so"
     done
 }
 
