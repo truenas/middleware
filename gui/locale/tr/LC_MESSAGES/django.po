@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-30 13:02+0200\n"
+"PO-Revision-Date: 2011-12-05 08:15+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3507,7 +3507,7 @@ msgstr "UFS birim isimleri sadece alfanümerik karakterler içerebilir"
 
 #: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
-msgstr "Üye diski"
+msgstr "Üye disk"
 
 #: storage/forms.py:480 storage/forms.py:587
 msgid "The selected disks were not verified for this import rules."
@@ -3540,7 +3540,7 @@ msgstr "Sıkıştırma seviyesi"
 
 #: storage/forms.py:652 storage/forms.py:684 storage/forms.py:713
 msgid "Enable atime"
-msgstr "Atime etkinleştirin"
+msgstr "Erişim zamanını etkinleştirin"
 
 #: storage/forms.py:653 storage/forms.py:685
 msgid "Quota for this dataset"
@@ -3674,7 +3674,7 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr "Yeni diskleri işaretle (verileri siler)"
+msgstr "Silinecek diski seçin (verileri silinir)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -5363,7 +5363,7 @@ msgstr "Disk değiştirme"
 #: templates/storage/geom_disk_replace.html:15
 #: templates/storage/zpool_disk_replace.html:15
 msgid "Replace disk"
-msgstr "Diski Değiştirmek"
+msgstr "Diski Değiştir"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"

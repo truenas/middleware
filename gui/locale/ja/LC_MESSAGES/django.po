@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-12-04 07:36+0200\n"
+"PO-Revision-Date: 2011-12-05 11:42+0200\n"
 "Last-Translator: shirayuki <shirayuking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -113,29 +113,27 @@ msgstr "無効"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Level 1 - スタンバイ（スピンダウン）を使った最小の消費電力"
+msgstr "レベル 1 - スタンバイ（スピンダウン）を使った最小の電力消費"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Level 64 - スタンバイを使った中間的な消費電力"
+msgstr "レベル 64 - スタンバイを使った中間的な電力消費レベル"
 
 #: choices.py:89
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "スタンバイを使った中間的な消費電力"
+msgstr "レベル 127 - スタンバイを使った中間的な電力消費"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Level 128 - スタンバイ（スピンダウン）を使わない最小の消費電力"
+msgstr "レベル 128 - スタンバイ（スピンダウン）を使わない最小の電力消費"
 
 #: choices.py:91
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "スタンバイを使わない中間的な消費電力"
+msgstr "レベル 192 - スタンバイを使わない中間的な電力消費"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Level 254 - 最大のパフォーマンス 最大の消費電力"
+msgstr "レベル 254 - 最大のパフォーマンス 最大の電力消費"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -318,7 +316,7 @@ msgstr "読み取り専用"
 #: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
 #: services/forms.py:844 templates/storage/wizard.html:131
 msgid "None"
-msgstr "指定無し"
+msgstr "指定なし"
 
 #: choices.py:223
 msgid "CHAP"
@@ -409,7 +407,7 @@ msgstr "毎週指定曜日"
 
 #: choices.py:469
 msgid "Read-only"
-msgstr "読み込み専用"
+msgstr "読み取り専用"
 
 #: choices.py:470
 msgid "Write-only"
@@ -478,21 +476,21 @@ msgstr "オフライン即時診断（ATAのみ）"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "名前の先頭を \"-\" にすることはできません"
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "文字 $ は末尾にのみ使えます"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "あなたの名前は正しくない文字(%s)を含んでいます。"
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "あなたのフルネームは正しくない文字(%s)を含んでいます。"
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -512,15 +510,12 @@ msgstr "ユーザ名"
 #: account/forms.py:199
 #, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"この項目は必須です。半角英数と、\"@\"、\".\"、\"+\"、\"-\"、\"_\"を用いて、30"
-"文字以下で指定してください。"
+msgstr "この項目は必須です。半角英数と、\".\"、\"-\"、\"_\"を用いて、16文字以下で指定してください。"
 
 #: account/forms.py:200
 #, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"この値には、半角英数、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です。"
+msgstr "この値には、半角英数、\".\"、\"-\"、\"_\"が使用可能です。"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -544,11 +539,11 @@ msgstr "シェル"
 #: account/forms.py:226
 #, fuzzy
 msgid "Disable password logins"
-msgstr "ログイン不可"
+msgstr "パスワードでのログインは無効"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "ユーザをロック"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -556,12 +551,12 @@ msgstr "プライマリグループ"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH公開鍵"
 
 #: account/forms.py:260
 #, fuzzy
 msgid "A user with that uid already exists."
-msgstr "同じユーザ名が存在します。"
+msgstr "同じユーザIDのユーザが既に存在します。"
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -576,16 +571,17 @@ msgstr "二つのパスワードが一致していません。"
 #: account/forms.py:286
 #, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "ホームディレクトリは /mnt/ から始まる必要があります。"
+msgstr "ホームディレクトリは /mnt/ から始まるか /nonexistent である必要があります。"
 
 #: account/forms.py:307 account/forms.py:486
 #, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "ホームディレクトリは /mnt/ から始まる必要があります。"
+msgstr "ホームディレクトリに書き込めません。ブランクを残します。"
 
 #: account/forms.py:313
+#, fuzzy
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "パスワードは無効です、ブランクを残します。"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -595,26 +591,25 @@ msgstr "この項目は必須です。"
 #: account/forms.py:405
 #, fuzzy
 msgid "Disable password"
-msgstr "共有パスワード"
+msgstr "パスワードを無効にする"
 
 #: account/forms.py:466
 #, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "ホームディレクトリは /mnt/ から始まる必要があります。"
+msgstr "ホームディレクトリは /mnt/ から始まるか /nonexistent にする必要があります。"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "グループIDの繰り返しを許可"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "同じユーザ名が存在します。"
+msgstr "同じ名前のグループが既に存在します。"
 
 #: account/forms.py:570
 #, fuzzy
 msgid "A group with this gid already exists"
-msgstr "同じユーザ名が存在します。"
+msgstr "同じグループIDのグループが既に存在します。"
 
 #: account/forms.py:582
 msgid "Member users"
@@ -824,7 +819,7 @@ msgstr ""
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s を更新しました。"
+msgstr "%s を正しく更新しました。"
 
 #: freeadmin/views.py:328 freeadmin/views.py:536 storage/views.py:145
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
@@ -842,7 +837,7 @@ msgstr "サービスの再起動に失敗しました。"
 #: freeadmin/views.py:606 freeadmin/views.py:610
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s を削除しました。"
+msgstr "%s を正しく削除しました。"
 
 # よく見かけるエラーだが訳が難しい
 # 本当はzpool statusあたりの出力をparseできなかったときに表示されていると思う
@@ -1185,9 +1180,8 @@ msgid "LAGG successfully added"
 msgstr "追加が成功しました。"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "%s は無効なユーザ名です。"
+msgstr "%s は無効なマスクです。"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1223,15 +1217,13 @@ msgstr "ディレクトリパーミッション"
 
 # 「0は初期値です」の方がよい？
 #: services/forms.py:145
-#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "この値は、1024 以上、65535 以下で設定して下さい。 0 はデフォルトです。"
+msgstr "この値は 1024 以上 65535 以下で設定してください。 0 は既定値です。"
 
 # 「0は初期値です」のほうがよい？
 #: services/forms.py:151
-#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "この値は、1024 以上、65535 以下で設定して下さい。 0 はデフォルトです。"
+msgstr "この値は 1024 以上 65535 以下で設定してください。0 は既定値です。"
 
 #: services/forms.py:170
 #, fuzzy
@@ -1305,10 +1297,10 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr ""
 
 #: services/forms.py:326 services/forms.py:897
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "%s は無効なユーザ名です。"
+msgstr[0] "%(email)s は無効なメールアドレスです"
 
 #: services/forms.py:335
 #, fuzzy
@@ -1409,7 +1401,7 @@ msgstr "認証グループの探索"
 #: services/forms.py:526
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "この値は、%(start)dから%(end)dまでの範囲で指定して下さい。"
+msgstr "この値は%(start)dから%(end)dまでの範囲で指定してください。"
 
 #: services/forms.py:534
 #, fuzzy
@@ -1461,12 +1453,12 @@ msgstr "ディスクデバイス"
 #: services/forms.py:776
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Portal Group IDは %d 以下にして下さい。"
+msgstr "Portal Group IDは %d を超えてはいけません"
 
 #: services/forms.py:800
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "Group ID は %d 以下にして下さい。"
+msgstr "Group ID は %d を超えてはいけません"
 
 #: services/forms.py:811
 #, fuzzy
@@ -1565,7 +1557,6 @@ msgid "Guest account"
 msgstr "ゲストアカウント"
 
 #: services/models.py:108 services/models.py:196
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1573,10 +1564,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルトは "
-"'ftp'）。このユーザにどのような権限を設定しても構いませんが、guest サービスに"
-"接続するすべてのクライアントに適用されます。ただし、このユーザを password "
-"file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
+"このオプションでユーザ名(既定値は 'nobody')を上書きできます。ゲストユーザとして指定されたサービスにアクセスするのに使います。このユーザにどん"
+"な権限を設定しても構いませんが、ゲストサービスに接続するあらゆるクライアントに適用されます。このユーザはpasswordファイルに記述しておく必要があり"
+"ますが、ログイン可能である必要はありません。ユーザrootをゲストアカウントとして使うことはできません。"
 
 #: services/models.py:111
 msgid "Allow guest access"
@@ -1640,7 +1630,7 @@ msgstr "ホームディレクトリの有効化"
 
 #: services/models.py:144
 msgid "Enable/disable home directories for samba user."
-msgstr "この設定は、samba ユーザのホームディレクトリを有効、または無効にします"
+msgstr "samba ユーザのホームディレクトリを有効/無効を切り替えます。"
 
 #: services/models.py:147
 #, fuzzy
@@ -1649,11 +1639,8 @@ msgstr "ホームディレクトリの閲覧を有効化"
 
 # 日本語が硬い
 #: services/models.py:148
-#, fuzzy
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
-"この設定は、samba ユーザによるホームディレクトリの閲覧を有効、または無効にし"
-"ます。"
+msgstr "samba ユーザによるホームディレクトリの閲覧の有効/無効を切り替えます。"
 
 #: services/models.py:152
 msgid "Home directories"
@@ -1665,7 +1652,7 @@ msgstr "AIOの有効化"
 
 #: services/models.py:158
 msgid "Enable/disable AIO support."
-msgstr "この設定は、AIO サポートを有効、もしくは無効にします。"
+msgstr "AIO サポートの有効/無効を切り替えます。"
 
 #: services/models.py:162
 #, fuzzy
@@ -1751,9 +1738,7 @@ msgstr "サーバーの数"
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr ""
-"サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定"
-"して下さい。一般に 4-6 程度です。"
+msgstr "サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定してください。一般に 4-6 程度です。"
 
 #: services/models.py:226
 msgid "Asynchronous mode"
@@ -2022,11 +2007,10 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"ポータルの記述方法は 'adress:port' 。 （例: IPv4用 '192.168.1.1:3260' 、IPv6"
-"用 '[2001:db8:1:1::1]:3260' 、 「3260」はiSCSIで一般的なポート番号です。IPを"
-"特に限定しない場合(wildcard address)は、IPv4用 '0.0.0.0:3260' 、IPv6用 "
-"'[::]:3260' 。wildcardを使う場合は、同じアドレスファミリ(IPv4やIPv6)には他の"
-"ポータルを設定しないで下さい。）"
+"ポータルの形式は 'address:port' です。例: IPv4は'192.168.1.1:3260'、IPv6は'[2001:db8:1:1::1"
+"]:3260'。ポート3260はiSCSIの標準的なポート番号です。IPを特に限定しない場合(ワイルドカードアドレス)は、IPv4は "
+"'0.0.0.0:3260' 、IPv6は "
+"'[::]:3260'。ワイルドカードを使う場合は、同じアドレスファミリのIPと混在させないようにしてください。）"
 
 #: services/models.py:490 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2070,14 +2054,12 @@ msgid "Peer Secret"
 msgstr "ピアシークレット"
 
 #: services/models.py:555
-#, fuzzy
 msgid "Authorized Access"
-msgstr "許可されたアクセス"
+msgstr "認証されたアクセス"
 
 #: services/models.py:556
-#, fuzzy
 msgid "Authorized Accesses"
-msgstr "許可されたアクセス"
+msgstr "認証されたアクセス"
 
 #: services/models.py:571
 msgid "Target Name"
@@ -2130,9 +2112,7 @@ msgstr "認証方法"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr ""
-"ターゲットを許可する認証方法を指定します。自動は、認証無しと認証有りの両方を"
-"意味します。"
+msgstr "ターゲットを許可する認証方法。自動は認証あり/なしの両方を意味します。"
 
 #: services/models.py:617
 msgid "Authentication Group ID"
@@ -2193,13 +2173,11 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
-"ホストの別名を指定します。このオプションで1つのIP アドレスに複数の名前を持た"
-"せる事ができます。複数の名前を定義する場合は、スペースで区切って記述して下さ"
-"い。"
+"ホストの別名を指定します。このオプションで同じIPアドレスに複数の名前を持たせることができます。複数の名前を指定する場合はスペースで区切ってください。"
 
 #: services/models.py:708
 msgid "Update period"
-msgstr "アップデート間隔"
+msgstr "更新間隔"
 
 #: services/models.py:710
 msgid "Time in milliseconds"
@@ -2278,8 +2256,7 @@ msgstr "このドライバは、UPSとの接続のために使われます。"
 
 #: services/models.py:782
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
-"UPS が接続されているシリアルポート、または USB ポートを指定して下さい。"
+msgstr "UPSが接続されているシリアルポートまたはUSBポートを指定してください。"
 
 #: services/models.py:785
 #, fuzzy
@@ -2307,9 +2284,8 @@ msgstr ""
 "が再度供給された場合、シャットダウンはキャンセルされます。"
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "共有パスワード"
+msgstr "UPSマスターユーザのパスワード"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
@@ -2321,7 +2297,7 @@ msgstr "リモートモニタリング"
 
 #: services/models.py:817
 msgid "Send Email Status Updates"
-msgstr "ステータス更新時にメールを送信"
+msgstr "状態更新時にメールを送信"
 
 #: services/models.py:820
 msgid "To email"
@@ -2333,7 +2309,7 @@ msgstr "セミコロンを使ってメールアドレスを複数記述する事
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "メールの件名"
 
 #: services/models.py:827
 msgid ""
@@ -2368,9 +2344,7 @@ msgstr "最大接続数"
 
 #: services/models.py:855
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
-"1つの IP アドレスあたりの最大接続数を指定します。（0 は、無制限を意味しま"
-"す。）"
+msgstr "IPアドレスごとの接続の最大数を指定します （0 は無制限を意味します）。"
 
 #: services/models.py:859
 msgid "Login Attempts"
@@ -2504,9 +2478,7 @@ msgstr "ローカルユーザのアップロード帯域制限値"
 
 #: services/models.py:925
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
-"ローカルユーザのアップロード帯域を KB/s に制限します。0 の場合は、無制限とな"
-"ります。"
+msgstr "ローカルユーザのアップロード帯域(KB/s)。0は無制限を意味します。"
 
 #: services/models.py:929
 msgid "Local user download bandwidth"
@@ -2514,27 +2486,23 @@ msgstr "ローカルユーザのダウンロード帯域制限値"
 
 #: services/models.py:930
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
-"ローカルユーザのダウンロード帯域を KB/s に制限します。0 の場合は無制限となり"
-"ます。"
+msgstr "ローカルユーザのダウンロード帯域(KB/s)。0は無制限を意味します。"
 
 #: services/models.py:934
 msgid "Anonymous user upload bandwidth"
-msgstr "匿名ユーザーのアップロード帯域（スピード）"
+msgstr "匿名ユーザのアップロード帯域"
 
 #: services/models.py:935
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
-"匿名ユーザーのアップロード帯域（スピード）KB/s　0は無制限を意味します。"
+msgstr "匿名ユーザのアップロード帯域(KB/s)。0は無制限を意味します。"
 
 #: services/models.py:939
 msgid "Anonymous user download bandwidth"
-msgstr "匿名ユーザーのダウンロード帯域（スピード）"
+msgstr "匿名ユーザのダウンロード帯域"
 
 #: services/models.py:940
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
-"匿名ユーザーのダウンロード帯域（スピード）KB/s　0は無制限を意味します。"
+msgstr "匿名ユーザのダウンロード帯域（KB/s)。0は無制限を意味します。"
 
 #: services/models.py:943
 msgid "Enable SSL/TLS"
@@ -2621,9 +2589,7 @@ msgstr "root のパスワードログイン"
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
-msgstr ""
-"無効: root は公開鍵認証のみ許可します。 有効: root のパスワードでの認証を許可"
-"します。"
+msgstr "無効: root は公開鍵認証のみでログインできます。 有効: root のパスワードでのログインを許可します。"
 
 #: services/models.py:1009
 msgid "Allow Password Authentication"
@@ -2643,7 +2609,7 @@ msgstr "ホスト秘密鍵"
 
 #: services/models.py:1018
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr "この項目に PEM フォーマットの RSA 秘密鍵 をペーストして下さい。"
+msgstr "ここに PEM 形式の RSA 秘密鍵を貼り付けてください。"
 
 #: services/models.py:1024
 msgid ""
@@ -2706,7 +2672,7 @@ msgstr "管理者パスワード"
 
 #: services/models.py:1100
 msgid "Password of Domain Administrator account."
-msgstr "ドメイン管理者アカウントのパスワードを入力して下さい。"
+msgstr "ドメイン管理者アカウントのパスワードを入力してください。"
 
 #: services/models.py:1104 services/models.py:1105
 #: templates/services/index.html:18
@@ -2720,16 +2686,14 @@ msgstr "LDAP サーバのホスト名または IP アドレス"
 #: services/models.py:1120
 #, fuzzy
 msgid "Base DN"
-msgstr "Base DN"
+msgstr "ベースDN"
 
 #: services/models.py:1122
 #, fuzzy
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
-msgstr ""
-"検索のために使われるデフォルトのBase DN を指定して下さい。（例: dc=test,"
-"dc=org）"
+msgstr "検索に使われる既定のベース識別名(DN)を指定してください。（例: dc=test,dc=org）"
 
 #: services/models.py:1125
 msgid "Allow Anonymous Binding"
@@ -2745,9 +2709,7 @@ msgstr "root バインド DN"
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
-msgstr ""
-"ディレクトリサーバに接続するために使用する識別名を入力して下さい。（例: "
-"cn=admin,dc=test,dc=org）"
+msgstr "ディレクトリサーバへのバインドに使用する識別名を入力してください。（例: cn=admin,dc=test,dc=org）"
 
 #: services/models.py:1134
 #, fuzzy
@@ -2757,7 +2719,7 @@ msgstr "root バインドパスワード"
 #: services/models.py:1136
 #, fuzzy
 msgid "The credentials with which to bind."
-msgstr "バインドする際に使用するパスワードを入力して下さい。"
+msgstr "バインドする際に使用するパスワードを入力してください。"
 
 #: services/models.py:1141
 msgid "Password Encryption"
@@ -2900,17 +2862,14 @@ msgstr ""
 "す。）"
 
 #: services/models.py:1244
-#, fuzzy
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"このオプションにより、そのモジュールとファイル転送するユーザー名を指定しま"
-"す。 'グループ' オプションと組み合わせることで、どのパーミッションを適用する"
-"かを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままに"
-"してください。"
+"このオプションを選択すると、そのモジュールからのファイル転送が行われる必要があるユーザー名を指定します。 'グループ'オプションと組み合わせることで、こ"
+"のアクセス許可が使用可能なファイルかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1251
 msgid ""
@@ -3132,7 +3091,7 @@ msgstr "名前"
 
 #: sharing/models.py:50
 msgid "Export Read Only"
-msgstr "読み込み専用"
+msgstr "読み取り専用をエクスポート"
 
 #: sharing/models.py:52
 #, fuzzy
@@ -3168,10 +3127,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルトは "
-"'ftp'）。このユーザにどのような権限を設定しても構いませんが、guest サービスに"
-"接続するすべてのクライアントに適用されます。ただし、このユーザを password "
-"file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
+"このオプションでユーザ名(既定値は'ftp')を上書きできます。ゲストユーザとして指定されたサービスにアクセスするのに使います。このユーザにどんな権限を"
+"設定しても構いませんが、ゲストサービスに接続するあらゆるクライアントに適用されます。このユーザはパスワードファイルに記述しておく必要がありますが、ログイ"
+"ン可能である必要はありません。"
 
 #: sharing/models.py:69
 msgid "Allow Guest Access"
@@ -3257,13 +3215,12 @@ msgid "Share password"
 msgstr "共有パスワード"
 
 #: sharing/models.py:117
+#, fuzzy
 msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
-msgstr ""
-"このオプションではvolumeパスワードを設定できます。(最大8文字。ASCIIコードを利"
-"用して下さい。)"
+msgstr "このオプションではボリュームパスワードを設定できます。(最大8文字。ASCIIコードを使うことを強く推奨します。)"
 
 #: sharing/models.py:121
 msgid "Share Character Set"
@@ -3299,22 +3256,18 @@ msgstr "拒否リスト"
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
-msgstr ""
-"共有へのアクセスを与えないユーザとグループを指定します。このオプションは許可"
-"リストと同じフォーマットです。"
+msgstr "共有へのアクセスを与えないユーザとグループを指定します。このオプションは許可リストと同じ形式です。"
 
 #: sharing/models.py:139
 msgid "Read-only Access"
-msgstr "読み込み専用アクセス"
+msgstr "読み取り専用アクセス"
 
 #: sharing/models.py:141
 #, fuzzy
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
-msgstr ""
-"特定のユーザ、グループが共有への読み込み専用アクセス権を持つ事を許可します。"
-"これは許可リストのフォーマットに従います。"
+msgstr "特定のユーザ、グループが共有への読み取り専用アクセス権を持つ事を許可します。これは許可リストの形式に従います。"
 
 #: sharing/models.py:145
 msgid "Read-write Access"
@@ -3325,9 +3278,7 @@ msgstr "読み込み/書き込み可能アクセス"
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
-msgstr ""
-"特定のユーザ、グループが共有への読み込み/書き込みアクセス権を持つ事を許可しま"
-"す。これは許可リストのフォーマットに従います。"
+msgstr "特定のユーザ、グループが共有への読み込み/書き込みアクセス権を持つ事を許可します。これは許可リストの形式に従います。"
 
 #: sharing/models.py:150
 #, fuzzy
@@ -3369,25 +3320,21 @@ msgstr "データベースパス"
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
-msgstr ""
-"データベース情報を指定したパスに保存するように設定します。ボリュームが読み込"
-"み専用の場合、書き込み可能な場所を選択して下さい。"
+msgstr "データベース情報を指定したパスに保存するように設定します。ボリュームが読み取り専用の場合、書き込み可能な場所を選択してください。"
 
 #: sharing/models.py:167
 msgid "Cache CNID"
 msgstr "キャッシュ CNID"
 
 #: sharing/models.py:168
-#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
-"有効にした場合、afpd はデータベース負荷を減らすために AppleDouble V2 ヘッダ"
-"ファイル内で記憶された ID 情報を使用します。ボリュームが AFP クライアント以外"
-"（NFS/SMB/ローカル）によって修正される事がある場合は、このオプションを有効に"
-"しないで下さい。"
+"有効にした場合、afpd はデータベース負荷を減らすために AppleDouble V2 ヘッダファイル内で記憶された ID "
+"情報を使用します。ボリュームが AFP "
+"クライアント以外（NFS/SMB/ローカル）によって修正される事がある場合は、このオプションを有効にしないでください。"
 
 #: sharing/models.py:171
 msgid "Translate CR/LF"
@@ -3545,11 +3492,11 @@ msgstr ""
 
 #: sharing/models.py:237
 msgid "Read Only"
-msgstr "読み込み専用"
+msgstr "読み取り専用"
 
 #: sharing/models.py:238
 msgid "Export the share read only. Writes are not permitted."
-msgstr "読み込み専用で共有します。書き込むことはできません。"
+msgstr "読み取り専用で共有します。書き込むことはできません。"
 
 #: sharing/models.py:241 system/models.py:447
 msgid "Quiet"
@@ -3645,9 +3592,7 @@ msgstr ""
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
-msgstr ""
-"ボリューム名は、必ず半角のアルファベットから始めて下さい。また、数字、 \"-"
-"\" 、 \"_\" を含めることができます。"
+msgstr "ボリューム名は、必ず半角のアルファベットから始めてください。また、数字、 \"-\" 、 \"_\" を含めることができます。"
 
 #: storage/forms.py:292
 #, fuzzy
@@ -3680,9 +3625,8 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "数字、mirror、raidz、spare で始まるボリューム名は指定できません。"
 
 #: storage/forms.py:330
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "Group ID は %d 以下にして下さい。"
+msgstr "UFSのボリューム名は9文字を超えることはできません。"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
@@ -3899,9 +3843,8 @@ msgid "Advanced Power Management"
 msgstr "APM（Advanced Power Management）"
 
 #: storage/models.py:194
-#, fuzzy
 msgid "Acoustic Level"
-msgstr "Acoustic Level"
+msgstr "音響レベル"
 
 #: storage/models.py:198
 msgid "Enable S.M.A.R.T."
@@ -3968,7 +3911,7 @@ msgstr ""
 
 #: storage/models.py:444
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "制限(KB/s)"
 
 #: storage/models.py:445
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
@@ -4153,7 +4096,7 @@ msgstr "データセットを削除しました。"
 
 #: storage/views.py:447
 msgid "Mount Point permissions successfully updated."
-msgstr "マウントポイントのパーミッションを更新しました。"
+msgstr "マウントポイントのパーミッションを正しく更新しました。"
 
 #: storage/views.py:463
 msgid "Dataset successfully destroyed."
@@ -4230,9 +4173,8 @@ msgid "Language (Require UI reload)"
 msgstr "言語（設定後、画面を開き直してください）"
 
 #: system/forms.py:168
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "この値は、0 以上、65535 以下で設定して下さい。"
+msgstr "この値は 1 以上 65535 以下で設定してください。"
 
 #: system/forms.py:170
 #, fuzzy
@@ -4751,9 +4693,7 @@ msgstr "拡張属性を保持します。"
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
-msgstr ""
-"このオプションにより、rsync のリモート拡張属性をローカルの設定と同じになるよ"
-"う更新します。"
+msgstr "このオプションでrsyncのリモート拡張属性をローカルの設定と同じになるよう更新します。"
 
 #: system/models.py:464
 #, fuzzy
@@ -5077,9 +5017,8 @@ msgid "Yes"
 msgstr "はい"
 
 #: templates/freeadmin/generic_model_edit.html:5
-#, fuzzy
 msgid "Your changes have been successfully updated!"
-msgstr "変更内容への更新が成功しました。"
+msgstr "あなたの変更点を正しく更新しました!"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
@@ -5894,7 +5833,7 @@ msgstr "サイズ"
 
 #: templates/storage/volumes.html:53
 msgid "Status"
-msgstr "ステータス"
+msgstr "状態"
 
 #: templates/storage/volumes.html:82 templates/storage/volumes.html.py:86
 #, fuzzy
@@ -5998,7 +5937,7 @@ msgstr "デバッグ（Debug）"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "ファームウェアアップデート"
+msgstr "ファームウェアの更新"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -6017,7 +5956,7 @@ msgstr "本当にすべての設定を工場出荷時に戻してもよろしい
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr "アップデート"
+msgstr "更新"
 
 #: templates/system/cronjob.html:40
 #, fuzzy
@@ -6036,7 +5975,7 @@ msgstr "Cron ジョブを追加する。"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr "再起動中です..."
+msgstr "再起動中..."
 
 #: templates/system/email_edit.html:12
 msgid "Send Test Mail"
@@ -6217,9 +6156,8 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "%(step)s ステップ目 / %(step_count)s ステップ"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "アップデート"
+msgstr "更新を適用"
 
 #: tools/alert.py:76
 #, python-format
@@ -6288,16 +6226,16 @@ msgid "IPv6 Netmask"
 msgstr "IPv6 ネットマスク"
 
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "この値は、0 以上、10000 以下で設定して下さい。"
+msgstr "この値は 0 以上 10000 以下で設定してください。"
 
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "この値は、0 以上、1000 以下で設定して下さい。"
+msgstr "この値は 0 以上 1000 以下で設定してください。"
 
 msgid "Enable DDP"
 msgstr "DDP の有効化"
 
 msgid "Enables DDP support for low-level appletalk access."
-msgstr "古いappletalkのためにDDP サポートを有効にします。"
+msgstr "低レベルのappletalkアクセスのためにDDPサポートを有効にします。"
 
 msgid "Turn on/off TLS"
 msgstr "TLS の on/off"
@@ -6366,7 +6304,7 @@ msgid "OS Version"
 msgstr "OSのバージョン"
 
 msgid "%s successfully update."
-msgstr "%s を更新しました。"
+msgstr "%s を正しく更新しました。"
 
 msgid "Admin user"
 msgstr "管理ユーザ"
@@ -6385,11 +6323,9 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルト"
-"は 'www'）。このユーザにどのような権限を設定しても構いませんが、guest サー"
-"ビスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
-"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありま"
-"せん。"
+"このオプションでユーザ名(既定値は'ftp')を上書きできます。ゲストユーザとして指定されたサービスにアクセスするのに使います。このユーザにどんな権限を"
+"設定しても構いませんが、ゲストサービスに接続するあらゆるクライアントに適用されます。このユーザはpasswordファイルに記述しておく必要がありますが、"
+"ログイン可能である必要はありません。"
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6426,9 +6362,7 @@ msgstr[0] "以下のエラーを修正してください。"
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
-msgstr ""
-"現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認"
-"のため、2 回入力します。"
+msgstr "現在のパスワードと新しいパスワードを入力してください。新しいパスワードは確認のため2回入力します。"
 
 msgid "Password (again)"
 msgstr "パスワード（確認）"

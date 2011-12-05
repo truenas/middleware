@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-28 07:02+0200\n"
+"PO-Revision-Date: 2011-12-05 11:49+0200\n"
 "Last-Translator: alamati <alamati@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
@@ -140,7 +140,6 @@ msgid "Minimum"
 msgstr "کمینه"
 
 #: choices.py:97
-#, fuzzy
 msgid "Medium"
 msgstr "متوسط"
 
@@ -149,22 +148,18 @@ msgid "Maximum"
 msgstr "بیشینه"
 
 #: choices.py:132 templates/storage/tasks.html:84
-#, fuzzy
 msgid "January"
 msgstr "ژانویه"
 
 #: choices.py:133 templates/storage/tasks.html:87
-#, fuzzy
 msgid "February"
 msgstr "فوریه"
 
 #: choices.py:134 templates/storage/tasks.html:90
-#, fuzzy
 msgid "March"
 msgstr "مارس"
 
 #: choices.py:135 templates/storage/tasks.html:93
-#, fuzzy
 msgid "April"
 msgstr "آوریل"
 
@@ -173,42 +168,34 @@ msgid "May"
 msgstr "مِی"
 
 #: choices.py:137 templates/storage/tasks.html:99
-#, fuzzy
 msgid "June"
 msgstr "ژوئن"
 
 #: choices.py:138 templates/storage/tasks.html:102
-#, fuzzy
 msgid "July"
 msgstr "جولای"
 
 #: choices.py:139 templates/storage/tasks.html:105
-#, fuzzy
 msgid "August"
 msgstr "اوت"
 
 #: choices.py:140 templates/storage/tasks.html:108
-#, fuzzy
 msgid "September"
 msgstr "سپتامبر"
 
 #: choices.py:141 templates/storage/tasks.html:111
-#, fuzzy
 msgid "October"
 msgstr "اکتبر"
 
 #: choices.py:142 templates/storage/tasks.html:114
-#, fuzzy
 msgid "November"
 msgstr "نوامبر"
 
 #: choices.py:143 templates/storage/tasks.html:117
-#, fuzzy
 msgid "December"
 msgstr "دسامبر"
 
 #: choices.py:146 templates/storage/tasks.html:55
-#, fuzzy
 msgid "Monday"
 msgstr "دوشنبه"
 
@@ -217,7 +204,6 @@ msgid "Tuesday"
 msgstr "سه‌شنبه"
 
 #: choices.py:148 templates/storage/tasks.html:61
-#, fuzzy
 msgid "Wednesday"
 msgstr "چهارشنبه"
 
@@ -226,12 +212,10 @@ msgid "Thursday"
 msgstr "پنج‌شنبه"
 
 #: choices.py:150 templates/storage/tasks.html:67
-#, fuzzy
 msgid "Friday"
 msgstr "جمعه"
 
 #: choices.py:151 templates/storage/tasks.html:70
-#, fuzzy
 msgid "Saturday"
 msgstr "شنبه"
 
@@ -244,12 +228,10 @@ msgid "Anonymous"
 msgstr "ناشناس"
 
 #: choices.py:164
-#, fuzzy
 msgid "Local User"
 msgstr "کاربر محلی"
 
 #: choices.py:185
-#, fuzzy
 msgid "Normal"
 msgstr "عادی"
 
@@ -262,18 +244,16 @@ msgid "Debug"
 msgstr "اشکال‌زدایی"
 
 #: choices.py:191
-#, fuzzy
 msgid "Default"
 msgstr "پیش‌فرض"
 
 #: choices.py:192
-#, fuzzy
 msgid "Time Machine"
 msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "موردی برای به‌هم آمیختن نیست"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -281,11 +261,11 @@ msgstr ""
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "مشتری حروف را کوچک و کارگزار حروف را بزرگ می‌بیند"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "مشتری حروف را بزرگ و کارگزار حروف را کوچک می‌بیند"
 
 #: choices.py:203
 msgid "File"
@@ -311,11 +291,11 @@ msgstr "دی‌وی‌دی"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "نوار"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "قبول شدن"
 
 #: choices.py:216
 msgid "read-write"
@@ -336,15 +316,15 @@ msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "CHAP دوطرفه"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "باتری UPS به میزان کمی رسیده"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS از باتری تغذیه می‌شود"
 
 #: choices.py:250
 #, fuzzy

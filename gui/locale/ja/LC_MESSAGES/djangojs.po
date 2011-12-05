@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-12-04 06:58+0200\n"
+"PO-Revision-Date: 2011-12-05 07:32+0200\n"
 "Last-Translator: shirayuki <shirayuking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -63,12 +63,10 @@ msgid "An error occurred!"
 msgstr "エラーが発生しました!"
 
 #: media/lib/js/freeadmin/form/Cron.js:47
-#, fuzzy
 msgid "Each selected"
 msgstr "選択したものそれぞれ"
 
 #: media/lib/js/freeadmin/form/Cron.js:98
-#, fuzzy
 msgid "Every N"
 msgstr "各 N"
 
