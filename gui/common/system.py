@@ -118,6 +118,10 @@ def send_mail(subject=None, text=None, interval=timedelta(),
     msg = msg.as_string()
 
     try:
+        if not em.em_outgoingserver or not em.em_port:
+            # See NOTE below.
+            raise ValueError('you must provide an outgoing mailserver and mail '
+                             'server port when sending mail')
         if em.em_security == 'ssl':
             server = smtplib.SMTP_SSL(em.em_outgoingserver, em.em_port,
                                       timeout=10)
@@ -128,10 +132,21 @@ def send_mail(subject=None, text=None, interval=timedelta(),
                 server.starttls()
         if em.em_smtp:
             server.login(em.em_user.encode('utf-8'), em.em_pass.encode('utf-8'))
-        else:
-            server.connect()
+        # NOTE: Don't do this.
+        #
+        # If smtplib.SMTP* tells you to run connect() first, it's because the
+        # mailserver it tried connecting to via the outgoing server argument was
+        # unreachable and it tried to connect to 'localhost' and barfed. This is
+        # because FreeNAS doesn't run a full MTA.
+        #else:
+        #    server.connect()
         server.sendmail(em.em_fromemail, to, msg)
         server.quit()
+    except ValueError, ve:
+        # Don't spam syslog with these messages. They should only end up in the
+        # test-email pane.
+        errmsg = str(ve)
+        error = True
     except Exception, e:
         syslog.openlog(channel, syslog.LOG_CONS | syslog.LOG_PID,
                        facility=syslog.LOG_MAIL)
