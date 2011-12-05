@@ -137,7 +137,6 @@ generate_proftp()
 #			/bin/rm -f ${_tmpfile}
 #		fi
 #	fi
-echo "Creating ${proftpd_config}"
 	cat <<EOF > ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
