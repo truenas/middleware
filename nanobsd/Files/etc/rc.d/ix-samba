@@ -267,7 +267,7 @@ EOF
 			# acls?
 
 			cat<<-EOF
-			    security = ADS
+			    #security = ADS
 			    realm = ${domain}
 			    workgroup = ${ad_workgroup}	
 			    netbios name = ${ad_netbiosname}
