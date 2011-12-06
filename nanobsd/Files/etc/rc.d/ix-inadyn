@@ -15,7 +15,6 @@ generate_inadyn_real()
 	local f="id ddns_provider ddns_domain ddns_username ddns_password ddns_updateperiod ddns_fupdateperiod"
 	eval local $f
 	local sf=$(var_to_sf $f)
-	local cmd
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM services_dynamicdns ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
