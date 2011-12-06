@@ -61,7 +61,7 @@
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="2000m"}
+: ${FREENAS_CACHESIZE:="1g"}
 : ${FREENAS_CACHEEXPIRE:="60"}
 
 #
@@ -441,7 +441,8 @@ create_cache_filesystem()
 		mkdir -p "${FREENAS_CACHEDIR}"
 	fi
 
-	mdmfs -s ${FREENAS_CACHESIZE} md "${FREENAS_CACHEDIR}"
+	mdmfs -i 4096 -b 4096 -f 512 -s ${FREENAS_CACHESIZE} \
+	    md "${FREENAS_CACHEDIR}"
 	if [ $? -eq 0 ]; then
 		return 0
 	fi
