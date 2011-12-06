@@ -792,7 +792,7 @@ def show_ip():
                 else:
                     p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
                       'sed -e s,^,%s://,g -e s,$,:%s/,g' % (proto, port)], shell=True, stdout=subprocess.PIPE)
-                out = p1.communicate()[1]
+                out = p1.communicate()[0]
                 if out:
                     print out
                 else:
