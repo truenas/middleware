@@ -20,25 +20,19 @@ generate_inadyn_real()
 		"SELECT $sf FROM services_dynamicdns ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
 		if [ -n "${ddns_provider}" ]; then
-			echo "dyndns_system ${ddns_provider}"
+			echo -n "--dyndns_system ${ddns_provider} "
 		fi
-		cat << EOF
-background
-syslog
-username ${ddns_username}
-password ${ddns_password}
-alias ${ddns_domain}
-EOF
 		if [ -n "${ddns_updateperiod}" ]; then
-			echo "update_period_sec ${ddns_updateperiod}"
+			echo -n "--update_period_sec ${ddns_updateperiod} "
 		fi
 		if [ -n "${ddns_fupdateperiod}" ]; then
-			echo "forced_update_period ${ddns_fupdateperiod}"
+			echo -n "--forced_update_period ${ddns_fupdateperiod} "
 		fi
 		ddns_options=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ddns_options FROM services_dynamicdns WHERE id=${id}"`
 		if [ -n "${ddns_options}" ]; then
-			echo "${ddns_options}"
+			echo -n "${ddns_options} "
 		fi
+		echo "--background --syslog --username ${ddns_username} --password ${ddns_password} --alias ${ddns_domain}"
 	done
 }
 
