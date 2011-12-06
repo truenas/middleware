@@ -6,14 +6,14 @@
 
 # auth
 auth		sufficient	pam_self.so		no_warn
-#@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass
+#@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass krb5_auth krb5_ccache_type=FILE
 #@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so no_warn try_first_pass
 auth		include		system
 
 # account
 account		requisite	pam_securetty.so
 account		required	pam_nologin.so
-#@@WINBIND@@	account		sufficient	/usr/local/lib/pam_winbind.so
+#@@WINBIND@@	account		sufficient	/usr/local/lib/pam_winbind.so krb5_auth krb5_ccache_type=FILE
 #@@LDAP@@	account		sufficient	/usr/local/lib/pam_ldap.so	ignore_authinfo_unavail
 account		include		system
 

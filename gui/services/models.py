@@ -28,6 +28,8 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
@@ -196,6 +198,13 @@ class AFP(Model):
             verbose_name=_("Local Access"),
             help_text=_("Allow users with local accounts to access apple shares on this box.")
             )
+    afp_srv_connections_limit = models.IntegerField(
+            max_length=120,
+            verbose_name=_('Max. Connections'),
+            validators=[MinValueValidator(1), MaxValueValidator(1000)],
+            help_text=_('Maximum number of connections permitted via AFP. The default limit is 50.'),
+            default=50,
+            )
 
     class Meta:
         verbose_name = _(u"AFP")
@@ -206,8 +215,8 @@ class AFP(Model):
         icon_model = u"AFPIcon"
 
 class NFS(Model):
-    nfs_srv_servers = models.CharField(
-            max_length=120,
+    nfs_srv_servers = models.PositiveIntegerField(
+            default=4,
             verbose_name=_("Number of servers"),
             help_text=_("Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six.")
             )
@@ -967,10 +976,10 @@ class TFTP(Model):
         icon_model = "TFTPIcon"
 
 class SSH(Model):
-    ssh_tcpport = models.CharField(
-            max_length=120,
+    ssh_tcpport = models.PositiveIntegerField(
             verbose_name = _("TCP Port"),
-            help_text = _("Alternate TCP port. Default is 22")
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            help_text = _("Alternate TCP port. Default is 22"),
             )
     ssh_rootlogin = models.BooleanField(
             verbose_name = _("Login as Root with password"),

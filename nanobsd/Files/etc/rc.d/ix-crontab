@@ -18,7 +18,9 @@ generate_crontab()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while read -r minute hour daymonth month dayweek user command; do
-        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
+	# Note that echo -e will do the wrong thing with certain characters. Read the commit
+	# history for more details.
+        echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	${user}	PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
     done
 
     local user host module recursive times compress archive delete quiet preserveperm preserveattr extra
@@ -67,7 +69,9 @@ generate_crontab()
             fi
 
         )
-        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
+	# Note that echo -e will do the wrong thing with certain characters. Read the commit
+	# history for more details.
+        echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	${user}	PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
     done
 }
 

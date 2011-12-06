@@ -16,7 +16,7 @@ class Migration(DataMigration):
         user.bsdusr_builtin = True
         user.bsdusr_full_name = "avahi user"
         user.bsdusr_group = group
-        user.bsdusr_home = "/nonexistant"
+        user.bsdusr_home = "/nonexistent"
         user.bsdusr_shell = "/usr/sbin/nologin"
         user.bsdusr_smbhash = "*"
         user.bsdusr_unixhash = "*"
@@ -32,7 +32,7 @@ class Migration(DataMigration):
         user.bsdusr_builtin = True
         user.bsdusr_full_name = "messagebus user"
         user.bsdusr_group = group
-        user.bsdusr_home = "/nonexistant"
+        user.bsdusr_home = "/nonexistent"
         user.bsdusr_shell = "/usr/sbin/nologin"
         user.bsdusr_smbhash = "*"
         user.bsdusr_unixhash = "*"
