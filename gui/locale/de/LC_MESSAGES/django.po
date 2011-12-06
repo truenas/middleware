@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-27 13:49+0200\n"
-"Last-Translator: fuubah <fuubah@googlemail.com>\n"
+"PO-Revision-Date: 2011-12-06 01:54+0200\n"
+"Last-Translator: cohewa <saugbaer@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -6052,7 +6052,7 @@ msgstr "Allgemein"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Auf Werkseinstellung zurücksetzen"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"

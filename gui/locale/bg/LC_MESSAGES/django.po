@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-23 18:58+0200\n"
+"PO-Revision-Date: 2011-12-05 13:25+0200\n"
 "Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -435,7 +435,7 @@ msgstr "%(week)s седмица"
 
 #: choices.py:488
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Never - Проверява устройството независимо от режима на консумация"
+msgstr "Newer - Проверява устройството независимо от режима на консумация"
 
 #: choices.py:489
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -570,7 +570,7 @@ msgstr "Не може да се пише в главната директори�
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Паролата е изключена, оставете полето празно."
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -588,7 +588,7 @@ msgstr "Главната директория трябва да започва �
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Позволява повторение на GIDs"
 
 #: account/forms.py:551
 msgid "A group with that name already exists."
@@ -608,7 +608,7 @@ msgstr "Външни групи"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Потребителят не може да принадлежи на повече от 64 помощни групи"
 
 #: account/forms.py:627
 msgid "New password"
@@ -797,7 +797,7 @@ msgstr "Изключване"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Не бе възможно да се извлече текущото състояние"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -808,9 +808,9 @@ msgstr "%s успешно обновени."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Грешка"
+msgstr "Грешка: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -844,44 +844,43 @@ msgstr "Мрежов адаптер"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Трябва да зададете IPv4 адрес"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Трябва да зададете IPv4 мрежова маска"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Трябва да зададете IPv6 адрес"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Трябва да зададете IPv6 мрежова маска"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Трябва да изберете между IPv4 и IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "Трябва да зададете валиден IPv4 или IPv6 с маска"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Обръщението е към не валиден nameserver."
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Неопределени адреси, не са валидни като nameservers"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "В полето не е въведен валиден IP адрес или мрежа"
+msgstr "Това не е валиден nameserver адрес"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr " 169.254/16 подмрежа не е валидна за nameserver"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -922,27 +921,27 @@ msgstr "Мрежата '%s' не е валидна, очаква се CIDR."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv4 адрес и за псевдонима"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv4 мрежова маска и за псевдонима"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv6 адрес и за псевдонима"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv6 мрежова маска и за псевдонима "
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Трябва да изберете между IPv4 и IPv6 за псевдонима"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "Трябва да зададете за псевдонима валидни IPv4 или IPv6 адреси с маска "
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -1336,7 +1335,7 @@ msgstr "Услугата iSCSI не успя да се презареди."
 
 #: services/forms.py:483
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN вече съществува на това място."
 
 #: services/forms.py:494 services/models.py:359
 msgid "Controller Auth Group"

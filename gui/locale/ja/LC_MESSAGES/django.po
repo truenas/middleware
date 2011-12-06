@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-12-05 11:42+0200\n"
+"PO-Revision-Date: 2011-12-05 13:25+0200\n"
 "Last-Translator: shirayuki <shirayuking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -430,12 +430,12 @@ msgstr "%(hour)s 時間"
 #: choices.py:478 choices.py:479 choices.py:480 choices.py:481 choices.py:482
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hour)s 時間"
+msgstr "%(hours)s 時間"
 
 #: choices.py:483
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) 日"
+msgstr "%(day)s 日"
 
 #: choices.py:484
 #, python-format
@@ -537,9 +537,8 @@ msgid "Shell"
 msgstr "シェル"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "パスワードでのログインは無効"
+msgstr "パスワードでのログインを無効にする"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
@@ -825,12 +824,11 @@ msgstr "%s を正しく更新しました。"
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "エラー"
+msgstr "エラー: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
-#, fuzzy
 msgid "The service failed to restart."
 msgstr "サービスの再起動に失敗しました。"
 
@@ -910,12 +908,11 @@ msgstr ""
 #: network/forms.py:144
 #, fuzzy
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
-"ネームサーバ 3 を指定する前に、ネームサーバ 2 を指定する必要があります。"
+msgstr "ネームサーバ 3 を指定する前に、ネームサーバ 2 を指定する必要があります"
 
 #: network/forms.py:147 network/forms.py:154 network/forms.py:165
 msgid "Required when using nameserver 3"
-msgstr "ネームサーバ 3 を使用する場合、必要です。"
+msgstr "ネームサーバ 3 を使用する場合、必要です"
 
 #: network/forms.py:151
 #, fuzzy
@@ -982,15 +979,15 @@ msgstr "ホスト名"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "ドメイン名"
+msgstr "ドメイン"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr "IPv4 デフォルトゲートウェイ"
+msgstr "IPv4デフォルトゲートウェイ"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr "IPv6 デフォルトゲートウェイ"
+msgstr "IPv6デフォルトゲートウェイ"
 
 #: network/models.py:61
 msgid "Nameserver 1"
@@ -1015,7 +1012,7 @@ msgstr "NIC を指定してください。"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr "インターフェース名"
+msgstr "インタフェース名"
 
 #: network/models.py:92
 msgid "Name your NIC."
@@ -1028,9 +1025,7 @@ msgstr "DHCP"
 #: network/models.py:96
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr ""
-"有効にすると、DHCP を使ってデフォルトルータなどからIPv4 アドレスを取得しま"
-"す。"
+msgstr "有効にすると、DHCPを使ってデフォルトルータなどからIPv4アドレスを取得します。"
 
 #: network/models.py:99 network/models.py:161
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1066,11 +1061,11 @@ msgstr "オプション"
 #: network/models.py:141 network/models.py:158 network/models.py:249
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr "インターフェース"
+msgstr "インタフェース"
 
 #: network/models.py:142 templates/network/index.html:9
 msgid "Interfaces"
-msgstr "インターフェース"
+msgstr "インタフェース"
 
 #: network/models.py:194 templates/services/iscsi_targets.html:6
 msgid "Alias"
@@ -1084,17 +1079,16 @@ msgstr "エイリアス"
 #: network/models.py:205 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr "仮想インターフェース"
+msgstr "仮想インタフェース"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります。"
+msgstr "インタフェース名は vlanXX (XXは数字)である必要があります。例: vlan0 。"
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr "物理インターフェース"
+msgstr "物理インタフェース"
 
 #: network/models.py:214 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -1122,7 +1116,7 @@ msgstr "プロトコルタイプ"
 
 #: network/models.py:274
 msgid "LAGG Interface group"
-msgstr "LAGGインターフェースグループ"
+msgstr "LAGGインタフェースグループ"
 
 #: network/models.py:277
 msgid "LAGG Priority Number"
@@ -1181,7 +1175,7 @@ msgstr "追加が成功しました。"
 
 #: services/forms.py:66
 msgid "This is not a valid mask"
-msgstr "%s は無効なマスクです。"
+msgstr "これは無効なマスクです"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1476,9 +1470,8 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
 #: services/forms.py:875
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "インタフェースの削除"
+msgstr "特殊ファイルを削除"
 
 #: services/forms.py:906
 #, fuzzy
@@ -1582,8 +1575,7 @@ msgstr "ファイルマスク"
 
 #: services/models.py:118
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
-"このオプションはファイル作成時のマスクを上書きします(デフォルトは0666）"
+msgstr "このオプションはファイル作成時のマスクを上書きします(既定値は0666)。"
 
 #: services/models.py:122 services/models.py:893
 msgid "Directory mask"
@@ -1592,8 +1584,7 @@ msgstr "ディレクトリマスク"
 #: services/models.py:124
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr ""
-"このオプションはディレクトリ作成時のマスクを上書きします(デフォルトは0777）"
+msgstr "このオプションはディレクトリ作成時のマスクを上書きします(既定値は0777)。"
 
 #: services/models.py:127
 msgid "Large RW support"
@@ -1664,9 +1655,7 @@ msgstr "AIO リードサイズの最小値"
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
-msgstr ""
-"リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを読み込みます。"
-"　デフォルトの読み込みサイズは１です"
+msgstr "リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを読み込みます。　既定の読み込みサイズは１です。"
 
 #: services/models.py:168
 msgid "Minimum AIO write size"
@@ -1677,9 +1666,7 @@ msgstr "AIO ライトサイズの最小値"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
-msgstr ""
-"リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを書き込みます。"
-"　デフォルトの書き込みサイズは１です"
+msgstr "リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを書き込みます。　既定の書き込みサイズは１です。"
 
 #: services/models.py:174 services/models.py:175
 #: templates/services/index.html:29
@@ -1691,11 +1678,10 @@ msgid "Server Name"
 msgstr "サーバ名"
 
 #: services/models.py:185
-#, fuzzy
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr "サーバ名。項目が空の場合はデフォルトのサーバ名が使用されます。"
+msgstr "サーバ名。項目が空の場合は既定のサーバ名が使用されます。"
 
 #: services/models.py:188
 msgid "Guest Access"
@@ -1719,11 +1705,9 @@ msgid "Max. Connections"
 msgstr "コネクションの最大値"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr ""
-"各セッションごとのコネクションの最大値を指定します。（デフォルトは 8 です。）"
+msgstr "AFPでのコネクションの最大値を指定します。既定の制限は 50 です。"
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -1732,7 +1716,7 @@ msgstr "AFP"
 
 #: services/models.py:221
 msgid "Number of servers"
-msgstr "サーバーの数"
+msgstr "サーバの数"
 
 #: services/models.py:222
 msgid ""
@@ -1792,23 +1776,21 @@ msgstr "NOPINを送信する間隔を秒単位で指定します（初期値は2
 
 #: services/models.py:272
 msgid "Max. sessions"
-msgstr "セッションの最大値"
+msgstr "最大セッション数"
 
 #: services/models.py:273
 #, fuzzy
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
-"同時に保持するセッションの最大値を指定します。（デフォルトは 16 です。）"
+msgstr "同時に保持するセッションの最大値を指定します(既定値は 16 です)。"
 
 #: services/models.py:278
 msgid "Max. connections"
-msgstr "コネクションの最大値"
+msgstr "最大コネクション数"
 
 #: services/models.py:279
 #, fuzzy
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
-"各セッションごとのコネクションの最大値を指定します。（デフォルトは 8 です。）"
+msgstr "各セッションごとのコネクションの最大値を指定します(既定値は 8 です)。"
 
 #: services/models.py:284
 #, fuzzy
@@ -1821,8 +1803,8 @@ msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
-"各コネクションごとの pre-send R2T の最大値を指定します。（デフォルトは 32 で"
-"す。）実際の値は、ターゲットの QueueDepth によって制限されます。"
+"各コネクションごとの pre-send R2T の最大値を指定します（既定値は 32 です）。実際の値は、ターゲットの QueueDepth "
+"によって制限されます。"
 
 # Outstandingの訳が微妙
 #: services/models.py:290
@@ -1880,11 +1862,8 @@ msgid "Controller IP address"
 msgstr "コントローラのIPアドレス"
 
 #: services/models.py:331
-#, fuzzy
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
-"論理ユニットコントローラのIPアドレスを指定します。（デフォルトは 127.0.0.1"
-"（localhost）です。）"
+msgstr "論理ユニットコントローラのIPアドレスを指定します(既定値は127.0.0.1(localhost)です)"
 
 #: services/models.py:337
 msgid "Controller TCP port"
@@ -1893,9 +1872,7 @@ msgstr "コントローラの TCP ポート"
 #: services/models.py:338
 #, fuzzy
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
-"論理ユニットコントローラの TCP ポートを指定します。（デフォルトは 3261 で"
-"す。）"
+msgstr "論理ユニットコントローラの TCP ポートを指定します(既定値は 3261 です)"
 
 # 表現が正確でないかも
 #: services/models.py:344
@@ -1906,9 +1883,7 @@ msgstr "コントローラの認証されたネットマスク"
 #: services/models.py:346
 #, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
-msgstr ""
-"コントローラの認証されたネットマスクを指定します。（デフォルトは "
-"255.255.255.0 です。）"
+msgstr "コントローラの認証されたネットマスクを指定します(既定値は255.255.255.0です)"
 
 #: services/models.py:353
 #, fuzzy
@@ -2043,7 +2018,7 @@ msgstr "イニシエーター"
 #: services/models.py:536
 #, fuzzy
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr "ターゲット側のユーザ名。通常、イニシエータ名がデフォルトです。"
+msgstr "ターゲット側のユーザ名。通常、イニシエータ名が既定値です。"
 
 #: services/models.py:546
 msgid "Peer User"
@@ -2218,8 +2193,7 @@ msgstr "連絡先"
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
-msgstr ""
-"連絡先情報を記述します。例:このシステムの管理者の名前やメールアドレス等"
+msgstr "連絡先情報。例:このシステムの管理者の名前やメールアドレス: 'admin@email.address'。"
 
 #: services/models.py:746
 msgid "Community"
@@ -2395,9 +2369,7 @@ msgstr "FTP で接続された際、最初に表示される挨拶のバナー�
 
 #: services/models.py:888 services/models.py:894
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr ""
-"ファイルの creation mask（デフォルト: 077）を上書きする場合は、このオプション"
-"を使用します。"
+msgstr "ファイルの作成時のマスク(既定値は077）を上書きする場合は、このオプションを使用します。"
 
 #: services/models.py:897
 msgid "Enable FXP"
@@ -2538,9 +2510,7 @@ msgstr "新しいファイルの作成を許可"
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr ""
-"待ち受けるポート番号を指定します。デフォルトでは、/etc/service で指定された "
-"tftp ポートを使用します。"
+msgstr "待ち受けるポート番号を指定します。既定では /etc/service で指定された tftp ポートを使用します。"
 
 #: services/models.py:976
 #, fuzzy
@@ -2552,13 +2522,10 @@ msgid "umask"
 msgstr "umask"
 
 #: services/models.py:981
-#, fuzzy
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
-msgstr ""
-"新しく作成されるファイルの umask を指定できます。デフォルトは 022（全てのユー"
-"ザが読み込み可能、所有者が書き込み可能）です。"
+msgstr "新しく作成されるファイルの umask を指定できます。既定値は 022 (全てのユーザが読み込み可能、誰も書き込めない)です。"
 
 #: services/models.py:985 services/models.py:1022 system/models.py:463
 msgid "Extra options"
@@ -2579,7 +2546,7 @@ msgstr "TCP ポート番号"
 
 #: services/models.py:1002
 msgid "Alternate TCP port. Default is 22"
-msgstr "TCP ポート番号を指定します。デフォルトは 22 です。"
+msgstr "代わりのTCPポート番号を指定します。既定値は 22 です"
 
 #: services/models.py:1005
 msgid "Login as Root with password"
@@ -2814,9 +2781,8 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1198
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "TCP ポート番号を指定します。デフォルトは 22 です。"
+msgstr "代わりのTCPポート番号を指定します。既定値は 873 です"
 
 #: services/models.py:1203
 #, fuzzy
@@ -2868,17 +2834,15 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"このオプションを選択すると、そのモジュールからのファイル転送が行われる必要があるユーザー名を指定します。 'グループ'オプションと組み合わせることで、こ"
-"のアクセス許可が使用可能なファイルかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
+"このオプションを選択すると、そのモジュールからのファイル転送が行われる必要があるユーザ名を指定します。 'グループ'オプションと組み合わせることで、この"
+"アクセス許可が使用可能なファイルかを決定します。既定値の設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1251
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
-"このオプションにより、そのモジュールとファイル転送するグループ名を指定しま"
-"す。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてくださ"
-"い。"
+"このオプションにより、そのモジュールとファイル転送するグループ名を指定します。既定値の設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1255
 #, fuzzy
@@ -2886,15 +2850,13 @@ msgid "Hosts allow"
 msgstr "許可するホスト"
 
 #: services/models.py:1256
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"この共有へのアクセスを許可するホストをカンマ、半角スペース、タブで区切り指定"
-"します。ホスト名、IPアドレスどちらの形式でも可能です。空白にするとデフォルト"
-"の設定を使用します。"
+"この共有へのアクセスを許可するホストをカンマ、半角スペース、タブで区切り指定します。ホスト名、IPアドレスどちらの形式でも可能です。空白にすると既定値の"
+"設定を使用します。"
 
 #: services/models.py:1260
 #, fuzzy
@@ -2902,7 +2864,6 @@ msgid "Hosts deny"
 msgstr "拒否するホスト"
 
 #: services/models.py:1261
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2911,11 +2872,9 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"この共有へのアクセスを拒否するホストをカンマ、半角スペース、タブで区切り指定"
-"します。リストが矛盾している場合は、許可するホストが優先されます。デフォルト"
-"で全てのホストを拒否するために、キーワード ALL (またはネットマスク "
-"0.0.0.0/0) を使用し、その後アクセスを許可するホストを明示的に指定します。デ"
-"フォルトの設定を使用する場合はこのフィールドを空白にしてください。"
+"この共有へのアクセスを拒否するホストをカンマ、半角スペース、タブで区切り指定します。リストが矛盾している場合は、許可するホストが優先されます。既定値で全"
+"てのホストを拒否するために、キーワード ALL (またはネットマスク 0.0.0.0/0) "
+"を使用し、その後アクセスを許可するホストを明示的に指定します。既定値の設定を使用する場合はこのフィールドを空白にしてください。"
 
 #: services/models.py:1266
 #, fuzzy
@@ -3013,7 +2972,7 @@ msgstr "デバイスエクステント"
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr "エクステントの追加"
+msgstr "エクステントを追加"
 
 #: services/nav.py:102
 #, fuzzy
@@ -3149,9 +3108,8 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
-"この共有へのアクセスを許可するホストをカンマ、半角スペース、タブで区切り指定"
-"します。ホスト名、IPアドレスどちらの形式でも可能です。空白にするとデフォルト"
-"の設定を使用します。"
+"この共有へのアクセスを許可するホストをカンマ、半角スペース、タブで区切り指定します。ホスト名、IPアドレスどちらの形式でも可能です。空白にすると既定の設"
+"定を使用します。"
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
@@ -3166,11 +3124,9 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
-"この共有へのアクセスを拒否するホストをカンマ、半角スペース、タブで区切り指定"
-"します。リストが矛盾している場合は、許可するホストが優先されます。デフォルト"
-"で全てのホストを拒否するために、キーワード ALL (またはネットマスク "
-"0.0.0.0/0) を使用し、その後アクセスを許可するホストを明示的に指定します。デ"
-"フォルトの設定を使用する場合はこのフィールドを空白にしてください。"
+"この共有へのアクセスを拒否するホストをカンマ、半角スペース、タブで区切り指定します。リストが矛盾している場合は、許可するホストが優先されます。既定値で全"
+"てのホストを拒否するために、キーワード ALL (またはネットマスク 0.0.0.0/0) "
+"を使用し、その後アクセスを許可するホストを明示的に指定します。既定値の設定を使用する場合はこのフィールドを空白にしてください。"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -3708,14 +3664,12 @@ msgid "You already have a dataset with the same name"
 msgstr "すでに同じ名前のデータセットがあります。"
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "データセットのクォータ"
+msgstr "このボリュームのクオータ"
 
 #: storage/forms.py:715
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "データセットの予約領域"
+msgstr "このボリュームの予約領域"
 
 #: storage/forms.py:740
 #, fuzzy
@@ -3755,7 +3709,7 @@ msgstr "モード"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "ACLの種類"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -4039,7 +3993,7 @@ msgstr "ZFS ボリュームの作成"
 
 #: storage/nav.py:111
 msgid "Add Periodic Snapshot"
-msgstr "定期的なスナップショットの追加"
+msgstr "定期的なスナップショットを追加"
 
 # ボリューム（複数）の方がよい？
 #: storage/nav.py:122
@@ -4053,46 +4007,40 @@ msgid "Change Permissions"
 msgstr "パーミッションの変更"
 
 #: storage/views.py:147 storage/views.py:174 storage/views.py:199
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s を追加しました。"
+msgstr "ボリュームを正しく追加しました。"
 
 #: storage/views.py:268 templates/system/smarttest.html:14
 msgid "Unknown"
-msgstr ""
+msgstr "不明"
 
 #: storage/views.py:325
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "データセットを削除しました。"
+msgstr "データセットを正しく追加しました。"
 
 #: storage/views.py:359
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "データセットを削除しました。"
+msgstr "データセットを正しく編集しました。"
 
 #: storage/views.py:361 storage/views.py:436
 msgid "An error occurred when setting the options"
-msgstr "オプションの設定中にエラーが発生しました。"
+msgstr "オプションの設定中にエラーが発生しました"
 
 #: storage/views.py:382
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "ZFS ボリュームを削除しました。"
+msgstr "ZFSボリュームを正しく追加しました。"
 
 #: storage/views.py:397
-#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr "iSCSI ターゲットが使用しています。まずそちらを開放してください。"
+msgstr "iSCSIターゲットが使用中です。まずそちらを削除してください。"
 
 #: storage/views.py:400
 msgid "ZFS Volume successfully destroyed."
 msgstr "ZFS ボリュームを削除しました。"
 
 #: storage/views.py:434
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "データセットを削除しました。"
+msgstr "ネイティブデータセットを正しく編集しました。"
 
 #: storage/views.py:447
 msgid "Mount Point permissions successfully updated."
@@ -4351,13 +4299,10 @@ msgid "From email"
 msgstr "送信元アドレス"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
-msgstr ""
-"システムがメールを送信するときに使用するメールアドレスを指定します 。（例:"
-"freenas@mydomain.com）"
+msgstr "システムがメールを送信するときに使用するメールアドレスを指定します。（例: freenas@example.com）"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4903,13 +4848,13 @@ msgstr "ID"
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr "メンバ"
+msgstr "メンバー"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr "変更"
+msgstr "修正"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -4917,19 +4862,19 @@ msgstr "削除"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr "修正"
+msgstr "グループを修正"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr "グループの削除"
+msgstr "グループを削除"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr "定義されたグループはありません。"
+msgstr "ユーザが定義したグループはありません。"
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr "新しいグループの追加"
+msgstr "新しいグループを追加"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
@@ -4938,7 +4883,7 @@ msgstr "ホーム"
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr "ユーザの変更"
+msgstr "ユーザを修正"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -4947,19 +4892,19 @@ msgstr "補助グループ"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr "ユーザの削除"
+msgstr "ユーザを削除"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
-msgstr "ユーザの削除"
+msgstr "ユーザを削除"
 
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 msgid "No users defined"
-msgstr "定義されたユーザはありません。"
+msgstr "ユーザが定義したものはありません"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
-msgstr "新しいユーザの追加"
+msgstr "新しいユーザを追加"
 
 # 表記の揺れ。
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
@@ -5182,11 +5127,11 @@ msgstr "編集"
 #: templates/network/interface.html:36 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
 msgid "Edit Interface"
-msgstr "インタフェースの編集"
+msgstr "インタフェースを編集"
 
 #: templates/network/interface.html:42 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr "インタフェースの削除"
+msgstr "インタフェースを削除"
 
 #: templates/network/interface.html:49 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5194,7 +5139,7 @@ msgstr "定義されたインタフェースはありません。"
 
 #: templates/network/interface.html:55 templates/network/interface.html:57
 msgid "Add Interface"
-msgstr "インタフェースの追加"
+msgstr "インタフェースを追加"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -5202,7 +5147,7 @@ msgstr "アクション"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr "メンバの編集"
+msgstr "メンバーを編集"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -5214,11 +5159,11 @@ msgstr "定義された LAGG インタフェースはありません。"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "LAGG インタフェースの追加"
+msgstr "LAGGインタフェースを追加 "
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr "LAGG の追加"
+msgstr "LAGGを追加"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
@@ -5245,11 +5190,11 @@ msgstr "Destination"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr "静的ルートの編集"
+msgstr "静的ルートを編集"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr "静的ルートの削除"
+msgstr "静的ルートを削除"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
@@ -5257,7 +5202,7 @@ msgstr "定義された静的ルートはありません。"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr "静的ルートの追加"
+msgstr "静的ルートを追加"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5273,15 +5218,15 @@ msgstr "デフォルトルート"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "定義されたデフォルトルートはありません。"
+msgstr "定義されたデフォルトルートはありません"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr "VLAN の編集"
+msgstr "VLANを編集"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr "VLAN の削除"
+msgstr "VLANを削除"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
@@ -5289,7 +5234,7 @@ msgstr "定義された VLAN はありません。"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr "VLAN インタフェースの追加"
+msgstr "VLANインタフェースを追加"
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
@@ -5443,7 +5388,7 @@ msgstr "ピア"
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
-msgstr "iSCSI ユーザの追加"
+msgstr "iSCSIユーザを追加"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -5452,7 +5397,7 @@ msgstr "認証されたネットワーク"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr "イニシエータの追加"
+msgstr "認証されたイニシエータを追加"
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
@@ -5460,21 +5405,21 @@ msgstr "待ち受け"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr "ポータルの編集"
+msgstr "ポータルを編集"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr "ポータルの削除"
+msgstr "ポータルを削除"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr "ポータルの追加"
+msgstr "ポータルを追加"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr "ターゲットの追加"
+msgstr "ターゲットを追加"
 
 #: templates/services/rsyncmod.html:34
 #, fuzzy
@@ -5492,11 +5437,11 @@ msgstr "アクティブな Apple ファイル共有はありません。"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr "Apple ファイル共有の編集"
+msgstr "Apple共有を編集"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr "Apple ファイル共有の削除"
+msgstr "Apple共有を削除"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
@@ -5505,11 +5450,11 @@ msgstr "ファイル共有は定義されていません。"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr "Apple ファイル共有の追加"
+msgstr "Apple共有を追加"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr "Apple ファイル共有の追加（AFP）"
+msgstr "Apple共有(AFP)を追加"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
@@ -5533,19 +5478,19 @@ msgstr "マウントポイント"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr "NFS 共有の設定"
+msgstr "NFS共有を編集"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr "NFS 共有の削除"
+msgstr "NFS共有を削除"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr "Unix 共有の追加"
+msgstr "UNIX共有を追加"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr "Unix 共有の追加（NFS）"
+msgstr "UNIX共有を追加(NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
@@ -5553,28 +5498,27 @@ msgstr "アクティブなWindows ファイル共有はありません。"
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr "Windows ファイル共有の編集"
+msgstr "Windows共有を編集"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr "Windows ファイル共有の削除"
+msgstr "Windows共有を削除"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr "Windows ファイル共有の追加"
+msgstr "Windows共有を追加"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr "Windows ファイル共有の追加（CIFS）"
+msgstr "Windows共有を追加(CIFS)"
 
 #: templates/storage/clonesnap.html:10 templates/storage/snapshots.html:17
 msgid "Clone Snapshot"
 msgstr "クローンの作成"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "データセットの編集"
+msgstr "ディスクを編集"
 
 # あえて敬語にしてみた
 #: templates/storage/dataset_confirm_delete.html:9
@@ -5595,7 +5539,7 @@ msgstr[0] ""
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr "データセットの編集"
+msgstr "データセットを編集"
 
 #: templates/storage/datasets.html:7
 #, fuzzy, python-format
@@ -5604,7 +5548,7 @@ msgstr "ZFSデータセットの作成"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
-msgstr "データセットの追加"
+msgstr "データセットを追加"
 
 # あえて敬語にしてみた。
 # デタッチはzfsにおけるdetach（zpool detach とか）と思われます。
@@ -5678,7 +5622,7 @@ msgstr "変更"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr "リプリケーションの追加"
+msgstr "リプリケーションを追加"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -5698,12 +5642,12 @@ msgstr "最終スナップショット"
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
 msgid "Delete Replication"
-msgstr "リプリケーションの削除"
+msgstr "リプリケーションを削除"
 
 #: templates/storage/replications.html:46
 #: templates/storage/replications.html:50
 msgid "Edit Replication"
-msgstr "リプリケーションの編集"
+msgstr "リプリケーションを編集"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
@@ -5809,7 +5753,7 @@ msgstr "予定されている定期的なスナップショットはありませ
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr "ZFS ボリュームの編集"
+msgstr "ZFSボリュームを編集"
 
 #: templates/storage/volume_export.html:9
 #, python-format
@@ -5848,7 +5792,7 @@ msgstr "ZFS ボリューム"
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
 msgid "Edit ZFS Options"
-msgstr "ZFS オプションの編集"
+msgstr "ZFSオプションを編集"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
 #, fuzzy
@@ -5898,7 +5842,7 @@ msgstr "Spare"
 
 #: templates/storage/wizard.html:172
 msgid "Add Volume"
-msgstr "ボリュームの追加"
+msgstr "ボリュームを追加"
 
 #: templates/storage/wizard.html:173
 msgid "Existing data will be cleared"
@@ -5993,14 +5937,12 @@ msgid "No loader setting defined."
 msgstr "定義されたターゲットはありません。"
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "ポータルの追加"
+msgstr "ローダーを追加"
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "ポータルの追加"
+msgstr "ローダーを追加"
 
 #: templates/system/reporting.html:4
 #, fuzzy
@@ -6375,7 +6317,7 @@ msgid "Create ZFS zvol"
 msgstr "ZVol を ZFS で作成"
 
 msgid "Add ZVol"
-msgstr "ZVol の追加"
+msgstr "ZVolを追加"
 
 msgid "English"
 msgstr "英語"
@@ -6384,10 +6326,10 @@ msgid "Level"
 msgstr "レベル"
 
 msgid "Add Link Aggregation"
-msgstr "リンクアグリゲーションの追加"
+msgstr "リンクアグリゲーションを追加"
 
 msgid "View All Interfaces"
-msgstr "全てのインターフェースを表示"
+msgstr "全てのインタフェースを表示"
 
 msgid "View All VLANs"
 msgstr "全てのVLANを表示"

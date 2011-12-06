@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-05 08:15+0200\n"
+"PO-Revision-Date: 2011-12-05 15:47+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -627,7 +627,7 @@ msgstr "Yeni parola onayı"
 
 #: account/forms.py:653
 msgid "Change root password as well"
-msgstr "root parolasınıda değiştirin"
+msgstr "Root parolasını değiştirin"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -4026,14 +4026,14 @@ msgstr "ayın günü"
 
 #: system/forms.py:342
 msgid "Place to temporarily place firmware file"
-msgstr "Geçici olarak donanım yazılım dosyasını bir yere yerleştirin"
+msgstr "Geçici olarak aygıt yazılım dosyasını bir yere yerleştirin"
 
 #: system/forms.py:342
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
-"Sisteme uygulamadan önce donanım yazılımı güncelleme dosyasını saklamak için "
+"Sisteme uygulamadan önce aygıt yazılımı güncelleme dosyasını saklamak için "
 "geçici olarak burayı kullanabilirsiniz."
 
 #: system/forms.py:350
@@ -4046,7 +4046,7 @@ msgstr "İmaj için toplam SHA256 "
 
 #: system/forms.py:361
 msgid "Invalid firmware"
-msgstr "Geçersiz donanım yazılımı"
+msgstr "Geçersiz aygıt yazılımı"
 
 #: system/forms.py:367 system/forms.py:394
 msgid "Invalid checksum"
@@ -4126,7 +4126,7 @@ msgstr "Ekran koruyucuyu etkinleştir"
 
 #: system/models.py:110
 msgid "Automatically Check for New Firmware"
-msgstr "Yeni donanım yazılımını otomatik kontrol et"
+msgstr "Yeni aygıt yazılımını otomatik kontrol et"
 
 #: system/models.py:112
 msgid "Beep on boot"
@@ -5653,7 +5653,7 @@ msgstr "Hata Düzeltmeyi Kaydet"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Donanım Yazılımı Güncellemesi"
+msgstr "Aygıt Yazılımını Güncelle"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
