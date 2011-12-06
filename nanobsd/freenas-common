@@ -72,11 +72,11 @@ FlashDevice generic 2g
 
 add_port devel/pkg-config
 add_port x11/kbproto
-add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXdmcp -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXau -DWITHOUT_X11 # run dep of collectd
-add_port devel/libpthread-stubs -DWITHOUT_X11 # run dep of collectd
-add_port x11/libxcb -DWITHOUT_X11 # run dep of collectd
+add_port x11/xproto WITHOUT_X11=y
+add_port x11/libXdmcp WITHOUT_X11=y
+add_port x11/libXau WITHOUT_X11=y
+add_port devel/libpthread-stubs WITHOUT_X11=y
+add_port x11/libxcb WITHOUT_X11=y
 add_port x11/libX11
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
@@ -112,12 +112,12 @@ add_port devel/popt
 add_port databases/tdb
 add_port sysutils/libsunacl
 #-net/samba
-add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
-	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT \
-	-DWITH_EXP_MODULES 
+add_port net/samba35	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
+			WITH_ACL_SUPPORT=y WITH_PAM_SMBPASS=y \
+			WITH_AIO_SUPPORT=y WITH_EXP_MODULES=y
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
-add_port shells/bash
+add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 #+sysutils/fusefs-ntfs
@@ -129,16 +129,15 @@ add_port sysutils/fusefs-ntfs
 add_port sysutils/ntfsprogs
 add_port sysutils/smartmontools
 #+emulators/open-vm-tools-nox11
-add_port devel/icu
 add_port devel/pcre
 add_port devel/glib20
 add_port net/libdnet
 #-emulators/open-vm-tools-nox11
-add_port emulators/open-vm-tools-nox11
+add_port emulators/open-vm-tools-nox11 WITHOUT_ICU=y
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
-add_port www/py-django -DWITHOUT_MYSQL
+add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
 #+databases/py-south
 add_port devel/py-setuptools
@@ -214,12 +213,13 @@ add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
 add_port benchmarks/iozone 
-add_port net/netatalk		-DWITH_PAM
+add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
 #+add_port ftp/wget
 add_port dns/libidn
 #-add_port ftp/wget
 add_port ftp/wget
 add_port benchmarks/iperf
+add_port sysutils/ipmitool
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
@@ -232,7 +232,6 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython
-	add_port security/ca_root_nss -DWITH_ETCSYMLINK
 	add_port ftp/curl
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
@@ -254,8 +253,7 @@ fi
 
 hack_nsswitch_conf ( )
 {
-	# Neuter out all references to NIS in the nssiwtch.conf file
-	# Not sure this is still needed, but FreeNAS has it...
+	# Neuter out all references to NIS in the nsswitch.conf file
 	sed -i.bak -es/nis/files/g ${NANO_WORLDDIR}/etc/nsswitch.conf
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }

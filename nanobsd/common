@@ -65,21 +65,21 @@ add_etc_make_conf()
 }
 customize_cmd add_etc_make_conf
 
-clean_usr_local()
+clean_packages()
 {
 	LOCAL_DIR=${NANO_WORLDDIR}/usr/local
 	pprint 2 "Clean and create world directory (${LOCAL_DIR})"
-	if rm -rf ${LOCAL_DIR}/ > /dev/null 2>&1 ; then
-		true
-	else
-		chflags -R noschg ${LOCAL_DIR}/
-		rm -rf ${LOCAL_DIR}/
+	if [ -d "$LOCAL_DIR" ]; then
+		rm -Rf ${LOCAL_DIR} >/dev/null 2>&1
+		chflags -R noschg ${LOCAL_DIR}/ || :
+		rm -rf ${LOCAL_DIR}
 	fi
 	for f in bin etc lib libdata libexec sbin share; do
 		mkdir -p ${LOCAL_DIR}/$f
 	done
+	find ${NANO_WORLDDIR}/var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
 }
-customize_cmd clean_usr_local
+customize_cmd clean_packages
 
 cust_install_machine_files()
 {
@@ -108,12 +108,15 @@ WITHOUT_AUDIT=true
 WITHOUT_BIND_DNSSEC=true
 WITHOUT_BIND_ETC=true
 WITHOUT_BIND_LIBS_LWRES=true
+WITHOUT_BIND_NAMED=true
 WITHOUT_BLUETOOTH=true
 WITHOUT_CALENDAR=true
+WITHOUT_CTM=true
 WITHOUT_CVS=true
 WITHOUT_DICT=true
 WITHOUT_EXAMPLES=true
 WITHOUT_FORTRAN=true
+WITHOUT_FREEBSD_UPDATE=yes
 WITHOUT_GAMES=true
 WITHOUT_GCOV=true
 WITHOUT_GPIB=true
@@ -121,14 +124,18 @@ WITHOUT_HTML=true
 WITHOUT_I4B=true
 WITHOUT_IPFILTER=true
 WITHOUT_IPX=true
+WITHOUT_LIB32=true
 WITHOUT_LIBKSE=true
 WITHOUT_LOCALES=true
 WITHOUT_LPR=true
 WITHOUT_MAN=true
+WITHOUT_NDIS=true
 WITHOUT_NIS=true
 WITHOUT_NLS=true
 WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
+WITHOUT_PORTSNAP=true
+WITHOUT_PPP=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
 WITHOUT_SENDMAIL=true
@@ -136,7 +143,9 @@ WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
 WITHOUT_SYSCONS=true
 WITHOUT_SYSINSTALL=true
-WITHOUT_LIB32=true
+WITHOUT_TELNET=true
+WITHOUT_WIRELESS=true
+WITHOUT_WPA_SUPPLICANT_EAPOL=true
 PYTHON_DEFAULT_VERSION=python2.7
 "
 CONF_INSTALL="$CONF_BUILD
@@ -162,7 +171,28 @@ NANO_PACKAGE_ONLY=1
 
 CR()
 {
-	chroot ${NANO_WORLDDIR} /bin/sh -exc "$*"
+	local newvers revision branch
+
+	newvers="$NANO_SRC/sys/conf/newvers.sh"
+	revision=$(grep -m 1 REVISION= $newvers | cut -f2 -d '"')
+	branch=$(grep -m 1 BRANCH= $newvers | cut -f2 -d '"')
+	# 1. Invoke a subshell so we don't pollute the build environment with
+	#    these variables.
+	# 2. Use sane defaults to avoid polluting the build environment with
+	#    system specific settings that might have been defined via
+	#    /etc/make.conf (LOCALBASE), etc.
+	mount -t devfs none $NANO_WORLDDIR/dev
+	(set -e
+	 env
+	 unset ENV
+	 export UNAME_m=$NANO_ARCH
+	 export UNAME_p=$NANO_ARCH
+	 export UNAME_r="$revision-$branch"
+	 export UNAME_v="$(uname -v | sed -e "s/$(uname -p)/$UNAME_p/" -e "s/$(uname -r)/$UNAME_r/g")"
+	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
+	 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
+	umount $NANO_WORLDDIR/dev
 }
 
 # install a package from a pre-built binary
@@ -208,19 +238,20 @@ do_add_port ()
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/dev
-	mount -t devfs devfs ${NANO_WORLDDIR}/dev
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
-	CR "env UNAME_p=${NANO_ARCH} TARGET=${NANO_ARCH} \
+	CR "env \
+	    TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
-	    package BATCH=yes $* clean FORCE_PKG_REGISTER=t"
+	    clean package BATCH=yes -DUSE_PACKAGE_DEPENDS \
+	    $* clean -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
-	umount ${NANO_WORLDDIR}/dev
 	umount ${NANO_WORLDDIR}/usr/ports/packages
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports
@@ -338,7 +369,7 @@ freenas_custom()
 	chown root:wheel ${NANO_WORLDDIR}/usr
         find ${NANO_WORLDDIR} -type f -name "*~" -delete
         find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
-	mkdir ${NANO_WORLDDIR}/data/zfs
+        mkdir ${NANO_WORLDDIR}/data/zfs
         ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
