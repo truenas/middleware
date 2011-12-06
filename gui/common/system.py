@@ -92,7 +92,8 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', to=None, extra_headers=None, plain=False):
+def send_mail(subject=None, text=None, interval=timedelta(),
+              channel=get_sw_name().lower(), to=None, extra_headers=None):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
@@ -102,56 +103,69 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
             pass
         timediff = datetime.now() - last_update
         if (timediff >= interval) or (timediff < timedelta()):
-            f = open(channelfile, 'w')
-            f.close()
+            open(channelfile, 'w').close()
         else:
             return
 
     error = False
     errmsg = ''
-    email = Email.objects.all().order_by('-id')[0]
+    em = Email.objects.all().order_by('-id')[0]
     if not to:
-        to = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
-    if not plain:
-        msg = MIMEText(text, _charset='utf-8')
-        if subject:
-            msg['Subject'] = subject
-        msg['From'] = email.em_fromemail
-        msg['To'] = to
-        msg['Date'] = formatdate()
+        to = [ bsdUsers.objects.get(bsdusr_username='root').bsdusr_email ]
+    msg = MIMEText(text, _charset='utf-8')
+    if subject:
+        msg['Subject'] = subject
+    msg['From'] = em.em_fromemail
+    msg['To'] = ', '.join(to)
+    msg['Date'] = formatdate()
 
-        if not extra_headers:
-            extra_headers = {}
-        for key, val in extra_headers.items():
-            if msg.has_key(key):
-                msg.replace_header(key, val)
-            else:
-                msg[key] = val
-        msg = msg.as_string()
-    else:
-        msg = text
+    if not extra_headers:
+        extra_headers = {}
+    for key, val in extra_headers.items():
+        if key in msg:
+            msg.replace_header(key, val)
+        else:
+            msg[key] = val
+    msg = msg.as_string()
 
     try:
-        if email.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port,
+        if not em.em_outgoingserver or not em.em_port:
+            # See NOTE below.
+            raise ValueError('you must provide an outgoing mailserver and mail '
+                             'server port when sending mail')
+        if em.em_security == 'ssl':
+            server = smtplib.SMTP_SSL(em.em_outgoingserver, em.em_port,
                                       timeout=10)
         else:
-            server = smtplib.SMTP(email.em_outgoingserver, email.em_port,
+            server = smtplib.SMTP(em.em_outgoingserver, em.em_port,
                                   timeout=10)
-            if email.em_security == 'tls':
+            if em.em_security == 'tls':
                 server.starttls()
-        if email.em_smtp:
-            server.login(email.em_user, email.em_pass)
-        else:
-            server.connect()
-        server.sendmail(email.em_fromemail, [to],
-                        msg)
+        if em.em_smtp:
+            server.login(em.em_user.encode('utf-8'), em.em_pass.encode('utf-8'))
+        # NOTE: Don't do this.
+        #
+        # If smtplib.SMTP* tells you to run connect() first, it's because the
+        # mailserver it tried connecting to via the outgoing server argument was
+        # unreachable and it tried to connect to 'localhost' and barfed. This is
+        # because FreeNAS doesn't run a full MTA.
+        #else:
+        #    server.connect()
+        server.sendmail(em.em_fromemail, to, msg)
         server.quit()
+    except ValueError, ve:
+        # Don't spam syslog with these messages. They should only end up in the
+        # test-email pane.
+        errmsg = str(ve)
+        error = True
     except Exception, e:
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID, facility=syslog.LOG_MAIL)
-        for line in traceback.format_exc().splitlines():
-            syslog.syslog(syslog.LOG_ERR, line)
-        syslog.closelog()
+        syslog.openlog(channel, syslog.LOG_CONS | syslog.LOG_PID,
+                       facility=syslog.LOG_MAIL)
+        try:
+            for line in traceback.format_exc().splitlines():
+                syslog.syslog(syslog.LOG_ERR, line)
+        finally:
+            syslog.closelog()
         errmsg = str(e)
         error = True
     return error, errmsg

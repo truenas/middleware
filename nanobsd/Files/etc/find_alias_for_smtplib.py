@@ -1,43 +1,51 @@
 #!/usr/local/bin/python
 
 import argparse
-from django.core.management import setup_environ
-import os
+import email
+import email.parser
 import re
 import sys
+
+from django.core.management import setup_environ
 
 sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
 
 from freenasUI import settings
 setup_environ(settings)
 
-from django.db import models
 from freenasUI.common.system import send_mail
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S+?):\s*(?P<to>\S+)$')
 
-def do_sendmail(msg, to=None, plain=False):
-    headers = {}
-    _headers, text = msg.split('\n\n', 1)
-    for header in _headers.split('\n'):
-        name, val = header.split(': ', 1)
-        headers[name] = val
+def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
-    to = headers.get("To", to)
-    if to and '@' not in to:
+    if to_addrs is None:
+        if not parse_recipients:
+            raise ValueError('Do not know who to send the message to.')
+        to_addrs = []
+
+    # XXX: this should probably be a FeedParser because reading from sys.stdin
+    # is blocking.
+    em_parser = email.parser.Parser()
+    em = em_parser.parsestr(msg)
+    if parse_recipients:
+        # Strip away the comma based delimiters and whitespace.
+        to_addrs = map(str.strip, em.get('To').split(','))
+
+    if to_addrs:
         aliases = get_aliases()
-        if to in aliases:
-            to = headers['To'] = aliases[to]
+        to_addrs_repl = []
+        for to_addr in to_addrs:
+            if to_addr.find('@') == -1 and to_addr in aliases:
+                to_addr = aliases[to_addr]
+            to_addrs_repl.append(to_addr)
 
     margs = {}
-    if plain:
-        margs['text'] = msg
-        margs['plain'] = True
-    else:
-        margs['text'] = text
-        margs['extra_headers'] = headers
-    if to:
-        margs['to'] = to
+    margs['extra_headers'] = dict(em)
+    margs['subject'] = em.get('Subject')
+    margs['text'] = ''.join(email.iterators.body_line_iterator(em))
+    if to_addrs_repl:
+        margs['to'] = to_addrs_repl
 
     send_mail(**margs)
 
@@ -57,21 +65,26 @@ def get_aliases():
                 break
             else:
                 doround = False
-            for key,val in aliases.items():
+            for key, val in aliases.iteritems():
                 if val in aliases:
                     aliases[key] = aliases[val]
                     doround = True
         return aliases
 
 def main():
-    parser = argparse.ArgumentParser(description='Process email.')
-    parser.add_argument('-i', dest='to', metavar='N', type=str,
-                       help='to email address')
-    parser.add_argument('-t', dest='plain', action='store_true',
-                       help='read recipients')
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Process email')
+    parser.add_argument('-i', dest='strip_leading_dot', action='store_false',
+                        default=True, help='see sendmail(8) -i')
+    parser.add_argument('-t', dest='parse_recipients', action='store_true',
+                        default=False,
+                        help='parse recipients from message')
+    parser.usage  = ' '.join(parser.format_usage().split(' ')[1:-1])
+    parser.usage += ' [email_addr|user] ..'
+    args, to = parser.parse_known_args()
+    if not to and not args.parse_recipients:
+        parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
-    do_sendmail(msg, to=args.to, plain=args.plain)
+    do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
 
 if __name__ == "__main__":
     main()
