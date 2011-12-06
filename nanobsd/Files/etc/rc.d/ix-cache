@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-cache
-# REQUIRE: django
+# REQUIRE: LOGIN
 
 . /etc/rc.freenas
 
