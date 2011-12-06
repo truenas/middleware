@@ -1,0 +1,189 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# REQUIRE: jail
+# PROVIDE: ix-plugins
+
+. /etc/rc.freenas
+
+get_jid()
+{
+	ret=1
+	jid=0
+
+	if srv_enabled plugins
+	then
+        	_jail_name=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+        	SELECT
+			jail_name
+
+		FROM
+			services_plugins
+
+		ORDER BY
+			-id
+
+		LIMIT 1
+		")
+
+		if [ -n "${_jail_name}" ]
+		then
+			local _ifs=${IFS}
+
+			IFS='
+'
+			for line in $(jls | tail +2)
+			do
+				line=$(echo ${line}|xargs)
+
+				local _jid=$(echo ${line}|cut -f1 -d' ')
+				local _hostname=$(echo ${line}|cut -f3 -d' ')
+
+				if [ "${_jail_name}" = "${_hostname}" ]
+				then
+					jid=${_jid}
+					ret=0
+					break
+				fi
+			
+			done
+			IFS=${_ifs}
+		fi
+	fi
+
+	echo "${jid}"
+	return ${ret}
+}
+
+plugins_start()
+{
+	local args="$*"
+
+	local jid=$(get_jid)
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	sql="
+	SELECT
+		plugin_name,
+		plugin_path,
+		plugin_enabled
+	FROM
+		plugins_plugins
+	"
+
+	if [ -n "${args}" ]
+	then
+		names=""
+		for p in ${args}
+		do
+			if [ -z "${names}" ]
+			then
+				names="'${p}'"
+			else
+				names="${names},'${p}'"
+			fi
+		done
+		sql="${sql}
+		WHERE	
+			plugin_name
+		IN
+			($names)
+		AND
+		"
+	else
+		sql="${sql} WHERE "
+	fi
+
+	sql="$sql plugin_enabled IS '1'"
+
+	local _ifs="${IFS}"
+	IFS="|"
+	
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	while read name path enabled 
+	do
+		if [ "${enabled}" = "1" ]
+		then
+			echo jexec ${jid} "${path}/control" start
+		fi
+	done
+	IFS="${_ifs}"
+}
+
+plugins_stop()
+{
+	local args="$*"
+
+	local jid=$(get_jid)
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	sql="
+	SELECT
+		plugin_name,
+		plugin_path,
+		plugin_enabled
+	FROM
+		plugins_plugins
+	"
+
+	if [ -n "${args}" ]
+	then
+		names=""
+		for p in ${args}
+		do
+			if [ -z "${names}" ]
+			then
+				names="'${p}'"
+			else
+				names="${names},'${p}'"
+			fi
+		done
+		sql="${sql}
+		WHERE	
+			plugin_name
+		IN
+			($names)
+		AND
+		"
+	else
+		sql="${sql} WHERE "
+	fi
+
+	sql="$sql plugin_enabled IS NOT '1'"
+
+	local _ifs="${IFS}"
+	IFS="|"
+	
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	while read name path enabled 
+	do
+		if [ "${enabled}" = "0" ]
+		then
+			echo jexec ${jid} "${path}/control" stop
+		fi
+	done
+	IFS="${_ifs}"
+}
+
+plugins_status()
+{
+	local args="$*"
+
+	# stub me
+}
+
+name="ix-plugins"
+start_cmd='plugins_start'
+stop_cmd='plugins_stop'
+status_cmd='plugins_status'
+            
+load_rc_config $name
+run_rc_command $*
