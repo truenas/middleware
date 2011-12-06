@@ -217,7 +217,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
@@ -335,8 +335,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_builtin=False
             bsduser.save()
             _notifier.reload("user")
-	    bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
-            if bsdusr_sshpubkey != '':
+            bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
+            if bsdusr_sshpubkey:
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
@@ -385,7 +385,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                                      initial=u'/bin/csh',
                                      choices=()
                                      )
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
@@ -450,7 +450,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         cleaned_data = self.cleaned_data
         if ((not (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == '/root')) and
-            self.cleaned_data.get('bsdusr_sshpubkey', '') != ''):
+            self.cleaned_data.get('bsdusr_sshpubkey', '')):
                 del self.cleaned_data['bsdusr_sshpubkey']
                 self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
         return cleaned_data
@@ -476,6 +476,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         _notifier.reload("user")
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == '/root'):
+            if bsdusr_sshpubkey:
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
