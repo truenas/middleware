@@ -102,7 +102,21 @@ db_update()
 
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
-	umount /data
+
+	# Things that need write access to /data can follow this.
+
+
+	# Things that just need to read from /data can follow this.
+	mount -ru /data
+
+	# Run this here to deal with potential changes in kernel configuration
+	# that will impact our next boot, instead of delaying the update in
+	# configuration until the boot after that.
+	#
+	# XXX: this should be somewhere a little more intelligent... it's a
+	# hack.
+	service ix-loader start
+
 	echo "Database upgrade complete.  Rebooting."
 	cd /
 	sleep 2
