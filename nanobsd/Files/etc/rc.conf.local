@@ -29,10 +29,6 @@
 
 . /etc/rc.freenas
 
-FREENAS_CONFIG=/data/freenas-v1.db
-FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
-FREENAS_RC=/var/tmp/rc.conf.freenas
-
 _interface_config()
 {
 	local IFS=\|
