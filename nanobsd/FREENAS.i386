@@ -87,6 +87,8 @@ options		NULLFS
 options		UNIONFS
 options		VFS_AIO
 
+options		KVA_PAGES=512
+
 # To make an SMP kernel, the next two lines are needed
 options 	SMP			# Symmetric MultiProcessor Kernel
 device		apic			# I/O APIC
