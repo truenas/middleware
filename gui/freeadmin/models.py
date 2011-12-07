@@ -56,6 +56,7 @@ class PathField(models.CharField):
     description = "A generic path chooser"
 
     def __init__(self, *args, **kwargs):
+        self.abspath = kwargs.pop("abspath", True)
         kwargs['max_length'] = 255
         if kwargs.get('blank', False):
             kwargs['null'] = True
@@ -66,6 +67,7 @@ class PathField(models.CharField):
         from freeadmin.forms import PathField as PF
         defaults = {
             'form_class': PF,
+            'abspath': self.abspath,
             }
         kwargs.update(defaults)
         return super(PathField, self).formfield(**kwargs)

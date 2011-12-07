@@ -373,6 +373,7 @@ class CronJob(Model):
 class Rsync(Model):
     rsync_path = PathField(
         verbose_name=_("Path"),
+        abspath=False,
         )
     rsync_remotehost = models.CharField(
             max_length=120,
