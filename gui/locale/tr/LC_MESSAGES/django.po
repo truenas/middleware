@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-05 15:47+0200\n"
+"PO-Revision-Date: 2011-12-06 15:50+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3790,7 +3790,7 @@ msgstr "Kopyalama Görevi"
 
 #: storage/models.py:449
 msgid "Replication Tasks"
-msgstr "Kopyalama Görevleri"
+msgstr "Çoğaltma Görevi"
 
 #: storage/models.py:472 system/models.py:422 templates/storage/tasks.html:22
 msgid "Recursive"
