@@ -551,8 +551,6 @@ freenas_custom()
 	compress_ko geom_stripe.ko
 	compress_ko geom_raid3.ko
 	compress_ko geom_gate.ko
-	compress_ko ntfs.ko
-	compress_ko smbfs.ko
 
 	# nuke .pyc files (saves ~25MB on a fresh install)
 	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
