@@ -530,19 +530,19 @@ class notifier:
         self.__system("/usr/sbin/service statd quietstart")
         self.__system("/usr/sbin/service lockd quietstart")
 
-    def _start_plugins(self):
+    def _start_plugins_jail(self):
         self.__system("/usr/sbin/service ix-jail quietstart")
         self.__system("/usr/sbin/service jail quietstart")
 
-    def _stop_plugins(self):
+    def _stop_plugins_jail(self):
         self.__system("/usr/sbin/service jail forcestop")
         self.__system("/usr/sbin/service ix-jail forcestop")
 
-    def _restart_plugins(self):
+    def _restart_plugins_jail(self):
         self._stop_plugins()
         self._start_plugins()
     
-    def _started_plugins(self):
+    def _started_plugins_jail(self):
         c = self.__open_db()
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()[0]
