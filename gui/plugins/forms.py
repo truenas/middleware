@@ -44,7 +44,7 @@ class PluginsForm(ModelForm):
     def save(self):
         super(PluginsForm, self).save()
         if self.instance._original_plugin_enabled != self.instance.plugin_enabled:
-            notifier().restart("ix-plugins %s" % self.instance.plugin_name)
+            notifier().restart("ix-plugins")
 
 
 class PBITemporaryLocationForm(Form):
