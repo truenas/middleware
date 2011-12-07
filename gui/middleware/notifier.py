@@ -56,6 +56,7 @@ import types
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 
 sys.path.append(WWW_PATH)
@@ -1393,7 +1394,7 @@ class notifier:
         finally:
             os.unlink(path)
             syslog.closelog()
-        open('/data/need-update', 'w').close()
+        open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def apply_servicepack(self):
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
@@ -1804,7 +1805,7 @@ class notifier:
 
         shutil.move(config_file_name, '/data/uploaded.db')
         # Now we must run the migrate operation in the case the db is older
-        open('/data/need-update', 'w+').close()
+        open(NEED_UPDATE_SENTINEL, 'w+').close()
 
         return True
 

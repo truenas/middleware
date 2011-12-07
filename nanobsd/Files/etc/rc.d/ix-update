@@ -6,7 +6,7 @@
 # PROVIDE: ix-update
 # BEFORE: ix-fstab
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 readonly UPDATE_FAILED_LOG="/data/update.failed"
 
@@ -35,10 +35,10 @@ handle_error()
 
 	echo "Reverting to previous state"
 
-	rm -f /data/need-update
+	rm -f $NEED_UPDATE_SENTINEL
 	mv ${FREENAS_CONFIG}.bak ${FREENAS_CONFIG}
-	if [ -f /data/cd_upgrade ]; then
-		rm /data/cd_upgrade
+	if [ -f $CD_UPGRADE_SENTINEL ]; then
+		rm $CD_UPGRADE_SENTINEL
 		cat <<EOF
 Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
 Reverting a failed CD upgrade is not totally possible
@@ -82,7 +82,7 @@ db_update()
 		echo "Cannot mount /data to see if you need an upgrade."
 		exit 1
 	fi
-	if [ ! -f /data/need-update ]; then
+	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
 		# XXX: this seems somewhat dangerous, depending on script
 		# ordering and system state.
 		umount /data 
@@ -100,10 +100,8 @@ db_update()
 	db_update_real || handle_error
 	set -e
 
-	rm -f /data/need-update
-	if [ -f /data/cd_upgrade ]; then
-		rm /data/cd_upgrade
-	fi
+	rm -f $NEED_UPDATE_SENTINEL
+	rm -f $CD_UPGRADE_SENTINEL
 	umount /data
 	echo "Database upgrade complete.  Rebooting."
 	cd /

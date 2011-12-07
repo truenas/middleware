@@ -35,6 +35,12 @@
 : ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
 
 #
+#	Updater specific variables.
+#
+readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
+readonly NEED_UPDATE_SENTINEL="/data/need-update"
+
+#
 #	OPENSSL settings
 #
 : ${OPENSSL:="/usr/bin/openssl"}

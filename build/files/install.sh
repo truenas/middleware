@@ -208,6 +208,9 @@ menu_install()
     local _do_upgrade
     local _menuheight
 
+    local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
+    local readonly NEED_UPDATE_SENTINEL="/data/need-update"
+
     get_physical_disks_list
     _disklist="${VAL}"
 
@@ -273,8 +276,8 @@ menu_install()
         mount /dev/${_disk}s4 /tmp/data_new
         ls /tmp/data_new > /dev/null
         cp -pR /tmp/data_preserved/ /tmp/data_new
-        : > /tmp/data_new/need-update
-        : > /tmp/data_new/cd_update
+        : > /tmp/$NEED_UPDATE_SENTINEL
+        : > /tmp/$CD_UPGRADE_SENTINEL
         umount /tmp/data_new
         # Mount: /
         mount /dev/${_disk}s1a /tmp/data_new
