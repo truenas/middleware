@@ -411,6 +411,61 @@ shrink_md_fbsize()
 }
 customize_cmd shrink_md_fbsize
 
+performance_sanity_caps()
+{
+	local arc_max_in_mb kmem_size nmbclusters
+
+	# For FreeNAS, there are a wide variety of heterogenous configs.
+	# Bottom line is that these are meant to be safe defaults s.t.
+	# FreeBSD doesn't overcommit memory without excessive prodding
+	# from the end-user.
+	#
+	# DISCLAIMER: These settings are not a free pass for running on
+	# platforms that do not meet the conditions listed on the FreeNAS
+	# system requirements page!!!
+	(
+
+	echo
+	echo "# System defaults for $NANO_LABEL ($FREENAS_ARCH)"
+	echo
+
+	# File kern IPC defaults.
+	case "$FREENAS_ARCH" in
+	amd64)
+		nmbclusters=50000
+		;;
+	i386)
+		nmbclusters=25000
+		;;
+	esac
+	echo "kern.ipc.nmbclusters=\"$nmbclusters\""
+
+	# ZFS defaults.
+	case "$FREENAS_ARCH" in
+	amd64)
+		arc_max_in_mb=1024
+		;;
+	i386)
+		arc_max_in_mb=256
+		;;
+	esac
+	echo "vfs.zfs.arc_max=\"$(( $arc_max_in_mb * 1024 * 1024 ))\""
+
+	case "$FREENAS_ARCH" in
+	amd64)
+		kmem_size=1024
+		;;
+	i386)
+		kmem_size=348
+		;;
+	esac
+	echo "vm.kmem_size=\"${kmem_size}M\""
+	echo "vm.kmem_size_max=\"${kmem_size}M\""
+
+	) >> ${NANO_WORLDDIR}/boot/loader.conf
+}
+customize_cmd performance_sanity_caps
+
 save_build ( )
 {
 	VERSION_FILE=${NANO_WORLDDIR}/etc/version
