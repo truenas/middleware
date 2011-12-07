@@ -71,7 +71,9 @@ plugins_start()
 	SELECT
 		plugin_name,
 		plugin_path,
-		plugin_enabled
+		plugin_enabled,
+		plugin_ip,
+		plugin_port
 	FROM
 		plugins_plugins
 	"
@@ -105,11 +107,11 @@ plugins_start()
 	IFS="|"
 	
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
-	while read name path enabled 
+	while read name path enabled ip port
 	do
 		if [ "${enabled}" = "1" ]
 		then
-			echo jexec ${jid} "${path}/control" start
+			jexec ${jid} "${path}/control" start "${ip}" "${port}"
 		fi
 	done
 	IFS="${_ifs}"
