@@ -37,8 +37,8 @@
 #
 #	Updater specific variables.
 #
-readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
-readonly NEED_UPDATE_SENTINEL="/data/need-update"
+: ${CD_UPGRADE_SENTINEL="/data/cd-upgrade"}
+: ${NEED_UPDATE_SENTINEL="/data/need-update"}
 
 #
 #	OPENSSL settings
