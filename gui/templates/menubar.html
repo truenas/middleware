@@ -27,6 +27,11 @@
 	<br />
         <span>{% trans "Services" %}</span>
     </div>
+    <div dojoType="dijit.MenuBarItem" onClick="Menu.openPlugins();" class="menu_icon{% if focused_tab == "services" %} dijitMenuItemSelected{% endif %}">
+	<img src="{{ STATIC_URL }}images/ui/menu/services.png">
+	<br />
+        <span>{% trans "Plugins" %}</span>
+    </div>
     <div dojoType="dijit.MenuBarItem" class="menu_icon" onClick="alert_open();" style="float:right;" >
     <div dojoType="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
         <span>Alert</span>
