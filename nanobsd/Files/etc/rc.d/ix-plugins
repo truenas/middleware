@@ -102,17 +102,24 @@ plugins_start()
 	local _ifs="${IFS}"
 	IFS="|"
 	
-	res=0
+	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled ip port
 	do
 		jexec ${jid} "${path}/control" start "${ip}" "${port}"
 		if [ "$?" != "0" ]
 		then
-			res=1
+			touch "${tmpfile}"
 		fi
 	done
 	IFS="${_ifs}"
+
+	local res=0
+	if [ -f "${tmpfile}" ]
+	then
+		rm -f "${tmpfile}"
+		res=1
+	fi
 
 	return ${res}
 }
