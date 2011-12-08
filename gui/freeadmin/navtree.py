@@ -375,10 +375,10 @@ class NavTree(object):
         Plugin nodes
         """
         host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(), )
-        for plugin in Plugins.objects.all():
+        for plugin in Plugins.objects.filter(plugin_enabled=True):
             try:
-                response = urllib2.urlopen("%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_uname), None, 1)
-                print "%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_uname)
+                response = urllib2.urlopen("%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_name), None, 1)
+                print "%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_name)
                 data = response.read()
             except urllib2.HTTPError, e:
                 data = None
