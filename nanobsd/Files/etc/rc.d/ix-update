@@ -115,6 +115,7 @@ db_update()
 	#
 	# XXX: this should be somewhere a little more intelligent... it's a
 	# hack.
+	# NOTE: Run this last ;)..
 	service ix-loader start
 
 	echo "Database upgrade complete.  Rebooting."
