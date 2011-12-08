@@ -106,7 +106,12 @@ plugins_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled ip port
 	do
-		jexec ${jid} "${path}/control" start "${ip}" "${port}"
+		if [ "${enabled}" != "1" ]
+		then
+			continue
+		fi
+
+		jexec ${jid} "${path}/control" start "${ip}" "${port}" 2>/dev/null
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"
@@ -170,7 +175,12 @@ plugins_stop()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled 
 	do
-		jexec ${jid} "${path}/control" stop
+		if [ "${enabled}" != "0" ]
+		then
+			continue
+		fi
+
+		jexec ${jid} "${path}/control" stop 2>/dev/null
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"
@@ -234,7 +244,7 @@ plugins_status()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled 
 	do
-		jexec ${jid} "${path}/control" status
+		jexec ${jid} "${path}/control" status 2>/dev/null
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"
