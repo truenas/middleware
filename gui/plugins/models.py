@@ -84,5 +84,4 @@ class Plugins(Model):
         verbose_name_plural = _(u"Plugins")
 
     class FreeAdmin:
-        deletable = False
         icon_model = u"PluginsIcon"

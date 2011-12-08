@@ -25,15 +25,18 @@
 #
 #####################################################################
 import re
+import urllib2
 
 from django.conf import settings
+from django.core.urlresolvers import resolve
 from django.db import models
 from django.forms import ModelForm
-from django.core.urlresolvers import resolve
 from django.http import Http404
+from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree
+from freenasUI.plugins.models import Plugins
 
 class NavTree(object):
 
@@ -371,12 +374,11 @@ class NavTree(object):
         """
         Plugin nodes
         """
-        #HACK: unused code yet
-        #import urllib2
-        #from django.utils import simplejson
-        for x in range(0):
+        host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(), )
+        for plugin in Plugins.objects.all():
             try:
-                response = urllib2.urlopen('http://10.1.1.1/', None, 1)
+                response = urllib2.urlopen("%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_uname), None, 1)
+                print "%s/plugins/%s/_s/v1/treemenu/" % (host, plugin.plugin_uname)
                 data = response.read()
             except urllib2.HTTPError, e:
                 data = None
