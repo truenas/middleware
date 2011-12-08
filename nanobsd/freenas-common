@@ -52,15 +52,17 @@ FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
 
+add_port converters/libiconv
+add_port converters/iconv
+add_port devel/gettext
+# gmake is not needed in the final image
+add_port devel/gmake
 add_port devel/pkg-config
 add_port devel/libpthread-stubs WITHOUT_X11=y
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
 #+editors/nano
 add_port lang/perl5.12
-add_port converters/libiconv
-add_port converters/iconv
-add_port devel/gettext
 #-editors/nano
 add_port editors/nano
 add_port ftp/proftpd
@@ -575,11 +577,14 @@ freenas_custom()
 	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
 	rm -rf ${NANO_WORLDDIR}/usr/share/me
 
+	# Not needed in the final image.
+	CR "/usr/sbin/pkg_delete -f /var/db/pkg/gmake*"
+
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 45MB)
 	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl*"
+		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
 	fi
 
 	# Kill all .a's that are installed (15MB)
