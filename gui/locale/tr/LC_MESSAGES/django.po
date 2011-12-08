@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-06 15:50+0200\n"
+"PO-Revision-Date: 2011-12-07 12:19+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3265,14 +3265,14 @@ msgstr ""
 
 #: sharing/models.py:179
 msgid "No .AppleDouble"
-msgstr ".AppleDouble yok"
+msgstr "AppleDouble yok"
 
 #: sharing/models.py:180
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
-"Bu otomatik olarak oluşturulmasını engeller. AppleÇift dizinleri. Mac "
+"AppleDouble dizinleri otomatik olarak bunun oluşturulmasını engeller. Mac "
 "bilgisayarlar tarafından erişilen dosyalar için bu seçenek kullanılmalıdır."
 
 #: sharing/models.py:183
