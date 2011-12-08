@@ -119,7 +119,7 @@ class PluginsForm(ModelForm):
         model = models.Plugins
     def save(self):
         super(PluginsForm, self).save()
-        started = notifier().restart("XXX")
+        started = notifier().restart("plugins_jail")
         if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
             raise ServiceFailed("plugins_jail", _("The Plugins service failed to reload."))
 
