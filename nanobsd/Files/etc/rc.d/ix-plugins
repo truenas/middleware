@@ -95,26 +95,26 @@ plugins_start()
 			plugin_name
 		IN
 			($names)
-		AND
 		"
-	else
-		sql="${sql} WHERE "
 	fi
 
-	sql="$sql plugin_enabled IS '1'"
 
 	local _ifs="${IFS}"
 	IFS="|"
 	
+	res=0
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled ip port
 	do
-		if [ "${enabled}" = "1" ]
+		jexec ${jid} "${path}/control" start "${ip}" "${port}"
+		if [ "$?" != "0" ]
 		then
-			jexec ${jid} "${path}/control" start "${ip}" "${port}"
+			res=1
 		fi
 	done
 	IFS="${_ifs}"
+
+	return ${res}
 }
 
 plugins_stop()
@@ -153,33 +153,96 @@ plugins_stop()
 			plugin_name
 		IN
 			($names)
-		AND
 		"
-	else
-		sql="${sql} WHERE "
 	fi
-
-	sql="$sql plugin_enabled IS NOT '1'"
 
 	local _ifs="${IFS}"
 	IFS="|"
 	
+	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled 
 	do
-		if [ "${enabled}" = "0" ]
+		jexec ${jid} "${path}/control" stop
+		if [ "$?" != "0" ]
 		then
-			echo jexec ${jid} "${path}/control" stop
+			touch "${tmpfile}"
 		fi
 	done
 	IFS="${_ifs}"
+
+	local res=0
+	if [ -f "${tmpfile}" ]
+	then
+		rm -f "${tmpfile}"
+		res=1
+	fi
+
+	return ${res}
 }
 
 plugins_status()
 {
 	local args="$*"
 
-	# stub me
+	local jid=$(get_jid)
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	sql="
+	SELECT
+		plugin_name,
+		plugin_path,
+		plugin_enabled
+	FROM
+		plugins_plugins
+	"
+
+	if [ -n "${args}" ]
+	then
+		names=""
+		for p in ${args}
+		do
+			if [ -z "${names}" ]
+			then
+				names="'${p}'"
+			else
+				names="${names},'${p}'"
+			fi
+		done
+		sql="${sql}
+		WHERE	
+			plugin_name
+		IN
+			($names)
+		"
+	fi
+
+	local _ifs="${IFS}"
+	IFS="|"
+	
+	local tmpfile="/var/tmp/...sporked"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	while read name path enabled 
+	do
+		jexec ${jid} "${path}/control" status
+		if [ "$?" != "0" ]
+		then
+			touch "${tmpfile}"
+		fi
+	done
+	IFS="${_ifs}"
+
+	local res=0
+	if [ -f "${tmpfile}" ]
+	then
+		rm -f "${tmpfile}"
+		res=1
+	fi
+
+	return ${res}
 }
 
 name="ix-plugins"
