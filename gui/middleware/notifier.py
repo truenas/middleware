@@ -558,6 +558,32 @@ class notifier:
         else:
             return False
 
+    def _start_plugins(self, plugin=None):
+        if plugin is not None:
+            self.__system_nolog("/usr/sbin/service ix-plugins quietstart %s" % plugin)
+        else:
+            self.__system_nolog("/usr/sbin/service ix-plugins quietstart")
+
+    def _stop_plugins(self, plugin=None):
+        if plugin is not None:
+            self.__system_nolog("/usr/sbin/service ix-plugins quietstop %s" % plugin)
+        else:
+            self.__system_nolog("/usr/sbin/service ix-plugins quietstop")
+
+    def _restart_plugins(self, plugin=None):
+        self._stop_plugins(plugin)
+        self._start_plugins(plugin)
+
+    def _started_plugins(self, plugin=None):
+        res = False
+        if plugin is not None:
+            if self.__system_nolog("/usr/sbin/service ix-plugins status %s" % plugin) == 0:
+                res = True 
+        else: 
+            if self.__system_nolog("/usr/sbin/service ix-plugins status") == 0:
+                res = True 
+        return res
+
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
         self.__system("/usr/sbin/service inadyn restart")
