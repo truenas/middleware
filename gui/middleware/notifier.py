@@ -586,6 +586,14 @@ class notifier:
                 res = True 
         return res
 
+    def plugins_jail_configured(self):
+        res = False
+        c = self.__open_db()
+        c.execute("SELECT count(*) from services_plugins")
+        if int(c.fetchone()[0]) > 0:
+            res = True
+        return res
+
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
         self.__system("/usr/sbin/service inadyn restart")
