@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nginx
+# BEFORE: nginx
+
+. /etc/rc.freenas
+
+NGINX_PLUGINS_CONF="/usr/local/etc/nginx/plugins.conf"
+
+generate_plugins_conf()
+{
+	local IFS="|"
+
+	: > "${NGINX_PLUGINS_CONF}"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		plugin_name,
+		plugin_uname,
+		plugin_view,
+		plugin_icon,
+		plugin_enabled,
+		plugin_ip,
+		plugin_port,
+		plugin_path
+
+	FROM
+		plugins_plugins
+
+	ORDER BY
+		-id
+	" | \
+	while read name uname view icon enabled ip port path
+	do
+		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
+		location = ${view} {
+		    fastcgi_pass   ${ip}:${port};
+		    include        fastcgi_params;
+		}
+__EOF__
+	done
+}
+
+
+name="ix-nginx"
+start_cmd='generate_plugins_conf'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"

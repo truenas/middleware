@@ -98,10 +98,9 @@ plugins_start()
 		"
 	fi
 
-
 	local _ifs="${IFS}"
 	IFS="|"
-	
+
 	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled ip port
