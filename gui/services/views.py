@@ -193,7 +193,7 @@ def servicesToggleView(request, formname):
         'rsync_toggle' : 'rsync',
         'smartd_toggle' : 'smartd',
         'ups_toggle' : 'ups',
-        'plugins_toggle' : 'plugins_jail',
+        'plugins_toggle' : 'plugins',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
@@ -222,6 +222,8 @@ def servicesToggleView(request, formname):
             started = notifier().start(changing_service)
         else:
             started = notifier().stop(changing_service)
+    elif changing_service == 'plugins':
+        started = notifier().restart('plugins_jail')
     else:
         started = notifier().restart(changing_service)
 
@@ -243,6 +245,9 @@ def servicesToggleView(request, formname):
             svc_entry.save()
             if changing_service in ('ldap','activedirectory', 'ups'):
                 notifier().stop(changing_service)
+            elif changing_service == 'plugins':
+                notifier().stop('plugins_jail')
+
     else:
         if svc_entry.srv_enable == 1:
             status ='on'
