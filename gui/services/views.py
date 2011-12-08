@@ -198,6 +198,7 @@ def servicesToggleView(request, formname):
     changing_service = form2namemap[formname]
     if changing_service == "":
         raise "Unknown service - Invalid request?"
+
     # Do not allow LDAP and AD to be enabled simultaniously
     opposing_service = None
     opp_svc_entry = None
@@ -208,6 +209,7 @@ def servicesToggleView(request, formname):
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if opposing_service:
         opp_svc_entry = models.services.objects.get(srv_service=opposing_service)
+
     # Turning things off is always ok
     if svc_entry.srv_enable:
         svc_entry.srv_enable = 0
@@ -215,6 +217,7 @@ def servicesToggleView(request, formname):
         if opposing_service and not opp_svc_entry.srv_enable == 1 or not opposing_service:
             svc_entry.srv_enable = 1
     svc_entry.save()
+
     # forcestop then start to make sure the service is of the same
     # status.
     if changing_service in ("ldap", "activedirectory"):
@@ -223,7 +226,10 @@ def servicesToggleView(request, formname):
         else:
             started = notifier().stop(changing_service)
     elif changing_service == 'plugins':
-        started = notifier().restart('plugins_jail')
+        if svc_entry.srv_enable == 1:
+            started = notifier().start('plugins_jail')
+        else:
+            started = notifier().stop('plugins_jail')
     else:
         started = notifier().restart(changing_service)
 
