@@ -193,7 +193,7 @@ def servicesToggleView(request, formname):
         'rsync_toggle' : 'rsync',
         'smartd_toggle' : 'smartd',
         'ups_toggle' : 'ups',
-        'plugins_toggle' : 'plugins',
+        'plugins_toggle' : 'plugins_jail',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":

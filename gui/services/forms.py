@@ -119,9 +119,9 @@ class PluginsForm(ModelForm):
         model = models.Plugins
     def save(self):
         super(PluginsForm, self).save()
-        started = notifier().restart("plugins_jail")
+        started = notifier().restart("XXX")
         if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
-            raise ServiceFailed("plugins", _("The Plugins service failed to reload."))
+            raise ServiceFailed("plugins_jail", _("The Plugins service failed to reload."))
 
 
 class FTPForm(ModelForm):
