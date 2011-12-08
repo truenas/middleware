@@ -127,7 +127,7 @@ generate_boot_loader_conf()
 
 	fi
 	if update_persistent_file /boot/loader.conf $tmp; then
-		reboot # Yes -- this is intentional :)
+		reboot_now=true
 	fi
 }
 
@@ -149,8 +149,14 @@ generate_boot_loader_conf_local()
 
 generate_loader_confs()
 {
+	reboot_now=false
+
 	generate_boot_loader_conf
 	generate_boot_loader_conf_local
+
+	if $reboot_now; then
+		reboot
+	fi
 }
 
 name="ix-loader"
