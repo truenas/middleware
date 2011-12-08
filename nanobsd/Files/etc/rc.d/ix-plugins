@@ -98,6 +98,7 @@ plugins_start()
 		"
 	fi
 
+
 	local _ifs="${IFS}"
 	IFS="|"
 
@@ -105,7 +106,7 @@ plugins_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled ip port
 	do
-		if [ "${enabled}" != "1" ]
+		if [ "${enabled}" != "1" -a "${rc_force}" != "yes" ]
 		then
 			continue
 		fi
@@ -174,7 +175,7 @@ plugins_stop()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name path enabled 
 	do
-		if [ "${enabled}" != "0" ]
+		if [ "${enabled}" != "0" -a "${rc_force}" != "yes" ]
 		then
 			continue
 		fi
