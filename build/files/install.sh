@@ -153,7 +153,7 @@ disk_is_freenas()
     local _disk="$1"
     local _rv=1
 
-    mkdir /tmp/data_old
+    mkdir -p /tmp/data_old
     mount /dev/${_disk}s4 /tmp/data_old
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
@@ -171,7 +171,7 @@ disk_is_freenas()
             cp -pR /tmp/data_old/root/.ssh /tmp/
         fi
         if [ -d /tmp/data_old/boot/modules ]; then
-            mkdir /tmp/modules
+            mkdir -p /tmp/modules
             for i in `ls /tmp/data_old/boot/modules`
             do
                 cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
@@ -272,31 +272,31 @@ menu_install()
     /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -eq 1 ]; then
         # Mount: /data
-        mkdir /tmp/data_new
-        mount /dev/${_disk}s4 /tmp/data_new
-        ls /tmp/data_new > /dev/null
-        cp -pR /tmp/data_preserved/ /tmp/data_new
+        mkdir -p /tmp/data
+        mount /dev/${_disk}s4 /tmp/data
+        ls /tmp/data > /dev/null
+        cp -pR /tmp/data_preserved/ /tmp/data
         : > /tmp/$NEED_UPDATE_SENTINEL
         : > /tmp/$CD_UPGRADE_SENTINEL
-        umount /tmp/data_new
+        umount /tmp/data
         # Mount: /
-        mount /dev/${_disk}s1a /tmp/data_new
-        ls /tmp/data_new > /dev/null
-        cp -p /tmp/hostid /tmp/data_new/conf/base/etc
+        mount /dev/${_disk}s1a /tmp/data
+        ls /tmp/data > /dev/null
+        cp -p /tmp/hostid /tmp/data/conf/base/etc
         if [ -d /tmp/.ssh ]; then
-            cp -pR /tmp/.ssh /tmp/data_new/root/
+            cp -pR /tmp/.ssh /tmp/data/root/
         fi
         if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
-                cp -p /tmp/modules/$i /tmp/data_new/boot/modules
+                cp -p /tmp/modules/$i /tmp/data/boot/modules
             done
         fi
         if [ -d /tmp/fusionio ]; then
-            cp -pR /tmp/fusionio /tmp/data_new/usr/local/
+            cp -pR /tmp/fusionio /tmp/data/usr/local/
         fi
-        umount /tmp/data_new
-        rmdir /tmp/data_new
+        umount /tmp/data
+        rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
 $SW_NAME will migrate this file, if necessary, to the current format." 6 74
     fi
