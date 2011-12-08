@@ -8,6 +8,43 @@
 
 . /etc/rc.subr
 
+# Update an file that persists across reboots with a new file if something's
+# changed, or nuke it if the file was unchanged.
+#
+# TODO: move to rc.freenas.
+#
+# Parameters:
+#   1 - Old file
+#   2 - New file
+#
+# Returns...
+#   0 - updated something.
+#   1 - no change.
+#   2 - an error occurred.
+update_persistent_file()
+{
+	local new old rc
+
+	old=$1
+	new=$2
+
+	rc=1
+	if [ ! -f "$new" ]; then
+		:
+	elif cmp -s "$old" "$new"; then
+		rm -f "$new"
+	else
+		rc=2
+		if mount -uw /; then
+			if mv "$new" "$old"; then
+				rc=0
+			fi
+			mount -ur /
+		fi
+	fi
+	return $rc
+}
+
 loader_serial()
 {
 	local serial_enable=0
@@ -70,46 +107,54 @@ loader_user() {
 
 }
 
-update_loader_conf()
+generate_boot_loader_conf()
 {
 	local tmp
 
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	autotune=/usr/local/www/freenasUI/tools/autotune
+	if [ -x $autotune ]; then
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+		# 1. Do autotuning magic here with $autotune
+		# 2. Output the contents of your autotuning magic to $tmp.
+		# 3. Profit!
+		#
+		# Don't remove this context and please don't change the
+		# comments ;)..
+
+
+		# End autotuning context.
+
+	fi
+	if update_persistent_file /boot/loader.conf $tmp; then
+		reboot # Yes -- this is intentional :)
+	fi
+}
+
+generate_boot_loader_conf_local()
+{
+	local settings
+	local tmp
 
 	settings="serial saver user"
-	for s in ${settings}
-	do
-		eval "loader_${s}" >> $tmp
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+	for setting in $settings; do
+		eval "loader_${setting}" >> $tmp
 	done
 
-	# NOTE: newline required!
-	sha256orig=$(sha256 -q -s "$(sed -E -n '/# User customizations/{n;p;}' /boot/loader.conf)
-")
-	sha256new=$(sha256 -q "${tmp}" 2>/dev/null)
-	if [ "${sha256orig}" != "${sha256new}" ]; then
-		tmp2=$(mktemp /tmp/tmp.XXXXXXX)
-		cat > $tmp2 <<EOF
-$(sed -E -n '/# User customizations/q;p' /boot/loader.conf)
+	update_persistent_file /boot/loader.conf.local $tmp
+}
 
-# User customizations (DO NOT DELETE THIS LINE)
-$(cat "${tmp}" 2>/dev/null)
-EOF
-		rc=1
-		if mount -uw /; then
-			if mv "$tmp2" /boot/loader.conf; then
-				rc=0
-			fi
-			mount -ur /
-		else
-			rm -f "$tmp2"
-		fi
-		return $rc
-	fi
-	rm -f $tmp
+generate_loader_confs()
+{
+	generate_boot_loader_conf
+	generate_boot_loader_conf_local
 }
 
 name="ix-loader"
-start_cmd='update_loader_conf'
+start_cmd='generate_loader_confs'
 stop_cmd=':'
 
 load_rc_config $name
