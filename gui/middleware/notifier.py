@@ -454,6 +454,7 @@ class notifier:
 
     def _start_motd(self):
         self.__system("/usr/sbin/service ix-motd quietstart")
+        self.__system("/usr/sbin/service motd quietstart")
 
     def _start_ttys(self):
         self.__system("/usr/sbin/service ix-ttys quietstart")
