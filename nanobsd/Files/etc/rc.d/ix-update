@@ -18,7 +18,7 @@ db_update_real()
 
 	yes | /usr/local/bin/python \
 	    /usr/local/www/freenasUI/manage.py migrate --merge > \
-		$UPDATE_FAILED_LOG
+		$UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
 		echo "manage.py migrate failed"
 		return 1
