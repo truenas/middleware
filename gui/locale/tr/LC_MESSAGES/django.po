@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-07 12:19+0200\n"
+"PO-Revision-Date: 2011-12-09 11:03+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -543,7 +543,7 @@ msgstr "Parolayla oturum açmayı devre dışı bırak"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr "Kiltli kullanıcı"
+msgstr "Kullanıcıyı kilitle"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -627,7 +627,7 @@ msgstr "Yeni parola onayı"
 
 #: account/forms.py:653
 msgid "Change root password as well"
-msgstr "Root parolasını değiştirin"
+msgstr "Root parolasını değiştir"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -736,7 +736,7 @@ msgstr "Hesabım"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr "Tüm kullanıcıları göster"
+msgstr "Tüm Kullanıcıları Göster"
 
 #: account/nav.py:43
 msgid "View All Groups"
@@ -783,7 +783,7 @@ msgstr "Yol, bağlanma birimi noktası içerisinde olmalıdır"
 #: freeadmin/navtree.py:316
 #, python-format
 msgid "Add %s"
-msgstr "Ekle %s"
+msgstr "%s Ekle "
 
 #: freeadmin/navtree.py:328
 #, python-format
@@ -4026,7 +4026,7 @@ msgstr "ayın günü"
 
 #: system/forms.py:342
 msgid "Place to temporarily place firmware file"
-msgstr "Geçici olarak aygıt yazılım dosyasını bir yere yerleştirin"
+msgstr "Geçici olarak aygıt yazılım dosyasının yükleneceği bir yer seçin"
 
 #: system/forms.py:342
 msgid ""
@@ -4038,11 +4038,11 @@ msgstr ""
 
 #: system/forms.py:350
 msgid "New image to be installed"
-msgstr "Yeni imaj kurulacak"
+msgstr "Kurulacak yeni imaj"
 
 #: system/forms.py:351 system/forms.py:378
 msgid "SHA256 sum for the image"
-msgstr "İmaj için toplam SHA256 "
+msgstr "İmaj için SHA256 değeri "
 
 #: system/forms.py:361
 msgid "Invalid firmware"
@@ -5658,7 +5658,7 @@ msgstr "Aygıt Yazılımını Güncelle"
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
 msgid "Apply Service Pack"
-msgstr "Hizmet Paketi Uygula"
+msgstr "Hizmet Paketi Yükle"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -5666,8 +5666,7 @@ msgstr "Yeniden Başlatılıyor..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
-"Kurulumun varsayılan ayarlarına geri dönmek istediğinizden emin misiniz?"
+msgstr "Kurulumun standart ayarlarına geri dönmek istediğinizden emin misiniz?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
@@ -5698,8 +5697,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
-"İPUCU: Test e-posta root kullanıcısına  gönderilir. Yapılandırmak için "
-"kullanıcılar Kullanıcılar -> root -> E-posta Değiştir"
+"İPUCU: Test e-posta root kullanıcısına  gönderilir. Yapılandırmak için Hesap "
+"-> Kullanıcılar -> Tüm Kullanıcıları Göster -> root -> E-postayı Değiştir"
 
 #: templates/system/loader.html:32
 msgid "No loader setting defined."
@@ -5759,7 +5758,7 @@ msgstr "Hiçbir rsync görevi tanımlı değil."
 
 #: templates/system/rsync.html:44
 msgid "Add rsync task"
-msgstr "Rsync görevi ekle"
+msgstr "Rsync Görevi Ekle"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5784,7 +5783,7 @@ msgstr "Yapılandırmayı Kaydet"
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr "Yapılandırmayı Güncelle"
+msgstr "Yapılandırmayı Yükle"
 
 #: templates/system/smarttest.html:36
 msgid "No S.M.A.R.T. tests defined"
@@ -5841,7 +5840,7 @@ msgstr "%(step)s - %(step_count)s"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
-msgstr "Güncellemeleri Uygula"
+msgstr "Güncellemeyi Uygula"
 
 #: tools/alert.py:76
 #, python-format
