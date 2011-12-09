@@ -48,6 +48,10 @@ from dojango import forms
 import choices
 
 class FileWizard(FormWizard):
+    def __init__(self, *args, **kwargs):
+        self.templates = kwargs.pop('templates', [])
+        self.saved_prefix = kwargs.pop("prefix", '')
+        super(FileWizard, self).__init__(*args, **kwargs)
     @method_decorator(csrf_protect)
     def __call__(self, request, *args, **kwargs):
         """
@@ -114,9 +118,11 @@ class FileWizard(FormWizard):
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
     def get_template(self, step):
-        """
-        TODO: templates as parameter
-        """
+        if self.templates:
+            for i, tpl in enumerate(self.templates):
+                if '%s' in tpl:
+                    self.templates[i] = tpl % step
+            return self.templates
         return ['system/wizard_%s.html' % step, 'system/wizard.html']
     def process_step(self, request, form, step):
         super(FileWizard, self).process_step(request, form, step)
@@ -134,9 +140,6 @@ class FileWizard(FormWizard):
         if not request.is_ajax():
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
-    def __init__(self, form_list, prefix="", initial=None):
-        super(FileWizard, self).__init__(form_list, initial)
-        self.saved_prefix = prefix
     def prefix_for_step(self, step):
         "Given the step, returns a Form prefix to use."
         return '%s%s' % (self.saved_prefix, str(step))
