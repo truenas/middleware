@@ -94,7 +94,7 @@ class notifier:
                            % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
 
     def __system_nolog(self, command):
         syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
@@ -111,7 +111,7 @@ class notifier:
             retval = self.___system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
         return retval
 
     def __pipeopen(self, command, log=True):
@@ -611,7 +611,10 @@ class notifier:
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service samba reload")
+        # TODO: samba reload doesn't work.
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/sbin/service samba quietstart")
 
     def _restart_cifs(self):
         # TODO: bug in samba rc.d script
@@ -1226,7 +1229,7 @@ class notifier:
             raise MiddlewareError("Operation could not be performed. %s" % msg)
 
         if msg != "":
-            syslog.syslog(syslog.LOG_NOTICE, "Command reports " + msg)
+            syslog.syslog(syslog.LOG_DEBUG, "Command reports " + msg)
 
     def __smbpasswd(self, username, password):
         command = '/usr/local/bin/smbpasswd -s -a "%s"' % (username)
@@ -2373,7 +2376,7 @@ class notifier:
         """
 
         syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_NOTICE, "sysctlbyname: %s" % (name, ))
+        syslog.syslog(syslog.LOG_DEBUG, "sysctlbyname: %s" % (name, ))
 
         if value:
             #TODO: set sysctl
