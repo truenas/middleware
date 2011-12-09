@@ -16,20 +16,14 @@ db_update_real()
 
 	echo "Applying database schema changes"
 
-	# Determine what directories we need to run base migrations from, e.g.
-	# freeadmin, system, sharing, etc.
-	set -- $(find /usr/local/www -name migrations -type d | xargs -J % find % -name '0001*.py' | sed -e 's,.*freenasUI/(.+)/migrations.*,\1,g' | sort)
-
-	for i in $*; do
-		yes | /usr/local/bin/python \
-		    /usr/local/www/freenasUI/manage.py migrate --merge $i > \
-		    $UPDATE_FAILED_LOG
-		if [ $? -ne 0 ]; then
-			echo "manage.py migrate $i failed"
-			return 1
-		fi
-	done
-	rm -f $UPDATE_FAILED_LOG 
+	yes | /usr/local/bin/python \
+	    /usr/local/www/freenasUI/manage.py migrate --merge > \
+		$UPDATE_FAILED_LOG
+	if [ $? -ne 0 ]; then
+		echo "manage.py migrate failed"
+		return 1
+	fi
+	rm -f $UPDATE_FAILED_LOG
 	return 0
 }
 
