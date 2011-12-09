@@ -701,7 +701,12 @@
                 loadOk(json, ioArgs);
             } catch(e) {
                 console.log(e);
-                rnode.set('content', data);
+                setMessage(gettext('An error occurred!'), "error");
+                try {
+                    rnode.hide();
+                } catch(e) {
+                    rnode.set('content', data);
+                }
             }
         };
 
