@@ -53,5 +53,7 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^cronjobs/$', 'cronjobs', name="system_cronjobs"),
     url(r'^rsyncs/$', 'rsyncs', name="system_rsyncs"),
     url(r'^smarttests/$', 'smarttests', name="system_smarttests"),
+    url(r'^sysctls/$', 'sysctls', name="system_sysctls"),
+    url(r'^loaders/$', 'loaders', name="system_loaders"),
     url(r'^restart-httpd/$', 'restart_httpd', name="system_restart_httpd"),
     )

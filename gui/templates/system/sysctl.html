@@ -1,0 +1,43 @@
+{% load i18n %}
+<table class="grid">
+        <thead class="header">
+          <tr>
+            <td>{% trans "Variable" %}</td>
+            <td>{% trans "Value" %}</td>
+            <td>{% trans "Comment" %}</td>
+            <td>{% trans "Available actions" %}</td>
+          </tr>
+        </thead>
+    {% for c in sysctls %}
+        <td>{{ c.sysctl_mib }}</td>
+        <td>{{ c.sysctl_value }}</td>
+        <td>{{ c.sysctl_comment }}</td>
+        <td>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Edit"|force_escape %}', '{{ c.get_edit_url }}', [this,]);
+            </script>
+            </button>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Delete"|force_escape %}', '{{ c.get_delete_url }}', [this,]);
+            </script>
+            </button>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="4">{% trans "No sysctl defined." %}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    <p class="btn">
+        <button dojoType="dijit.form.Button" type="button">
+            {% trans "Add sysctl" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Add Sysctl"|force_escape %}', '{% url freeadmin_model_add app="system",model="Sysctl" %}', [this,]);
+        </script>
+        </button>
+    </p>

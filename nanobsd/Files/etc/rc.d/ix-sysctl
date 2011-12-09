@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sysctl
+# REQUIRE: ix-update sysctl
+
+. /etc/rc.subr
+
+set_sysctl()
+{
+	local IFS=\|
+	local var value
+
+	# Generate sysctls
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		"SELECT sysctl_mib, sysctl_value FROM system_sysctl ORDER BY id" | \
+	while read var value; do
+		sysctl ${var}="${value}"
+	done
+}
+
+name="ix-sysctl"
+start_cmd='set_sysctl'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

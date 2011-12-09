@@ -4,45 +4,45 @@
 #
 
 # PROVIDE: ix-loader
+# REQUIRE: ix-update
 
 . /etc/rc.subr
 
-
-loader_serial_enable()
+# Update an file that persists across reboots with a new file if something's
+# changed, or nuke it if the file was unchanged.
+#
+# TODO: move to rc.freenas.
+#
+# Parameters:
+#   1 - Old file
+#   2 - New file
+#
+# Returns...
+#   0 - updated something.
+#   1 - no change.
+#   2 - an error occurred.
+update_persistent_file()
 {
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
+	local new old rc
 
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
+	old=$1
+	new=$2
+
+	rc=1
+	if [ ! -f "$new" ]; then
+		:
+	elif cmp -s "$old" "$new"; then
+		rm -f "$new"
+	else
+		rc=2
+		if mount -uw /; then
+			if mv "$new" "$old"; then
+				rc=0
+			fi
+			mount -ur /
+		fi
 	fi
-
-	echo 'boot_multicons="YES"' > "${tmp}"
-	echo 'console="vidconsole,comconsole"' >> "${tmp}"
-	cat "${conf}" >> "${tmp}"
-
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
-}
-
-loader_serial_disable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
+	return $rc
 }
 
 loader_serial()
@@ -60,42 +60,10 @@ loader_serial()
 		-id
 	LIMIT 1")
 
-	case "${serial_enable}" in
-		0) loader_serial_disable ;;
-		1) loader_serial_enable ;;
-	esac
-}
-
-loader_saver_enable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-
-	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
-	echo 'screensave_load="YES"' >> "${tmp}"
-	echo 'screensave_name="daemon_saver"' >> "${tmp}"
-
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
+	if [ "${serial_enable}" != "0" ]; then
+		echo 'boot_multicons="YES"'
+		echo 'console="vidconsole,comconsole"'
 	fi
-	mount -ur /
-}
-
-loader_saver_disable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
 }
 
 loader_saver()
@@ -113,23 +81,85 @@ loader_saver()
 		-id
 	LIMIT 1")
 
-	case "${saver_enable}" in
-		0) loader_saver_disable ;;
-		1) loader_saver_enable ;;
-	esac
+	if [ "${saver_enable}" != "0" ]; then
+		echo 'screensave_load="YES"'
+		echo 'screensave_name="daemon_saver"'
+	fi
+
 }
 
-update_loader_conf()
-{
-	settings="serial saver"
-	for s in ${settings}
-	do
-		eval "loader_${s}"
+loader_user() {
+
+	local IFS=\|
+	local var value comment
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT ldr_var,ldr_value,ldr_comment FROM system_loader ORDER BY id" | \
+	while read var value comment; do
+		(echo -n "${var}=\"${value}\""
+		 if [ -n "$comment" ]; then
+			echo -e " # $comment"
+		 else
+			echo
+		 fi)
 	done
+
+}
+
+generate_boot_loader_conf()
+{
+	local tmp
+
+	autotune=/usr/local/www/freenasUI/tools/autotune
+	if [ -x $autotune ]; then
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+		# 1. Do autotuning magic here with $autotune
+		# 2. Output the contents of your autotuning magic to $tmp.
+		# 3. Profit!
+		#
+		# Don't remove this context and please don't change the
+		# comments ;)..
+
+
+		# End autotuning context.
+
+	fi
+	if update_persistent_file /boot/loader.conf $tmp; then
+		reboot_now=true
+	fi
+}
+
+generate_boot_loader_conf_local()
+{
+	local settings
+	local tmp
+
+	settings="serial saver user"
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+	for setting in $settings; do
+		eval "loader_${setting}" >> $tmp
+	done
+
+	update_persistent_file /boot/loader.conf.local $tmp
+}
+
+generate_loader_confs()
+{
+	reboot_now=false
+
+	generate_boot_loader_conf
+	generate_boot_loader_conf_local
+
+	if $reboot_now; then
+		reboot
+	fi
 }
 
 name="ix-loader"
-start_cmd='update_loader_conf'
+start_cmd='generate_loader_confs'
 stop_cmd=':'
 
 load_rc_config $name

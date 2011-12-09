@@ -326,6 +326,18 @@ def rsyncs(request):
         'rsyncs': syncs,
         })
 
+def sysctls(request):
+    sysctls = models.Sysctl.objects.all().order_by('id')
+    return render(request, 'system/sysctl.html', {
+        'sysctls': sysctls,
+        })
+
+def loaders(request):
+    loaders = models.Loader.objects.all().order_by('id')
+    return render(request, 'system/loader.html', {
+        'loaders': loaders,
+        })
+
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")
