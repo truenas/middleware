@@ -611,10 +611,7 @@ class notifier:
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        # TODO: samba reload doesn't work.
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/sbin/service samba quietstart")
+        self.__system("/usr/sbin/service samba reload")
 
     def _restart_cifs(self):
         # TODO: bug in samba rc.d script
