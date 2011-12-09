@@ -165,6 +165,7 @@ class Plugins(TreeNode):
     gname = 'Plugins'
     name = _(u'Plugins')
     type = 'object'
+    icon = models.Plugins._admin.icon_model
 
     def __init__(self, *args, **kwargs):
         super(Plugins, self).__init__(*args, **kwargs)
