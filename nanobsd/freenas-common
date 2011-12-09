@@ -542,9 +542,7 @@ remove_perl()
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 45MB)
-	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
-	fi
+	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
 }
 customize_cmd remove_perl
 fi
