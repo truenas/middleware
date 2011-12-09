@@ -2162,7 +2162,7 @@ class notifier:
                     disk.disk_enabled = False
                 else:
                     disk.disk_enabled = True
-                    disk.disk_serial = self.serial_from_device(dskname)
+                    disk.disk_serial = self.serial_from_device(dskname) or ''
             elif dskname in in_disks:
                 # We are probably dealing with with multipath here
                 disk.disk_enabled = False
@@ -2191,7 +2191,7 @@ class notifier:
                 d = Disk()
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
-                d.disk_serial = self.serial_from_device(disk)
+                d.disk_serial = self.serial_from_device(disk) or ''
                 if d.disk_serial and d.disk_serial in serials:
                     #Probably dealing with multipath here, do not add another
                     continue
