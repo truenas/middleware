@@ -536,6 +536,27 @@ configure_nginx()
 }
 customize_cmd configure_nginx
 
+if [ "${DEBUG}" != 1 ]; then
+remove_perl()
+{
+	# Perl seems to be needed for build, but nothing after the
+	# build.  cope with bad dependencies (or misunderstood) and
+	# blow it away (saves 45MB)
+	if [ "${DEBUG}" != 1 ]; then
+		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
+	fi
+}
+customize_cmd remove_perl
+fi
+
+# This can't be done
+remove_var_db_pkg()
+{
+	# Eats up ~7 MB on the install image.
+	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
+}
+customize_cmd remove_var_db_pkg
+
 freenas_custom()
 {
 	compress_ko()
@@ -575,13 +596,6 @@ freenas_custom()
 	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
 	rm -rf ${NANO_WORLDDIR}/usr/share/me
 
-	# Perl seems to be needed for build, but nothing after the
-	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 45MB)
-	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
-	fi
-
 	# Kill all .a's that are installed (15MB)
 	find ${NANO_WORLDDIR} -name \*.a -delete
 
@@ -618,12 +632,6 @@ freenas_custom()
 }
 late_customize_cmd freenas_custom
 
-remove_var_db_pkg()
-{
-	# Eats up ~7 MB on the install image.
-	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
-}
-late_customize_cmd remove_var_db_pkg
 fi # [ $PACKAGE_PREP_BUILD = 1 ]
 
 if $do_image; then
