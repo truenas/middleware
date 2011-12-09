@@ -1,6 +1,8 @@
-from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
-import models
+
+from freenasUI.middleware.notifier import notifier
+from freeadmin.tree import TreeNode
+from . import models
 
 NAME = _('Services')
 BLACKLIST = ['services']
@@ -157,3 +159,18 @@ class RsyncModView(TreeNode):
     view = u'services_rsyncmod'
     icon = u'ViewAllrsyncModIcon'
     append_app = False
+
+class Plugins(TreeNode):
+
+    gname = 'Plugins'
+    name = _(u'Plugins')
+    type = 'object'
+
+    def __init__(self, *args, **kwargs):
+        super(Plugins, self).__init__(*args, **kwargs)
+        if notifier().plugins_jail_configured():
+            oid = models.Plugins.objects.order_by('-id')[0].id
+            self.view = 'freeadmin_model_edit'
+            self.kwargs = {'app': 'services', 'model': 'Plugins', 'oid': oid}
+        else:
+            self.view = 'plugins_jailpbi'

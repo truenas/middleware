@@ -27,12 +27,12 @@
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
-                    
-from plugins import models
+
+from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
-from dojango import forms
+from plugins import models
 
 
 class PluginsForm(ModelForm):
@@ -83,3 +83,26 @@ class PBIUploadForm(Form):
         return cleaned_data
     def done(self):
         return notifier().install_pbi()
+
+class JailPBIUploadForm(Form):
+    pbifile = FileField(label=_("Plugins Jail PBI"), required=True)
+    sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        filename = '/var/tmp/pbi/pbifile.pbi'
+        if cleaned_data.get('pbifile'):
+            with open(filename, 'wb+') as sp:
+                for c in cleaned_data['pbifile'].chunks():
+                    sp.write(c)
+            if 'sha256' in cleaned_data:
+                checksum = notifier().checksum(filename)
+                if checksum != str(cleaned_data['sha256']):
+                    msg = _(u"Invalid checksum")
+                    self._errors["pbifile"] = self.error_class([msg])
+                    del cleaned_data["pbifile"]
+        else:
+            self._errors["pbifile"] = self.error_class([_("This field is required.")])
+        return cleaned_data
+    def done(self):
+        #return notifier().install_pbi()
+        pass

@@ -26,15 +26,13 @@
 #####################################################################
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse 
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-    
+
 from freenasUI.plugins import models, forms
 from freenasUI.middleware.notifier import notifier
-
 from freeadmin.views import JsonResponse
-
 
 def plugins_home(request):
     plugins_list = models.Plugins.objects.all()
