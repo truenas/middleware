@@ -302,7 +302,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 cleaned_data.get("bsdusr_password_disabled", False)
         bsdusr_home = self.cleaned_data.get('bsdusr_home', '')
         if (self.cleaned_data.get('bsdusr_sshpubkey') and
-            not (bsdusr_home.startswith(u'/mnt/')):
+            not bsdusr_home.startswith(u'/mnt/')):
             del self.cleaned_data['bsdusr_sshpubkey']
             self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
