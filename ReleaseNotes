@@ -18,26 +18,26 @@ a. Use smaller block and frag sizes for /etc and /var .
 b. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
 c. Other build tweaks to remove non-essential features and packages from the image.
 
-1. NAS middleware:
+2. NAS middleware:
 
 a. Hide Etc/GMT* timezones as they're behavior is counterintuitive and conflicts with Windows 7 semantics (see r8707).
 b. Add tunable / sysctl support.
 
-2. AD/CIFS:
+3. AD/CIFS:
 
 a. Bump samba from 3.5.11 to 3.6.1.
 
-3. AFP:
+4. AFP:
 
 a. Bump netatalk to 2.2.1.
 b. Add knob for controlling the maximum number of configurable connections (see ticket: 847).
 c. Only advertise services via avahi if they're enabled (see ticket: 852).
 
-4. Rsync:
+5. Rsync:
 
 a. NFSv4 ACL support (see: r8375, r8414).
 
-5. Misc:
+6. Misc:
 
 a. Upgrade ataidle
 
