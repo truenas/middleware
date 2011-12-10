@@ -1,0 +1,168 @@
+Release Notes for FreeNAS 8.2-RELEASE
+
+*** IMPORTANT ***
+
+The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
+storage device.  The GUI upgrade can be used to upgrade a system from BETA3, 
+BETA4, or RC1 but upgrades from earlier releases can only be done from the CD.
+The other option is to save the config, reinstall the new version, then
+restore the config.
+
+Changes since 8.0.3-[...]:
+
+Enhancements:
+
+1. FreeBSD:
+
+a. CSUP snapshot used in build updated from 07/17/2011 to 11/15/2011 snapshot.
+
+2. GUI:
+
+a. dojango updated to 1.7.1.
+
+3. NAS middleware:
+
+a. Changes to ZFS volumes in FreeBSD CLI are now reflected in the GUI.
+b. First draft plugin framework completed.
+
+Bugfixes:
+
+
+
+Changes since 8.0.2-RELEASE:
+
+Enhancements:
+
+1. Reduce FreeNAS footprint:
+
+a. Use smaller block and frag sizes for /etc and /var .
+b. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
+c. Other build tweaks to remove non-essential features and packages from the image.
+
+2. NAS middleware:
+
+a. Hide Etc/GMT* timezones as they're behavior is counterintuitive and conflicts with Windows 7 semantics (see r8707).
+b. Add tunable / sysctl support.
+
+3. AD/CIFS:
+
+a. Bump samba from 3.5.11 to 3.6.1.
+
+4. AFP:
+
+a. Bump netatalk to 2.2.1.
+b. Add knob for controlling the maximum number of configurable connections (see ticket: 847).
+c. Only advertise services via avahi if they're enabled (see ticket: 852).
+
+5. Rsync:
+
+a. NFSv4 ACL support (see: r8375, r8414).
+
+6. Misc:
+
+a. Upgrade ataidle
+
+Bugfixes:
+
+1. Rsync task/crontab generation was broken with AD usernames and other unsanitized input.
+2. ZFS volume deletion failed when trying to delete zvol with the name 'zvol'.
+3. SSH pubkey saving was broken unless you manually add a newline to the text box.
+4. Fix email regressions since 8.0.2-RELEASE-p1 (SMART emails now work with more than one recipient, non-SMTP authentication based emails work again).
+5. Fix traceback when trying to edit user if ssh public key was not specified.
+6. Address simple failure cases with getting Kerberos tickets (clock skew) and joining AD domains so that users could better rectify improperly configured NAS boxes; this means that if either of these cases fail, the GUI will now feed back that the 'Active Directory' service is stopped.
+7. Fix the bug in rsync tasks where it would strip the trailing '/' off the end of the destination path.
+8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
+
+Cosmetic items:
+
+1. Change "SSH key" in GUI to "SSH Public Key".
+2. Fix GUI trademarks and branding to be more consistent with proper branding, similar to what TrueNAS does today.
+
+Major changes since 8.0.1-RELEASE:
+
+- The email subsystem was not working correctly in 8.0.1-RELEASE, which
+  resulted in the system not being able to send mail, as well as disfunction
+  of the alerting system in the GUI.
+
+Changes since 8.0.1-RELEASE:
+
+- Allow decimal numbers for a dataset quota. (r8728)
+
+- Fix setting recursive ACLs. (r8270)
+
+- Start proftpd after ix-ssl to use the correct SSL cert. (r8246)
+
+- Use wildcards in cron and rsync jobs instead of listing all values. (r8214, r8211)
+
+- Fix case in iSCSI targets to match the behavior specified by RFC 3722. (r8120)
+
+Changes since 8.0-RELEASE:
+
+There's too much to list here, but the high points are:
+
+- Divorced the volume members in the database from the FreeBSD devices.
+  This resolves an issue where FreeBSD can change devices names and the
+  GUI doesn't pick up the updates due to the devices names being hard-wired
+  in the database.
+
+- Support exporting ZFS zvols (virtual devices) as device extents via iSCSI.
+  8.0 was only able to export physical device nodes or file based extents.
+
+- The GUI now has an event notification system.
+
+- The email backend has been refactored.
+
+- Many many changes in the GUI to help it validate and sanitize inputs that
+  are passed to the backend daemons.
+
+- Added UPS functionality.
+
+- Added rsync client and server functionality.
+
+- Added the ability to schedule cron jobs in the GUI.
+
+- Vastly improved and reworked snapshot replication.
+
+Errata:
+
+CHAP doesn't work with GlobalSAN initiators on OS X.
+
+Upgrades from FreeNAS 0.7 aren't supported.
+
+The installer doesn't check the size of the install media before attempting
+an install.  A 2 GB device is required, but the install will appear to
+complete successfully on smaller devices, only to fail at boot.
+
+The installer will let you switch from i386 to amd64 architecture and
+vice-versa, but some files, such as the rrd files used by the statistics
+graphing package are architecture dependent.
+
+Filename:
+FreeNAS-8.0.3-BETA1-amd64.Full_Install.xz
+SHA256 Hash:
+dd0e343a09bcecb9ce21f11d1c17bbfab85b859bce9a0abb8f00e0fef33ce62c
+
+Filename:
+FreeNAS-8.0.3-BETA1-amd64-GUI_Upgrade.xz
+SHA256 Hash:
+cf98ac6e598def6f4c204fe605504eb20f71d541a5bfd0e079f3545c741570c2
+
+Filename:
+FreeNAS-8.0.3-BETA1-amd64.iso
+SHA256 Hash:
+4255e4d57dcfc7d1ca43f861eddb66ebacde4e5bb01058803b74de8df6b75e33
+
+Filename:
+FreeNAS-8.0.3-BETA1-i386-Full_Install.xz
+SHA256 Hash:
+4985ef54763d68458ad0430a44dee67f9f079fc4d41330db18e1013def756677
+
+Filename:
+FreeNAS-8.0.3-BETA1-i386-GUI_Upgrade.xz
+SHA256 Hash:
+a719157195b43676c7e02ffa02121db260f8f82bdba07458e182b627c209a5fd
+
+Filename:
+FreeNAS-8.0.3-BETA1-i386.iso
+SHA256 Hash:
+7b2b632bb693dc6929c1972c3cf994d231897938d828381d5b42374e3917bddf
