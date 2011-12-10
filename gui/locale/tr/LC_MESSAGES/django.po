@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-09 11:03+0200\n"
+"PO-Revision-Date: 2011-12-09 15:43+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -871,7 +871,7 @@ msgstr "IPv4 veya IPv6 arasında bir seçim yapın"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "IPv4 veya IPv6 ile geçerli bir maskbit belitlemlisiniz"
+msgstr "IPv4 veya IPv6 ile geçerli bir maskbit belirtmelisiniz"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
@@ -1121,11 +1121,11 @@ msgstr "Ağ geçidi"
 
 #: network/models.py:320
 msgid "Static Route"
-msgstr "Sabit Yönlendirme"
+msgstr "Sabit Yol"
 
 #: network/models.py:321 templates/network/index.html:19
 msgid "Static Routes"
-msgstr "Sabit Yolların"
+msgstr "Sabit Yollar"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
@@ -3786,7 +3786,7 @@ msgstr "Çoğaltma hız sınırı. Birimi kilobayt/saniye. 0 = sınırsız."
 
 #: storage/models.py:448
 msgid "Replication Task"
-msgstr "Kopyalama Görevi"
+msgstr "Çoğaltma Görevi"
 
 #: storage/models.py:449
 msgid "Replication Tasks"
@@ -3802,7 +3802,7 @@ msgstr "Anlık Durum Görüntüsü kullanım süresi değeri"
 
 #: storage/models.py:482
 msgid "Snapshot lifetime unit"
-msgstr "Anlık Durum Görüntüsü yaşam boyu birimi"
+msgstr "Anlık Durum Görüntüsü kullanım süresi birimi"
 
 #: storage/models.py:486
 msgid "Begin"
@@ -4385,7 +4385,7 @@ msgstr "Hafta sonları"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
-msgstr "IP Adresi veya bilgisayar adı"
+msgstr "IP adresi veya bilgisayar adı"
 
 #: system/models.py:384
 msgid "Remote Module Name"
