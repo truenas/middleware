@@ -87,7 +87,7 @@ sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
 if [ $? -eq 0 ]; then
 	REVISION="8.0.3-BETA1"
 	NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
-	xz --compress 9 -f ${NANO_OBJ}/_.disk.image
+	xz --verbose -9 -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_NAME}.xz
 fi
