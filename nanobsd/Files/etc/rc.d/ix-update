@@ -12,8 +12,6 @@ readonly UPDATE_FAILED_LOG="/data/update.failed"
 
 db_update_real()
 {
-	local i
-
 	echo "Applying database schema changes"
 
 	yes | /usr/local/bin/python \
