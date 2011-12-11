@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-09 15:43+0200\n"
+"PO-Revision-Date: 2011-12-10 15:49+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1215,7 +1215,7 @@ msgstr "Bu ad, slash ve köşeli parantez içeremez."
 
 #: services/forms.py:237
 msgid "Confirm Password"
-msgstr "Parola Tekrarı"
+msgstr "Parola doğrulama"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1279,7 +1279,7 @@ msgstr "Ldap hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:382 services/models.py:540
 msgid "Secret"
-msgstr "Şifre"
+msgstr "Parola"
 
 #: services/forms.py:384 services/models.py:541
 msgid "Target side secret."
@@ -1311,11 +1311,11 @@ msgstr "Parolalar birbirinin aynısı değil"
 
 #: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
-msgstr "Eş kullanıcı seçtiyseniz eş parola gereklidir."
+msgstr "ş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
 
 #: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Eş gizli kullanıcı aynı gizli kullanıcı olamaz."
+msgstr "Kullanıcı parolası ile eş kullanıcı parolası aynı olamaz."
 
 #: services/forms.py:424 services/forms.py:427
 msgid "The peer user is required if you set a peer secret."
@@ -1983,7 +1983,7 @@ msgstr "Yetkili Giriş"
 
 #: services/models.py:556
 msgid "Authorized Accesses"
-msgstr "Yetkili Girişlerin"
+msgstr "Yetkili Girişler"
 
 #: services/models.py:571
 msgid "Target Name"
@@ -2022,7 +2022,7 @@ msgstr "Eşleşen Mantıksal Birim Türü LUN."
 
 #: services/models.py:598
 msgid "Target Flags"
-msgstr "Hedef Bayrakları"
+msgstr "Hedef bayrakları"
 
 #: services/models.py:606
 msgid "Initiator Group ID"
@@ -2046,7 +2046,7 @@ msgstr "Kimlik Doğrulaması Grup Kimliği"
 
 #: services/models.py:630
 msgid "Queue Depth"
-msgstr "Sıra Derinliği"
+msgstr "Sıra derinliği"
 
 #: services/models.py:631
 msgid ""
@@ -3666,7 +3666,7 @@ msgstr "Klon aynı birim içinde olmalıdır"
 
 #: storage/forms.py:976 storage/models.py:403
 msgid "Remote hostname"
-msgstr "Uzak bilgisayar adı"
+msgstr "Uzak ana bilgisayar adı"
 
 #: storage/forms.py:977 storage/models.py:407
 msgid "Remote hostkey"
@@ -5452,7 +5452,7 @@ msgstr "Temizlemek istediğinize emin misiniz?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
-msgstr "İlerleme sırasında sistem yükü artacaktır"
+msgstr "İlerleme sırasında sistem yükü artacaktır."
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
@@ -5875,7 +5875,7 @@ msgid "Critical Alerts"
 msgstr "Kritik Uyarılar"
 
 msgid "Volume from which this dataset will be created on"
-msgstr "Bu birim hangi veri kümesi üzerinde oluşturulacak"
+msgstr "Bu veri kümesi hangi birim üzerinde oluşturulacak"
 
 msgid "Volume from which this ZFS Volume will be created on"
 msgstr "Oluşturulacak ZFS birimini seçin"
