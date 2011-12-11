@@ -41,7 +41,6 @@ main()
 
 	cd "$FREENAS_ROOT"
 
-	rm -Rf ${ISODIR}
 	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 
 	# Create a quick and dirty nano image from the world tree
