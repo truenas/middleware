@@ -32,20 +32,10 @@
 # FreeNAS specific bits of the common stuff.
 #
 
-# Find our files, since we're out of tree
-case $2 in
-/*/*)
-    NANO_CFG_BASE=$(dirname $2)
-    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-*/*)
-    NANO_CFG_BASE=$(dirname `pwd`/$2)
-    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-*)  NANO_CFG_BASE=`pwd`
-    NANO_SRC=`realpath $0 | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-esac
+export NANO_CFG_BASE="$FREENAS_ROOT/nanobsd"
+export NANO_MODULES="cxgb ext2fs geom ipmi ntfs smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+export NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
+export NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 
 if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
@@ -56,7 +46,7 @@ fi
 : ${SVNREVISION=`svnversion ${NANO_CFG_BASE}`}
 REVISION="8.0.3-BETA2"
 NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH}"
-NANO_IMGNAME="${NANO_NAME}.full"
+NANO_IMGNAME="${NANO_NAME}"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
 : ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
 NANO_LABEL=FreeNAS
@@ -391,3 +381,58 @@ remove_var_db_pkg()
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
 }
 customize_cmd remove_var_db_pkg
+
+if $do_image; then
+last_orders() {
+	local cd_image_log
+	local full_image full_image_log
+	local gui_upgrade gui_upgrade_image_log
+
+	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
+	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
+	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
+
+	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install"
+	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+
+	if $do_image && $do_copyout_partition; then
+
+		pprint 2 "Compressing GUI upgrade image"
+		pprint 3 "log: ${gui_image_log}"
+
+		(
+
+		# NOTE: keep in synch with create_*_diskimage.
+		mv "$NANO_DISKIMGDIR/_.disk.image" "$gui_upgrade"
+		xz --verbose -9 -f "$gui_upgrade"
+
+		) > "${gui_image_log}" 2>&1
+
+	fi
+
+	if $do_image; then
+
+		pprint 2 "Compressing full disk image"
+		pprint 3 "log: ${full_image_log}"
+
+		(
+
+		# NOTE: keep in synch with create_iso.sh.
+		mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
+		xz --verbose -9 -f "$full_image"
+
+		) > "${full_image_log}" 2>&1
+
+		pprint 2 "Creating ISO image"
+		pprint 3 "log: ${cd_image_log}"
+
+		(
+
+		sh "$FREENAS_ROOT/build/create_iso.sh"
+
+		) > "${cd_image_log}" 2>&1
+
+	fi
+
+}
+fi # $do_image

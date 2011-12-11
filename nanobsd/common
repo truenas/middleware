@@ -30,8 +30,6 @@
 # an explicit copyright/license statement, but are implicitly BSDL.
 #
 
-NANO_PMAKE="make -j8"					# NB: disable -j 3
-
 # Where cust_pkg() finds packages to install
 #XXX: Is this the right place?
 NANO_PORTS=${NANO_SRC}/../ports
@@ -77,7 +75,7 @@ clean_packages()
 	for f in bin etc lib libdata libexec sbin share; do
 		mkdir -p ${LOCAL_DIR}/$f
 	done
-	find ${NANO_WORLDDIR}/var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
+	find ${LOCAL_DIR}/var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
 }
 customize_cmd clean_packages
 
@@ -260,11 +258,9 @@ do_add_port ()
 }
 
 # Need to check if this function works with cross-compiling architecture!!!!
-# Recursive complex fonction: Generate one function for each ports
-#
-# Note: most nano variables aren't set yet, especially NANO_MAKE_CONF_BUILD, so
-# we can't use that here.  Instead, use no MAKE_CONF to avoid host contamination.
-add_port () {
+# Recursive complex function: Generate one function for each ports
+add_port ()
+{
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
     shift
@@ -273,7 +269,8 @@ add_port () {
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF= package-name` 
+    # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "

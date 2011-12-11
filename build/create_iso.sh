@@ -10,20 +10,21 @@ main()
         exit
     fi
 
+    cd "$(dirname "$0")/.."
+
     root=$(pwd)
+    : ${NANO_LABEL=FreeNAS}
     : ${FREENAS_ARCH=$(uname -p)}
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
     REVISION="8.0.3-BETA2"
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-${REVISION}-${FREENAS_ARCH}.full" ]; then
-	echo "Can't find image file for ${REVISION}, punting"
-	exit 1
-    fi
     export NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
-    export NANO_IMGNAME="${NANO_NAME}.full"
+    export NANO_IMGNAME="$NANO_NAME"
+
+    . build/functions.sh
 
     # Paths that may need altering on the build system
-    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
+    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.xz"
     TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
     ETC_FILES="$root/build/files"
 
@@ -38,6 +39,9 @@ main()
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
                  -b boot/cdboot ${ISODIR}"
+    if [ ! -f "${IMGFILE}" ]; then
+        error "${0##*/}: ERROR: Can't find image file (${IMGFILE}) for ${REVISION}, punting"
+    fi
 
     cleanup
 
@@ -53,10 +57,7 @@ main()
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     # Copy the image file to the cdrom.  Cache the compressed version to
     # make it easier to debug this and the install scripts.
-    if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
-	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
-    fi
-    cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
+    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${FREENAS_ARCH}-embedded.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)

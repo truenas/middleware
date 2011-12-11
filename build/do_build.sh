@@ -6,11 +6,18 @@
 # magic happens :)
 #
 
-root=$(pwd)
+cd "$(dirname "$0")/.."
+
+export root=$(pwd)
+export FREENAS_ROOT=$root
 : ${FREENAS_ARCH=$(uname -p)}
 export FREENAS_ARCH
+export NANO_CFG_BASE=$FREENAS_ROOT/nanobsd
+export NANO_SRC=$FREENAS_ROOT/FreeBSD/src
 export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
 PREP_SOURCE=${PREP_SOURCE:-""}
+
+. build/functions.sh
 
 # Make sure we have FreeBSD dirs
 if [ ! -d FreeBSD ]; then
@@ -67,6 +74,8 @@ fi
 # OK, now we can build
 cd FreeBSD/src
 args="-c ../../nanobsd/freenas-common"
+: ${MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))}
+args="$args -j $MAKE_JOBS"
 if [ `whoami` != "root" ]; then
     echo "You must be root to run this"
     exit 1
@@ -82,12 +91,9 @@ for i in $*; do
 	esac
 	
 done
-echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
-sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
-if [ $? -eq 0 ]; then
-	REVISION="8.0.3-BETA2"
-	NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
-	xz --verbose -9 -f ${NANO_OBJ}/_.disk.image
-	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
-	sha256 ${NANO_OBJ}/${NANO_NAME}.xz
+echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $extra_args
+if sh "$FREENAS_ROOT/build/nanobsd/nanobsd.sh" $args $extra_args; then
+	echo "$NANO_LABEL build PASSED"
+else
+	error "$NANO_LABEL build FAILED; please check above log for more details"
 fi
