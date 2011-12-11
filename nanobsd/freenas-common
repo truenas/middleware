@@ -104,8 +104,10 @@ add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/ntfsprogs
 add_port sysutils/smartmontools
-#+emulators/open-vm-tools-nox11
+#+emulators/open-vm-tools-nox11 || www/nginx || ...
 add_port devel/pcre
+#-emulators/open-vm-tools-nox11 || www/nginx || ...
+#+emulators/open-vm-tools-nox11
 add_port devel/glib20
 add_port net/libdnet
 #-emulators/open-vm-tools-nox11
@@ -121,10 +123,12 @@ add_port devel/py-setuptools
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
+if [ "${LIGHTTPD}" = yes ]; then
 #+add_port www/lighttpd
 add_port www/spawn-fcgi
 #-add_port www/lighttpd
 add_port www/lighttpd
+fi
 add_port www/nginx
 #+add_port www/py-flup
 #-add_port www/py-flup

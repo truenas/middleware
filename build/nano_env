@@ -82,7 +82,8 @@ NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 NANO_MODULES="cxgb ext2fs geom ipmi ntfs pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 
 # Feature sets to enable as part of the build.
-SW_FEATURES="DEBUG REPORTING"
+#SW_FEATURES="DEBUG LIGHTTPD MULTIMEDIA REPORTING"
+SW_FEATURES="DEBUG LIGHTTPD REPORTING"
 
 # The GEOM label to use.
 NANO_LABEL="FreeNAS"
