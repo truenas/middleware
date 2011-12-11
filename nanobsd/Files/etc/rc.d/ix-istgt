@@ -107,7 +107,7 @@ generate_istgt_config()
 	local sf=$(var_to_sf $f)
 	iscsi_target_lun=0
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${sf} FROM services_iscsitarget ORDER BY id" | \
-        while eval read ${fields}; do
+        while eval read ${f}; do
 		extent_count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(*) FROM services_iscsitargettoextent AS t WHERE t.iscsi_target_id = ${id}"`
 		if [ "${extent_count}" = "0" ]; then
 			continue
