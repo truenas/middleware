@@ -116,10 +116,6 @@ class InterfacesForm(ModelForm):
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6")])
-        if not ipv6 and not (ipv6addr or ipv6net) \
-                and not ipv4 and not (ipv4addr or ipv4net) \
-                and not (dhcp or ipv6auto):
-            self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit")])
 
         return cdata
 
