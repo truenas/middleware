@@ -35,7 +35,7 @@ generate_plugins_conf()
 	while read name uname view icon enabled ip port path
 	do
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
-		location = ${view} {
+		location ~ ${view} {
 		    fastcgi_pass   ${ip}:${port};
 		    include        fastcgi_params;
 		}
