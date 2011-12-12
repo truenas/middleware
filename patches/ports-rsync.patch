@@ -569,7 +569,7 @@ diff -urN /dev/null net/rsync/files/patch-sysacls.c
 ++	int fd;
 ++	acl_t acl;
 ++
-++	if ((fd = open(path_p, O_RDONLY)) < 0)
+++	if ((fd = open(path_p, O_RDONLY|O_NONBLOCK)) < 0)
 ++		return -1;
 ++	if ((acl = acl_get_fd(fd)) == NULL) {
 ++		close(fd);
