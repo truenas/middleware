@@ -11,6 +11,7 @@ cd "$(dirname "$0")/.."
 export root=$(pwd)
 export FREENAS_ROOT=$root
 : ${FREENAS_ARCH=$(uname -p)}
+export NANO_LABEL="FreeNAS"
 export FREENAS_ARCH
 export NANO_CFG_BASE=$FREENAS_ROOT/nanobsd
 export NANO_SRC=$FREENAS_ROOT/FreeBSD/src
