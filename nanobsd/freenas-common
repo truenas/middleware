@@ -123,7 +123,7 @@ add_port devel/py-setuptools
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-if [ "${LIGHTTPD}" = yes ]; then
+if [ "${LIGHTTPD}" = 1 ]; then
 #+add_port www/lighttpd
 add_port www/spawn-fcgi
 #-add_port www/lighttpd
