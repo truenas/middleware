@@ -44,8 +44,213 @@ __EOF__
 }
 
 
+generate_nginx_conf()
+{
+	local res=1
+	local ssl_enable="${1}"
+	local bind_addr="${2}"
+	local bind_port="${3}"
+	local tmp
+
+	# XXX: IPv6
+	if [ "${bind_addr}" != "0.0.0.0" -a -n "${bind_addr}" -a \
+		-z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
+		bind_addr="0.0.0.0"
+	fi
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+	awk -v ssl_enable="${ssl_enable}" \
+		-v ssl_cert="${HTTPDCERT}" \
+		-v httpd_addr="${bind_addr}" \
+		-v httpd_port="${bind_port}" '
+		BEGIN { }
+
+		function makeline(ch, len)
+		{
+			line = "";
+			for (i = 0;i < len;i++) {
+				line = line ch;
+			}
+			return line;
+		}
+
+		{
+			if (/^(( |\t)*)?listen( |\t)+/) {
+				fill = makeline(" ", index($0, "listen") - 1);
+
+				if (!httpd_port) {
+					httpd_port = ssl_enable ? 443 : 80;
+				}
+
+				if (ssl_enable) {
+					printf("%slisten %s:%d default_server ssl;\n",
+						fill, httpd_addr, httpd_port);
+				} else {
+					printf("%slisten %s:%d;\n", fill, httpd_addr, httpd_port);
+				}
+
+			} else if (/^(( |\t|#)*)?ssl_certificate( |\t)+/) {
+				if (/^(( |\t)+)?#/ && ssl_enable) {
+					fill = makeline(" ", index($0, "ssl_certificate") - 2);
+					printf("%sssl_certificate %s;\n", fill, ssl_cert);
+				} else {
+					print $0;
+				}
+			} else {
+				print $0;
+			}
+		}
+		END { }
+	' < "${HTTPDCONF}" > "${tmp}"
+
+	mv "${HTTPDCONF}" "${HTTPDCONF}.working"
+	mv "${tmp}" "${HTTPDCONF}"
+
+	${HTTPD} -t -q -c "${HTTPDCONF}" #>/dev/null 2>&1
+	rc=$?
+	if [ "${rc}" != "0" ]
+	then
+		mv "${HTTPDCONF}.working" "${HTTPDCONF}"
+	fi
+
+	return $rc
+}
+
+
+get_host_ip()
+{
+	ifconfig -a inet| grep broadcast|cut -f2 -d' '|head -n1
+}
+
+
+test_nginx_config()
+{
+	local ssl_enable="${1}"
+	local port="${2}"
+	local proto="http"
+	local ntries=5
+	local res=1
+	local try=0
+
+	if [ "${ssl_enable}" = "1" ]
+	then
+		proto="https"
+	fi
+	
+	local host=$(get_host_ip)
+	if [ -n "${port}" ]
+	then
+		host="${host}:${port}"
+	fi
+
+
+	${HTTPDSCRIPT} onerestart >/dev/null 2>&1
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		echo -n "Waiting for ${proto}... "
+		export HTTP_TIMEOUT=1
+		export FTP_TIMEOUT=1
+		while [ "${try}" -lt "${ntries}" ]
+		do
+			fetch -q -o /dev/null "${proto}://${host}" \
+			    >/dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				rc=0
+				break		
+			fi
+
+			: $(( try += 1 ))
+		done
+		if [ $rc -eq 0 ]; then
+			echo "Done."
+		else
+			echo "Failed."
+		fi
+	fi
+
+	return $rc
+}
+
+
+set_stg_guiprotocol()
+{
+	local res=1
+	local proto="${1}"
+
+	if [ "${proto}" = "http" -o "${proto}" = "https" ]
+	then
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			system_settings
+		SET
+			stg_guiprotocol = '${proto}'
+		"
+		res=$?
+	fi
+
+	return ${res}
+}
+
+
+do_configure_nginx()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		stg_guiprotocol,
+		stg_guiaddress,
+		stg_guiport
+
+	FROM
+		system_settings
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	" | \
+	while read stg_guiprotocol stg_guiaddress stg_guiport
+	do
+		local ssl_enable=0
+
+		stg_guiprotocol=$(echo "${stg_guiprotocol}"|tr a-z A-Z)
+		case "${stg_guiprotocol}" in
+			HTTP) ssl_enable=0; ;;
+			HTTPS) ssl_enable=1; ;;
+		esac
+
+		if [ "${ssl_enable}" = "1" -a ! -f "${SSLCONF}" ]
+		then
+			set_stg_guiprotocol "http"
+			ssl_enable=0
+		fi
+
+		generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
+		if ! test_nginx_config "${ssl_enable}" "${stg_guiport}"
+		then
+
+			if [ "${ssl_enable}" = "1" ]
+			then
+				ssl_enable=0
+				set_stg_guiprotocol "http"
+			fi
+
+			generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
+			${HTTPDSCRIPT} start
+		fi
+	done
+}
+
+configure_nginx()
+{
+	generate_plugins_conf
+	do_configure_nginx
+}
+
 name="ix-nginx"
-start_cmd='generate_plugins_conf'
+start_cmd='configure_nginx'
 stop_cmd=':'
             
 load_rc_config $name
