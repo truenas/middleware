@@ -53,6 +53,7 @@ Bugfixes:
 7. Fix the bug in rsync tasks where it would strip the trailing '/' off the end of the destination path.
 8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
 9. Fix an issue where if one entered in an invalid path, the GUI would traceback instead of providing feedback stating that the directory provided was invalid.
+10. Fixed hang issue where special files (such as FIFOs, character devices, etc) would cause rsync to hang.
 
 Cosmetic items:
 
