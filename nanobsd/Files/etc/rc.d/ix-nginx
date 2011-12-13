@@ -61,6 +61,7 @@ generate_nginx_conf()
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 	awk -v ssl_enable="${ssl_enable}" \
+		-v ssl_key="${HTTPDKEY}" \
 		-v ssl_cert="${HTTPDCERT}" \
 		-v httpd_addr="${bind_addr}" \
 		-v httpd_port="${bind_port}" '
@@ -94,6 +95,13 @@ generate_nginx_conf()
 				if (/^(( |\t)+)?#/ && ssl_enable) {
 					fill = makeline(" ", index($0, "ssl_certificate") - 2);
 					printf("%sssl_certificate %s;\n", fill, ssl_cert);
+				} else {
+					print $0;
+				}
+			} else if (/^(( |\t|#)*)?ssl_certificate_key( |\t)+/) {
+				if (/^(( |\t)+)?#/ && ssl_enable) {
+					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
+					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
 				} else {
 					print $0;
 				}
