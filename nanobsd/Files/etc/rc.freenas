@@ -55,10 +55,10 @@
 #
 #	HTTPD settings
 #
-: ${HTTPD:="/usr/local/sbin/lighttpd"}
-: ${HTTPDDIR:="/usr/local/etc/lighttpd"}
-: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/lighttpd"}
-: ${HTTPDCONF:="${HTTPDDIR}/lighttpd.conf"}
+: ${HTTPD:="/usr/local/sbin/nginx"}
+: ${HTTPDDIR:="/usr/local/etc/nginx"}
+: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/nginx"}
+: ${HTTPDCONF:="${HTTPDDIR}/nginx.conf"}
 : ${HTTPDCERT:="${SSLDIR}/httpd.pem"}
 : ${HTTPDSSLPORT:="443"}
 : ${HTTPDPORT:="80"}
