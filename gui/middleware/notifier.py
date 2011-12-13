@@ -595,6 +595,12 @@ class notifier:
             res = True
         return res
 
+    def start_ssl(self, what=None):
+        if what is not None:
+            self.__system("/usr/sbin/service ix-ssl quietstart %s" % what)
+        else:
+            self.__system("/usr/sbin/service ix-ssl quietstart")
+
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
         self.__system("/usr/sbin/service inadyn restart")
@@ -630,8 +636,8 @@ class notifier:
         self.__system("/usr/sbin/service bsnmpd quietstart")
 
     def _restart_http(self):
-        self.__system("/usr/sbin/service ix-httpd quietstart")
-        self.__system("/usr/sbin/service lighttpd restart")
+        self.__system("/usr/sbin/service ix-nginx quietstart")
+        self.__system("/usr/sbin/service nginx restart")
 
     def _start_loader(self):
         self.__system("/usr/sbin/service ix-loader quietstart")
