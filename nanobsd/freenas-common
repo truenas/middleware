@@ -505,44 +505,6 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
-configure_nginx()
-{
-	local nginx_dir="${NANO_WORLDDIR}/usr/local/etc/nginx"
-	local nginx_conf="${nginx_dir}/nginx.conf"
-	local nginx_temp="$(mktemp /tmp/nginx.XXXXXX)"
-	local plugins_conf="${nginx_dir}/plugins.conf"
-
-	awk '
-	BEGIN { server = 0; b = 0; nlines = 0; lines[0] = null; }
-	{
-		lines[nlines++] = $0;
-		if (/(\t| )+(#|$)/) {
-			next;
-		}
-		if (/^(\t| )+server(\t| )+/) {
-			server++;
-		}
-		if (/{/ && server > 0) {
-			b++;
-		}
-		if (/}/ && server > 0) {
-			b--;
-		}
-		if (server > 0 && b == 0) {
-			save = lines[--nlines];
-			lines[nlines++] = "\tinclude plugins.conf;";
-			lines[nlines++] = save;
-			server = 0;
-		}
-	}
-	END { for (i = 0;i < nlines;i++) { printf("%s\n", lines[i]); } }
-	' < "${nginx_conf}" > "${nginx_temp}"
-
-	mv "${nginx_temp}" "${nginx_conf}"
-	touch "${plugins_conf}"
-}
-customize_cmd configure_nginx
-
 if [ "${DEBUG}" != 1 ]; then
 remove_perl()
 {
