@@ -320,7 +320,7 @@ class EmailForm(ModelForm):
 class SSLForm(ModelForm):
     def save(self):
         super(SSLForm, self).save()
-        notifier().start("ix-ssl")
+        notifier().start_ssl("nginx")
     class Meta:
         model = models.SSL
 
