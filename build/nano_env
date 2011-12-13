@@ -16,6 +16,26 @@
 : ${FREENAS_ARCH=$(uname -p)}
 NANO_ARCH=$FREENAS_ARCH
 
+# Setup a humanized name for the image. Doesn't affect obj.*'s naming because
+# people would get jangry (sic) having to rebuild their workspaces from
+# scratch, changing NANO_ARCH would require shuffling around kernconfs, hacking
+# TARGET/TARGET_MACHINE before jumping into the [base/ports] build system and
+# because it's not user facing.
+#
+# Bottom line is that this is a cheap 'hack' to get what we want for Linux-y
+# and Windows-y users.
+case "$NANO_ARCH" in
+amd64)
+	NANO_ARCH_HUMANIZED="x64"
+	;;
+i386)
+	NANO_ARCH_HUMANIZED="x86"
+	;;
+*)
+	NANO_ARCH_HUMANIZED=$NANO_ARCH
+	;;
+esac
+
 NANO_OBJ=${FREENAS_ROOT}/obj.${NANO_ARCH}
 
 # Where the build configuration files used by nanobsd.sh live.
@@ -93,12 +113,12 @@ VERSION="8.2"
 
 # Image name, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386, see
 # nanobsd/freenas-common:last_orders().
-NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
+NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH_HUMANIZED"
 NANO_IMGNAME="$NANO_NAME"
 
 # Export these vars to override the NanoBSD defaults.
 export FREENAS_ARCH FREENAS_ROOT
-export NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
+export NANO_ARCH NANO_ARCH_HUMANIZED NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
 export NANO_MODULES NANO_NAME NANO_OBJ NANO_SRC NANO_TOOLS REVISION
 export SVNREVISION
 

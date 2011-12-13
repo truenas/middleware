@@ -48,6 +48,15 @@ pull() {
 
 post_images() {
 	(cd obj.$arch
+	 # End-user rebranding; see build/nano_env for more details.
+	 case "$arch" in
+	 amd64)
+		arch=x64
+		;;
+	 i386)
+		arch=x86
+		;;
+	 esac
 	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
 	 if [ "${RELEASE_BUILD:-}" = yes ]; then
 		cp ../ReleaseNotes README
