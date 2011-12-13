@@ -389,7 +389,7 @@ customize_cmd afpd_conf_symlink
 
 select_httpd ( )
 {
-	echo 'lighttpd_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
+	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
 }
 customize_cmd select_httpd
 
