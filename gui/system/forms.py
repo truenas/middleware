@@ -190,6 +190,8 @@ class SettingsForm(ModelForm):
                                     )
             if self.instance.stg_guiport != '':
                 newurl += ":" + self.instance.stg_guiport
+            if self.instance._original_stg_guiprotocol == 'http':
+                notifier().start_ssl("nginx")
             events.append("restartHttpd('%s')" % newurl)
 
 class NTPForm(ModelForm):
