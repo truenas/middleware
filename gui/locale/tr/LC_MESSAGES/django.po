@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-10 15:49+0200\n"
+"PO-Revision-Date: 2011-12-12 12:56+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3674,7 +3674,7 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr "Silinecek diski seçin (verileri silinir)"
+msgstr "Diskleri yeni olarak işaretle (verileri yok eder)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -5932,7 +5932,7 @@ msgid "Windows Shares"
 msgstr "Windows Paylaşımları"
 
 msgid "The volume failed to export"
-msgstr "Birimi vermek başarısız oldu"
+msgstr "Birimi dışarı aktarmak başarısız oldu"
 
 msgid "Cron Scheduler"
 msgstr "Cron Zamanlayıcısı"

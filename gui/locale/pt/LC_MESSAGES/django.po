@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-19 02:05+0200\n"
-"Last-Translator: vithort <vithort@gmail.com>\n"
+"PO-Revision-Date: 2011-12-13 01:50+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -469,21 +469,21 @@ msgstr "Teste imediato se desligado (ATA somente)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "O seu nome não pode começar por \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "O caractere $ só é permitido como caractere final"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "O seu nome contém caracteres inválidos (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "O seu nome completo contêm caracteres inválidos (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -500,15 +500,12 @@ msgid "Username"
 msgstr "Nome de utilizador"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"Necessário. 30 caracteres ou menos. Letras, dígitos e @/./+/-/_ apenas."
+msgstr "Necessário. 16 caracteres ou menos. Letras, dígitos e ./-/_ apenas."
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Este valor pode apenas conter letras, números e @/./+/-/_ caracteres."
+msgstr "Este valor pode apenas conter letras, números e ./-/_ caracteres."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -530,13 +527,12 @@ msgid "Shell"
 msgstr "Consola"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
 msgstr "Desactivar inícios de sessão"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Bloquear utilizador"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -544,10 +540,9 @@ msgstr "Grupo Primário"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Chave Publica"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
 msgstr "Um utilizador com esse nome de utilizador já existe."
 
@@ -562,18 +557,16 @@ msgid "The two password fields didn't match."
 msgstr "Os dois campos de palavra-passe não coincidem."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Directório pessoal tem de começar com /mnt/"
+msgstr "Directório pessoal tem de começar com /mnt/ ou ser /nonexistent"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Directório pessoal tem de começar com /mnt/"
+msgstr "Directório pessoal não pode ser escrito, deixe isto em branco"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Palavra-chave inactiva, deixar em branco"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -581,28 +574,24 @@ msgid "This field is required."
 msgstr "Este campo é obrigatório."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Palavra-chave da partilha"
+msgstr "Desactivar palavra-chave"
 
 #: account/forms.py:466
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Directório pessoal tem de começar com /mnt/"
+msgstr "Directório pessoal tem de começar com /mnt ou ser /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Permite GIDs repetidos"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Um utilizador com esse nome de utilizador já existe."
+msgstr "Um grupo com esse nome já existe."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Um utilizador com esse nome de utilizador já existe."
+msgstr "Um grupo com este GID já existe"
 
 #: account/forms.py:582
 msgid "Member users"
@@ -614,7 +603,7 @@ msgstr "Grupos auxiliares"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Um utilizador não pode pertencer a mais de 64 grupos auxiliares"
 
 #: account/forms.py:627
 msgid "New password"
@@ -625,9 +614,8 @@ msgid "New password confirmation"
 msgstr "Confirmação da nova palavra-passe"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Mudar Palavra-passe"
+msgstr "Mudar também a palavra-passe de root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -641,7 +629,7 @@ msgstr ""
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Deseja apagar todos os utilizadores com este grupo primário?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -808,7 +796,7 @@ msgstr "Encerrar"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Não é possivel devolver o estado actual"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -819,9 +807,9 @@ msgstr "%s actualizado com sucesso."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Erro"
+msgstr "Erro: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -855,23 +843,23 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Tem que especificar um endereço IPv4 também"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Tem que escolher uma mascara IPv4 também"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Tem que especificar um endereço IPv6 também"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Tem que escolher uma mascara IPv6 também"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Tem que escolher entre IPv4 ou IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
@@ -886,7 +874,6 @@ msgid "Unspecified addresses are not valid as nameservers"
 msgstr ""
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
 msgstr "Este campo não é um endereço IP válido ou rede"
 
@@ -1062,7 +1049,6 @@ msgid "Alias"
 msgstr "Apelido"
 
 #: network/models.py:195
-#, fuzzy
 msgid "Aliases"
 msgstr "Apelido"
 
@@ -1072,9 +1058,10 @@ msgid "Virtual Interface"
 msgstr "Interface Virtual"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Os nomes das interfaces têm de ser vlanXX onde XX é um número"
+msgstr ""
+"Os nomes das interfaces têm de ser vlanXX onde XX é um número. Exemplo: "
+"vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1161,9 +1148,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG adicionados com sucesso"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "O utilizador %s não é válido."
+msgstr "Isto não é uma mascara válida"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1175,9 +1161,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Este campo é necessário para \"Directórios da raiz\"."
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "O serviço NFS falhou no reinicio."
+msgstr "O serviço CIFS falhou no reinicio."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1228,9 +1213,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "O nome não pode conter uma barra ou um cardinal."
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Mudar Palavra-passe"
+msgstr "Confirmar Palavra-passe"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1241,7 +1225,6 @@ msgid "The location must contain only alphanumeric characters, _ or -"
 msgstr ""
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
 msgstr "Este campo não é um endereço IP válido ou rede"
 
@@ -1276,14 +1259,12 @@ msgstr[0] "O email %(email)s não é válido"
 msgstr[1] "Os seguintes emails não são validos: %(email)s"
 
 #: services/forms.py:335
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "O serviço NFS falhou no reinicio."
+msgstr "O serviço UPS falhou no reinicio."
 
 #: services/forms.py:340
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Password do Administrador"
+msgstr "Confirme Palavra-chave do Administrador"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
@@ -1336,7 +1317,6 @@ msgid "The peer secret cannot be the same as user secret."
 msgstr "O segredo do grupo não pode ser igual ao segredo do utilizador."
 
 #: services/forms.py:424 services/forms.py:427
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
 msgstr ""
 "O segredo do grupo é necessária se você configurar um utilizador do mesmo "
@@ -1428,11 +1408,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "O seu ID de Grupo não pode ser maior do que %d"
 
 #: services/forms.py:811
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "Este campo não é um endereço IP válido ou rede"
+msgstr ""
+"Este campo não é um endereço IP válido ou rede. A palavra \"ALL\" pode ser "
+"utilizada para permitir tudo."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -1447,9 +1428,8 @@ msgid "Delete underlying file"
 msgstr "Apagar ficheiro sublinhado"
 
 #: services/forms.py:906
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "O serviço SNMP falhou no rinicio."
+msgstr "O serviço S.M.A.R.T. falhou no rinicio."
 
 #: services/models.py:43
 msgid "Service"
@@ -1609,7 +1589,7 @@ msgstr "Permitir a navegação nos diretórios home"
 #: services/models.py:148
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Isto activa\\desactiva permissões de navegação nos directórios home para "
+"Isto activa/desactiva permissões de navegação nos directórios home para "
 "utilizadores samba."
 
 #: services/models.py:152
@@ -1622,7 +1602,7 @@ msgstr "Activar AIO"
 
 #: services/models.py:158
 msgid "Enable/disable AIO support."
-msgstr "Isto activa\\desactiva suporte AIO."
+msgstr "Isto activa/desactiva suporte AIO."
 
 #: services/models.py:162
 msgid "Minimum AIO read size"
@@ -1683,15 +1663,13 @@ msgstr ""
 "Permite acesso de utilizadores locais a todas as partilhas apple nesta caixa."
 
 #: services/models.py:204
-#, fuzzy
 msgid "Max. Connections"
 msgstr "Máximo de conexões"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Número máximo de conexões por cada sessão (8 por defeito)."
+msgstr "Número máximo de conexões via AFP. O limite é 50."
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -2211,9 +2189,8 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "A porta USB ou serial onde a UPS está ligada."
 
 #: services/models.py:785
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Parâmetros auxiliares"
+msgstr "Parâmetros auxiliares (ups.conf)"
 
 #: services/models.py:787
 msgid "Additional parameters to the hardware-specific part of the driver."
@@ -2236,13 +2213,12 @@ msgstr ""
 "antes que o tempo termine este é cancelado."
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "Palavra-chave da partilha"
+msgstr "UPS Palavra-chave Mestra"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Utilizadores extra (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2264,7 +2240,7 @@ msgstr ""
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "Assunto do Email"
 
 #: services/models.py:827
 msgid ""
@@ -2600,21 +2576,19 @@ msgstr "Nome do domínio, eg example.com"
 
 #: services/models.py:1084
 msgid "NetBIOS Name"
-msgstr "Nome do Host (NetBIOS-Name)"
+msgstr "Nome do Host"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "System hostname"
-msgstr "Nome do Host no formato antigo, eg EXAMPLE"
+msgstr "Nome do Host do Sistema"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
 msgstr "Nome do Grupo de trabalho"
 
 #: services/models.py:1090
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Nome do Grupo de trabalho no formato antigo, eg EXAMPLE"
+msgstr "Nome do Grupo de trabalho no formato antigo, eg WORKGROUP"
 
 #: services/models.py:1094
 msgid "Administrator Name"
@@ -2734,9 +2708,8 @@ msgstr ""
 "quando estes são adicionados ao diretório LDAP, p.e. ou=Computadores"
 
 #: services/models.py:1171
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "Modelo de Autenticação"
+msgstr "Modo de Encriptação"
 
 #: services/models.py:1172
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2774,7 +2747,7 @@ msgstr ""
 
 #: services/models.py:1207 services/models.py:1208
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Configurar Rsyncd"
 
 #: services/models.py:1218
 msgid "Module name"
@@ -2973,9 +2946,8 @@ msgid "Add Rsync Module"
 msgstr "Adicionar Rsync Modulo"
 
 #: services/nav.py:164
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Módulos Rsync"
+msgstr "Vêr Módulos Rsync"
 
 #: services/views.py:228
 msgid "The service could not be stopped."
@@ -2986,9 +2958,8 @@ msgid "The service could not be started."
 msgstr "O serviço não pode ser iniciado."
 
 #: sharing/forms.py:68
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Palavra-chave da partilha"
+msgstr "Confirmar Palavra-chave da partilha"
 
 #: sharing/forms.py:117
 msgid "The field is a not a valid IP address or network"
@@ -3027,9 +2998,8 @@ msgid "Browsable to Network Clients"
 msgstr "Pesquisável pelos Clientes da Rede"
 
 #: sharing/models.py:54
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Herdar"
+msgstr "Herdar Dono"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
@@ -3110,14 +3080,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Estes parâmetros foram adicionados á [Share] secção do smb.conf"
 
 #: sharing/models.py:92
-#, fuzzy
 msgid "CIFS Share"
-msgstr "Partilha UNIX"
+msgstr "Partilha CIFS"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "UNIX Partilhas"
+msgstr "CIFS Partilhas"
 
 #: sharing/models.py:104
 msgid ""
@@ -3375,14 +3343,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Use privilégios AFP3 unix."
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Partilha Apple"
+msgstr "Partilha AFP"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "Partilhas Apple"
+msgstr "Partilhas AFP"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3461,28 +3427,25 @@ msgid "Group to map all users to"
 msgstr "Grupo de mapa para todos os utilizadores"
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "Editar partilha NFS"
+msgstr "Partilha NFS"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "UNIX Partilhas"
+msgstr "NFS Partilhas"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
 msgstr "Partilha"
 
 #: storage/forms.py:89
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Insira um número positivo (pode usar um sufixo M, G, T) ou, 0"
+msgstr "Insira um número positivo (pode usar um sufixo K, M, G, T) ou, 0"
 
 #: storage/forms.py:102
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "O utilizador %s não é válido."
+msgstr "%s não é um numero válido"
 
 #: storage/forms.py:197 storage/forms.py:428 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3503,18 +3466,16 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:278
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_"
-"\"."
+"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_\" e "
+"\".\" ."
 
 #: storage/forms.py:292
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Caminho para a extensão"
+msgstr "Caminho não existe."
 
 #: storage/forms.py:295
 msgid "Path is not a directory."
@@ -3542,9 +3503,8 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "O nome de volume NOT pode começar com c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:330
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "O seu ID de Grupo não pode ser maior do que %d"
+msgstr "Os nomes de volumes UFS não podem ter mais de 9 caracteres"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
@@ -3614,27 +3574,24 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Espaço reservado para este conjunto de dados e todas as crianças"
 
 #: storage/forms.py:665
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
 "Os nomes dos dataset têm de começar com caracteres alfanuméricos e podem "
-"conter (-), (_), (:) e (.)."
+"conter \"-\", \"_\", \":\" e \".\"."
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
 msgstr "Já tem um dataset com esse nome"
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Quota para este dataset"
+msgstr "Quota para este volume"
 
 #: storage/forms.py:715
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Espaço reservado para este dataset"
+msgstr "Espaço reservado para este volume"
 
 #: storage/forms.py:740
 msgid "ZFS Volume Name"
@@ -3645,9 +3602,8 @@ msgid "Size for this ZFS Volume"
 msgstr "Tamanho para o Volume ZFS"
 
 #: storage/forms.py:741
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Nenhum; exemplo: 1g"
+msgstr "Exemplo: 1g"
 
 #: storage/forms.py:749
 msgid ""
@@ -3671,7 +3627,7 @@ msgstr "Modo"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tipo de ACL"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -3795,9 +3751,8 @@ msgstr "Hosts de replicação remota"
 
 #: storage/models.py:421 storage/models.py:468
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Tipo de sistema de ficheiros"
+msgstr "Sistema de ficheiros/Volume"
 
 #: storage/models.py:426
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4002,9 +3957,8 @@ msgid "Snapshot successfully deleted."
 msgstr "Snapshot eliminado com sucesso."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshots successfully deleted."
-msgstr "Snapshot eliminado com sucesso."
+msgstr "Snapshots eliminados com sucesso."
 
 #: storage/views.py:509
 msgid "Rollback successful."
@@ -4035,7 +3989,6 @@ msgid "Disk detach has been successfully done."
 msgstr "Separação do disco foi feito com sucesso."
 
 #: storage/views.py:614
-#, fuzzy
 msgid "Disk offline operation has been issued."
 msgstr "Substituição do disco foi iniciada."
 
@@ -4056,12 +4009,10 @@ msgid "Language (Require UI reload)"
 msgstr "Linguagem (necessita reiniciar UI)"
 
 #: system/forms.py:168
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Este valor tem que ser entre 0 e 65535, inclusive."
+msgstr "Este valor tem que ser entre 1 e 65535, inclusive."
 
 #: system/forms.py:170
-#, fuzzy
 msgid "Number is required."
 msgstr "Este campo é obrigatório."
 
@@ -4094,12 +4045,10 @@ msgid "SHA256 sum for the image"
 msgstr "SHA256 sum para a imagem"
 
 #: system/forms.py:361
-#, fuzzy
 msgid "Invalid firmware"
 msgstr "Firmware ou checksum inválido"
 
 #: system/forms.py:367 system/forms.py:394
-#, fuzzy
 msgid "Invalid checksum"
 msgstr "Firmware ou checksum inválido"
 
@@ -4108,7 +4057,6 @@ msgid "Service Pack image to be installed"
 msgstr "Imagem do Service Pack para ser instalado"
 
 #: system/forms.py:388
-#, fuzzy
 msgid "Invalid service pack"
 msgstr "Service pack ou checksum inválido"
 
@@ -4129,13 +4077,12 @@ msgid "Protocol"
 msgstr "Protocolo"
 
 #: system/models.py:53
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "Endereço IPv4"
+msgstr "Endereço WebGUI"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Porta WebGUI"
 
 #: system/models.py:65
 msgid "Language"
@@ -4159,7 +4106,7 @@ msgstr "Servidor NTP 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog servidor"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4198,13 +4145,12 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Activar Zeroconf/Bonjour"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"O tamanho swap de cada unidade em GiB, afecta somente a discos novos. Deve "
-"ser diferente de zero"
+"O tamanho swap de cada unidade em GiB, afecta somente a discos novos.  Deve "
+"ser sempre diferente de 0. (RECOMENDADO)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4227,13 +4173,12 @@ msgid "From email"
 msgstr "De"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
 "Um endereço de e-mail que o sistema usará para o endereço de envio de "
-"correio envia, ex: freenas@mydomain.com"
+"correio envia, eg: freenas@example.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4391,17 +4336,14 @@ msgid "Day of week"
 msgstr "Dia da semana"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Activar AIO"
+msgstr "Activado"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
 msgstr "Tarefa Agendada"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
 msgstr "Tarefas Agendadas"
 
@@ -4433,14 +4375,12 @@ msgid "Every month"
 msgstr "Todo mês"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Dia da semana"
+msgstr "Dias da semana"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
-#, fuzzy
 msgid "Weekends"
-msgstr "Semana(s)"
+msgstr "Fins de Semana"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4548,53 +4488,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Opção extra para linha de comando rsync (normalmente vazia)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Tarefa Rsync"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Tarefas Rsync"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. Teste"
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "Definições S.M.A.R.T"
+msgstr "Testes S.M.A.R.T"
 
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Disponível"
+msgstr "Variável"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Valor"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr "Carga média"
+msgstr "Iniciador"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr "Carga média"
+msgstr "Iniciadores"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4609,48 +4542,43 @@ msgid "System Information"
 msgstr "Informação do Sistema"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "Tarefas Agendadas"
+msgstr "Vêr Tarefas Agendadas"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Ver discos"
+msgstr "Vêr tarefas Rsync"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "Definições S.M.A.R.T"
+msgstr "Vêr Testes S.M.A.R.T"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Ver discos"
+msgstr "Vêr Sysctls"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Ver Todos os Utilizadores"
+msgstr "Vêr Iniciadores"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "O ficheiro enviado não é válido."
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Mensagem de teste do"
+msgstr "Mensagem de teste do %s"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Esta é uma mensagem de teste do"
+msgstr "Esta é uma mensagem de teste do %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "O seu email de teste não pode ser enviado:"
+msgstr "O seu email de teste não pode ser enviado: %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4814,11 +4742,11 @@ msgstr "Alterar a password de Administrador"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "AVISO"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "CRITICO"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4859,7 +4787,7 @@ msgstr "As alteração foram actualizadas com sucesso!"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "Guardar"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -5122,7 +5050,7 @@ msgstr "Bem vindo, %(username)s. Obrigado por ter entrado."
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Bemvindo a %(sw_name)s&trade; %(sw_login_versions)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5142,7 +5070,7 @@ msgstr "Voltou"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Pretende activar este serviço?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -5197,9 +5125,8 @@ msgid "TFTP Settings"
 msgstr "Definições de TFTP"
 
 #: templates/services/index.html:147
-#, fuzzy
 msgid "UPS Settings"
-msgstr "Definições de NFS"
+msgstr "Definições de UPS"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
@@ -5389,9 +5316,9 @@ msgid "Edit Disk"
 msgstr "Editar Disco"
 
 #: templates/storage/dataset_confirm_delete.html:9
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Tem a certeza que pretende eliminar?"
+msgstr "Tem a certeza que pretende eliminar \"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:12
 msgid ""
@@ -5403,16 +5330,21 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"Isto apagará todos os ficheiros constantes no conjunto de dados.\n"
 msgstr[1] ""
+"\n"
+"Isto apagará todos os ficheiros constantes no conjunto de dados e seus sub-"
+"conjuntos.\n"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
 msgstr "Editar Dataset"
 
 #: templates/storage/datasets.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Criar um Dataset em ZFS"
+msgstr "Criar um Dataset em ZFS no %(fs)s"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
@@ -5423,12 +5355,10 @@ msgid "Are you sure you want to detach?"
 msgstr "Tem a certeza que pretende desconectar?"
 
 #: templates/storage/disk_offline.html:7
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Tem a certeza que pretende eliminar?"
+msgstr "Tem a certeza que pretende passar a offline?"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
 msgstr "Tem a certeza que pretende eliminar?"
 
@@ -5495,6 +5425,8 @@ msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
+"ATENÇÃO: São criados instantâneos sobre os ZFS ficheiros de sistema/volume "
+"obtidos para a criação duma réplica da tarefa."
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5520,16 +5452,14 @@ msgid ""
 msgstr ""
 
 #: templates/storage/scrub_confirm.html:12
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Tem a certeza que pretende desconectar?"
+msgstr "Tem a certeza que pretende fazer scrub?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "Isto sobrecarregará o sistema enquanto processamento"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr "Tem a certeza que pretende reverter o snapshot para o estado anterior?"
 
@@ -5538,14 +5468,12 @@ msgid "Clone snapshot"
 msgstr "Clonar snapshot"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "Apagar snapshot"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "Apagar snapshot"
+msgstr "Apagar este Snapshot"
 
 #: templates/storage/snapshots.html:49
 #, fuzzy
@@ -5602,9 +5530,8 @@ msgid "on every"
 msgstr "sempre"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "Sem capturas periódicas definidas"
+msgstr "Sem capturas periódicas definidas."
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -5699,9 +5626,9 @@ msgid "Existing data will be cleared"
 msgstr "Informação existente será apagada"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Criar Volume ZFS"
+msgstr "Criar volume ZFS no %(name)s"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
@@ -5748,9 +5675,8 @@ msgid "Update"
 msgstr "Actualizar"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Sem CronJobs definidos"
+msgstr "Sem CronJobs definidos."
 
 #: templates/system/cronjob.html:46
 #, fuzzy
@@ -5777,9 +5703,8 @@ msgid ""
 msgstr ""
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Nenhum target definido"
+msgstr "Nenhuma preferencia de arranque definida."
 
 #: templates/system/loader.html:38
 #, fuzzy
@@ -5832,9 +5757,8 @@ msgid "Yearly Graphs"
 msgstr "Gráfico Anual"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Sem rsyncs definidos"
+msgstr "Sem tarefas rsyncs definidas."
 
 #: templates/system/rsync.html:44
 #, fuzzy
@@ -5872,19 +5796,16 @@ msgid "No S.M.A.R.T. tests defined"
 msgstr "Nenhum target definido"
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Adicionar S.M.A.R.T. Teste"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Adicionar S.M.A.R.T. Teste"
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Sem rsyncs definidos"
+msgstr "Sem sysctl definidos."
 
 #: templates/system/sysctl.html:38
 #, fuzzy
