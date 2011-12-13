@@ -168,10 +168,25 @@ def reporting(request):
     })
 
 def settings(request):
-    settings = models.Settings.objects.order_by("-id")[0].id
-    email = models.Email.objects.order_by("-id")[0].id
-    ssl = models.SSL.objects.order_by("-id")[0].id
-    advanced = models.Advanced.objects.order_by("-id")[0].id
+    try:
+        settings = models.Settings.objects.order_by("-id")[0].id
+    except:
+        settings = None
+
+    try:
+        email = models.Email.objects.order_by("-id")[0].id
+    except:
+        email = None
+
+    try:
+        ssl = models.SSL.objects.order_by("-id")[0].id
+    except:
+        ssl = None
+
+    try:
+        advanced = models.Advanced.objects.order_by("-id")[0].id
+    except:
+        advanced = None
 
     return render(request, 'system/settings.html', {
         'settings': settings,
