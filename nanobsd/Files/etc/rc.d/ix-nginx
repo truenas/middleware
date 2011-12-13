@@ -96,7 +96,7 @@ generate_nginx_conf()
 					fill = makeline(" ", index($0, "ssl_certificate") - 2);
 					printf("%sssl_certificate %s;\n", fill, ssl_cert);
 				} else {
-					fill = makeline(" ", index($0, "ssl_certificate") - 2);
+					fill = makeline(" ", index($0, "ssl_certificate") - 1);
 					printf("%s#ssl_certificate %s;\n", fill, ssl_cert);
 				}
 			} else if (/^(( |\t|#)*)?ssl_certificate_key( |\t)+/) {
@@ -104,7 +104,7 @@ generate_nginx_conf()
 					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
 					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
 				} else {
-					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
+					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
 					printf("%s#ssl_certificate_key %s;\n", fill, ssl_key);
 				}
 			} else {
