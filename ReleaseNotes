@@ -61,6 +61,7 @@ a. NFSv4 ACL support (see: r8375, r8414).
 6. Misc:
 
 a. Upgrade ataidle
+b. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1 image was broken due to the environment of the build machine where it was produced on.
 
 Bugfixes:
 
@@ -72,6 +73,8 @@ Bugfixes:
 6. Address simple failure cases with getting Kerberos tickets (clock skew) and joining AD domains so that users could better rectify improperly configured NAS boxes; this means that if either of these cases fail, the GUI will now feed back that the 'Active Directory' service is stopped.
 7. Fix the bug in rsync tasks where it would strip the trailing '/' off the end of the destination path.
 8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
+9. Fix an issue where if one entered in an invalid path, the GUI would traceback instead of providing feedback stating that the directory provided was invalid.
+10. Fixed hang issue where special files (such as FIFOs, character devices, etc) would cause rsync to hang.
 
 Cosmetic items:
 
@@ -138,31 +141,31 @@ vice-versa, but some files, such as the rrd files used by the statistics
 graphing package are architecture dependent.
 
 Filename:
-FreeNAS-8.0.3-BETA1-amd64.Full_Install.xz
+FreeNAS-8.0.3-BETA2-amd64.Full_Install.xz
 SHA256 Hash:
-dd0e343a09bcecb9ce21f11d1c17bbfab85b859bce9a0abb8f00e0fef33ce62c
+04d4c189a9f85fb26766951915892e939b6ecbb20b054049229715c6b93398ad
 
 Filename:
-FreeNAS-8.0.3-BETA1-amd64-GUI_Upgrade.xz
+FreeNAS-8.0.3-BETA2-amd64.GUI_Upgrade.xz
 SHA256 Hash:
-cf98ac6e598def6f4c204fe605504eb20f71d541a5bfd0e079f3545c741570c2
+5a4edaf377b0a8421fe2482dce9e5539ee1887e4aa7769d2810eeb81f4033681
 
 Filename:
-FreeNAS-8.0.3-BETA1-amd64.iso
+FreeNAS-8.0.3-BETA2-amd64.iso
 SHA256 Hash:
-4255e4d57dcfc7d1ca43f861eddb66ebacde4e5bb01058803b74de8df6b75e33
+d4ecf757c53f4537b6b0e33ef327ef5375510631b69274ba699570b4d0911a4e
 
 Filename:
-FreeNAS-8.0.3-BETA1-i386-Full_Install.xz
+FreeNAS-8.0.3-BETA2-i386.Full_Install.xz
 SHA256 Hash:
-4985ef54763d68458ad0430a44dee67f9f079fc4d41330db18e1013def756677
+89e4bb7ac4cff9bf70bf9b7971c2cd1d767ebcb09b30beb6c57b286fd1ffa526
 
 Filename:
-FreeNAS-8.0.3-BETA1-i386-GUI_Upgrade.xz
+FreeNAS-8.0.3-BETA2-i386.GUI_Upgrade.xz
 SHA256 Hash:
-a719157195b43676c7e02ffa02121db260f8f82bdba07458e182b627c209a5fd
+e795c862edcc1343904de1c04fce916d764a35fe614d9ce6f2d48f3616591375
 
 Filename:
-FreeNAS-8.0.3-BETA1-i386.iso
+FreeNAS-8.0.3-BETA2-i386.iso
 SHA256 Hash:
-7b2b632bb693dc6929c1972c3cf994d231897938d828381d5b42374e3917bddf
+09e734f2d05b5af80d1700f56c0be2ca213b77c37a2b40e810147c0f02402100
