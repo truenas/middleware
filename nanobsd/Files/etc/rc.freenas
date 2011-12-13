@@ -49,8 +49,8 @@
 : ${SSLCADIR:="${SSLDIR}/CA"}
 : ${SSLCACERTDIR:="${SSLCADIR}/certs"}
 : ${SSLCAPRIVDIR:="${SSLCADIR}/private"}
-: ${SSLCACERT:="${SSLCADIR}/cacert.pem"}
-: ${SSLCAKEY:="${SSLCAPRIVDIR}/cakey.pem"}
+: ${SSLCACERT:="${SSLCADIR}/cacert.crt"}
+: ${SSLCAKEY:="${SSLCAPRIVDIR}/cakey.key"}
 
 #
 #	HTTPD settings
@@ -59,7 +59,9 @@
 : ${HTTPDDIR:="/usr/local/etc/nginx"}
 : ${HTTPDSCRIPT:="/usr/local/etc/rc.d/nginx"}
 : ${HTTPDCONF:="${HTTPDDIR}/nginx.conf"}
-: ${HTTPDCERT:="${SSLDIR}/httpd.pem"}
+: ${HTTPDSSLDIR:="${SSLDIR}/nginx"}
+: ${HTTPDKEY:="${HTTPDSSLDIR}/nginx.key"}
+: ${HTTPDCERT:="${HTTPDSSLDIR}/nginx.crt"}
 : ${HTTPDSSLPORT:="443"}
 : ${HTTPDPORT:="80"}
 
