@@ -52,7 +52,7 @@ class ViewSysctl(TreeNode):
 
         gname = 'system.Sysctl.View'
         view = 'system_sysctls'
-        name = _('View Sysctl\'s')
+        name = _('View Sysctls')
         append_app = False
 
 class ViewLoader(TreeNode):
