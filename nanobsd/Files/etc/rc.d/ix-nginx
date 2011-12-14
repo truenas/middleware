@@ -96,7 +96,7 @@ generate_nginx_conf()
 					fill = makeline(" ", index($0, "ssl_certificate") - 2);
 					printf("%sssl_certificate %s;\n", fill, ssl_cert);
 				} else {
-					fill = makeline(" ", index($0, "ssl_certificate") - 1);
+					fill = makeline(" ", index($0, "ssl_certificate") - 2);
 					printf("%s#ssl_certificate %s;\n", fill, ssl_cert);
 				}
 			} else if (/^(( |\t|#)*)?ssl_certificate_key( |\t)+/) {
@@ -104,7 +104,7 @@ generate_nginx_conf()
 					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
 					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
 				} else {
-					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
+					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
 					printf("%s#ssl_certificate_key %s;\n", fill, ssl_key);
 				}
 			} else {
@@ -117,7 +117,7 @@ generate_nginx_conf()
 	mv "${HTTPDCONF}" "${HTTPDCONF}.working"
 	mv "${tmp}" "${HTTPDCONF}"
 
-	${HTTPD} -t -q -c "${HTTPDCONF}" #>/dev/null 2>&1
+	${HTTPD} -t -q -c "${HTTPDCONF}" >/dev/null 2>&1
 	rc=$?
 	if [ "${rc}" != "0" ]
 	then
@@ -154,8 +154,14 @@ test_nginx_config()
 		host="${host}:${port}"
 	fi
 
+	cmd="start"
+	${HTTPDSCRIPT} status >/dev/null 2>&1
+	if [ "$?" = "0" ]
+	then
+		cmd="restart"
+	fi
 
-	${HTTPDSCRIPT} onerestart >/dev/null 2>&1
+	${HTTPDSCRIPT} "${cmd}" >/dev/null 2>&1
 	rc=$?
 	if [ $rc -eq 0 ]; then
 		echo -n "Waiting for ${proto}... "
@@ -177,6 +183,11 @@ test_nginx_config()
 		else
 			echo "Failed."
 		fi
+	fi
+
+	if [ "${cmd}" = "start" ]
+	then
+		${HTTPDSCRIPT} stop >/dev/null 2>&1
 	fi
 
 	return $rc
@@ -248,7 +259,14 @@ do_configure_nginx()
 			fi
 
 			generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
-			${HTTPDSCRIPT} start
+
+			${HTTPDSCRIPT} status >/dev/null 2>&1
+			if [ "$?" = "0" ]
+			then
+				${HTTPDSCRIPT} restart >/dev/null 2>&1
+			else
+				${HTTPDSCRIPT} stop >/dev/null 2>&1
+			fi
 		fi
 	done
 }
