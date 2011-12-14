@@ -103,7 +103,7 @@ def home(request):
     try:
         plugins = models.Plugins.objects.order_by("-id")[0]
     except IndexError:
-        plugins = models.Plugins.objects.create()
+        plugins = None
 
     srv = models.services.objects.all()
     return render(request, 'services/index.html', {
