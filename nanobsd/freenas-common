@@ -117,18 +117,14 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
-#+databases/py-south
+#+databases/py-south || devel/py-daemon || ...
 add_port devel/py-setuptools
-#-databases/py-south
+#-databases/py-south || devel/py-daemon || ...
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-if [ "${LIGHTTPD}" = 1 ]; then
-#+add_port www/lighttpd
-add_port www/spawn-fcgi
-#-add_port www/lighttpd
-add_port www/lighttpd
-fi
+add_port devel/py-lockfile
+add_port devel/py-daemon
 add_port www/nginx WITH_IPV6=true WITH_HTTP_MODULE=true \
 	WITH_HTTP_CACHE_MODULE=true WITH_HTTP_DAV_MODULE=true \
 	WITH_HTTP_REWRITE_MODULE=true WITH_HTTP_SSL_MODULE=true \
