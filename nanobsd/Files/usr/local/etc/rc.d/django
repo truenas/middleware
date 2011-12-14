@@ -3,7 +3,7 @@
 #
 # PROVIDE: django
 # REQUIRE: DAEMON
-# BEFORE: lighttpd
+# BEFORE: nginx
 # KEYWORD: shutdown
 #
 
@@ -54,7 +54,7 @@ stop_cmd="stop_command"
 
 start_command()
 {
-	local logs="/var/log/lighttpd.error.log /var/log/lighttpd.access.log"
+	local logs="/var/log/nginx-error.log /var/log/nginx-access.log"
 	new_string=`dd if=/dev/random bs=32 count=1 2>/dev/null | /usr/local/bin/base64`
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         echo "SECRET_KEY = '${new_string}'" >> ${django_config}
