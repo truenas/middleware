@@ -115,9 +115,9 @@ class Alert(object):
                                       'the admin user (currently no password '
                                       'is required to login)'))
 
-    def lighttpd_bindaddr(self):
+    def httpd_bindaddr(self):
         address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
-        with open('/usr/local/etc/lighttpd/lighttpd.conf') as f:
+        with open('/usr/local/etc/nginx/nginx.conf') as f:
             # XXX: this is parse the file instead of slurping in the contents
             # (or in reality, just be moved somewhere else).
             if f.read().find('0.0.0.0') != -1 and address not in ('0.0.0.0', ''):
@@ -129,7 +129,7 @@ class Alert(object):
     def perform(self):
         self.volumes_status()
         self.admin_password()
-        self.lighttpd_bindaddr()
+        self.httpd_bindaddr()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:
