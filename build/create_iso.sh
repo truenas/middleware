@@ -15,10 +15,22 @@ main()
     root=$(pwd)
     : ${NANO_LABEL=FreeNAS}
     : ${FREENAS_ARCH=$(uname -p)}
+    case "$FREENAS_ARCH" in
+    amd64)
+	NANO_ARCH_HUMANIZED="x64"
+	;;
+    i386)
+	NANO_ARCH_HUMANIZED="x86"
+	;;
+    *)
+	NANO_ARCH_HUMANIZED=$NANO_ARCH
+	;;
+    esac
+
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
     REVISION="8.0.3-BETA2"
-    export NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
+    export NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH_HUMANIZED}"
     export NANO_IMGNAME="$NANO_NAME"
 
     . build/functions.sh
@@ -57,7 +69,7 @@ main()
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     # Copy the image file to the cdrom.  Cache the compressed version to
     # make it easier to debug this and the install scripts.
-    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${FREENAS_ARCH}-embedded.xz
+    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}-embedded.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)

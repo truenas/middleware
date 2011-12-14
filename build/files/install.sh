@@ -13,11 +13,6 @@ get_product_name()
     echo "FreeNAS"
 }
 
-get_product_arch()
-{
-    uname -p
-}
-
 get_product_path()
 {
     echo "/cdrom"
@@ -25,7 +20,7 @@ get_product_path()
 
 get_image_name()
 {
-    echo "$(get_product_path)/$(get_product_name)-$(get_product_arch)-embedded.xz"
+    echo "$(get_product_path)/$(get_product_name)-"*"-embedded.xz"
 }
 
 build_config()
