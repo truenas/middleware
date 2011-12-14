@@ -117,7 +117,23 @@ class PluginsForm(ModelForm):
 
     class Meta:
         model = models.Plugins
+
     def save(self):
+        from freenasUI.network import models
+
+        jiface = self.cleaned_data['jail_interface']
+        iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
+
+        new_alias = models.Alias()
+        new_alias.alias_interface = iface
+        new_alias.alias_v4address = self.cleaned_data['jail_ip']
+        new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+
+        try:
+            new_alias.save()
+        except Exception, err:
+            raise ServiceFailed("plugins_jail", _("Unable to configure alias."))
+
         super(PluginsForm, self).save()
         started = notifier().restart("plugins_jail")
         if started is False and models.services.objects.get(srv_service='plugins').srv_enable:

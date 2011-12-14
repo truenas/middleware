@@ -760,7 +760,8 @@ class Plugins(Model):
             blank=True
             )
     jail_netmask = models.IPAddressField(
-            max_length=120,
+            max_length=3,
+            choices=choices.v4NetmaskBitList,
             verbose_name=_("Jail netmask"),
             help_text=_("Plugins jail netmask"),
             default='',
