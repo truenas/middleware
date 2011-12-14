@@ -533,12 +533,10 @@ class notifier:
 
     def _start_plugins_jail(self):
         self.__system("/usr/sbin/service ix-jail quietstart")
-        self.__system("/usr/sbin/service jail quietstart")
         self.__system_nolog("/usr/sbin/service ix-plugins start")
 
     def _stop_plugins_jail(self):
         self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
-        self.__system("/usr/sbin/service jail forcestop")
         self.__system("/usr/sbin/service ix-jail forcestop")
 
     def _restart_plugins_jail(self):
