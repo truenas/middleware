@@ -297,6 +297,11 @@ _gen_conf()
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
 		echo "smartd_flags=\"-i ${inter}\""
 	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol FROM system_settings WHERE stg_guiprotocol = 'https' ORDER BY -id LIMIT 1" | \
+	while read ssl_enable; do
+		echo "ixssl_list=\"nginx\""
+	done
 }
 
 # If we're running really early, then mount /data read-only
