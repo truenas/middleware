@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-ssl
 # REQUIRE: FILESYSTEMS
-# BEFORE: ix-httpd
+# BEFORE: ix-nginx
 
 . /etc/rc.freenas
 
@@ -429,22 +429,17 @@ configure_nginx_ssl()
 
 do_openssl_config()
 {
-	local args="$*"
-
 	generate_openssl_conf
-	if [ -z "${args}" ]
-	then
-		generate_system_certificate
-	else
-		for arg in ${args}
-		do
-			func="configure_${arg}_ssl"
-			if $(type "${func}" 2>/dev/null|grep -q 'shell function')
-			then
-				eval ${func}
-			fi
-		done
-	fi
+	generate_system_certificate
+
+	for arg in ${ixssl_list}
+	do
+		func="configure_${arg}_ssl"
+		if $(type "${func}" 2>/dev/null|grep -q 'shell function')
+		then
+			eval ${func}
+		fi
+	done	
 }
 
 name="ix-ssl"
@@ -452,4 +447,13 @@ start_cmd='do_openssl_config'
 stop_cmd=':'
 
 load_rc_config $name
-run_rc_command $*
+cmd="${1}"
+if [ $# -gt 0 ]
+then
+	shift
+fi
+if [ -n "$*" ]
+then
+	ixssl_list="$*"
+fi
+run_rc_command "${cmd}"
