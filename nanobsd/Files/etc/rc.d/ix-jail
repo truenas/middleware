@@ -81,7 +81,10 @@ plugins_jail_start()
 {
 	if srv_enabled plugins
 	then
+		local jail_name="$(get_plugins_jail_name)"
+
 		generate_plugins_jail_config
+		/etc/rc.d/jail start "${jail_name}"
 	fi
 }
 
@@ -89,7 +92,7 @@ plugins_jail_stop()
 {
 	if srv_enabled plugins
 	then
-		jail_name="$(get_plugins_jail_name)"
+		local jail_name="$(get_plugins_jail_name)"
 		if [ -n "${jail_name}" ]
 		then
 			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
@@ -98,6 +101,7 @@ plugins_jail_stop()
 			mv "${tmpfile}" /etc/rc.conf
 
 			rm -f "/etc/fstab.${jail_name}"
+			/etc/rc.d/jail stop "${jail_name}"
 		fi
 	fi
 }
