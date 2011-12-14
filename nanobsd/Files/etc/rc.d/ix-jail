@@ -59,9 +59,6 @@ generate_plugins_jail_config()
 		# No VIM colors needed here
 		cat<<-__EOF__>>"${tmpfile}"
 
-		# do this through alias code
-		#ifconfig_${iface}_alias0="inet ${ip} netmask ${netmask}"
-
 		jail_${name}_rootdir="${path}/${name}"
 		jail_${name}_hostname="${name}"
 		jail_${name}_ip="${ip}"
