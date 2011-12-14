@@ -128,7 +128,7 @@ export SVNREVISION
 
 # See bsd.port.mk
 unset MASTER_SITE_BACKUP
-#unset MASTER_SITE_OVERRIDE
+unset MASTER_SITE_OVERRIDE
 
 # See pkg_add(1).
 unset PACKAGEROOT
