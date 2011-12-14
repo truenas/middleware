@@ -21,7 +21,7 @@ generate_tftp()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
-	if [ $enabled -ne 0 ]; then
+	if [ $enabled -eq 0 ]; then
 	    if [ "$tftp_port" -eq 69 ]; then
 		service="tftp"
 	    else
