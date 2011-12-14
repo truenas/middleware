@@ -773,7 +773,7 @@ def shutdown():
 
 def show_ip():
     proto = Settings.objects.all().order_by('-id')[0].stg_guiprotocol
-    p1 = subprocess.Popen("sockstat |awk '{ if ($2 == \"lighttpd\" && $7 == \"*:*\") print $6 }'", shell=True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen("sockstat |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'", shell=True, stdout=subprocess.PIPE)
     addrs = p1.communicate()[0].split('\n')[:-1]
 
     if addrs:
