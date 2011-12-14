@@ -8,7 +8,8 @@
 
 . /etc/rc.freenas
 
-NGINX_PLUGINS_CONF="/usr/local/etc/nginx/plugins.conf"
+NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
+NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
 generate_plugins_conf()
 {
@@ -213,6 +214,44 @@ set_stg_guiprotocol()
 	return ${res}
 }
 
+generate_fastcgi_params()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		stg_guiprotocol
+
+	FROM
+		system_settings
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	" | \
+	while read stg_guiprotocol
+	do
+		local ssl_enable=0
+
+		stg_guiprotocol=$(echo "${stg_guiprotocol}"|tr a-z A-Z)
+		case "${stg_guiprotocol}" in
+			HTTP) ssl_enable=0; ;;
+			HTTPS) ssl_enable=1; ;;
+		esac
+
+		local tmp="$(mktemp /tmp/tmp.XXXXXX)"
+		grep -Eiv '^( |\t)*fastcgi_param( |\t)+https( |\t)+' \
+			< "${NGINX_FASTCGI_PARAMS}" > "${tmp}"
+
+		if [ "${ssl_enable}" = "1" ]
+		then
+			echo "fastcgi_param HTTPS on;" >> "${tmp}"
+		fi
+		mv "${tmp}" "${NGINX_FASTCGI_PARAMS}"
+	done
+}
+
 
 do_configure_nginx()
 {
@@ -274,6 +313,7 @@ do_configure_nginx()
 configure_nginx()
 {
 	generate_plugins_conf
+	generate_fastcgi_params
 	do_configure_nginx
 }
 
