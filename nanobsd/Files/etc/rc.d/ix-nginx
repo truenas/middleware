@@ -35,7 +35,7 @@ generate_plugins_conf()
 	" | \
 	while read name uname view icon enabled ip port path
 	do
-		cat >>"${NGINX_PLUGINS_CONF}" <<-__EOF__
+		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
 		location ~ ${view} {
 		    fastcgi_pass   ${ip}:${port};
 		    include        fastcgi_params;
@@ -256,13 +256,12 @@ generate_fastcgi_params()
 do_configure_nginx()
 {
 	local IFS="|"
-	local f="stg_guiprotocol stg_guiaddress stg_guiport"
-	eval local $f
-	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		$sf
+		stg_guiprotocol,
+		stg_guiaddress,
+		stg_guiport
 
 	FROM
 		system_settings
@@ -272,7 +271,7 @@ do_configure_nginx()
 
 	LIMIT 1
 	" | \
-	while eval read $f
+	while read stg_guiprotocol stg_guiaddress stg_guiport
 	do
 		local ssl_enable=0
 
