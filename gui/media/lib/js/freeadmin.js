@@ -204,7 +204,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[I].tab == 'services'){
+                if(c[i].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(onload) onload();
