@@ -514,6 +514,7 @@ class notifier:
 
     def _reload_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
+        self.__system("killall -1 avahi-daemon")
         self.__system("killall -1 afpd")
 
     def _reload_nfs(self):
@@ -610,11 +611,8 @@ class notifier:
         self.__system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service ix-samba quietstart")
+        self.__system("killall -1 avahi-daemon")
         self.__system("/usr/sbin/service samba reload")
 
     def _restart_cifs(self):
