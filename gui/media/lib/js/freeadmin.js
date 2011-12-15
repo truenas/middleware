@@ -193,6 +193,52 @@
             }
 	},
 
+        openPluginsFcgi: function(p, item) {
+            dojo.xhrGet({
+                url: item.url,
+                sync: true,
+                failOk: true,
+                handleAs: "json",
+                load: function(data) {
+
+/*
+                    i = 0;
+                    inputs = new Array();
+                    form = new dijit.form.Form(); 
+                    for (var key in data) {
+                        val = data[key]
+                        inputs[i] = new dijit.form.TextBox({
+                            name: key,
+                            value: val, 
+                        });
+                    }
+*/
+
+/*
+                    json = dojo.toJson(data);
+                    dialog = new dijit.Dialog({
+                        id: "pluginsfcgi_dialog",
+                        style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+                        name: item.name,
+                        onHide: function() {
+                            setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                            refreshTabs(attrs.nodes);
+                        },
+                        onLoad: function() {
+                            processStack();
+                            this.layout();
+                       }
+                    });
+                    dialog.set('title', item.name);
+                    dialog.set('content', json); 
+                    dialog.show();
+*/
+
+                    //editObject(item.name, item.url);
+                }, 
+            });
+        },
+
         openServices: function(onload) {
             if(!onload) onload = function() {};
             var opened = false;
@@ -200,7 +246,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'services'){
+                if(c[I].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(onload) onload();
@@ -1287,6 +1333,8 @@
                     Menu.openServices();
                 } else if(item.type == 'en_dis_plugins') {
                     Menu.openPlugins();
+                } else if(item.type == 'pluginsfcgi') {
+                    Menu.openPluginsFcgi(p, item);
                 } else if(item.type == 'openaccount') {
                     Menu.openAccount(item.gname);
                 } else if(item.type == 'iscsi') {
