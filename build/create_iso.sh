@@ -50,7 +50,7 @@ main()
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
-	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
+	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED-embedded.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
@@ -63,7 +63,7 @@ main()
 	tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
 	cat > $INSTALLUFSDIR/etc/version-info <<EOF
-SW_ARCH=\$(uname -p)
+SW_ARCH=$NANO_ARCH_HUMANIZED
 SW_NAME="$NANO_LABEL"
 SW_FULL_VERSION="$NANO_NAME"
 SW_VERSION="$VERSION"
