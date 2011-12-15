@@ -30,7 +30,7 @@ bool_on()
 generate_afpd_config()
 {
     local IFS="|"
-    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_guest_user"
+    local f="afp_srv_name afp_srv_guest afp_srv_guest_user"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 

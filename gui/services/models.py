@@ -199,10 +199,6 @@ class AFP(Model):
             verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('nobody' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login. The user root can not be used as guest account.")
             )
-    afp_srv_local = models.BooleanField(
-            verbose_name=_("Local Access"),
-            help_text=_("Allow users with local accounts to access apple shares on this box.")
-            )
     afp_srv_connections_limit = models.IntegerField(
             max_length=120,
             verbose_name=_('Max. Connections'),
