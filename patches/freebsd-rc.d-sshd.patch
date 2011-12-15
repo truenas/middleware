@@ -29,7 +29,7 @@ Index: etc/rc.d/sshd
 +			echo ${_tmp} | /usr/local/bin/base64 -d > /etc/ssh/${i}
 +		fi
 +	done
-+	chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key
++	chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key 2>/dev/null
  	if [ ! -f /etc/ssh/ssh_host_key -o \
  	    ! -f /etc/ssh/ssh_host_dsa_key -o \
  	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
