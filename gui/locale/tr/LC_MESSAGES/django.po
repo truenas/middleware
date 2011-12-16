@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-12 12:56+0200\n"
+"PO-Revision-Date: 2011-12-16 09:07+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -689,7 +689,7 @@ msgstr "Birincil Grup Kimliği"
 
 #: account/models.py:104
 msgid "Home Directory"
-msgstr "Ev Dizini"
+msgstr "Ev dizini"
 
 #: account/models.py:113
 msgid "Full Name"
@@ -928,27 +928,27 @@ msgstr "Bu ağ '%leri' CIDR beklentisi dahilinde geçerli değil."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr "IPv4 adreslerinin yanı sıra takma isimlerde belirtilmek zorunda"
+msgstr "IPv4 adreslerinin yanı sıra takma adlarda belirtilmek zorunda"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr "IPv4 alt ağ maskesi için takma isim seçilmek zorunda"
+msgstr "IPv4 alt ağ maskesi için takma ad seçilmek zorunda"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr "IPv6 adresi yanı sıra takma isim belirtilmek zorunda"
+msgstr "IPv6 adresi yanı sıra takma ad belirtilmek zorunda"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "IPv6 ağ maskesi için takma isim seçilmek zorunda"
+msgstr "IPv6 ağ maskesi için takma ad seçilmek zorunda"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr "IPv4 veya IPv6 arasında takma isim seçilmek zorunda"
+msgstr "IPv4 veya IPv6 arasında takma ad seçilmek zorunda"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr "IPv4 veya IPv6 ile maskbit için geçerli bir takma isim belirtmelisiniz"
+msgstr "IPv4 veya IPv6 ile maskbit için geçerli bir takma ad belirtmelisiniz"
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -1521,11 +1521,11 @@ msgstr ""
 
 #: services/models.py:111
 msgid "Allow guest access"
-msgstr "Misafir erişimine izin ver"
+msgstr "Misafir girişine izin ver"
 
 #: services/models.py:113
 msgid "Only allow guest access"
-msgstr "Sadece misafir erişimine izin ver"
+msgstr "Sadece misafir girişine izin ver"
 
 #: services/models.py:116 services/models.py:887
 msgid "File mask"
@@ -1719,7 +1719,7 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"'iqn' temel isim değildir, hedef isimlere ekler eklenir. (Örneğin "
+"'iqn' temel ad değildir, hedef adlarda ekler eklenir. (Örneğin "
 "iqn.2007-09.jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
 
 #: services/models.py:249
@@ -1946,7 +1946,7 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"iSCSI hedef erişim yetkisi başlatıcısı. Herhangi bir başlatıcı için bir isim "
+"iSCSI hedef erişim yetkisi başlatıcısı. Herhangi bir başlatıcı için bir ad "
 "veya 'TÜMÜ' alınır."
 
 #: services/models.py:496
@@ -1991,7 +1991,7 @@ msgstr "Hedef adı"
 
 #: services/models.py:572
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Temel isimlerin başına otomatik olarak 'iqn.é eklenir."
+msgstr "Temel adların başına otomatik olarak 'iqn.' eklenir."
 
 #: services/models.py:579
 msgid "Target Alias"
@@ -3503,7 +3503,7 @@ msgstr "UFS birim adları 9 karakterden daha fazla olamaz"
 
 #: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr "UFS birim isimleri sadece alfanümerik karakterler içerebilir"
+msgstr "UFS birim adları sadece alfanümerik karakterleri içerebilir"
 
 #: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
@@ -3573,12 +3573,12 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Veri kümesi isimleri alfasayısal karakterlerle başlamalıdır ve sadece (-), "
+"Veri kümesi adları alfasayısal karakterlerle başlamalıdır ve sadece (-), "
 "(_), (:) ve (.) içerebilir."
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
-msgstr "Zaten aynı isimde bir veri seti var"
+msgstr "Zaten aynı adda bir veri kümesi var"
 
 #: storage/forms.py:714
 msgid "Quota for this volume"
@@ -5944,7 +5944,7 @@ msgid "Docs"
 msgstr "Dokümanları"
 
 msgid "Welcome to"
-msgstr "versiyon 8 hoşgeldiniz"
+msgstr "Hoş geldiniz"
 
 msgid "LUN"
 msgstr "LUN"
@@ -5992,7 +5992,7 @@ msgid "ZVol Name"
 msgstr "ZVol Adı"
 
 msgid "English"
-msgstr "Ingilizce"
+msgstr "İngilizce"
 
 msgid "Level"
 msgstr "Seviye"
