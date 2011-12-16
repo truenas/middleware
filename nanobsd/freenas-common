@@ -129,7 +129,8 @@ add_port www/nginx WITH_IPV6=true WITH_HTTP_MODULE=true \
 	WITH_HTTP_CACHE_MODULE=true WITH_HTTP_DAV_MODULE=true \
 	WITH_HTTP_REWRITE_MODULE=true WITH_HTTP_SSL_MODULE=true \
 	WITH_HTTP_STATUS_MODULE=true WITH_WWW=true \
-	WITH_HTTP_UPLOAD_MODULE=true WITH_DEBUGLOG=true
+	WITH_HTTP_UPLOAD_MODULE=true WITH_DEBUGLOG=true \
+	WITH_HTTP_UPLOAD_PROGRESS=truytre
 #+add_port www/py-flup
 #-add_port www/py-flup
 add_port www/py-flup
