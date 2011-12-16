@@ -26,6 +26,7 @@ if [ ! -d FreeBSD ]; then
     mkdir FreeBSD/src
     mkdir FreeBSD/ports
 fi
+set -e
 
 # Make sure we have FreeBSD src, fetch using csup if not
 if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
@@ -40,32 +41,45 @@ if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
 *default prefix=${root}/FreeBSD
 *default release=cvs
 *default delete use-rel-suffix
+*default compress
 
 src-all tag=RELENG_8_2
 ports-all date=2011.07.17.00.00.00
 EOF
+	# Nuke the newly created files to avoid build errors.
+	#
+	# patch(1) will automatically append to the previously non-existent
+	# file, which causes problems with .c, .h, .s, etc files.
+	#
+	# Do this here before running csup because it will pave over all files
+	# that were previously added via a patch if it turns out that a change
+	# was rolled into src or ports.
+	for file in $(find $FREENAS_ROOT/FreeBSD -name '*.orig' -size 0); do
+		rm -f "$(echo $file | sed -e 's/.orig$//')"
+	done
     csup -L 1 ${root}/FreeBSD/supfile
-# cvsup fixes any changes we make, it seems.  Repatch
-    rm -f ${root}/FreeBSD/src-patches
-    rm -f ${root}/FreeBSD/ports-patches
+	# Force a repatch because csup pulls pristine sources.
+	: > $FREENAS_ROOT/FreeBSD/src-patches
+	: > $FREENAS_ROOT/FreeBSD/ports-patches
 fi
 
-# Make sure that all the patches are applied
-touch ${root}/FreeBSD/src-patches
-for i in $(cd ${root}/patches && echo freebsd-*.patch); do
-    if ! grep $i ${root}/FreeBSD/src-patches > /dev/null 2>&1; then
-        echo "Applying patch $i..."
-        (cd FreeBSD/src && patch -p0 < ${root}/patches/$i)
-        echo $i >> ${root}/FreeBSD/src-patches
-    fi
+for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
+		echo "Applying patch $patch..."
+		(cd FreeBSD/src &&
+		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
+	fi
 done
-touch ${root}/FreeBSD/ports-patches
-for i in $(cd ${root}/patches && echo ports-*.patch); do
-    if ! grep $i ${root}/FreeBSD/ports-patches > /dev/null 2>&1; then
-        echo "Applying patch $i..."
-        (cd FreeBSD/ports && patch -p0 < ${root}/patches/$i)
-        echo $i >> ${root}/FreeBSD/ports-patches
-    fi
+for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
+		echo "Applying patch $patch..."
+		(cd FreeBSD/ports &&
+		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
+		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
+	fi
 done
 
 if [ -n "${PREP_SOURCE}" ]; then
