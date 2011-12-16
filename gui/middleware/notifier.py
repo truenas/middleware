@@ -1405,9 +1405,8 @@ class notifier:
             return (user, group, )
         raise OSError('Invalid mountpoint %s' % (path, ))
 
-    def change_upload_location(self, path, pbi=False):
-        dir = "pbi" if pbi is True else "firmware"
-        vardir = "/var/tmp/%s" % dir
+    def change_upload_location(self, path):
+        vardir = "/var/tmp/firmware"
 
         self.__system("/bin/rm -rf %s" % vardir)
         self.__system("/bin/mkdir -p %s/.freenas" % path)
@@ -1553,6 +1552,8 @@ class notifier:
                         ret = False                     
         return ret
 
+    def install_jail_pbi(self):
+        pass
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'

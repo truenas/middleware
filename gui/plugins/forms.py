@@ -59,7 +59,7 @@ class PBITemporaryLocationForm(Form):
         else:
             self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
     def done(self):
-        notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__(), pbi=True)
+        notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 
 class PBIUploadForm(Form):
@@ -67,7 +67,7 @@ class PBIUploadForm(Form):
     sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
-        filename = '/var/tmp/pbi/pbifile.pbi'
+        filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
             with open(filename, 'wb+') as sp:
                 for c in cleaned_data['pbifile'].chunks():
@@ -89,7 +89,7 @@ class JailPBIUploadForm(Form):
     sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
-        filename = '/var/tmp/pbi/pbifile.pbi'
+        filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
             with open(filename, 'wb+') as sp:
                 for c in cleaned_data['pbifile'].chunks():
@@ -104,5 +104,4 @@ class JailPBIUploadForm(Form):
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
-        #return notifier().install_pbi()
-        pass
+        return notifier().install_jail_pbi()

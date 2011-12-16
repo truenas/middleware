@@ -44,10 +44,14 @@ load_rc_config $name
 : ${django_sockfile="/tmp/${name}.sock"}
 : ${django_path="/usr/local/www/freenasUI"}
 : ${django_config="/etc/local_settings.py"}
+: ${django_host="127.0.0.1"}
+: ${django_port="9042"}
 
 pidfile=${django_pidfile}
 sockfile=${django_sockfile}
 path=${django_path}
+host=${django_host}
+port=${django_port}
 start_precmd="start_command"
 stop_cmd="stop_command"
 
@@ -59,18 +63,17 @@ start_command()
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         echo "SECRET_KEY = '${new_string}'" >> ${django_config}
 	/usr/local/bin/python ${path}/manage.py runfcgi method=threaded \
-		socket=${sockfile} pidfile=${pidfile}
+		host=${host} port=${port} pidfile=${pidfile}
 	touch ${logs}
 	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
 	sleep 1
-	chown www:www ${sockfile} ${logs}
+	chown www:www ${logs}
 }
 
 stop_command()
 {
 	kill `cat ${pidfile}`
 	rm -f ${pidfile}
-	rm -f ${sockfile}
 }
 
 run_rc_command "$1"
