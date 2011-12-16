@@ -1,0 +1,25 @@
+<div data-dojo-type="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
+<h1>{% blocktrans %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</h1>
+<form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
+<script type="dojo/event" event="onSubmit" args="e">
+    formSubmit(this, e, '{{ postpath }}');
+</script>
+<table>
+{{ form }}
+<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
+{{ previous_fields|safe }}
+<td>
+<button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+    {% if step == 1 %}
+    {% trans "OK" %}
+    {% else %}
+    {% trans "Upload Jail PBI" %}
+    {% endif %}
+    <script type="dojo/method" event="onClick" args="evt">
+        this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
+    </script>
+</button>
+</td>
+</form>
+</table>
+</div>

@@ -33,5 +33,9 @@ urlpatterns = patterns('plugins.views',
     url(r'^home/$', 'plugins_home', name='plugins_home'),
     url(r'^pbiwizard/$', FileWizard([PBITemporaryLocationForm, PBIUploadForm], prefix="pbi"), name='plugins_pbiwizard'),
     url(r'^plugin/edit/(?P<plugin_name>.+)/$', 'plugin_edit', name="plugin_edit"),
-    url(r'^jailpbi/$', FileWizard([PBITemporaryLocationForm, JailPBIUploadForm], prefix="jailpbi"), name='plugins_jailpbi'),
+    url(r'^jailpbi/$', FileWizard(
+            [PBITemporaryLocationForm, JailPBIUploadForm],
+            prefix="jailpbi",
+            templates=["plugins/jailpbi.html"]
+        ), name='plugins_jailpbi'),
     )
