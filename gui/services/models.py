@@ -169,6 +169,11 @@ class CIFS(Model):
             help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
             default = 1,
             )
+    cifs_srv_zeroconf = models.BooleanField(
+            verbose_name=_("Zeroconf share discovery"),
+            default=True,
+            help_text=_("Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) to automatically discover the CIFS shares on the system similar to the Computer Browser service in Windows."),
+            )
 
     class Meta:
         verbose_name = _(u"CIFS")

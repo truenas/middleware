@@ -267,8 +267,20 @@ _gen_conf()
 	_bool_svcconfig inadyn_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
 
-	_count_config avahi_daemon_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
-	_count_config dbus_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
+	local _avahi_srv_enable
+
+	if srv_enabled afp; then
+		_avahi_srv_enable=true
+	elif srv_enabled cifs && [ "x$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_zeroconf FROM services_cifs")" = x1 ]; then
+		_avahi_srv_enable=true
+	else
+		_avahi_srv_enable=false
+	fi
+
+	if $_avahi_srv_enable; then
+		echo "avahi_daemon_enable=\"YES\""
+		echo "dbus_enable=\"YES\""
+	fi
 
 	_nut_config
 
