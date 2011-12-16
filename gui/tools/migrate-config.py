@@ -450,7 +450,7 @@ class ConfigParser:
 
     def _handle_ad(self, __parent, __level):
         __nodemap = {'domaincontrollername':'ad_dcname', 'domainname_dns':'ad_domainname',
-            'domainname_netbios':'ad_netbiosname', 'username':'ad_adminname',
+            'username':'ad_adminname',
             'password':'ad_adminpw', 'enable':None}
 
         __pairs = {}
@@ -471,7 +471,7 @@ class ConfigParser:
     # XXX Not sure I got this one right... XXX
     #
     def _handle_afp(self, __parent, __level):
-        __nodemap = {'enable':None, 'afpname':'afp_srv_name', 'guest':'afp_srv_guest'}
+        __nodemap = {'enable':None, 'guest':'afp_srv_guest'}
         #__enable_node = self.__getChildNode(__parent, "enable")
 
         __pairs = {}
@@ -1046,7 +1046,7 @@ class ConfigParser:
 
     def _handle_samba(self, __parent, __level):
 
-        __settingsmap = {'netbiosname':'cifs_srv_netbiosname', 'workgroup':'cifs_srv_workgroup',
+        __settingsmap = {'workgroup':'cifs_srv_workgroup',
             'serverdesc':'cifs_srv_description', 'security':'cifs_srv_authmodel',
             'guestaccount':'cifs_srv_guest', 'localmaster':'cifs_srv_localmaster',
             'rcvbuf':None, 'sndbuf':None, 'storedosattributes':'cifs_srv_dosattr',

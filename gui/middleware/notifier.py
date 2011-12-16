@@ -294,6 +294,9 @@ class notifier:
         self.__system("/usr/sbin/service ix-hostname quietstart")
         self.__system("/usr/sbin/service hostname quietstart")
         self.__system("/usr/sbin/service routing restart")
+        self.__system("/usr/bin/killall -1 afpd")
+        self.__system("/usr/bin/killall -1 avahi-daemon")
+        self.__system("/usr/sbin/service samba quietreload")
 
     def _reload_timeservices(self):
         self.__system("/usr/sbin/service ix-localtime quietstart")

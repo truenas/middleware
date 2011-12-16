@@ -62,10 +62,6 @@ class CIFS(Model):
             verbose_name=_("Authentication Model"),
             help_text=_("Using Active Directory or LDAP authentication will supersede this option"),
             )
-    cifs_srv_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name=_("NetBIOS name")
-            )
     cifs_srv_workgroup = models.CharField(
             max_length=120,
             verbose_name=_("Workgroup"),
@@ -183,11 +179,6 @@ class CIFS(Model):
         icon_model = u"CIFSIcon"
 
 class AFP(Model):
-    afp_srv_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Server Name"),
-            help_text=_("Name of the server. If this field is left empty the default server is specified.")
-            )
     afp_srv_guest = models.BooleanField(
             verbose_name=_("Guest Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
@@ -1141,11 +1132,6 @@ class ActiveDirectory(Model):
             max_length=120,
             verbose_name = _("Domain Name (DNS/Realm-Name)"),
             help_text = _("Domain Name, eg example.com")
-            )
-    ad_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name = _("NetBIOS Name"),
-            help_text = _("System hostname")
             )
     ad_workgroup = models.CharField(
             max_length=120,

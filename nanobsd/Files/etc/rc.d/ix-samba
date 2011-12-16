@@ -35,7 +35,6 @@ generate_smbconf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		cifs_srv_authmodel,
-		cifs_srv_netbiosname,
 		cifs_srv_workgroup,
 		cifs_srv_description,
 		cifs_srv_doscharset,
@@ -83,7 +82,6 @@ generate_smbconf()
 			LIMIT 1
 		) as cifs_srv_ldap_enable,
 		ad_domainname,
-		ad_netbiosname,
 		ad_workgroup,
 		ad_allow_trusted_doms,
 		ad_adminname,
@@ -113,13 +111,13 @@ generate_smbconf()
 
 	LIMIT 1
 	" | \
-	while read -r authmodel netbiosname workgroup cifs_description doscharset \
+	while read -r authmodel workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest guestok guestonly \
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
-		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
+		ad_domainname ad_workgroup ad_allow_trusted_doms \
 		ad_adminname ad_adminpw ldap_hostname ldap_basedn ldap_anonbind \
 		ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
 		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
@@ -163,7 +161,6 @@ EOF
 		fi
 
 		if [ "${ad_enable}" = "0" ]; then
-			echo "    netbios name = ${netbiosname}"
 			echo "    workgroup = ${workgroup}"
 		fi
 
@@ -270,7 +267,6 @@ EOF
 			    #security = ADS
 			    realm = ${domain}
 			    workgroup = ${ad_workgroup}	
-			    netbios name = ${ad_netbiosname}
 			    client use spnego = yes
 			    cache directory = ${FREENAS_CACHEDIR}/.samba
 
