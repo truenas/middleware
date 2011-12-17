@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 """
-A test daemon that prints out a message every 5 seconds and exits via a handler if needed.
+A test daemon that prints out a message every 5 seconds and exits via a handler for SIGTERM.
 
 All messages are printed to syslog by design.
 
-Requires: devel/py-daemon, devel/py-lockfile
+Please read PEP-3143 and visit http://pypi.python.org/pypi/python-daemon if you're more
+interested in reading up on what one can do with the daemon module.
+
+Requires:
+
+- devel/py-daemon, devel/py-lockfile
+- Running `mkdir -p /tmp/test-daemon/wd' ;)..
 
 Garrett Cooper, December 2011
 """
