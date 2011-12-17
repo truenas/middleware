@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-16 09:07+0200\n"
+"PO-Revision-Date: 2011-12-17 10:50+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1137,11 +1137,11 @@ msgstr "Ağ Özeti"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr "Bağlantı birleştir"
+msgstr "Bağlantı Birleştir"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr "Tüm birleştirilmiş bağlantıları göster"
+msgstr "Tüm Birleştirilmiş Bağlantıları Göster"
 
 #: network/views.py:189
 msgid "LAGG successfully added"
@@ -3722,7 +3722,7 @@ msgstr "Ekstra S.M.A.R.T. seçenekleri"
 
 #: storage/models.py:245
 msgid "Mount Point"
-msgstr "Bağlantı Noktası"
+msgstr "Bağlantı noktası"
 
 #: storage/models.py:246
 msgid "Path to mount point"
