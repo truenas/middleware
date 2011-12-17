@@ -80,7 +80,7 @@ if [ -z "${SVNVERSION}" ]; then
 			fi
 			if $git_cmd --work-tree=${FREENAS_ROOT} diff-index \
 			    --name-only HEAD | read dummy; then
-				git="${git}-dirty"
+				git="${git}_dirty"
 			fi
 		fi
 	fi
