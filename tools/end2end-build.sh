@@ -1,52 +1,128 @@
 #!/bin/sh
 #
-# Copy this somewhere else and edit to your heart's content.
+# An end-to-end build script which sets up a sourcebase from scratch, builds it
+# for a series of architectures, and posts the images to a .
 #
-# Space added in places to avoid potential merge conflicts.
+# usage: end2end-build.sh [-C] [-A architecture] [-b branch] [-c cvsup-host] \
+#			  [-f config-file] [-p local-postdir-base] \
+#			  [-t build-tmpdir-template]
+#
+# NOTES:
+#
+# -- -A can be specfied multiple times to generate a list of architectures to
+#    build; defaults to amd64 and i386 today.
+# -- -C means `force no-clean'.
+# -- -f can be specified multiple times to source multiple config files (good
+#    idea when working with multiple branches / releases to reduce code
+#    duplication).
+# -- Look at `User definable functions' for a list of functions that you will
+#    probably want to override.
 #
 
 # Values you shouldn't change.
 
-clean=true
+CLEAN=true
 # Define beforehand to work around shell bugs.
-postdir=/dev/null
-tmpdir=/dev/null
+LOCAL_POSTDIR=/dev/null
+TMPDIR=/dev/null
 
-# Values you can and should change.
+# Values you can specify via the command-line (or the config file).
 
-branch=trunk
-cvsup_host=cvsup1.freebsd.org
-default_archs="amd64 i386"
-postdir_base=/dev/null
-tmpdir_template=e2e-bld.XXXXXXXX
+BRANCH=trunk
+CONFIG_FILES=
+CVSUP_HOST=cvsup1.freebsd.org
+DEFAULT_ARCHS="amd64 i386"
+LOCAL_POSTDIR_BASE=/dev/null
+TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 
-setup() {
+# User definable functions.
+
+# Generate release notes.
+#
+# Arguments:
+# 1 - The release notes input file.
+# 2 - The release name.
+#
+# Echos out filename if successful and returns 0. Returns a non-zero exit code
+# otherwise.
+generate_release_notes() {
+	local _RELEASE_NOTES_FILE
+
+	if tmpdir2=$(mktemp -d); then
+		_RELEASE_NOTES_FILE="$TMPDIR2/README"
+		(
+		 cat ReleaseNotes
+		 $(dirname "$0")/tools/checksum-to-release-format.sh
+		 ) > "$TMPDIR2/README"
+	else
+		return $?
+	fi
+	echo $_RELEASE_NOTES_FILE
+	return 0
+}
+
+# Patch the sourcebase.
+#
+# Arguments:
+# 1 - build directory
+patch_source() {
+	:
+}
+
+# Pull the sourcebase(s).
+#
+# Arguments:
+# 1 - build directory
+pull() {
+	svn co https://freenas.svn.sourceforge.net/svnroot/freenas/$BRANCH $1
+}
+
+# Post files via a user-defined method.
+#
+# Arguments:
+#   - a list of files to post
+post_remote_files() {
+	scp -o BatchMode=yes $* \
+	    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
+}
+
+#
+#
+
+# End user definable functions.
+
+_setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	export SHELL=/bin/sh
 
-	tmpdir=$(realpath "$(mktemp -d $tmpdir_template)")
-	chmod 0755 $tmpdir
-	pull $tmpdir 2>&1 | tail -n 30
-	cd $tmpdir
-	if [ -d "$postdir_base" ]; then
-		postdir="$postdir_base/$(env LC_LANG=C date '+%m-%d-%Y')"
-		sudo mkdir -p "$postdir"
+	TMPDIR=$(realpath "$(mktemp -d $TMPDIR_TEMPLATE)")
+	chmod 0755 $TMPDIR
+	pull $TMPDIR 2>&1 | tail -n 30
+	cd $TMPDIR
+	patch_source $TMPDIR
+	if [ -d "$LOCAL_POSTDIR_BASE" ]; then
+		LOCAL_POSTDIR="$LOCAL_POSTDIR_BASE/$(env LC_LANG=C date '+%m-%d-%Y')"
+		sudo mkdir -p "$LOCAL_POSTDIR"
 	else
-		postdir=
+		LOCAL_POSTDIR=
 	fi
 }
 
-cleanup() {
-	sudo rm -Rf $tmpdir
+_cleanup() {
+	sudo rm -Rf $TMPDIR
 }
 
-pull() {
-
-	svn co https://freenas.svn.sourceforge.net/svnroot/freenas/$branch $1
-
+_post_local_files() {
+	if [ -d "$LOCAL_POSTDIR" ]; then
+		sudo cp $file* "$LOCAL_POSTDIR"/.
+	fi
 }
 
-post_images() {
+_post_images() {
+	local arch file release
+
+	arch=$1
+
 	(cd obj.$arch
 	 # End-user rebranding; see build/nano_env for more details.
 	 case "$arch" in
@@ -58,111 +134,119 @@ post_images() {
 		;;
 	 esac
 	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
-	 if [ "${RELEASE_BUILD:-}" = yes ]; then
-		cp ../ReleaseNotes README
-		set -- *.iso *.xz README
-	 else
-		set -- *.iso *.xz
-	 fi
-	 for file in $*; do
+	 for file in *.iso *.xz; do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
-
-		if [ -d "$postdir" ]; then
-			sudo cp $file* "$postdir"/.
-		fi
-
-		scp -o BatchMode=yes $file* \
-		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
-
-	done)
+		_post_local_files $file*
+		post_remote_files $file*
+	 done)
 }
 
-while getopts 'A:b:c:C:p:' optch; do
-	case "$optch" in
+set -e
+while getopts 'A:b:c:Cf:p:t:' _OPTCH; do
+	case "$_OPTCH" in
 	A)
 		_arch=
-		for arch in $default_archs; do
-			if [ "$arch" = "$OPTARG" ]; then
-				_arch=$OPTARG
+		for ARCH in $DEFAULT_ARCHS; do
+			if [ "$_ARCH" = "$OPTARG" ]; then
+				_ARCH=$OPTARG
 				break
 			fi
 		done
-		if [ -z "$_arch" ]; then
+		if [ -z "$_ARCH" ]; then
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
 			exit 1
 		fi
-		archs="$archs $OPTARG"
+		ARCHS="$ARCHS $OPTARG"
 		;;
 	b)
-		branch=$OPTARG
+		BRANCH=$OPTARG
 		;;
 	c)
-		cvsup_host=$OPTARG
+		CVSUP_HOST=$OPTARG
 		;;
 	C)
-		clean=false
+		CLEAN=false
+		;;
+	f)
+		CONFIG_FILES="$CONFIG_FILES $OPTARG"
 		;;
 	p)
-		postdir_base=$OPTARG
+		LOCAL_POSTDIR_BASE=$OPTARG
+		;;
+	t)
+		TMPDIR_TEMPLATE=$OPTARG
 		;;
 	*)
-		echo "${0##*/}: ERROR: unhandled/unknown option: $optch"
+		echo "${0##*/}: ERROR: unhandled/unknown option: $_OPTCH"
 		exit 1
 		;;
 	esac
 done
 
-: ${archs=$default_archs}
+: ${ARCHS=$DEFAULT_ARCHS}
 
-set -e
-setup
-set +e
+for CONFIG_FILE in $CONFIG_FILES; do
+	. $CONFIG_FILE
+done
 
-if $clean; then
-	clean_s='yes'
+_setup
+
+if $CLEAN; then
+	_CLEAN_S='yes'
 else
-	clean_s='no'
+	_CLEAN_S='no'
 fi
 
 cat <<EOF
 =========================================================
 SETTINGS SUMMARY
 =========================================================
-Will build these archs:		$archs
-Branch:				$branch
-cvsup host:			$cvsup_host
+Will build these ARCHS:		$ARCHS
+Branch:				$BRANCH
+cvsup host:			$CVSUP_HOST
 ---------------------------------------------------------
-Image directory:		$postdir
-Build directory:		$tmpdir
-Clean if successful:		$clean_s
+Image directory:		$LOCAL_POSTDIR
+Build directory:		$TMPDIR
+Clean if successful:		$_CLEAN_S
 ---------------------------------------------------------
 EOF
 
-for arch in $archs; do
+# Build(s) can fail below (hope not, but it could happen). If they do, let's
+# report the problem in an intuitive manner and keep on going..
+set +e
 
-	log=build-$arch.log
+for _ARCH in $ARCHS; do
+
+	_LOG=build-$_ARCH.log
 
 	# Build
 	BUILD="sh build/do_build.sh"
-	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$cvsup_host PACKAGE_PREP_BUILD=1"
+	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
 	BUILD_PASS2_ENV=""
 
 	# Build twice so the resulting image is smaller than the fat image
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	sudo sh -c "export FREENAS_ARCH=$arch; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $log 2>&1
-	ec=$?
-	# Build success / failure is printed out in the last line :)...
-	tail -n 1 $log
-	if [ $ec -eq 0 ]; then
-		post_images
+	sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
+	_EC=$?
+	echo "[$_ARCH] $(tail -n 1 $_LOG)"
+	if [ $_EC -eq 0 ]; then
+		_PASSED_ARCHS="$_PASSED_ARCHS $_ARCH"
 	else
-		tail -n 10 $log | head -n 9
+		tail -n 10 $_LOG | head -n 9
 		clean=false
 	fi
 
 done
-if $clean; then
-	cd /; cleanup
+for ARCH in $_PASSED_ARCHS; do
+	_post_images $ARCH
+done
+if [ "${RELEASE_BUILD:-}" = yes -a -n "$_PASSED_ARCHS" ]; then
+	if _RELEASE_NOTES_FILE=$(generate_release_notes); then
+		post_remote_files $_RELEASE_NOTES_FILE
+	fi
+fi
+if $CLEAN; then
+	cd /; _cleanup
 fi
