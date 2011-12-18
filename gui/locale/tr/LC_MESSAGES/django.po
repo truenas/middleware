@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-17 10:50+0200\n"
+"PO-Revision-Date: 2011-12-17 16:57+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -586,7 +586,7 @@ msgstr "Bu alan gereklidir."
 
 #: account/forms.py:405
 msgid "Disable password"
-msgstr "Parolayı devredışı bırak"
+msgstr "Parolayı devre dışı bırak"
 
 #: account/forms.py:466
 msgid "Home directory has to start with /mnt or be /nonexistent"
