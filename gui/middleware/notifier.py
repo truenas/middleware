@@ -1500,7 +1500,7 @@ class notifier:
                     elif var == 'version':
                         version = val
 
-                self.__system("/bin/mv /var/tmp/pbi/pbifile.pbi %s/%s" % (plugins_path, pbi))
+                self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
                 p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/%s" % pbi)
                 res = p.run(jail=True, jid=j.jid)
