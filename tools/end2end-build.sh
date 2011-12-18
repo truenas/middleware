@@ -143,8 +143,8 @@ set -e
 while getopts 'A:b:c:Cf:p:t:' _OPTCH; do
 	case "$_OPTCH" in
 	A)
-		_arch=
-		for ARCH in $DEFAULT_ARCHS; do
+		_ARCH=
+		for _ARCH in $DEFAULT_ARCHS; do
 			if [ "$_ARCH" = "$OPTARG" ]; then
 				_ARCH=$OPTARG
 				break
