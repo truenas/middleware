@@ -2330,6 +2330,22 @@ class notifier:
         return filter(lambda x: not device_blacklist_re.match(x), disks)
 
 
+    def kern_module_is_loaded(self, module):
+        """Determine whether or not a kernel module (or modules) is loaded.
+
+        Parameter:
+            module_name - a module to look for in kldstat -v output (.ko is
+                          added automatically for you).
+
+        Returns:
+            A boolean to denote whether or not the module was found.
+        """
+
+        pipe = self.__pipeopen('/sbin/kldstat -v')
+
+        return 0 < pipe.communicate()[0].find(module + '.ko')
+
+
     def zfs_get_version(self):
         """Get the ZFS (SPA) version reported via zfs(4).
 
@@ -2337,11 +2353,15 @@ class notifier:
         conditional support for features in the GUI/CLI.
 
         Returns:
-            An integer corresponding to the version retrieved from zfs(4).
+            An integer corresponding to the version retrieved from zfs(4) or
+            0 if the module hasn't been loaded.
 
         Raises:
             ValueError: the ZFS version could not be parsed from sysctl(8).
         """
+
+        if not self.kern_module_is_loaded('zfs'):
+            return 0
 
         try:
             version = self.sysctl('vfs.zfs.version.spa', _type='INT')
