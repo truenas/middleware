@@ -372,7 +372,7 @@ PBID = os.path.join(PBI_PATH, "pbid")
 
 
 class pbi_exception(Exception):
-    def __init__(self, msg = None):
+    def __init__(self, msg=None):
         syslog(LOG_DEBUG, "pbi_exception.__init__: enter")
         if msg:
             syslog(LOG_DEBUG, "pbi_exception.__init__: error = %s" % msg)
@@ -384,6 +384,8 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: enter") 
         syslog(LOG_DEBUG, "pbi_pipe.__init__: cmd = %s" % cmd) 
 
+        self.fail = False
+        self.error = None
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
 
@@ -405,7 +407,8 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: out = %s" % self.__out)
 
         if self.__pipe.returncode != 0:
-            raise pbi_exception(self.__stderr.read().strip())
+            self.error = self.__out 
+            self.fail = True 
 
         self.returncode = self.__pipe.returncode
         syslog(LOG_DEBUG, "pbi_pipe.__init__: leave")
