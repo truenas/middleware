@@ -1527,7 +1527,7 @@ class notifier:
                         for line in out.splitlines():
                             parts = line.split(':')
                             key = parts[0].strip().lower()
-                            if key in ('uname', 'name', 'icon'):
+                            if key in ('uname', 'icon'):
                                 kwargs[key] = parts[1].strip()
                                 if key == 'name':
                                     kwargs['view'] = "/plugins/%s/%s" % (name, version)
