@@ -24,6 +24,7 @@
 CLEAN=true
 # Define beforehand to work around shell bugs.
 LOCAL_POSTDIR=/dev/null
+SCRIPTDIR="$(dirname "$0")"
 TMPDIR=/dev/null
 
 # Values you can specify via the command-line (or the config file).
@@ -52,7 +53,7 @@ generate_release_notes() {
 		_RELEASE_NOTES_FILE="$TMPDIR2/README"
 		(
 		 cat ReleaseNotes
-		 $(dirname "$0")/tools/checksum-to-release-format.sh
+		 "$SCRIPTDIR/checksum-to-release-format.sh"
 		 ) > "$TMPDIR2/README"
 	else
 		return $?
@@ -92,7 +93,7 @@ post_remote_files() {
 # End user definable functions.
 
 _setup() {
-	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+	export PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
 	export SHELL=/bin/sh
 
 	TMPDIR=$(realpath "$(mktemp -d $TMPDIR_TEMPLATE)")
