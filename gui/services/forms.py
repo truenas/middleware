@@ -131,6 +131,9 @@ class PluginsForm(ModelForm):
 
         try:
             new_alias.save()
+            notifier().stop("netif")
+            notifier().start("network")
+
         except Exception, err:
             raise ServiceFailed("plugins_jail", _("Unable to configure alias."))
 
