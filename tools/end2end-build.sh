@@ -24,7 +24,7 @@
 CLEAN=true
 # Define beforehand to work around shell bugs.
 LOCAL_POSTDIR=/dev/null
-SCRIPTDIR="$(dirname "$0")"
+SCRIPTDIR="$(realpath "$(dirname "$0")")"
 TMPDIR=/dev/null
 
 # Values you can specify via the command-line (or the config file).
