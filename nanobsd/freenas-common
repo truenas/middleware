@@ -222,6 +222,7 @@ add_port devel/py-twistedCore
 add_port devel/py-ujson
 add_port devel/py-lockfile
 add_port devel/py-daemon
+add_port devel/pyrex
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
