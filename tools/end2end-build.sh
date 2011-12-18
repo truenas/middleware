@@ -210,7 +210,7 @@ Clean if successful:		$_CLEAN_S
 EOF
 
 # Get the release string (see build/nano_env for more details).
-set -- $(sh -c 'cd $TMPDIR && . build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
+set -- $(sh -c '. build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
 PROJECT_NAME=$1
 RELEASE=$2
 
