@@ -123,8 +123,6 @@ add_port devel/py-setuptools
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-add_port devel/py-lockfile
-add_port devel/py-daemon
 add_port www/nginx WITH_IPV6=true WITH_HTTP_MODULE=true \
 	WITH_HTTP_CACHE_MODULE=true WITH_HTTP_DAV_MODULE=true \
 	WITH_HTTP_REWRITE_MODULE=true WITH_HTTP_SSL_MODULE=true \
@@ -222,6 +220,8 @@ add_port sysutils/ipmitool
 add_port devel/py-zope.interface
 add_port devel/py-twistedCore
 add_port devel/py-ujson
+add_port devel/py-lockfile
+add_port devel/py-daemon
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
