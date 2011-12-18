@@ -58,7 +58,7 @@ if [ -z "${SVNVERSION}" ]; then
 
 	if [ -n "$svnversion" ] ; then
 		# svn prints out errors to stdout. Bad svn! No cookie for you!
-		svn="r`cd ${FREENAS_ROOT} && /usr/bin/env LANG=C $svnversion; cd -`" || svn=""
+		svn=$(sh -c "echo r\$(cd ${FREENAS_ROOT} && /usr/bin/env LANG=C $svnversion)") || svn=""
 	fi
 	[ "${svn}" = "rUnversioned directory" ] && svn=""
 	if [ -z "$svn" ]; then
