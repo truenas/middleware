@@ -24,6 +24,8 @@
 CLEAN=true
 # Define beforehand to work around shell bugs.
 LOCAL_POSTDIR=/dev/null
+PROJECT_NAME=FIXME
+RELEASE=FIXME2
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 TMPDIR=/dev/null
 
@@ -40,17 +42,13 @@ TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 
 # Generate release notes.
 #
-# Arguments:
-# 1 - The release notes input file.
-# 2 - The release name.
-#
 # Echos out filename if successful and returns 0. Returns a non-zero exit code
 # otherwise.
 generate_release_notes() {
-	local _RELEASE_NOTES_FILE
+	local release_notes_file
 
 	if tmpdir2=$(mktemp -d); then
-		_RELEASE_NOTES_FILE="$TMPDIR2/README"
+		release_notes_file="$TMPDIR2/README"
 		(
 		 cat ReleaseNotes
 		 "$SCRIPTDIR/checksum-to-release-format.sh"
@@ -58,7 +56,7 @@ generate_release_notes() {
 	else
 		return $?
 	fi
-	echo $_RELEASE_NOTES_FILE
+	echo $release_notes_file
 	return 0
 }
 
@@ -120,7 +118,7 @@ _post_local_files() {
 }
 
 _post_images() {
-	local arch file release
+	local arch file
 
 	arch=$1
 
@@ -134,7 +132,6 @@ _post_images() {
 		arch=x86
 		;;
 	 esac
-	 release=$(ls *$arch.iso | sed -e "s/-$arch.*//g")
 	 for file in *.iso *.xz; do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
 		_post_local_files $file*
@@ -216,6 +213,10 @@ EOF
 # report the problem in an intuitive manner and keep on going..
 set +e
 
+# Get the release string (see build/nano_env for more details).
+set -- $(sh -c '. build/nano_env; echo "$NANO_LABEL"; echo "$VERSION-$REVISION"')
+PROJECT_NAME=$1
+RELEASE=$2
 for _ARCH in $ARCHS; do
 
 	_LOG=build-$_ARCH.log
