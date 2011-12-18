@@ -209,14 +209,15 @@ Clean if successful:		$_CLEAN_S
 ---------------------------------------------------------
 EOF
 
+# Get the release string (see build/nano_env for more details).
+set -- $(sh -c 'cd $TMPDIR && . build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
+PROJECT_NAME=$1
+RELEASE=$2
+
 # Build(s) can fail below (hope not, but it could happen). If they do, let's
 # report the problem in an intuitive manner and keep on going..
 set +e
 
-# Get the release string (see build/nano_env for more details).
-set -- $(sh -c '. build/nano_env; echo "$NANO_LABEL"; echo "$VERSION-$REVISION"')
-PROJECT_NAME=$1
-RELEASE=$2
 for _ARCH in $ARCHS; do
 
 	_LOG=build-$_ARCH.log
