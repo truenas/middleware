@@ -204,7 +204,7 @@ class VolumeWizardForm(forms.Form):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         self.fields['volume_add'].choices = [('','-----')] + [(x.vol_name, x.vol_name) for x in models.Volume.objects.filter(vol_fstype='ZFS')]
-        self.fields['volume_add'].widget.attrs['onClick'] = 'wizardcheckings();'
+        self.fields['volume_add'].widget.attrs['onChange'] = 'wizardcheckings(true);'
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
         self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleGeneric("id_ufspathen", ["id_ufspath"], true);'
         if not self.data.get("ufspathen", False):

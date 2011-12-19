@@ -892,11 +892,24 @@
     wizardcheckings = function(vol_change, first_load) {
 
         if(!dijit.byId("wizarddisks")) return;
+        var add = dijit.byId("id_volume_add");
+        var add_mode = false;
+        if(add.get("value") != '') {
+            add_mode = true;
+        }
         var disks = dijit.byId("wizarddisks");
         var d = disks.get('value');
         dojo.html.set(dojo.byId("wizard_num_disks"), d.length + '');
 
-        var zfs = dojo.query("input[name=volume_fstype]")[1].checked;
+        var zfs = dojo.query("input[name=volume_fstype]")[1].checked || add_mode;
+
+        dijit.byId("id_volume_name").set('disabled', add_mode);
+        dojo.query("input[name=volume_fstype]").forEach(function(item, idx) {
+            var wg = dijit.getEnclosingWidget(item);
+            if(wg && add_mode && dojo.attr(item, 'value') == 'ZFS') {
+                wg.set('checked', true);
+            }
+        });
 
         if(vol_change == true) {
             var unselected = [];
