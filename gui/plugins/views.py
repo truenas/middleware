@@ -66,7 +66,7 @@ def plugin_edit(request, plugin_id):
 def plugin_delete(request, plugin_id):
     plugin_id = int(plugin_id)
 
-    if notifier().delete_pbi(plugin_id)
+    if notifier().delete_pbi(plugin_id):
         return JsonResponse(message=_("Plugin successfully removed."))
     else:
         return JsonResponse(error=True, message=_("Unable to remove plugin."))
