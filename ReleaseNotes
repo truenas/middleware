@@ -2,11 +2,20 @@ Release Notes for FreeNAS 8.0.3-RELEASE
 
 *** IMPORTANT ***
 
-The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
+- The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
 storage device.  The GUI upgrade can be used to upgrade a system from BETA3, 
 BETA4, or RC1 but upgrades from earlier releases can only be done from the CD.
 The other option is to save the config, reinstall the new version, then
 restore the config.
+- FreeBSD can be really touchy with hardware. Please be sure to update your
+BIOS/BMC firmware when upgrading / installing FreeNAS if you run into
+mysterious hanging issues. There have been cases identified where a BIOS
+upgrade has fixed driver hangs, and/or other issues with FreeNAS; one such
+example was with an Intel 82578DC motherboard, as noted in the FreeNAS 8
+forums post titled "8.0.3-RELEASE coming soon..": http://bit.ly/rq78Q3 .
+Again, please only do this if you experience booting / runtime issues, as some
+vendors don't test FreeBSD interoperability as much as other between firmware
+releases.
 
 Changes since 8.0.2-RELEASE:
 
@@ -53,6 +62,7 @@ Bugfixes:
 7. Fix the bug in rsync tasks where it would strip the trailing '/' off the end of the destination path.
 8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
 9. Fix an issue where if one entered in an invalid path, the GUI would traceback instead of providing feedback stating that the directory provided was invalid.
+10. Fix an issue where if one autosnap process was killed uncleanly, more autosnap processes could back up and eventually deadlock the system.
 
 Cosmetic items:
 
