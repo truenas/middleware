@@ -1464,11 +1464,18 @@ class notifier:
 
         if self._started_plugins_jail():
             (c, conn) = self.__open_db(ret_conn=True)
+
             c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
-            jail_name = c.fetchone()[0]
+            jail_name = c.fetchone()
+            if not jail_name:
+                return False 
+            jail_name = jail_name[0]
 
             c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
-            plugins_path = c.fetchone()[0]
+            plugins_path = c.fetchone()
+            if not plugins_path:
+                return False
+            plugins_path = plugins_path[0]
 
             jail = None
             for j in Jls():
@@ -1563,13 +1570,14 @@ class notifier:
         pass
 
     def delete_pbi(self, plugin_id):
-        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: plugin_id = %d" % plugin_id)
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
-        jail_name = c.fetchone()[0]
-        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: jail_name = %s" % jail_name)
+        jail_name = c.fetchone()
+        if not jail_name:
+            return False
+        jail_name = jail_name[0]
 
         jail = None
         for j in Jls():
@@ -1581,7 +1589,9 @@ class notifier:
             c.execute("SELECT plugin_pbiname FROM plugins_plugins "
              "WHERE id = :plugin_id", {'plugin_id': plugin_id})
             plugin_pbiname = c.fetchone()
-            syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: plugin_pbiname = %s" % plugin_pbiname)
+            if not plugin_pbiname: 
+                return False
+            plugin_pbiname = plugin_pbiname[0]
 
             p = pbi_delete(pbi=plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
@@ -1592,10 +1602,8 @@ class notifier:
                     ret = True
 
                 except Exception, err:
-                    syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: err = %s" % err)
                     ret = False
 
-        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: ret = %s" % ret)
         return ret
 
     def get_volume_status(self, name, fs):
