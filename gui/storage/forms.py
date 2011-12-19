@@ -300,6 +300,8 @@ class VolumeWizardForm(forms.Form):
             self._errors['__all__'] = self.error_class(["You cannot select an existing ZFS volume and specify a new volume name"])
         elif not(volume_name or cleaned_data.get("volume_add")):
             self._errors['__all__'] = self.error_class(["You must specify a new volume name or select an existing ZFS volume to append a virtual device"])
+        elif not volume_name:
+            volume_name = cleaned_data.get("volume_add")
         if cleaned_data.get("volume_fstype", None) not in ('ZFS', 'UFS'):
             msg = _(u"You must select a filesystem")
             self._errors["volume_fstype"] = self.error_class([msg])
