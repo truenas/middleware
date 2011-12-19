@@ -1,6 +1,6 @@
 :Author: Garrett Cooper
 :Date: $Date$
-:Revision: $Revision$
+:Revision: $Rev$
 :Copyright: BSD Licensed to FreeNAS project (c/o iXsystems, Inc.)
 
 .. contents:: :depth: 2
