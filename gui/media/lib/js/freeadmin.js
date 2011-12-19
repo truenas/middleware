@@ -375,6 +375,17 @@
     };
     /* end Menu */
 
+    jailDeletePlugin = function(plugin_id) {
+        dojo.xhrGet({
+            url: '/plugins/plugin/delete/' + plugin_id,
+            sync: true,
+            failOk: true,
+            handle: function(data) {
+                setMessage(data);
+            },
+        });
+    }
+
     restartHttpd = function(newurl) {
 
         dojo.xhrGet({
