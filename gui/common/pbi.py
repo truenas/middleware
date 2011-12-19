@@ -384,7 +384,6 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: enter") 
         syslog(LOG_DEBUG, "pbi_pipe.__init__: cmd = %s" % cmd) 
 
-        self.fail = False
         self.error = None
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
@@ -408,7 +407,6 @@ class pbi_pipe(object):
 
         if self.__pipe.returncode != 0:
             self.error = self.__out 
-            self.fail = True 
 
         self.returncode = self.__pipe.returncode
         syslog(LOG_DEBUG, "pbi_pipe.__init__: leave")
@@ -431,6 +429,7 @@ class pbi_base(object):
         self.path = path
         self.flags = flags 
         self.args = "" 
+        self.error = None
 
         if objflags is None:
             objflags = []
@@ -464,6 +463,7 @@ class pbi_base(object):
 
         syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
+        self.error = pboj.error
 
         syslog(LOG_DEBUG, "pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
