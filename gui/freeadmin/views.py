@@ -67,18 +67,19 @@ class JsonResponse(HttpResponse):
         if kwargs.has_key("events"):
             self.events = kwargs.pop('events')
         if kwargs.has_key("enclosed"):
-            self.events = kwargs.pop('enclosed')
+            self.enclosed = kwargs.pop('enclosed')
 
         data = {
             'error': self.error,
             'message': self.message,
             'events': self.events,
         }
+
         if self.enclosed:
             kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
         else:
             kwargs['content'] = simplejson.dumps(data)
-        kwargs['content_type'] = 'application/json'
+            kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
 
 class JsonResp(HttpResponse):

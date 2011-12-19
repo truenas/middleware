@@ -89,7 +89,13 @@ class FileWizard(FormWizard):
             try:
                 self.process_step(request, form, current_step)
             except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+                kwargs = {
+                    'error': True,
+                    'message': _("Error: %s") % str(e),
+                    }
+                if not request.is_ajax():
+                    kwargs['enclosed'] = True
+                return JsonResponse(**kwargs)
             next_step = current_step + 1
 
             if next_step == self.num_steps():
