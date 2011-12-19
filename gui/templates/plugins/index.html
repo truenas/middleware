@@ -25,8 +25,14 @@
                 <button id="editPluginBtn{{ p.id }}" data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Edit" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Edit plugin"|force_escape|force_escape %}', '{% url plugin_edit plugin_name=p.plugin_name %}', [this,]);
+                        editObject('{% trans "Edit plugin"|force_escape|force_escape %}', '{% url plugin_edit plugin_id=p.id%}', [this,]);
                     </script>
+                </button>
+                <button data-dojo-type="dijit.form.Button" type="button">
+                  {% trans "Delete" %}
+                  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                      jailDeletePlugin({{ p.id }});
+                  </script>
                 </button>
             </td>
         <tr>
