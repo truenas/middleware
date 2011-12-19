@@ -58,7 +58,7 @@ class ConfigurePlugins(TreeNode):
             nav.name = p.plugin_name
             nav.icon = u'SettingsIcon'
             nav.view = 'plugin_edit'
-            nav.kwargs = {'plugin_name': p.plugin_name}
+            nav.kwargs = {'plugin_id': p.id}
             nav.type = 'object'
 
             self.insert_child(0, nav)

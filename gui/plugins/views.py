@@ -34,6 +34,9 @@ from freenasUI.plugins import models, forms
 from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
 
+from freenasUI.common.pbi import pbi_delete
+from freenasUI.common.jail import Jls, Jexec
+
 def plugins_home(request):
     plugins_list = models.Plugins.objects.all()
     return render(request, "plugins/index.html", {
@@ -41,8 +44,8 @@ def plugins_home(request):
     })
 
 
-def plugin_edit(request, plugin_name):
-    plugin = models.Plugins.objects.filter(plugin_name=plugin_name)[0]
+def plugin_edit(request, plugin_id):
+    plugin = models.Plugins.objects.filter(id=plugin_id)[0]
 
     if request.method == 'POST':
         plugins_form = forms.PluginsForm(request.POST, instance=plugin)
@@ -56,6 +59,12 @@ def plugin_edit(request, plugin_name):
         plugins_form = forms.PluginsForm(instance=plugin)
 
     return render(request, 'plugins/plugin_edit.html', {
-        'plugin_name': plugin_name,
+        'plugin_id': plugin_id,
         'form': plugins_form
     })
+
+def plugin_delete(request, plugin_id):
+    if notifier().delete_pbi(plugin_id):
+        return JsonResponse(message=_("Plugin successfully removed."))
+    else:
+        return JsonResponse(error=True, message=_("Unable to remove plugin."))

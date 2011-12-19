@@ -37,6 +37,24 @@ class Plugins(Model):
         help_text=_("Name of the plugin")
         )
 
+    plugin_pbiname = models.CharField(
+        max_length=120,
+        verbose_name=_("Plugin info name"),
+        help_text=_("Info name of the plugin")
+        )
+
+    plugin_version = models.CharField(
+        max_length=120,
+        verbose_name=_("Plugin version"),
+        help_text=_("Version of the plugin")
+        )
+
+    plugin_arch = models.CharField(
+        max_length=120,
+        verbose_name=_("Plugin architecture"),
+        help_text=_("Plugin architecture")
+        )
+
     plugin_uname = models.CharField(
         max_length=120,
         verbose_name=_("Plugin uname"),

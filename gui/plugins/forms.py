@@ -35,6 +35,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
+from freenasUI import services
 from plugins import models
 
 
@@ -51,6 +52,7 @@ class PBIFileWizard(FileWizard):
 class PluginsForm(ModelForm):
     class Meta:
         model = models.Plugins
+        exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version', 'plugin_path')
     def __init__(self, *args, **kwargs):
         super(PluginsForm, self).__init__(*args, **kwargs)
         self.instance._original_plugin_enabled = self.instance.plugin_enabled
@@ -63,7 +65,6 @@ class PluginsForm(ModelForm):
 class PBITemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label=_("Place to temporarily place PBI file"), help_text = _("The system will use this place to temporarily store the PBI file before it's installed."), choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
-        from freenasUI import services
         super(PBITemporaryLocationForm, self).__init__(*args, **kwargs)
         mp = services.models.Plugins.objects.order_by("-id")
         if mp:
@@ -95,11 +96,12 @@ class PBIUploadForm(Form):
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
-        return notifier().install_pbi()
+        notifier().install_pbi()
 
 class JailPBIUploadForm(Form):
     pbifile = FileField(label=_("Plugins Jail PBI"), required=True)
     sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
+
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
@@ -117,4 +119,4 @@ class JailPBIUploadForm(Form):
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
-        return notifier().install_jail_pbi()
+        notifier().install_jail_pbi()
