@@ -27,17 +27,18 @@
 
 from django.conf.urls.defaults import patterns, url
 from system.forms import FileWizard
-from plugins.forms import PBITemporaryLocationForm, PBIUploadForm, JailPBIUploadForm
+from plugins.forms import PBIFileWizard, PBITemporaryLocationForm, \
+    PBIUploadForm, JailPBIUploadForm
 
 urlpatterns = patterns('plugins.views',
     url(r'^home/$', 'plugins_home', name='plugins_home'),
-    url(r'^pbiwizard/$', FileWizard(
+    url(r'^pbiwizard/$', PBIFileWizard(
             [PBITemporaryLocationForm, PBIUploadForm],
             prefix="pbi",
             templates=["plugins/pbiwizard.html"]
         ), name='plugins_pbiwizard'),
     url(r'^plugin/edit/(?P<plugin_name>.+)/$', 'plugin_edit', name="plugin_edit"),
-    url(r'^jailpbi/$', FileWizard(
+    url(r'^jailpbi/$', PBIFileWizard(
             [PBITemporaryLocationForm, JailPBIUploadForm],
             prefix="jailpbi",
             templates=["plugins/jailpbi.html"]

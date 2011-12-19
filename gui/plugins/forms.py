@@ -27,12 +27,25 @@
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
+from django.shortcuts import render_to_response
+
 
 from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
+from freenasUI.system.forms import FileWizard
 from plugins import models
+
+
+class PBIFileWizard(FileWizard):
+    def done(self, request, form_list):
+        response = render_to_response('plugins/done.html', {
+            'retval': getattr(self, 'retval', None),
+        })
+        if not request.is_ajax():
+            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
+        return response
 
 
 class PluginsForm(ModelForm):
