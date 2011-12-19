@@ -1505,11 +1505,12 @@ class notifier:
                 p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/%s" % pbi)
                 res = p.run(jail=True, jid=j.jid)
                 if res and res[0] == 0:
-
                     kwargs = {}
                     kwargs['path'] = prefix
                     kwargs['enabled'] = False
                     kwargs['ip'] = jail.ip
+                    kwargs['name'] = name
+                    kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
                     # icky, icky icky, this is how we roll though.
                     port = 12345
@@ -1529,8 +1530,6 @@ class notifier:
                             key = parts[0].strip().lower()
                             if key in ('uname', 'icon'):
                                 kwargs[key] = parts[1].strip()
-                                if key == 'name':
-                                    kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
                     sqlvars = ""
                     sqlvals = ""
@@ -1542,13 +1541,12 @@ class notifier:
                     sqlvals = sqlvals.rstrip(',')
 
                     sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
-                    syslog.syslog(syslog.LOG_INFO, "install_pbi: sql = %s" % sql)
                     try:
                         c.execute(sql, kwargs)
                         conn.commit()
                         ret = True
 
-                    except:
+                    except Exception, err:
                         ret = False                     
 
                 elif res and res[0] != 0:
