@@ -14,7 +14,8 @@ following reasons:
 
 #. FreeNAS 8.x is written primarily in python, and RST is a python standard
    method of formulating documentation.
-#. RST is easy to digest in plaintext format.
+#. RST is easy to digest in plaintext format, and thus also easier to review
+   with simple reviewing tools like ReviewBoard.
 #. You don't need an external service to host the documentation (e.g. Google
    Docs), and some webservers support automatic RST -> HTML conversion.
 #. RST can be converted to a number of other potentially easier to digest
