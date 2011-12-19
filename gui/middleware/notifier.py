@@ -1550,6 +1550,10 @@ class notifier:
 
                     except:
                         ret = False                     
+
+                elif res and res[0] != 0:
+                    raise MiddlewareError(p.error)
+
         return ret
 
     def install_jail_pbi(self):
