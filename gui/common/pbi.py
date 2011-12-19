@@ -463,7 +463,7 @@ class pbi_base(object):
 
         syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
-        self.error = pboj.error
+        self.error = pobj.error
 
         syslog(LOG_DEBUG, "pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
