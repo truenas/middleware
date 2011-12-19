@@ -1464,7 +1464,7 @@ class notifier:
     def install_pbi(self):
         ret = False
 
-        if self._started_plugins():
+        if self._started_plugins_jail():
             (c, conn) = self.__open_db(ret_conn=True)
             c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
             jail_name = c.fetchone()[0]
