@@ -69,7 +69,8 @@ from django.db import models
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import pbi_add, PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO
+from freenasUI.common.pbi import pbi_add, pbi_delete, \
+    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO
 from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
@@ -1562,11 +1563,13 @@ class notifier:
         pass
 
     def delete_pbi(self, plugin_id):
+        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: plugin_id = %d" % plugin_id)
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()[0]
+        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: jail_name = %s" % jail_name)
 
         jail = None
         for j in Jls():
@@ -1578,6 +1581,7 @@ class notifier:
             c.execute("SELECT plugin_pbiname FROM plugins_plugins "
              "WHERE id = :plugin_id", {'plugin_id': plugin_id})
             plugin_pbiname = c.fetchone()
+            syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: plugin_pbiname = %s" % plugin_pbiname)
 
             p = pbi_delete(pbi=plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
@@ -1588,8 +1592,10 @@ class notifier:
                     ret = True
 
                 except Exception, err:
+                    syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: err = %s" % err)
                     ret = False
 
+        syslog.syslog(syslog.LOG_DEBUG, "notifier.delete_pbi: ret = %s" % ret)
         return ret
 
     def get_volume_status(self, name, fs):
