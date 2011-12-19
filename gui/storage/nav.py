@@ -31,7 +31,7 @@ class ViewSnap(TreeNode):
 class AddVolume(TreeNode):
 
         gname = 'Add'
-        name = _(u'Create Volume')
+        name = _(u'Volume Wizard')
         view = 'storage_wizard'
         type = 'volumewizard'
         icon = u'AddVolumeIcon'

@@ -1,9 +1,9 @@
 
     <button id="addVolumeBtn" data-dojo-type="dijit.form.Button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
-    <p>{% trans "Create Volume" %}</p>
+    <p>{% trans "Volume Wizard" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        volumeWizard('{% trans "Create Volume"|force_escape|force_escape %}', '{% url storage_wizard %}', [this,]);
+        volumeWizard('{% trans "Volume Wizard"|force_escape|force_escape %}', '{% url storage_wizard %}', [this,]);
     </script>
     </button>
 
