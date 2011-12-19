@@ -1477,15 +1477,16 @@ class notifier:
 
             # this stuff needs better error checking.. .. ..
             if jail is not None:
-                pbi = prefix = name = version = None
+                pbi = pbiname = prefix = name = version = arch = None
 
                 p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
-                out = p.info(True, j.jid, 'pbi information for', 'prefix', 'name', 'version')
+                out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
                 for pair in out:
                     (var, val) = pair.split('=')
 
                     var = var.lower()
                     if var == 'pbi information for':
+                        pbiname = val  
                         pbi = "%s.pbi" % val
 
                     elif var == 'prefix':
@@ -1497,16 +1498,22 @@ class notifier:
                     elif var == 'version':
                         version = val
 
+                    elif var == 'arch':
+                        arch = val
+
                 self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
                 p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/%s" % pbi)
-                res = p.run(jail=True, jid=j.jid)
+                res = p.run(jail=True, jid=jail.jid)
                 if res and res[0] == 0:
                     kwargs = {}
                     kwargs['path'] = prefix
                     kwargs['enabled'] = False
                     kwargs['ip'] = jail.ip
                     kwargs['name'] = name
+                    kwargs['arch'] = arch
+                    kwargs['version'] = version
+                    kwargs['pbiname'] = pbiname 
                     kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
                     # icky, icky icky, this is how we roll though.
@@ -1519,7 +1526,7 @@ class notifier:
 
                     kwargs['port'] = port + 1
 
-                    out = Jexec(jid=j.jid, command="cat %s/freenas" % prefix).run()
+                    out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
                     if out and out[0] == 0:
                         out = out[1]
                         for line in out.splitlines():
@@ -1553,6 +1560,37 @@ class notifier:
 
     def install_jail_pbi(self):
         pass
+
+    def delete_pbi(self, plugin_id):
+        ret = False
+
+        (c, conn) = self.__open_db(ret_conn=True)
+        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        jail_name = c.fetchone()[0]
+
+        jail = None
+        for j in Jls():
+            if j.hostname == jail_name:
+                jail = j 
+                break
+
+        if jail is not None:
+            c.execute("SELECT plugin_pbiname FROM plugins_plugins "
+             "WHERE id = :plugin_id", {'plugin_id': plugin_id})
+            plugin_pbiname = c.fetchone()
+
+            p = pbi_delete(pbi=plugin_pbiname)
+            res = p.run(jail=True, jid=jail.jid)
+            if res and res[0] == 0:
+                try:
+                    c.execute("DELETE FROM plugins_plugins WHERE id = :plugin_id", {'plugin_id': plugin_id})
+                    conn.commit()
+                    ret = True
+
+                except Exception, err:
+                    ret = False
+
+        return ret
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
