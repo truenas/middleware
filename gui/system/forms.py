@@ -228,6 +228,10 @@ class NTPForm(ModelForm):
             self._errors['ntp_address'] = self.error_class([_("Server could not be reached. Check \"Force\" to continue regardless.")])
             del cdata['ntp_address']
         return cdata
+    def save(self):
+        super(NTPForm, self).save()
+        notifier().start("ix-ntpd")
+        notifier().restart("ntpd")
 
 class AdvancedForm(ModelForm):
     class Meta:
