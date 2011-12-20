@@ -80,7 +80,11 @@ customize_cmd cust_install_machine_files
 buildenv()
 {
 	cd ${NANO_SRC}
-	env __MAKE_CONF=${NANO_MAKE_CONF_BUILD} DESTDIR=${NANO_WORLDDIR} make buildenv
+	env \
+		DESTDIR=${NANO_WORLDDIR} \
+		${NANO_PMAKE} \
+		buildenv \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD}
 }
 
 NANO_MAKEFS="makefs -B big \
@@ -246,7 +250,8 @@ do_add_port ()
 # Improvement: Don't know why package-recursive don't works here
 	CR "env \
 	    TARGET=${NANO_ARCH} \
-	    TARGET_ARCH=${NANO_ARCH} make \
+	    TARGET_ARCH=${NANO_ARCH} \
+	    ${NANO_PMAKE} \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
