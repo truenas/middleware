@@ -63,6 +63,7 @@ Bugfixes:
 8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
 9. Fix an issue where if one entered in an invalid path, the GUI would traceback instead of providing feedback stating that the directory provided was invalid.
 10. Fix an issue where if one autosnap process was killed uncleanly, more autosnap processes could back up and eventually deadlock the system.
+11. Fix an issue where the ZFS scrub cronjobs would execute every 30 days instead of a number divisible by 7, so what would generally happen is that ZFS scrubs would generally execute in the middle of the week.
 
 Cosmetic items:
 
