@@ -1413,6 +1413,7 @@
                     id: "shell_dialog",
                     content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
                     style: "min-height:400px;background-color: black;",
+                    region: 'center',
                     onShow: function() {
 
                         function handler(msg,value) {
