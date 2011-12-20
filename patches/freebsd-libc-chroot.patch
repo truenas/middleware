@@ -1,0 +1,197 @@
+diff --git include/unistd.h include/unistd.h
+index b4b7516..4782380 100644
+--- include/unistd.h
++++ include/unistd.h
+@@ -513,6 +513,7 @@ int	 initgroups(const char *, gid_t);
+ int	 iruserok(unsigned long, int, const char *, const char *);
+ int	 iruserok_sa(const void *, int, int, const char *, const char *);
+ int	 issetugid(void);
++void	__FreeBSD_libc_enter_restricted_mode(void);
+ long	 lpathconf(const char *, int);
+ #ifndef _MKDTEMP_DECLARED
+ char	*mkdtemp(char *);
+diff --git lib/libc/Versions.def lib/libc/Versions.def
+index da0ca6f..bbd59a4 100644
+--- lib/libc/Versions.def
++++ lib/libc/Versions.def
+@@ -19,6 +19,10 @@ FBSD_1.1 {
+ FBSD_1.2 {
+ } FBSD_1.1;
+ 
++# This version was first added to 10.0-current.
++FBSD_1.3 {
++} FBSD_1.2;
++
+ # This is our private namespace.  Any global interfaces that are
+ # strictly for use only by other FreeBSD applications and libraries
+ # are listed here.  We use a separate namespace so we can write
+@@ -26,4 +30,4 @@ FBSD_1.2 {
+ #
+ # Please do NOT increment the version of this namespace.
+ FBSDprivate_1.0 {
+-} FBSD_1.2;
++} FBSD_1.3;
+diff --git lib/libc/gen/Makefile.inc lib/libc/gen/Makefile.inc
+index d04dd75..ed61bd5 100644
+--- lib/libc/gen/Makefile.inc
++++ lib/libc/gen/Makefile.inc
+@@ -20,6 +20,7 @@ SRCS+=  __getosreldate.c __xuname.c \
+ 	getpeereid.c getprogname.c getpwent.c getttyent.c \
+ 	getusershell.c getvfsbyname.c glob.c \
+ 	initgroups.c isatty.c isinf.c isnan.c jrand48.c lcong48.c \
++	libc_dlopen.c \
+ 	lockf.c lrand48.c mrand48.c nftw.c nice.c \
+ 	nlist.c nrand48.c opendir.c \
+ 	pause.c pmadvise.c popen.c posix_spawn.c \
+diff --git lib/libc/gen/Symbol.map lib/libc/gen/Symbol.map
+index 4c19a3d..03edd60 100644
+--- lib/libc/gen/Symbol.map
++++ lib/libc/gen/Symbol.map
+@@ -369,6 +369,10 @@ FBSD_1.2 {
+ 	getpagesizes;
+ };
+ 
++FBSD_1.3 {
++	__FreeBSD_libc_enter_restricted_mode;
++};
++
+ FBSDprivate_1.0 {
+ 	/* needed by thread libraries */
+ 	__thr_jtable;
+diff --git lib/libc/gen/libc_dlopen.c lib/libc/gen/libc_dlopen.c
+new file mode 100644
+index 0000000..2b1aa9e
+--- /dev/null
++++ lib/libc/gen/libc_dlopen.c
+@@ -0,0 +1,61 @@
++/*-
++ * Copyright (c) 2011 Xin Li <delphij@FreeBSD.org>
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ *
++ * $FreeBSD$
++ */
++
++#include <sys/cdefs.h>
++__FBSDID("$FreeBSD$");
++
++#include <dlfcn.h>
++#include <stddef.h>
++#include <unistd.h>
++
++#include "libc_private.h"
++
++/*
++ * Whether we want to restrict dlopen()s.
++ */
++static int __libc_restricted_mode = 0;
++
++void *
++libc_dlopen(const char *path, int mode)
++{
++
++	if (__libc_restricted_mode) {
++		_rtld_error("Service unavailable -- libc in restricted mode");
++		return (NULL);
++	} else
++		return (dlopen(path, mode));
++}
++
++void
++__FreeBSD_libc_enter_restricted_mode(void)
++{
++
++	__libc_restricted_mode = 1;
++	return;
++}
++
+diff --git lib/libc/include/libc_private.h lib/libc/include/libc_private.h
+index 052eb13..d5f4212 100644
+--- lib/libc/include/libc_private.h
++++ lib/libc/include/libc_private.h
+@@ -44,6 +44,17 @@
+ extern int	__isthreaded;
+ 
+ /*
++ * libc should use libc_dlopen internally, which respects a global
++ * flag where loading of new shared objects can be restricted.
++ */
++void *libc_dlopen(const char *, int);
++
++/*
++ * For dynamic linker.
++ */
++void _rtld_error(const char *fmt, ...);
++
++/*
+  * File lock contention is difficult to diagnose without knowing
+  * where locks were set. Allow a debug library to be built which
+  * records the source file and line number of each lock call.
+diff --git lib/libc/net/nsdispatch.c lib/libc/net/nsdispatch.c
+index 6b7bd02..f9d787a 100644
+--- lib/libc/net/nsdispatch.c
++++ lib/libc/net/nsdispatch.c
+@@ -384,7 +384,7 @@ nss_configure(void)
+ 	confmod = statbuf.st_mtime;
+ 
+ #ifdef NS_CACHING
+-	handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
++	handle = libc_dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
+ 	if (handle != NULL) {
+ 		nss_cache_cycle_prevention_func = dlsym(handle,
+ 			"_nss_cache_cycle_prevention_function");
+@@ -497,7 +497,7 @@ nss_load_module(const char *source, nss_module_register_fn reg_fn)
+ 		if (snprintf(buf, sizeof(buf), "nss_%s.so.%d", mod.name,
+ 		    NSS_MODULE_INTERFACE_VERSION) >= (int)sizeof(buf))
+ 			goto fin;
+-		mod.handle = dlopen(buf, RTLD_LOCAL|RTLD_LAZY);
++		mod.handle = libc_dlopen(buf, RTLD_LOCAL|RTLD_LAZY);
+ 		if (mod.handle == NULL) {
+ #ifdef _NSS_DEBUG
+ 			/* This gets pretty annoying since the built-in
+diff --git libexec/ftpd/ftpd.c libexec/ftpd/ftpd.c
+index a83e759..27fe582 100644
+--- libexec/ftpd/ftpd.c
++++ libexec/ftpd/ftpd.c
+@@ -1543,6 +1543,7 @@ skip:
+ 			reply(550, "Can't change root.");
+ 			goto bad;
+ 		}
++		__FreeBSD_libc_enter_restricted_mode();
+ 	} else	/* real user w/o chroot */
+ 		homedir = pw->pw_dir;
+ 	/*
+diff --git libexec/ftpd/popen.c libexec/ftpd/popen.c
+index 8a739dc..9f80507 100644
+--- libexec/ftpd/popen.c
++++ libexec/ftpd/popen.c
+@@ -143,6 +143,9 @@ ftpd_popen(char *program, char *type)
+ 			}
+ 			(void)close(pdes[1]);
+ 		}
++		/* Drop privileges before proceeding */
++		if (getuid() != geteuid() && setuid(geteuid()) < 0)
++			_exit(1);
+ 		if (strcmp(gargv[0], _PATH_LS) == 0) {
+ 			/* Reset getopt for ls_main() */
+ 			optreset = optind = optopt = 1;
