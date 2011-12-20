@@ -48,8 +48,9 @@ a. NFSv4 ACL support (see: r8375, r8414).
 
 6. Misc:
 
-a. Upgrade ataidle
-b. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1 image was broken due to the environment of the build machine where it was produced on.
+a. Upgrade ataidle to 2.6.
+b. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
+c. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1 image was broken due to the environment of the build machine where it was produced on.
 
 Bugfixes:
 
