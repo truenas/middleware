@@ -99,7 +99,7 @@ class JsonResp(HttpResponse):
         self.type = kwargs.pop('type', None)
         self.template = kwargs.pop('template', None)
         self.form = kwargs.pop('form', None)
-        self.formsets = kwargs.pop('formsets', [])
+        self.formsets = kwargs.pop('formsets', {})
         self.request = request
 
         if self.form:
