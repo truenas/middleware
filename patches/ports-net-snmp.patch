@@ -1,0 +1,2247 @@
+diff -Nru net-mgmt/net-snmp/Makefile net-mgmt/net-snmp/Makefile
+--- net-mgmt/net-snmp/Makefile	2011-12-05 20:53:54.907692322 -0800
++++ net-mgmt/net-snmp/Makefile	2011-11-09 07:25:41.000000000 -0800
+@@ -2,11 +2,11 @@
+ # Date created:				26 June 1996
+ # Whom:					gpalmer
+ #
+-# $FreeBSD: ports/net-mgmt/net-snmp/Makefile,v 1.186 2010/08/31 11:00:14 sylvio Exp $
++# $FreeBSD: ports/net-mgmt/net-snmp/Makefile,v 1.193 2011/11/09 15:25:41 miwi Exp $
+ #
+ 
+ PORTNAME=	snmp
+-PORTVERSION=	5.5
++PORTVERSION=	5.7
+ PORTREVISION=	4
+ CATEGORIES=	net-mgmt ipv6
+ MASTER_SITES=	SF/net-${PORTNAME}/net-${PORTNAME}/${PORTVERSION}
+@@ -22,7 +22,8 @@
+ 		PERL_EMBEDDED "Build embedded perl" on \
+ 		DUMMY "Enable dummy values as placeholders" on \
+ 		TKMIB "Install graphical MIB browser" off \
+-		DMALLOC "Enable dmalloc debug memory allocator" off
++		DMALLOC "Enable dmalloc debug memory allocator" off \
++		UNPRIVILEGED "Allow unprivileged users to execute net-snmp" off
+ 
+ MAKE_JOBS_UNSAFE=	yes
+ 
+@@ -39,7 +40,6 @@
+ 		--with-sys-location="${NET_SNMP_SYS_LOCATION}" \
+ 		--with-logfile="${NET_SNMP_LOGFILE}" \
+ 		--with-persistent-directory="${NET_SNMP_PERSISTENTDIR}" \
+-		--with-mib-modules="host disman/event-mib smux mibII/mta_sendmail mibII/tcpTable ucd-snmp/diskio" \
+ 		--with-gnu-ld --with-libwrap --with-ldflags="-lm -lkvm -ldevstat"
+ 
+ .if defined(BATCH)
+@@ -92,7 +92,11 @@
+ PLIST_SUB+=	WITH_IPV6="@comment "
+ .endif
+ 
+-SHLIB_VERSION=	20
++.if defined(WITH_UNPRIVILEGED)
++CONFIGURE_ARGS+=--without-root-access
++.endif
++
++SHLIB_VERSION=	30
+ PLIST_SUB+=	SHLIB_VERSION=${SHLIB_VERSION}
+ SCRIPTS_SUB=	PREFIX=${PREFIX} PERL=${PERL}
+ 
+@@ -101,9 +105,10 @@
+ NET_SNMP_SYS_LOCATION?=	somewhere
+ NET_SNMP_LOGFILE?=	/var/log/snmpd.log
+ NET_SNMP_PERSISTENTDIR?=/var/net-snmp
++NET_SNMP_WITH_MIB_MODULE_LIST+=	host disman/event-mib smux mibII/mta_sendmail mibII/tcpTable ucd-snmp/diskio
+ 
+ .if ${OSVERSION} >= 700028
+-NET_SNMP_MIB_MODULE_LIST+=	sctp-mib
++NET_SNMP_WITH_MIB_MODULE_LIST+=	sctp-mib
+ .endif
+ 
+ .if ${OSVERSION} >= 800000
+@@ -112,87 +117,68 @@
+ 
+ .if defined(WITH_MFD_REWRITES)
+ CONFIGURE_ARGS+=--enable-mfd-rewrites
+-NET_SNMP_MIB_MODULE_LIST+=	if-mib
++NET_SNMP_WITH_MIB_MODULE_LIST+=	if-mib
++.endif
++
++.if defined(NET_SNMP_WITH_MIB_MODULE_LIST) && \
++    !empty(NET_SNMP_WITH_MIB_MODULE_LIST)
++CONFIGURE_ARGS+=--with-mib-modules="${NET_SNMP_WITH_MIB_MODULE_LIST}"
+ .endif
+ 
+-MAN1=		encode_keychange.1 fixproc.1 mib2c.1 mib2c-update.1 \
+-		net-snmp-config.1 net-snmp-create-v3-user.1 \
++.if defined(NET_SNMP_WITHOUT_MIB_MODULE_LIST) && \
++    !empty(NET_SNMP_WITHOUT_MIB_MODULE_LIST)
++CONFIGURE_ARGS+=--with-out-mib-modules="${NET_SNMP_WITHOUT_MIB_MODULE_LIST}"
++.endif
++
++MAN1=		agentxtrap.1 encode_keychange.1 fixproc.1 mib2c.1 mib2c-update.1 \
++		net-snmp-config.1 net-snmp-create-v3-user.1 snmp-bridge-mib.1 \
+ 		snmpbulkget.1 snmpbulkwalk.1 snmpcmd.1 snmpconf.1 \
+ 		snmpdelta.1 snmpdf.1 snmpget.1 snmpgetnext.1 snmpinform.1 \
+ 		snmpnetstat.1 snmpset.1 snmpstatus.1 snmptable.1 snmptest.1 \
+ 		snmptranslate.1 snmptrap.1 snmpusm.1 snmpvacm.1 snmpwalk.1 \
+ 		tkmib.1 traptoemail.1
+ MAN3=		add_mibdir.3 add_module_replacement.3 \
+-		config_perror.3 config_pwarn.3 config_api.3 \
++		config_perror.3 config_pwarn.3 \
+ 		default_store.3 fprint_description.3 \
+ 		fprint_objid.3 fprint_value.3 fprint_variable.3 \
+-		get_module_node.3 init_mib.3 init_mib_internals.3 mib_api.3 \
+-		netsnmp_access_multiplexer.3 \
+-		netsnmp_agent_handler.h.3 \
+-		netsnmp_agent.3 \
+-		netsnmp_baby_steps.3 \
+-		netsnmp_bulk_to_next.3 \
+-		netsnmp_cache_handler.3 netsnmp_container.3 \
+-		netsnmp_container_iterator.3 \
+-		netsnmp_container_iterator.h.3 \
+-		netsnmp_debug.3 \
+-		netsnmp_ds_get_boolean.3 netsnmp_ds_get_int.3 \
+-		netsnmp_ds_get_string.3 \
+-		netsnmp_ds_register_config.3 netsnmp_ds_register_premib.3 \
+-		netsnmp_ds_set_boolean.3 netsnmp_ds_set_int.3 \
+-		netsnmp_ds_set_string.3 netsnmp_ds_shutdown.3 \
+-		netsnmp_example_scalar_int.3 netsnmp_handler.3 \
+-		netsnmp_instance.3 \
+-		netsnmp_iterator_info_s.3 \
+-		netsnmp_leaf.3 netsnmp_library.3 \
+-		netsnmp_mib_handler_methods.3 netsnmp_mib_utilities.3 \
+-		netsnmp_mode_end_call.3 netsnmp_multiplexer.3 \
+-		netsnmp_netsnmp_monitor_callback_header_s.3 \
+-		netsnmp_null_container.3 \
+-		netsnmp_old_api.3 netsnmp_read_only.3 \
+-		netsnmp_row_merge.3 \
+-		netsnmp_scalar.3 \
+-		netsnmp_scalar_group_group.3 \
+-		netsnmp_serialize.3 \
+-		netsnmp_stash_cache.3 \
+-		netsnmp_table.3 netsnmp_table_array.3 \
+-		netsnmp_table_data.3 netsnmp_table_dataset.3 \
+-		netsnmp_table_iterator.3 \
+-		netsnmp_table_row.3 \
+-		netsnmp_tools.h.3 \
+-		netsnmp_utilities.3 \
+-		netsnmp_watcher.3 \
+-		pdu_api.3 \
++		get_module_node.3 \
++		netsnmp_agent_api.3 netsnmp_config_api.3 netsnmp_init_mib.3 \
++		netsnmp_mib_api.3 netsnmp_pdu_api.3 netsnmp_read_module.3 \
++		netsnmp_sess_api.3 netsnmp_session_api.3 netsnmp_trap_api.3 netsnmp_varbind_api.3 \
+ 		print_description.3 print_mib.3 print_objid.3 print_value.3 \
+ 		print_variable.3 read_all_mibs.3 \
+-		read_config.3 read_configs.3 read_config_print_usage.3 \
+-		read_mib.3 read_module.3 read_module_node.3 read_objid.3 \
++		read_configs.3 read_config_print_usage.3 \
++		read_mib.3 read_objid.3 \
+ 		read_premib_configs.3 \
+-		register_app_config_handler.3 register_app_premib_handler.3 \
++		register_app_config_handler.3 \
+ 		register_config_handler.3 register_mib_handlers.3 \
+-		register_premib_handler.3 \
+ 		send_easy_trap.3 send_trap_vars.3 send_v2trap.3 \
+-		session_api.3 \
+ 		shutdown_mib.3 \
+-		snmp_agent_api.3 \
+ 		snmp_alarm.3 snmp_alarm_register.3 \
+ 		snmp_alarm_register_hr.3 snmp_alarm_unregister.3 \
+ 		snmp_api_errstring.3 snmp_close.3 \
+ 		snmp_error.3 snmp_free_pdu.3 snmp_open.3 snmp_perror.3 \
+ 		snmp_read.3 snmp_select_info.3 \
+-		snmp_send.3 snmp_sess_api.3 snmp_sess_async_send.3 \
++		snmp_send.3 snmp_sess_async_send.3 \
+ 		snmp_sess_close.3 snmp_sess_error.3 snmp_sess_init.3 \
+ 		snmp_sess_open.3 snmp_sess_perror.3 \
+ 		snmp_sess_read.3 snmp_sess_select_info.3 \
+ 		snmp_sess_send.3 snmp_sess_session.3 snmp_sess_timeout.3 \
+ 		snmp_set_mib_warnings.3 snmp_set_save_descriptions.3 \
+-		snmp_timeout.3 snmp_trap_api.3 \
++		snmp_timeout.3 \
+ 		snprint_objid.3 snprint_value.3 snprint_variable.3 \
+-		sprint_realloc_objid.3 sprint_realloc_value.3 \
+-		sprint_realloc_variable.3 \
+ 		unregister_app_config_handler.3 \
+ 		unregister_config_handler.3 \
+-		varbind_api.3
++		unregister_all_config_handlers.3 \
++		register_prenetsnmp_mib_handler.3 register_const_config_handler.3 register_app_prenetsnmp_mib_handler.3 \
++		snprint_description.3 \
++		snmp_varlist_add_variable.3 \
++		snmp_set_var_value.3 \
++		snmp_set_var_typed_value.3 \
++		snmp_set_var_typed_integer.3 \
++		snmp_set_var_objid.3 \
++		snmp_set_mib_errors.3 snmp_pdu_create.3 snmp_pdu_add_variable.3 snmp_parse_oid.3 snmp_free_varbind.3 \
++		snmp_free_var.3 snmp_fix_pdu.3 snmp_clone_varbind.3 snmp_clone_pdu.3 snmp_add_null_var.3
+ 
+ .if defined(WITH_PERL)
+ MAN3PERL=	NetSNMP::ASN.3 NetSNMP::OID.3 NetSNMP::agent.3 \
+@@ -238,20 +224,29 @@
+ 	@${ECHO_MSG} "				Default log file location for snmpd."
+ 	@${ECHO_MSG} "NET_SNMP_PERSISTENTDIR=\"${NET_SNMP_PERSISTENTDIR}\""
+ 	@${ECHO_MSG} "				Default directory for persistent data storage."
++	@${ECHO_MSG} "NET_SNMP_WITH_MIB_MODULE_LIST=\"${NET_SNMP_WITH_MIB_MODULE_LIST}\""
++	@${ECHO_MSG} "                             MIBs to add to the build."
++	@${ECHO_MSG} "NET_SNMP_WITHOUT_MIB_MODULE_LIST=\"${NET_SNMP_WITHOUT_MIB_MODULE_LIST}\""
++	@${ECHO_MSG} "                             MIBs to omit from the build."
+ 	@${ECHO_MSG}
+ 
+ post-patch:
+ .for filename in ${SCRIPT_FILES}
+-	@${REINPLACE_CMD} ${SCRIPTS_SUB:S/$/!g/:S/^/ -e s!%%/:S/=/%%!/} \
++	${REINPLACE_CMD} ${SCRIPTS_SUB:S/$/!g/:S/^/ -e s!%%/:S/=/%%!/} \
+ 		${WRKSRC}/local/${filename}
+ .endfor
+ .if ${OSVERSION} >= 900007
+-	${REINPLACE_CMD} -e 's!utmp_p->ut_name!utmp_p->ut_user!' ${WRKSRC}/agent/mibgroup/host/hr_system.c
++	@${REINPLACE_CMD} -e 's!utmp_p->ut_name!utmp_p->ut_user!' ${WRKSRC}/agent/mibgroup/host/hr_system.c
+ .endif
+ 
+ post-configure:
+-	@${FIND} ${WRKSRC} -name Makefile | \
++	${FIND} ${WRKSRC} -name Makefile | \
+ 	 ${XARGS} ${REINPLACE_CMD} -E -e '/^INSTALL[ 	]+=/s|$$| -m 755|'
++.for hdr in sys/mbuf.h netinet/in_pcb.h netinet/in_var.h netinet/ip6.h
++	@${REINPLACE_CMD} -E -e '\
++		s!^.*#undef.*(HAVE_${hdr:U:S/./_/g:S/\//_/g}).*$$!#define \1 1!g' \
++			${WRKSRC}/include/net-snmp/net-snmp-config.h
++.endfor
+ 
+ post-build:
+ .if defined(WITH_PERL)
+@@ -270,23 +265,23 @@
+ 	${MKDIR} /var/agentx
+ 
+ strip-files:
+-	@cd ${PREFIX}/bin; ${STRIP_CMD} ${BIN_FILES}
+-	@cd ${PREFIX}/sbin; ${STRIP_CMD} ${SBIN_FILES}
++	cd ${PREFIX}/bin; ${STRIP_CMD} ${BIN_FILES}
++	cd ${PREFIX}/sbin; ${STRIP_CMD} ${SBIN_FILES}
+ 
+ install-config-files:
+-	@${INSTALL_DATA} ${WRKSRC}/EXAMPLE.conf ${DATADIR}/snmpd.conf.example
++	${INSTALL_DATA} ${WRKSRC}/EXAMPLE.conf ${DATADIR}/snmpd.conf.example
+ 
+ install-doc-files:
+ .if !defined(NOPORTDOCS)
+-	@${MKDIR} ${DOCSDIR}
++	${MKDIR} ${DOCSDIR}
+ . for filename in ${DOC_FILES}
+-	@${INSTALL_DATA} ${WRKSRC}/${filename} ${DOCSDIR}
++	${INSTALL_DATA} ${WRKSRC}/${filename} ${DOCSDIR}
+ . endfor
+ .endif
+ 
+ display-message:
+-	@${ECHO_MSG}
+-	@${CAT} ${PKGMESSAGE}
++	${ECHO_MSG}
++	${CAT} ${PKGMESSAGE}
+ 
+ # Maintainer's note:
+ #   Don't forget to bump library version in these ports.
+diff -Nru net-mgmt/net-snmp/distinfo net-mgmt/net-snmp/distinfo
+--- net-mgmt/net-snmp/distinfo	2011-12-05 20:53:54.908691401 -0800
++++ net-mgmt/net-snmp/distinfo	2011-07-27 13:18:34.000000000 -0700
+@@ -1,2 +1,2 @@
+-SHA256 (net-snmp-5.5.tar.gz) = 95936c6a95bef929e7ae0d9144c3fa20ffe62291dff94835bde88c5b5d2bf347
+-SIZE (net-snmp-5.5.tar.gz) = 5531055
++SHA256 (net-snmp-5.7.tar.gz) = 700205b76e16ce87734978520d4b2d05142abdfeaf3c268a030a63c768e73c55
++SIZE (net-snmp-5.7.tar.gz) = 6039854
+diff -Nru net-mgmt/net-snmp/files/extra-patch-local:Makefile.in net-mgmt/net-snmp/files/extra-patch-local:Makefile.in
+--- net-mgmt/net-snmp/files/extra-patch-local:Makefile.in	2011-12-05 20:53:54.908691401 -0800
++++ net-mgmt/net-snmp/files/extra-patch-local:Makefile.in	2011-07-27 13:18:35.000000000 -0700
+@@ -1,11 +1,11 @@
+---- local/Makefile.in.orig	Tue Oct 11 03:47:48 2005
+-+++ local/Makefile.in	Wed Nov 30 11:32:52 2005
++--- local/Makefile.in.orig	2011-07-27 08:56:11.000000000 -0300
+++++ local/Makefile.in	2011-07-27 08:56:22.000000000 -0300
+ @@ -16,7 +16,7 @@
+  #
+  SNMPCONFPATH=@SNMPCONFPATH@
+  PERSISTENT_DIRECTORY=@PERSISTENT_DIRECTORY@
+--PERLSCRIPTS=snmpcheck tkmib mib2c fixproc ipf-mod.pl snmpconf traptoemail
+-+PERLSCRIPTS=snmpcheck mib2c fixproc ipf-mod.pl snmpconf traptoemail
++-PERLSCRIPTS=snmpcheck tkmib mib2c fixproc ipf-mod.pl snmpconf traptoemail snmp-bridge-mib net-snmp-cert
+++PERLSCRIPTS=snmpcheck mib2c fixproc ipf-mod.pl snmpconf traptoemail snmp-bridge-mib net-snmp-cert
+  SHELLSCRIPTS=mib2c-update
+  SCRIPTSMADEFORPERL=snmpcheck.made tkmib.made mib2c.made fixproc.made \
+- 	ipf-mod.pl.made snmpconf.made traptoemail.made
++ 	ipf-mod.pl.made snmpconf.made traptoemail.made snmp-bridge-mib.made \
+diff -Nru net-mgmt/net-snmp/files/patch-Makefile.in net-mgmt/net-snmp/files/patch-Makefile.in
+--- net-mgmt/net-snmp/files/patch-Makefile.in	2011-12-05 20:53:54.909692925 -0800
++++ net-mgmt/net-snmp/files/patch-Makefile.in	2011-07-27 13:18:35.000000000 -0700
+@@ -1,9 +1,9 @@
+---- Makefile.in.orig	2008-09-09 17:27:23.000000000 -0300
+-+++ Makefile.in	2010-06-02 14:21:34.000000000 -0300
+-@@ -17,7 +17,7 @@
++--- Makefile.in.orig	2011-07-01 19:35:46.000000000 -0300
+++++ Makefile.in	2011-07-27 09:02:01.000000000 -0300
++@@ -19,7 +19,7 @@
+  INCLUDESUBDIR=system
+  INCLUDESUBDIRHEADERS= aix.h bsd.h bsdi3.h bsdi4.h bsdi.h cygwin.h \
+- 	darwin.h darwin7.h darwin8.h darwin9.h dragonfly.h dynix.h \
++ 	darwin.h darwin7.h darwin8.h darwin9.h darwin10.h dragonfly.h dynix.h \
+ -	freebsd2.h freebsd3.h freebsd4.h freebsd5.h freebsd6.h freebsd.h \
+ +	freebsd2.h freebsd3.h freebsd4.h freebsd5.h freebsd6.h freebsd7.h freebsd8.h freebsd9.h freebsd.h \
+  	generic.h \
+diff -Nru net-mgmt/net-snmp/files/patch-agent-mibgroup-hardware-fsys-fsys_getfsstats.c net-mgmt/net-snmp/files/patch-agent-mibgroup-hardware-fsys-fsys_getfsstats.c
+--- net-mgmt/net-snmp/files/patch-agent-mibgroup-hardware-fsys-fsys_getfsstats.c	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-agent-mibgroup-hardware-fsys-fsys_getfsstats.c	2011-11-01 15:31:03.000000000 -0700
+@@ -0,0 +1,25 @@
++--- agent/mibgroup/hardware/fsys/fsys_getfsstats.c.orig	2011-07-02 00:35:46.000000000 +0200
+++++ agent/mibgroup/hardware/fsys/fsys_getfsstats.c	2011-10-27 17:32:32.000000000 +0200
++@@ -150,13 +150,13 @@
++         if (!entry)
++             continue;
++ 
++-        memcpy( entry->path,   stats[i].f_mntonname,   sizeof(entry->path)  );
+++        strncpy( entry->path,   stats[i].f_mntonname,   sizeof(entry->path)  );
++         entry->path[sizeof(entry->path)-1] = '\0';
++-        memcpy( entry->device, stats[i].f_mntfromname, sizeof(entry->device));
+++        strncpy( entry->device, stats[i].f_mntfromname, sizeof(entry->device));
++         entry->device[sizeof(entry->device)-1] = '\0';
++         entry->units = stats[i].f_bsize;    /* or f_frsize */
++         entry->size  = stats[i].f_blocks;
++-        entry->used  = stats[i].f_bfree;
+++        entry->used  = stats[i].f_blocks - stats[i].f_bfree;
++         entry->avail = stats[i].f_bavail;
++         entry->inums_total = stats[i].f_files;
++         entry->inums_avail = stats[i].f_ffree;
++@@ -175,4 +175,5 @@
++         }
++         netsnmp_fsys_calculate32(entry);
++     }
+++    free(stats);
++ }
+diff -Nru net-mgmt/net-snmp/files/patch-agent-mibgroup-ucd-snmp_disk_hw.c net-mgmt/net-snmp/files/patch-agent-mibgroup-ucd-snmp_disk_hw.c
+--- net-mgmt/net-snmp/files/patch-agent-mibgroup-ucd-snmp_disk_hw.c	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-agent-mibgroup-ucd-snmp_disk_hw.c	2011-11-01 15:31:03.000000000 -0700
+@@ -0,0 +1,13 @@
++--- agent/mibgroup/ucd-snmp/disk_hw.c.orig	2011-07-02 00:35:46.000000000 +0200
+++++ agent/mibgroup/ucd-snmp/disk_hw.c	2011-10-06 19:17:46.000000000 +0200
++@@ -245,7 +245,9 @@
++ 
++ 
++ static int _percent( int value, int total ) {
++-    return (int)( value * 100 ) / total;
+++    if (!total)
+++	return 100;
+++    return (int)(( (int64_t) value * 100 ) / total);
++ }
++ 
++ static netsnmp_fsys_info **
+diff -Nru net-mgmt/net-snmp/files/patch-agent_mibgroup_mibII_system_mib.c net-mgmt/net-snmp/files/patch-agent_mibgroup_mibII_system_mib.c
+--- net-mgmt/net-snmp/files/patch-agent_mibgroup_mibII_system_mib.c	2010-08-31 04:00:14.000000000 -0700
++++ net-mgmt/net-snmp/files/patch-agent_mibgroup_mibII_system_mib.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,36 +0,0 @@
+---- agent/mibgroup/mibII/system_mib.c.orig	2010-06-11 13:43:01.000000000 +0200
+-+++ agent/mibgroup/mibII/system_mib.c	2010-06-11 13:45:21.000000000 +0200
+-@@ -61,6 +61,7 @@
+- static char     sysLocation[SYS_STRING_LEN] = NETSNMP_SYS_LOC;
+- static oid      sysObjectID[MAX_OID_LEN];
+- static size_t   sysObjectIDLength;
+-+static size_t   sysObjectID_sizeof;
+- 
+- extern oid      version_sysoid[];
+- extern int      version_sysoid_len;
+-@@ -178,6 +179,7 @@
+-         memcpy(sysObjectID, version_sysoid, version_sysoid_len * sizeof(oid));
+-         sysObjectIDLength = version_sysoid_len;
+-     }
+-+    sysObjectID_sizeof = sysObjectIDLength * sizeof(oid);
+- }
+- 
+- 
+-@@ -319,6 +321,7 @@
+-     /* default sysObjectID */
+-     memcpy(sysObjectID, version_sysoid, version_sysoid_len * sizeof(oid));
+-     sysObjectIDLength = version_sysoid_len;
+-+    sysObjectID_sizeof = sysObjectIDLength * sizeof(oid);
+- 
+-     {
+-         const oid sysDescr_oid[] = { 1, 3, 6, 1, 2, 1, 1, 1 };
+-@@ -341,7 +344,7 @@
+-             netsnmp_init_watcher_info6(
+- 		&sysObjectID_winfo, sysObjectID, 0, ASN_OBJECT_ID,
+- 		WATCHER_MAX_SIZE | WATCHER_SIZE_IS_PTR,
+--		MAX_OID_LEN, &sysObjectIDLength));
+-+		MAX_OID_LEN, &sysObjectID_sizeof));
+-     }
+-     {
+-         const oid sysUpTime_oid[] = { 1, 3, 6, 1, 2, 1, 1, 3 };
+-
+diff -Nru net-mgmt/net-snmp/files/patch-agent_read_config.c net-mgmt/net-snmp/files/patch-agent_read_config.c
+--- net-mgmt/net-snmp/files/patch-agent_read_config.c	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-agent_read_config.c	2011-07-28 05:41:50.000000000 -0700
+@@ -0,0 +1,14 @@
++--- ./agent/agent_read_config.c.orig	2011-07-07 15:30:36.000000000 -0700
+++++ agent/agent_read_config.c	2011-07-07 15:35:57.000000000 -0700
++@@ -5,7 +5,11 @@
++ #include <net-snmp/net-snmp-config.h>
++ #include <net-snmp/net-snmp-features.h>
++ 
+++#if HAVE_SYS_PARAM_H
+++#include <sys/param.h>
+++#else
++ #include <sys/types.h>
+++#endif
++ #if HAVE_STDLIB_H
++ #include <stdlib.h>
++ #endif
+diff -Nru net-mgmt/net-snmp/files/patch-at.c net-mgmt/net-snmp/files/patch-at.c
+--- net-mgmt/net-snmp/files/patch-at.c	2008-12-24 18:00:49.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-at.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,14 +0,0 @@
+---- agent/mibgroup/mibII/at.c.orig	2008-12-25 10:40:04.000000000 +0900
+-+++ agent/mibgroup/mibII/at.c	2008-12-25 10:40:59.000000000 +0900
+-@@ -686,7 +686,11 @@
+-     mib[2] = 0;
+-     mib[3] = AF_INET;
+-     mib[4] = NET_RT_FLAGS;
+-+#if defined(RTF_LLINFO)
+-     mib[5] = RTF_LLINFO;
+-+#else
+-+    mib[5] = 0;
+-+#endif
+- 
+-     if (at)
+-         free(at);
+diff -Nru net-mgmt/net-snmp/files/patch-auto_nlist.c net-mgmt/net-snmp/files/patch-auto_nlist.c
+--- net-mgmt/net-snmp/files/patch-auto_nlist.c	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-auto_nlist.c	2011-07-28 05:41:50.000000000 -0700
+@@ -0,0 +1,32 @@
++--- ./agent/auto_nlist.c.orig	2011-07-07 15:38:44.000000000 -0700
+++++ agent/auto_nlist.c	2011-07-07 15:39:37.000000000 -0700
++@@ -66,15 +66,26 @@
++         strcpy(it->nl[0].n_name, string);
++         it->nl[0].n_name[strlen(string)+1] = '\0';
++ #else
++-        sprintf(it->nl[0].n_name, "_%s", string);
+++        char *n_name;
+++
+++        n_name = malloc(strlen(string) + 2);
+++        if (n_name == NULL) {
+++            snmp_log(LOG_ERR, "nlist err: failed to allocate memory");
+++            return (-1);
+++        }
+++        snprintf(n_name, strlen(string) + 2, "_%s", string);
+++        it->nl[0].n_name = (const char*)n_name;
++ #endif
++         it->nl[1].n_name = 0;
++         init_nlist(it->nl);
++ #if !(defined(aix4) || defined(aix5) || defined(aix6) || defined(aix7) || \
++                     defined(netbsd1) || defined(dragonfly)) 
++         if (it->nl[0].n_type == 0) {
++-            strcpy(it->nl[0].n_name, string);
++-            it->nl[0].n_name[strlen(string)+1] = '\0';
+++            it->nl[0].n_name = (const char*)strdup(string);
+++            if (it->nl[0].n_name == (const char*)NULL) {
+++                snmp_log(LOG_ERR, "nlist err: failed to allocate memory");
+++                return (-1);
+++            }
++             init_nlist(it->nl);
++         }
++ #endif
+diff -Nru net-mgmt/net-snmp/files/patch-callback.c net-mgmt/net-snmp/files/patch-callback.c
+--- net-mgmt/net-snmp/files/patch-callback.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-callback.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/callback.c.orig	Tue Jan 25 10:19:39 2005
+-+++ snmplib/callback.c	Tue Jan 25 10:19:53 2005
+-@@ -34,6 +34,9 @@
+- #include <strings.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-configure net-mgmt/net-snmp/files/patch-configure
+--- net-mgmt/net-snmp/files/patch-configure	2011-12-05 20:53:54.917692126 -0800
++++ net-mgmt/net-snmp/files/patch-configure	2011-07-27 13:18:35.000000000 -0700
+@@ -1,11 +1,11 @@
+---- configure.orig	2009-01-25 21:34:07.000000000 +0900
+-+++ configure	2009-01-25 21:34:30.000000000 +0900
+-@@ -6074,7 +6074,7 @@
+- 
++--- configure.orig	2011-07-01 19:36:41.000000000 -0300
+++++ configure	2011-07-27 09:10:11.000000000 -0300
++@@ -7544,7 +7544,7 @@
+  
++ # On IRIX 5.3, sys/types and inttypes.h are conflicting.
+  for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+ -		  inttypes.h stdint.h unistd.h
+ +		  inttypes.h stdint.h unistd.h stdarg.h
+- do
+- as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+- echo "$as_me:$LINENO: checking for $ac_header" >&5
++ do :
++   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
++ ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
+diff -Nru net-mgmt/net-snmp/files/patch-default_store.c net-mgmt/net-snmp/files/patch-default_store.c
+--- net-mgmt/net-snmp/files/patch-default_store.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-default_store.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/default_store.c.orig	Tue Jan 25 10:20:31 2005
+-+++ snmplib/default_store.c	Tue Jan 25 10:20:47 2005
+-@@ -145,6 +145,9 @@
+- #include <winsock.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-disk.c net-mgmt/net-snmp/files/patch-disk.c
+--- net-mgmt/net-snmp/files/patch-disk.c	2008-08-10 07:48:06.000000000 -0700
++++ net-mgmt/net-snmp/files/patch-disk.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,31 +0,0 @@
+---- agent/mibgroup/ucd-snmp/disk.c.orig	2008-07-05 22:11:22.366362753 +0900
+-+++ agent/mibgroup/ucd-snmp/disk.c	2008-07-06 00:32:19.611196878 +0900
+-@@ -73,6 +73,9 @@
+- #if HAVE_SYS_VFS_H
+- #include <sys/vfs.h>
+- #endif
+-+#if defined(__FreeBSD__) && __FreeBSD_version >= 700055
+-+#include <sys/ucred.h>
+-+#endif
+- #if defined(HAVE_STATFS)
+- #if HAVE_SYS_MOUNT_H
+- #include <sys/mount.h>
+-@@ -491,6 +494,18 @@
+-     dummy = 1;
+-   }
+-   endfsent();			/* close /etc/fstab */
+-+#if defined(__FreeBSD__) && __FreeBSD_version >= 700055
+-+  {
+-+    struct statfs *mntbuf;
+-+    size_t i, mntsize;
+-+    mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
+-+    for (i = 0; i < mntsize; i++) {
+-+      if (strncmp(mntbuf[i].f_fstypename, "zfs", 3) == 0) {
+-+	add_device(mntbuf[i].f_mntonname, mntbuf[i].f_mntfromname, -1, minpercent, 0);
+-+      }
+-+    }
+-+  }
+-+#endif
+-   if(dummy != 0) {
+-     /*
+-      * dummy clause for else below
+diff -Nru net-mgmt/net-snmp/files/patch-freebsd10.h net-mgmt/net-snmp/files/patch-freebsd10.h
+--- net-mgmt/net-snmp/files/patch-freebsd10.h	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-freebsd10.h	2011-10-29 06:42:49.000000000 -0700
+@@ -0,0 +1,5 @@
++--- include/net-snmp/system/freebsd10.h.orig	2009-09-11 10:02:17.000000000 -0400
+++++ include/net-snmp/system/freebsd10.h	2009-09-11 10:02:17.000000000 -0400
++@@ -0,0 +1,2 @@
+++#include "freebsd9.h"
+++#define freebsd9 freebsd9
+diff -Nru net-mgmt/net-snmp/files/patch-include-net-snmp_net-snmp-config.h.in net-mgmt/net-snmp/files/patch-include-net-snmp_net-snmp-config.h.in
+--- net-mgmt/net-snmp/files/patch-include-net-snmp_net-snmp-config.h.in	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-include-net-snmp_net-snmp-config.h.in	2011-08-13 16:43:55.000000000 -0700
+@@ -0,0 +1,11 @@
++--- include/net-snmp/net-snmp-config.h.in.orig	2011-08-12 21:05:41.000000000 -0300
+++++ include/net-snmp/net-snmp-config.h.in	2011-08-12 21:07:03.000000000 -0300
++@@ -2061,7 +2061,7 @@
++ #define UCD_SNMP_LIBRARY 1
++ 
++ /* final conclusion on nlist usage */
++-#if defined(HAVE_NLIST) && defined(HAVE_STRUCT_NLIST_N_VALUE) && !defined(NETSNMP_DONT_USE_NLIST) && defined(HAVE_KMEM) && !defined(NETSNMP_NO_KMEM_USAGE)
+++#if defined(HAVE_NLIST) && defined(HAVE_STRUCT_NLIST_N_VALUE) && !defined(NETSNMP_DONT_USE_NLIST) && !defined(NETSNMP_NO_KMEM_USAGE)
++ #define NETSNMP_CAN_USE_NLIST
++ #endif
++ 
+diff -Nru net-mgmt/net-snmp/files/patch-interface_ioctl.c net-mgmt/net-snmp/files/patch-interface_ioctl.c
+--- net-mgmt/net-snmp/files/patch-interface_ioctl.c	2004-12-08 03:11:27.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-interface_ioctl.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,13 +0,0 @@
+---- ./agent/mibgroup/if-mib/data_access/interface_ioctl.c.orig	Mon Oct 25 12:57:23 2004
+-+++ ./agent/mibgroup/if-mib/data_access/interface_ioctl.c	Mon Oct 25 12:56:33 2004
+-@@ -385,6 +385,10 @@
+-     if (rc < 0)
+-         return 0;
+- 
+-+#if defined(__FreeBSD__)
+-+    return ifrq.ifr_index;
+-+#else
+-     return ifrq.ifr_ifindex;
+-+#endif
+- #endif /* SIOCGIFINDEX */
+- }
+diff -Nru net-mgmt/net-snmp/files/patch-ipv6.c net-mgmt/net-snmp/files/patch-ipv6.c
+--- net-mgmt/net-snmp/files/patch-ipv6.c	2009-04-09 04:10:41.000000000 -0700
++++ net-mgmt/net-snmp/files/patch-ipv6.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,598 +0,0 @@
+---- agent/mibgroup/mibII/ipv6.c.orig	2007-05-25 07:01:04.000000000 +0900
+-+++ agent/mibgroup/mibII/ipv6.c	2008-03-26 07:29:07.122940424 +0900
+-@@ -8,10 +8,25 @@
+- #define _KERNEL 1
+- #define _I_DEFINED_KERNEL
+- #endif
+-+
+-+/* make this source a wee bit more readable */
+-+#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#define OS_NET_BSD_16_OR_LATER 1
+-+#endif
+-+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#define OS_NOT_FREEBSD_NOR_DARWIN 1
+-+#endif
+-+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#define OS_FREEBSD_OR_DARWIN 1
+-+#if !defined(INP_IPV6PROTO)
+-+#define	INP_IPV6PROTO	0x04
+-+#endif
+-+#endif
+-+
+- #include <sys/types.h>
+- #include <sys/param.h>
+- #include <sys/socket.h>
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+- # if HAVE_SYS_SOCKETVAR_H
+- #  include <sys/socketvar.h>
+- # endif
+-@@ -80,7 +95,7 @@
+- # include <netinet6/ip6_var.h>
+- #endif
+- #include <net/route.h>
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+- # if HAVE_NETINET_IN_PCB_H
+- #  include <netinet/in_pcb.h>
+- # endif
+-@@ -578,7 +593,7 @@
+-             memcpy(result, &tmp, sizeof(tmp));
+-             return 0;
+-         }
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-         q = (caddr_t) TAILQ_NEXT(&tmp, if_link);
+- #else
+- # if defined(__NetBSD__) || defined(__OpenBSD__)
+-@@ -809,7 +824,7 @@
+- 
+-             if (if_getifnet(interface, &ifnet) < 0)
+-                 break;
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-             ifa = (caddr_t) TAILQ_FIRST(&ifnet.if_addrhead);
+- #else
+- # if defined(__NetBSD__) || defined(__OpenBSD__)
+-@@ -836,7 +851,7 @@
+-                     *var_len = sdl.sdl_alen;
+-                     return (u_char *) (sdl.sdl_data + sdl.sdl_nlen);
+-                 }
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-                 ifa = (caddr_t) TAILQ_NEXT(&ifaddr, ifa_link);
+- #else
+- # if defined(__NetBSD__) || defined(__OpenBSD__)
+-@@ -1229,32 +1244,33 @@
+-          size_t * length,
+-          int exact, size_t * var_len, WriteMethod ** write_method)
+- {
+--    oid             newname[MAX_OID_LEN];
+--    oid             savname[MAX_OID_LEN];
+-+    oid             newname[MAX_OID_LEN], savname[MAX_OID_LEN];
+-     int             result;
+-     int             i, j;
+-     caddr_t         p;
+--    static struct in6pcb in6pcb, savpcb;
+-+    static struct in6pcb tstpcb, savpcb;
+-     int             found, savnameLen;
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+    static struct in6pcb udb6;
+-+#endif
+-+#if OS_NET_BSD_16_OR_LATER
+-     struct inpcbtable udbtable;
+-     caddr_t	    first;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#endif
+-+#if OS_FREEBSD_OR_DARWIN
+-     char           *sysctl_buf;
+-     struct xinpgen *xig, *oxig;
+--#else
+--    static struct in6pcb udb6;
+- #endif
+- 
+-     DEBUGMSGTL(("mibII/ipv6", "var_udp6: "));
+-     DEBUGMSGOID(("mibII/ipv6", name, *length));
+-     DEBUGMSG(("mibII/ipv6", " %d\n", exact));
+- 
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NET_BSD_16_OR_LATER
+-     if (!auto_nlist("udbtable", (char *) &udbtable, sizeof(udbtable)))
+-         return NULL;
+-     first = p = (caddr_t)udbtable.inpt_queue.cqh_first;
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-     if (!auto_nlist("udb6", (char *) &udb6, sizeof(udb6)))
+-         return NULL;
+-     p = (caddr_t) udb6.in6p_next;
+-@@ -1283,9 +1299,10 @@
+-            (int) vp->namelen * sizeof(oid));
+-     DEBUGMSGTL(("mibII/ipv6", "start: p=%x\n", p));
+-     while (
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NET_BSD_16_OR_LATER
+-               p &&  p != first
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-+
+-               p && (u_long) p != auto_nlist_value("udb6")
+- #else
+-               xig->xig_len > sizeof(struct xinpgen)
+-@@ -1293,31 +1310,32 @@
+-         ) {
+-         DEBUGMSGTL(("mibII/ipv6", "looping: p=%x\n", p));
+- 
+--#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        if (!NETSNMP_KLOOKUP(p, (char *) &in6pcb, sizeof(in6pcb))) {
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+        if (!NETSNMP_KLOOKUP(p, (char *) &tstpcb, sizeof(tstpcb))) {
+-             DEBUGMSGTL(("mibII/ipv6", "klookup fail for udb6 at %x\n",
+-                         p));
+-             found = 0;
+-             break;
+-         }
+- #else
+--        in6pcb = ((struct xinpcb *) xig)->xi_inp;
+-+        tstpcb = ((struct xinpcb *) xig)->xi_inp;
+- #endif
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        if (in6pcb.in6p_af != AF_INET6)
+-+#if OS_NET_BSD_16_OR_LATER
+-+        if (tstpcb.in6p_af != AF_INET6) {
+-+            p = (caddr_t)tstpcb.in6p_queue.cqe_next;
+-             goto skip;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+--        if (0 == (in6pcb.inp_vflag & INP_IPV6))
+-+#elif OS_FREEBSD_OR_DARWIN
+-+        if (0 == (tstpcb.inp_vflag & INP_IPV6PROTO))
+-             goto skip;
+- #endif
+- 
+-         j = (int) vp->namelen;
+-         for (i = 0; i < sizeof(struct in6_addr); i++)
+--            newname[j++] = in6pcb.in6p_laddr.s6_addr[i];
+--        newname[j++] = ntohs(in6pcb.in6p_lport);
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+            newname[j++] = tstpcb.in6p_laddr.s6_addr[i];
+-+        newname[j++] = ntohs(tstpcb.inp_lport);
+-+        if (IN6_IS_ADDR_LINKLOCAL(&tstpcb.in6p_laddr))
+-             newname[j++] =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & tstpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             newname[j++] = 0;
+-         /*XXX*/
+-@@ -1328,7 +1346,7 @@
+- 
+-         result = snmp_oid_compare(name, *length, newname, j);
+-         if (exact && (result == 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                 found++;
+-@@ -1339,7 +1357,7 @@
+-              */
+-             if ((savnameLen == 0) ||
+-               (snmp_oid_compare(savname, savnameLen, newname, j) > 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                     found++;
+-@@ -1347,15 +1365,15 @@
+-         }
+- 
+-       skip:
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        p = (caddr_t)in6pcb.in6p_queue.cqe_next;
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        p = (caddr_t) in6pcb.in6p_next;
+-+#if OS_NET_BSD_16_OR_LATER
+-+        p = (caddr_t)tstpcb.in6p_queue.cqe_next;
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-+        p = (caddr_t) tstpcb.in6p_next;
+- #else
+-         xig = (struct xinpgen *) ((char *) xig + xig->xig_len);
+- #endif
+-     }
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-     free(sysctl_buf);
+- #endif
+-     DEBUGMSGTL(("mibII/ipv6", "found=%d\n", found));
+-@@ -1363,7 +1381,7 @@
+-         return NULL;
+-     *length = savnameLen;
+-     memcpy((char *) name, (char *) savname, *length * sizeof(oid));
+--    memcpy(&in6pcb, &savpcb, sizeof(savpcb));
+-+    memcpy(&tstpcb, &savpcb, sizeof(savpcb));
+-     *write_method = 0;
+-     *var_len = sizeof(long);    /* default to 'long' results */
+- 
+-@@ -1376,14 +1394,14 @@
+-     switch (vp->magic) {
+-     case IPV6UDPLOCALADDRESS:
+-         *var_len = sizeof(struct in6_addr);
+--        return in6pcb.in6p_laddr.s6_addr;
+-+        return savpcb.in6p_laddr.s6_addr;
+-     case IPV6UDPLOCALPORT:
+--        long_return = ntohs(in6pcb.in6p_lport);
+-+        long_return = ntohs(savpcb.inp_lport);
+-         return (u_char *) & long_return;
+-     case IPV6UDPIFINDEX:
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+        if (IN6_IS_ADDR_LINKLOCAL(&savpcb.in6p_laddr))
+-             long_return =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & savpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             long_return = 0;
+-         /*XXX*/ return (u_char *) & long_return;
+-@@ -1401,24 +1419,24 @@
+-          size_t * length,
+-          int exact, size_t * var_len, WriteMethod ** write_method)
+- {
+--    oid             newname[MAX_OID_LEN];
+--    oid             savname[MAX_OID_LEN];
+-+    oid             newname[MAX_OID_LEN], savname[MAX_OID_LEN];
+-     int             result;
+-     int             i, j;
+-     caddr_t         p;
+--    static struct in6pcb in6pcb, savpcb;
+-+    static struct in6pcb tstpcb, savpcb;
+-     struct tcp6cb   tcp6cb;
+-     int             found, savnameLen;
+-     static int      tcp6statemap[TCP6_NSTATES];
+-     static int      initialized = 0;
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+    static struct in6pcb tcb6;
+-+#endif
+-+#if OS_NET_BSD_16_OR_LATER
+-     struct inpcbtable tcbtable;
+-     caddr_t	    first;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#elif OS_FREEBSD_OR_DARWIN
+-     char           *sysctl_buf;
+-     struct xinpgen *xig, *oxig;
+--#else
+--    static struct in6pcb tcb6;
+- #endif
+- 
+-     if (!initialized) {
+-@@ -1440,11 +1458,11 @@
+-     DEBUGMSGOID(("mibII/ipv6", name, *length));
+-     DEBUGMSG(("mibII/ipv6", " %d\n", exact));
+- 
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NET_BSD_16_OR_LATER
+-     if (!auto_nlist("tcbtable", (char *) &tcbtable, sizeof(tcbtable)))
+-         return NULL;
+-     first = p = (caddr_t)tcbtable.inpt_queue.cqh_first;
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-     if (!auto_nlist("tcb6", (char *) &tcb6, sizeof(tcb6)))
+-         return NULL;
+-     p = (caddr_t) tcb6.in6p_next;
+-@@ -1473,9 +1491,10 @@
+-            (int) vp->namelen * sizeof(oid));
+-     DEBUGMSGTL(("mibII/ipv6", "start: p=%x\n", p));
+-     while (
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NET_BSD_16_OR_LATER
+-               p &&  p != first
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-+
+-               p && (u_long) p != auto_nlist_value("tcb6")
+- #else
+-               xig->xig_len > sizeof(struct xinpgen)
+-@@ -1483,39 +1502,39 @@
+-         ) {
+-         DEBUGMSGTL(("mibII/ipv6", "looping: p=%x\n", p));
+- 
+--#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        if (!NETSNMP_KLOOKUP(p, (char *) &in6pcb, sizeof(in6pcb))) {
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+        if (!NETSNMP_KLOOKUP(p, (char *) &tstpcb, sizeof(tstpcb))) {
+-             DEBUGMSGTL(("mibII/ipv6", "klookup fail for tcb6 at %x\n",
+-                         p));
+-             found = 0;
+-             break;
+-         }
+- #else
+--        in6pcb = ((struct xinpcb *) xig)->xi_inp;
+-+        tstpcb = ((struct xinpcb *) xig)->xi_inp;
+- #endif
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        if (in6pcb.in6p_af != AF_INET6)
+-+#if OS_NET_BSD_16_OR_LATER
+-+        if (tstpcb.in6p_af != AF_INET6)
+-             goto skip;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+--        if (0 == (in6pcb.inp_vflag & INP_IPV6))
+-+#elif OS_FREEBSD_OR_DARWIN
+-+        if (0 == (tstpcb.inp_vflag & INP_IPV6))
+-             goto skip;
+- #endif
+--        if (!NETSNMP_KLOOKUP(in6pcb.in6p_ppcb, (char *) &tcp6cb, sizeof(tcp6cb))) {
+-+        if (!NETSNMP_KLOOKUP(tstpcb.inp_ppcb, (char *) &tcp6cb, sizeof(tcp6cb))) {
+-             DEBUGMSGTL(("mibII/ipv6", "klookup fail for tcb6.tcp6cb at %x\n",
+--                        in6pcb.in6p_ppcb));
+-+                        tstpcb.inp_ppcb));
+-             found = 0;
+-             break;
+-         }
+-         j = (int) vp->namelen;
+-         for (i = 0; i < sizeof(struct in6_addr); i++)
+--            newname[j++] = in6pcb.in6p_laddr.s6_addr[i];
+--        newname[j++] = ntohs(in6pcb.in6p_lport);
+-+            newname[j++] = tstpcb.in6p_laddr.s6_addr[i];
+-+        newname[j++] = ntohs(tstpcb.inp_lport);
+-         for (i = 0; i < sizeof(struct in6_addr); i++)
+--            newname[j++] = in6pcb.in6p_faddr.s6_addr[i];
+--        newname[j++] = ntohs(in6pcb.in6p_fport);
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+            newname[j++] = tstpcb.in6p_faddr.s6_addr[i];
+-+        newname[j++] = ntohs(tstpcb.inp_fport);
+-+        if (IN6_IS_ADDR_LINKLOCAL(&tstpcb.in6p_laddr))
+-             newname[j++] =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & tstpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             newname[j++] = 0;
+-         /*XXX*/ newname[j++] = tcp6statemap[tcp6cb.t_state];
+-@@ -1526,13 +1545,13 @@
+-         DEBUGMSG(("mibII/ipv6", " %d\n", exact));
+- 
+- #if 1                           /* this is very odd but sometimes happen, and cause infinite loop */
+--        if (ntohs(in6pcb.in6p_lport) == 0)
+-+        if (ntohs(tstpcb.inp_lport) == 0)
+-             goto skip;
+- #endif
+- 
+-         result = snmp_oid_compare(name, *length, newname, j);
+-         if (exact && (result == 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                 found++;
+-@@ -1543,7 +1562,7 @@
+-              */
+-             if ((savnameLen == 0) ||
+-               (snmp_oid_compare(savname, savnameLen, newname, j) > 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                     found++;
+-@@ -1551,15 +1570,15 @@
+-         }
+- 
+-       skip:
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        p = (caddr_t)in6pcb.in6p_queue.cqe_next;
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        p = (caddr_t) in6pcb.in6p_next;
+-+#if OS_NET_BSD_16_OR_LATER
+-+        p = (caddr_t)tstpcb.in6p_queue.cqe_next;
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-+        p = (caddr_t) tstpcb.in6p_next;
+- #else
+-         xig = (struct xinpgen *) ((char *) xig + xig->xig_len);
+- #endif
+-     }
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-     free(sysctl_buf);
+- #endif
+-     DEBUGMSGTL(("mibII/ipv6", "found=%d\n", found));
+-@@ -1580,20 +1599,20 @@
+-     switch (vp->magic) {
+-     case IPV6TCPLOCALADDR:
+-         *var_len = sizeof(struct in6_addr);
+--        return (u_char *) & in6pcb.in6p_laddr.s6_addr[0];
+-+        return (u_char *) & savpcb.in6p_laddr.s6_addr[0];
+-     case IPV6TCPLOCALPORT:
+--        long_return = ntohs(in6pcb.in6p_lport);
+-+        long_return = ntohs(savpcb.inp_lport);
+-         return (u_char *) & long_return;
+-     case IPV6TCPREMOTEADDR:
+-         *var_len = sizeof(struct in6_addr);
+--        return (u_char *) & in6pcb.in6p_faddr.s6_addr[0];
+-+        return (u_char *) & savpcb.in6p_faddr.s6_addr[0];
+-     case IPV6TCPREMOTEPORT:
+--        long_return = ntohs(in6pcb.in6p_fport);
+-+        long_return = ntohs(savpcb.inp_fport);
+-         return (u_char *) & long_return;
+-     case IPV6TCPIFINDEX:
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+        if (IN6_IS_ADDR_LINKLOCAL(&savpcb.in6p_laddr))
+-             long_return =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & savpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             long_return = 0;
+-         /*XXX*/ return (u_char *) & long_return;
+-@@ -1640,22 +1659,23 @@
+-          size_t * length,
+-          int exact, size_t * var_len, WriteMethod ** write_method)
+- {
+--    oid             newname[MAX_OID_LEN];
+--    oid             savname[MAX_OID_LEN];
+-+    oid             newname[MAX_OID_LEN], savname[MAX_OID_LEN];
+-     int             result;
+-     int             i, j;
+-     caddr_t         p;
+--    static struct in6pcb in6pcb, savpcb;
+-+    static struct in6pcb tstpcb, savpcb;
+-     struct tcpcb    tcpcb;
+-     int             found, savnameLen;
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+    static struct in6pcb tcb6;
+-+#endif
+-+#if OS_NET_BSD_16_OR_LATER
+-     struct inpcbtable tcbtable;
+-     caddr_t	    first;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#endif
+-+#if OS_FREEBSD_OR_DARWIN
+-     char           *sysctl_buf;
+-     struct xinpgen *xig, *oxig;
+--#else
+--    static struct in6pcb tcb6;
+- #endif
+- 
+-     DEBUGMSGTL(("mibII/ipv6", "var_tcp6: "));
+-@@ -1695,9 +1715,9 @@
+-            (int) vp->namelen * sizeof(oid));
+-     DEBUGMSGTL(("mibII/ipv6", "start: p=%x\n", p));
+-     while (
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+-+#if OS_NET_BSD_16_OR_LATER
+-               p && p != first
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-               p && (u_long) p != auto_nlist_value("tcb6")
+- #else
+-               xig->xig_len > sizeof(struct xinpgen)
+-@@ -1705,39 +1725,39 @@
+-         ) {
+-         DEBUGMSGTL(("mibII/ipv6", "looping: p=%x\n", p));
+- 
+--#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        if (!NETSNMP_KLOOKUP(p, (char *) &in6pcb, sizeof(in6pcb))) {
+-+#if OS_NOT_FREEBSD_NOR_DARWIN
+-+        if (!NETSNMP_KLOOKUP(p, (char *) &tstpcb, sizeof(tstpcb))) {
+-             DEBUGMSGTL(("mibII/ipv6", "klookup fail for tcb6 at %x\n",
+-                         p));
+-             found = 0;
+-             break;
+-         }
+- #else
+--        in6pcb = ((struct xinpcb *) xig)->xi_inp;
+-+        tstpcb = ((struct xinpcb *) xig)->xi_inp;
+- #endif
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        if (in6pcb.in6p_af != AF_INET6)
+-+#if OS_NET_BSD_16_OR_LATER
+-+        if (tstpcb.in6p_af != AF_INET6)
+-             goto skip;
+--#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+--        if (0 == (in6pcb.inp_vflag & INP_IPV6))
+-+#elif OS_FREEBSD_OR_DARWIN
+-+        if (0 == (tstpcb.inp_vflag & INP_IPV6))
+-             goto skip;
+- #endif
+--        if (!NETSNMP_KLOOKUP(in6pcb.in6p_ppcb, (char *) &tcpcb, sizeof(tcpcb))) {
+-+        if (!NETSNMP_KLOOKUP(tstpcb.inp_ppcb, (char *) &tcpcb, sizeof(tcpcb))) {
+-             DEBUGMSGTL(("mibII/ipv6", "klookup fail for tcb6.tcpcb at %x\n",
+--                        in6pcb.in6p_ppcb));
+-+                        tstpcb.inp_ppcb));
+-             found = 0;
+-             break;
+-         }
+-         j = (int) vp->namelen;
+-         for (i = 0; i < sizeof(struct in6_addr); i++)
+--            newname[j++] = in6pcb.in6p_laddr.s6_addr[i];
+--        newname[j++] = ntohs(in6pcb.in6p_lport);
+-+            newname[j++] = tstpcb.in6p_laddr.s6_addr[i];
+-+        newname[j++] = ntohs(tstpcb.inp_lport);
+-         for (i = 0; i < sizeof(struct in6_addr); i++)
+--            newname[j++] = in6pcb.in6p_faddr.s6_addr[i];
+--        newname[j++] = ntohs(in6pcb.in6p_fport);
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+            newname[j++] = tstpcb.in6p_faddr.s6_addr[i];
+-+        newname[j++] = ntohs(tstpcb.inp_fport);
+-+        if (IN6_IS_ADDR_LINKLOCAL(&tstpcb.in6p_laddr))
+-             newname[j++] =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & tstpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             newname[j++] = 0;
+-         /*XXX*/ newname[j++] = mapTcpState((int)tcpcb.t_state);
+-@@ -1748,12 +1768,12 @@
+-         DEBUGMSG(("mibII/ipv6", " %d\n", exact));
+- 
+- #if 1                           /* this is very odd but sometimes happen, and cause infinite loop */
+--        if (ntohs(in6pcb.in6p_lport) == 0)
+-+        if (ntohs(tstpcb.inp_lport) == 0)
+-             goto skip;
+- #endif
+-         result = snmp_oid_compare(name, *length, newname, j);
+-         if (exact && (result == 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                 found++;
+-@@ -1764,7 +1784,7 @@
+-              */
+-             if ((savnameLen == 0) ||
+-               (snmp_oid_compare(savname, savnameLen, newname, j) > 0)) {
+--                memcpy(&savpcb, &in6pcb, sizeof(savpcb));
+-+                memcpy(&savpcb, &tstpcb, sizeof(savpcb));
+-                 savnameLen = j;
+-                 memcpy(savname, newname, j * sizeof(oid));
+-                     found++;
+-@@ -1772,15 +1792,15 @@
+-         }
+- 
+-       skip:
+--#if defined(__NetBSD__) && __NetBSD_Version__ >= 106250000	/*1.6Y*/
+--        p = (caddr_t)in6pcb.in6p_queue.cqe_next;
+--#elif !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(darwin)
+--        p = (caddr_t) in6pcb.in6p_next;
+-+#if OS_NET_BSD_16_OR_LATER
+-+        p = (caddr_t)tstpcb.in6p_queue.cqe_next;
+-+#elif OS_NOT_FREEBSD_NOR_DARWIN
+-+        p = (caddr_t) tstpcb.in6p_next;
+- #else
+-         xig = (struct xinpgen *) ((char *) xig + xig->xig_len);
+- #endif
+-     }
+--#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(darwin)
+-+#if OS_FREEBSD_OR_DARWIN
+-     free(sysctl_buf);
+- #endif
+-     DEBUGMSGTL(("mibII/ipv6", "found=%d\n", found));
+-@@ -1788,7 +1808,7 @@
+-         return NULL;
+-     *length = savnameLen;
+-     memcpy((char *) name, (char *) savname, *length * sizeof(oid));
+--    memcpy(&in6pcb, &savpcb, sizeof(savpcb));
+-+    memcpy(&tstpcb, &savpcb, sizeof(savpcb));
+-     *write_method = 0;
+-     *var_len = sizeof(long);    /* default to 'long' results */
+- 
+-@@ -1801,20 +1821,20 @@
+-     switch (vp->magic) {
+-     case IPV6TCPLOCALADDR:
+-         *var_len = sizeof(struct in6_addr);
+--        return (u_char *) & in6pcb.in6p_laddr.s6_addr[0];
+-+        return (u_char *) & savpcb.in6p_laddr.s6_addr[0];
+-     case IPV6TCPLOCALPORT:
+--        long_return = ntohs(in6pcb.in6p_lport);
+-+        long_return = ntohs(savpcb.inp_lport);
+-         return (u_char *) & long_return;
+-     case IPV6TCPREMOTEADDR:
+-         *var_len = sizeof(struct in6_addr);
+--        return (u_char *) & in6pcb.in6p_faddr.s6_addr[0];
+-+        return (u_char *) & savpcb.in6p_faddr.s6_addr[0];
+-     case IPV6TCPREMOTEPORT:
+--        long_return = ntohs(in6pcb.in6p_fport);
+-+        long_return = ntohs(savpcb.inp_fport);
+-         return (u_char *) & long_return;
+-     case IPV6TCPIFINDEX:
+--        if (IN6_IS_ADDR_LINKLOCAL(&in6pcb.in6p_laddr))
+-+        if (IN6_IS_ADDR_LINKLOCAL(&savpcb.in6p_laddr))
+-             long_return =
+--                ntohs(*(uint16_t *) & in6pcb.in6p_laddr.s6_addr[2]);
+-+                ntohs(*(uint16_t *) & savpcb.in6p_laddr.s6_addr[2]);
+-         else
+-             long_return = 0;
+-         /*XXX*/ return (u_char *) & long_return;
+diff -Nru net-mgmt/net-snmp/files/patch-keytools.c net-mgmt/net-snmp/files/patch-keytools.c
+--- net-mgmt/net-snmp/files/patch-keytools.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-keytools.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/keytools.c.orig	Tue Jan 25 10:17:48 2005
+-+++ snmplib/keytools.c	Tue Jan 25 10:18:07 2005
+-@@ -32,6 +32,9 @@
+- #include <strings.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-lcd_time.c net-mgmt/net-snmp/files/patch-lcd_time.c
+--- net-mgmt/net-snmp/files/patch-lcd_time.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-lcd_time.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/lcd_time.c.orig	Tue Jan 25 10:16:53 2005
+-+++ snmplib/lcd_time.c	Tue Jan 25 10:17:10 2005
+-@@ -38,6 +38,9 @@
+- #include <netinet/in.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-memory_freebsd.c net-mgmt/net-snmp/files/patch-memory_freebsd.c
+--- net-mgmt/net-snmp/files/patch-memory_freebsd.c	2011-02-10 04:25:07.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-memory_freebsd.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,190 +0,0 @@
+---- agent/mibgroup/hardware/memory/memory_freebsd.c.orig	2011-02-04 10:33:56.000000000 -0200
+-+++ agent/mibgroup/hardware/memory/memory_freebsd.c	2011-02-04 10:33:38.000000000 -0200
+-@@ -43,10 +43,17 @@
+- 
+-     u_long         phys_mem;
+-     u_long         user_mem;
+-+    unsigned int   cache_count;
+-+    unsigned int   cache_max;
+-     unsigned int   bufspace;
+-     unsigned int   maxbufspace;
+-+    unsigned int   inact_count;
+-+    unsigned int   page_count;
+-     size_t         mem_size  = sizeof(phys_mem);
+-+    size_t         cache_size = sizeof(cache_count);
+-     size_t         buf_size  = sizeof(bufspace);
+-+    size_t         inact_size = sizeof(inact_count);
+-+    size_t         page_size = sizeof(page_count);
+-     int            phys_mem_mib[] = { CTL_HW, HW_PHYSMEM };
+-     int            user_mem_mib[] = { CTL_HW, HW_USERMEM };
+- 
+-@@ -56,15 +63,20 @@
+-     sysctl(total_mib,    2, &total,    &total_size,    NULL, 0);
+-     sysctl(phys_mem_mib, 2, &phys_mem, &mem_size,      NULL, 0);
+-     sysctl(user_mem_mib, 2, &user_mem, &mem_size,      NULL, 0);
+-+    sysctlbyname("vm.stats.vm.v_cache_count", &cache_count, &cache_size, NULL, 0);
+-+    sysctlbyname("vm.stats.vm.v_cache_max", &cache_max, &cache_size, NULL, 0);
+-+    sysctlbyname("vm.stats.vm.v_inactive_count", &inact_count, &inact_size, NULL, 0);
+-+    sysctlbyname("vm.stats.vm.v_page_count", &page_count, &page_size, NULL, 0);
+-     sysctlbyname("vfs.bufspace",    &bufspace,    &buf_size, NULL, 0);
+-     sysctlbyname("vfs.maxbufspace", &maxbufspace, &buf_size, NULL, 0);
+--    auto_nlist(SUM_SYMBOL,      (char *) &vmem,     sizeof(vmem));
+- #ifndef freebsd4
+-     pagesize = 1024;
+- #else
+-     pagesize = getpagesize();
+- #endif
+- 
+-+    nswap = swapmode(pagesize);    
+-+
+-     /*
+-      * ... and save this in a standard form.
+-      */
+-@@ -75,7 +87,7 @@
+-         if (!mem->descr)
+-              mem->descr = strdup("Physical memory");
+-         mem->units = pagesize;
+--        mem->size  = user_mem/pagesize;
+-+        mem->size  = page_count;
+-         mem->free  = total.t_free;
+-     }
+- 
+-@@ -87,7 +99,7 @@
+-              mem->descr = strdup("Real memory");
+-         mem->units = pagesize;
+-         mem->size  = total.t_rm;
+--        mem->free  = total.t_arm;
+-+        mem->free  = total.t_rm - total.t_arm;
+-     }
+- 
+-     mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_VIRTMEM, 1 );
+-@@ -97,8 +109,8 @@
+-         if (!mem->descr)
+-              mem->descr = strdup("Virtual memory");
+-         mem->units = pagesize;
+--        mem->size  = total.t_vm;
+--        mem->free  = total.t_avm;
+-+	mem->size = page_count + swapTotal;
+-+	mem->free = total.t_free + swapFree;
+-     }
+- 
+-     mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_SHARED, 1 );
+-@@ -109,7 +121,7 @@
+-              mem->descr = strdup("Shared virtual memory");
+-         mem->units = pagesize;
+-         mem->size  = total.t_vmshr;
+--        mem->free  = total.t_avmshr;
+-+	mem->free  = total.t_vmshr - total.t_avmshr;
+-     }
+- 
+-     mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_SHARED2, 1 );
+-@@ -120,7 +132,7 @@
+-              mem->descr = strdup("Shared real memory");
+-         mem->units = pagesize;
+-         mem->size  = total.t_rmshr;
+--        mem->free  = total.t_armshr;
+-+        mem->free  = total.t_rmshr - total.t_armshr;
+-     }
+- 
+-     mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_CACHED, 1 );
+-@@ -129,12 +141,11 @@
+-     } else {
+-         if (!mem->descr)
+-              mem->descr = strdup("Cached memory");
+--        mem->units = vmem.v_page_size;
+--        mem->size  = vmem.v_cache_max;
+--        mem->free  = vmem.v_cache_max - vmem.v_cache_count;
+-+	mem->units = pagesize;
+-+	mem->size  = cache_count + inact_count;
+-+	mem->free  = cache_max - cache_count;
+-     }
+- 
+--    nswap = swapmode(pagesize);
+-     mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_SWAP, 1 );
+-     if (!mem) {
+-         snmp_log_perror("No Swap info entry");
+-@@ -201,6 +212,9 @@
+- /*
+-  * swapmode is based on a program called swapinfo written
+-  * by Kevin Lahey <kml@rokkaku.atl.ga.us>.
+-+ * 
+-+ * sync'd with swapmode_sysctl(), etc. from /usr/src/usr.sbin/pstat/pstat.c
+-+ * as of FreeBSD 8.1
+-  */
+- 
+- #include <sys/conf.h>
+-@@ -208,51 +222,30 @@
+- int
+- swapmode(long pagesize)
+- {
+--    int             i, n;
+--    static kvm_t   *kd = NULL;
+--    struct kvm_swap kswap[16];
+--    netsnmp_memory_info *mem;
+--    char buf[1024];
+--
+--    if (kd == NULL)
+--        kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
+--    n = kvm_getswapinfo(kd, kswap, sizeof(kswap) / sizeof(kswap[0]), 0);
+--
+--    swapUsed = swapTotal = swapFree = 0;
+--
+--    if ( n > 1 ) {
+--        /*
+--         * If there are multiple swap devices, then record
+--         *   the statistics for each one separately...
+--         */
+--        for (i = 0; i < n; ++i) {
+--            mem = netsnmp_memory_get_byIdx( NETSNMP_MEM_TYPE_SWAP+1+i, 1 );
+--            if (!mem)
+--                continue;
+--            if (!mem->descr) {
+--                sprintf(buf, "swap %s", kswap[i].ksw_devname);
+--                mem->descr = strdup( buf );
+--            }
+--            mem->units = pagesize;
+--            mem->size  = kswap[i].ksw_total;
+--            mem->free  = kswap[i].ksw_total - kswap[i].ksw_used;
+--            /*
+--             *  ... and keep a running total for the overall swap stats
+--             */
+--            swapTotal += kswap[i].ksw_total;
+--            swapUsed  += kswap[i].ksw_used;
+-+	struct kvm_swap ksw;
+-+	struct xswdev xsw;
+-+	size_t mibsize, size;
+-+	int mib[16], n;
+-+	
+-+	swapUsed = swapTotal = swapFree = 0;
+-+	
+-+	mibsize = sizeof mib / sizeof mib[0];
+-+	if (sysctlnametomib("vm.swap_info", mib, &mibsize) == -1)
+-+	err(1, "sysctlnametomib()");
+-+	for (n = 0; ; ++n) {
+-+	mib[mibsize] = n;
+-+	size = sizeof xsw;
+-+	if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) == -1)
+-+	break;
+-+	ksw.ksw_used = xsw.xsw_used;
+-+	ksw.ksw_total = xsw.xsw_nblks;
+-+	ksw.ksw_flags = xsw.xsw_flags;
+-+	
+-+	swapTotal += ksw.ksw_total;
+-+	swapUsed += ksw.ksw_used;
+-         }
+--    } else {
+--        /*
+--         * If there's only one swap device, then don't bother
+--         *   with individual statistics.
+--         */
+--        swapTotal += kswap[0].ksw_total;
+--        swapUsed  += kswap[0].ksw_used;
+--    }
+--
+--    swapFree = swapTotal - swapUsed;
+--    return n;
+-+	swapFree = swapTotal - swapUsed;
+-+	return n;
+- }
+- #endif
+- 
+diff -Nru net-mgmt/net-snmp/files/patch-mib.c net-mgmt/net-snmp/files/patch-mib.c
+--- net-mgmt/net-snmp/files/patch-mib.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-mib.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/mib.c.orig	Tue Jan 25 10:01:11 2005
+-+++ snmplib/mib.c	Tue Jan 25 10:02:02 2005
+-@@ -75,6 +75,9 @@
+- #include <winsock.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-net-snmp-config.h.in net-mgmt/net-snmp/files/patch-net-snmp-config.h.in
+--- net-mgmt/net-snmp/files/patch-net-snmp-config.h.in	2010-06-02 12:13:17.000000000 -0700
++++ net-mgmt/net-snmp/files/patch-net-snmp-config.h.in	1969-12-31 16:00:00.000000000 -0800
+@@ -1,11 +0,0 @@
+---- include/net-snmp/net-snmp-config.h.in.orig	2010-05-31 22:08:28.000000000 -0300
+-+++ include/net-snmp/net-snmp-config.h.in	2010-05-31 22:09:31.000000000 -0300
+-@@ -1721,7 +1721,7 @@
+- 
+- #define NETSNMP_EXCACHETIME 30
+- #define NETSNMP_CACHEFILE ".snmp-exec-cache"
+--#define NETSNMP_MAXCACHESIZE (200*80)   /* roughly 200 lines max */
+-+#define NETSNMP_MAXCACHESIZE (1500*80)   /* roughly 1500 lines max */
+- 
+- /* misc defaults */
+- 
+diff -Nru net-mgmt/net-snmp/files/patch-parse.c net-mgmt/net-snmp/files/patch-parse.c
+--- net-mgmt/net-snmp/files/patch-parse.c	2011-12-05 20:53:54.988690605 -0800
++++ net-mgmt/net-snmp/files/patch-parse.c	2011-07-28 05:41:50.000000000 -0700
+@@ -1,12 +1,169 @@
+---- snmplib/parse.c.orig	Tue Jan 25 10:04:35 2005
+-+++ snmplib/parse.c	Tue Jan 25 10:05:02 2005
+-@@ -106,6 +106,9 @@
+- #if defined(HAVE_REGEX_H) && defined(HAVE_REGCOMP)
+- #include <regex.h>
+- #endif
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
++--- snmplib/parse.c
+++++ snmplib/parse.c
++@@ -3902,8 +3902,13 @@ read_module_internal(const char *name)
++                 return MODULE_ALREADY_LOADED;
++             }
++             if ((fp = fopen(mp->file, "r")) == NULL) {
+++                int rval;
+++                if (errno == ENOTDIR || errno == ENOENT)
+++                    rval = MODULE_NOT_FOUND;
+++                else
+++                    rval = MODULE_LOAD_FAILED;
++                 snmp_log_perror(mp->file);
++-                return MODULE_LOAD_FAILED;
+++                return rval;
++             }
++             mp->no_imports = 0; /* Note that we've read the file */
++             File = mp->file;
++@@ -3917,10 +3922,7 @@ read_module_internal(const char *name)
++             File = oldFile;
++             mibLine = oldLine;
++             current_module = oldModule;
++-            if (np != NULL)
++-                return MODULE_LOADED_OK;
++-            else if (gMibError == MODULE_SYNTAX_ERROR) 
++-                return MODULE_SYNTAX_ERROR;
+++            return gMibError ? gMibError : MODULE_LOADED_OK;
++         }
++ 
++     return MODULE_NOT_FOUND;
++@@ -4339,6 +4341,7 @@ parse(FILE * fp, struct node *root)
++         case END:
++             if (state != IN_MIB) {
++                 print_error("Error, END before start of MIB", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             } else {
++                 struct module  *mp;
++@@ -4403,6 +4406,7 @@ parse(FILE * fp, struct node *root)
++                 nnp = parse_macro(fp, name);
++                 if (nnp == NULL) {
++                     print_error("Bad parse of MACRO", NULL, type);
+++                    gMibError = MODULE_SYNTAX_ERROR;
++                     /*
++                      * return NULL;
++                      */
++@@ -4427,6 +4431,7 @@ parse(FILE * fp, struct node *root)
++                 type = get_token(fp, token, MAXTOKEN);
++             if (type == ENDOFFILE) {
++                 print_error("Expected \"}\"", token, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             type = get_token(fp, token, MAXTOKEN);
++@@ -4436,6 +4441,7 @@ parse(FILE * fp, struct node *root)
++         case DEFINITIONS:
++             if (state != BETWEEN_MIBS) {
++                 print_error("Error, nested MIBS", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             state = IN_MIB;
++@@ -4460,6 +4466,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_objecttype(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of OBJECT-TYPE", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4467,6 +4474,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_objectgroup(fp, name, OBJECTS, &objects);
++             if (nnp == NULL) {
++                 print_error("Bad parse of OBJECT-GROUP", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4474,6 +4482,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_objectgroup(fp, name, NOTIFICATIONS, &notifs);
++             if (nnp == NULL) {
++                 print_error("Bad parse of NOTIFICATION-GROUP", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4481,6 +4490,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_trapDefinition(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of TRAP-TYPE", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4488,6 +4498,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_notificationDefinition(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of NOTIFICATION-TYPE", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4495,6 +4506,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_compliance(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of MODULE-COMPLIANCE", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4502,6 +4514,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_capabilities(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of AGENT-CAPABILITIES", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4509,6 +4522,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_macro(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of MACRO", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 /*
++                  * return NULL;
++                  */
++@@ -4520,6 +4534,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_moduleIdentity(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of MODULE-IDENTITY", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4527,6 +4542,7 @@ parse(FILE * fp, struct node *root)
++             nnp = parse_objectgroup(fp, name, OBJECTS, &objects);
++             if (nnp == NULL) {
++                 print_error("Bad parse of OBJECT-IDENTITY", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4534,16 +4550,19 @@ parse(FILE * fp, struct node *root)
++             type = get_token(fp, token, MAXTOKEN);
++             if (type != IDENTIFIER) {
++                 print_error("Expected IDENTIFIER", token, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             type = get_token(fp, token, MAXTOKEN);
++             if (type != EQUALS) {
++                 print_error("Expected \"::=\"", token, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             nnp = parse_objectid(fp, name);
++             if (nnp == NULL) {
++                 print_error("Bad parse of OBJECT IDENTIFIER", NULL, type);
+++                gMibError = MODULE_SYNTAX_ERROR;
++                 return NULL;
++             }
++             break;
++@@ -4555,6 +4574,7 @@ parse(FILE * fp, struct node *root)
++             break;
++         default:
++             print_error("Bad operator", token, type);
+++            gMibError = MODULE_SYNTAX_ERROR;
++             return NULL;
++         }
++         if (nnp) {
+diff -Nru net-mgmt/net-snmp/files/patch-scapi.c net-mgmt/net-snmp/files/patch-scapi.c
+--- net-mgmt/net-snmp/files/patch-scapi.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-scapi.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/scapi.c.orig	Tue Jan 25 10:18:44 2005
+-+++ snmplib/scapi.c	Tue Jan 25 10:19:01 2005
+-@@ -46,6 +46,9 @@
+- #include <netinet/in.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-sctpAssocTable.c net-mgmt/net-snmp/files/patch-sctpAssocTable.c
+--- net-mgmt/net-snmp/files/patch-sctpAssocTable.c	2009-03-07 07:51:25.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-sctpAssocTable.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,10 +0,0 @@
+---- agent/mibgroup/sctp-mib/sctpAssocTable.c.orig	2009-03-07 23:12:27.000000000 +0900
+-+++ agent/mibgroup/sctp-mib/sctpAssocTable.c	2009-03-07 23:12:37.000000000 +0900
+-@@ -6,7 +6,6 @@
+- #include <net-snmp/net-snmp-config.h>
+- #include <net-snmp/net-snmp-includes.h>
+- #include <net-snmp/agent/net-snmp-agent-includes.h>
+--#include <net-snmp/agent/net-snmp-agent-includes.h>
+- #include <net-snmp/agent/table_container.h>
+- #include "sctpAssocTable.h"
+- 
+diff -Nru net-mgmt/net-snmp/files/patch-sctpLookupLocalPortTable.c net-mgmt/net-snmp/files/patch-sctpLookupLocalPortTable.c
+--- net-mgmt/net-snmp/files/patch-sctpLookupLocalPortTable.c	2009-03-07 07:51:25.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-sctpLookupLocalPortTable.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,10 +0,0 @@
+---- agent/mibgroup/sctp-mib/sctpLookupLocalPortTable.c.orig	2009-03-07 23:14:02.000000000 +0900
+-+++ agent/mibgroup/sctp-mib/sctpLookupLocalPortTable.c	2009-03-07 23:14:09.000000000 +0900
+-@@ -6,7 +6,6 @@
+- #include <net-snmp/net-snmp-config.h>
+- #include <net-snmp/net-snmp-includes.h>
+- #include <net-snmp/agent/net-snmp-agent-includes.h>
+--#include <net-snmp/agent/net-snmp-agent-includes.h>
+- #include <net-snmp/agent/table_container.h>
+- #include "sctpLookupLocalPortTable.h"
+- 
+diff -Nru net-mgmt/net-snmp/files/patch-sctpScalars.h net-mgmt/net-snmp/files/patch-sctpScalars.h
+--- net-mgmt/net-snmp/files/patch-sctpScalars.h	2011-12-05 20:53:54.989692478 -0800
++++ net-mgmt/net-snmp/files/patch-sctpScalars.h	2011-10-29 06:42:49.000000000 -0700
+@@ -5,7 +5,7 @@
+  #if defined( linux )
+  config_require(sctp-mib/sctpScalars_linux)
+ -#elif defined( freebsd8 ) || defined ( freebsd7 )
+-+#elif defined( freebsd9 ) || defined( freebsd8 ) || defined ( freebsd7 )
+++#elif defined( freebsd10 ) || defined( freebsd9 ) || defined( freebsd8 ) || defined ( freebsd7 )
+  config_require(sctp-mib/sctpScalars_freebsd)	 
+  #else
+  /*
+diff -Nru net-mgmt/net-snmp/files/patch-sctpTables.h net-mgmt/net-snmp/files/patch-sctpTables.h
+--- net-mgmt/net-snmp/files/patch-sctpTables.h	2011-12-05 20:53:54.990692536 -0800
++++ net-mgmt/net-snmp/files/patch-sctpTables.h	2011-10-29 06:42:49.000000000 -0700
+@@ -5,7 +5,7 @@
+  config_require(sctp-mib/sctpTables_linux)
+  config_require(util_funcs/get_pid_from_inode)
+ -#elif defined( freebsd7 ) || defined( freebsd8 )
+-+#elif defined( freebsd7 ) || defined( freebsd8 ) || defined( freebsd9 )
+++#elif defined( freebsd7 ) || defined( freebsd8 ) || defined( freebsd9 ) || defined( freebsd10 )
+  config_require(sctp-mib/sctpTables_freebsd)
+  #else
+  config_error(SCTP-MIB is not available in tihs environment)
+diff -Nru net-mgmt/net-snmp/files/patch-sctpTables_common.h net-mgmt/net-snmp/files/patch-sctpTables_common.h
+--- net-mgmt/net-snmp/files/patch-sctpTables_common.h	2011-12-05 20:53:54.990692536 -0800
++++ net-mgmt/net-snmp/files/patch-sctpTables_common.h	2011-10-29 06:42:49.000000000 -0700
+@@ -5,7 +5,7 @@
+  #define SCTP_TABLES_COMMON_H
+  
+ -#if defined(freebsd8) || defined(freebsd7)
+-+#if defined(freebsd9) || defined(freebsd8) || defined(freebsd7)
+++#if defined(freebsd10) || defined(freebsd9) || defined(freebsd8) || defined(freebsd7)
+  #define netsnmp_table_registration_info_free SNMP_FREE
+  #endif
+  
+diff -Nru net-mgmt/net-snmp/files/patch-sctpTables_freebsd.c net-mgmt/net-snmp/files/patch-sctpTables_freebsd.c
+--- net-mgmt/net-snmp/files/patch-sctpTables_freebsd.c	2009-03-07 07:51:25.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-sctpTables_freebsd.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,252 +0,0 @@
+---- agent/mibgroup/sctp-mib/sctpTables_freebsd.c.orig	2009-03-07 23:31:54.000000000 +0900
+-+++ agent/mibgroup/sctp-mib/sctpTables_freebsd.c	2009-03-07 23:55:04.000000000 +0900
+-@@ -0,0 +1,249 @@
+-+#include <net-snmp/net-snmp-config.h>
+-+#include <net-snmp/net-snmp-includes.h>
+-+#include <net-snmp/agent/net-snmp-agent-includes.h>
+-+
+-+#include "sctpAssocTable.h"
+-+#include "sctpAssocLocalAddrTable.h"
+-+#include "sctpAssocRemAddrTable.h"
+-+#include "sctpTables_common.h"
+-+
+-+#include <util_funcs.h>
+-+
+-+#include <stdio.h>
+-+#include <errno.h>
+-+#include <stdlib.h>
+-+#include <unistd.h>
+-+#include <sys/types.h>
+-+#include <sys/sysctl.h>
+-+#include <stdint.h>
+-+#include <sys/socket.h>
+-+#include <netinet/in.h>
+-+#include <netinet/sctp.h>
+-+#include <netinet/sctp_constants.h>
+-+
+-+
+-+static int
+-+parse_assoc_local_addresses(sctpTables_containers * containers,
+-+							struct xsctp_laddr *xladdr)
+-+{
+-+  int ret;
+-+  sctpAssocLocalAddrTable_entry *entry;
+-+  entry = sctpAssocLocalAddrTable_entry_create();
+-+  if (entry == NULL)
+-+	return SNMP_ERR_GENERR;
+-+
+-+  entry->sctpAssocId = 0;
+-+  if (xladdr->address.sa.sa_family == AF_INET) {
+-+	entry->sctpAssocLocalAddrType = INETADDRESSTYPE_IPV4;
+-+	entry->sctpAssocLocalAddr_len = 4;
+-+	memcpy(entry->sctpAssocLocalAddr,
+-+		   &xladdr->address.sin.sin_addr,
+-+		   entry->sctpAssocLocalAddr_len);
+-+  } else if (xladdr->address.sa.sa_family == AF_INET6) {
+-+	entry->sctpAssocLocalAddrType = INETADDRESSTYPE_IPV6;
+-+	entry->sctpAssocLocalAddr_len = 16;
+-+	memcpy(entry->sctpAssocLocalAddr,
+-+		   &xladdr->address.sin6.sin6_addr,
+-+		   entry->sctpAssocLocalAddr_len);
+-+  }
+-+  entry->sctpAssocLocalAddrStartTime = xladdr->start_time.tv_sec;
+-+  ret = sctpAssocLocalAddrTable_add_or_update(containers->sctpAssocLocalAddrTable,
+-+											  entry);
+-+  if (ret != SNMP_ERR_NOERROR)
+-+	return SNMP_ERR_GENERR;
+-+
+-+  return SNMP_ERR_NOERROR;
+-+}
+-+
+-+static int
+-+parse_assoc_xstcb(sctpTables_containers * containers, struct xsctp_tcb *xstcb)
+-+{
+-+  long            inode;
+-+  char           *token;
+-+  int             ret;
+-+  sctpAssocTable_entry *entry;
+-+
+-+  entry = sctpAssocTable_entry_create();
+-+  if (entry == NULL)
+-+	return SNMP_ERR_GENERR;
+-+
+-+  switch (xstcb->state) {
+-+  case SCTP_STATE_INUSE:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_DELETETCB;
+-+	break;
+-+  case SCTP_STATE_COOKIE_WAIT:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_COOKIEWAIT;
+-+	break;
+-+  case SCTP_STATE_COOKIE_ECHOED:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_COOKIEECHOED;
+-+	break;
+-+  case SCTP_STATE_OPEN:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_ESTABLISHED;
+-+	break;
+-+  case SCTP_STATE_SHUTDOWN_SENT:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_SHUTDOWNSENT;
+-+	break;
+-+  case SCTP_STATE_SHUTDOWN_RECEIVED:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_SHUTDOWNRECEIVED;
+-+	break;
+-+  case SCTP_STATE_SHUTDOWN_ACK_SENT:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_SHUTDOWNACKSENT;
+-+	break;
+-+  default:
+-+  case SCTP_STATE_EMPTY:
+-+	entry->sctpAssocState = SCTPASSOCSTATE_CLOSED;
+-+	break;
+-+  };
+-+  entry->sctpAssocHeartBeatInterval = xstcb->heartbeat_interval;
+-+  entry->sctpAssocId = 0;
+-+  entry->sctpAssocPrimProcess = xstcb->primary_process;
+-+  entry->sctpAssocLocalPort = xstcb->local_port;
+-+  entry->sctpAssocRemPort = xstcb->remote_port;
+-+  entry->sctpAssocHeartBeatInterval = xstcb->heartbeat_interval;
+-+  entry->sctpAssocInStreams = xstcb->in_streams;
+-+  entry->sctpAssocOutStreams = xstcb->out_streams;
+-+  entry->sctpAssocMaxRetr = xstcb->max_nr_retrans;
+-+  entry->sctpAssocT1expireds = xstcb->T1_expireries;
+-+  entry->sctpAssocRtxChunks = xstcb->retransmitted_tsns;
+-+  entry->sctpAssocT2expireds = xstcb->T2_expireries; 
+-+  entry->sctpAssocRemHostName[0] = 0;
+-+  entry->sctpAssocRemHostName_len = 0;
+-+  entry->sctpAssocDiscontinuityTime = xstcb->discontinuity_time.tv_sec;
+-+  entry->sctpAssocStartTime = xstcb->start_time.tv_sec;	
+-+
+-+  ret = sctpAssocTable_add_or_update(containers->sctpAssocTable, entry);
+-+  if (ret != SNMP_ERR_NOERROR) {
+-+	return ret;
+-+  }
+-+
+-+  return SNMP_ERR_NOERROR;
+-+}
+-+
+-+
+-+static int
+-+parse_remaddr_xraddr(sctpTables_containers * containers,
+-+					 struct xsctp_raddr *xraddr)
+-+{
+-+  char           *token;
+-+  int             ret;
+-+  sctpAssocRemAddrTable_entry *entry;
+-+
+-+  entry = sctpAssocRemAddrTable_entry_create();
+-+  if (entry == NULL)
+-+	return SNMP_ERR_GENERR;
+-+
+-+	
+-+  entry->sctpAssocId = 0;
+-+
+-+  if(xraddr->active) 
+-+    entry->sctpAssocRemAddrActive = TRUTHVALUE_TRUE;
+-+  else
+-+	entry->sctpAssocRemAddrActive = TRUTHVALUE_FALSE;
+-+  
+-+  if (xraddr->heartbeat_enabled) 
+-+	entry->sctpAssocRemAddrHBActive = TRUTHVALUE_TRUE;
+-+  else
+-+	entry->sctpAssocRemAddrHBActive = TRUTHVALUE_FALSE;
+-+
+-+  entry->sctpAssocRemAddrRTO = xraddr->rto;
+-+  entry->sctpAssocRemAddrMaxPathRtx = xraddr->max_path_rtx;
+-+  entry->sctpAssocRemAddrRtx = xraddr->rtx;
+-+  entry->sctpAssocRemAddrStartTime = xraddr->start_time.tv_sec;
+-+
+-+  if (xraddr->address.sa.sa_family == AF_INET) {
+-+	entry->sctpAssocRemAddrType = INETADDRESSTYPE_IPV4;
+-+	entry->sctpAssocRemAddr_len = 4;
+-+	memcpy(entry->sctpAssocRemAddr,
+-+		   &xraddr->address.sin.sin_addr,
+-+		   entry->sctpAssocRemAddr_len);
+-+  } else if (xraddr->address.sa.sa_family == AF_INET6) {
+-+	entry->sctpAssocRemAddrType = INETADDRESSTYPE_IPV6;
+-+	entry->sctpAssocRemAddr_len = 16;
+-+	memcpy(entry->sctpAssocRemAddr,
+-+		   &xraddr->address.sin6.sin6_addr,
+-+		   entry->sctpAssocRemAddr_len);
+-+  }
+-+  ret =
+-+	sctpAssocRemAddrTable_add_or_update(containers->
+-+										sctpAssocRemAddrTable, entry);
+-+  if (ret != SNMP_ERR_NOERROR) {
+-+	return ret;
+-+  }
+-+  return SNMP_ERR_NOERROR;
+-+}
+-+
+-+
+-+int
+-+sctpTables_arch_load(sctpTables_containers * containers, u_long * flags)
+-+{
+-+  int             ret = SNMP_ERR_NOERROR;
+-+  size_t len;
+-+  caddr_t buf;
+-+  unsigned int offset;
+-+  struct xsctp_inpcb *xinp;
+-+  struct xsctp_tcb *xstcb;
+-+  struct xsctp_laddr *xladdr;
+-+  struct xsctp_raddr *xraddr;
+-+  sa_family_t family;
+-+  void *addr;
+-+
+-+
+-+  *flags |= SCTP_TABLES_LOAD_FLAG_DELETE_INVALID;
+-+  *flags |= SCTP_TABLES_LOAD_FLAG_AUTO_LOOKUP;
+-+  len = 0;
+-+  if (sysctlbyname("net.inet.sctp.assoclist", 0, &len, 0, 0) < 0) {
+-+	printf("Error %d (%s) could not get the assoclist\n", errno, strerror(errno));
+-+	return(-1);
+-+  }
+-+  if ((buf = (caddr_t)malloc(len)) == 0) {
+-+	printf("malloc %lu bytes failed.\n", (long unsigned)len);
+-+	return(-1);
+-+  }
+-+  if (sysctlbyname("net.inet.sctp.assoclist", buf, &len, 0, 0) < 0) {
+-+	printf("Error %d (%s) could not get the assoclist\n", errno, strerror(errno));
+-+	free(buf);
+-+	return(-1);
+-+  }
+-+  offset = 0;
+-+  xinp = (struct xsctp_inpcb *)(buf + offset);
+-+  while (xinp->last == 0) {
+-+	/* for each INP */
+-+	offset += sizeof(struct xsctp_inpcb);
+-+	/* Local addresses */
+-+	xladdr = (struct xsctp_laddr *)(buf + offset);
+-+	while (xladdr->last == 0) {
+-+	  offset += sizeof(struct xsctp_laddr);
+-+	  xladdr = (struct xsctp_laddr *)(buf + offset);
+-+	}
+-+	offset += sizeof(struct xsctp_laddr);
+-+	/* Associations */
+-+	xstcb = (struct xsctp_tcb *)(buf + offset);
+-+	while (xstcb->last == 0) {
+-+	  xstcb = (struct xsctp_tcb *)(buf + offset);
+-+	  offset += sizeof(struct xsctp_tcb);
+-+	  parse_assoc_xstcb(containers, xstcb);
+-+	  /* Local addresses */
+-+	  xladdr = (struct xsctp_laddr *)(buf + offset);
+-+	  while (xladdr->last == 0) {
+-+		parse_assoc_local_addresses(containers, xladdr);
+-+		offset += sizeof(struct xsctp_laddr);
+-+		xladdr = (struct xsctp_laddr *)(buf + offset);
+-+	  }
+-+	  offset += sizeof(struct xsctp_laddr);
+-+
+-+	  /* Remote addresses */
+-+	  xraddr = (struct xsctp_raddr *)(buf + offset);
+-+	  while (xraddr->last == 0) {
+-+		parse_remaddr_xraddr(containers, xraddr);
+-+		offset += sizeof(struct xsctp_raddr);
+-+		xraddr = (struct xsctp_raddr *)(buf + offset);
+-+	  }
+-+	  offset += sizeof(struct xsctp_raddr);
+-+	  xstcb = (struct xsctp_tcb *)(buf + offset);
+-+	}
+-+	offset += sizeof(struct xsctp_tcb);
+-+	xinp = (struct xsctp_inpcb *)(buf + offset);
+-+  }
+-+  free((void *)buf);
+-+  return ret;
+-+}
+diff -Nru net-mgmt/net-snmp/files/patch-snmpUCDIPv6Domain.c net-mgmt/net-snmp/files/patch-snmpUCDIPv6Domain.c
+--- net-mgmt/net-snmp/files/patch-snmpUCDIPv6Domain.c	2008-11-14 16:56:29.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmpUCDIPv6Domain.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,31 +0,0 @@
+---- snmplib/snmpUDPIPv6Domain.c.orig	2007-09-29 22:10:22.000000000 +0900
+-+++ snmplib/snmpUDPIPv6Domain.c	2008-11-14 21:36:45.000000000 +0900
+-@@ -109,12 +109,22 @@
+-     if (to == NULL) {
+-         return strdup("UDP/IPv6: unknown");
+-     } else {
+--        char addr[INET6_ADDRSTRLEN];
+--        char tmp[INET6_ADDRSTRLEN + 18];
+--
+--        sprintf(tmp, "UDP/IPv6: [%s]:%hu",
+--                inet_ntop(AF_INET6, (void *) &(to->sin6_addr), addr,
+--                          INET6_ADDRSTRLEN), ntohs(to->sin6_port));
+-+        char addr[NI_MAXHOST], tmp[NI_MAXHOST + NI_MAXSERV + 12];
+-+/*
+-+ * NI_WITHSCOPEID will be obsoleted.  But some implementations require
+-+ * this flag to retrieve scoped name.
+-+ * (2002-07-25: kuriyama@FreeBSD.org)
+-+ */
+-+#ifndef NI_WITHSCOPEID
+-+#define NI_WITHSCOPEID 0
+-+#endif
+-+	if (getnameinfo((struct sockaddr *)to, sizeof(struct sockaddr_in6),
+-+			addr, sizeof(addr), NULL, 0,
+-+			NI_NUMERICHOST | NI_WITHSCOPEID)) {
+-+	    return strdup("UDP/IPv6: unknown");
+-+	}
+-+	snprintf(tmp, sizeof(tmp), "UDP/IPv6: [%s]:%hu", addr,
+-+		 ntohs(to->sin6_port));
+-         return strdup(tmp);
+-     }
+- }
+diff -Nru net-mgmt/net-snmp/files/patch-snmp_auth.c net-mgmt/net-snmp/files/patch-snmp_auth.c
+--- net-mgmt/net-snmp/files/patch-snmp_auth.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmp_auth.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/snmp_auth.c.orig	Tue Jan 25 10:08:14 2005
+-+++ snmplib/snmp_auth.c	Tue Jan 25 10:08:34 2005
+-@@ -63,6 +63,9 @@
+- #include <arpa/inet.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-snmp_debug.c net-mgmt/net-snmp/files/patch-snmp_debug.c
+--- net-mgmt/net-snmp/files/patch-snmp_debug.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmp_debug.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/snmp_debug.c.orig	Tue Jan 25 10:10:49 2005
+-+++ snmplib/snmp_debug.c	Tue Jan 25 10:11:06 2005
+-@@ -22,6 +22,9 @@
+- #include <winsock.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-snmp_logging.c net-mgmt/net-snmp/files/patch-snmp_logging.c
+--- net-mgmt/net-snmp/files/patch-snmp_logging.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmp_logging.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/snmp_logging.c.orig	Tue Jan 25 10:14:41 2005
+-+++ snmplib/snmp_logging.c	Tue Jan 25 10:15:05 2005
+-@@ -65,6 +65,9 @@
+- #include <varargs.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-snmp_transport.c net-mgmt/net-snmp/files/patch-snmp_transport.c
+--- net-mgmt/net-snmp/files/patch-snmp_transport.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmp_transport.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/snmp_transport.c.orig	Tue Jan 25 10:21:33 2005
+-+++ snmplib/snmp_transport.c	Tue Jan 25 10:21:52 2005
+-@@ -12,6 +12,9 @@
+- #include <stdlib.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/files/patch-snmp_vars.c net-mgmt/net-snmp/files/patch-snmp_vars.c
+--- net-mgmt/net-snmp/files/patch-snmp_vars.c	1969-12-31 16:00:00.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-snmp_vars.c	2011-07-28 05:41:50.000000000 -0700
+@@ -0,0 +1,12 @@
++--- ./agent/snmp_vars.c.orig	2011-07-07 15:37:08.000000000 -0700
+++++ agent/snmp_vars.c	2011-07-07 15:37:14.000000000 -0700
++@@ -62,6 +62,9 @@
++  */
++ 
++ #include <net-snmp/net-snmp-config.h>
+++#if HAVE_SYS_PARAM_H
+++#include <sys/param.h>
+++#endif
++ #if HAVE_STRING_H
++ #include <string.h>
++ #endif
+diff -Nru net-mgmt/net-snmp/files/patch-snmpusm.c net-mgmt/net-snmp/files/patch-snmpusm.c
+--- net-mgmt/net-snmp/files/patch-snmpusm.c	2011-12-05 20:53:54.994693044 -0800
++++ net-mgmt/net-snmp/files/patch-snmpusm.c	2011-07-27 13:18:35.000000000 -0700
+@@ -1,16 +1,6 @@
+---- snmplib/snmpusm.c.orig	Thu Sep 16 07:57:47 2004
+-+++ snmplib/snmpusm.c	Tue Jan 25 10:23:02 2005
+-@@ -54,6 +54,9 @@
+- #include <netinet/in.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+-@@ -89,6 +92,8 @@
++--- snmplib/snmpusm.c.orig	2011-07-27 09:58:24.000000000 -0300
+++++ snmplib/snmpusm.c	2011-07-27 09:57:48.000000000 -0300
++@@ -91,6 +91,8 @@
+  oid             usmAESPrivProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 4 };
+  /* backwards compat */
+  oid             *usmAES128PrivProtocol = usmAESPrivProtocol;
+diff -Nru net-mgmt/net-snmp/files/patch-tcpTable.c net-mgmt/net-snmp/files/patch-tcpTable.c
+--- net-mgmt/net-snmp/files/patch-tcpTable.c	2011-12-05 20:53:54.994693044 -0800
++++ net-mgmt/net-snmp/files/patch-tcpTable.c	2011-07-27 13:18:35.000000000 -0700
+@@ -1,12 +1,13 @@
+---- agent/mibgroup/mibII/tcpTable.c.orig	Wed Jun  9 05:53:17 2004
+-+++ agent/mibgroup/mibII/tcpTable.c	Thu Jun 24 23:21:32 2004
+-@@ -275,6 +277,9 @@
+- 
++--- agent/mibgroup/mibII/tcpTable.c.orig	2011-07-01 19:35:46.000000000 -0300
+++++ agent/mibgroup/mibII/tcpTable.c	2011-07-27 10:00:57.000000000 -0300
++@@ -298,8 +298,10 @@
++ #ifndef NETSNMP_FEATURE_REMOVE_TCP_COUNT_CONNECTIONS
+  int
+  TCP_Count_Connections( void ) {
+ +#if (defined(CAN_USE_SYSCTL) && defined(TCPCTL_PCBLIST))
+-+    tcpTable_load(NULL, NULL);
+-+#endif
++     tcpTable_load(NULL, NULL);
+      return tcp_estab;
+++#endif
+  }
++ #endif /* NETSNMP_FEATURE_REMOVE_TCP_COUNT_CONNECTIONS */
+  
+diff -Nru net-mgmt/net-snmp/files/patch-tools.c net-mgmt/net-snmp/files/patch-tools.c
+--- net-mgmt/net-snmp/files/patch-tools.c	2005-01-25 15:49:30.000000000 -0800
++++ net-mgmt/net-snmp/files/patch-tools.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,12 +0,0 @@
+---- snmplib/tools.c.orig	Tue Jan 25 10:13:50 2005
+-+++ snmplib/tools.c	Tue Jan 25 10:14:06 2005
+-@@ -44,6 +44,9 @@
+- #include <arpa/inet.h>
+- #endif
+- 
+-+#if HAVE_UNISTD_H
+-+#include <unistd.h>
+-+#endif
+- #if HAVE_DMALLOC_H
+- #include <dmalloc.h>
+- #endif
+diff -Nru net-mgmt/net-snmp/pkg-plist net-mgmt/net-snmp/pkg-plist
+--- net-mgmt/net-snmp/pkg-plist	2011-12-05 20:53:54.997692797 -0800
++++ net-mgmt/net-snmp/pkg-plist	2011-08-13 16:43:55.000000000 -0700
+@@ -1,10 +1,13 @@
++bin/agentxtrap
+ bin/encode_keychange
+ bin/fixproc
+ bin/ipf-mod.pl
+ bin/mib2c
+ bin/mib2c-update
++bin/net-snmp-cert
+ bin/net-snmp-config
+ bin/net-snmp-create-v3-user
++bin/snmp-bridge-mib
+ bin/snmpbulkget
+ bin/snmpbulkwalk
+ bin/snmpcheck
+@@ -59,6 +62,7 @@
+ include/net-snmp/agent/serialize.h
+ include/net-snmp/agent/set_helper.h
+ include/net-snmp/agent/snmp_agent.h
++include/net-snmp/agent/snmp_get_statistic.h
+ include/net-snmp/agent/snmp_vars.h
+ include/net-snmp/agent/stash_cache.h
+ include/net-snmp/agent/stash_to_next.h
+@@ -78,8 +82,9 @@
+ include/net-snmp/library/README
+ include/net-snmp/library/asn1.h
+ include/net-snmp/library/callback.h
++include/net-snmp/library/cert_util.h
++include/net-snmp/library/oid.h
+ include/net-snmp/library/check_varbind.h
+-include/net-snmp/library/cmu_compat.h
+ include/net-snmp/library/container.h
+ include/net-snmp/library/container_binary_array.h
+ include/net-snmp/library/container_iterator.h
+@@ -127,6 +132,12 @@
+ include/net-snmp/library/snmpusm.h
+ include/net-snmp/library/snmpv3-security-includes.h
+ include/net-snmp/library/snmpv3.h
++%%WITH_IPV6%%include/net-snmp/library/snmpIPv6BaseDomain.h
++include/net-snmp/library/snmpUDPBaseDomain.h
++include/net-snmp/library/snmpUDPIPv4BaseDomain.h
++include/net-snmp/library/snmpTCPBaseDomain.h
++include/net-snmp/library/snmpSocketBaseDomain.h
++include/net-snmp/library/snmpIPv4BaseDomain.h
+ include/net-snmp/library/system.h
+ include/net-snmp/library/text_utils.h
+ include/net-snmp/library/tools.h
+@@ -139,6 +150,7 @@
+ include/net-snmp/machine/generic.h
+ include/net-snmp/mib_api.h
+ include/net-snmp/net-snmp-config.h
++include/net-snmp/net-snmp-features.h
+ include/net-snmp/net-snmp-includes.h
+ include/net-snmp/output_api.h
+ include/net-snmp/pdu_api.h
+@@ -154,6 +166,7 @@
+ include/net-snmp/system/darwin7.h
+ include/net-snmp/system/darwin8.h
+ include/net-snmp/system/darwin9.h
++include/net-snmp/system/darwin10.h
+ include/net-snmp/system/dragonfly.h
+ include/net-snmp/system/dynix.h
+ include/net-snmp/system/freebsd.h
+@@ -223,6 +236,8 @@
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/NetSNMP/default_store.pm
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/SNMP.pm
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/Bundle/NetSNMP/.packlist
++%%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/Bundle/NetSNMP/NetSNMP.bs
++%%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/Bundle/NetSNMP/NetSNMP.so
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/NetSNMP/ASN/ASN.bs
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/NetSNMP/ASN/ASN.so
+ %%WITH_PERL%%%%SITE_PERL%%/%%PERL_ARCH%%/auto/NetSNMP/ASN/autosplit.ix
+@@ -346,6 +361,7 @@
+ %%DATADIR%%/mib2c-data/syntax-StorageType-dependencies.m2i
+ %%DATADIR%%/mib2c-data/syntax-TestAndIncr-get.m2i
+ %%DATADIR%%/mibs/AGENTX-MIB.txt
++%%DATADIR%%/mibs/BRIDGE-MIB.txt
+ %%DATADIR%%/mibs/DISMAN-EVENT-MIB.txt
+ %%DATADIR%%/mibs/DISMAN-SCHEDULE-MIB.txt
+ %%DATADIR%%/mibs/DISMAN-SCRIPT-MIB.txt
+@@ -363,11 +379,13 @@
+ %%DATADIR%%/mibs/IP-FORWARD-MIB.txt
+ %%DATADIR%%/mibs/IP-MIB.txt
+ %%DATADIR%%/mibs/IPV6-ICMP-MIB.txt
++%%DATADIR%%/mibs/IPV6-FLOW-LABEL-MIB.txt
+ %%DATADIR%%/mibs/IPV6-MIB.txt
+ %%DATADIR%%/mibs/IPV6-TC.txt
+ %%DATADIR%%/mibs/IPV6-TCP-MIB.txt
+ %%DATADIR%%/mibs/IPV6-UDP-MIB.txt
+ %%DATADIR%%/mibs/MTA-MIB.txt
++%%DATADIR%%/mibs/NETWORK-SERVICES-MIB.txt
+ %%DATADIR%%/mibs/NET-SNMP-AGENT-MIB.txt
+ %%DATADIR%%/mibs/NET-SNMP-EXAMPLES-MIB.txt
+ %%DATADIR%%/mibs/NET-SNMP-EXTEND-MIB.txt
+@@ -375,7 +393,6 @@
+ %%DATADIR%%/mibs/NET-SNMP-PASS-MIB.txt
+ %%DATADIR%%/mibs/NET-SNMP-TC.txt
+ %%DATADIR%%/mibs/NET-SNMP-VACM-MIB.txt
+-%%DATADIR%%/mibs/NETWORK-SERVICES-MIB.txt
+ %%DATADIR%%/mibs/NOTIFICATION-LOG-MIB.txt
+ %%DATADIR%%/mibs/RFC-1215.txt
+ %%DATADIR%%/mibs/RFC1155-SMI.txt
+@@ -399,6 +416,7 @@
+ %%DATADIR%%/mibs/SNMPv2-TC.txt
+ %%DATADIR%%/mibs/SNMPv2-TM.txt
+ %%DATADIR%%/mibs/TCP-MIB.txt
++%%DATADIR%%/mibs/TUNNEL-MIB.txt
+ %%DATADIR%%/mibs/TRANSPORT-ADDRESS-MIB.txt
+ %%DATADIR%%/mibs/UCD-DEMO-MIB.txt
+ %%DATADIR%%/mibs/UCD-DISKIO-MIB.txt
