@@ -41,6 +41,7 @@ from freenasUI.storage import forms, models
 from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
 from middleware.exceptions import MiddlewareError
+from services.exceptions import ServiceFailed
 
 def home(request):
     return render(request, 'storage/index.html', {
@@ -648,8 +649,11 @@ def volume_export(request, vid):
     if request.method == "POST":
         form = forms.VolumeExport(request.POST, instance=volume, services=services)
         if form.is_valid():
-            volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
-            return JsonResponse(message=_("The volume has been successfully exported"))
+            try:
+                volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
+                return JsonResponse(message=_("The volume has been successfully exported"))
+            except ServiceFailed, e:
+                return JsonResponse(error=True, message=unicode(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_export.html', {

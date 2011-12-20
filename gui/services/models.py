@@ -29,7 +29,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import Volume, Disk
