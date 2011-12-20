@@ -69,23 +69,6 @@ class Settings(Model):
             default="America/Los_Angeles",
             verbose_name = _("Timezone")
             )
-    stg_ntpserver1 = models.CharField(
-            max_length=120,
-            default="0.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 1")
-            )
-    stg_ntpserver2 = models.CharField(
-            max_length=120,
-            default="1.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 2"),
-            blank=True
-            )
-    stg_ntpserver3 = models.CharField(
-            max_length=120,
-            default="2.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 3"),
-            blank=True
-            )
     stg_syslogserver = IPAddressField(
             default='',
             blank=True,

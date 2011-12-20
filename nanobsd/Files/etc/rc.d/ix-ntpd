@@ -14,22 +14,29 @@ FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
 generate_ntp_conf()
 {
 	local IFS="|"
-	local f="stg_ntpserver1 stg_ntpserver2 stg_ntpserver3
-		"
+	local f="ntp_address ntp_burst ntp_iburst ntp_prefer ntp_minpoll ntp_maxpoll"
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
-	while eval read $f; do
-		if [ -n "${stg_ntpserver1}" ]; then
-			echo "server ${stg_ntpserver1}"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_ntpserver ORDER BY id" | \
+	while eval read -r $f; do
+		echo -n "server ${ntp_address}"
+		if [ "${ntp_burst}" = "1" ]; then
+			echo -n " burst"
 		fi
-		if [ -n "${stg_ntpserver2}" ]; then
-			echo "server ${stg_ntpserver2}"
+		if [ "${ntp_iburst}" = "1" ]; then
+			echo -n " iburst"
 		fi
-		if [ -n "${stg_ntpserver3}" ]; then
-			echo "server ${stg_ntpserver3}"
+		if [ "${ntp_perfer}" = "1" ]; then
+			echo -n " perfer"
 		fi
+		if [ -n "${ntp_maxpoll}" ]; then
+			echo -n " maxpoll ${ntp_maxpoll}"
+		fi
+		if [ -n "${ntp_maxpoll}" ]; then
+			echo -n " minpoll ${ntp_minpoll}"
+		fi
+		echo
 	done > /etc/ntp.conf
 }
 
