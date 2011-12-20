@@ -146,12 +146,14 @@ PPLEVEL=3
 NANO_LABEL=""
 
 #######################################################################
-# Architecture to build.  Corresponds to TARGET_ARCH in a buildworld.
-# Unfortunately, there's no way to set TARGET at this time, and it
-# conflates the two, so architectures where TARGET != TARGET_ARCH do
-# not work.  This defaults to the arch of the current machine.
+# Architecture to build.  Corresponds to TARGET:TARGET_ARCH in
+# buildworld.
+# This defaults to the architecture and processor of the current machine.
+#
+# This accepts just the architecture though (for select architectures like
+# amd64, i386, etc where there isn't a different processor).
 
-NANO_ARCH=`uname -p`
+: ${NANO_ARCH=$(uname -m):$(uname -p)}
 
 # Directory to populate /cfg from
 NANO_CFGDIR=""
@@ -199,7 +201,10 @@ build_world ( ) (
 	pprint 3 "log: ${MAKEOBJDIRPREFIX}/_.bw"
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
 		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
@@ -224,7 +229,11 @@ build_kernel ( ) (
 	unset TARGET_BIG_ENDIAN
 	# Note: We intentionally build all modules, not only the ones in
 	# NANO_MODULES so the built world can be reused by multiple images.
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		buildkernel \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}" \
@@ -264,10 +273,14 @@ install_world ( ) (
 	pprint 3 "log: ${NANO_OBJ}/_.iw"
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} \
-	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} installworld \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		installworld \
 		DESTDIR=${NANO_WORLDDIR} \
 		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 		> ${NANO_OBJ}/_.iw 2>&1
 	chflags -R noschg ${NANO_WORLDDIR}
 )
@@ -278,8 +291,11 @@ install_etc ( ) (
 	pprint 3 "log: ${NANO_OBJ}/_.etc"
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} \
-	${NANO_PMAKE} distribution \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		distribution \
 		DESTDIR=${NANO_WORLDDIR} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
@@ -302,7 +318,11 @@ install_kernel ( ) (
 	fi
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} installkernel \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		installkernel \
 		DESTDIR=${NANO_WORLDDIR} \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
