@@ -881,10 +881,14 @@
                 num += 1;
             }
         }
+
+        var lowlog = dojo.byId("lowlog");
+        if(!lowlog) return;
+
         if(num == 1) {
-            dojo.style("lowlog", "display", "");
+            dojo.style(lowlog, "display", "");
         } else {
-            dojo.style("lowlog", "display", "none");
+            dojo.style(lowlog, "display", "none");
         }
     }
 
