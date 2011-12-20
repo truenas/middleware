@@ -251,7 +251,7 @@ do_add_port ()
 	CR "env \
 	    TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} \
-	    ${NANO_PMAKE} \
+	    make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
