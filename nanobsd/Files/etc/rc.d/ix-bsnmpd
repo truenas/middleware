@@ -18,12 +18,12 @@ generate_snmpconf()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-        hw_machine=`/sbin/sysctl -n hw.machine`
-        hw_model=`/sbin/sysctl -n hw.model`
-        hw_clockrate=`/sbin/sysctl -n hw.clockrate`
-        kern_ostype=`/sbin/sysctl -n kern.ostype`
-        kern_osrelease=`/sbin/sysctl -n kern.osrelease`
-        kern_osrevision=`/sbin/sysctl -n kern.osrevision`
+	hw_machine=`/sbin/sysctl -n hw.machine`
+	hw_model=`/sbin/sysctl -n hw.model`
+	hw_clockrate=`/sbin/sysctl -n hw.clockrate`
+	kern_ostype=`/sbin/sysctl -n kern.ostype`
+	kern_osrelease=`/sbin/sysctl -n kern.osrelease`
+	kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
@@ -60,7 +60,7 @@ sysDescr = \$(description)
 begemotSnmpdModulePath."mibII" = "/usr/lib/snmp_mibII.so"
 EOF
 	done
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${bsnmp_config}
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${bsnmp_config}
 }
 
 name="ix-snmpd"
