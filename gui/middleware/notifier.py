@@ -36,6 +36,7 @@ actions.
 
 from collections import OrderedDict
 import ctypes
+import errno
 import glob
 import grp
 import os
@@ -1260,37 +1261,128 @@ class notifier:
         self.__pw_with_password(command, password)
         self.__smbpasswd(username, password)
 
-    def user_create(self, username, fullname, password, uid = -1, gid = -1,
-                    shell = "/sbin/nologin", homedir = "/mnt", password_disabled = False,
-                    locked = False):
-        """Creates a user with the given parameters.
-        uid and gid can be omitted or specified as -1 which means the system should
-        choose automatically.
+    def user_create(self, username, fullname, password, uid=-1, gid=-1,
+                    shell="/sbin/nologin",
+                    homedir='/mnt', homedir_mode=0o755,
+                    password_disabled=False, locked=False):
+        """Create a user.
 
-        The default shell is /sbin/nologin.
+        This goes and compiles the invocation needed to execute via pw(8),
+        then goes and creates a home directory. Then it goes and adds the
+        user via pw(8), and finally adds the user's to the samba user
+        database. If adding the user fails for some reason, it will remove
+        the directory.
 
-        Returns user uid and gid"""
+        Required parameters:
+
+        username - a textual identifier for the user (should conform to
+                   all constraints with Windows, Unix and OSX usernames).
+                   Example: 'root'.
+        fullname - a textual 'humanized' identifier for the user. Example:
+                   'Charlie Root'.
+        password - passphrase used to login to the system; this is
+                   ignored if password_disabled is True.
+
+        Optional parameters:
+
+        uid - uid for the user. Defaults to -1 (defaults to the next UID
+              via pw(8)).
+        gid - gid for the user. Defaults to -1 (defaults to the next GID
+              via pw(8)).
+        shell - login shell for a user when logging in interactively.
+                Defaults to /sbin/nologin.
+        homedir - where the user will be put, or /nonexistent if
+                  the user doesn't need a directory; defaults to /mnt.
+        homedir_mode - mode to use when creating the home directory;
+                       defaults to 0755.
+        password_disabled - should password based logins be allowed for 
+                            the user? Defaults to False.
+        locked - allows the administrator to restrict the account s.t.
+                 it can't be used for logins (until some precondition is
+                 met, i.e. the user changes his or her password).
+
+        XXX: the default for the home directory seems like a bad idea.
+             Should this be a required parameter instead, or default
+             to /var/empty?
+        XXX: seems like the password_disabled and password fields could
+             be rolled into one property.
+        XXX: the homedir mode isn't set today by the GUI; the default
+             is set to the FreeBSD default when calling pw(8).
+        XXX: smbpasswd errors aren't being caught today.
+        XXX: invoking smbpasswd for each user add seems like an
+             expensive operation.
+        XXX: why are we returning the password hashes?
+
+        Returns:
+            A tuple of the user's UID, GID, the Unix encrypted password
+            hash, and the encrypted SMB password hash.
+
+        Raises:
+            MiddlewareError - failed to create the home directory for
+                              the user.
+            MiddlewareError - failed to run pw useradd successfully.
+        """
+        command = '/usr/sbin/pw useradd "%s" -c "%s" -d "%s" -s "%s"' % \
+            (username, fullname, homedir, shell, )
         if password_disabled:
-            command = '/usr/sbin/pw useradd "%s" -h - -c "%s"' % (username, fullname)
+            command += ' -h -'
         else:
-            command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
+            command += ' -h 0'
         if uid >= 0:
             command += " -u %d" % (uid)
         if gid >= 0:
             command += " -g %d" % (gid)
         if homedir != '/nonexistent':
-            command += ' -s "%s" -d "%s" -m' % (shell, homedir)
-        else:
-            command += ' -s "%s" -d "%s"' % (shell, homedir)
-        self.__issue_pwdchange(username, command, password)
-        if locked:
-            self.user_lock(username)
-        if password_disabled:
-            smb_hash = ""
-        else:
-            smb_command = "/usr/local/bin/pdbedit -w %s" % username
-            smb_cmd = self.__pipeopen(smb_command)
-            smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+            # Populate the home directory with files from /usr/share/skel .
+            command += ' -m'
+
+        # Is this a new directory or not? Let's not nuke existing directories,
+        # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
+        new_homedir = False
+
+        if homedir != '/nonexistent':
+            # Kept separate for cleanliness between formulating what to do
+            # and executing the formulated plan.
+
+            # You're probably wondering why pw -m doesn't suffice. Here's why:
+            # 1. pw(8) doesn't create home directories if the base directory
+            #    doesn't exist; example: if /mnt/tank/homes doesn't exist and
+            #    the user specified /mnt/tank/homes/user, then the home
+            #    directory won't be created.
+            # 2. pw(8) allows me to specify /mnt/md_size (a regular file) for
+            #    the home directory.
+            # 3. If some other random path creation error occurs, it's already
+            #    too late to roll back the user create.
+            try:
+                os.makedirs(homedir, mode=homedir_mode)
+            except OSError as oe:
+                if oe.errno == errno.EEXIST:
+                    if not os.path.isdir(homedir):
+                        raise MiddlewareError('Path for home directory already '
+                                              'exists and is not a directory')
+                else:
+                    raise MiddlewareError('Failed to create the base home directory '
+                                          'for user: %s' % (homedir_base, ))
+            else:
+                new_homedir = True
+
+        try:
+            self.__issue_pwdchange(username, command, password)
+            if locked:
+                self.user_lock(username)
+            if password_disabled:
+                smb_hash = ""
+            else:
+                smb_command = "/usr/local/bin/pdbedit -w %s" % username
+                smb_cmd = self.__pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+        except:
+            if new_homedir:
+                # Be as atomic as possible when creating the user if
+                # commands failed to execute cleanly.
+                shutil.rmtree(homedir)
+            raise
+
         user = self.___getpwnam(username)
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 
