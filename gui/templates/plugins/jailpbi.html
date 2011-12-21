@@ -5,16 +5,20 @@
     formSubmit(this, e, '{{ postpath }}');
 </script>
 <table>
+
 {{ form }}
+
 <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
 {{ previous_fields|safe }}
 <td>
 <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
-    {% if step == 1 %}
+
+    {% if step == 1 or step == 2 %}
     {% trans "OK" %}
     {% else %}
     {% trans "Upload Jail PBI" %}
     {% endif %}
+
     <script type="dojo/method" event="onClick" args="evt">
         this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
     </script>

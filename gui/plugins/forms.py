@@ -35,7 +35,8 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
-from freenasUI import services
+from freenasUI import services, storage, choices
+from freeadmin.models import PathField
 from plugins import models
 
 
@@ -118,5 +119,80 @@ class JailPBIUploadForm(Form):
         else:
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
+
     def done(self):
         notifier().install_jail_pbi()
+
+#
+#    Yuck. This is a form-i-fied version of the services Plugin model.
+#    FileWizard does not render the form correctly when using a ModelForm
+#    based class, so we handle it this way... for now.
+#
+class JailPBIConfigForm(Form):
+    jail_path = forms.ChoiceField(
+            label=_("Plugins jail path"),
+            choices=(),
+            widget=forms.Select(attrs={ 'class': 'required' }),
+            )
+    jail_name = forms.CharField(
+            label= _("Jail name"),
+            required=True
+            )
+    jail_interface = forms.ChoiceField(
+            label=_("Jail interface"),
+            choices=(),
+            widget=forms.Select(attrs={ 'class': 'required' }),
+            )
+    jail_ip = forms.IPAddressField(   
+            label=_("Jail IP address"),
+            required=True
+            )
+    jail_netmask = forms.ChoiceField(
+            label=_("Jail netmask"),
+            choices=(),
+            widget=forms.Select(attrs={ 'class': 'required' }),
+            )
+    plugins_path = forms.ChoiceField(
+            label=_("Plugins Path"),
+            choices=(),
+            widget=forms.Select(attrs={ 'class': 'required' }),
+            )
+
+    def __init__(self, *args, **kwargs):
+        super(JailPBIConfigForm, self).__init__(*args, **kwargs)
+
+        path_list = []
+        mp_list = storage.models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+        for m in mp_list:
+            path_list.append(m.mp_path) 
+
+            datasets = m.mp_volume.get_datasets()
+            if datasets:
+                for name, dataset in datasets.items():
+                    path_list.append(dataset.path)
+
+        self.fields['jail_path'].choices = [(path, path) for path in path_list]
+        self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
+        self.fields['jail_netmask'].choices = choices.v4NetmaskBitList
+        self.fields['plugins_path'].choices = [(path, path) for path in path_list]
+
+    def save(self):
+        super(JailPBIConfigForm, self).save(*args, **kwargs)
+        from freenasUI.network import models
+
+        jiface = self.cleaned_data['jail_interface']
+        iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
+            
+        new_alias = models.Alias()
+        new_alias.alias_interface = iface
+        new_alias.alias_v4address = self.cleaned_data['jail_ip']
+        new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+        
+        try:
+            new_alias.save()
+            notifier().stop("netif")
+            notifier().start("network")
+        
+        except Exception, err:
+            msg = _("Unable to configure alias.")
+            self._errors["jail_ip"] = self.error_class([msg])

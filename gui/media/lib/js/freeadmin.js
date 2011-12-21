@@ -381,7 +381,7 @@
             sync: true,
             failOk: true,
             handle: function(data) {
-                setMessage(data);
+                setMessage(data, "message");
             },
         });
     }

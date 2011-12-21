@@ -1567,7 +1567,13 @@ class notifier:
         return ret
 
     def install_jail_pbi(self):
-        pass
+        ret = False
+
+        (c, conn) = self.__open_db(ret_conn=True)
+
+        c.execute("SELECT jail_name, jail_path FROM services_plugins ORDER BY -id LIMIT 1")
+
+        return ret
 
     def delete_pbi(self, plugin_id):
         ret = False
