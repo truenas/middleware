@@ -27,28 +27,27 @@
 import os
 
 from django.forms import FileField
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext as __
 from django.shortcuts import render_to_response
 
-
+from . import models
 from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
 from freenasUI import services, storage, network, choices
-from plugins import models
 
 
 class PBIFileWizard(FileWizard):
     def done(self, request, form_list):
-        response = render_to_response('plugins/done.html', {
-            'retval': getattr(self, 'retval', None),
-        })
-        if not request.is_ajax():
-            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
-        return response
-
+        retval = getattr(self, 'retval', None)
+        return JsonResponse(
+            error=bool(retval),
+            message=retval if retval else __("Jail's plugin successfully installed"),
+            enclosed=not request.is_ajax(),
+            )
 
 class PluginsForm(ModelForm):
     class Meta:
