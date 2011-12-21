@@ -43,7 +43,18 @@ for feature in $SW_FEATURES; do
 done
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
-NANO_RAM_TMPVARSIZE=$((160*1024))
+
+# /var -> ~150MB (look through rc.initdiskless for the formula of how this
+# number is calculated out).
+# This is needed for samba as it drops a lot of files in /var/db/samba for
+# locking purposes when transferring large collections of data (~100MB for
+# ~4 TB in-flight data). I added overhead just in case, because when space
+# can't be obtained for /var/db/samba, smbd and nmbd have a nasty habit of
+# SIGABRTing and crashing, and this causes other applications to get unhappy
+# (vi and friends ;(..).
+#
+# Set to a lower default for lower footprints with home usecases in FreeNAS.
+NANO_RAM_TMPVARSIZE=32768
 
 NANO_IMAGES=2
 # Remove X11 crud too.
