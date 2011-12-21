@@ -1576,7 +1576,6 @@ class notifier:
                     try:
                         c.execute(sql, kwargs)
                         conn.commit()
-                        self._restart_http()
                         ret = True
 
                     except Exception, err:
