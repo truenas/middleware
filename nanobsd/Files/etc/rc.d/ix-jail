@@ -97,11 +97,11 @@ plugins_jail_stop()
 		then
 			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
 
+			/etc/rc.d/jail stop "${jail_name}"
 			grep -v "jail_" /etc/rc.conf > "${tmpfile}"
 			mv "${tmpfile}" /etc/rc.conf
 
 			rm -f "/etc/fstab.${jail_name}"
-			/etc/rc.d/jail stop "${jail_name}"
 		fi
 	fi
 }
