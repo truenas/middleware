@@ -40,7 +40,7 @@ urlpatterns = patterns('plugins.views',
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^jailpbi/$', PBIFileWizard(
-            [PBITemporaryLocationForm, JailPBIUploadForm, JailPBIConfigForm],
+            [PBITemporaryLocationForm, JailPBIConfigForm, JailPBIUploadForm],
             prefix="jailpbi",
             templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
