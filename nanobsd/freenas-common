@@ -228,12 +228,17 @@ add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port sysutils/ipmitool
+# NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
+# counted against the release image's size because they aren't used in
+# production yet.
+if [ "${DEBUG}" = 1 ]; then
 add_port devel/py-zope.interface
 add_port devel/py-twistedCore
 add_port devel/py-ujson
 add_port devel/py-lockfile
 add_port devel/py-daemon
 add_port devel/pyrex
+fi
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
