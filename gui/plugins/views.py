@@ -69,7 +69,10 @@ def plugin_delete(request, plugin_id):
 
     if request.method == 'POST':
         if notifier().delete_pbi(plugin_id):
-            return JsonResp(request, message=_("Plugin successfully removed."))
+            return JsonResp(request,
+                message=_("Plugin successfully removed."),
+                events=['restartHttpd()']
+                )
         else:
             return JsonResp(request, error=True, message=_("Unable to remove plugin."))
     else:

@@ -43,10 +43,14 @@ from freenasUI import services, storage, network, choices
 class PBIFileWizard(FileWizard):
     def done(self, request, form_list):
         retval = getattr(self, 'retval', None)
+        events = []
+        if not retval:
+            events.append('restartHttpd()')
         return JsonResponse(
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
             enclosed=not request.is_ajax(),
+            events=events,
             )
 
 class PluginsForm(ModelForm):

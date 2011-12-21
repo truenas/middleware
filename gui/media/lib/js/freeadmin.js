@@ -382,9 +382,11 @@
             sync: true,
             failOk: true,
             handle: function(a1,a2) {
-                setTimeout(function () {
-                    window.location = newurl;
-                }, 1500);
+                if(newurl) {
+                    setTimeout(function () {
+                        window.location = newurl;
+                    }, 1500);
+                }
             },
         });
 
