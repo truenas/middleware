@@ -32,7 +32,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.plugins import models, forms
 from freenasUI.middleware.notifier import notifier
-from freeadmin.views import JsonResponse
+from freeadmin.views import JsonResponse, JsonResp
 
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.jail import Jls, Jexec
@@ -65,8 +65,14 @@ def plugin_edit(request, plugin_id):
 
 def plugin_delete(request, plugin_id):
     plugin_id = int(plugin_id)
+    plugin = models.Plugins.objects.get(id=plugin_id)
 
-    if notifier().delete_pbi(plugin_id):
-        return JsonResponse(message=_("Plugin successfully removed."))
+    if request.method == 'POST':
+        if notifier().delete_pbi(plugin_id):
+            return JsonResp(request, message=_("Plugin successfully removed."))
+        else:
+            return JsonResp(request, error=True, message=_("Unable to remove plugin."))
     else:
-        return JsonResponse(error=True, message=_("Unable to remove plugin."))
+        return render(request, 'plugins/plugin_confirm_delete.html', {
+            'plugin': plugin,
+        })
