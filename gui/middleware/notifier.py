@@ -593,7 +593,25 @@ class notifier:
         c = self.__open_db()
         c.execute("SELECT count(*) from services_plugins")
         if int(c.fetchone()[0]) > 0:
-            res = True
+            c.execute("""
+            SELECT
+                jail_path,
+                jail_name,
+                jail_interface,
+                jail_ip,
+                jail_netmask,
+                plugins_path
+            FROM
+                services_plugins
+            ORDER BY
+                -id
+            LIMIT 1
+            """)
+            sp = c.fetchone()
+            for i in sp:
+                if i not in (None, ''):
+                    res = True
+                    break
         return res
 
     def start_ssl(self, what=None):
