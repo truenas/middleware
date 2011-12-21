@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
@@ -35,8 +36,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
-from freenasUI import services, storage, choices
-from freeadmin.models import PathField
+from freenasUI import services, storage, network, choices
 from plugins import models
 
 
@@ -100,35 +100,12 @@ class PBIUploadForm(Form):
         notifier().install_pbi()
 
 class JailPBIUploadForm(Form):
-    pbifile = FileField(label=_("Plugins Jail PBI"), required=True)
-    sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/pbifile.pbi'
-        if cleaned_data.get('pbifile'):
-            with open(filename, 'wb+') as sp:
-                for c in cleaned_data['pbifile'].chunks():
-                    sp.write(c)
-            if 'sha256' in cleaned_data:
-                checksum = notifier().checksum(filename)
-                if checksum != str(cleaned_data['sha256']):
-                    msg = _(u"Invalid checksum")
-                    self._errors["pbifile"] = self.error_class([msg])
-                    del cleaned_data["pbifile"]
-        else:
-            self._errors["pbifile"] = self.error_class([_("This field is required.")])
-        return cleaned_data
-
-    def done(self):
-        notifier().install_jail_pbi()
 
 #
 #    Yuck. This is a form-i-fied version of the services Plugin model.
 #    FileWizard does not render the form correctly when using a ModelForm
 #    based class, so we handle it this way... for now.
 #
-class JailPBIConfigForm(Form):
     jail_path = forms.ChoiceField(
             label=_("Plugins jail path"),
             choices=(),
@@ -157,9 +134,17 @@ class JailPBIConfigForm(Form):
             choices=(),
             widget=forms.Select(attrs={ 'class': 'required' }),
             )
+    pbifile = FileField(
+            label=_("Plugins Jail PBI"),
+            required=True
+            )
+    sha256 = forms.CharField(
+            label=_("SHA256 sum for the PBI file"),
+            required=True
+             )
 
     def __init__(self, *args, **kwargs):
-        super(JailPBIConfigForm, self).__init__(*args, **kwargs)
+        super(JailPBIUploadForm, self).__init__(*args, **kwargs)
 
         path_list = []
         mp_list = storage.models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
@@ -169,30 +154,63 @@ class JailPBIConfigForm(Form):
             datasets = m.mp_volume.get_datasets()
             if datasets:
                 for name, dataset in datasets.items():
-                    path_list.append(dataset.path)
+                    path_list.append(dataset.mountpoint)
 
         self.fields['jail_path'].choices = [(path, path) for path in path_list]
         self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
         self.fields['jail_netmask'].choices = choices.v4NetmaskBitList
         self.fields['plugins_path'].choices = [(path, path) for path in path_list]
 
-    def save(self):
-        super(JailPBIConfigForm, self).save(*args, **kwargs)
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        filename = '/var/tmp/firmware/pbifile.pbi'
+        if cleaned_data.get('pbifile'):
+            with open(filename, 'wb+') as sp:
+                for c in cleaned_data['pbifile'].chunks():
+                    sp.write(c)
+            if 'sha256' in cleaned_data:
+                checksum = notifier().checksum(filename)
+                if checksum != str(cleaned_data['sha256']):
+                    msg = _(u"Invalid checksum")
+                    self._errors["pbifile"] = self.error_class([msg])
+                    del cleaned_data["pbifile"]
+        else:
+            self._errors["pbifile"] = self.error_class([_("This field is required.")])
+        return cleaned_data
+
+    def done(self):
         from freenasUI.network import models
 
+        cleaned_data = self.cleaned_data 
+
+        # Find interface to create alias on
         jiface = self.cleaned_data['jail_interface']
         iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
             
-        new_alias = models.Alias()
+        # Create the alias
+        new_alias = network.models.Alias()
         new_alias.alias_interface = iface
         new_alias.alias_v4address = self.cleaned_data['jail_ip']
         new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+
+        # Create a plugins service entry
+        pj = services.models.Plugins()
+        pj.jail_path = cleaned_data.get('jail_path')
+        pj.jail_name = cleaned_data.get('jail_name')
+        pj.jail_interface = cleaned_data.get('jail_interface')
+        pj.jail_ip = cleaned_data.get('jail_ip')
+        pj.jail_netmask = cleaned_data.get('jail_netmask')
+        pj.plugins_path = cleaned_data.get('plugins_path')
+
+        # Install the jail PBI
+        install_path = os.path.join(pj.jail_path, pj.jail_name)
+        if notifier().install_jail_pbi(install_path):
+            try:
+                pj.save()
+                new_alias.save()
+                notifier().stop("netif")
+                notifier().start("network")
         
-        try:
-            new_alias.save()
-            notifier().stop("netif")
-            notifier().start("network")
-        
-        except Exception, err:
-            msg = _("Unable to configure alias.")
-            self._errors["jail_ip"] = self.error_class([msg])
+            except Exception, err:
+                msg = _("Unable to configure alias.")
+                self._errors["jail_ip"] = self.error_class([msg])
