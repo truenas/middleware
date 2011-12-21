@@ -67,7 +67,7 @@ class PBITemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(PBITemporaryLocationForm, self).__init__(*args, **kwargs)
         mp = services.models.Plugins.objects.order_by("-id")
-        if mp:
+        if mp and notifier().plugins_jail_configured():
             mp = mp[0]
             self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
         else:
