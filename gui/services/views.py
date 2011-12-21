@@ -100,8 +100,10 @@ def home(request):
     except IndexError:
         ldap = models.LDAP.objects.create()
 
+    plugins = None
     try:
-        plugins = models.Plugins.objects.order_by("-id")[0]
+        if notifier().plugins_jail_configured():
+            plugins = models.Plugins.objects.order_by("-id")[0]
     except IndexError:
         plugins = None
 
