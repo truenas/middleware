@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-12-05 13:25+0200\n"
+"PO-Revision-Date: 2011-12-21 11:44+0200\n"
 "Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -2805,7 +2805,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "Добави разширение"
 
 #: services/nav.py:102
 msgid "View All Extents"
@@ -3936,7 +3936,7 @@ msgstr "NTP сървър 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog сървър"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -3975,13 +3975,12 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Разрешаване на Zeroconf/Bonjour"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
 "Размер на swap файла за всеки диск в GiB, засяга само новите дискове. Трябва "
-"да бъде различен от 0"
+"да бъде различен от 0. Стойност 0 изключва swap (ПРЕПОРЪЧИТЕЛНО)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4005,13 +4004,10 @@ msgid "From email"
 msgstr "От имейл"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
-msgstr ""
-"Адрес на електронна поща, който системата ще използва, за да изпраща писма, "
-"например: freenas@mydomain.com"
+msgstr "Изходящ адрес на електронна поща, например: freenas@mydomain.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4171,17 +4167,14 @@ msgid "Day of week"
 msgstr "Ден от седмицата"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Разреши AIO"
+msgstr "Избрано"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
-msgstr "Разписание на задачите"
+msgstr "Разписание на задача"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
 msgstr "Разписание на задачите"
 
@@ -4213,14 +4206,12 @@ msgid "Every month"
 msgstr "Всеки месец"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Делничен ден"
+msgstr "Делнични дни"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
-#, fuzzy
 msgid "Weekends"
-msgstr "Седмица (и)"
+msgstr "Почивни дни"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4325,53 +4316,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Допълнителни опции за rsync командния ред (обикновено празно)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Rsync задача"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Rsync задачи"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. тест"
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. настройки"
+msgstr "S.M.A.R.T.  тестове"
 
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Достъпен"
+msgstr "Променлив"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Стойност"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr "Средно време за зареждане"
+msgstr "Лоудер"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr "Средно време за зареждане"
+msgstr "Лоудери"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4386,48 +4370,43 @@ msgid "System Information"
 msgstr "Ситемна информация"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "Разписание на задачите"
+msgstr "Преглед на разписанието на задачите"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Преглед на дисковете"
+msgstr "Преглед на Rsync задачите"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. настройки"
+msgstr "Показва S.M.A.R.T. Тестове"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Преглед на дисковете"
+msgstr "Показва Sysctls"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Преглед на всички потребители"
+msgstr "Показва лоудерите"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "Каченият файл е невалиден."
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Тестово съобщение от"
+msgstr "Тестово съобщение от %s"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Това е тестово съобщение от"
+msgstr "Това е тестово съобщение от %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Вашият тестов имейл не може да бъде изпратен!"
+msgstr "Вашият тестов имейл не може да бъде изпратен!  %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4956,7 +4935,7 @@ msgstr "NFS настройки"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
-msgstr "Настройки за синхронизация"
+msgstr "Настройки за Rsync синхронизация"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -5074,11 +5053,11 @@ msgstr "Няма дефинирани модули за синхронизаци
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr "Споделени ресурси"
+msgstr "Активни споделени ресурси"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr "Няма споделени ресурси за Apple."
+msgstr "Няма активни споделени ресурси за Apple."
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
@@ -5139,11 +5118,11 @@ msgstr "Добавяне на споделени ресурси за UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr "Няма споделени ресурси за Windows."
+msgstr "Няма активни Windows споделени ресурси."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr "Редактиране на споделени ресурси за Windows"
+msgstr "Редактиране на Windows споделени ресурси"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
@@ -5256,7 +5235,7 @@ msgstr "Промяна на разрешение за %(path)s към"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr "Промени"
+msgstr "Промяна"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -5371,7 +5350,7 @@ msgstr ", всеки"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr "всекидневен"
+msgstr "всеки ден"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
@@ -5437,7 +5416,7 @@ msgstr "Няма дефинирани дялове"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr "Дискове членове"
+msgstr "Описани дискове"
 
 #: templates/storage/wizard.html:71
 msgid "Group type"
@@ -5461,7 +5440,7 @@ msgstr "Кеш"
 
 #: templates/storage/wizard.html:134
 msgid "Spare"
-msgstr "Свободен"
+msgstr "Резервен"
 
 #: templates/storage/wizard.html:172
 msgid "Add Volume"
