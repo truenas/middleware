@@ -1,20 +1,5 @@
-
-<form dojoType="dijit.form.Form">
-<script type="dojo/event" event="onSubmit" args="e">
-    formSubmit(this, e, '{% url storage_disk_offline vname=vname label=label %}');
-</script>
-<table>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
     <tr><td><strong>{% if not disk %}{{ label }}{% else %}{{ disk }}{% endif %}</strong>: {% trans "Are you sure you want to offline?" %}</td></tr>
-    <tr>
-        <td>
-            <button id="submitform" dojoType="dijit.form.Button" type="submit">
-                {% trans "Yes" %}
-                <script type="dojo/method" event="onClick" args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape %}');
-                </script>
-            </button>
-            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
-        </td>
-    </tr>
-</table>
-</form>
+{% endblock %}
+{% block oklabel %}{% trans "Yes" %}{% endblock %}

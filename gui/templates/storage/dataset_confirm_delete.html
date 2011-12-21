@@ -1,9 +1,5 @@
-
-<form data-dojo-type="dijit.form.Form">
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_dataset_delete name=name %}');
-</script>
-<table>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
     <tr>
         <td>
         {% blocktrans with name=name %}Are you sure you want to destroy "{{ name }}"?{% endblocktrans %}
@@ -16,22 +12,6 @@
         {% endblocktrans %}
         </td>
     </tr>
-    {{ form }}
-    <tr>
-        <td>
-            <button id="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
-                {% trans "Yes" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
-            </button>
-            <button data-dojo-type="dijit.form.Button" class="cancelform">
-                {% trans "Cancel" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    cancelDialog(this);
-                </script>
-            </button>
-        </td>
-    </tr>
-</table>
-</form>
+{{ block.super }}
+{% endblock %}
+{% block oklabel %}{% trans "Yes" %}{% endblock %}
