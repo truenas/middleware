@@ -52,8 +52,10 @@ class ConfigurePlugins(TreeNode):
         super(ConfigurePlugins, self).__init__(*args, **kwargs)
 
         plugins = models.Plugins.objects.order_by("plugin_name")
-        for p in plugins:
+        if not plugins.exists():
+            self.append_app = False
 
+        for p in plugins:
             nav = TreeNode(p.plugin_name)
             nav.name = p.plugin_name
             nav.icon = u'SettingsIcon'
