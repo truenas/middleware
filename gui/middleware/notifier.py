@@ -70,7 +70,8 @@ from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
 from freenasUI.common.pbi import pbi_add, pbi_delete, \
-    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO
+    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO, \
+    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR
 from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
@@ -1566,12 +1567,17 @@ class notifier:
 
         return ret
 
-    def install_jail_pbi(self):
+    def install_jail_pbi(self, path):
         ret = False
 
-        (c, conn) = self.__open_db(ret_conn=True)
+        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG,
+            pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
+        res = p.run()
 
-        c.execute("SELECT jail_name, jail_path FROM services_plugins ORDER BY -id LIMIT 1")
+        if res and res[0] == 0:
+            ret = True
+        else:
+            raise MiddlewareError(p.error)
 
         return ret
 
