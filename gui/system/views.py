@@ -372,6 +372,12 @@ def loaders(request):
         'loaders': loaders,
         })
 
+def ntpservers(request):
+    ntpservers = models.NTPServer.objects.all().order_by('id')
+    return render(request, 'system/ntpserver.html', {
+        'ntpservers': ntpservers,
+        })
+
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")

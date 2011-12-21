@@ -61,3 +61,10 @@ class ViewLoader(TreeNode):
         view = 'system_loaders'
         name = _('View Loaders')
         append_app = False
+
+class ViewNTPServer(TreeNode):
+
+        gname = 'system.NTPServer.View'
+        view = 'system_ntpservers'
+        #name = _('View NTP Servers')
+        append_app = False
