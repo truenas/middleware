@@ -71,7 +71,8 @@ from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
 from freenasUI.common.pbi import pbi_add, pbi_delete, \
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO, \
-    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR
+    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR, \
+    PBI_ADD_FLAGS_FORCE
 from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
@@ -1606,7 +1607,7 @@ class notifier:
         if len(parts) > 1:
             ename = parts[len(parts) - 1]
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG,
+        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
             pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
         res = p.run()
 
