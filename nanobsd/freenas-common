@@ -75,7 +75,7 @@ DEBUG="0"
 # (vi and friends ;(..).
 #
 # Set to a lower default for lower footprints with home usecases in FreeNAS.
-NANO_RAM_TMPVARSIZE=32768
+NANO_RAM_TMPVARSIZE=327680
 
 NANO_IMAGES=2
 FlashDevice generic 2g
