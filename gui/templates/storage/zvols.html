@@ -1,17 +1,6 @@
-{% load i18n freeadmin %}
-<form data-dojo-type="dijit.form.Form">
-    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e, '{% url storage_zvol volume_name=volume_name %}');
-    </script>
-<table>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
 <tr><td>{% blocktrans with name=volume_name %}Create ZFS volume on {{ name }}{% endblocktrans %}</td></tr>
-{% admin_form form %}
-</table>
-<button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">{% trans "Add ZFS Volume" %}</button>
-        <button data-dojo-type="dijit.form.Button"type="button">
-            {% trans "Cancel" %}
-            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                cancelDialog(this);
-            </script>
-        </button>
-</form>
+{{ block.super }}
+{% endblock %}
+{% block oklabel %}{% trans "Add ZFS Volume" %}{% endblock %}
