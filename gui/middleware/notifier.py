@@ -1614,7 +1614,7 @@ class notifier:
             src = os.path.join(path, ename)
             dst = os.path.join(path, name)
             if src != dst:
-                os.rename(src, dst)
+                self.__system("/bin/mv '%s' '%s'" % (src, dst))
             self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
             ret = True
         else:
