@@ -1567,14 +1567,30 @@ class notifier:
 
         return ret
 
-    def install_jail_pbi(self, path):
+    def install_jail_pbi(self, path, name):
         ret = False
+
+        prefix = ename = None
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
+        out = p.info(False, -1, 'prefix')
+        for pair in out:
+            (var, val) = pair.split('=')
+            var = var.lower()
+            if var == 'prefix':
+                prefix = val
+
+        parts = path.split('/')
+
+        ename = parts[0]
+        if len(parts) > 1:
+            ename = parts[len(parts) - 1]
 
         p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG,
             pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
         res = p.run()
 
         if res and res[0] == 0:
+            os.rename(os.path.join(path, ename), os.path.join(path, name))
             ret = True
         else:
             raise MiddlewareError(p.error)

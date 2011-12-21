@@ -203,8 +203,7 @@ class JailPBIUploadForm(Form):
         pj.plugins_path = cleaned_data.get('plugins_path')
 
         # Install the jail PBI
-        install_path = os.path.join(pj.jail_path, pj.jail_name)
-        if notifier().install_jail_pbi(install_path):
+        if notifier().install_jail_pbi(pj.jail_path, pj.jail_name):
             try:
                 pj.save()
                 new_alias.save()
