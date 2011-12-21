@@ -1571,7 +1571,7 @@ class notifier:
         ret = False
 
         prefix = ename = pbi = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
         out = p.info(False, -1, 'prefix', 'pbi information for')
         for pair in out:
             (var, val) = pair.split('=')
@@ -1581,7 +1581,7 @@ class notifier:
             elif var == 'pbi information for':
                 pbi = "%s.pbi" % val
 
-        parts = path.split('/')
+        parts = prefix.split('/')
 
         ename = parts[0]
         if len(parts) > 1:
@@ -1592,7 +1592,10 @@ class notifier:
         res = p.run()
 
         if res and res[0] == 0:
-            os.rename(os.path.join(path, ename), os.path.join(path, name))
+            src = os.path.join(path, ename)
+            dst = os.path.join(path, name)
+            if src != dst:
+                os.rename(src, dst)
             self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
             ret = True
         else:
