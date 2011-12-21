@@ -45,7 +45,7 @@ class PBIFileWizard(FileWizard):
         retval = getattr(self, 'retval', None)
         return JsonResponse(
             error=bool(retval),
-            message=retval if retval else __("Jail's plugin successfully installed"),
+            message=retval if retval else __("PBI successfully installed."),
             enclosed=not request.is_ajax(),
             )
 
