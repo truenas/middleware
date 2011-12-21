@@ -3,80 +3,133 @@ Release Notes for FreeNAS 8.0.3-RELEASE
 *** IMPORTANT ***
 
 - The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
-storage device.  The GUI upgrade can be used to upgrade a system from BETA3, 
-BETA4, or RC1 but upgrades from earlier releases can only be done from the CD.
-The other option is to save the config, reinstall the new version, then
-restore the config.
-- FreeBSD can be really touchy with hardware. Please be sure to update your
-BIOS/BMC firmware when upgrading / installing FreeNAS if you run into
-mysterious hanging issues. There have been cases identified where a BIOS
-upgrade has fixed driver hangs, and/or other issues with FreeNAS; one such
-example was with an Intel 82578DC motherboard, as noted in the FreeNAS 8
-forums post titled "8.0.3-RELEASE coming soon..": http://bit.ly/rq78Q3 .
-Again, please only do this if you experience booting / runtime issues, as some
-vendors don't test FreeBSD interoperability as much as other between firmware
-releases.
+  storage device.  The GUI upgrade can be used to upgrade a system from
+  BETA3, BETA4, or RC1 but upgrades from earlier releases can only be
+  done from the CD. The other option is to save the config, reinstall
+  the new version, then restore the config.
+- FreeBSD can be really touchy with hardware. Please be sure to update
+  your BIOS/BMC firmware when upgrading / installing FreeNAS if you run
+  into OS hang issues. There have been cases identified where a BIOS
+  upgrade has fixed driver hangs, and/or other issues with FreeNAS; one
+  such example was with an Intel 82578DC motherboard, as noted in the
+  FreeNAS 8 forum thread titled "8.0.3-RELEASE coming soon..":
+  http://bit.ly/rq78Q3 , post # 70-88. Again, please only do this if you
+  experience booting / runtime issues, as some vendors don't test
+  FreeBSD interoperability as much as others between major firmware
+  releases.
+- Previous builds were branded as i386/amd64 (32-bit and 64-bit
+  respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
+  respectively.
 
 Changes since 8.0.2-RELEASE:
 
-Enhancements:
+Enhancements
+------------------------
 
-1. Reduce FreeNAS footprint:
+Reduce FreeNAS footprint
+========================
 
-a. Use smaller block and frag sizes for /etc and /var .
-b. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
-c. Other build tweaks to remove non-essential features and packages from the image.
+1. Use smaller block and frag sizes for /etc and /var .
+2. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
+3. Other build tweaks to remove non-essential features and packages from
+   the image.
 
-2. NAS middleware:
+Middleware
+========================
 
-a. Hide Etc/GMT* timezones as they're behavior is counterintuitive and conflicts with Windows 7 semantics (see r8707).
-b. Add tunable / sysctl support.
+1. Hide Etc/GMT* timezones as they're behavior is counterintuitive and
+   conflicts with Windows 7 semantics (see r8707).
+2. Add tunable / sysctl support so settings that affect kernel behavior
+   persist across upgrades.
 
-3. AD/CIFS:
+AD/CIFS
+========================
 
-a. Bump samba from 3.5.11 to 3.6.1.
+1. Bump samba from 3.5.11 to 3.6.1.
+2. Address simple failure cases with getting Kerberos tickets (clock
+   skew) and joining AD domains (invalid passwords, bad short domain names,
+   etc) so that users could better rectify improperly configured NAS boxes;
+   this means that if either of these cases fail, the GUI will now inform
+   the user that the 'Active Directory' service is stopped.
+3. Fix cachetool to better prevent potential race condition at boot between
+   winbindd and ix-cache.
 
-4. AFP:
+AFP
+========================
 
-a. Bump netatalk to 2.2.1.
-b. Add knob for controlling the maximum number of configurable connections (see ticket: 847).
-c. Only advertise services via avahi if they're enabled (see ticket: 852).
+1. Bump netatalk to 2.2.1.
+2. Add knob for controlling the maximum number of configurable connections
+   (see ticket: 847).
+3. Only advertise services via avahi if they're enabled (see ticket: 852).
 
-5. Rsync:
+Rsync
+========================
 
-a. NFSv4 ACL support (see: r8375, r8414).
+- NFSv4 ACL support (see: r8375, r8414).
 
-6. Misc:
+Misc
+========================
 
-a. Upgrade ataidle to 2.6.
-b. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
-c. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1 image was broken due to the environment of the build machine where it was produced on.
-d. Increase the /var md size from 74MB to 160MB s.t. samba will be able to service requests copying large sets of files, and the rest of the system will be able to play nicely with samba to a certain degree. More tuning is required for larger samba userbases.
+1. Upgrade ataidle to 2.6.
+2. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
+3. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1
+   image was broken due to the environment of the build machine where it
+   was produced on. This also fixes other items, such as DDNS because of
+   build environment tainting.
+4. Increase the /var md size from 74MB to 160MB s.t. samba will be able
+   to service requests copying large sets of files, and the rest of the
+   system will be able to play nicely with samba to a certain degree.
+   More tuning is required for larger samba userbases.
 
-Bugfixes:
+Bugfixes
+------------------------
 
-1. Rsync task/crontab generation was broken with AD usernames and other unsanitized input.
-2. ZFS volume deletion failed when trying to delete zvol with the name 'zvol'.
-3. SSH pubkey saving was broken unless you manually add a newline to the text box.
-4. Fix email regressions since 8.0.2-RELEASE-p1 (SMART emails now work with more than one recipient, non-SMTP authentication based emails work again).
-5. Fix traceback when trying to edit user if ssh public key was not specified.
-6. Address simple failure cases with getting Kerberos tickets (clock skew) and joining AD domains so that users could better rectify improperly configured NAS boxes; this means that if either of these cases fail, the GUI will now feed back that the 'Active Directory' service is stopped.
-7. Fix the bug in rsync tasks where it would strip the trailing '/' off the end of the destination path.
-8. Fix a validation error when editing users / groups in 8.0.2+ where if one entered in a path that wasn't valid, the GUI would traceback instead of punting the actual validation error.
-9. Fix an issue where if one entered in an invalid path, the GUI would traceback instead of providing feedback stating that the directory provided was invalid.
-10. Fix an issue where if one autosnap process was killed uncleanly, more autosnap processes could back up and eventually deadlock the system.
-11. Fix an issue where the ZFS scrub cronjobs would execute every 30 days instead of a number divisible by 7, so what would generally happen is that ZFS scrubs would generally execute in the middle of the week.
+GUI
+========================
 
-Cosmetic items:
+1. ZFS volume deletion failed when trying to delete zvol with the name
+   'zvol'.
+2. SSH pubkey saving was broken unless you manually add a newline to the
+   text box.
+3. Fix traceback when trying to edit user if ssh public key was not
+   specified.
+4. Fix the bug in rsync tasks where it would strip the trailing '/' off
+   the end of the destination path.
+5. Fix a validation error when editing users / groups in 8.0.2+ where
+   if one entered in a path that wasn't valid, the GUI would traceback
+   instead of punting the actual validation error.
+6. Fix an issue where if one entered in an invalid path, the GUI would
+   traceback instead of providing feedback stating that the directory
+   provided was invalid.
+
+Middleware
+========================
+
+1. Rsync task/crontab generation was broken with AD usernames and other
+   unsanitized input.
+2. Fix email regressions since 8.0.2-RELEASE-p1 (SMART emails now work
+   with more than one recipient, non-SMTP authentication based emails
+   work again).
+4. Fix an issue where if one autosnap process was killed uncleanly, more
+   autosnap processes could back up and eventually deadlock the system.
+5. Fix an issue where the ZFS scrub cronjobs would execute every 30 days
+   instead of a number divisible by 7, so what would generally happen is
+   that ZFS scrubs would generally execute in the middle of the week.
+
+Cosmetic items
+------------------------
 
 1. Change "SSH key" in GUI to "SSH Public Key".
-2. Fix GUI trademarks and branding to be more consistent with proper branding, similar to what TrueNAS does today.
+2. Fix GUI trademarks and branding to be more consistent with proper
+   branding, similar to what TrueNAS does today.
+
+
 
 Major changes since 8.0.1-RELEASE:
 
 - The email subsystem was not working correctly in 8.0.1-RELEASE, which
-  resulted in the system not being able to send mail, as well as disfunction
-  of the alerting system in the GUI.
+  resulted in the system not being able to send mail, as well as of the
+  alerting system in the GUI.
 
 Changes since 8.0.1-RELEASE:
 
@@ -132,31 +185,31 @@ vice-versa, but some files, such as the rrd files used by the statistics
 graphing package are architecture dependent.
 
 Filename:
-FreeNAS-8.0.3-BETA2-amd64.Full_Install.xz
+FreeNAS-8.0.3-RC1-x64.Full_Install.xz
 SHA256 Hash:
-04d4c189a9f85fb26766951915892e939b6ecbb20b054049229715c6b93398ad
+f1b5e259f123052074b25b6c2103b0046ef44946fd4e08809323f93b242efa37
 
 Filename:
-FreeNAS-8.0.3-BETA2-amd64.GUI_Upgrade.xz
+FreeNAS-8.0.3-RC1-x64.GUI_Upgrade.xz
 SHA256 Hash:
-5a4edaf377b0a8421fe2482dce9e5539ee1887e4aa7769d2810eeb81f4033681
+85855eda6262df7f12d915d05b3f9f5168b0b5349b3b8d47bb4da4b6c45f77b6
 
 Filename:
-FreeNAS-8.0.3-BETA2-amd64.iso
+FreeNAS-8.0.3-RC1-x64.iso
 SHA256 Hash:
-d4ecf757c53f4537b6b0e33ef327ef5375510631b69274ba699570b4d0911a4e
+bc060ef3743d9639683aef498e2f87c7f78697e0c150e34057094ba8a4142e55
 
 Filename:
-FreeNAS-8.0.3-BETA2-i386.Full_Install.xz
+FreeNAS-8.0.3-RC1-x86.Full_Install.xz
 SHA256 Hash:
-89e4bb7ac4cff9bf70bf9b7971c2cd1d767ebcb09b30beb6c57b286fd1ffa526
+51b19aa5e9128842d0e45a4da7424068f188146bbc419557a66e11720fbf9eef
 
 Filename:
-FreeNAS-8.0.3-BETA2-i386.GUI_Upgrade.xz
+FreeNAS-8.0.3-RC1-x86.GUI_Upgrade.xz
 SHA256 Hash:
-e795c862edcc1343904de1c04fce916d764a35fe614d9ce6f2d48f3616591375
+1254d89e9dd0cb546aa47513793580cb673f1fedfd1f9bb8d2eb8ea01a4598f9
 
 Filename:
-FreeNAS-8.0.3-BETA2-i386.iso
+FreeNAS-8.0.3-RC1-x86.iso
 SHA256 Hash:
-09e734f2d05b5af80d1700f56c0be2ca213b77c37a2b40e810147c0f02402100
+b767a6c597f900bfa68490cd655f5bd382a78efd14d34bfa11189b3159fc07f9
