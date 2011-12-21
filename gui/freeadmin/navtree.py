@@ -251,7 +251,7 @@ class NavTree(object):
                         obj = navc()
                         obj._gname = obj.gname
 
-                        if navc.append_app:
+                        if obj.append_app:
                             self.register_option(obj, nav, True, evaluate=True)
                         else:
                             self._navs[obj.gname] = obj
