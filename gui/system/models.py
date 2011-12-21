@@ -332,6 +332,7 @@ class CronJob(Model):
 
     class FreeAdmin:
         icon_model = u"cronJobIcon"
+        icon_object = u"cronJobIcon"
         icon_add = u"AddcronJobIcon"
 
     def __unicode__(self):
@@ -522,6 +523,7 @@ class Rsync(Model):
 
     class FreeAdmin:
         icon_model = u"rsyncIcon"
+        icon_object = u"rsyncIcon"
         icon_add = u"AddrsyncTaskIcon"
         icon_view = u"ViewrsyncTaskIcon"
 
@@ -686,6 +688,7 @@ class SMARTTest(Model):
 
     class FreeAdmin:
         icon_model = u"SMARTIcon"
+        icon_object = u"SMARTIcon"
         icon_add = u"AddSMARTTestIcon"
         icon_view = u"ViewSMARTTestIcon"
 
@@ -718,6 +721,7 @@ class Sysctl(Model):
 
     class FreeAdmin:
         icon_model = u"SysctlIcon"
+        icon_object = u"SysctlIcon"
         icon_add = u"AddSysctlIcon"
         icon_view = u"ViewSysctlIcon"
 
@@ -750,5 +754,6 @@ class Loader(Model):
 
     class FreeAdmin:
         icon_model = u"LoaderIcon"
+        icon_object = u"LoaderIcon"
         icon_add = u"AddLoaderIcon"
         icon_view = u"ViewLoaderIcon"
