@@ -538,6 +538,19 @@ remove_var_db_pkg()
 }
 customize_cmd remove_var_db_pkg
 
+fix_fuse_module_location()
+{
+	local bad_modules_dir
+
+	# fuse.ko, et all gets installed into the wrong spot.
+	bad_modules_dir=${NANO_WORLDDIR}/usr/local/modules
+
+	tar -cf - -C "$bad_modules_dir" . | \
+	    tar -xpvf - -C ${NANO_WORLDDIR}/boot/kernel/.
+	rm -Rf "$bad_modules_dir"
+}
+customize_cmd fix_fuse_module_location
+
 freenas_custom()
 {
 	compress_ko()
@@ -549,6 +562,7 @@ freenas_custom()
 
 	# Compress the kernel and preloaded modules
 	compress_ko kernel
+	compress_ko fuse.ko
 	compress_ko geom_mirror.ko
 	compress_ko geom_stripe.ko
 	compress_ko geom_raid3.ko
