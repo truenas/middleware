@@ -110,6 +110,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'freenasUI.freeadmin.middleware.LocaleMiddleware',
+    'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

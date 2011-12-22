@@ -43,7 +43,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.views import JsonResponse
-from middleware.exceptions import MiddlewareError
 from dojango import forms
 import choices
 
@@ -86,16 +85,7 @@ class FileWizard(FormWizard):
         else:
             form = self.get_form(current_step)
         if form.is_valid():
-            try:
-                self.process_step(request, form, current_step)
-            except MiddlewareError, e:
-                kwargs = {
-                    'error': True,
-                    'message': _("Error: %s") % str(e),
-                    }
-                if not request.is_ajax():
-                    kwargs['enclosed'] = True
-                return JsonResponse(**kwargs)
+            self.process_step(request, form, current_step)
             next_step = current_step + 1
 
             if next_step == self.num_steps():

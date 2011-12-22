@@ -40,7 +40,6 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
-from middleware.exceptions import MiddlewareError
 from services.exceptions import ServiceFailed
 
 def home(request):
@@ -139,12 +138,8 @@ def wizard(request):
 
         form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
-            try:
-                form.done(request)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
-            else:
-                return JsonResponse(message=_("Volume successfully added."))
+            form.done(request)
+            return JsonResponse(message=_("Volume successfully added."))
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
@@ -193,10 +188,7 @@ def volautoimport(request):
 
         form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
-            try:
-                form.done(request)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            form.done(request)
             return JsonResponse(message=_("Volume successfully added."))
         else:
 
@@ -537,12 +529,8 @@ def manualsnap(request, path):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
-            try:
-                form.commit(path)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
-            else:
-                return JsonResponse(message=_("Snapshot successfully taken."))
+            form.commit(path)
+            return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
@@ -573,13 +561,10 @@ def geom_disk_replace(request, vname):
     if request.method == "POST":
         form = forms.UFSDiskReplacementForm(request.POST)
         if form.is_valid():
-            try:
-                if form.done(volume):
-                    return JsonResponse(message=_("Disk replacement has been initiated."))
-                else:
-                    return JsonResponse(error=True, message=_("An error occurred."))
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            if form.done(volume):
+                return JsonResponse(message=_("Disk replacement has been initiated."))
+            else:
+                return JsonResponse(error=True, message=_("An error occurred."))
 
     else:
         form = forms.UFSDiskReplacementForm()
@@ -608,12 +593,8 @@ def disk_offline(request, vname, label):
     disk = notifier().label_to_disk(label)
 
     if request.method == "POST":
-        try:
-            notifier().zfs_offline_disk(volume, label)
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
-        else:
-            return JsonResponse(message=_("Disk offline operation has been issued."))
+        notifier().zfs_offline_disk(volume, label)
+        return JsonResponse(message=_("Disk offline operation has been issued."))
 
     return render(request, 'storage/disk_offline.html', {
         'vname': vname,
@@ -627,12 +608,8 @@ def zpool_disk_remove(request, vname, label):
     disk = notifier().label_to_disk(label)
 
     if request.method == "POST":
-        try:
-            notifier().zfs_remove_disk(volume, label)
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
-        else:
-            return JsonResponse(message=_("Disk has been removed."))
+        notifier().zfs_remove_disk(volume, label)
+        return JsonResponse(message=_("Disk has been removed."))
 
     return render(request, 'storage/disk_remove.html', {
         'vname': vname,
@@ -667,15 +644,11 @@ def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     pool = notifier().zpool_parse(volume.vol_name)
     if request.method == "POST":
-        try:
-            if request.POST.get("scrub") == 'IN_PROGRESS':
-                notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            else:
-                notifier().zfs_scrub(str(volume.vol_name))
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
+        if request.POST.get("scrub") == 'IN_PROGRESS':
+            notifier().zfs_scrub(str(volume.vol_name), stop=True)
         else:
-            return JsonResponse(message=_("The scrub process has begun"))
+            notifier().zfs_scrub(str(volume.vol_name))
+        return JsonResponse(message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
@@ -717,13 +690,10 @@ def zpool_disk_replace(request, vname, label):
     if request.method == "POST":
         form = forms.ZFSDiskReplacementForm(request.POST, disk=disk)
         if form.is_valid():
-            try:
-                if form.done(volume, disk, label):
-                    return JsonResponse(message=_("Disk replacement has been initiated."))
-                else:
-                    return JsonResponse(error=True, message=_("An error occurred."))
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            if form.done(volume, disk, label):
+                return JsonResponse(message=_("Disk replacement has been initiated."))
+            else:
+                return JsonResponse(error=True, message=_("An error occurred."))
 
     else:
         form = forms.ZFSDiskReplacementForm(disk=disk)

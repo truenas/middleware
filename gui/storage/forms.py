@@ -45,9 +45,9 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import is_mounted, mount, umount
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
-from middleware.exceptions import MiddlewareError
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 

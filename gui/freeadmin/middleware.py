@@ -37,6 +37,8 @@ from django.contrib.auth import login, get_backends
 from django.utils.cache import patch_vary_headers
 from django.utils import translation
 
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.exceptions import MiddlewareError
 from system.models import Settings
 
 COMMENT_SYNTAX = ((re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
@@ -69,7 +71,7 @@ class LocaleMiddleware(object):
 
     def process_request(self, request):
         if request.method == 'GET' and 'lang' in request.GET:
-                language = request.GET['lang']
+            language = request.GET['lang']
         else:
             #FIXME we could avoid this db hit using a cache,
             # invalidated when settings are edited
@@ -86,6 +88,19 @@ class LocaleMiddleware(object):
         translation.deactivate()
         return response
 
+class CatchError(object):
+
+    def process_response(self, request, response):
+        if sys.exc_type and isinstance(sys.exc_type, MiddlewareError):
+            excp = sys.exc_info()[1]
+            kwargs = {
+                'error': True,
+                'message': _("Error: %s") % unicode(excp.value),
+                }
+            if not request.is_ajax():
+                kwargs['enclosed'] = True
+            return JsonResponse(**kwargs)
+        return response
 
 class ProfileMiddleware(object):
     """

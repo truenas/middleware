@@ -76,7 +76,7 @@ from freenasUI.common.pbi import pbi_add, pbi_delete, \
     PBI_ADD_FLAGS_FORCE
 from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
-from middleware.exceptions import MiddlewareError
+from freenasUI.middleware.exceptions import MiddlewareError
 
 class notifier:
     from os import system as ___system
