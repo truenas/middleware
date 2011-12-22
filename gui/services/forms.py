@@ -42,6 +42,7 @@ from freeadmin.forms import DirectoryBrowser
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.forms import UnixPermissionField
 from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
@@ -130,19 +131,31 @@ class PluginsForm(ModelForm):
     class Meta:
         model = models.Plugins
 
+    def clean_jail_ip(self):
+        jip = self.cleaned_data.get("jail_ip")
+        if jip == self.instance.jail_ip:
+            return jip
+        if Alias.objects.filter(alias_v4address=jip).exists() or \
+            Interfaces.objects.filter(int_ipv4address=jip).exists():
+            raise forms.ValidationError(_("This IP already exists."))
+        return jip
+
     def save(self):
-        from freenasUI.network import models
-
         jiface = self.cleaned_data['jail_interface']
-        iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
+        iface = Interfaces.objects.filter(int_interface=jiface)[0]
 
-        new_alias = models.Alias()
-        new_alias.alias_interface = iface
-        new_alias.alias_v4address = self.cleaned_data['jail_ip']
-        new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+        qs = Alias.objects.filter(alias_v4address=self.cleaned_data.get("jail_ip"))
+        if not qs.exists():
+            new_alias = Alias()
+            new_alias.alias_interface = iface
+            new_alias.alias_v4address = self.cleaned_data['jail_ip']
+            new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+        else:
+            new_alias = None
 
         try:
-            new_alias.save()
+            if new_alias:
+                new_alias.save()
             notifier().stop("netif")
             notifier().start("network")
 
