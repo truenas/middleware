@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-12-06 01:54+0200\n"
-"Last-Translator: cohewa <saugbaer@hotmail.com>\n"
+"PO-Revision-Date: 2011-12-21 17:50+0200\n"
+"Last-Translator: troebbe <robert.niedermair@me.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -640,9 +640,8 @@ msgid "New password confirmation"
 msgstr "Passwort bestätigen"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Passwort ändern"
+msgstr "Bitte ändern Sie auch das Root-Passwort"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -807,7 +806,7 @@ msgstr ""
 #: freeadmin/navtree.py:316
 #, python-format
 msgid "Add %s"
-msgstr "%s hinzufügen"
+msgstr "Füge %s hinzu"
 
 #: freeadmin/navtree.py:328
 #, python-format

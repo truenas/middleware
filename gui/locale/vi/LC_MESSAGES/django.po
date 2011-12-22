@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:05-0700\n"
-"PO-Revision-Date: 2011-07-05 21:02+0200\n"
-"Last-Translator: d60pdp <nttho@yahoo.com>\n"
+"PO-Revision-Date: 2011-12-22 08:54+0200\n"
+"Last-Translator: hieunghiem <hi3unb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -521,7 +521,7 @@ msgstr "Mật khẩu"
 
 #: account/forms.py:223 account/forms.py:368 system/forms.py:224
 msgid "Password confirmation"
-msgstr "Gõ lại mật khẩu"
+msgstr "Xác nhận mật khẩu"
 
 #: account/forms.py:224 account/forms.py:369 system/forms.py:225
 msgid "Enter the same password as above, for verification."
@@ -565,18 +565,16 @@ msgid "The two password fields didn't match."
 msgstr "Hai trường mật khẩu không giống nhau."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
+msgstr "Thư mục Home phải bắt đầu bằng /mnt/ hoặc là /nonexistent"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
+msgstr "Không thể ghi vào thư mục Home, vui lòng để trống."
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Mật khẩu đã bị vô hiệu hóa, vui lòng để trống"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -584,9 +582,8 @@ msgid "This field is required."
 msgstr "Mục này là bắt buộc"
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Mật khẩu mới"
+msgstr "Vô hiệu hóa mật khẩu"
 
 #: account/forms.py:466
 #, fuzzy
@@ -595,7 +592,7 @@ msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Cho phép lặp lại GIDs"
 
 #: account/forms.py:551
 #, fuzzy
@@ -628,9 +625,8 @@ msgid "New password confirmation"
 msgstr "Xác nhận mật khẩu mới"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Thay đổi mật khẩu"
+msgstr "Vui lòng thay đổi mật khẩu root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -827,7 +823,7 @@ msgstr "Khởi động lại dịch vụ đã không thành công."
 #: freeadmin/views.py:606 freeadmin/views.py:610
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s đã xóa thành công."
+msgstr "Đã xóa thành công %s."
 
 #: middleware/zfs.py:513 storage/models.py:360
 msgid "Error getting total space"
@@ -920,7 +916,7 @@ msgstr ""
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Cạc mạng trong LAGG "
 
 #: network/forms.py:276
 #, python-format
@@ -958,7 +954,7 @@ msgstr "Hostname"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "Domain"
+msgstr "Tên miền"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"

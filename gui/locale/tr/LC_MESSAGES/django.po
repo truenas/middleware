@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-17 16:57+0200\n"
+"PO-Revision-Date: 2011-12-22 08:28+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -121,7 +121,7 @@ msgstr "Seviye 64 - Bekleme konumunda orta seviye güç tüketimi"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Seviye 127 - Bekleme konumunda orta seviyede güç tüketimi"
+msgstr "Seviye 127 - Bekleme konumunda orta seviye güç tüketimi"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
@@ -311,7 +311,7 @@ msgstr "okuma-yazma"
 
 #: choices.py:217
 msgid "read-only"
-msgstr "salt okunur"
+msgstr "salt-okunur"
 
 #: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
 #: services/forms.py:844 templates/storage/wizard.html:131
@@ -469,7 +469,7 @@ msgstr "Kendi kendine kısa test"
 
 #: choices.py:497
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Yalnızca ATA modda iken iletim Testi"
+msgstr "Yalnızca ATA modda iken iletim testi"
 
 #: choices.py:498
 msgid "Offline Immediate Test (ATA only)"
@@ -569,7 +569,7 @@ msgstr "İki parola alanı eşleşmedi."
 
 #: account/forms.py:286
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Ev dizini /mnt/ veya /varolmayan ile başlamalı"
+msgstr "Ev dizini /mnt/ veya /nonexistent ile başlamalı"
 
 #: account/forms.py:307 account/forms.py:486
 msgid "Home directory is not writable, leave this blank"
@@ -855,7 +855,7 @@ msgstr "IPv4 adresi de belirtilmek zorunda"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr "IPv4 ağ maskesinide değiştirln"
+msgstr "IPv4 ağ maskesinide değiştirin"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
@@ -924,7 +924,7 @@ msgstr "LAGG içindeki Fiziksel NIC'lar"
 #: network/forms.py:276
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Bu ağ '%leri' CIDR beklentisi dahilinde geçerli değil."
+msgstr "Bu ağ '%s' CIDR beklentisi dahilinde geçerli değil."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
@@ -1157,7 +1157,7 @@ msgstr "\"Ana dizin gözatma etkin\" ise bu alan doldurulmalıdır."
 
 #: services/forms.py:86
 msgid "This field is required for \"Home directories\"."
-msgstr "\"Ana dizin\" etkin ise gerekli alan."
+msgstr "\"Ana dizin\" etkin ise bu alan doldurulmalıdır."
 
 #: services/forms.py:94
 msgid "The CIFS service failed to reload."
@@ -1182,16 +1182,16 @@ msgstr "Dizin iznleri"
 #: services/forms.py:145
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
-"Bu değer 1024 ile 65535 arasında olmalıdır. Geçerli değer için 0 giriniz."
+"Bu değer 1024 ile 65535 arasında olmalıdır. Varsayılan değer için 0 giriniz."
 
 #: services/forms.py:151
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
-"Bu değer 1024 ile 65535 arasında olmalıdır. Geçerli değer için 0 giriniz."
+"Bu değer 1024 ile 65535 arasında olmalıdır. Varsayılan değer için 0 giriniz."
 
 #: services/forms.py:170
 msgid "This field is required for anonymous login"
-msgstr "Bu alan Anonim giriş için gereklidir."
+msgstr "Bu alan anonim giriş için gereklidir."
 
 #: services/forms.py:177
 msgid "The ftp service failed to start."
@@ -1211,7 +1211,7 @@ msgstr "Rsync hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:218
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Bu ad, slash ve köşeli parantez içeremez."
+msgstr "Bu ad, taksim ve köşeli parantez içeremez."
 
 #: services/forms.py:237
 msgid "Confirm Password"
@@ -1271,7 +1271,7 @@ msgstr "Yönetci parolasını onayla"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
-msgstr "ActiveDirectory hizmeti yeniden yüklenirken hata oluştu."
+msgstr "Aktif Dizin hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:376
 msgid "The ldap service failed to reload."
@@ -1311,7 +1311,7 @@ msgstr "Parolalar birbirinin aynısı değil"
 
 #: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
-msgstr "ş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
+msgstr "Eş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
 
 #: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
@@ -1370,7 +1370,7 @@ msgstr ""
 
 #: services/forms.py:620
 msgid "You need to specify a filepath, not a directory."
-msgstr "Dosya yolunu girmelisiniz (Klasör adı değil)"
+msgstr "Bir dosya yolu değil, bir dizin belirtmeniz gerekir."
 
 #: services/forms.py:624
 msgid "You need to specify a file inside your volume/dataset."
@@ -1439,7 +1439,7 @@ msgstr "Hizmet"
 
 #: services/models.py:44
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "Hizmet Adı, kurulum esnasında otomatik olarak yaratılmalıdır"
+msgstr "Hizmet Adı, kurulum esnasında otomatik olarak oluşturulmalıdır"
 
 #: services/models.py:47
 msgid "Enable Service"
@@ -1474,7 +1474,7 @@ msgid ""
 "15 characters)."
 msgstr ""
 "İstemciler tarafından sorgulama sırasında görünecek çalışma grubu sunucusu "
-"(maksimum 15 karakter)."
+"(en fazla15 karakter)."
 
 #: services/models.py:79
 msgid "Server description. This can usually be left blank."
@@ -1673,7 +1673,7 @@ msgstr "En fazla bağlantı sayısı"
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
-"FP aracılığı ile izin verilen maksimum bağlantı sayısı.Varsayılan sınırı "
+"AFP aracılığı ile izin verilen en fazla bağlantı sayısı.Varsayılan sınırı "
 "50'dir."
 
 #: services/models.py:211 services/models.py:212
@@ -1891,7 +1891,7 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Boyut kapasitesi, 0 otomatik anlamına gelir , bayt olarak bir sayı ve son ek "
+"Boyut kapasitesi, 0 otomatik anlamına gelir, bayt olarak bir sayı ve son ek "
 "olarakta KB, MB veya TB kullanılabilir."
 
 #: services/models.py:402 services/models.py:456 services/models.py:503
@@ -2037,7 +2037,7 @@ msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
-"Bu yöntem hedef tarafından kabul edilebilir. Otomatik hiçbir yetkilendirme "
+"Bu yöntem hedef tarafından kabul edilebilir. Otomatik, hiçbir yetkilendirme "
 "yapma demektir."
 
 #: services/models.py:617
@@ -2116,8 +2116,7 @@ msgstr "Zorunlu güncelleme süresi"
 
 #: services/models.py:720 services/models.py:754
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"Bu parametreler inadyn.conf dosyasındaki küresel ayarlara eeklenecektir."
+msgstr "Bu parametreler inadyn.conf dosyasındaki genel ayarlara eklenecektir."
 
 #: services/models.py:724 services/models.py:725
 #: templates/services/index.html:40
@@ -2199,7 +2198,7 @@ msgstr "Kapatma modu"
 
 #: services/models.py:802
 msgid "Shutdown timer"
-msgstr "Kapanma zamanlayıcısı"
+msgstr "Kapatma zamanlayıcısı"
 
 #: services/models.py:803
 msgid ""
@@ -2232,7 +2231,7 @@ msgstr "E-posta"
 #: services/models.py:822
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
-"Hedef e-posta adresi. Herbir e-posta adreslerini noktalı virgül ile ayırın."
+"Hedef e-posta adresi. Her bir e-posta adresini noktalı virgül ile ayırın."
 
 #: services/models.py:826
 msgid "Email Subject"
@@ -2976,7 +2975,7 @@ msgstr "Tüm harita kullanıcısı tüm harita grubunu gerektirir"
 
 #: sharing/forms.py:139 sharing/forms.py:142
 msgid "Maproot user/group disqualifies Mapall"
-msgstr "Maproot kullanıcı/grubun Mapall yetkisini alır"
+msgstr "Yönetici haritası kullanıcı/grubun Tüm yönetici haritası yetkisini alır"
 
 #: sharing/models.py:40 sharing/models.py:103 storage/models.py:44
 #: storage/models.py:161 templates/network/interface.html:6
@@ -3918,7 +3917,7 @@ msgstr "Bilinmeyen"
 
 #: storage/views.py:325
 msgid "Dataset successfully added."
-msgstr "Veri kümesi başarıyla silindi."
+msgstr "Veri kümesi başarıyla eklendi."
 
 #: storage/views.py:359
 msgid "Dataset successfully edited."
