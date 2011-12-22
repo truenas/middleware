@@ -375,6 +375,26 @@
     };
     /* end Menu */
 
+    getVolumes = function() {
+        volume_list = null;
+
+        dojo.xhrGet({
+            url: '/storage/get_volumes/',
+            sync: true,
+            failOk: true,
+            handleAs: "json",
+            handle: function(data) {
+                volume_list = data.message;
+            },
+        });
+
+        return volume_list;
+    }
+
+    setVolume = function() {
+        alert("setVolume");
+    }  
+
     restartHttpd = function(newurl) {
 
         dojo.xhrGet({

@@ -59,6 +59,17 @@ def volumes(request):
         'mp_list': mp_list,
         })
 
+def get_volumes(request):
+    volumes = []
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    for m in mp_list:
+        volumes.append(m.mp_path)
+        datasets = m.mp_volume.get_datasets()
+        if datasets: 
+            for name, dataset in datasets.items():
+                volumes.append(dataset.mountpoint) 
+    return JsonResponse(message=volumes)
+
 def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
     return render(request, 'storage/replications.html', {
