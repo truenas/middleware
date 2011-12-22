@@ -34,16 +34,16 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
 from django.core.validators import email_re
 
-import choices
-from services import models
-from services.exceptions import ServiceFailed
-from storage.models import Volume, MountPoint, Disk
-from storage.forms import UnixPermissionField
+from dojango import forms
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
-from freenasUI.middleware.notifier import notifier
-from dojango import forms
 from freeadmin.forms import DirectoryBrowser
+from freenasUI.middleware.notifier import notifier
+from freenasUI.services import models
+from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.storage.models import Volume, MountPoint, Disk
+from freenasUI.storage.forms import UnixPermissionField
 from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
 """ Services """
@@ -114,6 +114,18 @@ class PluginsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(PluginsForm, self).__init__(*args, **kwargs)
         self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
+
+    def clean_plugins_path(self):
+        ppath = self.cleaned_data.get("plugins_path")
+        jpath = self.cleaned_data.get("jail_path")
+        jname = self.cleaned_data.get("jail_name")
+        if not ppath:
+            return None
+        ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
+        jpathname = os.path.join(jpath, jname)
+        if ppath.startswith(jpath) or ppath.startswith(jpathname):
+            raise forms.ValidationError(_("The plugins path cannot be the same or reside within jail path."))
+        return ppath
 
     class Meta:
         model = models.Plugins

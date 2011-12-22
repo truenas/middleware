@@ -81,7 +81,7 @@ class PBITemporaryLocationForm(Form):
 
 
 class PBIUploadForm(Form):
-    pbifile = FileField(label=_("PBI fileto be installed"), required=True)
+    pbifile = FileField(label=_("PBI file to be installed"), required=True)
     sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -123,7 +123,7 @@ class JailPBIUploadForm(Form):
             choices=(),
             widget=forms.Select(attrs={ 'class': 'required' }),
             )
-    jail_ip = forms.IPAddressField(   
+    jail_ip = forms.IPAddressField(
             label=_("Jail IP address"),
             required=True
             )
@@ -152,7 +152,7 @@ class JailPBIUploadForm(Form):
         path_list = []
         mp_list = storage.models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
         for m in mp_list:
-            path_list.append(m.mp_path) 
+            path_list.append(m.mp_path)
 
             datasets = m.mp_volume.get_datasets()
             if datasets:
@@ -184,12 +184,12 @@ class JailPBIUploadForm(Form):
     def done(self):
         from freenasUI.network import models
 
-        cleaned_data = self.cleaned_data 
+        cleaned_data = self.cleaned_data
 
         # Find interface to create alias on
         jiface = self.cleaned_data['jail_interface']
         iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
-            
+
         # Create the alias
         new_alias = network.models.Alias()
         new_alias.alias_interface = iface
@@ -212,7 +212,7 @@ class JailPBIUploadForm(Form):
                 new_alias.save()
                 notifier().stop("netif")
                 notifier().start("network")
-        
+
             except Exception, err:
                 msg = _("Unable to configure alias.")
                 self._errors["jail_ip"] = self.error_class([msg])
