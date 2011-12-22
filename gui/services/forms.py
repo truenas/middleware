@@ -147,15 +147,14 @@ class PluginsForm(ModelForm):
         qs = Alias.objects.filter(alias_v4address=self.cleaned_data.get("jail_ip"))
         if not qs.exists():
             new_alias = Alias()
-            new_alias.alias_interface = iface
-            new_alias.alias_v4address = self.cleaned_data['jail_ip']
-            new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
         else:
-            new_alias = None
+            new_alias = qs[0]
+        new_alias.alias_interface = iface
+        new_alias.alias_v4address = self.cleaned_data['jail_ip']
+        new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
 
         try:
-            if new_alias:
-                new_alias.save()
+            new_alias.save()
             notifier().stop("netif")
             notifier().start("network")
 
