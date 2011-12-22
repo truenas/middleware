@@ -988,7 +988,10 @@
             dojo.style("grpopt", "display", "");
         } else {
             dojo.style("grpopt", "display", "none");
-            dojo.query("input[name=group_type]:checked").forEach(function(tag) { dijit.getEnclosingWidget(tag).set('checked', false);  });
+            dojo.query("input[name=group_type]:checked").forEach(function(tag) {
+                var dtag = dijit.getEnclosingWidget(tag);
+                if(dtag) dtag.set('checked', false);
+            });
         }
 
         if(zfs) {
