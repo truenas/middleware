@@ -99,7 +99,7 @@ test_httpd_config()
 		proto="https"
 	fi
 	
-	local host=$(get_host_ip )
+	local host=$(get_host_ip "$addr")
 	if [ -n "${port}" ]
 	then
 		host="${host}:${port}"
