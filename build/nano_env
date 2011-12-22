@@ -99,7 +99,7 @@ NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 #NANO_LOCAL_DIRS=
 
 # Modules to build with the kernel.
-NANO_MODULES="cxgb ext2fs geom ipmi ntfs pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+NANO_MODULES="cxgb ext2fs geom ipmi pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 
 # Feature sets to enable as part of the build.
 #SW_FEATURES="DEBUG MULTIMEDIA REPORTING"
