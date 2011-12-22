@@ -33,9 +33,9 @@
 #
 
 # Override the defaults in nanobsd.sh from a common script.
-. "$FREENAS_ROOT/build/nano_env"
+. "$CYB0RG_ROOT/build/nano_env"
 # Helpful functions.
-. "$FREENAS_ROOT/build/functions.sh"
+. "$CYB0RG_ROOT/build/functions.sh"
 
 # DEBUG=1, MULTIMEDIA=1, etc.
 for feature in $SW_FEATURES; do
@@ -352,7 +352,7 @@ customize_cmd hack_nsswitch_conf
 add_gui()
 {
     local gui dst dstCR
-    gui=${FREENAS_ROOT}/gui
+    gui=${CYB0RG_ROOT}/gui
     dstCR=/usr/local/www/freenasUI
     dst=${NANO_WORLDDIR}${dstCR}
     if [ -d ${gui} ]; then
@@ -661,7 +661,7 @@ last_orders() {
 
 		(
 
-		sh "$FREENAS_ROOT/build/create_iso.sh"
+		sh "$CYB0RG_ROOT/build/create_iso.sh"
 
 		) > "${cd_image_log}" 2>&1
 

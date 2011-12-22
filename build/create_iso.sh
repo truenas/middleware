@@ -6,16 +6,16 @@ set -e
 
 main()
 {
-	export FREENAS_ROOT=$(realpath "$(dirname "$0")/..")
-	. "$FREENAS_ROOT/build/nano_env"
-	. "$FREENAS_ROOT/build/functions.sh"
+	export CYB0RG_ROOT=$(realpath "$(dirname "$0")/..")
+	. "$CYB0RG_ROOT/build/nano_env"
+	. "$CYB0RG_ROOT/build/functions.sh"
 
 	requires_root
 
 	# Keep in sync with freenas-common and nano_env.
 	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
-	ETC_FILES="$FREENAS_ROOT/build/files"
+	ETC_FILES="$CYB0RG_ROOT/build/files"
 
 	# Various mount points needed to build the CD, adjust to taste
 	STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
@@ -39,7 +39,7 @@ main()
 
 	cleanup
 
-	cd "$FREENAS_ROOT"
+	cd "$CYB0RG_ROOT"
 
 	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 

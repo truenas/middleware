@@ -21,7 +21,7 @@ fi
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 # Should we update src + ports?
-if [ -f $FREENAS_ROOT/FreeBSD/.pulled ]; then
+if [ -f $CYB0RG_ROOT/FreeBSD/.pulled ]; then
 	UPDATE=false
 else
 	UPDATE=true
@@ -89,13 +89,13 @@ if $UPDATE; then
 	fi
 	echo "Checking out tree from ${FREEBSD_CVSUP_HOST}..."
 
-	mkdir -p $FREENAS_ROOT/FreeBSD
+	mkdir -p $CYB0RG_ROOT/FreeBSD
 
-	SUPFILE=$FREENAS_ROOT/FreeBSD/supfile
+	SUPFILE=$CYB0RG_ROOT/FreeBSD/supfile
 	cat <<EOF > $SUPFILE
 *default host=${FREEBSD_CVSUP_HOST}
-*default base=$FREENAS_ROOT/FreeBSD/sup
-*default prefix=$FREENAS_ROOT/FreeBSD
+*default base=$CYB0RG_ROOT/FreeBSD/sup
+*default prefix=$CYB0RG_ROOT/FreeBSD
 *default release=cvs
 *default delete use-rel-suffix
 *default compress
@@ -111,32 +111,32 @@ EOF
 	# Do this here before running csup because it will pave over all files
 	# that were previously added via a patch if it turns out that a change
 	# was rolled into src or ports.
-	for file in $(find $FREENAS_ROOT/FreeBSD -name '*.orig' -size 0); do
+	for file in $(find $CYB0RG_ROOT/FreeBSD -name '*.orig' -size 0); do
 		rm -f "$(echo $file | sed -e 's/.orig$//')"
 	done
 	csup -L 1 $SUPFILE
 	# Force a repatch because csup pulls pristine sources.
-	: > $FREENAS_ROOT/FreeBSD/src-patches
-	: > $FREENAS_ROOT/FreeBSD/ports-patches
-	: > $FREENAS_ROOT/FreeBSD/.pulled
+	: > $CYB0RG_ROOT/FreeBSD/src-patches
+	: > $CYB0RG_ROOT/FreeBSD/ports-patches
+	: > $CYB0RG_ROOT/FreeBSD/.pulled
 fi
 
-for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
-	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
+for patch in $(cd $CYB0RG_ROOT/patches && ls freebsd-*.patch); do
+	if ! grep -q $patch $CYB0RG_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/src &&
-		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
-		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
+		 patch -C -p0 < $CYB0RG_ROOT/patches/$patch &&
+		 patch -E -p0 -s < $CYB0RG_ROOT/patches/$patch)
+		echo $patch >> $CYB0RG_ROOT/FreeBSD/src-patches
 	fi
 done
-for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
-	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
+for patch in $(cd $CYB0RG_ROOT/patches && ls ports-*.patch); do
+	if ! grep -q $patch $CYB0RG_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/ports &&
-		 patch -C -p0 < $FREENAS_ROOT/patches/$patch &&
-		 patch -E -p0 -s < $FREENAS_ROOT/patches/$patch)
-		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
+		 patch -C -p0 < $CYB0RG_ROOT/patches/$patch &&
+		 patch -E -p0 -s < $CYB0RG_ROOT/patches/$patch)
+		echo $patch >> $CYB0RG_ROOT/FreeBSD/ports-patches
 	fi
 done
 
@@ -157,7 +157,7 @@ if [ $FORCE_BUILD -eq 0 ]; then
 elif [ $FORCE_BUILD -eq 1 ]; then
 	extra_args="$extra_args -n"
 fi
-cmd="$FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
+cmd="$CYB0RG_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
 echo $cmd
 if ! $BUILD; then
 	exit 0

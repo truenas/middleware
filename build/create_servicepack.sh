@@ -39,9 +39,9 @@ cleanup() {
 	rm -Rf $PREFIX
 }
 
-FREENAS_ROOT="$(realpath "$(dirname "$0")/..")"
-. "$FREENAS_ROOT/build/nano_env"
-. "$FREENAS_ROOT/build/functions.sh"
+CYB0RG_ROOT="$(realpath "$(dirname "$0")/..")"
+. "$CYB0RG_ROOT/build/nano_env"
+. "$CYB0RG_ROOT/build/functions.sh"
 
 requires_root
 
