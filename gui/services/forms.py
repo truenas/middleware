@@ -123,7 +123,7 @@ class PluginsForm(ModelForm):
             return None
         ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
         jpathname = os.path.join(jpath, jname)
-        if ppath.startswith(jpath) or ppath.startswith(jpathname):
+        if ppath == jpath or ppath.startswith(jpathname):
             raise forms.ValidationError(_("The plugins path cannot be the same or reside within jail path."))
         return ppath
 
