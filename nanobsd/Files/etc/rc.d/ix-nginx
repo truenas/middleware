@@ -131,14 +131,22 @@ generate_nginx_conf()
 
 get_host_ip()
 {
-	ifconfig -a inet| grep broadcast|cut -f2 -d' '|head -n1
+	local addr="${1}"
+
+	if [ -n "${addr}" -a "${addr}" != "0.0.0.0" ]
+	then
+		ifconfig -a inet| grep broadcast|cut -f2 -d' '|grep "${addr}"
+	else
+		ifconfig -a inet| grep broadcast|cut -f2 -d' '|head -n1
+	fi
 }
 
 
 test_nginx_config()
 {
 	local ssl_enable="${1}"
-	local port="${2}"
+	local addr="${2}"
+	local port="${3}"
 	local proto="http"
 	local ntries=5
 	local res=1
@@ -149,7 +157,7 @@ test_nginx_config()
 		proto="https"
 	fi
 	
-	local host=$(get_host_ip)
+	local host=$(get_host_ip "${addr}")
 	if [ -n "${port}" ]
 	then
 		host="${host}:${port}"
@@ -288,7 +296,7 @@ do_configure_nginx()
 		fi
 
 		generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
-		if ! test_nginx_config "${ssl_enable}" "${stg_guiport}"
+		if ! test_nginx_config "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
 		then
 
 			if [ "${ssl_enable}" = "1" ]
