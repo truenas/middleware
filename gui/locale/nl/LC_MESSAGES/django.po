@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:04-0700\n"
-"PO-Revision-Date: 2011-08-02 16:39+0200\n"
+"PO-Revision-Date: 2011-12-23 00:21+0200\n"
 "Last-Translator: Christian <c.helmus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -501,9 +501,8 @@ msgid "Username"
 msgstr "Gebruikersnaam"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Vereist. 30 tekens of minder. Enkel letters, cijfers en @/./+/-/_."
+msgstr "Vereist. 16 tekens of minder. Alleen letters, cijfers en  ./-/_."
 
 #: account/forms.py:200
 #, fuzzy

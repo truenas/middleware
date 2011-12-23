@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:03-0700\n"
-"PO-Revision-Date: 2011-10-22 19:43+0200\n"
+"PO-Revision-Date: 2011-12-22 16:20+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -479,9 +479,9 @@ msgid "Your name contains invalid characters (%s)."
 msgstr "שמך מכיל תווים לא חוקיים (%s)."
 
 #: account/forms.py:71
-#, fuzzy, python-format
+#, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "שמך מכיל תווים לא חוקיים (%s)."
+msgstr "שמך המלא מכיל תווים לא חוקיים (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -625,7 +625,7 @@ msgstr "הסיסמה הישנה שלך הוקשה לא נכון. בבקשה הק
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "האם ברצונך למחוק את כל המשתמשים בקבוצה הראשית הזאת?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
