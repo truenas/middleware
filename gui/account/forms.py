@@ -32,10 +32,10 @@ from django.contrib.auth.models import User as django_User
 from django.utils.safestring import mark_safe
 from django.http import QueryDict
 
+from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.account import models
 from freenasUI.middleware.notifier import notifier
-from dojango import forms
 
 class bsdUserGroupMixin:
     def _populate_shell_choices(self):
@@ -213,6 +213,8 @@ class UserChangeForm(ModelForm):
         return obj
 
 class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
+    #TODO: move it away
+    from freenasUI.storage.forms import UnixPermissionField
     """
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
@@ -226,6 +228,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
     bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_mode = UnixPermissionField(label=_('Mode'), initial='755')
+    advanced_fields = ['bsdusr_mode']
 
     class Meta:
         model = models.bsdUsers

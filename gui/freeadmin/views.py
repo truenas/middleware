@@ -384,6 +384,8 @@ def generic_model_add(request, app, model, mf=None):
         else:
             mf = navtree._modelforms[m][mf]
 
+    if m._admin.advanced_fields:
+        mf.advanced_fields.extend(m._admin.advanced_fields)
 
     instance = m()
     formsets = {}
@@ -599,6 +601,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 mf = navtree._modelforms[m].values()[-1]
         else:
             mf = navtree._modelforms[m][mf]
+
+    if m._admin.advanced_fields:
+        mf.advanced_fields.extend(m._admin.advanced_fields)
 
     formsets = {}
     if request.method == "POST":

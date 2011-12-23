@@ -30,16 +30,21 @@ from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
 
 from dojango import forms
+from freenasUI.system.models import Advanced
 
 register = template.Library()
 
 class FormRender(template.Node):
-    def __init__(self, arg, adv_mode):
+    def __init__(self, arg):
         self.arg = arg
-        self.adv_mode = adv_mode
     def render(self, context):
         form = context[self.arg]
-        adv_mode = context.get(self.adv_mode)
+
+        #TODO: cache
+        #if adv_mode is None:
+        adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
+        #request.session['adv_mode'] = adv_mode
+        #adv_mode = form.isAdvanced()
 
         if hasattr(form, "_meta") and hasattr(form._meta.model, '_admin'):
             model = form._meta.model
@@ -67,14 +72,12 @@ class FormRender(template.Node):
 
         for field in new_fields:
             _hide, is_adv = '', False
-            if model:
-                is_adv = field in model._admin.advanced_fields
-                _hide = ' style="display: none;"' if not adv_mode and is_adv else False
-                if is_adv:
-                    form.fields.get(field).widget.attrs['class'] = 'advancedField'
+            is_adv = field in form.advanced_fields
+            _hide = ' style="display: none;"' if not adv_mode and is_adv else False
+            is_adv = ' class="advancedField"' if is_adv else ''
             if composed.has_key(field):
                 label, fields = composed.get(field)
-                html = u"""<tr%s><th><label>%s</label></th><td>""" % (_hide, label)
+                html = u"""<tr><th><label%s>%s</label></th><td>""" % (_hide, label)
                 for field in fields:
                     bf = BoundField(form, form.fields.get(field), field)
                     bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
@@ -92,7 +95,7 @@ class FormRender(template.Node):
                         help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><span id="%shelp">?</span>""" % (bf.auto_id, bf.help_text, bf.auto_id)
                     else:
                         help_text = ""
-                    html = u"""<tr%s><th>%s</th><td>%s%s %s</td></tr>""" % (_hide, bf.label_tag(), bf_errors, bf, help_text)
+                    html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (is_adv, _hide, bf.label_tag(), bf_errors, bf, help_text)
                     output.append(html)
 
         if hidden_fields:
@@ -104,17 +107,11 @@ class FormRender(template.Node):
 
 @register.tag(name="admin_form")
 def do_admin_form(parser, token):
-    # This version uses a regular expression to parse tag contents.
-    adv_mode = True
     try:
-        try:
-            # Splitting by None == splitting by spaces.
-            tag_name, arg, adv_mode = token.contents.split(None, 2)
-        except ValueError:
-            tag_name, arg = token.contents.split(None, 1)
+        tag_name, arg = token.contents.split(None, 1)
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
 
     #if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
     #    raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return FormRender(arg, adv_mode)
+    return FormRender(arg)

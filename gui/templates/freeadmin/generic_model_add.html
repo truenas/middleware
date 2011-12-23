@@ -11,7 +11,7 @@
 </script>
 {% endblock %}
 <table>
-    {% admin_form form advanced_mode %}
+    {% admin_form form %}
     {% block formset %}
     <tr><td colspan="2">
     {% for name, formset in formsets.items %}
@@ -49,7 +49,7 @@
                     cancelDialog(this);
                 </script>
             </button>
-            {% with modeladmin.advanced_fields as advfields %}
+            {% with form.advanced_fields as advfields %}
             {% include "freeadmin/advanced_btn.html" %}
             {% endwith %}
         </td></tr>

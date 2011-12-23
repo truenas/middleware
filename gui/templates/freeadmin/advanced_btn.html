@@ -1,10 +1,12 @@
             {% if advfields %}
-            <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: '{% if advanced_mode %}advanced{% else %}basic{% endif %}'">
+            <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: '{% if form.isAdvanced %}advanced{% else %}basic{% endif %}'">
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                     var form = getForm(this);
                     var mode = this;
                     dojo.forEach(dojo.query(".advancedField", form.domNode), function(node, idx) {
-                        var tr = dojo.query(node).parents("tr")[0];
+                        //var tr = dojo.query(node).parents("tr")[0];
+                        var tr = node;
+                        //console.log(tr);
                         if(mode.mode == 'basic') {
                             dojo.style(tr, "display", "table-row");
                         } else {

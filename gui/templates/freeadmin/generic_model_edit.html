@@ -13,7 +13,7 @@
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
 <table>
     {% block form %}
-{% admin_form form advanced_mode %}
+    {% admin_form form %}
     {% endblock %}
     {% block formset %}
     <tr><td colspan="2">
@@ -80,7 +80,7 @@
                      });
                 </script>{% trans "Delete" %}</button>
             {% endif %}
-            {% with modeladmin.advanced_fields as advfields %}
+            {% with form.advanced_fields as advfields %}
             {% include "freeadmin/advanced_btn.html" %}
             {% endwith %}
             {% block buttons_extra %}

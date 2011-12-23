@@ -27,9 +27,20 @@
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
-class ModelForm(MF):
+class AdvMixin(object):
+
+    advanced_fields = []
+    def __init__(self, *args, **kwargs):
+        if not hasattr(self, "advanced_fields"):
+            self.advanced_fields = []
+        super(AdvMixin, self).__init__(*args, **kwargs)
+
+    def isAdvanced(self):
+        return len(self.advanced_fields) > 0
+
+class ModelForm(AdvMixin, MF):
     """
-    We need to handle dynamic choices, mainly because of the FreeNAS_User, 
+    We need to handle dynamic choices, mainly because of the FreeNAS_User,
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
     """
@@ -47,9 +58,9 @@ class ModelForm(MF):
             help_text_html = u'<br />%s',
             errors_on_separate_row = False)
 
-class Form(F):
+class Form(AdvMixin, F):
     """
-    We need to handle dynamic choices, mainly because of the FreeNAS_User, 
+    We need to handle dynamic choices, mainly because of the FreeNAS_User,
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
     """
