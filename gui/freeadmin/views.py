@@ -355,17 +355,11 @@ def generic_model_add(request, app, model, mf=None):
     except ImportError:
         raise
 
-    adv_mode = request.session.get("adv_mode")
-    if adv_mode is None:
-        adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
-        request.session['adv_mode'] = adv_mode
-
     m = getattr(_temp, model)
     context = {
         'app': app,
         'model': model,
         'modeladmin': m._admin,
-        'advanced_mode': adv_mode,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
@@ -568,16 +562,10 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         inline = False
 
-    adv_mode = request.session.get("adv_mode")
-    if adv_mode is None:
-        adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
-        request.session['adv_mode'] = adv_mode
-
     context = {
         'app': app,
         'model': model,
         'modeladmin': m._admin,
-        'advanced_mode': adv_mode,
         'mf': mf,
         'oid': oid,
         'inline': inline,
