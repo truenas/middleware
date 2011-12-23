@@ -228,7 +228,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
     bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
-    bsdusr_mode = UnixPermissionField(label=_('Mode'), initial='755')
+    bsdusr_mode = UnixPermissionField(label=_('Home Directory Mode'), initial='755')
     advanced_fields = ['bsdusr_mode']
 
     class Meta:
@@ -237,7 +237,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_mode', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -343,6 +343,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 gid = gid,
                 shell = str(self.cleaned_data['bsdusr_shell']),
                 homedir = str(self.cleaned_data['bsdusr_home']),
+                homedir_mode = int(self.cleaned_data['bsdusr_mode'], 8),
                 password_disabled = self.cleaned_data['bsdusr_password_disabled'],
                 locked = self.cleaned_data['bsdusr_locked']
             )
