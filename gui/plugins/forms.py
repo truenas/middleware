@@ -54,14 +54,44 @@ class PBIFileWizard(FileWizard):
             )
 
 class PluginsForm(ModelForm):
+    plugin_mountpoints = forms.MultipleChoiceField(
+        widget = forms.SelectMultiple(),
+        label = _("Mountpoints used by plugin")
+        )
+
     class Meta:
         model = models.Plugins
         exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version', 'plugin_path')
+
     def __init__(self, *args, **kwargs):
         super(PluginsForm, self).__init__(*args, **kwargs)
+
+        path_list = []
+        mp_list = storage.models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+        for m in mp_list:
+            path_list.append(m.mp_path)
+            datasets = m.mp_volume.get_datasets()
+            if datasets:
+                for name, dataset in datasets.items():
+                    path_list.append(dataset.mountpoint)
+
+        self.fields['plugin_mountpoints'].choices = [(path, path) for path in path_list]
         self.instance._original_plugin_enabled = self.instance.plugin_enabled
+
     def save(self):
         super(PluginsForm, self).save()
+
+        mp_list = self.cleaned_data['plugin_mountpoints']
+        pmp_list = models.PluginsMountPoints.objects.filter(pk=self.instance.id)
+        for pmp in pmp_list:
+            pmp.delete()
+
+        for mp in mp_list:
+            pmp = models.PluginsMountPoints()
+            pmp.pm_plugin = self.instance
+            pmp.pm_path = mp
+            pmp.save()
+
         if self.instance._original_plugin_enabled != self.instance.plugin_enabled:
             notifier()._restart_plugins(self.instance.plugin_name)
 

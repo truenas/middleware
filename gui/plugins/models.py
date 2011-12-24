@@ -103,3 +103,16 @@ class Plugins(Model):
 
     class FreeAdmin:
         icon_model = u"PluginsIcon"
+
+class PluginsMountPoints(Model):
+    pm_plugin = models.ForeignKey(
+        Plugins,
+        unique = False,
+        verbose_name=("Plugins") 
+        )
+
+    pm_path = models.CharField(
+        max_length=1024,
+        verbose_name=_("Plugin mount"),
+        help_text=_("Path exported to plugins jail for plugin")
+        )
