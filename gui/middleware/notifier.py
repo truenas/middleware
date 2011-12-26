@@ -62,7 +62,7 @@ from django.db import models
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from middleware import zfs
-
+from freenasUI.middleware.exceptions import MiddlewareError
 
 class notifier:
     from os import system as ___system
