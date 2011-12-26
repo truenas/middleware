@@ -1631,6 +1631,15 @@ class notifier:
             raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
         return True
 
+    def volume_export(self, vol):
+        if vol.vol_fstype == 'ZFS':
+            self.zfs_export(vol.vol_name)
+        else:
+            p1 = self.__pipeopen("umount /mnt/%s" % vol.vol_name)
+            if p1.wait() != 0:
+                return False
+        return True
+
     def zfs_scrub(self, name):
         imp = self.__pipeopen('zpool scrub %s' % str(name))
         stdout, stderr = imp.communicate()

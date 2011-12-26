@@ -118,9 +118,9 @@ class Volume(Model):
 
         if destroy:
             notifier().destroy("volume", self)
-        elif self.vol_fstype == 'ZFS':
+        else:
             try:
-                notifier().zfs_export(self.vol_name)
+                notifier().volume_export(self)
             except:
                 pass
 
