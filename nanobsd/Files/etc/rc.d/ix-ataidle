@@ -4,8 +4,7 @@
 #
 
 # PROVIDE: ix-ataidle
-# REQUIRE: DAEMON
-# BEFORE: LOGIN
+# REQUIRE: LOGIN
 # KEYWORD: nojail shutdown
 
 . /etc/rc.subr
