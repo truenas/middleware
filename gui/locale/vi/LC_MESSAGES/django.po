@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:05-0700\n"
-"PO-Revision-Date: 2011-12-22 08:54+0200\n"
-"Last-Translator: hieunghiem <hi3unb@gmail.com>\n"
+"PO-Revision-Date: 2011-12-26 04:57+0200\n"
+"Last-Translator: buithephong <buithephong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -1005,7 +1005,7 @@ msgstr ""
 #: network/models.py:99 network/models.py:161
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "địa chỉ IPv4"
 
 #: network/models.py:108 network/models.py:170
 msgid "IPv4 Netmask"
@@ -1013,11 +1013,13 @@ msgstr ""
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Tự động cấu hình IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
+"Khi được bật, sử dụng DHCP để nhận địa chỉ IPv4, gateway mặc định và các "
+"thông số khác"
 
 #: network/models.py:116 network/models.py:174
 #: templates/network/interface.html:10

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2011-09-16 16:57+0200\n"
-"Last-Translator: ikhwan <ikhwan@098.co.kr>\n"
+"PO-Revision-Date: 2011-12-26 01:45+0200\n"
+"Last-Translator: biggypsy <biggypsy@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -335,7 +335,7 @@ msgstr ""
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "바람직한"
 
 #: choices.py:251
 msgid "Tolerated"
@@ -421,39 +421,39 @@ msgstr "읽기 쓰기"
 #: choices.py:475 choices.py:476
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) 분"
+msgstr "%(분)s 분"
 
 #: choices.py:477
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) 시간"
+msgstr "%(시간) 시간"
 
 #: choices.py:478 choices.py:479 choices.py:480 choices.py:481 choices.py:482
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours) 시간"
+msgstr "%(시간)s 시간"
 
 #: choices.py:483
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day)s 일"
+msgstr "%(일)s 일"
 
 #: choices.py:484
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) 주"
+msgstr "%(주)s 주"
 
 #: choices.py:488
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "상관없음 - 장치의 전원 상태에 상관 없이 장치 점검"
 
 #: choices.py:489
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "잠자기 - 잠자기 상태가 아니라면 장치 점검"
 
 #: choices.py:490
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "대기 - 장치가 잠자기 또는 대기 상태가 아니라면 장치 점검"
 
 #: choices.py:491
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -505,7 +505,7 @@ msgstr "선택된"
 #: services/models.py:700 services/models.py:975 system/models.py:179
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "사용자명"
+msgstr "사용자이름"
 
 #: account/forms.py:199
 #, fuzzy
