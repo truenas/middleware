@@ -551,6 +551,61 @@ fix_fuse_module_location()
 }
 customize_cmd fix_fuse_module_location
 
+cyb0rg_config()
+{
+	cat > ${NANO_OBJ}/cyb0rg.conf <<EOF
+#!/bin/sh
+#
+# A simple, sourceable script that can be used to derive
+# cyb0rg project specific details, such as name, version, etc.
+# This should be sourced by middleware.
+#
+# Use easy-to parse lines for this script, like:
+#
+# {{{
+# FOO="bar"
+#
+# export FOO
+# }}}
+# Not something like...
+#
+# {{{
+# export FOO="bar"
+# }}}
+#
+# or...
+#
+# {{{
+# for var in FOO; do
+# 	eval ${var}="bar"
+# done 
+# }}}
+#
+# This file will be parsed sometime in the future without having
+# to invoke /bin/sh.
+
+# The name of the project, e.g. FreeNAS.
+CYB0RG_PROJECT="$NANO_NAME"
+
+# The version of software, e.g. 8.0.3-RELEASE, 8.2-ALPHA, etc.
+CYB0RG_VERSION="$VERSION"
+
+# The build number, e.g. r9310, <git-sha256-hash>, etc.
+CYB0RG_BUILD_NUMBER="$REVISION"
+
+# The machine[:processor] for the image with a humanized name,
+# e.g. `x64', `mips:mipsel', etc.
+#
+# Divine the machine architecture from the 
+export CYB0RG_ARCH
+
+export CYB0RG_PROJECT CYB0RG_VERSION CYB0RG_BUILD_NUMBER
+export CYB0RG_ARCH
+EOF
+	cp ${NANO_OBJ}/cyb0rg.conf ${NANO_WORLDDIR}/etc/cyb0rg.conf
+}
+customize_cmd cyb0rg_config
+
 freenas_custom()
 {
 	compress_ko()
