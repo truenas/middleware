@@ -1353,8 +1353,8 @@ class notifier:
                         raise MiddlewareError('Path for home directory already '
                                               'exists and is not a directory')
                 else:
-                    raise MiddlewareError('Failed to create the base home directory '
-                                          'for user: %s' % (homedir_base, ))
+                    raise MiddlewareError('Failed to create the home directory '
+                                          'for user: %s' % (homedir, ))
             else:
                 new_homedir = True
 
