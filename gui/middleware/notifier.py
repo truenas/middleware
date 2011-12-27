@@ -969,29 +969,21 @@ class notifier:
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if '@' in path:
-            MNTLOCK = mntlock()
             try:
-                MNTLOCK.lock_try()
-                if self.__snapshot_hold(path):
-                    retval = 'Held by replication system.'
-                MNTLOCK.unlock()
-                del MNTLOCK
+                with mntlock(blocking=False) as MNTLOCK:
+                    if self.__snapshot_hold(path):
+                        retval = 'Held by replication system.'
             except IOError:
                 retval = 'Try again later.'
         elif recursive:
-            MNTLOCK = mntlock()
             try:
-                MNTLOCK.lock_try()
-                zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
-                snaps = zfsproc.communicate()[0]
-                for snap in snaps.split('\n'):
-                    if not snap:
-                        continue
-                    if self.__snapshot_hold(snap):
-                        retval = '%s: Held by replication system.' % snap
-                        break
-                MNTLOCK.unlock()
-                del MNTLOCK
+                with mntlock(blocking=False) as MNTLOCK:
+                    zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
+                    snaps = zfsproc.communicate()[0]
+                    for snap in filter(None, snaps.splitlines()):
+                        if self.__snapshot_hold(snap):
+                            retval = '%s: Held by replication system.' % snap
+                            break
             except IOError:
                 retval = 'Try again later.'
         if retval == None:
@@ -2124,20 +2116,16 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
-        MNTLOCK = mntlock()
         try:
-            MNTLOCK.lock_try()
-            zfsproc = self.__pipeopen(zfscmd)
-            output = zfsproc.communicate()[0]
-            if output != '':
-                snapshots_list = output.split('\n')
-            for snapshot_item in snapshots_list:
-                if snapshot_item != '':
+            with mntlock(blocking=False) as MNTLOCK:
+                zfsproc = self.__pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
+                if output != '':
+                    snapshots_list = output.splitlines()
+                for snapshot_item in filter(None, snapshots_list):
                     snapshot, state = snapshot_item.split('\t')
                     if state != '-':
                         self.zfs_inherit_option(snapshot, 'freenas:state')
-            MNTLOCK.unlock()
-            del MNTLOCK
         except IOError:
             retval = 'Try again later.'
         return retval
@@ -2150,20 +2138,16 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
-        MNTLOCK = mntlock()
         try:
-            MNTLOCK.lock_try()
-            zfsproc = self.__pipeopen(zfscmd)
-            output = zfsproc.communicate()[0]
-            if output != '':
-                snapshots_list = output.split('\n')
-            for snapshot_item in snapshots_list:
-                if snapshot_item != '':
+            with mntlock(blocking=False) as MNTLOCK:
+                zfsproc = self.__pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
+                if output != '':
+                    snapshots_list = output.splitlines()
+                for snapshot_item in filter(None, snapshots_list):
                     snapshot, state = snapshot_item.split('\t')
                     if state != 'NEW':
                         self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
-            MNTLOCK.unlock()
-            del MNTLOCK
         except IOError:
             retval = 'Try again later.'
         return retval
