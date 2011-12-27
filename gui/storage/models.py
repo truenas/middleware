@@ -256,23 +256,21 @@ class MountPoint(Model):
             null=True,
             )
     def is_my_path(self, path):
-        import os
         if path == self.mp_path:
             return True
-        elif path.find(self.mp_path) >= 0:
-            # TODO: This is wrong, need to be fixed by revealing
-            # the underlying file system ids.
-            rep = path.replace(self.mp_path, self.mp_path+'/')
-            if os.path.abspath(rep) == os.path.abspath(path):
-                return True
-        return False
+        try:
+            # If the st_dev values match, then it's the same mountpoint.
+            return os.stat(self.mp_path).st_dev == os.stat(path).st_dev
+        except OSError:
+            # Not a real path (most likely). Fallback to a braindead
+            # best-effort path check.
+            return os.path.commonprefix([self.mp_path, path]) == self.mp_path
 
     def has_attachments(self):
         """
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         """
-        import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
         mypath = os.path.abspath(self.mp_path)
