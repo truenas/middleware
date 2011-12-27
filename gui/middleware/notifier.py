@@ -1942,21 +1942,53 @@ class notifier:
             return True
         return False
 
-    def zfs_export(self, name):
-        imp = self.__pipeopen('zpool export %s' % str(name))
-        stdout, stderr = imp.communicate()
-        if imp.returncode != 0:
-            raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
-        return True
+    def volume_detach(self, vol_name, vol_fstype):
+        """Detach a volume from the system
 
-    def volume_export(self, vol):
-        if vol.vol_fstype == 'ZFS':
-            self.zfs_export(vol.vol_name)
+        This either executes exports a zpool or umounts a
+        generic volume (e.g. NTFS, UFS, etc).
+
+        In the event that the volume is still in use in the OS,
+        the end-result is implementation defined depending on
+        the filesystem, and the set of commands used to export
+        the filesystem.
+
+        XXX: recursive unmounting / needs for recursive
+             unmounting here might be a good idea.
+        XXX: better feedback about files in use might be a good
+             idea... someday. But probably before getting to
+             this point. This is a tricky problem to fix in a
+             way that doesn't unnecessarily suck up resources,
+             but also ensures that the user is provided with
+             meaningful data.
+
+        Parameters:
+            vol_name: a textual name for the volume, e.g. tank,
+                      stripe, etc.
+            vol_fstype: the filesystem type for the volume;
+                        valid values are:
+                        'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
+
+        Raises:
+            MiddlewareError: the volume could not be detached
+                             cleanly. 
+        """
+
+        if vol_fstype == 'ZFS':
+            cmds = [ 'zpool export %s' % (vol_name, ) ]
         else:
-            p1 = self.__pipeopen("umount /mnt/%s" % vol.vol_name)
-            if p1.wait() != 0:
-                return False
-        return True
+            cmds = [ 'umount /mnt/%s' % (vol_name, ) ]
+
+        for cmd in cmds:
+            p1 = self.__pipeopen(cmd)
+            stdout, stderr = p1.communicate()
+            if p1.returncode:
+                raise MiddlewareError("Failed to detach the "
+                                      "volume %s (exited "
+                                      "with %d): %s"
+                                      % (vol_name, cmd,
+                                         p1.returncode,
+                                         stderr, ))
 
     def zfs_scrub(self, name, stop=False):
         if stop:
