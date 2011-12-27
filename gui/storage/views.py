@@ -32,7 +32,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.db import transaction, models as dmodels
+from django.db import models as dmodels
 
 from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
@@ -60,15 +60,15 @@ def volumes(request):
         })
 
 def get_volumes(request):
-    volumes = []
+    _volumes = []
     mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     for m in mp_list:
-        volumes.append(m.mp_path)
+        _volumes.append(m.mp_path)
         datasets = m.mp_volume.get_datasets()
-        if datasets: 
-            for name, dataset in datasets.items():
-                volumes.append(dataset.mountpoint) 
-    return JsonResponse(message=volumes)
+        if datasets:
+            for dataset in datasets.values():
+                _volumes.append(dataset.mountpoint) 
+    return JsonResponse(message=_volumes)
 
 def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
