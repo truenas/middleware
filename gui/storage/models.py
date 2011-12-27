@@ -134,8 +134,7 @@ class Volume(Model):
             if dirty:
                 notifier().stop(svc)
 
-        if not destroy:
-            notifier().detach_volume_swaps(self)
+        notifier().detach_volume_swaps(self)
 
         if destroy:
             notifier().destroy("volume", self)
