@@ -1983,12 +1983,10 @@ class notifier:
             p1 = self.__pipeopen(cmd)
             stdout, stderr = p1.communicate()
             if p1.returncode:
-                raise MiddlewareError("Failed to detach the "
-                                      "volume %s (exited "
-                                      "with %d): %s"
-                                      % (vol_name, cmd,
-                                         p1.returncode,
-                                         stderr, ))
+                raise MiddlewareError('Failed to detach %s with "%s" (exited '
+                                      'with %d): %s'
+                                      % (vol_name, cmd, p1.returncode,
+                                         stderr, )) 
 
     def zfs_scrub(self, name, stop=False):
         if stop:
