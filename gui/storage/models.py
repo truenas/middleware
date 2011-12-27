@@ -139,10 +139,7 @@ class Volume(Model):
         if destroy:
             notifier().destroy("volume", self)
         else:
-            try:
-                notifier().volume_export(self)
-            except:
-                pass
+            notifier().volume_export(self)
 
         # The framework would cascade delete all database items
         # referencing this volume.
