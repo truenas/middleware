@@ -70,9 +70,10 @@ class FormRender(template.Node):
                     new_fields.remove(field)
                 composed[fields[0]] = (label, fields)
 
+        advanced_fields = getattr(form, 'advanced_fields', [])
         for field in new_fields:
             _hide, is_adv = '', False
-            is_adv = field in form.advanced_fields
+            is_adv = field in advanced_fields
             _hide = ' style="display: none;"' if not adv_mode and is_adv else False
             is_adv = ' class="advancedField"' if is_adv else ''
             if composed.has_key(field):
