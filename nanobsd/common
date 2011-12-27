@@ -277,10 +277,15 @@ add_port ()
     # Need to:
     # 1. check ARCH of this package!
     # 2. Add a trap
-    echo "add_port: $port_path"
     cd ${NANO_PORTS}/${port_path}
     # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
+    set +e
     PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
+    if [ $? -ne 0 ]; then
+        echo "failed to determine the package name for $port_path"
+        exit 1
+    fi
+    set -e
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "
