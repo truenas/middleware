@@ -594,7 +594,7 @@ CYB0RG_VERSION="$VERSION"
 CYB0RG_BUILD_NUMBER="$REVISION"
 
 # The machine[:processor] for the image with a humanized name,
-# e.g. `x64', `mips:mipsel', etc.
+# e.g. 'x64', 'mips:mipsel', etc.
 #
 # Divine the machine architecture from the 
 export CYB0RG_ARCH
