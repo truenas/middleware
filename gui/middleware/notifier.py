@@ -2583,7 +2583,6 @@ class notifier:
         raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
 
     def __sysctl_error(self, libc, name):
-        import errno
         errloc = getattr(libc,'__error')
         errloc.restype = ctypes.POINTER(ctypes.c_int)
         error = errloc().contents.value
