@@ -933,7 +933,7 @@ class notifier:
         ufs_volume_id = vgrp.id
         geom_type = vgrp.group_type
         geom_name = vgrp.group_name
-        if geom_type == '':
+        if geom_type not in ('mirror', 'stripe', 'raid3'):
             # Grab disk from the group
             disk = vgrp.disk_set.all()[0]
             devname = self.identifier_to_device(disk.disk_identifier)
