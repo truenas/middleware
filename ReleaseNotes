@@ -33,6 +33,8 @@ Reduce FreeNAS footprint
 2. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
 3. Other build tweaks to remove non-essential features and packages from
    the image.
+4. Disable output to /var/log/console.log in non-debug builds to avoid
+   unnecessary duplication in /var/log/messages .
 
 Middleware
 ========================
@@ -53,6 +55,11 @@ AD/CIFS
    the user that the 'Active Directory' service is stopped.
 3. Fix cachetool to better prevent potential race condition at boot between
    winbindd and ix-cache.
+4. Add knob for enabling/disabling Zeroconf/Bonjour (avahi) support in the
+   GUI. For technical reasons outside of the author's control, this
+   feature defaults to off when upgrading FreeNAS. FreeNAS admins
+   anticipating that they will have Mac users attempting to connect to CIFS
+   shares should enable this feature.
 
 AFP
 ========================
@@ -84,6 +91,13 @@ Misc
 Bugfixes
 ------------------------
 
+AD/CIFS
+========================
+
+1. Change the default workgroup from FREENAS to WORKGROUP as having the same
+   name for the workgroup and the hostname is illegal per the SMB/CIFS
+   protocol.
+
 GUI
 ========================
 
@@ -101,6 +115,10 @@ GUI
 6. Fix an issue where if one entered in an invalid path, the GUI would
    traceback instead of providing feedback stating that the directory
    provided was invalid.
+7. Add logic to create home directories on demand instead of failing
+   'silently' if the path to the directory didn't already exist.
+8. Fix 'detaching' UFS volumes so that it unmounts the volume in the
+   FreeBSD backend.
 
 Middleware
 ========================
@@ -115,6 +133,8 @@ Middleware
 5. Fix an issue where the ZFS scrub cronjobs would execute every 30 days
    instead of a number divisible by 7, so what would generally happen is
    that ZFS scrubs would generally execute in the middle of the week.
+6. Fix setting httpd to listen on an interface which is not the first
+   interface.
 
 Cosmetic items
 ------------------------
