@@ -484,9 +484,9 @@ class notifier:
         self.__system("/usr/sbin/service nut_upslog start")
 
     def _stop_ups(self):
-        self.__system("/usr/sbin/service nut_upslog stop")
-        self.__system("/usr/sbin/service nut_upsmon stop")
-        self.__system("/usr/sbin/service nut stop")
+        self.__system("/usr/sbin/service nut_upslog forcestop")
+        self.__system("/usr/sbin/service nut_upsmon forcestop")
+        self.__system("/usr/sbin/service nut forcestop")
 
     def _restart_ups(self):
         self.__system("/usr/sbin/service ix-ups quietstart")
