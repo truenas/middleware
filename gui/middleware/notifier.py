@@ -1310,6 +1310,8 @@ class notifier:
             hash, and the encrypted SMB password hash.
 
         Raises:
+            MiddlewareError - tried to create a home directory under a
+                              subdirectory on the /mnt memory disk.
             MiddlewareError - failed to create the home directory for
                               the user.
             MiddlewareError - failed to run pw useradd successfully.
@@ -1347,6 +1349,14 @@ class notifier:
             #    too late to roll back the user create.
             try:
                 os.makedirs(homedir, mode=homedir_mode)
+                if os.stat(homedir).st_dev == os.stat('/mnt').st_dev:
+                    # HACK: ensure the user doesn't put their homedir under
+                    # /mnt
+                    # XXX: fix the GUI code and elsewhere to enforce this, then
+                    # remove the hack.
+                    raise MiddlewareError('Path for the home directory (%s) '
+                                          'must be under a volume or dataset'
+                                          % (homedir, ))
             except OSError as oe:
                 if oe.errno == errno.EEXIST:
                     if not os.path.isdir(homedir):
