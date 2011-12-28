@@ -520,7 +520,19 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
-if [ "${DEBUG}" != 1 ]; then
+if [ "${DEBUG}" == 1 ]; then
+
+unmute_console_logging()
+{
+	# /var is small. Don't fill it up with messages from console.log
+	# because it's a chatty log.
+	sed -i '' -e 's/#console.info/console.info/' \
+		     "${NANO_WORLDDIR}/etc/syslog.conf"
+}
+customize_cmd unmute_console_logging
+
+else
+
 remove_perl()
 {
 	# Perl seems to be needed for build, but nothing after the
@@ -529,6 +541,7 @@ remove_perl()
 	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
 }
 customize_cmd remove_perl
+
 fi
 
 remove_var_db_pkg()
