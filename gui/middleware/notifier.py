@@ -1364,7 +1364,8 @@ class notifier:
                                               'exists and is not a directory')
                 else:
                     raise MiddlewareError('Failed to create the home directory '
-                                          'for user: %s' % (homedir, ))
+                                          '(%s) for user: %s'
+                                          % (homedir, str(oe)))
             else:
                 new_homedir = True
 
