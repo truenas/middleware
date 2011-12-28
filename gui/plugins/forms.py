@@ -37,6 +37,7 @@ from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
+from freenasUI.account.forms import FilteredSelectField
 from freenasUI import services, storage, network, choices
 
 
@@ -54,9 +55,10 @@ class PBIFileWizard(FileWizard):
             )
 
 class PluginsForm(ModelForm):
-    plugin_mountpoints = forms.MultipleChoiceField(
-        widget = forms.SelectMultiple(),
-        label = _("Mountpoints used by plugin")
+    plugin_mountpoints = FilteredSelectField(
+        label = _("Mountpoints"),
+        choices=(),
+        required=False
         )
 
     class Meta:
@@ -75,17 +77,17 @@ class PluginsForm(ModelForm):
                 for name, dataset in datasets.items():
                     path_list.append(dataset.mountpoint)
 
+        pmp_list = models.PluginsMountPoints.objects.filter(pm_plugin=self.instance.id)
         self.fields['plugin_mountpoints'].choices = [(path, path) for path in path_list]
+        self.fields['plugin_mountpoints'].initial = [(pmp.pm_path) for pmp in pmp_list]
+
         self.instance._original_plugin_enabled = self.instance.plugin_enabled
 
     def save(self):
         super(PluginsForm, self).save()
+        pmp_list = models.PluginsMountPoints.objects.filter(pm_plugin=self.instance.id).delete()
 
         mp_list = self.cleaned_data['plugin_mountpoints']
-        pmp_list = models.PluginsMountPoints.objects.filter(pk=self.instance.id)
-        for pmp in pmp_list:
-            pmp.delete()
-
         for mp in mp_list:
             pmp = models.PluginsMountPoints()
             pmp.pm_plugin = self.instance
