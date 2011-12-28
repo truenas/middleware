@@ -113,9 +113,9 @@ class Volume(Model):
             for zvol in zvols:
                 qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
                 if qs.exists():
-                    qs.delete()
                     if destroy:
-                        retval = notifier().destroy_zfs_vol(name)
+                        retval = notifier().destroy_zfs_vol(zvol)
+                    qs.delete()
                 reloads = map(sum, zip(reloads, (False, False, False, True)))
 
         else:
