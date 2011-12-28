@@ -520,7 +520,7 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
-if [ "${DEBUG}" == 1 ]; then
+if [ "${DEBUG}" = 1 ]; then
 
 unmute_console_logging()
 {
