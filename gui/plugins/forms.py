@@ -94,8 +94,7 @@ class PluginsForm(ModelForm):
             pmp.pm_path = mp
             pmp.save()
 
-        if self.instance._original_plugin_enabled != self.instance.plugin_enabled:
-            notifier()._restart_plugins(self.instance.plugin_name)
+        notifier()._restart_plugins(self.instance.plugin_name)
 
 
 class PBITemporaryLocationForm(Form):
