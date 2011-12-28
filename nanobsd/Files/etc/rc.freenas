@@ -442,3 +442,25 @@ __SQL__
 	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
 	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
 }
+
+# Is a service enabled?
+#
+# Parameters:
+# 1 - service name, e.g. afp, cifs, etc.
+#
+# Returns:
+# 0 - enabled
+# 1 - disabled
+# 2 - not found
+srv_enabled()
+{
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	    "SELECT srv_enable from services_services where srv_service = '$1'" \
+	    2>/dev/null)
+	if [ "$enabled" = 1 ]; then
+		return 0
+	elif [ "$enabled" = 0 ]; then
+		return 1
+	fi
+	return 2
+}
