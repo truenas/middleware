@@ -1648,6 +1648,8 @@ class notifier:
                         port = int(c.fetchone()[0])
 
                     kwargs['port'] = port + 1
+                    kwargs['uname'] = "system.%s" % name
+                    kwargs['icon'] = "default.png"
 
                     out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
                     if out and out[0] == 0:

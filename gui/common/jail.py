@@ -182,6 +182,7 @@ class Jail_pipe(object):
         syslog(LOG_DEBUG, "Jail_pipe.__init__: enter") 
         syslog(LOG_DEBUG, "Jail_pipe.__init__: cmd = %s" % cmd) 
 
+        self.error = None
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
 
@@ -203,7 +204,7 @@ class Jail_pipe(object):
         syslog(LOG_DEBUG, "Jail_pipe.__init__: out = %s" % self.__out)
 
         if self.__pipe.returncode != 0:
-            raise Jail_exception(self.__stderr.read().strip())
+            self.error = self.__out 
 
         self.returncode = self.__pipe.returncode
         syslog(LOG_DEBUG, "Jail_pipe.__init__: leave")
@@ -255,6 +256,7 @@ class Jail_bait(object):
 
         syslog(LOG_DEBUG, "Jail_bait.cmd = %s" % cmd)
         pobj = Jail_pipe(cmd, self.pipe_func)
+        self.error = pobj.error
 
         syslog(LOG_DEBUG, "Jail_bait.run: leave")
         return (pobj.returncode, str(pobj))
