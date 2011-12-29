@@ -566,15 +566,15 @@ class notifier:
 
     def _start_plugins(self, plugin=None):
         if plugin is not None:
-            self.__system_nolog("/usr/sbin/service ix-plugins quietstart %s" % plugin)
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestart %s" % plugin)
         else:
-            self.__system_nolog("/usr/sbin/service ix-plugins quietstart")
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestart")
 
     def _stop_plugins(self, plugin=None):
         if plugin is not None:
-            self.__system_nolog("/usr/sbin/service ix-plugins quietstop %s" % plugin)
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestop %s" % plugin)
         else:
-            self.__system_nolog("/usr/sbin/service ix-plugins quietstop")
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
 
     def _restart_plugins(self, plugin=None):
         self._stop_plugins(plugin)
