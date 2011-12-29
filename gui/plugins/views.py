@@ -68,7 +68,7 @@ def plugin_delete(request, plugin_id):
     plugin = models.Plugins.objects.get(id=plugin_id)
 
     if request.method == 'POST':
-        if notifier().delete_pbi(plugin_id):
+        if notifier()._stop_plugins(plugin.plugin_name) and notifier().delete_pbi(plugin_id):
             return JsonResp(request,
                 message=_("Plugin successfully removed."),
                 events=['restartHttpd()']
