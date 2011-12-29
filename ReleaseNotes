@@ -204,32 +204,3 @@ The installer will let you switch from i386 to amd64 architecture and
 vice-versa, but some files, such as the rrd files used by the statistics
 graphing package are architecture dependent.
 
-Filename:
-FreeNAS-8.0.3-RC1-x64.Full_Install.xz
-SHA256 Hash:
-f1b5e259f123052074b25b6c2103b0046ef44946fd4e08809323f93b242efa37
-
-Filename:
-FreeNAS-8.0.3-RC1-x64.GUI_Upgrade.xz
-SHA256 Hash:
-85855eda6262df7f12d915d05b3f9f5168b0b5349b3b8d47bb4da4b6c45f77b6
-
-Filename:
-FreeNAS-8.0.3-RC1-x64.iso
-SHA256 Hash:
-bc060ef3743d9639683aef498e2f87c7f78697e0c150e34057094ba8a4142e55
-
-Filename:
-FreeNAS-8.0.3-RC1-x86.Full_Install.xz
-SHA256 Hash:
-51b19aa5e9128842d0e45a4da7424068f188146bbc419557a66e11720fbf9eef
-
-Filename:
-FreeNAS-8.0.3-RC1-x86.GUI_Upgrade.xz
-SHA256 Hash:
-1254d89e9dd0cb546aa47513793580cb673f1fedfd1f9bb8d2eb8ea01a4598f9
-
-Filename:
-FreeNAS-8.0.3-RC1-x86.iso
-SHA256 Hash:
-b767a6c597f900bfa68490cd655f5bd382a78efd14d34bfa11189b3159fc07f9
