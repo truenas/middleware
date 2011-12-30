@@ -270,6 +270,7 @@ do_add_port ()
 # Recursive complex function: Generate one function for each ports
 add_port ()
 {
+    local _add_pkg
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
     shift
@@ -286,8 +287,19 @@ add_port ()
         exit 1
     fi
     set -e
-    if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
+
+    _add_pkg=false
+    if $do_world && $do_clean; then
+        # HACK: make do_build.sh -ff work properly instead of having
+        # do_add_pkg fall flat on its face when it tries to add the
+        # missing package.
+        :
+    elif [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
+        _add_pkg=true
+    fi
+
+    if $_add_pkg; then
 	eval "
 	    add_pkg_${port} () {
 	        do_add_pkg ${PKG_NAME}
@@ -295,7 +307,6 @@ add_port ()
             customize_cmd add_pkg_${port}
             "
     else
-	# No pkg file: Generate add_port_NAME function
 	echo "Package is not yet built: $port"
         eval "
             add_port_${port} () {
