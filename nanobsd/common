@@ -315,12 +315,11 @@ freenas_custom()
 {
 	# Compress the kernel and preloaded modules
 	compress_ko kernel
+	compress_ko fuse.ko
 	compress_ko geom_mirror.ko
 	compress_ko geom_stripe.ko
 	compress_ko geom_raid3.ko
 	compress_ko geom_gate.ko
-	compress_ko ntfs.ko
-	compress_ko smbfs.ko
 
 	# kill docs (saves 22MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
