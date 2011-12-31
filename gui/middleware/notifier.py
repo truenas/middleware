@@ -44,6 +44,7 @@ import re
 import glob
 import grp
 import pwd
+import shutil
 import signal
 import time
 import sys
