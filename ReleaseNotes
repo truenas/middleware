@@ -26,7 +26,7 @@ Changes since 8.0.2-RELEASE:
 Enhancements
 ------------------------
 
-Reduce FreeNAS footprint
+OS/Third party
 ========================
 
 1. Use smaller block and frag sizes for /etc and /var .
@@ -35,14 +35,27 @@ Reduce FreeNAS footprint
    the image.
 4. Disable output to /var/log/console.log in non-debug builds to avoid
    unnecessary duplication in /var/log/messages .
+5. Upgrade ataidle to 2.6.
+6. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
+7. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1
+   image was broken due to the environment of the build machine where it
+   was produced on. This also fixes other items, such as DDNS because of
+   build environment tainting.
+8. Increase the /var md size from 74MB to 160MB s.t. samba will be able
+   to service requests copying large sets of files, and the rest of the
+   system will be able to play nicely with samba to a certain degree.
+   More tuning is required for larger samba userbases.
+
+GUI
+========================
+
+1. Add kernel tunable / sysctl support.
 
 Middleware
 ========================
 
 1. Hide Etc/GMT* timezones as they're behavior is counterintuitive and
    conflicts with Windows 7 semantics (see r8707).
-2. Add tunable / sysctl support so settings that affect kernel behavior
-   persist across upgrades.
 
 AD/CIFS
 ========================
@@ -74,29 +87,13 @@ Rsync
 
 - NFSv4 ACL support (see: r8375, r8414).
 
-Misc
-========================
-
-1. Upgrade ataidle to 2.6.
-2. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
-3. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1
-   image was broken due to the environment of the build machine where it
-   was produced on. This also fixes other items, such as DDNS because of
-   build environment tainting.
-4. Increase the /var md size from 74MB to 160MB s.t. samba will be able
-   to service requests copying large sets of files, and the rest of the
-   system will be able to play nicely with samba to a certain degree.
-   More tuning is required for larger samba userbases.
-
 Bugfixes
 ------------------------
 
-AD/CIFS
+OS/Third party
 ========================
 
-1. Change the default workgroup from FREENAS to WORKGROUP as having the same
-   name for the workgroup and the hostname is illegal per the SMB/CIFS
-   protocol.
+1. Fix NTFS volume imports.
 
 GUI
 ========================
@@ -115,10 +112,6 @@ GUI
 6. Fix an issue where if one entered in an invalid path, the GUI would
    traceback instead of providing feedback stating that the directory
    provided was invalid.
-7. Add logic to create home directories on demand instead of failing
-   'silently' if the path to the directory didn't already exist.
-8. Fix 'detaching' UFS volumes so that it unmounts the volume in the
-   FreeBSD backend.
 
 Middleware
 ========================
@@ -135,6 +128,17 @@ Middleware
    that ZFS scrubs would generally execute in the middle of the week.
 6. Fix setting httpd to listen on an interface which is not the first
    interface.
+7. Add logic to create home directories on demand instead of failing
+   'silently' if the path to the directory didn't already exist.
+8. Fix 'detaching' NTFS/UFS volumes so that it unmounts the volume in
+   the FreeBSD backend.
+
+AD/CIFS
+========================
+
+1. Change the default workgroup from FREENAS to WORKGROUP as having the same
+   name for the workgroup and the hostname is illegal per the SMB/CIFS
+   protocol.
 
 Cosmetic items
 ------------------------
