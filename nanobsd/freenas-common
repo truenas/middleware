@@ -33,7 +33,7 @@
 #
 
 export NANO_CFG_BASE="$FREENAS_ROOT/nanobsd"
-export NANO_MODULES="cxgb ext2fs geom ipmi libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+export NANO_MODULES="cxgb ext2fs geom ipmi smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 export NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
 export NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 
