@@ -34,8 +34,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
-from django.utils.cache import patch_vary_headers
 from django.utils import translation
+from django.utils.cache import patch_vary_headers
+from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -91,7 +92,7 @@ class LocaleMiddleware(object):
 class CatchError(object):
 
     def process_response(self, request, response):
-        if sys.exc_type and isinstance(sys.exc_type, MiddlewareError):
+        if sys.exc_type and sys.exc_type is MiddlewareError:
             excp = sys.exc_info()[1]
             kwargs = {
                 'error': True,
