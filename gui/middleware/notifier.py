@@ -2373,6 +2373,25 @@ class notifier:
         parse = zfs.parse_status(name, doc, res)
         return parse
 
+    def sync_disk(self, devname):
+        from storage.models import Disk
+
+        self.__diskserial.clear()
+
+        ident = self.device_to_identifier(devname)
+        qs = Disk.objects.filter(disk_identifier=ident)
+        if qs.exists():
+            disk = qs[0]
+            disk.disk_name = devname
+            disk.disk_enabled = True
+        else:
+            Disk.objects.filter(disk_name=devname).update(disk_enabled=False)
+            disk = Disk()
+            disk.disk_name = devname
+            disk.disk_identifier = ident
+            disk.disk_serial = self.serial_from_device(devname) or ''
+        disk.save()
+
     def sync_disks(self):
         from storage.models import Disk
 
