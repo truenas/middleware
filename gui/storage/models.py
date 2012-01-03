@@ -435,7 +435,8 @@ class Replication(Model):
             verbose_name = _("Remote Host"),
             )
     repl_zfs = models.CharField(max_length=120,
-            verbose_name = _("Remote ZFS filesystem"),
+            verbose_name = _("Remote ZFS filesystem name"),
+            help_text = _("This should be the name of the ZFS filesystem on remote side. eg: poolname/datasetname not the mountpoint or filesystem path"),
             )
     repl_userepl = models.BooleanField(
             default = False,
