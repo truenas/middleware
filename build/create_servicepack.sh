@@ -39,9 +39,9 @@ cleanup() {
 	rm -Rf $PREFIX
 }
 
-CYB0RG_ROOT="$(realpath "$(dirname "$0")/..")"
-. "$CYB0RG_ROOT/build/nano_env"
-. "$CYB0RG_ROOT/build/functions.sh"
+AVATAR_ROOT="$(realpath "$(dirname "$0")/..")"
+. "$AVATAR_ROOT/build/nano_env"
+. "$AVATAR_ROOT/build/functions.sh"
 
 requires_root
 

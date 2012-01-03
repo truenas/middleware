@@ -33,9 +33,9 @@
 #
 
 # Override the defaults in nanobsd.sh from a common script.
-. "$CYB0RG_ROOT/build/nano_env"
+. "$AVATAR_ROOT/build/nano_env"
 # Helpful functions.
-. "$CYB0RG_ROOT/build/functions.sh"
+. "$AVATAR_ROOT/build/functions.sh"
 
 # DEBUG=1, MULTIMEDIA=1, etc.
 for feature in $SW_FEATURES; do
@@ -352,7 +352,7 @@ customize_cmd hack_nsswitch_conf
 add_gui()
 {
     local gui dst dstCR
-    gui=${CYB0RG_ROOT}/gui
+    gui=${AVATAR_ROOT}/gui
     dstCR=/usr/local/www/freenasUI
     dst=${NANO_WORLDDIR}${dstCR}
     if [ -d ${gui} ]; then
@@ -564,13 +564,13 @@ fix_fuse_module_location()
 }
 customize_cmd fix_fuse_module_location
 
-cyb0rg_config()
+avatar_config()
 {
-	cat > ${NANO_OBJ}/cyb0rg.conf <<EOF
+	cat > ${NANO_OBJ}/avatar.conf <<EOF
 #!/bin/sh
 #
 # A simple, sourceable script that can be used to derive
-# cyb0rg project specific details, such as name, version, etc.
+# avatar project specific details, such as name, version, etc.
 # This should be sourced by middleware.
 #
 # Use easy-to parse lines for this script, like:
@@ -598,26 +598,26 @@ cyb0rg_config()
 # to invoke /bin/sh.
 
 # The name of the project, e.g. FreeNAS.
-CYB0RG_PROJECT="$NANO_NAME"
+AVATAR_PROJECT="$NANO_NAME"
 
 # The version of software, e.g. 8.0.3-RELEASE, 8.2-ALPHA, etc.
-CYB0RG_VERSION="$VERSION"
+AVATAR_VERSION="$VERSION"
 
 # The build number, e.g. r9310, <git-sha256-hash>, etc.
-CYB0RG_BUILD_NUMBER="$REVISION"
+AVATAR_BUILD_NUMBER="$REVISION"
 
 # The machine[:processor] for the image with a humanized name,
 # e.g. 'x64', 'mips:mipsel', etc.
 #
 # Divine the machine architecture from the 
-export CYB0RG_ARCH
+export AVATAR_ARCH
 
-export CYB0RG_PROJECT CYB0RG_VERSION CYB0RG_BUILD_NUMBER
-export CYB0RG_ARCH
+export AVATAR_PROJECT AVATAR_VERSION AVATAR_BUILD_NUMBER
+export AVATAR_ARCH
 EOF
-	cp ${NANO_OBJ}/cyb0rg.conf ${NANO_WORLDDIR}/etc/cyb0rg.conf
+	cp ${NANO_OBJ}/avatar.conf ${NANO_WORLDDIR}/etc/avatar.conf
 }
-customize_cmd cyb0rg_config
+customize_cmd avatar_config
 
 freenas_custom()
 {
@@ -743,7 +743,7 @@ last_orders() {
 
 		(
 
-		sh "$CYB0RG_ROOT/build/create_iso.sh"
+		sh "$AVATAR_ROOT/build/create_iso.sh"
 
 		) > "${cd_image_log}" 2>&1
 

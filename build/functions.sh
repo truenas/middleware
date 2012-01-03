@@ -12,7 +12,7 @@ info() {
 }
 
 #nano_env_vars() {
-#	grep '^export' "$CYB0RG_ROOT/build/nano_env" | \
+#	grep '^export' "$AVATAR_ROOT/build/nano_env" | \
 #	    sed -e 's/export //g' | tr '\012' ' '
 #}
 

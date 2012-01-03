@@ -8,7 +8,7 @@
 # other build / image generation scripts.
 
 # The FreeNAS source and build tree is rooted here.
-: ${CYB0RG_ROOT=$(pwd)}
+: ${AVATAR_ROOT=$(pwd)}
 
 # The architecture for the machine (amd64, i386, etc).
 # NOTE: have to do things this way because nanobsd.sh sets this value
@@ -36,19 +36,19 @@ i386)
 	;;
 esac
 
-NANO_OBJ=${CYB0RG_ROOT}/obj.${NANO_ARCH}
+NANO_OBJ=${AVATAR_ROOT}/obj.${NANO_ARCH}
 
 # Where the build configuration files used by nanobsd.sh live.
-NANO_CFG_BASE=$CYB0RG_ROOT/nanobsd
+NANO_CFG_BASE=$AVATAR_ROOT/nanobsd
 
 # Where the FreeBSD ports tree lives.
-NANO_PORTS="$CYB0RG_ROOT/FreeBSD/ports"
+NANO_PORTS="$AVATAR_ROOT/FreeBSD/ports"
 
 # Where the FreeBSD source tree lives.
-NANO_SRC="$CYB0RG_ROOT/FreeBSD/src"
+NANO_SRC="$AVATAR_ROOT/FreeBSD/src"
 
 # Where the nanobsd tools live.
-NANO_TOOLS="$CYB0RG_ROOT/build/nanobsd"
+NANO_TOOLS="$AVATAR_ROOT/build/nanobsd"
 
 if [ -z "${SVNVERSION}" ]; then
 	# This is executed sometimes as set -e; don't let it fail by no-oping
@@ -58,7 +58,7 @@ if [ -z "${SVNVERSION}" ]; then
 
 	if [ -n "$svnversion" ] ; then
 		# svn prints out errors to stdout. Bad svn! No cookie for you!
-		svn=$(sh -c "echo r\$(cd ${CYB0RG_ROOT} && /usr/bin/env LANG=C $svnversion)") || svn=""
+		svn=$(sh -c "echo r\$(cd ${AVATAR_ROOT} && /usr/bin/env LANG=C $svnversion)") || svn=""
 	fi
 	[ "${svn}" = "rUnversioned directory" ] && svn=""
 	if [ -z "$svn" ]; then
@@ -78,7 +78,7 @@ if [ -z "${SVNVERSION}" ]; then
 					git="${git}"
 				fi
 			fi
-			if $git_cmd --work-tree=${CYB0RG_ROOT} diff-index \
+			if $git_cmd --work-tree=${AVATAR_ROOT} diff-index \
 			    --name-only HEAD | read dummy; then
 				git="${git}_dirty"
 			fi
@@ -117,7 +117,7 @@ NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH_HUMANIZED"
 NANO_IMGNAME="$NANO_NAME"
 
 # Export these vars to override the NanoBSD defaults.
-export CYB0RG_ROOT FREENAS_ARCH
+export AVATAR_ROOT FREENAS_ARCH
 export NANO_ARCH NANO_ARCH_HUMANIZED NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
 export NANO_MODULES NANO_NAME NANO_OBJ NANO_SRC NANO_TOOLS REVISION
 export SVNREVISION
