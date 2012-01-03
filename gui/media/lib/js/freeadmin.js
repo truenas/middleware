@@ -836,6 +836,23 @@
             }
         };
 
+        var errorHandle = function(data) {
+
+            setMessage(gettext('An error occurred!'), "error");
+
+            try {
+               rnode.hide();
+            } catch(err2) {
+                dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                  function(inputElem){
+                       dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                   }
+                );
+
+                dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
+            }
+        }
+
         // are there any files to be submited?
         var files = dojo.query("input[type=file]", item.domNode);
         if(files.length > 0) {
@@ -847,7 +864,7 @@
                 handleAs: 'text',
                 //headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
                 load: loadOk,
-	            error: function(response, ioArgs) { },
+	            error: errorHandle,
              });
 
         } else {
@@ -861,22 +878,7 @@
                 content: newData,
                 handleAs: 'text',
                 load: loadOk,
-                error: function(data) {
-
-                        setMessage(gettext('An error occurred!'), "error");
-
-                        try {
-                           rnode.hide();
-                        } catch(err2) {
-                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
-                              function(inputElem){
-                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
-                               }
-                            );
-
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
-                        }
-                 }
+                error: errorHandle,
              });
 
          }
