@@ -184,7 +184,7 @@ generate_istgt_auth()
 		      FROM services_iscsitargetauthcredential
 		      WHERE iscsi_target_auth_tag=${iscsi_target_auth_tag}
 		      ORDER BY id" | \
-		while $f2; do
+		while eval read -r $f2; do
 			echo "  Auth \"${iscsi_target_auth_user}\" \"${iscsi_target_auth_secret}\" \"${iscsi_target_auth_peeruser}\" \"${iscsi_target_auth_peersecret}\""
 		done
 		echo
