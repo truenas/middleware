@@ -2426,9 +2426,9 @@ class notifier:
             if dskname not in disks:
                 disk.disk_enabled = False
                 if disk._original_state.get("disk_enabled"):
-                    #Duplicated disk entries in database
                     disk.save()
                 else:
+                    #Duplicated disk entries in database
                     disk.delete()
             else:
                 disk.save()
