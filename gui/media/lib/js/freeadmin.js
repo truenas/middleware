@@ -678,8 +678,12 @@
                 if(inputElem.type == 'submit') {
                     var dj = dijit.getEnclosingWidget(inputElem);
                     if(dj) {
-                        dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
-                        dj.set('label', gettext('Please wait...'));
+                        if(dj.isInstanceOf(dojox.form.BusyButton)) {
+                            dj.busyLabel = 'Please wait...';
+                        } else {
+                            dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                            dj.set('label', gettext('Please wait...'));
+                        }
                     }
                 }
                 dijit.getEnclosingWidget(inputElem).set('disabled',true);
@@ -710,6 +714,7 @@
                 } else {
                     sbtn.set('label', 'Save');
                 }
+                if(sbtn.isInstanceOf(dojox.form.BusyButton)) sbtn.resetTimeout();
             }
             handleJson(rnode, data);
 
@@ -1253,6 +1258,7 @@
         "dijit/ProgressBar",
         "dijit/Tooltip",
         "dojox/data/JsonRestStore",
+        "dojox/form/BusyButton",
         "dojox/fx/scroll",
         "dojox/grid/EnhancedGrid",
         "dojox/grid/enhanced/plugins/DnD",

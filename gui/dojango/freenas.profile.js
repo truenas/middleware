@@ -31,6 +31,7 @@
            "dojox.timing",
            "dojox.form.CheckedMultiSelect",
            "dojox.form.FileInput",
+           "dojox.form.BusyButton",
            "dojox.string.sprintf",
            "dijit.Tree",
            "dijit.layout.BorderContainer",
