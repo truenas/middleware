@@ -34,6 +34,7 @@ import time
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -42,7 +43,7 @@ from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.system import forms, models
@@ -253,6 +254,13 @@ def shutdown_run(request):
 
 def testmail(request):
 
+    form = forms.EmailForm(request.POST)
+    if not form.is_valid():
+        return JsonResp(request, form=form)
+
+    sid = transaction.savepoint()
+    form.save()
+
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
@@ -264,8 +272,9 @@ def testmail(request):
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
+    transaction.savepoint_rollback(sid)
 
-    return JsonResponse(error=error, message=errmsg)
+    return JsonResp(request, error=error, message=errmsg)
 
 def clearcache(request):
 

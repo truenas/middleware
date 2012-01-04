@@ -175,7 +175,7 @@ class Email(Model):
             max_length=120,
             verbose_name = _("From email"),
             help_text = _("An email address that the system will use for the sending address for mail it sends, eg: freenas@example.com"),
-            blank=True
+            default='',
             )
     em_outgoingserver = models.CharField(
             max_length=120,

@@ -1,13 +1,14 @@
 {% extends "freeadmin/generic_model_edit.html" %}
 
 {% block buttons_extra %}
-            <button data-dojo-type="dijit.form.Button"> 
+            <button data-dojo-type="dijit.form.Button">
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-                    var sendbtn = this;
-                    this.set('disabled', true);
                     form = getForm(this);
-                    data = form.get('value');
-                    formSubmit(form, e, '{% url system_testmail %}{% if inline %}?inline=true{% endif %}');
+                    doSubmit({
+                        form: form,
+                        event: e,
+                        url: '{% url system_testmail %}{% if inline %}?inline=true{% endif %}',
+                        });
                 </script>
             {% trans "Send Test Mail" %}
             </button>
