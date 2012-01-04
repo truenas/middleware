@@ -382,7 +382,7 @@ setup_nanobsd ( ) (
 		(
 		mkdir -p etc/local
 		cd usr/local/etc
-		find . | cpio -dumpl ../../../etc/local
+		find . | cpio -R root:wheel -dumpl ../../../etc/local
 		cd ..
 		rm -rf etc
 		ln -s ../../etc/local etc
@@ -396,7 +396,7 @@ setup_nanobsd ( ) (
 		# the files in /$d will be hidden by the mount.
 		# XXX: configure /$d ramdisk size
 		mkdir -p conf/base/$d conf/default/$d
-		find $d | cpio -dumpl conf/base/
+		find $d | cpio -R root:wheel -dumpl conf/base/
 	done
 
 	echo "$NANO_RAM_ETCSIZE" > conf/base/etc/md_size
@@ -465,7 +465,7 @@ populate_slice ( ) (
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -dumpv ${mnt}
+	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -R root:wheel -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
@@ -726,7 +726,7 @@ cust_allow_ssh_root () (
 cust_install_files () (
 	cd ${NANO_TOOLS}/Files
 	find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | \
-	    cpio -Ldumpv ${NANO_WORLDDIR}
+	    cpio -R root:wheel -Ldumpv ${NANO_WORLDDIR}
 )
 
 #######################################################################
@@ -744,7 +744,8 @@ cust_pkg () (
 	mkdir -p ${NANO_WORLDDIR}/Pkg
 	(
 		cd ${NANO_PACKAGE_DIR}
-		find ${NANO_PACKAGE_LIST} | cpio -Ldumpv ${NANO_WORLDDIR}/Pkg
+		find ${NANO_PACKAGE_LIST} | \
+		    cpio -R root:wheel -Ldumpv ${NANO_WORLDDIR}/Pkg
 	)
 
 	# Count & report how many we have to install

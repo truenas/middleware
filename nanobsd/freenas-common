@@ -359,7 +359,7 @@ add_gui()
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
 	( cd ${gui}
-	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -dumpv ${dst} )
+	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
@@ -380,7 +380,7 @@ move_data()
 	db=${NANO_WORLDDIR}/data
 	rm -rf ${NANO_DATADIR}
 	mkdir -p ${NANO_DATADIR}
-	( cd ${db} ; find . | cpio -dumpv ${NANO_DATADIR} )
+	( cd ${db} ; find . | cpio -R root:wheel -dumpv ${NANO_DATADIR} )
 	rm -rf ${db}
 }
 customize_cmd move_data
