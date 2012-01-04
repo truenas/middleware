@@ -9,7 +9,7 @@
     {% endblock %}
 </table>
     {% block buttons %}
-    <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+    <button data-dojo-type="dojox.form.BusyButton" type="submit" data-dojo-props="type:'submit'" class="submitform">
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
     {% if not inline %}
