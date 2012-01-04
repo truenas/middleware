@@ -69,9 +69,10 @@ class Settings(Model):
             default="America/Los_Angeles",
             verbose_name = _("Timezone")
             )
-    stg_syslogserver = IPAddressField(
+    stg_syslogserver = models.CharField(
             default='',
             blank=True,
+            max_length=120,
             verbose_name = _("Syslog server")
             )
 
