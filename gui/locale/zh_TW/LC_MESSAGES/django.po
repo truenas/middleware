@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-11-19 22:38+0200\n"
+"PO-Revision-Date: 2012-01-04 08:56+0200\n"
 "Last-Translator: ahaoa <ahaoa.wang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -1245,7 +1245,7 @@ msgstr "連接埠"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "請使用英文字母、數字和 .  - 和 _ 符號。"
 
-# 電子郵件 %(email)s 不正確
+# 電子郵件 %(email) 不正確
 #: services/forms.py:326 services/forms.py:897
 #, python-format
 msgid "The email %(email)s is not valid"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-12-05 11:49+0200\n"
+"PO-Revision-Date: 2012-01-04 10:43+0200\n"
 "Last-Translator: alamati <alamati@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
@@ -1229,7 +1229,7 @@ msgstr ""
 #: services/forms.py:305 services/models.py:780 services/models.py:841
 #: services/models.py:968
 msgid "Port"
-msgstr ""
+msgstr "درگاه"
 
 #: services/forms.py:315
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1612,7 +1612,7 @@ msgstr ""
 
 #: services/models.py:204
 msgid "Max. Connections"
-msgstr ""
+msgstr "بیشینه‌ی ارتباطات"
 
 #: services/models.py:206
 msgid ""
@@ -1924,7 +1924,7 @@ msgstr ""
 
 #: services/models.py:583 storage/views.py:225
 msgid "Serial"
-msgstr ""
+msgstr "سریال"
 
 #: services/models.py:586
 msgid "Serial number for the logical unit"
@@ -1987,7 +1987,7 @@ msgstr ""
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "هدف"
 
 #: services/models.py:660
 msgid "Target this extent belongs to"
@@ -2003,11 +2003,11 @@ msgstr ""
 
 #: services/models.py:690
 msgid "Provider"
-msgstr ""
+msgstr "فراهم‌کننده"
 
 #: services/models.py:694
 msgid "Domain name"
-msgstr ""
+msgstr "نام دامنه"
 
 #: services/models.py:696
 msgid ""
@@ -2017,11 +2017,11 @@ msgstr ""
 
 #: services/models.py:708
 msgid "Update period"
-msgstr ""
+msgstr "تناوب به‌روز رسانی"
 
 #: services/models.py:710
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "زمان به میلی‌ثانیه"
 
 #: services/models.py:714
 msgid "Forced update period"
@@ -2029,16 +2029,16 @@ msgstr ""
 
 #: services/models.py:720 services/models.py:754
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "این پارامترها به تنظیمات کلی در inadyn.conf اضافه خواهند شد."
 
 #: services/models.py:724 services/models.py:725
 #: templates/services/index.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "DNS ‌پویا"
 
 #: services/models.py:734
 msgid "Location"
-msgstr ""
+msgstr "محل"
 
 #: services/models.py:736
 msgid ""
@@ -2048,7 +2048,7 @@ msgstr ""
 
 #: services/models.py:740
 msgid "Contact"
-msgstr ""
+msgstr "تماس"
 
 #: services/models.py:742
 msgid ""
@@ -2058,7 +2058,7 @@ msgstr ""
 
 #: services/models.py:746
 msgid "Community"
-msgstr ""
+msgstr "انجمن"
 
 #: services/models.py:747
 msgid "In most cases, 'public' is used here."
