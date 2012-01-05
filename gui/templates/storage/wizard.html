@@ -18,11 +18,20 @@
             </td>
             <td>
                 {{ form.volume_name.errors }}
-                {{ form.volume_name }}<br />
+                {{ form.volume_name }}
+            </td>
+        </tr>
+        {% if form.volume_add %}
+        <tr>
+            <td style="width:150px;">
+                {% trans "Volume to extend" %}
+            </td>
+            <td>
                 {{ form.volume_add.errors }}
                 {{ form.volume_add }}
             </td>
         </tr>
+        {% endif %}
         <tr>
             <td>
                 {% trans "Member disks" %} (<span id="wizard_num_disks">0</span>)

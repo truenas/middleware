@@ -193,7 +193,6 @@ class UnixPermissionField(forms.MultiValueField):
 
 class VolumeWizardForm(forms.Form):
     volume_name = forms.CharField(max_length=30, label=_('Volume name'), required=False)
-    volume_add = forms.ChoiceField(label = _('Volume add'), required=False )
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
@@ -203,8 +202,12 @@ class VolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_add'].choices = [('','-----')] + [(x.vol_name, x.vol_name) for x in models.Volume.objects.filter(vol_fstype='ZFS')]
-        self.fields['volume_add'].widget.attrs['onChange'] = 'wizardcheckings(true);'
+        qs = models.Volume.objects.filter(vol_fstype='ZFS')
+        if qs.exists():
+            self.fields['volume_add'] = forms.ChoiceField(label = _('Volume add'), required=False )
+            self.fields['volume_add'].choices = [('','-----')] + \
+                                        [(x.vol_name, x.vol_name) for x in qs]
+            self.fields['volume_add'].widget.attrs['onChange'] = 'wizardcheckings(true);'
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
         self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleGeneric("id_ufspathen", ["id_ufspath"], true);'
         if not self.data.get("ufspathen", False):

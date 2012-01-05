@@ -932,7 +932,7 @@
         if(!dijit.byId("wizarddisks")) return;
         var add = dijit.byId("id_volume_add");
         var add_mode = false;
-        if(add.get("value") != '') {
+        if(add && add.get("value") != '') {
             add_mode = true;
         }
         var disks = dijit.byId("wizarddisks");
