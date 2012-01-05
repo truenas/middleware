@@ -54,12 +54,13 @@ class Volume(Model):
     def get_disks(self):
         try:
             if not hasattr(self, '_disks'):
+                n = notifier()
                 if self.vol_fstype == 'ZFS':
-                    pool = notifier().zpool_parse(self.vol_name)
+                    pool = n.zpool_parse(self.vol_name)
                     self._disks = pool.get_disks()
                 else:
-                    prov = notifier().get_label_provider(self.vol_fstype.lower(), self.vol_name)
-                    self._disks = notifier().get_disks_from_provider(prov)
+                    prov = n.get_label_provider(self.vol_fstype.lower(), self.vol_name)
+                    self._disks = n.get_disks_from_provider(prov)
             return self._disks
         except Exception, e:
             return []
@@ -103,13 +104,14 @@ class Volume(Model):
         svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
         reloads = (False, False, False,  False)
 
+        n = notifier()
         if cascade:
 
             for mp in self.mountpoint_set.all():
                 reloads = map(sum, zip(reloads, mp.delete_attachments()))
                 mp.delete(do_reload=False)
 
-            zvols = notifier().list_zfs_vols(self.vol_name)
+            zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
                 qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
                 if qs.exists():
@@ -132,24 +134,24 @@ class Volume(Model):
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
-                notifier().stop(svc)
+                n.stop(svc)
 
-        notifier().detach_volume_swaps(self)
+        n.detach_volume_swaps(self)
 
         if destroy:
-            notifier().destroy("volume", self)
+            n.destroy("volume", self)
         else:
-            notifier().volume_detach(self.vol_name, self.vol_fstype)
+            n.volume_detach(self.vol_name, self.vol_fstype)
 
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
         # Refresh the fstab
-        notifier().reload("disk")
+        n.reload("disk")
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
-                notifier().start(svc)
+                n.start(svc)
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
@@ -210,8 +212,9 @@ class Disk(Model):
             default=True,
         )
     def get_serial(self):
-        return notifier().serial_from_device(
-            notifier().identifier_to_device(self.disk_identifier)
+        n = notifier()
+        return n.serial_from_device(
+            n.identifier_to_device(self.disk_identifier)
             )
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
