@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2011-12-26 01:45+0200\n"
-"Last-Translator: biggypsy <biggypsy@gmail.com>\n"
+"PO-Revision-Date: 2012-01-05 02:54+0200\n"
+"Last-Translator: choongsan <choongsan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -112,19 +112,16 @@ msgid "Disabled"
 msgstr "비활성화 됨"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "대기모드 시 최소 전력 사용 (spindown)"
+msgstr "1단계 - 대기모드 시 최소 전력 사용 (spindown)"
 
 #: choices.py:88
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "대기모드 시 보통 전력 사용"
+msgstr "64단계 - 대기모드 시 중간 정도의 전력 사용"
 
 #: choices.py:89
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "대기모드 시 보통 전력 사용"
+msgstr "127단계 - 대기모드 시 중간 정도의 전력 사용"
 
 #: choices.py:90
 #, fuzzy
@@ -5805,7 +5802,7 @@ msgid "English"
 msgstr "영어"
 
 msgid "Level"
-msgstr "레벨"
+msgstr "단계"
 
 msgid "Add Link Aggregation"
 msgstr "링크어그리게이션 추가"
