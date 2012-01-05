@@ -1461,7 +1461,7 @@ class notifier:
             fd.close()
             self.__system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
         if homedir == '/root':
-            self.__system("/sbin/mount -u /")
+            self.__system("/sbin/mount -ur /")
         os.umask(saved_umask)
 
     def _reload_user(self):
