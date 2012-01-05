@@ -996,6 +996,12 @@ class notifier:
                 from storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
+        if not retval:
+            try:
+                self.__rmdir_mountpoint(path)
+            except MiddlewareError as me:
+                retval = str(me)
+
         return retval
 
     def destroy_zfs_vol(self, name):
@@ -1005,10 +1011,10 @@ class notifier:
 
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
-        z_name = str(volume.vol_name)
+        vol_name = str(volume.vol_name)
         # First, destroy the zpool.
         disks = volume.get_disks()
-        self.__system("zpool destroy -f %s" % (z_name))
+        self.__system("zpool destroy -f %s" % (vol_name, ))
 
         # Clear out disks associated with the volume
         for disk in disks:
@@ -1217,15 +1223,100 @@ class notifier:
             if swapdev != '':
                 self.__system("swapoff /dev/%s" % swapdev)
 
-    def _destroy_volume(self, volume):
-        """Destroy a volume designated by volume_id"""
+    def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
+        """Determine the mountpoint for a volume or ZFS dataset
 
-        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS', 'EXT2FS')
-        if volume.vol_fstype == 'ZFS':
+        It tries to divine the location of the volume or dataset from the
+        relevant command, and if all else fails, falls back to a less
+        elegant method of representing the mountpoint path.
+
+        This is done to ensure that in the event that the database and
+        reality get out of synch, the user can nuke the volume/mountpoint.
+
+        XXX: this should be done more elegantly by calling getfsent from C.
+
+        Required Parameters:
+            name: textual name for the mountable vdev or volume, e.g. 'tank',
+                  'stripe', 'tank/dataset', etc.
+            fstype: filesystem type for the vdev or volume, e.g. 'UFS', 'ZFS',
+                    etc.
+
+        Optional Parameters:
+            mountpoint_root: the root directory where all of the datasets and
+                             volumes shall be mounted. Defaults to '/mnt'.
+
+        Returns:
+            the absolute path for the volume on the system.
+        """
+        mountpoint = None
+        if fstype == 'ZFS':
+            p1 = self.__pipeopen('zfs list -H -o mountpoint %s' % (name, ))
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
+                return stdout.strip()
+        elif fstype == 'UFS':
+            p1 = self.__pipeopen('mount -p')
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
+                flines = filter(lambda x: x and x.split()[0] == \
+                                                '/dev/ufs/' + name,
+                                stdout.splitlines())
+                if flines:
+                    return flines[0].split()[1]
+
+        return os.path.join(mountpoint_root, name)
+
+    def _destroy_volume(self, volume):
+        """Destroy a volume on the system
+
+        This either destroys a zpool or umounts a generic volume (e.g. NTFS,
+        UFS, etc) and nukes it.
+
+        In the event that the volume is still in use in the OS, the end-result
+        is implementation defined depending on the filesystem, and the set of
+        commands used to export the filesystem.
+
+        Finally, this method goes and cleans up the mountpoint, as it's
+        assumed to be no longer needed. This is also a sanity check to ensure
+        that cleaning up everything worked.
+
+        XXX: doing recursive unmounting here might be a good idea.
+        XXX: better feedback about files in use might be a good idea...
+             someday. But probably before getting to this point. This is a
+             tricky problem to fix in a way that doesn't unnecessarily suck up
+             resources, but also ensures that the user is provided with
+             meaningful data.
+        XXX: divorce this from storage.models; depending on storage.models
+             introduces a circular dependency and creates design ugliness.
+        XXX: implement destruction algorithm for non-UFS/-ZFS.
+
+        Parameters:
+            volume: a storage.models.Volume object.
+
+        Raises:
+            MiddlewareError: the volume could not be detached cleanly.
+            MiddlewareError: the volume's mountpoint couldn't be removed.
+            ValueError: 'destroy' isn't implemented for the said filesystem.
+        """
+
+        # volume_detach compatibility.
+        vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
+
+        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
+
+        if vol_fstype == 'ZFS':
             self.__destroy_zfs_volume(volume)
-        elif volume.vol_fstype == 'UFS':
+        elif vol_fstype == 'UFS':
             self.__destroy_ufs_volume(volume)
+        else:
+            raise ValueError("destroy isn't implemented for the %s filesystem"
+                             % (vol_fstype, ))
+
+
         self._reload_disk()
+
+
+        self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-fstab quietstart")
@@ -1950,39 +2041,41 @@ class notifier:
     def volume_detach(self, vol_name, vol_fstype):
         """Detach a volume from the system
 
-        This either executes exports a zpool or umounts a
-        generic volume (e.g. NTFS, UFS, etc).
+        This either executes exports a zpool or umounts a generic volume (e.g.
+        NTFS, UFS, etc).
 
-        In the event that the volume is still in use in the OS,
-        the end-result is implementation defined depending on
-        the filesystem, and the set of commands used to export
-        the filesystem.
+        In the event that the volume is still in use in the OS, the end-result
+        is implementation defined depending on the filesystem, and the set of
+        commands used to export the filesystem.
 
-        XXX: recursive unmounting / needs for recursive
-             unmounting here might be a good idea.
-        XXX: better feedback about files in use might be a good
-             idea... someday. But probably before getting to
-             this point. This is a tricky problem to fix in a
-             way that doesn't unnecessarily suck up resources,
-             but also ensures that the user is provided with
+        Finally, this method goes and cleans up the mountpoint. This is a
+        sanity check to ensure that things are in synch.
+
+        XXX: recursive unmounting / needs for recursive unmounting here might
+             be a good idea.
+        XXX: better feedback about files in use might be a good idea...
+             someday. But probably before getting to this point. This is a
+             tricky problem to fix in a way that doesn't unnecessarily suck up
+             resources, but also ensures that the user is provided with
              meaningful data.
+        XXX: this doesn't work with the alternate mountpoint functionality
+             available in UFS volumes.
 
         Parameters:
-            vol_name: a textual name for the volume, e.g. tank,
-                      stripe, etc.
-            vol_fstype: the filesystem type for the volume;
-                        valid values are:
+            vol_name: a textual name for the volume, e.g. tank, stripe, etc.
+            vol_fstype: the filesystem type for the volume; valid values are:
                         'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
 
         Raises:
-            MiddlewareError: the volume could not be detached
-                             cleanly. 
+            MiddlewareError: the volume could not be detached cleanly.
+            MiddlewareError: the volume's mountpoint couldn't be removed.
         """
 
+        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
         if vol_fstype == 'ZFS':
             cmds = [ 'zpool export %s' % (vol_name, ) ]
         else:
-            cmds = [ 'umount /mnt/%s' % (vol_name, ) ]
+            cmds = [ 'umount %s' % (vol_mountpath, ) ]
 
         for cmd in cmds:
             p1 = self.__pipeopen(cmd)
@@ -1992,6 +2085,42 @@ class notifier:
                                       'with %d): %s'
                                       % (vol_name, cmd, p1.returncode,
                                          stderr, )) 
+        self.__rmdir_mountpoint(vol_mountpath)
+
+
+    def __rmdir_mountpoint(self, path):
+        """Remove a mountpoint directory designated by path
+
+        This only nukes mountpoints that exist in /mnt as alternate mointpoints
+        can be specified with UFS, which can take down mission critical
+        subsystems.
+
+        This purposely doesn't use shutil.rmtree to avoid removing files that
+        were potentially hidden by the mount.
+
+        Parameters:
+            path: a path suffixed with /mnt that points to a mountpoint that
+                  needs to be nuked.
+
+        XXX: rewrite to work outside of /mnt and handle unmounting of
+             non-critical filesystems.
+        XXX: remove hardcoded reference to /mnt .
+
+        Raises:
+            MiddlewareError: the volume's mountpoint couldn't be removed.
+        """
+
+        if path.startswith('/mnt'):
+            # UFS can be mounted anywhere. Don't nuke /etc, /var, etc as the
+            # underlying contents might contain something of value needed for
+            # the system to continue operating.
+            try:
+                if os.path.isdir(path):
+                    os.rmdir(path)
+            except OSError as ose:
+                raise MiddlewareError('Failed to remove mountpoint %s: %s'
+                                      % (path, str(ose), ))
+
 
     def zfs_scrub(self, name, stop=False):
         if stop:

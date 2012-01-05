@@ -93,7 +93,7 @@ class Volume(Model):
                     services[service] = services.get(service, 0) + len(ids)
         return services
 
-    def delete(self, destroy=True, cascade=True):
+    def _delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
@@ -109,7 +109,6 @@ class Volume(Model):
 
             for mp in self.mountpoint_set.all():
                 reloads = map(sum, zip(reloads, mp.delete_attachments()))
-                mp.delete(do_reload=False)
 
             zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
@@ -142,6 +141,21 @@ class Volume(Model):
             n.destroy("volume", self)
         else:
             n.volume_detach(self.vol_name, self.vol_fstype)
+
+        return (svcs, reloads, )
+
+    def delete(self, destroy=True, cascade=True):
+
+        try:
+            svcs, reloads = Volume._delete(self,
+                                           destroy=destroy,
+                                           cascade=cascade)
+        finally:
+            for mp in self.mountpoint_set.all():
+                if not os.path.isdir(mp.mp_path):
+                    mp.delete(do_reload=False)
+
+        n = notifier()
 
         # The framework would cascade delete all database items
         # referencing this volume.
