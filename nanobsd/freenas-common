@@ -208,7 +208,7 @@ add_port converters/base64
 add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port net/py-ldap2 -DWITH_SASL
+add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port devel/xorg-macros
 add_port sysutils/gnome_subr
@@ -429,6 +429,180 @@ fix_fuse_module_location()
 	rm -Rf "$bad_modules_dir"
 }
 customize_cmd fix_fuse_module_location
+
+# NOTE: these are 8.0.x specific hacks that should be rolled into the package
+# or generated at boot/runtime; do not merge into 8.2.x+.
+if [ "$MULTIMEDIA" = 1 ]; then
+minidlna_hacks()
+{
+	# Port installs the user; package doesn't appear to.
+	CR "id dlna || pw useradd dlna -d /var/empty -s /sbin/nologin"
+	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
+
+minidlna_enable="NO"
+EOF
+	# XXX: minidlna requires a UID, not a username for the -u option
+	#      (script rc.d bug). That being said, it still doesn't start with
+	#      the dlna user *grump*. Run as root for the super insecure win!
+	# XXX: Make sure the database is rebuilt every time it's restarted.
+	# TODO: implement directory watch via kqueues in minidlna.
+	# XXX: remove check for /var/db directory to avoid having to rewrite
+	#      minidlna's rc.d script.
+	sed -i '' \
+	    -e 's/-"dlna"}/-$(id -u "root")}/' \
+	    -e 's/\(command_args="-P $pidfile.*\)"/\1 -R"/g' \
+	    -e '/^required_dirs/d' \
+	    ${NANO_WORLDDIR}/usr/local/etc/rc.d/minidlna
+	cat > "${NANO_WORLDDIR}/usr/local/etc/minidlna.conf" <<EOF
+port=8200
+# GC: Look for everything (audio, pictures, video) in this directory.
+#media_dir=/mnt/tank
+# GC: Just audio
+#media_dir=A,/mnt/tank
+# GC: Just pictures
+#media_dir=P,/mnt/tank
+# GC: Just video
+#media_dir=V,/mnt/tank
+# GC: might want to change this.
+friendly_name=freenas
+# GC: change this
+#db_dir=/mnt/tank/var/db/minidlna
+album_art_names=Cover.jpg/cover.jpg/AlbumArtSmall.jpg/albumartsmall.jpg/AlbumArt.jpg/albumart.jpg/Album.jpg/album.jpg/Folder.jpg/folder.jpg/Thumb.jpg/thumb.jpg
+inotify=no
+enable_tivo=no
+strict_dlna=no
+notify_interval=300
+# You might want to change the following if you have more than one NAS box.
+serial=12345678
+model_number=1
+EOF
+
+}
+customize_cmd minidlna_hacks
+
+firefly_hacks()
+{
+	# Port installs the user; package doesn't appear to.
+	CR "id daapd || pw useradd daapd -d /var/empty -s /sbin/nologin"
+	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
+
+firefly_enable="NO"
+EOF
+	# XXX: --prefix bug in port; just omit the db directory check to avoid
+	# having to re-edit the script after a reboot.
+	sed -i '' -e '/^required_dirs/d' \
+	    ${NANO_WORLDDIR}/usr/local/etc/rc.d/mt-daapd
+	cat > ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf <<EOF
+[general]
+web_root = /usr/local/share/mt-daapd/admin-root
+port = 3689
+admin_pw = mt-daapd
+db_type = sqlite3
+# GC: change this
+#db_parms = /mnt/tank/var/db/firefly
+# GC: change this
+#mp3_dir = /mnt/tank/
+# GC: might want to change this.
+servername = FreeNAS %v on %h
+runas = daapd
+# Set this if you want to have password access to your share.
+#password = password
+extensions = .mp3,.m4a,.m4p,.ogg,.flac
+ssc_codectypes = ogg,flac,alac
+ssc_prog = /usr/local/bin/mt-daapd-ssc.sh
+logfile = /var/log/mt-daapd.log
+debuglevel = 5  
+rescan_interval = 300
+always_scan = 0
+scan_type = 0
+compress = 1
+
+[plugins]
+plugin_dir = /usr/local/lib/mt-daapd/plugins
+
+[scanning]
+process_playlists = 1
+process_itunes = 1
+process_m3u = 1
+EOF
+}
+customize_cmd firefly_hacks
+
+transmission_hacks()
+{
+	# Port installs the user; package doesn't appear to.
+	CR "id transmission || pw useradd transmission -d /var/empty -s /sbin/nologin"
+	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
+
+transmission_enable="NO"
+transmission_watch_dir=""
+transmission_download_dir=""
+transmission_user="myuser"
+EOF
+	# No comments for JSON ;(..
+	cat >> ${NANO_WORLDDIR}/usr/local/etc/transmission/home/settings.json <<EOF
+{
+    "alt-speed-down": 50,
+    "alt-speed-enabled": false,
+    "alt-speed-time-begin": 540,
+    "alt-speed-time-day": 127,
+    "alt-speed-time-enabled": false,
+    "alt-speed-time-end": 1020,
+    "alt-speed-up": 50,
+    "bind-address-ipv4": "0.0.0.0",
+    "bind-address-ipv6": "::",
+    "blocklist-enabled": false,
+    "blocklist-url": "http://www.example.com/blocklist",
+    "cache-size-mb": 4,
+    "dht-enabled": true,
+    "download-dir": "/mnt/tank/home/myuser/transmission/complete",
+    "encryption": 1,
+    "idle-seeding-limit": 30,
+    "idle-seeding-limit-enabled": false,
+    "incomplete-dir": "/mnt/tank/home/myuser/transmission/incomplete",
+    "incomplete-dir-enabled": true,
+    "lpd-enabled": false,
+    "message-level": 2,
+    "peer-congestion-algorithm": "",
+    "peer-limit-global": 240,
+    "peer-limit-per-torrent": 60,
+    "peer-port": 51413,
+    "peer-port-random-high": 65535,
+    "peer-port-random-low": 49152,
+    "peer-port-random-on-start": false,
+    "peer-socket-tos": "default",
+    "pex-enabled": true,
+    "port-forwarding-enabled": true,
+    "preallocation": 1,
+    "prefetch-enabled": 1,
+    "ratio-limit": 2,
+    "ratio-limit-enabled": false,
+    "rename-partial-files": true,
+    "rpc-authentication-required": false,
+    "rpc-bind-address": "0.0.0.0",
+    "rpc-enabled": false,
+    "rpc-password": "{83ea26654a4e4ffa421cc53e5cc9fd3394d8412cX46GA39K",
+    "rpc-port": 9091,
+    "rpc-url": "/transmission/",
+    "rpc-username": "",
+    "rpc-whitelist": "127.0.0.1,192.168.*.*",
+    "rpc-whitelist-enabled": true,
+    "script-torrent-done-enabled": false,
+    "script-torrent-done-filename": "",
+    "speed-limit-down": 100,
+    "speed-limit-down-enabled": false,
+    "speed-limit-up": 100,
+    "speed-limit-up-enabled": false,
+    "start-added-torrents": true,
+    "trash-original-torrent-files": false,
+    "umask": 18,
+    "upload-slots-per-torrent": 14,
+    "utp-enabled": true
+}
+EOF
+}
+customize_cmd transmission_hacks
+fi
 
 if $do_image; then
 last_orders() {
