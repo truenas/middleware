@@ -150,8 +150,8 @@ _host_config()
 			echo ipv6_defaultrouter=\"${ipv6gateway}\"
 		fi
 		# Generate resolv.conf
-		(if [ -n "${nameserver1}" ]; then
-			echo search ${domainname}
+		if [ -n "${nameserver1}" ]; then
+			(echo search ${domainname}
 			for ns in \
 				"${nameserver1}" "${nameserver2}" \
 				"${nameserver3}"
@@ -159,8 +159,8 @@ _host_config()
 				if [ -n "${ns:-}" ]; then
 					echo "nameserver ${ns}"
 				fi
-			done
-		fi) > /etc/resolv.conf
+			done) > /etc/resolv.conf
+		fi
 	done
 }
 
