@@ -26,6 +26,7 @@ class Migration(SchemaMigration):
             'ad_allow_trusted_doms': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ad_dcname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ad_domainname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'ad_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ad_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
@@ -34,6 +35,7 @@ class Migration(SchemaMigration):
             'afp_srv_connections_limit': ('django.db.models.fields.IntegerField', [], {'default': '50', 'max_length': '120'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
+            'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'services.cifs': {
@@ -57,6 +59,7 @@ class Migration(SchemaMigration):
             'cifs_srv_largerw': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_localmaster': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_loglevel': ('django.db.models.fields.CharField', [], {'default': "'Minimum'", 'max_length': '120'}),
+            'cifs_srv_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'cifs_srv_nullpw': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_sendfile': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_smb_options': ('django.db.models.fields.TextField', [], {'max_length': '120', 'blank': 'True'}),
