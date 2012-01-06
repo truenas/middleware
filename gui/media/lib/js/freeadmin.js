@@ -1314,7 +1314,6 @@
 
             var geticons = function(item,opened) {
                 if(item.icon) return item.icon;
-                return (!item || this.model.mayHaveChildren(item)) ? (opened ? "dijitFolderOpened" : "dijitFolderClosed") : "dijitLeaf";
             };
 
             var treeclick = function(item) {
