@@ -959,10 +959,11 @@ class FTP(Model):
             verbose_name = _("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
             verbose_name = _("Require Reverse DNS for IP"))
-    ftp_masqaddress = models.IPAddressField(
+    ftp_masqaddress = models.CharField(
             verbose_name = _("Masquerade address"),
-            blank=True,
-            help_text = _("Causes the server to display the network information for the specified IP address to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
+            blank = True,
+            max_length = 120,
+            help_text = _("Causes the server to display the network information for the specified address to the client, on the assumption that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
             )
     ftp_passiveportsmin = models.PositiveIntegerField(
             default = 0,
