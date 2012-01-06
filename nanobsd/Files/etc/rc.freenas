@@ -69,7 +69,7 @@
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="1g"}
+: ${FREENAS_CACHESIZE:="2g"}
 : ${FREENAS_CACHEEXPIRE:="60"}
 
 #
