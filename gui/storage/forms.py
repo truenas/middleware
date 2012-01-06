@@ -462,14 +462,6 @@ class VolumeImportForm(forms.Form):
         for name, part in _parts.items():
             parts.append(Disk(part['devname'], part['capacity']))
 
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            for p in list(parts):
-                if p.dev.startswith(rootdev_base.group(0)):
-                    parts.remove(p)
-
         choices = sorted(parts)
         choices = [tuple(p) for p in choices]
         return choices
