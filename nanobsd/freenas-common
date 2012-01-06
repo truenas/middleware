@@ -91,7 +91,6 @@ add_port net/nss_ldap
 add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
 	WITH_ACL=true WITHOUT_ICONV=true WITHOUT_TIMELIMIT=true
 add_port lang/python27 WITH_HUGE_STACK_SIZE=y
-add_port lang/lua
 add_port dns/py-dnspython
 #+net/samba
 add_port devel/talloc
@@ -229,7 +228,7 @@ add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
-add_port security/nmap
+#add_port security/nmap
 add_port sysutils/ipmitool
 # NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
 # counted against the release image's size because they aren't used in
