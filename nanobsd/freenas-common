@@ -507,6 +507,7 @@ minidlna_hacks()
 	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
 
 minidlna_enable="NO"
+minidlna_flags="-f /mnt/tank/home/myuser/minidlna.conf"
 EOF
 	# XXX: minidlna requires a UID, not a username for the -u option
 	#      (script rc.d bug). That being said, it still doesn't start with
@@ -523,17 +524,17 @@ EOF
 	cat > "${NANO_WORLDDIR}/usr/local/etc/minidlna.conf" <<EOF
 port=8200
 # GC: Look for everything (audio, pictures, video) in this directory.
-#media_dir=/mnt/tank
+#media_dir=/mnt/tank/home/myuser
 # GC: Just audio
-#media_dir=A,/mnt/tank
+#media_dir=A,/mnt/tank/home/myuser
 # GC: Just pictures
-#media_dir=P,/mnt/tank
+#media_dir=P,/mnt/tank/home/myuser
 # GC: Just video
-#media_dir=V,/mnt/tank
+#media_dir=V,/mnt/tank/home/myuser
 # GC: might want to change this.
 friendly_name=freenas
 # GC: change this
-#db_dir=/mnt/tank/var/db/minidlna
+db_dir=/mnt/tank/home/myuser/var/db/minidlna
 album_art_names=Cover.jpg/cover.jpg/AlbumArtSmall.jpg/albumartsmall.jpg/AlbumArt.jpg/albumart.jpg/Album.jpg/album.jpg/Folder.jpg/folder.jpg/Thumb.jpg/thumb.jpg
 inotify=no
 enable_tivo=no
@@ -553,7 +554,8 @@ firefly_hacks()
 	CR "id daapd || pw useradd daapd -d /var/empty -s /sbin/nologin"
 	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
 
-firefly_enable="NO"
+mt_daapd_enable="NO"
+mtdaapd_flags="-c /mnt/tank/home/myuser/mt-daapd.conf"
 EOF
 	# XXX: --prefix bug in port; just omit the db directory check to avoid
 	# having to re-edit the script after a reboot.
@@ -566,9 +568,9 @@ port = 3689
 admin_pw = mt-daapd
 db_type = sqlite3
 # GC: change this
-#db_parms = /mnt/tank/var/db/firefly
+db_parms = /mnt/tank/myuser/var/db/firefly
 # GC: change this
-#mp3_dir = /mnt/tank/
+#mp3_dir = /mnt/tank/myuser
 # GC: might want to change this.
 servername = FreeNAS %v on %h
 runas = daapd
