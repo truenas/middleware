@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.3-RELEASE
+Release Notes for FreeNAS 8.0.3-RELEASE-p1
 
 *** IMPORTANT ***
 
@@ -20,6 +20,26 @@ Release Notes for FreeNAS 8.0.3-RELEASE
 - Previous builds were branded as i386/amd64 (32-bit and 64-bit
   respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
   respectively.
+
+Changes since 8.0.3-RELEASE:
+
+Bugfixes
+------------------------
+
+Middleware
+========================
+1. Fix a regression for DHCP users where /etc/resolv.conf would be nulled
+   out if DNS servers weren't specified in the GUI.
+
+AD/CIFS
+========================
+1. Disable AIO by default and change the default AIO read / write size to
+   2kB. This was done provided feedback and the fact that the build fixes
+   actually enabled AIO, whereas prior releases didn't enable it by
+   default. This can cause issues with machines that don't have the
+   resources to service AIO requests quickly enough, where previously they
+   would be able to service requests at near line speeds, whereas after
+   they are unable to service requests that quickly.
 
 Changes since 8.0.2-RELEASE:
 
