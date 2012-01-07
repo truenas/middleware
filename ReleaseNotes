@@ -23,6 +23,15 @@ Release Notes for FreeNAS 8.0.3-RELEASE-p1
 
 Changes since 8.0.3-RELEASE:
 
+Enhancements
+------------------------
+
+OS/Third party
+========================
+
+1. Update ataidle from 2.6 to 2.72 based on maintainer's (brucec@FreeBSD)
+   recommendation due to interoperabilities with 2.6 and certain chipsets.
+
 Bugfixes
 ------------------------
 
