@@ -1,0 +1,329 @@
+diff -Naur databases/tdb/Makefile databases/tdb/Makefile
+--- databases/tdb/Makefile	2010-12-03 23:30:51.000000000 -0800
++++ databases/tdb/Makefile	2011-08-01 13:05:57.000000000 -0700
+@@ -2,12 +2,12 @@
+ # Date created:				1 May 2009
+ # Whom:					Koop Mast <kwm@FreeBSD.org>
+ #
+-# $FreeBSD: ports/databases/tdb/Makefile,v 1.19 2010/12/04 07:30:51 ade Exp $
++# $FreeBSD: ports/databases/tdb/Makefile,v 1.20 2011/08/01 20:05:57 timur Exp $
+ #
+ 
+ PORTNAME=		tdb
+-PORTVERSION=		1.2.1
+-PORTREVISION=		1
++PORTVERSION=		1.2.9
++PORTREVISION=		0
+ PORTEPOCH=		1
+ CATEGORIES=		databases
+ MASTER_SITES=		ftp://ftp.samba.org/pub/%SUBDIR%/ \
+@@ -20,42 +20,81 @@
+ 
+ CONFLICTS=		*samba3[0-4]-3.*
+ 
+-USE_PYTHON=		yes
+-USE_GMAKE=		yes
++USE_PYTHON_BUILD=	yes
+ USE_LDCONFIG=		yes
+-GNU_CONFIGURE=		yes
++HAS_CONFIGURE=		yes
++WAF_TOOL=		buildtools/bin/waf
++CONFIGURE_SCRIPT=	${WAF_TOOL} configure
+ USE_GNOME=		pkgconfig
+-USE_AUTOTOOLS=		autoconf autoheader
+ 
+ LICENSE=		GPLv3
+ MAKE_JOBS_SAFE=		yes
+ 
+-IPATHS=			-I${WRKSRC}/libreplace
+-AUTOHEADER_ARGS=	${IPATHS}
+-AUTOCONF_ARGS=		${IPATHS}
+ PKGCONFIGDIR?=		${PREFIX}/libdata/pkgconfig
+-PKGCONFIGDIR_REL?=	${PKGCONFIGDIR:S|^${PREFIX}/||}
+-PYTHON_SITELIBDIR_REL?=	${PYTHONPREFIX_SITELIBDIR:S|^${PREFIX}/||}
++PLIST_SUB+=		PKGCONFIGDIR=${PKGCONFIGDIR:S;${PREFIX}/;;}
+ 
+-CONFIGURE_ENV+=		XSLTPROC="/usr/bin/true"
++OPTIONS=		PYTHON		"Python bindings"	on
++
++.include <bsd.port.options.mk>
+ 
+ MAN8=			tdbbackup.8 \
+ 			tdbdump.8 \
++			tdbrestore.8 \
+ 			tdbtool.8
+ 
+ PLIST_FILES=		bin/tdbbackup \
+ 			bin/tdbdump \
++			bin/tdbrestore \
+ 			bin/tdbtool \
+ 			include/tdb.h \
+-			lib/libtdb.a \
+ 			lib/libtdb.so \
+ 			lib/libtdb.so.1 \
+-			${PKGCONFIGDIR_REL}/tdb.pc \
+-			${PYTHON_SITELIBDIR_REL}/tdb.so
++			%%PKGCONFIGDIR%%/tdb.pc
++
++CONFIGURE_ENV+=		XSLTPROC="/usr/bin/true"
++CONFIGURE_ENV+=		NOCOLOR=yes
++MAKE_ENV+=		NOCOLOR=yes
+ 
+-pre-install:
++CONFIGURE_ARGS+=	--mandir=${MANPREFIX}/man
++
++.if !defined(DISABLE_MAKE_JOBS)
++CONFIGURE_ARGS+=	--jobs=${MAKE_JOBS_NUMBER}
++_MAKE_JOBS=		--jobs=${MAKE_JOBS_NUMBER}
++.endif
++
++.if defined(WITH_PYTHON)
++USE_PYTHON_RUN=		yes
++PLIST_FILES+=		%%PYTHON_SITELIBDIR%%/tdb.so
++PLIST_DIRSTRY+=		%%PYTHON_SITELIBDIR%% \
++			%%PYTHON_LIBDIR%%
++.else
++CONFIGURE_ARGS+=	--disable-python
++.endif
++
++ALL_TARGET=		build
++INSTALL_TARGET=		install
++
++post-patch:
++			@${REINPLACE_CMD} -e 's|%%PKGCONFIGDIR%%|${PKGCONFIGDIR}|g' \
++				${WRKSRC}/wscript
++
++pre-build:
+ .for man in ${MAN8}
+-			@${INSTALL_MAN} ${FILESDIR}/${man} ${WRKSRC}/manpages
++			@${MKDIR} ${BUILD_WRKSRC}/bin/default/manpages
++			@${INSTALL_MAN} ${FILESDIR}/${man} ${BUILD_WRKSRC}/bin/default/manpages
+ .endfor
+ 
++do-build:
++			@(cd ${BUILD_WRKSRC}; \
++			if ! ${SETENV} ${MAKE_ENV} ${BUILD_WRKSRC}/${WAF_TOOL} ${_MAKE_JOBS} ${MAKE_ARGS} build; then \
++				if [ x != x${BUILD_FAIL_MESSAGE} ] ; then \
++					${ECHO_MSG} "===> Compilation failed unexpectedly."; \
++					(${ECHO_CMD} ${BUILD_FAIL_MESSAGE}) | ${FMT} 75 79 ; \
++				fi; \
++			${FALSE}; \
++			fi)
++
++do-install:
++			@(cd ${INSTALL_WRKSRC} && ${SETENV} ${MAKE_ENV} ${INSTALL_WRKSRC}/${WAF_TOOL} ${MAKE_ARGS} install)
++
+ .include <bsd.port.mk>
+diff -Naur databases/tdb/distinfo databases/tdb/distinfo
+--- databases/tdb/distinfo	2010-10-29 05:49:53.000000000 -0700
++++ databases/tdb/distinfo	2011-08-01 13:05:57.000000000 -0700
+@@ -1,2 +1,2 @@
+-SHA256 (tdb-1.2.1.tar.gz) = ef423b934c5ddfeddaa3d3b1567072b0d6f7243bbae5fd363a1b090b0573cdfa
+-SIZE (tdb-1.2.1.tar.gz) = 268142
++SHA256 (tdb-1.2.9.tar.gz) = 886fbca71710b9fcf168ffcae47f05a6c3ff3392cf951f4cb1f949851c04f9ed
++SIZE (tdb-1.2.9.tar.gz) = 368475
+diff -Naur databases/tdb/files/patch-buildtools__wafsamba__samba_install.py databases/tdb/files/patch-buildtools__wafsamba__samba_install.py
+--- databases/tdb/files/patch-buildtools__wafsamba__samba_install.py	1969-12-31 16:00:00.000000000 -0800
++++ databases/tdb/files/patch-buildtools__wafsamba__samba_install.py	2011-08-01 13:05:57.000000000 -0700
+@@ -0,0 +1,11 @@
++--- buildtools/wafsamba/samba_install.py.orig	2010-12-21 02:00:02.000000000 +0100
+++++ buildtools/wafsamba/samba_install.py	2011-06-21 11:46:28.000000000 +0200
++@@ -109,7 +109,7 @@
++             inst_name    = bld.make_libname(t.target)
++     elif self.vnum:
++         vnum_base    = self.vnum.split('.')[0]
++-        install_name = bld.make_libname(target_name, version=self.vnum)
+++        install_name = bld.make_libname(target_name, version=vnum_base)
++         install_link = bld.make_libname(target_name, version=vnum_base)
++         inst_name    = bld.make_libname(t.target)
++         if not self.private_library:
+diff -Naur databases/tdb/files/patch-tdb.mk databases/tdb/files/patch-tdb.mk
+--- databases/tdb/files/patch-tdb.mk	2010-10-29 05:49:53.000000000 -0700
++++ databases/tdb/files/patch-tdb.mk	1969-12-31 16:00:00.000000000 -0800
+@@ -1,68 +0,0 @@
+---- tdb.mk.orig	2010-02-08 16:12:57.000000000 +0100
+-+++ tdb.mk	2010-10-29 14:36:26.000000000 +0200
+-@@ -5,8 +5,7 @@
+- PROGS_NOINSTALL = bin/tdbtest$(EXEEXT) bin/tdbtorture$(EXEEXT)
+- ALL_PROGS = $(PROGS) $(PROGS_NOINSTALL)
+- 
+--TDB_SONAME = libtdb.$(SHLIBEXT).1
+--TDB_SOLIB = libtdb.$(SHLIBEXT).$(PACKAGE_VERSION)
+-+TDB_SOLIB = libtdb.$(SHLIBEXT).1
+- TDB_STLIB = libtdb.a
+- 
+- TDB_LIB = $(TDB_STLIB) 
+-@@ -28,7 +27,7 @@
+- 
+- test:: abi_checks
+- 
+--test:: bin/tdbtorture$(EXEEXT) $(TDB_SONAME)
+-+test:: bin/tdbtorture$(EXEEXT) $(TDB_SOLIB)
+- 	$(LIB_PATH_VAR)=. bin/tdbtorture$(EXEEXT)
+- 
+- abi_checks::
+-@@ -37,7 +36,7 @@
+- 
+- clean:: 
+- 	rm -f test.db test.tdb torture.tdb test.gdbm
+--	rm -f $(TDB_SONAME) $(TDB_SOLIB) $(TDB_STLIB) libtdb.$(SHLIBEXT)
+-+	rm -f $(TDB_SOLIB) $(TDB_STLIB) libtdb.$(SHLIBEXT)
+- 	rm -f $(ALL_PROGS) tdb.pc
+- 	rm -f tdb.exports.sort tdb.exports.check tdb.exports.check.sort
+- 	rm -f tdb.signatures.sort tdb.signatures.check tdb.signatures.check.sort
+-@@ -70,7 +69,7 @@
+- 	mkdir -p $(DESTDIR)`$(PYTHON) -c "import distutils.sysconfig; print distutils.sysconfig.get_python_lib(1, prefix='$(prefix)')"`
+- 	cp tdb.$(SHLIBEXT) $(DESTDIR)`$(PYTHON) -c "import distutils.sysconfig; print distutils.sysconfig.get_python_lib(1, prefix='$(prefix)')"`
+- 
+--check-python:: build-python $(TDB_SONAME)
+-+check-python:: build-python $(TDB_SOLIB)
+- 	$(LIB_PATH_VAR)=. PYTHONPATH=".:$(tdbdir)" $(PYTHON) $(tdbdir)/python/tests/simple.py
+- 
+- clean::
+-@@ -80,7 +79,7 @@
+- 	mkdir -p $(DESTDIR)$(bindir)
+- 	mkdir -p $(DESTDIR)$(includedir)
+- 	mkdir -p $(DESTDIR)$(libdir) 
+--	mkdir -p $(DESTDIR)$(libdir)/pkgconfig
+-+	mkdir -p $(DESTDIR)$(prefix)/libdata/pkgconfig
+- 
+- installbin:: all installdirs
+- 	cp $(PROGS) $(DESTDIR)$(bindir)
+-@@ -89,18 +88,13 @@
+- 	cp $(srcdir)/include/tdb.h $(DESTDIR)$(includedir)
+- 
+- installlibs:: all installdirs
+--	cp tdb.pc $(DESTDIR)$(libdir)/pkgconfig
+-+	cp tdb.pc $(DESTDIR)$(prefix)/libdata/pkgconfig
+- 	cp $(TDB_STLIB) $(TDB_SOLIB) $(DESTDIR)$(libdir)
+- 	rm -f $(DESTDIR)$(libdir)/libtdb.$(SHLIBEXT)
+- 	ln -s $(TDB_SOLIB) $(DESTDIR)$(libdir)/libtdb.$(SHLIBEXT)
+--	rm -f $(DESTDIR)$(libdir)/$(TDB_SONAME)
+--	ln -s $(TDB_SOLIB) $(DESTDIR)$(libdir)/$(TDB_SONAME)
+- 
+- $(TDB_STLIB): $(TDB_OBJ)
+- 	ar -rv $(TDB_STLIB) $(TDB_OBJ)
+- 
+- libtdb.$(SHLIBEXT): $(TDB_SOLIB)
+- 	ln -fs $< $@
+--
+--$(TDB_SONAME): $(TDB_SOLIB)
+--	ln -fs $< $@
+diff -Naur databases/tdb/files/patch-wscript databases/tdb/files/patch-wscript
+--- databases/tdb/files/patch-wscript	1969-12-31 16:00:00.000000000 -0800
++++ databases/tdb/files/patch-wscript	2011-08-01 13:05:57.000000000 -0700
+@@ -0,0 +1,11 @@
++--- ./wscript.orig	2011-04-05 03:59:59.000000000 +0200
+++++ ./wscript	2011-04-05 04:00:57.000000000 +0200
++@@ -63,7 +63,7 @@
++                             io.c open.c transaction.c hash.c summary.c''')
++ 
++     if bld.env.standalone_tdb:
++-        bld.env.PKGCONFIGDIR = '${LIBDIR}/pkgconfig'
+++        bld.env.PKGCONFIGDIR = '%%PKGCONFIGDIR%%'
++         bld.PKG_CONFIG_FILES('tdb.pc', vnum=VERSION)
++         bld.INSTALL_FILES('${INCLUDEDIR}', 'include/tdb.h', flat=True)
++         private_library = False
+diff -Naur databases/tdb/files/tdbbackup.8 databases/tdb/files/tdbbackup.8
+--- databases/tdb/files/tdbbackup.8	2010-10-26 06:07:59.000000000 -0700
++++ databases/tdb/files/tdbbackup.8	2011-08-01 13:05:57.000000000 -0700
+@@ -2,12 +2,12 @@
+ .\"     Title: tdbbackup
+ .\"    Author: [see the "AUTHOR" section]
+ .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+-.\"      Date: 10/26/2010
++.\"      Date: 03/29/2011
+ .\"    Manual: System Administration tools
+ .\"    Source: Samba 3.6
+ .\"  Language: English
+ .\"
+-.TH "TDBBACKUP" "8" "10/26/2010" "Samba 3\&.6" "System Administration tools"
++.TH "TDBBACKUP" "8" "03/29/2011" "Samba 3\&.6" "System Administration tools"
+ .\" -----------------------------------------------------------------
+ .\" * set default formatting
+ .\" -----------------------------------------------------------------
+diff -Naur databases/tdb/files/tdbdump.8 databases/tdb/files/tdbdump.8
+--- databases/tdb/files/tdbdump.8	2010-10-26 06:07:59.000000000 -0700
++++ databases/tdb/files/tdbdump.8	2011-08-01 13:05:57.000000000 -0700
+@@ -2,12 +2,12 @@
+ .\"     Title: tdbdump
+ .\"    Author: [see the "AUTHOR" section]
+ .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+-.\"      Date: 10/26/2010
++.\"      Date: 03/29/2011
+ .\"    Manual: System Administration tools
+ .\"    Source: Samba 3.6
+ .\"  Language: English
+ .\"
+-.TH "TDBDUMP" "8" "10/26/2010" "Samba 3\&.6" "System Administration tools"
++.TH "TDBDUMP" "8" "03/29/2011" "Samba 3\&.6" "System Administration tools"
+ .\" -----------------------------------------------------------------
+ .\" * set default formatting
+ .\" -----------------------------------------------------------------
+diff -Naur databases/tdb/files/tdbrestore.8 databases/tdb/files/tdbrestore.8
+--- databases/tdb/files/tdbrestore.8	1969-12-31 16:00:00.000000000 -0800
++++ databases/tdb/files/tdbrestore.8	2011-08-01 13:05:57.000000000 -0700
+@@ -0,0 +1,45 @@
++'\" t
++.\"     Title: tdbrestore
++.\"    Author: [see the "AUTHOR" section]
++.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
++.\"      Date: 03/29/2011
++.\"    Manual: System Administration tools
++.\"    Source: Samba 3.6
++.\"  Language: English
++.\"
++.TH "TDBRESTORE" "8" "03/29/2011" "Samba 3\&.6" "System Administration tools"
++.\" -----------------------------------------------------------------
++.\" * set default formatting
++.\" -----------------------------------------------------------------
++.\" disable hyphenation
++.nh
++.\" disable justification (adjust text to left margin only)
++.ad l
++.\" -----------------------------------------------------------------
++.\" * MAIN CONTENT STARTS HERE *
++.\" -----------------------------------------------------------------
++.SH "NAME"
++tdbrestore \- tool for creating a TDB file out of a tdbdump output
++.SH "SYNOPSIS"
++.HP \w'\fBtdbrestore\fR\ 'u
++\fBtdbrestore\fR {tdbfilename}
++.SH "DESCRIPTION"
++.PP
++This tool is part of the
++\fBsamba\fR(1)
++suite\&.
++.PP
++\fBtdbrestore\fR
++is a very simple utility that \'restores\' the contents of dump file into TDB (Trivial DataBase) file\&. The dump file is obtained from the tdbdump command\&.
++.PP
++This tool wait on the standard input for the content of the dump and will write the tdb in the tdbfilename parameter\&.
++.PP
++This tool can be used for unpacking the content of tdb as backup mean\&.
++.SH "VERSION"
++.PP
++This man page is correct for version 3 of the Samba suite\&.
++.SH "AUTHOR"
++.PP
++The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&. This tool was initially written by Volker Lendecke based on an idea by Simon McVittie\&.
++.PP
++The tdbrestore man page was written by Matthieu Patou\&.
+diff -Naur databases/tdb/files/tdbtool.8 databases/tdb/files/tdbtool.8
+--- databases/tdb/files/tdbtool.8	2010-10-26 06:07:59.000000000 -0700
++++ databases/tdb/files/tdbtool.8	2011-08-01 13:05:57.000000000 -0700
+@@ -2,12 +2,12 @@
+ .\"     Title: tdbtool
+ .\"    Author: [see the "AUTHOR" section]
+ .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+-.\"      Date: 10/26/2010
++.\"      Date: 03/29/2011
+ .\"    Manual: System Administration tools
+ .\"    Source: Samba 3.6
+ .\"  Language: English
+ .\"
+-.TH "TDBTOOL" "8" "10/26/2010" "Samba 3\&.6" "System Administration tools"
++.TH "TDBTOOL" "8" "03/29/2011" "Samba 3\&.6" "System Administration tools"
+ .\" -----------------------------------------------------------------
+ .\" * set default formatting
+ .\" -----------------------------------------------------------------
