@@ -156,21 +156,21 @@ class CIFS(Model):
             help_text=_("These extensions enable Samba to better serve UNIX CIFS clients by supporting features such as symbolic links, hard links, etc..."),
             )
     cifs_srv_aio_enable = models.BooleanField(
-            default=True,
+            default=False,
             verbose_name=_("Enable AIO"),
             help_text=_("Enable/disable AIO support.")
             )
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimum AIO read size"),
-            help_text=_("Samba will read asynchronously if request size is larger than this value. The default read size is 1."),
-            default = 1,
+            help_text=_("Samba will read asynchronously if request size is larger than this value."),
+            default=4096,
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimum AIO write size"),
-            help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
-            default = 1,
+            help_text=_("Samba will write asynchronously if request size is larger than this value."),
+            default=4096,
             )
     cifs_srv_zeroconf = models.BooleanField(
             verbose_name=_("Zeroconf share discovery"),
