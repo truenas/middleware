@@ -1,15 +1,73 @@
-Index: dns/inadyn/Makefile
-===================================================================
-RCS file: /home/ncvs/ports/dns/inadyn/Makefile,v
-retrieving revision 1.9
-diff -u -r1.9 Makefile
---- dns/inadyn/Makefile	10 Jul 2009 23:23:38 -0000	1.9
-+++ dns/inadyn/Makefile	13 Feb 2011 04:38:47 -0000
-@@ -38,6 +38,7 @@
+diff --exclude '*.orig' -Naur dns/inadyn/Makefile dns/inadyn/Makefile
+--- dns/inadyn/Makefile	2009-07-10 16:23:38.000000000 -0700
++++ dns/inadyn/Makefile	2012-01-07 20:04:28.202978310 -0800
+@@ -7,7 +7,7 @@
+ 
+ PORTNAME=	inadyn
+ PORTVERSION=	1.96.2
+-PORTREVISION=	2
++PORTREVISION=	3
+ CATEGORIES=	dns
+ MASTER_SITES=	http://www.inatech.eu/inadyn/ \
+ 		${MASTER_SITE_LOCAL}
+@@ -21,34 +21,29 @@
+ USE_RC_SUBR=	inadyn
+ USE_ZIP=	yes
+ USE_DOS2UNIX=	yes
+-USE_GMAKE=	yes
+-MAKEFILE=	makefile
+-
+-MAN8=		inadyn.8
+-MAN5=		inadyn.conf.5
+-MANCOMPRESSED=	no
+ 
+ PORTDOCS=	readme.html
+ PLIST_FILES=	bin/inadyn
+ 
+ NO_INSTALL_MANPAGES=yes
+ 
++MAKE_JOBS_SAFE=	yes
++MAKEFILE=	${FILESDIR}/BSDmakefile
++
++MAKE_ENV+=	MANDIR=${MANPREFIX}/man
++
+ post-extract:
+ 	${MV} ${WRKDIR}/${PORTNAME} ${WRKDIR}/${PORTNAME}-${PORTVERSION}
  
  post-patch:
- 	@${REINPLACE_CMD} -e 's|gcc|$$\(CC\)|g' ${WRKSRC}/makefile
-+	@${REINPLACE_CMD} -e 's|TARGET_ARCH|OSNAME|g' ${WRKSRC}/makefile
+-	@${REINPLACE_CMD} -e 's|gcc|$$\(CC\)|g' ${WRKSRC}/makefile
  	${REINPLACE_CMD} -e "s,%%PREFIX%%,${PREFIX},g" \
  		${WRKSRC}/man/inadyn.8 ${WRKSRC}/readme.html \
  		${WRKSRC}/src/dyndns.h
+ 
+-do-install:
++pre-install:
+ .if !defined(NOPORTDOCS)
+ 	${MKDIR} ${DOCSDIR}
+ 	${INSTALL_MAN} ${WRKSRC}/${PORTDOCS} ${DOCSDIR}
+ .endif
+-	 ${INSTALL_SCRIPT} ${WRKSRC}/bin/linux/inadyn ${PREFIX}/bin
+-	 ${INSTALL_SCRIPT} ${WRKSRC}/man/inadyn.8 ${MANPREFIX}/man/man8
+-	 ${INSTALL_SCRIPT} ${WRKSRC}/man/inadyn.conf.5 ${MANPREFIX}/man/man5
+ 
+ .include <bsd.port.mk>
+diff --exclude '*.orig' -Naur dns/inadyn/files/BSDmakefile dns/inadyn/files/BSDmakefile
+--- dns/inadyn/files/BSDmakefile	1969-12-31 16:00:00.000000000 -0800
++++ dns/inadyn/files/BSDmakefile	2012-01-07 20:02:28.322979665 -0800
+@@ -0,0 +1,16 @@
++PROG=	inadyn
++
++MAN5=	inadyn.conf.5
++
++MAN8=	inadyn.8
++
++SRCS=	base64utils.c dyndns.c errorcode.c get_cmd.c http_client.c ip.c main.c os.c \
++	os_psos.c os_unix.c os_windows.c tcp.c inadyn_cmd.c
++
++.PATH:	man src
++
++WARNS=	2
++
++BINDIR=	${PREFIX}/bin
++
++.include <bsd.prog.mk>
