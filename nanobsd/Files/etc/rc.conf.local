@@ -107,7 +107,7 @@ _interface_config()
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
 	while read lagg_physnic lagg_deviceoptions lagg_gid; do
-		lagg_intoptions=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}"`
+		lagg_intoptions=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}")
 		echo "ifconfig_${lagg_physnic}=\"${lagg_intoptions} ${lagg_deviceoptions}\""
 	done
 

@@ -4,6 +4,8 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+SW_NAME = 'FreeNAS'
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -150,7 +152,7 @@ class Migration(SchemaMigration):
         adv.adv_tuning=0
         adv.adv_powerdaemon=0
         adv.adv_zeroconfbonjour=1
-        adv.adv_motd='Welcome to FreeNAS'
+        adv.adv_motd='Welcome to %s' % (SW_NAME, )
         adv.adv_swapondrive=2
         adv.save()
 

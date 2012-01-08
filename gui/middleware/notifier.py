@@ -2761,7 +2761,10 @@ class notifier:
     def sysctl(self, name, value=None, _type='CHAR'):
         """Get any sysctl value using libc call
 
-        This cut down the overhead of lunching subprocesses
+        This cut down the overhead of launching subprocesses
+
+        XXX: reimplment with a C extension because ctypes.CDLL can be leaky and
+             has a tendency to crash given the right inputs.
 
         Returns:
             The value of the given ``name'' sysctl

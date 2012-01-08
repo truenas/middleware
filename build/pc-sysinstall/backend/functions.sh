@@ -290,13 +290,15 @@ iscompressed()
   local RES
 
   FILE="$1"
-  RES=1
 
-  if echo "${FILE}" | \
-    grep -iE '\.(Z|lzo|lzw|lzma|gz|bz2|xz|zip)$' >/dev/null 2>&1
-  then
+  case "${FILE}" in
+  *.Z|*.lzo|*.lzw|*.lzma|*.gz|*.bz2|*.xz|*.zip)
     RES=0
-  fi
+    ;;
+  *)
+    RES=1
+    ;;
+  esac
 
   return ${RES}
 }
