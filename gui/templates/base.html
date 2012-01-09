@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/CheckedMultiSelect.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/BusyButton.css" />
+    <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/layout/resources/ExpandoPane.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/resources/claroGrid.css" type="text/css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/enhanced/resources/EnhancedGrid.css" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
@@ -46,7 +47,7 @@
         <div data-dojo-type="dijit.layout.BorderContainer" id="inter" style="width:272px; height:100%" data-dojo-props="region:'left', gutters:false, splitter:true">
             <div data-dojo-type="dijit.layout.ContentPane" id="colexpand"
                 data-dojo-props="region:'top'" style="height:20px;">
-                <a href="javascript:void(0);" onClick="dijit.byId('fntree').expandAll()">{% trans "expand all" %}</a> &nbsp; 
+                <a href="javascript:void(0);" onClick="dijit.byId('fntree').expandAll()">{% trans "expand all" %}</a> &nbsp;
                 <a href="javascript:void(0);" onClick="dijit.byId('fntree').collapseAll()">{% trans "collapse all" %}</a>
             </div>
             <div data-dojo-type="dijit.layout.ContentPane" id="menupane"

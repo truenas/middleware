@@ -1273,6 +1273,7 @@
         "dojox/grid/enhanced/plugins/Pagination",
         "dojox/grid/enhanced/plugins/Filter",
         "dojox/grid/TreeGrid",
+        "dojox/layout/ExpandoPane",
         "dojox/validate",
         ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
