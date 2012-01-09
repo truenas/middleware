@@ -64,7 +64,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
 DEBUG="0"
-MULTIMEDIA="0"
+MULTIMEDIA="1"
 REPORTING="1"
 
 # /var -> ~150MB (look through rc.initdiskless for the formula of how this
@@ -469,9 +469,7 @@ remove_perl()
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 45MB)
-	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
-	fi
+	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
 }
 customize_cmd remove_perl
 
@@ -497,8 +495,6 @@ fix_fuse_module_location()
 }
 customize_cmd fix_fuse_module_location
 
-# NOTE: these are 8.0.x specific hacks that should be rolled into the package
-# or generated at boot/runtime; do not merge into 8.2.x+.
 if [ "$MULTIMEDIA" = 1 ]; then
 minidlna_hacks()
 {
@@ -672,6 +668,18 @@ EOF
 }
 customize_cmd transmission_hacks
 fi
+
+fix_easy_install_pth()
+{
+	local site_packages
+
+	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
+
+	env PYTHONPATH=$site_packages \
+	    python ${FREENAS_ROOT}/tools/sanitize_pth.py -f \
+	    $site_packages
+}
+customize_cmd fix_easy_install_pth
 
 if $do_image; then
 last_orders() {
