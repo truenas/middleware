@@ -566,6 +566,18 @@ fix_fuse_module_location()
 }
 customize_cmd fix_fuse_module_location
 
+fix_easy_install_pth()
+{
+	local site_packages
+
+	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
+
+	env PYTHONPATH=$site_packages \
+	    python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
+	    $site_packages
+}
+customize_cmd fix_easy_install_pth
+
 avatar_config()
 {
 	cat > ${NANO_OBJ}/avatar.conf <<EOF
