@@ -9,6 +9,10 @@ Requirements:
 
 - Your build environment must be FreeBSD 8.1-RELEASE or newer.
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.
+- You need the following ports/packages to build FreeNAS:
+  - devel/git or devel/subversion
+  - lang/python26 or lang/python27
+  - sysutils/cdrtools
 
 Building the System Quickstart Flow:
 
@@ -20,10 +24,15 @@ Building the System Quickstart Flow:
 More information about checking out sources from svn via SourceForge
 can be found here: http://p.sf.net/sourceforge/svn .
 
+- Checking out the code from the *unofficial* Gitorious git repository
+  (it might lag behind the svn repo):
+
+% git clone git://gitorious.org/freenas/freenas.git
+% cd freenas
+
 - Use the build script (substituting your favorite cvsup mirror)
 
 % sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh
-% sudo sh build/create_iso.sh
 
 That's it.
 
