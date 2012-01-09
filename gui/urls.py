@@ -25,7 +25,9 @@
 #
 #####################################################################
 import os
+
 from django.conf.urls.defaults import include, patterns
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.static import serve
 from django.conf import settings
 from django.template.loader import add_to_builtins
@@ -50,6 +52,9 @@ urlpatterns = patterns('',
     (r'^media/(?P<path>.*)',
         public(serve),
         {'document_root': settings.MEDIA_ROOT}),
+    (r'^static/(?P<path>.*)',
+        public(serve),
+        {'document_root': os.path.join(settings.HERE, "freeadmin/static") }),
     (r'^dojango/(?P<path>.*)$',
         public(serve),
         {'document_root': os.path.abspath(os.path.dirname(__file__)+'/dojango/')}),
@@ -64,3 +69,5 @@ urlpatterns = patterns('',
     (r'^services/', include('services.urls')),
     (r'^plugins/', include('plugins.urls')),
     )
+
+urlpatterns += staticfiles_urlpatterns()

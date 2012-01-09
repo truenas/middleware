@@ -518,9 +518,9 @@
             handleAs: "json",
             load: function(data) {
                 if(data.status == 'on') {
-                    obj.src = '/media/images/ui/buttons/on.png';
+                    obj.src = '/static/images/ui/buttons/on.png';
                 } else if(data.status == 'off') {
-                    obj.src = '/media/images/ui/buttons/off.png';
+                    obj.src = '/static/images/ui/buttons/off.png';
                 }
                 if(data.error) {
                     setMessage(data.message, "error");
@@ -1276,7 +1276,7 @@
         "dojox/validate",
         ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
-        dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
+        dojo.registerModulePath("freeadmin", "../../../../../static/lib/js/freeadmin");
 
         dojo._contentHandlers.text = (function(old){
           return function(xhr){

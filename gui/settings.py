@@ -86,10 +86,10 @@ STATIC_ROOT = os.path.join(HERE, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = MEDIA_URL
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
-    os.path.join(HERE, "media"),
+    os.path.join(HERE, "fnstatic"),
 )
 
 # List of finder classes that know how to find static files in

@@ -1,0 +1,537 @@
+/* button styles */
+.claro .dijitButtonText {
+    padding: 4px;
+    font-weight:bold;
+    font-size: 7pt !important;
+    color:#666;
+}
+.claro .dijitButtonText p:hover {
+    color:#333;
+}
+.claro .dijitButtonText p{
+    padding-top: 6px;
+    padding-bottom: 2px !important;
+    font-size:7pt;
+}
+/* system->settings->config */
+.configbtn {
+        float:left;
+        padding:4px;
+    }
+/**/
+.claro .dijitTextBox  {
+    margin-right:18px;
+}
+/* end field styles */
+
+
+#rebootDialog_underlay { background-color:#000; }
+#shutdownDialog_underlay, #editscary_dialog_underlay { background-color:#FD0000; }
+#top_dialog_underlay { background-color:#000; }
+#top_dialog .dijitDialogPaneContent { background-color:#000 !important; }
+#shell_dialog_underlay { background-color:#000; }
+#shell_dialog .dijitDialogPaneContent { background-color:#000 !important; }
+#shell_dialog pre {border:none !important;}
+#log_dialog .dijitDialogPaneContent { width:800px;background-color:#000 !important; }
+.dijitDialogPaneContent { border-top:1px solid #333 !important; }
+#top_dialog pre {border:none !important;}
+.error {
+background-color:#F7977A;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+#msgfull_output {
+min-width:900px;
+}
+pre.message {
+font-family: monospace, Courier New, Courier;
+font-size: 9pt;
+color:#00FF00;
+padding:0;
+width:70%;
+background-color:#000;
+min-width:600px;
+border:1px solid #222;
+height:77px;
+white-space:pre-wrap;
+max-height:77px;
+opacity:0.6;filter:alpha(opacity=18);
+}
+.error {
+background-color:#40664D;
+margin-left:100px;
+min-width:400px;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+.success {
+background-color:#40664D;
+min-width:400px;
+margin-left:100px;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+.error p {
+    padding-top:18px;
+    color:#fff;
+}
+.success p {
+    padding-top:18px;
+    color:#fff;
+}
+.footer-block {
+float:left;color:#f5f5f5;
+}
+.dijitTooltipContainer {
+    max-width:250px;
+    margin-top:10px;
+    overflow:auto;
+}
+#successmsg {
+    margin-left:100px;
+
+}
+#id_stg_timezone_menu {
+    max-height:200px;
+    overflow:auto !important;
+}
+#id_stg_language_menu {
+    max-height:200px;
+    overflow:auto !important;
+}
+
+#id_int_v4netmaskbit_menu {
+    max-height:200px;
+    overflow:auto !important;
+    width:155px;
+}
+
+ul.radio {
+    list-style: none;
+}
+ul.radio li{
+    position:relative;
+    left:-25px;
+}
+div.menu_icon {
+    width:50px;
+    text-align:center;
+}
+table.srv td{
+    padding:8px;
+}
+
+
+table.srv img{
+    cursor:pointer;
+}
+img.srv {
+    cursor:pointer;
+}
+div form {
+    margin-top:10px;
+}
+span.required {
+    font-weight:bold;
+    color:#5C7990;
+}
+table.config {
+    margin-top:10px;
+}
+.config th{
+    color:#ff0000;
+}
+.config td{
+    padding-right:6px;
+}
+.dijitContentPane {
+    padding:0px !important;
+}
+table.grid thead {
+    color:#000;
+    background:#dce4ea;
+    line-height:22px;
+}
+table.grid td {
+    padding:4px;
+}
+tbody tr:hover {
+    background:#d7ebff;
+}
+thead td:hover {
+    background:#d7ebff;
+}
+table.grid  {
+    margin-top:10px;
+    margin-left:10px;
+    border-spacing:0;
+    border-collapse:collapse;
+}
+tr.even:hover {
+    background:#d7ebff;
+}
+tr.odd:hover {
+    background:#d7ebff;
+}
+.even {
+    background:#f5f5f5;
+}
+.odd {
+    background:#fff;
+}
+#srv div.services {
+    width: 145px;
+    height: 145px;
+    border-right: 1px solid #c5c5c5;
+    border-bottom: 1px solid #c2c2c2;
+    text-align:left;
+    float: left;
+    margin:8px;
+    background: #f5f5f5;
+    overflow:auto;
+}
+#srv div.p {
+    padding:2px;
+}
+#reports div.chart {
+    text-align:left;
+    padding-bottom:10px;
+    width:482px;
+}
+#reports div.h3 {
+    padding:2px;
+}
+#cp div {
+    width: 125px;
+    height: 125px;
+    border: 1px solid #000;
+    text-align:center;
+    float: left;
+    margin:8px;
+    overflow:auto;
+}
+#sub-menu {
+    float:right;
+    margin:8px;
+    padding:4px;
+    border:1px solid #C5C5C5;
+    background:#fff;
+}
+.sub-menu_item {
+    float:left;
+}
+.sub-menu_item a{
+    font-weight:bold;
+    margin-right:6px;
+}
+
+
+#sidepanel {
+    margin:8px;
+}
+
+.icons {
+width:130px;
+position:relative;
+float:left;
+text-align:left;
+}
+.label {
+    font-weight:bold;
+    color:#50575F;
+    line-height:24px;
+    padding-left:10px;
+}
+html, body, #mainDiv {
+      width: 100%; height: 100%;
+        border: 0; padding: 0; margin: 0;
+    }
+
+.raidmenu {
+    background:transparent;
+    padding-bottom:14px;
+    font-size:14px;
+    font-weight:bold;
+    height:40px;
+    line-height:40px;
+    text-shadow:0 -1px 1px #000000;
+    font-family:Arial,Helvetica,sans-serif;
+}
+.raidmenu a {
+
+    color:#EDF0F1;
+    padding-right:18px;
+}
+/*
+ * FORM 
+ */
+
+ .errorlist {
+    color:#ff0000;
+    list-style-type: none;
+    padding-left:0px;
+    font-weight: bold;
+}
+ .errorlist li{
+     list-style-type: none;
+     padding-left:0px;
+     text-decoration:bold;
+}
+table.ix {
+    width:100%;
+}
+
+tr.ix, td.ix{
+    vertical-align:text-top;
+    line-height:26px;
+}
+
+ td.ix {
+    padding:6px;
+    background-color:#f7f7f7;
+    color:#000;
+}
+ th{
+    color: #50575F;
+    background:#f5f5f5;
+    padding:6px;
+    font-weight:bold;
+    margin-right:8px;
+    vertical-align:top;
+    line-height:24px;
+}
+
+.cifs_text_class radio{
+    color:#ff0000;
+    background-color:#000;
+
+}
+/* Tree Expand / Collapse */
+#colexpand { 
+margin-left:10px !important;
+width: 50% !important;
+margin-top:10px !important;
+}
+
+table.grid tr {
+    border-bottom:1px #ccc solid;
+}
+.SystemIcon { background-image: url('/static/images/ui/tree/system.png'); width:16px; height:    16px; }
+.ReportingIcon { background-image: url('/static/images/ui/tree/reporting.png'); width:16px; height:    16px; }
+.InfoIcon { background-image: url('/static/images/ui/tree/system_information.png'); width:16px; height:    16px; }
+.SettingsIcon { background-image: url('/static/images/ui/tree/settings.png'); width:16px; height:    16px; }
+.RebootIcon { background-image: url('/static/images/ui/tree/reboot.png'); width:16px; height:    16px; }
+.ShutdownIcon { background-image: url('/static/images/ui/tree/shutdown.png'); width:16px; height:    16px; }
+.AccountIcon { background-image: url('/static/images/ui/tree/account.png'); width:16px;          height:16px; }
+.NetworkIcon { background-image: url('/static/images/ui/tree/network.png'); width:16px;          height:16px; }
+.InterfacesIcon { background-image: url('/static/images/ui/tree/interfaces.png'); width:16px;          height:16px; }
+.AddInterfaceIcon { background-image: url('/static/images/ui/tree/add_interfaces.png'); width:16px;          height:16px; }
+.ViewAllInterfacesIcon { background-image: url('/static/images/ui/tree/view_all_interfaces.png'); width:16px;          height:16px; }
+.VLANIcon { background-image: url('/static/images/ui/tree/vlan.png'); width:16px;          height:16px; }
+.AddVLANIcon { background-image: url('/static/images/ui/tree/add_vlan.png'); width:16px;          height:16px; }
+.ViewAllVLANsIcon { background-image: url('/static/images/ui/tree/view_all_vlans.png'); width:16px;          height:16px; }
+.LAGGIcon { background-image: url('/static/images/ui/tree/lagg.png'); width:16px;          height:16px; }
+.AddLAGGIcon { background-image: url('/static/images/ui/tree/add_lagg.png'); width:16px;          height:16px; }
+.ViewAllLAGGsIcon { background-image: url('/static/images/ui/tree/view_all_laggs.png'); width:16px;          height:16px; }
+.StaticRouteIcon { background-image: url('/static/images/ui/tree/static_routes.png'); width:16px;          height:16px; }
+.AddStaticRouteIcon { background-image: url('/static/images/ui/tree/add_static_route.png'); width:16px;          height:16px; }
+.ViewAllStaticRoutesIcon { background-image: url('/static/images/ui/tree/view_all_static_routes.png'); width:16px;          height:16px; }
+.AddInterfaceIcon { background-image: url('/static/images/ui/tree/add_interfaces.png'); width:16px;          height:16px; }
+.ViewAllInterfacesIcon { background-image: url('/static/images/ui/tree/view_all_interfaces.png'); width:16px;          height:16px; }
+.StorageIcon { background-image: url('/static/images/ui/tree/storage.png'); width:16px;          height:16px; }
+.SharingIcon { background-image: url('/static/images/ui/tree/sharing.png'); width:16px;          height:16px; }
+.ServicesIcon { background-image: url('/static/images/ui/tree/services.png'); width:16px;        height:16px; }
+.iSCSIIcon { background-image: url('/static/images/ui/tree/iscsi.png'); width:16px;        height:16px; }
+.SNMPIcon { background-image: url('/static/images/ui/tree/snmp.png'); width:16px;        height:16px; }
+.ActiveDirectoryIcon { background-image: url('/static/images/ui/tree/active_directory.png'); width:16px;        height:16px; }
+.DDNSIcon { background-image: url('/static/images/ui/tree/dynamic_dns.png'); width:16px;        height:16px; }
+.OpenSSHIcon { background-image: url('/static/images/ui/tree/open_ssh.png'); width:16px;        height:16px; }
+.FTPIcon { background-image: url('/static/images/ui/tree/ftp.png'); width:16px;        height:16px; }
+.TFTPIcon { background-image: url('/static/images/ui/tree/tftp.png'); width:16px;        height:16px; }
+.LDAPIcon { background-image: url('/static/images/ui/tree/ldap.png'); width:16px;        height:16px; }
+.UPSIcon { background-image: url('/static/images/ui/tree/ups.png'); width:16px;        height:16px; }
+.StaticRoutesIcon { background-image: url('/static/images/ui/tree/static_routes.png'); width:16px;        height:16px; }
+.TopIcon { background-image: url('/static/images/ui/tree/display_system_processes.png'); width:16px;        height:16px; }
+.MyAccountIcon { background-image: url('/static/images/ui/tree/nfs.png'); width:16px;        height:16px; }
+.ChangeAdminIcon { background-image: url('/static/images/ui/tree/change_admin_user.png'); width:16px;        height:16px; }
+.ChangePasswordIcon { background-image: url('/static/images/ui/tree/change_password.png'); width:16px;        height:16px; }
+.LogOutIcon { background-image: url('/static/images/ui/tree/logout.png'); width:16px;        height:16px; }
+.GroupsIcon { background-image: url('/static/images/ui/tree/groups.png'); width:16px;        height:16px; }
+.AddGroupIcon { background-image: url('/static/images/ui/tree/add_groups.png'); width:16px;        height:16px; }
+.GroupIcon { background-image: url('/static/images/ui/tree/group.png'); width:16px;        height:16px; }
+.ViewAllGroupsIcon { background-image: url('/static/images/ui/tree/view_all_groups.png'); width:16px;        height:16px; }
+.UsersIcon { background-image: url('/static/images/ui/tree/users.png'); width:16px;        height:16px; }
+.ViewAllUsersIcon { background-image: url('/static/images/ui/tree/view_all_users.png'); width:16px;        height:16px; }
+.AddUserIcon { background-image: url('/static/images/ui/tree/add_users.png'); width:16px;        height:16px; }
+.UserIcon { background-image: url('/static/images/ui/tree/user.png'); width:16px;        height:16px; }
+.ViewUsersIcon { background-image: url('/static/images/ui/tree/view_all_users.png'); width:16px;        height:16px; }
+.VolumesIcon { background-image: url('/static/images/ui/tree/volumes.png'); width:16px;        height:16px; }
+.AddVolumeIcon { background-image: url('/static/images/ui/tree/add_volume.png'); width:16px;        height:16px; }
+.ViewAllVolumesIcon { background-image: url('/static/images/ui/tree/view_all_volumes.png'); width:16px;        height:16px; }
+.AddVolumeIcon { background-image: url('/static/images/ui/tree/add_volume.png'); width:16px;        height:16px; }
+.AddShareIcon { background-image: url('/static/images/ui/tree/add_share.png'); width:16px;        height:16px; }
+.AFPIcon { background-image: url('/static/images/ui/tree/apple_shares.png'); width:16px;        height:16px; }
+.AppleShareIcon { background-image: url('/static/images/ui/tree/apple_shares.png'); width:16px;        height:16px; }
+.AddAppleShareIcon { background-image: url('/static/images/ui/tree/add_apple_share.png'); width:16px;        height:16px; }
+.ViewAllAppleSharesIcon { background-image: url('/static/images/ui/tree/view_all_apple_shares.png'); width:16px;        height:16px; }
+.CIFSIcon { background-image: url('/static/images/ui/tree/windows_shares.png'); width:16px;        height:16px; }
+.WindowsShareIcon { background-image: url('/static/images/ui/tree/windows_shares.png'); width:16px;        height:16px; }
+.AddWindowsShareIcon { background-image: url('/static/images/ui/tree/add_windows_share.png'); width:16px;        height:16px; }
+.ViewAllWindowsSharesIcon { background-image: url('/static/images/ui/tree/view_all_windows_shares.png'); width:16px;        height:16px; }
+.NFSIcon { background-image: url('/static/images/ui/tree/nfs.png'); width:16px;        height:16px; }
+.UNIXShareIcon { background-image: url('/static/images/ui/tree/nfs.png'); width:16px;        height:16px; }
+.AddUNIXShareIcon { background-image: url('/static/images/ui/tree/add_unix_share.png'); width:16px;        height:16px; }
+.ViewAllUNIXSharesIcon { background-image: url('/static/images/ui/tree/view_all_unix_shares.png'); width:16px;        height:16px; }
+.TargetExtentIcon { background-image: url('/static/images/ui/tree/target_extents.png'); width:16px;        height:16px; }
+.AddTargetExtentIcon { background-image: url('/static/images/ui/tree/add_target_extents.png'); width:16px;        height:16px; }
+.ViewAllTargetExtentsIcon { background-image: url('/static/images/ui/tree/view_all_target_extents.png'); width:16px;        height:16px; }
+.TargetIcon { background-image: url('/static/images/ui/tree/targets.png'); width:16px;        height:16px; }
+.AddTargetIcon { background-image: url('/static/images/ui/tree/add_target.png'); width:16px;        height:16px; }
+.ViewAllTargetsIcon { background-image: url('/static/images/ui/tree/view_all_targets.png'); width:16px;        height:16px; }
+.ExtentIcon { background-image: url('/static/images/ui/tree/extents.png'); width:16px;        height:16px; }
+.AddExtentIcon { background-image: url('/static/images/ui/tree/add_extents.png'); width:16px;        height:16px; }
+.ViewAllExtentsIcon { background-image: url('/static/images/ui/tree/view_all_extents.png'); width:16px;        height:16px; }
+.InitiatorIcon { background-image: url('/static/images/ui/tree/initiators.png'); width:16px;        height:16px; }
+.AddInitiatorIcon { background-image: url('/static/images/ui/tree/add_initiator.png'); width:16px;        height:16px; }
+.ViewAllInitiatorsIcon { background-image: url('/static/images/ui/tree/view_all_initiators.png'); width:16px;        height:16px; }
+.PortalIcon { background-image: url('/static/images/ui/tree/portals.png'); width:16px;        height:16px; }
+.AddPortalIcon { background-image: url('/static/images/ui/tree/add_portals.png'); width:16px;        height:16px; }
+.ViewAllPortalsIcon { background-image: url('/static/images/ui/tree/view_all_portals.png'); width:16px;        height:16px; }
+.AuthorizedAccessIcon { background-image: url('/static/images/ui/tree/authorized_access.png'); width:16px;        height:16px; }
+.AddAuthorizedAccessIcon { background-image: url('/static/images/ui/tree/add_authorized_access.png'); width:16px;        height:16px; }
+.ViewAllAuthorizedAccessIcon { background-image: url('/static/images/ui/tree/view_all_authorized_access.png'); width:16px;        height:16px; }
+.AddDatasetIcon { background-image: url('/static/images/ui/tree/add_dataset.png'); width:16px;        height:16px; }
+.AddZFSVolumeIcon { background-image: url('/static/images/ui/tree/add_zfs_volume.png'); width:16px;        height:16px; }
+.ImportVolumeIcon { background-image: url('/static/images/ui/tree/import_volume.png'); width:16px;        height:16px; }
+.ImportVolumeIcon { background-image: url('/static/images/ui/tree/import_volume.png'); width:16px;        height:16px; }
+.CreatePeriodicSnapIcon { background-image: url('/static/images/ui/tree/create_periodic_snapshot.png'); width:16px;        height:16px; }
+.ViewAllPeriodicSnapIcon { background-image: url('/static/images/ui/tree/view_all_periodic_snapshots.png'); width:16px;        height:16px; }
+.SnapIcon { background-image: url('/static/images/ui/tree/snapshots.png'); width:16px;        height:16px; }
+.AddReplIcon { background-image: url('/static/images/ui/tree/add_replication.png'); width:16px;        height:16px; }
+.ReplIcon { background-image: url('/static/images/ui/tree/replication.png'); width:16px;        height:16px; }
+.ViewAllReplIcon { background-image: url('/static/images/ui/tree/view_all_replication.png'); width:16px;        height:16px; }
+.cronJobIcon { background-image: url('/static/images/ui/tree/cron.png'); width:16px;        height:16px; }
+.AddcronJobIcon { background-image: url('/static/images/ui/tree/add_cron_job.png'); width:16px;        height:16px; }
+.ViewcronJobIcon { background-image: url('/static/images/ui/tree/view_cron_jobs.png'); width:16px;        height:16px; }
+.SMARTIcon { background-image: url('/static/images/ui/tree/smart.png'); width:16px;        height:16px; }
+.AddSMARTTestIcon { background-image: url('/static/images/ui/tree/add_smart_test.png'); width:16px;        height:16px; }
+.ViewSMARTTestIcon { background-image: url('/static/images/ui/tree/view_smart_tests.png'); width:16px;        height:16px; }
+.rsyncIcon { background-image: url('/static/images/ui/tree/rsync.png'); width:16px;        height:16px; }
+.rsyncdIcon { background-image: url('/static/images/ui/tree/settings.png'); width:16px;        height:16px; }
+.rsyncModIcon { background-image: url('/static/images/ui/tree/rsync_modules.png'); width:16px;        height:16px; }
+.AddrsyncTaskIcon { background-image: url('/static/images/ui/tree/add_rsync_task.png'); width:16px;        height:16px; }
+.ViewrsyncTaskIcon { background-image: url('/static/images/ui/tree/view_rsync_tasks.png'); width:16px;        height:16px; }
+.AddrsyncModIcon { background-image: url('/static/images/ui/tree/add_rsync_module.png'); width:16px;        height:16px; }
+.ViewAllrsyncModIcon { background-image: url('/static/images/ui/tree/view_rsync_modules.png'); width:16px;        height:16px; }
+
+.dijitTextArea {
+min-height:60px;
+}
+.claro .dijitDialogTitleBar {
+    -moz-border-bottom-colors: none;
+    -moz-border-image: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #242424;
+    background-image: url("../images/titlebar.png");
+    background-position: -100px 100%;
+    background-repeat: repeat-x;
+    border-color: -moz-use-text-color #373535 #373535;
+    border-right: 1px solid #373535;
+    border-style: none solid solid;
+    border-width: medium 1px 1px;
+    padding: 5px 7px 4px;
+}
+.claro .dijitDialogTitle {
+    font-size: 1.091em;
+    padding: 0 1px;
+}
+.claro .dijitDialogTitle {
+     color: #FAFAFA;
+     font-size: 1.091em;
+     font-weight: bold;
+     padding: 0 2px;
+     text-shadow: 0 -1px 1px #000000;
+ }
+.claro .dijitDialog {
+    border: 1px solid #373535;
+    box-shadow: 0 1px 5px #383838;
+}
+.claro .dijitDialogUnderlay { background: none repeat scroll 0 0 #1D1D1D; }
+.mytoggle {
+margin:2px;
+padding:2px;
+}
+
+.mytoggleChecked {
+background-color: #ddd;
+}
+
+.treecontainer:hover {
+background:white;
+}
+
+.treecontainer div {
+padding-left:5px;
+}
+#alert_status_text p {
+    margin-top:20px !important;
+    margin-right:20px !important;
+    text-align:center;
+    padding-right: !important;
+}
+.alert_ok {
+    background: url("/static/images/ui/alerts/ok.png") no-repeat 0 0 transparent !important;
+    width:25px;
+    height:25px;
+    padding: 0;
+    margin: 0 auto;
+    margin-bottom:3px;
+    border:none !important;
+
+}
+.alert_warn {
+    background: url("/static/images/ui/alerts/warn.gif") no-repeat 0 0 transparent !important;
+    width:25px;
+    height:25px;
+    padding: 0 !important;
+    margin: 0 auto;
+    margin-bottom:3px;
+    border:none !important;
+
+}
+.alert_crit {
+    background: url("/static/images/ui/alerts/crit.gif") no-repeat 0 0 transparent !important;
+    width:25px;
+    height:25px;
+    padding: 0 !important;
+    margin: 0 auto;
+    margin-bottom:3px;
+    border:none !important;
+
+}
+
+span.shell_f0 { color: #000000; }
+span.shell_f1 { color: #c00006; }
+span.shell_f2 { color: #1bc806; }
+span.shell_f3 { color: #c3c609; }
+span.shell_f4 { color: #0000c2; }
+span.shell_f5 { color: #bf00c2; }
+span.shell_f6 { color: #19c4c2; }
+span.shell_f7 { color: #f2f2f2; }
+span.shell_fc { color: transparent; } /* Concealed */
+span.shell_fe { color: #000000; }     /* Negative fg */
+span.shell_ff { color: #ffffff; }     /* Default fg */
+
+span.shell_b0 { background-color: #000000; }
+span.shell_b1 { background-color: #cc2300; }
+span.shell_b2 { background-color: #00cc00; }
+span.shell_b3 { background-color: #cccc00; }
+span.shell_b4 { background-color: #0e2acc; }
+span.shell_b5 { background-color: #cc34cc; }
+span.shell_b6 { background-color: #00cccc; }
+span.shell_b7 { background-color: #f5f5f5; }
+span.shell_bc { background-color: #555555; }      /* Cursor */
+span.shell_be { background-color: transparent; }  /* Default bg */
+span.shell_bf { background-color: #ffffff; }      /* Negative bg */
