@@ -26,6 +26,7 @@
 #####################################################################
 
 import re
+import shutil
 import subprocess
 
 from django.forms import FileField
@@ -398,9 +399,12 @@ class FirmwareUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
         if cleaned_data.get('firmware'):
-            with open(filename, 'wb+') as fw:
-                for c in cleaned_data['firmware'].chunks():
-                    fw.write(c)
+            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
+                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as fw:
+                    for c in cleaned_data['firmware'].chunks():
+                        fw.write(c)
             retval = notifier().validate_xz(filename)
             if not retval:
                 msg = _(u"Invalid firmware")
