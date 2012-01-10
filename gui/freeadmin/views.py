@@ -378,13 +378,13 @@ def generic_model_add(request, app, model, mf=None):
         else:
             mf = navtree._modelforms[m][mf]
 
-    if m._admin.advanced_fields:
-        mf.advanced_fields.extend(m._admin.advanced_fields)
-
     instance = m()
     formsets = {}
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if mf.is_valid():
             valid = True
         else:
@@ -430,6 +430,8 @@ def generic_model_add(request, app, model, mf=None):
 
     else:
         mf = mf()
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
         if m._admin.inlines:
             extrakw = {
                 'can_delete': False
@@ -590,12 +592,12 @@ def generic_model_edit(request, app, model, oid, mf=None):
         else:
             mf = navtree._modelforms[m][mf]
 
-    if m._admin.advanced_fields:
-        mf.advanced_fields.extend(m._admin.advanced_fields)
-
     formsets = {}
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if mf.is_valid():
             valid = True
         else:
@@ -644,6 +646,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
 
     else:
         mf = mf(instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if m._admin.inlines:
             extrakw = {
                 'can_delete': True,
