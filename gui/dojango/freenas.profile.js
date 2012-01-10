@@ -33,6 +33,8 @@
            "dojox.form.FileInput",
            "dojox.form.BusyButton",
            "dojox.string.sprintf",
+           "dojox.uuid._base",
+           "dojox.uuid.generateRandomUuid",
            "dijit.Tree",
            "dijit.layout.BorderContainer",
            "dijit.layout.ContentPane",

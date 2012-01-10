@@ -867,15 +867,48 @@
         var files = dojo.query("input[type=file]", item.domNode);
         if(files.length > 0) {
 
+            var uuid, pbar;
+            if (attrs.progressbar == true) {
+                pbar = dijit.ProgressBar({
+                    style: "width:300px",
+                    indeterminate: true,
+                    });
+                /*
+                 * We cannot destroy form node, that's why we just hide it
+                 * otherwise iframe.send won't work, it expects the form domNode
+                 */
+                item.domNode.parentNode.appendChild(pbar.domNode);
+                dojo.style(item.domNode, "display", "none")
+                rnode.layout();
+
+            }
+            uuid = dojox.uuid.generateRandomUuid();
             dojo.io.iframe.send({
-                url: url + '?iframe=true',
+                url: url + '?iframe=true&X-Progress-ID='+uuid,
                 method: 'POST',
                 form: item.domNode,
                 handleAs: 'text',
-                //headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
                 load: loadOk,
 	            error: errorHandle,
              });
+             fetch = function() {
+                dojo.xhrGet({
+                    url: '/progress',
+                    headers: {"X-Progress-ID": uuid},
+                    handle: function(data) {
+                        var obj = eval(data);
+                        if(obj.state == 'uploading') {
+                            var perc = Math.ceil((obj.received / obj.size)*100);
+                            if(pbar.indeterminate == true)
+                                pbar.indeterminate = false;
+                            pbar.update({maximum: 100, progress: perc});
+                        }
+                        if(obj.state == 'starting' || obj.state == 'uploading')
+                            setTimeout('fetch();', 1000);
+                    },
+                })
+             }
+             fetch();
 
         } else {
 
@@ -1274,6 +1307,8 @@
         "dojox/grid/enhanced/plugins/Filter",
         "dojox/grid/TreeGrid",
         "dojox/layout/ExpandoPane",
+        "dojox/uuid/_base",
+        "dojox/uuid/generateRandomUuid",
         "dojox/validate",
         ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
