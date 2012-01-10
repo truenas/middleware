@@ -512,6 +512,10 @@ class notifier:
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service mountd reload")
 
+    def _stop_nfs(self):
+        self.__system("/usr/sbin/service mountd forcestop")
+        self.__system("/usr/sbin/service nfsd forcestop")
+
     def _restart_nfs(self):
         self.__system("/usr/sbin/service mountd forcestop")
         self.__system("/usr/sbin/service nfsd forcestop")
@@ -547,6 +551,11 @@ class notifier:
         self.__system("/usr/bin/killall nmbd")
         self.__system("/usr/bin/killall smbd")
         self.__system("/usr/sbin/service samba quietstart")
+
+    def _stop_cifs(self):
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/sbin/service samba forcestop")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")
