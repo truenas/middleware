@@ -34,7 +34,7 @@ class MiddlewareError(Exception):
         syslog.closelog()
 
     def __str__(self):
-        return "[%s: %s]" % (type(self).__name__, self.value)
+        return "[%s: %s]" % (type(self).__name__, self.value.encode('utf-8'))
 
 class StorageError(MiddlewareError):
     pass
