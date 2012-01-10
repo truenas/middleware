@@ -899,9 +899,11 @@
                         var obj = eval(data);
                         if(obj.state == 'uploading') {
                             var perc = Math.ceil((obj.received / obj.size)*100);
-                            if(pbar.indeterminate == true)
-                                pbar.indeterminate = false;
-                            pbar.update({maximum: 100, progress: perc});
+                            if(perc == 100) {
+                                pbar.update({'indeterminate': true});
+                            } else {
+                                pbar.update({maximum: 100, progress: perc, indeterminate: false});
+                            }
                         }
                         if(obj.state == 'starting' || obj.state == 'uploading')
                             setTimeout('fetch();', 1000);
