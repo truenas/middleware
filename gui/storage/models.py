@@ -123,13 +123,8 @@ class Volume(Model):
 
             for mp in self.mountpoint_set.all():
                 attachments = mp.has_attachments()
-                reloads = map(sum, zip(reloads, (
-                            len(attachments['cifs']),
-                            len(attachments['afp']),
-                            len(attachments['nfs']),
-                            len(attachments['iscsiextent']),
-                        )
-                        ))
+                reloads = map(sum,
+                              zip(reloads, [len(attachments[svc]) in svcs]))
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
