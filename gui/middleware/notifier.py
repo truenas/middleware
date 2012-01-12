@@ -410,8 +410,11 @@ class notifier:
             #raise Exception('Failed to associate with the domain.')
             return
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
-        self.__system("/usr/sbin/service winbindd quietstart")
-        self.__system("/usr/sbin/service winbindd reload")
+        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/bin/killall winbindd")
+        self.__system("/usr/sbin/service samba quietstart")
 
     def _stop_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
@@ -421,7 +424,11 @@ class notifier:
         self.__system("/usr/sbin/service ix-kinit forcestop")
         self.__system("/usr/sbin/service ix-activedirectory forcestop")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
-        self.__system("/usr/sbin/service winbindd forcestop")
+        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/bin/killall winbindd")
+        self.__system("/usr/sbin/service samba quietstart")
 
     def _restart_activedirectory(self):
         self._stop_activedirectory()
@@ -628,27 +635,20 @@ class notifier:
     def _reload_cifs(self):
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("killall -1 avahi-daemon")
-        self.__system("/usr/sbin/service samba forcereload")
-
-    def _restart_cifs(self):
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/sbin/service samba restart")
-
-    def _start_cifs(self):
-        self.__system("/usr/sbin/service dbus quietstart")
-        self.__system("/usr/sbin/service avahi-daemon quietstart")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
         self.__system("/usr/sbin/service samba quietstart")
 
-    def _stop_cifs(self):
+    def _restart_cifs(self):
+        # TODO: bug in samba rc.d script
+        # self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
         self.__system("/usr/sbin/service dbus restart")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/sbin/service samba quietstart")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")
