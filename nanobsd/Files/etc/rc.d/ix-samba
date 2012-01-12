@@ -267,7 +267,7 @@ EOF
 			# acls?
 
 			cat<<-EOF
-			    #security = ADS
+			    security = ADS
 			    realm = ${domain}
 			    workgroup = ${ad_workgroup}	
 			    netbios name = ${ad_netbiosname}
@@ -299,9 +299,6 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = no
 			    winbind refresh tickets = yes
-			    # Enable in the global settings if you want to manage
-			    # files in multitiered AD deployments. This doesn't work
-			    # in all configurations. Caveat emptor.
 EOF
 			if [ "${ad_allow_trusted_doms}" = "1" ]; then
 				echo -e "\t\t\t    allow trusted domains = yes"
