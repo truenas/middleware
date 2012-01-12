@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $FreeBSD$
+
+# PROVIDE: smbd
+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
+# BEFORE: LOGIN
+# KEYWORD: shutdown
+#
+# See .../rc.d/samba for more details.
+#
+
+name="smbd"
+
+. /usr/local/etc/rc.samba
+
+if checkyesno ${name}_enable || checkyesno samba_enable; then
+	eval ${name}_enable="YES"
+else
+	eval ${name}_enable="NO"
+fi
+if [ -z "${smbd_flags:-}" ]; then
+	eval ${name}_flags="-D"
+fi
+
+rcvar=$(set_rcvar)
+
+reload_cmd="reload_cmd"
+
+run_rc_command "$1"

@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+# Generalized rc.d infrastructure script for samba.
+
+. /etc/rc.subr
+
+: ${command_args=${samba_config:+-s "${samba_config}"}}
+: ${pidfile="/var/run/samba/$name.pid"}
+: ${samba_standalone_daemon=1}
+: ${smbcontrol_cmd=/usr/local/bin/smbcontrol}
+: ${testparm_cmd=/usr/local/bin/testparm}
+
+extra_commands="reload status"
+
+samba_parm="${testparm_cmd} -s -v --parameter-name"
+
+samba_lockdir=$(${samba_parm} 'lock directory' ${samba_config:+"${samba_config}"} 2>/dev/null)
+
+if [ "$samba_standalone_daemon" -eq 1 ]; then
+	restart_precmd="samba_checkconfig"
+	reload_precmd="samba_checkconfig"
+
+	# Requirements
+	required_files="$samba_config"
+	required_dirs="$samba_lockdir"
+fi
+
+case "$name" in
+samba)
+	eval ${name}_flags=""
+	;;
+*)
+	eval ${name}_flags=""
+	eval ${name}_program="/usr/local/sbin/${name}"
+	;;
+esac
+
+samba_checkconfig()
+{
+	echo -n "Performing sanity check on Samba configuration: "
+	${testparm_cmd} ${samba_config:+-s "${samba_config}"} >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "OK"
+	else
+		echo "FAILED"
+		return 1
+	fi
+}
+
+# Reload a samba service.
+#
+# name - samba, nmbd, smbd, winbindd
+reload_cmd()
+{
+	local message_type reload_dest
+
+	if [ "$name" = "samba" ]; then
+		reload_dest="all"
+	else
+		reload_dest="$name"
+	fi
+
+	# XXX: reload doesn't print out any diags.
+	debug "reloading $name configuration"
+	echo "Reloading $name"
+	message_type="reload-config"
+
+	$smbcontrol_cmd $reload_dest $message_type $command_args \
+	    >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	return 0
+}
