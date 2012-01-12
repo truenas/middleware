@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2012-01-04 13:35+0200\n"
-"Last-Translator: tecnicosj <tecnico.soria@interredes.net.ar>\n"
+"PO-Revision-Date: 2012-01-11 16:28+0200\n"
+"Last-Translator: Tomas <tomasecastro@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -449,22 +449,22 @@ msgstr ""
 #: choices.py:490
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"En espera - Compruebe el dispositivo a no ser que se encuentra en REPOSO o "
-"modo ESPERA"
+"En espera - Compruebe que el dispositivo no encuentre en REPOSO o modo "
+"ESPERA"
 
 #: choices.py:491
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Inactivo - Compruebe el dispositivo a no ser que se encuentra en REPOSO, "
-"ESPERA o modo INACTIVO"
+"Inactivo - Compruebe que el dispositivo no se encuentre en REPOSO, ESPERA o "
+"modo INACTIVO"
 
 #: choices.py:495
 msgid "Long Self-Test"
-msgstr "Autoprueba Larga"
+msgstr "Prueba Larga"
 
 #: choices.py:496
 msgid "Short Self-Test"
-msgstr "Autoprueba Corta"
+msgstr "Prueba Corta"
 
 #: choices.py:497
 msgid "Conveyance Self-Test (ATA  only)"
@@ -480,12 +480,12 @@ msgstr "Tú nombre no puede empezar con \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "El caracter $ solo es permitido como el caracter final"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Tu nombre contiene caracteres inválidos (%s)"
 
 #: account/forms.py:71
 #, python-format
@@ -564,7 +564,7 @@ msgstr "Ya existe un usuario con ese nombre."
 #: services/forms.py:249 services/forms.py:352 sharing/forms.py:85
 #: system/forms.py:268
 msgid "The two password fields didn't match."
-msgstr "Los campos de contraseña no coinciden"
+msgstr "Los campos de la contraseña no coinciden"
 
 #: account/forms.py:286
 #, fuzzy

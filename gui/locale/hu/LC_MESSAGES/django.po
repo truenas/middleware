@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:05-0700\n"
-"PO-Revision-Date: 2012-01-10 09:46+0200\n"
+"PO-Revision-Date: 2012-01-12 11:35+0200\n"
 "Last-Translator: fgraca <fgraca@dravanet.hu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
@@ -105,7 +105,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Mindig be"
+msgstr "Mindig bekapcsolva"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -126,19 +126,20 @@ msgstr "127. Szint - Közepes energia-felhasználás, készenléttel"
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"128. Szint - Minimális energia-felhasználás, készenlét nélkül (nincs leállás)"
+"128. Szint - Minimális energia-felhasználás, készenléti mód nélkül (lemez "
+"nem áll le)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "192. Szint - Közepes energia-felhasználás, készenlét nélkül"
+msgstr "192. Szint - Közepes energia-felhasználás, készenléti mód nélkül"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "254. Szint - Maximális teljesítmény és energia-felhasználás"
+msgstr "254. Szint - Maximális teljesítmény és energiafelhasználás"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "Minimális"
+msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
@@ -146,7 +147,7 @@ msgstr "Közepes"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "Maximális"
+msgstr "Maximum"
 
 # a magyar nyelvtan szabályai szerint a hónapneveket kis kezdőbetűvel írjuk.
 #: choices.py:132 templates/storage/tasks.html:84
@@ -323,11 +324,11 @@ msgstr "Kölcsönös CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "UPS akkumlátora lemerült"
+msgstr "UPS akkumulátora lemerül"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS akkumlátorról üzemel"
+msgstr "UPS akkumulátorról üzemel"
 
 #: choices.py:250
 msgid "Preferred"
@@ -371,23 +372,23 @@ msgstr "gzip (maximális, lassú)"
 
 #: choices.py:454
 msgid "Hour(s)"
-msgstr "Óra"
+msgstr "óra"
 
 #: choices.py:455
 msgid "Day(s)"
-msgstr "Nap"
+msgstr "nap"
 
 #: choices.py:456
 msgid "Week(s)"
-msgstr "Hét"
+msgstr "hét"
 
 #: choices.py:457
 msgid "Month(s)"
-msgstr "Hónap"
+msgstr "hónap"
 
 #: choices.py:458
 msgid "Year(s)"
-msgstr "Év"
+msgstr "év"
 
 #: choices.py:462 system/models.py:330 system/models.py:355
 #: system/models.py:497 system/models.py:518 system/models.py:582
@@ -518,7 +519,7 @@ msgstr "Jelszó"
 
 #: account/forms.py:223 account/forms.py:368 system/forms.py:224
 msgid "Password confirmation"
-msgstr "Jelszó megerősítés"
+msgstr "Jelszó megerősítése"
 
 #: account/forms.py:224 account/forms.py:369 system/forms.py:225
 msgid "Enter the same password as above, for verification."
@@ -552,13 +553,13 @@ msgstr "Ilyen nevű felhasználó már létezik."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
-msgstr "Ilyen nevű felhasználó már létezik."
+msgstr "Már létezik ilyen nevű felhasználó."
 
 #: account/forms.py:279 account/forms.py:388 account/forms.py:639
 #: services/forms.py:249 services/forms.py:352 sharing/forms.py:85
 #: system/forms.py:268
 msgid "The two password fields didn't match."
-msgstr "A megadott két jelszó nem egyezik!"
+msgstr "A két jelszó nem egyezik!"
 
 #: account/forms.py:286
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
