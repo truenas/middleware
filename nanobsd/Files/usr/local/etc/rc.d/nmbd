@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $FreeBSD$
+
+# PROVIDE: nmbd
+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
+# BEFORE: LOGIN
+# KEYWORD: shutdown
+#
+# See .../rc.d/samba for more details.
+#
+
+name="nmbd"
+desc="$name daemon"
+: ${nmbd_enable=${samba_enable=NO}}
+: $(nmbd_flags="-D")
+
+. /usr/local/etc/rc.samba
+
+rcvar=$(set_rcvar)
+
+reload_cmd="reload_cmd"
+
+run_rc_command "$1"
