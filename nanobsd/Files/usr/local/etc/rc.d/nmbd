@@ -11,11 +11,17 @@
 #
 
 name="nmbd"
-desc="$name daemon"
-: ${nmbd_enable=${samba_enable=NO}}
-: $(nmbd_flags="-D")
 
 . /usr/local/etc/rc.samba
+
+if checkyesno ${name}_enable || checkyesno samba_enable; then
+	eval ${name}_enable="YES"
+else
+	eval ${name}_enable="NO"
+fi
+if [ -z "${nmbd_flags:-}" ]; then
+	eval ${name}_flags="-D"
+fi
 
 rcvar=$(set_rcvar)
 

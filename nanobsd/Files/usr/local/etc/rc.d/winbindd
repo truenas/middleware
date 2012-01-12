@@ -11,14 +11,19 @@
 #
 
 name="winbindd"
-desc="$name daemon"
-: ${winbindd_enable=NO}
 
 . /usr/local/etc/rc.samba
 
-rcvar=$(set_rcvar)
+if checkyesno ${name}_enable || checkyesno samba_enable; then
+	eval ${name}_enable="YES"
+else
+	eval ${name}_enable="NO"
+fi
+if [ -z "${winbindd_flags:-}" ]; then
+	eval ${name}_flags="-D"
+fi
 
-reload_cmd="reload_cmd"
+rcvar=$(set_rcvar)
 
 if ! checkyesno ${name}_enable; then
 	samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
@@ -26,5 +31,7 @@ if ! checkyesno ${name}_enable; then
 		${name}_enable="YES"
 	fi
 fi
+
+reload_cmd="reload_cmd"
 
 run_rc_command "$1"
