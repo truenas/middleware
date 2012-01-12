@@ -118,8 +118,8 @@ __get_SRV_record()
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
-		port=$(echo "${line}"|awk '{ print $3 }')
+		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
+		local port=$(echo "${line}"|awk '{ print $3 }')
 
 		__do_AD_query "${host}" "${port}" "" "" "" "base" "" "" >/dev/null 2>&1
 		if [ "$?" = "0" ]
@@ -158,6 +158,7 @@ __do_AD_query()
 	local scope="${6}"
 	local filter="${7}"
 	local attributes="${8}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
 	: ${dcname:="$(AD_get dcname)"}
 	: ${dcport:="$(AD_get dcport)"}
@@ -167,17 +168,24 @@ __do_AD_query()
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${dcname}:${dcport}" \
-		-b "${basedn}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-s "${scope}"  \
-		-x \
-		-z 0 \
-		-E 'pr=16384/noprompt' \
-		-LLL \
-		"${filter}" "${attributes}"
+	    -H "ldap://${dcname}:${dcport}" \
+	    -b "${basedn}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -s "${scope}" \
+	    -x \
+	    -z 0 \
+	    -E 'pr=16384/noprompt' \
+	    -LLL \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	cat $tmpfile
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 AD_query()
@@ -191,14 +199,22 @@ AD_query()
 	: ${basedn:="$(AD_get basedn)"}
 	: ${filter:='(objectclass=*)'}
 
-	dcname="$(AD_get dcname)"
-	dcport="$(AD_get dcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local dcname="$(AD_get dcname)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
 	__do_AD_query "${dcname}" "${dcport}" "${basedn}" \
 		"${binddn}" "${adminpw}" "sub" "${filter}" \
 		"${attributes}" 2>/dev/null
+}
+
+AD_query_partitions()
+{
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+	local basedn="CN=Partitions,${config}"
+
+	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
 }
 
 AD_query_global_catalog()
@@ -207,47 +223,60 @@ AD_query_global_catalog()
 
 	shift
 	local attributes="${*}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
     	: ${filter:='(objectclass=*)'}
 
-	gchost="$(AD_get gchost)"
-	gcport="$(AD_get gcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local gchost="$(AD_get gchost)"
+	local gcport="$(AD_get gcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${gchost}:${gcport}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-b "" \
-		-s sub \
-		-x \
-		-z 0 \
-		-LLL \
-		"${filter}" ${attributes} 2>/dev/null
+	    -H "ldap://${gchost}:${gcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s sub \
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 AD_query_rootDSE()
 {
 	local filter="${1}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
 	: ${filter:='(objectclass=*)'}
 
-	dcname="$(AD_get dcname)"
-	dcport="$(AD_get dcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local dcname="$(AD_get dcname)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${dcname}:${dcport}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-b "" \
-		-s base \
-		-x \
-		-z 0 \
-		-LLL \
-		"${filter}" 2>/dev/null
+	    -H "ldap://${dcname}:${dcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s base \
+	    -x \
+	   -z 0 \
+	   -LLL \
+	   "${filter}"
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 __do_AD_get()
@@ -410,13 +439,13 @@ __SQL__
 	local domainname=$(AD_get domainname)
 	AD_set binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
 
-	dc=$(AD_get_domain_controller "${domainname}")
+	local dc=$(AD_get_domain_controller "${domainname}")
 	AD_set dcname=$(echo "${dc}"|cut -f1 -d:)
 	AD_set dcport=$(echo "${dc}"|cut -f2 -d:)
 
 	AD_set basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
 
-	gc=$(AD_get_global_catalog "${domainname}")
+	local gc=$(AD_get_global_catalog "${domainname}")
 	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
 	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
 }

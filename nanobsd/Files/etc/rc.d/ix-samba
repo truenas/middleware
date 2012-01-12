@@ -256,6 +256,7 @@ EOF
 		elif [ "${ad_enable}" = "1" ]; then
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
 			local ad_workgroup="${ad_workgroup}"
+			local trusted="no"
 
 			AD_init
 			mkdir -p ${FREENAS_CACHEDIR}/.samba
@@ -265,6 +266,23 @@ EOF
 			# admin users??
 			# valid users??
 			# acls?
+
+			if [ "${ad_allow_trusted_doms}" = "1" ]
+			then
+				local ifs="${IFS}"
+				local partitions="$(AD_query_partitions)"
+
+				trusted="yes"
+				IFS=" "
+				for p in ${partitions}
+				do
+					mkdir -p "/home/${p}"
+				done
+				IFS="${ifs}"
+			else
+				trusted="no"
+				mkdir -p "/home/${ad_workgroup}"
+			fi
 
 			cat<<-EOF
 			    security = ADS
@@ -299,14 +317,9 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = no
 			    winbind refresh tickets = yes
-EOF
-			if [ "${ad_allow_trusted_doms}" = "1" ]; then
-				echo -e "\t\t\t    allow trusted domains = yes"
-			else
-				echo -e "\t\t\t    allow trusted domains = no"
-			fi
 
-			cat<<-EOF
+			    allow trusted domains = ${trusted}
+
 			    template shell = /bin/sh
 			    template homedir = /home/%D/%U
 
