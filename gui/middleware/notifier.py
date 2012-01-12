@@ -411,7 +411,6 @@ class notifier:
             return
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
         self.__system("/usr/sbin/service winbindd quietstart")
-        self.__system("/usr/sbin/service winbindd reload")
 
     def _stop_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
@@ -635,20 +634,24 @@ class notifier:
         self.__system("/usr/sbin/service dbus restart")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/sbin/service samba restart")
+        self.__system("/usr/sbin/service smbd forcestop")
+        self.__system("/usr/sbin/service nmbd forcestop")
+        self.__system("/usr/sbin/service smbd quietrestart")
+        self.__system("/usr/sbin/service nmbd quietrestart")
 
     def _start_cifs(self):
         self.__system("/usr/sbin/service dbus quietstart")
         self.__system("/usr/sbin/service avahi-daemon quietstart")
-        self.__system("/usr/sbin/service samba quietstart")
+        self.__system("/usr/sbin/service smbd quietstart")
+        self.__system("/usr/sbin/service nmbd quietstart")
 
     def _stop_cifs(self):
         self.__system("/usr/sbin/service dbus forcestop")
         self.__system("/usr/sbin/service dbus restart")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/sbin/service smbd forcestop")
+        self.__system("/usr/sbin/service nmbd forcestop")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")

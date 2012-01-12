@@ -1,0 +1,431 @@
+diff -Naur /usr/ports/net/samba36/Makefile net/samba36/Makefile
+--- /usr/ports/net/samba36/Makefile	2011-10-20 19:12:22.000000000 -0700
++++ net/samba36/Makefile	2012-01-10 20:00:45.992978145 -0800
+@@ -7,7 +7,7 @@
+ 
+ PORTNAME=		${SAMBA_BASENAME}36
+ PORTVERSION=		3.6.1
+-PORTREVISION?=		0
++PORTREVISION?=		1
+ CATEGORIES?=		net
+ MASTER_SITES=		${MASTER_SITE_SAMBA}
+ MASTER_SITE_SUBDIR=	. old-versions rc pre
+@@ -145,8 +145,19 @@
+ .	endif
+ .else
+ # Samba server itself
+-USE_RC_SUBR=		${SAMBA_BASENAME}
+-SUB_FILES=		pkg-install pkg-message pkg-deinstall smb.conf.sample
++USE_RC_SUBR=		${SAMBA_BASENAME} \
++			nmbd \
++			smbd
++
++.if !defined(WITHOUT_WINBIND)
++USE_RC_SUBR+=		winbindd
++.endif
++
++SUB_FILES=		pkg-install \
++			pkg-message \
++			pkg-deinstall \
++			rc.samba \
++			smb.conf.sample \
+ 
+ PLIST=			${WRKDIR}/.PLIST
+ # We don't (yet) have clustered FS for cluster support
+@@ -533,6 +544,7 @@
+ # !NOPORTDOCS
+ .endif
+ # Run post-install script
++	${INSTALL_SCRIPT} "${WRKDIR}/rc.samba" "${SAMBA_CONFDIR}/."
+ 	@${SH} ${PKGINSTALL} ${PKGNAME} POST-INSTALL
+ 	@${CAT} ${PKGMESSAGE}
+ 
+diff -Naur /usr/ports/net/samba36/files/nmbd.in net/samba36/files/nmbd.in
+--- /usr/ports/net/samba36/files/nmbd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/nmbd.in	2012-01-10 21:14:06.712977824 -0800
+@@ -0,0 +1,31 @@
++#!/bin/sh
++#
++# $FreeBSD$
++
++# PROVIDE: nmbd
++# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++#
++# See .../rc.d/samba for more details.
++#
++
++name="nmbd"
++
++. /etc/rc.subr
++. %%SAMBA_CONFDIR%%/rc.samba
++
++rcvar=$(set_rcvar)
++
++load_rc_config $name
++
++: ${nmbd_enable=NO}
++: ${samba_enable=NO}
++if ! checkyesno ${name}_enable && checkyesno samba_enable; then
++	eval ${name}_enable="YES"
++fi
++: ${nmbd_flags="-D"}
++
++reload_cmd="reload_cmd"
++
++run_rc_command "$1"
+diff -Naur /usr/ports/net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
+--- /usr/ports/net/samba36/files/rc.samba.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/rc.samba.in	2012-01-10 21:42:37.892977446 -0800
+@@ -0,0 +1,52 @@
++#!/bin/sh
++#
++# $FreeBSD$
++#
++# Generalized rc.d infrastructure script for samba.
++
++: ${smbcontrol_cmd=%%PREFIX%%/bin/smbcontrol}
++: ${testparm_cmd=%%PREFIX%%/bin/testparm}
++
++extra_commands="reload status"
++
++samba_parm="${testparm_cmd} -s -v --parameter-name"
++
++samba_lockdir=$(${samba_parm} 'lock directory' ${samba_config:+"${samba_config}"} 2>/dev/null)
++
++case "$name" in
++samba)
++	eval ${name}_flags=""
++	;;
++*)
++	: ${command_args=${samba_config:+-s "${samba_config}"}}
++	: ${pidfile="%%SAMBA_RUNDIR%%/$name.pid"}
++	eval ${name}_flags=""
++	eval ${name}_program="%%PREFIX%%/sbin/${name}"
++	;;
++esac
++
++# Reload a samba service.
++#
++# name - samba, nmbd, smbd, winbindd
++reload_cmd()
++{
++	local message_type reload_dest
++
++	if [ "$name" = "samba" ]; then
++		reload_dest="all"
++	else
++		reload_dest="$name"
++	fi
++
++	# XXX: reload doesn't print out any diags.
++	debug "reloading $name configuration"
++	echo "Reloading $name"
++	message_type="reload-config"
++
++	$smbcontrol_cmd $reload_dest $message_type $command_args \
++	    >/dev/null 2>&1
++	if [ $? -ne 0 ]; then
++		return 1
++	fi
++	return 0
++}
+diff -Naur /usr/ports/net/samba36/files/samba.in net/samba36/files/samba.in
+--- /usr/ports/net/samba36/files/samba.in	2011-10-16 15:35:25.000000000 -0700
++++ net/samba36/files/samba.in	2012-01-10 21:50:27.048614266 -0800
+@@ -1,14 +1,8 @@
+ #!/bin/sh
+ #
+-# $FreeBSD: ports/net/samba36/files/samba.in,v 1.1 2011/10/16 22:35:25 timur Exp $
+-#
+-
+-# PROVIDE: nmbd smbd
+-%%WINBIND%%# PROVIDE: winbindd
+-# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
+-%%CUPS%%# REQUIRE: cupsd
+-# BEFORE: LOGIN
+-# KEYWORD: shutdown
++# PROVIDE: samba
++# REQUIRE: nmbd smbd
++%%WINBIND%%# REQUIRE: winbindd
+ #
+ # Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+ # to enable this service:
+@@ -17,152 +11,83 @@
+ # or, for fine grain control:
+ #nmbd_enable="YES"
+ #smbd_enable="YES"
+-%%WINBIND%%# You need to enable winbindd separately, by adding:
++%%WINBIND%%# You can enable winbindd separately, by adding:
+ %%WINBIND%%#winbindd_enable="YES"
++%%WINBIND%%# or by adding the 'idmap uid' directive to smb.conf .
+ #
+ # Configuration file can be set with:
+ #samba_config="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
+-#
++
++name="samba"
+ 
+ . /etc/rc.subr
++. %%SAMBA_CONFDIR%%/rc.samba
+ 
+-name="samba"
+ rcvar=$(set_rcvar)
+-set_rcvar ${rcvar} "NO" "Samba service" > /dev/null
+-# Defaults
+-eval ${rcvar}=\${${rcvar}:=NO}
+-samba_config_default="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
+-samba_config=${samba_config="${samba_config_default}"}
+-command_args=${samba_config:+-s "${samba_config}"}
+-# Fetch parameters from configuration file
+-testparm_command="%%PREFIX%%/bin/testparm"
+-smbcontrol_command="%%PREFIX%%/bin/smbcontrol"
+-samba_parm="${testparm_command} -s -v --parameter-name"
+-samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
+-samba_lockdir=$(${samba_parm} 'lock directory' "${samba_config}" 2>/dev/null)
+-# Load configuration
+-load_rc_config "${name}"
+-# Setup dependent variables
+-if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+-    nmbd_enable=${nmbd_enable=YES}
+-    smbd_enable=${smbd_enable=YES}
+-%%WINBIND%%    # Check that winbindd is actually configured
+-%%WINBIND%%    if [ -n "${samba_idmap}" ]; then
+-%%WINBIND%%	winbindd_enable=${winbindd_enable=YES}
+-%%WINBIND%%    fi
+-fi
+-# XXX: Hack to enable check of the dependent variables
+-eval real_${rcvar}="\${${rcvar}:=NO}"	${rcvar}=YES
+-# nmbd
+-nmbd_enable=${nmbd_enable:=NO}
+-nmbd_flags=${nmbd_flags="-D"}
+-set_rcvar nmbd_enable "NO" "nmb daemon" >/dev/null
+-# smbd
+-smbd_enable=${smbd_enable:=NO}
+-smbd_flags=${smbd_flags="-D"}
+-set_rcvar smbd_enable "NO" "smb daemon" >/dev/null
+-%%WINBIND%%# winbindd
+-%%WINBIND%%winbindd_enable=${winbindd_enable:=NO}
+-%%WINBIND%%winbindd_flags=${winbindd_flags=''}
+-%%WINBIND%%set_rcvar winbindd_enable "NO" "winbind daemon" >/dev/null
+-# Custom commands
+-extra_commands="reload status"
++
++load_rc_config $name
++
++: ${samba_enable=NO}
++
++samba_daemons="smbd nmbd"
++%%WINBIND%%samba_daemons="$samba_daemons winbindd"
++
+ start_precmd="samba_start_precmd"
+-start_cmd="samba_cmd"
+-stop_cmd="samba_cmd"
+-status_cmd="samba_cmd"
+ restart_precmd="samba_checkconfig"
+ reload_precmd="samba_checkconfig"
+-reload_cmd="samba_reload_cmd"
+-rcvar_cmd="samba_rcvar_cmd"
+-#
+-samba_daemons="nmbd smbd"
+-%%WINBIND%%samba_daemons="${samba_daemons} winbindd"
++
++reload_cmd="samba_daemons_command"
++restart_cmd="samba_daemons_command"
++start_cmd="samba_daemons_command"
++status_cmd="samba_daemons_command"
++stop_cmd="samba_daemons_command"
++
+ # Requirements
+-required_files="${samba_config}"
+-required_dirs="${samba_lockdir}"
++required_files="$samba_config"
++required_dirs="$samba_lockdir"
+ 
+-samba_checkconfig() {
+-    echo -n "Performing sanity check on Samba configuration: "
+-    if ${testparm_command} -s ${samba_config:+"${samba_config}"} >/dev/null 2>&1; then
+-	echo "OK"
+-    else
+-	echo "FAILED"
+-	return 1
+-    fi
+-    return 0
+-}
++samba_start_precmd()
++{
++	local file
+ 
+-samba_start_precmd() {
+-    # XXX: Never delete winbindd_idmap, winbindd_cache and group_mapping
+-    if [ -n "${samba_lockdir}" -a -d "${samba_lockdir}" ]; then
++	# XXX: Never delete winbindd_idmap, winbindd_cache and group_mapping
+ 	echo -n "Removing stale Samba tdb files: "
+ 	for file in brlock.tdb browse.dat connections.tdb gencache.tdb \
+ 		    locking.tdb messages.tdb namelist.debug sessionid.tdb \
+ 		    unexpected.tdb
+ 	do
+-	    rm "${samba_lockdir}/${file}" </dev/null 2>/dev/null && echo -n '.'
++		rm "${samba_lockdir}/${file}" </dev/null \
++		    2>/dev/null && echo -n '.'
+ 	done
+ 	echo " done"
+-    fi
+ }
+ 
+-samba_rcvar_cmd() {
+-    local rcvar
+-    rcvar=$(set_rcvar ${name})
+-    eval ${rcvar}=\${real_${rcvar}}
+-    # Prevent recursive calling
+-    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+-    # Check master variable
+-    run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+-}
+-
+-samba_reload_cmd() {
+-    local name rcvar command pidfile
+-    # Prevent recursive calling
+-    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+-    # Apply to all daemons
+-    for name in ${samba_daemons}; do
+-    	rcvar=$(set_rcvar ${name})
+-	command="%%PREFIX%%/sbin/${name}"
+-	pidfile="%%SAMBA_RUNDIR%%/${name}${pid_extra}.pid"
+-	# Daemon should be enabled and running
+-	if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+-	    if [ -n "$(check_pidfile "${pidfile}" "${command}")" ]; then
+-		debug "reloading ${name} configuration"
+-		echo "Reloading ${name}."
+-		# XXX: Hack with pid_extra
+-		${smbcontrol_command} "${name}${pid_extra}" 'reload-config' ${command_args} >/dev/null 2>&1
+-	    fi
++samba_checkconfig()
++{
++	echo -n "Performing sanity check on Samba configuration: "
++	${testparm_cmd} -s ${samba_config:+"${samba_config}"} >/dev/null 2>&1
++	if [ $? -eq 0 ]; then
++		echo "OK"
++	else
++		echo "FAILED"
++		return 1
+ 	fi
+-    done
+ }
+ 
+-samba_cmd() {
+-    local name rcvar rcvars v command pidfile samba_daemons result
+-    # Prevent recursive calling
+-    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+-    # Stop processes in the reverse order
+-    if [ "${rc_arg}" = "stop" ] ; then
+-	samba_daemons=$(reverse_list ${samba_daemons})
+-    fi
+-    # Assume success
+-    result=0
+-    # Apply to all daemons
+-    for name in ${samba_daemons}; do
+-	rcvar=$(set_rcvar ${name})
+-	# XXX
+-	rcvars=''; v=''
+-	command="%%PREFIX%%/sbin/${name}"
+-	pidfile="%%SAMBA_RUNDIR%%/${name}${pid_extra}.pid"
+-	# Daemon should be enabled and running
+-	if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+-	    run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+-	    # If any of the of the commands failed, take it as a total result
+-	    result=$((${result} || $?))
++samba_daemons_command()
++{
++	local rc service
++
++	if [ $rc_arg = "stop" ]; then
++		samba_daemons=$(reverse_list $samba_daemons)
+ 	fi
+-    done
+-    return ${result}
++	for service in $samba_daemons; do
++		service $service ${_rc_prefix}${rc_arg} ${rc_extra_args}
++		if [ $? -ne 0 ]; then
++			rc=1
++		fi
++	done
++	return $rc
+ }
+ 
+ run_rc_command "$1"
+diff -Naur /usr/ports/net/samba36/files/smbd.in net/samba36/files/smbd.in
+--- /usr/ports/net/samba36/files/smbd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/smbd.in	2012-01-10 21:14:00.563195309 -0800
+@@ -0,0 +1,32 @@
++#!/bin/sh
++#
++# $FreeBSD$
++
++# PROVIDE: smbd
++# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
++%%CUPS%%# REQUIRE: cupsd
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++#
++# See .../rc.d/samba for more details.
++#
++
++name="smbd"
++
++. /etc/rc.subr
++. %%SAMBA_CONFDIR%%/rc.samba
++
++rcvar=$(set_rcvar)
++
++load_rc_config $name
++
++: ${samba_enable=NO}
++: ${smbd_enable=NO}
++if ! checkyesno ${name}_enable && checkyesno samba_enable; then
++	eval ${name}_enable="YES"
++fi
++: ${smbd_flags="-D"}
++
++reload_cmd="reload_cmd"
++
++run_rc_command "$1"
+diff -Naur /usr/ports/net/samba36/files/winbindd.in net/samba36/files/winbindd.in
+--- /usr/ports/net/samba36/files/winbindd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/winbindd.in	2012-01-10 21:14:10.786880512 -0800
+@@ -0,0 +1,34 @@
++#!/bin/sh
++#
++# $FreeBSD$
++
++# PROVIDE: winbindd
++# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++#
++# See .../rc.d/samba for more details.
++#
++
++name="winbindd"
++
++. /etc/rc.subr
++. %%SAMBA_CONFDIR%%/rc.samba
++
++rcvar=$(set_rcvar)
++
++load_rc_config $name
++
++: ${samba_enable=NO}
++: ${winbindd_enable=NO}
++if ! checkyesno ${name}_enable; then
++	samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
++	if [ -n "${samba_idmap:-}" ]; then
++		eval ${name}_enable="YES"
++	fi
++fi
++: ${winbindd_flags="-D"}
++
++reload_cmd="reload_cmd"
++
++run_rc_command "$1"
