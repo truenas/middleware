@@ -77,21 +77,18 @@ diff -Naur net/samba36/files/nmbd.in net/samba36/files/nmbd.in
 +run_rc_command "$1"
 diff -Naur net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
 --- net/samba36/files/rc.samba.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/rc.samba.in	2012-01-13 00:29:25.382977983 -0800
-@@ -0,0 +1,76 @@
++++ net/samba36/files/rc.samba.in	2012-01-13 00:51:05.131701075 -0800
+@@ -0,0 +1,52 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
 +#
 +# Generalized rc.d infrastructure script for samba.
 +
-+. /etc/rc.subr
-+
 +: ${command_args=${samba_config:+-s "${samba_config}"}}
-+: ${pidfile="/var/run/samba/$name.pid"}
-+: ${samba_standalone_daemon=1}
-+: ${smbcontrol_cmd=/usr/local/bin/smbcontrol}
-+: ${testparm_cmd=/usr/local/bin/testparm}
++: ${pidfile="%%SAMBA_RUNDIR%%/$name.pid"}
++: ${smbcontrol_cmd=%%PREFIX%%/bin/smbcontrol}
++: ${testparm_cmd=%%PREFIX%%/bin/testparm}
 +
 +extra_commands="reload status"
 +
@@ -99,36 +96,15 @@ diff -Naur net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
 +
 +samba_lockdir=$(${samba_parm} 'lock directory' ${samba_config:+"${samba_config}"} 2>/dev/null)
 +
-+if [ "$samba_standalone_daemon" -eq 1 ]; then
-+	restart_precmd="samba_checkconfig"
-+	reload_precmd="samba_checkconfig"
-+
-+	# Requirements
-+	required_files="$samba_config"
-+	required_dirs="$samba_lockdir"
-+fi
-+
 +case "$name" in
 +samba)
 +	eval ${name}_flags=""
 +	;;
 +*)
 +	eval ${name}_flags=""
-+	eval ${name}_program="/usr/local/sbin/${name}"
++	eval ${name}_program="%%PREFIX%%/sbin/${name}"
 +	;;
 +esac
-+
-+samba_checkconfig()
-+{
-+	echo -n "Performing sanity check on Samba configuration: "
-+	${testparm_cmd} ${samba_config:+-s "${samba_config}"} >/dev/null 2>&1
-+	if [ $? -eq 0 ]; then
-+		echo "OK"
-+	else
-+		echo "FAILED"
-+		return 1
-+	fi
-+}
 +
 +# Reload a samba service.
 +#
@@ -157,7 +133,7 @@ diff -Naur net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
 +}
 diff -Naur net/samba36/files/samba.in net/samba36/files/samba.in
 --- net/samba36/files/samba.in	2012-01-13 00:23:17.462982495 -0800
-+++ net/samba36/files/samba.in	2012-01-13 00:43:36.106170945 -0800
++++ net/samba36/files/samba.in	2012-01-13 00:50:03.967767880 -0800
 @@ -1,14 +1,8 @@
  #!/bin/sh
  #
