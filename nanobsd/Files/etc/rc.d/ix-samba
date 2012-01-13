@@ -399,6 +399,26 @@ EOF
                         if [ "${cifs_homedir_mp}" != "" ]; then
                                 echo "    path = ${cifs_homedir_path}"
                         fi
+
+			if [ "${ad_enable}" = "1" ]
+			then
+				if [ "${ad_allow_trusted_doms}" = "1" ]
+				then
+					AD_init
+
+					local ifs="${IFS}"
+					local partitions="$(AD_query_partitions)"
+
+					IFS=" "
+					for p in ${partitions}
+					do
+						mkdir -p "${cifs_homedir_mp}/${p}"
+					done
+					IFS="${ifs}"
+				else
+					mkdir -p "${cifs_homedir_mp}/${ad_workgroup}"
+				fi
+			fi
 		fi
 
 
