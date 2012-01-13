@@ -1,12 +1,12 @@
-diff -Naur /usr/ports/net/samba36/Makefile net/samba36/Makefile
---- /usr/ports/net/samba36/Makefile	2011-10-20 19:12:22.000000000 -0700
-+++ net/samba36/Makefile	2012-01-10 20:00:45.992978145 -0800
+diff -Naur net/samba36/Makefile net/samba36/Makefile
+--- net/samba36/Makefile	2012-01-13 00:23:17.462982495 -0800
++++ net/samba36/Makefile	2012-01-13 00:24:24.303040379 -0800
 @@ -7,7 +7,7 @@
  
  PORTNAME=		${SAMBA_BASENAME}36
  PORTVERSION=		3.6.1
 -PORTREVISION?=		0
-+PORTREVISION?=		1
++PORTREVISION?=		2
  CATEGORIES?=		net
  MASTER_SITES=		${MASTER_SITE_SAMBA}
  MASTER_SITE_SUBDIR=	. old-versions rc pre
@@ -40,9 +40,9 @@ diff -Naur /usr/ports/net/samba36/Makefile net/samba36/Makefile
  	@${SH} ${PKGINSTALL} ${PKGNAME} POST-INSTALL
  	@${CAT} ${PKGMESSAGE}
  
-diff -Naur /usr/ports/net/samba36/files/nmbd.in net/samba36/files/nmbd.in
---- /usr/ports/net/samba36/files/nmbd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/nmbd.in	2012-01-10 21:14:06.712977824 -0800
+diff -Naur net/samba36/files/nmbd.in net/samba36/files/nmbd.in
+--- net/samba36/files/nmbd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/nmbd.in	2012-01-13 00:31:14.900038252 -0800
 @@ -0,0 +1,31 @@
 +#!/bin/sh
 +#
@@ -75,18 +75,23 @@ diff -Naur /usr/ports/net/samba36/files/nmbd.in net/samba36/files/nmbd.in
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
-diff -Naur /usr/ports/net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
---- /usr/ports/net/samba36/files/rc.samba.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/rc.samba.in	2012-01-10 21:42:37.892977446 -0800
-@@ -0,0 +1,52 @@
+diff -Naur net/samba36/files/rc.samba.in net/samba36/files/rc.samba.in
+--- net/samba36/files/rc.samba.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/rc.samba.in	2012-01-13 00:29:25.382977983 -0800
+@@ -0,0 +1,76 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
 +#
 +# Generalized rc.d infrastructure script for samba.
 +
-+: ${smbcontrol_cmd=%%PREFIX%%/bin/smbcontrol}
-+: ${testparm_cmd=%%PREFIX%%/bin/testparm}
++. /etc/rc.subr
++
++: ${command_args=${samba_config:+-s "${samba_config}"}}
++: ${pidfile="/var/run/samba/$name.pid"}
++: ${samba_standalone_daemon=1}
++: ${smbcontrol_cmd=/usr/local/bin/smbcontrol}
++: ${testparm_cmd=/usr/local/bin/testparm}
 +
 +extra_commands="reload status"
 +
@@ -94,17 +99,36 @@ diff -Naur /usr/ports/net/samba36/files/rc.samba.in net/samba36/files/rc.samba.i
 +
 +samba_lockdir=$(${samba_parm} 'lock directory' ${samba_config:+"${samba_config}"} 2>/dev/null)
 +
++if [ "$samba_standalone_daemon" -eq 1 ]; then
++	restart_precmd="samba_checkconfig"
++	reload_precmd="samba_checkconfig"
++
++	# Requirements
++	required_files="$samba_config"
++	required_dirs="$samba_lockdir"
++fi
++
 +case "$name" in
 +samba)
 +	eval ${name}_flags=""
 +	;;
 +*)
-+	: ${command_args=${samba_config:+-s "${samba_config}"}}
-+	: ${pidfile="%%SAMBA_RUNDIR%%/$name.pid"}
 +	eval ${name}_flags=""
-+	eval ${name}_program="%%PREFIX%%/sbin/${name}"
++	eval ${name}_program="/usr/local/sbin/${name}"
 +	;;
 +esac
++
++samba_checkconfig()
++{
++	echo -n "Performing sanity check on Samba configuration: "
++	${testparm_cmd} ${samba_config:+-s "${samba_config}"} >/dev/null 2>&1
++	if [ $? -eq 0 ]; then
++		echo "OK"
++	else
++		echo "FAILED"
++		return 1
++	fi
++}
 +
 +# Reload a samba service.
 +#
@@ -131,9 +155,9 @@ diff -Naur /usr/ports/net/samba36/files/rc.samba.in net/samba36/files/rc.samba.i
 +	fi
 +	return 0
 +}
-diff -Naur /usr/ports/net/samba36/files/samba.in net/samba36/files/samba.in
---- /usr/ports/net/samba36/files/samba.in	2011-10-16 15:35:25.000000000 -0700
-+++ net/samba36/files/samba.in	2012-01-10 21:50:27.048614266 -0800
+diff -Naur net/samba36/files/samba.in net/samba36/files/samba.in
+--- net/samba36/files/samba.in	2012-01-13 00:23:17.462982495 -0800
++++ net/samba36/files/samba.in	2012-01-13 00:43:36.106170945 -0800
 @@ -1,14 +1,8 @@
  #!/bin/sh
  #
@@ -162,13 +186,14 @@ diff -Naur /usr/ports/net/samba36/files/samba.in net/samba36/files/samba.in
 +%%WINBIND%%# or by adding the 'idmap uid' directive to smb.conf .
  #
  # Configuration file can be set with:
- #samba_config="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
+-#samba_config="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
 -#
++#samba_config="/usr/local/etc/smb.conf"
 +
 +name="samba"
  
  . /etc/rc.subr
-+. %%SAMBA_CONFDIR%%/rc.samba
++. /usr/local/etc/rc.samba
  
 -name="samba"
  rcvar=$(set_rcvar)
@@ -355,17 +380,16 @@ diff -Naur /usr/ports/net/samba36/files/samba.in net/samba36/files/samba.in
  }
  
  run_rc_command "$1"
-diff -Naur /usr/ports/net/samba36/files/smbd.in net/samba36/files/smbd.in
---- /usr/ports/net/samba36/files/smbd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/smbd.in	2012-01-10 21:14:00.563195309 -0800
-@@ -0,0 +1,32 @@
+diff -Naur net/samba36/files/smbd.in net/samba36/files/smbd.in
+--- net/samba36/files/smbd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/smbd.in	2012-01-13 00:30:38.672977759 -0800
+@@ -0,0 +1,31 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
 +
 +# PROVIDE: smbd
 +# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
-+%%CUPS%%# REQUIRE: cupsd
 +# BEFORE: LOGIN
 +# KEYWORD: shutdown
 +#
@@ -391,9 +415,9 @@ diff -Naur /usr/ports/net/samba36/files/smbd.in net/samba36/files/smbd.in
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
-diff -Naur /usr/ports/net/samba36/files/winbindd.in net/samba36/files/winbindd.in
---- /usr/ports/net/samba36/files/winbindd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/winbindd.in	2012-01-10 21:14:10.786880512 -0800
+diff -Naur net/samba36/files/winbindd.in net/samba36/files/winbindd.in
+--- net/samba36/files/winbindd.in	1969-12-31 16:00:00.000000000 -0800
++++ net/samba36/files/winbindd.in	2012-01-13 00:30:52.913006869 -0800
 @@ -0,0 +1,34 @@
 +#!/bin/sh
 +#
@@ -429,3 +453,14 @@ diff -Naur /usr/ports/net/samba36/files/winbindd.in net/samba36/files/winbindd.i
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
+diff -Naur net/samba36/pkg-plist net/samba36/pkg-plist
+--- net/samba36/pkg-plist	2012-01-13 00:23:17.462982495 -0800
++++ net/samba36/pkg-plist	2012-01-13 00:25:47.853009160 -0800
+@@ -20,6 +20,7 @@
+ bin/smbtar
+ bin/smbtree
+ bin/testparm
++etc/rc.samba
+ %%SMBTORTURE%%bin/smbtorture
+ %%WINBIND%%bin/wbinfo
+ %%WINBIND%%include/wbclient.h
