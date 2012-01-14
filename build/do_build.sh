@@ -121,11 +121,14 @@ EOF
 	: > $AVATAR_ROOT/FreeBSD/.pulled
 fi
 
+_lp=last-patch.$$.log
 for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/src &&
-		 patch -C -p0 < $AVATAR_ROOT/patches/$patch &&
+		 patch -C -f -p0 < $AVATAR_ROOT/patches/$patch >$_lp 2>&1 ||
+		 { echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		   exit 1; } &&
 		 patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
 		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
 	fi
@@ -134,7 +137,9 @@ for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/ports &&
-		 patch -C -p0 < $AVATAR_ROOT/patches/$patch &&
+		 patch -C -f -p0 < $AVATAR_ROOT/patches/$patch >$_lp 2>&1 ||
+		{ echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		  exit 1; } &&
 		 patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
 		echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
 	fi
