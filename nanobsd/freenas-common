@@ -578,61 +578,6 @@ fix_easy_install_pth()
 }
 customize_cmd fix_easy_install_pth
 
-avatar_config()
-{
-	cat > ${NANO_OBJ}/avatar.conf <<EOF
-#!/bin/sh
-#
-# A simple, sourceable script that can be used to derive
-# avatar project specific details, such as name, version, etc.
-# This should be sourced by middleware.
-#
-# Use easy-to parse lines for this script, like:
-#
-# {{{
-# FOO="bar"
-#
-# export FOO
-# }}}
-# Not something like...
-#
-# {{{
-# export FOO="bar"
-# }}}
-#
-# or...
-#
-# {{{
-# for var in FOO; do
-# 	eval ${var}="bar"
-# done 
-# }}}
-#
-# This file will be parsed sometime in the future without having
-# to invoke /bin/sh.
-
-# The name of the project, e.g. FreeNAS.
-AVATAR_PROJECT="$NANO_NAME"
-
-# The version of software, e.g. 8.0.3-RELEASE, 8.2-ALPHA, etc.
-AVATAR_VERSION="$VERSION"
-
-# The build number, e.g. r9310, <git-sha256-hash>, etc.
-AVATAR_BUILD_NUMBER="$REVISION"
-
-# The machine[:processor] for the image with a humanized name,
-# e.g. 'x64', 'mips:mipsel', etc.
-#
-# Divine the machine architecture from the 
-export AVATAR_ARCH
-
-export AVATAR_PROJECT AVATAR_VERSION AVATAR_BUILD_NUMBER
-export AVATAR_ARCH
-EOF
-	cp ${NANO_OBJ}/avatar.conf ${NANO_WORLDDIR}/etc/avatar.conf
-}
-customize_cmd avatar_config
-
 freenas_custom()
 {
 	compress_ko()
