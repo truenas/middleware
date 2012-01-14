@@ -87,9 +87,25 @@ if $UPDATE; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
 		error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
 	fi
-	echo "Checking out tree from ${FREEBSD_CVSUP_HOST}..."
-
 	mkdir -p $AVATAR_ROOT/FreeBSD
+
+	: ${FREEBSD_SRC_REPOSITORY_ROOT=http://svn.freebsd.org/base}
+	FREEBSD_SRC_URL_REL="release/8.2.0"
+
+	FREEBSD_SRC_URL_FULL="$FREEBSD_SRC_REPOSITORY_ROOT/$FREEBSD_SRC_URL_REL"
+
+	(
+	 cd "$AVATAR_ROOT/FreeBSD"
+	 if [ -d src/.svn ]; then
+		svn upgrade src >/dev/null 2>&1 || :
+	 	svn resolved src
+	 else
+		svn co $FREEBSD_SRC_URL_FULL src
+	 fi
+	 # Always do this so the csup pulled files are paved over.
+ 	 svn revert -R src
+	 svn up src
+	)
 
 	SUPFILE=$AVATAR_ROOT/FreeBSD/supfile
 	cat <<EOF > $SUPFILE
@@ -100,22 +116,25 @@ if $UPDATE; then
 *default delete use-rel-suffix
 *default compress
 
-src-all tag=RELENG_8_2
 ports-all date=2011.12.28.00.00.00
 EOF
-	# Nuke the newly created files to avoid build errors.
-	#
-	# patch(1) will automatically append to the previously non-existent
-	# file, which causes problems with .c, .h, .s, etc files.
-	#
-	# Do this here before running csup because it will pave over all files
-	# that were previously added via a patch if it turns out that a change
-	# was rolled into src or ports.
-	for file in $(find $AVATAR_ROOT/FreeBSD -name '*.orig' -size 0); do
+	# Nuke newly created files to avoid build errors.
+	svn_status_ok="$AVATAR_ROOT/FreeBSD/.svn_status_ok"
+	rm -f "$svn_status_ok"
+	(
+	 svn status $AVATAR_ROOT/FreeBSD/src
+	 : > "$svn_status_ok"
+	) | \
+		awk '$1 == "?" { print $2 }' | \
+		xargs rm -Rf
+	[ -f "$svn_status_ok" ]
+
+	for file in $(find $AVATAR_ROOT/FreeBSD/ports -name '*.orig' -size 0); do
 		rm -f "$(echo $file | sed -e 's/.orig$//')"
 	done
+	echo "Checking out ports tree from ${FREEBSD_CVSUP_HOST}..."
 	csup -L 1 $SUPFILE
-	# Force a repatch because csup pulls pristine sources.
+	# Force a repatch.
 	: > $AVATAR_ROOT/FreeBSD/src-patches
 	: > $AVATAR_ROOT/FreeBSD/ports-patches
 	: > $AVATAR_ROOT/FreeBSD/.pulled
