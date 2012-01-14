@@ -696,10 +696,6 @@ def _call_all():
         div2()
         page += 1
 
-    page -= 1
-    sys.stdout.write("\t\t\t\t\t\t\t\tPage: %2d" % page)
-    div2()
-
 
 def zfs_header():
     daydate = time.strftime("%a %b %d %H:%M:%S %Y")
