@@ -154,7 +154,8 @@ while getopts 'A:b:c:Cf:p:t:' _OPTCH; do
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
 			exit 1
 		fi
-		ARCHS="$ARCHS $OPTARG"
+		ARCHS="${ARCHS+$ARCHS }"
+		ARCHS="$ARCHS$OPTARG"
 		;;
 	b)
 		BRANCH=$OPTARG
@@ -187,8 +188,6 @@ for CONFIG_FILE in $CONFIG_FILES; do
 	. $CONFIG_FILE
 done
 
-_setup
-
 if $CLEAN; then
 	_CLEAN_S='yes'
 else
@@ -208,6 +207,8 @@ Build directory:		$TMPDIR
 Clean if successful:		$_CLEAN_S
 ---------------------------------------------------------
 EOF
+
+_setup
 
 # Get the release string (see build/nano_env for more details).
 set -- $(sh -c '. build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
