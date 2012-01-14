@@ -86,3 +86,8 @@ things properly!).
    images:
 
 % sudo sh build/do_build.sh -- -i
+
+Submitting Build Bugs:
+
+Please execute the 'build/build_bug.sh' command and follow the directions
+described in the script.

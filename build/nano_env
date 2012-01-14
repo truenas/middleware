@@ -10,6 +10,9 @@
 # The FreeNAS source and build tree is rooted here.
 : ${AVATAR_ROOT=$(pwd)}
 
+# The support site for this avatar project.
+: ${AVATAR_SUPPORT_SITE=http://support.freenas.org}
+
 # The architecture for the machine (amd64, i386, etc).
 # NOTE: have to do things this way because nanobsd.sh sets this value
 # explicitly in the script.
