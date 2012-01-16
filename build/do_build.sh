@@ -97,6 +97,7 @@ if $UPDATE; then
 	(
 	 cd "$AVATAR_ROOT/FreeBSD"
 	 if [ -d src/.svn ]; then
+		svn switch $FREEBSD_SRC_URL_FULL src
 		svn upgrade src >/dev/null 2>&1 || :
 	 	svn resolved src
 	 else
