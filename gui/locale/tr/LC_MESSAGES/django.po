@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-12-22 08:28+0200\n"
-"Last-Translator: Ersan <yakazan@gmail.com>\n"
+"PO-Revision-Date: 2012-01-16 15:51+0200\n"
+"Last-Translator: deagle <murat.oflu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -3673,7 +3673,7 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr "Diskleri yeni olarak işaretle (verileri yok eder)"
+msgstr "Diskleri yeni olarak belirle (bu işlem diskteki verileri yok edecektir)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -3973,7 +3973,7 @@ msgstr "Anlık Durum Görüntüsü başarıyla gerçekleştirildi."
 
 #: storage/views.py:558
 msgid "Snapshot successfully cloned."
-msgstr "Anlık Durum Görüntüsü başarı klonlandı."
+msgstr "Anlık Durum Görüntüsü başarı ile çoğaltıldı."
 
 #: storage/views.py:576 storage/views.py:717
 msgid "Disk replacement has been initiated."
@@ -4159,7 +4159,7 @@ msgstr ""
 
 #: system/models.py:127
 msgid "Show tracebacks in case of fatal errors"
-msgstr "Ölümcül bir hata durumunda izi göster"
+msgstr "Ölümcül bir hata durumunda, sorun izleme listesini göster"
 
 #: system/models.py:135
 msgid "MOTD banner"
