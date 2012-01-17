@@ -27,6 +27,10 @@
 # $FreeBSD$
 #####################################################################
 
+# This isn't needed when executed standalone on the CLI; this is needed when
+# executed from webserver/restricted context.
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
 . /usr/local/etc/freenas-debug/include.sh
 
 readonly email_opt="e"
