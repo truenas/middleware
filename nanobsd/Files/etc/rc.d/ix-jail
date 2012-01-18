@@ -37,20 +37,28 @@ generate_plugins_jail_config()
 	SELECT
 		jail_path,
 		jail_name,
-		jail_ip,
-		jail_netmask,
-		jail_interface,
+		na.alias_v4address as jail_ip,
 		plugins_path
 
 	FROM
 		services_plugins
 
+	INNER JOIN
+		network_alias as na
+	ON
+		na.id = jail_ip_id
+
+	INNER JOIN
+		network_interfaces as ni
+	ON
+		na.alias_interface_id = ni.id
+
 	ORDER BY	
-		-id
+		-services_plugins.id
 
 	LIMIT 1
 	" | \
-	while read path name ip netmask iface plugins
+	while read path name ip plugins
 	do
 		echo "${plugins} ${path}/${name}/mnt nullfs ro 0 0" > "/etc/fstab.${name}"
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf

@@ -31,6 +31,7 @@ import freenasUI.settings
 import os
 import re
 import sqlite3
+import copy
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
@@ -303,7 +304,7 @@ class whoChoices:
 ## Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=True, include_vlan_parent=False):
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=True, include_vlan_parent=False, with_alias=False):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -352,6 +353,33 @@ class NICChoices(object):
                         if interface[0] in self._NIClist:
                             self._NIClist.remove(interface[0])
 
+        if with_alias:
+            try:
+                sql = """
+                    SELECT
+                        int_interface
+
+                    FROM
+                        network_interfaces as ni
+
+                    INNER JOIN
+                        network_alias as na
+                    ON
+                        na.alias_interface_id = ni.id
+                """
+                c.execute(sql)
+
+            except sqlite3.OperationalError:
+                pass
+
+            else:
+                aliased_nics = [x[0] for x in c]
+                niclist = copy.deepcopy(self._NIClist)
+                for interface in niclist:
+                    if interface not in aliased_nics: 
+                        self._NIClist.remove(interface)
+                
+
         if exclude_configured:
             try:
                 # Exclude any configured interfaces
@@ -364,6 +392,8 @@ class NICChoices(object):
                 for interface in c:
                     if interface[0] in self._NIClist:
                         self._NIClist.remove(interface[0])
+
+      
 
         self.max_choices = len(self._NIClist)
 

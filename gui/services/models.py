@@ -33,6 +33,7 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import Volume, Disk
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias
 from services.exceptions import ServiceFailed
 
 class services(Model):
@@ -746,26 +747,9 @@ class Plugins(Model):
             default='',
             blank=True
             )
-    jail_interface = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("Jail interface"),
-            help_text=_("Interface for ths plugins jail")
-            )
-    jail_ip = models.IPAddressField(
-            max_length=120,
-            verbose_name=_("Jail IP address"),
-            help_text=_("Plugins jail IP address"),
-            default='',
-            blank=True
-            )
-    jail_netmask = models.IPAddressField(
-            max_length=3,
-            choices=choices.v4NetmaskBitList,
-            verbose_name=_("Jail netmask"),
-            help_text=_("Plugins jail netmask"),
-            default='',
-            blank=True
+    jail_ip = models.ForeignKey(
+            Alias,
+            verbose_name=_("Jail IP address")
             )
     plugins_path = PathField(
             verbose_name=_("Plugins Path"),

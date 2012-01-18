@@ -110,12 +110,6 @@ class NFSForm(ModelForm):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 class PluginsForm(ModelForm):
-    jail_interface = forms.ChoiceField(label = _("Jail interface"))
-
-    def __init__(self, *args, **kwargs):
-        super(PluginsForm, self).__init__(*args, **kwargs)
-        self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
-
     def clean_plugins_path(self):
         ppath = self.cleaned_data.get("plugins_path")
         jpath = self.cleaned_data.get("jail_path")

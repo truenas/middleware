@@ -149,19 +149,10 @@ class JailPBIUploadForm(Form):
             label= _("Jail name"),
             required=True
             )
-    jail_interface = forms.ChoiceField(
-            label=_("Jail interface"),
-            choices=(),
-            widget=forms.Select(attrs={ 'class': 'required' }),
-            )
-    jail_ip = forms.IPAddressField(
+    jail_ip = forms.ChoiceField(
             label=_("Jail IP address"),
-            required=True
-            )
-    jail_netmask = forms.ChoiceField(
-            label=_("Jail netmask"),
             choices=(),
-            widget=forms.Select(attrs={ 'class': 'required' }),
+            required=True
             )
     plugins_path = forms.ChoiceField(
             label=_("Plugins Path"),
@@ -178,6 +169,8 @@ class JailPBIUploadForm(Form):
              )
 
     def __init__(self, *args, **kwargs):
+        from freenasUI.network import models
+
         super(JailPBIUploadForm, self).__init__(*args, **kwargs)
 
         path_list = []
@@ -190,9 +183,12 @@ class JailPBIUploadForm(Form):
                 for name, dataset in datasets.items():
                     path_list.append(dataset.mountpoint)
 
+        nics = choices.NICChoices(with_alias=True, exclude_configured=False)
+        ifaces = models.Interfaces.objects.filter(int_interface__in=[n[0] for n in nics])
+        aliases = models.Alias.objects.filter(alias_interface__in=[i.id for i in ifaces])
+
         self.fields['jail_path'].choices = [(path, path) for path in path_list]
-        self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
-        self.fields['jail_netmask'].choices = choices.v4NetmaskBitList
+        self.fields['jail_ip'].choices = [(a.alias_v4address, a.alias_v4address) for a in aliases]
         self.fields['plugins_path'].choices = [(path, path) for path in path_list]
 
     def clean(self):
@@ -217,33 +213,16 @@ class JailPBIUploadForm(Form):
 
         cleaned_data = self.cleaned_data
 
-        # Find interface to create alias on
-        jiface = self.cleaned_data['jail_interface']
-        iface = models.Interfaces.objects.filter(int_interface=jiface)[0]
-
-        # Create the alias
-        new_alias = network.models.Alias()
-        new_alias.alias_interface = iface
-        new_alias.alias_v4address = self.cleaned_data['jail_ip']
-        new_alias.alias_v4netmaskbit = self.cleaned_data['jail_netmask']
+        jail_ip = self.cleaned_data['jail_ip']
+        alias = models.Alias.objects.filter(alias_v4address=jail_ip)[0]
 
         # Create a plugins service entry
         pj = services.models.Plugins()
         pj.jail_path = cleaned_data.get('jail_path')
         pj.jail_name = cleaned_data.get('jail_name')
-        pj.jail_interface = cleaned_data.get('jail_interface')
-        pj.jail_ip = cleaned_data.get('jail_ip')
-        pj.jail_netmask = cleaned_data.get('jail_netmask')
+        pj.jail_ip = alias
         pj.plugins_path = cleaned_data.get('plugins_path')
 
         # Install the jail PBI
         if notifier().install_jail_pbi(pj.jail_path, pj.jail_name, pj.plugins_path):
-            try:
-                pj.save()
-                new_alias.save()
-                notifier().stop("netif")
-                notifier().start("network")
-
-            except Exception, err:
-                msg = _("Unable to configure alias.")
-                self._errors["jail_ip"] = self.error_class([msg])
+            pj.save()
