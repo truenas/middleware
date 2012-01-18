@@ -622,9 +622,9 @@ class SysctlForm(ModelForm):
         super(SysctlForm, self).save()
         notifier().start("sysctl")
 
-class LoaderForm(ModelForm):
+class TunableForm(ModelForm):
     class Meta:
-        model = models.Loader
+        model = models.Tunable
 
     def clean_ldr_comment(self):
         return self.cleaned_data.get('ldr_comment').strip()
@@ -637,10 +637,10 @@ class LoaderForm(ModelForm):
 
     def clean_ldr_var(self):
         value = self.cleaned_data.get('ldr_var')
-        if TUNABLE_VARNAME_FORMAT_RE.match(value): 
+        if TUNABLE_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
 
     def save(self):
-        super(LoaderForm, self).save()
+        super(TunableForm, self).save()
         notifier().start("loader")

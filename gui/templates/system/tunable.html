@@ -8,10 +8,10 @@
             <td>{% trans "Available actions" %}</td>
           </tr>
         </thead>
-    {% for c in loaders %}
-        <td>{{ c.ldr_var }}</td>
-        <td>{{ c.ldr_value }}</td>
-        <td>{{ c.ldr_comment }}</td>
+    {% for c in tunables %}
+        <td>{{ c.tun_var }}</td>
+        <td>{{ c.tun_value }}</td>
+        <td>{{ c.tun_comment }}</td>
         <td>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
@@ -29,15 +29,15 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="4">{% trans "No loader setting defined." %}</td>
+        <td colspan="4">{% trans "No tunable setting defined." %}</td>
     </tr>
     {% endfor %}
     </table>
     <p class="btn">
         <button data-dojo-type="dijit.form.Button" type="button">
-            {% trans "Add loader" %}
+            {% trans "Add Tunable" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                editObject('{% trans "Add Loader"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="Loader" %}', [this,]);
+                editObject('{% trans "Add Loader"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="Tunable" %}', [this,]);
         </script>
         </button>
     </p>

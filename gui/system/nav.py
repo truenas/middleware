@@ -55,11 +55,11 @@ class ViewSysctl(TreeNode):
         name = _('View Sysctls')
         append_app = False
 
-class ViewLoader(TreeNode):
+class ViewTunable(TreeNode):
 
-        gname = 'system.Loader.View'
-        view = 'system_loaders'
-        name = _('View Loaders')
+        gname = 'system.Tunable.View'
+        view = 'system_tunables'
+        name = _('View Tunables')
         append_app = False
 
 class ViewNTPServer(TreeNode):

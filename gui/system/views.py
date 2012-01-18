@@ -375,10 +375,10 @@ def sysctls(request):
         'sysctls': sysctls,
         })
 
-def loaders(request):
-    loaders = models.Loader.objects.all().order_by('id')
-    return render(request, 'system/loader.html', {
-        'loaders': loaders,
+def tunables(request):
+    tunables = models.Tunable.objects.all().order_by('id')
+    return render(request, 'system/tunable.html', {
+        'tunables': tunables,
         })
 
 def ntpservers(request):
