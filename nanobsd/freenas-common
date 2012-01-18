@@ -64,7 +64,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
 DEBUG="0"
-MULTIMEDIA="1"
+MULTIMEDIA="0"
 REPORTING="1"
 
 # /var -> ~150MB (look through rc.initdiskless for the formula of how this
