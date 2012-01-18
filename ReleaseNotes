@@ -20,6 +20,16 @@ Release Notes for FreeNAS 8.0.3-RELEASE-p1
 - Previous builds were branded as i386/amd64 (32-bit and 64-bit
   respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
   respectively.
+- 8.0.1 and 8.0.2 images advertised CIFS shares to Macs by default but
+  8.0.3 and later images don't advertise CIFS shares by default. If you
+  want to advertise CIFS shares in 8.0.3 and later, be sure to turn on
+  "Zeroconf" support in the CIFS global settings.
+- Builds prior to 8.0.3-RELEASE with 'CIFS' didn't actually have AIO
+  (asynchronous I/O) enabled. So, if you experience performance
+  degradation after upgrading from prior versions of FreeNAS to
+  8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
+  something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
+  or 4kB).
 
 Changes since 8.0.3-RELEASE:
 
@@ -31,6 +41,7 @@ OS/Third party
 
 1. Update ataidle from 2.6 to 2.72 based on maintainer's (brucec@FreeBSD)
    recommendation due to interoperabilities with 2.6 and certain chipsets.
+2. Fix the inadyn port so that it works on i386.
 
 Bugfixes
 ------------------------
@@ -49,6 +60,12 @@ AD/CIFS
    resources to service AIO requests quickly enough, where previously they
    would be able to service requests at near line speeds, whereas after
    they are unable to service requests that quickly.
+
+NFS:
+========================
+1. Add in logic to start lockd and mountd when NFS is enabled s.t. FreeNAS
+   doesn't need to be manually prodded to start the services, or rebooted
+   in order for the services to become effective.
 
 Changes since 8.0.2-RELEASE:
 
