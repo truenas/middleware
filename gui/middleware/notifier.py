@@ -2517,10 +2517,16 @@ class notifier:
             disk.disk_name = devname
             disk.disk_enabled = True
         else:
-            Disk.objects.filter(disk_name=devname).update(disk_enabled=False)
-            disk = Disk()
+            qs = Disk.objects.filter(disk_name=devname)
+            if qs.exists():
+                disk = qs[0]
+                if qs.count() > 1:
+                    Disk.objects.filter(disk_name=devname).exclude(self=disk).delete()
+            else:
+                disk = Disk()
             disk.disk_name = devname
             disk.disk_identifier = ident
+            disk.disk_enabled = True
             disk.disk_serial = self.serial_from_device(devname) or ''
         disk.save()
 
