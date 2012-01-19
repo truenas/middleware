@@ -2578,9 +2578,12 @@ class notifier:
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
                 d.disk_serial = self.serial_from_device(disk) or ''
-                if d.disk_serial and d.disk_serial in serials:
-                    #Probably dealing with multipath here, do not add another
-                    continue
+                if d.disk_serial:
+                    if d.disk_serial in serials:
+                        #Probably dealing with multipath here, do not add another
+                        continue
+                    else:
+                        serials.append(d.disk_serial)
                 d.save()
 
     def geom_disks_dump(self, volume):
