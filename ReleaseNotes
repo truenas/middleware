@@ -260,3 +260,5 @@ Errata:
   the following support ticket for more details:
   http://support.freenas.org/ticket/1135 .
 
+- Shadow copies via CIFS do not work in 8.0.3. Please see
+  https://support.freenas.org/ticket/1186 for more details.
