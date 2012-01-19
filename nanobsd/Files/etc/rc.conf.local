@@ -218,13 +218,16 @@ _bool_svcconfig()
 _staticroute_config()
 {
 	local IFS=\|
-	local id destination gateway interface
+	local id destination gateway interface static_routes
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute;" | \
 	while read id destination gateway; do
 		echo route_freenas${id}=\"-net ${destination} ${gateway}\"
 	done
-	echo static_routes=\"$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo )\"
+	static_routes=\"$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo )\"
+	if [ -n "${static_routes:-}" ]; then
+		echo static_routes=\"$static_routes\"
+	fi
 }
 
 _nut_config() {
