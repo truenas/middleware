@@ -56,20 +56,85 @@ EOF
 	return 0
 }
 
+
+get_trusted()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_allow_trusted_doms
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1;
+	"
+}
+
+get_workgroup()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_workgroup
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1;
+	"
+}
+
+get_cifs_homedir()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_homedir
+
+	FROM
+		services_cifs
+
+	ORDER BY
+		-services_cifs.id
+
+	LIMIT 1;
+	"
+}
+
+
 setup_homedirs()
 {
-	local hdsrc="/var/home"
-	local hddst="/home"
+	local homepath="/var/home"
+	local trusted=$(get_trusted)
+	local cifs_home="$(get_cifs_homedir)"
 
-	local dst=$(dirname "${hddst}")
+	if [ -n "${cifs_home}" ]
+	then
+		homepath="${cifs_home}"
+	fi
 
-	mount -uw /	
-
-	mkdir -p "${hdsrc}"
-	mkdir -p "${dst}"
-	ln -s "${hdsrc}" "${dst}" 2>/dev/null
-
+	rmdir /home
+	mkdir -p "${homepath}"
+	mount -uw /
+	ln -sfh "${homepath}/" /home 2>/dev/null
 	mount -ur /
+
+	if [ "${trusted}" = "1" ]
+	then
+		local partitions="$(AD_query_partitions)"
+		for p in ${partitions}
+		do
+			mkdir -p "/home/${p}"
+		done
+
+	else
+		local workgroup=$(get_workgroup)
+		mkdir -p "${homepath}/${workgroup}"
+	fi
 }
 
 activedirectory_start()

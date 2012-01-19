@@ -143,10 +143,10 @@ EOF
 	return 0
 }
 
-setup_homedirs()
+
+get_cifs_homedir()
 {
-	default="/var/home"
-	homedir=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		cifs_srv_homedir
 
@@ -157,17 +157,25 @@ setup_homedirs()
 		-services_cifs.id
 
 	LIMIT 1;
-	")
+	"
+}
 
-	if [ -n "${homedir}" ]; then
-		hdir=$homedir
-	else
-		hdir=$default
+setup_homedirs()
+{
+
+	local homepath="/var/home"
+	local cifs_home="$(get_cifs_homedir)"
+
+	if [ -n "${cifs_home}" ]
+	then
+		homepath="${cifs_home}"
 	fi
 
-	mkdir -p "${hdir}"
+	rmdir /home
+	mkdir -p "${homepath}"
 	mount -uw /
-	ln -sfh "${hdir}" /home 2>/dev/null
+	rm -f /home
+	ln -sfh "${homepath}" /home 2>/dev/null
 	mount -ur /
 }
 
