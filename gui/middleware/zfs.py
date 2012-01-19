@@ -614,7 +614,7 @@ def parse_status(name, doc, data):
                     node.append(node2)
                     pnode = node
             elif ident >= 2:
-                if word != 'replacing':
+                if not word.startswith('replacing'):
                     if ident == 3:
                         replacing = True
                     else:
