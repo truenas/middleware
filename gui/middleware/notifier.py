@@ -2812,7 +2812,10 @@ class notifier:
         Raises:
             AssertionError in case the operation failed
         """
-        p1 = self.__pipeopen("/sbin/route delete %s" % sr.sr_destination)
+        import ipaddr
+        netmask = ipaddr.IPNetwork(sr.sr_destination)
+        masked = netmask.masked().compressed
+        p1 = self.__pipeopen("/sbin/route delete %s" % masked)
         if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
 
