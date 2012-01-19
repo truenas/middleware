@@ -2810,7 +2810,7 @@ class notifier:
         Delete a static route from the route table
 
         Raises:
-            AssertionError in case the operation failed
+            MiddlewareError in case the operation failed
         """
         import ipaddr
         netmask = ipaddr.IPNetwork(sr.sr_destination)
