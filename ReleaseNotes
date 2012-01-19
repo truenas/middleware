@@ -54,7 +54,7 @@ Middleware
 AD/CIFS
 ========================
 1. Disable AIO by default and change the default AIO read / write size to
-   2kB. This was done provided feedback and the fact that the build fixes
+   4kB. This was done provided feedback and the fact that the build fixes
    actually enabled AIO, whereas prior releases didn't enable it by
    default. This can cause issues with machines that don't have the
    resources to service AIO requests quickly enough, where previously they
