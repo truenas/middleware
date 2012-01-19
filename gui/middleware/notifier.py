@@ -2805,6 +2805,17 @@ class notifier:
 
         return buf.value
 
+    def staticroute_delete(self, sr):
+        """
+        Delete a static route from the route table
+
+        Raises:
+            AssertionError in case the operation failed
+        """
+        p1 = self.__pipeopen("/sbin/route delete %s" % sr.sr_destination)
+        if p1.wait() != 0:
+            raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
+
 def usage():
     usage_str = """usage: %s action command
     Action is one of:

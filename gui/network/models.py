@@ -336,3 +336,7 @@ class StaticRoute(Model):
 
     def save(self, *args, **kwargs):
         super(StaticRoute, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        super(StaticRoute, self).delete(*args, **kwargs)
+        notifier().staticroute_delete(self)
