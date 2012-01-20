@@ -918,7 +918,7 @@ class DiskReplacementForm(forms.Form):
         self.disk = kwargs.pop('disk', None)
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])))
 
     def _populate_disk_choices(self):
 
@@ -942,16 +942,9 @@ class DiskReplacementForm(forms.Form):
                 diskchoices[devname] = "In-place [%s (%s)]" % (devname, capacity)
             else:
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            for disk in diskchoices.keys():
-                if disk.startswith(rootdev_base.group(0)):
-                    del diskchoices[disk]
 
         choices = diskchoices.items()
-        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])))
         return choices
 
 class ZFSDiskReplacementForm(DiskReplacementForm):
