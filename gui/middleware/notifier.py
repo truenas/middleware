@@ -537,7 +537,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-jail forcestop")
 
     def _force_stop_jail(self):
-        self.__system("/usr/sbin/service jail forccestop")
+        self.__system("/usr/sbin/service jail forcestop")
 
     def _restart_plugins_jail(self):
         self._stop_plugins_jail()
