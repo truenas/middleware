@@ -536,6 +536,9 @@ class notifier:
         self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
         self.__system("/usr/sbin/service ix-jail forcestop")
 
+    def _force_stop_jail(self):
+        self.__system("/usr/sbin/service jail forccestop")
+
     def _restart_plugins_jail(self):
         self._stop_plugins_jail()
         self._start_plugins_jail()
@@ -1814,12 +1817,14 @@ class notifier:
         return ret
 
     def delete_pbi(self, plugin_id):
+        from syslog import syslog as S, LOG_DEBUG
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()
         if not jail_name:
+            S(LOG_DEBUG, "delete_pbi: plugins jail info not in database")
             return False
         jail_name = jail_name[0]
 
@@ -1831,24 +1836,109 @@ class notifier:
 
         if jail is not None:
             c.execute("SELECT plugin_pbiname FROM plugins_plugins "
-             "WHERE id = :plugin_id", {'plugin_id': plugin_id})
+                "WHERE id = :plugin_id", {'plugin_id': plugin_id})
             plugin_pbiname = c.fetchone()
             if not plugin_pbiname: 
+                S(LOG_DEBUG, "delete_pbi: pbi info for %d not in database" % plugin_id)
                 return False
             plugin_pbiname = plugin_pbiname[0]
+
+            c.execute("SELECT id FROM plugins_pluginsmountpoints "
+                "WHERE pm_plugin_id = :plugin_id", {'plugin_id': plugin_id})
+            plugin_mounts = [pm[0] for pm in c.fetchall()]
 
             p = pbi_delete(pbi=plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
             if res and res[0] == 0:
                 try:
+                    for pm in plugin_mounts:
+                        c.execute("DELETE FROM plugins_pluginsmountpoints "
+                            "WHERE id = :pm", {'pm': pm})
+
                     c.execute("DELETE FROM plugins_plugins WHERE id = :plugin_id", {'plugin_id': plugin_id})
                     conn.commit()
                     ret = True
 
                 except Exception, err:
+                    S(LOG_DEBUG, "delete_plugins_jail: unable to delete pbi %d from database (%s)" % (plugin_id, err))
                     ret = False
 
         return ret
+
+    def delete_plugins_jail(self, jail_id):
+        from syslog import syslog as S, LOG_DEBUG
+        (c, conn) = self.__open_db(ret_conn=True)
+        ret = False
+
+        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins")
+        self._stop_plugins()
+
+        S(LOG_DEBUG, "delete_plugins_jail: getting plugins id's from the database")
+        c.execute("SELECT id FROM plugins_plugins")
+        plugin_ids = [p[0] for p in c.fetchall()]
+        for plugin_id in plugin_ids:
+            if not self.delete_pbi(plugin_id):
+                S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugin %d" % plugin_id)
+
+        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins jail")
+        self._stop_plugins_jail()
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        if self._started_plugins_jail():
+            S(LOG_DEBUG, "delete_plugins_jail: plugins jail not stopped, forcing")
+            self._force_stop_jail()
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        if self._started_plugins_jail():
+            S(LOG_DEBUG, "delete_plugins_jail: unable to stop plugins jail")
+            return False
+
+        S(LOG_DEBUG, "delete_plugins_jail: getting jail info from database")
+        c.execute("SELECT jail_name, jail_path, plugins_path "
+            "FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+        jail_info = c.fetchone()
+        if not jail_info:
+            S(LOG_DEBUG, "delete_plugins_jail: plugins jail info not in database")
+            return False
+
+        (jail_name, jail_path, plugins_path) = jail_info
+        full_jail_path = os.path.join(jail_path, jail_name)
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking jail path in filesystem")
+        if not os.access(full_jail_path, os.F_OK):
+            S(LOG_DEBUG, "delete_plugins_jail: unable to access %s" % full_jail_path)
+            return False
+
+        cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
+        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        p = self.__pipeopen(cmd)
+        p.wait()
+        if p.returncode != 0:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to chflags on %s" % full_jail_path)
+            return False
+                   
+        cmd = "/bin/rm -rf %s" % full_jail_path
+        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        p = self.__pipeopen(cmd)
+        p.wait()
+        if p.returncode != 0:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s" % full_jail_path)
+            return False
+ 
+        S(LOG_DEBUG, "delete_plugins_jail: deleting jail from database")
+        try:
+            c.execute("DELETE FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+            c.execute("UPDATE services_services set srv_enabled = 0 WHERE srv_service = 'plugins'")
+            conn.commit()
+            ret = True
+
+        except Exception, err:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugins jail from database (%s)" % err)
+            ret = False
+
+        S(LOG_DEBUG, "delete_plugins_jail: returning %s" % ret)
+        return ret
+
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
