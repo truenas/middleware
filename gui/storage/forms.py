@@ -438,7 +438,7 @@ class VolumeImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])))
         return choices
 
     def clean(self):
