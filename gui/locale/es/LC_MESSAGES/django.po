@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2012-01-11 16:28+0200\n"
-"Last-Translator: Tomas <tomasecastro@gmail.com>\n"
+"PO-Revision-Date: 2012-01-20 05:01+0200\n"
+"Last-Translator: victor <pi_victor@yahoo.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -535,13 +535,12 @@ msgid "Shell"
 msgstr "Terminal (Shell)"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Deshabilitar inicios de sesión"
+msgstr "Deshabilitado el inicio de sesión con contraseña"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Bloquear Usuario"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -549,7 +548,7 @@ msgstr "Grupo Principal"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Clave Pública SSH"
 
 #: account/forms.py:260
 #, fuzzy
@@ -567,18 +566,16 @@ msgid "The two password fields didn't match."
 msgstr "Los campos de la contraseña no coinciden"
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "El directorio personal debe comenzar con /mnt/"
+msgstr "El directorio personal debe comenzar con /mnt/ o ser /nonexistent"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "El directorio personal debe comenzar con /mnt/"
+msgstr "El directorio Home no es modificable, déjelo en blanco"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Contraseña desactivada, déjalo en blanco"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -586,28 +583,24 @@ msgid "This field is required."
 msgstr "Este campo es obligatorio."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Contraseña del recurso compartido"
+msgstr "Desactivar contraseña"
 
 #: account/forms.py:466
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "El directorio personal debe comenzar con /mnt/"
+msgstr "El directorio Home debe comenzar con /mnt/ o ser /nonexistent"
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Permitir GIDs (Identificadores De Grupo) repetidas"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Ya existe un usuario con ese nombre."
+msgstr "Ya existe un grupo con ese nombre."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Ya existe un usuario con ese nombre."
+msgstr "Un grupo con este GID (Identificadores De Grupo) ya existe."
 
 #: account/forms.py:582
 msgid "Member users"
@@ -619,7 +612,7 @@ msgstr "Grupos auxiliares"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Un usuario no puede pertenecer a más de 64 grupos auxiliares"
 
 #: account/forms.py:627
 msgid "New password"
@@ -630,9 +623,8 @@ msgid "New password confirmation"
 msgstr "Confirmación de la nueva contraseña"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Cambiar Contraseña"
+msgstr "Cambiar también la contraseña de root (Administrador)"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -646,7 +638,7 @@ msgstr ""
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "¿Desea borrar todos los usuarios con este grupo primario="
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
