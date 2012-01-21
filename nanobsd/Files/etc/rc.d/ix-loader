@@ -111,6 +111,8 @@ generate_boot_loader_conf()
 {
 	local tmp
 
+	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
 	autotune=/usr/local/bin/autotune
 	if [ -x $autotune ]; then
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
