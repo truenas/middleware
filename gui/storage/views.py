@@ -220,11 +220,15 @@ def disks_datagrid(request):
     names = [x.verbose_name for x in models.Disk._meta.fields]
     _n = [x.name for x in models.Disk._meta.fields]
 
-    names.remove('ID')
-    _n.remove('id')
+    filter_fields = [
+        ('disk enabled', 'disk_enabled'),
+        ('ID', 'id'),
+    ]
 
-    names.remove('disk enabled')
-    _n.remove('disk_enabled')
+    for name, field in filter_fields:
+        if name in names and field in _n:
+            names.remove(name)
+            _n.remove(field)
 
     """
     Nasty hack to calculate the width of the datagrid column
