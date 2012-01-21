@@ -39,8 +39,11 @@ generate_ntp_conf()
 
 	if [ -s /etc/ntp.conf ]; then
 		cat >> /etc/ntp.conf <<EOF
+restrict default ignore
 restrict 127.0.0.1
 restrict -6 ::1
+
+disable bclient
 EOF
 	fi
 }
