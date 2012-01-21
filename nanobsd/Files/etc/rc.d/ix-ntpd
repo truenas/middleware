@@ -7,9 +7,7 @@
 # REQUIRE: FILESYSTEMS
 # BEFORE: ntpd
 
-. /etc/rc.subr
-
-FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
+. /etc/rc.freenas
 
 generate_ntp_conf()
 {
@@ -38,9 +36,14 @@ generate_ntp_conf()
 		fi
 		echo
 	done > /etc/ntp.conf
+
+	if [ -s /etc/ntp.conf ]; then
+		cat >> /etc/ntp.conf <<EOF
+restrict 127.0.0.1
+restrict -6 ::1
+EOF
+	fi
 }
-
-
 
 name="ix-ntpd"
 start_cmd='generate_ntp_conf'
