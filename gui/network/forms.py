@@ -30,11 +30,11 @@ import socket
 
 from django.utils.translation import ugettext_lazy as _
 
+from dojango import forms
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
-from freenasUI import choices
-from dojango import forms
 
 class InterfacesForm(ModelForm):
     int_interface = forms.ChoiceField(label = _("NIC"))
