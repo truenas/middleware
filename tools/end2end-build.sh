@@ -100,7 +100,7 @@ _setup() {
 	cd $TMPDIR
 	patch_source $TMPDIR
 	if [ -d "$LOCAL_POSTDIR_BASE" ]; then
-		LOCAL_POSTDIR="$LOCAL_POSTDIR_BASE/$(env LC_LANG=C date '+%m-%d-%Y')"
+		LOCAL_POSTDIR="$LOCAL_POSTDIR_BASE/$(env LC_LANG=C date '+%Y-%m-%d')"
 		sudo mkdir -p "$LOCAL_POSTDIR"
 	else
 		LOCAL_POSTDIR=
