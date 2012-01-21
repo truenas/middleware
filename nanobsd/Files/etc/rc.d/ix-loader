@@ -111,7 +111,7 @@ generate_boot_loader_conf()
 {
 	local tmp
 
-	autotune=/usr/local/www/freenasUI/tools/autotune
+	autotune=/usr/local/bin/autotune
 	if [ -x $autotune ]; then
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
 
