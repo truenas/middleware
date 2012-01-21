@@ -68,3 +68,4 @@ class ViewNTPServer(TreeNode):
         view = 'system_ntpservers'
         #name = _('View NTP Servers')
         append_app = False
+
