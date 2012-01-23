@@ -271,20 +271,6 @@ def disks_datagrid_json(request):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
-        #fields = dir(data.__class__) + ret.keys()
-        #add_ons = [k for k in dir(data) if k not in fields]
-        #for k in add_ons:
-        #    ret[k] = getattr(data, k)
-        if request.GET.has_key('inclusions'):
-            for k in request.GET['inclusions'].split(','):
-                if k == "": continue
-                try:
-                    ret[k] = getattr(data,k)()
-                except:
-                    try:
-                        ret[k] = eval("data.%s"%".".join(k.split("__")))
-                    except:
-                        ret[k] = getattr(data,k)
         complete.append(ret)
 
     return HttpResponse(simplejson.dumps(
