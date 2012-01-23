@@ -38,7 +38,7 @@ network_func()
 	#
 	#	Dump hosts configuration
 	#
-	section_header "/etc/hosts"
+	section_header "Hosts File (/etc/hosts)"
 	cat "/etc/hosts"
 	section_footer
 
@@ -91,11 +91,20 @@ network_func()
 	route -n show default|grep gateway|awk '{ print $2 }'
 	section_footer
 
-	section_header "netstat -nr"
+	section_header "Routing tables (netstat -nr)"
 	netstat -nr
 	section_footer
 
-	section_header "arp -a"
+	section_header "ARP entries (arp -a)"
 	arp -a
 	section_footer
+
+	section_header "mbuf statistics (netstat -m)"
+	netstat -m
+	section_footer
+
+	section_header "Interface statistics (netstat -i)"
+	netstat -i
+	section_footer
+
 }
