@@ -1,58 +1,3 @@
-  <script type="text/javascript">
-  //<!--
-    function getElementsByClassName(oElm, strTagName, strClassName){
-        // Written by Jonathan Snook, http://www.snook.ca/jon; Add-ons by Robert Nyman, http://www.robertnyman.com
-        var arrElements = (strTagName == "*" && document.all)? document.all :
-        oElm.getElementsByTagName(strTagName);
-        var arrReturnElements = new Array();
-        strClassName = strClassName.replace(/\-/g, "\\-");
-        var oRegExp = new RegExp("(^|\\s)" + strClassName + "(\\s|$)");
-        var oElement;
-        for(var i=0; i<arrElements.length; i++){
-            oElement = arrElements[i];
-            if(oRegExp.test(oElement.className)){
-                arrReturnElements.push(oElement);
-            }
-        }
-        return (arrReturnElements)
-    }
-    function hideAll(elems) {
-      for (var e = 0; e < elems.length; e++) {
-        elems[e].style.display = 'none';
-      }
-    }
-    window.onload = function() {
-      hideAll(getElementsByClassName(document, 'table', 'vars'));
-      hideAll(getElementsByClassName(document, 'ol', 'pre-context'));
-      hideAll(getElementsByClassName(document, 'ol', 'post-context'));
-      hideAll(getElementsByClassName(document, 'div', 'pastebin'));
-    }
-    function toggle() {
-      for (var i = 0; i < arguments.length; i++) {
-        var e = document.getElementById(arguments[i]);
-        if (e) {
-          e.style.display = e.style.display == 'none' ? 'block' : 'none';
-        }
-      }
-      return false;
-    }
-    function varToggle(link, id) {
-      toggle('v' + id);
-      var s = link.getElementsByTagName('span')[0];
-      var uarr = String.fromCharCode(0x25b6);
-      var darr = String.fromCharCode(0x25bc);
-      s.innerHTML = s.innerHTML == uarr ? darr : uarr;
-      return false;
-    }
-    function switchPastebinFriendly(link) {
-      s1 = "Switch to copy-and-paste view";
-      s2 = "Switch back to interactive view";
-      link.innerHTML = link.innerHTML == s1 ? s2 : s1;
-      toggle('browserTraceback', 'pastebinTraceback');
-      return false;
-    }
-    //-->
-  </script>
 <div id="summary">
   <h1>{{ exception_type }} at {{ request.path_info|escape }}</h1>
   <pre class="exception_value">{{ exception_value|escape }}</pre>
@@ -141,7 +86,7 @@
 </div>
 {% endif %}
 <div id="traceback">
-  <h2>Traceback <span class="commands"><a href="#" onclick="return switchPastebinFriendly(this);">Switch to copy-and-paste view</a></span></h2>
+  <h2>Traceback</h2>
   {% autoescape off %}
   <div id="browserTraceback">
     <ul class="traceback">
@@ -154,7 +99,7 @@
               {% if frame.pre_context %}
                 <ol start="{{ frame.pre_context_lineno }}" class="pre-context" id="pre{{ frame.id }}">{% for line in frame.pre_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')">{{ line|escape }}</li>{% endfor %}</ol>
               {% endif %}
-              <ol start="{{ frame.lineno }}" class="context-line"><li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')">{{ frame.context_line|escape }} <span>...</span></li></ol>
+              <ol start="{{ frame.lineno }}" class="context-line"><li>{{ frame.context_line|escape }} <span>...</span></li></ol>
               {% if frame.post_context %}
                 <ol start='{{ frame.lineno|add:"1" }}' class="post-context" id="post{{ frame.id }}">{% for line in frame.post_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')">{{ line|escape }}</li>{% endfor %}</ol>
               {% endif %}
@@ -198,12 +143,6 @@ Environment:
 
 Request Method: {{ request.META.REQUEST_METHOD }}
 Request URL: {{ request.build_absolute_uri|escape }}
-Django Version: {{ django_version_info }}
-Python Version: {{ sys_version_info }}
-Installed Applications:
-{{ settings.INSTALLED_APPS|pprint }}
-Installed Middleware:
-{{ settings.MIDDLEWARE_CLASSES|pprint }}
 
 {% if template_does_not_exist %}Template Loader Error:
 {% if loader_debug_info %}Django tried loading these templates, in this order:
@@ -342,31 +281,4 @@ Exception Value: {{ exception_value|escape }}
     </tbody>
   </table>
 
-  <h3 id="settings-info">Settings</h3>
-  <h4>Using settings module <code>{{ settings.SETTINGS_MODULE }}</code></h4>
-  <table class="req">
-    <thead>
-      <tr>
-        <th>Setting</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for var in settings.items|dictsort:"0" %}
-        <tr>
-          <td>{{ var.0 }}</td>
-          <td class="code"><div>{{ var.1|pprint }}</div></td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-</div>
-
-<div id="explanation">
-  <p>
-    You're seeing this error because you have <code>DEBUG = True</code> in your
-    Django settings file. Change that to <code>False</code>, and Django will
-    display a standard 500 page.
-  </p>
 </div>
