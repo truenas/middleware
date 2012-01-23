@@ -103,7 +103,7 @@ _setup() {
 		LOCAL_POSTDIR="$LOCAL_POSTDIR_BASE/$(env LC_LANG=C date '+%Y-%m-%d')"
 		sudo mkdir -p "$LOCAL_POSTDIR"
 	else
-		LOCAL_POSTDIR=
+		: ${LOCAL_POSTDIR=}
 	fi
 }
 
@@ -228,6 +228,8 @@ for _ARCH in $ARCHS; do
 	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
 	BUILD_PASS2_ENV=""
 
+	echo "[$_ARCH] Build started on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
+
 	# Build twice so the resulting image is smaller than the fat image
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
@@ -241,7 +243,8 @@ for _ARCH in $ARCHS; do
 		tail -n 10 $_LOG | head -n 9
 		clean=false
 	fi
-
+	echo "[$_ARCH] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
+	
 done
 for ARCH in $_PASSED_ARCHS; do
 	_post_images $ARCH
