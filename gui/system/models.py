@@ -118,6 +118,11 @@ class NTPServer(Model):
     def __unicode__(self):
         return self.ntp_address
 
+    def delete(self):
+        super(NTPServer, self).delete()
+        notifier().start("ix-ntpd")
+        notifier().restart("ntpd")
+
     class Meta:
         verbose_name = _("NTP Server")
         verbose_name_plural = _("NTP Servers")
