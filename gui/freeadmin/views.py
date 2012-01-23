@@ -312,7 +312,7 @@ class ExceptionReporter(debug.ExceptionReporter):
             'sys_executable': sys.executable,
             'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
             'server_time': datetime.datetime.now(),
-            'django_version_info': get_sw_version(),
+            'sw_version': get_sw_version(),
             'sys_path' : sys.path,
             'template_info': self.template_info,
             'template_does_not_exist': self.template_does_not_exist,
