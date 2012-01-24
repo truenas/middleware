@@ -103,6 +103,16 @@ class Pool(object):
             setattr(self, root.name, root)
         root.parent = self
 
+    def find_unavail(self):
+        """
+        Get disks used within this pool
+        """
+        unavails = []
+        for key in ('data', 'cache', 'spares', 'logs'):
+            if getattr(self, key):
+                unavails.extend(getattr(self, key).find_unavail())
+        return unavails
+
     def get_disks(self):
         """
         Get disks used within this pool
@@ -181,19 +191,12 @@ class Tnode(object):
         """
         Find nodes of stauts UNAVAIL
         """
-        if len(self.children) == 0:
-            if self.status != 'ONLINE':
-                return self
-        else:
-            unavails = []
-            for child in self.children:
-                find = child.find_unavail()
-                if find:
-                    if isinstance(find, list):
-                        unavails += find
-                    else:
-                        unavails.append(find)
-            return unavails
+        if len(self.children) == 0 and self.status == 'UNAVAIL':
+            return [self]
+        unavails = []
+        for child in self.children:
+            unavails.extend(child.find_unavail())
+        return unavails
 
     def append(self, tnode):
         """
