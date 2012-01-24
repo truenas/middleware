@@ -26,6 +26,7 @@
 #
 import os
 import re
+import subprocess
 
 from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
@@ -383,7 +384,7 @@ class Dev(Tnode):
 
     def treedump(self):
         from django.utils import simplejson
-        #TODO Move django stuff to outside (view)
+        #TODO Move django stuff to outside (view) - hydrate mode
         from freenasUI.storage.models import Disk
         from django.core.urlresolvers import reverse
         disk = None
@@ -457,6 +458,15 @@ class Dev(Tnode):
                 provider = search[0].content
             elif self.status == 'ONLINE':
                 raise Exception("It should be a valid device: %s" % self.name)
+            elif self.name.isdigit():
+                # Lets check whether it is a guid
+                p1 = subprocess.Popen(["/usr/sbin/zdb", "-C", self.parent.parent.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if p1.wait() == 0:
+                    zdb = p1.communicate()[0]
+                    reg = re.search(r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % self.name, zdb, re.M|re.S)
+                    if reg:
+                        self.path = reg.group("path")
+
         if provider:
             search = self._doc.xpathEval("//provider[@id = '%s']"
                                          "/../name" % provider)
