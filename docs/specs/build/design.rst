@@ -25,12 +25,11 @@ Goals
 
 The goals of the FreeNAS build system are the following items:
 
-  #. Builds must be repeatable provided the minimum requirements of the
-     system are met.
+  #. Builds must be repeatable.
   #. Builds must be environment and system agnostic.
-  #. Builds must fail when needed and also provide enough information
-     for developers and release engineers to root-cause the source of
-     failure.
+  #. Builds must fail when needed.
+  #. Build failures must provide enough information for developers and
+     release engineers to root-cause the source of failure.
 
 ==============
 Basic Workflow
@@ -40,20 +39,15 @@ The basic workflow of the end to end build process for custom
 OS distributions that the author has worked with, is typically as
 follows:
 
-  #. Pull sources.
-     #. Pull custom distribution sources from project specific source
-        control system
-  #. Bootstrap the distribution
-     #. Optionally bootstrap the base OS and third party sources if
-        they're not included in the source base
-     #. Patch base OS and third-party sources with the changes needed
-        for the custom distribution
+  #. Pull sources
+     i. Pull distribution sources
+  #. Bootstrap the base OS and third-party sources
+  #. Patch base OS and third-party sources
   #. Build distribution
-     #. Build and install base OS
+     i. Build and install base OS
      #. Build and install third party packages
      #. Overlay Install with project specific files
-     #. Create bootable images (CD ISOs, disk images, install tarballs,
-        or custom install images)
+     #. Create bootable images
 
 The following sections will describe how things are done from the
 FreeNAS build system in more gross detail.
