@@ -82,12 +82,14 @@ class Alert(object):
                 reg1 = re.search(r'^\s*status: (.*?)\n\s*\w+:', stdout, re.S|re.M)
                 reg2 = re.search(r'^\s*action: (.*?)\n\s*\w+:', stdout, re.S|re.M)
                 if reg1:
-                    status = 'UNKNOWN'
+                    if status == 'HEALTHY':
+                        status = 'UNKNOWN'
                     msg = reg1.group(1)
                     msg = re.sub(r'\s+', ' ', msg)
                     message += msg
                 if reg2:
-                    status = 'UNKNOWN'
+                    if status == 'HEALTHY':
+                        status = 'UNKNOWN'
                     msg = reg2.group(1)
                     msg = re.sub(r'\s+', ' ', msg)
                     message += msg
