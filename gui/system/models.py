@@ -128,7 +128,10 @@ class NTPServer(Model):
         verbose_name_plural = _("NTP Servers")
 
     class FreeAdmin:
-        pass
+        icon_model = u"NTPServerIcon"
+        #icon_object = u"NTPServerIcon"
+        #icon_view = u"NTPServerIcon"
+        #icon_add = u"NTPServerIcon"
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(

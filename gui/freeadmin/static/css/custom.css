@@ -424,6 +424,9 @@ table.grid tr {
 .AddrsyncModIcon { background-image: url('/static/images/ui/tree/add_rsync_module.png'); width:16px;        height:16px; }
 .ViewAllrsyncModIcon { background-image: url('/static/images/ui/tree/view_rsync_modules.png'); width:16px;        height:16px; }
 
+.TunableIcon { background-image: url('/static/images/ui/tree/Tunable_16x16px.png'); width:16px; height:16px; }
+.NTPServerIcon { background-image: url('/static/images/ui/tree/NTP_Servers_16x16px.png'); width:16px; height:16px; }
+
 .dijitTextArea {
 min-height:60px;
 }
