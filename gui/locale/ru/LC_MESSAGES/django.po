@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2012-01-06 11:03+0200\n"
-"Last-Translator: djhrum <djhrum@gmail.com>\n"
+"PO-Revision-Date: 2012-01-24 20:02+0200\n"
+"Last-Translator: yupych <yupych@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -547,9 +547,8 @@ msgid "Disable password logins"
 msgstr "Отключить вход по паролю"
 
 #: account/forms.py:227 account/forms.py:406
-#, fuzzy
 msgid "Lock user"
-msgstr "Блокировка пользователей"
+msgstr "Заблокировкать пользователя"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -1193,9 +1192,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Это поле является обязательным для \"Домашние каталоги\"."
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Службу CIFS не удалось перезагрузить."
+msgstr "Не удалось перезагрузить службу CIFS."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
