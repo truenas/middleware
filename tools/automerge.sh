@@ -37,7 +37,7 @@ _do() {
 	: > $log
 	while [ $tries -gt 0 ]; do
 		$* > $log 2>&1
-		if grep -q onflict $log; then
+		if awk '$1 == "C" || $2 == "C" { exit 1; }' $log; then
 			break
 		elif ! grep -q 'svn: E' $log; then
 			ec=0
@@ -112,7 +112,8 @@ set +e
 failed_a_merge=false
 i=$old_version
 while [ $i -le $new_version ]; do
-	if _do svn log --incremental -r$i $parent_branch > revlog; then
+	_do svn log --incremental -r$i $parent_branch > revlog
+	if [ $? -eq 0 -a -s revlog ]; then
 		if $honor_do_not_merge && grep -q '^Do-Not-Merge: ' revlog; then
 			echo "Not merging r$i"
 		else
@@ -120,7 +121,7 @@ while [ $i -le $new_version ]; do
 
 			# svn is stupid. Exit codes people!
 			_do svn merge -c $i --dry-run $parent_branch $child_branch > merge-log
-			if grep -q onflict merge-log; then
+			if awk '$1 == "C" || $2 == "C" { exit 1; }' merge-log; then
 				failed_merge=true
 			else
 				_do svn merge --non-interactive -c $i $parent_branch $child_branch > merge-log
@@ -146,8 +147,9 @@ while [ $i -le $new_version ]; do
 			fi
 			rm merge-log
 		fi
-	else
+	elif [ -s revlog ]; then
 		echo "Failed to get log for r$i"
+		cat revlog
 	fi
 	: $(( i += 1 ))
 done
