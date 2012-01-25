@@ -241,7 +241,7 @@ for _ARCH in $ARCHS; do
 		_PASSED_ARCHS="$_PASSED_ARCHS $_ARCH"
 	else
 		tail -n 10 $_LOG | head -n 9
-		clean=false
+		CLEAN=false
 	fi
 	echo "[$_ARCH] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
 	
