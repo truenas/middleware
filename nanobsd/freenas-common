@@ -93,10 +93,10 @@ add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
 add_port lang/python27 WITH_HUGE_STACK_SIZE=y
 add_port dns/py-dnspython
 #+net/samba
-add_port devel/talloc MAKE_JOBS_UNSAFE=y
+add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
 add_port devel/popt
-add_port databases/tdb MAKE_JOBS_UNSAFE=y
+add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
 #-net/samba
 add_port net/samba36	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
