@@ -93,7 +93,7 @@ class FormRender(template.Node):
                     hidden_fields.append(unicode(bf))
                 else:
                     if bf.help_text:
-                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><span id="%shelp">?</span>""" % (bf.auto_id, bf.help_text, bf.auto_id)
+                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, bf.help_text, bf.auto_id)
                     else:
                         help_text = ""
                     html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (is_adv, _hide, bf.label_tag(), bf_errors, bf, help_text)
