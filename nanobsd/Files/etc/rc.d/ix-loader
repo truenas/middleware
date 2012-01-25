@@ -127,6 +127,10 @@ generate_boot_loader_conf()
 
 		# End autotuning context.
 
+		ec=$?
+		if [ $ec -ne 0 ]; then
+			return $ec
+		fi
 	fi
 	if update_persistent_file /boot/loader.conf $tmp; then
 		reboot_now=true
