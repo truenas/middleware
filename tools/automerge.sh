@@ -37,7 +37,7 @@ _do() {
 	: > $log
 	while [ $tries -gt 0 ]; do
 		$* > $log 2>&1
-		if awk 'BEGIN { ec=0 } $1 == "C" || $2 == "C" { ec=1 } END { exit ec }' $log; then
+		if awk 'BEGIN { ec=1 } $1 == "C" || $2 == "C" { ec=0 } END { exit ec }' $log; then
 			break
 		elif ! grep -q 'svn: E' $log; then
 			ec=0
@@ -121,7 +121,7 @@ while [ $i -le $new_version ]; do
 
 			# svn is stupid. Exit codes people!
 			_do svn merge -c $i --dry-run $parent_branch $child_branch > merge-log
-			if awk 'BEGIN { ec=0 } $1 == "C" || $2 == "C" { ec=1 } END { exit ec }' merge-log; then
+			if awk 'BEGIN { ec=1 } $1 == "C" || $2 == "C" { ec=0 } END { exit ec }' merge-log; then
 				failed_merge=true
 			else
 				_do svn merge --non-interactive -c $i $parent_branch $child_branch > merge-log
