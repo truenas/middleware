@@ -52,7 +52,7 @@ unset.
 Conditionals and Loops
 ======================
 
-Conditionals should be composed in this format::
+Conditionals should be composed in this format:
 
     if :
     then
@@ -76,6 +76,17 @@ Command substitution
 ====================
 
 * The $() format of command substitution is the preferred method.
+
+=========
+Functions 
+=========
+
+Functions should be composed in this format:
+
+    name()
+    {
+        :
+    }
 
 ===============
 Local variables
