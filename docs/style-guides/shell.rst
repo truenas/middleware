@@ -65,6 +65,19 @@ Conditionals should be composed in this format::
         :
     done
 
+    for :
+    do
+        # Do something here
+        :
+    done
+
+======================
+Command susubstitution
+======================
+
+* the $() format of command substitution is the preferred method.
+
+
 ===============
 Local variables
 ===============
