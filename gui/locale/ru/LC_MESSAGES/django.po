@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2012-01-24 20:02+0200\n"
-"Last-Translator: yupych <yupych@mail.ru>\n"
+"PO-Revision-Date: 2012-01-26 11:17+0200\n"
+"Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -542,7 +542,6 @@ msgid "Shell"
 msgstr "Командный интерпретатор"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
 msgstr "Отключить вход по паролю"
 
@@ -559,9 +558,8 @@ msgid "SSH Public Key"
 msgstr "Открытый ключ SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Пользователь с таким именем уже существует."
+msgstr "Пользователь с таким идентификатором (uid) уже существует."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -591,9 +589,8 @@ msgid "This field is required."
 msgstr "Это поле обязательно."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Пароль для общего доступа"
+msgstr "Отключить пароль"
 
 #: account/forms.py:466
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -862,7 +859,6 @@ msgid "You have to specify IPv4 address as well"
 msgstr "Вы также должны выбрать адрес IPv4"
 
 #: network/forms.py:88
-#, fuzzy
 msgid "You have to choose IPv4 netmask as well"
 msgstr "Вы также должны выбрать маску IPv4"
 
@@ -879,29 +875,24 @@ msgid "You have to choose between IPv4 or IPv6"
 msgstr "Вы должны выбрать между IPv4 или IPv6"
 
 #: network/forms.py:102
-#, fuzzy
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
 msgstr "Вы должны указать действительный IPv4 или IPv6 с побитовой маской"
 
 #: network/forms.py:117
-#, fuzzy
 msgid "Loopback is not a valid nameserver"
 msgstr "Loopback не является допустимым DNS"
 
 #: network/forms.py:119
-#, fuzzy
 msgid "Unspecified addresses are not valid as nameservers"
 msgstr "Не указаны адреса действительных DNS"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
 msgstr "Это не правильный адрес DNS"
 
 #: network/forms.py:124
-#, fuzzy
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 подсети не распространяется на сервер имен"
+msgstr "169.254/16 подсеть не распространяется на DNS"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -941,32 +932,26 @@ msgid "The network '%s' is not valid, CIDR expected."
 msgstr "Сеть '%s' неверна, просрочен CIDR"
 
 #: network/forms.py:303
-#, fuzzy
 msgid "You have to specify IPv4 address as well per alias"
 msgstr "Вы должны указать адрес IPv4, а также псевдоним"
 
 #: network/forms.py:305
-#, fuzzy
 msgid "You have to choose IPv4 netmask as well per alias"
 msgstr "Вы должны выбрать IPv4 маску на псевдоним"
 
 #: network/forms.py:310
-#, fuzzy
 msgid "You have to specify IPv6 address as well per alias"
 msgstr "Вы должны указать адрес IPv6 для псевдонима"
 
 #: network/forms.py:312
-#, fuzzy
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "Вы должны выбрать IPv6 маски для псевдонима"
+msgstr "Вы должны выбрать IPv6 маску для псевдонима"
 
 #: network/forms.py:315
-#, fuzzy
 msgid "You have to choose between IPv4 or IPv6 per alias"
 msgstr "Вы должны выбрать между IPv4 или IPv6 для псевдонима"
 
 #: network/forms.py:317
-#, fuzzy
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
 "Вы должны указать действительный IPv4 или IPv6 с побитной маской для "
@@ -1054,7 +1039,6 @@ msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
 #: network/models.py:125 network/models.py:183
-#, fuzzy
 msgid "IPv6 Prefix Length"
 msgstr "Длина префикса IPv6"
 
@@ -1077,9 +1061,8 @@ msgid "Alias"
 msgstr "Синоним"
 
 #: network/models.py:195
-#, fuzzy
 msgid "Aliases"
-msgstr "Синоним"
+msgstr "Псевдонимы"
 
 #: network/models.py:205 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -1177,9 +1160,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG успешно добавлен"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Не допустимая маска"
+msgstr "Недопустимая маска"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1246,25 +1228,22 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Имя не может содержать косую черту или квадратные скобки."
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Подтвердить пароль"
+msgstr "Подтверждение пароля"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
 msgstr "Службу DynamicDNS не удалось перезагрузить."
 
 #: services/forms.py:273
-#, fuzzy
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "Место должно содержать только буквы и цифры, _ или -"
+msgstr "Должно содержать только буквы и цифры, _ или -"
 
 #: services/forms.py:280
 msgid "This is not a valid e-mail address"
 msgstr "Недопустимый адрес электронной почты"
 
 #: services/forms.py:282
-#, fuzzy
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
@@ -1273,7 +1252,6 @@ msgstr ""
 "электронной почты"
 
 #: services/forms.py:287
-#, fuzzy
 msgid "The community must contain only alphanumeric characters, _ or -"
 msgstr "Сообщество должно содержать только буквы, цифры, _ или -"
 
@@ -1303,9 +1281,8 @@ msgid "The UPS service failed to reload."
 msgstr "Службу UPS не удалось перезагрузить."
 
 #: services/forms.py:340
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Подтвердить пароль администратора"
+msgstr "Подтвердите пароль администратора"
 
 #: services/forms.py:365
 msgid "The activedirectory service failed to reload."
