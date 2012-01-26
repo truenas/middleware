@@ -109,6 +109,29 @@ handles chrooting, package building, installation, etc.
 Project Customizations
 ----------------------
 
+build/nano_env defines [mostly] project specific knobs for how the
+project should be built (in reality the project generic bits should
+be moved into a different layer, e.g. avatar_env, etc so it can be
+used with multiple projects). Because of the way that nanobsd is
+written (many values are hardcoded in nanobsd.sh and overridden by
+the callers), nano_env is naively sourced multiple times during the
+course of the entire build: once from build/do_build.sh, once from
+nanobsd/freenas_common, and subsequently from standalone scripts,
+such as build/create_iso.sh, etc. In reality this sourceable script
+should be split into two scripts to drive the the lowest common
+denominator in a manner similar to bsd.port.pre.mk and
+bsd.port.post.mk, etc so pieces like SVNVERSION don't need to be
+determined more than once.
+
+nano_env should contain components which define:
+
+  #. How kernel should be built.
+  #. How world should be built.
+  #. The name of the project.
+  #. Other ``common`` pieces that are relevant to multiple dissimilar
+     projects, e.g. support website, project specific tools that can be
+     built on demand, etc.
+
 nanobsd/freenas-common defines how the FreeNAS project will be built
 and differentiates the project (in this case FreeNAS) from other
 nanobsd based projects (BSD Router project, pfSense, etc).
