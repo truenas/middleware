@@ -1971,6 +1971,16 @@ class notifier:
         return sum
 
     def get_disks(self):
+        """
+        Grab usable disks and pertinent info about them
+        This accounts for:
+            - all the disks the OS found
+                (except the ones that are providers for multipath)
+            - multipath geoms providers
+
+        Returns:
+            Dict of disks
+        """
         disksd = {}
 
         disks = self.__get_disks()
@@ -2771,9 +2781,15 @@ class notifier:
                 for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
             ]
 
-    def multipath_create(self, name, providers):
+    def multipath_create(self, name, consumers):
+        """
+        Create an Active/Active GEOM_MULTIPATH provider
+        with name ``name`` using ``consumers`` as the consumers for it
 
-        p1 = subprocess.Popen(["/sbin/gmultipath", "label", "-A", name] + providers, stdout=subprocess.PIPE)
+        Returns:
+            True in case the label succeeded and False otherwise
+        """
+        p1 = subprocess.Popen(["/sbin/gmultipath", "label", "-A", name] + consumers, stdout=subprocess.PIPE)
         if p1.wait() != 0:
             return False
         # We need to invalidate confxml cache
@@ -2781,6 +2797,13 @@ class notifier:
         return True
 
     def multipath_next(self):
+        """
+        Find out the next available name for a multipath named diskX
+        where X is a crescenting value starting from 1
+
+        Returns:
+            The string of the multipath name to be created
+        """
         RE_NAME = re.compile(r'[a-z]+(\d+)')
         numbers = sorted([int(RE_NAME.search(mp.name).group(1)) \
                         for mp in self.multipath_all() if RE_NAME.match(mp.name)
@@ -2849,12 +2872,7 @@ class notifier:
             name = self.multipath_next()
             self.multipath_create(name, disks)
 
-        #for disk in disks:
-        #    name = self.multipath_next()
-        #    print "create multipath %s with %s" % (name, disk)
-        #    self.multipath_create(name, [disk])
-
-        self.__confxml = None
+        # Grab confxml again to take new multipaths into account
         doc = self.__geom_confxml()
         mp_ids = []
         for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
