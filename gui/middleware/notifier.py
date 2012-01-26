@@ -1843,18 +1843,10 @@ class notifier:
                 return False
             plugin_pbiname = plugin_pbiname[0]
 
-            c.execute("SELECT id FROM plugins_pluginsmountpoints "
-                "WHERE pm_plugin_id = :plugin_id", {'plugin_id': plugin_id})
-            plugin_mounts = [pm[0] for pm in c.fetchall()]
-
             p = pbi_delete(pbi=plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
             if res and res[0] == 0:
                 try:
-                    for pm in plugin_mounts:
-                        c.execute("DELETE FROM plugins_pluginsmountpoints "
-                            "WHERE id = :pm", {'pm': pm})
-
                     c.execute("DELETE FROM plugins_plugins WHERE id = :plugin_id", {'plugin_id': plugin_id})
                     conn.commit()
                     ret = True
