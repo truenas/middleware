@@ -134,6 +134,7 @@ def __api_call_network_get_staticroute(request, **kwargs):
     return __serialize(network.models.StaticRoute.objects.order_by("-id"))
 
 
+
 #
 #    Plugins methods
 #
@@ -285,7 +286,7 @@ def __api_call_system_get_tunable(request, **kwargs):
 #
 #    Database methods
 #
-def __api_call_query_database(request, **kwargs):
+def __api_call_db_query_database(request, **kwargs):
     data = { "error": False, "message": "Not implemented" }
     return json.dumps(data)
 
@@ -294,7 +295,7 @@ def __api_call_query_database(request, **kwargs):
 #
 #    Filesystem methods
 #
-def __api_call_get_mountpoints(request, **kwargs):
+def __api_call_fs_get_mountpoints(request, **kwargs):
     path_list = []
     mp_list = storage.models.MountPoint.objects.exclude(
         mp_volume__vol_fstype__exact='iscsi').select_related().all()
@@ -310,7 +311,7 @@ def __api_call_get_mountpoints(request, **kwargs):
     data = { "error": False, "mountpoints": path_list }
     return json.dumps(data)
 
-def __api_call_mount_filesystem(request, **kwargs):
+def __api_call_fs_mount_filesystem(request, **kwargs):
     jail_path = __get_plugins_jail_full_path()
     if not jail_path:
         data = { "error": True, "message": "plugins jail is not configured" }
@@ -336,7 +337,7 @@ def __api_call_mount_filesystem(request, **kwargs):
 
     return json.dumps(data)
 
-def __api_call_umount_filesystem(request, **kwargs):
+def __api_call_fs_umount_filesystem(request, **kwargs):
     jail_path = __get_plugins_jail_full_path()
     if not jail_path:
         data = { "error": True, "message": "plugins jail is not configured" }
@@ -571,15 +572,15 @@ __plugins_api_call_table = {
     #
     #    Database
     #
-    "db_query_database":                              __api_call_query_database,
+    "db_query_database":                              __api_call_db_query_database,
 
 
     #
     #    Filesystem
     #
-    "fs_get_mountpoints":                             __api_call_get_mountpoints,
-    "fs_mount_filesystem":                            __api_call_mount_filesystem,
-    "fs_umount_filesystem":                           __api_call_umount_filesystem,
+    "fs_get_mountpoints":                             __api_call_fs_get_mountpoints,
+    "fs_mount_filesystem":                            __api_call_fs_mount_filesystem,
+    "fs_umount_filesystem":                           __api_call_fs_umount_filesystem,
 
 
     #
