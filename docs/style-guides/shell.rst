@@ -27,15 +27,6 @@ Variable Declarations
 
 * Variable names should be complete and descript. The reader should be
   able to discern what the intent of the variable is from the name.
-* Variables should be defined and declared separately, e.g.::
-
-    local foo="$1"
-
-  is discouraged, when compared with::
-
-    local foo
-
-    foo="$1"
 
 * If your variable is multiword, it must be quoted in order to avoid
   word splitting in /bin/sh under FreeBSD.
@@ -68,7 +59,8 @@ Conditionals should be composed in this format::
         # This will always be executed
     fi
 
-    while : ; do
+    while :
+    do
         # Do something here
         :
     done
@@ -99,7 +91,7 @@ Hereto-docs
 hereto-docs are constructs that allow the author to compose multiline
 inputs to various commands (e.g. cat). An example follows::
 
-    cat > a-file <<EOF
+    cat <<EOF >a-file
     this is a multiline
     message
     EOF
