@@ -1,0 +1,51 @@
+<div id="multipathGrid" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="doLayout: true">
+<script type="dojo/method">
+
+    var store = new dojo.data.ItemFileReadStore({
+        url: "{% url storage_multipath_status_json %}",
+        });
+
+    var treeModel = new dijit.tree.ForestStoreModel({
+        store: store,
+        rootLabel: 'Multipaths',
+        query: { 'type': 'root' },
+        childrenAttrs: ['children']
+    });
+
+    actions = function(v) {
+        var content = new dijit.layout.ContentPane({});
+        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
+
+        var json = dojo.fromJson(v);
+        if(json == undefined) return content;
+
+        if(json.edit_url) {
+            var b = new dijit.form.Button({label: gettext("Edit")});
+            dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
+            content.domNode.appendChild(b.domNode);
+        }
+
+        return content;
+    };
+
+    var struc = [
+        { field: "name", name: "Name", width: "auto" },
+        { field: "status", name: "Status", width: "auto" },
+        //{ field: "actions", name: "Available Actions", width: "auto", formatter: actions },
+        ];
+
+    // create a new grid:
+    var grid4 = new dojox.grid.TreeGrid({
+        treeModel: treeModel,
+        rowSelector: true,
+        defaultOpen: true,
+        structure: struc
+        },
+        document.createElement('div'));
+
+    container = dojo.byId("multipathGrid");
+    dojo.html._emptyNode(container);
+    container.appendChild(grid4.domNode);
+    grid4.startup();
+</script>
+</div>

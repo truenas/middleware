@@ -61,6 +61,17 @@ class ViewDisks(TreeNode):
         model = 'Disk'
         append_app = False
 
+class ViewMultipaths(TreeNode):
+
+        gname = 'storage.View.Multipaths'
+        name = _(u'View Multipaths')
+        view = 'storage_multipath_status'
+        type = 'view'
+        icon = u'ViewAllVolumesIcon'
+        app_name = 'storage'
+        model = 'Disk'
+        append_app = False
+
 class AutoImportVolume(TreeNode):
 
         gname = 'AutoImport'
@@ -120,6 +131,7 @@ class Volumes(TreeNode):
                                     AutoImportVolume(),
                                     ViewVolumes(),
                                     ViewDisks(),
+                                    ViewMultipaths(),
                                  ])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
 

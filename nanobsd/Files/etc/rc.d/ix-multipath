@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-multipath
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.subr
+
+multipath_sync()
+{
+	/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py multipath_sync
+}
+
+name="ix-multipath"
+start_cmd='multipath_sync'
+stop_cmd=''
+
+load_rc_config $name
+run_rc_command "$1"

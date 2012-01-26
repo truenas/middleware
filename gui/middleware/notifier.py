@@ -66,6 +66,7 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
+from django.db.models import Q
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -1970,16 +1971,26 @@ class notifier:
         return sum
 
     def get_disks(self):
-
         disksd = {}
 
-        for disk in self.__get_disks():
+        disks = self.__get_disks()
+
+        """
+        Replace devnames by its multipath equivalent
+        """
+        for mp in self.multipath_all():
+            for dev in mp.devices:
+                if dev in disks:
+                    disks.remove(dev)
+            disks.append(mp.devname)
+
+        for disk in disks:
             info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
             if len(info) > 3:
                 disksd.update({
                     disk: {
                         'devname': info[0],
-                        'capacity': info[2]
+                        'capacity': info[2],
                     },
                 })
 
@@ -2431,11 +2442,9 @@ class notifier:
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
             return self.__diskserial.get(devname)
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
-        output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
-        if search:
-            serial = search.group("serial")
+        p1 = Popen(["/sbin/camcontrol", "inquiry", devname, "-S"], stdout=PIPE, stderr=PIPE)
+        serial = p1.communicate()[0].split('\n')[0]
+        if serial:
             self.__diskserial[devname] = serial
             return serial
         return None
@@ -2543,6 +2552,11 @@ class notifier:
         else:
             return ''
 
+    def swap_from_diskid(self, diskid):
+        from storage.models import Disk
+        disk = Disk.objects.get(id=diskid)
+        return self.part_type_from_device('swap', disk.devname)
+
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
 
@@ -2633,7 +2647,7 @@ class notifier:
                     disk.disk_serial = self.serial_from_device(dskname) or ''
             elif dskname in in_disks:
                 # We are probably dealing with with multipath here
-                disk.disk_enabled = False
+                disk.delete()
                 continue
             else:
                 disk.disk_enabled = True
@@ -2744,6 +2758,173 @@ class notifier:
             })
         return items
 
+    def multipath_all(self):
+        """
+        Get all available gmultipath instances
+
+        Returns:
+            A list of Multipath objects
+        """
+        from middleware.multipath import Multipath
+        doc = self.__geom_confxml()
+        return [Multipath(doc=doc, xmlnode=geom) \
+                for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
+            ]
+
+    def multipath_create(self, name, providers):
+
+        p1 = subprocess.Popen(["/sbin/gmultipath", "label", "-A", name] + providers, stdout=subprocess.PIPE)
+        if p1.wait() != 0:
+            return False
+        # We need to invalidate confxml cache
+        self.__confxml = None
+        return True
+
+    def multipath_next(self):
+        RE_NAME = re.compile(r'[a-z]+(\d+)')
+        numbers = sorted([int(RE_NAME.search(mp.name).group(1)) \
+                        for mp in self.multipath_all() if RE_NAME.match(mp.name)
+                        ])
+        if not numbers:
+            numbers = [0]
+        for number in xrange(1, numbers[-1]+2):
+            if number not in numbers:
+                break
+        else:
+            #FIXME
+            raise
+        return "disk%d" % number
+
+    def multipath_sync(self):
+        """Synchronize multipath disks
+
+        Every distinct GEOM_DISK that shares an ident (aka disk serial)
+        is considered a multpath and will be handled by GEOM_MULTIPATH
+
+        If the disk is not currently in use by some Volume or iSCSI Disk Extent
+        then a gmultipath is automatically created and will be available for use
+        """
+        from freenasUI.storage.models import Volume, Disk
+
+        doc = self.__geom_confxml()
+
+        mp_disks = []
+        for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
+            for provref in geom.xpathEval("./consumer/provider/@ref"):
+                prov = doc.xpathEval("//provider[@id = '%s']" % provref.content)[0]
+                class_name = prov.xpathEval("../../name")[0].content
+                #For now just DISK is allowed
+                if class_name != 'DISK':
+                    continue
+                disk = prov.xpathEval("../name")[0].content
+                mp_disks.append(disk)
+
+        reserved = [self.__find_root_dev()]
+
+        # disks already in use count as reserved as well
+        for vol in Volume.objects.all():
+            reserved.extend(vol.get_disks())
+
+        disks = []
+        serials = {}
+        RE_CD = re.compile('^cd[0-9]')
+        for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
+            name = geom.xpathEval("./name")[0].content
+            if RE_CD.match(name) or name in reserved or name in mp_disks:
+                continue
+            serial = self.serial_from_device(name)
+            if not serial:
+                disks.append(name)
+            else:
+                if not serials.has_key(serial):
+                    serials[serial] = [name]
+                else:
+                    serials[serial].append(name)
+
+        disks = sorted(disks)
+
+        for serial, disks in serials.items():
+            if not len(disks) > 1:
+                continue
+            name = self.multipath_next()
+            self.multipath_create(name, disks)
+
+        #for disk in disks:
+        #    name = self.multipath_next()
+        #    print "create multipath %s with %s" % (name, disk)
+        #    self.multipath_create(name, [disk])
+
+        self.__confxml = None
+        doc = self.__geom_confxml()
+        mp_ids = []
+        for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
+            _disks = []
+            for provref in geom.xpathEval("./consumer/provider/@ref"):
+                prov = doc.xpathEval("//provider[@id = '%s']" % provref.content)[0]
+                class_name = prov.xpathEval("../../name")[0].content
+                #For now just DISK is allowed
+                if class_name != 'DISK':
+                    continue
+                disk = prov.xpathEval("../name")[0].content
+                _disks.append(disk)
+            qs = Disk.objects.filter(
+                Q(disk_name__in=_disks)|Q(disk_multipath_member__in=_disks)
+                )
+            if qs.exists():
+                diskobj = qs[0]
+                mp_ids.append(diskobj.id)
+                diskobj.disk_multipath_name = geom.xpathEval("./name")[0].content
+                if diskobj.disk_name in _disks:
+                    _disks.remove(diskobj.disk_name)
+                if _disks:
+                    diskobj.disk_multipath_member = _disks.pop()
+                diskobj.save()
+
+        Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
+
+
+    def __get_disks(self):
+        """Return a list of available storage disks.
+
+        The list excludes all devices that cannot be reserved for storage,
+        e.g. the root device, CD drives, etc.
+
+        Returns:
+            A list of available devices (ada0, da0, etc), or an empty list if
+            no devices could be divined from the system.
+        """
+
+        disks = self.sysctl('kern.disks').split()
+        disks.reverse()
+
+        root_dev = self.__find_root_dev()
+
+        device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
+
+        return filter(lambda x: not device_blacklist_re.match(x), disks)
+
+
+    def kern_module_is_loaded(self, module):
+        """Determine whether or not a kernel module (or modules) is loaded.
+
+        Parameter:
+            module_name - a module to look for in kldstat -v output (.ko is
+                          added automatically for you).
+
+        Returns:
+            A boolean to denote whether or not the module was found.
+        """
+
+        pipe = self.__pipeopen('/sbin/kldstat -v')
+
+        return 0 < pipe.communicate()[0].find(module + '.ko')
+
+
+    def __toCamelCase(self, name):
+        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
+        pass2 = re.sub(r'\s{2,}', ' ', pass1)
+        camel = ''.join([word.capitalize() for word in pass2.split()])
+        return camel
 
     def __find_root_dev(self):
         """Find the root device.
@@ -2773,42 +2954,6 @@ class notifier:
             name = prov.xpathEval("../name")[0].content
             return name
         raise AssertionError('Root device not found (!)')
-
-
-    def __get_disks(self):
-        """Return a list of available storage disks.
-
-        The list excludes all devices that cannot be reserved for storage,
-        e.g. the root device, CD drives, etc.
-
-        Returns:
-            A list of available devices (ada0, da0, etc), or an empty list if
-            no devices could be divined from the system.
-        """
-
-        disks = self.sysctl('kern.disks').split()
-
-        root_dev = self.__find_root_dev()
-
-        device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
-
-        return filter(lambda x: not device_blacklist_re.match(x), disks)
-
-
-    def kern_module_is_loaded(self, module):
-        """Determine whether or not a kernel module (or modules) is loaded.
-
-        Parameter:
-            module_name - a module to look for in kldstat -v output (.ko is
-                          added automatically for you).
-
-        Returns:
-            A boolean to denote whether or not the module was found.
-        """
-
-        pipe = self.__pipeopen('/sbin/kldstat -v')
-
-        return 0 < pipe.communicate()[0].find(module + '.ko')
 
 
     def zfs_get_version(self):

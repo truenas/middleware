@@ -31,6 +31,14 @@
         </script>
     </button>
 
+    <button id="viewMultipathBtn" dojoType="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png">
+        <p>{% trans "View Multipaths" %}</p>
+        <script type="dojo/method" event="onClick" args="evt">
+            viewModel('{% trans "View Multipaths"|force_escape %}', '{% url storage_multipath_status %}');
+        </script>
+    </button>
+
     {% comment %}
     Since datasets and zvols are not part of mp_list its not trivial to determine it previously
     <h5>

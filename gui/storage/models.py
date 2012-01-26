@@ -179,6 +179,16 @@ class Disk(Model):
             verbose_name = _("Serial"),
             blank=True
             )
+    disk_multipath_name = models.CharField(
+            max_length=30,
+            verbose_name=_("Multipath name"),
+            blank=True,
+            )
+    disk_multipath_member = models.CharField(
+            max_length=30,
+            verbose_name=_("Multipath member"),
+            blank=True,
+            )
     disk_description = models.CharField(
             max_length=120,
             verbose_name = _("Description"),
@@ -233,6 +243,20 @@ class Disk(Model):
         Get the corresponding device name from disk_identifier field
         """
         return notifier().identifier_to_device(self.disk_identifier)
+    @property
+    def devname(self):
+        if self.disk_multipath_name:
+            return "multipath/%s" % self.disk_multipath_name
+        else:
+            return self.disk_name
+    def get_disk_size(self):
+        #FIXME
+        import subprocess
+        p1 = subprocess.Popen(["/usr/sbin/diskinfo", self.devname], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if p1.wait() == 0:
+            out = p1.communicate()[0]
+            return out.split('\t')[3]
+        return 0
     def save(self, *args, **kwargs):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):

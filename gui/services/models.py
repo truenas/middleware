@@ -424,7 +424,11 @@ class iSCSITargetExtent(Model):
             return self.iscsi_target_extent_path
         else:
             try:
-                return "/dev/%s" % Disk.objects.get(id=self.iscsi_target_extent_path).identifier_to_device()
+                disk = Disk.objects.get(id=self.iscsi_target_extent_path)
+                if disk.disk_multipath_name:
+                    return "/dev/%s" % disk.devname
+                else:
+                    return "/dev/%s" % notifier().identifier_to_device(disk.disk_identifier)
             except:
                 return self.iscsi_target_extent_path
     def delete(self):

@@ -217,18 +217,8 @@ def volautoimport(request):
 
 def disks_datagrid(request):
 
-    names = [x.verbose_name for x in models.Disk._meta.fields]
-    _n = [x.name for x in models.Disk._meta.fields]
-
-    filter_fields = [
-        ('disk enabled', 'disk_enabled'),
-        ('ID', 'id'),
-    ]
-
-    for name, field in filter_fields:
-        if name in names and field in _n:
-            names.remove(name)
-            _n.remove(field)
+    names = [_('Name'), _('Serial'), _('Description'), _("Transfer Mode"), _("HDD Standby"), _("Advanced Power Management"), _("Acoustic Level"), _("Enable S.M.A.R.T."), _("Enable S.M.A.R.T.")]
+    _n = ['devname', 'disk_serial', 'disk_description', 'disk_transfermode', 'disk_hddstandby', 'disk_advpowermgmt', 'disk_acousticlevel', 'disk_togglesmart', 'disk_smartoptions']
 
     """
     Nasty hack to calculate the width of the datagrid column
@@ -271,6 +261,8 @@ def disks_datagrid_json(request):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
+        ret['devname'] = data.devname
+
         complete.append(ret)
 
     return HttpResponse(simplejson.dumps(
@@ -704,3 +696,39 @@ def zpool_disk_replace(request, vname, label):
         'label': label,
         'disk': disk,
     })
+
+def multipath_status(request):
+
+    return render(request, 'storage/multipath_status.html', {
+    })
+
+def multipath_status_json(request):
+
+    multipaths = notifier().multipath_all()
+    _id = 1
+    items = []
+    for mp in multipaths:
+        children = []
+        for cn in mp.consumers:
+            items.append({
+                'id': str(_id),
+                'name': cn.devname,
+                'status': cn.status,
+                'type': 'consumer',
+            })
+            children.append({'_reference': str(_id)})
+            _id += 1
+        data = {
+            'id': str(_id),
+            'name': mp.devname,
+            'status': mp.status,
+            'type': 'root',
+            'children': children,
+        }
+        items.append(data)
+        _id += 1
+    return HttpResponse(simplejson.dumps({
+        'identifier': 'id',
+        'label': 'name',
+        'items': items,
+    }, indent=2), content_type='application/json')

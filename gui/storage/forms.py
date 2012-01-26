@@ -243,15 +243,10 @@ class VolumeWizardForm(forms.Form):
 
         disks = []
 
-        serials = {}
-        #Get cached serials
-        for d in models.Disk.objects.all():
-            serials[d.disk_name] = d.disk_serial
-
         # Grab disk list
         # Root device already ruled out
         for disk, info in notifier().get_disks().items():
-            disks.append(Disk(info['devname'], info['capacity'], serial=serials.get(disk)))
+            disks.append(Disk(info['devname'], info['capacity'], serial=info.get('ident')))
 
         # Exclude what's already added
         used_disks = []
@@ -259,8 +254,7 @@ class VolumeWizardForm(forms.Form):
             used_disks.extend(v.get_disks())
 
         qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(id__in=diskids)])
+        used_disks.extend([i.get_device()[5:] for i in qs])
 
         for d in list(disks):
             if d.dev in used_disks:

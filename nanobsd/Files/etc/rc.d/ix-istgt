@@ -147,10 +147,14 @@ generate_istgt_config()
 		    WHERE t.iscsi_target_id = ${id}" | \
 		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type; do
 			if [ "${iscsi_target_extent_type}" = "Disk" ]; then
+				mpname=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_multipath_name FROM storage_disk WHERE id = ${iscsi_target_extent_path}")
 				ident=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE id = ${iscsi_target_extent_path}"|sed 's/{label}/{devicename}/')
-
-				devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
-				echo -n "  LUN${iscsi_target_lun} Storage /dev/${devname}"
+				diskname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
+				if [ -n "${mpname}" ]; then
+					echo -n "  LUN${iscsi_target_lun} Storage /dev/multipath/${mpname}"
+				else
+					echo -n "  LUN${iscsi_target_lun} Storage /dev/${diskname}"
+				fi
 			elif [ "${iscsi_target_extent_type}" = "ZVOL" ]; then
 				echo -n "  LUN${iscsi_target_lun} Storage /dev/${iscsi_target_extent_path}"
 			else

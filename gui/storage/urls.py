@@ -66,5 +66,7 @@ urlpatterns = patterns('storage.views',
     url(r'^zpool-(?P<vname>[^/]+)/disk/offline/(?P<label>.+)/$', 'disk_offline', name="storage_disk_offline"),
     url(r'^zpool-(?P<vname>[^/]+)/disk/remove/(?P<label>.+)/$', 'zpool_disk_remove', name="storage_zpool_disk_remove"),
     url(r'^get_volumes/$', 'get_volumes', name="get_volumes"),
+    url(r'^multipath/status/$', 'multipath_status', name="storage_multipath_status"),
+    url(r'^multipath/status/json/$', 'multipath_status_json', name="storage_multipath_status_json"),
     )
 
