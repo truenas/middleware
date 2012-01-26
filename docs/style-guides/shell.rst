@@ -52,7 +52,7 @@ unset.
 Conditionals and Loops
 ======================
 
-Conditionals should be composed in this format:
+Conditionals should be composed in this format::
 
     if :
     then
@@ -81,10 +81,11 @@ Command substitution
 Functions 
 =========
 
-Functions should be composed in this format:
+Functions should be composed in this format::
 
     name()
     {
+        # Function body
         :
     }
 
@@ -123,5 +124,3 @@ The FreeBSD project as well as many other projects compose hereto
 docs in the above format. Furthermore, using the above format improves
 readability in emacs, vim, etc, in particular when things are
 colorized.
-
-   
