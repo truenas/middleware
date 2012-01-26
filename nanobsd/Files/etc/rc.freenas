@@ -468,6 +468,18 @@ create_cache_filesystem()
 {
 	local dev
 
+	# test to see if /var is an md, if not, presumably it's been moved to
+	# a persistant volume, so skip creating a separate in memory
+	# filesystem for it.
+	ret=`mount | awk '$3 == "/var" {print $1}' | grep -qE "/dev/md[[:digit:]]+"`
+	if [ $? -ne 0 ] ; then
+		if ! [ -d "${FREENAS_CACHEDIR}" ]; then
+			mkdir -p "${FREENAS_CACHEDIR}"
+		fi
+	return 0
+	fi
+
+
 	if [ -d "${FREENAS_CACHEDIR}" ]; then
 		dev=$(mount | awk -v "dir=$FREENAS_CACHEDIR" \
 			'$3 == dir { print $1 }')
