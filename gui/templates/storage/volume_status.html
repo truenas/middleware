@@ -22,31 +22,31 @@
 
         if(json.edit_url) {
             var b = new dijit.form.Button({label: gettext("Edit")});
-            dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
+            dojo.connect(b, 'onClick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
             content.domNode.appendChild(b.domNode);
         }
 
         if(json.replace_url) {
             var b2 = new dijit.form.Button({label: gettext("Replace")});
-            dojo.connect(b2.domNode, 'onclick', function(){ editObject(gettext('Disk Replacement'), json.replace_url, [gridhtml,]); });
+            dojo.connect(b2, 'onClick', function(){ editObject(gettext('Disk Replacement'), json.replace_url, [gridhtml,]); });
             content.domNode.appendChild(b2.domNode);
         }
         if(json.detach_url) {
             var b3 = new dijit.form.Button({label: gettext("Detach")});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Disk Detach'), json.detach_url, [gridhtml,]); });
+            dojo.connect(b3, 'onClick', function(){ editObject(gettext('Disk Detach'), json.detach_url, [gridhtml,]); });
             content.domNode.appendChild(b3.domNode);
         }
 
         if(json.offline_url) {
-            var b3 = new dijit.form.Button({label: gettext("Offline")});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Offline Disk'), json.offline_url, [gridhtml,]); });
-            content.domNode.appendChild(b3.domNode);
+            var b4 = new dijit.form.Button({label: gettext("Offline")});
+            dojo.connect(b4, 'onClick', function(){ editObject(gettext('Offline Disk'), json.offline_url, [gridhtml,]); });
+            content.domNode.appendChild(b4.domNode);
         }
 
         if(json.remove_url) {
-            var b3 = new dijit.form.Button({label: gettext("Remove")});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Remove Disk'), json.remove_url, [gridhtml,]); });
-            content.domNode.appendChild(b3.domNode);
+            var b5 = new dijit.form.Button({label: gettext("Remove")});
+            dojo.connect(b5, 'onClick', function(){ editObject(gettext('Remove Disk'), json.remove_url, [gridhtml,]); });
+            content.domNode.appendChild(b5.domNode);
         }
 
         return content;
