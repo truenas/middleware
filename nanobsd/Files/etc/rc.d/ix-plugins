@@ -83,37 +83,6 @@ get_jail_name()
 	"
 }
 
-get_plugin_mountpoints()
-{
-	local plugin="${1}"
-
-	if [ -z "${plugin}" ]
-	then
-		return 1
-	fi
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT DISTINCT
-		pmp.pm_path
-
-	FROM
-		plugins_pluginsmountpoints as pmp
-
-	INNER JOIN
-		plugins_plugins as p
-	ON
-		(pmp.pm_plugin_id = p.id)
-
-	WHERE
-		(p.plugin_name = '${plugin}')
-
-	ORDER BY
-		pmp.pm_path	
-	"
-
-	return 0
-}
-
 plugins_start()
 {
 	local args="$*"
@@ -176,25 +145,6 @@ plugins_start()
 		then
 			touch "${tmpfile}"
 		fi
-
-		jexec ${jid} "mkdir -p ${path}/mnt" 2>/dev/null
-
-		local pl_fstab="/etc/fstab.${jn}.${name}"
-
-		get_plugin_mountpoints "${name}" | \
-		while read mp
-		do
-			dir=$(basename ${mp})
-			dst="${jp}/${path}/mnt/${dir}"
-			mkdir -p  "${dst}"
-			echo "${mp} ${dst} nullfs rw 0 0"
-		done > "${pl_fstab}"
-
-		if [ -s "${pl_fstab}" ]
-		then
-			mount -a -F "${pl_fstab}"
-		fi
-
 	done
 	IFS="${_ifs}"
 
@@ -266,13 +216,6 @@ plugins_stop()
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"
-		fi
-
-		local pl_fstab="/etc/fstab.${jn}.${name}"
-		if [ -s "${pl_fstab}" ]
-		then
-			umount -a -F "${pl_fstab}"
-			rm -f "${pl_fstab}"
 		fi
 	done
 	IFS="${_ifs}"
