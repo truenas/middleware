@@ -2024,7 +2024,7 @@ class notifier:
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
-                        'devname': os.path.basename(info[0]),
+                        'devname': info[0].replace("/dev/", ""),
                         'capacity': info[2]
                     },
                 })
