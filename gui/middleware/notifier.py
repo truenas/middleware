@@ -2783,13 +2783,13 @@ class notifier:
 
     def multipath_create(self, name, consumers):
         """
-        Create an Active/Active GEOM_MULTIPATH provider
+        Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
 
         Returns:
             True in case the label succeeded and False otherwise
         """
-        p1 = subprocess.Popen(["/sbin/gmultipath", "label", "-A", name] + consumers, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(["/sbin/gmultipath", "label", name] + consumers, stdout=subprocess.PIPE)
         if p1.wait() != 0:
             return False
         # We need to invalidate confxml cache
