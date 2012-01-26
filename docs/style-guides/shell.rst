@@ -71,12 +71,11 @@ Conditionals should be composed in this format::
         :
     done
 
-======================
-Command susubstitution
-======================
+====================
+Command substitution
+====================
 
-* the $() format of command substitution is the preferred method.
-
+* The $() format of command substitution is the preferred method.
 
 ===============
 Local variables
