@@ -630,7 +630,12 @@ class VolumeAutoImportForm(forms.Form):
 class DiskFormPartial(ModelForm):
     class Meta:
         model = models.Disk
-        exclude = ('disk_enabled', 'disk_transfermode')
+        exclude = (
+            'disk_enabled',
+            'disk_transfermode',
+            'disk_multipath_name',
+            'disk_multipath_member',
+            )
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
