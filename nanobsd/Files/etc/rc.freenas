@@ -168,7 +168,7 @@ __do_AD_query()
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
-	cat<<-__EOF__>"${tmpfile}"
+	cat > "${tmpfile}" <<-__EOF__
 	/usr/local/bin/ldapsearch \
 	    -H "ldap://${dcname}:${dcport}" \
 	    -b "${basedn}" \
@@ -232,7 +232,7 @@ AD_query_global_catalog()
 	local binddn="$(AD_get binddn)"
 	local adminpw="$(AD_get adminpw)"
 
-	cat<<-__EOF__>"${tmpfile}"
+	cat >"${tmpfile}" <<-__EOF__
 	/usr/local/bin/ldapsearch \
 	    -H "ldap://${gchost}:${gcport}" \
 	    -D "${binddn}" \
@@ -262,7 +262,7 @@ AD_query_rootDSE()
 	local binddn="$(AD_get binddn)"
 	local adminpw="$(AD_get adminpw)"
 
-	cat<<-__EOF__>"${tmpfile}"
+	cat > "${tmpfile}" <<-__EOF__
 	/usr/local/bin/ldapsearch \
 	    -H "ldap://${dcname}:${dcport}" \
 	    -D "${binddn}" \
