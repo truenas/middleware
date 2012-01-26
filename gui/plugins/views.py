@@ -36,6 +36,8 @@ from freeadmin.views import JsonResponse, JsonResp
 
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.jail import Jls, Jexec
+from freenasUI.plugins.api_calls import plugins_api_get_method
+
 
 def plugins_home(request):
     plugins_list = models.Plugins.objects.all()
@@ -80,3 +82,14 @@ def plugin_delete(request, plugin_id):
         return render(request, 'plugins/plugin_confirm_delete.html', {
             'plugin': plugin,
         })
+
+
+def plugin_api_call(request, api_func):
+    kwargs = {}
+    callback = None
+
+    for key in request.GET:
+        kwargs[key] = request.GET[key]
+
+    callback = plugins_api_get_method(api_func)
+    return HttpResponse(callback(request, **kwargs), mimetype="application/json")
