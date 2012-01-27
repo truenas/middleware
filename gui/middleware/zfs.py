@@ -371,6 +371,7 @@ class Dev(Tnode):
 
     disk = None
     devname = None
+    path = None
     def __init__(self, *args, **kwargs):
         self.replacing = kwargs.pop('replacing', False)
         super(Dev, self).__init__(*args, **kwargs)
