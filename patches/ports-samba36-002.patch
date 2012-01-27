@@ -1,6 +1,10 @@
-diff --exclude '*work*' -Naur net/samba36~~~/Makefile net/samba36/Makefile
---- net/samba36~~~/Makefile	2012-01-13 00:23:17.462982495 -0800
-+++ net/samba36/Makefile	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/samba36/Makefile,v
+retrieving revision 1.3
+diff -u -p -r1.3 Makefile
+--- net/samba36/Makefile	21 Oct 2011 02:12:22 -0000	1.3
++++ net/samba36/Makefile	27 Jan 2012 20:24:54 -0000
 @@ -7,7 +7,7 @@
  
  PORTNAME=		${SAMBA_BASENAME}36
@@ -10,7 +14,7 @@ diff --exclude '*work*' -Naur net/samba36~~~/Makefile net/samba36/Makefile
  CATEGORIES?=		net
  MASTER_SITES=		${MASTER_SITE_SAMBA}
  MASTER_SITE_SUBDIR=	. old-versions rc pre
-@@ -145,8 +145,19 @@
+@@ -145,8 +145,19 @@ CONFIGURE_ARGS+=	--disable-cups --disabl
  .	endif
  .else
  # Samba server itself
@@ -32,7 +36,7 @@ diff --exclude '*work*' -Naur net/samba36~~~/Makefile net/samba36/Makefile
  
  PLIST=			${WRKDIR}/.PLIST
  # We don't (yet) have clustered FS for cluster support
-@@ -533,6 +544,7 @@
+@@ -533,6 +544,7 @@ post-install:
  # !NOPORTDOCS
  .endif
  # Run post-install script
@@ -40,9 +44,27 @@ diff --exclude '*work*' -Naur net/samba36~~~/Makefile net/samba36/Makefile
  	@${SH} ${PKGINSTALL} ${PKGNAME} POST-INSTALL
  	@${CAT} ${PKGMESSAGE}
  
-diff --exclude '*work*' -Naur net/samba36~~~/files/nmbd.in net/samba36/files/nmbd.in
---- net/samba36~~~/files/nmbd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/nmbd.in	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/pkg-plist
+===================================================================
+RCS file: /home/ncvs/ports/net/samba36/pkg-plist,v
+retrieving revision 1.3
+diff -u -p -r1.3 pkg-plist
+--- net/samba36/pkg-plist	21 Oct 2011 02:12:22 -0000	1.3
++++ net/samba36/pkg-plist	27 Jan 2012 20:24:54 -0000
+@@ -20,6 +20,7 @@ bin/smbta-util
+ bin/smbtar
+ bin/smbtree
+ bin/testparm
++etc/rc.samba
+ %%SMBTORTURE%%bin/smbtorture
+ %%WINBIND%%bin/wbinfo
+ %%WINBIND%%include/wbclient.h
+Index: net/samba36/files/nmbd.in
+===================================================================
+RCS file: net/samba36/files/nmbd.in
+diff -N net/samba36/files/nmbd.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/samba36/files/nmbd.in	27 Jan 2012 20:24:54 -0000
 @@ -0,0 +1,62 @@
 +#!/bin/sh
 +#
@@ -106,9 +128,12 @@ diff --exclude '*work*' -Naur net/samba36~~~/files/nmbd.in net/samba36/files/nmb
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
-diff --exclude '*work*' -Naur net/samba36~~~/files/rc.samba.in net/samba36/files/rc.samba.in
---- net/samba36~~~/files/rc.samba.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/rc.samba.in	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/files/rc.samba.in
+===================================================================
+RCS file: net/samba36/files/rc.samba.in
+diff -N net/samba36/files/rc.samba.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/samba36/files/rc.samba.in	27 Jan 2012 20:24:54 -0000
 @@ -0,0 +1,104 @@
 +#!/bin/sh
 +#
@@ -214,9 +239,13 @@ diff --exclude '*work*' -Naur net/samba36~~~/files/rc.samba.in net/samba36/files
 +	fi
 +	return 0
 +}
-diff --exclude '*work*' -Naur net/samba36~~~/files/samba.in net/samba36/files/samba.in
---- net/samba36~~~/files/samba.in	2012-01-13 00:23:17.462982495 -0800
-+++ net/samba36/files/samba.in	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/files/samba.in
+===================================================================
+RCS file: /home/ncvs/ports/net/samba36/files/samba.in,v
+retrieving revision 1.1
+diff -u -p -r1.1 samba.in
+--- net/samba36/files/samba.in	16 Oct 2011 22:35:25 -0000	1.1
++++ net/samba36/files/samba.in	27 Jan 2012 20:24:54 -0000
 @@ -1,14 +1,8 @@
  #!/bin/sh
  #
@@ -439,9 +468,12 @@ diff --exclude '*work*' -Naur net/samba36~~~/files/samba.in net/samba36/files/sa
  }
  
  run_rc_command "$1"
-diff --exclude '*work*' -Naur net/samba36~~~/files/smbd.in net/samba36/files/smbd.in
---- net/samba36~~~/files/smbd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/smbd.in	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/files/smbd.in
+===================================================================
+RCS file: net/samba36/files/smbd.in
+diff -N net/samba36/files/smbd.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/samba36/files/smbd.in	27 Jan 2012 20:24:54 -0000
 @@ -0,0 +1,62 @@
 +#!/bin/sh
 +#
@@ -505,9 +537,12 @@ diff --exclude '*work*' -Naur net/samba36~~~/files/smbd.in net/samba36/files/smb
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
-diff --exclude '*work*' -Naur net/samba36~~~/files/winbindd.in net/samba36/files/winbindd.in
---- net/samba36~~~/files/winbindd.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/samba36/files/winbindd.in	2012-01-13 01:07:20.762978793 -0800
+Index: net/samba36/files/winbindd.in
+===================================================================
+RCS file: net/samba36/files/winbindd.in
+diff -N net/samba36/files/winbindd.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/samba36/files/winbindd.in	27 Jan 2012 20:24:54 -0000
 @@ -0,0 +1,68 @@
 +#!/bin/sh
 +#
@@ -577,14 +612,3 @@ diff --exclude '*work*' -Naur net/samba36~~~/files/winbindd.in net/samba36/files
 +reload_cmd="reload_cmd"
 +
 +run_rc_command "$1"
-diff --exclude '*work*' -Naur net/samba36~~~/pkg-plist net/samba36/pkg-plist
---- net/samba36~~~/pkg-plist	2012-01-13 00:23:17.462982495 -0800
-+++ net/samba36/pkg-plist	2012-01-13 01:07:20.762978793 -0800
-@@ -20,6 +20,7 @@
- bin/smbtar
- bin/smbtree
- bin/testparm
-+etc/rc.samba
- %%SMBTORTURE%%bin/smbtorture
- %%WINBIND%%bin/wbinfo
- %%WINBIND%%include/wbclient.h
