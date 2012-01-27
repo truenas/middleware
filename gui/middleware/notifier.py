@@ -2938,12 +2938,6 @@ class notifier:
         return 0 < pipe.communicate()[0].find(module + '.ko')
 
 
-    def __toCamelCase(self, name):
-        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
-        pass2 = re.sub(r'\s{2,}', ' ', pass1)
-        camel = ''.join([word.capitalize() for word in pass2.split()])
-        return camel
-
     def __find_root_dev(self):
         """Find the root device.
 
