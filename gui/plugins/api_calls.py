@@ -476,6 +476,9 @@ def __api_call_fs_get_directory(request, **kwargs):
 def __api_call_fs_get_file(request, **kwargs):
     return __api_call_not_implemented(request, kwargs)
 
+def __api_call_fs_get_filesystems(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+
 
 #
 #    OS methods
@@ -737,6 +740,9 @@ __plugins_api_call_table.update(
 )
 __plugins_api_call_table.update(
     { "fs_get_file": ( __api_call_fs_get_file, None) }
+)
+__plugins_api_call_table.update(
+    { "fs_get_filesystems": ( __api_call_fs_get_filesystems, None) }
 )
 
 
