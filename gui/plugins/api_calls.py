@@ -739,10 +739,10 @@ __plugins_api_call_table.update(
     { "fs_get_directory": ( __api_call_fs_get_directory, None) }
 )
 __plugins_api_call_table.update(
-    { "fs_get_file": ( __api_call_fs_get_file, None) }
+    { "fs_get_filesystems": ( __api_call_fs_get_filesystems, None) }
 )
 __plugins_api_call_table.update(
-    { "fs_get_filesystems": ( __api_call_fs_get_filesystems, None) }
+    { "fs_get_file": ( __api_call_fs_get_file, None) }
 )
 
 
