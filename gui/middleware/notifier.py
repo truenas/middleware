@@ -2901,6 +2901,36 @@ class notifier:
         Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
 
+    def __find_root_dev(self):
+        """Find the root device.
+
+        The original algorithm was adapted from /root/updatep*, but this
+        grabs the relevant information from geom's XML facility.
+
+        Returns:
+             The root device name in string format, e.g. FreeNASp1,
+             FreeNASs2, etc.
+
+        Raises:
+             AssertionError: the root device couldn't be determined.
+        """
+        # XXX: circular dependency
+        import common.system
+
+        sw_name = common.system.get_sw_name()
+        doc = self.__geom_confxml()
+
+        for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
+                "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
+                % (sw_name, )):
+            prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
+            pid = prov.xpathEval("../consumer/provider/@ref")[0].content
+            prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
+            name = prov.xpathEval("../name")[0].content
+            return name
+        raise AssertionError('Root device not found (!)')
+
+
     def __get_disks(self):
         """Return a list of available storage disks.
 
@@ -2936,36 +2966,6 @@ class notifier:
         pipe = self.__pipeopen('/sbin/kldstat -v')
 
         return 0 < pipe.communicate()[0].find(module + '.ko')
-
-
-    def __find_root_dev(self):
-        """Find the root device.
-
-        The original algorithm was adapted from /root/updatep*, but this
-        grabs the relevant information from geom's XML facility.
-
-        Returns:
-             The root device name in string format, e.g. FreeNASp1,
-             FreeNASs2, etc.
-
-        Raises:
-             AssertionError: the root device couldn't be determined.
-        """
-        # XXX: circular dependency
-        import common.system
-
-        sw_name = common.system.get_sw_name()
-        doc = self.__geom_confxml()
-
-        for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
-                "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
-                % (sw_name, )):
-            prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
-            pid = prov.xpathEval("../consumer/provider/@ref")[0].content
-            prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
-            name = prov.xpathEval("../name")[0].content
-            return name
-        raise AssertionError('Root device not found (!)')
 
 
     def zfs_get_version(self):
