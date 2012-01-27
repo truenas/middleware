@@ -43,14 +43,11 @@ require([
 
         setTimeout(function() {
             dojo.xhrGet({
-                url: '/system/reboot/runn/',
+                url: '/system/reboot/run/',
                 sync: true,
                 failOk: true,
                 handle: function(a1,a2) {
-                    setTimeout('checkRunning()', 3000);
-                    setTimeout(function () {
-                        window.location = '/';
-                    }, 90000);
+                    setTimeout('checkRunning()', 10000);
                 },
             });
         }, 1000);
@@ -72,9 +69,7 @@ require([
                 </div>
 	    </div>
 		<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'" style="padding: 10px;">
-            {% block dojango_content %}
             <h1>System - Rebooting</h1>
-            {% endblock %}
 		</div>
 	</div>
 
