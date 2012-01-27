@@ -36,7 +36,7 @@ from freeadmin.views import JsonResponse, JsonResp
 
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.jail import Jls, Jexec
-from freenasUI.plugins.api_calls import plugins_api_get_method
+from freenasUI.plugins.api_calls import plugins_api_get_info
 
 
 def plugins_home(request):
@@ -86,10 +86,16 @@ def plugin_delete(request, plugin_id):
 
 def plugin_api_call(request, api_func):
     kwargs = {}
-    callback = None
+    out = None
 
     for key in request.GET:
         kwargs[key] = request.GET[key]
 
-    callback = plugins_api_get_method(api_func)
-    return HttpResponse(callback(request, **kwargs), mimetype="application/json")
+    info = plugins_api_get_info(api_func)
+    if info[1]:
+        out = info[0](info[1], request, **kwargs)
+
+    else: 
+        out = info[0](request, **kwargs)
+
+    return HttpResponse(out, mimetype="application/json")
