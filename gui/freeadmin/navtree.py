@@ -365,10 +365,10 @@ class NavTree(object):
         nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon', action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon ='RebootIcon')
+        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon='RebootIcon', type='dialog', view='system_reboot_dialog')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', action='shutdown')
+        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', type='dialog', view='system_shutdown_dialog')
         tree_roots.register(nav)
 
         """

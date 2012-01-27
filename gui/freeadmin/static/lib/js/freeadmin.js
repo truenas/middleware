@@ -1399,10 +1399,6 @@
                     dijit.byId("top_dialog").show();
                 } else if(item.action == 'shell') {
                     dijit.byId("shell_dialog").show();
-                } else if(item.action == 'reboot') {
-                    dijit.byId("rebootDialog").show();
-                } else if(item.action == 'shutdown') {
-                    dijit.byId("shutdownDialog").show();
                 } else if(item.type == 'opensharing') {
                     Menu.openSharing(item.gname);
                 } else if(item.type == 'openstorage') {

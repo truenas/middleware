@@ -56,39 +56,6 @@ require(["dojo/ready"], function(ready) {
     <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
     <input id="stopmsgrefresh" data-dojo-type="dijit.form.CheckBox" /><label for="stopmsgrefresh" style="color:white;">Stop refresh</label>
 </div>
-<div data-dojo-type="dijit.Dialog" id="rebootDialog" data-dojo-props="title: '{% trans "Reboot the System"|force_escape|force_escape %}'" >
-    <h3>{% trans "Warning!" %}</h3>
-    <p>{% trans "You are about to <strong>REBOOT</strong> the system, what would you like to do?" %}</p>
-                <button data-dojo-type="dijit.form.Button" type="button">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    dijit.byId('rebootDialog').hide();
-                    </script>
-                    {% trans "Cancel" %}
-                </button>
-                <button data-dojo-type="dijit.form.Button" type="button">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    window.location='{% url system_reboot %}';
-                    </script>
-                    {% trans "Reboot" %}
-                </button>
-</div>
-
-<div data-dojo-type="dijit.Dialog" id="shutdownDialog" data-dojo-props="title: '{% trans "Shutdown the System"|force_escape|force_escape %}'">
-    <h3>{% trans "Warning!" %}</h3>
-    <p>{% trans "You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?" %}</p>
-                <button data-dojo-type="dijit.form.Button" type="button">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    dijit.byId('shutdownDialog').hide();
-                    </script>
-                    {% trans "Cancel" %}
-                </button>
-                <button data-dojo-type="dijit.form.Button" type="button">
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    window.location='{% url system_shutdown %}';
-                    </script>
-                    {% trans "Shutdown" %}
-                </button>
-</div>
 
 <div data-dojo-type="dijit.Dialog" id="helpDialog" data-dojo-props="title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support"|force_escape|force_escape %}'"  style="background:#fff;width:400px;">
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">

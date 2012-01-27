@@ -10,20 +10,44 @@
 <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
 <script type="text/javascript">
 
-    dojo.require("dijit.MenuItem");
-    dojo.require("dijit.PopupMenuItem");
-    dojo.require("dijit.form.Button");
-    dojo.require("dijit.layout.ContentPane");
-    dojo.require("dijit.layout.BorderContainer");
+require([
+    "dojo",
+    "dojo/ready",
+    "dojo/_base/xhr",
+    "dojo/_base/html",
+    "dijit/MenuItem",
+    "dijit/PopupMenuItem",
+    "dijit/form/Button",
+    "dijit/layout/ContentPane",
+    "dijit/layout/BorderContainer",
+    ], function(dojo, ready) {
 
-    dojo.addOnLoad(function() {
+    ready(function() {
+
+        checkRunning = function() {
+
+            dojo.xhrGet({
+                url: '/',
+                sync: true,
+                failOk: true,
+                handle: function(a1,ioArgs) {
+                    if(ioArgs.xhr.status == 200 || ioArgs.xhr.status == 302) {
+                        window.location = '/';
+                    } else {
+                        setTimeout('checkRunning()', 3000);
+                    }
+                },
+                });
+
+        }
 
         setTimeout(function() {
             dojo.xhrGet({
-                url: '/system/reboot/run/',
+                url: '/system/reboot/runn/',
                 sync: true,
                 failOk: true,
                 handle: function(a1,a2) {
+                    setTimeout('checkRunning()', 3000);
                     setTimeout(function () {
                         window.location = '/';
                     }, 90000);
@@ -32,6 +56,8 @@
         }, 1000);
 
     });
+
+});
 
 </script>
 </head>

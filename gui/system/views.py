@@ -35,7 +35,7 @@ from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils import simplejson
@@ -230,8 +230,19 @@ def top(request):
         'top': top_output,
     }, content_type='text/xml')
 
+def reboot_dialog(request):
+    if request.method == "POST":
+        request.session['allow_reboot'] = True
+        return JsonResponse(error=False,
+                    message=_("Reboot is being issued"),
+                    events=['window.location="%s"' % reverse('system_reboot')])
+    return render(request, 'system/reboot_dialog.html')
+
 def reboot(request):
     """ reboots the system """
+    if not request.session.get("allow_reboot"):
+        return HttpResponseRedirect('/')
+    request.session.pop("allow_reboot")
     return render(request, 'system/reboot.html', {
         'sw_name': get_sw_name(),
         'sw_version': get_sw_version(),
@@ -241,8 +252,19 @@ def reboot_run(request):
     notifier().restart("system")
     return HttpResponse('OK')
 
+def shutdown_dialog(request):
+    if request.method == "POST":
+        request.session['allow_shutdown'] = True
+        return JsonResponse(error=False,
+                    message=_("Shutdown is being issued"),
+                    events=['window.location="%s"' % reverse('system_shutdown')])
+    return render(request, 'system/shutdown_dialog.html')
+
 def shutdown(request):
     """ shuts down the system and powers off the system """
+    if not request.session.get("allow_shutdown"):
+        return HttpResponseRedirect('/')
+    request.session.pop("allow_shutdown")
     return render(request, 'system/shutdown.html', {
         'sw_name': get_sw_name(),
         'sw_version': get_sw_version(),

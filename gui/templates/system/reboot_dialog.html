@@ -1,0 +1,16 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<h3>{% trans "Warning!" %}</h3>
+<p>{% trans "You are about to <strong>REBOOT</strong> the system, what would you like to do?" %}</p>
+{% endblock %}
+{% block buttons %}
+<button data-dojo-type="dijit.form.Button" type="button">
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+    cancelDialog(this);
+    </script>
+    {% trans "Cancel" %}
+</button>
+<button data-dojo-type="dijit.form.Button" type="submit">
+    {% trans "Reboot" %}
+</button>
+{% endblock %}
