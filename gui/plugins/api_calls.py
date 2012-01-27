@@ -470,6 +470,19 @@ def __api_call_fs_umount_filesystem(request, **kwargs):
 
     return json.dumps(data)
 
+def __api_call_fs_get_directory(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+
+def __api_call_fs_get_file(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+
+
+#
+#    OS methods
+#
+def  __api_call_os_query_system(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+
 
 
 #
@@ -717,7 +730,21 @@ __plugins_api_call_table.update(
     { "fs_mount_filesystem": (__api_call_fs_mount_filesystem, None) }
 )
 __plugins_api_call_table.update(
-    { "fs_umount_filesystem":( __api_call_fs_umount_filesystem, None) }
+    { "fs_umount_filesystem": ( __api_call_fs_umount_filesystem, None) }
+)
+__plugins_api_call_table.update(
+    { "fs_get_directory": ( __api_call_fs_get_directory, None) }
+)
+__plugins_api_call_table.update(
+    { "fs_get_file": ( __api_call_fs_get_file, None) }
+)
+
+
+#
+#    OS stuff
+#
+__plugins_api_call_table.update(
+    { "os_query_system": ( __api_call_os_query_system, None) }
 )
 
 
