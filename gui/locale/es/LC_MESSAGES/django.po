@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:08-0700\n"
-"PO-Revision-Date: 2012-01-20 05:01+0200\n"
+"PO-Revision-Date: 2012-01-28 01:39+0200\n"
 "Last-Translator: victor <pi_victor@yahoo.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -121,12 +121,12 @@ msgstr "Nivel 64 - Uso de energía intermedio utilizando el modo Espera"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Nivel 127 - Uso de energía intermedio utilizando el modo \"Standby\""
+msgstr "Nivel 127 - Uso de energía intermedio utilizando el modo de espera"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"Nivel 128 - Uso de energía intermedio sin utilizar el modo \"Standby\" (sin "
+"Nivel 128 - Uso de energía intermedio sin utilizar el modo de espera (sin "
 "detención de disco)"
 
 #: choices.py:91
@@ -251,7 +251,7 @@ msgstr "Por Defecto"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "Máquina de Tiempo"
+msgstr "Hora de la Máquina"
 
 #: choices.py:195
 msgid "No case folding"
@@ -297,15 +297,15 @@ msgstr "Cinta"
 
 #: choices.py:212
 msgid "Pass"
-msgstr "Paso"
+msgstr "Clave"
 
 #: choices.py:216
 msgid "read-write"
-msgstr "Lectura-Escritura"
+msgstr "lectura-escritura"
 
 #: choices.py:217
 msgid "read-only"
-msgstr "Solo Lectura"
+msgstr "solo lectura"
 
 #: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
 #: services/forms.py:844 templates/storage/wizard.html:131
@@ -327,7 +327,7 @@ msgstr "El SAI tiene poca batería"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "SAI utilizando batería"
+msgstr "SAI esta en funcionamiento con batería"
 
 #: choices.py:250
 msgid "Preferred"
@@ -397,7 +397,7 @@ msgstr "Todos los días"
 
 #: choices.py:463
 msgid "Every selected weekday"
-msgstr "Cada día hábil seleccionado"
+msgstr "Cada día de la semana seleccionado"
 
 #: choices.py:469
 msgid "Read-only"
@@ -480,12 +480,12 @@ msgstr "Tú nombre no puede empezar con \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr "El caracter $ solo es permitido como el caracter final"
+msgstr "El caracter $ solo está permitido como caracter final"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "Tu nombre contiene caracteres inválidos (%s)"
+msgstr "Tu nombre contiene caracteres inválidos (%s)."
 
 #: account/forms.py:71
 #, python-format
@@ -504,16 +504,15 @@ msgstr "Seleccionado"
 #: services/models.py:700 services/models.py:975 system/models.py:179
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Nombre de Usuario"
+msgstr "Nombre de usuario"
 
 #: account/forms.py:199
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Requerido. 16 caracteres o menos. Solo alfanuméricos y ./-/_."
+msgstr "Requerido. 16 carácteres o menos. Solo alfanuméricos y ./-/_."
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Este valor solo puede contener caracteres alfanuméricos y @/./+/-/_"
+msgstr "Este valor solo puede contener caracteres alfanuméricos y ./-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -527,12 +526,12 @@ msgstr "Confirmación de contraseña"
 
 #: account/forms.py:224 account/forms.py:369 system/forms.py:225
 msgid "Enter the same password as above, for verification."
-msgstr "Repita la contraseña para verificarla."
+msgstr "Repita la misma contraseña de antes, para verificarla."
 
 #: account/forms.py:225 account/forms.py:407 account/models.py:109
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "Terminal (Shell)"
+msgstr "Terminal"
 
 #: account/forms.py:226
 msgid "Disable password logins"
@@ -540,7 +539,7 @@ msgstr "Deshabilitado el inicio de sesión con contraseña"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr "Bloquear Usuario"
+msgstr "Bloquear usuario"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -551,19 +550,18 @@ msgid "SSH Public Key"
 msgstr "Clave Pública SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Ya existe un usuario con ese nombre."
+msgstr "Un usuario con este nombre ya existe."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
-msgstr "Ya existe un usuario con ese nombre."
+msgstr "Un usuario con ese nombre ya existe."
 
 #: account/forms.py:279 account/forms.py:388 account/forms.py:639
 #: services/forms.py:249 services/forms.py:352 sharing/forms.py:85
 #: system/forms.py:268
 msgid "The two password fields didn't match."
-msgstr "Los campos de la contraseña no coinciden"
+msgstr "Los dos campos de la contraseña no coinciden."
 
 #: account/forms.py:286
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -596,7 +594,7 @@ msgstr "Permitir GIDs (Identificadores De Grupo) repetidas"
 
 #: account/forms.py:551
 msgid "A group with that name already exists."
-msgstr "Ya existe un grupo con ese nombre."
+msgstr "Un grupo con ese nombre ya existe."
 
 #: account/forms.py:570
 msgid "A group with this gid already exists"
@@ -638,7 +636,7 @@ msgstr ""
 
 #: account/forms.py:680
 msgid "Do you want to delete all users with this primary group?"
-msgstr "¿Desea borrar todos los usuarios con este grupo primario="
+msgstr "¿Desea borrar todos los usuarios con este grupo primario?"
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -763,7 +761,7 @@ msgid ""
 "form from this page."
 msgstr ""
 "Lo sentimos, pero su formulario ha expirado. Por favor, continúe completando "
-"el formulario desde aquí."
+"el formulario desde está página."
 
 #: freeadmin/forms.py:111
 #, python-format
@@ -787,7 +785,7 @@ msgstr "Añadir %s"
 #: freeadmin/navtree.py:328
 #, python-format
 msgid "View All %s"
-msgstr "Ver Todo %s"
+msgstr "Ver Todos %s"
 
 #: freeadmin/navtree.py:347
 msgid "Display System Processes"
@@ -799,11 +797,11 @@ msgstr "Reiniciar"
 
 #: freeadmin/navtree.py:361 templates/freeadmin/index.html:78
 msgid "Shutdown"
-msgstr "Apagar"
+msgstr "Apagar sistema"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "No ha sido posible recuperar el estado actual"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -814,9 +812,9 @@ msgstr "%s ha sido actualizado correctamente."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Error"
+msgstr "Error: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -846,48 +844,47 @@ msgstr "Error"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "Tarjeta de Red"
+msgstr "Tarjeta de Red NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Has de especificar una dirección IPv4"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Has de elegir una máscara IPv4"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Has de especificar una dirección IPv6"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Has de elegir una máscara de red IPv6"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Has de elegir entre IPv4 o IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "Has de especificar una IPv4 válida o IPv6 con máscara de bits"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "El servidor local no es un nombre válido"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Las direcciones especificadas no son válidas para DNS"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "El campo no es una dirección IP válida o de la red"
+msgstr "Esta no es una dirección IP válida para este DNS"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "La subred 169.254/16 no es correcto para el nombre de servidor"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -910,7 +907,7 @@ msgstr ""
 
 #: network/forms.py:177
 msgid "Parent Interface"
-msgstr "Interfaz superior"
+msgstr "Interfaz Superior"
 
 #: network/forms.py:186
 msgid "The name must be vlanXX where XX is a integer"
@@ -918,11 +915,11 @@ msgstr "Los nombres de interfaz deben ser vlanXX donde XX es un número"
 
 #: network/forms.py:192
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "Las etiquetas VLAN van del 1 al 4095"
+msgstr "Las etiquetas VLAN van del 1 al 4095 incluidas"
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
-msgstr "Tarjetas de Red en el LAGG"
+msgstr "Tarjetas de red físicas NICs en el LAGG"
 
 #: network/forms.py:276
 #, python-format
@@ -931,32 +928,33 @@ msgstr "La red '%s' no es válida, se espera que ingrese un CIDR."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Has de especificar la dirección IPv4 y también el alias"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Has de elegir la mascara de red IPv4 y también el alias"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Has de especificar la dirección IPv6 y también el alias"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Has de elegir una mascara de red IPv6 y también el alias"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Has de elegir entre IPv4 o IPv6 y tambien el alias"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Has de especificar una dirección IPv4 o IPV6 con mascara de bit por alias"
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Nombre de anfitrión"
+msgstr "Nombre de anfitrión (Hostname)"
 
 #: network/models.py:46
 msgid "Domain"
@@ -989,7 +987,7 @@ msgstr "Configuración Global"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Elija su Tarjeta de Red"
+msgstr "Elija su Tarjeta de Red NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
@@ -997,7 +995,7 @@ msgstr "Nombre de la Interfaz"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Nombre de la Tarjeta de Red"
+msgstr "Pon nombre a tu Tarjeta de Red NIC"
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1067,14 +1065,15 @@ msgid "Virtual Interface"
 msgstr "Interfaz Virtual"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Los nombres de interfaz deben ser vlanXX donde XX es un número"
+msgstr ""
+"Los nombres de interfaz deben ser vlanXX donde XX es un número. Ejemplo: "
+"vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr "Interfaz Física"
+msgstr "Interfaz física"
 
 #: network/models.py:214 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -1097,27 +1096,27 @@ msgstr "VLANs"
 
 #: network/models.py:253
 msgid "Protocol Type"
-msgstr "Tipo de Protocolo"
+msgstr "Tipo de protocolo"
 
 #: network/models.py:274
 msgid "LAGG Interface group"
-msgstr "Grupo de Interfaz de LAGG"
+msgstr "Grupo de Interfaz LAGG"
 
 #: network/models.py:277
 msgid "LAGG Priority Number"
-msgstr "Número de Prioridad de la LAGG"
+msgstr "Número de Prioridad LAGG"
 
 #: network/models.py:282
 msgid "Physical NIC"
-msgstr "Tarjeta de Red"
+msgstr "Tarjeta de Red (NIC)"
 
 #: network/models.py:297 templates/network/index.html:14
 msgid "Link Aggregation"
-msgstr "Agregación de Enlaces"
+msgstr "Agregar Enlaces"
 
 #: network/models.py:298 network/nav.py:53
 msgid "Link Aggregations"
-msgstr "Agregación de Enlaces"
+msgstr "Agregar Enlaces"
 
 #: network/models.py:307
 msgid "Destination network"
@@ -1125,7 +1124,7 @@ msgstr "Red de Destino"
 
 #: network/models.py:311 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr "Puerta de Enlace"
+msgstr "Puerta de enlace"
 
 #: network/models.py:320
 msgid "Static Route"
@@ -1141,11 +1140,11 @@ msgstr "Red"
 
 #: network/nav.py:13 templates/network/index.html:29
 msgid "Network Summary"
-msgstr "Resumen configuración de Red"
+msgstr "Sumario de Red"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr "Crear Agregación de Enlaces"
+msgstr "Crear Agregar Enlaces"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
@@ -1156,9 +1155,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG añadido satisfactoriamente"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "El usuario %s no es válido."
+msgstr "Esta no es una máscara valida"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1171,9 +1169,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Este campo es obligatorio para \"Directorios home\""
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Ha fallado el reinicio del servicio NFS"
+msgstr "El servicio CIFS ha fallado en la recarga."
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1228,9 +1225,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "El nombre no puede contener los caracteres \"/ , ]\""
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Cambiar Contraseña"
+msgstr "Confirma Contraseña"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1299,7 +1295,7 @@ msgstr "Secreto"
 
 #: services/forms.py:384 services/models.py:541
 msgid "Target side secret."
-msgstr "Secreto del lado Destino"
+msgstr "Destino lado secreto"
 
 #: services/forms.py:385
 msgid "Secret (Confirm)"
@@ -6126,7 +6122,7 @@ msgid "Level"
 msgstr "Nivel"
 
 msgid "Add Link Aggregation"
-msgstr "Añadir Agregación de Enlaces"
+msgstr "Añadir Agregar Enlaces"
 
 msgid "View All Interfaces"
 msgstr "Ver todos los Interfaces"
