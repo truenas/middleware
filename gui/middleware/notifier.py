@@ -1343,9 +1343,17 @@ class notifier:
             syslog.syslog(syslog.LOG_DEBUG, "Command reports " + msg)
 
     def __smbpasswd(self, username, password):
-        command = '/usr/local/bin/smbpasswd -s -a "%s"' % (username)
+        """
+        Add the user ``username'' to samba using ``password'' as
+        the current password
+
+        Returns:
+            True whether the user has been successfully added and False otherwise
+        """
+        command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
         smbpasswd = self.__pipeopen(command)
         smbpasswd.communicate("%s\n%s\n" % (password, password))
+        return smbpasswd.returncode == 0
 
     def __issue_pwdchange(self, username, command, password):
         self.__pw_with_password(command, password)
@@ -1474,7 +1482,11 @@ class notifier:
             if password_disabled:
                 smb_hash = ""
             else:
-                smb_command = "/usr/local/bin/pdbedit -w %s" % username
+                """
+                Make sure to use -d 0 for pdbedit, otherwise it will bomb
+                if CIFS debug level is anything different than 'Minimum'
+                """
+                smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
                 smb_cmd = self.__pipeopen(smb_command)
                 smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         except:
@@ -1504,7 +1516,18 @@ class notifier:
         return self.user_gethashedpassword(username)
 
     def user_gethashedpassword(self, username):
-        smb_command = "/usr/local/bin/pdbedit -w %s" % username
+        """
+        Get the samba hashed password for ``username''
+
+        Returns:
+            tuple -> (user password, samba hash)
+        """
+
+        """
+        Make sure to use -d 0 for pdbedit, otherwise it will bomb
+        if CIFS debug level is anything different than 'Minimum'
+        """
+        smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
         smb_cmd = self.__pipeopen(smb_command)
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
