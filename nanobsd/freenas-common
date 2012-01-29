@@ -63,6 +63,8 @@ FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
 
+add_port archivers/lzo2
+add_port security/openvpn
 add_port converters/libiconv
 add_port converters/iconv
 add_port devel/gettext
