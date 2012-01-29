@@ -11,24 +11,6 @@
 
 : ${smartd_config="/usr/local/etc/smartd.conf"}
 
-parse_devlist()
-{
-disk=$1
-
-awk -v dev=$disk '{
-if ($NF~","dev)
-if ($1=="<HPT")
-print "/dev/hptrr -d hpt,"$(NF-1)+1"/"$(NF-3)+1
-else print "/dev/"dev
-}'
-}
-
-get_prop_dev()
-{
-disk=$1
-camcontrol devlist | parse_devlist $disk
-}
-
 generate_smartd_cfg()
 {
 	local IFS="|"
