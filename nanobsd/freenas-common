@@ -455,7 +455,7 @@ performance_sanity_caps()
 	echo "# System defaults for $NANO_LABEL ($FREENAS_ARCH)"
 	echo
 
-	# File kern IPC defaults.
+	# MBUF cluster defaults.
 	case "$FREENAS_ARCH" in
 	amd64)
 		nmbclusters=50000
