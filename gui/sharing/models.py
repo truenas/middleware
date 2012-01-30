@@ -32,8 +32,6 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.middleware.notifier import notifier
 
-mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
-
 class CIFS_Share(Model):
     cifs_name = models.CharField(
             max_length=120,
