@@ -207,9 +207,10 @@ ISCSI_TARGET_EXTENT_TYPE_CHOICES = (
 
 ISCSI_TARGET_TYPE_CHOICES = (
         ('Disk', _('Disk')),
-        ('DVD', _('DVD')),
-        ('Tape', _('Tape')),
-        ('Pass-thru Device', _('Pass')),
+        #Those types are not supported by istgt yet
+        #('DVD', _('DVD')),
+        #('Tape', _('Tape')),
+        #('Pass-thru Device', _('Pass')),
         )
 
 ISCSI_TARGET_FLAGS_CHOICES = (

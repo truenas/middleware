@@ -597,6 +597,7 @@ class iSCSITarget(Model):
     iscsi_target_type = models.CharField(
             max_length=120,
             choices=choices.ISCSI_TARGET_TYPE_CHOICES,
+            default='Disk',
             verbose_name = _("Type"),
             help_text = _("Logical Unit Type mapped to LUN."),
             )
