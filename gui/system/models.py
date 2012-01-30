@@ -716,6 +716,10 @@ class Sysctl(Model):
             verbose_name=_("Comment"),
             blank=True,
             )
+    sysctl_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
 
     def __unicode__(self):
         return unicode(self.sysctl_mib)
@@ -748,6 +752,10 @@ class Tunable(Model):
             max_length=100,
             verbose_name=_("Comment"),
             blank=True,
+            )
+    tun_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
             )
 
     def __unicode__(self):

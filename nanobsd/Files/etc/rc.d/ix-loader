@@ -95,8 +95,8 @@ loader_user() {
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT $sf FROM system_tunable ORDER BY id" | \
-	while eval read $f; do
+	"SELECT $sf FROM system_tunable WHERE tun_enabled = 1 ORDER BY id" | \
+	while eval read -r $f; do
 		(echo -n "${tun_var}=\"${tun_value}\""
 		 if [ -n "${tun_comment}" ]; then
 			echo -e " # ${tun_comment}"
