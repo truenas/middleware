@@ -30,6 +30,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
+from freenasUI.middleware.notifier import notifier
 
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
@@ -87,6 +88,10 @@ class CIFS_Share(Model):
 
     def __unicode__(self):
         return self.cifs_name
+    def delete(self, *args, **kwargs):
+        super(CIFS_Share, self).delete(*args, **kwargs)
+        notifier().reload("cifs")
+
     class Meta:
         verbose_name = _("CIFS Share")
         verbose_name_plural = _("CIFS Shares")
@@ -210,6 +215,9 @@ class AFP_Share(Model):
 
     def __unicode__(self):
         return unicode(self.afp_name)
+    def delete(self, *args, **kwargs):
+        super(AFP_Share, self).delete(*args, **kwargs)
+        notifier().reload("afp")
 
     class Meta:
         verbose_name = _("AFP Share")
@@ -289,6 +297,9 @@ class NFS_Share(Model):
 
     def __unicode__(self):
         return unicode(self.nfs_path)
+    def delete(self, *args, **kwargs):
+        super(NFS_Share, self).delete(*args, **kwargs)
+        notifier().reload("nfs")
 
     class Meta:
         verbose_name = _("NFS Share")
