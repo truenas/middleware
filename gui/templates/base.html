@@ -5,19 +5,19 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
 <style type="text/css">
-    @import "/dojango/dojo-media/release/{{ DOJANGO.VERSION }}/dojo/resources/dojo.css";
-    @Import "/dojango/dojo-media/release/{{ DOJANGO.VERSION }}/dijit/themes/claro/claro.css";
+    @import "{{ DOJANGO.DOJO_URL }}/resources/dojo.css";
+    @Import "{{ DOJANGO.DIJIT_URL }}/themes/claro/claro.css";
 </style>
 <script type="text/javascript">
     var dojoConfig = {
         'isDebug':true,
         'parseOnLoad':true,
-        'baseUrl':"/dojango/dojo-media/release/{{ DOJANGO.VERSION }}/dojo/",
+        'baseUrl':"{{ DOJANGO.DOJO_URL }}",
         'async': true,
     };
 </script>
 
-<script type="text/javascript" src="/dojango/dojo-media/release/{{ DOJANGO.VERSION }}/dojo/dojo.js">
+<script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/dojo.js">
 </script>
     <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
     <link rel="stylesheet" href="{{ DOJANGO.DIJIT_URL }}/themes/claro/document.css" />
