@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2012-01-29 11:53+0200\n"
+"PO-Revision-Date: 2012-01-29 15:11+0200\n"
 "Last-Translator: djhrum <djhrum@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -1333,7 +1333,6 @@ msgid "The peer secret cannot be the same as user secret."
 msgstr "Секрет пира не может совпадать с Секретом пользователя"
 
 #: services/forms.py:424 services/forms.py:427
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
 msgstr "Секрет пира требуется, если вы установили пользователя-пира."
 
@@ -1377,7 +1376,6 @@ msgstr ""
 "CHAP Mutal."
 
 #: services/forms.py:582
-#, fuzzy
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
@@ -1410,7 +1408,7 @@ msgstr ""
 
 #: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "Файл должен существовать, если размер установлен в автоматически (0)"
 
 #: services/forms.py:671
 msgid "Disk device"
@@ -1427,13 +1425,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "Ваш 'Идентификатор группы' не может быть больше чем %d"
 
 #: services/forms.py:811
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Поле не является допустимым IP-адресом или сетью. Ключевое слово \"ALL\" может "
-"быть использовано для разрешения всех."
+"Содержимое поля не является IP-адресом или сетью. Используйте \"ALL\" что бы "
+"разрешить всем."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -2232,12 +2229,10 @@ msgstr ""
 "возобновляется, то выключения отменяется."
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "Пароль для общего доступа"
+msgstr "Основной пароль пользователя UPS"
 
 #: services/models.py:812
-#, fuzzy
 msgid "Extra users (upsd.users)"
 msgstr "Дополнительные пользователи (upsd.users)"
 
@@ -2600,9 +2595,8 @@ msgid "NetBIOS Name"
 msgstr "Имя компьютера (NetBIOS)"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "System hostname"
-msgstr "Имя компьютера в старом формате, например \"EXAMPLE\""
+msgstr "Имя хоста"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
@@ -2917,9 +2911,7 @@ msgstr "E-mail для сообщения"
 
 #: services/models.py:1312
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
-"E-mail получателя. Используйте запятую для разделения адресов электронной "
-"почты."
+msgstr "E-mail получателя. Разделяйте несколько адресов точкой с запятой."
 
 #: services/models.py:1315 services/models.py:1316
 #: templates/services/index.html:108
@@ -2974,9 +2966,8 @@ msgid "Add Rsync Module"
 msgstr "Добавить модуль Rsync"
 
 #: services/nav.py:164
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Модули Rsync"
+msgstr "Показать модули Rsync"
 
 #: services/views.py:228
 msgid "The service could not be stopped."
@@ -2987,9 +2978,8 @@ msgid "The service could not be started."
 msgstr "Служба не может быть запущена."
 
 #: sharing/forms.py:68
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Подтвердить пароль для общего доступа"
+msgstr "Подтвердите пароль для общего доступа"
 
 #: sharing/forms.py:117
 msgid "The field is a not a valid IP address or network"
@@ -3034,7 +3024,6 @@ msgid "Browsable to Network Clients"
 msgstr "Видимый для клиентов сети"
 
 #: sharing/models.py:54
-#, fuzzy
 msgid "Inherit Owner"
 msgstr "Наследуется"
 
@@ -3115,14 +3104,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Эти параметры добавляются в раздел [Share] smb.conf"
 
 #: sharing/models.py:92
-#, fuzzy
 msgid "CIFS Share"
-msgstr "Общий ресурс UNIX"
+msgstr "CIFS шара"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "Общие ресурсы UNIX"
+msgstr "CIFS шара"
 
 #: sharing/models.py:104
 msgid ""
@@ -3378,14 +3365,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Использовать AFP3 привилегии UNIX."
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Общий ресурс Apple"
+msgstr "AFP шара"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "Общие ресурсы Apple"
+msgstr "AFP шара"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3468,14 +3453,12 @@ msgid "Group to map all users to"
 msgstr "Назначить группе пользователей права доступа \"all\""
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "Изменить общие ресурсы NFS"
+msgstr "NFS шара"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "Общие ресурсы UNIX"
+msgstr "NFS шара"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3487,7 +3470,7 @@ msgstr ""
 "Введите положительное число (опционально с суффиксом K, М, G, T), или, 0"
 
 #: storage/forms.py:102
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
 msgstr "%s не допустимое число"
 
@@ -3501,12 +3484,10 @@ msgid "Force 4096 bytes sector size"
 msgstr "Увеличить размер сектора до 4096 байт"
 
 #: storage/forms.py:202 templates/storage/wizard.html:154
-#, fuzzy
 msgid "Specify custom path"
 msgstr "Укажите пользовательский путь"
 
 #: storage/forms.py:211
-#, fuzzy
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
@@ -3576,11 +3557,12 @@ msgid "You must select a volume."
 msgstr "Вы должны выбрать том."
 
 #: storage/forms.py:624
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
-"Том \"%s\" не удалось импортировать, для подробной информации проверьте статус"
+"Том \"%s\" не удалось импортировать, для подробной информации проверьте статус "
+"пула"
 
 #: storage/forms.py:650
 msgid "Dataset Name"
@@ -3638,9 +3620,8 @@ msgid "Quota for this volume"
 msgstr "Квота для этого тома"
 
 #: storage/forms.py:715
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Зарезервированное место для этого набора данных"
+msgstr "Зарезервированное пространство для этого тома"
 
 #: storage/forms.py:740
 msgid "ZFS Volume Name"
@@ -3729,7 +3710,7 @@ msgstr "Удаленный сервер ключей"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Пометить диски как новые (уничтожить данные)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -3827,7 +3808,6 @@ msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr "Рекурсивно копировать и удалять устаревшие снимки на удаленной стороне"
 
 #: storage/models.py:440
-#, fuzzy
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
 "Инициализация удаленной стороной только в этот раз. (Может привести к потере "
@@ -4047,7 +4027,6 @@ msgid "Disk detach has been successfully done."
 msgstr "Отсоединение диска было успешно произведено."
 
 #: storage/views.py:614
-#, fuzzy
 msgid "Disk offline operation has been issued."
 msgstr "Инициирована процедура замены диска."
 
@@ -4061,7 +4040,7 @@ msgstr "Том был успешно экспортирован"
 
 #: storage/views.py:673
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "Процесс \"Scrub\" начался"
 
 #: system/forms.py:158
 msgid "Language (Require UI reload)"
@@ -4072,9 +4051,8 @@ msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Это значение должно быть от 1 до 65535 включительно."
 
 #: system/forms.py:170
-#, fuzzy
 msgid "Number is required."
-msgstr "Требуется количество."
+msgstr "Необходимо значение"
 
 #: system/forms.py:335 system/forms.py:412 system/forms.py:449
 msgid "hour"
@@ -4128,9 +4106,8 @@ msgid "minute"
 msgstr "минута"
 
 #: system/forms.py:544 system/forms.py:561
-#, fuzzy
 msgid "Quotes are not allowed"
-msgstr "Квоты не разрешены"
+msgstr "Кавычки не разрешены"
 
 #: system/models.py:47
 msgid "Protocol"
@@ -4165,9 +4142,8 @@ msgid "NTP server 3"
 msgstr "NTP-сервер 3"
 
 #: system/models.py:93
-#, fuzzy
 msgid "Syslog server"
-msgstr "Сервер журналирования"
+msgstr "Syslog сервер"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4236,13 +4212,12 @@ msgid "From email"
 msgstr "Обратный адрес"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Адрес электронной почты, который система будет использовать для отправки, "
-"например, freenas@mydomain.com"
+"Адрес электронной почты, который система будет использовать при отправке "
+"почты, например, freenas@mydomain.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4401,19 +4376,16 @@ msgid "Day of week"
 msgstr "День недели"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Включить AIO"
+msgstr "Включить"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
-msgstr "CronJob"
+msgstr "Задания Cron"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
-msgstr "CronJobs"
+msgstr "Задания Cron"
 
 #: system/models.py:314 system/models.py:481
 msgid "Every minute"
@@ -4443,9 +4415,8 @@ msgid "Every month"
 msgstr "Каждый месяц"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Будний день"
+msgstr "Будни"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
 msgid "Weekends"
@@ -4565,16 +4536,14 @@ msgid "S.M.A.R.T. Test"
 msgstr "Тест S.M.A.R.T."
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "Настройки S.M.A.R.T."
+msgstr "Тесты S.M.A.R.T."
 
 # или Доступно
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Доступный"
+msgstr "Доступно"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
@@ -4590,14 +4559,12 @@ msgid "Sysctls"
 msgstr "Sysctls"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr "Средняя нагрузка"
+msgstr "Загрузчик"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr "Средняя нагрузка"
+msgstr "Загрузчики"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4616,24 +4583,21 @@ msgid "View Cron Jobs"
 msgstr "Просмотр заданий Cron"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Показать все задачи репликации"
+msgstr "Показать задачи Rsync"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "Настройки S.M.A.R.T."
+msgstr "Показать тест S.M.A.R.T."
 
 #: system/nav.py:55
 msgid "View Sysctls"
-msgstr "Просмотр параметров ядра"
+msgstr "Показать Sysctls"
 
 # Просмотрерть всех пользователей
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Просмотреть всех пользователей"
+msgstr "Показать загрузчики"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
@@ -5123,9 +5087,9 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Добро пожаловать, %(username). Спасибо за вход."
 
 #: templates/registration/login.html:50
-#, fuzzy, python-format
+#, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Добро пожаловать в %(sw_name)&trade; %(sw_login_version)"
+msgstr "Добро пожаловать в %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5396,7 +5360,6 @@ msgid "Are you sure you want to destroy \"%(name)s\"?"
 msgstr "Вы уверены, что хотите удалить\"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:12
-#, fuzzy
 msgid ""
 "\n"
 "        This will delete all files within the dataset.\n"
@@ -5407,11 +5370,9 @@ msgid_plural ""
 "        "
 msgstr[0] ""
 "\n"
-"\n"
 "        Это приведет к удалению всех файлов в наборе данных.\n"
 "        "
 msgstr[1] ""
-"\n"
 "\n"
 "        Это приведет к удалению всех файлов в наборе данных и дочерних "
 "наборов данных.\n"
@@ -5423,9 +5384,9 @@ msgid "Edit Dataset"
 msgstr "Изменить набор данных"
 
 #: templates/storage/datasets.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Создание набора данных ZFS"
+msgstr "Создание набора данных ZFS в %(fs)"
 
 #: templates/storage/datasets.html:10
 msgid "Add Dataset"
@@ -5436,12 +5397,10 @@ msgid "Are you sure you want to detach?"
 msgstr "Вы уверены, что хотите отсоединить?"
 
 #: templates/storage/disk_offline.html:7
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Вы уверены, что хотите перейти в автономный режим?"
+msgstr "Вы уверены, что хотите отключить?"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
 msgstr "Вы уверены, что хотите удалить?"
 
@@ -5530,54 +5489,47 @@ msgid "No ZFS replication available"
 msgstr "Не доступны ZFS репликации"
 
 #: templates/storage/scrub_confirm.html:10
-#, fuzzy
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
-"Очистка в настоящее время работает! Вы действительно хотите ОСТАНОВИТЬ "
-"процесс очистки?"
+"\"Scrub\" в настоящее время работает! Вы действительно хотите ОСТАНОВИТЬ "
+"процесс \"Scrub\"?"
 
 #: templates/storage/scrub_confirm.html:12
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Вы уверены, что хотите отсоединить?"
+msgstr "Вы уверены, что хотите начать \"Scrub\"?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
 msgstr "Это приведет к увеличению нагрузки на систему в процессе выполнения"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "Вы уверены, что хотите откатить снимок в предыдущее состояние?"
+msgstr "Вы уверены, что хотите откатить набор данных в это состояние?"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"
 msgstr "Клонировать снимок"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "Уничтожить снимок"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
 msgstr "Уничтожить этот снимок"
 
 #: templates/storage/snapshots.html:49
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "Откат на этот снимок"
+msgstr "Откатить снимок"
 
 #: templates/storage/snapshots.html:54
 msgid "Rollback to this snapshot"
 msgstr "Откат на этот снимок"
 
 #: templates/storage/snapshots.html:128
-#, fuzzy
 msgid "Destroy"
-msgstr "Уничтожить Том"
+msgstr "Уничтожить"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5620,18 +5572,17 @@ msgid "on every"
 msgstr "каждый"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "Не запланировано периодических снимков."
+msgstr "Имеются не периодические запланированные снимки."
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
 msgstr "Изменить том ZFS"
 
 #: templates/storage/volume_export.html:9
-#, fuzzy, python-format
+#, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr "У вас есть %(used)s из использованного места в этом томе"
+msgstr "У вас есть %(used) из использованного места в этом томе"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
@@ -5654,9 +5605,8 @@ msgid "Export Volume"
 msgstr "Экспортировать том"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "Очистка тома"
+msgstr "\"Scrub\" тома"
 
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
@@ -5716,7 +5666,7 @@ msgid "Existing data will be cleared"
 msgstr "Существующие данные будут стёрты"
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
 msgstr "Создать ZFS том в %(name)s"
 
@@ -5738,9 +5688,8 @@ msgstr "Кэш не может быть восстановлен"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "Отладка"
+msgstr "Сохранить отладку"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -5765,19 +5714,16 @@ msgid "Update"
 msgstr "Обновить"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "CronJobs не определены"
+msgstr "Задания Cron не определены"
 
 #: templates/system/cronjob.html:46
-#, fuzzy
 msgid "Add a cron job"
-msgstr "Добавить CronJob"
+msgstr "Добавить задание Cron"
 
 #: templates/system/cronjob.html:48
-#, fuzzy
 msgid "Add cron job"
-msgstr "Добавить CronJob"
+msgstr "Добавить задание Cron"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5792,21 +5738,20 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"СОВЕТ: Проверьте электронную почту суперпользователя. Для настройки "
+"используйте Users -> root -> Change E-mail"
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Цели не определенны"
+msgstr "Не определенны настройки загрузчика"
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "Добавить портал"
+msgstr "Добавить загрузчик"
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "Добавить портал"
+msgstr "Добавить загрузчик"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5849,7 +5794,6 @@ msgid "Yearly Graphs"
 msgstr "Годовой график"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
 msgstr "Задачи rsync не определены"
 
@@ -5891,9 +5835,8 @@ msgid "Add S.M.A.R.T. Test"
 msgstr "Добавить S.M.A.R.T. тест"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Добавить тест S.M.A.R.T."
 
 #: templates/system/sysctl.html:32
 msgid "No sysctl defined."
@@ -5941,14 +5884,14 @@ msgid "Apply Update"
 msgstr "Применить обновление"
 
 #: tools/alert.py:76
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr "Состояние тома %s HEALTHY"
+msgstr "Состояние тома %s - В НОРМЕ"
 
 #: tools/alert.py:79
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr "Состояние тома %s DEGRADED"
+msgstr "Состояние тома %s - РАЗРУШЕН"
 
 #: tools/alert.py:82
 #, python-format
@@ -5964,12 +5907,11 @@ msgstr ""
 "требуется)"
 
 #: tools/alert.py:99
-#, fuzzy, python-format
+#, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr "Адрес web-интерфейса не может быть привязан к %s; используйте шаблон"
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
 msgstr "Критические оповещения"
 
