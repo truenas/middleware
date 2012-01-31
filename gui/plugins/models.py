@@ -28,7 +28,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freeadmin.models import Model, UserField, GroupField, PathField
+from freeadmin.models import Model
 
 class Plugins(Model):
     plugin_name = models.CharField(
