@@ -180,6 +180,11 @@ WITHOUT_SHAREDOCS=true
 
 NANO_PACKAGE_ONLY=1
 
+# Ports compiles need to be free of locale tainting.
+for v in $(env | egrep '^(LANG|LC).*='); do
+	unset ${v%=*}
+done
+
 CR()
 {
 	local newvers revision branch
