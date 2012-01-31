@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:07-0700\n"
-"PO-Revision-Date: 2011-11-28 12:54+0200\n"
-"Last-Translator: ganthur <ganthur@163.com>\n"
+"PO-Revision-Date: 2012-01-30 19:13+0200\n"
+"Last-Translator: WolfX-700 <yintingran@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -916,15 +916,15 @@ msgstr ""
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "需要为IP地址配置子网掩码"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "请指定一个IPV6地址"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "需要指定一个IPV6掩码"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
@@ -1146,9 +1146,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "这个字段是“主目录”所必需的。"
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "NFS服务重新加载失败。"
+msgstr "CIFS/Samba 服务重加载失败。"
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1212,9 +1211,8 @@ msgid "The location must contain only alphanumeric characters, _ or -"
 msgstr ""
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "该域不是一个合法的IP地址或网络"
+msgstr "这不是一个合法的e-mail地址"
 
 #: services/forms.py:282
 msgid ""
@@ -1247,9 +1245,8 @@ msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] ""
 
 #: services/forms.py:335
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS服务重新加载失败。"
+msgstr "UPS监控服务重加载失败。"
 
 #: services/forms.py:340
 msgid "Confirm Administrator Password"
@@ -1369,7 +1366,7 @@ msgstr "这个值可以是一个字节大小，也可以以KB, MB, GB, TB后缀"
 
 #: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "在范围大小被设定为自动的情况下 此文件必须存在"
 
 #: services/forms.py:671
 msgid "Disk device"
@@ -1398,16 +1395,15 @@ msgstr "认证群组号"
 
 #: services/forms.py:849
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "请使用数字、字母或者\".\", \"-\"  \":\"这几个符号"
 
 #: services/forms.py:875
 msgid "Delete underlying file"
 msgstr "删除对应的文件存储"
 
 #: services/forms.py:906
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SNMP服务重新加载失败。"
+msgstr "S.M.A.R.T服务重加载失败。"
 
 #: services/models.py:43
 msgid "Service"
@@ -1628,10 +1624,9 @@ msgid "Max. Connections"
 msgstr "最大连接数"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "每个会话中的最大连接数（默认值为8）"
+msgstr "AFP的最大连接数（默认值为50）"
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -2143,9 +2138,8 @@ msgid ""
 msgstr "关机前等待的秒数。如果UPS在秒数有剩余前恢复，则取消关机操作。"
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "共享密码"
+msgstr "UPS密码"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
@@ -2420,9 +2414,8 @@ msgid "Alternate TCP port. Default is 22"
 msgstr "替代TCP端口。默认是22"
 
 #: services/models.py:1005
-#, fuzzy
 msgid "Login as Root with password"
-msgstr "使用root登录"
+msgstr "允许以Root用户登录"
 
 #: services/models.py:1006
 msgid ""
