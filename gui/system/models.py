@@ -539,7 +539,10 @@ class Rsync(Model):
     def __unicode__(self):
         if self.rsync_desc:
             return self.rsync_desc
-        return u"%d (%s)" % (self.id, self.rsync_user)
+        elif self.rsync_mode == 'module':
+            return self.rsync_remotemodule
+        else:
+            return self.rsync_remotepath
 
     def get_human_minute(self):
         if self.rsync_minute == '*':
