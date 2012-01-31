@@ -214,7 +214,7 @@ class UserChangeForm(ModelForm):
 
 class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     #TODO: move it away
-    from freenasUI.storage.wigets import UnixPermissionField
+    from freenasUI.storage.widgets import UnixPermissionField
     """
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
