@@ -18,7 +18,7 @@ save_certificate()
 {
 	local ldap_id="${1}"
 
-	mount -uw /
+	mount -uw -onoatime /
 	mkdir -p "$(dirname ${CERT_FILE})"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -173,7 +173,7 @@ setup_homedirs()
 
 	rmdir /home
 	mkdir -p "${homepath}"
-	mount -uw /
+	mount -uw -onoatime /
 	rm -f /home
 	ln -sfh "${homepath}" /home 2>/dev/null
 	mount -ur /

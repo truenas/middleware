@@ -119,7 +119,7 @@ setup_homedirs()
 
 	rmdir /home
 	mkdir -p "${homepath}"
-	mount -uw /
+	mount -uw -onoatime /
 	ln -sfh "${homepath}/" /home 2>/dev/null
 	mount -ur /
 

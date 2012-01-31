@@ -20,7 +20,7 @@ ix_save_hostid()
 	# so we don't create another dependency on /cfg which we're trying
 	# to eliminate to support 1 spindle systems.
 	if ! cmp -s /etc/hostid /conf/base/etc/hostid; then
-		mount -uw /
+		mount -uw -onoatime /
 		cp /etc/hostid /conf/base/etc/hostid
 		mount -ur /
 	fi

@@ -74,7 +74,7 @@ db_update()
 			exit 1
 		fi
 	fi
-	if ! mount -w /data; then
+	if ! mount -w -onoatime /data; then
 		echo "Cannot mount /data to see if you need an upgrade."
 		exit 1
 	fi
@@ -103,7 +103,7 @@ db_update()
 
 
 	# Things that just need to read from /data can follow this.
-	mount -ru /data
+	mount -ur /data
 
 	# Run this here to deal with potential changes in kernel configuration
 	# that will impact our next boot, instead of delaying the update in
