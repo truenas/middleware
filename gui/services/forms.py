@@ -44,7 +44,7 @@ from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.storage.models import Volume, MountPoint, Disk
-from freenasUI.storage.forms import UnixPermissionField
+from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
 """ Services """
