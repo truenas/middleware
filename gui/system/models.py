@@ -475,7 +475,10 @@ class Rsync(Model):
         icon_view = u"ViewrsyncTaskIcon"
 
     def __unicode__(self):
-        return u"%d (%s)" % (self.id, self.rsync_user)
+        if self.rsync_desc:
+            return self.rsync_desc
+        else:
+            return self.rsync_remotemodule
 
     def get_human_minute(self):
         if self.rsync_minute == '*':
