@@ -29,6 +29,7 @@ import types
 from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
 
 from dojango import forms
+from dojango.forms import widgets
 
 class UnixPermissionWidget(widgets.MultiWidget):
     def __init__(self, attrs=None):
