@@ -30,7 +30,7 @@
 . /etc/rc.conf.local
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
-: ${FREENAS_DEBUG_MODULEDIR:="/usr/local/etc/freenas-debug"}
+: ${FREENAS_DEBUG_MODULEDIR:="/usr/local/libexec/freenas-debug"}
 : ${FREENAS_DEBUG_MODULES:=""}
 
 VERSION_FILE=/etc/version
