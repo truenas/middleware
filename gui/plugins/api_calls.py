@@ -457,7 +457,7 @@ def __api_call_fs_umount_filesystem(request, **kwargs):
         data = { "error": True, "message": "destination not specified" }
         return json.dumps(data)
 
-    fs = os.path.join(jail_path, dst)
+    fs = "%s/%s" % (jail_path, dst)
     p = __popen("/sbin/umount %s" % fs)
     p.wait()
 
