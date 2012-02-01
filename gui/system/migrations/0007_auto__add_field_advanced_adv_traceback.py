@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Advanced.adv_traceback'
-        db.add_column('system_advanced', 'adv_traceback', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+        db.add_column('system_advanced', 'adv_traceback', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
 
 
     def backwards(self, orm):
@@ -30,7 +30,7 @@ class Migration(SchemaMigration):
             'adv_serialconsole': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'adv_swapondrive': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'adv_systembeep': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'adv_traceback': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'adv_traceback': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'adv_tuning': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'adv_zeroconfbonjour': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})

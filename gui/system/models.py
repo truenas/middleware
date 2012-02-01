@@ -159,7 +159,7 @@ class Advanced(Model):
             default=True)
     adv_traceback = models.BooleanField(
             verbose_name = _("Show tracebacks in case of fatal errors"),
-            default=False)
+            default=True)
     adv_advancedmode = models.BooleanField(
             verbose_name = _("Show advanced fields by default"),
             default=False)
