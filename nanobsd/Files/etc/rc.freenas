@@ -31,6 +31,7 @@
 #	FreeNAS settings	
 #
 : ${FREENAS_CONFIG:="/data/freenas-v1.db"}
+: ${FREENAS_CONFIG_MD5:="/var/tmp/freenas_config.md5"}
 : ${FREENAS_SQLITE_CMD:="/usr/local/bin/sqlite3"}
 : ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
 

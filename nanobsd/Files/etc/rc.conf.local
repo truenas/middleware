@@ -328,8 +328,14 @@ fi
 # Regenerate stale caches of rc.conf data.  We run multiple time
 # as part of the boot process, and this helps.  It also provides
 # a useful file to look at for debugging.
-if [ ! -f ${FREENAS_RC} -o ${FREENAS_CONFIG} -nt ${FREENAS_RC} ]; then
+#
+# Previously mtime was being used to invalidate the cache
+# However this solution could not deal with backward date changes
+_NEWSUM=$(md5 -q ${FREENAS_CONFIG})
+_OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
+if [ ! "${_NEWSUM}" = "${_OLDSUM}" ]; then
 	_gen_conf > ${FREENAS_RC}
+	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
 if [ -n "${_doumount}" ]; then
