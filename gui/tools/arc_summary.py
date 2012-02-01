@@ -97,12 +97,9 @@ def get_Kstat():
 
 
 def div1():
-    i = 1
-    l = 18
     sys.stdout.write("\n")
-    while i <= l:
+    for i in xrange(18):
         sys.stdout.write("%s" % "----")
-        i += 1
     sys.stdout.write("\n")
 
 
