@@ -305,12 +305,7 @@ __do_AD_set()
 	local prefix="${1}"
 	local pair="${2}"
 
-	local name=$(echo ${pair}|cut -s -f1 -d=|xargs)
-	local val=$(echo ${pair}|cut -s -f2- -d=|xargs)
-
-	local var=$(echo "${prefix}${name}")
-
-	eval "${var}=${val}"
+	eval "${prefix}${pair}"
 }
 
 AD_set()
