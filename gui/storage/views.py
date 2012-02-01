@@ -217,7 +217,7 @@ def volautoimport(request):
 
 def disks_datagrid(request):
 
-    names = [_('Name'), _('Serial'), _('Description'), _("Transfer Mode"), _("HDD Standby"), _("Advanced Power Management"), _("Acoustic Level"), _("Enable S.M.A.R.T."), _("Enable S.M.A.R.T.")]
+    names = [_('Name'), _('Serial'), _('Description'), _("Transfer Mode"), _("HDD Standby"), _("Advanced Power Management"), _("Acoustic Level"), _("Enable S.M.A.R.T."), _("S.M.A.R.T. Extra Options")]
     _n = ['devname', 'disk_serial', 'disk_description', 'disk_transfermode', 'disk_hddstandby', 'disk_advpowermgmt', 'disk_acousticlevel', 'disk_togglesmart', 'disk_smartoptions']
 
     """
