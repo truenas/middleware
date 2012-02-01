@@ -263,7 +263,7 @@ class notifier:
         self._simplecmd("start", what)
         return self.started(what, sn)
 
-    def started(self, what, sn):
+    def started(self, what, sn=None):
         """ Test if service specified by "what" has been started. """
         try:
             f = getattr(self, '_started_' + what)
