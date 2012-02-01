@@ -433,7 +433,7 @@ def __api_call_fs_mount_filesystem(request, **kwargs):
         data = { "error": True, "message": "source or destination not specified" }
         return json.dumps(data)
 
-    full_dst = os.path.join(jail_path, dst)
+    full_dst = "%s/%s" % (jail_path, dst)
     p = __popen("/sbin/mount_nullfs %s %s" % (src, full_dst))
     p.wait()
 
