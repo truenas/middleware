@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2012-01-04 10:43+0200\n"
-"Last-Translator: alamati <alamati@gmail.com>\n"
+"PO-Revision-Date: 2012-02-01 07:50+0200\n"
+"Last-Translator: ghazizadeh <ghazizadeh_a@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
@@ -137,7 +137,7 @@ msgstr "پایه‌ی ۲۵۴ - کارایی بیشینه، بیشنیه‌ی ا�
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "کمینه"
+msgstr "حداقل"
 
 #: choices.py:97
 msgid "Medium"
@@ -145,7 +145,7 @@ msgstr "متوسط"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "بیشینه"
+msgstr "حداکثر"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
@@ -257,15 +257,15 @@ msgstr "موردی برای به‌هم آمیختن نیست"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "اسم ها با حروف کوچک در هر دو جهت"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "مشتری حروف را کوچک و کارگزار حروف را بزرگ می‌بیند"
+msgstr "سرویس گیرنده حروف را کوچک و سرویس دهنده حروف را بزرگ می‌بیند"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "مشتری حروف را بزرگ و کارگزار حروف را کوچک می‌بیند"
+msgstr "سرویس گیرنده حروف را بزرگ و سرویس دهنده حروف را کوچک می‌بیند"
 
 #: choices.py:203
 msgid "File"
@@ -277,7 +277,7 @@ msgstr "افزار"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr "حجمِ ZFS"
+msgstr "درایو ZFS"
 
 #: choices.py:209 storage/models.py:234 system/models.py:540
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
