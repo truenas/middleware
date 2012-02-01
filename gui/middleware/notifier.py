@@ -79,6 +79,39 @@ from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 
+import select
+import threading
+class StartNotify(threading.Thread):
+    """
+    Use kqueue to watch for an event before actually calling start/stop
+    This should help against synchronization issues under VM
+
+    If the given pid file exists attach on it, otherwise use the parent folder
+    """
+
+    def __init__(self, pidfile, *args, **kwargs):
+        self._pidfile = pidfile
+        super(StartNotify, self).__init__(*args, **kwargs)
+
+    def run(self):
+
+        if not self._pidfile:
+            return None
+
+        if os.path.exists(self._pidfile):
+            _file = self._pidfile
+        else:
+            _file = os.path.dirname(self._pidfile)
+        fd = os.open(_file, os.O_RDONLY)
+        evts = [
+            select.kevent(fd,
+                filter=select.KQ_FILTER_VNODE,
+                flags=select.KQ_EV_ADD|select.KQ_EV_ONESHOT,
+                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND|select.KQ_NOTE_DELETE),
+            ]
+        kq = select.kqueue()
+        ev = kq.control(evts, 1, 3)
+
 class notifier:
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
@@ -143,8 +176,8 @@ class notifier:
                 raise ValueError("Internal error: Unknown command")
         f()
 
-    def _started(self, what):
-        service2daemon = {
+
+    __service2daemon = {
             'ssh': ('sshd', '/var/run/sshd.pid'),
             'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
@@ -158,14 +191,40 @@ class notifier:
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
         }
+
+    def _started_notify(self, what):
         """
-        We need to wait a little bit so pgrep works
-        My guess here is that the processes need some time to
-        write the PID files before we can use them
+        The check for started [or not] processes is currently done in 2 steps
+        This is the first step which involves a thread StartNotify that watch for event
+        before actually start/stop rc.d scripts
+
+        Returns:
+            StartNotify object if the service is known or None otherwise
         """
-        time.sleep(0.5)
-        if what in service2daemon:
-            procname, pidfile = service2daemon[what]
+
+        if what in self.__service2daemon:
+            procname, pidfile = self.__service2daemon[what]
+            sn = StartNotify(pidfile=pidfile)
+            sn.start()
+            return sn
+        else:
+            return None
+
+    def _started(self, what, notify=None):
+        """
+        This is the second step::
+        Wait for the StartNotify thread to finish and then check for the
+        status of pidfile/procname using pgrep
+
+        Returns:
+            True whether the service is alive, False otherwise
+        """
+
+        if what in self.__service2daemon:
+            procname, pidfile = self.__service2daemon[what]
+            if notify:
+                notify.join()
+
             if pidfile:
                 retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
             else:
@@ -200,32 +259,35 @@ class notifier:
 
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("start", what)
-        return self.started(what)
+        return self.started(what, sn)
 
-    def started(self, what):
+    def started(self, what, sn):
         """ Test if service specified by "what" has been started. """
         try:
             f = getattr(self, '_started_' + what)
             return f()
         except:
-            return self._started(what)
+            return self._started(what, sn)
 
     def stop(self, what):
         """ Stop the service specified by "what".
 
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("stop", what)
-        return self.started(what)
+        return self.started(what, sn)
 
     def restart(self, what):
         """ Restart the service specified by "what".
 
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("restart", what)
-        return self.started(what)
+        return self.started(what, sn)
 
     def reload(self, what):
         """ Reload the service specified by "what".
