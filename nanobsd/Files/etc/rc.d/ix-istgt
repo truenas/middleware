@@ -102,12 +102,12 @@ generate_istgt_config()
 
 	# Generate [LogicalUnitNN] sections
 	echo "# LogicalUnit section"
-	local f="iscsi_target_logical_blocksize iscsi_target_portalgroup_id iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup_id iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags id iscsi_target_serial"
+	local f="iscsi_target_logical_blocksize iscsi_target_portalgroup_id iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup_id iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags iscsi_target_serial iscsi_target_initiator_tag iscsi_target_portal_tag"
 	eval local ${f}
 	local sf=$(var_to_sf $f)
 	iscsi_target_lun=0
-        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${sf} FROM services_iscsitarget ORDER BY id" | \
-        while eval read ${f}; do
+        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT t.id AS id, ${sf} FROM services_iscsitarget t LEFT JOIN services_iscsitargetportal p ON p.id=iscsi_target_portalgroup_id LEFT JOIN services_iscsitargetauthorizedinitiator a ON a.id=iscsi_target_initiatorgroup_id ORDER BY id" | \
+        while eval read id ${f}; do
 		extent_count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(*) FROM services_iscsitargettoextent AS t WHERE t.iscsi_target_id = ${id}"`
 		if [ "${extent_count}" = "0" ]; then
 			continue
@@ -117,7 +117,7 @@ generate_istgt_config()
 		if [ -n "${iscsi_target_alias}" ]; then
 			echo "  TargetAlias \"${iscsi_target_alias}\""
 		fi
-		echo "  Mapping PortalGroup${iscsi_target_portalgroup_id} InitiatorGroup${iscsi_target_initiatorgroup_id}"
+		echo "  Mapping PortalGroup${iscsi_target_portal_tag} InitiatorGroup${iscsi_target_initiator_tag}"
 		echo "  AuthMethod ${iscsi_target_authtype}"
 		if [ -n "${iscsi_target_authgroup}" -a "${iscsi_target_authtype}" != "None" ]; then
 			echo "  AuthGroup AuthGroup${iscsi_target_authgroup}"
