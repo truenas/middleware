@@ -78,7 +78,7 @@ class PBITemporaryLocationForm(Form):
             self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
         else:
             self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
-    def done(self):
+    def done(self, *args, **kwargs):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 
@@ -101,7 +101,7 @@ class PBIUploadForm(Form):
         else:
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
-    def done(self):
+    def done(self, *args, **kwargs):
         notifier().install_pbi()
 
 class JailPBIUploadForm(Form):
@@ -179,7 +179,7 @@ class JailPBIUploadForm(Form):
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
 
-    def done(self):
+    def done(self, *args, **kwargs):
         from freenasUI.network import models
 
         cleaned_data = self.cleaned_data

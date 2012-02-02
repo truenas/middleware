@@ -127,7 +127,7 @@ class FileWizard(FormWizard):
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done()
+            retval = form.done(request=request)
             if step == self.num_steps()-1:
                 self.retval = retval
 
@@ -389,7 +389,7 @@ class FirmwareTemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
-    def done(self):
+    def done(self, *args, **kwargs):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 class FirmwareUploadForm(Form):
@@ -419,8 +419,9 @@ class FirmwareUploadForm(Form):
         else:
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
-    def done(self):
+    def done(self, request, *args, **kwargs):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
+        request.session['allow_reboot'] = True
 
 class ServicePackUploadForm(Form):
     servicepack = FileField(label=_("Service Pack image to be installed"), required=True)
@@ -446,8 +447,9 @@ class ServicePackUploadForm(Form):
         else:
             self._errors["servicepack"] = self.error_class([_("This field is required.")])
         return cleaned_data
-    def done(self):
+    def done(self, request, *args, **kwargs):
         return notifier().apply_servicepack()
+        request.session['allow_reboot'] = True
 
 class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
