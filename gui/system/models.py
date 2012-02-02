@@ -433,7 +433,7 @@ class Rsync(Model):
             max_length=120,
             verbose_name=_("Remote Path"),
             blank=True,
-            help_text=_("Path in the remote host to rsync, e.g. /mnt/tank"),
+            help_text=_("Path on remote host to rsync to, e.g. /mnt/tank"),
             )
     rsync_direction = models.CharField(
             max_length=10,
