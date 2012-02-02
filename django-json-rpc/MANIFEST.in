@@ -1,0 +1,3 @@
+include README.mdown
+include COPYING
+recursive-include jsonrpc/templates *
