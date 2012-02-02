@@ -10,7 +10,6 @@ class MyAccount(TreeNode):
     gname = 'MyAccount'
     name = _('My Account')
     icon = u'MyAccountIcon'
-    order = -1
     def __init__(self, *args, **kwargs):
         super(MyAccount, self).__init__(*args, **kwargs)
 

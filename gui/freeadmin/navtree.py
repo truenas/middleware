@@ -138,25 +138,17 @@ class NavTree(object):
                     new[opt.name] = opt
 
             sort = new.keys()
-            sort.sort()
+            sort = sorted(sort, cmp=lambda x,y: cmp(x.lower(), y.lower()))
 
             for opt in sort:
                 opts.append(new[opt])
             nav._children = opts
-
-            inserts = 0
-            for opt in nav:
-                if len(opt) == 0:
-                    nav.remove_child(opt)
-                    nav.insert_child(inserts, opt)
-                    inserts += 1
 
             # TODO better order based on number attribute
             sort = order.keys()
             sort.sort()
             for key in sort:
                 nav.insert_child(0, order[key])
-
 
         for opt in nav:
             self.sort_navoption(opt)
