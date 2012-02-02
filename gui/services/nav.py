@@ -127,7 +127,7 @@ class ISCSIExt(TreeNode):
 class ISCSI(TreeNode):
 
     gname = 'ISCSI'
-    name = _(u'ISCSI')
+    name = _(u'iSCSI')
     type = u'iscsi'
     icon = u'iSCSIIcon'
 
