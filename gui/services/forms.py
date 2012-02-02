@@ -826,7 +826,7 @@ class iSCSITargetPortalForm(ModelForm):
         if not reg:
             raise forms.ValidationError(_("Invalid portal format: %s") % value)
         ip, port = reg.groups()
-        is_ipv6 = ip[0] == '[' and ip[-1] == ']'
+        is_ipv6 = ip.startswith('[') and ip.endswith(']')
         if is_ipv6:
             try:
                 IPv6Address(ip[1:-1])
