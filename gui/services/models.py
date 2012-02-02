@@ -473,6 +473,9 @@ class iSCSITargetPortal(Model):
         icon_model = u"PortalIcon"
         icon_add = u"AddPortalIcon"
         icon_view = u"ViewAllPortalsIcon"
+        inlines = [
+            ('iSCSITargetPortalIPForm', 'portalip_set'),
+        ]
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
             return u"%s (%s)" % (self.iscsi_target_portal_tag, self.iscsi_target_portal_comment)
@@ -487,6 +490,26 @@ class iSCSITargetPortal(Model):
         started = notifier().reload("iscsitarget")
         if started is False and services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
+class iSCSITargetPortalIP(Model):
+    iscsi_target_portalip_portal = models.ForeignKey(
+            iSCSITargetPortal,
+            verbose_name=_("Portal"),
+            )
+    iscsi_target_portalip_ip =  models.IPAddressField(
+            verbose_name=_("IP Address"),
+            )
+    iscsi_target_portalip_port =  models.SmallIntegerField(
+            verbose_name=_("Port"),
+            default=3260,
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            )
+
+    class Meta:
+        unique_together = (
+            ('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),
+            )
+        verbose_name = _("Portal IP")
 
 class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(

@@ -856,6 +856,12 @@ class iSCSITargetPortalForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+class iSCSITargetPortalIPForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
+    class Meta:
+        model = models.iSCSITargetPortalIP
+
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
