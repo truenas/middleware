@@ -738,10 +738,12 @@
                 console.log(e);
                 setMessage(gettext('An error occurred!'), "error");
                 try {
-                    rnode.hide();
-                } catch(e) {
-                    rnode.set('content', data);
-                }
+                    if(ioArgs.xhr.status == 200) {
+                        rnode.set('content', data);
+                    } else {
+                        rnode.hide();
+                    }
+                } catch(e) {}
             }
         };
 
