@@ -24,6 +24,7 @@ webshell = (function() {
                     content: {s: sid, w: width, h: height, k: send},
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     sync: false,
+                    preventCache: true,
                     handleAs: 'text',
                     handle: function(data, req) {
                         me.islocked=false;

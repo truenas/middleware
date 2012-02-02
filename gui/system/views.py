@@ -34,13 +34,14 @@ import time
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
+from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.views.decorators.cache import never_cache
 
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
@@ -434,6 +435,8 @@ def debug_save(request):
 
 
 multiplex = Multiplex("bash", "xterm-color")
+
+@never_cache
 def terminal(request):
     try:
         sid = int(request.GET.get("s"))
