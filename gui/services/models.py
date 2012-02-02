@@ -474,7 +474,10 @@ class iSCSITargetPortal(Model):
         icon_add = u"AddPortalIcon"
         icon_view = u"ViewAllPortalsIcon"
         inlines = [
-            ('iSCSITargetPortalIPForm', 'portalip_set'),
+            {
+                'form': 'iSCSITargetPortalIPForm',
+                'prefix': 'portalip_set',
+            },
         ]
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":

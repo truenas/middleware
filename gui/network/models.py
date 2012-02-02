@@ -149,7 +149,10 @@ class Interfaces(Model):
         icon_add = u"AddInterfaceIcon"
         icon_view = u"ViewAllInterfacesIcon"
         inlines = [
-            ('AliasForm', 'alias_set'),
+            {
+                'form': 'AliasForm',
+                'prefix': 'alias_set'
+            },
         ]
 
 

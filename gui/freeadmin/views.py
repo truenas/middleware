@@ -391,7 +391,9 @@ def generic_model_add(request, app, model, mf=None):
             valid = False
 
         if m._admin.inlines:
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
@@ -436,7 +438,9 @@ def generic_model_add(request, app, model, mf=None):
             extrakw = {
                 'can_delete': False
                 }
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
@@ -606,7 +610,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
             valid = False
 
         if m._admin.inlines:
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
@@ -655,7 +661,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
             extrakw = {
                 'can_delete': True,
                 }
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
@@ -695,8 +703,9 @@ def generic_model_empty_formset(request, app, model):
         return None
 
     inline = None
-    for _inline, prefix in m._admin.inlines:
-        print _inline
+    for inlineopts in m._admin.inlines:
+        _inline = inlineopts.get("form")
+        prefix = inlineopts.get("prefix")
         if prefix == request.GET.get("fsname"):
             _temp = __import__('%s.forms' % app, globals(), locals(), [_inline], -1)
             inline = getattr(_temp, _inline)
