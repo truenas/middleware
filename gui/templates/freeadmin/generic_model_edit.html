@@ -18,24 +18,32 @@
     {% block formset %}
     <tr><td colspan="2">
     {% for name, formset in formsets.items %}
-    <table>
-        <tr>
-            <td colspan="2">
-            Aliases
-            {{ formset.management_form }}
-            </td>
-        </tr>
-        {% for form in formset %}
-        <table>
-        {% admin_form form %}
-        </table>
-        {% endfor %}
-        <tr>
-            <td colspan="2">
-            <a href="javascript:void(0);" onClick="addAlias(this, 'alias_set');">Add extra alias</a>
-            </td>
-        </tr>
-    </table>
+    <tr>
+        <td colspan="2">
+            <table>
+                {{ formset.management_form }}
+                <tr>
+                    <td colspan="2">
+                    {{ formset.verbose_name }}
+                    </td>
+                </tr>
+                {% for form in formset %}
+                <tr>
+                    <td colspan="2">
+                        <table>
+                            {% admin_form form %}
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="2">
+                    <a href="javascript:void(0);" onClick="add_formset(this, '{% url freeadmin_model_empty_formset app=app model=model %}', '{{ formset.prefix|escapejs }}');">Add extra {{ formset.verbose_name }}</a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
     {% endfor %}
     {% endblock %}
     {% block buttons %}

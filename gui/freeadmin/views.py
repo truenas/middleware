@@ -440,7 +440,9 @@ def generic_model_add(request, app, model, mf=None):
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
-                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
+                fsname = 'formset_%s' % inline._meta.model._meta.module_name
+                formsets[fsname] = fset(prefix=prefix, instance=instance)
+                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
 
     context.update({
         'form': mf,
@@ -657,7 +659,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
-                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
+                fsname = 'formset_%s' % inline._meta.model._meta.module_name
+                formsets[fsname] = fset(prefix=prefix, instance=instance)
+                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
 
     context.update({
         'form': mf,
@@ -678,6 +682,33 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         return render(request, template, context, \
                 content_type='text/html')
+
+def generic_model_empty_formset(request, app, model):
+
+    try:
+        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+    except ImportError:
+        raise
+    m = getattr(_temp, model)
+
+    if not m._admin.inlines:
+        return None
+
+    inline = None
+    for _inline, prefix in m._admin.inlines:
+        print _inline
+        if prefix == request.GET.get("fsname"):
+            _temp = __import__('%s.forms' % app, globals(), locals(), [_inline], -1)
+            inline = getattr(_temp, _inline)
+            break
+
+    if inline:
+        fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1)
+        fsins = fset(prefix=prefix)
+
+        return HttpResponse(fsins.empty_form.as_table())
+    return HttpResponse()
+
 
 def generic_model_delete(request, app, model, oid):
 

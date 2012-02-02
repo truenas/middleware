@@ -428,6 +428,30 @@
 
     }
 
+    add_formset = function(a, url, name) {
+
+        dojo.xhrGet({
+            url: url,
+            content: {
+                fsname: name,
+            },
+            sync: true,
+            load: function(data, ioArgs) {
+
+                var extra = dijit.byId("id_"+name+"-TOTAL_FORMS");
+                var extran = extra.get("value");
+                data = data.replace(/__prefix__/g, extran);
+                var div = dojo.create("table");
+                dojo.query(a.parentNode.parentNode).before(div);
+                div.innerHTML = data;
+                dojo.parser.parse(div);
+                extra.set('value', parseInt(extran) + 1);
+
+            },
+        });
+
+    }
+
     addAlias = function(a, name) {
 
         extra = dijit.byId("id_"+name+"-TOTAL_FORMS");
