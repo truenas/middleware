@@ -1,0 +1,441 @@
+
+<form data-dojo-type="dijit.form.Form">
+
+<script type="dojo/method">
+    var saved = null;
+
+    get_mp_list = function() {
+        var mp_list = null;
+
+        dojo.xhrGet({
+            url: '/plugins/firefly/1696_6/mp_saved',
+            sync: true,
+            failOk: true,
+            handleAs: "json",
+            handle: function(data) {
+                mp_list = data;
+            },
+        });
+
+        return mp_list;
+    }
+
+    get_directories = function() {
+        var mountpoints = get_mp_list();
+        var mp_list = new Array();
+        var dirs = null;
+        var i = 0;
+        for (var mp in mountpoints) {
+            if (mp.indexOf("firefly_mp_dst_") >=0) {
+                mp_list[i++] = mountpoints[mp];
+            }
+        }
+
+        dirs = new Array(mp_list.length + 3)
+        dirs[0] = "-";
+        dirs[1] = "/usr/pbi/firefly-amd64/etc/firefly/home";
+        dirs[2] = "/usr/pbi/firefly-amd64/etc/firefly/home/Downloads";
+        for (var i = 0;i < mp_list.length;i++) {   
+            dirs[i + 3] = mp_list[i];
+        }
+            
+        return dirs;
+    }
+
+    sd = function(k, v) {
+        if (!saved[k]) {
+            saved[k] = v;
+        }
+    }
+
+    set_defaults = function(saved) {
+        sd("firefly_general_web_root", "/usr/pbi/firefly-amd64/share/mt-daapd/admin-root");
+        sd("firefly_general_port", "3689");
+        sd("firefly_general_admin_pw", "mt-daapd");
+        sd("firefly_general_db_type", "sqlite3");
+        sd("firefly_general_db_parms", "/usr/pbi/firefly-amd64/var/db/firefly");
+        sd("firefly_general_servername", "Firefly %v on %h");
+        sd("firefly_general_runas", "daapd");
+        sd("firefly_general_extensions", ".mp3,.m4a,.m4p,.ogg,.flac");
+        sd("firefly_general_ssc_codectypes", "ogg,flac,alac");
+        sd("firefly_general_ssc_prog", "/usr/pbi/firefly-amd64/bin/mt-daapd-ssc.sh");
+        sd("firefly_general_logfile", "/var/log/mt-daapd.log");
+        sd("firefly_general_debuglevel", "5");
+        sd("firefly_general_scan_type", "0");
+
+        sd("firefly_plugins_plugin_dir", "/usr/pbi/firefly-amd64/lib/mt-daapd/plugins");
+
+        sd("firefly_scanning_process_playlists", "1");
+        sd("firefly_scanning_process_itunes", "1");
+        sd("firefly_scanning_process_m3u", "1");
+    }
+
+    get_saved = function() {
+        var saved = null;
+     
+        dojo.xhrGet({
+            url: '/plugins/firefly/1696_6/saved',
+            sync: true,
+            failOk: true,
+            handleAs: "json",  
+            handle: function(data) {
+                saved = data;
+            },
+        });
+            
+        return saved;
+    }
+
+    filldiv = function(divid, header, settings) {
+        var div = dojo.byId(divid);
+        var table = dojo.create("table", {align: "center"}, div);
+        var tr = dojo.create("tr", null, table);
+        var th = dojo.create("th", {colspan: "2", align: "center"}, table);
+
+        var s = dojo.create("strong", {innerHTML: header}, th);
+        for (var i = 0;i < settings.length;i++) {
+            var tr = dojo.create("tr", null, table);
+            var td1 = dojo.create("td", {innerHTML: settings[i].label}, tr);
+            var td2 = dojo.create("td", null, tr);
+            var obj = settings[i].type.placeAt(td2); 
+        }
+    }
+
+    firefly_daemon_config = function() {
+        var sel_debug_level = new Array(11);
+
+        sel_debug_level[0] = "-";
+        for (var i = 1;i < 11;i++) {
+            sel_debug_level[i] = {
+                label: (i - 1).toString(),
+                value: (i - 1).toString(),
+                selected: ((i -1 ) == saved["firefly_daemon_debuglevel"])
+            };
+        }
+
+        var daemon_settings = new Array(
+            { 
+                label: "Enabled",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_daemon_enable",
+                    checked: saved["firefly_daemon_enable"]
+                })
+            },
+            { 
+                label: "Set CWD",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_daemon_set_cwd",
+                    checked: saved["firefly_daemon_set_cwd"]
+                })
+            },
+            { 
+                label: "Debug level",
+                type: new dijit.form.Select({
+                    name: "firefly_daemon_debuglevel",
+                    options: sel_debug_level
+                })
+            },
+            { 
+                label: "Debug modules",
+                type: new dijit.form.TextBox({
+                    name: "firefly_daemon_debug_modules",
+                    value: saved["firefly_daemon_debug_modules"]
+                })
+            },
+            { 
+                label: "Disable mDNS",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_daemon_disable_mdns",
+                    checked: saved["firefly_daemon_disable_mdns"]
+                })
+            },
+            { 
+                label: "Disable mDNS",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_daemon_disable_mdns",
+                    checked: saved["firefly_daemon_disable_mdns"]
+                })
+            },
+            { 
+                label: "Run as non-root user",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_daemon_non_root_usser",
+                    checked: saved["firefly_daemon_non_root_user"]
+                })
+            },
+            { 
+                label: "ffid",
+                type: new dijit.form.TextBox({
+                    name: "firefly_daemon_ffid",
+                    value: saved["firefly_daemon_ffid"]
+                })
+            }
+        );
+
+        filldiv("firefly_daemon_config", "Daemon Configuration", daemon_settings);
+    }
+
+    firefly_general_config = function() {
+        var dirs = get_directories();
+        var sel_db_type = new Array(2);
+        var sel_mp3_dir = new Array(dirs.length);
+        var sel_scan_type = new Array(3);
+
+        for (var i = 0;i < 2;i++) {
+            var str = (i == 0) ? "sqlite" : "sqlite3";
+            var s = (str == saved["firefly_general_db_type"]);
+            sel_db_type[i] = {
+                label: str,
+                value: str,
+                selected: s
+            };
+        }
+
+        for (var i = 0;i < dirs.length;i++) {
+            sel_mp3_dir[i] = {
+                label: dirs[i],
+                value: dirs[i],
+                selected: (dirs[i] == saved["firefly_general_mp3_dir"])
+            };
+        }
+
+        sel_scan_type[0] = {
+            label: "Normal",
+            value: "0",
+            selected: (saved["firefly_general_scan_type"] == "0")
+        };
+
+        sel_scan_type[1] = {
+            label: "Agressive",
+            value: "1",
+            selected: (saved["firefly_general_scan_type"] == "1")
+        };
+
+        sel_scan_type[2] = {
+            label: "Painfully agressive",
+            value: "2",
+            selected: (saved["firefly_general_scan_type"] == "2")
+        };
+
+        var general_settings = new Array(
+            { 
+                label: "Web root",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_web_root",
+                    value: saved["firefly_general_web_root"]
+                })
+            },
+            { 
+                label: "Port",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_port",
+                    value: saved["firefly_general_port"]
+                })
+            },
+            { 
+                label: "Admin password",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_admin_pw",
+                    value: saved["firefly_general_admin_pw"]
+                })
+            },
+            {
+                label: "DB type",
+                type: new dijit.form.Select({
+                    name: "firefly_general_db_type",
+                    options: sel_db_type
+                })
+            },
+            { 
+                label: "DB parameters",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_db_parms",
+                    value: saved["firefly_general_db_parms"]
+                })
+            },
+            {
+                label: "MP3 directory",
+                type: new dijit.form.Select({
+                    name: "firefly_general_mp3_dir",
+                    options: sel_mp3_dir
+                })
+            },
+            { 
+                label: "Server name",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_servername",
+                    value: saved["firefly_general_servername"]
+                })
+            },
+            { 
+                label: "Password",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_password",
+                    value: saved["firefly_general_password"]
+                })
+            },
+            { 
+                label: "Extensions",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_extensions",
+                    value: saved["firefly_general_extensions"]
+                })
+            },
+            { 
+                label: "Codec types",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_ssc_codectypes",
+                    value: saved["firefly_general_ssc_codectypes"]
+                })
+            },
+            { 
+                label: "Codec program",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_ssc_prog",
+                    value: saved["firefly_general_ssc_prog"]
+                })
+            },
+            { 
+                label: "Log file",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_logfile",
+                    value: saved["firefly_general_logfile"]
+                })
+            },
+            { 
+                label: "Debug level",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_debuglevel",
+                    value: saved["firefly_general_debuglevel"]
+                })
+            },
+            { 
+                label: "Rescan interval",
+                type: new dijit.form.TextBox({
+                    name: "firefly_general_rescan_interval",
+                    value: saved["firefly_general_rescan_interval"]
+                })
+            },
+            { 
+                label: "Always scan",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_general_always_scan",
+                    checked: saved["firefly_general_always_scan"]
+                })
+            },
+            { 
+                label: "Scan type",
+                type: new dijit.form.Select({
+                    name: "firefly_general_scan_type",
+                    options: sel_scan_type
+                })
+            },
+            { 
+                label: "Compress",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_general_compress",
+                    checked: saved["firefly_general_compress"]
+                })
+            }
+        );
+
+        filldiv("firefly_general_config", "General Configuration", general_settings);
+    }
+
+    firefly_plugins_config = function() {
+        var dirs = get_directories();
+        var sel_plugin_dir = new Array(dirs.length);
+
+        for (var i = 0;i < dirs.length;i++) {
+            var s = (dirs[i] == saved["firefly_plugins_plugin_dir"]);
+            sel_plugin_dir[i] = {
+                label: dirs[i],
+                value: dirs[i],
+                selected: s
+            };
+        }
+
+        var plugins_settings = new Array(
+            {
+                label: "Plugins directory",
+                type: new dijit.form.Select({
+                    name: "firefly_plugins_plugin_dir",
+                    options: sel_plugin_dir
+                })
+            }
+        );
+
+        filldiv("firefly_plugins_config", "Plugins Configuration", plugins_settings);
+    }
+
+    firefly_scanning_config = function() {
+        var scanning_settings = new Array(
+            {
+                label: "Process playlists",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_scanning_process_playlists",
+                    checked: saved["firefly_scanning_process_playlists"]
+                })
+            },
+            {
+                label: "Process iTunes",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_scanning_process_itunes",
+                    checked: saved["firefly_scanning_process_itunes"]
+                })
+            },
+            {
+                label: "Process m3u",
+                type: new dijit.form.CheckBox({
+                    name: "firefly_scanning_process_m3u",
+                    checked: saved["firefly_scanning_process_m3u"]
+                })
+            }
+        );
+
+        filldiv("firefly_scanning_config", "Scanning Configuration", scanning_settings);
+    }
+
+    saved = get_saved(); 
+    set_defaults(saved);
+
+    firefly_daemon_config();
+    firefly_general_config();
+    firefly_plugins_config();
+    firefly_scanning_config();
+
+</script>
+
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+        formSubmit(this, e, "/plugins/firefly/1696_6/post");
+    </script>
+
+<div id="firefly_daemon_config"></div>
+<div id="firefly_general_config"></div>
+<div id="firefly_plugins_config"></div>
+<div id="firefly_scanning_config"></div>
+
+<table align="center">
+
+    <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+
+    <tr>
+        <td colspan="2" align="center">
+            <button data-dojo-type="dijit.form.Button" type="submit"
+                data-dojo-props="type:'submit'" class="submitform">
+                OK
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                Cancel
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    cancelDialog(this);
+                </script>
+            </button>
+        </td>
+    </tr>
+
+</table>
+</form>

@@ -1,0 +1,287 @@
+
+<form data-dojo-type="dijit.form.Form">
+
+<script type="dojo/method">
+    var saved = null;
+
+    get_mp_list = function() {
+        var mp_list = null;
+
+        dojo.xhrGet({
+            url: '/plugins/minidlna/1.0.22_1/mp_saved',
+            sync: true,
+            failOk: true,
+            handleAs: "json",
+            handle: function(data) {
+                mp_list = data;
+            },
+        });
+
+        return mp_list;
+    }
+
+    sd = function(k, v) {
+        if (!saved[k]) {
+            saved[k] = v;
+        }
+    }
+
+    set_defaults = function() {
+        sd("minidlna_file_port", "8200");
+        sd("minidlna_file_friendly_name", "sesam minidlna");
+        sd("minidlna_file_album_art_names", "Cover.jpg/cover.jpg/AlbumArtSmall.jpg/albumartsmall.jpg" +
+            "/AlbumArt.jpg/albumart.jpg/Album.jpg/album.jpg/Folder.jpg/folder.jpg/Thumb.jpg/thumb.jpg");
+        sd("minidlna_file_inotify", "no");
+        sd("minidlna_file_enable_tivo", "no");
+        sd("minidlna_file_strict_dlna", "no");
+        sd("minidlna_file_notify_interval", "900");
+        sd("minidlna_file_serial", "12345678");
+        sd("minidlna_file_model_number", "1");
+    }
+
+    get_saved = function() {
+        var saved = null;
+     
+        dojo.xhrGet({
+            url: '/plugins/minidlna/1.0.22_1/saved',
+            sync: true,
+            failOk: true,
+            handleAs: "json",  
+            handle: function(data) {
+                saved = data;
+            },
+        });
+            
+        return saved;
+    }
+
+    filldiv = function(divid, header, settings) {
+        var div = dojo.byId(divid);
+        var table = dojo.create("table", {align: "center"}, div);
+        var tr = dojo.create("tr", null, table);
+        var th = dojo.create("th", {colspan: "2", align: "center"}, table);
+
+        var s = dojo.create("strong", {innerHTML: header}, th);
+        for (var i = 0;i < settings.length;i++) {
+            var tr = dojo.create("tr", null, table);
+            var td1 = dojo.create("td", {innerHTML: settings[i].label}, tr);
+            var td2 = dojo.create("td", null, tr);
+            var obj = settings[i].type.placeAt(td2); 
+        }
+    }
+
+    minidlna_daemon_config = function() {
+        var settings = new Array(
+            {
+                label: "Enable",
+                type: new dijit.form.CheckBox({
+                    name: "minidlna_daemon_enable",
+                    checked: saved["minidlna_daemon_enable"]
+                })
+            },
+            {
+                label: "Debug",
+                type: new dijit.form.CheckBox({
+                    name: "minidlna_daemon_debug",
+                    checked: saved["minidlna_daemon_debug"]
+                })
+            },
+            {
+                label: "Port",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_daemon_port",
+                    value: saved["minidlna_daemon_port"]
+                })
+            },
+            {
+                label: "Serial",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_daemon_serial",
+                    value: saved["minidlna_daemon_serial"]
+                })
+            },
+            {
+                label: "Model number",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_daemon_model_number",
+                    value: saved["minidlna_daemon_model_number"]
+                })
+            },
+            {
+                label: "Notify interval",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_daemon_notify_interval",
+                    value: saved["minidlna_daemon_notify_interval"]
+                })
+            },
+            {
+                label: "Presentation URL",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_daemon_presentation_url",
+                    value: saved["minidlna_daemon_presentation_url"]
+                })
+            },
+            {
+                label: "Rescan",
+                type: new dijit.form.CheckBox({
+                    name: "minidlna_daemon_rescan",
+                    value: saved["minidlna_daemon_rescan"]
+                })
+            }
+        );
+
+        filldiv("minidlna_daemon_config", "Daemon Configuration", settings);
+    }
+
+    minidlna_add_media_dir = function() {
+    }
+
+    minidlna_file_config = function() {
+        var dirs = new Array();
+        var mountpoints = get_mp_list();
+        var i = 0;
+        for (var mp in mountpoints) {
+            if (mp.indexOf("minidlna_mp_dst_") >=0) {
+                dirs[i++] = mountpoints[mp];
+            }
+        }
+
+        var sel_media_dir = new Array(dirs.length);
+        var sel_db_dir = new Array(dirs.length);
+
+        for (var i = 0;i < dirs.length;i++) {
+            sel_media_dir[i] = {
+                label: dirs[i],
+                value: dirs[i],
+                selected: (dirs[i] == saved["minidlna_file_media_dir"])
+            };
+
+            sel_db_dir[i] = {
+                label: dirs[i],
+                value: dirs[i],
+                selected: (dirs[i] == saved["minidlna_file_db_dir"])
+            };
+        }
+
+        var settings = new Array(
+            { 
+                label: "Port",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_port",
+                    value: saved["minidlna_file_port"]
+                })
+            },
+            { 
+                label: "Friendly name",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_friendly_name",
+                    value: saved["minidlna_file_friendly_name"]
+                })
+            },
+            { 
+                label: "Media directory",
+                type: new dijit.form.Select({
+                    name: "minidlna_file_media_dir",
+                    options: sel_media_dir
+                })
+            },
+            { 
+                label: "Database directory",
+                type: new dijit.form.Select({
+                    name: "minidlna_file_db_dir",
+                    options: sel_db_dir
+                })
+            },
+            { 
+                label: "Album art names",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_album_art_names",
+                    value: saved["minidlna_file_album_art_names"]
+                })
+            },
+            { 
+                label: "Inotify",
+                type: new dijit.form.CheckBox({
+                    name: "minidlna_file_inotify",
+                    checked: saved["minidlna_file_inotify"]
+                })
+            },
+            { 
+                label: "Strict DLNA",
+                type: new dijit.form.CheckBox({
+                    name: "minidlna_file_strict_dlna",
+                    checked: saved["minidlna_file_strict_dlna"]
+                })
+            },
+            { 
+                label: "Presentation URL",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_presentation_url",
+                    value: saved["minidlna_file_presentation_url"]
+                })
+            },
+            { 
+                label: "Notify interval",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_notify_interval",
+                    checked: saved["minidlna_file_notify_interval"]
+                })
+            },
+            { 
+                label: "Serial",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_serial",
+                    checked: saved["minidlna_file_serial"]
+                })
+            },
+            { 
+                label: "Model number",
+                type: new dijit.form.TextBox({
+                    name: "minidlna_file_model_number",
+                    checked: saved["minidlna_file_model_number"]
+                })
+            }
+        );
+
+        filldiv("minidlna_file_config", "Configuration file", settings);
+    }
+
+    saved = get_saved();
+    set_defaults(); 
+
+    minidlna_daemon_config();
+    minidlna_file_config();
+
+</script>
+
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+        formSubmit(this, e, "/plugins/minidlna/1.0.22_1/post");
+    </script>
+
+<div id="minidlna_daemon_config"></div>
+<div id="minidlna_file_config"></div>
+
+<table align="center">
+
+    <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+
+    <tr>
+        <td colspan="2" align="center">
+            <button data-dojo-type="dijit.form.Button" type="submit"
+                data-dojo-props="type:'submit'" class="submitform">
+                OK
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                Cancel
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    cancelDialog(this);
+                </script>
+            </button>
+        </td>
+    </tr>
+
+</table>
+</form>

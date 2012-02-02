@@ -1,0 +1,185 @@
+<form data-dojo-type="dijit.form.Form">
+
+<script type="dojo/method">
+    var nmp = 0;
+    var saved = null;
+
+    sd = function(k, v) {
+        if (!saved[k]) {
+            saved[k] = v;
+        }
+    }
+
+    get_saved = function() {
+        dojo.xhrGet({
+            url: '/plugins/firefly/1696_6/mp_saved',
+            sync: true,
+            failOk: true,
+            handleAs: "json",  
+            handle: function(data) {
+                saved = data;
+            },
+        });
+    }
+
+    filldiv = function(divid, header, settings) {
+        var div = dojo.byId(divid);
+        var table = dojo.create("table", {align: "center"}, div);
+
+        if (header) {
+            var tr = dojo.create("tr", null, table);
+            var th = dojo.create("th", {colspan: "2", align: "center"}, table);
+            var s = dojo.create("strong", {innerHTML: header}, th);
+        }
+
+        for (var i = 0;i < settings.length;i++) {
+            var tr = dojo.create("tr", null, table);
+            var td1 = dojo.create("td", null, tr);
+            var obj = settings[i].src.placeAt(td1);
+            var td2 = dojo.create("td", null, tr);
+            var obj = settings[i].dst.placeAt(td2);
+        }
+    }
+
+    api_call = function(api_call_args) {
+        if (!api_call_args || !api_call_args["api_method"]) {
+            return null; 
+        }
+      
+        var api_res = null;
+        var url = '/plugins/firefly/1696_6/api_call';
+        dojo.xhrGet({
+            url: url,
+            content: api_call_args,
+            sync: true,
+            failOk: true,
+            handleAs: "json",  
+            handle: function(data) {
+                api_res = data;
+            },
+        });
+            
+        return api_res;
+    }
+
+    get_directories = function() {
+        var args = new Array();
+        args["api_method"] = "fs_get_mountpoints";
+
+        var json = api_call(args);
+        var obj = dojo.fromJson(json);
+
+        var mp_list = null;
+        if (!obj["error"]) {
+            mp_list = obj["mountpoints"];
+        }
+
+        return mp_list;
+    }
+
+    firefly_mp_unmount = function() {
+        get_saved();
+
+        var args = new Array();
+        args["api_method"] = "fs_umount_filesystem";
+
+        for (var i in saved) {
+            if (i.indexOf("firefly_mp_dst_") >=0) {
+                args["destination"] = saved[i];
+                api_call(args);
+            }
+        }
+    }
+
+    firefly_mp_add = function() {
+        var dirs = get_directories();
+        var sel_mp_list = new Array(dirs.length);
+
+        for (var i = 0;i < dirs.length;i++) {
+            var s = false;
+
+            s = (dirs[i] == saved["firefly_mp_src_" + i]);
+            sel_mp_list[i] = {
+                label: dirs[i],
+                value: dirs[i],
+                selected: s
+            };
+        }
+
+        var mountpoints = new Array(
+            {
+                src: new dijit.form.Select({
+                    name: "firefly_mp_src_" + nmp ,
+                    options: sel_mp_list
+                }),
+                dst: new dijit.form.TextBox({
+                    name: "firefly_mp_dst_" + nmp,
+                    value: saved["firefly_mp_dst_" + nmp]
+                })
+            }
+        );
+
+        if (nmp == 0) {
+            filldiv("firefly_mp_add", "Mount Point Configuration", mountpoints);
+        } else {
+            filldiv("firefly_mp_add", null, mountpoints);
+        }
+
+        nmp++;
+    }
+
+    get_saved();
+    firefly_mp_add();
+
+</script>
+
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+        formSubmit(this, e, "/plugins/firefly/1696_6/mp_post");
+    </script>
+
+<div id="firefly_mp_add"></div>
+
+<table align="center">
+
+    <tr>
+        <td align="center">
+            <button data-dojo-type="dijit.form.Button" type="button" id="button_firefly_mp_unmount">
+                Unmount Mount Points
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    firefly_mp_unmount();
+                </script>
+            </button>
+        </td>
+        <td align="center">
+            <button data-dojo-type="dijit.form.Button" type="button" id="button_firefly_mp_add">
+                Add Mount Point
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    firefly_mp_add();
+                </script>
+            </button>
+        </td>
+    </tr>
+
+
+    <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+
+    <tr>
+        <td colspan="2" align="center">
+            <button data-dojo-type="dijit.form.Button" type="submit"
+                data-dojo-props="type:'submit'" class="submitform">
+                OK
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                Cancel
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    cancelDialog(this);
+                </script>
+            </button>
+        </td>
+    </tr>
+
+</table>
+</form>

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+transmission_path=/usr/pbi/transmission-amd64
+tmpfile=$(mktemp /tmp/.XXXXXX)
+
+grep -v 'transmission_' /etc/rc.conf > ${tmpfile}
+cat ${transmission_path}/etc/rc.conf >> ${tmpfile}
+mv ${tmpfile} /etc/rc.conf

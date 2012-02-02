@@ -1,0 +1,451 @@
+#!/usr/local/bin/python
+
+import os
+import re
+import sys
+import stat
+import signal
+
+import cgi
+import json
+import urllib
+import urllib2
+import cookielib
+import Cookie
+
+from flup.server.fcgi import WSGIServer
+from subprocess import Popen, PIPE
+from syslog import syslog, LOG_DEBUG
+from time import ctime
+
+minidlna_pbi_path = "/usr/pbi/minidlna-amd64"
+minidlna_etc_path = os.path.join(minidlna_pbi_path, "etc")
+minidlna_mnt_path = os.path.join(minidlna_pbi_path, "mnt")
+minidlna_fcgi_pidfile = "/var/run/minidlna_fcgi_server.pid"
+minidlna_fcgi_wwwdir = os.path.join(minidlna_pbi_path, "www")
+minidlna_control = "/usr/local/etc/rc.d/minidlna"
+minidlna_config = os.path.join(minidlna_etc_path, "minidlna.conf")
+minidlna_opts = os.path.join(minidlna_etc_path, "options")
+minidlna_mp_file = os.path.join(minidlna_etc_path, "mountpoints")
+
+
+def minidlna_start(environ, start_response, args):
+    cmd = "%s start" % minidlna_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def minidlna_stop(environ, start_response, args):
+    cmd = "%s stop " % minidlna_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def minidlna_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(minidlna_fcgi_wwwdir, "edit.html")
+    data = open(file).read()
+    return data
+
+def minidlna_mp_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    saved = {}
+    if os.access(minidlna_mp_file, os.F_OK):
+        f = open(minidlna_mp_file, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+
+def minidlna_mp_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(minidlna_fcgi_wwwdir, "mp_edit.html")
+    data = open(file).read()
+    return data
+
+
+def minidlna_mp_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    if not args:
+        return "Fail."
+
+    data = ""
+    f = open(minidlna_mp_file, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false":
+            f.write("%s=%s\n" % (key, value))
+    f.close()
+
+    api_method = "fs_mount_filesystem"
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+    http_cookie = environ.get("HTTP_COOKIE", None)
+
+    fs_src = []
+    fs_dst = []
+    from syslog import syslog, LOG_DEBUG
+    for i in sorted(args.keys()):
+        if i.startswith("minidlna_mp_src"):
+            fs_src.append(args[i]) 
+        elif i.startswith("minidlna_mp_dst"):
+            fs_dst.append(args[i]) 
+
+    i = 0
+    while i < len(fs_src):
+        url_args = {}
+        url_args["source"] = fs_src[i]
+        url_args["destination"] = fs_dst[i]
+        fullurl = "%s?%s" % (url, urllib.urlencode(url_args))
+
+        syslog(LOG_DEBUG, "minidlna_api_call: URL = %s" % fullurl)
+
+        req = urllib2.Request(fullurl)
+        if http_cookie:
+            req.add_header("Cookie", http_cookie)
+        
+        response = urllib2.urlopen(req)
+        data = response.read()
+        i += 1
+
+    return json.dumps("ok") 
+
+
+def minidlna_treemenu(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    plugin = {
+        'name': 'minidlna',
+        'append_to': 'system',
+        'children': [
+            {
+                'name': 'Edit Mount Points',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/minidlna/1.0.22_1/mp_edit',
+		'kwargs': {'plugin_name': 'minidlna'},
+            },
+            {
+                'name': 'Edit',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/minidlna/1.0.22_1/edit',
+		'kwargs': {'plugin_name': 'minidlna'},
+            },
+            {
+                'name': 'Start',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/minidlna/1.0.22_1/start',
+		'kwargs': {'plugin_name': 'minidlna'},
+            },
+            {
+                'name': 'Stop',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/minidlna/1.0.22_1/stop',
+		'kwargs': {'plugin_name': 'minidlna'},
+            },
+        ] 
+    }
+
+    return json.dumps([plugin])
+
+minidlna_daemon_settings = {}
+minidlna_daemon_vars = {
+    "enable":           { "type": "checkbox", "opt": None},
+    "debug":            { "type": "checkbox", "opt": "-d" },
+    "port":             { "type": "textbox",  "opt": "-p" },
+    "serial":           { "type": "textbox",  "opt": "-s" },
+    "model_number":     { "type": "textbox",  "opt": "-m" },
+    "notify_interval":  { "type": "textbox",  "opt": "-t" },
+    "presentation_url": { "type": "textbox",  "opt": "-w" },
+    "rescan":           { "type": "checkbox", "opt": "-R" }
+}
+
+minidlna_config_settings = {}
+minidlna_config_vars = [
+    "port",
+    "media_dir",
+    "friendly_name",
+    "db_dir",
+    "album_art_names",
+    "inotify",
+    "strict_dlna",
+    "presentation_url",
+    "notify_interval",
+    "serial",
+    "model_number"
+]
+
+vars_and_settings = [
+    ("minidlna_daemon",  minidlna_daemon_vars,  minidlna_daemon_settings),
+    ("minidlna_file",    minidlna_config_vars,  minidlna_config_settings),
+]
+
+def minidlna_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    saved = {}
+    if os.access(minidlna_opts, os.F_OK):
+        f = open(minidlna_opts, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+
+def minidlna_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
+        keep_blank_values=1)
+
+    if not form.list:
+        return "Fail."
+
+    f = open(minidlna_opts, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false" and value != "-":
+            f.write("%s=%s\n" % (key, value))
+
+        sptr = svar = None
+        for (p, v, s) in vars_and_settings:
+            svar = key.replace(p + "_", "")
+            if svar == key: 
+                continue
+
+            if p == "minidlna_daemon":
+                if svar == "enable":
+                    s["minidlna_enable"] = "YES"
+
+                else:
+                    info = v[svar]
+                    if info["type"] == "checkbox" and value != "false":
+                        s["minidlna_flags"] += "%s " % info["opt"]
+
+                    elif value and value != "false":
+                        s["minidlna_flags"] += "%s %s " % (info["opt"], value)
+
+                break
+
+            if svar in v: 
+                sptr = s
+                break
+        
+        if sptr is not None:
+            if value and value != "-":
+                sptr[svar] = value
+
+    f.close()
+
+    rcconf = os.path.join(minidlna_etc_path, "rc.conf")
+    f = open(rcconf, "w")
+    for field in minidlna_daemon_settings:
+        if field:
+            f.write('%s="%s"\n' % (field, minidlna_daemon_settings[field].strip()))
+    f.close()
+
+    f = open(minidlna_config, "w")
+    f.write("#\n# minidlna.conf (%s)\n#\n\n" % ctime())
+
+    for v in minidlna_config_vars:
+        if minidlna_config_settings.has_key(v):
+            f.write("%s = %s\n" % (v, minidlna_config_settings[v]))
+ 
+    f.close()
+
+    minidlna_media_dir = None
+    if minidlna_daemon_settings.has_key("media_dir") and minidlna_daemon_settings["media_dir"]:
+        minidlna_media_dir = minidlna_daemon_settings["media_dir"]
+    elif minidlna_config_settings.has_key("media_dir") and minidlna_config_settings["media_dir"]:
+        minidlna_media_dir = minidlna_config_settings["media_dir"]
+    if minidlna_media_dir:
+        os.system("/usr/sbin/chown -R dlna:dlna '%s'" % minidlna_media_dir)
+        os.system("/bin/chmod 775 '%s'" % minidlna_media_dir)
+
+    minidlna_db_dir = None
+    if minidlna_daemon_settings.has_key("db_dir") and minidlna_daemon_settings["db_dir"]:
+        minidlna_db_dir = minidlna_daemon_settings["db_dir"]
+    elif minidlna_config_settings.has_key("db_dir") and minidlna_config_settings["db_dir"]:
+        minidlna_db_dir = minidlna_config_settings["db_dir"]
+    if minidlna_db_dir:
+        os.system("/usr/sbin/chown -R dlna:dlna '%s'" % minidlna_db_dir)
+        os.system("/bin/chmod 775 '%s'" % minidlna_db_dir)
+
+    ret = "Bad Stuff."
+    if os.system(os.path.join(minidlna_pbi_path, "tweak-rcconf")) == 0:
+        ret = "Good Stuff."
+
+    return ret
+
+
+def minidlna_default(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return "minidlna_default()"
+
+def minidlna_api_call(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    if not args:
+        return "Fail"
+
+    api_method = args.get("api_method", None)
+    if not api_method:
+        return "More Fail"
+
+    del(args["api_method"])
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+
+    if args:
+        url_args = urllib.urlencode(args) 
+        url = "%s?%s" % (url, url_args)
+
+    from syslog import syslog, LOG_DEBUG
+    syslog(LOG_DEBUG, "transmission_api_call: URL = %s" % url)
+
+    req = urllib2.Request(url)
+
+    http_cookie = environ.get("HTTP_COOKIE", None)
+    if http_cookie:
+        req.add_header("Cookie", http_cookie)
+        
+    response = urllib2.urlopen(req)
+    data = response.read()
+    return json.dumps(data)
+
+
+def minidlna_fcgi_app(environ, start_response):
+    minidlna_fcgi_handlers = {
+        'mp_saved': minidlna_mp_saved,
+        'mp_edit': minidlna_mp_edit,
+        'mp_post': minidlna_mp_post,
+        'api_call': minidlna_api_call,
+        'saved': minidlna_saved,
+        'start': minidlna_start,
+        'stop': minidlna_stop,
+        'edit': minidlna_edit,
+        'post': minidlna_post,
+        'treemenu': minidlna_treemenu
+    }
+
+    args = {}
+    form = cgi.FieldStorage(fp=environ['wsgi.input'],
+        environ=environ, keep_blank_values=1)
+    for field in form.list:
+        args[field.name] = field.value
+
+    script_name = environ['SCRIPT_NAME']
+    pobj = re.compile('^.+\/([^?\/]+)')
+    mobj = pobj.match(script_name)
+
+    action = mobj.group(1).lower()
+    if action not in minidlna_fcgi_handlers.keys():
+        action = 'default'
+
+    yield minidlna_fcgi_handlers[action](environ, start_response, args)
+
+
+def minidlna_fcgi_start(args):
+    if len(args) < 2:
+        return False
+
+    ip = args[0]
+    port = long(args[1])
+
+    pid = os.fork()
+    if pid < 0:
+        return False
+    if pid != 0:
+        sys.exit(0)
+
+    os.setsid()
+
+    res = False
+    with open(minidlna_fcgi_pidfile, "wb") as fp:
+        fp.write(str(os.getpid()))
+        fp.close()
+
+        res = WSGIServer(minidlna_fcgi_app, bindAddress=(ip, port)).run()
+            
+    return res
+
+
+def minidlna_fcgi_stop(args):
+    res = False 
+    if os.access(minidlna_fcgi_pidfile, os.F_OK):
+        with open(minidlna_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+
+            os.kill(pid, signal.SIGHUP)
+            res = True
+
+    if os.access(minidlna_fcgi_pidfile, os.F_OK):
+        os.unlink(minidlna_fcgi_pidfile)
+
+    return res
+
+
+def minidlna_fcgi_status(args):
+    res = False 
+    if os.access(minidlna_fcgi_pidfile, os.F_OK):
+        with open(minidlna_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+            res = True
+
+    return res
+
+
+def minidlna_fcgi_configure(args):
+    return True
+
+
+def main(argc, argv):
+    if argc < 2:
+        sys.exit(1) 
+
+    commands = {
+        'start': minidlna_fcgi_start,
+        'stop': minidlna_fcgi_stop,
+        'status': minidlna_fcgi_status,
+        'configure': minidlna_fcgi_configure
+    }
+
+    if not commands.has_key(argv[0]):
+        sys.exit(1)
+
+    if not commands[argv[0]](argv[1:]):
+        sys.exit(1)
+
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main(len(sys.argv), sys.argv[1:])

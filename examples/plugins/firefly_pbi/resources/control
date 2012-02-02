@@ -1,0 +1,478 @@
+#!/usr/local/bin/python
+
+import os
+import re
+import sys
+import stat
+import signal
+
+import cgi
+import json
+import urllib
+import urllib2
+import cookielib
+import Cookie
+
+from flup.server.fcgi import WSGIServer
+from syslog import syslog, LOG_DEBUG
+from subprocess import Popen, PIPE
+from time import ctime
+
+firefly_pbi_path = "/usr/pbi/firefly-amd64"
+firefly_etc_path = os.path.join(firefly_pbi_path, "etc")
+firefly_mnt_path = os.path.join(firefly_pbi_path, "mnt")
+firefly_fcgi_pidfile = "/var/run/firefly_fcgi_server.pid"
+firefly_fcgi_wwwdir = os.path.join(firefly_pbi_path, "www")
+firefly_control = "/usr/local/etc/rc.d/mt-daapd"
+firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
+firefly_opts = os.path.join(firefly_etc_path, "options")
+firefly_mp_file = os.path.join(firefly_etc_path, "mountpoints")
+
+
+def firefly_start(environ, start_response, args):
+    cmd = "%s start" % firefly_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def firefly_stop(environ, start_response, args):
+    cmd = "%s stop " % firefly_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def firefly_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(firefly_fcgi_wwwdir, "edit.html")
+    data = open(file).read()
+    return data
+
+def firefly_mp_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    saved = {}
+    if os.access(firefly_mp_file, os.F_OK):
+        f = open(firefly_mp_file, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+
+def firefly_mp_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(firefly_fcgi_wwwdir, "mp_edit.html")
+    data = open(file).read()
+    return data
+
+
+def firefly_mp_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    if not args:
+        return "Fail."
+
+    data = ""
+    f = open(firefly_mp_file, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false":
+            f.write("%s=%s\n" % (key, value))
+    f.close()
+
+    api_method = "fs_mount_filesystem"
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+    http_cookie = environ.get("HTTP_COOKIE", None)
+
+    fs_src = []
+    fs_dst = []
+    from syslog import syslog, LOG_DEBUG
+    for i in sorted(args.keys()):
+        if i.startswith("firefly_mp_src"):
+            fs_src.append(args[i]) 
+        elif i.startswith("firefly_mp_dst"):
+            fs_dst.append(args[i]) 
+
+    i = 0
+    while i < len(fs_src):
+        url_args = {}
+        url_args["source"] = fs_src[i]
+        url_args["destination"] = fs_dst[i]
+        fullurl = "%s?%s" % (url, urllib.urlencode(url_args))
+
+        syslog(LOG_DEBUG, "firefly_api_call: URL = %s" % fullurl)
+
+        req = urllib2.Request(fullurl)
+        if http_cookie:
+            req.add_header("Cookie", http_cookie)
+        
+        response = urllib2.urlopen(req)
+        data = response.read()
+        i += 1
+
+    return json.dumps("ok") 
+
+
+def firefly_treemenu(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    syslog(LOG_DEBUG, "firefly.control: firefly_treemenu()")
+
+    plugin = {
+        'name': 'firefly',
+        'append_to': 'system',
+        'children': [
+            {
+                'name': 'Edit Mount Points',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/firefly/1696_6/mp_edit',
+		'kwargs': {'plugin_name': 'firefly'},
+            },
+            {
+                'name': 'Edit',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/firefly/1696_6/edit',
+		'kwargs': {'plugin_name': 'firefly'},
+            },
+            {
+                'name': 'Start',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/firefly/1696_6/start',
+		'kwargs': {'plugin_name': 'firefly'},
+            },
+            {
+                'name': 'Stop',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/firefly/1696_6/stop',
+		'kwargs': {'plugin_name': 'firefly'},
+            },
+        ] 
+    }
+
+    return json.dumps([plugin])
+
+def firefly_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    saved = {}
+    if os.access(firefly_opts, os.F_OK):
+        f = open(firefly_opts, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+
+firefly_daemon_settings = { "firefly_flags": "" }
+firefly_daemon_vars = {
+    "enabled":         { "type": "checkbox", "opt": None },
+    "set_cwd":         { "type": "checkbox", "opt": "-a" },
+    "debuglevel":      { "type": "select", "opt": "-d" },
+    "debug_modules":   { "type": "textbox", "opt": "-D" },
+    "disable_mdns":    { "type": "checkbox", "opt": "-m" },
+    "non_root_usser":  { "type": "checkbox", "opt": "-y" },
+    "ffid":            { "type": "textbox", "opt": "-b" }
+}
+
+firefly_general_settings = { "runas": "daapd" }
+firefly_general_vars = [
+    "web_root",
+    "port",
+    "admin_pw",
+    "db_type",
+    "db_parms",
+    "mp3_dir",
+    "servername",
+    "runas",
+    "password",
+    "extensions",
+    "ssc_codectypes",
+    "ssc_prog",
+    "logfile",
+    "debuglevel",
+    "rescan_interval",
+    "always_scan",
+    "scan_type",
+    "compress"
+]
+
+firefly_plugins_settings = {}
+firefly_plugins_vars = [
+    "plugin_dir"
+]
+
+firefly_scanning_settings = {}
+firefly_scanning_vars = [
+    "process_playlists",
+    "process_itunes",
+    "process_m3u"
+]
+
+vars_and_settings = [
+    ("firefly_daemon",   firefly_daemon_vars,   firefly_daemon_settings),
+    ("firefly_general",  firefly_general_vars,  firefly_general_settings),
+    ("firefly_plugins",  firefly_plugins_vars,  firefly_plugins_settings),
+    ("firefly_scanning", firefly_scanning_vars, firefly_scanning_settings)
+]
+
+def firefly_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
+        keep_blank_values=1)
+
+    if not form.list:
+        return "Fail."
+
+    f = open(firefly_opts, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false" and value != "-":
+            f.write("%s=%s\n" % (key, value))
+
+        sptr = svar = None
+        for (p, v, s) in vars_and_settings:
+            svar = key.replace(p + "_", "")
+            if svar == key: 
+                continue
+
+            if p == "firefly_daemon":
+                if svar == "enable":
+                    s["firefly_enable"] = "YES"
+
+                else:
+                    info = v[svar]
+                    if info["type"] == "checkbox" and value != "false":
+                        s["firefly_flags"] += "%s " % info["opt"]
+
+                    elif value and value != "false":
+                        s["firefly_flags"] += "%s %s " % (info["opt"], value)
+
+                break
+
+            if svar in v: 
+                sptr = s
+                break
+        
+        if sptr is not None:
+            if value and value != "-":
+                val = value 
+                if val in ("on", "true"):
+                    val = "1"
+                elif val in ("off", "false"):
+                    val = "0"
+                
+                sptr[svar] = val
+
+    f.close()
+
+    rcconf = os.path.join(firefly_etc_path, "rc.conf")
+    f = open(rcconf, "w")
+    for field in firefly_daemon_settings:
+        if field:
+            f.write('%s="%s"\n' % (field, firefly_daemon_settings[field].strip()))
+    f.close()
+
+    f = open(firefly_config, "w")
+    f.write("#\n# mt-daapd.conf (%s)\n#\n\n" % ctime())
+
+    for (p, vars, settings) in vars_and_settings:
+        if p == "firefly_daemon":
+            continue 
+
+        section = p.replace("firefly_", "") 
+        f.write("[%s]\n" % section)
+
+        for v in vars:
+            if settings.has_key(v):
+                f.write("%s = %s\n" % (v, settings[v]))
+
+        f.write("\n")
+
+    f.close() 
+
+    if firefly_general_settings.has_key("mp3_dir") and firefly_general_settings["mp3_dir"]:
+        os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_general_settings["mp3_dir"])
+        os.system("/bin/chmod 775 '%s'" % firefly_general_settings["mp3_dir"])
+    if firefly_plugins_settings.has_key("plugin_dir") and firefly_plugins_settings["plugin_dir"]:
+        os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_plugins_settings["plugin_dir"])
+        os.system("/bin/chmod 775 '%s'" % firefly_plugins_settings["plugin_dir"])
+
+    ret = "Bad Stuff."
+    if os.system(os.path.join(firefly_pbi_path, "tweak-rcconf")) == 0:
+        ret = "Good Stuff."
+
+    return ret
+
+
+def firefly_default(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return "firefly_default()"
+
+
+def firefly_api_call(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    if not args:
+        return "Fail"
+
+    api_method = args.get("api_method", None)
+    if not api_method:
+        return "More Fail"
+
+    del(args["api_method"])
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+
+    if args:
+        url_args = urllib.urlencode(args) 
+        url = "%s?%s" % (url, url_args)
+
+    from syslog import syslog, LOG_DEBUG
+    syslog(LOG_DEBUG, "firefly_api_call: URL = %s" % url)
+
+    req = urllib2.Request(url)
+
+    http_cookie = environ.get("HTTP_COOKIE", None)
+    if http_cookie:
+        req.add_header("Cookie", http_cookie)
+        
+    response = urllib2.urlopen(req)
+    data = response.read()
+    return json.dumps(data)
+
+
+def firefly_fcgi_app(environ, start_response):
+    firefly_fcgi_handlers = {
+        'mp_saved': firefly_mp_saved,
+        'mp_edit': firefly_mp_edit,
+        'mp_post': firefly_mp_post,
+        'api_call': firefly_api_call,
+        'saved': firefly_saved,
+        'start': firefly_start,
+        'stop': firefly_stop,
+        'edit': firefly_edit,
+        'post': firefly_post,
+        'treemenu': firefly_treemenu
+    }
+
+    args = {}
+    form = cgi.FieldStorage(fp=environ['wsgi.input'],
+        environ=environ, keep_blank_values=1)
+    for field in form.list:
+        args[field.name] = field.value
+
+    script_name = environ['SCRIPT_NAME']
+    pobj = re.compile('^.+\/([^?\/]+)')
+    mobj = pobj.match(script_name)
+
+    action = mobj.group(1).lower()
+    if action not in firefly_fcgi_handlers.keys():
+        action = 'default'
+
+    yield firefly_fcgi_handlers[action](environ, start_response, args)
+
+
+def firefly_fcgi_start(args):
+    if len(args) < 2:
+        return False
+
+    ip = args[0]
+    port = long(args[1])
+
+    pid = os.fork()
+    if pid < 0:
+        return False
+    if pid != 0:
+        sys.exit(0)
+
+    os.setsid()
+
+    res = False
+    with open(firefly_fcgi_pidfile, "wb") as fp:
+        fp.write(str(os.getpid()))
+        fp.close()
+
+        res = WSGIServer(firefly_fcgi_app, bindAddress=(ip, port)).run()
+            
+    return res
+
+
+def firefly_fcgi_stop(args):
+    res = False 
+    if os.access(firefly_fcgi_pidfile, os.F_OK):
+        with open(firefly_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+
+            os.kill(pid, signal.SIGHUP)
+            res = True
+
+    if os.access(firefly_fcgi_pidfile, os.F_OK):
+        os.unlink(firefly_fcgi_pidfile)
+
+    return res
+
+
+def firefly_fcgi_status(args):
+    res = False 
+    if os.access(firefly_fcgi_pidfile, os.F_OK):
+        with open(firefly_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+            res = True
+
+    return res
+
+
+def firefly_fcgi_configure(args):
+    return True
+
+
+def main(argc, argv):
+    if argc < 2:
+        sys.exit(1) 
+
+    commands = {
+        'start': firefly_fcgi_start,
+        'stop': firefly_fcgi_stop,
+        'status': firefly_fcgi_status,
+        'configure': firefly_fcgi_configure
+    }
+
+    if not commands.has_key(argv[0]):
+        sys.exit(1)
+
+    if not commands[argv[0]](argv[1:]):
+        sys.exit(1)
+
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main(len(sys.argv), sys.argv[1:])

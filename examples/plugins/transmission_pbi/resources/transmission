@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# $FreeBSD: ports/net-p2p/transmission-cli/files/transmission.in,v 1.4 2011/03/05 04:17:28 mezz Exp $
+#
+# PROVIDE: transmission
+# REQUIRE: DAEMON 
+#
+# Add the following lines to /etc/rc.conf to enable this service:
+#
+# transmission_enable:	     Set to NO by default. Set it to YES to enable it.
+# transmission_watch_dir:    Directory for torrent files to download
+#			     automatically. Off by default unless you add
+#			     a path.
+# transmission_conf_dir:     Directory where transmission configuration
+#			     data is stored.
+#			     Default: /usr/pbi/transmission-amd64/etc/transmission/home
+# transmission_download_dir: Directory to store downloaded data.
+#			     Default: /usr/pbi/transmission-amd64/etc/transmission/home/Downloads
+# transmission_user:	     The user account transmission daemon runs as what
+#			     you want it to be. It uses 'transmission' user by
+#			     default. Do not sets it as empty or it will run
+#			     as root.
+#
+
+. /etc/rc.subr
+
+name="transmission"
+rcvar=${name}_enable
+
+pidfile=/usr/pbi/transmission-amd64/etc/transmission/transmission.pid
+command=/usr/local/bin/transmission-daemon
+
+load_rc_config ${name}
+
+: ${transmission_enable:="NO"}
+: ${transmission_user:="transmission"}
+: ${transmission_conf_dir="/usr/pbi/transmission-amd64/etc/transmission/home"}
+: ${transmission_download_dir="/usr/pbi/transmission-amd64/etc/transmission/home/Downloads"}
+
+transmission_flags=" \
+	${transmission_watch_dir:+-c ${transmission_watch_dir}} \
+	${transmission_conf_dir:+-g ${transmission_conf_dir}} \
+	${transmission_download_dir:+-w ${transmission_download_dir}} \
+	-x ${pidfile} \
+	${transmission_flags}"
+
+transmission_stop()
+{
+	res=1
+	echo -n 'Stopping transmission.'
+	if [ -f "${pidfile}" ]
+	then
+		kill -QUIT $(cat "${pidfile}")
+		rm -f ${pidfile}
+		res=$?
+	else
+		killall -QUIT transmission-daemon
+		res=$?
+	fi
+
+	echo
+	return ${res}
+}
+
+stop_cmd='transmission_stop'
+run_rc_command "$1"

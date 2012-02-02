@@ -1,0 +1,424 @@
+#!/usr/local/bin/python
+
+import os
+import re
+import sys
+import stat
+import signal
+
+import cgi
+import json
+import urllib
+import urllib2
+import cookielib
+import Cookie
+
+from flup.server.fcgi import WSGIServer
+from subprocess import Popen, PIPE
+
+transmission_pbi_path = "/usr/pbi/transmission-amd64"
+transmission_etc_path = os.path.join(transmission_pbi_path, "etc")
+transmission_mnt_path = os.path.join(transmission_pbi_path, "mnt")
+transmission_fcgi_pidfile = "/var/run/transmission_fcgi_server.pid"
+transmission_fcgi_wwwdir = os.path.join(transmission_pbi_path, "www")
+transmission_control = "/usr/local/etc/rc.d/transmission"
+transmission_opts = os.path.join(transmission_etc_path, "options")
+transmission_mp_file = os.path.join(transmission_etc_path, "mountpoints")
+
+
+def transmission_start(environ, start_response, args):
+    cmd = "%s start" % transmission_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def transmission_stop(environ, start_response, args):
+    cmd = "%s stop " % transmission_control
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return out
+
+
+def transmission_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(transmission_fcgi_wwwdir, "edit.html")
+    data = open(file).read()
+    return data
+
+def transmission_mp_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    saved = {}
+    if os.access(transmission_mp_file, os.F_OK):
+        f = open(transmission_mp_file, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+
+def transmission_mp_edit(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    file = os.path.join(transmission_fcgi_wwwdir, "mp_edit.html")
+    data = open(file).read()
+    return data
+
+
+def transmission_mp_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    if not args:
+        return "Fail."
+
+    data = ""
+    f = open(transmission_mp_file, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false":
+            f.write("%s=%s\n" % (key, value))
+    f.close()
+
+    api_method = "fs_mount_filesystem"
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+    http_cookie = environ.get("HTTP_COOKIE", None)
+
+    fs_src = []
+    fs_dst = []
+    from syslog import syslog, LOG_DEBUG
+    for i in sorted(args.keys()):
+        if i.startswith("transmission_mp_src"):
+            fs_src.append(args[i]) 
+        elif i.startswith("transmission_mp_dst"):
+            fs_dst.append(args[i]) 
+
+    i = 0
+    while i < len(fs_src):
+        url_args = {}
+        url_args["source"] = fs_src[i]
+        url_args["destination"] = fs_dst[i]
+        fullurl = "%s?%s" % (url, urllib.urlencode(url_args))
+
+        syslog(LOG_DEBUG, "transmission_api_call: URL = %s" % fullurl)
+
+        req = urllib2.Request(fullurl)
+        if http_cookie:
+            req.add_header("Cookie", http_cookie)
+        
+        response = urllib2.urlopen(req)
+        data = response.read()
+        i += 1
+
+    return json.dumps("ok") 
+
+
+def transmission_treemenu(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    plugin = {
+        'name': 'transmission',
+        'append_to': 'system',
+        'children': [
+            {
+                'name': 'Edit Mount Points',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/transmission/2.42/mp_edit',
+		'kwargs': {'plugin_name': 'transmission'},
+            },
+            {
+                'name': 'Edit',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/transmission/2.42/edit',
+		'kwargs': {'plugin_name': 'transmission'},
+            },
+            {
+                'name': 'Start',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/transmission/2.42/start',
+		'kwargs': {'plugin_name': 'transmission'},
+            },
+            {
+                'name': 'Stop',
+                'icon': 'SettingsIcon',
+                'type': 'pluginsfcgi',
+                'url': '/plugins/transmission/2.42/stop',
+		'kwargs': {'plugin_name': 'transmission'},
+            },
+        ] 
+    }
+
+    return json.dumps([plugin])
+
+
+transmission_main_vars = {
+    "transmission_enable": None,
+    "transmission_watch_dir": None,
+    "transmission_conf_dir": None,
+    "transmission_download_dir": None
+}
+
+transmission_advanced_vars = {
+    "transmission_allowed":               { "type": "textbox", "opt": "-a" },
+    "transmission_blocklist":             { "type": "checkbox", "on": "-b", "off": "-B" },
+    "transmission_logfile":               { "type": "textbox", "opt": "-e" },
+    "transmission_port":                  { "type": "textbox", "opt": "-p" },
+    "transmission_auth":                  { "type": "checkbox", "on": "-t", "off": "-T" },
+    "transmission_username":              { "type": "textbox", "opt": "-u" },
+    "transmission_password":              { "type": "textbox", "opt": "-v" },
+    "transmission_dht":                   { "type": "checkbox", "on": "-o", "off": "-O" },
+    "transmission_lpd":                   { "type": "checkbox", "on": "-y", "off": "-Y" },
+    "transmission_utp":                   { "type": "checkbox", "on": "--utp", "off": "--no-utp" },
+    "transmission_peerport":              { "type": "textbox", "opt": "-P" },
+    "transmission_portmap":               { "type": "checkbox", "on": "-m", "off": "-M" },
+    "transmission_peerlimit_global":      { "type": "textbox", "opt": "-L" },
+    "transmission_peerlimit_torrent":     { "type": "textbox", "opt": "-l" },
+    "transmission_encryption_required":   { "type": "checkbox", "on": "-er", "off": None },
+    "transmission_encryption_preferred":  { "type": "checkbox", "on": "-ep", "off": None },
+    "transmission_encryption_tolerated":  { "type": "checkbox", "on": "-et", "off": None },
+    "transmission_global_seedration":     { "type": "textbox", "opt": "-gsr" }
+}
+
+def transmission_saved(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'application/json')])
+
+    saved = {}
+    if os.access(transmission_opts, os.F_OK):
+        f = open(transmission_opts, "r") 
+        for line in f:
+            line = line.strip()
+            parts = line.split("=")
+            if len(parts) > 1:
+                saved[parts[0]] = parts[1]
+        f.close()
+
+    return json.dumps(saved)
+
+def transmission_post(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+
+    if not args:
+        return "Fail."
+
+    data = ""
+    main_settings = {}
+    advanced_settings = {}
+
+    f = open(transmission_opts, "w")
+    for key in args:
+        value = args[key]
+        if value and value != "false":
+            f.write("%s=%s\n" % (key, value))
+        if transmission_main_vars.has_key(key):
+            if key == "transmission_enable":
+                main_settings[key] = "YES"
+
+            elif value != "-":
+                main_settings[key] = value
+
+        elif transmission_advanced_vars.has_key(key):
+            info = transmission_advanced_vars[key]
+            if info["type"] == "checkbox" and value != "false":
+                advanced_settings[key] = info["on"]
+
+            elif info["type"] == "textbox" and value:
+                advanced_settings[key] = "%s %s" % (info["opt"], value)
+    f.close()
+
+    rcconf = os.path.join(transmission_etc_path, "rc.conf")
+    f = open(rcconf, "w")
+    for field in main_settings:
+        if main_settings[field]:
+            f.write('%s="%s"\n' % (field, main_settings[field]))
+
+    transmission_flags = ""
+    if advanced_settings:
+        for field in advanced_settings:
+            if field:
+                transmission_flags += "%s " % advanced_settings[field]
+
+    if transmission_flags: 
+        f.write('transmission_flags="%s"\n' % transmission_flags)
+    f.close()
+
+    if main_settings.has_key("transmission_watch_dir") and main_settings["transmission_watch_dir"]:
+        os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_watch_dir"])
+        os.system("/bin/chmod 775 '%s'" % main_settings["transmission_watch_dir"])
+    if main_settings.has_key("transmission_conf_dir") and main_settings["transmission_conf_dir"]:
+        os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_conf_dir"])
+        os.system("/bin/chmod 775 '%s'" % main_settings["transmission_conf_dir"])
+    if main_settings.has_key("transmission_download_dir") and main_settings["transmission_download_dir"]:
+        os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_download_dir"])
+        os.system("/bin/chmod 775 '%s'" % main_settings["transmission_download_dir"])
+
+    ret = "Bad Stuff."
+    if os.system(os.path.join(transmission_pbi_path, "tweak-rcconf")) == 0:
+        ret = "Good Stuff."
+
+    return ret
+
+
+def transmission_default(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return "transmission_default()"
+
+
+def transmission_api_call(environ, start_response, args):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    if not args:
+        return "Fail"
+
+    api_method = args.get("api_method", None)
+    if not api_method:
+        return "More Fail"
+
+    del(args["api_method"])
+    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
+    url = "%s/plugins/plugin/api/%s" % (host, api_method)
+
+    if args:
+        url_args = urllib.urlencode(args) 
+        url = "%s?%s" % (url, url_args)
+
+    from syslog import syslog, LOG_DEBUG
+    syslog(LOG_DEBUG, "transmission_api_call: URL = %s" % url)
+
+    req = urllib2.Request(url)
+
+    http_cookie = environ.get("HTTP_COOKIE", None)
+    if http_cookie:
+        req.add_header("Cookie", http_cookie)
+        
+    response = urllib2.urlopen(req)
+    data = response.read()
+    return json.dumps(data)
+
+
+def transmission_fcgi_app(environ, start_response):
+    from syslog import syslog, LOG_DEBUG
+    transmission_fcgi_handlers = {
+        'mp_saved': transmission_mp_saved,
+        'mp_edit': transmission_mp_edit,
+        'mp_post': transmission_mp_post,
+        'api_call': transmission_api_call,
+        'saved': transmission_saved,
+        'start': transmission_start,
+        'stop': transmission_stop,
+        'edit': transmission_edit,
+        'post': transmission_post,
+        'treemenu': transmission_treemenu
+    }
+
+    args = {}
+    form = cgi.FieldStorage(fp=environ['wsgi.input'],
+        environ=environ, keep_blank_values=1)
+    for field in form.list:
+        args[field.name] = field.value
+
+    script_name = environ['SCRIPT_NAME']
+    pobj = re.compile('^.+\/([^?\/]+)')
+    mobj = pobj.match(script_name)
+
+    action = mobj.group(1).lower()
+    if action not in transmission_fcgi_handlers.keys():
+        action = 'default'
+
+    yield transmission_fcgi_handlers[action](environ, start_response, args)
+
+
+def transmission_fcgi_start(args):
+    if len(args) < 2:
+        return False
+
+    ip = args[0]
+    port = long(args[1])
+
+    pid = os.fork()
+    if pid < 0:
+        return False
+    if pid != 0:
+        sys.exit(0)
+
+    os.setsid()
+
+    res = False
+    with open(transmission_fcgi_pidfile, "wb") as fp:
+        fp.write(str(os.getpid()))
+        fp.close()
+
+        res = WSGIServer(transmission_fcgi_app, bindAddress=(ip, port)).run()
+            
+    return res
+
+
+def transmission_fcgi_stop(args):
+    res = False 
+    if os.access(transmission_fcgi_pidfile, os.F_OK):
+        with open(transmission_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+
+            os.kill(pid, signal.SIGHUP)
+            res = True
+
+    if os.access(transmission_fcgi_pidfile, os.F_OK):
+        os.unlink(transmission_fcgi_pidfile)
+
+    return res
+
+
+def transmission_fcgi_status(args):
+    res = False 
+    if os.access(transmission_fcgi_pidfile, os.F_OK):
+        with open(transmission_fcgi_pidfile, "r") as fp:
+            pid = long(fp.read())
+            fp.close()
+            res = True
+
+    return res
+
+
+def transmission_fcgi_configure(args):
+    return True
+
+
+def main(argc, argv):
+    if argc < 2:
+        sys.exit(1) 
+
+    commands = {
+        'start': transmission_fcgi_start,
+        'stop': transmission_fcgi_stop,
+        'status': transmission_fcgi_status,
+        'configure': transmission_fcgi_configure
+    }
+
+    if not commands.has_key(argv[0]):
+        sys.exit(1)
+
+    if not commands[argv[0]](argv[1:]):
+        sys.exit(1)
+
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main(len(sys.argv), sys.argv[1:])
