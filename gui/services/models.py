@@ -487,7 +487,7 @@ class iSCSITargetPortal(Model):
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
-        for idx, portal in zip(portals, xrange(1, len(portals) + 1)):
+        for portal, idx in zip(portals, xrange(1, len(portals) + 1)):
             portal.iscsi_target_portal_tag = idx
             portal.save()
         started = notifier().reload("iscsitarget")
