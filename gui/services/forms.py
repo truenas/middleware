@@ -807,49 +807,6 @@ class iSCSITargetPortalForm(ModelForm):
         if tag > higher:
             raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
         return tag
-    @staticmethod
-    def _validate_listen(value):
-        """
-        iSCSI portals should be specified in the format::
-            ADDR:port
-
-        for IPv4, or::
-            [ADDR]:port
-
-        for IPv6. ':port' is a hard requirement.
-        >>> _validate_listen('0.0.0.0:3260')
-        >>> '0.0.0.0:3260'
-        >>> _validate_listen('[::]:3260')
-        >>> '[::]:3260'
-        """
-        reg = re.search(r'(?P<ip>\S+):(?P<port>\d+)', value)
-        if not reg:
-            raise forms.ValidationError(_("Invalid portal format: %s") % value)
-        ip, port = reg.groups()
-        is_ipv6 = ip.startswith('[') and ip.endswith(']')
-        if is_ipv6:
-            try:
-                IPv6Address(ip[1:-1])
-            except AddressValueError:
-                raise forms.ValidationError(_("Invalid IPv6 Address: %s") % ip[1:-1])
-        else:
-            try:
-                IPv4Address(ip)
-            except AddressValueError:
-                raise forms.ValidationError(_("Invalid IPv4 Address: %s") % ip)
-        try:
-            port = int(port)
-            if port < 0 or port > 65535:
-                raise ValueError
-        except ValueError:
-            raise forms.ValidationError(_("Invalid port: %s") % port)
-        return value
-    def clean_iscsi_target_portal_listen(self):
-        val = self.cleaned_data.get("iscsi_target_portal_listen")
-        addresses = []
-        for entry in val.split('\n'):
-            addresses.append(self.__class__._validate_listen(entry.strip()))
-        return '\n'.join(addresses)
     def save(self):
         super(iSCSITargetPortalForm, self).save()
         started = notifier().reload("iscsitarget")
