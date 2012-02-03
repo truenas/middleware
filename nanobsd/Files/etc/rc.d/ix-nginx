@@ -96,6 +96,9 @@ generate_nginx_conf()
 				if (/^(( |\t)+)?#/ && ssl_enable) {
 					fill = makeline(" ", index($0, "ssl_certificate") - 2);
 					printf("%sssl_certificate %s;\n", fill, ssl_cert);
+				} else if (ssl_enable) {
+					fill = makeline(" ", index($0, "ssl_certificate") - 1);
+					printf("%sssl_certificate %s;\n", fill, ssl_cert);
 				} else {
 					fill = makeline(" ", index($0, "ssl_certificate") - 1);
 					printf("%s#ssl_certificate %s;\n", fill, ssl_cert);
@@ -103,6 +106,9 @@ generate_nginx_conf()
 			} else if (/^(( |\t|#)*)?ssl_certificate_key( |\t)+/) {
 				if (/^(( |\t)+)?#/ && ssl_enable) {
 					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
+					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
+				} else if (ssl_enable) {
+					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
 					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
 				} else {
 					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
@@ -298,7 +304,6 @@ do_configure_nginx()
 		generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
 		if ! test_nginx_config "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
 		then
-
 			if [ "${ssl_enable}" = "1" ]
 			then
 				ssl_enable=0
