@@ -5,7 +5,7 @@ from freeadmin.tree import TreeNode
 from . import models
 
 NAME = _('Services')
-BLACKLIST = ['services']
+BLACKLIST = ['services', 'iSCSITargetPortalIP']
 ICON = u'ServicesIcon'
 
 class EnDisServices(TreeNode):
