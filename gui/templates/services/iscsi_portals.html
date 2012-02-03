@@ -1,17 +1,24 @@
-
 <table class="grid">
-  <thead class="header">
-  		<tr>
-                    <td>{% trans "Group ID" %}</td>
-                    <td>{% trans "Listen" %}</td>
-                    <td>{% trans "Comment" %}</td>
-              <td></td>
-  		</tr>
-  	        </thead>
+    <thead class="header">
+        <tr>
+            <td>{% trans "Group ID" %}</td>
+            <td>{% trans "Listen" %}</td>
+            <td>{% trans "Comment" %}</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
           {% for p in iscsiportal_list %}
           <tr class="{% cycle 'odd' 'even' %}" id="{{ p.id }}">
               <td>{{ p.iscsi_target_portal_tag }}</td>
-              <td>{{ p.iscsi_target_portal_listen }}</td>
+              <td>
+                {% for portalip in p.iscsitargetportalip_set.all %}
+                {{ portalip.iscsi_target_portalip_ip}}:{{ portalip.iscsi_target_portalip_port }}
+                {% empty %}
+                {% trans "No IP defined for this Portal" %}
+                {% endfor %}
+                {{ p.iscsi_target_portal_listen }}
+              </td>
               <td>{{ p.iscsi_target_portal_comment }}</td>
               <td>
                   <button data-dojo-type="dijit.form.Button" type="button">
@@ -33,7 +40,8 @@
               <td colspan="4">{% trans "No targets defined" %}</td>
           </tr>
           {% endfor %}
-          </table>
+    </tbody>
+</table>
            <p class="btn">
            <button id="portal_button" data-dojo-type="dijit.form.Button" type="button">
                {% trans "Add Portal" %}
