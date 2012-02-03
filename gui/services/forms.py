@@ -913,7 +913,7 @@ class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
     class Meta:
         model = models.iSCSITarget
-        exclude = ('iscsi_target_initialdigest',)
+        exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
         if not kwargs.has_key("instance"):
