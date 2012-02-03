@@ -75,7 +75,7 @@ class ISCSIDevice(TreeNode):
         devadd.icon = u'AddExtentIcon'
 
         devview = TreeNode('View')
-        devview.name = _(u'View All Device Extents')
+        devview.name = _(u'View Device Extents')
         devview.type = u'iscsi'
         devview.icon = u'ViewAllExtentsIcon'
         devview.append_app = False
@@ -114,7 +114,7 @@ class ISCSIExt(TreeNode):
         extadd.icon = u'AddExtentIcon'
 
         extview = TreeNode('View')
-        extview.name = _(u'View All Extents')
+        extview.name = _(u'View Extents')
         extview.type = u'iscsi'
         extview.view = u'freeadmin_model_datagrid'
         extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}

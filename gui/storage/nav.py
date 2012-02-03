@@ -21,7 +21,7 @@ class ViewPeriodic(TreeNode):
 class ViewSnap(TreeNode):
 
         gname = 'View'
-        name = _(u'View All Snapshots')
+        name = _(u'View Snapshots')
         type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
@@ -86,7 +86,7 @@ class AutoImportVolume(TreeNode):
 class ViewVolumes(TreeNode):
 
         gname = 'View'
-        name = _(u'View All Volumes')
+        name = _(u'View Volumes')
         view = u'storage_home'
         type = 'openstorage'
         icon = u'ViewAllVolumesIcon'

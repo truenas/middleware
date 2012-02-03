@@ -47,7 +47,7 @@ class Linkss(TreeNode):
 
         laggview = TreeNode('View')
         laggview.gname = 'View'
-        laggview.name = _(u'View All Link Aggregations')
+        laggview.name = _(u'View Link Aggregations')
         laggview.type = 'opennetwork'
         laggview.icon = u'ViewAllLAGGsIcon'
         laggview.model = 'LAGGInterface'

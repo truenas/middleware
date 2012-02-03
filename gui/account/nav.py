@@ -27,13 +27,11 @@ class MyAccount(TreeNode):
 class ViewUsers(TreeNode):
 
     gname = 'account.bsdUsers.View'
-    name = _('View All Users')
     type = 'openaccount'
     append_app = False
 
 class ViewGroups(TreeNode):
 
     gname = 'account.bsdGroups.View'
-    name = _('View All Groups')
     type = 'openaccount'
     append_app = False

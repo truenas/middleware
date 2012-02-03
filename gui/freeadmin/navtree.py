@@ -138,7 +138,7 @@ class NavTree(object):
                     new[opt.name] = opt
 
             sort = new.keys()
-            sort = sorted(sort, cmp=lambda x,y: cmp(x.lower(), y.lower()))
+            sort = sorted(sort, cmp=lambda x,y: cmp(x.lower(), y.lower()) if x and y else 0)
 
             for opt in sort:
                 opts.append(new[opt])
@@ -199,7 +199,7 @@ class NavTree(object):
         if a related ModelForm is found several entries are Added to the Menu
             - Objects
             - Add (Model)
-            - View All (Model)
+            - View (Model)
     """
     def generate(self, request=None):
 
@@ -331,7 +331,7 @@ class NavTree(object):
 
                         # Node to view all instances of model
                         subopt = TreeNode('View')
-                        subopt.name = _(u'View All %s') % model._meta.verbose_name_plural
+                        subopt.name = _(u'View %s') % model._meta.verbose_name_plural
                         subopt.view = u'freeadmin_model_datagrid'
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
