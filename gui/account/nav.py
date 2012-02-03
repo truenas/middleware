@@ -1,17 +1,17 @@
 from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
-import models
+from . import models
 
 NAME = _('Account')
 ICON = u'AccountIcon'
 
-class MyAccount(TreeNode):
+class AdminAccount(TreeNode):
 
-    gname = 'MyAccount'
-    name = _('My Account')
-    icon = u'MyAccountIcon'
+    gname = 'AdminAccount'
+    name = _('Admin Account')
+    icon = u'AdminAccountIcon'
     def __init__(self, *args, **kwargs):
-        super(MyAccount, self).__init__(*args, **kwargs)
+        super(AdminAccount, self).__init__(*args, **kwargs)
 
         chpw = TreeNode('ChangePass')
         chpw.name = _('Change Password')
