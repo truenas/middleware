@@ -66,19 +66,22 @@ generate_istgt_config()
 
 	# Generate [PortalGroupNN] sections
 	echo "# PortalGroup section"
-	local f="iscsi_target_portal_tag"
+	local f="id iscsi_target_portal_tag"
 	eval local ${f}
 	local sf=$(var_to_sf $f)
-	local f2="iscsi_target_portal_listen"
+	local f2="iscsi_target_portalip_ip iscsi_target_portalip_port"
 	eval local ${sf2}
 	local sf2=$(var_to_sf $f2)
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${sf} FROM services_iscsitargetportal ORDER BY id" | \
-        while eval read ${f}; do
+        while eval read -r ${f}; do
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM services_iscsitargetportal WHERE iscsi_target_portal_tag=${iscsi_target_portal_tag}" | \
-		while eval read $f2; do
-			if [ ! -z "${iscsi_target_portal_listen}" ]; then
-				echo "  Portal DA1 ${iscsi_target_portal_listen}"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM services_iscsitargetportalip WHERE iscsi_target_portalip_portal_id=${id}" | \
+		while eval read -r $f2; do
+			# IPv6 or not
+			if [ ! -z "$(echo ${iscsi_target_portalip_ip}|grep ':')" ]; then
+				echo "  Portal DA1 [${iscsi_target_portalip_ip}]:${iscsi_target_portalip_port}"
+			else
+				echo "  Portal DA1 ${iscsi_target_portalip_ip}:${iscsi_target_portalip_port}"
 			fi
 		done
 	done
