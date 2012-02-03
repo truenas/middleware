@@ -17,7 +17,7 @@ get_product_path()
 
 get_image_name()
 {
-    find "$(get_product_path)" -name "$SW_NAME-$SW_ARCH-embedded.xz" -type f
+    find "$(get_product_path)" -name "$SW_NAME-$SW_ARCH.img.xz" -type f
 }
 
 build_config()

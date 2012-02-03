@@ -668,7 +668,7 @@ last_orders() {
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 
-	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install"
+	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install.img"
 	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 
 	if $do_image && $do_copyout_partition; then
