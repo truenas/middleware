@@ -1,0 +1,79 @@
+--- /dev/null
++++ www/py-django-json-rpc/Makefile	2012-02-03 08:30:53.157010914 -0600
+@@ -0,0 +1,26 @@
++# New ports collection makefile for:	py-django-json-rpc
++# Date created:	Feb 3, 2012
++# Whom:	John Hixson <john@ixsystems.com>
++#
++# $FreeBSD$
++#
++
++PORTNAME=	django-json-rpc
++PORTVERSION=	0.6.2
++PORTREVISION=	1
++CATEGORIES=	www python
++MASTER_SITES=	http://wiki.pcbsd.org/ports/
++PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
++
++MAINTAINER=	john@ixsystems.com
++COMMENT=	A simple JSON-RPC implementation for Django
++
++RUN_DEPENDS=	${PYTHON_SITELIBDIR}/django/bin/django-admin.py:${PORTSDIR}/www/py-django
++
++LICENSE=	MIT
++
++USE_BZIP2=	yes
++USE_PYTHON=	yes
++USE_PYDISTUTILS=	easy_install
++
++.include <bsd.port.mk>
+--- /dev/null
++++ www/py-django-json-rpc/distinfo	2012-02-03 08:30:53.167014320 -0600
+@@ -0,0 +1,2 @@
++SHA256 (django-json-rpc-0.6.2.tar.bz2) = 732e7c0817c5838afdff2e419313222c88924ce0de9b4cda648a5ab2015625da
++SIZE (django-json-rpc-0.6.2.tar.bz2) = 264513
+diff -ruN ../../ports2/www/py-django-json-rpc/pkg-descr py-django-json-rpc/pkg-descr
+--- /dev/null
++++ www/py-django-json-rpc/pkg-descr	2012-02-03 08:30:53.167014320 -0600
+@@ -0,0 +1,3 @@
++A simple JSON-RPC implementation for Django.
++
++https://github.com/samuraisam/django-json-rpc
+--- /dev/null
++++ www/py-django-json-rpc/pkg-plist	2012-02-03 08:30:53.167014320 -0600
+@@ -0,0 +1,35 @@
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/PKG-INFO
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/SOURCES.txt
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/dependency_links.txt
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/not-zip-safe
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/requires.txt
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO/top_level.txt
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/__init__.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/__init__.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/__init__.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/_json.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/_json.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/_json.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/exceptions.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/exceptions.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/exceptions.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/mochikit.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/mochikit.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/mochikit.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/proxy.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/proxy.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/proxy.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/site.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/site.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/site.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/types.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/types.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/types.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/views.py
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/views.pyc
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/views.pyo
++%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/templates/browse.html
++@dirrm %%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc/templates
++@dirrm %%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/jsonrpc
++@dirrm %%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%/EGG-INFO
++@dirrm %%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%
