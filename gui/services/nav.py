@@ -88,7 +88,7 @@ class ISCSIDevice(TreeNode):
 class ISCSIExt(TreeNode):
 
     gname = 'services.ISCSI.iSCSITargetExtent'
-    name = _(u'Extents')
+    name = _(u'File Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
@@ -107,14 +107,14 @@ class ISCSIExt(TreeNode):
             self.append_child(nav)
 
         extadd = TreeNode('Add')
-        extadd.name = _(u'Add Extent')
+        extadd.name = _(u'Add File Extent')
         extadd.type = u'object'
         extadd.view = u'freeadmin_model_add'
         extadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
         extadd.icon = u'AddExtentIcon'
 
         extview = TreeNode('View')
-        extview.name = _(u'View Extents')
+        extview.name = _(u'View File Extents')
         extview.type = u'iscsi'
         extview.view = u'freeadmin_model_datagrid'
         extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
