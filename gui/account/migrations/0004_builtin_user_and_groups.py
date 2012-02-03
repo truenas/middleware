@@ -28,6 +28,8 @@ class Migration(DataMigration):
                     setattr(user, field, entry['fields'].get(field))
             user.save()
 
+        call_command("loaddata", "bsdGroupMembership.json")
+
     def backwards(self, orm):
         "Write your backwards methods here."
 
