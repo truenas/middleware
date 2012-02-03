@@ -453,12 +453,6 @@ class iSCSITargetPortal(Model):
             default=1,
             verbose_name = _("Portal Group ID"),
             )
-    iscsi_target_portal_listen = models.TextField(
-            max_length=120,
-            default = "0.0.0.0:3260",
-            verbose_name = _("Portal"),
-            help_text = _("The portal takes the form of 'address:port'. for example '192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at same address family.")
-            )
     iscsi_target_portal_comment = models.CharField(
             max_length=120,
             blank=True,
