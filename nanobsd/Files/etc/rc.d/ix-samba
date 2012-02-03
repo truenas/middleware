@@ -328,8 +328,6 @@ EOF
 			cifs_filemask=0666
 		fi
 
-		echo "    create mask = ${cifs_filemask}"
-
 		if [ -z "${cifs_dirmask}" ]; then
 			cifs_dirmask=0777
 		fi
@@ -425,6 +423,7 @@ generate_exports()
 	do
 		if [ -d "${mountpoint}" ]; then
 
+			vfsobj_shadow=" "
 			fs=$(zfs list -H -o mountpoint,name|grep -E "${mountpoint}	"|awk '{print $2}')
 			if [ -n "${fs}" ]; then
 				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_filesystem='${fs}' LIMIT 1;"`
