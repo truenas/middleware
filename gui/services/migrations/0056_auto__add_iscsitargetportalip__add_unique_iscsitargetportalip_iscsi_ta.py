@@ -1,8 +1,33 @@
 # encoding: utf-8
 import datetime
+import re
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+import ipaddr
+
+def validate_listen(value):
+    reg = re.search(r'(?P<ip>\S+):(?P<port>\d+)', value)
+    if not reg:
+        raise ValueError
+    ip, port = reg.groups()
+    port = int(port)
+    if port < 0 or port > 65535:
+        raise ValueError
+    is_ipv6 = ip.startswith('[') and ip.endswith(']')
+    if is_ipv6:
+        try:
+            ipaddr.IPv6Address(ip[1:-1])
+            return ip[1:-1], port
+        except ipaddr.AddressValueError:
+            raise ValueError
+    else:
+        try:
+            ipaddr.IPv4Address(ip)
+            return ip, port
+        except AddressValueError:
+            raise ValueError
+    raise ValueError
 
 class Migration(SchemaMigration):
 
@@ -19,6 +44,18 @@ class Migration(SchemaMigration):
 
         # Adding unique constraint on 'iSCSITargetPortalIP', fields ['iscsi_target_portalip_ip', 'iscsi_target_portalip_port']
         db.create_unique('services_iscsitargetportalip', ['iscsi_target_portalip_ip', 'iscsi_target_portalip_port'])
+
+        for portal in orm.iSCSITargetPortal.objects.all():
+            for entry in portal.iscsi_target_portal_listen.split('\n'):
+                try:
+                    ip, port = validate_listen(entry)
+                    portalip = orm.iSCSITargetPortalIP()
+                    portalip.iscsi_target_portalip_portal = portal
+                    portalip.iscsi_target_portalip_ip = ip
+                    portalip.iscsi_target_portalip_port = port
+                    portalip.save()
+                except ValueError:
+                    pass
 
 
     def backwards(self, orm):
