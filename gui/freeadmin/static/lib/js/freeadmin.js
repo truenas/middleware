@@ -1221,6 +1221,7 @@
     require([
         "dojo",
         "dojo/ready",
+        "dojo/rpc/JsonService",
         "dojo/_base/xhr",
         "dojo/_base/html",
         "dojo/cookie",
