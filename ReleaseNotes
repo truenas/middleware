@@ -31,6 +31,62 @@ Release Notes for FreeNAS 8.0.3-RELEASE-p1
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
 
+
+Changes since 8.0.3-RELEASE-p1:
+
+Enhancements
+==============
+
+OS/Third party
+--------------
+
+1. Update firefly to 1696_6 to for iTunes 10.5.2+ compatibility.
+2. Add in sane caps for minimum ZFS requirements for lower spec'ed home
+   user machines.
+
+AD/CIFS
+--------------
+
+1. Add shadow copy support to samba36; it was in samba35.
+2. Automatically create AD/LDAP user home directories.
+3. Add 'allow trusted domains' knob in the CIFS global configuration.
+
+iSCSI
+--------------
+
+1. Restrict portal input in the GUI to prevent scenarios where
+   incorrect input would prevent iSCSI from starting.
+
+Rsync
+--------------
+
+1. Add SSH push functionality.
+
+Bugfixes
+==============
+
+GUI
+--------------
+
+1. Fix disks / partition parsing when importing volumes.
+
+Middleware
+--------------
+
+1. Correct smbpasswd parsing when debug level isn't set to minimum logging.
+
+AD/CIFS
+--------------
+
+1. Escape samba AD/LDAP passwords.
+2. Ensure guest accounts are disabled if checked.
+
+iSCSI
+--------------
+
+1. Tooltips added to disambiguate requirements for fields.
+
+
 Changes since 8.0.3-RELEASE:
 
 Enhancements
