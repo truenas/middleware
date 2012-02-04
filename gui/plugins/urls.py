@@ -31,6 +31,9 @@ from django.contrib.formtools.wizard import FormWizard
 from plugins.forms import PBIFileWizard, PBITemporaryLocationForm, \
     PBIUploadForm, JailPBIUploadForm
 
+from jsonrpc import jsonrpc_site
+import freenasUI.plugins.views
+
 urlpatterns = patterns('plugins.views',
     url(r'^home/$', 'plugins_home', name='plugins_home'),
     url(r'^pbiwizard/$', PBIFileWizard(
@@ -38,7 +41,6 @@ urlpatterns = patterns('plugins.views',
             prefix="pbi",
             templates=["plugins/pbiwizard.html"]
         ), name='plugins_pbiwizard'),
-    url(r'^plugin/api/(?P<api_func>[a-zA-Z_]{1}[a-zA-Z0-9_]+)$', 'plugin_api_call', name="plugin_api_call"),
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^jailpbi/$', PBIFileWizard(
@@ -46,4 +48,5 @@ urlpatterns = patterns('plugins.views',
             prefix="jailpbi",
             templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
+    url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
     )

@@ -30,10 +30,10 @@ import sys
 import json
 
 from subprocess import Popen, PIPE
-
 from django.core import serializers
 
 from freenasUI import account, network, plugins, services, sharing, storage, system
+from jsonrpc import jsonrpc_method
 
 
 PLUGINS_API_VERSION = "0.1"
@@ -88,313 +88,753 @@ def __api_call_not_implemented(request, **kwargs):
     data = {}
     data["error"] = False
     data["message"] = "not implemented"
-    return json.dumps(data)
+    return data
 
-
-
-
-class PluginInterface(object):
-    def _m(self, t):
-        return "%s_%s_%s" % (self._system, t, self._name)
-        
-    def __init__(self, system, name, model):
-        self._system = system
-        self._name = name
-        self._model = model
-
-        self._method_names = [
-            "get",
-            "set",
-            "create",
-            "destroy",
-            "info",
-            "status"
-        ]
-
-        self._interface = {}
-        for i in self._method_names:
-            self._interface[self._m(i)] = (getattr(self, i), self)
- 
-    def get(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-    def set(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-    def create(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-    def destroy(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-    def info(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-    def status(self, request, **kwargs):
-        return __api_call_not_implemented(request, kwargs)
-
-    def interface(self):
-        return self._interface
 
 
 #
 #    API information methods
 #
+@jsonrpc_method("api.methods")
 def __api_call_api_methods(request, **kwargs):
     api_methods = __plugins_api_call_table.keys()
-    data = { "error": False, "api_methods": sorted(api_methods) }
-    return json.dumps(data)
+    return { "error": False, "api_methods": sorted(api_methods) }
 
 
+@jsonrpc_method("api.version")
 def __api_call_api_version(request, **kwargs):
-    data = { "error": False, "api_version": PLUGINS_API_VERSION }
-    return json.dumps(data)
+    return { "error": False, "api_version": PLUGINS_API_VERSION }
+    
 
 
 #
 #    Account methods
 #
-class AccountbsdGroupsAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("account.bsdgroups.get")
+def __account_bsdgroups_get(request, **kwargs):
+    return __serialize(account.models.bsdGroups.objects.order_by("-id"))
+@jsonrpc_method("account.bsdgroups.set")
+def __account_bsdgroups_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdgroups.create")
+def __account_bsdgroups_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdgroups.destroy")
+def __account_bsdgroups_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class AccountbsdUsersAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("account.bsdusers.get")
+def __account_bsdusers_get(request, **kwargs):
+    return __serialize(account.models.bsdUsers.objects.order_by("-id"))
+@jsonrpc_method("account.bsdusers.set")
+def __account_bsdusers_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdusers.create")
+def __account_bsdusers_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdusers.destroy")
+def __account_bsdusers_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class AccountbsdGroupMembershipAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("account.bsdgroupmembership.get")
+def __account_bsdgroupmembership_get(request, **kwargs):
+    return __serialize(account.models.bsdGroupMembership.objects.order_by("-id"))
+@jsonrpc_method("account.bsdgroupmembership.set")
+def __account_bsdgroupmembership_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdgroupmembership.create")
+def __account_bsdgroupmembership_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("account.bsdgroupmembership.destroy")
+def __account_bsdgroupmembership_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+
 
 
 
 #
 #    Network methods
 #
-class NetworkGlobalConfigurationAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.globalconfiguration.get")
+def __network_globalconfiguration_get(request, **kwargs):
+    return __serialize(network.models.GlobalConfiguration.objects.order_by("-id"))
+@jsonrpc_method("network.globalconfiguration.set")
+def __network_globalconfiguration_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.globalconfiguration.create")
+def __network_globalconfiguration_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.globalconfiguration.destroy")
+def __network_globalconfiguration_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkInterfacesAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.interfaces.get")
+def __network_interfaces_get(request, **kwargs):
+    return __serialize(network.models.Interfaces.objects.order_by("-id"))
+@jsonrpc_method("network.interfaces.set")
+def __network_interfaces_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.interfaces.create")
+def __network_interfaces_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.interfaces.destroy")
+def __network_interfaces_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkAliasAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.alias.get")
+def __network_alias_get(request, **kwargs):
+    return __serialize(network.models.Alias.objects.order_by("-id"))
+@jsonrpc_method("network.alias.set")
+def __network_alias_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.alias.create")
+def __network_alias_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.alias.destroy")
+def __network_alias_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkVLANAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.vlan.get")
+def __network_vlan_get(request, **kwargs):
+    return __serialize(network.models.VLAN.objects.order_by("-id"))
+@jsonrpc_method("network.vlan.set")
+def __network_vlan_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.vlan.create")
+def __network_vlan_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.vlan.destroy")
+def __network_vlan_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkLAGGInterfaceAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.lagginterface.get")
+def __network_lagginterface_get(request, **kwargs):
+    return __serialize(network.models.LAGGInterface.objects.order_by("-id"))
+@jsonrpc_method("network.lagginterface.set")
+def __network_lagginterface_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.lagginterface.create")
+def __network_lagginterface_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.lagginterface.destroy")
+def __network_lagginterface_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkLAGGInterfaceMembersAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.lagginterfacemembers.get")
+def __network_lagginterfacemembers_get(request, **kwargs):
+    return __serialize(network.models.LAGGInterfaceMembers.objects.order_by("-id"))
+@jsonrpc_method("network.lagginterfacemembers.set")
+def __network_lagginterfacemembers_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.lagginterfacemembers.create")
+def __network_lagginterfacemembers_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.lagginterfacemembers.destroy")
+def __network_lagginterfacemembers_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class NetworkStaticRouteAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("network.staticroute.get")
+def __network_staticroute_get(request, **kwargs):
+    return __serialize(network.models.StaticRoute.objects.order_by("-id"))
+@jsonrpc_method("network.staticroute.set")
+def __network_staticroute_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.staticroute.create")
+def __network_staticroute_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("network.staticroute.destroy")
+def __network_staticroute_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 #
 #    Plugins methods
 #
-class PluginsPluginsAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("plugins.plugins.get")
+def __plugins_plugins_get(request, **kwargs):
+    return __serialize(plugins.models.Plugins.objects.order_by("-id"))
+@jsonrpc_method("plugins.plugins.set")
+def __plugins_plugins_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("plugins.plugins.create")
+def __plugins_plugins_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("plugins.plugins.destroy")
+def __plugins_plugins_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 
 #
 #    Services methods
 #
-class ServicesServicesAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.services.get")
+def __services_services_get(request, **kwargs):
+    return __serialize(services.models.services.objects.order_by("-id"))
+@jsonrpc_method("services.services.set")
+def __services_services_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.services.create")
+def __services_services_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.services.destroy")
+def __services_services_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesCIFSAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.cifs.get")
+def __services_cifs_get(request, **kwargs):
+    return __serialize(services.models.CIFS.objects.order_by("-id"))
+@jsonrpc_method("services.cifs.set")
+def __services_cifs_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.cifs.create")
+def __services_cifs_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.cifs.destroy")
+def __services_cifs_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesAFPAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.afp.get")
+def __services_afp_get(request, **kwargs):
+    return __serialize(services.models.AFP.objects.order_by("-id"))
+@jsonrpc_method("services.afp.set")
+def __services_afp_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.afp.create")
+def __services_afp_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.afp.destroy")
+def __services_afp_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesNFSAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.nfs.get")
+def __services_nfs_get(request, **kwargs):
+    return __serialize(services.models.NFS.objects.order_by("-id"))
+@jsonrpc_method("services.nfs.set")
+def __services_nfs_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.nfs.create")
+def __services_nfs_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.nfs.destroy")
+def __services_nfs_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetGlobalConfigurationAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetglobalconfiguration.get")
+def __services_iscsitargetglobalconfiguration_get(request, **kwargs):
+    return __serialize(sevices.models.iSCSITargetGlobalConfiguration.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetglobalconfiguration.set")
+def __services_iscsitargetglobalconfiguration_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetglobalconfiguration.create")
+def __services_iscsitargetglobalconfiguration_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetglobalconfiguration.destroy")
+def __services_iscsitargetglobalconfiguration_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetExtentAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetextent.get")
+def __services_iscsitargetextent_get(request, **kwargs):
+    return __serialize(services.iSCSITargetExtent.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetextent.set")
+def __services_iscsitargetextent_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetextent.create")
+def __services_iscsitargetextent_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetextent.destroy")
+def __services_iscsitargetextent_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetPortalAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetportal.get")
+def __services_iscsitargetportal_get(request, **kwargs):
+    return __serialize(services.models.iSCSITargetPortal.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetportal.set")
+def __services_iscsitargetportal_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetportal.create")
+def __services_iscsitargetportal_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetportal.destroy")
+def __services_iscsitargetportal_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetAuthorizedInitiatorAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetauthorizedinitiator.get")
+def __services_iscsitargetauthorizedinitiator_get(request, **kwargs):
+    return __serialize(services.models.iSCSITargetAuthorizedInitiator.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetauthorizedinitiator.set")
+def __services_iscsitargetauthorizedinitiator_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetauthorizedinitiator.create")
+def __services_iscsitargetauthorizedinitiator_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetauthorizedinitiator.destroy")
+def __services_iscsitargetauthorizedinitiator_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetAuthCredentialAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetauthcredential.get")
+def __services_iscsitargetauthcredential_get(request, **kwargs):
+    return __serialize(services.models.iSCSITargetAuthCredential.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargetauthcredential.set")
+def __services_iscsitargetauthcredential_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetauthcredential.create")
+def __services_iscsitargetauthcredential_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargetauthcredential.destroy")
+def __services_iscsitargetauthcredential_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitarget.get")
+def __services_iscsitarget_get(request, **kwargs):
+    return __serialize(services.models.iSCSITarget.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitarget.set")
+def __services_iscsitarget_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitarget.create")
+def __services_iscsitarget_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitarget.destroy")
+def __services_iscsitarget_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesiSCSITargetToExtentAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargettoextent.get")
+def __services_iscsitargettoextent_get(request, **kwargs):
+    return __serialize(services.iSCSITargetToExtent.objects.order_by("-id"))
+@jsonrpc_method("services.iscsitargettoextent.set")
+def __services_iscsitargettoextent_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargettoextent.create")
+def __services_iscsitargettoextent_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.iscsitargettoextent.destroy")
+def __services_iscsitargettoextent_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesDynamicDNSAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.dynamicdns.get")
+def __services_dynamicdns_get(request, **kwargs):
+    return __serialize(services.DynamicDNS.objects.order_by("-id"))
+@jsonrpc_method("services.dynamicdns.set")
+def __services_dynamicdns_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.dynamicdns.create")
+def __services_dynamicdns_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.dynamicdns.destroy")
+def __services_dynamicdns_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesPluginsAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.plugins.get")
+def __services_plugins_get(request, **kwargs):
+    return __serialize(services.models.Plugins.objects.order_by("-id"))
+@jsonrpc_method("services.plugins.set")
+def __services_plugins_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.plugins.create")
+def __services_plugins_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.plugins.destroy")
+def __services_plugins_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesSNMPAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.snmp.get")
+def __services_snmp_get(request, **kwargs):
+    return __serialize(services.models.SNMP.objects.order_by("-id"))
+@jsonrpc_method("services.snmp.set")
+def __services_snmp_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.snmp.create")
+def __services_snmp_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.snmp.destroy")
+def __services_snmp_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesUPSAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.ups.get")
+def __services_ups_get(request, **kwargs):
+    return __serialize(services.models.UPS.objects.order_by("-id"))
+@jsonrpc_method("services.ups.set")
+def __services_ups_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ups.create")
+def __services_ups_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ups.destroy")
+def __services_ups_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesFTPAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.ftp.get")
+def __services_ftp_get(request, **kwargs):
+    return __serialize(services.models.FTP.objects.order_by("-id"))
+@jsonrpc_method("services.ftp.set")
+def __services_ftp_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ftp.create")
+def __services_ftp_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ftp.destroy")
+def __services_ftp_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesTFTPAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.tftp.get")
+def __services_tftp_get(request, **kwargs):
+    return __serialize(services.models.TFTP.objects.order_by("-id"))
+@jsonrpc_method("services.tftp.set")
+def __services_tftp_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.tftp.create")
+def __services_tftp_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.tftp.destroy")
+def __services_tftp_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesSSHAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.ssh.get")
+def __services_ssh_get(request, **kwargs):
+    return __serialize(services.models.SSH.objects.order_by("-id"))
+@jsonrpc_method("services.ssh.set")
+def __services_ssh_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ssh.create")
+def __services_ssh_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ssh.destroy")
+def __services_ssh_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesActiveDirectoryAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.activedirectory.get")
+def __services_activedirectory_get(request, **kwargs):
+    return __serialize(services.models.ActiveDirectory.objects.order_by("-id"))
+@jsonrpc_method("services.activedirectory.set")
+def __services_activedirectory_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.activedirectory.create")
+def __services_activedirectory_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.activedirectory.destroy")
+def __services_activedirectory_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesLDAPAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.ldap.get")
+def __services_ldap_get(request, **kwargs):
+    return __serialize(services.models.LDAP.objects.order_by("-id"))
+@jsonrpc_method("services.ldap.set")
+def __services_ldap_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ldap.create")
+def __services_ldap_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.ldap.destroy")
+def __services_ldap_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesRsyncdAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.rsyncd.get")
+def __services_rsyncd_get(request, **kwargs):
+    return __serialize(services.models.Rsyncd.objects.order_by("-id"))
+@jsonrpc_method("services.rsyncd.set")
+def __services_rsyncd_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.rsyncd.create")
+def __services_rsyncd_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.rsyncd.destroy")
+def __services_rsyncd_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesRsyncModAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.rsyncmod.get")
+def __services_rsyncmod_get(request, **kwargs):
+    return __serialize(services.models.RsyncMod.objects.order_by("-id"))
+@jsonrpc_method("services.rsyncmod.set")
+def __services_rsyncmod_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.rsyncmod.create")
+def __services_rsyncmod_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.rsyncmod.destroy")
+def __services_rsyncmod_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class ServicesSMARTAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("services.smart.get")
+def __services_smart_get(request, **kwargs):
+    return __serialize(services.models.SMART.objects.order_by("-id"))
+@jsonrpc_method("services.smart.set")
+def __services_smart_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.smart.create")
+def __services_smart_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("services.smart.destroy")
+def __services_smart_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 
 #
 #    Sharing methods
 #
-class SharingCIFS_ShareAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("sharing.cifs_share.get")
+def __sharing_cifs_share_get(request, **kwargs):
+    return __serialize(sharing.models.CIFS_Share.objects.order_by("-id"))
+@jsonrpc_method("sharing.cifs_share.set")
+def __sharing_cifs_share_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.cifs_share.create")
+def __sharing_cifs_share_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.cifs_share.destroy")
+def __sharing_cifs_share_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SharingAFP_ShareAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("sharing.afp_share.get")
+def __sharing_afp_share_get(request, **kwargs):
+    return __serialize(sharing.models.AFP_Share.objects.order_by("-id"))
+@jsonrpc_method("sharing.afp_share.set")
+def __sharing_afp_share_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.afp_share.create")
+def __sharing_afp_share_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.afp_share.destroy")
+def __sharing_afp_share_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SharingNFS_ShareAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("sharing.nfs_share.get")
+def __sharing_nfs_share_get(request, **kwargs):
+    return __serialize(sharing.models.NFS_Share.objects.order_by("-id"))
+@jsonrpc_method("sharing.nfs_share.set")
+def __sharing_nfs_share_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.nfs_share.create")
+def __sharing_nfs_share_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("sharing.nfs_share.destroy")
+def __sharing_nfs_share_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 
 #
 #    Storage methods
 #
-class StorageVolumeAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.volume.get")
+def __storage_volume_get(request, **kwargs):
+    return __serialize(storage.models.Volume.objects.order_by("-id"))
+@jsonrpc_method("storage.volume.set")
+def __storage_volume_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.volume.create")
+def __storage_volume_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.volume.destroy")
+def __storage_volume_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class StorageDiskAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.disk.get")
+def __storage_disk_get(request, **kwargs):
+    return __serialize(storage.models.Disk.objects.order_by("-id"))
+@jsonrpc_method("storage.disk.set")
+def __storage_disk_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.disk.create")
+def __storage_disk_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.disk.destroy")
+def __storage_disk_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class StorageMountPointAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.mountpoint.get")
+def __storage_mountpoint_get(request, **kwargs):
+    return __serialize(storage.models.MountPoint.objects.order_by("-id"))
+@jsonrpc_method("storage.mountpoint.set")
+def __storage_mountpoint_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.mountpoint.create")
+def __storage_mountpoint_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.mountpoint.destroy")
+def __storage_mountpoint_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class StorageReplRemoteAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.replremote.get")
+def __storage_replremote_get(request, **kwargs):
+    return __serialize(storage.models.ReplRemote.objects.order_by("-id"))
+@jsonrpc_method("storage.replremote.set")
+def __storage_replremote_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.replremote.create")
+def __storage_replremote_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.replremote.destroy")
+def __storage_replremote_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class StorageReplicationAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.replication.get")
+def __storage_replication_get(request, **kwargs):
+    return __serialize(storage.models.Replication.objects.order_by("-id"))
+@jsonrpc_method("storage.replication.set")
+def __storage_replication_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.replication.create")
+def __storage_replication_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.replication.destroy")
+def __storage_replication_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class StorageTaskAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("storage.task.get")
+def __storage_task_get(request, **kwargs):
+    return __serialize(storage.models.Task.objects.order_by("-id"))
+@jsonrpc_method("storage.task.set")
+def __storage_task_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.task.create")
+def __storage_task_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("storage.task.destroy")
+def __storage_task_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 
 #
 #    System methods
 #
-class SystemSettingsAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.settings.get")
+def __system_settings_get(request, **kwargs):
+    return __serialize(system.models.Settings.objects.order_by("-id"))
+@jsonrpc_method("system.settings.set")
+def __system_settings_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.settings.create")
+def __system_settings_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.settings.destroy")
+def __system_settings_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemNTPServerAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.ntpserver.get")
+def __system_ntpserver_get(request, **kwargs):
+    return __serialize(system.models.NTPServer.objects.order_by("-id"))
+@jsonrpc_method("system.ntpserver.set")
+def __system_ntpserver_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.ntpserver.create")
+def __system_ntpserver_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.ntpserver.destroy")
+def __system_ntpserver_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemAdvancedAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.advanced.get")
+def __system_advanced_get(request, **kwargs):
+    return __serialize(system.models.Advanced.objects.order_by("-id"))
+@jsonrpc_method("system.advanced.set")
+def __system_advanced_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.advanced.create")
+def __system_advanced_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.advanced.destroy")
+def __system_advanced_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemEmailAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.email.get")
+def __system_email_get(request, **kwargs):
+    return __serialize(system.models.Email.objects.order_by("-id"))
+@jsonrpc_method("system.email.set")
+def __system_email_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.email.create")
+def __system_email_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.email.destroy")
+def __system_email_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemSSLAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.ssl.get")
+def __system_ssl_get(request, **kwargs):
+    return __serialize(system.models.SSL.objects.order_by("-id"))
+@jsonrpc_method("system.ssl.set")
+def __system_ssl_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.ssl.create")
+def __system_ssl_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.ssl.destroy")
+def __system_ssl_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemCronJobAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.cronjob.get")
+def __system_cronjob_get(request, **kwargs):
+    return __serialize(system.models.CronJob.objects.order_by("-id"))
+@jsonrpc_method("system.cronjob.set")
+def __system_cronjob_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.cronjob.create")
+def __system_cronjob_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.cronjob.destroy")
+def __system_cronjob_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemRsyncAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.rsync.get")
+def __system_rsync_get(request, **kwargs):
+    return __serialize(system.models.Rsync.objects.order_by("-id"))
+@jsonrpc_method("system.rsync.set")
+def __system_rsync_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.rsync.create")
+def __system_rsync_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.rsync.destroy")
+def __system_rsync_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemSMARTTestAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.smarttest.get")
+def __system_smarttest_get(request, **kwargs):
+    return __serialize(system.models.SMARTTest.objects.order_by("-id"))
+@jsonrpc_method("system.smarttest.set")
+def __system_smarttest_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.smarttest.create")
+def __system_smarttest_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.smarttest.destroy")
+def __system_smarttest_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemSysctlAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.sysctl.get")
+def __system_sysctl_get(request, **kwargs):
+    return __serialize(system.models.Sysctl.objects.order_by("-id"))
+@jsonrpc_method("system.sysctl.set")
+def __system_sysctl_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.sysctl.create")
+def __system_sysctl_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.sysctl.destroy")
+def __system_sysctl_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
-class SystemTunableAPI(PluginInterface):
-    def get(self, request, **kwargs):
-        return __serialize(self._model.objects.order_by("-id"))
+@jsonrpc_method("system.tunable.get")
+def __system_tunable_get(request, **kwargs):
+    return __serialize(system.models.Tunable.objects.order_by("-id"))
+@jsonrpc_method("system.tunable.set")
+def __system_tunable_set(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.tunable.create")
+def __system_tunable_create(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
+@jsonrpc_method("system.tunable.destroy")
+def __system_tunable_destroy(request, **kwargs):
+    return __api_call_not_implemented(request, kwargs)
 
 
 
 #
 #    Database methods
 #
+@jsonrpc_method("db.query")
 def __api_call_db_query_database(request, **kwargs):
     data = { "error": False, "message": "Not implemented" }
     return json.dumps(data)
@@ -404,6 +844,7 @@ def __api_call_db_query_database(request, **kwargs):
 #
 #    Filesystem methods
 #
+@jsonrpc_method("fs.mountpoints.get")
 def __api_call_fs_get_mountpoints(request, **kwargs):
     path_list = []
     mp_list = storage.models.MountPoint.objects.exclude(
@@ -418,8 +859,9 @@ def __api_call_fs_get_mountpoints(request, **kwargs):
                 path_list.append(dataset.mountpoint)
 
     data = { "error": False, "mountpoints": path_list }
-    return json.dumps(data)
+    return data
 
+@jsonrpc_method("fs.mount")
 def __api_call_fs_mount_filesystem(request, **kwargs):
     jail_path = __get_plugins_jail_full_path()
     if not jail_path:
@@ -444,8 +886,9 @@ def __api_call_fs_mount_filesystem(request, **kwargs):
     else:
         data = { "error": False, "message": "ok" }
 
-    return json.dumps(data)
+    return data
 
+@jsonrpc_method("fs.umount")
 def __api_call_fs_umount_filesystem(request, **kwargs):
     jail_path = __get_plugins_jail_full_path()
     if not jail_path:
@@ -468,14 +911,17 @@ def __api_call_fs_umount_filesystem(request, **kwargs):
     else:
         data = { "error": False, "message": "ok" }
 
-    return json.dumps(data)
+    return data
 
+@jsonrpc_method("fs.directory.get")
 def __api_call_fs_get_directory(request, **kwargs):
     return __api_call_not_implemented(request, kwargs)
 
+@jsonrpc_method("fs.file.get")
 def __api_call_fs_get_file(request, **kwargs):
     return __api_call_not_implemented(request, kwargs)
 
+@jsonrpc_method("fs.filesystems.get")
 def __api_call_fs_get_filesystems(request, **kwargs):
     return __api_call_not_implemented(request, kwargs)
 
@@ -483,6 +929,7 @@ def __api_call_fs_get_filesystems(request, **kwargs):
 #
 #    OS methods
 #
+@jsonrpc_method("os.query")
 def  __api_call_os_query_system(request, **kwargs):
     return __api_call_not_implemented(request, kwargs)
 
@@ -491,286 +938,12 @@ def  __api_call_os_query_system(request, **kwargs):
 #
 #    Debug/Test/Null methods
 #
+@jsonrpc_method("api.test")
 def __api_call_api_test(request, **kwargs):
     kwargs["error"] = False
-    return json.dumps(kwargs)
+    return kwargs
 
+@jsonrpc_method("api.debug")
 def __api_call_api_debug(request, **kwargs):
     kwargs["error"] = False
-    return json.dumps(kwargs)
-
-
-
-#
-#    API call dispatch table
-#
-__plugins_api_call_table = {}
-
-
-#
-#    Account
-#
-__plugins_api_call_table.update(AccountbsdGroupsAPI(
-    "account", "bsdgroups", account.models.bsdGroups).interface()
-)
-__plugins_api_call_table.update(AccountbsdUsersAPI(
-    "account", "bsdusers", account.models.bsdUsers).interface()
-)
-__plugins_api_call_table.update(AccountbsdGroupMembershipAPI(
-    "account", "bsdgroupmembership", account.models.bsdGroupMembership).interface()
-)
-
-
-#
-#    Network
-#
-__plugins_api_call_table.update(NetworkGlobalConfigurationAPI(
-    "network", "globalconfiguration", network.models.GlobalConfiguration).interface()
-)
-__plugins_api_call_table.update(NetworkInterfacesAPI(
-    "network", "interfaces", network.models.Interfaces).interface()
-)
-__plugins_api_call_table.update(NetworkAliasAPI(
-    "network", "alias", network.models.Alias).interface()
-)
-__plugins_api_call_table.update(NetworkVLANAPI(
-    "network", "vlan", network.models.VLAN).interface()
-)
-__plugins_api_call_table.update(NetworkLAGGInterfaceAPI(
-    "network", "lagginterface", network.models.LAGGInterface).interface()
-)
-__plugins_api_call_table.update(NetworkLAGGInterfaceMembersAPI(
-    "network", "lagginterfacemembers", network.models.LAGGInterfaceMembers).interface()
-)
-__plugins_api_call_table.update(NetworkStaticRouteAPI(
-    "network", "staticroute", network.models.StaticRoute).interface()
-)
-
-
-#
-#    Plugins
-#
-__plugins_api_call_table.update(PluginsPluginsAPI(
-    "plugins", "plugins", plugins.models.Plugins).interface()
-)
-
-
-#
-#    Services
-#
-__plugins_api_call_table.update(ServicesServicesAPI(
-    "services", "services", services.models.services).interface()
-)
-__plugins_api_call_table.update(ServicesCIFSAPI(
-    "services", "cifs", services.models.CIFS).interface()
-)
-__plugins_api_call_table.update(ServicesAFPAPI(
-    "services", "afp", services.models.AFP).interface()
-)
-__plugins_api_call_table.update(ServicesNFSAPI(
-    "services", "nfs", services.models.NFS).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetGlobalConfigurationAPI(
-    "services", "iscsitargetglobalconfiguration", services.models.iSCSITargetGlobalConfiguration).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetExtentAPI(
-    "services", "iscsitargetextent", services.models.iSCSITargetExtent).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetPortalAPI(
-    "services", "iscsitargetportal", services.models.iSCSITargetPortal).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetAuthorizedInitiatorAPI(
-    "services", "iscsitargetauthorizedinitiator", services.models.iSCSITargetAuthorizedInitiator).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetAuthCredentialAPI(
-    "services", "iscsitargetauthcredential", services.models.iSCSITargetAuthCredential).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetAPI(
-    "services", "iscsitarget", services.models.iSCSITarget).interface()
-)
-__plugins_api_call_table.update(ServicesiSCSITargetToExtentAPI(
-    "services", "iscsitargettoextent", services.models.iSCSITargetToExtent).interface()
-)
-__plugins_api_call_table.update(ServicesDynamicDNSAPI(
-    "services", "dynamicdns", services.models.DynamicDNS).interface()
-)
-__plugins_api_call_table.update(ServicesPluginsAPI(
-    "services", "plugins", services.models.Plugins).interface()
-)
-__plugins_api_call_table.update(ServicesSNMPAPI(
-    "services", "snmp", services.models.SNMP).interface()
-)
-__plugins_api_call_table.update(ServicesUPSAPI(
-    "services", "ups", services.models.UPS).interface()
-)
-__plugins_api_call_table.update(ServicesFTPAPI(
-    "services", "ftp", services.models.FTP).interface()
-)
-__plugins_api_call_table.update(ServicesTFTPAPI(
-    "services", "tftp", services.models.TFTP).interface()
-)
-__plugins_api_call_table.update(ServicesSSHAPI(
-    "services", "ssh", services.models.SSH).interface()
-)
-__plugins_api_call_table.update(ServicesActiveDirectoryAPI(
-    "services", "activedirectory", services.models.ActiveDirectory).interface()
-)
-__plugins_api_call_table.update(ServicesLDAPAPI(
-    "services", "ldap", services.models.LDAP).interface()
-)
-__plugins_api_call_table.update(ServicesRsyncdAPI(
-    "services", "rsyncd", services.models.Rsyncd).interface()
-)
-__plugins_api_call_table.update(ServicesRsyncModAPI(
-    "services", "rsyncmod", services.models.RsyncMod).interface()
-)
-__plugins_api_call_table.update(ServicesSMARTAPI(
-    "services", "smart", services.models.SMART).interface()
-)
-
-
-#
-#    Sharing
-#
-__plugins_api_call_table.update(SharingCIFS_ShareAPI(
-    "sharing", "cifs_share", sharing.models.CIFS_Share).interface()
-)
-__plugins_api_call_table.update(SharingAFP_ShareAPI(
-    "sharing", "afp_share", sharing.models.AFP_Share).interface()
-)
-__plugins_api_call_table.update(SharingNFS_ShareAPI(
-    "sharing", "nfs_share", sharing.models.NFS_Share).interface()
-)
-
-
-#
-#    Storage methods
-#
-__plugins_api_call_table.update(StorageVolumeAPI(
-    "storage", "volume", storage.models.Volume).interface()
-)
-__plugins_api_call_table.update(StorageDiskAPI(
-    "storage", "disk", storage.models.Disk).interface()
-)
-__plugins_api_call_table.update(StorageMountPointAPI(
-    "storage", "mountpoint", storage.models.MountPoint).interface()
-)
-__plugins_api_call_table.update(StorageReplRemoteAPI(
-    "storage", "replremote", storage.models.ReplRemote).interface()
-)
-__plugins_api_call_table.update(StorageReplicationAPI(
-    "storage", "replication", storage.models.Replication).interface()
-)
-__plugins_api_call_table.update(StorageTaskAPI(
-    "storage", "task", storage.models.Task).interface()
-)
-
-
-#
-#    System
-#
-__plugins_api_call_table.update(SystemSettingsAPI(
-    "system", "settings", system.models.Settings).interface()
-)
-__plugins_api_call_table.update(SystemNTPServerAPI(
-    "system", "ntpserver", system.models.NTPServer).interface()
-)
-__plugins_api_call_table.update(SystemAdvancedAPI(
-    "system", "advanced", system.models.Advanced).interface()
-)
-__plugins_api_call_table.update(SystemEmailAPI(
-    "system", "email", system.models.Email).interface()
-)
-__plugins_api_call_table.update(SystemSSLAPI(
-    "system", "ssl", system.models.SSL).interface()
-)
-__plugins_api_call_table.update(SystemCronJobAPI(
-    "system", "cronjob", system.models.CronJob).interface()
-)
-__plugins_api_call_table.update(SystemRsyncAPI(
-    "system", "rsync", system.models.Rsync).interface()
-)
-__plugins_api_call_table.update(SystemSMARTTestAPI(
-    "system", "smarttest", system.models.SMARTTest).interface()
-)
-__plugins_api_call_table.update(SystemSysctlAPI(
-    "system", "sysctl", system.models.Sysctl).interface()
-)
-__plugins_api_call_table.update(SystemTunableAPI(
-    "system", "tunable", system.models.Tunable).interface()
-)
-
-
-#
-#    API
-#
-__plugins_api_call_table.update(
-    { "api_methods": (__api_call_api_methods, None) }
-)
-__plugins_api_call_table.update(
-    { "api_version": (__api_call_api_version, None) }
-)
-__plugins_api_call_table.update(
-    { "api_authenticate": (__api_call_api_version, None) }
-)
-
-
-#
-#    Database
-#
-__plugins_api_call_table.update(
-    { "db_query_database": (__api_call_db_query_database, None) }
-)
-
-
-#
-#    Filesystem
-#
-__plugins_api_call_table.update(
-    { "fs_get_mountpoints": (__api_call_fs_get_mountpoints, None) }
-)
-__plugins_api_call_table.update(
-    { "fs_mount_filesystem": (__api_call_fs_mount_filesystem, None) }
-)
-__plugins_api_call_table.update(
-    { "fs_umount_filesystem": ( __api_call_fs_umount_filesystem, None) }
-)
-__plugins_api_call_table.update(
-    { "fs_get_directory": ( __api_call_fs_get_directory, None) }
-)
-__plugins_api_call_table.update(
-    { "fs_get_filesystems": ( __api_call_fs_get_filesystems, None) }
-)
-__plugins_api_call_table.update(
-    { "fs_get_file": ( __api_call_fs_get_file, None) }
-)
-
-
-#
-#    OS stuff
-#
-__plugins_api_call_table.update(
-    { "os_query_system": ( __api_call_os_query_system, None) }
-)
-
-
-#
-#    Debug/Test
-#
-__plugins_api_call_table.update(
-    { "test": (__api_call_api_test, None) }
-)
-__plugins_api_call_table.update(
-    { "debug":( __api_call_api_debug, None) }
-)
-
-
-def plugins_api_get_info(name):
-    method = None
-    try:
-        info = __plugins_api_call_table[name]
-
-    except:
-        info = __plugins_api_call_table["test"]
-
-    return info
+    return kwargs
