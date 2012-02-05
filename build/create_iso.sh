@@ -29,7 +29,7 @@ main()
 
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-    REVISION="8.0.3-RELEASE-p1"
+    REVISION="8.0.4-BETA1"
     export NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH_HUMANIZED}"
     export NANO_IMGNAME="$NANO_NAME"
 
@@ -69,7 +69,7 @@ main()
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     # Copy the image file to the cdrom.  Cache the compressed version to
     # make it easier to debug this and the install scripts.
-    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}.xz
+    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}-img.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
