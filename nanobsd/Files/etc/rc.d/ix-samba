@@ -416,7 +416,6 @@ generate_exports()
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
-
 			vfsobj_shadow=" "
 			fs=$(zfs list -H -o mountpoint,name|grep -E "${mountpoint}	"|awk '{print $2}')
 			if [ -n "${fs}" ]; then
@@ -426,7 +425,6 @@ generate_exports()
 					vfsobj_shadow=" shadow_copy2"
 				fi
 			fi
-
 			echo "[${name}]"
 			echo "    path = ${mountpoint}"
 			echo "    printable = no"
