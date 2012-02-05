@@ -105,14 +105,8 @@ db_update()
 	# Things that just need to read from /data can follow this.
 	mount -ur /data
 
-	# Run this here to deal with potential changes in kernel configuration
-	# that will impact our next boot, instead of delaying the update in
-	# configuration until the boot after that.
-	#
-	# XXX: this should be somewhere a little more intelligent... it's a
-	# hack.
-	# NOTE: Run this last ;)..
-	service ix-loader start
+	# NOTE: this must be run via the rc.d script, not service(8).
+	env AUTOTUNE_REBOOT=false /etc/rc.d/ix-loader start
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /

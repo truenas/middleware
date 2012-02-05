@@ -8,6 +8,8 @@
 
 . /etc/rc.subr
 
+: ${AUTOTUNE_REBOOT=true}
+
 # Update an file that persists across reboots with a new file if something's
 # changed, or nuke it if the file was unchanged.
 #
@@ -160,7 +162,7 @@ generate_loader_confs()
 	generate_boot_loader_conf
 	generate_boot_loader_conf_local
 
-	if $reboot_now; then
+	if $AUTOTUNE_REBOOT && $reboot_now; then
 		reboot
 	fi
 }
