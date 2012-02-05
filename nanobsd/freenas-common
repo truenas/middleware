@@ -1,5 +1,6 @@
+#!/bin/sh
 #-
-# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,7 +14,7 @@
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# ARE DISCLAIMED.  IN NO EVENT SHALL iXsystems, Inc. OR CONTRIBUTORS BE LIABLE
 # FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 # OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -21,7 +22,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
 #
 # This file is heavily derived from both Sam Leffler's Avilia config,
 # as well as the BSDRP project's config file.  Neither of these have
@@ -235,13 +235,15 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
-add_port benchmarks/iozone 
 add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
 #+add_port ftp/wget
 add_port dns/libidn
 #-add_port ftp/wget
 add_port ftp/wget
+add_port benchmarks/iozone
 add_port benchmarks/iperf
+add_port benchmarks/netperf
+#add_port security/nmap
 add_port sysutils/ipmitool
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
@@ -319,7 +321,6 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
 	add_port devel/ctags 
 fi
-	 
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
@@ -337,12 +338,6 @@ hack_nsswitch_conf ( )
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 customize_cmd hack_nsswitch_conf
-
-default_root_password ( )
-{
-	CR "echo freenas | pw usermod root -h 0"
-}
-customize_cmd default_root_password
 
 add_gui()
 {
@@ -392,18 +387,6 @@ add_data_to_fstab ( )
 }
 customize_cmd add_data_to_fstab
 
-fix_mt_daapd ( )
-{
-	# Create database directory, for some reason the port/pkg doesn't
-	# do this
-	mkdir -p ${NANO_WORLDDIR}/var/db/mt-daapd
-	# Use the sample config as the actual config
-	# XXX: maybe this should move to common files?
-	cp  ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf.sample \
-	    ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf
-}
-# customize_cmd fix_mt_daapd
-
 afpd_conf_symlink ( )
 {
 	ln -sfh /etc/afpd.conf ${NANO_WORLDDIR}/usr/local/etc/afpd.conf
@@ -440,6 +423,61 @@ shrink_md_fbsize()
 	    ${NANO_WORLDDIR}/etc/rc.initdiskless
 }
 customize_cmd shrink_md_fbsize
+
+performance_sanity_caps()
+{
+	local arc_max_in_mb kmem_size nmbclusters
+
+	# For FreeNAS, there are a wide variety of heterogenous configs.
+	# Bottom line is that these are meant to be safe defaults s.t.
+	# FreeBSD doesn't overcommit memory without excessive prodding
+	# from the end-user.
+	#
+	# DISCLAIMER: These settings are not a free pass for running on
+	# platforms that do not meet the conditions listed on the FreeNAS
+	# system requirements page!!!
+	(
+
+	echo
+	echo "# System defaults for $NANO_LABEL ($FREENAS_ARCH)"
+	echo
+
+	# MBUF cluster defaults.
+	case "$FREENAS_ARCH" in
+	amd64)
+		nmbclusters=50000
+		;;
+	i386)
+		nmbclusters=25000
+		;;
+	esac
+	echo "kern.ipc.nmbclusters=\"$nmbclusters\""
+
+	# ZFS defaults.
+	case "$FREENAS_ARCH" in
+	amd64)
+		arc_max_in_mb=1024
+		;;
+	i386)
+		arc_max_in_mb=256
+		;;
+	esac
+	echo "vfs.zfs.arc_max=\"$(( $arc_max_in_mb * 1024 * 1024 ))\""
+
+	case "$FREENAS_ARCH" in
+	amd64)
+		kmem_size=1024
+		;;
+	i386)
+		kmem_size=348
+		;;
+	esac
+	echo "vm.kmem_size=\"${kmem_size}M\""
+	echo "vm.kmem_size_max=\"${kmem_size}M\""
+
+	) >> ${NANO_WORLDDIR}/boot/loader.conf
+}
+customize_cmd performance_sanity_caps
 
 save_build ( )
 {
