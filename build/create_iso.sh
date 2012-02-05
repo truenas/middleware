@@ -36,7 +36,7 @@ main()
     . build/functions.sh
 
     # Paths that may need altering on the build system
-    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.xz"
+    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.img.xz"
     TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
     ETC_FILES="$root/build/files"
 
@@ -69,7 +69,7 @@ main()
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     # Copy the image file to the cdrom.  Cache the compressed version to
     # make it easier to debug this and the install scripts.
-    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}-embedded.xz
+    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)

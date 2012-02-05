@@ -20,7 +20,7 @@ get_product_path()
 
 get_image_name()
 {
-    echo "$(get_product_path)/$(get_product_name)-"*"-embedded.xz"
+    echo "$(get_product_path)/$(get_product_name)-"*"-img.xz"
 }
 
 build_config()
