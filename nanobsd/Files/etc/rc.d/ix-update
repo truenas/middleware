@@ -100,7 +100,15 @@ db_update()
 	if [ -f /data/cd_upgrade ]; then
 		rm /data/cd_upgrade
 	fi
-	umount /data
+	# Things that need write access to /data can follow this.
+
+
+	# Things that just need to read from /data can follow this.
+	mount -ur /data
+
+	# NOTE: this must be run via the rc.d script, not service(8).
+	env AUTOTUNE_REBOOT=false /etc/rc.d/ix-loader start
+
 	echo "Database upgrade complete.  Rebooting."
 	cd /
 	sleep 2
