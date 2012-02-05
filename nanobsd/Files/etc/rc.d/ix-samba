@@ -84,6 +84,7 @@ generate_smbconf()
 		ad_domainname,
 		ad_netbiosname,
 		ad_workgroup,
+		ad_allow_trusted_doms,
 		ad_adminname,
 		ad_adminpw,
 		ldap_hostname,
@@ -117,10 +118,10 @@ generate_smbconf()
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
-		ad_domainname ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
-		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
-		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
-		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
+		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
+		ad_adminname ad_adminpw ldap_hostname ldap_basedn ldap_anonbind \
+		ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
+		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
@@ -150,6 +151,7 @@ generate_smbconf()
 		    getwd cache = yes
 		    guest account = ${guest}
 		    map to guest = Bad Password
+		    obey pam restrictions = Yes
 EOF
 		if [ "${guestok}" = "1" ]; then
 			echo "    guest ok = yes"
@@ -249,6 +251,7 @@ EOF
 		elif [ "${ad_enable}" = "1" ]; then
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
 			local ad_workgroup="${ad_workgroup}"
+			local trusted="no"
 
 			AD_init
 			mkdir -p ${FREENAS_CACHEDIR}/.samba
@@ -259,6 +262,11 @@ EOF
 			# valid users??
 			# acls?
 
+			if [ "${ad_allow_trusted_doms}" = "1" ]
+			then
+				trusted="yes"
+			fi
+
 			cat<<-EOF
 			    security = ADS
 			    realm = ${domain}
@@ -266,14 +274,14 @@ EOF
 			    netbios name = ${ad_netbiosname}
 			    client use spnego = yes
 			    cache directory = ${FREENAS_CACHEDIR}/.samba
-			    
+
 			    wins server = $(AD_get dcname)
 			    password server = $(AD_get dcname)
-			    
+
 			    local master = no
 			    domain master = no
 			    preferred master = no
-		
+
 			    inherit acls = yes
 			    acl compatibility = auto
 			    acl check permissions = true
@@ -292,7 +300,8 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = no
 			    winbind refresh tickets = yes
-			    allow trusted domains = yes
+
+			    allow trusted domains = ${trusted}
 
 			    template shell = /bin/sh
 			    template homedir = /home/%D/%U
@@ -312,8 +321,6 @@ EOF
 		if [ -z "${cifs_filemask}" ]; then
 			cifs_filemask=0666
 		fi
-
-		echo "    create mask = ${cifs_filemask}"
 
 		if [ -z "${cifs_dirmask}" ]; then
 			cifs_dirmask=0777
@@ -374,8 +381,6 @@ EOF
                                 echo "    path = ${cifs_homedir_path}"
                         fi
 		fi
-
-
 	done
 
 	echo
@@ -383,7 +388,7 @@ EOF
 
 generate_exports()
 {
-	local IFS=\|
+	local IFS="|"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -411,14 +416,17 @@ generate_exports()
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
-			mp_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM storage_mountpoint WHERE mp_path=\"${mountpoint}\";"`
-			if [ -n "${mp_id}" ]; then
-				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;"`
-				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;" | /usr/bin/cut -c1`
+
+			vfsobj_shadow=" "
+			fs=$(zfs list -H -o mountpoint,name|grep -E "${mountpoint}	"|awk '{print $2}')
+			if [ -n "${fs}" ]; then
+				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_filesystem='${fs}' LIMIT 1;"`
+				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_filesystem=\"${fs}\" LIMIT 1;" | /usr/bin/cut -c1`
 				if [ -n "${task_rint}" ]; then
 					vfsobj_shadow=" shadow_copy2"
 				fi
 			fi
+
 			echo "[${name}]"
 			echo "    path = ${mountpoint}"
 			echo "    printable = no"
@@ -512,18 +520,20 @@ EOF
 
 generate_smb_tdb()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%' AND NOT bsdusr_unixhash LIKE '*LOCKED*%'" > /tmp/smbpasswd
+	local tmp
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%' AND NOT bsdusr_unixhash LIKE '*LOCKED*%'" > $tmp
 	rm -f /var/etc/private/passdb.tdb
-	/usr/local/bin/pdbedit -i smbpasswd:/tmp/smbpasswd -e tdbsam:/var/etc/private/passdb.tdb
-	rm -f /tmp/smbpasswd
+	/usr/local/bin/pdbedit -d 0 -i smbpasswd:$tmp \
+	    -e tdbsam:/var/etc/private/passdb.tdb >/dev/null
+	rm -f $tmp
 }
 
 generate_avahi_cifs_service()
 {
 	local samba_enabled
 
-	samba_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'cifs'" 2>/dev/null || echo 0)
-        [ "x$samba_enabled" = x1 ] && \
+	srv_enabled cifs && \
 	    [ "x$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_zeroconf FROM services_cifs")" = x1 ]
 	if [ $? -eq 0 ]; then
 		cat > ${AVAHI_CIFS_SERVICE} <<EOF
