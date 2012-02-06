@@ -55,7 +55,7 @@ generate_krb5_conf()
 
 generate_kerberos_files()
 {
-	if AD_enabled
+	if srv_enabled activedirectory
 	then
 		AD_init
 

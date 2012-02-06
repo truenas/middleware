@@ -17,7 +17,7 @@ kerberos_start()
 
 	ec=1
 
-	if AD_enabled
+	if srv_enabled activedirectory
 	then
 		AD_init
 
@@ -49,7 +49,7 @@ kerberos_status()
 
 	ec=1
 
-	if AD_enabled
+	if srv_enabled activedirectory
 	then
 		AD_init
 

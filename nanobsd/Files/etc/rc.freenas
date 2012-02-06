@@ -437,6 +437,54 @@ __SQL__
 	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
 }
 
+# Create a cache filesystem on ${FREENAS_CACHEDIR} .
+#
+# Used by ix-activedirectory and ix-ldap.
+#
+# Returns 0 if successful; 1 if unsuccessful.
+#
+# NOTE: This function is intentionally noisy to catch potential logic errors
+# with the boot process.
+#
+# TODO: add permanent store capability; using the mdconfig* rc.d scripts would
+# be a good idea as it features pre-populating / fsck functionality for memory
+# disk images, whereas mdmfs doesn't.
+# TODO: employ something similar for ix-collectd, but only after the permanent
+# store capability has been added.
+create_cache_filesystem()
+{
+	local dev
+
+	# test to see if /var is an md, if not, presumably it's been moved to
+	# a persistant volume, so skip creating a separate in memory
+	# filesystem for it.
+	mount | awk '$3 == "/var" {print $1}' | grep -qE "/dev/md[[:digit:]]+"
+	if [ $? -ne 0 ] ; then
+		if [ ! -d "${FREENAS_CACHEDIR}" ]; then
+			mkdir -p "${FREENAS_CACHEDIR}"
+		fi
+		return 0
+	fi
+
+	if [ -d "${FREENAS_CACHEDIR}" ]; then
+		dev=$(mount | awk -v "dir=$FREENAS_CACHEDIR" \
+			'$3 == dir { print $1 }')
+		if [ -n "$dev" ] && ! umount $dev; then
+			return 1
+		fi
+	else
+		mkdir -p "${FREENAS_CACHEDIR}"
+	fi
+
+	mdmfs -i 4096 -b 4096 -f 512 -s ${FREENAS_CACHESIZE} \
+	    md "${FREENAS_CACHEDIR}"
+	if [ $? -eq 0 ]; then
+		return 0
+	fi
+
+	return 1
+}
+
 #
 #	General purpose utility functions.
 #
