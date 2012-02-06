@@ -523,3 +523,13 @@ LDAP_SSL_CHOICES = (
         ('on', _('SSL')),
         ('start_tls', _('TLS')),
         )
+
+RSYNC_MODE_CHOICES = (
+        ('module', _('Rsync module')),
+        ('ssh', _('Rsync over SSH')),
+)
+
+RSYNC_DIRECTION = (
+        ('push', _('Push')),
+        ('pull', _('Pull')),
+)

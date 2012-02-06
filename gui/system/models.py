@@ -380,9 +380,29 @@ class Rsync(Model):
             verbose_name=_("Remote Host"),
             help_text=_("IP Address or hostname"),
             )
+    rsync_mode = models.CharField(
+            max_length=20,
+            choices=choices.RSYNC_MODE_CHOICES,
+            default='module',
+            )
     rsync_remotemodule = models.CharField(
             max_length=120,
             verbose_name=_("Remote Module Name"),
+            blank=True,
+            help_text=_("Name of the module defined in the remote rsync daemon"),
+            )
+    rsync_remotepath = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote Path"),
+            blank=True,
+            help_text=_("Path on remote host to rsync to, e.g. /mnt/tank"),
+            )
+    rsync_direction = models.CharField(
+            max_length=10,
+            verbose_name=_("Direction"),
+            help_text=_("Push - From local to remote machine. Pull - From remote to local machine."),
+            default='push',
+            choices=choices.RSYNC_DIRECTION,
             )
     rsync_desc = models.CharField(
             max_length=120,
@@ -465,6 +485,10 @@ class Rsync(Model):
             help_text=_("Extra options to rsync command line (usually empty)"),
             blank=True
             )
+    rsync_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
@@ -477,6 +501,8 @@ class Rsync(Model):
     def __unicode__(self):
         if self.rsync_desc:
             return self.rsync_desc
+        elif self.rsync_mode == 'module':
+            return self.rsync_remotemodule
         else:
             return self.rsync_remotemodule
 

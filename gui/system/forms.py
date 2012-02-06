@@ -411,6 +411,12 @@ class CronJobForm(ModelForm):
             if ins.cron_dayweek == '*':
                 ins.cron_dayweek = "1,2,3,4,5,6,7"
         super(CronJobForm, self).__init__(*args, **kwargs)
+    def clean_cron_user(self):
+        user = self.cleaned_data.get("cron_user")
+        # See #1061 or FreeBSD PR 162976
+        if len(user) > 17:
+            raise forms.ValidationError("Usernames cannot exceed 17 characters for cronjobs")
+        return user
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
         if len(m) == 12:
@@ -448,6 +454,25 @@ class RsyncForm(ModelForm):
             if ins.rsync_dayweek == '*':
                 ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
+        self.fields['rsync_mode'].widget.attrs['onChange'] = "rsyncModeToggle();"
+    def clean_rsync_user(self):
+        user = self.cleaned_data.get("rsync_user")
+        # See #1061 or FreeBSD PR 162976
+        if len(user) > 17:
+            raise forms.ValidationError("Usernames cannot exceed 17 characters for rsync tasks")
+        return user
+    def clean_rsync_remotemodule(self):
+        mode = self.cleaned_data.get("rsync_mode")
+        val = self.cleaned_data.get("rsync_remotemodule")
+        if mode == 'module' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val
+    def clean_rsync_remotepath(self):
+        mode = self.cleaned_data.get("rsync_mode")
+        val = self.cleaned_data.get("rsync_remotepath")
+        if mode == 'ssh' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val
     def clean_rsync_month(self):
         m = eval(self.cleaned_data.get("rsync_month"))
         if len(m) == 12:
