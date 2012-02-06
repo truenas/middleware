@@ -36,6 +36,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
 from freeadmin.models import Model
 
+
 class Volume(Model):
     vol_name = models.CharField(
             unique=True,
@@ -51,6 +52,10 @@ class Volume(Model):
             max_length=50,
             blank=True,
             )
+
+    class Meta:
+        verbose_name = _("Volume")
+
     def get_disks(self):
         try:
             if not hasattr(self, '_disks'):
@@ -64,11 +69,14 @@ class Volume(Model):
             return self._disks
         except Exception, e:
             return []
+
     def get_datasets(self):
         if self.vol_fstype == 'ZFS':
             return notifier().list_zfs_datasets(path=self.vol_name, recursive=True)
+
     def get_zvols(self):
         return notifier().list_zfs_vols(self.vol_name)
+
     def _get_status(self):
         try:
             # Make sure do not compute it twice
@@ -78,8 +86,7 @@ class Volume(Model):
         except Exception, e:
             return _(u"Error")
     status = property(_get_status)
-    class Meta:
-        verbose_name = _("Volume")
+
     def has_attachments(self):
         """
         This is mainly used by the VolumeDelete form.
@@ -164,6 +171,66 @@ class Volume(Model):
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
+
+
+class Scrub(Model):
+    scrub_volume = models.OneToOneField(Volume,
+            verbose_name=_("Volume"),
+            limit_choices_to={'vol_fstype': 'ZFS'},
+            )
+    scrub_threshold = models.PositiveSmallIntegerField(
+            verbose_name=_("Threshold days"),
+            default=35,
+            help_text=_("Determine how many days shall be between scrubs"),
+            )
+    scrub_description = models.CharField(
+            max_length=200,
+            verbose_name=_("Description"),
+            blank=True,
+            )
+    scrub_minute = models.CharField(
+            max_length=100,
+            default="00",
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    scrub_hour = models.CharField(
+            max_length=100,
+            default="00",
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    scrub_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    scrub_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            verbose_name=_("Month"),
+            )
+    scrub_dayweek = models.CharField(
+            max_length=100,
+            default="7",
+            verbose_name=_("Day of week"),
+            )
+    scrub_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
+    class Meta:
+        verbose_name = _("ZFS Scrub")
+        verbose_name_plural = _("ZFS Scrubs")
+
+    class FreeAdmin:
+        icon_model = u"cronJobIcon"
+        icon_object = u"cronJobIcon"
+        icon_add = u"AddcronJobIcon"
+
+    def __unicode__(self):
+        return self.scrub_volume.vol_name
+
 
 class Disk(Model):
     disk_name = models.CharField(

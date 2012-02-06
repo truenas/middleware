@@ -39,12 +39,12 @@ from django.utils.translation import ugettext_lazy as _, ugettext as __, ungette
 
 from dojango import forms
 from dojango.forms import widgets, CheckboxSelectMultiple
-from freeadmin.forms import UserField, GroupField
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import is_mounted, mount, umount
+from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
@@ -960,3 +960,45 @@ class Dataset_Destroy(Form):
                 len(self.datasets)
             )
             self.fields['cascade'] = forms.BooleanField(initial=True, label=label)
+
+
+class ScrubForm(ModelForm):
+    class Meta:
+        model = models.Scrub
+        widgets = {
+            'scrub_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
+            'scrub_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
+            'scrub_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
+            'scrub_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
+            'scrub_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('instance'):
+            ins = kwargs.get('instance')
+            if ins.scrub_month == '*':
+                ins.scrub_month = "1,2,3,4,5,6,7,8,9,a,b,c"
+            else:
+                ins.scrub_month = ins.scrub_month.replace("10", "a").replace("11", "b").replace("12", "c")
+            if ins.scrub_dayweek == '*':
+                ins.scrub_dayweek = "1,2,3,4,5,6,7"
+        super(ScrubForm, self).__init__(*args, **kwargs)
+
+    def clean_scrub_month(self):
+        m = eval(self.cleaned_data.get("scrub_month"))
+        if len(m) == 12:
+            return '*'
+        m = ",".join(m)
+        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
+        return m
+
+    def clean_scrub_dayweek(self):
+        w = eval(self.cleaned_data.get("scrub_dayweek"))
+        if len(w) == 7:
+            return '*'
+        w = ",".join(w)
+        return w
+
+    def save(self):
+        super(ScrubForm, self).save()
+        started = notifier().restart("cron")
