@@ -69,7 +69,7 @@ main()
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     # Copy the image file to the cdrom.  Cache the compressed version to
     # make it easier to debug this and the install scripts.
-    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}-img.xz
+    cp ${IMGFILE} ${ISODIR}/$NANO_LABEL-${NANO_ARCH_HUMANIZED}.img.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
