@@ -480,6 +480,10 @@ class CronJobForm(ModelForm):
         # See #1061 or FreeBSD PR 162976
         if len(user) > 17:
             raise forms.ValidationError("Usernames cannot exceed 17 characters for cronjobs")
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
+        if ' ' in user:
+            raise forms.ValidationError("Usernames cannot have spaces")
         return user
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
@@ -524,6 +528,10 @@ class RsyncForm(ModelForm):
         # See #1061 or FreeBSD PR 162976
         if len(user) > 17:
             raise forms.ValidationError("Usernames cannot exceed 17 characters for rsync tasks")
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
+        if ' ' in user:
+            raise forms.ValidationError("Usernames cannot have spaces")
         return user
     def clean_rsync_remotemodule(self):
         mode = self.cleaned_data.get("rsync_mode")
