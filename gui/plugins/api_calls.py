@@ -85,10 +85,7 @@ def __serialize(objects):
     return serializers.serialize("json", objects)
 
 def __api_call_not_implemented(request, **kwargs):
-    data = {}
-    data["error"] = False
-    data["message"] = "not implemented"
-    return data
+    return "not implemented"
 
 
 
@@ -98,12 +95,12 @@ def __api_call_not_implemented(request, **kwargs):
 @jsonrpc_method("api.methods")
 def __api_call_api_methods(request, **kwargs):
     api_methods = __plugins_api_call_table.keys()
-    return { "error": False, "api_methods": sorted(api_methods) }
+    return sorted(api_methods)
 
 
 @jsonrpc_method("api.version")
 def __api_call_api_version(request, **kwargs):
-    return { "error": False, "api_version": PLUGINS_API_VERSION }
+    return PLUGINS_API_VERSION
     
 
 
@@ -836,8 +833,7 @@ def __system_tunable_destroy(request, **kwargs):
 #
 @jsonrpc_method("db.query")
 def __api_call_db_query_database(request, **kwargs):
-    data = { "error": False, "message": "Not implemented" }
-    return json.dumps(data)
+    return __api_call_not_implemented(request, kwargs)
 
 
 
@@ -858,8 +854,7 @@ def __api_call_fs_get_mountpoints(request, **kwargs):
             for name, dataset in datasets.items():
                 path_list.append(dataset.mountpoint)
 
-    data = { "error": False, "mountpoints": path_list }
-    return data
+    return path_list
 
 @jsonrpc_method("fs.mount")
 def __api_call_fs_mount_filesystem(request, **kwargs):
@@ -880,13 +875,7 @@ def __api_call_fs_mount_filesystem(request, **kwargs):
     p.wait()
 
     out = p.communicate()[0].split('\n')
-    if p.returncode != 0:
-        data = { "error": True, "message": out }
-
-    else:
-        data = { "error": False, "message": "ok" }
-
-    return data
+    return False if p.returncode != 0 else True
 
 @jsonrpc_method("fs.umount")
 def __api_call_fs_umount_filesystem(request, **kwargs):
@@ -905,13 +894,7 @@ def __api_call_fs_umount_filesystem(request, **kwargs):
     p.wait()
 
     out = p.communicate()[0].split('\n')
-    if p.returncode != 0:
-        data = { "error": True, "message": out }
-
-    else:
-        data = { "error": False, "message": "ok" }
-
-    return data
+    return False if p.returncode != 0 else True
 
 @jsonrpc_method("fs.directory.get")
 def __api_call_fs_get_directory(request, **kwargs):
@@ -940,10 +923,8 @@ def  __api_call_os_query_system(request, **kwargs):
 #
 @jsonrpc_method("api.test")
 def __api_call_api_test(request, **kwargs):
-    kwargs["error"] = False
     return kwargs
 
 @jsonrpc_method("api.debug")
 def __api_call_api_debug(request, **kwargs):
-    kwargs["error"] = False
     return kwargs
