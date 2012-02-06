@@ -28,6 +28,13 @@ class ViewSnap(TreeNode):
         model = 'Task'
         append_app = False
 
+class ViewScrub(TreeNode):
+
+    gname = 'storage.Scrub.View'
+    name = _('View ZFS Scrubs')
+    view = 'storage_scrubs'
+    append_app = False
+
 class AddVolume(TreeNode):
 
         gname = 'Add'

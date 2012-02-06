@@ -732,3 +732,9 @@ def multipath_status_json(request):
         'label': 'name',
         'items': items,
     }, indent=2), content_type='application/json')
+
+def scrubs(request):
+    scrubs = models.Scrub.objects.all().order_by('id')
+    return render(request, 'storage/scrub.html', {
+        'scrubs': scrubs,
+        })

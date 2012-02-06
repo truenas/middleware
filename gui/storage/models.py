@@ -231,6 +231,67 @@ class Scrub(Model):
     def __unicode__(self):
         return self.scrub_volume.vol_name
 
+    def get_human_minute(self):
+        if self.scrub_minute == '*':
+            return _(u'Every minute')
+        elif self.scrub_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.scrub_minute.split('*/')[1]
+        else:
+            return self.scrub_minute
+
+    def get_human_hour(self):
+        if self.scrub_hour == '*':
+            return _(u'Every hour')
+        elif self.scrub_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.scrub_hour.split('*/')[1]
+        else:
+            return self.scrub_hour
+
+    def get_human_daymonth(self):
+        if self.scrub_daymonth == '*':
+            return _(u'Everyday')
+        elif self.scrub_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.scrub_daymonth.split('*/')[1]
+        else:
+            return self.scrub_daymonth
+
+    def get_human_month(self):
+        months = self.scrub_month.split(",")
+        if len(months) == 12 or self.scrub_month == '*':
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            if m in ('10', '11', '12'):
+                m = chr(87 + int(m))
+            labels.append(unicode(mchoices[m]))
+        return ', '.join(labels)
+
+    def get_human_dayweek(self):
+        # TODO:
+        # 1. Carve out the days input so that way one can say:
+        #    Mon-Fri + Saturday -> Weekdays + Saturday.
+        # 2. Get rid of the duplicate code.
+        weeks = self.scrub_dayweek.split(',')
+        if len(weeks) == 7 or self.scrub_dayweek == '*':
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[str(w)]))
+        return ', '.join(labels)
+
+    def delete(self):
+        super(Scrub, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
 
 class Disk(Model):
     disk_name = models.CharField(
