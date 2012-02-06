@@ -54,7 +54,7 @@ GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
 
-def _system_info():
+def _system_info(request=None):
     # OS, hostname, release
     __, hostname, __ = os.uname()[0:3]
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
@@ -71,6 +71,11 @@ def _system_info():
     except:
         pass
 
+    if request:
+        host = request.META.get("HTTP_HOST")
+    else:
+        host = None
+
     return {
         'hostname': hostname,
         'platform': platform,
@@ -79,10 +84,11 @@ def _system_info():
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
+        'host': host,
     }
 
 def system_info(request):
-    sysinfo = _system_info()
+    sysinfo = _system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
 
 def config_restore(request):
