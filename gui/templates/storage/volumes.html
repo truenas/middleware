@@ -86,11 +86,11 @@
     <button id="delVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            editScaryObject('{% trans "Export Volume"|force_escape|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
+            editScaryObject('{% trans "Detach Volume"|force_escape|force_escape %}', '{% url storage_detach vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
     <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delVolBtn{{ m.id }}', position: ['above']">
-        <strong>{% trans "Export Volume" %}</strong>
+        <strong>{% trans "Detach Volume" %}</strong>
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="scrubVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">

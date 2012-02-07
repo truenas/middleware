@@ -1,7 +1,6 @@
-
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_export vid=volume.id %}', null, {progressbar: true});
+    formSubmit(this, e, '{% url storage_detach vid=volume.id %}', null, {progressbar: true});
 </script>
 <table>
     <tr>
@@ -18,7 +17,7 @@
 {% endif %}
 
     {{ form }}
-    <tr><td><strong>{{ volume.vol_name}}</strong>: {% trans "Are you sure you want to export?" %}</td></tr>
+    <tr><td><strong>{{ volume.vol_name}}</strong>: {% trans "Are you sure you want to detach?" %}</td></tr>
    <tr>
         <td>
             <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">

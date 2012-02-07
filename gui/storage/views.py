@@ -610,7 +610,7 @@ def zpool_disk_remove(request, vname, label):
         'disk': disk,
     })
 
-def volume_export(request, vid):
+def volume_detach(request, vid):
 
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = sum([mp._get_used_bytes() for mp in volume.mountpoint_set.all()])
@@ -621,12 +621,12 @@ def volume_export(request, vid):
         if form.is_valid():
             try:
                 volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
-                return JsonResponse(message=_("The volume has been successfully exported"))
+                return JsonResponse(message=_("The volume has been successfully detached"))
             except ServiceFailed, e:
                 return JsonResponse(error=True, message=unicode(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
-    return render(request, 'storage/volume_export.html', {
+    return render(request, 'storage/volume_detach.html', {
         'volume': volume,
         'form': form,
         'used': usedsize,
