@@ -91,6 +91,17 @@ generate_crontab()
 		# history for more details.
 		echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
 	done
+
+	local f="scrub_threshold scrub_minute scrub_hour scrub_daymonth scrub_month scrub_dayweek vol_name"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM storage_scrub s, storage_volume v WHERE s.scrub_volume_id = v.id AND scrub_enabled = 1 ORDER BY v.id" | \
+	while eval read -r $f; do
+		# Note that echo -e will do the wrong thing with certain characters. Read the commit
+		# history for more details.
+		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/sbin/scrub ${vol_name} ${scrub_threshold} >/dev/null 2>&1" >> /etc/crontab
+	done
 }
 
 original_crontab()
