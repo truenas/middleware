@@ -320,6 +320,10 @@ class VolumeWizardForm(forms.Form):
                 notifier().init("volume", volume, groups=grouped, force4khack=force4khack, path=ufspath)
                 if volume.vol_fstype == 'ZFS':
                     models.Scrub.objects.create(scrub_volume=volume)
+                    try:
+                        notifier().restart("cron")
+                    except:
+                        pass
 
         if mp_path in ('/etc', '/var', '/usr'):
             device = '/dev/ufs/' + volume_name
