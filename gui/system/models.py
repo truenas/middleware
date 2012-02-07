@@ -308,22 +308,25 @@ class CronJob(Model):
             )
     cron_minute = models.CharField(
             max_length=100,
+            default="00",
             verbose_name=_("Minute"),
             help_text=_("Values 0-59 allowed."),
             )
     cron_hour = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Hour"),
             help_text=_("Values 0-23 allowed."),
             )
     cron_daymonth = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Day of month"),
             help_text=_("Values 1-31 allowed."),
             )
     cron_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
             verbose_name=_("Month"),
             )
     cron_dayweek = models.CharField(
@@ -449,22 +452,25 @@ class Rsync(Model):
             )
     rsync_minute = models.CharField(
             max_length=100,
+            default="00",
             verbose_name=_("Minute"),
             help_text=_("Values 0-59 allowed."),
             )
     rsync_hour = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Hour"),
             help_text=_("Values 0-23 allowed."),
             )
     rsync_daymonth = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Day of month"),
             help_text=_("Values 1-31 allowed."),
             )
     rsync_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
             verbose_name=_("Month"),
             )
     rsync_dayweek = models.CharField(
