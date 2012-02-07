@@ -1,16 +1,15 @@
-
 <div data-dojo-type="dijit.layout.TabContainer" id="tab_sharing" data-dojo-props="nested:true, doLayout:true">
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Apple"|force_escape|force_escape %}'
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Apple (AFP)"|force_escape|force_escape %}'
     {% if focus_form == "sharing.AFP_Share.View" %}, selected: true{% endif %},
     href: '{% url sharing_apple %}',
     refreshOnShow: true" class="objrefresh data_sharing_AFP_Share" tab="sharing.AFP_Share.View">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "UNIX"|force_escape|force_escape %}'
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "UNIX (NFS)"|force_escape|force_escape %}'
     {% if focus_form == "sharing.NFS_Share.View" %}, selected: true{% endif %},
     href: '{% url sharing_unix %}',
     refreshOnShow: true" class="objrefresh data_sharing_NFS_Share" tab="sharing.NFS_Share.View">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Windows"|force_escape|force_escape %}'
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Windows (CIFS)"|force_escape|force_escape %}'
     {% if focus_form == "sharing.CIFS_Share.View" %}, selected: true{% endif %},
     href: '{% url sharing_windows %}',
     refreshOnShow: true" class="objrefresh data_sharing_CIFS_Share" tab="sharing.CIFS_Share.View">

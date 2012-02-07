@@ -91,8 +91,8 @@ class CIFS_Share(Model):
         notifier().reload("cifs")
 
     class Meta:
-        verbose_name = _("CIFS Share")
-        verbose_name_plural = _("CIFS Shares")
+        verbose_name = _("Windows (CIFS) Share")
+        verbose_name_plural = _("Windows (CIFS) Shares")
     class FreeAdmin:
         icon_model = u"WindowsShareIcon"
         icon_add = u"AddWindowsShareIcon"
@@ -218,8 +218,8 @@ class AFP_Share(Model):
         notifier().reload("afp")
 
     class Meta:
-        verbose_name = _("AFP Share")
-        verbose_name_plural = _("AFP Shares")
+        verbose_name = _("Apple (AFP) Share")
+        verbose_name_plural = _("Apple (AFP) Shares")
     class FreeAdmin:
         icon_model = u"AppleShareIcon"
         icon_add = u"AddAppleShareIcon"
@@ -300,8 +300,8 @@ class NFS_Share(Model):
         notifier().reload("nfs")
 
     class Meta:
-        verbose_name = _("NFS Share")
-        verbose_name_plural = _("NFS Shares")
+        verbose_name = _("Unix (NFS) Share")
+        verbose_name_plural = _("Unix (NFS) Shares")
     class FreeAdmin:
         icon_model = u"UNIXShareIcon"
         icon_add = u"AddUNIXShareIcon"
