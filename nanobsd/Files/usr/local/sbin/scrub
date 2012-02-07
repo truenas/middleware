@@ -1,0 +1,114 @@
+#!/bin/sh
+#+
+# Copyright 2012 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#	notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#	notice, this list of conditions and the following disclaimer in the
+#	documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 	 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# $FreeBSD$
+#####################################################################
+
+# This isn't needed when executed standalone on the CLI; this is needed when
+# executed from webserver/restricted context.
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+usage()
+{
+
+	cat<<-__EOF__
+	usage: $0 -p <pool> [<options>]
+	Where options is:
+	-t	Threshold days between scrubs
+__EOF__
+
+	return 0
+}
+
+main()
+{
+	local cmd="$0 $*"
+	local threshold="35"
+	local rc=0
+	local _last_scrub _scrub_diff _status pool
+
+	while getopts "p:t:" opt
+	do
+		case "${opt}" in
+		p)
+			pool=${OPTARG}
+			;;
+		t)
+			threshold=${OPTARG}
+			;;
+		:|\?)
+			usage "${opts}"
+			return 2
+			;;
+		esac
+	done
+
+	if [ -z "${pool}" ]; then
+		usage "${opts}"
+		return 2
+	fi
+
+	# Piece of code based on 800.scrub-zfs from periodic
+	_last_scrub=$(zpool history ${pool} | \
+		egrep "^[0-9\.\:\-]{19} zpool scrub ${pool}\$" | tail -1 |\
+		cut -d ' ' -f 1)
+	if [ -z "${_last_scrub}" ]; then
+		# creation time of the pool if no scrub was done
+		_last_scrub=$(zpool history ${pool} | \
+			sed -ne '2s/ .*$//p')
+	fi
+
+	# Now minus last scrub (both in seconds) converted to days.
+	_scrub_diff=$(expr -e \( $(date +%s) - \
+		$(date -j -f %F.%T ${_last_scrub} +%s) \) / 60 / 60 / 24)
+	if [ ${_scrub_diff} -lt ${threshold} ]; then
+		echo "   skipping scrubbing of pool '${pool}':"
+		echo "	  last scrubbing is ${_scrub_diff} days ago, threshold is set to ${threshold} days"
+		return 3
+	fi
+
+	_status="$(zpool status ${pool} | grep scrub:)"
+	case "${_status}" in
+		*"scrub in progress"*)
+			echo "   scrubbing of pool '${pool}' already in progress, skipping"
+			;;
+		*"none requested"*)
+			echo "   starting first scrub (since reboot) of pool '${pool}'"
+			zpool scrub ${pool}
+			[ $rc -eq 0 ] && rc=1
+			;;
+		*)
+			echo "   starting scrub of pool '${pool}'"
+			zpool scrub ${pool}
+			[ $rc -eq 0 ] && rc=1
+			;;
+	esac
+
+	return $rc
+
+}
+
+main $*
