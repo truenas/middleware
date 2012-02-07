@@ -202,12 +202,13 @@ class Scrub(Model):
             )
     scrub_daymonth = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Day of month"),
             help_text=_("Values 1-31 allowed."),
             )
     scrub_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
             verbose_name=_("Month"),
             )
     scrub_dayweek = models.CharField(

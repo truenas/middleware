@@ -16,13 +16,15 @@ class Migration(SchemaMigration):
             ('scrub_description', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('scrub_minute', self.gf('django.db.models.fields.CharField')(default='00', max_length=100)),
             ('scrub_hour', self.gf('django.db.models.fields.CharField')(default='00', max_length=100)),
-            ('scrub_daymonth', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('scrub_month', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7,8,9,10,a,b,c', max_length=100)),
+            ('scrub_daymonth', self.gf('django.db.models.fields.CharField')(max_length=100, default='*')),
+            ('scrub_month', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7,8,9,a,b,c', max_length=100)),
             ('scrub_dayweek', self.gf('django.db.models.fields.CharField')(default='7', max_length=100)),
             ('scrub_enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal('storage', ['Scrub'])
 
+        for vol in orm.Volume.objects.filter(vol_fstype='ZFS'):
+            orm.Scrub.objects.create(scrub_volume=vol)
 
     def backwards(self, orm):
         
@@ -76,13 +78,13 @@ class Migration(SchemaMigration):
         'storage.scrub': {
             'Meta': {'object_name': 'Scrub'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'scrub_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'scrub_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100', 'default': "'*'"}),
             'scrub_dayweek': ('django.db.models.fields.CharField', [], {'default': "'7'", 'max_length': '100'}),
             'scrub_description': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
             'scrub_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'scrub_hour': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
             'scrub_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
-            'scrub_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
+            'scrub_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
             'scrub_threshold': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '35'}),
             'scrub_volume': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['storage.Volume']", 'unique': 'True'})
         },
