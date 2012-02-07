@@ -25,6 +25,9 @@
 #
 #####################################################################
 
+import glob
+import os
+import pwd
 import re
 import shutil
 import subprocess
@@ -527,24 +530,28 @@ class RsyncForm(ModelForm):
         user = self.cleaned_data.get("rsync_user")
         # See #1061 or FreeBSD PR 162976
         if len(user) > 17:
-            raise forms.ValidationError("Usernames cannot exceed 17 characters for rsync tasks")
+            raise forms.ValidationError("Usernames cannot exceed 17 "
+                "characters for rsync tasks")
         # Windows users can have spaces in their usernames
         # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
         if ' ' in user:
             raise forms.ValidationError("Usernames cannot have spaces")
         return user
+
     def clean_rsync_remotemodule(self):
         mode = self.cleaned_data.get("rsync_mode")
         val = self.cleaned_data.get("rsync_remotemodule")
         if mode == 'module' and not val:
             raise forms.ValidationError(_("This field is required"))
         return val
+
     def clean_rsync_remotepath(self):
         mode = self.cleaned_data.get("rsync_mode")
         val = self.cleaned_data.get("rsync_remotepath")
         if mode == 'ssh' and not val:
             raise forms.ValidationError(_("This field is required"))
         return val
+
     def clean_rsync_month(self):
         m = eval(self.cleaned_data.get("rsync_month"))
         if len(m) == 12:
@@ -552,12 +559,32 @@ class RsyncForm(ModelForm):
         m = ",".join(m)
         m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
+
     def clean_rsync_dayweek(self):
         w = eval(self.cleaned_data.get("rsync_dayweek"))
         if len(w) == 7:
             return '*'
         w = ",".join(w)
         return w
+
+    def clean(self):
+        cdata = self.cleaned_data
+        mode = cdata.get("rsync_mode")
+        user = cdata.get("rsync_user")
+        if mode == 'ssh':
+            try:
+                home = pwd.getpwnam(user).pw_dir
+                search = os.path.join(home, ".ssh", "id_[edr]*.*")
+                if not glob.glob(search):
+                    raise ValueError
+            except (KeyError, ValueError, AttributeError, TypeError):
+                self._errors['rsync_user'] = self.error_class([
+                    _("In order to use rsync over SSH you need a user<br />"
+                      "with a public key (DSA/ECDSA/RSA) set up in home dir."),
+                    ])
+                cdata.pop('rsync_user', None)
+        return cdata
+
     def save(self):
         super(RsyncForm, self).save()
         started = notifier().restart("cron")
