@@ -165,9 +165,9 @@ INSTALLED_APPS = (
     'system',
     'network',
     'storage',
-    'plugins',
     'sharing',
     'services',
+    'plugins',
 )
 
 BLACKLIST_NAV = (
