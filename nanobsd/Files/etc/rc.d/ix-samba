@@ -217,9 +217,7 @@ EOF
 			fi
 
 			if [ -n "${ldap_rootbindpw}" ]; then
-				mount -u /
 				/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
-				mount -ur /
 			fi
 
 			if [ -n "${ldap_basedn}" ]; then

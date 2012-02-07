@@ -18,7 +18,6 @@ save_certificate()
 {
 	local ldap_id="${1}"
 
-	mount -uw -onoatime /
 	mkdir -p "$(dirname ${CERT_FILE})"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -32,8 +31,6 @@ save_certificate()
 		id = ${ldap_id}
 
 	" > "${CERT_FILE}"
-
-	mount -ur /
 }
 
 generate_ldapconf()

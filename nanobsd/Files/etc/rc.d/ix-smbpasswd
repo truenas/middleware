@@ -34,9 +34,7 @@ generate_smbpasswd()
 	while eval read $f
 	do
 		if [ -n "${ldap_rootbindpw}" ]; then
-			mount -uw -onoatime /
 			/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
-			mount -ur /
 		fi
 	done
 }
