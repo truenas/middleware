@@ -126,6 +126,7 @@ class NTPServer(Model):
     class Meta:
         verbose_name = _("NTP Server")
         verbose_name_plural = _("NTP Servers")
+        ordering = ["ntp_address"]
 
     class FreeAdmin:
         icon_model = u"NTPServerIcon"
@@ -303,7 +304,7 @@ class CronJob(Model):
             )
     cron_description = models.CharField(
             max_length=200,
-            verbose_name=_("Description"),
+            verbose_name=_("Short description"),
             blank=True,
             )
     cron_minute = models.CharField(
@@ -341,6 +342,7 @@ class CronJob(Model):
     class Meta:
         verbose_name = _("Cron Job")
         verbose_name_plural = _("Cron Jobs")
+        ordering = ["cron_description", "cron_user"]
 
     class FreeAdmin:
         icon_model = u"cronJobIcon"
@@ -348,6 +350,8 @@ class CronJob(Model):
         icon_add = u"AddcronJobIcon"
 
     def __unicode__(self):
+        if self.cron_description:
+            return self.cron_description
         return u"%d (%s)" % (self.id, self.cron_user)
 
     def get_human_minute(self):
