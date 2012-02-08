@@ -321,7 +321,7 @@ class notifier:
         try:
             with open('/var/run/webshell.pid', 'r') as f:
                 pid = f.read()
-                self.__system_nolog("kill -9 %s" % pid)
+                os.kill(int(pid), signal.SIGKILL)
         except:
             pass
         self.__system_nolog("/usr/local/www/freenasUI/tools/webshell.py")
