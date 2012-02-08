@@ -171,6 +171,16 @@ webshell = (function() {
                     return keypress(ev);
                 }
             }
+
+            /*
+             * We need to stop propagation whether this is TAB
+             * for command completion in shell
+             * TODO: Use dojo
+             */
+            if (ev.keyCode == 9) {
+                me.keypress(ev);
+            }
+
         }
         qtimer=window.setTimeout(me.update, 1);
     }
