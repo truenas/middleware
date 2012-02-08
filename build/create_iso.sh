@@ -13,7 +13,7 @@ main()
 	requires_root
 
 	# Keep in sync with freenas-common and nano_env.
-	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.img.xz"
+	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 	ETC_FILES="$AVATAR_ROOT/build/files"
 

@@ -39,7 +39,7 @@ That's it.
 The End Result:
 
 If your build completes successfully, you'll have an image in
-obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.Full_Install.xz where:
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.img.xz where:
 
 - VVVV is the 'release' branch version or.
 - XXXX is the svn revision from the FreeNAS repo.
