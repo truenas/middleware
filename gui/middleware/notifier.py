@@ -190,6 +190,7 @@ class notifier:
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
+            'webshell': (None, '/var/run/webshell.pid'),
         }
 
     def _started_notify(self, what):
@@ -226,7 +227,8 @@ class notifier:
                 notify.join()
 
             if pidfile:
-                retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
+                procname = " " + procname if procname else ""
+                retval = self.__system_nolog("/bin/pgrep -F %s%s" % (pidfile, procname))
             else:
                 retval = self.__system_nolog("/bin/pgrep %s" % (procname,))
 
@@ -311,6 +313,9 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
+
+    def _start_webshell(self):
+        self.__system_nolog("/usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")

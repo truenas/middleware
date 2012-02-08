@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 #+
-# Copyright 2011 iXsystems, Inc.
+# Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,18 +27,89 @@
 #####################################################################
 
 from ctypes import cdll, byref, create_string_buffer
-
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 import array
-import commands
+import atexit
 import fcntl
 import os
 import pty
-import select
 import signal
+import select
 import struct
+import sys
+import syslog
 import termios
 import threading
 import time
+
+import daemon
+
+
+def set_proc_name(newname):
+    libc = cdll.LoadLibrary('libc.so.7')
+    buff = create_string_buffer(len(newname)+1)
+    buff.value = newname
+    libc.setproctitle(byref(buff))
+
+
+def main_loop():
+    set_proc_name('webshelld')
+    server = SimpleXMLRPCServer(("localhost", 8000))
+    server.register_instance(Multiplex("bash", "xterm-color"))
+    server.serve_forever()
+
+
+class PidFile(object):
+    """
+    Context manager that locks a pid file.
+    Implemented as class not generator because daemon.py is calling __exit__
+    with no parameters instead of the None, None, None specified by PEP-343.
+
+    Based on:
+    http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
+    """
+
+    def __init__(self, path):
+        self.path = path
+        self.pidfile = None
+
+    def __enter__(self):
+        self.pidfile = open(self.path, "a+")
+        try:
+            fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            raise SystemExit("Already running according to " + self.path)
+        self.pidfile.seek(0)
+        self.pidfile.truncate()
+        self.pidfile.write(str(os.getpid()))
+        self.pidfile.flush()
+        self.pidfile.seek(0)
+        return self.pidfile
+
+    def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
+        try:
+            self.pidfile.close()
+        except IOError as err:
+            pass
+
+
+def main(argv):
+    """Our friendly neighborhood main function."""
+    pidfile = PidFile('/var/run/webshell.pid')
+
+    context = daemon.DaemonContext(
+        working_directory='/root',
+        umask=0o002,
+        pidfile=pidfile,
+        #stdout=sys.stdout,
+        #stdin=sys.stdin,
+        #stderr=sys.stderr,
+    )
+
+    with context:
+        main_loop()
+
 
 class Terminal:
     def __init__(self, w, h):
@@ -1192,18 +1264,24 @@ class Multiplex:
         return True
     # Write to process
     def proc_write(self, sid, d):
-        if sid not in self.session:
-            return False
-        elif self.session[sid]['state'] != 'alive':
-            return False
+        d = d.data
+        print d, repr(d)
         try:
-            term = self.session[sid]['term']
-            d = term.pipe(d)
-            fd = self.session[sid]['fd']
-            os.write(fd, d)
-        except (IOError, OSError):
-            return False
-        return True
+            if sid not in self.session:
+                return False
+            elif self.session[sid]['state'] != 'alive':
+                return False
+            try:
+                term = self.session[sid]['term']
+                d = term.pipe(d)
+                fd = self.session[sid]['fd']
+                os.write(fd, d)
+            except (IOError, OSError):
+                return False
+            return True
+        except Exception, e:
+            print "here"
+        return False
     # Dump terminal output
     def proc_dump(self, sid):
         if sid not in self.session:
@@ -1239,3 +1317,6 @@ class Multiplex:
             if len(i):
                 time.sleep(0.002)
         self.proc_buryall()
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

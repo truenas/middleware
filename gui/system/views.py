@@ -30,6 +30,7 @@ import os
 import shutil
 import subprocess
 import time
+import xmlrpclib
 
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
@@ -48,7 +49,6 @@ from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.system import forms, models
-from freenasUI.system.terminal import Terminal, Multiplex
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -440,18 +440,34 @@ def debug_save(request):
     return response
 
 
-multiplex = Multiplex("bash", "xterm-color")
-
 @never_cache
 def terminal(request):
+
+    sid = int(request.GET.get("s", 0))
+    k = request.GET.get("k")
+    w = int(request.GET.get("w", 80))
+    h = int(request.GET.get("h", 24))
+
+    """
+    Yeah, I know...
+    Making one connection for every request... shame on you
+    Fixing that soon, I guess!
+    """
+    multiplex = xmlrpclib.ServerProxy("http://localhost:8000/")
+    alive = False
+    for i in range(3):
+        try:
+            alive = multiplex.proc_keepalive(sid, w, h)
+            break
+        except:
+            if not notifier().started("webshell"):
+                notifier().start("webshell")
+                time.sleep(0.5)
+
     try:
-        sid = int(request.GET.get("s"))
-        k = request.GET.get("k")
-        w = int(request.GET.get("w"))
-        h = int(request.GET.get("h"))
-        if multiplex.proc_keepalive(sid, w, h):
+        if alive:
             if k:
-                multiplex.proc_write(sid, k)
+                multiplex.proc_write(sid, xmlrpclib.Binary(bytearray(str(k))))
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
             response = HttpResponse(content_data, content_type='text/xml')
@@ -460,8 +476,7 @@ def terminal(request):
             response = HttpResponse('Disconnected')
             response.status_code = 400
             return response
-    except (KeyError, ValueError, IndexError):
+    except (KeyError, ValueError, IndexError), e:
         response = HttpResponse('Invalid parameters')
         response.status_code = 400
         return response
-
