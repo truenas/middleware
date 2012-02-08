@@ -2,23 +2,14 @@
 <form data-dojo-type="dijit.form.Form">
 
 <script type="dojo/method">
+    var plugin_name = "minidlna";
+    var service = new dojo.rpc.JsonService({
+        serviceUrl: "/plugins/json/",
+    });
+
+    var plugin_info = null;
+    var mounted = null;
     var saved = null;
-
-    get_mp_list = function() {
-        var mp_list = null;
-
-        dojo.xhrGet({
-            url: '/plugins/minidlna/1.0.22_1/mp_saved',
-            sync: true,
-            failOk: true,
-            handleAs: "json",
-            handle: function(data) {
-                mp_list = data;
-            },
-        });
-
-        return mp_list;
-    }
 
     sd = function(k, v) {
         if (!saved[k]) {
@@ -40,10 +31,8 @@
     }
 
     get_saved = function() {
-        var saved = null;
-     
         dojo.xhrGet({
-            url: '/plugins/minidlna/1.0.22_1/saved',
+            url: '/plugins/minidlna/1.0.22_2/saved',
             sync: true,
             failOk: true,
             handleAs: "json",  
@@ -51,8 +40,6 @@
                 saved = data;
             },
         });
-            
-        return saved;
     }
 
     filldiv = function(divid, header, settings) {
@@ -137,29 +124,27 @@
     }
 
     minidlna_file_config = function() {
-        var dirs = new Array();
-        var mountpoints = get_mp_list();
-        var i = 0;
-        for (var mp in mountpoints) {
-            if (mp.indexOf("minidlna_mp_dst_") >=0) {
-                dirs[i++] = mountpoints[mp];
+        var mp_list = new Array();
+        if (mounted && mounted.length) {
+            for (var i = 0;i < mounted.length;i++) {
+                mp_list[i] = mounted[i][1];
             }
         }
 
-        var sel_media_dir = new Array(dirs.length);
-        var sel_db_dir = new Array(dirs.length);
+        var sel_media_dir = new Array(mp_list.length);
+        var sel_db_dir = new Array(mp_list.length);
 
-        for (var i = 0;i < dirs.length;i++) {
+        for (var i = 0;i < mp_list.length;i++) {
             sel_media_dir[i] = {
-                label: dirs[i],
-                value: dirs[i],
-                selected: (dirs[i] == saved["minidlna_file_media_dir"])
+                label: mp_list[i],
+                value: mp_list[i],
+                selected: (mp_list[i] == saved["minidlna_file_media_dir"])
             };
 
             sel_db_dir[i] = {
-                label: dirs[i],
-                value: dirs[i],
-                selected: (dirs[i] == saved["minidlna_file_db_dir"])
+                label: mp_list[i],
+                value: mp_list[i],
+                selected: (mp_list[i] == saved["minidlna_file_db_dir"])
             };
         }
 
@@ -246,16 +231,43 @@
         filldiv("minidlna_file_config", "Configuration file", settings);
     }
 
-    saved = get_saved();
-    set_defaults(); 
+    wait_for_mounted = function() {
+        plugin_info = dojo.fromJson(plugin_info);
 
-    minidlna_daemon_config();
-    minidlna_file_config();
+        var fields = plugin_info[0]["fields"];
+        var plugin_path = fields["plugin_path"];
+
+        var s = service.callRemote("fs.mounted.get", [plugin_path]);
+        s.addCallback(function(result) {
+            mounted = result;
+
+            get_saved();
+            set_defaults(); 
+
+            minidlna_daemon_config();
+            minidlna_file_config();
+        });
+    }
+
+    wait_for_plugin_info = function() {
+        var s = service.callRemote("plugins.plugins.get", [plugin_name]);
+        s.addCallback(function(result) {
+            plugin_info = result;
+
+            wait_for_mounted();
+        });
+    }
+
+    main = function() {
+        wait_for_plugin_info();
+    }
+
+    main();
 
 </script>
 
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e, "/plugins/minidlna/1.0.22_1/post");
+        formSubmit(this, e, "/plugins/minidlna/1.0.22_2/post");
     </script>
 
 <div id="minidlna_daemon_config"></div>

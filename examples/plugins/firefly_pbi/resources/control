@@ -26,7 +26,6 @@ firefly_fcgi_wwwdir = os.path.join(firefly_pbi_path, "www")
 firefly_control = "/usr/local/etc/rc.d/mt-daapd"
 firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
 firefly_opts = os.path.join(firefly_etc_path, "options")
-firefly_mp_file = os.path.join(firefly_etc_path, "mountpoints")
 
 
 def firefly_start(environ, start_response, args):
@@ -60,21 +59,6 @@ def firefly_edit(environ, start_response, args):
     data = open(file).read()
     return data
 
-def firefly_mp_saved(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-
-    saved = {}
-    if os.access(firefly_mp_file, os.F_OK):
-        f = open(firefly_mp_file, "r") 
-        for line in f:
-            line = line.strip()
-            parts = line.split("=")
-            if len(parts) > 1:
-                saved[parts[0]] = parts[1]
-        f.close()
-
-    return json.dumps(saved)
-
 
 def firefly_mp_edit(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
@@ -82,54 +66,6 @@ def firefly_mp_edit(environ, start_response, args):
     file = os.path.join(firefly_fcgi_wwwdir, "mp_edit.html")
     data = open(file).read()
     return data
-
-
-def firefly_mp_post(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-
-    if not args:
-        return "Fail."
-
-    data = ""
-    f = open(firefly_mp_file, "w")
-    for key in args:
-        value = args[key]
-        if value and value != "false":
-            f.write("%s=%s\n" % (key, value))
-    f.close()
-
-    api_method = "fs_mount_filesystem"
-    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
-    url = "%s/plugins/plugin/api/%s" % (host, api_method)
-    http_cookie = environ.get("HTTP_COOKIE", None)
-
-    fs_src = []
-    fs_dst = []
-    from syslog import syslog, LOG_DEBUG
-    for i in sorted(args.keys()):
-        if i.startswith("firefly_mp_src"):
-            fs_src.append(args[i]) 
-        elif i.startswith("firefly_mp_dst"):
-            fs_dst.append(args[i]) 
-
-    i = 0
-    while i < len(fs_src):
-        url_args = {}
-        url_args["source"] = fs_src[i]
-        url_args["destination"] = fs_dst[i]
-        fullurl = "%s?%s" % (url, urllib.urlencode(url_args))
-
-        syslog(LOG_DEBUG, "firefly_api_call: URL = %s" % fullurl)
-
-        req = urllib2.Request(fullurl)
-        if http_cookie:
-            req.add_header("Cookie", http_cookie)
-        
-        response = urllib2.urlopen(req)
-        data = response.read()
-        i += 1
-
-    return json.dumps("ok") 
 
 
 def firefly_treemenu(environ, start_response, args):
@@ -337,43 +273,9 @@ def firefly_default(environ, start_response, args):
     return "firefly_default()"
 
 
-def firefly_api_call(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    if not args:
-        return "Fail"
-
-    api_method = args.get("api_method", None)
-    if not api_method:
-        return "More Fail"
-
-    del(args["api_method"])
-    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
-    url = "%s/plugins/plugin/api/%s" % (host, api_method)
-
-    if args:
-        url_args = urllib.urlencode(args) 
-        url = "%s?%s" % (url, url_args)
-
-    from syslog import syslog, LOG_DEBUG
-    syslog(LOG_DEBUG, "firefly_api_call: URL = %s" % url)
-
-    req = urllib2.Request(url)
-
-    http_cookie = environ.get("HTTP_COOKIE", None)
-    if http_cookie:
-        req.add_header("Cookie", http_cookie)
-        
-    response = urllib2.urlopen(req)
-    data = response.read()
-    return json.dumps(data)
-
-
 def firefly_fcgi_app(environ, start_response):
     firefly_fcgi_handlers = {
-        'mp_saved': firefly_mp_saved,
         'mp_edit': firefly_mp_edit,
-        'mp_post': firefly_mp_post,
-        'api_call': firefly_api_call,
         'saved': firefly_saved,
         'start': firefly_start,
         'stop': firefly_stop,

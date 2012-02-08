@@ -2,32 +2,20 @@
 <form data-dojo-type="dijit.form.Form">
 
 <script type="dojo/method">
+    var plugin_name = "firefly";
+    var service = new dojo.rpc.JsonService({
+        serviceUrl: "/plugins/json/",
+    });
+
+    var plugin_info = null;
+    var mounted = null;
     var saved = null;
 
-    get_mp_list = function() {
-        var mp_list = null;
-
-        dojo.xhrGet({
-            url: '/plugins/firefly/1696_6/mp_saved',
-            sync: true,
-            failOk: true,
-            handleAs: "json",
-            handle: function(data) {
-                mp_list = data;
-            },
-        });
-
-        return mp_list;
-    }
-
     get_directories = function() {
-        var mountpoints = get_mp_list();
         var mp_list = new Array();
-        var dirs = null;
-        var i = 0;
-        for (var mp in mountpoints) {
-            if (mp.indexOf("firefly_mp_dst_") >=0) {
-                mp_list[i++] = mountpoints[mp];
+        if (mounted && mounted.length) {
+            for (var i = 0;i < mounted.length;i++) {
+                mp_list[i] = mounted[i][1];
             }
         }
 
@@ -71,8 +59,6 @@
     }
 
     get_saved = function() {
-        var saved = null;
-     
         dojo.xhrGet({
             url: '/plugins/firefly/1696_6/saved',
             sync: true,
@@ -82,8 +68,6 @@
                 saved = data;
             },
         });
-            
-        return saved;
     }
 
     filldiv = function(divid, header, settings) {
@@ -396,13 +380,40 @@
         filldiv("firefly_scanning_config", "Scanning Configuration", scanning_settings);
     }
 
-    saved = get_saved(); 
-    set_defaults(saved);
+    wait_for_mounted = function() {
+        plugin_info = dojo.fromJson(plugin_info);
 
-    firefly_daemon_config();
-    firefly_general_config();
-    firefly_plugins_config();
-    firefly_scanning_config();
+        var fields = plugin_info[0]["fields"];
+        var plugin_path = fields["plugin_path"];
+
+        var s = service.callRemote("fs.mounted.get", [plugin_path]);
+        s.addCallback(function(result) {
+            mounted = result;
+
+            get_saved(); 
+            set_defaults(saved);
+
+            firefly_daemon_config();
+            firefly_general_config();
+            firefly_plugins_config();
+            firefly_scanning_config();
+        });
+    }
+
+    wait_for_plugin_info = function() {
+        var s = service.callRemote("plugins.plugins.get", [plugin_name]);
+        s.addCallback(function(result) {
+            plugin_info = result;
+
+            wait_for_mounted();
+        });
+    }
+
+    main = function() {
+        wait_for_plugin_info();
+    }
+
+    main();
 
 </script>
 

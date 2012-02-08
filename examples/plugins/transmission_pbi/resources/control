@@ -23,7 +23,6 @@ transmission_fcgi_pidfile = "/var/run/transmission_fcgi_server.pid"
 transmission_fcgi_wwwdir = os.path.join(transmission_pbi_path, "www")
 transmission_control = "/usr/local/etc/rc.d/transmission"
 transmission_opts = os.path.join(transmission_etc_path, "options")
-transmission_mp_file = os.path.join(transmission_etc_path, "mountpoints")
 
 
 def transmission_start(environ, start_response, args):
@@ -57,21 +56,6 @@ def transmission_edit(environ, start_response, args):
     data = open(file).read()
     return data
 
-def transmission_mp_saved(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-
-    saved = {}
-    if os.access(transmission_mp_file, os.F_OK):
-        f = open(transmission_mp_file, "r") 
-        for line in f:
-            line = line.strip()
-            parts = line.split("=")
-            if len(parts) > 1:
-                saved[parts[0]] = parts[1]
-        f.close()
-
-    return json.dumps(saved)
-
 
 def transmission_mp_edit(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
@@ -79,54 +63,6 @@ def transmission_mp_edit(environ, start_response, args):
     file = os.path.join(transmission_fcgi_wwwdir, "mp_edit.html")
     data = open(file).read()
     return data
-
-
-def transmission_mp_post(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-
-    if not args:
-        return "Fail."
-
-    data = ""
-    f = open(transmission_mp_file, "w")
-    for key in args:
-        value = args[key]
-        if value and value != "false":
-            f.write("%s=%s\n" % (key, value))
-    f.close()
-
-    api_method = "fs_mount_filesystem"
-    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
-    url = "%s/plugins/plugin/api/%s" % (host, api_method)
-    http_cookie = environ.get("HTTP_COOKIE", None)
-
-    fs_src = []
-    fs_dst = []
-    from syslog import syslog, LOG_DEBUG
-    for i in sorted(args.keys()):
-        if i.startswith("transmission_mp_src"):
-            fs_src.append(args[i]) 
-        elif i.startswith("transmission_mp_dst"):
-            fs_dst.append(args[i]) 
-
-    i = 0
-    while i < len(fs_src):
-        url_args = {}
-        url_args["source"] = fs_src[i]
-        url_args["destination"] = fs_dst[i]
-        fullurl = "%s?%s" % (url, urllib.urlencode(url_args))
-
-        syslog(LOG_DEBUG, "transmission_api_call: URL = %s" % fullurl)
-
-        req = urllib2.Request(fullurl)
-        if http_cookie:
-            req.add_header("Cookie", http_cookie)
-        
-        response = urllib2.urlopen(req)
-        data = response.read()
-        i += 1
-
-    return json.dumps("ok") 
 
 
 def transmission_treemenu(environ, start_response, args):
@@ -282,44 +218,10 @@ def transmission_default(environ, start_response, args):
     return "transmission_default()"
 
 
-def transmission_api_call(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    if not args:
-        return "Fail"
-
-    api_method = args.get("api_method", None)
-    if not api_method:
-        return "More Fail"
-
-    del(args["api_method"])
-    host = "%s://%s" % ("https" if environ['HTTPS'] == 'on' else "http", environ['HTTP_HOST'])
-    url = "%s/plugins/plugin/api/%s" % (host, api_method)
-
-    if args:
-        url_args = urllib.urlencode(args) 
-        url = "%s?%s" % (url, url_args)
-
-    from syslog import syslog, LOG_DEBUG
-    syslog(LOG_DEBUG, "transmission_api_call: URL = %s" % url)
-
-    req = urllib2.Request(url)
-
-    http_cookie = environ.get("HTTP_COOKIE", None)
-    if http_cookie:
-        req.add_header("Cookie", http_cookie)
-        
-    response = urllib2.urlopen(req)
-    data = response.read()
-    return json.dumps(data)
-
-
 def transmission_fcgi_app(environ, start_response):
     from syslog import syslog, LOG_DEBUG
     transmission_fcgi_handlers = {
-        'mp_saved': transmission_mp_saved,
         'mp_edit': transmission_mp_edit,
-        'mp_post': transmission_mp_post,
-        'api_call': transmission_api_call,
         'saved': transmission_saved,
         'start': transmission_start,
         'stop': transmission_stop,

@@ -2,6 +2,13 @@
 <form data-dojo-type="dijit.form.Form">
 
 <script type="dojo/method">
+    var plugin_name = "transmission";
+    var service = new dojo.rpc.JsonService({
+        serviceUrl: "/plugins/json/",
+    });
+
+    var plugin_info = null;
+    var mounted = null;
     var saved = null;
 
     sd = function(k, v) {
@@ -31,22 +38,6 @@
         return saved;
     }
 
-    get_mp_list = function() {
-        var mp_list = null;
-     
-        dojo.xhrGet({
-            url: '/plugins/transmission/2.42/mp_saved',
-            sync: true,
-            failOk: true,
-            handleAs: "json",  
-            handle: function(data) {
-                mp_list = data;
-            },
-        });
-            
-        return mp_list;
-    }
-
     filldiv = function(divid, header, settings) {
         var div = dojo.byId(divid);
         var table = dojo.create("table", {align: "center"}, div);
@@ -62,34 +53,11 @@
         }
     }
 
-    api_call = function(api_call_args) {
-        if (!api_call_args || !api_call_args["api_method"]) {
-            return null; 
-        }
-      
-        var api_res = null;
-        var url = '/plugins/transmission/2.42/api_call';
-        dojo.xhrGet({
-            url: url,
-            content: api_call_args,
-            sync: true,
-            failOk: true,
-            handleAs: "json",  
-            handle: function(data) {
-                api_res = data;
-            },
-        });
-            
-        return api_res;
-    }
-
     get_directories = function() {
         var mp_list = new Array();
-        var mountpoints = get_mp_list();
-        var i = 0;
-        for (var mp in mountpoints) {
-            if (mp.indexOf("transmission_mp_dst_") >=0) {
-                mp_list[i++] = mountpoints[mp];
+        if (mounted && mounted.length) {
+            for (var i = 0;i < mounted.length;i++) {
+                mp_list[i] = mounted[i][1];
             }
         }
 
@@ -231,7 +199,7 @@
                 })
             },
             { 
-                label: "Local peer discovery",
+                Label: "Local peer discovery",
                 type: new dijit.form.CheckBox({
                     name: "transmission_lpd",
                     checked: saved["transmission_lpd"]
@@ -313,10 +281,36 @@
 	}
     }
 
-    get_saved();
-    set_defaults();
+    wait_for_mounted = function() {
+        plugin_info = dojo.fromJson(plugin_info);
 
-    transmission_daemon_config();
+        var fields = plugin_info[0]["fields"];
+        var plugin_path = fields["plugin_path"];
+
+        var s = service.callRemote("fs.mounted.get", [plugin_path]);
+        s.addCallback(function(result) {
+            mounted = result;
+
+            get_saved();
+            set_defaults();
+            transmission_daemon_config(); 
+        });
+    }
+
+    wait_for_plugin_info = function() {
+        var s = service.callRemote("plugins.plugins.get", [plugin_name]);
+        s.addCallback(function(result) {
+            plugin_info = result;
+
+            wait_for_mounted();
+        });
+    }
+
+    main = function() {
+        wait_for_plugin_info(); 
+    }
+
+    main();
 
 </script>
 
