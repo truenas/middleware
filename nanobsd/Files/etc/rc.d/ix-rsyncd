@@ -44,12 +44,14 @@ EOF
 	while eval read -r $f; do
 	    cat >> $cfg <<EOF
 [${rsyncmod_name}]
-    comment = ${rsyncmod_comment}
     path = ${rsyncmod_path}
     max connections = ${rsyncmod_maxconn}
     uid = ${rsyncmod_user}
     gid = ${rsyncmod_group}
 EOF
+		if [ -n "${rsyncmod_comment}" ]; then
+			echo "    comment = ${rsyncmod_comment}" >> $cfg
+		fi
 	    if [ "${rsyncmod_mode}" = "ro" ]; then
 		    echo "    write only = false" >> $cfg
 		    echo "    read only = true" >> $cfg

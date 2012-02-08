@@ -1300,38 +1300,39 @@ class RsyncMod(Model):
             )
     rsyncmod_comment = models.CharField(
             max_length=120,
+            blank=True,
             verbose_name=_("Comment"),
             )
     rsyncmod_path = PathField(
-        verbose_name=_("Path"),
-        help_text=_("Path to be shared"),
-        )
+            verbose_name=_("Path"),
+            help_text=_("Path to be shared"),
+            )
     rsyncmod_mode = models.CharField(
-        max_length=120,
-        choices=choices.ACCESS_MODE,
-        default="rw",
-        verbose_name=_("Access Mode"),
-        help_text=_("This controls the access a remote host has to this module"),
-        )
+            max_length=120,
+            choices=choices.ACCESS_MODE,
+            default="rw",
+            verbose_name=_("Access Mode"),
+            help_text=_("This controls the access a remote host has to this module"),
+            )
     rsyncmod_maxconn = models.IntegerField(
-        default=0,
-        verbose_name=_("Maximum connections"),
-        help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
-        )
+            default=0,
+            verbose_name=_("Maximum connections"),
+            help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
+            )
     rsyncmod_user = UserField(
-        max_length=120,
-        default="nobody",
-        verbose_name=_("User"),
-        help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
-        blank=True,
-        )
+            max_length=120,
+            default="nobody",
+            verbose_name=_("User"),
+            help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
+            blank=True,
+            )
     rsyncmod_group = GroupField(
-        max_length=120,
-        default="nobody",
-        verbose_name=_("Group"),
-        help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
-        blank=True,
-        )
+            max_length=120,
+            default="nobody",
+            verbose_name=_("Group"),
+            help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
+            blank=True,
+            )
     rsyncmod_hostsallow = models.TextField(
             verbose_name = _("Hosts allow"),
             help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this module. You can specify the hosts by name or IP number. Leave this field empty to use default settings"),
@@ -1351,6 +1352,7 @@ class RsyncMod(Model):
     class Meta:
         verbose_name = _("Rsync Module")
         verbose_name_plural = _("Rsync Modules")
+        ordering = ["rsyncmod_name"]
 
     class FreeAdmin:
         menu_child_of = 'Rsync'
