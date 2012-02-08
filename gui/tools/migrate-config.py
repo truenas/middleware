@@ -1029,7 +1029,7 @@ class ConfigParser:
 
 
     def _handle_reboot(self, __parent, __level):
-        self.__handle_cronjob(__parent, "root", "/sbin/reboot")
+        self.__handle_cronjob(__parent, "root", "/sbin/shutdown -r now")
 
     #
     # XXX needs to be implemented XXX

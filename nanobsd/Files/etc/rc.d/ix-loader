@@ -163,7 +163,7 @@ generate_loader_confs()
 	generate_boot_loader_conf_local
 
 	if $AUTOTUNE_REBOOT && $reboot_now; then
-		reboot
+		shutdown -r now
 	fi
 }
 
