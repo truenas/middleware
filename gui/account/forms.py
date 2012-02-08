@@ -411,7 +411,7 @@ class bsdUserPasswordForm(ModelForm):
         return self.instance
 
 class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
-    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password"), required=False)
+    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"),
                                      initial=u'/bin/csh',
