@@ -317,6 +317,15 @@ class notifier:
     def _start_webshell(self):
         self.__system_nolog("/usr/local/www/freenasUI/tools/webshell.py")
 
+    def _restart_webshell(self):
+        try:
+            with open('/var/run/webshell.pid', 'r') as f:
+                pid = f.read()
+                self.__system_nolog("kill -9 %s" % pid)
+        except:
+            pass
+        self.__system_nolog("/usr/local/www/freenasUI/tools/webshell.py")
+
     def _restart_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
         self.__system("/usr/sbin/service istgt forcestop")

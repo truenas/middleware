@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+from httplib import HTTPConnection
 import commands
 import os
 import shutil
@@ -440,6 +441,16 @@ def debug_save(request):
     return response
 
 
+class TimeoutTransport(xmlrpclib.Transport):
+    timeout = 5.0
+    def set_timeout(self, timeout):
+        self.timeout = timeout
+    def make_connection(self, host):
+        return HTTPConnection(host, timeout=self.timeout)
+
+timeoutTransport = TimeoutTransport()
+
+
 @never_cache
 def terminal(request):
 
@@ -448,21 +459,15 @@ def terminal(request):
     w = int(request.GET.get("w", 80))
     h = int(request.GET.get("h", 24))
 
-    """
-    Yeah, I know...
-    Making one connection for every request... shame on you
-    Fixing that soon, I guess!
-    """
-    multiplex = xmlrpclib.ServerProxy("http://localhost:8000/")
+    multiplex = xmlrpclib.ServerProxy("http://localhost:8000/", transport=timeoutTransport)
     alive = False
     for i in range(3):
         try:
             alive = multiplex.proc_keepalive(sid, w, h)
             break
         except:
-            if not notifier().started("webshell"):
-                notifier().start("webshell")
-                time.sleep(0.5)
+            notifier().restart("webshell")
+            time.sleep(0.5)
 
     try:
         if alive:
