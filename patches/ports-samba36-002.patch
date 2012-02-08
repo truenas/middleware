@@ -65,38 +65,7 @@ RCS file: net/samba36/files/nmbd.in
 diff -N net/samba36/files/nmbd.in
 --- /dev/null	1 Jan 1970 00:00:00 -0000
 +++ net/samba36/files/nmbd.in	27 Jan 2012 20:24:54 -0000
-@@ -0,0 +1,62 @@
-+#!/bin/sh
-+#
-+# $FreeBSD$
-+
-+# PROVIDE: nmbd
-+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
-+# BEFORE: LOGIN
-+# KEYWORD: shutdown
-+#
-+# See .../rc.d/samba for more details.
-+#
-+
-+name="nmbd"
-+
-+. /etc/rc.subr
-+. %%SAMBA_CONFDIR%%/rc.samba
-+
-+rcvar=$(set_rcvar)
-+
-+load_rc_config $name
-+
-+: ${nmbd_enable=NO}
-+: ${samba_enable=NO}
-+if ! checkyesno ${name}_enable && checkyesno samba_enable; then
-+	eval ${name}_enable="YES"
-+fi
-+: ${nmbd_flags="-D"}
-+
-+reload_cmd="reload_cmd"
-+
-+run_rc_command "$1"
+@@ -0,0 +1,31 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
@@ -268,59 +237,7 @@ RCS file: net/samba36/files/rc.samba.in
 diff -N net/samba36/files/rc.samba.in
 --- /dev/null	1 Jan 1970 00:00:00 -0000
 +++ net/samba36/files/rc.samba.in	27 Jan 2012 20:24:54 -0000
-@@ -0,0 +1,104 @@
-+#!/bin/sh
-+#
-+# $FreeBSD$
-+#
-+# Generalized rc.d infrastructure script for samba.
-+
-+: ${command_args=${samba_config:+-s "${samba_config}"}}
-+: ${pidfile="%%SAMBA_RUNDIR%%/$name.pid"}
-+: ${smbcontrol_cmd=%%PREFIX%%/bin/smbcontrol}
-+: ${testparm_cmd=%%PREFIX%%/bin/testparm}
-+
-+extra_commands="reload status"
-+
-+samba_parm="${testparm_cmd} -s -v --parameter-name"
-+
-+samba_lockdir=$(${samba_parm} 'lock directory' ${samba_config:+"${samba_config}"} 2>/dev/null)
-+
-+case "$name" in
-+samba)
-+	eval ${name}_flags=""
-+	;;
-+*)
-+	eval ${name}_flags=""
-+	eval ${name}_program="%%PREFIX%%/sbin/${name}"
-+	;;
-+esac
-+
-+# Reload a samba service.
-+#
-+# name - samba, nmbd, smbd, winbindd
-+reload_cmd()
-+{
-+	local message_type reload_dest
-+
-+	if [ "$name" = "samba" ]; then
-+		reload_dest="all"
-+	else
-+		reload_dest="$name"
-+	fi
-+
-+	# XXX: reload doesn't print out any diags.
-+	debug "reloading $name configuration"
-+	echo "Reloading $name"
-+	message_type="reload-config"
-+
-+	$smbcontrol_cmd $reload_dest $message_type $command_args \
-+	    >/dev/null 2>&1
-+	if [ $? -ne 0 ]; then
-+		return 1
-+	fi
-+	return 0
-+}
+@@ -0,0 +1,52 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
@@ -608,38 +525,7 @@ RCS file: net/samba36/files/smbd.in
 diff -N net/samba36/files/smbd.in
 --- /dev/null	1 Jan 1970 00:00:00 -0000
 +++ net/samba36/files/smbd.in	27 Jan 2012 20:24:54 -0000
-@@ -0,0 +1,62 @@
-+#!/bin/sh
-+#
-+# $FreeBSD$
-+
-+# PROVIDE: smbd
-+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
-+# BEFORE: LOGIN
-+# KEYWORD: shutdown
-+#
-+# See .../rc.d/samba for more details.
-+#
-+
-+name="smbd"
-+
-+. /etc/rc.subr
-+. %%SAMBA_CONFDIR%%/rc.samba
-+
-+rcvar=$(set_rcvar)
-+
-+load_rc_config $name
-+
-+: ${samba_enable=NO}
-+: ${smbd_enable=NO}
-+if ! checkyesno ${name}_enable && checkyesno samba_enable; then
-+	eval ${name}_enable="YES"
-+fi
-+: ${smbd_flags="-D"}
-+
-+reload_cmd="reload_cmd"
-+
-+run_rc_command "$1"
+@@ -0,0 +1,31 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
@@ -677,41 +563,7 @@ RCS file: net/samba36/files/winbindd.in
 diff -N net/samba36/files/winbindd.in
 --- /dev/null	1 Jan 1970 00:00:00 -0000
 +++ net/samba36/files/winbindd.in	27 Jan 2012 20:24:54 -0000
-@@ -0,0 +1,68 @@
-+#!/bin/sh
-+#
-+# $FreeBSD$
-+
-+# PROVIDE: winbindd
-+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
-+# BEFORE: LOGIN
-+# KEYWORD: shutdown
-+#
-+# See .../rc.d/samba for more details.
-+#
-+
-+name="winbindd"
-+
-+. /etc/rc.subr
-+. %%SAMBA_CONFDIR%%/rc.samba
-+
-+rcvar=$(set_rcvar)
-+
-+load_rc_config $name
-+
-+: ${samba_enable=NO}
-+: ${winbindd_enable=NO}
-+if ! checkyesno ${name}_enable; then
-+	samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
-+	if [ -n "${samba_idmap:-}" ]; then
-+		eval ${name}_enable="YES"
-+	fi
-+fi
-+: ${winbindd_flags="-D"}
-+
-+reload_cmd="reload_cmd"
-+
-+run_rc_command "$1"
+@@ -0,0 +1,34 @@
 +#!/bin/sh
 +#
 +# $FreeBSD$
