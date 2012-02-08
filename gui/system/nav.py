@@ -30,8 +30,7 @@ class ViewCron(TreeNode):
 
         gname = 'system.CronJob.View'
         name = _('View Cron Jobs')
-        type = 'opencron'
-        icon = u"ViewcronJobIcon"
+        view = 'system_cronjobs'
         append_app = False
 
 class ViewRsync(TreeNode):

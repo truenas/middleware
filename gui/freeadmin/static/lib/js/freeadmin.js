@@ -344,33 +344,6 @@
             }
 
         },
-        openCron: function() {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'cron'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlCron;
-
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('CronJobs'),
-                    closable: true,
-                    refreshOnShow: true,
-                    href: openurl,
-                });
-                pane.tab = 'cron';
-                p.addChild(pane);
-                p.selectChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_services_CronJob"]);
-            }
-
-        }
 
     };
     /* end Menu */
@@ -1353,8 +1326,6 @@
                     Menu.openSharing(item.gname);
                 } else if(item.type == 'openstorage') {
                     Menu.openStorage(item.gname);
-                } else if(item.type == 'opencron') {
-                    Menu.openCron();
                 } else if(item.type == 'viewmodel') {
                     //  get the children and make sure we haven't opened this yet.
                     var c = p.getChildren();
