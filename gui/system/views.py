@@ -25,10 +25,10 @@
 #
 #####################################################################
 
-from httplib import HTTPConnection
 import commands
 import os
 import shutil
+import socket
 import subprocess
 import time
 import xmlrpclib
@@ -441,14 +441,81 @@ def debug_save(request):
     return response
 
 
-class TimeoutTransport(xmlrpclib.Transport):
-    timeout = 5.0
-    def set_timeout(self, timeout):
-        self.timeout = timeout
-    def make_connection(self, host):
-        return HTTPConnection(host, timeout=self.timeout)
+class UnixTransport(xmlrpclib.Transport):
+    def make_connection(self, addr):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(addr)
+        self.sock.settimeout(5)
+        return self.sock
 
-timeoutTransport = TimeoutTransport()
+    def single_request(self, host, handler, request_body, verbose=0):
+        # issue XML-RPC request
+
+        self.make_connection(host)
+
+        try:
+            self.sock.send(request_body+"\n")
+            p, u = self.getparser()
+
+            while 1:
+                data = self.sock.recv(1024)
+                if not data:
+                    break
+                p.feed(data)
+
+            self.sock.close()
+            p.close()
+
+            return u.close()
+        except xmlrpclib.Fault:
+            raise
+        except Exception:
+            # All unexpected errors leave connection in
+            # a strange state, so we clear it.
+            self.close()
+            raise
+        #discard any response data and raise exception
+        if (response.getheader("content-length", 0)):
+            response.read()
+        raise ProtocolError(
+            host + handler,
+            response.status, response.reason,
+            response.msg,
+            )
+
+
+class MyServer(xmlrpclib.ServerProxy):
+
+    def __init__(self, addr):
+
+        self.__handler = "/"
+        self.__host = addr
+        self.__transport = UnixTransport()
+        self.__encoding = None
+        self.__verbose = 0
+        self.__allow_none = 0
+
+    def __request(self, methodname, params):
+        # call a method on the remote server
+
+        request = xmlrpclib.dumps(params, methodname, encoding=self.__encoding,
+                        allow_none=self.__allow_none)
+
+        response = self.__transport.request(
+            self.__host,
+            self.__handler,
+            request,
+            verbose=self.__verbose
+            )
+
+        if len(response) == 1:
+            response = response[0]
+
+        return response
+
+    def __getattr__(self, name):
+        # magic method dispatcher
+        return xmlrpclib._Method(self.__request, name)
 
 
 @never_cache
@@ -459,7 +526,7 @@ def terminal(request):
     w = int(request.GET.get("w", 80))
     h = int(request.GET.get("h", 24))
 
-    multiplex = xmlrpclib.ServerProxy("http://localhost:8000/", transport=timeoutTransport)
+    multiplex = MyServer("/var/run/webshell.sock")
     alive = False
     for i in range(3):
         try:

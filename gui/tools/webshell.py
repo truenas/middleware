@@ -27,8 +27,7 @@
 #####################################################################
 
 from ctypes import cdll, byref, create_string_buffer
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 import array
 import atexit
 import fcntl
@@ -39,6 +38,7 @@ import select
 import struct
 import sys
 import syslog
+import SocketServer
 import termios
 import threading
 import time
@@ -53,10 +53,24 @@ def set_proc_name(newname):
     libc.setproctitle(byref(buff))
 
 
+class XMLRPCHandler(SocketServer.BaseRequestHandler):
+
+    def handle(self):
+        self.data = self.request.recv(1024).strip()
+        self.request.send(self.server.dispatcher._marshaled_dispatch(self.data))
+
+
 def main_loop():
     set_proc_name('webshelld')
-    server = SimpleXMLRPCServer(("localhost", 8000))
-    server.register_instance(Multiplex("bash", "xterm-color"))
+
+    dispatcher = SimpleXMLRPCDispatcher()
+    SOCKFILE = '/var/run/webshell.sock'
+    if os.path.exists(SOCKFILE):
+        os.unlink(SOCKFILE)
+    server = SocketServer.UnixStreamServer(SOCKFILE, XMLRPCHandler)
+    os.chmod(SOCKFILE, 0o700)
+    dispatcher.register_instance(Multiplex("bash", "xterm-color"))
+    server.dispatcher = dispatcher
     server.serve_forever()
 
 
@@ -87,10 +101,12 @@ class PidFile(object):
         self.pidfile.seek(0)
         return self.pidfile
 
-    def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
+    def __exit__(self, *args, **kwargs):
         try:
+            if os.path.exists(self.path):
+                os.unlink(self.path)
             self.pidfile.close()
-        except IOError as err:
+        except IOError:
             pass
 
 
@@ -102,9 +118,9 @@ def main(argv):
         working_directory='/root',
         umask=0o002,
         pidfile=pidfile,
-        #stdout=sys.stdout,
-        #stdin=sys.stdin,
-        #stderr=sys.stderr,
+        stdout=sys.stdout,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
     )
 
     with context:
@@ -1096,6 +1112,7 @@ class Terminal:
             self.dump_cache = dump
             return '<c cy="%03d" />' % cy + dump
 
+
 class SynchronizedMethod:
     def __init__(self, lock, orig):
         self.lock = lock
@@ -1125,10 +1142,12 @@ class Multiplex:
         self.signal_stop = 0
         self.thread = threading.Thread(target = self.proc_thread)
         self.thread.start()
+
     def stop(self):
         # Stop supervisor thread
         self.signal_stop = 1
         self.thread.join()
+
     def proc_keepalive(self, sid, w, h):
         if not sid in self.session:
             # Start a new session
@@ -1155,6 +1174,7 @@ class Multiplex:
             return True
         else:
             return False
+
     def proc_spawn(self, sid):
         # Session
         self.session[sid]['state'] = 'alive'
@@ -1204,7 +1224,9 @@ class Multiplex:
             except (IOError, OSError), e:
                 pass
             return True
+
     def proc_waitfordeath(self, sid):
+
         try:
             os.close(self.session[sid]['fd'])
         except (KeyError, IOError, OSError):
@@ -1221,6 +1243,7 @@ class Multiplex:
                 del self.session[sid]['pid']
         self.session[sid]['state'] = 'dead'
         return True
+
     def proc_bury(self, sid):
         if self.session[sid]['state'] == 'alive':
             try:
@@ -1231,6 +1254,7 @@ class Multiplex:
         if sid in self.session:
             del self.session[sid]
         return True
+
     def proc_buryall(self):
         for sid in self.session.keys():
             self.proc_bury(sid)
@@ -1262,26 +1286,23 @@ class Multiplex:
             except (IOError, OSError):
                 return False
         return True
+
     # Write to process
     def proc_write(self, sid, d):
         d = d.data
-        print d, repr(d)
+        if sid not in self.session:
+            return False
+        elif self.session[sid]['state'] != 'alive':
+            return False
         try:
-            if sid not in self.session:
-                return False
-            elif self.session[sid]['state'] != 'alive':
-                return False
-            try:
-                term = self.session[sid]['term']
-                d = term.pipe(d)
-                fd = self.session[sid]['fd']
-                os.write(fd, d)
-            except (IOError, OSError):
-                return False
-            return True
-        except Exception, e:
-            print "here"
-        return False
+            term = self.session[sid]['term']
+            d = term.pipe(d)
+            fd = self.session[sid]['fd']
+            os.write(fd, d)
+        except (IOError, OSError):
+            return False
+        return True
+
     # Dump terminal output
     def proc_dump(self, sid):
         if sid not in self.session:
@@ -1302,6 +1323,7 @@ class Multiplex:
                     fds.append(self.session[sid]['fd'])
                     fd2sid[self.session[sid]['fd']] = sid
         return (fds, fd2sid)
+
     # Supervisor thread
     def proc_thread(self):
         while not self.signal_stop:
