@@ -1,5 +1,5 @@
-            {% if advfields %}
-            <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: '{% if form.isAdvanced %}advanced{% else %}basic{% endif %}'">
+            {% if form.isAdvanced %}
+            <button data-dojo-type="dijit.form.Button" data-dojo-props="mode: '{% if form.advDefault %}advanced{% else %}basic{% endif %}'">
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                     var form = getForm(this);
                     var mode = this;
@@ -21,7 +21,7 @@
                         this.set('label', gettext('Advanced Mode'));
                     }
                 </script>
-                {% if form.isAdvanced %}
+                {% if form.advDefault %}
                 {% trans "Basic Mode" %}
                 {% else %}
                 {% trans "Advanced Mode" %}

@@ -44,7 +44,7 @@ class FormRender(template.Node):
         #if adv_mode is None:
         adv_mode = Advanced.objects.order_by('-id')[0].adv_advancedmode
         #request.session['adv_mode'] = adv_mode
-        #adv_mode = form.isAdvanced()
+        form.advDefault = adv_mode
 
         if hasattr(form, "_meta") and hasattr(form._meta.model, '_admin'):
             model = form._meta.model
