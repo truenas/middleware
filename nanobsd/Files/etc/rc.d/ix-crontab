@@ -100,7 +100,7 @@ generate_crontab()
 	while eval read -r $f; do
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
 		# history for more details.
-		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/sbin/scrub -p ${vol_name} -t ${scrub_threshold}" >> /etc/crontab
+		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/sbin/scrub -t ${scrub_threshold} ${vol_name}" >> /etc/crontab
 	done
 }
 

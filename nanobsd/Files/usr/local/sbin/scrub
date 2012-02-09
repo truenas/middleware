@@ -35,7 +35,7 @@ usage()
 {
 
 	cat<<-__EOF__
-	usage: $0 -p <pool> [<options>]
+	usage: $0 [<options>] <pool>
 	Where options is:
 	-t	Threshold days between scrubs
 __EOF__
@@ -50,12 +50,9 @@ main()
 	local rc=0
 	local _last_scrub _scrub_diff _status pool
 
-	while getopts "p:t:" opt
+	while getopts "t:" opt
 	do
 		case "${opt}" in
-		p)
-			pool=${OPTARG}
-			;;
 		t)
 			threshold=${OPTARG}
 			;;
@@ -66,10 +63,14 @@ main()
 		esac
 	done
 
-	if [ -z "${pool}" ]; then
+	shift $(( $OPTIND - 1 ))
+
+	if [ $# -ne 1 ]; then
 		usage "${opts}"
 		return 2
 	fi
+
+	pool=$1
 
 	# Piece of code based on 800.scrub-zfs from periodic
 	_last_scrub=$(zpool history ${pool} | \
