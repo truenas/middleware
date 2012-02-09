@@ -89,21 +89,25 @@ generate_istgt_config()
 
 	# Generate [InitiatorGroupNN] sections
 	echo "# InitiatorGroup section"
-	local f="id iscsi_target_initiator_tag iscsi_target_initiator_auth_network"
+	local f="id iscsi_target_initiator_tag"
 	eval local ${f}
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${sf} FROM services_iscsitargetauthorizedinitiator ORDER BY id" | \
 	while eval read -r ${f}; do
 		echo "[InitiatorGroup${iscsi_target_initiator_tag}]"
-		iscsi_target_initiator_initiators=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_initiator_initiators FROM services_iscsitargetauthorizedinitiator WHERE id = ${id}")
-
-		echo ${iscsi_target_initiator_initiators} | tr " ," "\n"| tr -s "\n" | \
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_initiator_initiators FROM services_iscsitargetauthorizedinitiator WHERE id = ${id}" | tr " ," "\n"| tr -s "\n" | \
 		while read -r initiator; do
 			if [ -n "${initiator}" ]; then
 				echo "  InitiatorName \"${initiator}\""
 			fi
 		done
-		echo "  Netmask ${iscsi_target_initiator_auth_network}"
+		# tr pipe for backward compatibiity
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_initiator_auth_network FROM services_iscsitargetauthorizedinitiator WHERE id = ${id}" | tr " ," "\n"| tr -s "\n" | \
+		while read -r network; do
+			if [ -n "${network}" ]; then
+				echo "  Netmask ${network}"
+			fi
+		done
 		echo
 	done
 

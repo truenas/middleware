@@ -841,28 +841,39 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
         self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
+
     class Meta:
         model = models.iSCSITargetAuthorizedInitiator
         widgets = {
             'iscsi_target_initiator_tag': forms.widgets.HiddenInput(),
         }
+
     def clean_iscsi_target_initiator_tag(self):
         tag = self.cleaned_data["iscsi_target_initiator_tag"]
         higher = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
         if tag > higher:
             raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
         return tag
+
     def clean_iscsi_target_initiator_auth_network(self):
-        auth_network = self.cleaned_data.get('iscsi_target_initiator_auth_network', '').strip().upper()
-        if auth_network != 'ALL':
+        field = self.cleaned_data.get('iscsi_target_initiator_auth_network',
+            '').strip().upper()
+        nets = re.findall(r'\S+', field)
+
+        for auth_network in nets:
+            if auth_network == 'ALL':
+                continue
             try:
                 IPNetwork(auth_network.encode('utf-8'))
             except (NetmaskValueError, ValueError):
                 try:
                     IPAddress(auth_network.encode('utf-8'))
                 except (AddressValueError, ValueError):
-                    raise forms.ValidationError(_("The field is a not a valid IP address or network. The keyword \"ALL\" can be used to allow everything."))
-        return auth_network
+                    raise forms.ValidationError(
+                        _("The field is a not a valid IP address or network. "
+                        "The keyword \"ALL\" can be used to allow everything."))
+        return '\n'.join(nets)
+
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
         started = notifier().reload("iscsitarget")
