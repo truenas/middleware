@@ -26,8 +26,8 @@
 #####################################################################
 
 class ServiceFailed(Exception):
-    def __init__(self, service, errmsg):
+    def __init__(self, service, value):
         self.service = service
-        self.errmsg = errmsg
+        self.value = value
     def __str__(self):
-        return repr(self.errmsg)
+        return repr(self.value)

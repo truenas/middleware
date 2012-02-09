@@ -40,6 +40,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.services.exceptions import ServiceFailed
 from system.models import Settings
 
 COMMENT_SYNTAX = ((re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
@@ -92,7 +93,7 @@ class LocaleMiddleware(object):
 class CatchError(object):
 
     def process_response(self, request, response):
-        if sys.exc_type and sys.exc_type is MiddlewareError:
+        if sys.exc_type and sys.exc_type in (MiddlewareError, ServiceFailed):
             excp = sys.exc_info()[1]
             kwargs = {
                 'error': True,
