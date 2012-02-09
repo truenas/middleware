@@ -520,8 +520,8 @@ class iSCSITargetAuthorizedInitiator(Model):
             default = "ALL",
             help_text = _("Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' for any initiators.")
             )
-    iscsi_target_initiator_auth_network = models.CharField(
-            max_length=255,
+    iscsi_target_initiator_auth_network = models.TextField(
+            max_length=2048,
             verbose_name = _("Authorized network"),
             default = "ALL",
             help_text = _("Network authorized to access to the iSCSI target. It takes IP or CIDR addresses or 'ALL' for any IPs.")
