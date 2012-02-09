@@ -1,0 +1,578 @@
+--- sysutils/megacli/Makefile	2011-06-23 01:56:04.000000000 -0700
++++ sysutils/megacli/Makefile	2011-11-30 07:30:11.000000000 -0800
+@@ -2,14 +2,15 @@
+ # Date created:		12 April 2009
+ # Whom:			Vladimir Laskov <samflanker@gmail.com>
+ #
+-# $FreeBSD: ports/sysutils/megacli/Makefile,v 1.9 2011/06/23 08:56:04 pav Exp $
++# $FreeBSD: ports/sysutils/megacli/Makefile,v 1.12 2011/11/30 15:30:11 pawel Exp $
+ #
+ 
+ PORTNAME=	megacli
+-PORTVERSION=	8.01.06
++PORTVERSION=	8.02.16
+ CATEGORIES=	sysutils
+-MASTER_SITES=	http://www.lsi.com/downloads/Public/MegaRAID%20Common%20Files/
+-DISTNAME=	${PORTVERSION}_FreeBSD_MegaCLI
++MASTER_SITES=	http://www.lsi.com/downloads/Public/MegaRAID%20Common%20Files/ \
++		CRITICAL
++DISTNAME=	${PORTVERSION}_MegaCLI
+ 
+ MAINTAINER=	samflanker@gmail.com
+ COMMENT=	SAS MegaRAID FreeBSD MegaCLI
+@@ -19,7 +20,6 @@
+ FETCH_BEFORE_ARGS=	-o ${DISTDIR}/${DISTFILES}
+ 
+ ONLY_FOR_ARCHS=	i386 amd64
+-IA32_BINARY_PORT=	yes
+ 
+ USE_ZIP=	yes
+ NO_BUILD=	yes
+@@ -27,7 +27,14 @@
+ 
+ PLIST_FILES=	sbin/MegaCli
+ 
+-do-install:
+-	${INSTALL_PROGRAM} ${WRKSRC}/MegaCli ${PREFIX}/sbin
++pre-fetch:
++	@${FETCH_BINARY} -o /dev/null http://www.lsi.com/magic.axd?x=e&file=http%3A//www.lsi.com/downloads/Public/MegaRAID%2520Common%2520Files/8.02.16_MegaCLI.zip
+ 
+-.include <bsd.port.mk>
++.include <bsd.port.pre.mk>
++do-install:
++.if ${ARCH} == "i386"
++		${INSTALL_PROGRAM} ${WRKSRC}/FREEBSD/MegaCli ${PREFIX}/sbin/MegaCli
++.elif ${ARCH} == "amd64"
++		${INSTALL_PROGRAM} ${WRKSRC}/FREEBSD/MegaCli64 ${PREFIX}/sbin/MegaCli
++.endif
++.include <bsd.port.post.mk>
+--- sysutils/megacli/distinfo	2011-03-18 00:14:46.000000000 -0700
++++ sysutils/megacli/distinfo	2011-10-30 05:45:54.000000000 -0700
+@@ -1,2 +1,2 @@
+-SHA256 (8.01.06_FreeBSD_MegaCLI.zip) = 95d5d35f5643b369da8ea3604f476738837c252fb06b5064f7e77a3b5a488f30
+-SIZE (8.01.06_FreeBSD_MegaCLI.zip) = 800132
++SHA256 (8.02.16_MegaCLI.zip) = e22b615f6a10e4c305e65434153f8e15e779a2e245c08116ce5eca840c183d66
++SIZE (8.02.16_MegaCLI.zip) = 12244704
+diff -ruN /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.flattened sysutils/megacli/work/.PLIST.flattened
+--- /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.flattened	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/.PLIST.flattened	2012-02-08 16:07:31.381891279 -0800
+@@ -0,0 +1 @@
++/usr/local/sbin/MegaCli
+diff -ruN /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.mktmp sysutils/megacli/work/.PLIST.mktmp
+--- /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.mktmp	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/.PLIST.mktmp	2012-02-08 16:07:30.401882061 -0800
+@@ -0,0 +1 @@
++sbin/MegaCli
+diff -ruN /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.mktmp.sorted sysutils/megacli/work/.PLIST.mktmp.sorted
+--- /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.mktmp.sorted	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/.PLIST.mktmp.sorted	2012-02-08 16:07:30.401882061 -0800
+@@ -0,0 +1 @@
++sbin/MegaCli
+diff -ruN /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.objdump sysutils/megacli/work/.PLIST.objdump
+--- /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/.PLIST.objdump	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/.PLIST.objdump	2012-02-08 16:07:31.411880493 -0800
+@@ -0,0 +1,3 @@
++
++/usr/local/sbin/MegaCli:     file format elf64-x86-64-freebsd
++
+--- sysutils/megacli/work/8.02.16_MegaCLI.txt	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/8.02.16_MegaCLI.txt	2011-08-12 10:13:36.000000000 -0700
+@@ -0,0 +1,378 @@
++*********************************************
++
++LSI Corp. MegaRAID Version 8.02.16 MegaCLI Release 
++
++*********************************************
++
++Release Date: 08/11/2011
++========================
++
++Supported Controllers
++==================
++
++MegaRAID SAS 9265-8i
++MegaRAID SAS 9285-8e
++MegaRAID SAS 9240-4i
++MegaRAID SAS 9240-8i
++MegaRAID SAS 9260-4i
++MegaRAID SAS 9260CV-4i
++MegaRAID SAS 9260-8i
++MegaRAID SAS 9260CV-8i
++MegaRAID SAS 9260DE-8i
++MegaRAID SAS 9261-8i
++MegaRAID SAS 9280-4i4e
++MegaRAID SAS 9280-8e
++MegaRAID SAS 9280DE-8e
++MegaRAID SAS 9280-24i4e
++MegaRAID SAS 9280-16i4e
++MegaRAID SAS 9260-16i
++MegaRAID SAS 8704ELP
++MegaRAID SAS 8704EM2
++MegaRAID SAS 8708ELP
++MegaRAID SAS 8708EM2 
++MegaRAID SAS 8880EM2
++MegaRAID SAS 8888ELP
++MegaRAID SAS 8308ELP*
++MegaRAID SAS 8344ELP*
++MegaRAID SAS 84016E*
++MegaRAID SAS 8408E*
++MegaRAID SAS 8480E*
++MegaRAID SATA 300-8ELP*
++
++*These older controllers should work but have not been tested.
++
++
++Component:
++=========
++SAS MegaRAID MegaCLI
++Release Date: 08/11/2011
++
++
++Version Numbers:	MegaCLI
++===============		===========			
++Current Version		8.02.16
++Previous Version	8.01.06
++
++
++Contents:
++=========
++This package contains MegaCLI for the following OSes:
++DOS
++FreeBSD
++Linux
++Solaris
++VMware
++Windows
++
++Use the MegaCLI components from the folder that matches your OS.
++
++
++
++Enhancements and Bug Fixes
++==========================
++LSIP200148740 (CO) (auto4comp UNIV_VIVA_Cli) MegaSCU (DOS4GW) change request to support OEM iBBU calibration process 
++LSIP200148762 (CO) (auto4comp UNIV_VIVA_Cli) TB FW: Do not let WebBIOS to display "BBU Retention Time" and "Estimated Time To Recharge". 
++LSIP200184338 (CO) (auto4comp UNIV_VIVA_Cli) TB FW Re-activate the user option to enable Patrol Read on SSD. 
++LSIP200099745 (CO) (auto4comp UNIV_VIVA_Cli) Enclosure related CLI improvements 
++LSIP200099746 (CO) (auto4comp UNIV_VIVA_PCLI) Enclosure related CLI improvements 
++LSIP200099762 (CO) (auto4comp UNIV_VIVA_Cli) PD diag state - Shield State 
++LSIP200099768 (CO) (auto4comp UNIV_VIVA_Cli) Shield state properties 
++LSIP200099803 (CO) (auto4comp UNIV_VIVA_Cli) PD status commands under CLI 
++LSIP200099804 (CO) (auto4comp UNIV_VIVA_PCLI) PD status commands under CLI 
++LSIP200173292 (CO) (auto4comp UNIV_VIVA_Cli) FW to take PCI IDs & SAS Address out of SBR or TSOC (OEM selectable per value) 
++LSIP200153885 (CO) (auto4comp UNIV_VIVA_Cli) Update MR SAS LSI applications for VMWare ESXi MN Release 
++LSIP200099807 (CO) (auto4comp UNIV_VIVA_Cli) additional MR diags 
++LSIP200099771 (CO) (auto4comp UNIV_VIVA_Cli) CLI battery commands 
++LSIP200100159 (CO) (auto4comp UNIV_VIVA_Cli) CLI version command 
++LSIP200154735 (CO) (auto4comp UNIV_VIVA_Cli) FreeBSD x64 support for 6Gb/s (TBolt) MegaRAID line 
++LSIP200099844 (CO) (auto4comp UNIV_VIVA_Cli) Request to use Unconfigured Good Drives for a HotSpare if no spare defined. 
++LSIP200099855 (CO) (auto4comp UNIV_VIVA_Cli) Emergency spare may ignore mixing policies 
++LSIP200099877 (CO) (auto4comp UNIV_VIVA_Cli) DGs revertible HSP attributes sticky on adoption. 
++LSIP200099896 (CO) (auto4comp UNIV_VIVA_Cli) Suspend / resume background tasks 
++LSIP200088557 (CO) (auto4comp UNIV_VIVA_Cli) Need ability to RESET expander from behind MegaSAS 
++LSIP200135217 (CO) (auto4comp UNIV_VIVA_Cli) SW licensing. Support FoD for PF activations on MegaRAID 
++LSIP200150237 (CO) (auto4comp UNIV_VIVA_Cli) Need MFC bit for CacheCade 2.0 
++LSIP200150509 (CO) (auto4comp UNIV_VIVA_Cli) Need MFC bit for CacheCade 2.0 
++LSIP200099823 (CO) (auto4comp UNIV_VIVA_Cli) erase vd function 
++LSIP200135617 (CO) (LSIP200106069) CLI. Add performance monitor related functions to MegaOEM 
++LSIP200101547 (CO) (auto4comp UNIV_VIVA_Cli) iMR unconfigured disks naming for JBOD disks 
++LSIP200101549 (CO) (auto4comp UNIV_VIVA_PCLI) iMR unconfigured disks naming for JBOD disks 
++LSIP200112561 (DFCT) DIF: MegaSCU CMD adpsettings -read -f settings.txt a0 does not work 
++LSIP200118922 (DFCT) Battery state option not available in CLI 
++LSIP200121822 (DFCT) CLI version commands are not added in help file. 
++LSIP200146132 (DFCT) MegaSCU needs to have a PR to set Mfg name & Mfg Date of StingRay ibbu 
++LSIP200154218 (DFCT) MegaCli vague message displayed when SpinDownTime value is too big 
++LSIP200168791 (DFCT) This defect is created to check-in files for Defects:LSIP200167601& LSIP200167602 
++LSIP200169584 (DFCT) Unable to flash 16mb file using adpM0flash on TB(MR controller) using CMDTOOL 
++LSIP200171972 (DFCT) Enclosure temperatures are reported 20 deg C higher than actual temperature. 
++LSIP200060991 (DFCT) DSIII: MegaCLI -adpgetprop defaultldpolicy -a0 return incorrect info 
++LSIP200141543 (DFCT) DIF cli mixing nonPI and Pi pds found cfgalldreedrv command failed to create R0 Pi VD 
++LSIP200147521 (DFCT) No syntax for VD erase operation on a VD in MegaCLI 8.02.07 
++LSIP200147590 (DFCT) MEGASCU Progdsply/showprog command displays the progress of REBUILD and PDCPYBK event even after suspended. 
++LSIP200147591 (DFCT) MEGASCU-Patrol read info displays the state as "unknown" when the process is suspended . 
++LSIP200173919 (DFCT) (Defer LSIP200168402) Patrol read info displays the state as "unknown" when the process is suspended . 
++LSIP200173920 (DFCT) (Defer LSIP200168399) VD numbering in CLI using command ldpdinfo . 
++LSIP200148211 (DFCT) Physical Disk information missing in command CFGDSPLY 
++LSIP200148112 (DFCT) (RW LSIP200141543) DIF cli mixing nonPI and Pi pds found cfgalldreedrv command failed to create R0 Pi VD 
++LSIP200149139 (DFCT) (RW LSIP200148112) (RW LSIP200141543) DIF cli mixing nonPI and Pi pds found cfgalldreedrv command failed to create R0 Pi 
++LSIP200147977 (DFCT) add AdpGetPciInfo command options in CLI (help menu, DOS support) 
++LSIP200148550 (DFCT) (RW LSIP200148211) Physical Disk information missing in command CFGDSPLY 
++LSIP200147562 (DFCT) 8.00.41 on ESXi and ESX 4.1 gives "Permission Denied" after installing MegaCLI 
++LSIP200149997 (DFCT) (7040217) (Defer LSIP200148994) MegaCli packages for both SPARC and x86 do not verify architecture type 
++LSIP200184682 (DFCT) Dos MegaCli doesn't show AdpFWFlash command syntax in the help menu. 
++LSIP200112950 (DFCT) MegaCli command CfgEachDskRaid0 -enblPI -a1 returns 0x01 error 
++LSIP200113677 (DFCT) Enclosure serial number is not displaying in CLI and PCLI 
++LSIP200114042 (DFCT) Enclosure FRU number and part number is not displaying in CLI 
++LSIP200119731 (DFCT) Enclosure type option is not available in CLI 
++LSIP200121825 (DFCT) Driver version command is not working in linux CLI 
++LSIP200166294 (DFCT) Unable to flash 16mb file using adpM0flash on TB(MR controller) 
++LSIP200174078 (DFCT) MegaCLI crashes during Advance Event Capture command 
++LSIP200148073 (DFCT) Defect to deliver changes for PR LSIP200072686. 
++LSIP200148459 (DFCT) CLI should not provide "Default" option in "Adpsetprop defaultldpspolicy" command. 
++LSIP200148495 (DFCT) (Defer LSIP200147731) DSIII: Failed to Set Adapter Properties when run MegaCli -AdpSetProp -DefaultLdPSPolicy -Default - 
++LSIP200148545 (DFCT) (RW LSIP200148495) (Defer LSIP200147731) DSIII: Failed to Set Adapter Properties when run MegaCli -AdpSetProp -DefaultLd 
++LSIP200148300 (DFCT) PR LSIP200072686 requires release of CmdTool2 for MN 
++LSIP200148511 (DFCT) VMware ESXi5.0 - MegaCLI does not work without export the library paths 
++LSIP200148515 (DFCT) VMware ESXi 5.0 - CmdTool2 returns Segmentation Fault 
++LSIP200151201 (DFCT) WB:Data not getting generated while trying to capture information through Megacli with IO running in background. 
++LSIP200119733 (DFCT) Driver version not shown in CLI using "Megacli version driver" command. 
++LSIP200113675 (DFCT) CLI version commands are not added in help page. 
++LSIP200114029 (DFCT) Battery backup charge time is not as per scopping in CLI 
++LSIP200111844 (DFCT) Remove unsupport DIF CMD in MegaCLI 
++LSIP200119430 (DFCT) (RW LSIP200113679) MegaCLI "ldinfo" page Mirror data size is shown as reduntant data size 
++LSIP200119788 (DFCT) Junk character display for SATA WWN field in CLI. 
++LSIP200114071 (DFCT) Bad Block table information is not shown when execute the cli command with - lall. 
++LSIP200121864 (DFCT) Enclosure FRU number and part number is not displaying in PCLI 
++LSIP200123173 (DFCT) Getbbtentries command gives some corrected and uncorrected entries in PCLI eventhough no bad blocks exists 
++LSIP200124552 (DFCT) MegaSCU: No help file for DIF support feature 
++LSIP200138571 (DFCT) Defect to port PR-LSIP200100398 : Provide the chip version/revision for MegaRAID controllers thru MegaCLI 
++LSIP200119187 (DFCT) (7002618) Unable to download disk f/w through MegaCLI 
++LSIP200147898 (DFCT) SWR: Macon:SCU: Efi cli pdinfo for SATA drives shows junk value for Enquiry data . 
++LSIP200148634 (DFCT) SWR:Macon:SCU-Cli shows max LD per array as 16. 
++LSIP200150590 (DFCT) (RW LSIP200148634) SWR:Macon:SCU-Cli shows max LD per array as 16. 
++LSIP200147485 (DFCT) Macon: In EFI environment CC cannot be started on a VD after performing Fast Init 
++LSIP200151366 (DFCT) SWR:Macon:CLI versions are different as displayed when queried and in release notes 
++LSIP200105726 (DFCT) Dummy defect for 11M02 PR 
++LSIP200105748 (DFCT) Dummy Defect for Removing Comments from files 
++LSIP200110822 (DFCT) MegaCli PdFWdown missing "-" before EncdevId 
++LSIP200110789 (DFCT) MegaCli PD FW download to multiple devices not supported, command output needs to be changed 
++LSIP200099006 (DFCT) For ibbu08, MegaCLI -GetBbuCapacityInfo returns zero for max error, remainging capacity alarm, and remaining time alarm 
++LSIP200111893 (DFCT) Porting the defect LSIP200099006. 
++LSIP200111888 (DFCT) Porting the defect LSIP200077064. (PreBootCli - AdpEventLog fails with exit code 0x01.) 
++LSIP200113872 (DFCT) Diff PR Merging in 11m02 
++LSIP200113364 (DFCT) Suspend/Resume fails to work on windows Cli for CC 
++LSIP200113851 (DFCT) CLI version commands are not working in PCLI 
++LSIP200114598 (DFCT) PCli fails to work. 
++LSIP200119427 (DFCT) Cli shows wrong information about Emergency spare 
++LSIP200119254 (DFCT) FW crashes when execute "adpbbucmd" command in PCLI 
++LSIP200120059 (DFCT) MegaCli fails to print the operation strings. 
++LSIP200120725 (DFCT) Battery backup charge time is not as per scopping in CLI 
++LSIP200114553 (DFCT) In Solaris and SPARC, Un installation time not removing MegaRAID directory. 
++LSIP200122180 (DFCT) Name change for iBBU08 for TB. 
++LSIP200152862 (DFCT) Need to CheckIn PR(LSIP200137246) (Univ_Viva_Cli)tools to address latency
++LSIP200154233 (DFCT) Battery type need to update 
++LSIP200156117 (DFCT) MegaCli ShowSummary does not display system info 
++LSIP200158424 (DFCT) OEM Enclosure PR need to be complete(49251) 
++LSIP200168903 (DFCT) Progdsply/showprog command displays the progress of rebuild event even after it is suspended. 
++LSIP200172526 (DFCT) The command showsummary doesnot display system information . 
++LSIP200147689 (DFCT) Porting of CC2 PR 
++LSIP200147743 (DFCT) need some extra changes for CC2 
++LSIP200148065 (DFCT) Porting Cache-offload PR 
++LSIP200148087 (DFCT) UNIV_VIVA_Cli crashes when spanned array is created . 
++LSIP200148138 (DFCT) Unable to capture performance data with Megacli64 
++LSIP200148231 (DFCT) Need to update perf mon cmd code 
++LSIP200148465 (DFCT) CLI does not show if CahceCade 2 is enabled on the controller 
++LSIP200148688 (DFCT) (RW LSIP200148465) CLI does not show if CahceCade 2 is enabled on the controller 
++LSIP200144918 (DFCT) Line CacheOffload equals 0 causes Pre-Man to fail
++LSIP200148710 (DFCT) AdpHwDevice read command not working properly 
++LSIP200148711 (DFCT) Porting the Pr-97510 
++LSIP200148835 (DFCT) Porting PR-55434 
++LSIP200149728 (DFCT) UNIV_VIVA_cli fails to create Virtual Drives using latest cachecade firmware . 
++LSIP200150311 (DFCT) WB:Megacli crashes while trying to capture information when IO is running in background. 
++LSIP200150662 (DFCT) Name changeing for Cache cade feature 
++LSIP200104408 (DFCT) LSIP200049226, LSIP200049215 PD/VD secure erase 
++LSIP200105750 (DFCT) Dummy defect to check in secure erase changes 
++LSIP200111056 (DFCT) MegaCLI 8.01.01 enable/disables PI command does not work 
++LSIP200111338 (DFCT) Megacli Ver 8.01.01-DIF does not show VD properties if PI is enable or disabled 
++LSIP200111846 (DFCT) MegaCLI should not allow to enable DIF with Liberator controller 
++LSIP200112378 (DFCT) improvement needed for output of ./MegaCli LdGetProp -dsblpi -l0 -a2 and ldinfo 
++LSIP200119591 (DFCT) MegaCli fails to work 
++LSIP200119449 (DFCT) CLI : After aborting VD erase on a VD, veifying prog dsply , shows as Check Consistency on VD not in progress. 
++LSIP200121826 (DFCT) In CLI help file "UEFI" command is not added in version commands. 
++LSIP200121841 (DFCT) "Version uefi a0" failed to show UEFI version in EFI host CLI 
++LSIP200124586 (DFCT) (RW LSIP200121841) "Version uefi a0" failed to show UEFI version in EFI host CLI 
++LSIP200124588 (DFCT) (RW LSIP200121826) In CLI help file "UEFI" command is not added in version commands. 
++LSIP200173918 (DFCT) EFI CLI- Driver seperation changes 
++LSIP200170447 (DFCT) efiHostCli does not work with 2208 products 
++LSIP200148615 (DFCT) SWR:Macon:DCLI: DCLI does not support 8 drives. 
++LSIP200148613 (DFCT) SWR:Macon:DCLI:Appropriate error messgae should be displayed for Background operation not supported 
++LSIP200155836 (DFCT) Megacli ldgetprop consistency lx aN gives invalid output 
++LSIP200156087 (DFCT) CLI command to enable DPM is not shown in help file but it works. 
++LSIP200166715 (DFCT) (RW LSIP200159708) CLI does not read entire package version during flashing, causing FW upgrade to report error 
++LSIP200148921 (DFCT) Forward Porting the changes 
++LSIP200100106 (DFCT) Assgning the VD numbering issue in Cli after deletion of VDs 
++LSIP200121545 (DFCT) VD Numbering issue in CLI after deletion of VD. 
++LSIP200122430 (DFCT) By typing MegaOem commands like v,help.. It shows all MegaSCU commands, and working like MegaSCU 
++LSIP200123575 (DFCT) (CL LSIP200123543) Fahrenheit values are not shown for SATA and SSD drives in CLI drive temperature field. 
++LSIP200099360 (DFCT) Porting 10M08 changes to 10M09 and 10M12 
++LSIP200100910 (DFCT) FW reports more than 1 enclosures in enclosure list while connect only 1 enclosure with multi path 
++LSIP200113012 (DFCT) Using MegaCLI to create a RAID1 array under FreeBSD 8.1 result in an error message: No match 
++LSIP200123317 (DFCT) MegaCli is unable to create VD with power policy settings. 
++LSIP200105052 (DFCT) CLI is allowing user to set MAXWITHCACHE ps policy for one of the OEM, which should actually be restricted 
++LSIP200105743 (DFCT) cfgeachdskraid0 command fails 
++LSIP200106000 (DFCT) Dummy defect to modify PCLI flash address 
++LSIP200120037 (DFCT) Mode 0 flash support for TB controllers with 32MB flash 
++
++
++
++Known Restrictions
++================
++1.	NONE
++
++
++Known Bugs
++==========
++1.	NONE
++
++
++Installation Commands: 
++=======================
++
++Run MegaCli from the Command Prompt.  Use -h option to see help menu.
++
++
++
++
++=====================================
++=====================================
++Previous Releases:
++=====================================
++=====================================
++
++SAS MegaRAID MegaCLI
++Release Date: 02/28/2011
++
++
++Version Numbers:	MegaCLI
++===============		===========			
++Current Version		8.01.06
++Previous Version	8.00.40
++
++
++Enhancements and Bug Fixes
++==========================
++Added support for 9265-8i and 9285-8e controllers
++LSIP200101547 (CO) iMR unconfigured disks naming for JBOD disks 
++LSIP200101549 (CO) iMR unconfigured disks naming for JBOD disks 
++LSIP200072536 (CO) Phy Info (Direct Attached) reporting 
++LSIP200072543 (CO) Phy Settings (Direct Attached) 
++LSIP200072524 (CO) Advanced Event Capture 
++LSIP200089240 (DFCT) We need to Set Permission while executing the CLI in Linux (SLES 11-64bit) 
++LSIP200084303 (DFCT) Can not flash FW using MegaCLI on 9265 Controller. Works in MSM. 
++LSIP200095215 (DFCT) Megaware makefile changes 
++LSIP200099543 (DFCT) Windows Megacli for Vmware unable to detect the Vmware Server Host controller iMR 9285 
++LSIP200100106 (DFCT) Assgning the VD numbering issue in Cli after deletion of VDs 
++LSIP200121545 (DFCT) VD Numbering issue in CLI after deletion of VD. 
++LSIP200122430 (DFCT) By typing MegaOem commands like v,help., it shows wrong commands
++LSIP200123575 (DFCT) (CL LSIP200123543) Fahrenheit values are not shown for SATA and SSD drives in CLI drive temperature field. 
++LSIP200099360 (DFCT) Porting 10M08 changes to 10M09 and 10M12 
++LSIP200100910 (DFCT) FW reports more than 1 enclosures in enclosure list while connect only 1 enclosure with multi path 
++LSIP200113012 (DFCT) Using MegaCLI to create a RAID1 array under FreeBSD 8.1 result in an error message: No match 
++LSIP200123317 (DFCT) MegaCli is unable to create VD with power policy settings. 
++LSIP200085810 (DFCT) MegaCli PdFwDownload output missing a dash 
++LSIP200089295 (DFCT) -adpsettings command is not expecting "s" on end of "EnableLedHeaders" setting 
++LSIP200089930 (DFCT) Junk character in the help message for “encinfo” command 
++LSIP200095273 (DFCT) MegaCLI 8.00.30 crashed during a -adpallinfo command to an iMR controller. 
++LSIP200110822 (DFCT) MegaCli PdFWdown missing "-" before EncdevId 
++LSIP200110789 (DFCT) MegaCli PD FW download to multiple devices not supported, command output needs to be changed 
++LSIP200099006 (DFCT) For ibbu08, MegaCLI -GetBbuCapacityInfo returns zero for max error, remainging capacity alarm, and remaining time alarm 
++LSIP200111893 (DFCT) Porting the defect LSIP200099006. 
++LSIP200111888 (DFCT) Porting the defect LSIP200077064. (PreBootCli - AdpEventLog fails with exit code 0x01.) 
++LSIP200122180 (DFCT) Name change for iBBU08 for 9265 
++LSIP200081963 (DFCT) Cannot clear DPM data using the -clear option 
++LSIP200077322 (DFCT) CLI displays incorrect information when DPM lct command is issue 
++LSIP200077324 (DFCT) CLI displays data from DPM histogram command incorrectly 
++LSIP200077326 (DFCT) Latest CLI reports error when issue any AEC command (All AEC commands are not working) 
++LSIP200083390 (DFCT) Defect to accomodate API changes in MegaWare1.2 boxcar 
++LSIP200085172 (DFCT) MegaCLI output for DPM ext command does not align correctly 
++LSIP200094822 (DFCT) Porting defect fixes from 10M09 to 10M12 
++LSIP200097425 (DFCT) DIF syntax errors AdpSetprop -preventPiImport 
++LSIP200105052 (DFCT) CLI is allowing user to set MAXWITHCACHE ps policy for one of the OEM, which should actually be restricted 
++LSIP200105743 (DFCT) cfgeachdskraid0 command fails 
++LSIP200106000 (DFCT) Dummy defect to modify PCLI flash address 
++LSIP200120037 (DFCT) Mode 0 flash support for TB controllers with 32MB flash 
++LSIP200083430 (DFCT) Implementation of MegaWare 1.1 in MegaPCLI 
++LSIP200084039 (DFCT) MegaWare support code changes 
++LSIP200075421 (DFCT) SWR: MegaDcli takes too much to execute command 
++LSIP200087724 (DFCT) Intermittent issue seen while Clearing Configuraton through MegaCLI in RHEL 6 B2 64bit 
++LSIP200097535 (DFCT) Dummy defect to update version of DCLI 
++LSIP200097793 (DFCT) EFI Cli is displaying "Created VD0" even for 2nd VD 
++LSIP200097811 (DFCT) To check in EFI CLI binary 
++LSIP200089369 (DFCT) (#33990.1) Incorrect Display View Mirror Infos for all VD's in Windows CLI 
++LSIP200096227 (DFCT) By pressing Ctrl-Y(PCLI) in POST message, its going to megamon in fw and also not getting pcli command promot . 
++LSIP200096792 (DFCT) CLI crashes when using "–snapshot –info" command on the repository VD 
++LSIP200097032 (DFCT) CLI is allowing user to set MAXWITHCACHE ps policy for one of the OEM, which should actually be restricted 
++
++
++
++
++
++
++
++Release Date: 12/10/2010
++
++
++Version Numbers:	MegaCLI
++===============		===========			
++Current Version		8.00.40
++Previous Version	8.00.29
++
++
++Enhancements and Bug Fixes
++==========================
++LSIP200097574 (DFCT) MegaCliKL is not able to access the Host Machine 
++LSIP200063469 (CO) Check internal backplane SES page for Backplane Bay ID and display in mgmt tools 
++LSIP200063410/LSIP200063415 (CO) Break R1 Mirror 
++LSIP200063457 (CO) Support for variable rate HDDs 
++LSIP200075203 (CO) RAID Firmware to read controller thermal sensors to get chip and board temps 
++LSIP200070634 (CO) Customer requested these EFI:CLI commands are required for their testing 
++LSIP200073881 (CO) Provide PCI bus and device id for a selected controller thru MegaCLI 
++LSIP200072376 (CO) SWRAID. Develop CLI for uEFI 2.2 
++LSIP200083287 (CO) SW licensing. Verbiage changes in MegaRAID management tools 
++LSIP200076197 (DFCT) “No more interfaces” on executing most of the CLI command 
++LSIP200075420 (DFCT) SWR: MegaDCli does not detect the PDs 
++LSIP200076437 (DFCT) SWR5: Unable to create Raid 5 thru DCLI 
++LSIP200087722 (DFCT) DCLI -After creating R5, we can’t delete the VD or clear the config. 
++LSIP200084490 (DFCT) Porting 10M08 chnages to 10M09 
++LSIP200085665 (DFCT) "MegaCli pdfwdownload" command is not flashing PD Firmware for Multiple PD's at a time. 
++LSIP200087720 (DFCT) DCLI - Version Info showing wrong Date. 
++LSIP200085497 (DFCT) SWR5: Cannot create config and clear config using EFI CLI 
++LSIP200087729 (DFCT) DCLI/EFI CLI - "pdfwdownload" command is not exists in the help file of DCLI and EFI CLI. 
++LSIP200075421 (DFCT) SWR: MegaDcli takes too much to execute command 
++LSIP200087724 (DFCT) Intermittent issue seen while Clearing Configuraton through MegaCLI in RHEL 6 B2 64bit 
++LSIP200097793 (DFCT) EFI Cli is displaying "Created VD0" even for 2nd VD 
++LSIP200082937 (DFCT) Defect to merge DSW-3 code 
++LSIP200084314 (DFCT) AutoDeleteOldestSnapshot doesn’t work in the CLI 
++LSIP200018606/LSIP200018607 (DFCT) "./MegaCli64 adpeventlog getlatest n ax" fails when ldbi is running on the controllers 
++LSIP200087587 (DFCT) Defect to accomodate for non-availablity of DSW-3 feature on iMR controllers 
++LSIP200089369 (DFCT) (#33990.1) Incorrect Display View Mirror Infos for all VD's in Windows CLI 
++LSIP200096227 (DFCT) By pressing Ctrl-Y(PCLI) in POST message, its going to megamon in fw and also not getting pcli command promot . 
++LSIP200096792 (DFCT) CLI crashes when using "–snapshot –info" command on the repository VD 
++LSIP200097032 (DFCT) CLI is allowing user to set MAXWITHCACHE ps policy for one of the OEM, which should actually be restricted 
++LSIP200085810 (DFCT) MegaCli PdFwDownload output missing a dash 
++LSIP200089295 (DFCT) -adpsettings command is not expecting "s" on end of "EnableLedHeaders" setting 
++LSIP200089930 (DFCT) Junk character in the help message for “encinfo” command 
++LSIP200095273 (DFCT) MegaCLI 8.00.30 crashed during a -adpallinfo command to a iMR controller. 
++LSIP200076406 (DFCT) CLI displays 'Stripe' size instead of displaying 'Strip' size in adpallinfo info page 
++LSIP200082223 (DFCT) "MegaCli -AdpAliLog a0" command showing wrong Adapter values in the adapterinfo field. 
++LSIP200018511 (DFCT) Linux "MegaCli adpalilog a0" displays garbage, also missing key data comparing to Windows output. 
++LSIP200082785 (DFCT) Support of AdpGetPciInfo command for recent stream 
++LSIP200083564 (DFCT) Megacli-8.00.28 : Megacli does not give any progress value for initialization on LD with progdsply 
++LSIP200086230 (DFCT) Different TimeStamps values in MegaCLI Ctrl Eventlog 
++LSIP200075258 (DFCT) Create separate binary to configure VMware ESXi through MegaCLI. 
++LSIP200082000 (DFCT) Help file needs to be updated for MegaCliKL. 
++LSIP200082431 (DFCT) PFK - MFT_STAT Support 
++LSIP200077081 (DFCT) Information For Command Parameters is missing in HELP file for the ADPBBUCMD command 
++LSIP200073835 (DFCT) MegaCLI Enclosure Inquiry returns irrelevant in Vendor Specific Information field 
++LSIP200076725 (DFCT) Spelling mistake in one of the output of CLI command 
++
+--- sysutils/megacli/work/DOS/LICENSE_DOS32A.txt	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/DOS/LICENSE_DOS32A.txt	2011-07-04 16:17:36.000000000 -0700
+@@ -0,0 +1,39 @@
++DOS/32 Advanced DOS Extender Software License
++=============================================
++
++Copyright (C) 1996-2006 by Narech K. All rights reserved.
++
++Redistribution  and  use  in source and  binary  forms, with or without
++modification,  are permitted provided that the following conditions are
++met:
++
++1.  Redistributions  of  source code  must  retain  the above copyright
++notice, this list of conditions and the following disclaimer.
++
++2.  Redistributions  in binary form  must reproduce the above copyright
++notice,  this  list of conditions and  the  following disclaimer in the
++documentation and/or other materials provided with the distribution.
++
++3. The end-user documentation included with the redistribution, if any,
++must include the following acknowledgment:
++
++"This product uses DOS/32 Advanced DOS Extender technology."
++
++Alternately,  this acknowledgment may appear in the software itself, if
++and wherever such third-party acknowledgments normally appear.
++
++4.  Products derived from this software  may not be called "DOS/32A" or
++"DOS/32 Advanced".
++
++THIS  SOFTWARE AND DOCUMENTATION IS PROVIDED  "AS IS" AND ANY EXPRESSED
++OR  IMPLIED  WARRANTIES,  INCLUDING, BUT  NOT  LIMITED  TO, THE IMPLIED
++WARRANTIES  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED.  IN  NO  EVENT SHALL THE  AUTHORS  OR  COPYRIGHT HOLDERS BE
++LIABLE  FOR  ANY DIRECT, INDIRECT,  INCIDENTAL,  SPECIAL, EXEMPLARY, OR
++CONSEQUENTIAL  DAMAGES  (INCLUDING, BUT NOT  LIMITED TO, PROCUREMENT OF
++SUBSTITUTE  GOODS  OR  SERVICES;  LOSS OF  USE,  DATA,  OR  PROFITS; OR
++BUSINESS  INTERRUPTION) HOWEVER CAUSED AND  ON ANY THEORY OF LIABILITY,
++WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++OTHERWISE)  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/DOS/MegaCli.exe and sysutils/megacli/work/DOS/MegaCli.exe differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/FREEBSD/MegaCli and sysutils/megacli/work/FREEBSD/MegaCli differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/FREEBSD/MegaCli64 and sysutils/megacli/work/FREEBSD/MegaCli64 differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/LINUX/MegaCliLin.zip and sysutils/megacli/work/LINUX/MegaCliLin.zip differ
+--- sysutils/megacli/work/LINUX/readme.txt	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/LINUX/readme.txt	2011-07-04 12:06:20.000000000 -0700
+@@ -0,0 +1,44 @@
++Prerequisite for MegaCli installation
++
++==========================
++The MegaRAID ®  MegaCli application depends on few standard libraries. 
++Please ensure that these libraries are present in the system before installing MegaCli rpm. 
++MegaCli will not function without these libraries.
++
++For your convenience, above libraries are available in the rpm <Lib_Utils-1.xx-xx.noarch.rpm> and <Lib_Utils2-1.xx-xx.noarch.rpm>.
++<Lib_Utils-1.xx-xx.noarch.rpm> and <Lib_Utils2-1.xx-xx.noarch.rpm> are packaged in the MegaCli zip file.
++To install the <Lib_Utils-1.xx-xx.noarch.rpm> and <Lib_Utils2-1.xx-xx.noarch.rpm>, please follow below steps.
++
++1) unzip the MegaCli package .
++2) To install the Lib_Utils RPM, run the command "rpm -ivh <Lib_Utils-1.xx-xx.noarch.rpm>"
++3) To install the Lib_Utils2 RPM, run the command "rpm -ivh <Lib_Utils2-1.xx-xx.noarch.rpm>"
++4) To install the MegaCli RPM, run the comand "rpm -ivh <MegaCli-x.xx-x.i386.rpm>"
++5) To upgrade the MegaCli RPM, run the comand "rpm -Uvh <MegaCli-x.xx-x.i386.rpm>"
++
++Please follow the steps to use 32 bit MegaCLI to communicate with VMWARE Cosless machine.
++
++Open the file cliVmWare.conf which is present in the same directory as MegaCLI. 
++Enter the IP address of VMWARE Cosless machine in the parameter location. 
++Enter the Administrator user name and password of VMWARE Cosless machine. 
++
++With above parameters set correctly, MegaCLI will start executing MegaCLI command on the remote VMWARE Cosless machine.
++
++
++Notes:
++1. If older version of the libutil or libutil2 rpm (i.e. <Lib_Utils-1.xx-xx.noarch.rpm> or <Lib_Utils2-1.xx-xx.noarch.rpm>) is installed on the system, 
++    please uninstall the older version of the RPM using the command "rpm -e <Lib_Utils-1.xx-xx>" or  "rpm -e <Lib_Utils2-1.xx-xx>"
++    and then install the latest libutil rpm <Lib_Utils-1.xx-xx.noarch.rpm> or <Lib_Utils-1.xx-xx> packaged in this zip file.
++
++2. If older version of the libutil rpm <Lib_Utils-1.xx-xx.noarch.rpm> is installed on the system, 
++    To perform upgrade from previous version to latest version run the command 
++    "rpm -Uvh --nopostun <Lib_Utils-1.xx-xx.rpm> ". 
++	
++3. If older version of the libutil rpm <Lib_Utils2-1.xx-xx.noarch.rpm> is installed on the system, 
++    To perform upgrade from previous version to latest version run the command 
++    "rpm -Uvh --nopostun <Lib_Utils2-1.xx-xx.rpm> ". 	
++
++Example: 
++   If "Lib_Utils-1.00-06.noarch.rpm" is installed on the target system to to perform upgrade to latest RPM
++   "Lib_Utils-1.00-07.noarch.rpm" run the command  "rpm -Uvh --nopostun Lib_Utils-1.00-07.noarch.rpm".
++
++4. On RHEL-3 (X64) and SLES-9 (X64), MegaCli requires libstdc++.so.6. It is assumed that these standard libraries are present in the system.
+\ No newline at end of file
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/SOLARIS/MegaCli and sysutils/megacli/work/SOLARIS/MegaCli differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/SOLARIS/MegaCli.pkg and sysutils/megacli/work/SOLARIS/MegaCli.pkg differ
+--- sysutils/megacli/work/SOLARIS/readme.txt	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/SOLARIS/readme.txt	2011-07-05 16:00:38.000000000 -0700
+@@ -0,0 +1,10 @@
++Things to Remember:
++
++1) Prior to executing standalone MegaCli binary, check the permissions of MegaCli binary. 
++
++	"ls -l MegaCli"
++
++2) If executable permissions are not given, run the below command to change the permissions.
++
++	"chmod +x MegaCli"
++
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/VMWARE/MegaCli and sysutils/megacli/work/VMWARE/MegaCli differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/WINDOWS/MegaCli.exe and sysutils/megacli/work/WINDOWS/MegaCli.exe differ
+Files /home/gcooper/f/branches/8.0.4/FreeBSD/ports/sysutils/megacli/work/WINDOWS/MegaCli64.exe and sysutils/megacli/work/WINDOWS/MegaCli64.exe differ
+--- sysutils/megacli/work/WINDOWS/readme.txt	1969-12-31 16:00:00.000000000 -0800
++++ sysutils/megacli/work/WINDOWS/readme.txt	2011-07-04 10:06:52.000000000 -0700
+@@ -0,0 +1,5 @@
++Requirement for MegaCli Execution:
++======================================
++In Windows Vista OS, MegaCli application will not function if the User Account Control (UAC) is turned on. Please ensure that UAC is turned off before you start the MegaCli application. 
++
++You can turn on or off the User Account Control (UAC) settings by selecting Control Panel and go to User Accounts section.
