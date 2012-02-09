@@ -86,16 +86,19 @@ generate_istgt_config()
 
 	# Generate [InitiatorGroupNN] sections
 	echo "# InitiatorGroup section"
-	local fields="iscsi_target_initiator_tag iscsi_target_initiator_initiators iscsi_target_initiator_auth_network"
+	local fields="id iscsi_target_initiator_tag"
 	eval local ${fields}
 	local csfields
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitargetauthorizedinitiator ORDER BY id" | \
-        while eval read ${fields}; do
+        while eval read -r ${fields}; do
 		echo "[InitiatorGroup${iscsi_target_initiator_tag}]"
-		echo ${iscsi_target_initiator_initiators} | tr "," "\n" | \
-		while eval read initiator; do
-			echo "  InitiatorName \"${initiator}\""
+		iscsi_target_initiator_initiators=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_initiator_initiators FROM services_iscsitargetauthorizedinitiator WHERE id = ${id}")
+		echo ${iscsi_target_initiator_initiators} | tr " ," "\n"| tr -s "\n" | \
+		while eval read -r initiator; do
+			if [ -n "${initiator}" ]; then
+				echo "  InitiatorName \"${initiator}\""
+			fi
 		done
 		echo "  Netmask ${iscsi_target_initiator_auth_network}"
 		echo
