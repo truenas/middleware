@@ -1914,6 +1914,9 @@ class notifier:
         conn.commit()
         c.close()
 
+    def interface_mtu(self, iface, mtu):
+        self.__system("ifconfig %s mtu %s" % (iface, mtu))
+
     def __init__(self):
         self.__confxml = None
 
