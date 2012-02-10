@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import re
 
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
@@ -132,12 +133,21 @@ class Interfaces(Model):
 
     def __unicode__(self):
             return u'%s' % self.int_name
+    def __init__(self, *args, **kwargs):
+        super(Interfaces, self).__init__(*args, **kwargs)
+        self._original_int_options = self.int_options
     def delete(self):
         for lagg in self.lagginterface_set.all():
             lagg.delete()
         super(Interfaces, self).delete()
         notifier().stop("netif")
         notifier().start("network")
+    def save(self, *args, **kwargs):
+        super(Interfaces, self).save(*args, **kwargs)
+        if self._original_int_options != self.int_options and \
+                re.search(r'mtu \d+', self._original_int_options) and \
+                self.int_options.find("mtu") == -1:
+            notifier().interface_mtu(self.int_interface, "1500")
     class Meta:
         verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")

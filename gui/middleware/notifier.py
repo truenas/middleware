@@ -2539,6 +2539,9 @@ class notifier:
     def iface_destroy(self, name):
         self.__system("ifconfig %s destroy" % name)
 
+    def interface_mtu(self, iface, mtu):
+        self.__system("ifconfig %s mtu %s" % (iface, mtu))
+
     def __init__(self):
         self.__confxml = None
         self.__diskserial = {}
