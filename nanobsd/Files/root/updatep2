@@ -58,46 +58,30 @@ dd of=/dev/${TARGET_DRIVE}s$PARTNUM obs=128k
 fsck_ffs -n /dev/${TARGET_DRIVE}s${PARTNUM}a
 tunefs -L ${LABELNAME}s${PARTNUM}a /dev/${TARGET_DRIVE}s${PARTNUM}a
 
+tmpdir=$(mktemp -d /mnt/tmp.XXXXXX)
+
 # Save all files which exist under / that should persist across upgrades (root
 # ssh keys, /boot/modules/* , fusionio utilities, etc).
-if [ -e /tmp/upgrade ]; then
-    if [ ! -d /tmp/upgrade ]; then
-        rm -rf /tmp/upgrade
-        mkdir /tmp/upgrade
-    fi
-else
-    mkdir /tmp/upgrade
-fi
 
-mount /dev/${TARGET_DRIVE}s${PARTNUM}a /tmp/upgrade
+mount -o noatime /dev/${TARGET_DRIVE}s${PARTNUM}a $tmpdir
+trap "umount $tmpdir" 1 2 15 EXIT
 
-if [ -d /root/.ssh ]; then
-    cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
-fi
+dirs="/root/.ssh /boot/modules /usr/local/fusion-io"
+for dir in $dirs
+do
+	if [ -d $dir ]
+	then
+		tar cpf - $dir | tar --keep-newer-files -xpf - -C $tmpdir
+	fi
+done
 
-if [ -d /usr/local/fusionio ]; then
-    cp -R /usr/local/fusionio /tmp/upgrade/usr/local/
-fi  
-
-if [ -d /boot/modules ]; then
-    if [ ! -d /tmp/upgrade/boot/modules ]; then
-        mkdir /tmp/upgrade/boot/modules
-    fi  
-    for i in `ls /boot/modules/`
-    do  
-        cp /boot/modules/$i /tmp/upgrade/boot/modules/
-    done
-fi  
-
-umount /tmp/upgrade
-rmdir /tmp/upgrade
+umount $tmpdir
 
 # Update the /etc/fstab
-trap "umount /mnt" 1 2 15 EXIT
-mount /dev/${NANO_DRIVE}s${PARTNUM}a /mnt
-sed -i "" "s,${NANO_DRIVE}s$OTHER_PARTNUM,${NANO_DRIVE}s$PARTNUM," /mnt/conf/base/etc/fstab
-sed -i "" "s,${NANO_DRIVE}s$OTHER_PARTNUM,${NANO_DRIVE}s$PARTNUM," /mnt/etc/fstab
-umount /mnt
-trap 1 2 15 EXIT
+mount -o noatime /dev/${NANO_DRIVE}s${PARTNUM}a $tmpdir
+sed -i "" "s,${NANO_DRIVE}s$OTHER_PARTNUM,${NANO_DRIVE}s$PARTNUM," $tmpdir/conf/base/etc/fstab
+sed -i "" "s,${NANO_DRIVE}s$OTHER_PARTNUM,${NANO_DRIVE}s$PARTNUM," $tmpdir/etc/fstab
+umount $tmpdir
+trap - 1 2 15 EXIT
 
 gpart set -a active -i $PARTNUM ${TARGET_DRIVE}
