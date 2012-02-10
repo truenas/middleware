@@ -109,32 +109,25 @@ get_cifs_homedir()
 
 setup_homedirs()
 {
-	local homepath="/var/home"
 	local trusted=$(get_trusted)
 	local cifs_home="$(get_cifs_homedir)"
 
 	if [ -n "${cifs_home}" ]
 	then
-		homepath="${cifs_home}"
-	fi
+		ln -sfh "$cifs_home" "/var/home"
 
-	rmdir /home
-	mkdir -p "${homepath}"
-	mount -uw -onoatime /
-	ln -sfh "${homepath}/" /home 2>/dev/null
-	mount -ur /
+		if [ "${trusted}" = "1" ]
+		then
+			local partitions="$(AD_query_partitions)"
+			for p in ${partitions}
+			do
+				mkdir -p "/var/home/${p}"
+			done
 
-	if [ "${trusted}" = "1" ]
-	then
-		local partitions="$(AD_query_partitions)"
-		for p in ${partitions}
-		do
-			mkdir -p "/home/${p}"
-		done
-
-	else
-		local workgroup=$(get_workgroup)
-		mkdir -p "${homepath}/${workgroup}"
+		else
+			local workgroup=$(get_workgroup)
+			mkdir -p "/var/home/${workgroup}"
+		fi
 	fi
 }
 

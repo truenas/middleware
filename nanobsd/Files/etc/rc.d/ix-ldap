@@ -159,21 +159,12 @@ get_cifs_homedir()
 
 setup_homedirs()
 {
-
-	local homepath="/var/home"
 	local cifs_home="$(get_cifs_homedir)"
 
 	if [ -n "${cifs_home}" ]
 	then
-		homepath="${cifs_home}"
+		ln -sfh "$cifs_home" "/var/home" 2>/dev/null
 	fi
-
-	rmdir /home
-	mkdir -p "${homepath}"
-	mount -uw -onoatime /
-	rm -f /home
-	ln -sfh "${homepath}" /home 2>/dev/null
-	mount -ur /
 }
 
 generate_ldap_config()

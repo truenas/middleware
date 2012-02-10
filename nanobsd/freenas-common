@@ -581,6 +581,17 @@ fix_easy_install_pth()
 }
 customize_cmd fix_easy_install_pth
 
+create_var_home_symlink()
+{
+	# Create a link to a non-persistent location that ix-activedirectory
+	# and ix-ldap can use as a pointer to a home directory on persistent
+	# storage (/mnt/tank/homes, etc).
+	rm -f $NANO_WORLDDIR/home || :
+	rm -Rf $NANO_WORLDDIR/home
+	ln -sfh /var/home $NANO_WORLDDIR/home
+}
+customize_cmd create_var_home_symlink
+
 freenas_custom()
 {
 	compress_ko()
