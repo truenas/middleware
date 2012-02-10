@@ -111,6 +111,7 @@ loader_user() {
 
 generate_boot_loader_conf()
 {
+	local autotune
 	local tmp
 
 	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
