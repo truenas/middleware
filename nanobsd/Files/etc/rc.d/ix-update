@@ -40,9 +40,11 @@ Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
 Reverting a failed CD upgrade is not totally possible
 Rebooting in 15 seconds..
 EOF
+		umount /data
 		sleep 15
 		reboot
 	fi
+	umount /data
 
 	. /etc/nanobsd.conf
 
