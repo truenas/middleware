@@ -37,7 +37,7 @@ update_persistent_file()
 		rm -f "$new"
 	else
 		rc=2
-		if mount -uw /; then
+		if mount -uw -onoatime /; then
 			if mv "$new" "$old"; then
 				rc=0
 			fi
@@ -160,7 +160,7 @@ generate_loader_confs()
 	generate_boot_loader_conf_local
 
 	if $AUTOTUNE_REBOOT && $reboot_now; then
-		reboot
+		shutdown -r now
 	fi
 }
 

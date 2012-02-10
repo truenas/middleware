@@ -32,9 +32,7 @@ generate_smbpasswd()
 	while read rootbindpw
 	do
 		if [ -n "${rootbindpw}" ]; then
-			mount -u /
 			/usr/local/bin/smbpasswd -w "${rootbindpw}" >/dev/null 2>&1
-			mount -ur /
 		fi
 	done
 }

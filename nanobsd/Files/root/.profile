@@ -6,6 +6,9 @@ HOME=/root; export HOME
 TERM=${TERM:-cons25}; export TERM
 PAGER=more; export PAGER
 
+# set ENV to a file invoked each time sh is started for interactive use.
+ENV=$HOME/.shrc; export ENV
+
 #set -o vi
 set -o emacs
 if [ `id -u` = 0 ]; then

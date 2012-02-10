@@ -16,14 +16,14 @@ update_sercons()
 	case $sercons in
 	0)
 		if [ -f ${bc} ]; then
-			mount -uw /
+			mount -uw -onoatime /
 			rm -f ${bc}
 			mount -ur /
 		fi
 		;;
 	1)
 		if [ ! -f ${bc} ] || ! grep -q -- -h ${bc} ; then
-			mount -uw /
+			mount -uw -onoatime /
 			echo -h > ${bc}
 			mount -ur /
 		fi

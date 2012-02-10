@@ -428,7 +428,7 @@ def reset_factory_defaults():
     a = raw_input("Are you sure you want to reset to factory defaults? (yes/no): ")
     if a.lower().startswith('y'):
         notifier().config_restore()
-        os.system("/sbin/reboot")
+        os.system("/sbin/shutdown -r now")
 
 def configure_lagg_interface():
     lagg_index = 0
@@ -765,7 +765,7 @@ def reboot():
     while True:
         ret = raw_input("Confirm reboot (y/n): ")
         if ret.lower().startswith("y"):
-            os.system("/sbin/reboot")
+            os.system("/sbin/shutdown -r now")
         if ret.lower().startswith("n"):
             return False
 
