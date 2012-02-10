@@ -440,6 +440,7 @@ def debug_save(request):
         'attachment; filename=debug-%s-%s.txt' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
     return response
 
+
 class UnixTransport(xmlrpclib.Transport):
     def make_connection(self, addr):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -482,6 +483,7 @@ class UnixTransport(xmlrpclib.Transport):
             response.msg,
             )
 
+
 class MyServer(xmlrpclib.ServerProxy):
 
     def __init__(self, addr):
@@ -514,6 +516,7 @@ class MyServer(xmlrpclib.ServerProxy):
     def __getattr__(self, name):
         # magic method dispatcher
         return xmlrpclib._Method(self.__request, name)
+
 
 @never_cache
 def terminal(request):
@@ -549,4 +552,5 @@ def terminal(request):
         response = HttpResponse('Invalid parameters')
         response.status_code = 400
         return response
+
 
