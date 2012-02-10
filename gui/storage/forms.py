@@ -542,38 +542,28 @@ class VolumeAutoImportForm(forms.Form):
 
         notifier().reload("disk")
 
-#=================================
 
-# A partial form for editing disk.
-# we only show disk_name (used as GPT label), disk_disks
-# (device name), and disk_group (which group this disk belongs
-# to), but don't allow editing.
 class DiskFormPartial(ModelForm):
     class Meta:
         model = models.Disk
         exclude = (
-            'disk_enabled',
-            'disk_transfermode',
-            'disk_multipath_name',
-            'disk_multipath_member',
+            'disk_transfermode',  # This option isn't used anywhere
             )
+
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['disk_name'].widget.attrs['readonly'] = True
-            self.fields['disk_name'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
-            self.fields['disk_identifier'].widget.attrs['readonly'] = True
-            self.fields['disk_identifier'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_name'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
             self.fields['disk_serial'].widget.attrs['readonly'] = True
-            self.fields['disk_serial'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_serial'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
+
     def clean_disk_name(self):
         return self.instance.disk_name
-    def clean_disk_identifier(self):
-        return self.instance.disk_identifier
+
 
 class ZFSDataset_CreateForm(Form):
     dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))

@@ -51,6 +51,7 @@ class Volume(Model):
     vol_guid = models.CharField(
             max_length=50,
             blank=True,
+            editable=False,
             )
 
     class Meta:
@@ -302,22 +303,25 @@ class Disk(Model):
             )
     disk_identifier = models.CharField(
             max_length=42,
-            verbose_name = _("Identifier")
+            verbose_name=_("Identifier"),
+            editable=False,
             )
     disk_serial = models.CharField(
             max_length=30,
             verbose_name = _("Serial"),
-            blank=True
+            blank=True,
             )
     disk_multipath_name = models.CharField(
             max_length=30,
             verbose_name=_("Multipath name"),
             blank=True,
+            editable=False,
             )
     disk_multipath_member = models.CharField(
             max_length=30,
             verbose_name=_("Multipath member"),
             blank=True,
+            editable=False,
             )
     disk_description = models.CharField(
             max_length=120,
@@ -359,7 +363,8 @@ class Disk(Model):
             )
     disk_enabled = models.BooleanField(
             default=True,
-        )
+            editable=False,
+            )
     def get_serial(self):
         n = notifier()
         return n.serial_from_device(
