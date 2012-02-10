@@ -8,7 +8,38 @@
 
 . /etc/rc.subr
 
-set_sysctl()
+set_autotune_sysctls()
+{
+	local IFS="
+"
+	local autotune
+	local tmp
+
+	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
+	autotune=/usr/local/bin/autotune
+	if [ -x $autotune ]; then
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+		$autotune \
+			--kernel-reserved=6442450944 \
+			--userland-reserved=4831838208 \
+			--conf-file=/etc/sysctl.conf > $tmp
+
+		if [ $? -eq 0 ]; then
+			grep -v '^#' $tmp | \
+			egrep -v '^[[:space:]]*$' | \
+			sed -e "s/'//g" -e 's/"//g' | \
+			while read -r line
+			do
+				[ -n "$line" ] || continue
+				sysctl "$line"
+			done
+		fi
+	fi
+}
+
+set_user_sysctls()
 {
 	local IFS="|"
 	local f="sysctl_mib sysctl_value"
@@ -23,8 +54,14 @@ set_sysctl()
 	done
 }
 
+start_sysctl()
+{
+	set_autotune_sysctls
+	set_user_sysctls
+}
+
 name="ix-sysctl"
-start_cmd='set_sysctl'
+start_cmd='start_sysctl'
 stop_cmd=':'
 
 load_rc_config $name
