@@ -819,7 +819,7 @@ class iSCSITargetPortalIPForm(ModelForm):
         self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
             label=self.fields['iscsi_target_portalip_ip'].label,
             )
-        ips = [('', '------'), ('127.0.0.1', '127.0.0.1'), ('0.0.0.0', '0.0.0.0')]
+        ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
         for interface in Interfaces.objects.all():
             if interface.int_ipv4address:
                 ips.append( (interface.int_ipv4address, interface.int_ipv4address) )
