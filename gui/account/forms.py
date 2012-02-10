@@ -236,8 +236,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         widgets = {
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
-        exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_mode', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
+        exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_group')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2',
+            'bsdusr_home', 'bsdusr_mode', 'bsdusr_shell', 'bsdusr_full_name',
+            'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2',
+            'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -421,7 +424,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     class Meta:
         model = models.bsdUsers
-        exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_builtin',)
+        exclude = ('bsdusr_unixhash', 'bsdusr_smbhash')
         widgets = {
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
@@ -535,7 +538,6 @@ class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
 class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
     class Meta:
         model = models.bsdGroups
-        exclude = ('bsdgrp_builtin',)
         widgets = {
                 'bsdgrp_gid': forms.widgets.ValidationTextInput(),
                 }

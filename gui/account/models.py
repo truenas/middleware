@@ -27,8 +27,9 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
-from freeadmin.models import Model
+
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
@@ -41,7 +42,9 @@ class bsdGroups(Model):
             )
     bsdgrp_builtin = models.BooleanField(
             default=False,
+            editable=False,
             )
+
     class Meta:
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
@@ -58,16 +61,20 @@ class bsdGroups(Model):
 
     def __unicode__(self):
         return self.bsdgrp_group
+
     def delete(self, using=None, reload=True):
         if self.bsdgrp_builtin == True:
-            raise ValueError(_("Group %s is built-in and can not be deleted!") % (self.bsdgrp_group))
+            raise ValueError(_("Group %s is built-in and can not be "
+                "deleted!") % (self.bsdgrp_group))
         notifier().user_deletegroup(self.bsdgrp_group.__str__())
         super(bsdGroups, self).delete(using)
         if reload:
             notifier().reload("user")
 
+
 def get_sentinel_group():
     return bsdGroups.objects.get(bsdgrp_group='nobody')
+
 
 class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
@@ -113,6 +120,7 @@ class bsdUsers(Model):
             )
     bsdusr_builtin = models.BooleanField(
             default=False,
+            editable=False,
             )
     bsdusr_email = models.EmailField(
             verbose_name=_("E-mail"),
@@ -122,6 +130,7 @@ class bsdUsers(Model):
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
+
     class FreeAdmin:
         create_modelform = "bsdUserCreationForm"
         edit_modelform = "bsdUserChangeForm"
@@ -136,14 +145,18 @@ class bsdUsers(Model):
 
     def __unicode__(self):
         return self.bsdusr_username
+
     def delete(self, using=None, reload=True):
         if self.bsdusr_builtin == True:
-            raise ValueError(_("User %s is built-in and can not be deleted!") % (self.bsdusr_username))
+            raise ValueError(_("User %s is built-in and can not be "
+                "deleted!") % (self.bsdusr_username))
         notifier().user_deleteuser(self.bsdusr_username.__str__())
         try:
             gobj = self.bsdusr_group
-            count = bsdGroupMembership.objects.filter(bsdgrpmember_group = gobj).count()
-            count2 = bsdUsers.objects.filter(bsdusr_group = gobj).exclude(id=self.id).count()
+            count = bsdGroupMembership.objects.filter(
+                bsdgrpmember_group=gobj).count()
+            count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
+                id=self.id).count()
             if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False)
         except:
@@ -151,6 +164,7 @@ class bsdUsers(Model):
         super(bsdUsers, self).delete(using)
         if reload:
             notifier().reload("user")
+
 
 class bsdGroupMembership(Model):
     bsdgrpmember_group = models.ForeignKey(
