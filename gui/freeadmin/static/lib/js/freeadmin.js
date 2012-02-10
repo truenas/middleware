@@ -166,7 +166,7 @@
 
         },
 
-	openPlugins: function(onload) {
+        openPlugins: function(onload) {
             if(!onload) onload = function() {};
             var opened = false;
             var p = dijit.byId("content");
@@ -191,7 +191,7 @@
                 p.selectChild(pane);
                 dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
             }
-	},
+        },
 
         openPluginsFcgi: function(p, item) {
             editObject(item.name, item.url);
@@ -815,7 +815,7 @@
                 form: item.domNode,
                 handleAs: 'text',
                 load: loadOk,
-	            error: errorHandle,
+                error: errorHandle,
              });
              fetch = function() {
                 dojo.xhrGet({
@@ -1105,7 +1105,9 @@
             closable: true,
             style: attrs.style,
             onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                setTimeout(dojo.hitch(this, function() {
+                    this.destroyRecursive();
+                }), dijit.defaultDuration);
                 refreshTabs(attrs.nodes);
             },
             onLoad: function() {
