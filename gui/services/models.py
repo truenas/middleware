@@ -337,7 +337,6 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             )
     iscsi_lucport =  models.IntegerField(
-            max_length=120,
             default=3261,
             verbose_name=_("Controller TCP port"),
             help_text=_("Logical Unit Controller TCP port (3261 by default)"),
