@@ -42,16 +42,19 @@ from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
 from services.exceptions import ServiceFailed
 
+
 def home(request):
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", None),
     })
+
 
 def tasks(request):
     task_list = models.Task.objects.order_by("task_filesystem").all()
     return render(request, 'storage/tasks.html', {
         'task_list': task_list,
         })
+
 
 def volumes(request):
     mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
@@ -119,8 +122,8 @@ def snapshots_data(request):
                 rev = True
             else:
                 rev = False
-            if zfsnap_list[0].has_key(field):
-                zfsnap_list.sort(key=lambda item:item[field], reverse=rev)
+            if field in zfsnap_list[0]:
+                zfsnap_list.sort(key=lambda item: item[field], reverse=rev)
 
     data = []
     count = 0
@@ -138,7 +141,7 @@ def snapshots_data(request):
 
     if r:
         resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
-        resp['Content-Range'] = 'items %d-%d/%d' % (r1,r1+count, total)
+        resp['Content-Range'] = 'items %d-%d/%d' % (r1, r1 + count, total)
     else:
         resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
     return resp
@@ -252,7 +255,11 @@ def disks_datagrid_json(request):
     for data in disks:
         ret = {}
         ret['edit'] = {
-            'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
+            'edit_url': reverse('freeadmin_model_edit', kwargs={
+                'app': 'storage',
+                'model': 'Disk',
+                'oid': data.id,
+                }) + '?deletable=false',
             }
         ret['edit'] = simplejson.dumps(ret['edit'])
 
@@ -270,17 +277,16 @@ def disks_datagrid_json(request):
     ))
 
 def volume_disks(request, volume_id):
-    # mp = MountPoint.objects.get(mp_volume = volume_id)
-    volume = models.Volume.objects.get(id = volume_id)
-    disk_list = models.Disk.objects.filter(disk_group__group_volume = volume_id)
+    volume = models.Volume.objects.get(id=volume_id)
+    disk_list = models.Disk.objects.filter(disk_group__group_volume=volume_id)
     return render(request, 'storage/volume_detail.html', {
-        'focused_tab' : 'storage',
+        'focused_tab': 'storage',
         'volume': volume,
         'disk_list': disk_list,
     })
 
 def dataset_create(request, fs):
-    defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
+    defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
         dataset_form = forms.ZFSDataset_CreateForm(request.POST, fs=fs)
         if dataset_form.is_valid():
@@ -288,9 +294,9 @@ def dataset_create(request, fs):
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
-            props['compression']=dataset_compression.__str__()
+            props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
-            props['atime']=dataset_atime.__str__()
+            props['atime'] = dataset_atime.__str__()
             refquota = cleaned_data.get('dataset_refquota')
             if refquota != '0':
                 props['refquota']=refquota.__str__()
@@ -350,7 +356,7 @@ def dataset_edit(request, dataset_name):
     })
 
 def zvol_create(request, volume_name):
-    defaults = { 'zvol_compression' : 'inherit', }
+    defaults = {'zvol_compression': 'inherit', }
     if request.method == 'POST':
         zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=volume_name)
         if zvol_form.is_valid():
@@ -396,7 +402,7 @@ def zfsvolume_edit(request, object_id):
         if volume_form.is_valid():
             volume = mp.mp_volume
             volume_name = volume.vol_name
-            volume_name = mp.mp_path.replace("/mnt/","")
+            volume_name = mp.mp_path.replace("/mnt/", "")
 
             if volume_form.cleaned_data["volume_refquota"] == "0":
                 volume_form.cleaned_data["volume_refquota"] = "none"
@@ -430,7 +436,7 @@ def mp_permission(request, path):
             form.commit(path=path)
             return JsonResponse(message=_("Mount Point permissions successfully updated."))
     else:
-        form = forms.MountPointAccessForm(initial={'path':path})
+        form = forms.MountPointAccessForm(initial={'path': path})
     return render(request, 'storage/permission.html', {
         'path': path,
         'form': form,
@@ -467,8 +473,8 @@ def snapshot_delete(request, dataset, snapname):
             return JsonResponse(error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
-            'snapname' : snapname,
-            'dataset' : dataset,
+            'snapname': snapname,
+            'dataset': dataset,
         })
 
 def snapshot_delete_bulk(request):
@@ -478,7 +484,7 @@ def snapshot_delete_bulk(request):
     if snaps and delete == "true":
         snap_list = snaps.split('|')
         for snapshot in snap_list:
-            retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
+            retval = notifier().destroy_zfs_dataset(path=str(snapshot))
             if retval != '':
                 return JsonResponse(error=True, message=retval)
         notifier().restart("collectd")
@@ -491,15 +497,15 @@ def snapshot_delete_bulk(request):
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
-        ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
+        ret = notifier().rollback_zfs_snapshot(snapshot=snapshot.__str__())
         if ret == '':
             return JsonResponse(message=_("Rollback successful."))
         else:
             return JsonResponse(error=True, message=ret)
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
-            'snapname' : snapname,
-            'dataset' : dataset,
+            'snapname': snapname,
+            'dataset': dataset,
         })
 
 def periodicsnap(request):
@@ -532,7 +538,7 @@ def manualsnap(request, path):
     })
 
 def clonesnap(request, snapshot):
-    initial = { 'cs_snapshot' : snapshot }
+    initial = {'cs_snapshot': snapshot}
     if request.method == "POST":
         form = forms.CloneSnapshotForm(request.POST, initial=initial)
         if form.is_valid():
