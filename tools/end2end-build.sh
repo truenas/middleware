@@ -96,7 +96,8 @@ _setup() {
 
 	TMPDIR=$(realpath "$(mktemp -d $TMPDIR_TEMPLATE)")
 	chmod 0755 $TMPDIR
-	pull $TMPDIR 2>&1 | tail -n 30
+	pull $TMPDIR 2>&1 > $TMPDIR/pull.log
+	tail -n 30 $TMPDIR/pull.log
 	cd $TMPDIR
 	patch_source $TMPDIR
 	if [ -d "$LOCAL_POSTDIR_BASE" ]; then
