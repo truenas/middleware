@@ -2051,7 +2051,7 @@ class notifier:
                     status = search[0].content
 
             else:
-                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % name)
+                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % (name, ), log=False)
                 p1.communicate()
                 if p1.returncode == 0:
                     status = 'HEALTHY'
