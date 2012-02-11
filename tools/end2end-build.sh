@@ -194,6 +194,8 @@ else
 	_CLEAN_S='no'
 fi
 
+_setup
+
 cat <<EOF
 =========================================================
 SETTINGS SUMMARY
@@ -207,8 +209,6 @@ Build directory:		$TMPDIR
 Clean if successful:		$_CLEAN_S
 ---------------------------------------------------------
 EOF
-
-_setup
 
 # Get the release string (see build/nano_env for more details).
 set -- $(sh -c '. build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
