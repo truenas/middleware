@@ -71,7 +71,7 @@ for dir in $dirs
 do
 	if [ -d $dir ]
 	then
-		tar cpf - $dir | tar --keep-newer-files xpvf - -C $tmpdir
+		tar cpf - $dir | tar -xpvf - -C $tmpdir
 	fi
 done
 
