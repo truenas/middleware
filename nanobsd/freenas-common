@@ -589,8 +589,8 @@ firefly_hacks()
 	CR "id daapd || pw useradd daapd -d /var/empty -s /sbin/nologin"
 	cat >> ${NANO_WORLDDIR}/etc/rc.conf <<EOF
 
-mt_daapd_enable="NO"
-mtdaapd_flags="-c /mnt/tank/home/myuser/mt-daapd.conf"
+firefly_enable="NO"
+firefly_flags="-c /mnt/tank/home/myuser/mt-daapd.conf"
 EOF
 	# XXX: --prefix bug in port; just omit the db directory check to avoid
 	# having to re-edit the script after a reboot.
