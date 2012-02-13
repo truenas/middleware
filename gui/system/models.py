@@ -541,6 +541,7 @@ class Rsync(Model):
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
+        ordering = ["rsync_path", "rsync_desc"]
 
     class FreeAdmin:
         icon_model = u"rsyncIcon"
@@ -706,6 +707,7 @@ class SMARTTest(Model):
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
+        ordering = ["smarttest_disk"]
         unique_together = (
             ('smarttest_disk', 'smarttest_type'),
         )
@@ -746,6 +748,7 @@ class Sysctl(Model):
     class Meta:
         verbose_name = _("Sysctl")
         verbose_name_plural = _("Sysctls")
+        ordering = ["sysctl_mib"]
 
     class FreeAdmin:
         icon_model = u"SysctlIcon"
@@ -783,6 +786,7 @@ class Tunable(Model):
     class Meta:
         verbose_name = _("Tunable")
         verbose_name_plural = _("Tunables")
+        ordering = ["tun_var"]
 
     class FreeAdmin:
         icon_model = u"TunableIcon"
