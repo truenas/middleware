@@ -1145,7 +1145,9 @@ class notifier:
         u_name = str(volume.vol_name)
 
         disks = volume.get_disks()
-        provider = self.get_label_provider('ufs', u_name)
+        provider = self.get_label_consumer('ufs', u_name)
+        if not provider:
+            return None
         geom_type = provider.xpathEval("../../name")[0].content.lower()
 
         if geom_type not in ('mirror', 'stripe', 'raid3'):
@@ -2041,7 +2043,9 @@ class notifier:
                 status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
 
-            provider = self.get_label_provider('ufs', name)
+            provider = self.get_label_consumer('ufs', name)
+            if not provider:
+                return 'UNKNOWN'
             gtype = provider.xpathEval("../../name")[0].content
 
             if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
@@ -2501,12 +2505,20 @@ class notifier:
         return retval
 
     def geom_disk_replace(self, volume, to_disk):
-        """Replace disk in volume_id from from_diskid to to_diskid"""
-        """Gather information"""
+        """Replace disk in ``volume`` for ``to_disk``
+
+        Raises:
+            ValueError: Volume not found
+
+        Returns:
+            0 if the disk was replaced, > 0 otherwise
+        """
 
         assert volume.vol_fstype == 'UFS'
 
-        provider = self.get_label_provider('ufs', volume.vol_name)
+        provider = self.get_label_consumer('ufs', volume.vol_name)
+        if not provider:
+            raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
         class_name = provider.xpathEval("../../name")[0].content
         geom_name = provider.xpathEval("../name")[0].content
 
@@ -2673,9 +2685,18 @@ class notifier:
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
 
-    def get_label_provider(self, geom, name):
+    def get_label_consumer(self, geom, name):
+        """
+        Get the label consumer of a given ``geom`` with name ``name``
+
+        Returns:
+            The provider xmlnode if found, None otherwise
+        """
         doc = self.__geom_confxml()
-        providerid = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))[0].content
+        xpath = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))
+        if not xpath:
+            return None
+        providerid = xpath[0].content
         provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
 
         class_name = provider.xpathEval("../../name")[0].content
@@ -2796,11 +2817,17 @@ class notifier:
                 d.save()
 
     def geom_disks_dump(self, volume):
+        """
+        Raises:
+            ValueError: UFS volume not found
+        """
         #FIXME: This should not be here
         from django.core.urlresolvers import reverse
         from django.utils import simplejson
         from storage.models import Disk
-        provider = self.get_label_provider('ufs', volume.vol_name)
+        provider = self.get_label_consumer('ufs', volume.vol_name)
+        if not provider:
+            raise ValueError("UFS Volume %s not found" % (volume,))
         class_name = provider.xpathEval("../../name")[0].content
 
         items = []

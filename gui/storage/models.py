@@ -65,8 +65,8 @@ class Volume(Model):
                     pool = n.zpool_parse(self.vol_name)
                     self._disks = pool.get_disks()
                 else:
-                    prov = n.get_label_provider(self.vol_fstype.lower(), self.vol_name)
-                    self._disks = n.get_disks_from_provider(prov)
+                    prov = n.get_label_consumer(self.vol_fstype.lower(), self.vol_name)
+                    self._disks = n.get_disks_from_provider(prov) if prov else []
             return self._disks
         except Exception, e:
             return []
