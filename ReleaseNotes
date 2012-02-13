@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.4-BETA1
+Release Notes for FreeNAS 8.0.4-BETA2
 
 *** IMPORTANT ***
 
@@ -32,6 +32,42 @@ Release Notes for FreeNAS 8.0.4-BETA1
   or 4kB).
 
 
+Changes since 8.0.4-BETA1:
+
+Enhancements
+========================
+
+OS/Third party
+------------------------
+
+1. Update transmission to 2.42 (SF r10093).
+2. Add MegaCLI tool (SF r10072, r10073).
+3. Disable periodic tasks in the base system that would negatively
+   impact system performance on NAS boxes with large directory
+   structures (SF r10113).
+
+Bugfixes
+------------------------
+
+Middleware
+------------------------
+
+1. Fix handling for 'every day' SMART tasks created in the GUI
+   (SF r10088).
+2. Add in several robustness fixes to reduce potential for filesystem
+   corruption on root / boot device. In some scenarios this would also
+   improve performance when fetching data from the root device as well
+   (SF r10095, r10109).
+
+iSCSI
+------------------------
+
+1. Network field from iSCSI initiator could contain multiple IP
+   addresses, CIDR addresses, or ANY keyword (SF r10082).
+2. Generate istgt.conf properly if and when multiple initiators were
+   specified (SF r10081).
+
+
 Changes since 8.0.3-RELEASE-p1:
 
 Enhancements
@@ -45,7 +81,7 @@ Build
 OS/Third party
 ------------------------
 
-1. Update firefly to 1696_6 to for iTunes 10.5.2+ compatibility.
+1. Update firefly to 1696_6 for iTunes 10.5.2+ compatibility.
 2. Add in sane caps for minimum ZFS requirements for lower spec'ed home
    user machines.
 
