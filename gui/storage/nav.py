@@ -126,7 +126,7 @@ class CreatePeriodicSnap(TreeNode):
 
 class Volumes(TreeNode):
 
-        gname = 'storage.Volume'
+        gname = 'Volume'
         name = _(u'Volumes')
         icon = u'VolumesIcon'
 
