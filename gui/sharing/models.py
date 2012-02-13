@@ -182,9 +182,12 @@ class AFP_Share(Model):
             verbose_name = _("Windows File Names"),
             help_text = _("This forces filenames to be restricted to the character set used by Windows. This is not recommended for shares used principally by Mac computers.")
             )
-    afp_noadouble = models.BooleanField(
-            verbose_name = _("No .AppleDouble"),
-            help_text = _("This will suppress automatic creation of the .AppleDouble directories. This option should not be used if files are accessed by Mac computers.")
+    afp_adouble = models.BooleanField(
+            verbose_name = _("Enable .AppleDouble"),
+            help_text = _("This will enable automatic creation of the "
+                ".AppleDouble directories. This option should be used if "
+                "files are accessed by Mac computers."),
+            default=True,
             )
     afp_nodev = models.BooleanField(
             verbose_name = _("Zero Device Numbers"),
