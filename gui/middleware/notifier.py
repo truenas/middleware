@@ -1647,7 +1647,7 @@ class notifier:
             pass
 
         if homedir == '/root':
-            self.__system("/sbin/mount -uw /")
+            self.__system("/sbin/mount -uw -onoatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
@@ -1767,7 +1767,7 @@ class notifier:
         if freenas_build != expected_build:
             raise MiddlewareError('Software versions did not match ("%s" != '
                                   '"%s")' % (freenas_build, expected_build))
-        self.__system("/sbin/mount -uw /")
+        self.__system("/sbin/mount -uw -onoatime /")
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
         self.__system("/bin/sh /etc/servicepack/post-install")
         self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.txz")
