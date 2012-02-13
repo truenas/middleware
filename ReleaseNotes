@@ -57,7 +57,14 @@ Middleware
 2. Add in several robustness fixes to reduce potential for filesystem
    corruption on root / boot device. In some scenarios this would also
    improve performance when fetching data from the root device as well
-   (SF r10095, r10109).
+   (SF r10095, r10109, r10129).
+
+CIFS
+------------------------
+1. Fix vfs objects modules ordering so shadow copy (aka previous
+   versions) support functions again (FN 935, FN 1186, FN 1275).
+2. Update samba to 3.6.3 to resolve several bugs (both security and
+   non-security related) (SF r10127).
 
 iSCSI
 ------------------------
