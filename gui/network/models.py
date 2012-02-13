@@ -133,24 +133,30 @@ class Interfaces(Model):
 
     def __unicode__(self):
             return u'%s' % self.int_name
+
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
         self._original_int_options = self.int_options
+
     def delete(self):
         for lagg in self.lagginterface_set.all():
             lagg.delete()
         super(Interfaces, self).delete()
         notifier().stop("netif")
         notifier().start("network")
+
     def save(self, *args, **kwargs):
         super(Interfaces, self).save(*args, **kwargs)
         if self._original_int_options != self.int_options and \
                 re.search(r'mtu \d+', self._original_int_options) and \
                 self.int_options.find("mtu") == -1:
             notifier().interface_mtu(self.int_interface, "1500")
+
     class Meta:
         verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")
+        ordering = ["int_interface"]
+
     class FreeAdmin:
         create_modelform = "InterfacesForm"
         edit_modelform = "InterfacesEditForm"
@@ -200,17 +206,21 @@ class Alias(Model):
 
     def __unicode__(self):
             return u'%s:%s' % (self.alias_interface.int_name, self.alias_v4address)
+
     def delete(self):
         super(Alias, self).delete()
         notifier().stop("netif")
         notifier().start("network")
+
     class Meta:
         verbose_name = _("Alias")
         verbose_name_plural = _("Aliases")
+
     class FreeAdmin:
         pass
         #create_modelform = "InterfacesForm"
         #edit_modelform = "InterfacesEditForm"
+
 
 ## Network|Interface Management|VLAN
 class VLAN(Model):
@@ -245,6 +255,7 @@ class VLAN(Model):
     class Meta:
         verbose_name = _("VLAN")
         verbose_name_plural = _("VLANs")
+        ordering = ["vlan_vint"]
 
     class FreeAdmin:
         icon_object = u"VLANIcon"
@@ -267,6 +278,12 @@ class LAGGInterface(Model):
             verbose_name=_("Protocol Type"),
             choices=choices.LAGGType,
             )
+
+    class Meta:
+        verbose_name = _("Link Aggregation")
+        verbose_name_plural = _("Link Aggregations")
+        ordering = ["lagg_interface"]
+
     def __unicode__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = self.id)
         if interface_list != None:
@@ -284,6 +301,7 @@ class LAGGInterface(Model):
         icon_model = u"VLANIcon"
         icon_add = u"AddVLANIcon"
         icon_view = u"ViewAllVLANsIcon"
+
 
 # Physical interfaces list inside one LAGG group
 class LAGGInterfaceMembers(Model):
@@ -303,21 +321,26 @@ class LAGGInterfaceMembers(Model):
             max_length=120,
             verbose_name=_("Options")
             )
+
     def __unicode__(self):
         return self.lagg_physnic
 
     def delete(self):
-        import os
-        os.system("ifconfig %s -laggport %s" % (self.lagg_interfacegroup.lagg_interface.int_interface, self.lagg_physnic))
+        notifier().lagg_remove_port(
+            self.lagg_interfacegroup.lagg_interface.int_interface,
+            self.lagg_physnic,
+            )
         super(LAGGInterfaceMembers, self).delete()
 
     class Meta:
         verbose_name = _("Link Aggregation")
         verbose_name_plural = _("Link Aggregations")
+        ordering = ["lagg_interfacegroup"]
 
     class FreeAdmin:
         icon_object = u"LAGGIcon"
         icon_model = u"LAGGIcon"
+
 
 class StaticRoute(Model):
     sr_destination = models.CharField(
@@ -337,6 +360,7 @@ class StaticRoute(Model):
     class Meta:
         verbose_name = _("Static Route")
         verbose_name_plural = _("Static Routes")
+        ordering = ["sr_destination", "sr_gateway"]
 
     class FreeAdmin:
         icon_object = u"StaticRouteIcon"

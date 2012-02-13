@@ -2554,6 +2554,9 @@ class notifier:
     def interface_mtu(self, iface, mtu):
         self.__system("ifconfig %s mtu %s" % (iface, mtu))
 
+    def lagg_remove_port(self, lagg, iface):
+        return self.__system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
+
     def __init__(self):
         self.__confxml = None
         self.__diskserial = {}
