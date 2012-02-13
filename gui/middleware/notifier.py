@@ -3197,6 +3197,30 @@ class notifier:
         if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
 
+    def mount_volume(self, volume):
+        """
+        Mount a volume.
+        The volume must be in /etc/fstab
+
+        Returns:
+            True if volume was sucessfully mounted, False otherwise
+        """
+        if volume.vol_fstype == 'ZFS':
+            raise NotImplementedError("No donuts for you!")
+
+        prov = self.get_label_consumer(volume.vol_fstype.lower(),
+            str(volume.vol_name))
+        if not prov:
+            return False
+
+        proc = self.__pipeopen("mount /dev/%s/%s" % (
+            volume.vol_fstype.lower(),
+            volume.vol_name,
+            ))
+        if proc.wait() != 0:
+            return False
+        return True
+
 def usage():
     usage_str = """usage: %s action command
     Action is one of:

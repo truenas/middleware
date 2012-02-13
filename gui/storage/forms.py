@@ -419,6 +419,8 @@ class VolumeImportForm(forms.Form):
         mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
+        notifier().start("ix-fstab")
+        notifier().mount_volume(volume)
         #notifier().reload("disk")
 
 class VolumeAutoImportForm(forms.Form):
