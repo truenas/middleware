@@ -41,12 +41,12 @@ class Volume(Model):
     vol_name = models.CharField(
             unique=True,
             max_length=120,
-            verbose_name = _("Name")
+            verbose_name=_("Name")
             )
     vol_fstype = models.CharField(
             max_length=120,
             choices=choices.VolumeType_Choices,
-            verbose_name = _("File System Type"),
+            verbose_name=_("File System Type"),
             )
     vol_guid = models.CharField(
             max_length=50,
@@ -225,6 +225,7 @@ class Scrub(Model):
     class Meta:
         verbose_name = _("ZFS Scrub")
         verbose_name_plural = _("ZFS Scrubs")
+        ordering = ["scrub_volume__vol_name"]
 
     class FreeAdmin:
         icon_model = u"cronJobIcon"
@@ -366,25 +367,30 @@ class Disk(Model):
             default=True,
             editable=False,
             )
+
     def get_serial(self):
         n = notifier()
         return n.serial_from_device(
             n.identifier_to_device(self.disk_identifier)
             )
+
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
+
     def identifier_to_device(self):
         """
         Get the corresponding device name from disk_identifier field
         """
         return notifier().identifier_to_device(self.disk_identifier)
+
     @property
     def devname(self):
         if self.disk_multipath_name:
             return "multipath/%s" % self.disk_multipath_name
         else:
             return self.disk_name
+
     def get_disk_size(self):
         #FIXME
         import subprocess
@@ -393,11 +399,13 @@ class Disk(Model):
             out = p1.communicate()[0]
             return out.split('\t')[3]
         return 0
+
     def save(self, *args, **kwargs):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
         super(Disk, self).save(args, kwargs)
+
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
         #Delete device extents depending on this Disk
@@ -406,8 +414,12 @@ class Disk(Model):
         if qs.exists():
             qs.delete()
         super(Disk, self).delete()
+
     class Meta:
         verbose_name = _("Disk")
+        verbose_name_plural = _("Disks")
+        ordering = ["disk_name"]
+
     def __unicode__(self):
         return unicode(self.disk_name)
         #ident = self.identifier_to_device() or _('Unknown')
@@ -569,6 +581,7 @@ class MountPoint(Model):
     used_si = property(_get_used_si)
     status = property(_get_status)
 
+
 # TODO: Refactor replication out from the storage model to its
 # own application
 class ReplRemote(Model):
@@ -584,13 +597,16 @@ class ReplRemote(Model):
             max_length=2048,
             verbose_name=_("Remote hostkey"),
             )
+
     class Meta:
         verbose_name = _(u"Remote Replication Host")
         verbose_name_plural = _(u"Remote Replication Hosts")
+
     def delete(self):
         rv = super(ReplRemote, self).delete()
         notifier().reload("ssh")
         return rv
+
     def __unicode__(self):
         return self.ssh_remote_hostname
 
@@ -623,16 +639,21 @@ class Replication(Model):
             verbose_name = _("Limit (kB/s)"),
             help_text = _("Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."),
             )
+
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
+        ordering = ["repl_filesystem"]
+
     class FreeAdmin:
         icon_model = u"ReplIcon"
         icon_add = u"AddReplIcon"
         icon_view = u"ViewAllReplIcon"
         icon_object = u"ReplIcon"
+
     def __unicode__(self):
         return '%s -> %s' % (self.repl_filesystem, self.repl_remote.ssh_remote_hostname)
+
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":
@@ -641,6 +662,7 @@ class Replication(Model):
         except:
             pass
         super(Replication, self).delete()
+
 
 class Task(Model):
     task_filesystem = models.CharField(max_length=150,
@@ -708,6 +730,7 @@ class Task(Model):
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
         verbose_name_plural = _(u"Periodic Snapshot Tasks")
+        ordering = ["task_filesystem"]
 
     class FreeAdmin:
         icon_model = u"SnapIcon"
