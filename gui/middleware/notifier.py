@@ -1256,7 +1256,7 @@ class notifier:
         stderr = p1.communicate()[1]
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk replacement failed: "%s"' % error)
+            raise MiddlewareError('Disk offline failed: "%s"' % error)
 
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
