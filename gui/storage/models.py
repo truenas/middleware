@@ -76,7 +76,8 @@ class Volume(Model):
             return notifier().list_zfs_datasets(path=self.vol_name, recursive=True)
 
     def get_zvols(self):
-        return notifier().list_zfs_vols(self.vol_name)
+        if self.vol_fstype == 'ZFS':
+            return notifier().list_zfs_vols(self.vol_name)
 
     def _get_status(self):
         try:
