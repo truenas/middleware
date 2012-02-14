@@ -134,7 +134,7 @@
             });
             if(snaps.length == 0) return true;
 
-            editObject('test', null, [this], function(data) {
+            editObject('{% trans "Delete snapshots"|escapejs %}', null, [this], function(data) {
                 var dialog = this;
                 dojo.rawXhrPost({
                     url: '{% url storage_snapshot_delete_bulk %}',
