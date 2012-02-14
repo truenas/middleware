@@ -35,6 +35,7 @@ import types
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import QueryDict
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
 
 from dojango import forms
@@ -726,13 +727,22 @@ class MountPointAccessForm(Form):
             recursive=self.cleaned_data['mp_recursive'],
             acl=self.cleaned_data['mp_acl'])
 
+
 class PeriodicSnapForm(ModelForm):
+
     class Meta:
         model = models.Task
         widgets = {
-            'task_byweekday': CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES)
-            #'task_bymonth': CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES)
+            'task_byweekday': CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES),
+            'task_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
+            'task_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
         }
+
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()

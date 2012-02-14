@@ -684,13 +684,13 @@ class Task(Model):
             )
     task_begin = models.TimeField(
             default=time(hour=9),
-            verbose_name = _("Begin"),
-            help_text = _("When in a day should we start making snapshots, e.g. 8:00"),
+            verbose_name=_("Begin"),
+            help_text=_("Do not snapshot before"),
             )
     task_end = models.TimeField(
             default=time(hour=18),
-            verbose_name = _("End"),
-            help_text = _("When in a day should we stop making snapshots, e.g. 17:00"),
+            verbose_name=_("End"),
+            help_text=_("Do not snapshot after"),
             )
     task_interval = models.PositiveIntegerField(
             default = 60,
