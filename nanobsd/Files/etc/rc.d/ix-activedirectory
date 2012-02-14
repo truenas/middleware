@@ -128,6 +128,10 @@ setup_homedirs()
 			local workgroup=$(get_workgroup)
 			mkdir -p "/var/home/${workgroup}"
 		fi
+
+	elif [ ! -d "/var/home" ]
+	then
+		mkdir /var/home
 	fi
 }
 

@@ -164,6 +164,10 @@ setup_homedirs()
 	if [ -n "${cifs_home}" ]
 	then
 		ln -sfh "$cifs_home" "/var/home" 2>/dev/null
+
+	elif [ ! -d "/var/home" ]
+	then
+		mkdir /var/home
 	fi
 }
 
