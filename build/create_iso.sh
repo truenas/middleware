@@ -29,7 +29,7 @@ main()
 
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-    REVISION="8.0.4-BETA2"
+    REVISION="8.0.4-BETA2_MULTIMEDIA"
     export NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH_HUMANIZED}"
     export NANO_IMGNAME="$NANO_NAME"
 
