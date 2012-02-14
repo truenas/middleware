@@ -315,7 +315,7 @@ class notifier:
             self.start(what)
 
     def _start_webshell(self):
-        self.__system_nolog("/usr/local/www/freenasUI/tools/webshell.py")
+        self.__system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_webshell(self):
         try:
