@@ -474,6 +474,7 @@ def dataset_delete(request, object_id):
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         if retval == '':
             obj.delete()
+            notifier().restart("collectd")
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully destroyed.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
@@ -488,6 +489,7 @@ def snapshot_delete(request, dataset, snapname):
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
         if retval == '':
+            notifier().restart("collectd")
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully deleted.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
@@ -507,6 +509,7 @@ def snapshot_delete_bulk(request):
             retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
             if retval != '':
                 return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+        notifier().restart("collectd")
         return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshots successfully deleted.")}), mimetype="application/json")
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {

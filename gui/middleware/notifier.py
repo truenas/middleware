@@ -856,8 +856,6 @@ class notifier:
         if retval == None:
             zfsproc = self.__pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
-            if zfsproc.returncode == 0:
-                self.restart("collectd")
         return retval
 
     def destroy_zfs_vol(self, name):
