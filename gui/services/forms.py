@@ -645,7 +645,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         for mp in MountPoint.objects.all():
             if path == mp.mp_path:
                 raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
-            if path.startswith(mp.mp_path):
+            if path.startswith(mp.mp_path+'/'):
                 valid = True
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
