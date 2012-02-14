@@ -12,6 +12,7 @@ ISTGT_CONFPATH="/usr/local/etc/istgt"
 ISTGT_CONFIG="${ISTGT_CONFPATH}/istgt.conf"
 ISTGT_AUTHFILE="${ISTGT_CONFPATH}/auth.conf"
 ISTGT_CTLFILE="${ISTGT_CONFPATH}/istgtcontrol.conf"
+ALERT_PORTAL_IP="/var/tmp/iscsi_portal_ip"
 
 pidfile=/var/run/istgt.pid
 command="/usr/local/bin/istgt"
@@ -65,6 +66,7 @@ generate_istgt_config()
         done
 
 	# Generate [PortalGroupNN] sections
+	rm -f "${ALERT_PORTAL_IP}" || true
 	echo "# PortalGroup section"
 	local f="id iscsi_target_portal_tag"
 	eval local ${f}
@@ -77,6 +79,10 @@ generate_istgt_config()
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM services_iscsitargetportalip WHERE iscsi_target_portalip_portal_id=${id}" | \
 		while eval read -r $f2; do
+			if [ -z $(/sbin/ifconfig -a|grep "${iscsi_target_portalip_ip}") ]; then
+				echo "${iscsi_target_portalip_ip}" >> ${ALERT_PORTAL_IP}
+				iscsi_target_portalip_ip="0.0.0.0"
+			fi
 			# IPv6 or not
 			if [ ! -z "$(echo ${iscsi_target_portalip_ip}|grep ':')" ]; then
 				echo "  Portal DA1 [${iscsi_target_portalip_ip}]:${iscsi_target_portalip_port}"

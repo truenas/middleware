@@ -51,6 +51,7 @@ from freenasUI.system.models import Settings
 
 ALERT_FILE = '/var/tmp/alert'
 LAST_ALERT_FILE = '/var/tmp/alert.last'
+PORTAL_IP_FILE = '/var/tmp/iscsi_portal_ip'
 
 class Alert(object):
 
@@ -128,10 +129,22 @@ class Alert(object):
                          _('The WebGUI Address could not be bind to %s; using wildcard')
                          % (address,))
 
+    def iscsi_portal_ips(self):
+        if not os.path.exists(PORTAL_IP_FILE):
+            return None
+        with open(PORTAL_IP_FILE) as f:
+            ips = f.read().split('\n')
+            ips = filter(lambda y: bool(y), ips)
+            self.log(self.LOG_WARN,
+                _('The following IPs are bind to iSCSI Portal but were not '
+                'found in the system: %s') % (', '.join(ips))
+                )
+
     def perform(self):
         self.volumes_status()
         self.admin_password()
         self.httpd_bindaddr()
+        self.iscsi_portal_ips()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:
