@@ -823,7 +823,7 @@ class iSCSITargetPortalIPForm(ModelForm):
         for interface in Interfaces.objects.all():
             if interface.int_ipv4address:
                 ips.append( (interface.int_ipv4address, interface.int_ipv4address) )
-            elif int_ipv6address:
+            elif interface.int_ipv6address:
                 ips.append( (interface.int_ipv6address, interface.int_ipv6address) )
             for alias in interface.alias_set.all():
                 if alias.alias_v4address:
