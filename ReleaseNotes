@@ -67,6 +67,8 @@ Middleware
 2. Work around interoperability issues with user / group population in the
    GUI by failing silently in certain cases if AD/LDAP users cannot be
    retrieved (SF r10140).
+3. Fix case where local and remote paths passed to rsync in Rsync tasks
+   weren't quoted, so paths with spaces in them would not work (FN 1285).
 
 
 Changes since 8.0.4-BETA1:
