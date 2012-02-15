@@ -50,7 +50,6 @@ Middleware
 1. Do not restart collectd (reporting backend) when deleting snapshots
    in the GUI (SF r10139).
 
-
 Bugfixes
 ========================
 
@@ -86,7 +85,7 @@ OS/Third party
    structures (SF r10113).
 
 Bugfixes
-------------------------
+========================
 
 Middleware
 ------------------------
