@@ -283,11 +283,11 @@ var _Paginator = declare("dojox.grid.enhanced.plugins._Paginator", [_Widget, _Te
 		this.inherited(arguments);
 		var _this = this, g = this.grid;
 		this.plugin.connect(g, "_resize", lang.hitch(this, "_resetGridHeight"));
-		this._originalResize = lang.hitch(g, "resize");
+		this._originalResize = g.resize;
 		g.resize = function(changeSize, resultSize){
 			_this._changeSize = changeSize;
 			_this._resultSize = resultSize;
-			_this._originalResize();
+			_this._originalResize.apply(g, arguments);
 		};
 		this.focus = _Focus(this);
 		this._placeSelf();
