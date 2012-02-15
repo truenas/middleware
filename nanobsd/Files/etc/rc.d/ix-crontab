@@ -69,16 +69,16 @@ generate_crontab()
 
 			if [ "${rsync_mode}" = "module" ]; then
 				if [ "${rsync_direction}" = "push" ]; then
-					echo -n "${rsync_path} ${rsync_remotehost}::${rsync_remotemodule}"
+					echo -n "'${rsync_path}' ${rsync_remotehost}::${rsync_remotemodule}"
 				else
-					echo -n "${rsync_remotehost}::${rsync_remotemodule} ${rsync_path}"
+					echo -n "${rsync_remotehost}::${rsync_remotemodule} '${rsync_path}'"
 				fi
 			else
 				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' "
 				if [ "${rsync_direction}" = "push" ]; then
-					echo -n "${rsync_path} ${rsync_remotehost}:${rsync_remotepath}"
+					echo -n "'${rsync_path}' ${rsync_remotehost}:'${rsync_remotepath}'"
 				else
-					echo -n "${rsync_remotehost}:${rsync_remotepath} ${rsync_path}"
+					echo -n "${rsync_remotehost}:'${rsync_remotepath}' '${rsync_path}'"
 				fi
 			fi
 
