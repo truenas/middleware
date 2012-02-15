@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.4-BETA2
+Release Notes for FreeNAS 8.0.4-RC1
 
 *** IMPORTANT ***
 
@@ -30,6 +30,43 @@ Release Notes for FreeNAS 8.0.4-BETA2
   8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
+
+
+Changes since 8.0.4-BETA2:
+
+Enhancements
+========================
+
+Build
+------------------------
+
+1. Remove Full_Install from the compressed disk image name to avoid
+   potential confusion when looking at the disk image vs the GUI
+   upgrade image (SF r10154).
+
+Middleware
+------------------------
+
+1. Do not restart collectd (reporting backend) when deleting snapshots
+   in the GUI (SF r10139).
+
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Correct window title for snapshot deletion GUI (SF r10138).
+
+Middleware
+------------------------
+
+1. Catch ZFS snapshot errors when snapshots are done via the GUI instead of
+   failing silently (SF r10152).
+2. Work around interoperability issues with user / group population in the
+   GUI by failing silently in certain cases if AD/LDAP users cannot be
+   retrieved (SF r10140).
 
 
 Changes since 8.0.4-BETA1:
