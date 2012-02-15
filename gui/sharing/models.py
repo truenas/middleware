@@ -59,10 +59,15 @@ class CIFS_Share(Model):
             verbose_name=_("Show Hidden Files"))
     cifs_guest = UserField(
             max_length=120,
-            default="www",
+            default="nobody",
             exclude=["root"],
             verbose_name=_("Guest Account"),
-            help_text=_("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
+            help_text=_("Use this option to override the username ('nonody' "
+                "by default) which will be used for access to services which "
+                "are specified as guest. Whatever privileges this user has "
+                "will be available to any client connecting to the guest "
+                "service. This user must exist in the password file, but does"
+                "not require a valid login.")
             )
     cifs_guestok = models.BooleanField(
             verbose_name=_("Allow Guest Access"))
