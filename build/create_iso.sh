@@ -36,7 +36,7 @@ main()
     . build/functions.sh
 
     # Paths that may need altering on the build system
-    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.img.xz"
+    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
     TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
     ETC_FILES="$root/build/files"
 
