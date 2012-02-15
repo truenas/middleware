@@ -244,6 +244,7 @@ add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
+add_port benchmarks/xdd
 #add_port security/nmap
 add_port sysutils/ipmitool
 
