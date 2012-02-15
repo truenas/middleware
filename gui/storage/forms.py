@@ -657,7 +657,7 @@ class VolumeAutoImportForm(forms.Form):
                         i += 1
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
-                from middleware.exceptions import MiddlewareError
+                from freenasUI.middleware.exceptions import MiddlewareError
                 raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])
 
         if vol['type'] == 'zfs':

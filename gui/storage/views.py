@@ -41,7 +41,7 @@ from freenasUI.storage import forms
 from freenasUI.storage import models
 from freenasUI.storage.evilhack import evil_zvol_destroy
 from freenasUI.middleware.notifier import notifier
-from middleware.exceptions import MiddlewareError
+from freenasUI.middleware.exceptions import MiddlewareError
 
 ## Disk section
 
@@ -550,8 +550,12 @@ def manualsnap(request, path):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
-            form.commit(path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken.")}), mimetype="application/json")
+            try:
+                form.commit(path)
+            except MiddlewareError, e:
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            else:
+                return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
