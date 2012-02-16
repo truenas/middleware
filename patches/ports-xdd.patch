@@ -1,0 +1,158 @@
+diff -Naur benchmarks/xdd/Makefile benchmarks/xdd/Makefile
+--- benchmarks/xdd/Makefile	2007-12-21 07:31:17.000000000 -0800
++++ benchmarks/xdd/Makefile	2012-02-15 22:22:20.394135532 -0800
+@@ -7,6 +7,7 @@
+ 
+ PORTNAME=	xdd
+ PORTVERSION=	65
++PORTREVISION=	1
+ CATEGORIES=	benchmarks
+ MASTER_SITES=	http://www.ioperformance.com/xddversions/
+ DISTNAME=	xdd65.013007
+diff -Naur benchmarks/xdd/files/patch-initialization.c benchmarks/xdd/files/patch-initialization.c
+--- benchmarks/xdd/files/patch-initialization.c	2007-12-21 07:25:47.000000000 -0800
++++ benchmarks/xdd/files/patch-initialization.c	2012-02-15 21:59:31.220136804 -0800
+@@ -1,6 +1,19 @@
+---- initialization.c.orig	Fri Mar 16 06:54:36 2007
+-+++ initialization.c	Fri Mar 16 06:56:05 2007
+-@@ -628,7 +628,7 @@
++--- initialization.c.orig	2012-02-09 19:46:52.785072682 -0800
+++++ initialization.c	2012-02-15 21:58:34.759136156 -0800
++@@ -181,11 +181,7 @@
++ 	fprintf(out, "Computer Name, %s, User Name, %s\n",name.nodename, getlogin());
++ 	fprintf(out, "OS release and version, %s %s %s\n",name.sysname, name.release, name.version);
++ 	fprintf(out, "Machine hardware type, %s\n",name.machine);
++-#if (SOLARIS)
++-	xgp->number_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
++-	physical_pages = sysconf(_SC_PHYS_PAGES);
++-	page_size = sysconf(_SC_PAGE_SIZE);
++-#elif (AIX)
+++#if (SOLARIS || AIX || FreeBSD)
++ 	xgp->number_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
++ 	physical_pages = sysconf(_SC_PHYS_PAGES);
++ 	page_size = sysconf(_SC_PAGE_SIZE);
++@@ -628,7 +624,7 @@
+  	 * NOTE: This is not supported by all operating systems. 
+  	 */
+  	if (p->target_options & RX_SHARED_MEMORY) {
+@@ -9,7 +22,7 @@
+  		/* In AIX we need to get memory in a shared memory segment to avoid
+  	     * the system continually trying to pin each page on every I/O operation */
+  #if (AIX)
+-@@ -656,14 +656,14 @@
++@@ -656,14 +652,14 @@
+  		fprintf(xgp->errout,"%s: Shared Memory not supported on this OS - using valloc\n",
+  			xgp->progname);
+  		p->target_options &= ~RX_SHARED_MEMORY;
+@@ -26,7 +39,7 @@
+  		rwbuf = valloc(p->iosize);
+  #else
+  		rwbuf = malloc(p->iosize);
+-@@ -740,7 +740,7 @@
++@@ -740,7 +736,7 @@
+  	newlim = liret - (PAGESIZE*8);
+  	return;
+  #else
+@@ -35,7 +48,7 @@
+  	if (getuid() != 0) {
+  		fprintf(xgp->errout,"(PID %d) %s: You must run as superuser to lock memory for %s\n",
+  			getpid(),xgp->progname, sp);
+-@@ -889,7 +889,7 @@
++@@ -889,7 +885,7 @@
+  #endif
+  	return;
+  #else
+@@ -44,7 +57,7 @@
+  	if (getuid() != 0) {
+  		return;
+  	}
+-@@ -974,7 +974,7 @@
++@@ -974,7 +970,7 @@
+  	if (xgp->global_options & RX_NOPROCLOCK) 
+                  return;
+  #if !(OSX)
+@@ -53,7 +66,7 @@
+  	if (getuid() != 0)
+  		fprintf(xgp->errout,"%s: xdd_schedule_options: You must be super user to lock processes\n",xgp->progname);
+  #endif 
+-@@ -985,7 +985,7 @@
++@@ -985,7 +981,7 @@
+  		perror("Reason");
+  	}
+  	if (xgp->global_options & RX_MAXPRI) {
+@@ -62,7 +75,7 @@
+  		if (getuid() != 0) 
+  			fprintf(xgp->errout,"%s: xdd_schedule_options: You must be super user to max priority\n",xgp->progname);
+  #endif
+-@@ -1127,7 +1127,7 @@
++@@ -1127,7 +1123,7 @@
+  #endif
+  #if (IRIX || SOLARIS || HPUX || AIX || ALTIX)
+  	struct stat64 statbuf; /* buffer for file statistics */
+diff -Naur benchmarks/xdd/files/patch-parse.c benchmarks/xdd/files/patch-parse.c
+--- benchmarks/xdd/files/patch-parse.c	2007-12-21 07:25:47.000000000 -0800
++++ benchmarks/xdd/files/patch-parse.c	2012-02-15 22:19:47.555136372 -0800
+@@ -1,5 +1,5 @@
+---- parse.c.orig	Fri Mar 16 07:10:44 2007
+-+++ parse.c	Fri Mar 16 07:11:44 2007
++--- parse.c.orig	2012-02-15 22:02:57.832134671 -0800
+++++ parse.c	2012-02-15 22:02:57.878141191 -0800
+ @@ -810,7 +810,7 @@
+  xddfunc_delay(int32_t argc, char *argv[])
+  { 
+@@ -18,3 +18,30 @@
+  }
+  /*----------------------------------------------------------------------------*/
+  // Set the maximum runtime priority
++@@ -1448,7 +1448,7 @@
++ #if (LINUXUP || HPUX || OSX)
++ 	cpus = 1;
++ 	fprintf(xgp->errout,"%s: WARNING: Multiple processors not supported in this release\n",xgp->progname);
++-#elif (SOLARIS || AIX)
+++#elif (SOLARIS || AIX || FreeBSD)
++ 	/* SOLARIS or AIX */ 
++ 	cpus = sysconf(_SC_NPROCESSORS_ONLN);
++ #elif (IRIX || WIN32)
++@@ -1764,7 +1764,7 @@
++ #if (LINUXUP || HPUX || OSX)
++ 	cpus = 1;
++ 	fprintf(xgp->errout,"%s: WARNING: Multiple processors not supported in this release\n",xgp->progname);
++-#elif (SOLARIS || AIX)
+++#elif (SOLARIS || AIX || FreeBSD)
++ 	/* SOLARIS or AIX */ 
++ 	cpus = sysconf(_SC_NPROCESSORS_ONLN);
++ #elif (IRIX || WIN32)
++@@ -2057,7 +2057,7 @@
++ #if (LINUXUP || HPUX || OSX)
++ 	cpus = 1;
++ 	fprintf(xgp->errout,"%s: WARNING: Multiple processors not supported in this release\n",xgp->progname);
++-#elif (SOLARIS || AIX)
+++#elif (SOLARIS || AIX || FreeBSD)
++ 	/* SOLARIS or AIX */ 
++ 	cpus = sysconf(_SC_NPROCESSORS_ONLN);
++ #elif (IRIX || WIN32)
+diff -Naur benchmarks/xdd/files/patch-xdd.h benchmarks/xdd/files/patch-xdd.h
+--- benchmarks/xdd/files/patch-xdd.h	2007-12-21 07:25:47.000000000 -0800
++++ benchmarks/xdd/files/patch-xdd.h	2012-02-15 22:01:19.438135496 -0800
+@@ -1,5 +1,19 @@
+---- xdd.h.orig	Fri Mar 16 06:35:11 2007
+-+++ xdd.h	Fri Mar 16 07:04:35 2007
++--- xdd.h.orig	2012-02-15 22:00:06.595144141 -0800
+++++ xdd.h	2012-02-15 22:01:01.868152911 -0800
++@@ -30,12 +30,12 @@
++ #include <errno.h>
++ #include <fcntl.h>
++ #include <sys/types.h>
+++#include <string.h>
++ #ifdef WIN32
++ #include <io.h>
++ #include <sys/timeb.h>
++ #include <time.h>
++ #include <memory.h>
++-#include <string.h>
++ #include <windows.h>
++ #include <windef.h>
++ #include <winbase.h>
+ @@ -48,7 +48,7 @@
+  #include <sys/ipc.h>
+  #include <sys/sem.h>
