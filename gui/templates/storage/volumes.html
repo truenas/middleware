@@ -239,13 +239,13 @@
             <td>{{ attrs.volsize }}</td>
 		    <td>{{ m.status }}</td>
             <td>
-                <button id="delZVolBtn{{ volname }}{{ forloop.counter }}" data-dojo-type="dijit.form.Button" type="button">
+                <button id="delZVolBtn{{ m.mp_volume.vol_name }}{{ forloop.counter }}" data-dojo-type="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                         editScaryObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
                     </script>
                 </button>
-                <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delZVolBtn{{ forloop.counter }}', position: ['above']">
+                <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delZVolBtn{{ m.mp_volume.vol_name }}{{ forloop.counter }}', position: ['above']">
                     <strong>{% trans "Destroy ZFS Volume" %}</strong>
                 </div>
             </td>
