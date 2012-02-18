@@ -1,0 +1,67 @@
+diff -Naur www/transmission-web/Makefile www/transmission-web/Makefile
+--- www/transmission-web/Makefile	2011-06-30 10:05:53.000000000 -0700
++++ www/transmission-web/Makefile	2011-12-10 12:36:51.000000000 -0800
+@@ -2,14 +2,14 @@
+ # Date created:				14 July 2008
+ # Whom:					Mezz <mezz@FreeBSD.org>
+ #
+-# $FreeBSD: ports/www/transmission-web/Makefile,v 1.7 2011/06/30 17:05:53 mezz Exp $
++# $FreeBSD: ports/www/transmission-web/Makefile,v 1.9 2011/12/10 20:36:51 crees Exp $
+ #
+ 
+ PORTREVISION=	0
+ CATEGORIES=	www net-p2p
+ PKGNAMESUFFIX=	-web
+ 
+-MAINTAINER=	mezz@FreeBSD.org
++MAINTAINER=	crees@FreeBSD.org
+ COMMENT=	A fast and lightweight WebUI for Transmission BitTorrent client
+ 
+ DESCR=		${.CURDIR}/pkg-descr
+diff -Naur www/transmission-web/pkg-plist www/transmission-web/pkg-plist
+--- www/transmission-web/pkg-plist	2010-12-12 14:52:38.000000000 -0800
++++ www/transmission-web/pkg-plist	2011-10-18 11:36:40.000000000 -0700
+@@ -17,34 +17,35 @@
+ %%DATADIR%%/web/images/buttons/torrent_buttons.png
+ %%DATADIR%%/web/images/favicon.ico
+ %%DATADIR%%/web/images/favicon.png
++%%DATADIR%%/web/images/graphics/blue-turtle.png
+ %%DATADIR%%/web/images/graphics/chrome.png
+ %%DATADIR%%/web/images/graphics/filter_bar.png
+ %%DATADIR%%/web/images/graphics/filter_icon.png
+ %%DATADIR%%/web/images/graphics/iphone_chrome.png
+ %%DATADIR%%/web/images/graphics/lock_icon.png
+ %%DATADIR%%/web/images/graphics/logo.png
+-%%DATADIR%%/web/images/graphics/transfer_arrows.png
+-%%DATADIR%%/web/images/graphics/wait20.gif
+ %%DATADIR%%/web/images/progress/progress.png
+ %%DATADIR%%/web/images/webclip-icon.png
+ %%DATADIR%%/web/index.html
+ %%DATADIR%%/web/javascript/common.js
+ %%DATADIR%%/web/javascript/dialog.js
++%%DATADIR%%/web/javascript/file-row.js
+ %%DATADIR%%/web/javascript/formatter.js
++%%DATADIR%%/web/javascript/inspector.js
+ %%DATADIR%%/web/javascript/jquery/jquery.contextmenu.min.js
+ %%DATADIR%%/web/javascript/jquery/jquery.form.js
+ %%DATADIR%%/web/javascript/jquery/jquery.form.min.js
+-%%DATADIR%%/web/javascript/jquery/jquery.min.js
+ %%DATADIR%%/web/javascript/jquery/jquery.transmenu.min.js
+-%%DATADIR%%/web/javascript/jquery/json.min.js
+-%%DATADIR%%/web/javascript/menu.js
++%%DATADIR%%/web/javascript/jquery/json2.min.js
++%%DATADIR%%/web/javascript/prefs-dialog.js
++%%DATADIR%%/web/javascript/remote.js
++%%DATADIR%%/web/javascript/torrent-row.js
+ %%DATADIR%%/web/javascript/torrent.js
+ %%DATADIR%%/web/javascript/transmission.js
+-%%DATADIR%%/web/javascript/transmission.remote.js
+ %%DATADIR%%/web/stylesheets/common.css
+-%%DATADIR%%/web/stylesheets/ie6.css
+ %%DATADIR%%/web/stylesheets/ie7.css
+-%%DATADIR%%/web/stylesheets/iphone.css
++%%DATADIR%%/web/stylesheets/ieAll.css
++%%DATADIR%%/web/stylesheets/mobile.css
+ @dirrm %%DATADIR%%/web/stylesheets
+ @dirrm %%DATADIR%%/web/javascript/jquery
+ @dirrm %%DATADIR%%/web/javascript
