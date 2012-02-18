@@ -433,7 +433,7 @@ generate_exports()
 			echo "[${name}]"
 			echo "    path = ${mountpoint}"
 			echo "    printable = no"
-			echo "    veto files = /.snap/.windows/"
+			echo "    veto files = /.snap/.windows/.zfs/"
 			if [ -n "${comment}" ]; then
 				echo "    comment = ${comment}"
 			fi
