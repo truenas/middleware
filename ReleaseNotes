@@ -50,6 +50,12 @@ Middleware
 1. Do not restart collectd (reporting backend) when deleting snapshots
    in the GUI (SF r10139).
 
+Tools
+------------------------
+
+1. Add arcstat.py and arc_summary.py tools originally contributed by
+   jhell (FreeBSD contributor), ported by jhixson to FreeNAS 8.x.
+
 Bugfixes
 ========================
 
