@@ -20,6 +20,164 @@ Release Notes for FreeNAS 8.0.3-RELEASE-p1
 - Previous builds were branded as i386/amd64 (32-bit and 64-bit
   respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
   respectively.
+- 8.0.1 and 8.0.2 images advertised CIFS shares to Macs by default but
+  8.0.3 and later images don't advertise CIFS shares by default. If you
+  want to advertise CIFS shares in 8.0.3 and later, be sure to turn on
+  "Zeroconf" support in the CIFS global settings.
+- Builds prior to 8.0.3-RELEASE with 'CIFS' didn't actually have AIO
+  (asynchronous I/O) enabled. So, if you experience performance
+  degradation after upgrading from prior versions of FreeNAS to
+  8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
+  something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
+  or 4kB).
+
+
+Changes since 8.0.4-BETA2:
+
+Enhancements
+========================
+
+Build
+------------------------
+
+1. Remove Full_Install from the compressed disk image name to avoid
+   potential confusion when looking at the disk image vs the GUI
+   upgrade image (SF r10154).
+
+Middleware
+------------------------
+
+1. Do not restart collectd (reporting backend) when deleting snapshots
+   in the GUI (SF r10139).
+
+Tools
+------------------------
+
+1. Add arcstat.py and arc_summary.py tools originally contributed by
+   jhell (FreeBSD contributor), ported by jhixson to FreeNAS 8.x.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Correct window title for snapshot deletion GUI (SF r10138).
+
+Middleware
+------------------------
+
+1. Catch ZFS snapshot errors when snapshots are done via the GUI instead of
+   failing silently (SF r10152).
+2. Work around interoperability issues with user / group population in the
+   GUI by failing silently in certain cases if AD/LDAP users cannot be
+   retrieved (SF r10140).
+3. Fix case where local and remote paths passed to rsync in Rsync tasks
+   weren't quoted, so paths with spaces in them would not work (FN 1285).
+
+
+Changes since 8.0.4-BETA1:
+
+Enhancements
+========================
+
+OS/Third party
+------------------------
+
+1. Update transmission to 2.42 (SF r10093).
+2. Add MegaCLI tool (SF r10072, r10073).
+3. Disable periodic tasks in the base system that would negatively
+   impact system performance on NAS boxes with large directory
+   structures (SF r10113).
+
+Bugfixes
+========================
+
+Middleware
+------------------------
+
+1. Fix handling for 'every day' SMART tasks created in the GUI
+   (SF r10088).
+2. Add in several robustness fixes to reduce potential for filesystem
+   corruption on root / boot device. In some scenarios this would also
+   improve performance when fetching data from the root device as well
+   (SF r10095, r10109, r10129).
+
+CIFS
+------------------------
+1. Fix vfs objects modules ordering so shadow copy (aka previous
+   versions) support functions again (FN 935, FN 1186, FN 1275).
+2. Update samba to 3.6.3 to resolve several bugs (both security and
+   non-security related) (SF r10127).
+
+iSCSI
+------------------------
+
+1. Network field from iSCSI initiator could contain multiple IP
+   addresses, CIDR addresses, or ANY keyword (SF r10082).
+2. Generate istgt.conf properly if and when multiple initiators were
+   specified (SF r10081).
+
+
+Changes since 8.0.3-RELEASE-p1:
+
+Enhancements
+========================
+
+Build
+------------------------
+1. Add .img suffix to simplify mounting full disk image for Windows and
+   OSX users (FN # 1236).
+
+OS/Third party
+------------------------
+
+1. Update firefly to 1696_6 for iTunes 10.5.2+ compatibility.
+2. Add in sane caps for minimum ZFS requirements for lower spec'ed home
+   user machines.
+
+AD/CIFS
+------------------------
+
+1. Automatically create AD/LDAP user home directories (FN # 1203).
+2. Add 'allow trusted domains' knob in the CIFS global configuration
+   (FN # 998).
+
+iSCSI
+------------------------
+
+1. Restrict portal input in the GUI to prevent scenarios where
+   incorrect input would prevent iSCSI from starting (FN # 1231).
+
+Rsync
+------------------------
+
+1. Add rsync+SSH functionality (FN # 990).
+2. Add functionality to differentiate rsync pushing from pulling
+   (FN # 394).
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix disks / partition parsing when importing volumes (FN # 1202).
+2. Restrict users from creating cronjobs / rsync tasks with long
+   usernames (FN # 1061).
+
+Middleware
+------------------------
+
+1. Correct smbpasswd parsing when debug level isn't set to minimum
+   logging (FN # 1224).
+
+AD/CIFS
+------------------------
+
+1. Escape samba AD/LDAP passwords (FN # 1225).
+2. Ensure guest accounts are disabled if checked (SF r8276).
+
 
 Changes since 8.0.3-RELEASE:
 
@@ -31,6 +189,7 @@ OS/Third party
 
 1. Update ataidle from 2.6 to 2.72 based on maintainer's (brucec@FreeBSD)
    recommendation due to interoperabilities with 2.6 and certain chipsets.
+2. Fix the inadyn port so that it works on i386.
 
 Bugfixes
 ------------------------
@@ -43,12 +202,18 @@ Middleware
 AD/CIFS
 ========================
 1. Disable AIO by default and change the default AIO read / write size to
-   2kB. This was done provided feedback and the fact that the build fixes
+   4kB. This was done provided feedback and the fact that the build fixes
    actually enabled AIO, whereas prior releases didn't enable it by
    default. This can cause issues with machines that don't have the
    resources to service AIO requests quickly enough, where previously they
    would be able to service requests at near line speeds, whereas after
    they are unable to service requests that quickly.
+
+NFS:
+========================
+1. Add in logic to start lockd and mountd when NFS is enabled s.t. FreeNAS
+   doesn't need to be manually prodded to start the services, or rebooted
+   in order for the services to become effective.
 
 Changes since 8.0.2-RELEASE:
 
@@ -243,3 +408,5 @@ Errata:
   the following support ticket for more details:
   http://support.freenas.org/ticket/1135 .
 
+- Shadow copies via CIFS do not work in 8.0.3. Please see
+  https://support.freenas.org/ticket/1186 for more details.
