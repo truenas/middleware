@@ -1802,7 +1802,7 @@ class notifier:
             if jail is not None:
                 pbi = pbiname = prefix = name = version = arch = None
 
-                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/.freenas/pbifile.pbi")
+                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
                 out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
                 for pair in out:
                     (var, val) = pair.split('=')
@@ -1826,7 +1826,7 @@ class notifier:
 
                 self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
-                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/%s" % pbi)
+                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/plugins/%s" % pbi)
                 res = p.run(jail=True, jid=jail.jid)
                 if res and res[0] == 0:
                     kwargs = {}

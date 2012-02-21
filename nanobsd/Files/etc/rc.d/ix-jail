@@ -60,7 +60,25 @@ generate_plugins_jail_config()
 	" | \
 	while read path name ip plugins
 	do
-		echo "${plugins} ${path}/${name}/mnt nullfs ro 0 0" > "/etc/fstab.${name}"
+		local mntpath_plugins="${path}/${name}/mnt/plugins"
+		local mntpath_pbi="${path}/${name}/usr/pbi"
+
+		if [ ! -d "${plugins}/pbi" ]
+		then
+			mkdir -p "${plugins}/pbi"
+		fi
+		if [ ! -d "${mntpath_plugins}" ]
+		then
+			mkdir -p "${mntpath_plugins}"
+		fi
+		if [ ! -d "${mntpath_pbi}" ]
+		then
+			mkdir -p "${mntpath_pbi}"
+		fi
+
+		echo "${plugins} ${mntpath_plugins} nullfs ro 0 0" > "/etc/fstab.${name}"
+		echo "${plugins}/pbi ${mntpath_pbi} nullfs ro 0 0" >> "/etc/fstab.${name}"
+
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
 		sysctl security.jail.allow_raw_sockets=1
 
