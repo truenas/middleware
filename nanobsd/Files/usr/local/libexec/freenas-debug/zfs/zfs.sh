@@ -49,8 +49,12 @@ zfs_func()
 	done
 	section_footer
 
-	section_header "ZFS Datasets"
-	zfs list 
+	section_header "ZFS Datasets and ZVols"
+	zfs list
+	section_footer
+
+	section_header "ZFS Snapshots"
+	zfs list -t snapshot
 	section_footer
 
 	section_header "ZFS Datasets Properties"
