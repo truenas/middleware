@@ -105,7 +105,7 @@ __EOF__
 
 plugins_jail_start()
 {
-	if srv_enabled plugins
+	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
 	then
 		local jail_name="$(get_plugins_jail_name)"
 
@@ -116,7 +116,7 @@ plugins_jail_start()
 
 plugins_jail_stop()
 {
-	if srv_enabled plugins
+	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
 	then
 		local jail_name="$(get_plugins_jail_name)"
 		if [ -n "${jail_name}" ]
