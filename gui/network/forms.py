@@ -309,6 +309,14 @@ class AliasForm(ModelForm):
         model = models.Alias
         fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
 
+    def __init__(self, *args, **kwargs):
+        from syslog import syslog, LOG_DEBUG
+        super(AliasForm, self).__init__(*args, **kwargs)
+        self.instance._original_alias_v4address = self.instance.alias_v4address
+        self.instance._original_alias_v4netmaskbit = self.instance.alias_v4netmaskbit
+        self.instance._original_alias_v6address = self.instance.alias_v6address
+        self.instance._original_alias_v6netmaskbit = self.instance.alias_v6netmaskbit
+
     def clean_alias_v4address(self):
         ip = self.cleaned_data.get("alias_v4address")
         par_ip = self.parent.cleaned_data.get("int_ipv4address") \
@@ -367,3 +375,47 @@ class AliasForm(ModelForm):
             self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit per alias")])
 
         return cdata
+
+    def save(self, commit):
+        if not commit:
+            return False
+
+        iface = models.Interfaces.objects.filter(id=self.instance.alias_interface_id)
+        if not iface:
+            return False
+
+        change = False
+        iface = str(iface[0].int_interface)
+        kwargs = { 'oldip': str(self.instance._original_alias_v4address) }
+        if self.instance._original_alias_v4address != self.instance.alias_v4address:
+            kwargs['oldip'] = str(self.instance._original_alias_v4address)
+            kwargs['newip'] = str(self.instance.alias_v4address)
+            change = True
+
+        if self.instance._original_alias_v4netmaskbit != self.instance.alias_v4netmaskbit:
+            kwargs['oldnetmask'] = str(self.instance._original_alias_v4netmaskbit)
+            kwargs['newnetmask'] = str(self.instance.alias_v4netmaskbit)
+            change = True
+
+        if change:
+            if not notifier().ifconfig_alias(iface, **kwargs):
+                return False 
+
+        change = False
+        kwargs = { 'oldip': str(self.instance._original_alias_v6address) }
+        if self.instance._original_alias_v6address != self.instance.alias_v6address:
+            kwargs['oldip'] = str(self.instance._original_alias_v6address)
+            kwargs['newip'] = str(self.instance.alias_v6address)
+            change = True
+
+        if self.instance._original_alias_v6netmaskbit != self.instance.alias_v6netmaskbit:
+            kwargs['oldnetmask'] = str(self.instance._original_alias_v6netmaskbit)
+            kwargs['newnetmask'] = str(self.instance.alias_v6netmaskbit)
+            change = True
+
+        if change:
+            if not notifier().ifconfig_alias(iface, **kwargs):
+                return False
+
+        super(AliasForm, self).save(commit)
+        return True
