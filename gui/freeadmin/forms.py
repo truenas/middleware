@@ -152,6 +152,7 @@ class PathField(forms.CharField):
         self.widget = DirectoryBrowser(dirsonly=dirsonly)
         super(PathField, self).__init__(*args, **kwargs)
     def clean(self, value):
+        value = value.strip()
         if value not in ('', None):
             absv = os.path.abspath(value)
             valid = False
