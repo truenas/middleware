@@ -485,7 +485,7 @@ def _l2arc_summary():
         sys.stdout.write("\tSPA Mismatch:\t\t\t\t%s\n" % fHits(l2_write_spa_mismatch))
         sys.stdout.write("\n")
 
-        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n", fBytes(l2_size));
+        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % fBytes(l2_size));
         sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" %
             (fPerc(l2_hdr_size, l2_size), fBytes(l2_hdr_size)))
         sys.stdout.write("\n")
