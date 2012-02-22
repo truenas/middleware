@@ -171,6 +171,40 @@ class Interfaces(Model):
             },
         ]
 
+    def get_ipv4_addresses(self):
+        """
+        Includes IPv4 addresses in aliases
+        """
+        ips = []
+        if self.int_ipv4address:
+            ips.append("%s/%s" % (
+                str(self.int_ipv4address),
+                str(self.int_v4netmaskbit),
+                ))
+        for alias in self.alias_set.exclude(alias_v4address=''):
+            ips.append("%s/%s" % (
+                str(alias.alias_v4address),
+                str(alias.alias_v4netmaskbit),
+                ))
+        return ips
+
+    def get_ipv6_addresses(self):
+        """
+        Includes IPv6 addresses in aliases
+        """
+        ips = []
+        if self.int_ipv6address:
+            ips.append("%s/%s" % (
+                str(self.int_ipv6address),
+                str(self.int_v6netmaskbit),
+                ))
+        for alias in self.alias_set.exclude(alias_v6address=''):
+            ips.append("%s/%s" % (
+                str(alias.alias_v6address),
+                str(alias.alias_v6netmaskbit),
+                ))
+        return ips
+
 
 class Alias(Model):
     alias_interface = models.ForeignKey(
