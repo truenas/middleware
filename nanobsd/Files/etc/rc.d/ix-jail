@@ -77,7 +77,7 @@ generate_plugins_jail_config()
 		fi
 
 		echo "${plugins} ${mntpath_plugins} nullfs ro 0 0" > "/etc/fstab.${name}"
-		echo "${plugins}/pbi ${mntpath_pbi} nullfs ro 0 0" >> "/etc/fstab.${name}"
+		echo "${plugins}/pbi ${mntpath_pbi} nullfs rw 0 0" >> "/etc/fstab.${name}"
 
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
 		sysctl security.jail.allow_raw_sockets=1
