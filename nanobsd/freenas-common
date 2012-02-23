@@ -64,7 +64,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
 DEBUG="0"
-MULTIMEDIA="0"
+MULTIMEDIA="1"
 REPORTING="1"
 
 # /var -> ~150MB (look through rc.initdiskless for the formula of how this
@@ -475,7 +475,6 @@ performance_sanity_caps()
 		;;
 	esac
 	echo "vm.kmem_size=\"${kmem_size}M\""
-	echo "vm.kmem_size_max=\"${kmem_size}M\""
 
 	) >> ${NANO_WORLDDIR}/boot/loader.conf
 }
