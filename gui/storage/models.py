@@ -525,7 +525,8 @@ class MountPoint(Model):
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
 
     def delete(self, do_reload=True):
-        reloads = self.delete_attachments()
+        if do_reload:
+            reloads = self.delete_attachments()
 
         if self.mp_volume.vol_fstype == 'ZFS':
             Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
