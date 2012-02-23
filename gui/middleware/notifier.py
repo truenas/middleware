@@ -645,6 +645,19 @@ class notifier:
         self.__system("/usr/sbin/service statd quietstart")
         self.__system("/usr/sbin/service lockd quietstart")
 
+    def _stop_nfs(self):
+        self.__system("/usr/sbin/service lockd forcestop")
+        self.__system("/usr/sbin/service statd forcestop")
+        self.__system("/usr/sbin/service mountd forcestop")
+        self.__system("/usr/sbin/service nfsd forcestop")
+
+    def _start_nfs(self):
+        self.__system("/usr/sbin/service ix-nfsd quietstart")
+        self.__system("/usr/sbin/service mountd quietstart")
+        self.__system("/usr/sbin/service nfsd quietstart")
+        self.__system("/usr/sbin/service statd quietstart")
+        self.__system("/usr/sbin/service lockd quietstart")
+
     def _start_plugins_jail(self):
         self.__system("/usr/sbin/service ix-jail quietstart")
         self.__system_nolog("/usr/sbin/service ix-plugins start")
