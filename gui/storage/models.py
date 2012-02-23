@@ -110,7 +110,7 @@ class Volume(Model):
         from services.models import iSCSITargetExtent
 
         # TODO: This is ugly.
-        svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
+        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
         reloads = (False, False, False,  False)
 
         n = notifier()
@@ -121,7 +121,9 @@ class Volume(Model):
 
             zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
-                qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+                qs = iSCSITargetExtent.objects.filter(
+                    iscsi_target_extent_path='zvol/' + zvol,
+                    iscsi_target_extent_type='ZVOL')
                 if qs.exists():
                     if destroy:
                         retval = notifier().destroy_zfs_vol(zvol)
@@ -133,7 +135,9 @@ class Volume(Model):
             for mp in self.mountpoint_set.all():
                 attachments = mp.has_attachments()
                 reloads = map(sum,
-                              zip(reloads, [len(attachments[svc]) in svcs]))
+                              zip(reloads,
+                                [len(attachments[svc]) for svc in svcs])
+                             )
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
@@ -222,6 +226,7 @@ class Scrub(Model):
             default=True,
             verbose_name=_("Enabled"),
             )
+
     class Meta:
         verbose_name = _("ZFS Scrub")
         verbose_name_plural = _("ZFS Scrubs")
@@ -462,7 +467,7 @@ class MountPoint(Model):
             'cifs': [],
             'afp': [],
             'nfs': [],
-            'iscsiextent': [],
+            'iscsitarget': [],
         }
 
         for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
@@ -479,9 +484,11 @@ class MountPoint(Model):
         #       model.
         zvols = notifier().list_zfs_vols(self.mp_volume.vol_name)
         for zvol in zvols:
-            qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+            qs = iSCSITargetExtent.objects.filter(
+                iscsi_target_extent_path='zvol/' + zvol,
+                iscsi_target_extent_type='ZVOL')
             if qs.exists():
-                attachments['iscsiextent'].append(qs[0].id)
+                attachments['iscsitarget'].append(qs[0].id)
 
         return attachments
 
@@ -510,11 +517,13 @@ class MountPoint(Model):
         if attachments['nfs']:
             NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
             reload_nfs = True
-        if attachments['iscsiextent']:
-            for target in iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent']):
+        if attachments['iscsitarget']:
+            for target in iSCSITargetExtent.objects.filter(
+                    id__in=attachments['iscsitarget']):
                 target.delete()
             reload_iscsi = True
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
+
     def delete(self, do_reload=True):
         reloads = self.delete_attachments()
 
