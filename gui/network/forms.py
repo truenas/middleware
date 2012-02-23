@@ -310,7 +310,6 @@ class AliasForm(ModelForm):
         fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
 
     def __init__(self, *args, **kwargs):
-        from syslog import syslog, LOG_DEBUG
         super(AliasForm, self).__init__(*args, **kwargs)
         self.instance._original_alias_v4address = self.instance.alias_v4address
         self.instance._original_alias_v4netmaskbit = self.instance.alias_v4netmaskbit
@@ -377,12 +376,11 @@ class AliasForm(ModelForm):
         return cdata
 
     def save(self, commit):
-        if not commit:
-            return False
+        m = super(AliasForm, self).save(commit)
 
         iface = models.Interfaces.objects.filter(id=self.instance.alias_interface_id)
         if not iface:
-            return False
+            return m
 
         change = False
         iface = str(iface[0].int_interface)
@@ -399,7 +397,7 @@ class AliasForm(ModelForm):
 
         if change:
             if not notifier().ifconfig_alias(iface, **kwargs):
-                return False 
+                return m
 
         change = False
         kwargs = { 'oldip': str(self.instance._original_alias_v6address) }
@@ -415,7 +413,8 @@ class AliasForm(ModelForm):
 
         if change:
             if not notifier().ifconfig_alias(iface, **kwargs):
-                return False
+                return m
 
-        super(AliasForm, self).save(commit)
-        return True
+        if commit: 
+            m.save()
+        return m 
