@@ -96,8 +96,8 @@ child_branch=$3
 # source path.
 #
 # Sorry in advance for any confusion...
-OLD_VERSION_F=$child_branch/.old_version
-NEW_VERSION_F=$child_branch/.new_version
+OLD_VERSION_F=$(realpath "$child_branch/.old_version")
+NEW_VERSION_F=$(realpath "$child_branch/.new_version")
 
 cd $base_dir
 # XXX: doesn't work like expected.
@@ -166,7 +166,6 @@ while [ $i -le $new_version ]; do
 	fi
 	: $(( i += 1 ))
 done
-cd -
 mv $NEW_VERSION_F $OLD_VERSION_F
 if $failed_a_merge; then
 	exit 1
