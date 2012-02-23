@@ -488,7 +488,6 @@ performance_sanity_caps()
 		;;
 	esac
 	echo "vm.kmem_size=\"${kmem_size}M\""
-	echo "vm.kmem_size_max=\"${kmem_size}M\""
 
 	) >> ${NANO_WORLDDIR}/boot/loader.conf
 }
