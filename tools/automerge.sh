@@ -166,6 +166,7 @@ while [ $i -le $new_version ]; do
 	fi
 	: $(( i += 1 ))
 done
+cd -
 mv $NEW_VERSION_F $OLD_VERSION_F
 if $failed_a_merge; then
 	exit 1
