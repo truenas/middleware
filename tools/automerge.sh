@@ -86,6 +86,8 @@ base_dir=$1
 parent_branch=$2
 child_branch=$3
 
+cd $base_dir
+
 # Cached version files for the parent branch.
 #
 # Please note that while (for sanity/cleanliness), it would be better for these
@@ -99,7 +101,6 @@ child_branch=$3
 OLD_VERSION_F=$(realpath "$child_branch/.old_version")
 NEW_VERSION_F=$(realpath "$child_branch/.new_version")
 
-cd $base_dir
 # XXX: doesn't work like expected.
 #lockf -k -t 1 .old_version true
 old_version=$(cat $OLD_VERSION_F)
