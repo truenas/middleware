@@ -268,9 +268,19 @@ make_conf_install ( ) (
 	echo "${CONF_INSTALL}" >> ${NANO_MAKE_CONF_INSTALL}
 )
 
+# Run installworld in a deterministic manner.
+#
+# Parameters:
+# 1 - where to install the world; defaults to $NANO_WORLDDIR
 install_world ( ) (
+	local worlddir
+
 	pprint 2 "installworld"
 	pprint 3 "log: ${NANO_OBJ}/_.iw"
+
+	worlddir=${1:-${NANO_WORLDDIR}}
+
+	mkdir -p "$worlddir"
 
 	cd ${NANO_SRC}
 	env \
@@ -278,7 +288,7 @@ install_world ( ) (
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
 		installworld \
-		DESTDIR=${NANO_WORLDDIR} \
+		DESTDIR=${worlddir} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 		> ${NANO_OBJ}/_.iw 2>&1
