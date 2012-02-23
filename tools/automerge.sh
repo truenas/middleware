@@ -86,8 +86,18 @@ base_dir=$1
 parent_branch=$2
 child_branch=$3
 
-OLD_VERSION_F=$parent_branch/.old_version
-NEW_VERSION_F=$parent_branch/.new_version
+# Cached version files for the parent branch.
+#
+# Please note that while (for sanity/cleanliness), it would be better for these
+# files to live under the parent branch, the problem that needs to be resolved
+# here is that you can have a parent branch which is consumed by multiple child
+# branches. So in order for everything to live and operate on multiple branches
+# in the same repo, we must store these files in the target path, not the
+# source path.
+#
+# Sorry in advance for any confusion...
+OLD_VERSION_F=$child_branch/.old_version
+NEW_VERSION_F=$child_branch/.new_version
 
 cd $base_dir
 # XXX: doesn't work like expected.
