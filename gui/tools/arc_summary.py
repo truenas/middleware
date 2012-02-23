@@ -644,7 +644,7 @@ def _sysctl_summary():
             if not tunable:
                 continue
             tunable = tunable.strip()
-            name, description = split("=")[0:2]
+            name, description = tunable.split('=')[:2]
             name = name.strip()
             description = description.strip()
             if not description:
