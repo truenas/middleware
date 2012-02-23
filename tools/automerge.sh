@@ -86,14 +86,17 @@ base_dir=$1
 parent_branch=$2
 child_branch=$3
 
+OLD_VERSION_F=$parent_branch/.old_version
+NEW_VERSION_F=$parent_branch/.new_version
+
 cd $base_dir
 # XXX: doesn't work like expected.
 #lockf -k -t 1 .old_version true
-old_version=$(cat .old_version)
+old_version=$(cat $OLD_VERSION_F)
 clean_svn
 _do svn up --non-interactive $child_branch $parent_branch
-_do svnversion $parent_branch > .new_version
-new_version=$(cat .new_version)
+_do svnversion $parent_branch > $NEW_VERSION_F
+new_version=$(cat $NEW_VERSION_F)
 
 # A tricky way to ensure that this is indeed a valid number.
 : $(( old_version += 0 ))
@@ -153,7 +156,7 @@ while [ $i -le $new_version ]; do
 	fi
 	: $(( i += 1 ))
 done
-mv .new_version .old_version
+mv $NEW_VERSION_F $OLD_VERSION_F
 if $failed_a_merge; then
 	exit 1
 else
