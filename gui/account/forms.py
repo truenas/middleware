@@ -109,6 +109,8 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 
     def render(self, name, value, attrs=None, choices=()):
 
+        if value is None:
+            value = []
         selected = []
         for choice in list(self.choices):
             if choice[0] in value:
@@ -229,6 +231,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
     bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
     bsdusr_mode = UnixPermissionField(label=_('Home Directory Mode'), initial='755')
+    bsdusr_to_group = FilteredSelectField(label=_('Auxiliary groups'),
+        choices=(),
+        required=False)
     advanced_fields = ['bsdusr_mode']
 
     class Meta:
@@ -240,7 +245,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2',
             'bsdusr_home', 'bsdusr_mode', 'bsdusr_shell', 'bsdusr_full_name',
             'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2',
-            'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
+            'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked',
+            'bsdusr_to_group')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -254,8 +260,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
         self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
-        self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple([x for x in self.fields['bsdusr_group2'].choices][1:])
+        self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple(
+            [x for x in self.fields['bsdusr_group2'].choices][1:])
         self.fields['bsdusr_group2'].required = False
+        self.fields['bsdusr_to_group'].choices = [(x.id, x.bsdgrp_group) \
+            for x in models.bsdGroups.objects.all()]
 
     def clean_bsdusr_uid(self):
         bsdusr_uid = self.cleaned_data["bsdusr_uid"]
@@ -299,6 +308,12 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         name = self.cleaned_data["bsdusr_full_name"]
         self.pw_checkfullname(name)
         return name
+
+    def clean_bsdusr_to_group(self):
+        v = self.cleaned_data.get("bsdusr_to_group")
+        if len(v) > 64:
+            raise forms.ValidationError(_("A user cannot belong to more than 64 auxiliary groups"))
+        return v
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -365,6 +380,16 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_smbhash=smbhash
             bsduser.bsdusr_builtin=False
             bsduser.save()
+
+            models.bsdGroupMembership.objects.filter(
+                bsdgrpmember_user=bsduser).delete()
+            groupid_list = self.cleaned_data['bsdusr_to_group']
+            for groupid in groupid_list:
+                group = models.bsdGroups.objects.get(id=groupid)
+                m = models.bsdGroupMembership(bsdgrpmember_group=group,
+                    bsdgrpmember_user=bsduser)
+                m.save()
+
             _notifier.reload("user")
             bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
             if bsdusr_sshpubkey:
@@ -671,9 +696,11 @@ class PasswordChangeForm(SetPasswordForm):
         if self.user.has_usable_password():
             self.fields['old_password'] = forms.CharField(label=_("Old password"),
                     widget=forms.PasswordInput)
-            self.fields.keyOrder = ['old_password', 'new_password1', 'new_password2', 'change_root']
+            self.fields.keyOrder = ['old_password', 'new_password1',
+                'new_password2', 'change_root']
         else:
-            self.fields.keyOrder = ['new_password1', 'new_password2', 'change_root']
+            self.fields.keyOrder = ['new_password1', 'new_password2',
+                'change_root']
 
     def clean_old_password(self):
         """
@@ -683,8 +710,11 @@ class PasswordChangeForm(SetPasswordForm):
             return ''
         old_password = self.cleaned_data["old_password"]
         if not self.user.check_password(old_password):
-            raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))
+            raise forms.ValidationError(
+                _("Your old password was entered incorrectly. Please enter it "
+                "again."))
         return old_password
+
 
 class DeleteGroupForm(forms.Form):
 
