@@ -54,7 +54,9 @@ clean_svn() {
 	_do svn cleanup $parent_branch
 	_do svn cleanup $child_branch
 	_do svn revert -R $child_branch
-	_do svn status $child_branch | awk '$1 == "?" && $2 !~ /FreeBSD/ && $2 !~ /obj\./ { print $2 }' | xargs rm -Rf
+	_do svn status $child_branch | \
+		awk '$1 == "?" && $2 !~ /FreeBSD/ && $2 !~ /obj\./ { print $2 }' | \
+		egrep -v '(new|old)_version' | xargs rm -Rf
 }
 
 usage() {
