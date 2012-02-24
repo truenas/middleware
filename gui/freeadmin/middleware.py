@@ -34,42 +34,61 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
-from django.utils.cache import patch_vary_headers
 from django.utils import translation
+from django.utils.cache import patch_vary_headers
+from django.utils.translation import ugettext as _
 
-from system.models import Settings
+from freenasUI import settings as mysettings
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.system.models import Settings
 
-COMMENT_SYNTAX = ((re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
-                  (re.compile(r'^application/j(avascript|son)$',     re.I), '/*',   '*/' ))
+COMMENT_SYNTAX = (
+    (re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
+    (re.compile(r'^application/j(avascript|son)$',     re.I), '/*',   '*/'),
+    )
+
 
 def public(f):
     f.__is_public = True
     return f
+
 
 class RequireLoginMiddleware(object):
     """
     Middleware component that makes every view be login_required
     unless its decorated with @public
     """
-    def process_view(self,request,view_func,view_args,view_kwargs):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+
+        # Bypass this middleware in case URLCONF is different
+        # This is required so django tests can run
+        if settings.ROOT_URLCONF != mysettings.ROOT_URLCONF:
+                    return None
+
         if not request.user.is_authenticated():
-            user = User.objects.filter(is_superuser=True,password=UNUSABLE_PASSWORD)
+            user = User.objects.filter(is_superuser=True,
+                password=UNUSABLE_PASSWORD)
             if user.exists():
                 user = user[0]
                 backend = get_backends()[0]
-                user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+                user.backend = "%s.%s" % (backend.__module__,
+                    backend.__class__.__name__)
                 login(request, user)
+
         if request.path == settings.LOGIN_URL:
             return None
         if hasattr(view_func, '__is_public'):
             return None
-        return login_required(view_func)(request,*view_args,**view_kwargs)
+        return login_required(view_func)(request, *view_args, **view_kwargs)
+
 
 class LocaleMiddleware(object):
 
     def process_request(self, request):
         if request.method == 'GET' and 'lang' in request.GET:
-                language = request.GET['lang']
+            language = request.GET['lang']
         else:
             #FIXME we could avoid this db hit using a cache,
             # invalidated when settings are edited
@@ -84,6 +103,21 @@ class LocaleMiddleware(object):
         if 'Content-Language' not in response:
             response['Content-Language'] = translation.get_language()
         translation.deactivate()
+        return response
+
+
+class CatchError(object):
+
+    def process_response(self, request, response):
+        if sys.exc_type and sys.exc_type in (MiddlewareError, ServiceFailed):
+            excp = sys.exc_info()[1]
+            kwargs = {
+                'error': True,
+                'message': _("Error: %s") % unicode(excp.value),
+                }
+            if not request.is_ajax():
+                kwargs['enclosed'] = True
+            return JsonResponse(**kwargs)
         return response
 
 
@@ -138,7 +172,8 @@ class ProfileMiddleware(object):
         # Construct an HTML/XML or Javascript comment, with
         # the formatted stats, written to the StringIO object
         # and attach it to the content of the response.
-        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, out.getvalue(), end_comment)
+        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, out.getvalue(),
+            end_comment)
         response.content += comment
 
         # If the Content-Length header is given, add the
@@ -147,6 +182,7 @@ class ProfileMiddleware(object):
         # it remains so in order to don't change the
         # behaviour of the web server or user agent.
         if response.has_header('Content-Length'):
-            response['Content-Length'] = int(response['Content-Length']) + len(comment)
+            response['Content-Length'] = int(response['Content-Length']) + \
+                len(comment)
 
         return response

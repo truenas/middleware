@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-syncdisks
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.subr
+
+syncdisks()
+{
+    /usr/local/bin/python /usr/local/www/freenasUI/tools/sync_disks.py
+}
+
+name="ix-syncdisks"
+start_cmd='syncdisks'
+stop_cmd=''
+
+load_rc_config $name
+run_rc_command "$1"

@@ -69,26 +69,10 @@ class Settings(Model):
             default="America/Los_Angeles",
             verbose_name = _("Timezone")
             )
-    stg_ntpserver1 = models.CharField(
-            max_length=120,
-            default="0.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 1")
-            )
-    stg_ntpserver2 = models.CharField(
-            max_length=120,
-            default="1.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 2"),
-            blank=True
-            )
-    stg_ntpserver3 = models.CharField(
-            max_length=120,
-            default="2.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name = _("NTP server 3"),
-            blank=True
-            )
-    stg_syslogserver = IPAddressField(
+    stg_syslogserver = models.CharField(
             default='',
             blank=True,
+            max_length=120,
             verbose_name = _("Syslog server")
             )
 
@@ -97,6 +81,58 @@ class Settings(Model):
 
     class FreeAdmin:
         deletable = False
+
+class NTPServer(Model):
+    ntp_address = models.CharField(
+            verbose_name=_("Address"),
+            max_length=120,
+            )
+    ntp_burst = models.BooleanField(
+            verbose_name=_("Burst"),
+            default=False,
+            help_text=_("When the server is reachable, send a burst of eight packets instead of the usual one. This is designed to improve timekeeping quality with the server command and s addresses."),
+            )
+    ntp_iburst = models.BooleanField(
+            verbose_name=_("IBurst"),
+            default=True,
+            help_text=_("When the server is unreachable, send a burst of eight packets instead of the usual one. This is designed to speed the initial synchronization acquisition with the server command and s addresses."),
+            )
+    ntp_prefer = models.BooleanField(
+            verbose_name=_("Prefer"),
+            default=False,
+            help_text=_("Marks the server as preferred. All other things being equal, this host will be chosen for synchronization among a set of correctly operating hosts."),
+            )
+    ntp_minpoll = models.IntegerField(
+            verbose_name=_("Min. Poll"),
+            default=6,
+            validators=[MinValueValidator(4)],
+            help_text=_("The minimum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"),
+            )
+    ntp_maxpoll = models.IntegerField(
+            verbose_name=_("Max. Poll"),
+            default=10,
+            validators=[MaxValueValidator(17)],
+            help_text=_("The maximum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 h)"),
+            )
+
+    def __unicode__(self):
+        return self.ntp_address
+
+    def delete(self):
+        super(NTPServer, self).delete()
+        notifier().start("ix-ntpd")
+        notifier().restart("ntpd")
+
+    class Meta:
+        verbose_name = _("NTP Server")
+        verbose_name_plural = _("NTP Servers")
+        ordering = ["ntp_address"]
+
+    class FreeAdmin:
+        icon_model = u"NTPServerIcon"
+        #icon_object = u"NTPServerIcon"
+        #icon_view = u"NTPServerIcon"
+        #icon_add = u"NTPServerIcon"
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
@@ -124,6 +160,9 @@ class Advanced(Model):
             default=True)
     adv_traceback = models.BooleanField(
             verbose_name = _("Show tracebacks in case of fatal errors"),
+            default=True)
+    adv_advancedmode = models.BooleanField(
+            verbose_name = _("Show advanced fields by default"),
             default=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
@@ -146,7 +185,7 @@ class Email(Model):
             max_length=120,
             verbose_name = _("From email"),
             help_text = _("An email address that the system will use for the sending address for mail it sends, eg: freenas@example.com"),
-            blank=True
+            default='',
             )
     em_outgoingserver = models.CharField(
             max_length=120,
@@ -265,27 +304,30 @@ class CronJob(Model):
             )
     cron_description = models.CharField(
             max_length=200,
-            verbose_name=_("Description"),
+            verbose_name=_("Short description"),
             blank=True,
             )
     cron_minute = models.CharField(
             max_length=100,
+            default="00",
             verbose_name=_("Minute"),
             help_text=_("Values 0-59 allowed."),
             )
     cron_hour = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Hour"),
             help_text=_("Values 0-23 allowed."),
             )
     cron_daymonth = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Day of month"),
             help_text=_("Values 1-31 allowed."),
             )
     cron_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
             verbose_name=_("Month"),
             )
     cron_dayweek = models.CharField(
@@ -300,12 +342,17 @@ class CronJob(Model):
     class Meta:
         verbose_name = _("Cron Job")
         verbose_name_plural = _("Cron Jobs")
+        ordering = ["cron_description", "cron_user"]
 
     class FreeAdmin:
         icon_model = u"cronJobIcon"
+        icon_object = u"cronJobIcon"
         icon_add = u"AddcronJobIcon"
+        icon_view = u"ViewcronJobIcon"
 
     def __unicode__(self):
+        if self.cron_description:
+            return self.cron_description
         return u"%d (%s)" % (self.id, self.cron_user)
 
     def get_human_minute(self):
@@ -394,6 +441,7 @@ class Rsync(Model):
             max_length=120,
             verbose_name=_("Remote Path"),
             blank=True,
+            help_text=_("Path on remote host to rsync to, e.g. /mnt/tank"),
             )
     rsync_direction = models.CharField(
             max_length=10,
@@ -409,22 +457,25 @@ class Rsync(Model):
             )
     rsync_minute = models.CharField(
             max_length=100,
+            default="00",
             verbose_name=_("Minute"),
             help_text=_("Values 0-59 allowed."),
             )
     rsync_hour = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Hour"),
             help_text=_("Values 0-23 allowed."),
             )
     rsync_daymonth = models.CharField(
             max_length=100,
+            default="*",
             verbose_name=_("Day of month"),
             help_text=_("Values 1-31 allowed."),
             )
     rsync_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
             verbose_name=_("Month"),
             )
     rsync_dayweek = models.CharField(
@@ -490,16 +541,21 @@ class Rsync(Model):
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
+        ordering = ["rsync_path", "rsync_desc"]
 
     class FreeAdmin:
         icon_model = u"rsyncIcon"
+        icon_object = u"rsyncIcon"
         icon_add = u"AddrsyncTaskIcon"
         icon_view = u"ViewrsyncTaskIcon"
 
     def __unicode__(self):
         if self.rsync_desc:
             return self.rsync_desc
-        return u"%d (%s)" % (self.id, self.rsync_user)
+        elif self.rsync_mode == 'module':
+            return self.rsync_remotemodule
+        else:
+            return self.rsync_remotepath
 
     def get_human_minute(self):
         if self.rsync_minute == '*':
@@ -651,12 +707,14 @@ class SMARTTest(Model):
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
+        ordering = ["smarttest_disk"]
         unique_together = (
             ('smarttest_disk', 'smarttest_type'),
         )
 
     class FreeAdmin:
         icon_model = u"SMARTIcon"
+        icon_object = u"SMARTIcon"
         icon_add = u"AddSMARTTestIcon"
         icon_view = u"ViewSMARTTestIcon"
 
@@ -675,6 +733,10 @@ class Sysctl(Model):
             verbose_name=_("Comment"),
             blank=True,
             )
+    sysctl_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
 
     def __unicode__(self):
         return unicode(self.sysctl_mib)
@@ -686,40 +748,48 @@ class Sysctl(Model):
     class Meta:
         verbose_name = _("Sysctl")
         verbose_name_plural = _("Sysctls")
+        ordering = ["sysctl_mib"]
 
     class FreeAdmin:
         icon_model = u"SysctlIcon"
+        icon_object = u"SysctlIcon"
         icon_add = u"AddSysctlIcon"
         icon_view = u"ViewSysctlIcon"
 
-class Loader(Model):
-    ldr_var = models.CharField(
+class Tunable(Model):
+    tun_var = models.CharField(
             max_length=50,
             unique=True,
             verbose_name=_("Variable"),
             )
-    ldr_value = models.CharField(
+    tun_value = models.CharField(
             max_length=50,
             verbose_name=_("Value"),
             )
-    ldr_comment = models.CharField(
+    tun_comment = models.CharField(
             max_length=100,
             verbose_name=_("Comment"),
             blank=True,
             )
+    tun_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
 
     def __unicode__(self):
-        return unicode(self.ldr_var)
+        return unicode(self.tun_var)
 
     def delete(self):
-        super(Loader, self).delete()
+        super(Tunable, self).delete()
         notifier().start("loader")
 
     class Meta:
-        verbose_name = _("Loader")
-        verbose_name_plural = _("Loaders")
+        verbose_name = _("Tunable")
+        verbose_name_plural = _("Tunables")
+        ordering = ["tun_var"]
 
     class FreeAdmin:
-        icon_model = u"LoaderIcon"
-        icon_add = u"AddLoaderIcon"
-        icon_view = u"ViewLoaderIcon"
+        icon_model = u"TunableIcon"
+        icon_object = u"TunableIcon"
+        icon_add = u"AddTunableIcon"
+        icon_view = u"ViewTunableIcon"

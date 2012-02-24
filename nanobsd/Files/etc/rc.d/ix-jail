@@ -37,32 +37,57 @@ generate_plugins_jail_config()
 	SELECT
 		jail_path,
 		jail_name,
-		jail_ip,
-		jail_netmask,
-		jail_interface
+		na.alias_v4address as jail_ip,
+		plugins_path
 
 	FROM
 		services_plugins
 
+	INNER JOIN
+		network_alias as na
+	ON
+		na.id = jail_ip_id
+
+	INNER JOIN
+		network_interfaces as ni
+	ON
+		na.alias_interface_id = ni.id
+
 	ORDER BY	
-		-id
+		-services_plugins.id
 
 	LIMIT 1
 	" | \
-	while read path name ip netmask iface
+	while read path name ip plugins
 	do
-		touch "/etc/fstab.${name}"
+		local mntpath_plugins="${path}/${name}/mnt/plugins"
+		local mntpath_pbi="${path}/${name}/usr/pbi"
+
+		if [ ! -d "${plugins}/pbi" ]
+		then
+			mkdir -p "${plugins}/pbi"
+		fi
+		if [ ! -d "${mntpath_plugins}" ]
+		then
+			mkdir -p "${mntpath_plugins}"
+		fi
+		if [ ! -d "${mntpath_pbi}" ]
+		then
+			mkdir -p "${mntpath_pbi}"
+		fi
+
+		echo "${plugins} ${mntpath_plugins} nullfs ro 0 0" > "/etc/fstab.${name}"
+		echo "${plugins}/pbi ${mntpath_pbi} nullfs rw 0 0" >> "/etc/fstab.${name}"
+
+		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
+		sysctl security.jail.allow_raw_sockets=1
 
 		# No VIM colors needed here
 		cat<<-__EOF__>>"${tmpfile}"
 
-		# do this through alias code
-		#ifconfig_${iface}_alias0="inet ${ip} netmask ${netmask}"
-
 		jail_${name}_rootdir="${path}/${name}"
 		jail_${name}_hostname="${name}"
 		jail_${name}_ip="${ip}"
-		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_ruleset="devfsrules_jail"
 		jail_${name}_procfs_enable="YES"
@@ -80,21 +105,25 @@ __EOF__
 
 plugins_jail_start()
 {
-	if srv_enabled plugins
+	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
 	then
+		local jail_name="$(get_plugins_jail_name)"
+
 		generate_plugins_jail_config
+		/etc/rc.d/jail start "${jail_name}"
 	fi
 }
 
 plugins_jail_stop()
 {
-	if srv_enabled plugins
+	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
 	then
-		jail_name="$(get_plugins_jail_name)"
+		local jail_name="$(get_plugins_jail_name)"
 		if [ -n "${jail_name}" ]
 		then
 			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
 
+			/etc/rc.d/jail stop "${jail_name}"
 			grep -v "jail_" /etc/rc.conf > "${tmpfile}"
 			mv "${tmpfile}" /etc/rc.conf
 

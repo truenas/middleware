@@ -7,32 +7,21 @@
 # REQUIRE: FILESYSTEMS
 # BEFORE: inetd
 
-. /etc/rc.subr
-
-# XXX need to refactor this
-_svc_enabled()
-{
-    local IFS=\|
-    local boolvalue
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='$1' ORDER BY id DESC LIMIT 1" | \
-	while read boolvalue; do
-	    echo ${boolvalue}
-	done
-}
+. /etc/rc.freenas
 
 generate_tftp()
 {
-    local IFS=\|
+    local IFS="|"
     local f="tftp_directory tftp_newfiles tftp_port tftp_username tftp_umask tftp_options"
     eval local $f
-    local cmd sf
+    local sf=$(var_to_sf $f)
+    local cmd
     local enabled
-    sf=$(echo $f | sed -e 's/ /, /g')
-    enabled=$(_svc_enabled tftp)
+    srv_enabled tftp; enabled=$?
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
-	if [ "$enabled" -eq 1 ]; then
+	if [ $enabled -eq 0 ]; then
 	    if [ "$tftp_port" -eq 69 ]; then
 		service="tftp"
 	    else

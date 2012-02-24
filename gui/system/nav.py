@@ -30,8 +30,7 @@ class ViewCron(TreeNode):
 
         gname = 'system.CronJob.View'
         name = _('View Cron Jobs')
-        type = 'opencron'
-        icon = u"ViewcronJobIcon"
+        view = 'system_cronjobs'
         append_app = False
 
 class ViewRsync(TreeNode):
@@ -55,9 +54,17 @@ class ViewSysctl(TreeNode):
         name = _('View Sysctls')
         append_app = False
 
-class ViewLoader(TreeNode):
+class ViewTunable(TreeNode):
 
-        gname = 'system.Loader.View'
-        view = 'system_loaders'
-        name = _('View Loaders')
+        gname = 'system.Tunable.View'
+        view = 'system_tunables'
+        name = _('View Tunables')
         append_app = False
+
+class ViewNTPServer(TreeNode):
+
+        gname = 'system.NTPServer.View'
+        view = 'system_ntpservers'
+        #name = _('View NTP Servers')
+        append_app = False
+

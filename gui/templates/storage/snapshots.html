@@ -1,4 +1,3 @@
-
 <div data-dojo-type="dijit.layout.BorderContainer" style="height:100%; width:100%;">
 <div data-dojo-type="dijit.layout.ContentPane" id="datagrid" data-dojo-props="region: 'center'" style="height:100%; width:100%;">
 <script type="dojo/method">
@@ -134,7 +133,7 @@
             });
             if(snaps.length == 0) return true;
 
-            editObject('test', null, [this], function(data) {
+            editObject('{% trans "Delete snapshots"|escapejs %}', null, [this], function(data) {
                 var dialog = this;
                 dojo.rawXhrPost({
                     url: '{% url storage_snapshot_delete_bulk %}',

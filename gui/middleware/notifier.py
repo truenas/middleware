@@ -36,6 +36,7 @@ actions.
 
 from collections import OrderedDict
 import ctypes
+import errno
 import glob
 import grp
 import os
@@ -56,6 +57,7 @@ import types
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 
 sys.path.append(WWW_PATH)
@@ -64,12 +66,51 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
+from django.db.models import Q
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pbi import pbi_add, pbi_delete, \
+    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO, \
+    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR, \
+    PBI_ADD_FLAGS_FORCE
+from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
-from middleware.exceptions import MiddlewareError
+from freenasUI.middleware.exceptions import MiddlewareError
+
+import select
+import threading
+class StartNotify(threading.Thread):
+    """
+    Use kqueue to watch for an event before actually calling start/stop
+    This should help against synchronization issues under VM
+
+    If the given pid file exists attach on it, otherwise use the parent folder
+    """
+
+    def __init__(self, pidfile, *args, **kwargs):
+        self._pidfile = pidfile
+        super(StartNotify, self).__init__(*args, **kwargs)
+
+    def run(self):
+
+        if not self._pidfile:
+            return None
+
+        if os.path.exists(self._pidfile):
+            _file = self._pidfile
+        else:
+            _file = os.path.dirname(self._pidfile)
+        fd = os.open(_file, os.O_RDONLY)
+        evts = [
+            select.kevent(fd,
+                filter=select.KQ_FILTER_VNODE,
+                flags=select.KQ_EV_ADD|select.KQ_EV_ONESHOT,
+                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND|select.KQ_NOTE_DELETE),
+            ]
+        kq = select.kqueue()
+        ev = kq.control(evts, 1, 3)
 
 class notifier:
     from os import system as ___system
@@ -91,7 +132,7 @@ class notifier:
                            % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
 
     def __system_nolog(self, command):
         syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
@@ -108,7 +149,7 @@ class notifier:
             retval = self.___system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
         return retval
 
     def __pipeopen(self, command, log=True):
@@ -135,8 +176,8 @@ class notifier:
                 raise ValueError("Internal error: Unknown command")
         f()
 
-    def _started(self, what):
-        service2daemon = {
+
+    __service2daemon = {
             'ssh': ('sshd', '/var/run/sshd.pid'),
             'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
@@ -149,17 +190,45 @@ class notifier:
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
+            'webshell': (None, '/var/run/webshell.pid'),
         }
+
+    def _started_notify(self, what):
         """
-        We need to wait a little bit so pgrep works
-        My guess here is that the processes need some time to
-        write the PID files before we can use them
+        The check for started [or not] processes is currently done in 2 steps
+        This is the first step which involves a thread StartNotify that watch for event
+        before actually start/stop rc.d scripts
+
+        Returns:
+            StartNotify object if the service is known or None otherwise
         """
-        time.sleep(0.5)
-        if what in service2daemon:
-            procname, pidfile = service2daemon[what]
+
+        if what in self.__service2daemon:
+            procname, pidfile = self.__service2daemon[what]
+            sn = StartNotify(pidfile=pidfile)
+            sn.start()
+            return sn
+        else:
+            return None
+
+    def _started(self, what, notify=None):
+        """
+        This is the second step::
+        Wait for the StartNotify thread to finish and then check for the
+        status of pidfile/procname using pgrep
+
+        Returns:
+            True whether the service is alive, False otherwise
+        """
+
+        if what in self.__service2daemon:
+            procname, pidfile = self.__service2daemon[what]
+            if notify:
+                notify.join()
+
             if pidfile:
-                retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
+                procname = " " + procname if procname else ""
+                retval = self.__system_nolog("/bin/pgrep -F %s%s" % (pidfile, procname))
             else:
                 retval = self.__system_nolog("/bin/pgrep %s" % (procname,))
 
@@ -192,32 +261,35 @@ class notifier:
 
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("start", what)
-        return self.started(what)
+        return self.started(what, sn)
 
-    def started(self, what):
+    def started(self, what, sn=None):
         """ Test if service specified by "what" has been started. """
         try:
             f = getattr(self, '_started_' + what)
             return f()
         except:
-            return self._started(what)
+            return self._started(what, sn)
 
     def stop(self, what):
         """ Stop the service specified by "what".
 
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("stop", what)
-        return self.started(what)
+        return self.started(what, sn)
 
     def restart(self, what):
         """ Restart the service specified by "what".
 
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
+        sn = self._started_notify(what)
         self._simplecmd("restart", what)
-        return self.started(what)
+        return self.started(what, sn)
 
     def reload(self, what):
         """ Reload the service specified by "what".
@@ -241,6 +313,19 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
+
+    def _start_webshell(self):
+        self.__system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+
+    def _restart_webshell(self):
+        try:
+            with open('/var/run/webshell.pid', 'r') as f:
+                pid = f.read()
+                os.kill(int(pid), signal.SIGHUP)
+                time.sleep(0.2)
+        except:
+            pass
+        self.__system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
@@ -270,22 +355,57 @@ class notifier:
 
     def _start_network(self):
         c = self.__open_db()
-        c.execute("SELECT COUNT(id) FROM network_interfaces WHERE int_ipv6auto = 1 OR int_ipv6address != ''")
+        c.execute("SELECT COUNT(n.id) FROM network_interfaces n LEFT JOIN network_alias a ON a.alias_interface_id=n.id WHERE int_ipv6auto = 1 OR int_ipv6address != '' OR alias_v6address != ''")
         ipv6_interfaces = c.fetchone()[0]
         if ipv6_interfaces > 0:
-            libc = ctypes.cdll.LoadLibrary("libc.so.7")
-            auto_linklocal = ctypes.c_uint(0)
-            auto_linklocal_size = ctypes.c_uint(4)
-            rv = libc.sysctlbyname("net.inet6.ip6.auto_linklocal", ctypes.byref(auto_linklocal), ctypes.byref(auto_linklocal_size), None, 0)
-            if rv == 0:
-                auto_linklocal = auto_linklocal.value
-            else:
+            try:
+                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal", _type='INT')
+            except AssertionError:
                 auto_linklocal = 0
             if auto_linklocal == 0:
                 self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
                 self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
                 self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
+
+    def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
+        if not iface:
+            return False
+
+        cmd = "/sbin/ifconfig %s" % iface
+        if newip and newnetmask:
+            cmd += " alias %s/%s" % (newip, newnetmask) 
+
+        elif newip:
+            cmd += " alias %s" % newip
+
+        else:
+            cmd = None
+
+        if cmd:
+            p = self.__pipeopen(cmd)
+            if p.wait() != 0:
+                return False
+
+        cmd = "/sbin/ifconfig %s" % iface
+        if newip:
+            cmd += " -alias %s" % oldip
+            p = self.__pipeopen(cmd)
+            if p.wait() != 0:
+                return False
+
+        if newnetmask and not newip:
+            cmd += " alias %s/%s" % (oldip, newnetmask)
+
+        else:
+            cmd = None
+        
+        if cmd:
+            p = self.__pipeopen(cmd)
+            if p.wait() != 0:
+                return False
+
+        return True
 
     def _reload_named(self):
         self.__system("/usr/sbin/service named reload")
@@ -373,6 +493,11 @@ class notifier:
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled, FLAGS_DBINIT
 
+        for srv in ('kinit', 'activedirectory', ):
+            if (self.__system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
+                != 0):
+                return False
+
         ret = False
         if ActiveDirectoryEnabled():
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
@@ -391,27 +516,28 @@ class notifier:
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service ix-kinit quietstart")
+        if self.__system_nolog('/usr/sbin/service ix-kinit status') != 0:
+            # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
+            #raise Exception('Failed to get a kerberos ticket.')
+            return
         self.__system("/usr/sbin/service ix-activedirectory quietstart")
+        if (self.__system_nolog('/usr/sbin/service ix-activedirectory status')
+            != 0):
+            # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
+            #raise Exception('Failed to associate with the domain.')
+            return
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/bin/killall winbindd")
-        self.__system("/usr/sbin/service samba quietstart")
+        self.__system("/usr/sbin/service winbindd quietstart")
 
     def _stop_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service ix-kinit quietstart")
-        self.__system("/usr/sbin/service ix-activedirectory quietrestart")
+        self.__system("/usr/sbin/service ix-kinit forcestop")
+        self.__system("/usr/sbin/service ix-activedirectory forcestop")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/bin/killall winbindd")
-        self.__system("/usr/sbin/service samba quietstart")
+        self.__system("/usr/sbin/service winbindd forcestop")
 
     def _restart_activedirectory(self):
         self._stop_activedirectory()
@@ -441,6 +567,7 @@ class notifier:
 
     def _start_motd(self):
         self.__system("/usr/sbin/service ix-motd quietstart")
+        self.__system("/usr/sbin/service motd quietstart")
 
     def _start_ttys(self):
         self.__system("/usr/sbin/service ix-ttys quietstart")
@@ -466,9 +593,9 @@ class notifier:
         self.__system("/usr/sbin/service nut_upslog start")
 
     def _stop_ups(self):
-        self.__system("/usr/sbin/service nut_upslog stop")
-        self.__system("/usr/sbin/service nut_upsmon stop")
-        self.__system("/usr/sbin/service nut stop")
+        self.__system("/usr/sbin/service nut_upslog forcestop")
+        self.__system("/usr/sbin/service nut_upsmon forcestop")
+        self.__system("/usr/sbin/service nut forcestop")
 
     def _restart_ups(self):
         self.__system("/usr/sbin/service ix-ups quietstart")
@@ -500,6 +627,7 @@ class notifier:
 
     def _reload_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
+        self.__system("killall -1 avahi-daemon")
         self.__system("killall -1 afpd")
 
     def _reload_nfs(self):
@@ -517,19 +645,35 @@ class notifier:
         self.__system("/usr/sbin/service statd quietstart")
         self.__system("/usr/sbin/service lockd quietstart")
 
-    def _start_plugins(self):
-        self.__system("/usr/sbin/service ix-jail quietstart")
-        self.__system("/usr/sbin/service jail quietstart")
+    def _stop_nfs(self):
+        self.__system("/usr/sbin/service lockd forcestop")
+        self.__system("/usr/sbin/service statd forcestop")
+        self.__system("/usr/sbin/service mountd forcestop")
+        self.__system("/usr/sbin/service nfsd forcestop")
 
-    def _stop_plugins(self):
-        self.__system("/usr/sbin/service jail forcestop")
+    def _start_nfs(self):
+        self.__system("/usr/sbin/service ix-nfsd quietstart")
+        self.__system("/usr/sbin/service mountd quietstart")
+        self.__system("/usr/sbin/service nfsd quietstart")
+        self.__system("/usr/sbin/service statd quietstart")
+        self.__system("/usr/sbin/service lockd quietstart")
+
+    def _start_plugins_jail(self):
+        self.__system("/usr/sbin/service ix-jail quietstart")
+        self.__system_nolog("/usr/sbin/service ix-plugins start")
+
+    def _stop_plugins_jail(self):
+        self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
         self.__system("/usr/sbin/service ix-jail forcestop")
 
-    def _restart_plugins(self):
-        self._stop_plugins()
-        self._start_plugins()
+    def _force_stop_jail(self):
+        self.__system("/usr/sbin/service jail forcestop")
+
+    def _restart_plugins_jail(self):
+        self._stop_plugins_jail()
+        self._start_plugins_jail()
     
-    def _started_plugins(self):
+    def _started_plugins_jail(self):
         c = self.__open_db()
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()[0]
@@ -545,6 +689,62 @@ class notifier:
         else:
             return False
 
+    def _start_plugins(self, plugin=None):
+        if plugin is not None:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestart %s" % plugin)
+        else:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestart")
+
+    def _stop_plugins(self, plugin=None):
+        if plugin is not None:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestop %s" % plugin)
+        else:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
+
+    def _restart_plugins(self, plugin=None):
+        self._stop_plugins(plugin)
+        self._start_plugins(plugin)
+
+    def _started_plugins(self, plugin=None):
+        res = False
+        if plugin is not None:
+            if self.__system_nolog("/usr/sbin/service ix-plugins status %s" % plugin) == 0:
+                res = True 
+        else: 
+            if self.__system_nolog("/usr/sbin/service ix-plugins status") == 0:
+                res = True 
+        return res
+
+    def plugins_jail_configured(self):
+        res = False
+        c = self.__open_db()
+        c.execute("SELECT count(*) from services_plugins")
+        if int(c.fetchone()[0]) > 0:
+            c.execute("""
+            SELECT
+                jail_path,
+                jail_name,
+                jail_ip_id,
+                plugins_path
+            FROM
+                services_plugins
+            ORDER BY
+                -id
+            LIMIT 1
+            """)
+            sp = c.fetchone()
+            for i in sp:
+                if i not in (None, ''):
+                    res = True
+                    break
+        return res
+
+    def start_ssl(self, what=None):
+        if what is not None:
+            self.__system("/usr/sbin/service ix-ssl quietstart %s" % what)
+        else:
+            self.__system("/usr/sbin/service ix-ssl quietstart")
+
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
         self.__system("/usr/sbin/service inadyn restart")
@@ -556,23 +756,33 @@ class notifier:
         self.__system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service samba reload")
+        self.__system("killall -1 avahi-daemon")
+        self.__system("/usr/sbin/service samba forcereload")
 
     def _restart_cifs(self):
-        # TODO: bug in samba rc.d script
-        # self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
         self.__system("/usr/sbin/service dbus restart")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/sbin/service samba quietstart")
+        self.__system("/usr/sbin/service smbd forcestop")
+        self.__system("/usr/sbin/service nmbd forcestop")
+        self.__system("/usr/sbin/service smbd quietrestart")
+        self.__system("/usr/sbin/service nmbd quietrestart")
+
+    def _start_cifs(self):
+        self.__system("/usr/sbin/service dbus quietstart")
+        self.__system("/usr/sbin/service avahi-daemon quietstart")
+        self.__system("/usr/sbin/service smbd quietstart")
+        self.__system("/usr/sbin/service nmbd quietstart")
+
+    def _stop_cifs(self):
+        self.__system("/usr/sbin/service dbus forcestop")
+        self.__system("/usr/sbin/service dbus restart")
+        self.__system("/usr/sbin/service avahi-daemon forcestop")
+        self.__system("/usr/sbin/service avahi-daemon restart")
+        self.__system("/usr/sbin/service smbd forcestop")
+        self.__system("/usr/sbin/service nmbd forcestop")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")
@@ -580,8 +790,8 @@ class notifier:
         self.__system("/usr/sbin/service bsnmpd quietstart")
 
     def _restart_http(self):
-        self.__system("/usr/sbin/service ix-httpd quietstart")
-        self.__system("/usr/sbin/service lighttpd restart")
+        self.__system("/usr/sbin/service ix-nginx quietstart")
+        self.__system("/usr/sbin/service nginx restart")
 
     def _start_loader(self):
         self.__system("/usr/sbin/service ix-loader quietstart")
@@ -895,29 +1105,21 @@ class notifier:
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if '@' in path:
-            MNTLOCK = mntlock()
             try:
-                MNTLOCK.lock_try()
-                if self.__snapshot_hold(path):
-                    retval = 'Held by replication system.'
-                MNTLOCK.unlock()
-                del MNTLOCK
+                with mntlock(blocking=False) as MNTLOCK:
+                    if self.__snapshot_hold(path):
+                        retval = 'Held by replication system.'
             except IOError:
                 retval = 'Try again later.'
         elif recursive:
-            MNTLOCK = mntlock()
             try:
-                MNTLOCK.lock_try()
-                zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
-                snaps = zfsproc.communicate()[0]
-                for snap in snaps.split('\n'):
-                    if not snap:
-                        continue
-                    if self.__snapshot_hold(snap):
-                        retval = '%s: Held by replication system.' % snap
-                        break
-                MNTLOCK.unlock()
-                del MNTLOCK
+                with mntlock(blocking=False) as MNTLOCK:
+                    zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
+                    snaps = zfsproc.communicate()[0]
+                    for snap in filter(None, snaps.splitlines()):
+                        if self.__snapshot_hold(snap):
+                            retval = '%s: Held by replication system.' % snap
+                            break
             except IOError:
                 retval = 'Try again later.'
         if retval == None:
@@ -930,6 +1132,12 @@ class notifier:
                 from storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
+        if not retval:
+            try:
+                self.__rmdir_mountpoint(path)
+            except MiddlewareError as me:
+                retval = str(me)
+
         return retval
 
     def destroy_zfs_vol(self, name):
@@ -939,10 +1147,10 @@ class notifier:
 
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
-        z_name = str(volume.vol_name)
+        vol_name = str(volume.vol_name)
         # First, destroy the zpool.
         disks = volume.get_disks()
-        self.__system("zpool destroy -f %s" % (z_name))
+        self.__system("zpool destroy -f %s" % (vol_name, ))
 
         # Clear out disks associated with the volume
         for disk in disks:
@@ -989,7 +1197,9 @@ class notifier:
         u_name = str(volume.vol_name)
 
         disks = volume.get_disks()
-        provider = self.get_label_provider('ufs', u_name)
+        provider = self.get_label_consumer('ufs', u_name)
+        if not provider:
+            return None
         geom_type = provider.xpathEval("../../name")[0].content.lower()
 
         if geom_type not in ('mirror', 'stripe', 'raid3'):
@@ -1098,7 +1308,7 @@ class notifier:
         stderr = p1.communicate()[1]
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk replacement failed: "%s"' % error)
+            raise MiddlewareError('Disk offline failed: "%s"' % error)
 
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
@@ -1151,15 +1361,100 @@ class notifier:
             if swapdev != '':
                 self.__system("swapoff /dev/%s" % swapdev)
 
-    def _destroy_volume(self, volume):
-        """Destroy a volume designated by volume_id"""
+    def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
+        """Determine the mountpoint for a volume or ZFS dataset
 
-        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS', 'EXT2FS')
-        if volume.vol_fstype == 'ZFS':
+        It tries to divine the location of the volume or dataset from the
+        relevant command, and if all else fails, falls back to a less
+        elegant method of representing the mountpoint path.
+
+        This is done to ensure that in the event that the database and
+        reality get out of synch, the user can nuke the volume/mountpoint.
+
+        XXX: this should be done more elegantly by calling getfsent from C.
+
+        Required Parameters:
+            name: textual name for the mountable vdev or volume, e.g. 'tank',
+                  'stripe', 'tank/dataset', etc.
+            fstype: filesystem type for the vdev or volume, e.g. 'UFS', 'ZFS',
+                    etc.
+
+        Optional Parameters:
+            mountpoint_root: the root directory where all of the datasets and
+                             volumes shall be mounted. Defaults to '/mnt'.
+
+        Returns:
+            the absolute path for the volume on the system.
+        """
+        mountpoint = None
+        if fstype == 'ZFS':
+            p1 = self.__pipeopen('zfs list -H -o mountpoint %s' % (name, ))
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
+                return stdout.strip()
+        elif fstype == 'UFS':
+            p1 = self.__pipeopen('mount -p')
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
+                flines = filter(lambda x: x and x.split()[0] == \
+                                                '/dev/ufs/' + name,
+                                stdout.splitlines())
+                if flines:
+                    return flines[0].split()[1]
+
+        return os.path.join(mountpoint_root, name)
+
+    def _destroy_volume(self, volume):
+        """Destroy a volume on the system
+
+        This either destroys a zpool or umounts a generic volume (e.g. NTFS,
+        UFS, etc) and nukes it.
+
+        In the event that the volume is still in use in the OS, the end-result
+        is implementation defined depending on the filesystem, and the set of
+        commands used to export the filesystem.
+
+        Finally, this method goes and cleans up the mountpoint, as it's
+        assumed to be no longer needed. This is also a sanity check to ensure
+        that cleaning up everything worked.
+
+        XXX: doing recursive unmounting here might be a good idea.
+        XXX: better feedback about files in use might be a good idea...
+             someday. But probably before getting to this point. This is a
+             tricky problem to fix in a way that doesn't unnecessarily suck up
+             resources, but also ensures that the user is provided with
+             meaningful data.
+        XXX: divorce this from storage.models; depending on storage.models
+             introduces a circular dependency and creates design ugliness.
+        XXX: implement destruction algorithm for non-UFS/-ZFS.
+
+        Parameters:
+            volume: a storage.models.Volume object.
+
+        Raises:
+            MiddlewareError: the volume could not be detached cleanly.
+            MiddlewareError: the volume's mountpoint couldn't be removed.
+            ValueError: 'destroy' isn't implemented for the said filesystem.
+        """
+
+        # volume_detach compatibility.
+        vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
+
+        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
+
+        if vol_fstype == 'ZFS':
             self.__destroy_zfs_volume(volume)
-        elif volume.vol_fstype == 'UFS':
+        elif vol_fstype == 'UFS':
             self.__destroy_ufs_volume(volume)
+        else:
+            raise ValueError("destroy isn't implemented for the %s filesystem"
+                             % (vol_fstype, ))
+
+
         self._reload_disk()
+
+
+        self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-fstab quietstart")
@@ -1176,48 +1471,162 @@ class notifier:
             raise MiddlewareError("Operation could not be performed. %s" % msg)
 
         if msg != "":
-            syslog.syslog(syslog.LOG_NOTICE, "Command reports " + msg)
+            syslog.syslog(syslog.LOG_DEBUG, "Command reports " + msg)
 
     def __smbpasswd(self, username, password):
-        command = '/usr/local/bin/smbpasswd -s -a "%s"' % (username)
+        """
+        Add the user ``username'' to samba using ``password'' as
+        the current password
+
+        Returns:
+            True whether the user has been successfully added and False otherwise
+        """
+        command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
         smbpasswd = self.__pipeopen(command)
         smbpasswd.communicate("%s\n%s\n" % (password, password))
+        return smbpasswd.returncode == 0
 
     def __issue_pwdchange(self, username, command, password):
         self.__pw_with_password(command, password)
         self.__smbpasswd(username, password)
 
-    def user_create(self, username, fullname, password, uid = -1, gid = -1,
-                    shell = "/sbin/nologin", homedir = "/mnt", password_disabled = False,
-                    locked = False):
-        """Creates a user with the given parameters.
-        uid and gid can be omitted or specified as -1 which means the system should
-        choose automatically.
+    def user_create(self, username, fullname, password, uid=-1, gid=-1,
+                    shell="/sbin/nologin",
+                    homedir='/mnt', homedir_mode=0o755,
+                    password_disabled=False, locked=False):
+        """Create a user.
 
-        The default shell is /sbin/nologin.
+        This goes and compiles the invocation needed to execute via pw(8),
+        then goes and creates a home directory. Then it goes and adds the
+        user via pw(8), and finally adds the user's to the samba user
+        database. If adding the user fails for some reason, it will remove
+        the directory.
 
-        Returns user uid and gid"""
+        Required parameters:
+
+        username - a textual identifier for the user (should conform to
+                   all constraints with Windows, Unix and OSX usernames).
+                   Example: 'root'.
+        fullname - a textual 'humanized' identifier for the user. Example:
+                   'Charlie Root'.
+        password - passphrase used to login to the system; this is
+                   ignored if password_disabled is True.
+
+        Optional parameters:
+
+        uid - uid for the user. Defaults to -1 (defaults to the next UID
+              via pw(8)).
+        gid - gid for the user. Defaults to -1 (defaults to the next GID
+              via pw(8)).
+        shell - login shell for a user when logging in interactively.
+                Defaults to /sbin/nologin.
+        homedir - where the user will be put, or /nonexistent if
+                  the user doesn't need a directory; defaults to /mnt.
+        homedir_mode - mode to use when creating the home directory;
+                       defaults to 0755.
+        password_disabled - should password based logins be allowed for 
+                            the user? Defaults to False.
+        locked - allows the administrator to restrict the account s.t.
+                 it can't be used for logins (until some precondition is
+                 met, i.e. the user changes his or her password).
+
+        XXX: the default for the home directory seems like a bad idea.
+             Should this be a required parameter instead, or default
+             to /var/empty?
+        XXX: seems like the password_disabled and password fields could
+             be rolled into one property.
+        XXX: the homedir mode isn't set today by the GUI; the default
+             is set to the FreeBSD default when calling pw(8).
+        XXX: smbpasswd errors aren't being caught today.
+        XXX: invoking smbpasswd for each user add seems like an
+             expensive operation.
+        XXX: why are we returning the password hashes?
+
+        Returns:
+            A tuple of the user's UID, GID, the Unix encrypted password
+            hash, and the encrypted SMB password hash.
+
+        Raises:
+            MiddlewareError - tried to create a home directory under a
+                              subdirectory on the /mnt memory disk.
+            MiddlewareError - failed to create the home directory for
+                              the user.
+            MiddlewareError - failed to run pw useradd successfully.
+        """
+        command = '/usr/sbin/pw useradd "%s" -c "%s" -d "%s" -s "%s"' % \
+            (username, fullname, homedir, shell, )
         if password_disabled:
-            command = '/usr/sbin/pw useradd "%s" -h - -c "%s"' % (username, fullname)
+            command += ' -h -'
         else:
-            command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
+            command += ' -h 0'
         if uid >= 0:
             command += " -u %d" % (uid)
         if gid >= 0:
             command += " -g %d" % (gid)
         if homedir != '/nonexistent':
-            command += ' -s "%s" -d "%s" -m' % (shell, homedir)
-        else:
-            command += ' -s "%s" -d "%s"' % (shell, homedir)
-        self.__issue_pwdchange(username, command, password)
-        if locked:
-            self.user_lock(username)
-        if password_disabled:
-            smb_hash = ""
-        else:
-            smb_command = "/usr/local/bin/pdbedit -w %s" % username
-            smb_cmd = self.__pipeopen(smb_command)
-            smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+            # Populate the home directory with files from /usr/share/skel .
+            command += ' -m'
+
+        # Is this a new directory or not? Let's not nuke existing directories,
+        # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
+        new_homedir = False
+
+        if homedir != '/nonexistent':
+            # Kept separate for cleanliness between formulating what to do
+            # and executing the formulated plan.
+
+            # You're probably wondering why pw -m doesn't suffice. Here's why:
+            # 1. pw(8) doesn't create home directories if the base directory
+            #    doesn't exist; example: if /mnt/tank/homes doesn't exist and
+            #    the user specified /mnt/tank/homes/user, then the home
+            #    directory won't be created.
+            # 2. pw(8) allows me to specify /mnt/md_size (a regular file) for
+            #    the home directory.
+            # 3. If some other random path creation error occurs, it's already
+            #    too late to roll back the user create.
+            try:
+                os.makedirs(homedir, mode=homedir_mode)
+                if os.stat(homedir).st_dev == os.stat('/mnt').st_dev:
+                    # HACK: ensure the user doesn't put their homedir under
+                    # /mnt
+                    # XXX: fix the GUI code and elsewhere to enforce this, then
+                    # remove the hack.
+                    raise MiddlewareError('Path for the home directory (%s) '
+                                          'must be under a volume or dataset'
+                                          % (homedir, ))
+            except OSError as oe:
+                if oe.errno == errno.EEXIST:
+                    if not os.path.isdir(homedir):
+                        raise MiddlewareError('Path for home directory already '
+                                              'exists and is not a directory')
+                else:
+                    raise MiddlewareError('Failed to create the home directory '
+                                          '(%s) for user: %s'
+                                          % (homedir, str(oe)))
+            else:
+                new_homedir = True
+
+        try:
+            self.__issue_pwdchange(username, command, password)
+            if locked:
+                self.user_lock(username)
+            if password_disabled:
+                smb_hash = ""
+            else:
+                """
+                Make sure to use -d 0 for pdbedit, otherwise it will bomb
+                if CIFS debug level is anything different than 'Minimum'
+                """
+                smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
+                smb_cmd = self.__pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+        except:
+            if new_homedir:
+                # Be as atomic as possible when creating the user if
+                # commands failed to execute cleanly.
+                shutil.rmtree(homedir)
+            raise
+
         user = self.___getpwnam(username)
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 
@@ -1238,7 +1647,18 @@ class notifier:
         return self.user_gethashedpassword(username)
 
     def user_gethashedpassword(self, username):
-        smb_command = "/usr/local/bin/pdbedit -w %s" % username
+        """
+        Get the samba hashed password for ``username''
+
+        Returns:
+            tuple -> (user password, samba hash)
+        """
+
+        """
+        Make sure to use -d 0 for pdbedit, otherwise it will bomb
+        if CIFS debug level is anything different than 'Minimum'
+        """
+        smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
         smb_cmd = self.__pipeopen(smb_command)
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
@@ -1279,7 +1699,7 @@ class notifier:
             pass
 
         if homedir == '/root':
-            self.__system("/sbin/mount -uw /")
+            self.__system("/sbin/mount -uw -onoatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
@@ -1293,7 +1713,7 @@ class notifier:
             fd.close()
             self.__system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
         if homedir == '/root':
-            self.__system("/sbin/mount -u /")
+            self.__system("/sbin/mount -ur /")
         os.umask(saved_umask)
 
     def _reload_user(self):
@@ -1351,10 +1771,12 @@ class notifier:
         raise OSError('Invalid mountpoint %s' % (path, ))
 
     def change_upload_location(self, path):
-        self.__system("/bin/rm -rf /var/tmp/firmware")
+        vardir = "/var/tmp/firmware"
+
+        self.__system("/bin/rm -rf %s" % vardir)
         self.__system("/bin/mkdir -p %s/.freenas" % path)
         self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
-        self.__system("/bin/ln -s %s/.freenas /var/tmp/firmware" % path)
+        self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
     def validate_xz(self, path):
         ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
@@ -1378,7 +1800,7 @@ class notifier:
         finally:
             os.unlink(path)
             syslog.closelog()
-        open('/data/need-update', 'w').close()
+        open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def apply_servicepack(self):
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
@@ -1397,11 +1819,273 @@ class notifier:
         if freenas_build != expected_build:
             raise MiddlewareError('Software versions did not match ("%s" != '
                                   '"%s")' % (freenas_build, expected_build))
-        self.__system("/sbin/mount -uw /")
+        self.__system("/sbin/mount -uw -onoatime /")
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
         self.__system("/bin/sh /etc/servicepack/post-install")
         self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.txz")
         self.__system("/bin/rm -fr /var/tmp/firmware/etc")
+
+
+    def install_pbi(self):
+        ret = False
+
+        if self._started_plugins_jail():
+            (c, conn) = self.__open_db(ret_conn=True)
+
+            c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+            jail_name = c.fetchone()
+            if not jail_name:
+                return False 
+            jail_name = jail_name[0]
+
+            c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
+            plugins_path = c.fetchone()
+            if not plugins_path:
+                return False
+            plugins_path = plugins_path[0]
+
+            jail = None
+            for j in Jls():
+                if j.hostname == jail_name:
+                    jail = j 
+                    break
+
+            # this stuff needs better error checking.. .. ..
+            if jail is not None:
+                pbi = pbiname = prefix = name = version = arch = None
+
+                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
+                out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
+                for pair in out:
+                    (var, val) = pair.split('=')
+
+                    var = var.lower()
+                    if var == 'pbi information for':
+                        pbiname = val  
+                        pbi = "%s.pbi" % val
+
+                    elif var == 'prefix':
+                        prefix = val
+
+                    elif var == 'name':
+                        name = val
+
+                    elif var == 'version':
+                        version = val
+
+                    elif var == 'arch':
+                        arch = val
+
+                self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+
+                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/plugins/%s" % pbi)
+                res = p.run(jail=True, jid=jail.jid)
+                if res and res[0] == 0:
+                    kwargs = {}
+                    kwargs['path'] = prefix
+                    kwargs['enabled'] = False
+                    kwargs['ip'] = jail.ip
+                    kwargs['name'] = name
+                    kwargs['arch'] = arch
+                    kwargs['version'] = version
+                    kwargs['pbiname'] = pbiname 
+                    kwargs['view'] = "/plugins/%s/%s" % (name, version)
+
+                    # icky, icky icky, this is how we roll though.
+                    port = 12345
+                    c.execute("SELECT count(*) FROM plugins_plugins")
+                    count = c.fetchone()[0]
+                    if count > 0: 
+                        c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
+                        port = int(c.fetchone()[0])
+
+                    kwargs['port'] = port + 1
+                    kwargs['uname'] = "system.%s" % name
+                    kwargs['icon'] = "default.png"
+
+                    out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
+                    if out and out[0] == 0:
+                        out = out[1]
+                        for line in out.splitlines():
+                            parts = line.split(':')
+                            key = parts[0].strip().lower()
+                            if key in ('uname', 'icon'):
+                                kwargs[key] = parts[1].strip()
+
+                    sqlvars = ""
+                    sqlvals = ""
+                    for key in kwargs:
+                        sqlvars += "plugin_%s," % key
+                        sqlvals += ":%s," % key
+
+                    sqlvars = sqlvars.rstrip(',')
+                    sqlvals = sqlvals.rstrip(',')
+
+                    sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
+                    try:
+                        c.execute(sql, kwargs)
+                        conn.commit()
+                        ret = True
+
+                    except Exception, err:
+                        ret = False                     
+
+                elif res and res[0] != 0:
+                    raise MiddlewareError(p.error)
+
+        return ret
+
+    def install_jail_pbi(self, path, name, plugins_path):
+        ret = False
+
+        prefix = ename = pbi = None
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
+        out = p.info(False, -1, 'prefix', 'pbi information for')
+        for pair in out:
+            (var, val) = pair.split('=')
+            var = var.lower()
+            if var == 'prefix':
+                prefix = val
+            elif var == 'pbi information for':
+                pbi = "%s.pbi" % val
+
+        parts = prefix.split('/')
+
+        ename = parts[0]
+        if len(parts) > 1:
+            ename = parts[len(parts) - 1]
+
+        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
+            pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
+        res = p.run()
+
+        if res and res[0] == 0:
+            src = os.path.join(path, ename)
+            dst = os.path.join(path, name)
+            if src != dst:
+                self.__system("/bin/mv '%s' '%s'" % (src, dst))
+            self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+            ret = True
+        else:
+            raise MiddlewareError(p.error)
+
+        return ret
+
+    def delete_pbi(self, plugin_id):
+        from syslog import syslog as S, LOG_DEBUG
+        ret = False
+
+        (c, conn) = self.__open_db(ret_conn=True)
+        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        jail_name = c.fetchone()
+        if not jail_name:
+            S(LOG_DEBUG, "delete_pbi: plugins jail info not in database")
+            return False
+        jail_name = jail_name[0]
+
+        jail = None
+        for j in Jls():
+            if j.hostname == jail_name:
+                jail = j 
+                break
+
+        if jail is not None:
+            c.execute("SELECT plugin_pbiname FROM plugins_plugins "
+                "WHERE id = :plugin_id", {'plugin_id': plugin_id})
+            plugin_pbiname = c.fetchone()
+            if not plugin_pbiname: 
+                S(LOG_DEBUG, "delete_pbi: pbi info for %d not in database" % plugin_id)
+                return False
+            plugin_pbiname = plugin_pbiname[0]
+
+            p = pbi_delete(pbi=plugin_pbiname)
+            res = p.run(jail=True, jid=jail.jid)
+            if res and res[0] == 0:
+                try:
+                    c.execute("DELETE FROM plugins_plugins WHERE id = :plugin_id", {'plugin_id': plugin_id})
+                    conn.commit()
+                    ret = True
+
+                except Exception, err:
+                    S(LOG_DEBUG, "delete_plugins_jail: unable to delete pbi %d from database (%s)" % (plugin_id, err))
+                    ret = False
+
+        return ret
+
+    def delete_plugins_jail(self, jail_id):
+        from syslog import syslog as S, LOG_DEBUG
+        (c, conn) = self.__open_db(ret_conn=True)
+        ret = False
+
+        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins")
+        self._stop_plugins()
+
+        S(LOG_DEBUG, "delete_plugins_jail: getting plugins id's from the database")
+        c.execute("SELECT id FROM plugins_plugins")
+        plugin_ids = [p[0] for p in c.fetchall()]
+        for plugin_id in plugin_ids:
+            if not self.delete_pbi(plugin_id):
+                S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugin %d" % plugin_id)
+
+        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins jail")
+        self._stop_plugins_jail()
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        if self._started_plugins_jail():
+            S(LOG_DEBUG, "delete_plugins_jail: plugins jail not stopped, forcing")
+            self._force_stop_jail()
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        if self._started_plugins_jail():
+            S(LOG_DEBUG, "delete_plugins_jail: unable to stop plugins jail")
+            return False
+
+        S(LOG_DEBUG, "delete_plugins_jail: getting jail info from database")
+        c.execute("SELECT jail_name, jail_path, plugins_path "
+            "FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+        jail_info = c.fetchone()
+        if not jail_info:
+            S(LOG_DEBUG, "delete_plugins_jail: plugins jail info not in database")
+            return False
+
+        (jail_name, jail_path, plugins_path) = jail_info
+        full_jail_path = os.path.join(jail_path, jail_name)
+
+        S(LOG_DEBUG, "delete_plugins_jail: checking jail path in filesystem")
+        if not os.access(full_jail_path, os.F_OK):
+            S(LOG_DEBUG, "delete_plugins_jail: unable to access %s" % full_jail_path)
+            return False
+
+        cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
+        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        p = self.__pipeopen(cmd)
+        p.wait()
+        if p.returncode != 0:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to chflags on %s" % full_jail_path)
+            return False
+                   
+        cmd = "/bin/rm -rf %s" % full_jail_path
+        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        p = self.__pipeopen(cmd)
+        p.wait()
+        if p.returncode != 0:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s" % full_jail_path)
+            return False
+ 
+        S(LOG_DEBUG, "delete_plugins_jail: deleting jail from database")
+        try:
+            c.execute("DELETE FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+            c.execute("UPDATE services_services set srv_enabled = 0 WHERE srv_service = 'plugins'")
+            conn.commit()
+            ret = True
+
+        except Exception, err:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugins jail from database (%s)" % err)
+            ret = False
+
+        S(LOG_DEBUG, "delete_plugins_jail: returning %s" % ret)
+        return ret
+
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
@@ -1411,7 +2095,9 @@ class notifier:
                 status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
 
-            provider = self.get_label_provider('ufs', name)
+            provider = self.get_label_consumer('ufs', name)
+            if not provider:
+                return 'UNKNOWN'
             gtype = provider.xpathEval("../../name")[0].content
 
             if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
@@ -1421,7 +2107,7 @@ class notifier:
                     status = search[0].content
 
             else:
-                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % name)
+                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % (name, ), log=False)
                 p1.communicate()
                 if p1.returncode == 0:
                     status = 'HEALTHY'
@@ -1441,16 +2127,36 @@ class notifier:
         return sum
 
     def get_disks(self):
+        """
+        Grab usable disks and pertinent info about them
+        This accounts for:
+            - all the disks the OS found
+                (except the ones that are providers for multipath)
+            - multipath geoms providers
 
+        Returns:
+            Dict of disks
+        """
         disksd = {}
 
-        for disk in self.__get_disks():
+        disks = self.__get_disks()
+
+        """
+        Replace devnames by its multipath equivalent
+        """
+        for mp in self.multipath_all():
+            for dev in mp.devices:
+                if dev in disks:
+                    disks.remove(dev)
+            disks.append(mp.devname)
+
+        for disk in disks:
             info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
             if len(info) > 3:
                 disksd.update({
                     disk: {
                         'devname': info[0],
-                        'capacity': info[2]
+                        'capacity': info[2],
                     },
                 })
 
@@ -1474,7 +2180,7 @@ class notifier:
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
-                        'devname': os.path.basename(info[0]),
+                        'devname': info[0].replace("/dev/", ""),
                         'capacity': info[2]
                     },
                 })
@@ -1594,21 +2300,89 @@ class notifier:
             return True
         return False
 
-    def zfs_export(self, name):
-        imp = self.__pipeopen('zpool export %s' % str(name))
-        stdout, stderr = imp.communicate()
-        if imp.returncode != 0:
-            raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
-        return True
+    def volume_detach(self, vol_name, vol_fstype):
+        """Detach a volume from the system
 
-    def volume_export(self, vol):
-        if vol.vol_fstype == 'ZFS':
-            self.zfs_export(vol.vol_name)
+        This either executes exports a zpool or umounts a generic volume (e.g.
+        NTFS, UFS, etc).
+
+        In the event that the volume is still in use in the OS, the end-result
+        is implementation defined depending on the filesystem, and the set of
+        commands used to export the filesystem.
+
+        Finally, this method goes and cleans up the mountpoint. This is a
+        sanity check to ensure that things are in synch.
+
+        XXX: recursive unmounting / needs for recursive unmounting here might
+             be a good idea.
+        XXX: better feedback about files in use might be a good idea...
+             someday. But probably before getting to this point. This is a
+             tricky problem to fix in a way that doesn't unnecessarily suck up
+             resources, but also ensures that the user is provided with
+             meaningful data.
+        XXX: this doesn't work with the alternate mountpoint functionality
+             available in UFS volumes.
+
+        Parameters:
+            vol_name: a textual name for the volume, e.g. tank, stripe, etc.
+            vol_fstype: the filesystem type for the volume; valid values are:
+                        'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
+
+        Raises:
+            MiddlewareError: the volume could not be detached cleanly.
+            MiddlewareError: the volume's mountpoint couldn't be removed.
+        """
+
+        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
+        if vol_fstype == 'ZFS':
+            cmds = [ 'zpool export %s' % (vol_name, ) ]
         else:
-            p1 = self.__pipeopen("umount /mnt/%s" % vol.vol_name)
-            if p1.wait() != 0:
-                return False
-        return True
+            cmds = [ 'umount %s' % (vol_mountpath, ) ]
+
+        for cmd in cmds:
+            p1 = self.__pipeopen(cmd)
+            stdout, stderr = p1.communicate()
+            if p1.returncode:
+                raise MiddlewareError('Failed to detach %s with "%s" (exited '
+                                      'with %d): %s'
+                                      % (vol_name, cmd, p1.returncode,
+                                         stderr, )) 
+        self.__rmdir_mountpoint(vol_mountpath)
+
+
+    def __rmdir_mountpoint(self, path):
+        """Remove a mountpoint directory designated by path
+
+        This only nukes mountpoints that exist in /mnt as alternate mointpoints
+        can be specified with UFS, which can take down mission critical
+        subsystems.
+
+        This purposely doesn't use shutil.rmtree to avoid removing files that
+        were potentially hidden by the mount.
+
+        Parameters:
+            path: a path suffixed with /mnt that points to a mountpoint that
+                  needs to be nuked.
+
+        XXX: rewrite to work outside of /mnt and handle unmounting of
+             non-critical filesystems.
+        XXX: remove hardcoded reference to /mnt .
+
+        Raises:
+            MiddlewareError: the volume's mountpoint couldn't be removed.
+        """
+
+        if path.startswith('/mnt'):
+            # UFS can be mounted anywhere. Don't nuke /etc, /var, etc as the
+            # underlying contents might contain something of value needed for
+            # the system to continue operating.
+            try:
+                if os.path.isdir(path):
+                    os.rmdir(path)
+            except OSError as ose:
+                raise MiddlewareError('Failed to remove mountpoint %s: %s'
+                                      % (path, str(ose), ))
+
 
     def zfs_scrub(self, name, stop=False):
         if stop:
@@ -1696,7 +2470,7 @@ class notifier:
 
         shutil.move(config_file_name, '/data/uploaded.db')
         # Now we must run the migrate operation in the case the db is older
-        open('/data/need-update', 'w+').close()
+        open(NEED_UPDATE_SENTINEL, 'w+').close()
 
         return True
 
@@ -1746,20 +2520,16 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
-        MNTLOCK = mntlock()
         try:
-            MNTLOCK.lock_try()
-            zfsproc = self.__pipeopen(zfscmd)
-            output = zfsproc.communicate()[0]
-            if output != '':
-                snapshots_list = output.split('\n')
-            for snapshot_item in snapshots_list:
-                if snapshot_item != '':
+            with mntlock(blocking=False) as MNTLOCK:
+                zfsproc = self.__pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
+                if output != '':
+                    snapshots_list = output.splitlines()
+                for snapshot_item in filter(None, snapshots_list):
                     snapshot, state = snapshot_item.split('\t')
                     if state != '-':
                         self.zfs_inherit_option(snapshot, 'freenas:state')
-            MNTLOCK.unlock()
-            del MNTLOCK
         except IOError:
             retval = 'Try again later.'
         return retval
@@ -1772,31 +2542,35 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
-        MNTLOCK = mntlock()
         try:
-            MNTLOCK.lock_try()
-            zfsproc = self.__pipeopen(zfscmd)
-            output = zfsproc.communicate()[0]
-            if output != '':
-                snapshots_list = output.split('\n')
-            for snapshot_item in snapshots_list:
-                if snapshot_item != '':
+            with mntlock(blocking=False) as MNTLOCK:
+                zfsproc = self.__pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
+                if output != '':
+                    snapshots_list = output.splitlines()
+                for snapshot_item in filter(None, snapshots_list):
                     snapshot, state = snapshot_item.split('\t')
                     if state != 'NEW':
                         self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
-            MNTLOCK.unlock()
-            del MNTLOCK
         except IOError:
             retval = 'Try again later.'
         return retval
 
     def geom_disk_replace(self, volume, to_disk):
-        """Replace disk in volume_id from from_diskid to to_diskid"""
-        """Gather information"""
+        """Replace disk in ``volume`` for ``to_disk``
+
+        Raises:
+            ValueError: Volume not found
+
+        Returns:
+            0 if the disk was replaced, > 0 otherwise
+        """
 
         assert volume.vol_fstype == 'UFS'
 
-        provider = self.get_label_provider('ufs', volume.vol_name)
+        provider = self.get_label_consumer('ufs', volume.vol_name)
+        if not provider:
+            raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
         class_name = provider.xpathEval("../../name")[0].content
         geom_name = provider.xpathEval("../name")[0].content
 
@@ -1826,25 +2600,33 @@ class notifier:
 
         return 1
 
-    def vlan_delete(self, vint):
-        self.__system("ifconfig %s destroy" % vint)
+    def iface_destroy(self, name):
+        self.__system("ifconfig %s destroy" % name)
+
+    def interface_mtu(self, iface, mtu):
+        self.__system("ifconfig %s mtu %s" % (iface, mtu))
+
+    def lagg_remove_port(self, lagg, iface):
+        return self.__system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
 
     def __init__(self):
         self.__confxml = None
+        self.__diskserial = {}
 
     def __geom_confxml(self):
         if self.__confxml == None:
             from libxml2 import parseDoc
-            sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml', log=False)
-            self.__confxml = parseDoc(sysctl_proc.communicate()[0][:-1])
+            self.__confxml = parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
 
     def serial_from_device(self, devname):
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
-        output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
-        if search:
-            return search.group("serial")
+        if devname in self.__diskserial:
+            return self.__diskserial.get(devname)
+        p1 = Popen(["/sbin/camcontrol", "inquiry", devname, "-S"], stdout=PIPE, stderr=PIPE)
+        serial = p1.communicate()[0].split('\n')[0]
+        if serial:
+            self.__diskserial[devname] = serial
+            return serial
         return None
 
     def label_to_disk(self, name):
@@ -1950,12 +2732,26 @@ class notifier:
         else:
             return ''
 
+    def swap_from_diskid(self, diskid):
+        from storage.models import Disk
+        disk = Disk.objects.get(id=diskid)
+        return self.part_type_from_device('swap', disk.devname)
+
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
 
-    def get_label_provider(self, geom, name):
+    def get_label_consumer(self, geom, name):
+        """
+        Get the label consumer of a given ``geom`` with name ``name``
+
+        Returns:
+            The provider xmlnode if found, None otherwise
+        """
         doc = self.__geom_confxml()
-        providerid = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))[0].content
+        xpath = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))
+        if not xpath:
+            return None
+        providerid = xpath[0].content
         provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
 
         class_name = provider.xpathEval("../../name")[0].content
@@ -1994,15 +2790,42 @@ class notifier:
         parse = zfs.parse_status(name, doc, res)
         return parse
 
+    def sync_disk(self, devname):
+        from storage.models import Disk
+
+        self.__diskserial.clear()
+
+        ident = self.device_to_identifier(devname)
+        qs = Disk.objects.filter(disk_identifier=ident)
+        if qs.exists():
+            disk = qs[0]
+            disk.disk_name = devname
+            disk.disk_enabled = True
+        else:
+            qs = Disk.objects.filter(disk_name=devname)
+            if qs.exists():
+                disk = qs[0]
+                if qs.count() > 1:
+                    Disk.objects.filter(disk_name=devname).exclude(self=disk).delete()
+            else:
+                disk = Disk()
+            disk.disk_name = devname
+            disk.disk_identifier = ident
+            disk.disk_enabled = True
+            disk.disk_serial = self.serial_from_device(devname) or ''
+        disk.save()
+
     def sync_disks(self):
         from storage.models import Disk
 
         disks = self.__get_disks()
+        self.__diskserial.clear()
 
         in_disks = {}
+        serials = []
         for disk in Disk.objects.all():
 
-            dskname = disk.identifier_to_device()
+            dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname:
                 dskname = disk.disk_name
                 disk.disk_identifier = self.device_to_identifier(dskname)
@@ -2010,19 +2833,26 @@ class notifier:
                     disk.disk_enabled = False
                 else:
                     disk.disk_enabled = True
-                    disk.disk_serial = self.serial_from_device(dskname)
+                    disk.disk_serial = self.serial_from_device(dskname) or ''
+            elif dskname in in_disks:
+                # We are probably dealing with with multipath here
+                disk.delete()
+                continue
             else:
                 disk.disk_enabled = True
                 if dskname != disk.disk_name:
                     disk.disk_name = dskname
 
+            if disk.disk_serial:
+                serials.append(disk.disk_serial)
+
             if dskname not in disks:
                 disk.disk_enabled = False
-                if not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
+                if disk._original_state.get("disk_enabled"):
+                    disk.save()
+                else:
                     #Duplicated disk entries in database
                     disk.delete()
-                else:
-                    disk.save()
             else:
                 disk.save()
             in_disks[dskname] = disk
@@ -2032,15 +2862,27 @@ class notifier:
                 d = Disk()
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
-                d.disk_serial = self.serial_from_device(disk)
+                d.disk_serial = self.serial_from_device(disk) or ''
+                if d.disk_serial:
+                    if d.disk_serial in serials:
+                        #Probably dealing with multipath here, do not add another
+                        continue
+                    else:
+                        serials.append(d.disk_serial)
                 d.save()
 
     def geom_disks_dump(self, volume):
+        """
+        Raises:
+            ValueError: UFS volume not found
+        """
         #FIXME: This should not be here
         from django.core.urlresolvers import reverse
         from django.utils import simplejson
         from storage.models import Disk
-        provider = self.get_label_provider('ufs', volume.vol_name)
+        provider = self.get_label_consumer('ufs', volume.vol_name)
+        if not provider:
+            raise ValueError("UFS Volume %s not found" % (volume,))
         class_name = provider.xpathEval("../../name")[0].content
 
         items = []
@@ -2111,11 +2953,151 @@ class notifier:
             })
         return items
 
+    def multipath_all(self):
+        """
+        Get all available gmultipath instances
+
+        Returns:
+            A list of Multipath objects
+        """
+        from middleware.multipath import Multipath
+        doc = self.__geom_confxml()
+        return [Multipath(doc=doc, xmlnode=geom) \
+                for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
+            ]
+
+    def multipath_create(self, name, consumers):
+        """
+        Create an Active/Passive GEOM_MULTIPATH provider
+        with name ``name`` using ``consumers`` as the consumers for it
+
+        Returns:
+            True in case the label succeeded and False otherwise
+        """
+        p1 = subprocess.Popen(["/sbin/gmultipath", "label", name] + consumers, stdout=subprocess.PIPE)
+        if p1.wait() != 0:
+            return False
+        # We need to invalidate confxml cache
+        self.__confxml = None
+        return True
+
+    def multipath_next(self):
+        """
+        Find out the next available name for a multipath named diskX
+        where X is a crescenting value starting from 1
+
+        Returns:
+            The string of the multipath name to be created
+        """
+        RE_NAME = re.compile(r'[a-z]+(\d+)')
+        numbers = sorted([int(RE_NAME.search(mp.name).group(1)) \
+                        for mp in self.multipath_all() if RE_NAME.match(mp.name)
+                        ])
+        if not numbers:
+            numbers = [0]
+        for number in xrange(1, numbers[-1]+2):
+            if number not in numbers:
+                break
+        else:
+            #FIXME
+            raise
+        return "disk%d" % number
+
+    def multipath_sync(self):
+        """Synchronize multipath disks
+
+        Every distinct GEOM_DISK that shares an ident (aka disk serial)
+        is considered a multpath and will be handled by GEOM_MULTIPATH
+
+        If the disk is not currently in use by some Volume or iSCSI Disk Extent
+        then a gmultipath is automatically created and will be available for use
+        """
+        from freenasUI.storage.models import Volume, Disk
+
+        doc = self.__geom_confxml()
+
+        mp_disks = []
+        for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
+            for provref in geom.xpathEval("./consumer/provider/@ref"):
+                prov = doc.xpathEval("//provider[@id = '%s']" % provref.content)[0]
+                class_name = prov.xpathEval("../../name")[0].content
+                #For now just DISK is allowed
+                if class_name != 'DISK':
+                    continue
+                disk = prov.xpathEval("../name")[0].content
+                mp_disks.append(disk)
+
+        reserved = [self.__find_root_dev()]
+
+        # disks already in use count as reserved as well
+        for vol in Volume.objects.all():
+            reserved.extend(vol.get_disks())
+
+        disks = []
+        serials = {}
+        RE_CD = re.compile('^cd[0-9]')
+        for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
+            name = geom.xpathEval("./name")[0].content
+            if RE_CD.match(name) or name in reserved or name in mp_disks:
+                continue
+            serial = self.serial_from_device(name)
+            if not serial:
+                disks.append(name)
+            else:
+                if not serials.has_key(serial):
+                    serials[serial] = [name]
+                else:
+                    serials[serial].append(name)
+
+        disks = sorted(disks)
+
+        for serial, disks in serials.items():
+            if not len(disks) > 1:
+                continue
+            name = self.multipath_next()
+            self.multipath_create(name, disks)
+
+        # Grab confxml again to take new multipaths into account
+        doc = self.__geom_confxml()
+        mp_ids = []
+        for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
+            _disks = []
+            for provref in geom.xpathEval("./consumer/provider/@ref"):
+                prov = doc.xpathEval("//provider[@id = '%s']" % provref.content)[0]
+                class_name = prov.xpathEval("../../name")[0].content
+                #For now just DISK is allowed
+                if class_name != 'DISK':
+                    continue
+                disk = prov.xpathEval("../name")[0].content
+                _disks.append(disk)
+            qs = Disk.objects.filter(
+                Q(disk_name__in=_disks)|Q(disk_multipath_member__in=_disks)
+                )
+            if qs.exists():
+                diskobj = qs[0]
+                mp_ids.append(diskobj.id)
+                diskobj.disk_multipath_name = geom.xpathEval("./name")[0].content
+                if diskobj.disk_name in _disks:
+                    _disks.remove(diskobj.disk_name)
+                if _disks:
+                    diskobj.disk_multipath_member = _disks.pop()
+                diskobj.save()
+
+        Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
+
 
     def __find_root_dev(self):
-        """Find the root device from glabel status -s output.
+        """Find the root device.
 
-        NOTE: algorithm adapted from /root/updatep*.
+        The original algorithm was adapted from /root/updatep*, but this
+        grabs the relevant information from geom's XML facility.
+
+        Returns:
+             The root device name in string format, e.g. FreeNASp1,
+             FreeNASs2, etc.
+
+        Raises:
+             AssertionError: the root device couldn't be determined.
         """
         # XXX: circular dependency
         import common.system
@@ -2125,19 +3107,28 @@ class notifier:
 
         for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
                 "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
-                % sw_name):
+                % (sw_name, )):
             prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
             pid = prov.xpathEval("../consumer/provider/@ref")[0].content
             prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
             name = prov.xpathEval("../name")[0].content
             return name
+        raise AssertionError('Root device not found (!)')
+
 
     def __get_disks(self):
-        """Return a list of available storage disks, e.g. not cds, the root
-           media device, etc."""
+        """Return a list of available storage disks.
 
-        disks = \
-            self.__pipeopen('sysctl -n kern.disks').communicate()[0].split()
+        The list excludes all devices that cannot be reserved for storage,
+        e.g. the root device, CD drives, etc.
+
+        Returns:
+            A list of available devices (ada0, da0, etc), or an empty list if
+            no devices could be divined from the system.
+        """
+
+        disks = self.sysctl('kern.disks').split()
+        disks.reverse()
 
         root_dev = self.__find_root_dev()
 
@@ -2145,6 +3136,145 @@ class notifier:
 
         return filter(lambda x: not device_blacklist_re.match(x), disks)
 
+
+    def kern_module_is_loaded(self, module):
+        """Determine whether or not a kernel module (or modules) is loaded.
+
+        Parameter:
+            module_name - a module to look for in kldstat -v output (.ko is
+                          added automatically for you).
+
+        Returns:
+            A boolean to denote whether or not the module was found.
+        """
+
+        pipe = self.__pipeopen('/sbin/kldstat -v')
+
+        return 0 < pipe.communicate()[0].find(module + '.ko')
+
+
+    def zfs_get_version(self):
+        """Get the ZFS (SPA) version reported via zfs(4).
+
+        This allows us to better tune warning messages and provide
+        conditional support for features in the GUI/CLI.
+
+        Returns:
+            An integer corresponding to the version retrieved from zfs(4) or
+            0 if the module hasn't been loaded.
+
+        Raises:
+            ValueError: the ZFS version could not be parsed from sysctl(8).
+        """
+
+        if not self.kern_module_is_loaded('zfs'):
+            return 0
+
+        try:
+            version = self.sysctl('vfs.zfs.version.spa', _type='INT')
+        except ValueError, ve:
+            raise ValueError('Could not determine ZFS version: %s'
+                             % (str(ve), ))
+        if 0 < version:
+            return version
+        raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
+
+    def __sysctl_error(self, libc, name):
+        errloc = getattr(libc,'__error')
+        errloc.restype = ctypes.POINTER(ctypes.c_int)
+        error = errloc().contents.value
+        if error == errno.ENOENT:
+            msg = "The name is unknown."
+        elif error == errno.ENOMEM:
+            msg = "The length pointed to by oldlenp is too short to hold " \
+                  "the requested value."
+        else:
+            msg = "Unknown error (%d)" % (error, )
+        raise AssertionError("Sysctl by name (%s) failed: %s" % (name, msg))
+
+    def sysctl(self, name, value=None, _type='CHAR'):
+        """Get any sysctl value using libc call
+
+        This cut down the overhead of launching subprocesses
+
+        XXX: reimplment with a C extension because ctypes.CDLL can be leaky and
+             has a tendency to crash given the right inputs.
+
+        Returns:
+            The value of the given ``name'' sysctl
+
+        Raises:
+            AssertionError: sysctlbyname(3) returned an error
+        """
+
+        syslog.openlog('middleware', syslog.LOG_PID)
+        syslog.syslog(syslog.LOG_DEBUG, "sysctlbyname: %s" % (name, ))
+
+        if value:
+            #TODO: set sysctl
+            raise NotImplementedError
+
+        libc = ctypes.CDLL('libc.so.7')
+        size = ctypes.c_size_t()
+
+        if _type == 'CHAR':
+            #We need find out the size
+            rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
+            if rv != 0:
+                self.__sysctl_error(libc, name)
+
+            buf = ctypes.create_string_buffer(size.value)
+            arg = buf
+
+        else:
+            buf = ctypes.c_int()
+            size.value = ctypes.sizeof(buf)
+            arg = ctypes.byref(buf)
+
+        # Grab the sysctl value
+        rv = libc.sysctlbyname(str(name), arg, ctypes.byref(size), None, 0)
+        if rv != 0:
+            self.__sysctl_error(libc, name)
+
+        return buf.value
+
+    def staticroute_delete(self, sr):
+        """
+        Delete a static route from the route table
+
+        Raises:
+            MiddlewareError in case the operation failed
+        """
+        import ipaddr
+        netmask = ipaddr.IPNetwork(sr.sr_destination)
+        masked = netmask.masked().compressed
+        p1 = self.__pipeopen("/sbin/route delete %s" % masked)
+        if p1.wait() != 0:
+            raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
+
+    def mount_volume(self, volume):
+        """
+        Mount a volume.
+        The volume must be in /etc/fstab
+
+        Returns:
+            True if volume was sucessfully mounted, False otherwise
+        """
+        if volume.vol_fstype == 'ZFS':
+            raise NotImplementedError("No donuts for you!")
+
+        prov = self.get_label_consumer(volume.vol_fstype.lower(),
+            str(volume.vol_name))
+        if not prov:
+            return False
+
+        proc = self.__pipeopen("mount /dev/%s/%s" % (
+            volume.vol_fstype.lower(),
+            volume.vol_name,
+            ))
+        if proc.wait() != 0:
+            return False
+        return True
 
 def usage():
     usage_str = """usage: %s action command

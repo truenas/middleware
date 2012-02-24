@@ -28,31 +28,34 @@
 import commands
 import os
 import shutil
+import socket
 import subprocess
 import time
+import xmlrpclib
 
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.views.decorators.cache import never_cache
 
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.system import forms, models
-from freenasUI.system.terminal import Terminal, Multiplex
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
 
-def _system_info():
+def _system_info(request=None):
     # OS, hostname, release
     __, hostname, __ = os.uname()[0:3]
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
@@ -69,6 +72,11 @@ def _system_info():
     except:
         pass
 
+    if request:
+        host = request.META.get("HTTP_HOST")
+    else:
+        host = None
+
     return {
         'hostname': hostname,
         'platform': platform,
@@ -77,10 +85,11 @@ def _system_info():
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
+        'host': host,
     }
 
 def system_info(request):
-    sysinfo = _system_info()
+    sysinfo = _system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
 
 def config_restore(request):
@@ -168,10 +177,25 @@ def reporting(request):
     })
 
 def settings(request):
-    settings = models.Settings.objects.order_by("-id")[0].id
-    email = models.Email.objects.order_by("-id")[0].id
-    ssl = models.SSL.objects.order_by("-id")[0].id
-    advanced = models.Advanced.objects.order_by("-id")[0].id
+    try:
+        settings = models.Settings.objects.order_by("-id")[0].id
+    except:
+        settings = None
+
+    try:
+        email = models.Email.objects.order_by("-id")[0].id
+    except:
+        email = None
+
+    try:
+        ssl = models.SSL.objects.order_by("-id")[0].id
+    except:
+        ssl = None
+
+    try:
+        advanced = models.Advanced.objects.order_by("-id")[0].id
+    except:
+        advanced = None
 
     return render(request, 'system/settings.html', {
         'settings': settings,
@@ -214,8 +238,19 @@ def top(request):
         'top': top_output,
     }, content_type='text/xml')
 
+def reboot_dialog(request):
+    if request.method == "POST":
+        request.session['allow_reboot'] = True
+        return JsonResponse(error=False,
+                    message=_("Reboot is being issued"),
+                    events=['window.location="%s"' % reverse('system_reboot')])
+    return render(request, 'system/reboot_dialog.html')
+
 def reboot(request):
     """ reboots the system """
+    if not request.session.get("allow_reboot"):
+        return HttpResponseRedirect('/')
+    request.session.pop("allow_reboot")
     return render(request, 'system/reboot.html', {
         'sw_name': get_sw_name(),
         'sw_version': get_sw_version(),
@@ -225,8 +260,19 @@ def reboot_run(request):
     notifier().restart("system")
     return HttpResponse('OK')
 
+def shutdown_dialog(request):
+    if request.method == "POST":
+        request.session['allow_shutdown'] = True
+        return JsonResponse(error=False,
+                    message=_("Shutdown is being issued"),
+                    events=['window.location="%s"' % reverse('system_shutdown')])
+    return render(request, 'system/shutdown_dialog.html')
+
 def shutdown(request):
     """ shuts down the system and powers off the system """
+    if not request.session.get("allow_shutdown"):
+        return HttpResponseRedirect('/')
+    request.session.pop("allow_shutdown")
     return render(request, 'system/shutdown.html', {
         'sw_name': get_sw_name(),
         'sw_version': get_sw_version(),
@@ -237,6 +283,13 @@ def shutdown_run(request):
     return HttpResponse('OK')
 
 def testmail(request):
+
+    form = forms.EmailForm(request.POST)
+    if not form.is_valid():
+        return JsonResp(request, form=form)
+
+    sid = transaction.savepoint()
+    form.save()
 
     error = False
     if request.is_ajax():
@@ -249,8 +302,9 @@ def testmail(request):
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
+    transaction.savepoint_rollback(sid)
 
-    return JsonResponse(error=error, message=errmsg)
+    return JsonResp(request, error=error, message=errmsg)
 
 def clearcache(request):
 
@@ -351,10 +405,16 @@ def sysctls(request):
         'sysctls': sysctls,
         })
 
-def loaders(request):
-    loaders = models.Loader.objects.all().order_by('id')
-    return render(request, 'system/loader.html', {
-        'loaders': loaders,
+def tunables(request):
+    tunables = models.Tunable.objects.all().order_by('id')
+    return render(request, 'system/tunable.html', {
+        'tunables': tunables,
+        })
+
+def ntpservers(request):
+    ntpservers = models.NTPServer.objects.all().order_by('id')
+    return render(request, 'system/ntpserver.html', {
+        'ntpservers': ntpservers,
         })
 
 def restart_httpd(request):
@@ -381,16 +441,105 @@ def debug_save(request):
     return response
 
 
-multiplex = Multiplex("bash", "xterm-color")
+class UnixTransport(xmlrpclib.Transport):
+    def make_connection(self, addr):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(addr)
+        self.sock.settimeout(5)
+        return self.sock
+
+    def single_request(self, host, handler, request_body, verbose=0):
+        # issue XML-RPC request
+
+        self.make_connection(host)
+
+        try:
+            self.sock.send(request_body+"\n")
+            p, u = self.getparser()
+
+            while 1:
+                data = self.sock.recv(1024)
+                if not data:
+                    break
+                p.feed(data)
+
+            self.sock.close()
+            p.close()
+
+            return u.close()
+        except xmlrpclib.Fault:
+            raise
+        except Exception:
+            # All unexpected errors leave connection in
+            # a strange state, so we clear it.
+            self.close()
+            raise
+        #discard any response data and raise exception
+        if (response.getheader("content-length", 0)):
+            response.read()
+        raise ProtocolError(
+            host + handler,
+            response.status, response.reason,
+            response.msg,
+            )
+
+
+class MyServer(xmlrpclib.ServerProxy):
+
+    def __init__(self, addr):
+
+        self.__handler = "/"
+        self.__host = addr
+        self.__transport = UnixTransport()
+        self.__encoding = None
+        self.__verbose = 0
+        self.__allow_none = 0
+
+    def __request(self, methodname, params):
+        # call a method on the remote server
+
+        request = xmlrpclib.dumps(params, methodname, encoding=self.__encoding,
+                        allow_none=self.__allow_none)
+
+        response = self.__transport.request(
+            self.__host,
+            self.__handler,
+            request,
+            verbose=self.__verbose
+            )
+
+        if len(response) == 1:
+            response = response[0]
+
+        return response
+
+    def __getattr__(self, name):
+        # magic method dispatcher
+        return xmlrpclib._Method(self.__request, name)
+
+
+@never_cache
 def terminal(request):
+
+    sid = int(request.GET.get("s", 0))
+    k = request.GET.get("k")
+    w = int(request.GET.get("w", 80))
+    h = int(request.GET.get("h", 24))
+
+    multiplex = MyServer("/var/run/webshell.sock")
+    alive = False
+    for i in range(3):
+        try:
+            alive = multiplex.proc_keepalive(sid, w, h)
+            break
+        except:
+            notifier().restart("webshell")
+            time.sleep(0.5)
+
     try:
-        sid = int(request.GET.get("s"))
-        k = request.GET.get("k")
-        w = int(request.GET.get("w"))
-        h = int(request.GET.get("h"))
-        if multiplex.proc_keepalive(sid, w, h):
+        if alive:
             if k:
-                multiplex.proc_write(sid, k)
+                multiplex.proc_write(sid, xmlrpclib.Binary(bytearray(str(k))))
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
             response = HttpResponse(content_data, content_type='text/xml')
@@ -403,4 +552,5 @@ def terminal(request):
         response = HttpResponse('Invalid parameters')
         response.status_code = 400
         return response
+
 

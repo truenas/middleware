@@ -8,21 +8,60 @@
 
 . /etc/rc.subr
 
-set_sysctl()
+set_autotune_sysctls()
 {
-	local IFS=\|
-	local var value
+	local IFS="
+"
+	local autotune
+	local tmp
+
+	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
+	autotune=/usr/local/bin/autotune
+	if [ -x $autotune ]; then
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+		$autotune \
+			--kernel-reserved=1073741824 \
+			--userland-reserved=2147483648 \
+			--conf-file=/etc/sysctl.conf > $tmp
+
+		if [ $? -eq 0 ]; then
+			grep -v '^#' $tmp | \
+			egrep -v '^[[:space:]]*$' | \
+			sed -e "s/'//g" -e 's/"//g' | \
+			while read -r line
+			do
+				[ -n "$line" ] || continue
+				sysctl "$line"
+			done
+		fi
+	fi
+}
+
+set_user_sysctls()
+{
+	local IFS="|"
+	local f="sysctl_mib sysctl_value"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
 	# Generate sysctls
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT sysctl_mib, sysctl_value FROM system_sysctl ORDER BY id" | \
-	while read var value; do
-		sysctl ${var}=\"${value}\"
+		"SELECT $sf FROM system_sysctl WHERE sysctl_enabled = 1 ORDER BY id" | \
+	while eval read -r $f; do
+		sysctl ${sysctl_mib}="${sysctl_value}"
 	done
 }
 
+start_sysctl()
+{
+	set_autotune_sysctls
+	set_user_sysctls
+}
+
 name="ix-sysctl"
-start_cmd='set_sysctl'
+start_cmd='start_sysctl'
 stop_cmd=':'
 
 load_rc_config $name

@@ -1,0 +1,51 @@
+
+<table class="grid">
+        <thead class="header">
+          <tr>
+            <td>{% trans "Volume" %}</td>
+            <td>{% trans "Minute" %}</td>
+            <td>{% trans "Hour" %}</td>
+            <td>{% trans "Day of month" %}</td>
+            <td>{% trans "Month" %}</td>
+            <td>{% trans "Day of week" %}</td>
+            <td>{% trans "Short description" %}</td>
+            <td>{% trans "Available actions" %}</td>
+          </tr>
+        </thead>
+    {% for c in scrubs %}
+        <td>{{ c.scrub_volume }}</td>
+        <td>{{ c.get_human_minute }}</td>
+        <td>{{ c.get_human_hour }}</td>
+        <td>{{ c.get_human_daymonth }}</td>
+        <td>{{ c.get_human_month }}</td>
+        <td>{{ c.get_human_dayweek }}</td>
+        <td>{{ c.scrub_desc|default:_("None") }}</td>
+        <td>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Edit"|force_escape|force_escape %}', '{{ c.get_edit_url }}', [this,]);
+            </script>
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ c.get_delete_url }}', [this,]);
+            </script>
+            </button>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="8">{% trans "No scrub tasks defined." %}</td>
+    </tr>
+    {% endfor %}
+    </table>
+              <p class="btn">
+        <button data-dojo-type="dijit.form.Button" type="button">
+            {% trans "Add ZFS Scrub Task" %}
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                addObject('{% trans "Add ZFS Scrub"|force_escape|force_escape %}', '{% url freeadmin_model_add app="storage",model="Scrub" %}', [this,]);
+        </script>
+        </button>
+        </p>

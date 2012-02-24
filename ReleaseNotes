@@ -1,0 +1,412 @@
+Release Notes for FreeNAS 8.0.3-RELEASE-p1
+
+*** IMPORTANT ***
+
+- The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
+  storage device.  The GUI upgrade can be used to upgrade a system from
+  BETA3, BETA4, or RC1 but upgrades from earlier releases can only be
+  done from the CD. The other option is to save the config, reinstall
+  the new version, then restore the config.
+- FreeBSD can be really touchy with hardware. Please be sure to update
+  your BIOS/BMC firmware when upgrading / installing FreeNAS if you run
+  into OS hang issues. There have been cases identified where a BIOS
+  upgrade has fixed driver hangs, and/or other issues with FreeNAS; one
+  such example was with an Intel 82578DC motherboard, as noted in the
+  FreeNAS 8 forum thread titled "8.0.3-RELEASE coming soon..":
+  http://bit.ly/rq78Q3 , post # 70-88. Again, please only do this if you
+  experience booting / runtime issues, as some vendors don't test
+  FreeBSD interoperability as much as others between major firmware
+  releases.
+- Previous builds were branded as i386/amd64 (32-bit and 64-bit
+  respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
+  respectively.
+- 8.0.1 and 8.0.2 images advertised CIFS shares to Macs by default but
+  8.0.3 and later images don't advertise CIFS shares by default. If you
+  want to advertise CIFS shares in 8.0.3 and later, be sure to turn on
+  "Zeroconf" support in the CIFS global settings.
+- Builds prior to 8.0.3-RELEASE with 'CIFS' didn't actually have AIO
+  (asynchronous I/O) enabled. So, if you experience performance
+  degradation after upgrading from prior versions of FreeNAS to
+  8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
+  something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
+  or 4kB).
+
+
+Changes since 8.0.4-BETA2:
+
+Enhancements
+========================
+
+Build
+------------------------
+
+1. Remove Full_Install from the compressed disk image name to avoid
+   potential confusion when looking at the disk image vs the GUI
+   upgrade image (SF r10154).
+
+Middleware
+------------------------
+
+1. Do not restart collectd (reporting backend) when deleting snapshots
+   in the GUI (SF r10139).
+
+Tools
+------------------------
+
+1. Add arcstat.py and arc_summary.py tools originally contributed by
+   jhell (FreeBSD contributor), ported by jhixson to FreeNAS 8.x.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Correct window title for snapshot deletion GUI (SF r10138).
+
+Middleware
+------------------------
+
+1. Catch ZFS snapshot errors when snapshots are done via the GUI instead of
+   failing silently (SF r10152).
+2. Work around interoperability issues with user / group population in the
+   GUI by failing silently in certain cases if AD/LDAP users cannot be
+   retrieved (SF r10140).
+3. Fix case where local and remote paths passed to rsync in Rsync tasks
+   weren't quoted, so paths with spaces in them would not work (FN 1285).
+
+
+Changes since 8.0.4-BETA1:
+
+Enhancements
+========================
+
+OS/Third party
+------------------------
+
+1. Update transmission to 2.42 (SF r10093).
+2. Add MegaCLI tool (SF r10072, r10073).
+3. Disable periodic tasks in the base system that would negatively
+   impact system performance on NAS boxes with large directory
+   structures (SF r10113).
+
+Bugfixes
+========================
+
+Middleware
+------------------------
+
+1. Fix handling for 'every day' SMART tasks created in the GUI
+   (SF r10088).
+2. Add in several robustness fixes to reduce potential for filesystem
+   corruption on root / boot device. In some scenarios this would also
+   improve performance when fetching data from the root device as well
+   (SF r10095, r10109, r10129).
+
+CIFS
+------------------------
+1. Fix vfs objects modules ordering so shadow copy (aka previous
+   versions) support functions again (FN 935, FN 1186, FN 1275).
+2. Update samba to 3.6.3 to resolve several bugs (both security and
+   non-security related) (SF r10127).
+
+iSCSI
+------------------------
+
+1. Network field from iSCSI initiator could contain multiple IP
+   addresses, CIDR addresses, or ANY keyword (SF r10082).
+2. Generate istgt.conf properly if and when multiple initiators were
+   specified (SF r10081).
+
+
+Changes since 8.0.3-RELEASE-p1:
+
+Enhancements
+========================
+
+Build
+------------------------
+1. Add .img suffix to simplify mounting full disk image for Windows and
+   OSX users (FN # 1236).
+
+OS/Third party
+------------------------
+
+1. Update firefly to 1696_6 for iTunes 10.5.2+ compatibility.
+2. Add in sane caps for minimum ZFS requirements for lower spec'ed home
+   user machines.
+
+AD/CIFS
+------------------------
+
+1. Automatically create AD/LDAP user home directories (FN # 1203).
+2. Add 'allow trusted domains' knob in the CIFS global configuration
+   (FN # 998).
+
+iSCSI
+------------------------
+
+1. Restrict portal input in the GUI to prevent scenarios where
+   incorrect input would prevent iSCSI from starting (FN # 1231).
+
+Rsync
+------------------------
+
+1. Add rsync+SSH functionality (FN # 990).
+2. Add functionality to differentiate rsync pushing from pulling
+   (FN # 394).
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix disks / partition parsing when importing volumes (FN # 1202).
+2. Restrict users from creating cronjobs / rsync tasks with long
+   usernames (FN # 1061).
+
+Middleware
+------------------------
+
+1. Correct smbpasswd parsing when debug level isn't set to minimum
+   logging (FN # 1224).
+
+AD/CIFS
+------------------------
+
+1. Escape samba AD/LDAP passwords (FN # 1225).
+2. Ensure guest accounts are disabled if checked (SF r8276).
+
+
+Changes since 8.0.3-RELEASE:
+
+Enhancements
+------------------------
+
+OS/Third party
+========================
+
+1. Update ataidle from 2.6 to 2.72 based on maintainer's (brucec@FreeBSD)
+   recommendation due to interoperabilities with 2.6 and certain chipsets.
+2. Fix the inadyn port so that it works on i386.
+
+Bugfixes
+------------------------
+
+Middleware
+========================
+1. Fix a regression for DHCP users where /etc/resolv.conf would be nulled
+   out if DNS servers weren't specified in the GUI.
+
+AD/CIFS
+========================
+1. Disable AIO by default and change the default AIO read / write size to
+   4kB. This was done provided feedback and the fact that the build fixes
+   actually enabled AIO, whereas prior releases didn't enable it by
+   default. This can cause issues with machines that don't have the
+   resources to service AIO requests quickly enough, where previously they
+   would be able to service requests at near line speeds, whereas after
+   they are unable to service requests that quickly.
+
+NFS:
+========================
+1. Add in logic to start lockd and mountd when NFS is enabled s.t. FreeNAS
+   doesn't need to be manually prodded to start the services, or rebooted
+   in order for the services to become effective.
+
+Changes since 8.0.2-RELEASE:
+
+Enhancements
+------------------------
+
+OS/Third party
+========================
+
+1. Use smaller block and frag sizes for /etc and /var .
+2. Import a build tweak to nuke /var/db/pkg to save ~7MB space.
+3. Other build tweaks to remove non-essential features and packages from
+   the image.
+4. Disable output to /var/log/console.log in non-debug builds to avoid
+   unnecessary duplication in /var/log/messages .
+5. Upgrade ataidle to 2.6.
+6. Upgrade nut / net-snmp to 2.6.2 and 5.7.1, respectively.
+7. Import omnibus build system fixes to fix the fact that the 8.0.3-BETA1
+   image was broken due to the environment of the build machine where it
+   was produced on. This also fixes other items, such as DDNS because of
+   build environment tainting.
+8. Increase the /var md size from 74MB to 160MB s.t. samba will be able
+   to service requests copying large sets of files, and the rest of the
+   system will be able to play nicely with samba to a certain degree.
+   More tuning is required for larger samba userbases.
+
+GUI
+========================
+
+1. Add kernel tunable / sysctl support.
+
+Middleware
+========================
+
+1. Hide Etc/GMT* timezones as they're behavior is counterintuitive and
+   conflicts with Windows 7 semantics (see r8707).
+
+AD/CIFS
+========================
+
+1. Bump samba from 3.5.11 to 3.6.1.
+2. Address simple failure cases with getting Kerberos tickets (clock
+   skew) and joining AD domains (invalid passwords, bad short domain names,
+   etc) so that users could better rectify improperly configured NAS boxes;
+   this means that if either of these cases fail, the GUI will now inform
+   the user that the 'Active Directory' service is stopped.
+3. Fix cachetool to better prevent potential race condition at boot between
+   winbindd and ix-cache.
+4. Add knob for enabling/disabling Zeroconf/Bonjour (avahi) support in the
+   GUI. For technical reasons outside of the author's control, this
+   feature defaults to off when upgrading FreeNAS. FreeNAS admins
+   anticipating that they will have Mac users attempting to connect to CIFS
+   shares should enable this feature.
+
+AFP
+========================
+
+1. Bump netatalk to 2.2.1.
+2. Add knob for controlling the maximum number of configurable connections
+   (see ticket: 847).
+3. Only advertise services via avahi if they're enabled (see ticket: 852).
+
+Rsync
+========================
+
+- NFSv4 ACL support (see: r8375, r8414).
+
+Bugfixes
+------------------------
+
+OS/Third party
+========================
+
+1. Fix NTFS volume imports.
+
+GUI
+========================
+
+1. ZFS volume deletion failed when trying to delete zvol with the name
+   'zvol'.
+2. SSH pubkey saving was broken unless you manually add a newline to the
+   text box.
+3. Fix traceback when trying to edit user if ssh public key was not
+   specified.
+4. Fix the bug in rsync tasks where it would strip the trailing '/' off
+   the end of the destination path.
+5. Fix a validation error when editing users / groups in 8.0.2+ where
+   if one entered in a path that wasn't valid, the GUI would traceback
+   instead of punting the actual validation error.
+6. Fix an issue where if one entered in an invalid path, the GUI would
+   traceback instead of providing feedback stating that the directory
+   provided was invalid.
+
+Middleware
+========================
+
+1. Rsync task/crontab generation was broken with AD usernames and other
+   unsanitized input.
+2. Fix email regressions since 8.0.2-RELEASE-p1 (SMART emails now work
+   with more than one recipient, non-SMTP authentication based emails
+   work again).
+4. Fix an issue where if one autosnap process was killed uncleanly, more
+   autosnap processes could back up and eventually deadlock the system.
+5. Fix an issue where the ZFS scrub cronjobs would execute every 30 days
+   instead of a number divisible by 7, so what would generally happen is
+   that ZFS scrubs would generally execute in the middle of the week.
+6. Fix setting httpd to listen on an interface which is not the first
+   interface.
+7. Add logic to create home directories on demand instead of failing
+   'silently' if the path to the directory didn't already exist.
+8. Fix 'detaching' NTFS/UFS volumes so that it unmounts the volume in
+   the FreeBSD backend.
+
+AD/CIFS
+========================
+
+1. Change the default workgroup from FREENAS to WORKGROUP as having the same
+   name for the workgroup and the hostname is illegal per the SMB/CIFS
+   protocol.
+
+Cosmetic items
+------------------------
+
+1. Change "SSH key" in GUI to "SSH Public Key".
+2. Fix GUI trademarks and branding to be more consistent with proper
+   branding, similar to what TrueNAS does today.
+
+
+
+Major changes since 8.0.1-RELEASE:
+
+- The email subsystem was not working correctly in 8.0.1-RELEASE, which
+  resulted in the system not being able to send mail, as well as of the
+  alerting system in the GUI.
+
+Changes since 8.0.1-RELEASE:
+
+- Allow decimal numbers for a dataset quota. (r8728)
+
+- Fix setting recursive ACLs. (r8270)
+
+- Start proftpd after ix-ssl to use the correct SSL cert. (r8246)
+
+- Use wildcards in cron and rsync jobs instead of listing all values. (r8214, r8211)
+
+- Fix case in iSCSI targets to match the behavior specified by RFC 3722. (r8120)
+
+Changes since 8.0-RELEASE:
+
+There's too much to list here, but the high points are:
+
+- Divorced the volume members in the database from the FreeBSD devices.
+  This resolves an issue where FreeBSD can change devices names and the
+  GUI doesn't pick up the updates due to the devices names being hard-wired
+  in the database.
+
+- Support exporting ZFS zvols (virtual devices) as device extents via iSCSI.
+  8.0 was only able to export physical device nodes or file based extents.
+
+- The GUI now has an event notification system.
+
+- The email backend has been refactored.
+
+- Many many changes in the GUI to help it validate and sanitize inputs that
+  are passed to the backend daemons.
+
+- Added UPS functionality.
+
+- Added rsync client and server functionality.
+
+- Added the ability to schedule cron jobs in the GUI.
+
+- Vastly improved and reworked snapshot replication.
+
+Errata:
+
+- CHAP doesn't work with GlobalSAN initiators on OS X.
+
+- Upgrades from FreeNAS 0.7 aren't supported.
+
+- The installer doesn't check the size of the install media before attempting
+  an install.  A 2 GB device is required, but the install will appear to
+  complete successfully on smaller devices, only to fail at boot.
+
+- The installer will let you switch from i386 to amd64 architecture and
+  vice-versa, but some files, such as the rrd files used by the statistics
+  graphing package are architecture dependent.
+
+- There are known interoperability issues with FreeNAS and Samba 4.x being
+  used as a PDC due to Samba 4.x not conforming to the Microsoft CIFS
+  specification and the way LDAP queries are executed on FreeNAS. Please see
+  the following support ticket for more details:
+  http://support.freenas.org/ticket/1135 .
+
+- Shadow copies via CIFS do not work in 8.0.3. Please see
+  https://support.freenas.org/ticket/1186 for more details.

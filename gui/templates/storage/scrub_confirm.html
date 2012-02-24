@@ -1,9 +1,5 @@
-
-<form data-dojo-type="dijit.form.Form">
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_scrub vid=volume.id %}');
-</script>
-<table>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
     <tr>
         <td>
         {% if scrub == 'IN_PROGRESS' %}
@@ -11,24 +7,8 @@
         {% else %}
         {{ volume.vol_name }}: {% trans "Are you sure you want to scrub?" %}<br />{% trans "This will increase system overhead while in progress" %}
         {% endif %}
+        <input data-dojo-type="dijit.form.TextBox" data-dojo-props="type: 'hidden', name: 'scrub', value: '{{ scrub|force_escape|force_escape }}'" type="hidden" />
         </td>
     </tr>
-    <tr>
-        <td>
-            <input data-dojo-type="dijit.form.TextBox" data-dojo-props="type: 'hidden', name: 'scrub', value: '{{ scrub|force_escape|force_escape }}'" type="hidden" />
-            <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
-                {% trans "Yes" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
-            </button>
-            <button data-dojo-type="dijit.form.Button" class="cancelform">
-                {% trans "Cancel" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    cancelDialog(this);
-                </script>
-            </button>
-        </td>
-    </tr>
-</table>
-</form>
+{% endblock %}
+{% block oklabel %}{% trans "OK" %}{% endblock %}

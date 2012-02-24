@@ -1,0 +1,40 @@
+diff -aur net-mgmt/collectd/Makefile net-mgmt/collectd/Makefile
+--- net-mgmt/collectd/Makefile	2011-12-28 19:04:30.049684795 -0800
++++ net-mgmt/collectd/Makefile	2011-12-28 19:22:04.208679640 -0800
+@@ -16,7 +16,7 @@
+ 
+ USE_GMAKE=	yes
+ GNU_CONFIGURE=	yes
+-USE_AUTOTOOLS=	libltdl
++USE_AUTOTOOLS=	autoconf autoheader libltdl
+ WANT_GNOME=	yes
+ 
+ OPTIONS=	CGI		"Install collection.cgi (requires RRDTOOL)" 	Off \
+@@ -385,7 +385,7 @@
+ 		-e 's;/var/lib/;/var/db/;' \
+ 		${WRKSRC}/src/collectd.conf.in
+ 	@${REINPLACE_CMD} \
+-		-e 's;$$[(]DESTDIR)$$[(]sysconfdir)/collectd\.conf;&.sample;' \
++		-e 's;$$(INSTALL).*$$[(]DESTDIR)$$[(]sysconfdir)/collectd\.conf;&.sample;' \
+ 		${WRKSRC}/src/Makefile.in
+ 	@${REINPLACE_CMD} -e '/$$[(]mkinstalldirs)/d' ${WRKSRC}/Makefile.in
+ 	@${REINPLACE_CMD} \
+@@ -397,13 +397,13 @@
+ 		${WRKSRC}/contrib/collection.conf
+ 	@${REINPLACE_CMD} \
+ 		-e 's;{libdir}/pkgconfig;{prefix}/libdata/pkgconfig;' \
+-		${WRKSRC}/configure
++		${WRKSRC}/configure.in
+ 
+ post-install:
+ 	${MKDIR} /var/db/collectd
+-	if [ ! -f ${PREFIX}/etc/collectd.conf ]; then \
+-		${CP} -p ${PREFIX}/etc/collectd.conf.sample \
+-			${PREFIX}/etc/collectd.conf ; \
++	if [ ! -f ${PREFIX}/etc/collectd.conf.sample ]; then \
++		${CP} -p ${PREFIX}/etc/collectd.conf \
++			${PREFIX}/etc/collectd.conf.sample; \
+ 	fi
+ .if defined(WITH_CGI)
+ 	${MKDIR} ${WWWDIR}
+Only in net-mgmt/collectd: config.log

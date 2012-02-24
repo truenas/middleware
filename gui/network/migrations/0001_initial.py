@@ -4,6 +4,8 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+SW_NAME = 'FreeNAS'
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -63,7 +65,7 @@ class Migration(SchemaMigration):
         db.send_create_signal('network', ['StaticRoute'])
 
         gc = orm.GlobalConfiguration()
-        gc.gc_hostname='freenas'
+        gc.gc_hostname=SW_NAME.lower()
         gc.gc_domain='local'
         gc.save()
 

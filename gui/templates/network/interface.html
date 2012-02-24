@@ -17,17 +17,9 @@
               <td>{{ i.int_interface }}</td>
               <td>{{ i.int_name }}</td>
               <td>{{ i.int_dhcp }}</td>
-              {% if i.int_ipv4address != "" %}
-              <td>{{ i.int_ipv4address }}/{{ i.int_v4netmaskbit }}</td>
-              {% else %}
-              <td></td>
-              {% endif %}
+              <td>{% for ipv4 in i.get_ipv4_addresses %}{{ ipv4 }}<br />{% endfor %}</td>
               <td>{{ i.int_ipv6auto }}</td>
-              {% if i.int_ipv6address != "" %}
-              <td>{{ i.int_ipv6address }}/{{ i.int_v6netmaskbit }}</td>
-              {% else %}
-              <td></td>
-              {% endif %}
+              <td>{% for ipv6 in i.get_ipv6_addresses %}{{ ipv6 }}<br />{% endfor %}</td>
               <td>{{ i.int_options }}</td>
               <td>
                   <button data-dojo-type="dijit.form.Button" type="button">

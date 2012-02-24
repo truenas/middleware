@@ -5,24 +5,26 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
 <style type="text/css">
-    @import "/dojango/dojo-media/release/1.7.0/dojo/resources/dojo.css";
-    @Import "/dojango/dojo-media/release/1.7.0/dijit/themes/claro/claro.css";
+    @import "{{ DOJANGO.DOJO_URL }}/resources/dojo.css";
+    @Import "{{ DOJANGO.DIJIT_URL }}/themes/claro/claro.css";
 </style>
 <script type="text/javascript">
     var dojoConfig = {
         'isDebug':true,
         'parseOnLoad':true,
-        'baseUrl':"/dojango/dojo-media/release/1.7.0/dojo/",
+        'baseUrl':"{{ DOJANGO.DOJO_URL }}",
         'async': true,
     };
 </script>
 
-<script type="text/javascript" src="/dojango/dojo-media/release/1.7.0/dojo/dojo.js">
+<script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/dojo.js">
 </script>
     <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
     <link rel="stylesheet" href="{{ DOJANGO.DIJIT_URL }}/themes/claro/document.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/CheckedMultiSelect.css" />
+    <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/BusyButton.css" />
+    <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/layout/resources/ExpandoPane.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/resources/claroGrid.css" type="text/css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/enhanced/resources/EnhancedGrid.css" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
@@ -45,7 +47,7 @@
         <div data-dojo-type="dijit.layout.BorderContainer" id="inter" style="width:272px; height:100%" data-dojo-props="region:'left', gutters:false, splitter:true">
             <div data-dojo-type="dijit.layout.ContentPane" id="colexpand"
                 data-dojo-props="region:'top'" style="height:20px;">
-                <a href="javascript:void(0);" onClick="dijit.byId('fntree').expandAll()">{% trans "expand all" %}</a> &nbsp; 
+                <a href="javascript:void(0);" onClick="dijit.byId('fntree').expandAll()">{% trans "expand all" %}</a> &nbsp;
                 <a href="javascript:void(0);" onClick="dijit.byId('fntree').collapseAll()">{% trans "collapse all" %}</a>
             </div>
             <div data-dojo-type="dijit.layout.ContentPane" id="menupane"

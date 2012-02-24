@@ -4,6 +4,8 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+SW_NAME = 'FreeNAS'
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -22,7 +24,7 @@ class Migration(SchemaMigration):
         db.send_create_signal('system', ['Email'])
 
         em = orm.Email()
-        em.em_fromemail='root@freenas.local'
+        em.em_fromemail='root@%s.local' % (SW_NAME.lower(), )
         em.em_port=25
         em.em_smtp=False
         em.save()

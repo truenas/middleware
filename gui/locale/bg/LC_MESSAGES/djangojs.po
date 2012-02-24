@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-09-09 14:13+0200\n"
-"Last-Translator: Crazy <vmishev07051@gmail.com>\n"
+"PO-Revision-Date: 2011-11-11 14:29+0200\n"
+"Last-Translator: neohidra <neohidra@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Статистики"
+msgstr "Статистика"
 
 #: media/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -28,7 +28,7 @@ msgstr "Настройки"
 
 #: media/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr "Системна информация"
+msgstr "Инф. за системата"
 
 #: media/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -70,14 +70,14 @@ msgstr "Всяко от избраните"
 msgid "Every N"
 msgstr "Всяко N"
 
-#~ msgid "Replace"
-#~ msgstr "Замяна"
+msgid "Replace"
+msgstr "Замяна"
 
-#~ msgid "Disk Replacement"
-#~ msgstr "Смяна на диск"
+msgid "Disk Replacement"
+msgstr "Смяна на диск"
 
-#~ msgid "Detach"
-#~ msgstr "Откачи"
+msgid "Detach"
+msgstr "Откачи"
 
-#~ msgid "Disk Detach"
-#~ msgstr "Откачи диска"
+msgid "Disk Detach"
+msgstr "Откачи диска"

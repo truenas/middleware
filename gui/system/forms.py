@@ -25,7 +25,12 @@
 #
 #####################################################################
 
+import glob
+import os
+import pwd
 import re
+import shutil
+import subprocess
 
 from django.forms import FileField
 from django.conf import settings
@@ -42,11 +47,14 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.views import JsonResponse
-from middleware.exceptions import MiddlewareError
 from dojango import forms
 import choices
 
 class FileWizard(FormWizard):
+    def __init__(self, *args, **kwargs):
+        self.templates = kwargs.pop('templates', [])
+        self.saved_prefix = kwargs.pop("prefix", '')
+        super(FileWizard, self).__init__(*args, **kwargs)
     @method_decorator(csrf_protect)
     def __call__(self, request, *args, **kwargs):
         """
@@ -81,10 +89,7 @@ class FileWizard(FormWizard):
         else:
             form = self.get_form(current_step)
         if form.is_valid():
-            try:
-                self.process_step(request, form, current_step)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            self.process_step(request, form, current_step)
             next_step = current_step + 1
 
             if next_step == self.num_steps():
@@ -113,9 +118,11 @@ class FileWizard(FormWizard):
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
     def get_template(self, step):
-        """
-        TODO: templates as parameter
-        """
+        if self.templates:
+            for i, tpl in enumerate(self.templates):
+                if '%s' in tpl:
+                    self.templates[i] = tpl % step
+            return self.templates
         return ['system/wizard_%s.html' % step, 'system/wizard.html']
     def process_step(self, request, form, step):
         super(FileWizard, self).process_step(request, form, step)
@@ -123,7 +130,7 @@ class FileWizard(FormWizard):
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done()
+            retval = form.done(request=request)
             if step == self.num_steps()-1:
                 self.retval = retval
 
@@ -133,9 +140,6 @@ class FileWizard(FormWizard):
         if not request.is_ajax():
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
-    def __init__(self, form_list, prefix="", initial=None):
-        super(FileWizard, self).__init__(form_list, initial)
-        self.saved_prefix = prefix
     def prefix_for_step(self, step):
         "Given the step, returns a Form prefix to use."
         return '%s%s' % (self.saved_prefix, str(step))
@@ -186,7 +190,42 @@ class SettingsForm(ModelForm):
                                     )
             if self.instance.stg_guiport != '':
                 newurl += ":" + self.instance.stg_guiport
+            if self.instance._original_stg_guiprotocol == 'http':
+                notifier().start_ssl("nginx")
             events.append("restartHttpd('%s')" % newurl)
+
+class NTPForm(ModelForm):
+    force = forms.BooleanField(label=_("Force"), required=False)
+    class Meta:
+        model = models.NTPServer
+    def __init__(self, *args, **kwargs):
+        super(NTPForm, self).__init__( *args, **kwargs)
+        self.usable = True
+    def clean_ntp_address(self):
+        addr = self.cleaned_data.get("ntp_address")
+        p1 = subprocess.Popen(["ntpq", "-c", "rv", addr],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        data = p1.communicate()[0]
+        #TODO: ntpq does not return error code in case of errors
+        if not re.search(r'version=', data):
+            self.usable = False
+        return addr
+    def clean_ntp_maxpoll(self):
+        maxp = self.cleaned_data.get("ntp_maxpoll")
+        minp = self.cleaned_data.get("ntp_minpoll")
+        if not maxp > minp:
+            raise forms.ValidationError(_("Max Poll should be higher than Min Poll"))
+        return maxp
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("force", False) and not self.usable:
+            self._errors['ntp_address'] = self.error_class([_("Server could not be reached. Check \"Force\" to continue regardless.")])
+            del cdata['ntp_address']
+        return cdata
+    def save(self):
+        super(NTPForm, self).save()
+        notifier().start("ix-ntpd")
+        notifier().restart("ntpd")
 
 class AdvancedForm(ModelForm):
     class Meta:
@@ -200,6 +239,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
+        self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:
@@ -224,6 +264,9 @@ class AdvancedForm(ModelForm):
                 events.append("_msg_start()")
             else:
                 events.append("_msg_stop()")
+        if self.instance._original_adv_advancedmode != self.instance.adv_advancedmode:
+            #Invalidate cache
+            request.session.pop("adv_mode", None)
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
@@ -283,7 +326,7 @@ class EmailForm(ModelForm):
 class SSLForm(ModelForm):
     def save(self):
         super(SSLForm, self).save()
-        notifier().start("ix-ssl")
+        notifier().start_ssl("nginx")
     class Meta:
         model = models.SSL
 
@@ -349,7 +392,7 @@ class FirmwareTemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
-    def done(self):
+    def done(self, *args, **kwargs):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 class FirmwareUploadForm(Form):
@@ -359,9 +402,12 @@ class FirmwareUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
         if cleaned_data.get('firmware'):
-            with open(filename, 'wb+') as fw:
-                for c in cleaned_data['firmware'].chunks():
-                    fw.write(c)
+            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
+                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as fw:
+                    for c in cleaned_data['firmware'].chunks():
+                        fw.write(c)
             retval = notifier().validate_xz(filename)
             if not retval:
                 msg = _(u"Invalid firmware")
@@ -376,8 +422,9 @@ class FirmwareUploadForm(Form):
         else:
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
-    def done(self):
+    def done(self, request, *args, **kwargs):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
+        request.session['allow_reboot'] = True
 
 class ServicePackUploadForm(Form):
     servicepack = FileField(label=_("Service Pack image to be installed"), required=True)
@@ -403,8 +450,9 @@ class ServicePackUploadForm(Form):
         else:
             self._errors["servicepack"] = self.error_class([_("This field is required.")])
         return cleaned_data
-    def done(self):
+    def done(self, request, *args, **kwargs):
         return notifier().apply_servicepack()
+        request.session['allow_reboot'] = True
 
 class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
@@ -430,6 +478,16 @@ class CronJobForm(ModelForm):
             if ins.cron_dayweek == '*':
                 ins.cron_dayweek = "1,2,3,4,5,6,7"
         super(CronJobForm, self).__init__(*args, **kwargs)
+    def clean_cron_user(self):
+        user = self.cleaned_data.get("cron_user")
+        # See #1061 or FreeBSD PR 162976
+        if len(user) > 17:
+            raise forms.ValidationError("Usernames cannot exceed 17 characters for cronjobs")
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
+        if ' ' in user:
+            raise forms.ValidationError("Usernames cannot have spaces")
+        return user
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
         if len(m) == 12:
@@ -468,18 +526,32 @@ class RsyncForm(ModelForm):
                 ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
         self.fields['rsync_mode'].widget.attrs['onChange'] = "rsyncModeToggle();"
+    def clean_rsync_user(self):
+        user = self.cleaned_data.get("rsync_user")
+        # See #1061 or FreeBSD PR 162976
+        if len(user) > 17:
+            raise forms.ValidationError("Usernames cannot exceed 17 "
+                "characters for rsync tasks")
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
+        if ' ' in user:
+            raise forms.ValidationError("Usernames cannot have spaces")
+        return user
+
     def clean_rsync_remotemodule(self):
         mode = self.cleaned_data.get("rsync_mode")
         val = self.cleaned_data.get("rsync_remotemodule")
         if mode == 'module' and not val:
             raise forms.ValidationError(_("This field is required"))
         return val
+
     def clean_rsync_remotepath(self):
         mode = self.cleaned_data.get("rsync_mode")
         val = self.cleaned_data.get("rsync_remotepath")
         if mode == 'ssh' and not val:
             raise forms.ValidationError(_("This field is required"))
         return val
+
     def clean_rsync_month(self):
         m = eval(self.cleaned_data.get("rsync_month"))
         if len(m) == 12:
@@ -487,12 +559,32 @@ class RsyncForm(ModelForm):
         m = ",".join(m)
         m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
+
     def clean_rsync_dayweek(self):
         w = eval(self.cleaned_data.get("rsync_dayweek"))
         if len(w) == 7:
             return '*'
         w = ",".join(w)
         return w
+
+    def clean(self):
+        cdata = self.cleaned_data
+        mode = cdata.get("rsync_mode")
+        user = cdata.get("rsync_user")
+        if mode == 'ssh':
+            try:
+                home = pwd.getpwnam(user).pw_dir
+                search = os.path.join(home, ".ssh", "id_[edr]*.*")
+                if not glob.glob(search):
+                    raise ValueError
+            except (KeyError, ValueError, AttributeError, TypeError):
+                self._errors['rsync_user'] = self.error_class([
+                    _("In order to use rsync over SSH you need a user<br />"
+                      "with a public key (DSA/ECDSA/RSA) set up in home dir."),
+                    ])
+                cdata.pop('rsync_user', None)
+        return cdata
+
     def save(self):
         super(RsyncForm, self).save()
         started = notifier().restart("cron")
@@ -567,9 +659,9 @@ class SysctlForm(ModelForm):
         super(SysctlForm, self).save()
         notifier().start("sysctl")
 
-class LoaderForm(ModelForm):
+class TunableForm(ModelForm):
     class Meta:
-        model = models.Loader
+        model = models.Tunable
 
     def clean_ldr_comment(self):
         return self.cleaned_data.get('ldr_comment').strip()
@@ -582,10 +674,10 @@ class LoaderForm(ModelForm):
 
     def clean_ldr_var(self):
         value = self.cleaned_data.get('ldr_var')
-        if TUNABLE_VARNAME_FORMAT_RE.match(value): 
+        if TUNABLE_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
 
     def save(self):
-        super(LoaderForm, self).save()
+        super(TunableForm, self).save()
         notifier().start("loader")

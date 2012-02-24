@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import re
 
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
@@ -132,13 +133,30 @@ class Interfaces(Model):
 
     def __unicode__(self):
             return u'%s' % self.int_name
+
+    def __init__(self, *args, **kwargs):
+        super(Interfaces, self).__init__(*args, **kwargs)
+        self._original_int_options = self.int_options
+
     def delete(self):
+        for lagg in self.lagginterface_set.all():
+            lagg.delete()
         super(Interfaces, self).delete()
         notifier().stop("netif")
         notifier().start("network")
+
+    def save(self, *args, **kwargs):
+        super(Interfaces, self).save(*args, **kwargs)
+        if self._original_int_options != self.int_options and \
+                re.search(r'mtu \d+', self._original_int_options) and \
+                self.int_options.find("mtu") == -1:
+            notifier().interface_mtu(self.int_interface, "1500")
+
     class Meta:
         verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")
+        ordering = ["int_interface"]
+
     class FreeAdmin:
         create_modelform = "InterfacesForm"
         edit_modelform = "InterfacesEditForm"
@@ -147,8 +165,45 @@ class Interfaces(Model):
         icon_add = u"AddInterfaceIcon"
         icon_view = u"ViewAllInterfacesIcon"
         inlines = [
-            ('AliasForm', 'alias_set'),
+            {
+                'form': 'AliasForm',
+                'prefix': 'alias_set'
+            },
         ]
+
+    def get_ipv4_addresses(self):
+        """
+        Includes IPv4 addresses in aliases
+        """
+        ips = []
+        if self.int_ipv4address:
+            ips.append("%s/%s" % (
+                str(self.int_ipv4address),
+                str(self.int_v4netmaskbit),
+                ))
+        for alias in self.alias_set.exclude(alias_v4address=''):
+            ips.append("%s/%s" % (
+                str(alias.alias_v4address),
+                str(alias.alias_v4netmaskbit),
+                ))
+        return ips
+
+    def get_ipv6_addresses(self):
+        """
+        Includes IPv6 addresses in aliases
+        """
+        ips = []
+        if self.int_ipv6address:
+            ips.append("%s/%s" % (
+                str(self.int_ipv6address),
+                str(self.int_v6netmaskbit),
+                ))
+        for alias in self.alias_set.exclude(alias_v6address=''):
+            ips.append("%s/%s" % (
+                str(alias.alias_v6address),
+                str(alias.alias_v6netmaskbit),
+                ))
+        return ips
 
 
 class Alias(Model):
@@ -184,18 +239,22 @@ class Alias(Model):
             )
 
     def __unicode__(self):
-            return u'%s:%s' % (self.alias_interface.int_name, self.alias_address)
+            return u'%s:%s' % (self.alias_interface.int_name, self.alias_v4address)
+
     def delete(self):
         super(Alias, self).delete()
         notifier().stop("netif")
         notifier().start("network")
+
     class Meta:
         verbose_name = _("Alias")
         verbose_name_plural = _("Aliases")
+
     class FreeAdmin:
         pass
         #create_modelform = "InterfacesForm"
         #edit_modelform = "InterfacesEditForm"
+
 
 ## Network|Interface Management|VLAN
 class VLAN(Model):
@@ -225,11 +284,12 @@ class VLAN(Model):
         vint = self.vlan_vint
         super(VLAN, self).delete()
         Interfaces.objects.filter(int_interface=vint).delete()
-        notifier().vlan_delete(vint)
+        notifier().iface_destroy(vint)
 
     class Meta:
         verbose_name = _("VLAN")
         verbose_name_plural = _("VLANs")
+        ordering = ["vlan_vint"]
 
     class FreeAdmin:
         icon_object = u"VLANIcon"
@@ -252,6 +312,12 @@ class LAGGInterface(Model):
             verbose_name=_("Protocol Type"),
             choices=choices.LAGGType,
             )
+
+    class Meta:
+        verbose_name = _("Link Aggregation")
+        verbose_name_plural = _("Link Aggregations")
+        ordering = ["lagg_interface"]
+
     def __unicode__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = self.id)
         if interface_list != None:
@@ -260,11 +326,16 @@ class LAGGInterface(Model):
             interfaces = 'None'
         return "%s (%s: %s)" % (self.lagg_interface, self.lagg_protocol, interfaces)
 
+    def delete(self):
+        super(LAGGInterface, self).delete()
+        notifier().iface_destroy(self.lagg_interface.int_interface)
+
     class FreeAdmin:
         icon_object = u"VLANIcon"
         icon_model = u"VLANIcon"
         icon_add = u"AddVLANIcon"
         icon_view = u"ViewAllVLANsIcon"
+
 
 # Physical interfaces list inside one LAGG group
 class LAGGInterfaceMembers(Model):
@@ -284,21 +355,26 @@ class LAGGInterfaceMembers(Model):
             max_length=120,
             verbose_name=_("Options")
             )
+
     def __unicode__(self):
         return self.lagg_physnic
 
     def delete(self):
-        import os
-        os.system("ifconfig %s -laggport %s" % (self.lagg_interfacegroup.lagg_interface.int_interface, self.lagg_physnic))
+        notifier().lagg_remove_port(
+            self.lagg_interfacegroup.lagg_interface.int_interface,
+            self.lagg_physnic,
+            )
         super(LAGGInterfaceMembers, self).delete()
 
     class Meta:
         verbose_name = _("Link Aggregation")
         verbose_name_plural = _("Link Aggregations")
-   
+        ordering = ["lagg_interfacegroup"]
+
     class FreeAdmin:
         icon_object = u"LAGGIcon"
         icon_model = u"LAGGIcon"
+
 
 class StaticRoute(Model):
     sr_destination = models.CharField(
@@ -318,6 +394,7 @@ class StaticRoute(Model):
     class Meta:
         verbose_name = _("Static Route")
         verbose_name_plural = _("Static Routes")
+        ordering = ["sr_destination", "sr_gateway"]
 
     class FreeAdmin:
         icon_object = u"StaticRouteIcon"
@@ -330,3 +407,7 @@ class StaticRoute(Model):
 
     def save(self, *args, **kwargs):
         super(StaticRoute, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        super(StaticRoute, self).delete(*args, **kwargs)
+        notifier().staticroute_delete(self)

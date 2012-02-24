@@ -1,0 +1,8 @@
+#!/bin/sh
+
+firefly_path=/usr/pbi/firefly-amd64
+tmpfile=$(mktemp /tmp/.XXXXXX)
+
+grep -v 'firefly_' /etc/rc.conf > ${tmpfile}
+cat ${firefly_path}/etc/rc.conf >> ${tmpfile}
+mv ${tmpfile} /etc/rc.conf

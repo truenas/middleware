@@ -146,12 +146,14 @@ PPLEVEL=3
 NANO_LABEL=""
 
 #######################################################################
-# Architecture to build.  Corresponds to TARGET_ARCH in a buildworld.
-# Unfortunately, there's no way to set TARGET at this time, and it
-# conflates the two, so architectures where TARGET != TARGET_ARCH do
-# not work.  This defaults to the arch of the current machine.
+# Architecture to build.  Corresponds to TARGET:TARGET_ARCH in
+# buildworld.
+# This defaults to the architecture and processor of the current machine.
+#
+# This accepts just the architecture though (for select architectures like
+# amd64, i386, etc where there isn't a different processor).
 
-NANO_ARCH=`uname -p`
+: ${NANO_ARCH=$(uname -m):$(uname -p)}
 
 # Directory to populate /cfg from
 NANO_CFGDIR=""
@@ -199,7 +201,10 @@ build_world ( ) (
 	pprint 3 "log: ${MAKEOBJDIRPREFIX}/_.bw"
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
 		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
@@ -224,7 +229,11 @@ build_kernel ( ) (
 	unset TARGET_BIG_ENDIAN
 	# Note: We intentionally build all modules, not only the ones in
 	# NANO_MODULES so the built world can be reused by multiple images.
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		buildkernel \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}" \
@@ -259,15 +268,29 @@ make_conf_install ( ) (
 	echo "${CONF_INSTALL}" >> ${NANO_MAKE_CONF_INSTALL}
 )
 
+# Run installworld in a deterministic manner.
+#
+# Parameters:
+# 1 - where to install the world; defaults to $NANO_WORLDDIR
 install_world ( ) (
+	local worlddir
+
 	pprint 2 "installworld"
 	pprint 3 "log: ${NANO_OBJ}/_.iw"
 
+	worlddir=${1:-${NANO_WORLDDIR}}
+
+	mkdir -p "$worlddir"
+
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} \
-	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} installworld \
-		DESTDIR=${NANO_WORLDDIR} \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		installworld \
+		DESTDIR=${worlddir} \
 		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 		> ${NANO_OBJ}/_.iw 2>&1
 	chflags -R noschg ${NANO_WORLDDIR}
 )
@@ -278,8 +301,11 @@ install_etc ( ) (
 	pprint 3 "log: ${NANO_OBJ}/_.etc"
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} \
-	${NANO_PMAKE} distribution \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		distribution \
 		DESTDIR=${NANO_WORLDDIR} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
@@ -302,7 +328,11 @@ install_kernel ( ) (
 	fi
 
 	cd ${NANO_SRC}
-	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} installkernel \
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		installkernel \
 		DESTDIR=${NANO_WORLDDIR} \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
@@ -362,7 +392,7 @@ setup_nanobsd ( ) (
 		(
 		mkdir -p etc/local
 		cd usr/local/etc
-		find . | cpio -dumpl ../../../etc/local
+		find . | cpio -R root:wheel -dumpl ../../../etc/local
 		cd ..
 		rm -rf etc
 		ln -s ../../etc/local etc
@@ -376,7 +406,7 @@ setup_nanobsd ( ) (
 		# the files in /$d will be hidden by the mount.
 		# XXX: configure /$d ramdisk size
 		mkdir -p conf/base/$d conf/default/$d
-		find $d | cpio -dumpl conf/base/
+		find $d | cpio -R root:wheel -dumpl conf/base/
 	done
 
 	echo "$NANO_RAM_ETCSIZE" > conf/base/etc/md_size
@@ -445,7 +475,7 @@ populate_slice ( ) (
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -dumpv ${mnt}
+	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -R root:wheel -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
@@ -706,7 +736,7 @@ cust_allow_ssh_root () (
 cust_install_files () (
 	cd ${NANO_TOOLS}/Files
 	find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | \
-	    cpio -Ldumpv ${NANO_WORLDDIR}
+	    cpio -R root:wheel -Ldumpv ${NANO_WORLDDIR}
 )
 
 #######################################################################
@@ -724,7 +754,8 @@ cust_pkg () (
 	mkdir -p ${NANO_WORLDDIR}/Pkg
 	(
 		cd ${NANO_PACKAGE_DIR}
-		find ${NANO_PACKAGE_LIST} | cpio -Ldumpv ${NANO_WORLDDIR}/Pkg
+		find ${NANO_PACKAGE_LIST} | \
+		    cpio -R root:wheel -Ldumpv ${NANO_WORLDDIR}/Pkg
 	)
 
 	# Count & report how many we have to install

@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 import re
 
 from django.utils.translation import ugettext_lazy as _
@@ -97,8 +98,18 @@ AFP_ShareForm.base_fields.keyOrder.remove('afp_sharepw2')
 AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
 
 class NFS_ShareForm(ModelForm):
+
     class Meta:
         model = models.NFS_Share
+
+    def clean_nfs_path(self):
+        path = self.cleaned_data.get("nfs_path")
+        if not os.path.exists(path):
+            raise forms.ValidationError(_("The path %s does not exist") % (
+                path,
+                ))
+        return path
+
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()

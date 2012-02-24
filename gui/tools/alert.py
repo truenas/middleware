@@ -51,6 +51,7 @@ from freenasUI.system.models import Settings
 
 ALERT_FILE = '/var/tmp/alert'
 LAST_ALERT_FILE = '/var/tmp/alert.last'
+PORTAL_IP_FILE = '/var/tmp/iscsi_portal_ip'
 
 class Alert(object):
 
@@ -82,12 +83,14 @@ class Alert(object):
                 reg1 = re.search(r'^\s*status: (.*?)\n\s*\w+:', stdout, re.S|re.M)
                 reg2 = re.search(r'^\s*action: (.*?)\n\s*\w+:', stdout, re.S|re.M)
                 if reg1:
-                    status = 'UNKNOWN'
+                    if status == 'HEALTHY':
+                        status = 'UNKNOWN'
                     msg = reg1.group(1)
                     msg = re.sub(r'\s+', ' ', msg)
                     message += msg
                 if reg2:
-                    status = 'UNKNOWN'
+                    if status == 'HEALTHY':
+                        status = 'UNKNOWN'
                     msg = reg2.group(1)
                     msg = re.sub(r'\s+', ' ', msg)
                     message += msg
@@ -115,9 +118,9 @@ class Alert(object):
                                       'the admin user (currently no password '
                                       'is required to login)'))
 
-    def lighttpd_bindaddr(self):
+    def httpd_bindaddr(self):
         address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
-        with open('/usr/local/etc/lighttpd/lighttpd.conf') as f:
+        with open('/usr/local/etc/nginx/nginx.conf') as f:
             # XXX: this is parse the file instead of slurping in the contents
             # (or in reality, just be moved somewhere else).
             if f.read().find('0.0.0.0') != -1 and address not in ('0.0.0.0', ''):
@@ -126,10 +129,22 @@ class Alert(object):
                          _('The WebGUI Address could not be bind to %s; using wildcard')
                          % (address,))
 
+    def iscsi_portal_ips(self):
+        if not os.path.exists(PORTAL_IP_FILE):
+            return None
+        with open(PORTAL_IP_FILE) as f:
+            ips = f.read().split('\n')
+            ips = filter(lambda y: bool(y), ips)
+            self.log(self.LOG_WARN,
+                _('The following IPs are bind to iSCSI Portal but were not '
+                'found in the system: %s') % (', '.join(ips))
+                )
+
     def perform(self):
         self.volumes_status()
         self.admin_password()
-        self.lighttpd_bindaddr()
+        self.httpd_bindaddr()
+        self.iscsi_portal_ips()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:

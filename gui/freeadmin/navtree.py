@@ -25,15 +25,18 @@
 #
 #####################################################################
 import re
+import urllib2
 
 from django.conf import settings
+from django.core.urlresolvers import resolve
 from django.db import models
 from django.forms import ModelForm
-from django.core.urlresolvers import resolve
 from django.http import Http404
+from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree
+from freenasUI.plugins.models import Plugins
 
 class NavTree(object):
 
@@ -135,25 +138,17 @@ class NavTree(object):
                     new[opt.name] = opt
 
             sort = new.keys()
-            sort.sort()
+            sort = sorted(sort, cmp=lambda x,y: cmp(x.lower(), y.lower()) if x and y else 0)
 
             for opt in sort:
                 opts.append(new[opt])
             nav._children = opts
-
-            inserts = 0
-            for opt in nav:
-                if len(opt) == 0:
-                    nav.remove_child(opt)
-                    nav.insert_child(inserts, opt)
-                    inserts += 1
 
             # TODO better order based on number attribute
             sort = order.keys()
             sort.sort()
             for key in sort:
                 nav.insert_child(0, order[key])
-
 
         for opt in nav:
             self.sort_navoption(opt)
@@ -204,7 +199,7 @@ class NavTree(object):
         if a related ModelForm is found several entries are Added to the Menu
             - Objects
             - Add (Model)
-            - View All (Model)
+            - View (Model)
     """
     def generate(self, request=None):
 
@@ -248,7 +243,7 @@ class NavTree(object):
                         obj = navc()
                         obj._gname = obj.gname
 
-                        if navc.append_app:
+                        if obj.append_app:
                             self.register_option(obj, nav, True, evaluate=True)
                         else:
                             self._navs[obj.gname] = obj
@@ -336,7 +331,7 @@ class NavTree(object):
 
                         # Node to view all instances of model
                         subopt = TreeNode('View')
-                        subopt.name = _(u'View All %s') % model._meta.verbose_name_plural
+                        subopt.name = _(u'View %s') % model._meta.verbose_name_plural
                         subopt.view = u'freeadmin_model_datagrid'
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
@@ -362,21 +357,19 @@ class NavTree(object):
         nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon', action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon ='RebootIcon')
+        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon='RebootIcon', type='dialog', view='system_reboot_dialog')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', action='shutdown')
+        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', type='dialog', view='system_shutdown_dialog')
         tree_roots.register(nav)
 
         """
         Plugin nodes
         """
-        #HACK: unused code yet
-        #import urllib2
-        #from django.utils import simplejson
-        for x in range(0):
+        host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(), )
+        for plugin in Plugins.objects.filter(plugin_enabled=True):
             try:
-                response = urllib2.urlopen('http://10.1.1.1/', None, 1)
+                response = urllib2.urlopen("%s/%s/treemenu" % (host, plugin.plugin_view), None, 1)
                 data = response.read()
             except urllib2.HTTPError, e:
                 data = None

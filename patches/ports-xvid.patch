@@ -1,0 +1,60 @@
+diff -Naur /scratch/freenas-trunk/FreeBSD/ports/multimedia/xvid/Makefile multimedia/xvid/Makefile
+--- /scratch/freenas-trunk/FreeBSD/ports/multimedia/xvid/Makefile	2011-08-11 00:31:04.000000000 -0700
++++ multimedia/xvid/Makefile	2012-01-07 21:21:22.952978170 -0800
+@@ -7,6 +7,7 @@
+ 
+ PORTNAME=	xvid
+ PORTVERSION=	1.3.2
++PORTREVISION=	1
+ PORTEPOCH=	1
+ CATEGORIES=	multimedia
+ MASTER_SITES=	http://downloads.xvid.org/downloads/
+diff -Naur /scratch/freenas-trunk/FreeBSD/ports/multimedia/xvid/files/patch-Makefile multimedia/xvid/files/patch-Makefile
+--- /scratch/freenas-trunk/FreeBSD/ports/multimedia/xvid/files/patch-Makefile	1969-12-31 16:00:00.000000000 -0800
++++ multimedia/xvid/files/patch-Makefile	2012-01-07 20:57:44.092978575 -0800
+@@ -0,0 +1,45 @@
++--- Makefile	2012-01-07 20:28:54.382985196 -0800
+++++ Makefile	2012-01-07 20:31:19.373992363 -0800
++@@ -85,7 +85,7 @@
++ 
++ $(BUILD_DIR):
++ 	@echo "  D: $(BUILD_DIR)"
++-	@$(INSTALL) -d $(BUILD_DIR)
+++	@mkdir -m 0755 -p $(BUILD_DIR)
++ 
++ #-----------------------------------------------------------------------------
++ # Generic assembly rule
++@@ -93,7 +93,7 @@
++ 
++ .$(ASSEMBLY_EXTENSION).$(OBJECT_EXTENSION):
++ 	@echo "  A: $(@D)/$(<F)"
++-	@$(INSTALL) -d $(BUILD_DIR)/$(@D)
+++	@mkdir -m 0755 -p $(BUILD_DIR)/$(@D)
++ 	@$(AS) $(AFLAGS) $< -o $(BUILD_DIR)/$@
++ 
++ #-----------------------------------------------------------------------------
++@@ -104,7 +104,7 @@
++ 
++ .c.$(OBJECT_EXTENSION):
++ 	@echo "  C: $(@D)/$(<F)"
++-	@$(INSTALL) -d $(BUILD_DIR)/$(@D)
+++	@mkdir -m 0755 -p $(BUILD_DIR)/$(@D)
++ 	@$(CC) -c $(ARCHITECTURE) $(BUS) $(ENDIANNESS) $(FEATURES) $(SPECIFIC_CFLAGS) $(CFLAGS) $< -o $(BUILD_DIR)/$@
++ 
++ #-----------------------------------------------------------------------------
++@@ -142,13 +142,13 @@
++ 
++ install: $(BUILD_DIR)/$(STATIC_LIB) $(BUILD_DIR)/$(SHARED_LIB)
++ 	@echo "  D: $(libdir)"
++-	@$(INSTALL) -d $(DESTDIR)$(libdir)
+++	@mkdir -m 0755 -p $(DESTDIR)$(libdir)
++ 	@echo "  I: $(libdir)/$(SHARED_LIB)"
++ 	@$(INSTALL) -m 644 $(BUILD_DIR)/$(SHARED_LIB) $(DESTDIR)$(libdir)/$(SHARED_LIB)
++ 	@echo "  I: $(libdir)/$(STATIC_LIB)"
++ 	@$(INSTALL) -m 644 $(BUILD_DIR)/$(STATIC_LIB) $(DESTDIR)$(libdir)/$(STATIC_LIB)
++ 	@echo "  D: $(includedir)"
++-	@$(INSTALL) -d $(DESTDIR)$(includedir)
+++	@mkdir -m 0755 -p $(DESTDIR)$(includedir)
++ 	@echo "  I: $(includedir)/xvid.h"
++ 	@$(INSTALL) -m 644 $(SRC_DIR)/xvid.h $(DESTDIR)$(includedir)/xvid.h
++ 

@@ -97,7 +97,7 @@ class UserField(forms.ChoiceField):
             if not self.required:
                 ulist.append(('-----', 'N/A'))
             ulist.extend(map(lambda x: (x.pw_name, x.pw_name, ),
-                             filter(lambda y: y.pw_name not in self._exclude,
+                             filter(lambda y: y is not None and y.pw_name not in self._exclude,
                                               FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER))))
 
             self.widget = widgets.FilteringSelect()
@@ -152,6 +152,7 @@ class PathField(forms.CharField):
         self.widget = DirectoryBrowser(dirsonly=dirsonly)
         super(PathField, self).__init__(*args, **kwargs)
     def clean(self, value):
+        value = value.strip()
         if value not in ('', None):
             absv = os.path.abspath(value)
             valid = False

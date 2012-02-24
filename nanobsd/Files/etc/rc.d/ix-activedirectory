@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-activedirectory
-# REQUIRE: smbd
+# REQUIRE: ix-samba ix-kinit
+# BEFORE: winbindd
 
 . /etc/rc.freenas
 
@@ -56,38 +57,105 @@ EOF
 	return 0
 }
 
+
+get_trusted()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_allow_trusted_doms
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1;
+	"
+}
+
+get_workgroup()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_workgroup
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1;
+	"
+}
+
+get_cifs_homedir()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_homedir
+
+	FROM
+		services_cifs
+
+	ORDER BY
+		-services_cifs.id
+
+	LIMIT 1;
+	"
+}
+
+
 setup_homedirs()
 {
-	local hdsrc="/var/home"
-	local hddst="/home"
+	local trusted=$(get_trusted)
+	local cifs_home="$(get_cifs_homedir)"
 
-	local dst=$(dirname "${hddst}")
+	if [ -n "${cifs_home}" ]
+	then
+		ln -sfh "$cifs_home" "/var/home"
 
-	mount -uw /	
+		if [ "${trusted}" = "1" ]
+		then
+			local partitions="$(AD_query_partitions)"
+			for p in ${partitions}
+			do
+				mkdir -p "/var/home/${p}"
+			done
 
-	mkdir -p "${hdsrc}"
-	mkdir -p "${dst}"
-	ln -s "${hdsrc}" "${dst}" 2>/dev/null
+		else
+			local workgroup=$(get_workgroup)
+			mkdir -p "/var/home/${workgroup}"
+		fi
 
-	mount -ur /
+	elif [ ! -d "/var/home" ]
+	then
+		mkdir /var/home
+	fi
 }
 
 activedirectory_start()
 {
-	if AD_enabled
+	if srv_enabled activedirectory
 	then
 		AD_init
-		AD_join_domain
+		if ! AD_join_domain; then
+			return $?
+		fi
 
 		#generate_nss_ldap_conf
 
 		setup_homedirs
 		create_cache_filesystem
 		mkdir -p ${FREENAS_CACHEDIR}/.samba
-
-		sleep 10
-		/usr/sbin/service samba restart >/dev/null 2>&1
 	fi
+}
+
+activedirectory_status()
+{
+	AD_init
+	AD_status_domain >/dev/null
 }
 
 activedirectory_stop()
@@ -101,6 +169,7 @@ activedirectory_stop()
 
 name="ix-activedirectory"
 start_cmd='activedirectory_start'
+status_cmd='activedirectory_status'
 stop_cmd='activedirectory_stop'
             
 load_rc_config $name

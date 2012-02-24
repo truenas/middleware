@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:01-0700\n"
-"PO-Revision-Date: 2011-06-19 17:20+0200\n"
-"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
+"PO-Revision-Date: 2011-11-28 20:24+0200\n"
+"Last-Translator: KAPnik <KAPnik76@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -476,21 +476,21 @@ msgstr "Негайний Offline тест (тільки ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Ваше ім'я не може починатись з  \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Символ $ припустимий тільки в якості останього символа"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Ваше ім'я містить недопустимі символи (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Ваше повне ім'я містить недопустимі символи (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -552,12 +552,11 @@ msgstr "Основна група"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Відкритий ключ SSH "
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Користувач за таким ім'ям вже існує."
+msgstr "Користувач за таким ім'ям (uid ) вже існує."
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -575,13 +574,12 @@ msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "Домашній каталог має починатися з /mnt/"
 
 #: account/forms.py:307 account/forms.py:486
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Домашній каталог має починатися з /mnt/"
+msgstr "Домашній каталог для запису не доступний, залиште це поле порожнім"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Паролю відключений, залиште це поле порожнім"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398

@@ -1,0 +1,118 @@
+diff -Naur sysutils/nut/Makefile sysutils/nut/Makefile
+--- sysutils/nut/Makefile	2011-12-14 18:46:42.500726389 -0800
++++ sysutils/nut/Makefile	2011-12-14 19:46:21.546763804 -0800
+@@ -6,7 +6,7 @@
+ #
+ 
+ PORTNAME=	nut
+-PORTVERSION=	2.6.1
++PORTVERSION=	2.6.2
+ CATEGORIES=	sysutils
+ MASTER_SITES=	http://www.networkupstools.org/source/${PORTVERSION:R}/
+ DISTFILES=	${DISTNAME}${EXTRACT_SUFX} ${DISTNAME}${EXTRACT_SUFX}.sig
+@@ -44,10 +44,39 @@
+ 		upscli_splitname.3 upscli_ssl.3 upscli_strerror.3 \
+ 		upscli_upserror.3 upsclient.3
+ 
++MAN3=		\
++		nutscan_add_device_to_device.3 \
++		nutscan_add_option_to_device.3 \
++		nutscan_cidr_to_ip.3 \
++		nutscan_display_parsable.3 \
++		nutscan_display_ups_conf.3 \
++		nutscan_free_device.3 \
++		nutscan_new_device.3 \
++		nutscan_scan_avahi.3 \
++		nutscan_scan_ipmi.3 \
++		nutscan_scan_nut.3 \
++		nutscan_scan_snmp.3 \
++		nutscan_scan_usb.3 \
++		nutscan_scan_xml_http.3 \
++		upscli_connect.3 \
++		upscli_disconnect.3 \
++		upscli_fd.3 \
++		upscli_get.3 \
++		upscli_list_next.3 \
++		upscli_list_start.3 \
++		upscli_readline.3 \
++		upscli_sendline.3 \
++		upscli_splitaddr.3 \
++		upscli_splitname.3 \
++		upscli_ssl.3 \
++		upscli_strerror.3 \
++		upscli_upserror.3 \
++		upsclient.3 \
++
+ MAN5=		nut.conf.5 ups.conf.5 upsd.conf.5 upsd.users.5 upsmon.conf.5 \
+ 		upssched.conf.5
+ 
+-MAN8=		nutupsdrv.8 upsc.8 upscmd.8 upsd.8 upsdrvctl.8 \
++MAN8=		nut-scanner.8 nutupsdrv.8 upsc.8 upscmd.8 upsd.8 upsdrvctl.8 \
+ 		upslog.8 upsmon.8 upsrw.8 upssched.8
+ 
+ PORTDOCS=	*
+@@ -175,11 +204,11 @@
+ 	@${CHOWN} ${NUT_USER}:${NUT_GROUP} ${STATEDIR}
+ 	@${CHMOD} 0750 ${STATEDIR}
+ 
+-.if !defined(NOPORTDOCS)
+ post-install:
+ .if defined(WITH_BASH)
+ 	${INSTALL_DATA} ${WRKSRC}/scripts/misc/nut.bash_completion ${PREFIX}/etc/bash_completion.d/
+ .endif
++.if !defined(NOPORTDOCS)
+ 	@${MKDIR} ${DOCSDIR}/cables
+ 	${INSTALL_DATA} ${WRKSRC}/docs/cables/*.txt ${DOCSDIR}/cables
+ 	${INSTALL_DATA} ${WRKSRC}/docs/*.txt ${DOCSDIR}
+diff -Naur sysutils/nut/distinfo sysutils/nut/distinfo
+--- sysutils/nut/distinfo	2011-12-14 18:46:42.487744571 -0800
++++ sysutils/nut/distinfo	2011-12-14 19:05:14.149691131 -0800
+@@ -1,4 +1,4 @@
+-SHA256 (nut-2.6.1.tar.gz) = f5c46b856c0cf5b7f0e4b22d82b670af64cc98717a90eaac8723dd402a181c00
+-SIZE (nut-2.6.1.tar.gz) = 1776645
+-SHA256 (nut-2.6.1.tar.gz.sig) = 780be2a54fcd4df1124f8dcec4e49df3c1c7a985e030856dbe63fd77d0e76ea8
+-SIZE (nut-2.6.1.tar.gz.sig) = 72
++SHA256 (nut-2.6.2.tar.gz) = 343554add0713348f8b09bca8d83eee2eb2ae8bad9cdad9a39e0f0e2d0f5d375
++SIZE (nut-2.6.2.tar.gz) = 1897691
++SHA256 (nut-2.6.2.tar.gz.sig) = 606fa60c12dc4dfbaf9195aee86d56690dd2f38a81076c0e7353b9cd70228f29
++SIZE (nut-2.6.2.tar.gz.sig) = 72
+diff -Naur sysutils/nut/pkg-plist sysutils/nut/pkg-plist
+--- sysutils/nut/pkg-plist	2011-12-14 18:46:42.487744571 -0800
++++ sysutils/nut/pkg-plist	2011-12-14 19:28:26.541692000 -0800
+@@ -1,6 +1,7 @@
+ @stopdaemon nut_upsmon
+ @stopdaemon nut_upslog
+ @stopdaemon nut
++bin/nut-scanner
+ bin/upsc
+ bin/upscmd
+ bin/upslog
+@@ -17,6 +18,10 @@
+ etc/nut/upssched.conf.sample
+ include/parseconf.h
+ include/upsclient.h
++lib/libnutscan.la
++lib/libnutscan.so.1
++lib/libnutscan.so
++lib/libnutscan.a
+ lib/libupsclient.a
+ lib/libupsclient.so.1
+ lib/libupsclient.so
+@@ -26,6 +31,7 @@
+ %%NUT_HAL%%libexec/hald-addon-tripplite_usb
+ %%NUT_HAL%%libexec/hald-addon-usbhid-ups
+ %%NUT_SERIAL%%libexec/nut/apcsmart
++%%NUT_SERIAL%%libexec/nut/apcsmart-old
+ %%NUT_SERIAL%%libexec/nut/bestfortress
+ %%NUT_SERIAL%%libexec/nut/bcmxcp
+ %%NUT_USB%%libexec/nut/bcmxcp_usb
+@@ -62,8 +68,8 @@
+ %%NUT_SERIAL%%libexec/nut/rhino
+ %%NUT_USB%%libexec/nut/richcomm_usb
+ %%NUT_SERIAL%%libexec/nut/safenet
+-%%NUT_SNMP%%libexec/nut/snmp-ups
+ %%NUT_SERIAL%%libexec/nut/skel
++%%NUT_SNMP%%libexec/nut/snmp-ups
+ %%NUT_SERIAL%%libexec/nut/solis
+ %%NUT_SERIAL%%libexec/nut/tripplite
+ %%NUT_USB%%libexec/nut/tripplite_usb

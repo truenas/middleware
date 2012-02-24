@@ -22,9 +22,6 @@ class Migration(SchemaMigration):
         srv = orm.services.objects.create(srv_service='plugins', srv_enable=False)
         srv.save()
 
-        plugins = orm.Plugins.objects.create()
-        plugins.save()
-
     def backwards(self, orm):
         
         # Deleting model 'Plugins'

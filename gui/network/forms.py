@@ -30,11 +30,11 @@ import socket
 
 from django.utils.translation import ugettext_lazy as _
 
+from dojango import forms
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
-from freenasUI import choices
-from dojango import forms
 
 class InterfacesForm(ModelForm):
     int_interface = forms.ChoiceField(label = _("NIC"))
@@ -116,10 +116,6 @@ class InterfacesForm(ModelForm):
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6")])
-        if not ipv6 and not (ipv6addr or ipv6net) \
-                and not ipv4 and not (ipv4addr or ipv4net) \
-                and not (dhcp or ipv6auto):
-            self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit")])
 
         return cdata
 
@@ -313,6 +309,13 @@ class AliasForm(ModelForm):
         model = models.Alias
         fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
 
+    def __init__(self, *args, **kwargs):
+        super(AliasForm, self).__init__(*args, **kwargs)
+        self.instance._original_alias_v4address = self.instance.alias_v4address
+        self.instance._original_alias_v4netmaskbit = self.instance.alias_v4netmaskbit
+        self.instance._original_alias_v6address = self.instance.alias_v6address
+        self.instance._original_alias_v6netmaskbit = self.instance.alias_v6netmaskbit
+
     def clean_alias_v4address(self):
         ip = self.cleaned_data.get("alias_v4address")
         par_ip = self.parent.cleaned_data.get("int_ipv4address") \
@@ -371,3 +374,47 @@ class AliasForm(ModelForm):
             self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit per alias")])
 
         return cdata
+
+    def save(self, commit):
+        m = super(AliasForm, self).save(commit)
+
+        iface = models.Interfaces.objects.filter(id=self.instance.alias_interface_id)
+        if not iface:
+            return m
+
+        change = False
+        iface = str(iface[0].int_interface)
+        kwargs = { 'oldip': str(self.instance._original_alias_v4address) }
+        if self.instance._original_alias_v4address != self.instance.alias_v4address:
+            kwargs['oldip'] = str(self.instance._original_alias_v4address)
+            kwargs['newip'] = str(self.instance.alias_v4address)
+            change = True
+
+        if self.instance._original_alias_v4netmaskbit != self.instance.alias_v4netmaskbit:
+            kwargs['oldnetmask'] = str(self.instance._original_alias_v4netmaskbit)
+            kwargs['newnetmask'] = str(self.instance.alias_v4netmaskbit)
+            change = True
+
+        if change:
+            if not notifier().ifconfig_alias(iface, **kwargs):
+                return m
+
+        change = False
+        kwargs = { 'oldip': str(self.instance._original_alias_v6address) }
+        if self.instance._original_alias_v6address != self.instance.alias_v6address:
+            kwargs['oldip'] = str(self.instance._original_alias_v6address)
+            kwargs['newip'] = str(self.instance.alias_v6address)
+            change = True
+
+        if self.instance._original_alias_v6netmaskbit != self.instance.alias_v6netmaskbit:
+            kwargs['oldnetmask'] = str(self.instance._original_alias_v6netmaskbit)
+            kwargs['newnetmask'] = str(self.instance.alias_v6netmaskbit)
+            change = True
+
+        if change:
+            if not notifier().ifconfig_alias(iface, **kwargs):
+                return m
+
+        if commit: 
+            m.save()
+        return m 

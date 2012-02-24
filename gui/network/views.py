@@ -155,7 +155,7 @@ def summary(request):
     })
 
 def interface(request):
-    int_list = models.Interfaces.objects.order_by("-id").values()
+    int_list = models.Interfaces.objects.order_by("-id")
     return render(request, 'network/interface.html', {
         'int_list': int_list,
     })

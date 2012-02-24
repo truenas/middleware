@@ -1,9 +1,5 @@
-
-<form data-dojo-type="dijit.form.Form">
-    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e,  '{% url storage_autoimport %}');
-    </script>
-    <table>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
         <tr>
             <td>
                 {% trans "Disk" %}
@@ -18,16 +14,5 @@
             </select>
             </td>
         </tr>
-    </table>
-        <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
-    <script type="dojo/method">
-    </script>
-    {% trans "Import Volume" %}<br />
-        </button>
-        <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
-            {% trans "Cancel" %}
-            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                cancelDialog(this);
-            </script>
-        </button>
-</form>
+{% endblock %}
+{% block oklabel %}{% trans "Import Volume" %}{% endblock %}

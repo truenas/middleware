@@ -36,38 +36,49 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
 from freeadmin.models import Model
 
+
 class Volume(Model):
     vol_name = models.CharField(
             unique=True,
             max_length=120,
-            verbose_name = _("Name")
+            verbose_name=_("Name")
             )
     vol_fstype = models.CharField(
             max_length=120,
             choices=choices.VolumeType_Choices,
-            verbose_name = _("File System Type"),
+            verbose_name=_("File System Type"),
             )
     vol_guid = models.CharField(
             max_length=50,
             blank=True,
+            editable=False,
             )
+
+    class Meta:
+        verbose_name = _("Volume")
+
     def get_disks(self):
         try:
             if not hasattr(self, '_disks'):
+                n = notifier()
                 if self.vol_fstype == 'ZFS':
-                    pool = notifier().zpool_parse(self.vol_name)
+                    pool = n.zpool_parse(self.vol_name)
                     self._disks = pool.get_disks()
                 else:
-                    prov = notifier().get_label_provider(self.vol_fstype.lower(), self.vol_name)
-                    self._disks = notifier().get_disks_from_provider(prov)
+                    prov = n.get_label_consumer(self.vol_fstype.lower(), self.vol_name)
+                    self._disks = n.get_disks_from_provider(prov) if prov else []
             return self._disks
         except Exception, e:
             return []
+
     def get_datasets(self):
         if self.vol_fstype == 'ZFS':
             return notifier().list_zfs_datasets(path=self.vol_name, recursive=True)
+
     def get_zvols(self):
-        return notifier().list_zfs_vols(self.vol_name)
+        if self.vol_fstype == 'ZFS':
+            return notifier().list_zfs_vols(self.vol_name)
+
     def _get_status(self):
         try:
             # Make sure do not compute it twice
@@ -77,8 +88,7 @@ class Volume(Model):
         except Exception, e:
             return _(u"Error")
     status = property(_get_status)
-    class Meta:
-        verbose_name = _("Volume")
+
     def has_attachments(self):
         """
         This is mainly used by the VolumeDelete form.
@@ -92,7 +102,7 @@ class Volume(Model):
                     services[service] = services.get(service, 0) + len(ids)
         return services
 
-    def delete(self, destroy=True, cascade=True):
+    def _delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
@@ -100,63 +110,198 @@ class Volume(Model):
         from services.models import iSCSITargetExtent
 
         # TODO: This is ugly.
-        svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
+        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
         reloads = (False, False, False,  False)
 
+        n = notifier()
         if cascade:
 
             for mp in self.mountpoint_set.all():
                 reloads = map(sum, zip(reloads, mp.delete_attachments()))
-                mp.delete(do_reload=False)
 
-            zvols = notifier().list_zfs_vols(self.vol_name)
+            zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
-                qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+                qs = iSCSITargetExtent.objects.filter(
+                    iscsi_target_extent_path='zvol/' + zvol,
+                    iscsi_target_extent_type='ZVOL')
                 if qs.exists():
-                    qs.delete()
                     if destroy:
-                        retval = notifier().destroy_zfs_vol(name)
+                        retval = notifier().destroy_zfs_vol(zvol)
+                    qs.delete()
                 reloads = map(sum, zip(reloads, (False, False, False, True)))
 
         else:
 
             for mp in self.mountpoint_set.all():
                 attachments = mp.has_attachments()
-                reloads = map(sum, zip(reloads, (
-                            len(attachments['cifs']),
-                            len(attachments['afp']),
-                            len(attachments['nfs']),
-                            len(attachments['iscsiextent']),
-                        )
-                        ))
+                reloads = map(sum,
+                              zip(reloads,
+                                [len(attachments[svc]) for svc in svcs])
+                             )
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
-                notifier().stop(svc)
+                n.stop(svc)
 
-        if not destroy:
-            notifier().detach_volume_swaps(self)
+        n.detach_volume_swaps(self)
 
         if destroy:
-            notifier().destroy("volume", self)
+            n.destroy("volume", self)
         else:
-            try:
-                notifier().volume_export(self)
-            except:
-                pass
+            n.volume_detach(self.vol_name, self.vol_fstype)
+
+        return (svcs, reloads, )
+
+    def delete(self, destroy=True, cascade=True):
+
+        try:
+            svcs, reloads = Volume._delete(self,
+                                           destroy=destroy,
+                                           cascade=cascade)
+        finally:
+            for mp in self.mountpoint_set.all():
+                if not os.path.isdir(mp.mp_path):
+                    mp.delete(do_reload=False)
+
+        n = notifier()
 
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
         # Refresh the fstab
-        notifier().reload("disk")
+        n.reload("disk")
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
-                notifier().start(svc)
+                n.start(svc)
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
+
+
+class Scrub(Model):
+    scrub_volume = models.OneToOneField(Volume,
+            verbose_name=_("Volume"),
+            limit_choices_to={'vol_fstype': 'ZFS'},
+            )
+    scrub_threshold = models.PositiveSmallIntegerField(
+            verbose_name=_("Threshold days"),
+            default=35,
+            help_text=_("Determine how many days shall be between scrubs"),
+            )
+    scrub_description = models.CharField(
+            max_length=200,
+            verbose_name=_("Description"),
+            blank=True,
+            )
+    scrub_minute = models.CharField(
+            max_length=100,
+            default="00",
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    scrub_hour = models.CharField(
+            max_length=100,
+            default="00",
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    scrub_daymonth = models.CharField(
+            max_length=100,
+            default="*",
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    scrub_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,a,b,c',
+            verbose_name=_("Month"),
+            )
+    scrub_dayweek = models.CharField(
+            max_length=100,
+            default="7",
+            verbose_name=_("Day of week"),
+            )
+    scrub_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
+            )
+
+    class Meta:
+        verbose_name = _("ZFS Scrub")
+        verbose_name_plural = _("ZFS Scrubs")
+        ordering = ["scrub_volume__vol_name"]
+
+    class FreeAdmin:
+        icon_model = u"cronJobIcon"
+        icon_object = u"cronJobIcon"
+        icon_add = u"AddcronJobIcon"
+        icon_view = u"ViewcronJobIcon"
+
+    def __unicode__(self):
+        return self.scrub_volume.vol_name
+
+    def get_human_minute(self):
+        if self.scrub_minute == '*':
+            return _(u'Every minute')
+        elif self.scrub_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.scrub_minute.split('*/')[1]
+        else:
+            return self.scrub_minute
+
+    def get_human_hour(self):
+        if self.scrub_hour == '*':
+            return _(u'Every hour')
+        elif self.scrub_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.scrub_hour.split('*/')[1]
+        else:
+            return self.scrub_hour
+
+    def get_human_daymonth(self):
+        if self.scrub_daymonth == '*':
+            return _(u'Everyday')
+        elif self.scrub_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.scrub_daymonth.split('*/')[1]
+        else:
+            return self.scrub_daymonth
+
+    def get_human_month(self):
+        months = self.scrub_month.split(",")
+        if len(months) == 12 or self.scrub_month == '*':
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            if m in ('10', '11', '12'):
+                m = chr(87 + int(m))
+            labels.append(unicode(mchoices[m]))
+        return ', '.join(labels)
+
+    def get_human_dayweek(self):
+        # TODO:
+        # 1. Carve out the days input so that way one can say:
+        #    Mon-Fri + Saturday -> Weekdays + Saturday.
+        # 2. Get rid of the duplicate code.
+        weeks = self.scrub_dayweek.split(',')
+        if len(weeks) == 7 or self.scrub_dayweek == '*':
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[str(w)]))
+        return ', '.join(labels)
+
+    def delete(self):
+        super(Scrub, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
 
 class Disk(Model):
     disk_name = models.CharField(
@@ -165,12 +310,25 @@ class Disk(Model):
             )
     disk_identifier = models.CharField(
             max_length=42,
-            verbose_name = _("Identifier")
+            verbose_name=_("Identifier"),
+            editable=False,
             )
     disk_serial = models.CharField(
             max_length=30,
             verbose_name = _("Serial"),
-            blank=True
+            blank=True,
+            )
+    disk_multipath_name = models.CharField(
+            max_length=30,
+            verbose_name=_("Multipath name"),
+            blank=True,
+            editable=False,
+            )
+    disk_multipath_member = models.CharField(
+            max_length=30,
+            verbose_name=_("Multipath member"),
+            blank=True,
+            editable=False,
             )
     disk_description = models.CharField(
             max_length=120,
@@ -212,24 +370,47 @@ class Disk(Model):
             )
     disk_enabled = models.BooleanField(
             default=True,
-        )
-    def get_serial(self):
-        return notifier().serial_from_device(
-            notifier().identifier_to_device(self.disk_identifier)
+            editable=False,
             )
+
+    def get_serial(self):
+        n = notifier()
+        return n.serial_from_device(
+            n.identifier_to_device(self.disk_identifier)
+            )
+
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
+
     def identifier_to_device(self):
         """
         Get the corresponding device name from disk_identifier field
         """
         return notifier().identifier_to_device(self.disk_identifier)
+
+    @property
+    def devname(self):
+        if self.disk_multipath_name:
+            return "multipath/%s" % self.disk_multipath_name
+        else:
+            return self.disk_name
+
+    def get_disk_size(self):
+        #FIXME
+        import subprocess
+        p1 = subprocess.Popen(["/usr/sbin/diskinfo", self.devname], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if p1.wait() == 0:
+            out = p1.communicate()[0]
+            return out.split('\t')[3]
+        return 0
+
     def save(self, *args, **kwargs):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
         super(Disk, self).save(args, kwargs)
+
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
         #Delete device extents depending on this Disk
@@ -238,8 +419,12 @@ class Disk(Model):
         if qs.exists():
             qs.delete()
         super(Disk, self).delete()
+
     class Meta:
         verbose_name = _("Disk")
+        verbose_name_plural = _("Disks")
+        ordering = ["disk_name"]
+
     def __unicode__(self):
         return unicode(self.disk_name)
         #ident = self.identifier_to_device() or _('Unknown')
@@ -260,23 +445,21 @@ class MountPoint(Model):
             null=True,
             )
     def is_my_path(self, path):
-        import os
         if path == self.mp_path:
             return True
-        elif path.find(self.mp_path) >= 0:
-            # TODO: This is wrong, need to be fixed by revealing
-            # the underlying file system ids.
-            rep = path.replace(self.mp_path, self.mp_path+'/')
-            if os.path.abspath(rep) == os.path.abspath(path):
-                return True
-        return False
+        try:
+            # If the st_dev values match, then it's the same mountpoint.
+            return os.stat(self.mp_path).st_dev == os.stat(path).st_dev
+        except OSError:
+            # Not a real path (most likely). Fallback to a braindead
+            # best-effort path check.
+            return os.path.commonprefix([self.mp_path, path]) == self.mp_path
 
     def has_attachments(self):
         """
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         """
-        import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
         mypath = os.path.abspath(self.mp_path)
@@ -284,7 +467,7 @@ class MountPoint(Model):
             'cifs': [],
             'afp': [],
             'nfs': [],
-            'iscsiextent': [],
+            'iscsitarget': [],
         }
 
         for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
@@ -301,9 +484,11 @@ class MountPoint(Model):
         #       model.
         zvols = notifier().list_zfs_vols(self.mp_volume.vol_name)
         for zvol in zvols:
-            qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='zvol/'+zvol,iscsi_target_extent_type='ZVOL')
+            qs = iSCSITargetExtent.objects.filter(
+                iscsi_target_extent_path='zvol/' + zvol,
+                iscsi_target_extent_type='ZVOL')
             if qs.exists():
-                attachments['iscsiextent'].append(qs[0].id)
+                attachments['iscsitarget'].append(qs[0].id)
 
         return attachments
 
@@ -332,13 +517,16 @@ class MountPoint(Model):
         if attachments['nfs']:
             NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
             reload_nfs = True
-        if attachments['iscsiextent']:
-            for target in iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent']):
+        if attachments['iscsitarget']:
+            for target in iSCSITargetExtent.objects.filter(
+                    id__in=attachments['iscsitarget']):
                 target.delete()
             reload_iscsi = True
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
+
     def delete(self, do_reload=True):
-        reloads = self.delete_attachments()
+        if do_reload:
+            reloads = self.delete_attachments()
 
         if self.mp_volume.vol_fstype == 'ZFS':
             Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
@@ -403,6 +591,7 @@ class MountPoint(Model):
     used_si = property(_get_used_si)
     status = property(_get_status)
 
+
 # TODO: Refactor replication out from the storage model to its
 # own application
 class ReplRemote(Model):
@@ -418,13 +607,16 @@ class ReplRemote(Model):
             max_length=2048,
             verbose_name=_("Remote hostkey"),
             )
+
     class Meta:
         verbose_name = _(u"Remote Replication Host")
         verbose_name_plural = _(u"Remote Replication Hosts")
+
     def delete(self):
         rv = super(ReplRemote, self).delete()
         notifier().reload("ssh")
         return rv
+
     def __unicode__(self):
         return self.ssh_remote_hostname
 
@@ -441,7 +633,8 @@ class Replication(Model):
             verbose_name = _("Remote Host"),
             )
     repl_zfs = models.CharField(max_length=120,
-            verbose_name = _("Remote ZFS filesystem"),
+            verbose_name = _("Remote ZFS filesystem name"),
+            help_text = _("This should be the name of the ZFS filesystem on remote side. eg: poolname/datasetname not the mountpoint or filesystem path"),
             )
     repl_userepl = models.BooleanField(
             default = False,
@@ -456,16 +649,21 @@ class Replication(Model):
             verbose_name = _("Limit (kB/s)"),
             help_text = _("Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."),
             )
+
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
+        ordering = ["repl_filesystem"]
+
     class FreeAdmin:
         icon_model = u"ReplIcon"
         icon_add = u"AddReplIcon"
         icon_view = u"ViewAllReplIcon"
         icon_object = u"ReplIcon"
+
     def __unicode__(self):
         return '%s -> %s' % (self.repl_filesystem, self.repl_remote.ssh_remote_hostname)
+
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":
@@ -474,6 +672,7 @@ class Replication(Model):
         except:
             pass
         super(Replication, self).delete()
+
 
 class Task(Model):
     task_filesystem = models.CharField(max_length=150,
@@ -495,13 +694,13 @@ class Task(Model):
             )
     task_begin = models.TimeField(
             default=time(hour=9),
-            verbose_name = _("Begin"),
-            help_text = _("When in a day should we start making snapshots, e.g. 8:00"),
+            verbose_name=_("Begin"),
+            help_text=_("Do not snapshot before"),
             )
     task_end = models.TimeField(
             default=time(hour=18),
-            verbose_name = _("End"),
-            help_text = _("When in a day should we stop making snapshots, e.g. 17:00"),
+            verbose_name=_("End"),
+            help_text=_("Do not snapshot after"),
             )
     task_interval = models.PositiveIntegerField(
             default = 60,
@@ -541,6 +740,7 @@ class Task(Model):
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
         verbose_name_plural = _(u"Periodic Snapshot Tasks")
+        ordering = ["task_filesystem"]
 
     class FreeAdmin:
         icon_model = u"SnapIcon"

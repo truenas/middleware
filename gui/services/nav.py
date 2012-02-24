@@ -1,9 +1,11 @@
-from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
-import models
+
+from freenasUI.middleware.notifier import notifier
+from freeadmin.tree import TreeNode
+from . import models
 
 NAME = _('Services')
-BLACKLIST = ['services']
+BLACKLIST = ['services', 'iSCSITargetPortalIP']
 ICON = u'ServicesIcon'
 
 class EnDisServices(TreeNode):
@@ -73,7 +75,7 @@ class ISCSIDevice(TreeNode):
         devadd.icon = u'AddExtentIcon'
 
         devview = TreeNode('View')
-        devview.name = _(u'View All Device Extents')
+        devview.name = _(u'View Device Extents')
         devview.type = u'iscsi'
         devview.icon = u'ViewAllExtentsIcon'
         devview.append_app = False
@@ -86,7 +88,7 @@ class ISCSIDevice(TreeNode):
 class ISCSIExt(TreeNode):
 
     gname = 'services.ISCSI.iSCSITargetExtent'
-    name = _(u'Extents')
+    name = _(u'File Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
@@ -105,14 +107,14 @@ class ISCSIExt(TreeNode):
             self.append_child(nav)
 
         extadd = TreeNode('Add')
-        extadd.name = _(u'Add Extent')
+        extadd.name = _(u'Add File Extent')
         extadd.type = u'object'
         extadd.view = u'freeadmin_model_add'
         extadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
         extadd.icon = u'AddExtentIcon'
 
         extview = TreeNode('View')
-        extview.name = _(u'View All Extents')
+        extview.name = _(u'View File Extents')
         extview.type = u'iscsi'
         extview.view = u'freeadmin_model_datagrid'
         extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
@@ -125,7 +127,7 @@ class ISCSIExt(TreeNode):
 class ISCSI(TreeNode):
 
     gname = 'ISCSI'
-    name = _(u'ISCSI')
+    name = _(u'iSCSI')
     type = u'iscsi'
     icon = u'iSCSIIcon'
 
@@ -157,3 +159,19 @@ class RsyncModView(TreeNode):
     view = u'services_rsyncmod'
     icon = u'ViewAllrsyncModIcon'
     append_app = False
+
+class Plugins(TreeNode):
+
+    gname = 'Plugins'
+    name = _(u'Plugins')
+    type = 'object'
+    icon = models.Plugins._admin.icon_model
+
+    def __init__(self, *args, **kwargs):
+        super(Plugins, self).__init__(*args, **kwargs)
+        if notifier().plugins_jail_configured():
+            oid = models.Plugins.objects.order_by('-id')[0].id
+            self.view = 'freeadmin_model_edit'
+            self.kwargs = {'app': 'services', 'model': 'Plugins', 'oid': oid}
+        else:
+            self.view = 'plugins_jailpbi'

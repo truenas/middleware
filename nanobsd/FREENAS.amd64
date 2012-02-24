@@ -344,3 +344,6 @@ device		sbp		# SCSI over FireWire (Requires scbus and da)
 #device		fwip		# IP over FireWire (RFC 2734,3146)
 #device		dcons		# Dumb console driver
 #device		dcons_crom	# Configuration ROM for dcons
+
+# Needed for ipmi(4)
+device		smbus

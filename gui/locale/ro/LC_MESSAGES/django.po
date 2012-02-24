@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:05-0700\n"
-"PO-Revision-Date: 2011-07-19 22:13+0200\n"
-"Last-Translator: HarryE <harald.ersch@gmail.com>\n"
+"PO-Revision-Date: 2012-01-24 21:46+0200\n"
+"Last-Translator: mijansky <feeddle@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -121,24 +121,20 @@ msgid "Level 64 - Intermediate power usage with Standby"
 msgstr "Nivel 64 - Utilizare cu consum mediu şi  oprire "
 
 #: choices.py:89
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Utilizare intermediară cu oprire"
+msgstr "Utilizare cu consum mediu şi oprire"
 
 #: choices.py:90
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Utilizare minimă fără oprire (discurile nu se opresc)"
+msgstr "Utilizare cu consum minim fără oprire (discurile nu se opresc)"
 
 #: choices.py:91
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Utilizare itermediară fără oprire"
+msgstr "Utilizare cu consum mediu fără oprire"
 
 #: choices.py:92
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Utilizare intensivă, perfprmanță maximă"
+msgstr "Performanţă maximă, consum maxim"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -459,11 +455,11 @@ msgstr ""
 
 #: choices.py:495
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Test automat lung"
 
 #: choices.py:496
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Test automat scurt"
 
 #: choices.py:497
 msgid "Conveyance Self-Test (ATA  only)"
@@ -475,21 +471,21 @@ msgstr ""
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Numele tău nu poate începe cu \"_\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Caracterul $ nu este acceptat ca ultmiul caracter"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Numele tău conţine caractere invalide (%s)."
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Numele tău complet conţine caractere invalide (%s)."
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -506,15 +502,13 @@ msgid "Username"
 msgstr "Nume utilizator"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Obligatoriu. 30 caractere sau mai puţin. Doar litere, cifre şi @/./+/-/_ ."
+"Obligatoriu. 16 caractere sau mai puţine. Doar litere, cifre şi ./-/_ only."
 
 #: account/forms.py:200
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Valoarea poate conţine numai litere, numere și caracterele @/./+/-/_ ."
+msgstr "Această valoare poate conţine numai litere, numere și caracterele ./-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -536,13 +530,12 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Dezactivează logarea"
+msgstr "Dezactivează logarea prin parolă"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Blochează utilizator"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -550,12 +543,11 @@ msgstr "Grup primar"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Cheie Publică SSH"
 
 #: account/forms.py:260
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Există deja un utilizator cu acelaşi nume."
+msgstr "Un utilizator cu acelaşi uid există deja"
 
 #: account/forms.py:271
 msgid "A user with that username already exists."
@@ -568,18 +560,18 @@ msgid "The two password fields didn't match."
 msgstr "Cele două parole nu sunt identice."
 
 #: account/forms.py:286
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/"
+msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /nonexistent"
 
 #: account/forms.py:307 account/forms.py:486
 #, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/"
+msgstr "Nu se poate scrie în directorul Home, lasă gol"
 
 #: account/forms.py:313
+#, fuzzy
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Parola este dezactivată, lasă gol"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -587,28 +579,26 @@ msgid "This field is required."
 msgstr "Câmpul este obligatoriu."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "Parolă partajare"
+msgstr "Dezactivează parola"
 
 #: account/forms.py:466
 #, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/"
+msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /nonexistent"
 
 #: account/forms.py:538
+#, fuzzy
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Permite GIDs repetate"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Există deja un utilizator cu acelaşi nume."
+msgstr "Un grup cu acelaşi nume există deja."
 
 #: account/forms.py:570
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Există deja un utilizator cu acelaşi nume."
+msgstr "Un grup cu acelaşi gid există deja"
 
 #: account/forms.py:582
 msgid "Member users"
@@ -619,8 +609,9 @@ msgid "Auxiliary groups"
 msgstr "Grupuri auxiliare"
 
 #: account/forms.py:610
+#, fuzzy
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Un utilizator nu poate aparţine de mai mult de 64 de grupuri auxiliare"
 
 #: account/forms.py:627
 msgid "New password"
@@ -631,9 +622,8 @@ msgid "New password confirmation"
 msgstr "Confirmare parolă nouă"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Schimbare parolă"
+msgstr "Schimbă, deasemenea şi parola de root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -796,12 +786,12 @@ msgstr ""
 #: freeadmin/navtree.py:316
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Adaugă %s"
 
 #: freeadmin/navtree.py:328
 #, fuzzy, python-format
 msgid "View All %s"
-msgstr "Vizualizare toţi utilizatorii"
+msgstr "Vezi toţi %s"
 
 #: freeadmin/navtree.py:347
 msgid "Display System Processes"

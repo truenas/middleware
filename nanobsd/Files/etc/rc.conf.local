@@ -29,10 +29,6 @@
 
 . /etc/rc.freenas
 
-FREENAS_CONFIG=/data/freenas-v1.db
-FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
-FREENAS_RC=/var/tmp/rc.conf.freenas
-
 _interface_config()
 {
 	local IFS=\|
@@ -111,7 +107,7 @@ _interface_config()
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
 	while read lagg_physnic lagg_deviceoptions lagg_gid; do
-		lagg_intoptions=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}"`
+		lagg_intoptions=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}")
 		echo "ifconfig_${lagg_physnic}=\"${lagg_intoptions} ${lagg_deviceoptions}\""
 	done
 
@@ -154,8 +150,8 @@ _host_config()
 			echo ipv6_defaultrouter=\"${ipv6gateway}\"
 		fi
 		# Generate resolv.conf
-		(if [ -n "${nameserver1}" ]; then
-			echo search ${domainname}
+		if [ -n "${nameserver1}" ]; then
+			(echo search ${domainname}
 			for ns in \
 				"${nameserver1}" "${nameserver2}" \
 				"${nameserver3}"
@@ -163,8 +159,8 @@ _host_config()
 				if [ -n "${ns:-}" ]; then
 					echo "nameserver ${ns}"
 				fi
-			done
-		fi) > /etc/resolv.conf
+			done) > /etc/resolv.conf
+		fi
 	done
 }
 
@@ -222,13 +218,16 @@ _bool_svcconfig()
 _staticroute_config()
 {
 	local IFS=\|
-	local id destination gateway interface
+	local id destination gateway interface static_routes
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute;" | \
 	while read id destination gateway; do
 		echo route_freenas${id}=\"-net ${destination} ${gateway}\"
 	done
-	echo static_routes=\"$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo )\"
+	static_routes=\"$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo )\"
+	if [ -n "${static_routes:-}" ]; then
+		echo static_routes=\"$static_routes\"
+	fi
 }
 
 _nut_config() {
@@ -262,6 +261,7 @@ _gen_conf()
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
 	_bool_svcconfig samba_enable cifs
+	_bool_svcconfig winbindd_enable activedirectory
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
@@ -270,8 +270,20 @@ _gen_conf()
 	_bool_svcconfig inadyn_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
 
-	_count_config avahi_daemon_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
-	_count_config dbus_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
+	local _avahi_srv_enable
+
+	if srv_enabled afp; then
+		_avahi_srv_enable=true
+	elif srv_enabled cifs && [ "x$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_zeroconf FROM services_cifs")" = x1 ]; then
+		_avahi_srv_enable=true
+	else
+		_avahi_srv_enable=false
+	fi
+
+	if $_avahi_srv_enable; then
+		echo "avahi_daemon_enable=\"YES\""
+		echo "dbus_enable=\"YES\""
+	fi
 
 	_nut_config
 
@@ -300,6 +312,11 @@ _gen_conf()
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
 		echo "smartd_flags=\"-i ${inter}\""
 	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol FROM system_settings WHERE stg_guiprotocol = 'https' ORDER BY -id LIMIT 1" | \
+	while read ssl_enable; do
+		echo "ixssl_list=\"nginx\""
+	done
 }
 
 # If we're running really early, then mount /data read-only
@@ -311,8 +328,14 @@ fi
 # Regenerate stale caches of rc.conf data.  We run multiple time
 # as part of the boot process, and this helps.  It also provides
 # a useful file to look at for debugging.
-if [ ! -f ${FREENAS_RC} -o ${FREENAS_CONFIG} -nt ${FREENAS_RC} ]; then
+#
+# Previously mtime was being used to invalidate the cache
+# However this solution could not deal with backward date changes
+_NEWSUM=$(md5 -q ${FREENAS_CONFIG})
+_OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
+if [ ! "${_NEWSUM}" = "${_OLDSUM}" ]; then
 	_gen_conf > ${FREENAS_RC}
+	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
 if [ -n "${_doumount}" ]; then

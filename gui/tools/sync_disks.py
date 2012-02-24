@@ -25,6 +25,7 @@
 # SUCH DAMAGE.
 #
 
+import argparse
 import sys
 
 sys.path.append('/usr/local/www')
@@ -38,7 +39,16 @@ setup_environ(settings)
 from freenasUI.middleware.notifier import notifier
 
 def main():
-    notifier().sync_disks()
+    parser = argparse.ArgumentParser(description='Sync disks.')
+    parser.add_argument('devs', metavar='N', type=str, nargs='*', help='device name(s)')
+    args = parser.parse_args()
+    _notifier = notifier()
+    if args.devs:
+        for dev in args.devs:
+            dev = dev.replace("/dev/", "")
+            _notifier.sync_disk(dev)
+    else:
+        _notifier.sync_disks()
 
 if __name__ == "__main__":
     main()

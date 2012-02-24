@@ -130,11 +130,13 @@ serial_disable()
 update_ttys()
 {
 	local IFS="|"
+	local f="adv_consolemenu adv_serialconsole"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		adv_consolemenu,
-		adv_serialconsole
+		$sf
 
 	FROM
 		system_advanced
@@ -143,14 +145,14 @@ update_ttys()
 		-id
 	LIMIT 1
 	" | \
-	while read console_menu serial
+	while eval read $f
 	do
-		case "${serial}" in 
+		case "${adv_serialconsole}" in 
 			0) serial_disable ;;
 			1) serial_enable ;;
 		esac
 
-		case "${console_menu}" in
+		case "${adv_consolemenu}" in
 			0) netcli_disable; netcli_serial_disable ;;
 			1) netcli_enable; netcli_serial_enable ;;
 		esac

@@ -32,7 +32,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.db import transaction, models as dmodels
+from django.db import models as dmodels
 
 from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
@@ -40,12 +40,14 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
-from middleware.exceptions import MiddlewareError
+from services.exceptions import ServiceFailed
+
 
 def home(request):
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", None),
     })
+
 
 def tasks(request):
     task_list = models.Task.objects.order_by("task_filesystem").all()
@@ -53,11 +55,23 @@ def tasks(request):
         'task_list': task_list,
         })
 
+
 def volumes(request):
     mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     return render(request, 'storage/volumes.html', {
         'mp_list': mp_list,
         })
+
+def get_volumes(request):
+    _volumes = []
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    for m in mp_list:
+        _volumes.append(m.mp_path)
+        datasets = m.mp_volume.get_datasets()
+        if datasets:
+            for dataset in datasets.values():
+                _volumes.append(dataset.mountpoint) 
+    return JsonResponse(message=_volumes)
 
 def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
@@ -108,8 +122,8 @@ def snapshots_data(request):
                 rev = True
             else:
                 rev = False
-            if zfsnap_list[0].has_key(field):
-                zfsnap_list.sort(key=lambda item:item[field], reverse=rev)
+            if field in zfsnap_list[0]:
+                zfsnap_list.sort(key=lambda item: item[field], reverse=rev)
 
     data = []
     count = 0
@@ -127,7 +141,7 @@ def snapshots_data(request):
 
     if r:
         resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
-        resp['Content-Range'] = 'items %d-%d/%d' % (r1,r1+count, total)
+        resp['Content-Range'] = 'items %d-%d/%d' % (r1, r1 + count, total)
     else:
         resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
     return resp
@@ -138,12 +152,8 @@ def wizard(request):
 
         form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
-            try:
-                form.done(request)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
-            else:
-                return JsonResponse(message=_("Volume successfully added."))
+            form.done(request)
+            return JsonResponse(message=_("Volume successfully added."))
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
@@ -161,6 +171,7 @@ def wizard(request):
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
+        'zfsversion': notifier().zfs_get_version(),
     })
 
 def volimport(request):
@@ -191,10 +202,7 @@ def volautoimport(request):
 
         form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
-            try:
-                form.done(request)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            form.done(request)
             return JsonResponse(message=_("Volume successfully added."))
         else:
 
@@ -212,14 +220,8 @@ def volautoimport(request):
 
 def disks_datagrid(request):
 
-    names = [x.verbose_name for x in models.Disk._meta.fields]
-    _n = [x.name for x in models.Disk._meta.fields]
-
-    names.remove('ID')
-    _n.remove('id')
-
-    names.remove('disk enabled')
-    _n.remove('disk_enabled')
+    names = [_('Name'), _('Serial'), _('Description'), _("Transfer Mode"), _("HDD Standby"), _("Advanced Power Management"), _("Acoustic Level"), _("Enable S.M.A.R.T."), _("S.M.A.R.T. Extra Options")]
+    _n = ['devname', 'disk_serial', 'disk_description', 'disk_transfermode', 'disk_hddstandby', 'disk_advpowermgmt', 'disk_acousticlevel', 'disk_togglesmart', 'disk_smartoptions']
 
     """
     Nasty hack to calculate the width of the datagrid column
@@ -253,7 +255,11 @@ def disks_datagrid_json(request):
     for data in disks:
         ret = {}
         ret['edit'] = {
-            'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
+            'edit_url': reverse('freeadmin_model_edit', kwargs={
+                'app': 'storage',
+                'model': 'Disk',
+                'oid': data.id,
+                }) + '?deletable=false',
             }
         ret['edit'] = simplejson.dumps(ret['edit'])
 
@@ -262,20 +268,8 @@ def disks_datagrid_json(request):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
-        #fields = dir(data.__class__) + ret.keys()
-        #add_ons = [k for k in dir(data) if k not in fields]
-        #for k in add_ons:
-        #    ret[k] = getattr(data, k)
-        if request.GET.has_key('inclusions'):
-            for k in request.GET['inclusions'].split(','):
-                if k == "": continue
-                try:
-                    ret[k] = getattr(data,k)()
-                except:
-                    try:
-                        ret[k] = eval("data.%s"%".".join(k.split("__")))
-                    except:
-                        ret[k] = getattr(data,k)
+        ret['devname'] = data.devname
+
         complete.append(ret)
 
     return HttpResponse(simplejson.dumps(
@@ -283,17 +277,16 @@ def disks_datagrid_json(request):
     ))
 
 def volume_disks(request, volume_id):
-    # mp = MountPoint.objects.get(mp_volume = volume_id)
-    volume = models.Volume.objects.get(id = volume_id)
-    disk_list = models.Disk.objects.filter(disk_group__group_volume = volume_id)
+    volume = models.Volume.objects.get(id=volume_id)
+    disk_list = models.Disk.objects.filter(disk_group__group_volume=volume_id)
     return render(request, 'storage/volume_detail.html', {
-        'focused_tab' : 'storage',
+        'focused_tab': 'storage',
         'volume': volume,
         'disk_list': disk_list,
     })
 
 def dataset_create(request, fs):
-    defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
+    defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
         dataset_form = forms.ZFSDataset_CreateForm(request.POST, fs=fs)
         if dataset_form.is_valid():
@@ -301,9 +294,9 @@ def dataset_create(request, fs):
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
-            props['compression']=dataset_compression.__str__()
+            props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
-            props['atime']=dataset_atime.__str__()
+            props['atime'] = dataset_atime.__str__()
             refquota = cleaned_data.get('dataset_refquota')
             if refquota != '0':
                 props['refquota']=refquota.__str__()
@@ -363,7 +356,7 @@ def dataset_edit(request, dataset_name):
     })
 
 def zvol_create(request, volume_name):
-    defaults = { 'zvol_compression' : 'inherit', }
+    defaults = {'zvol_compression': 'inherit', }
     if request.method == 'POST':
         zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=volume_name)
         if zvol_form.is_valid():
@@ -409,7 +402,7 @@ def zfsvolume_edit(request, object_id):
         if volume_form.is_valid():
             volume = mp.mp_volume
             volume_name = volume.vol_name
-            volume_name = mp.mp_path.replace("/mnt/","")
+            volume_name = mp.mp_path.replace("/mnt/", "")
 
             if volume_form.cleaned_data["volume_refquota"] == "0":
                 volume_form.cleaned_data["volume_refquota"] = "none"
@@ -443,7 +436,7 @@ def mp_permission(request, path):
             form.commit(path=path)
             return JsonResponse(message=_("Mount Point permissions successfully updated."))
     else:
-        form = forms.MountPointAccessForm(initial={'path':path})
+        form = forms.MountPointAccessForm(initial={'path': path})
     return render(request, 'storage/permission.html', {
         'path': path,
         'form': form,
@@ -480,8 +473,8 @@ def snapshot_delete(request, dataset, snapname):
             return JsonResponse(error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
-            'snapname' : snapname,
-            'dataset' : dataset,
+            'snapname': snapname,
+            'dataset': dataset,
         })
 
 def snapshot_delete_bulk(request):
@@ -491,7 +484,7 @@ def snapshot_delete_bulk(request):
     if snaps and delete == "true":
         snap_list = snaps.split('|')
         for snapshot in snap_list:
-            retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
+            retval = notifier().destroy_zfs_dataset(path=str(snapshot))
             if retval != '':
                 return JsonResponse(error=True, message=retval)
         notifier().restart("collectd")
@@ -504,15 +497,15 @@ def snapshot_delete_bulk(request):
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
-        ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
+        ret = notifier().rollback_zfs_snapshot(snapshot=snapshot.__str__())
         if ret == '':
             return JsonResponse(message=_("Rollback successful."))
         else:
             return JsonResponse(error=True, message=ret)
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
-            'snapname' : snapname,
-            'dataset' : dataset,
+            'snapname': snapname,
+            'dataset': dataset,
         })
 
 def periodicsnap(request):
@@ -535,12 +528,8 @@ def manualsnap(request, path):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
-            try:
-                form.commit(path)
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
-            else:
-                return JsonResponse(message=_("Snapshot successfully taken."))
+            form.commit(path)
+            return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
@@ -549,7 +538,7 @@ def manualsnap(request, path):
     })
 
 def clonesnap(request, snapshot):
-    initial = { 'cs_snapshot' : snapshot }
+    initial = {'cs_snapshot': snapshot}
     if request.method == "POST":
         form = forms.CloneSnapshotForm(request.POST, initial=initial)
         if form.is_valid():
@@ -571,13 +560,10 @@ def geom_disk_replace(request, vname):
     if request.method == "POST":
         form = forms.UFSDiskReplacementForm(request.POST)
         if form.is_valid():
-            try:
-                if form.done(volume):
-                    return JsonResponse(message=_("Disk replacement has been initiated."))
-                else:
-                    return JsonResponse(error=True, message=_("An error occurred."))
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            if form.done(volume):
+                return JsonResponse(message=_("Disk replacement has been initiated."))
+            else:
+                return JsonResponse(error=True, message=_("An error occurred."))
 
     else:
         form = forms.UFSDiskReplacementForm()
@@ -606,12 +592,8 @@ def disk_offline(request, vname, label):
     disk = notifier().label_to_disk(label)
 
     if request.method == "POST":
-        try:
-            notifier().zfs_offline_disk(volume, label)
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
-        else:
-            return JsonResponse(message=_("Disk offline operation has been issued."))
+        notifier().zfs_offline_disk(volume, label)
+        return JsonResponse(message=_("Disk offline operation has been issued."))
 
     return render(request, 'storage/disk_offline.html', {
         'vname': vname,
@@ -625,12 +607,8 @@ def zpool_disk_remove(request, vname, label):
     disk = notifier().label_to_disk(label)
 
     if request.method == "POST":
-        try:
-            notifier().zfs_remove_disk(volume, label)
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
-        else:
-            return JsonResponse(message=_("Disk has been removed."))
+        notifier().zfs_remove_disk(volume, label)
+        return JsonResponse(message=_("Disk has been removed."))
 
     return render(request, 'storage/disk_remove.html', {
         'vname': vname,
@@ -638,7 +616,7 @@ def zpool_disk_remove(request, vname, label):
         'disk': disk,
     })
 
-def volume_export(request, vid):
+def volume_detach(request, vid):
 
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = sum([mp._get_used_bytes() for mp in volume.mountpoint_set.all()])
@@ -647,11 +625,14 @@ def volume_export(request, vid):
     if request.method == "POST":
         form = forms.VolumeExport(request.POST, instance=volume, services=services)
         if form.is_valid():
-            volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
-            return JsonResponse(message=_("The volume has been successfully exported"))
+            try:
+                volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
+                return JsonResponse(message=_("The volume has been successfully detached"))
+            except ServiceFailed, e:
+                return JsonResponse(error=True, message=unicode(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
-    return render(request, 'storage/volume_export.html', {
+    return render(request, 'storage/volume_detach.html', {
         'volume': volume,
         'form': form,
         'used': usedsize,
@@ -662,15 +643,11 @@ def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     pool = notifier().zpool_parse(volume.vol_name)
     if request.method == "POST":
-        try:
-            if request.POST.get("scrub") == 'IN_PROGRESS':
-                notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            else:
-                notifier().zfs_scrub(str(volume.vol_name))
-        except MiddlewareError, e:
-            return JsonResponse(error=True, message=_("Error: %s") % str(e))
+        if request.POST.get("scrub") == 'IN_PROGRESS':
+            notifier().zfs_scrub(str(volume.vol_name), stop=True)
         else:
-            return JsonResponse(message=_("The scrub process has begun"))
+            notifier().zfs_scrub(str(volume.vol_name))
+        return JsonResponse(message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
@@ -712,13 +689,10 @@ def zpool_disk_replace(request, vname, label):
     if request.method == "POST":
         form = forms.ZFSDiskReplacementForm(request.POST, disk=disk)
         if form.is_valid():
-            try:
-                if form.done(volume, disk, label):
-                    return JsonResponse(message=_("Disk replacement has been initiated."))
-                else:
-                    return JsonResponse(error=True, message=_("An error occurred."))
-            except MiddlewareError, e:
-                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            if form.done(volume, disk, label):
+                return JsonResponse(message=_("Disk replacement has been initiated."))
+            else:
+                return JsonResponse(error=True, message=_("An error occurred."))
 
     else:
         form = forms.ZFSDiskReplacementForm(disk=disk)
@@ -728,3 +702,45 @@ def zpool_disk_replace(request, vname, label):
         'label': label,
         'disk': disk,
     })
+
+def multipath_status(request):
+
+    return render(request, 'storage/multipath_status.html', {
+    })
+
+def multipath_status_json(request):
+
+    multipaths = notifier().multipath_all()
+    _id = 1
+    items = []
+    for mp in multipaths:
+        children = []
+        for cn in mp.consumers:
+            items.append({
+                'id': str(_id),
+                'name': cn.devname,
+                'status': cn.status,
+                'type': 'consumer',
+            })
+            children.append({'_reference': str(_id)})
+            _id += 1
+        data = {
+            'id': str(_id),
+            'name': mp.devname,
+            'status': mp.status,
+            'type': 'root',
+            'children': children,
+        }
+        items.append(data)
+        _id += 1
+    return HttpResponse(simplejson.dumps({
+        'identifier': 'id',
+        'label': 'name',
+        'items': items,
+    }, indent=2), content_type='application/json')
+
+def scrubs(request):
+    scrubs = models.Scrub.objects.all().order_by('id')
+    return render(request, 'storage/scrub.html', {
+        'scrubs': scrubs,
+        })

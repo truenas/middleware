@@ -359,15 +359,15 @@ class FreeNAS_LDAP_Directory(object):
     def __init__(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.__init__: enter")
 
-        self.host = kwargs['host'] if kwargs.has_key('host') else None
+        self.host = kwargs.get('host', None)
 
         self.port = None
         if kwargs.has_key('port') and kwargs['port'] is not None: 
             self.port = long(kwargs['port']) 
 
-        self.binddn = kwargs['binddn'] if kwargs.has_key('binddn') else None
-        self.bindpw = kwargs['bindpw'] if kwargs.has_key('bindpw') else None
-        self.basedn = kwargs['basedn'] if kwargs.has_key('basedn') else None
+        self.binddn = kwargs.get('binddn', None)
+        self.bindpw = kwargs.get('bindpw', None)
+        self.basedn = kwargs.get('basedn', None)
 
         self.ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl'] is not None:
@@ -382,8 +382,8 @@ class FreeNAS_LDAP_Directory(object):
         if kwargs.has_key('scope') and kwargs['scope'] is not None:
             self.scope = kwargs['scope']
 
-        self.filter = kwargs['filter'] if kwargs.has_key('filter') else None
-        self.attributes = kwargs['attributes'] if kwargs.has_key('attributes') else None
+        self.filter = kwargs.get('filter', None)
+        self.attributes = kwargs.get('attributes', None)
 
         self.pagesize = 0
         if kwargs.has_key('pagesize') and kwargs['pagesize'] is not None:
@@ -506,7 +506,7 @@ class FreeNAS_LDAP_Directory(object):
             else:
                 try:
                     syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.open: "
-                        "trying to bind to %s:%d" % (self.host, self.port))
+                        "(anonymous bind) trying to bind to %s:%d" % (self.host, self.port))
                     res = self._handle.simple_bind_s()
                     syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.open: binded")
 
@@ -664,8 +664,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             if len(parts) > 1 and parts[1]:
                 port = long(parts[1])
 
-        binddn = ldap['ldap_rootbasedn']
-        bindpw = ldap['ldap_rootbindpw']
+        binddn = bindpw = None
+        anonbind = ldap['ldap_anonbind']
+        if not anonbind:
+            binddn = ldap['ldap_rootbasedn']
+            bindpw = ldap['ldap_rootbindpw']
         basedn = ldap['ldap_basedn']
 
         ssl = FREENAS_LDAP_NOSSL
@@ -698,7 +701,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.__no_db_init__: enter")
 
         host = None
-        tmphost = kwargs['host'] if kwargs.has_key('host') else None
+        tmphost = kwargs.get('host', None)
         if tmphost:
             host = tmphost.split(':')[0]
             port = long(kwargs['port']) if kwargs.has_key('port') else None 
@@ -710,9 +713,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         if kwargs.has_key('port') and kwargs['port'] and not port:  
             port = long(kwargs['port'])
 
-        binddn = kwargs['binddn'] if kwargs.has_key('binddn') else None
-        bindpw = kwargs['bindpw'] if kwargs.has_key('bindpw') else None
-        basedn = kwargs['basedn'] if kwargs.has_key('basedn') else None
+        binddn = bindpw = None
+        anonbind = kwargs.get('anonbind', None)
+        if not anonbind:
+            binddn = kwargs.get('binddn', None)
+            bindpw = kwargs.get('bindpw', None)
+        basedn = kwargs.get('basedn', None)
 
         ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl']:
@@ -729,14 +735,14 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
-        self.rootbasedn = kwargs['rootbasedn'] if kwargs.has_key('rootbasedn') else None
-        self.rootbindpw = kwargs['rootbindpw'] if kwargs.has_key('rootbindpw') else None
-        self.usersuffix = kwargs['usersuffix'] if kwargs.has_key('usersuffix') else None
-        self.groupsuffix = kwargs['groupsuffix'] if kwargs.has_key('groupsuffix') else None
-        self.machinesuffix = kwargs['machinesuffix'] if kwargs.has_key('machinesuffix') else None
-        self.passwordsuffix = kwargs['passwordsuffix'] if kwargs.has_key('passwordsuffix') else None
-        self.pwencryption = kwargs['pwencryption'] if kwargs.has_key('pwencryption') else None
-        self.anonbind = kwargs['anonbind'] if kwargs.has_key('anonbind') else None
+        self.rootbasedn = kwargs.get('rootbasedn', None)
+        self.rootbindpw = kwargs.get('rootbindpw', None)
+        self.usersuffix = kwargs.get('usersuffix', None)
+        self.groupsuffix = kwargs.get('groupsuffix', None)
+        self.machinesuffix = kwargs.get('machinesuffix', None)
+        self.passwordsuffix = kwargs.get('passwordsuffix', None)
+        self.pwencryption = kwargs.get('pwencryption', None)
+        self.anonbind = kwargs.get('anonbind', None)
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.__no_db_init__: leave")
 
@@ -1015,10 +1021,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__no_db_init__: enter")
 
         host = port = None 
-        self.domain = kwargs['domain'] if kwargs.has_key('domain') else None
-        self.netbiosname = kwargs['netbiosname'] if kwargs.has_key('netbiosname') else None
+        self.domain = kwargs.get('domain', None)
+        self.netbiosname = kwargs.get('netbiosname', None)
 
-        tmphost = kwargs['host'] if kwargs.has_key('host') else None
+        tmphost = kwargs.get('host', None)
         if tmphost:
             host = tmphost.split(':')[0]
             port = long(kwargs['port']) if kwargs.has_key('port') else None
@@ -1030,8 +1036,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         if kwargs.has_key('port') and kwargs['port'] and not port:
             port = long(kwargs['port'])
 
-        self.binddn = kwargs['binddn'] if kwargs.has_key('binddn') else None
-        self.bindpw = kwargs['bindpw'] if kwargs.has_key('bindpw') else None
+        self.binddn = kwargs.get('binddn', None)
+        self.bindpw = kwargs.get('bindpw', None)
 
         args = { 'binddn': self.binddn, 'bindpw': self.bindpw }
         if host:

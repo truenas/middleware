@@ -29,11 +29,11 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import Volume, Disk
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias
 from services.exceptions import ServiceFailed
 
 class services(Model):
@@ -157,21 +157,26 @@ class CIFS(Model):
             help_text=_("These extensions enable Samba to better serve UNIX CIFS clients by supporting features such as symbolic links, hard links, etc..."),
             )
     cifs_srv_aio_enable = models.BooleanField(
-            default=True,
+            default=False,
             verbose_name=_("Enable AIO"),
             help_text=_("Enable/disable AIO support.")
             )
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimum AIO read size"),
-            help_text=_("Samba will read asynchronously if request size is larger than this value. The default read size is 1."),
-            default = 1,
+            help_text=_("Samba will read asynchronously if request size is larger than this value."),
+            default=4096,
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimum AIO write size"),
-            help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
-            default = 1,
+            help_text=_("Samba will write asynchronously if request size is larger than this value."),
+            default=4096,
+            )
+    cifs_srv_zeroconf = models.BooleanField(
+            verbose_name=_("Zeroconf share discovery"),
+            default=True,
+            help_text=_("Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) to automatically discover the CIFS shares on the system similar to the Computer Browser service in Windows."),
             )
 
     class Meta:
@@ -198,10 +203,6 @@ class AFP(Model):
             exclude=["root"],
             verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('nobody' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login. The user root can not be used as guest account.")
-            )
-    afp_srv_local = models.BooleanField(
-            verbose_name=_("Local Access"),
-            help_text=_("Allow users with local accounts to access apple shares on this box.")
             )
     afp_srv_connections_limit = models.IntegerField(
             max_length=120,
@@ -336,7 +337,6 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             )
     iscsi_lucport =  models.IntegerField(
-            max_length=120,
             default=3261,
             verbose_name=_("Controller TCP port"),
             help_text=_("Logical Unit Controller TCP port (3261 by default)"),
@@ -423,7 +423,11 @@ class iSCSITargetExtent(Model):
             return self.iscsi_target_extent_path
         else:
             try:
-                return "/dev/%s" % Disk.objects.get(id=self.iscsi_target_extent_path).identifier_to_device()
+                disk = Disk.objects.get(id=self.iscsi_target_extent_path)
+                if disk.disk_multipath_name:
+                    return "/dev/%s" % disk.devname
+                else:
+                    return "/dev/%s" % notifier().identifier_to_device(disk.disk_identifier)
             except:
                 return self.iscsi_target_extent_path
     def delete(self):
@@ -448,12 +452,6 @@ class iSCSITargetPortal(Model):
             default=1,
             verbose_name = _("Portal Group ID"),
             )
-    iscsi_target_portal_listen = models.TextField(
-            max_length=120,
-            default = "0.0.0.0:3260",
-            verbose_name = _("Portal"),
-            help_text = _("The portal takes the form of 'address:port'. for example '192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at same address family.")
-            )
     iscsi_target_portal_comment = models.CharField(
             max_length=120,
             blank=True,
@@ -468,6 +466,12 @@ class iSCSITargetPortal(Model):
         icon_model = u"PortalIcon"
         icon_add = u"AddPortalIcon"
         icon_view = u"ViewAllPortalsIcon"
+        inlines = [
+            {
+                'form': 'iSCSITargetPortalIPForm',
+                'prefix': 'portalip_set',
+            },
+        ]
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
             return u"%s (%s)" % (self.iscsi_target_portal_tag, self.iscsi_target_portal_comment)
@@ -476,12 +480,32 @@ class iSCSITargetPortal(Model):
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
-        for idx, portal in zip(portals, xrange(1, len(portals) + 1)):
+        for portal, idx in zip(portals, xrange(1, len(portals) + 1)):
             portal.iscsi_target_portal_tag = idx
             portal.save()
         started = notifier().reload("iscsitarget")
         if started is False and services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
+class iSCSITargetPortalIP(Model):
+    iscsi_target_portalip_portal = models.ForeignKey(
+            iSCSITargetPortal,
+            verbose_name=_("Portal"),
+            )
+    iscsi_target_portalip_ip =  models.IPAddressField(
+            verbose_name=_("IP Address"),
+            )
+    iscsi_target_portalip_port =  models.SmallIntegerField(
+            verbose_name=_("Port"),
+            default=3260,
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            )
+
+    class Meta:
+        unique_together = (
+            ('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),
+            )
+        verbose_name = _("Portal IP")
 
 class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(
@@ -592,6 +616,7 @@ class iSCSITarget(Model):
     iscsi_target_type = models.CharField(
             max_length=120,
             choices=choices.ISCSI_TARGET_TYPE_CHOICES,
+            default='Disk',
             verbose_name = _("Type"),
             help_text = _("Logical Unit Type mapped to LUN."),
             )
@@ -746,25 +771,9 @@ class Plugins(Model):
             default='',
             blank=True
             )
-    jail_interface = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("Jail interface"),
-            help_text=_("Interface for ths plugins jail")
-            )
-    jail_ip = models.IPAddressField(
-            max_length=120,
-            verbose_name=_("Jail IP address"),
-            help_text=_("Plugins jail IP address"),
-            default='',
-            blank=True
-            )
-    jail_netmask = models.IPAddressField(
-            max_length=120,
-            verbose_name=_("Jail netmask"),
-            help_text=_("Plugins jail netmask"),
-            default='',
-            blank=True
+    jail_ip = models.ForeignKey(
+            Alias,
+            verbose_name=_("Jail IP address")
             )
     plugins_path = PathField(
             verbose_name=_("Plugins Path"),
@@ -784,7 +793,7 @@ class Plugins(Model):
 
 class SNMP(Model):
     snmp_location = models.CharField(
-            max_length=120,
+            max_length=255,
             verbose_name = _("Location"),
             blank=True,
             help_text = _("Location information, e.g. physical location of this system: 'Floor of building, Room xyzzy'.")
@@ -958,10 +967,11 @@ class FTP(Model):
             verbose_name = _("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
             verbose_name = _("Require Reverse DNS for IP"))
-    ftp_masqaddress = models.IPAddressField(
+    ftp_masqaddress = models.CharField(
             verbose_name = _("Masquerade address"),
-            blank=True,
-            help_text = _("Causes the server to display the network information for the specified IP address to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
+            blank = True,
+            max_length = 120,
+            help_text = _("Causes the server to display the network information for the specified address to the client, on the assumption that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
             )
     ftp_passiveportsmin = models.PositiveIntegerField(
             default = 0,
@@ -1012,10 +1022,9 @@ class FTP(Model):
         icon_model = "FTPIcon"
 
 class TFTP(Model):
-    tftp_directory = models.CharField(
-            max_length=120,
+    tftp_directory = PathField(
             verbose_name = _("Directory"),
-            help_text = _("The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer.")
+            help_text = _("The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer."),
             )
     tftp_newfiles = models.BooleanField(
             verbose_name = _("Allow New Files"))
@@ -1085,6 +1094,18 @@ class SSH(Model):
             null=True
             )
     ssh_host_dsa_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_ecdsa_key = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_ecdsa_key_pub = models.TextField(
             max_length=1024,
             editable=False,
             blank=True,
@@ -1278,38 +1299,39 @@ class RsyncMod(Model):
             )
     rsyncmod_comment = models.CharField(
             max_length=120,
+            blank=True,
             verbose_name=_("Comment"),
             )
     rsyncmod_path = PathField(
-        verbose_name=_("Path"),
-        help_text=_("Path to be shared"),
-        )
+            verbose_name=_("Path"),
+            help_text=_("Path to be shared"),
+            )
     rsyncmod_mode = models.CharField(
-        max_length=120,
-        choices=choices.ACCESS_MODE,
-        default="rw",
-        verbose_name=_("Access Mode"),
-        help_text=_("This controls the access a remote host has to this module"),
-        )
+            max_length=120,
+            choices=choices.ACCESS_MODE,
+            default="rw",
+            verbose_name=_("Access Mode"),
+            help_text=_("This controls the access a remote host has to this module"),
+            )
     rsyncmod_maxconn = models.IntegerField(
-        default=0,
-        verbose_name=_("Maximum connections"),
-        help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
-        )
+            default=0,
+            verbose_name=_("Maximum connections"),
+            help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
+            )
     rsyncmod_user = UserField(
-        max_length=120,
-        default="nobody",
-        verbose_name=_("User"),
-        help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
-        blank=True,
-        )
+            max_length=120,
+            default="nobody",
+            verbose_name=_("User"),
+            help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
+            blank=True,
+            )
     rsyncmod_group = GroupField(
-        max_length=120,
-        default="nobody",
-        verbose_name=_("Group"),
-        help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
-        blank=True,
-        )
+            max_length=120,
+            default="nobody",
+            verbose_name=_("Group"),
+            help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
+            blank=True,
+            )
     rsyncmod_hostsallow = models.TextField(
             verbose_name = _("Hosts allow"),
             help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this module. You can specify the hosts by name or IP number. Leave this field empty to use default settings"),
@@ -1329,6 +1351,7 @@ class RsyncMod(Model):
     class Meta:
         verbose_name = _("Rsync Module")
         verbose_name_plural = _("Rsync Modules")
+        ordering = ["rsyncmod_name"]
 
     class FreeAdmin:
         menu_child_of = 'Rsync'

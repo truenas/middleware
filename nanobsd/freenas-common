@@ -33,9 +33,9 @@
 #
 
 # Override the defaults in nanobsd.sh from a common script.
-. "$FREENAS_ROOT/build/nano_env"
+. "$AVATAR_ROOT/build/nano_env"
 # Helpful functions.
-. "$FREENAS_ROOT/build/functions.sh"
+. "$AVATAR_ROOT/build/functions.sh"
 
 # DEBUG=1, MULTIMEDIA=1, etc.
 for feature in $SW_FEATURES; do
@@ -43,7 +43,18 @@ for feature in $SW_FEATURES; do
 done
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
-NANO_RAM_TMPVARSIZE=$((160*1024))
+
+# /var -> ~150MB (look through rc.initdiskless for the formula of how this
+# number is calculated out).
+# This is needed for samba as it drops a lot of files in /var/db/samba for
+# locking purposes when transferring large collections of data (~100MB for
+# ~4 TB in-flight data). I added overhead just in case, because when space
+# can't be obtained for /var/db/samba, smbd and nmbd have a nasty habit of
+# SIGABRTing and crashing, and this causes other applications to get unhappy
+# (vi and friends ;(..).
+#
+# Set to a lower default for lower footprints with home usecases in FreeNAS.
+NANO_RAM_TMPVARSIZE=327680
 
 NANO_IMAGES=2
 # Remove X11 crud too.
@@ -52,15 +63,17 @@ FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
 
+add_port archivers/lzo2
+add_port security/openvpn
+add_port converters/libiconv
+add_port converters/iconv
+add_port devel/gettext
 add_port devel/pkg-config
 add_port devel/libpthread-stubs WITHOUT_X11=y
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
 #+editors/nano
 add_port lang/perl5.12
-add_port converters/libiconv
-add_port converters/iconv
-add_port devel/gettext
 #-editors/nano
 add_port editors/nano
 add_port ftp/proftpd
@@ -82,10 +95,10 @@ add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
 add_port lang/python27 WITH_HUGE_STACK_SIZE=y
 add_port dns/py-dnspython
 #+net/samba
-add_port devel/talloc
+add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
 add_port devel/popt
-add_port databases/tdb
+add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
 #-net/samba
 add_port net/samba36	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
@@ -104,8 +117,10 @@ add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/ntfsprogs
 add_port sysutils/smartmontools
-#+emulators/open-vm-tools-nox11
+#+emulators/open-vm-tools-nox11 || www/nginx || ...
 add_port devel/pcre
+#-emulators/open-vm-tools-nox11 || www/nginx || ...
+#+emulators/open-vm-tools-nox11
 add_port devel/glib20
 add_port net/libdnet
 #-emulators/open-vm-tools-nox11
@@ -115,17 +130,18 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
-#+databases/py-south
+#+databases/py-south || devel/py-daemon || ...
 add_port devel/py-setuptools
-#-databases/py-south
+#-databases/py-south || devel/py-daemon || ...
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-#+add_port www/lighttpd
-add_port www/spawn-fcgi
-#-add_port www/lighttpd
-add_port www/lighttpd
-add_port www/nginx
+add_port www/nginx WITH_IPV6=true WITH_HTTP_MODULE=true \
+	WITH_HTTP_CACHE_MODULE=true WITH_HTTP_DAV_MODULE=true \
+	WITH_HTTP_REWRITE_MODULE=true WITH_HTTP_SSL_MODULE=true \
+	WITH_HTTP_STATUS_MODULE=true WITH_WWW=true \
+	WITH_HTTP_UPLOAD_MODULE=true WITH_DEBUGLOG=true \
+	WITH_HTTP_UPLOAD_PROGRESS=truytre
 #+add_port www/py-flup
 #-add_port www/py-flup
 add_port www/py-flup
@@ -190,7 +206,7 @@ add_port converters/base64
 add_port emulators/mtools WITHOUT_X11=y
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-#add_port sysutils/megacli
+add_port sysutils/megacli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
@@ -213,10 +229,22 @@ add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
+add_port benchmarks/netperf
+add_port benchmarks/xdd
+#add_port security/nmap
 add_port sysutils/ipmitool
+add_port www/py-django-json-rpc
+# NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
+# counted against the release image's size because they aren't used in
+# production yet.
+if [ "${DEBUG}" = 1 ]; then
 add_port devel/py-zope.interface
 add_port devel/py-twistedCore
 add_port devel/py-ujson
+add_port devel/py-lockfile
+add_port devel/py-daemon
+add_port devel/pyrex
+fi
 
 if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
@@ -234,7 +262,6 @@ if [ "${MULTIMEDIA}" = 1 ]; then
 	add_port audio/libvorbis
 	add_port audio/speex
 	#-add_port audio/firefly || net/minidlna
-	add_port audio/firefly
 	add_port audio/libao
 	add_port audio/vorbis-tools
 	add_port multimedia/libkate
@@ -266,6 +293,7 @@ if [ "${MULTIMEDIA}" = 1 ]; then
 					WITHOUT_FFSERVER=y WITHOUT_FREETYPE=y \
 					WITHOUT_VP8=y
 	#-add_port net/minidlna
+	add_port audio/firefly
 	add_port net/minidlna
 	#+add_port net-p2p/transmission-daemon
 	#add_port devel/pkg-config
@@ -330,14 +358,14 @@ customize_cmd hack_nsswitch_conf
 add_gui()
 {
     local gui dst dstCR
-    gui=${FREENAS_ROOT}/gui
+    gui=${AVATAR_ROOT}/gui
     dstCR=/usr/local/www/freenasUI
     dst=${NANO_WORLDDIR}${dstCR}
     if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
 	( cd ${gui}
-	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -dumpv ${dst} )
+	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
@@ -352,13 +380,24 @@ add_gui()
 }
 customize_cmd add_gui
 
+add_autotune()
+{
+    local autotune autotune_src
+
+    # See ix-loader for more details.
+    autotune_src=$AVATAR_ROOT/src/autotune/files/autotune.py
+    autotune=$NANO_WORLDDIR/usr/local/bin/autotune
+    install -m 0755 $autotune_src $autotune
+}
+customize_cmd add_autotune
+
 # Move the $world/data to the /data partion
 move_data()
 {
 	db=${NANO_WORLDDIR}/data
 	rm -rf ${NANO_DATADIR}
 	mkdir -p ${NANO_DATADIR}
-	( cd ${db} ; find . | cpio -dumpv ${NANO_DATADIR} )
+	( cd ${db} ; find . | cpio -R root:wheel -dumpv ${NANO_DATADIR} )
 	rm -rf ${db}
 }
 customize_cmd move_data
@@ -382,7 +421,7 @@ customize_cmd afpd_conf_symlink
 
 select_httpd ( )
 {
-	echo 'lighttpd_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
+	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
 }
 customize_cmd select_httpd
 
@@ -399,6 +438,18 @@ configure_mnt_md ( )
 }
 customize_cmd configure_mnt_md
 
+shrink_md_fbsize()
+{
+	# We have a lot of little files on our memory disks. Let's decrease
+	# the block and frag size to fit more little files on them (this
+	# halves our space requirement by ~50% on /etc and /var on 8.x --
+	# and gives us more back on 9.x as the default block and frag size
+	# are 4 times larger).
+	sed -i '' -e 's,-S -i 4096,-S -i 4096 -b 4096 -f 512,' \
+	    ${NANO_WORLDDIR}/etc/rc.initdiskless
+}
+customize_cmd shrink_md_fbsize
+
 save_build ( )
 {
 	VERSION_FILE=${NANO_WORLDDIR}/etc/version
@@ -412,7 +463,7 @@ customize_cmd save_build
 
 configure_pbi_manager()
 {
-	local sbin links
+	local sbin links l
 	sbin=${NANO_WORLDDIR}/usr/local/sbin/
 	links="pbi_add pbi_addrepo pbi_browser pbi_autobuild \
 		pbi_delete pbi_deleterepo pbi_icon pbi_info pbi_indextool \
@@ -420,14 +471,83 @@ configure_pbi_manager()
 		pbi_metatool pbi_patch pbi_update pbi_update_hashdir \
 		pbid pbi-crashhandler"
 
-	cp ${sbin}/pbi-manager ${sbin}/pbi_create
+	mkdir -p ${sbin}
+	cd ${sbin}
+	cp pbi-manager pbi_create
 	for l in ${links}
 	do
-		ln -f ${sbin}/pbi_create ${sbin}/${l}
+		ln -f pbi_create ${l}
 	done	
-	rm ${sbin}/pbi-manager
+	rm pbi-manager
 }
 customize_cmd configure_pbi_manager
+
+if [ "${DEBUG}" = 1 ]; then
+
+unmute_console_logging()
+{
+	# /var is small. Don't fill it up with messages from console.log
+	# because it's a chatty log.
+	sed -i '' -e 's/#console.info/console.info/' \
+		     "${NANO_WORLDDIR}/etc/syslog.conf"
+}
+customize_cmd unmute_console_logging
+
+else
+
+remove_perl()
+{
+	# Perl seems to be needed for build, but nothing after the
+	# build.  cope with bad dependencies (or misunderstood) and
+	# blow it away (saves 45MB)
+	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
+}
+customize_cmd remove_perl
+
+fi
+
+remove_var_db_pkg()
+{
+	# Eats up ~7 MB on the install image.
+	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
+}
+customize_cmd remove_var_db_pkg
+
+fix_fuse_module_location()
+{
+	local bad_modules_dir
+
+	# fuse.ko, et all gets installed into the wrong spot.
+	bad_modules_dir=${NANO_WORLDDIR}/usr/local/modules
+
+	tar -cf - -C "$bad_modules_dir" . | \
+	    tar -xpvf - -C ${NANO_WORLDDIR}/boot/kernel/.
+	rm -Rf "$bad_modules_dir"
+}
+customize_cmd fix_fuse_module_location
+
+fix_easy_install_pth()
+{
+	local site_packages
+
+	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
+
+	env PYTHONPATH=$site_packages \
+	    python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
+	    $site_packages
+}
+customize_cmd fix_easy_install_pth
+
+create_var_home_symlink()
+{
+	# Create a link to a non-persistent location that ix-activedirectory
+	# and ix-ldap can use as a pointer to a home directory on persistent
+	# storage (/mnt/tank/homes, etc).
+	rm -f $NANO_WORLDDIR/home || :
+	rm -Rf $NANO_WORLDDIR/home
+	ln -sfh /var/home $NANO_WORLDDIR/home
+}
+customize_cmd create_var_home_symlink
 
 freenas_custom()
 {
@@ -440,12 +560,11 @@ freenas_custom()
 
 	# Compress the kernel and preloaded modules
 	compress_ko kernel
+	compress_ko fuse.ko
 	compress_ko geom_mirror.ko
 	compress_ko geom_stripe.ko
 	compress_ko geom_raid3.ko
 	compress_ko geom_gate.ko
-	compress_ko ntfs.ko
-	compress_ko smbfs.ko
 
 	# nuke .pyc files (saves ~25MB on a fresh install)
 	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
@@ -469,13 +588,6 @@ freenas_custom()
 	rm -rf ${NANO_WORLDDIR}/usr/share/groff_font
 	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
 	rm -rf ${NANO_WORLDDIR}/usr/share/me
-
-	# Perl seems to be needed for build, but nothing after the
-	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 45MB)
-	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl*"
-	fi
 
 	# Kill all .a's that are installed (15MB)
 	find ${NANO_WORLDDIR} -name \*.a -delete
@@ -513,12 +625,6 @@ freenas_custom()
 }
 late_customize_cmd freenas_custom
 
-remove_var_db_pkg()
-{
-	# Eats up ~7 MB on the install image.
-	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
-}
-late_customize_cmd remove_var_db_pkg
 fi # [ $PACKAGE_PREP_BUILD = 1 ]
 
 if $do_image; then
@@ -531,7 +637,7 @@ last_orders() {
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 
-	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install"
+	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
 	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 
 	if $do_image && $do_copyout_partition; then
@@ -567,7 +673,7 @@ last_orders() {
 
 		(
 
-		sh "$FREENAS_ROOT/build/create_iso.sh"
+		sh "$AVATAR_ROOT/build/create_iso.sh"
 
 		) > "${cd_image_log}" 2>&1
 

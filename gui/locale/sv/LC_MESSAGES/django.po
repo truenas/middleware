@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-10-31 19:24+0200\n"
-"Last-Translator: swehes <swehes@gmail.com>\n"
+"PO-Revision-Date: 2012-01-13 02:46+0200\n"
+"Last-Translator: Marquz <liljedahl.markus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -710,7 +710,7 @@ msgstr "Användare %s är inbyggd och kan inte tas bort!"
 
 #: account/nav.py:5 templates/menubar.html:48
 msgid "Account"
-msgstr ""
+msgstr "Konto"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -2841,7 +2841,7 @@ msgstr ""
 #: services/nav.py:154 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Lägg till Rsync-modul"
 
 #: services/nav.py:164
 msgid "View Rsync Modules"
@@ -3420,13 +3420,12 @@ msgid "You already have a dataset with the same name"
 msgstr ""
 
 #: storage/forms.py:714
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "ZFS Volym"
+msgstr "Kvota för denna volym"
 
 #: storage/forms.py:715
 msgid "Reserved space for this volume"
-msgstr ""
+msgstr "Reserverat utrymme för denna volym"
 
 #: storage/forms.py:740
 #, fuzzy
@@ -3440,7 +3439,7 @@ msgstr "ZFS Volym"
 
 #: storage/forms.py:741
 msgid "Example: 1g"
-msgstr ""
+msgstr "Exempel: 1g"
 
 #: storage/forms.py:749
 msgid ""
@@ -3462,7 +3461,7 @@ msgstr ""
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "Typ av ACL"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -3748,7 +3747,7 @@ msgstr "Volymen har lagts till."
 
 #: storage/views.py:268 templates/system/smarttest.html:14
 msgid "Unknown"
-msgstr ""
+msgstr "Okänd"
 
 #: storage/views.py:325
 msgid "Dataset successfully added."
@@ -3829,7 +3828,7 @@ msgstr ""
 
 #: storage/views.py:633
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disken har tagits bort."
 
 #: storage/views.py:651
 msgid "The volume has been successfully exported"
@@ -3855,7 +3854,7 @@ msgstr "Obligatoriskt fält."
 
 #: system/forms.py:335 system/forms.py:412 system/forms.py:449
 msgid "hour"
-msgstr ""
+msgstr "timme"
 
 #: system/forms.py:336 system/forms.py:413 system/forms.py:450
 msgid "day of month"
@@ -3881,11 +3880,11 @@ msgstr ""
 
 #: system/forms.py:361
 msgid "Invalid firmware"
-msgstr ""
+msgstr "Ogiltig firmware"
 
 #: system/forms.py:367 system/forms.py:394
 msgid "Invalid checksum"
-msgstr ""
+msgstr "Ogiltig kontrollsumma"
 
 #: system/forms.py:377
 msgid "Service Pack image to be installed"
@@ -3901,11 +3900,11 @@ msgstr ""
 
 #: system/forms.py:411 system/forms.py:448
 msgid "minute"
-msgstr ""
+msgstr "minut"
 
 #: system/forms.py:544 system/forms.py:561
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Citationstecken är inte tillåtna"
 
 #: system/models.py:47
 msgid "Protocol"
@@ -4092,7 +4091,7 @@ msgstr ""
 
 #: system/models.py:235
 msgid "Country"
-msgstr ""
+msgstr "Land"
 
 #: system/models.py:236
 msgid "Country Name (2 letter code)"
@@ -4126,11 +4125,11 @@ msgstr ""
 #: system/models.py:274 system/models.py:393 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
 msgid "Minute"
-msgstr ""
+msgstr "Minut"
 
 #: system/models.py:275 system/models.py:394
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Tillåtna värden är 0-59."
 
 #: system/models.py:279 system/models.py:398 system/models.py:555
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
@@ -4140,17 +4139,17 @@ msgstr "Timme"
 
 #: system/models.py:280 system/models.py:399 system/models.py:556
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Tillåtna värden är 0-23."
 
 #: system/models.py:284 system/models.py:403 system/models.py:560
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 #: templates/system/smarttest.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Dag i månaden"
 
 #: system/models.py:285 system/models.py:404 system/models.py:561
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Tillåtna värden är 1-31"
 
 #: system/models.py:290 system/models.py:409 system/models.py:566
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
@@ -4162,12 +4161,11 @@ msgstr "Månad"
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 #: templates/system/smarttest.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "Veckodag"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Aktivera AIO"
+msgstr "Aktiverad"
 
 #: system/models.py:302
 msgid "Cron Job"
@@ -4179,7 +4177,7 @@ msgstr ""
 
 #: system/models.py:314 system/models.py:481
 msgid "Every minute"
-msgstr ""
+msgstr "Varje minut"
 
 #: system/models.py:316 system/models.py:483
 #, python-format
@@ -4188,13 +4186,14 @@ msgstr ""
 
 #: system/models.py:322 system/models.py:489 system/models.py:576
 msgid "Every hour"
-msgstr ""
+msgstr "Varje timme"
 
 #: system/models.py:324 system/models.py:491
 #, python-format
 msgid "Every %s hour(s)"
 msgstr ""
 
+# Kan vara: Var 1:a dag, Var 3:e dag osv.
 #: system/models.py:332 system/models.py:499
 #, python-format
 msgid "Every %s days"
@@ -4202,7 +4201,7 @@ msgstr "Varje %s dag"
 
 #: system/models.py:339 system/models.py:506 system/models.py:589
 msgid "Every month"
-msgstr ""
+msgstr "Varje månad"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
 #, fuzzy
@@ -4216,16 +4215,15 @@ msgstr "Vecka(or)"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP-adress eller värdnamn"
 
 #: system/models.py:384
 msgid "Remote Module Name"
 msgstr ""
 
 #: system/models.py:388 system/models.py:550
-#, fuzzy
 msgid "Short description"
-msgstr "Beskrivning"
+msgstr "Kort beskrivning"
 
 #: system/models.py:423
 #, fuzzy
@@ -4234,7 +4232,7 @@ msgstr "Hemma kataloger"
 
 #: system/models.py:427
 msgid "Times"
-msgstr ""
+msgstr "Gånger"
 
 #: system/models.py:428
 msgid "Preserve modification times"
@@ -4242,7 +4240,7 @@ msgstr ""
 
 #: system/models.py:432
 msgid "Compress"
-msgstr ""
+msgstr "Komprimera"
 
 #: system/models.py:433
 msgid "Compress data during the transfer"
@@ -4250,7 +4248,7 @@ msgstr ""
 
 #: system/models.py:437
 msgid "Archive"
-msgstr ""
+msgstr "Arkiv"
 
 #: system/models.py:438
 msgid "Archive mode"
@@ -4283,7 +4281,7 @@ msgstr ""
 #: templates/system/smarttest.html.py:29 templates/system/sysctl.html:23
 #: templates/system/sysctl.html.py:25
 msgid "Delete"
-msgstr ""
+msgstr "Radera"
 
 #: system/models.py:443
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -4291,12 +4289,11 @@ msgstr ""
 
 #: system/models.py:448
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Utelämna icke-felmeddelanden"
 
 #: system/models.py:452
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "Katalogrättigheter"
+msgstr "Bevara rättigheter"
 
 #: system/models.py:453
 msgid ""
@@ -4343,11 +4340,11 @@ msgstr "Tillgänglig"
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Värde"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
@@ -4383,12 +4380,11 @@ msgstr ""
 
 #: system/nav.py:48
 msgid "View S.M.A.R.T. Tests"
-msgstr ""
+msgstr "Visa S.M.A.R.T. Tester"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Visa alla %s"
+msgstr "Visa Sysctl"
 
 #: system/nav.py:62
 #, fuzzy
@@ -4397,50 +4393,50 @@ msgstr "Visa alla användare"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Den uppladdade filen är inte giltig."
 
 #: system/views.py:244
 #, python-format
 msgid "Test message from %s"
-msgstr ""
+msgstr "Testmeddelande från %s"
 
 #: system/views.py:246
 #, python-format
 msgid "This is a message test from %s"
-msgstr ""
+msgstr "Detta är ett meddelande test från %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Ditt test meddelande kunde inte skickas:"
+msgstr "Ditt testmeddelande kunde inte skickas: %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
-msgstr "Ditt test meddelande har skickats!"
+msgstr "Ditt testmeddelande har skickats!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Sidan kunde inte hittas"
 
 #: templates/base.html:34
 msgid "expand all"
-msgstr ""
+msgstr "expandera alla"
 
 #: templates/base.html:35
 msgid "collapse all"
-msgstr ""
+msgstr "minimera alla"
 
 #: templates/menubar.html:37
 msgid "Log Out"
-msgstr ""
+msgstr "Logga Ut"
 
 #: templates/menubar.html:43
 msgid "Help"
-msgstr ""
+msgstr "Hjälp"
 
 #: templates/menubar.html:55 templates/registration/login.html:63
 msgid "Log In"
-msgstr ""
+msgstr "Logga In"
 
 #: templates/account/bsdgroup2user_form.html:10
 #: templates/freeadmin/alert_status.html:6
@@ -4448,7 +4444,7 @@ msgstr ""
 #: templates/freeadmin/generic_model_edit.html:36
 #: templates/network/lagg_add.html:10
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/account/bsdgroup2user_form.html:12
 #: templates/account/changeform.html:29 templates/account/passform.html:29
@@ -4469,7 +4465,7 @@ msgstr ""
 #: templates/system/config_restore.html:13
 #: templates/system/config_upload.html:37 templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr ""
+msgstr "Vänligen vänta..."
 
 #: templates/account/bsdgroup2user_form.html:16
 #: templates/freeadmin/generic_model_add.html:37
@@ -4497,32 +4493,32 @@ msgstr ""
 #: templates/storage/zvols.html:12 templates/system/config_restore.html:17
 #: templates/system/config_upload.html:41
 msgid "Cancel"
-msgstr ""
+msgstr "Avbryt"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Medlemmar"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr ""
+msgstr "Ändra"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Ta bort"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "Ändra Grupp"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
@@ -4530,20 +4526,20 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Det finns inga användardefinierade grupper."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr ""
+msgstr "Lägg Till Grupp"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
-msgstr ""
+msgstr "Hem"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "Ändra Användare"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -4552,24 +4548,23 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "Ta bort Användare"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
-msgstr ""
+msgstr "Ta bort Användare"
 
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 msgid "No users defined"
-msgstr ""
+msgstr "Inga användare definierade"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
-msgstr ""
+msgstr "Lägg till ny användare"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-post"
+msgstr "Ändra E-post"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
@@ -4577,21 +4572,21 @@ msgstr ""
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "VARNING"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "KRITISK"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr ""
+msgstr "Bälddra"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr ""
+msgstr "Stäng"
 
 #: templates/freeadmin/generic_model_delete.html:12
 #: templates/storage/snapshot_confirm_delete.html:7
@@ -4614,7 +4609,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:11
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
@@ -4622,7 +4617,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "Spara"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -4631,7 +4626,7 @@ msgstr ""
 #: templates/freeadmin/index.html:36 templates/freeadmin/index.html.py:40
 #: templates/freeadmin/index.html:45
 msgid "Loading..."
-msgstr ""
+msgstr "Laddar..."
 
 #: templates/freeadmin/index.html:48
 msgid "Reboot the System"
@@ -4639,7 +4634,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:49 templates/freeadmin/index.html.py:66
 msgid "Warning!"
-msgstr ""
+msgstr "Varning!"
 
 #: templates/freeadmin/index.html:50
 msgid ""
@@ -4658,13 +4653,12 @@ msgid ""
 msgstr ""
 
 #: templates/freeadmin/index.html:82
-#, fuzzy
 msgid "Help & Support"
-msgstr "Stöd för EA"
+msgstr "Hjälp & Support"
 
 #: templates/freeadmin/index.html:86
 msgid "Forum"
-msgstr ""
+msgstr "Forum"
 
 #: templates/freeadmin/index.html:88
 msgid "Community Forum"
@@ -4672,11 +4666,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:93
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC (Chatt)"
 
 #: templates/freeadmin/index.html:95
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#freenas på freenode"
 
 #: templates/freeadmin/index.html:99
 msgid "Mailing Lists"
@@ -4716,7 +4710,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:118
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentation"
 
 #: templates/freeadmin/index.html:120
 msgid "FreeNAS Documentation"
@@ -4759,7 +4753,7 @@ msgstr ""
 #: templates/system/smarttest.html:21 templates/system/smarttest.html.py:23
 #: templates/system/sysctl.html:17 templates/system/sysctl.html.py:19
 msgid "Edit"
-msgstr ""
+msgstr "Ändra"
 
 #: templates/network/interface.html:36 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
@@ -4784,7 +4778,7 @@ msgstr ""
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Ändra Medlemmar"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -4812,7 +4806,7 @@ msgstr ""
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:15
 msgid "Action"
-msgstr ""
+msgstr "Åtgärd"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -4821,31 +4815,31 @@ msgstr ""
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Mål"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Ändra Statisk Route"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Ta bort Statisk Route"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Ingen statisk route definierad"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Lägg till Statisk Route"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "Namnserver"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Ingen namnserver angiven"
 
 #: templates/network/summary.html:37
 msgid "Default route"
@@ -4857,15 +4851,15 @@ msgstr ""
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Ändra VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Ta bort VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Inget VLAN definierat"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -4873,41 +4867,41 @@ msgstr ""
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Ditt användarnamn och lösenord matchade ej. Vänligen försök igen."
 
 #: templates/registration/login.html:48
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Välkommmen, %(username)s. Tack för att du loggar in."
 
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Välkommen till %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Vänligen logga in."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Utloggad"
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
-msgstr ""
+msgstr "Du är nu utloggad."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr ""
+msgstr "Logga in igen"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Vill du aktivera denna tjänst?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
-msgstr ""
+msgstr "Nej"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
@@ -4923,7 +4917,7 @@ msgstr ""
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Dynamiska DNS-inställningar"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
@@ -4959,11 +4953,11 @@ msgstr ""
 
 #: templates/services/index.html:147
 msgid "UPS Settings"
-msgstr ""
+msgstr "UPS Inställningar"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index.html:160
 msgid "ISCSI Settings"
@@ -4975,7 +4969,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:9
 msgid "Targets"
-msgstr ""
+msgstr "Mål"
 
 #: templates/services/iscsi.html:27
 msgid "Associated Targets"
@@ -4983,7 +4977,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:33
 msgid "Authentication"
-msgstr ""
+msgstr "Autentisering"
 
 #: templates/services/iscsi.html:39
 msgid "Authorized Initiator"
@@ -5001,7 +4995,7 @@ msgstr ""
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Inget mån angivet"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
@@ -5017,7 +5011,7 @@ msgstr ""
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Lägg till iSCSI-användare"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -5052,7 +5046,7 @@ msgstr ""
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr ""
+msgstr "Inga rsync-moduler definierade"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -5086,15 +5080,15 @@ msgstr ""
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:8
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:13
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
@@ -5102,7 +5096,7 @@ msgstr ""
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
-msgstr ""
+msgstr "Monteringspunkt"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
@@ -5145,9 +5139,8 @@ msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Disk"
+msgstr "Ändra Disk"
 
 #: templates/storage/dataset_confirm_delete.html:9
 #, fuzzy, python-format
@@ -5205,7 +5198,7 @@ msgstr ""
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "Filsystemstyp"
 
 #: templates/storage/index.html:3
 msgid "Active Volumes"
@@ -5240,7 +5233,7 @@ msgstr ""
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Ändra"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -5249,7 +5242,7 @@ msgstr ""
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Visa publik nyckel"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -5340,19 +5333,19 @@ msgstr ""
 
 #: templates/storage/tasks.html:41
 msgid "From"
-msgstr ""
+msgstr "Från"
 
 #: templates/storage/tasks.html:43
 msgid "through"
-msgstr ""
+msgstr "genom"
 
 #: templates/storage/tasks.html:45
 msgid ", every"
-msgstr ""
+msgstr ", varje"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr ""
+msgstr "varje dag"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
@@ -5377,15 +5370,15 @@ msgstr "Är du säker på att du vill exportera?"
 
 #: templates/storage/volumes.html:50
 msgid "Used"
-msgstr ""
+msgstr "Använt"
 
 #: templates/storage/volumes.html:52
 msgid "Size"
-msgstr ""
+msgstr "Storlek"
 
 #: templates/storage/volumes.html:53
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:82 templates/storage/volumes.html.py:86
 msgid "Export Volume"
@@ -5424,7 +5417,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:71
 msgid "Group type"
-msgstr ""
+msgstr "Grupptyp"
 
 #: templates/storage/wizard.html:123
 msgid "ZFS Extra"
@@ -5448,7 +5441,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:172
 msgid "Add Volume"
-msgstr ""
+msgstr "Lägg till Volym"
 
 #: templates/storage/wizard.html:173
 msgid "Existing data will be cleared"
@@ -5486,7 +5479,7 @@ msgstr "Avlusa"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr ""
+msgstr "Firmware uppdatering"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -5495,15 +5488,17 @@ msgstr ""
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Startar om..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
 msgstr ""
+"Är du säker på att du vill återställa konfigurationen till "
+"fabriksinställningar?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Uppdatera"
 
 #: templates/system/cronjob.html:40
 #, fuzzy
@@ -5520,11 +5515,11 @@ msgstr ""
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Startar om..."
 
 #: templates/system/email_edit.html:12
 msgid "Send Test Mail"
-msgstr "Skicka test meddelande"
+msgstr "Skicka testmeddelande"
 
 #: templates/system/email_edit.html:19
 msgid ""
@@ -5547,7 +5542,7 @@ msgstr ""
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Timvis"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -5555,7 +5550,7 @@ msgstr ""
 
 #: templates/system/reporting.html:16
 msgid "Daily"
-msgstr ""
+msgstr "Dagliga"
 
 #: templates/system/reporting.html:17
 msgid "Daily Graphs"
@@ -5563,7 +5558,7 @@ msgstr ""
 
 #: templates/system/reporting.html:28
 msgid "Weekly"
-msgstr ""
+msgstr "Veckovis"
 
 #: templates/system/reporting.html:29
 msgid "Weekly Graphs"
@@ -5605,7 +5600,7 @@ msgstr ""
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Fabriksinställningar"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5613,12 +5608,12 @@ msgstr "Återställ konfigurationen"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
-msgstr ""
+msgstr "Spara Konfiguration"
 
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr ""
+msgstr "Ladda upp konfiguration"
 
 #: templates/system/smarttest.html:36
 msgid "No S.M.A.R.T. tests defined"
@@ -5653,7 +5648,7 @@ msgstr ""
 
 #: templates/system/system_info.html:13
 msgid "Platform"
-msgstr ""
+msgstr "Plattform"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
@@ -5661,11 +5656,11 @@ msgstr "Minne"
 
 #: templates/system/system_info.html:21
 msgid "System Time"
-msgstr ""
+msgstr "Systemtid"
 
 #: templates/system/system_info.html:25
 msgid "Uptime"
-msgstr ""
+msgstr "Upptid"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
@@ -5674,7 +5669,7 @@ msgstr ""
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Steg %(step) av %(step_count)"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -5713,7 +5708,7 @@ msgid "Critical Alerts"
 msgstr "Kritiska Alarm"
 
 msgid "successfully deleted"
-msgstr "har tagits bort"
+msgstr "har tagits bort med lyckat resultat"
 
 msgid "%s successfully added."
 msgstr "%s har skapats."

@@ -6,16 +6,16 @@ set -e
 
 main()
 {
-	export FREENAS_ROOT=$(realpath "$(dirname "$0")/..")
-	. "$FREENAS_ROOT/build/nano_env"
-	. "$FREENAS_ROOT/build/functions.sh"
+	export AVATAR_ROOT=$(realpath "$(dirname "$0")/..")
+	. "$AVATAR_ROOT/build/nano_env"
+	. "$AVATAR_ROOT/build/functions.sh"
 
 	requires_root
 
 	# Keep in sync with freenas-common and nano_env.
-	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.xz"
+	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
-	ETC_FILES="$FREENAS_ROOT/build/files"
+	ETC_FILES="$AVATAR_ROOT/build/files"
 
 	# Various mount points needed to build the CD, adjust to taste
 	STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
@@ -39,9 +39,8 @@ main()
 
 	cleanup
 
-	cd "$FREENAS_ROOT"
+	cd "$AVATAR_ROOT"
 
-	rm -Rf ${ISODIR}
 	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 
 	# Create a quick and dirty nano image from the world tree
@@ -51,7 +50,7 @@ main()
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
-	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
+	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
@@ -64,7 +63,7 @@ main()
 	tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
 	cat > $INSTALLUFSDIR/etc/version-info <<EOF
-SW_ARCH=\$(uname -p)
+SW_ARCH=$NANO_ARCH_HUMANIZED
 SW_NAME="$NANO_LABEL"
 SW_FULL_VERSION="$NANO_NAME"
 SW_VERSION="$VERSION"

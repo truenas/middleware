@@ -52,6 +52,7 @@ from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 
+
 class JsonResponse(HttpResponse):
 
     error = False
@@ -66,18 +67,19 @@ class JsonResponse(HttpResponse):
         if kwargs.has_key("events"):
             self.events = kwargs.pop('events')
         if kwargs.has_key("enclosed"):
-            self.events = kwargs.pop('enclosed')
+            self.enclosed = kwargs.pop('enclosed')
 
         data = {
             'error': self.error,
             'message': self.message,
             'events': self.events,
         }
+
         if self.enclosed:
             kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
         else:
             kwargs['content'] = simplejson.dumps(data)
-        kwargs['content_type'] = 'application/json'
+            kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
 
 class JsonResp(HttpResponse):
@@ -97,7 +99,7 @@ class JsonResp(HttpResponse):
         self.type = kwargs.pop('type', None)
         self.template = kwargs.pop('template', None)
         self.form = kwargs.pop('form', None)
-        self.formsets = kwargs.pop('formsets', [])
+        self.formsets = kwargs.pop('formsets', {})
         self.request = request
 
         if self.form:
@@ -310,7 +312,7 @@ class ExceptionReporter(debug.ExceptionReporter):
             'sys_executable': sys.executable,
             'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
             'server_time': datetime.datetime.now(),
-            'django_version_info': get_sw_version(),
+            'sw_version': get_sw_version(),
             'sys_path' : sys.path,
             'template_info': self.template_info,
             'template_does_not_exist': self.template_does_not_exist,
@@ -376,18 +378,22 @@ def generic_model_add(request, app, model, mf=None):
         else:
             mf = navtree._modelforms[m][mf]
 
-
     instance = m()
     formsets = {}
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if mf.is_valid():
             valid = True
         else:
             valid = False
 
         if m._admin.inlines:
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
@@ -426,15 +432,21 @@ def generic_model_add(request, app, model, mf=None):
 
     else:
         mf = mf()
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
         if m._admin.inlines:
             extrakw = {
                 'can_delete': False
                 }
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
-                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
+                fsname = 'formset_%s' % inline._meta.model._meta.module_name
+                formsets[fsname] = fset(prefix=prefix, instance=instance)
+                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
 
     context.update({
         'form': mf,
@@ -589,13 +601,18 @@ def generic_model_edit(request, app, model, oid, mf=None):
     formsets = {}
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if mf.is_valid():
             valid = True
         else:
             valid = False
 
         if m._admin.inlines:
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
@@ -637,15 +654,22 @@ def generic_model_edit(request, app, model, oid, mf=None):
 
     else:
         mf = mf(instance=instance)
+        if m._admin.advanced_fields:
+            mf.advanced_fields.extend(m._admin.advanced_fields)
+
         if m._admin.inlines:
             extrakw = {
                 'can_delete': True,
                 }
-            for inline, prefix in m._admin.inlines:
+            for inlineopts in m._admin.inlines:
+                inline = inlineopts.get("form")
+                prefix = inlineopts.get("prefix")
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
                 fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
-                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
+                fsname = 'formset_%s' % inline._meta.model._meta.module_name
+                formsets[fsname] = fset(prefix=prefix, instance=instance)
+                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
 
     context.update({
         'form': mf,
@@ -666,6 +690,34 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         return render(request, template, context, \
                 content_type='text/html')
+
+def generic_model_empty_formset(request, app, model):
+
+    try:
+        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+    except ImportError:
+        raise
+    m = getattr(_temp, model)
+
+    if not m._admin.inlines:
+        return None
+
+    inline = None
+    for inlineopts in m._admin.inlines:
+        _inline = inlineopts.get("form")
+        prefix = inlineopts.get("prefix")
+        if prefix == request.GET.get("fsname"):
+            _temp = __import__('%s.forms' % app, globals(), locals(), [_inline], -1)
+            inline = getattr(_temp, _inline)
+            break
+
+    if inline:
+        fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1)
+        fsins = fset(prefix=prefix)
+
+        return HttpResponse(fsins.empty_form.as_table())
+    return HttpResponse()
+
 
 def generic_model_delete(request, app, model, oid):
 

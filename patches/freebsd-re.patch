@@ -1,14 +1,5 @@
 --- sys/dev/re/if_re.c.orig	2011-01-20 09:41:24.000000000 -0800
 +++ sys/dev/re/if_re.c	2011-05-04 14:41:48.000000000 -0700
-@@ -31,7 +31,7 @@
-  */
- 
- #include <sys/cdefs.h>
--__FBSDID("$FreeBSD: src/sys/dev/re/if_re.c,v 1.160.2.16.2.2 2011/01/20 17:41:24 yongari Exp $");
-+__FBSDID("$FreeBSD: src/sys/dev/re/if_re.c,v 1.160.2.28 2011/03/01 00:07:38 yongari Exp $");
- 
- /*
-  * RealTek 8139C+/8169/8169S/8110S/8168/8111/8101E PCI NIC driver
 @@ -157,8 +157,12 @@
  #include "miibus_if.h"
  
@@ -1400,28 +1391,8 @@
 +	return (sysctl_int_range(oidp, arg1, arg2, req, RL_TIMER_MIN,
 +	    RL_TIMER_MAX));
 +}
---- sys/pci/if_rl.c.orig	2011-05-04 14:44:46.000000000 -0700
-+++ sys/pci/if_rl.c	2011-05-04 14:42:11.000000000 -0700
-@@ -31,7 +31,7 @@
-  */
- 
- #include <sys/cdefs.h>
--__FBSDID("$FreeBSD: src/sys/pci/if_rl.c,v 1.189.2.8.2.1 2010/12/21 17:09:25 kensmith Exp $");
-+__FBSDID("$FreeBSD: src/sys/pci/if_rl.c,v 1.189.2.8 2010/11/15 17:48:13 sobomax Exp $");
- 
- /*
-  * RealTek 8129/8139 PCI NIC driver
 --- sys/pci/if_rlreg.h.orig	2010-12-21 09:09:25.000000000 -0800
 +++ sys/pci/if_rlreg.h	2011-05-04 14:42:11.000000000 -0700
-@@ -29,7 +29,7 @@
-  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-  * THE POSSIBILITY OF SUCH DAMAGE.
-  *
-- * $FreeBSD: src/sys/pci/if_rlreg.h,v 1.97.2.8.2.1 2010/12/21 17:09:25 kensmith Exp $
-+ * $FreeBSD: src/sys/pci/if_rlreg.h,v 1.97.2.17 2011/03/01 00:07:38 yongari Exp $
-  */
- 
- /*
 @@ -160,21 +160,24 @@
  #define	RL_HWREV_8110S		0x04000000
  #define	RL_HWREV_8169_8110SB	0x10000000

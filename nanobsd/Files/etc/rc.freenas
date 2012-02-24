@@ -31,8 +31,15 @@
 #	FreeNAS settings	
 #
 : ${FREENAS_CONFIG:="/data/freenas-v1.db"}
+: ${FREENAS_CONFIG_MD5:="/var/tmp/freenas_config.md5"}
 : ${FREENAS_SQLITE_CMD:="/usr/local/bin/sqlite3"}
 : ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
+
+#
+#	Updater specific variables.
+#
+: ${CD_UPGRADE_SENTINEL="/data/cd-upgrade"}
+: ${NEED_UPDATE_SENTINEL="/data/need-update"}
 
 #
 #	OPENSSL settings
@@ -43,17 +50,19 @@
 : ${SSLCADIR:="${SSLDIR}/CA"}
 : ${SSLCACERTDIR:="${SSLCADIR}/certs"}
 : ${SSLCAPRIVDIR:="${SSLCADIR}/private"}
-: ${SSLCACERT:="${SSLCADIR}/cacert.pem"}
-: ${SSLCAKEY:="${SSLCAPRIVDIR}/cakey.pem"}
+: ${SSLCACERT:="${SSLCADIR}/cacert.crt"}
+: ${SSLCAKEY:="${SSLCAPRIVDIR}/cakey.key"}
 
 #
 #	HTTPD settings
 #
-: ${HTTPD:="/usr/local/sbin/lighttpd"}
-: ${HTTPDDIR:="/usr/local/etc/lighttpd"}
-: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/lighttpd"}
-: ${HTTPDCONF:="${HTTPDDIR}/lighttpd.conf"}
-: ${HTTPDCERT:="${SSLDIR}/httpd.pem"}
+: ${HTTPD:="/usr/local/sbin/nginx"}
+: ${HTTPDDIR:="/usr/local/etc/nginx"}
+: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/nginx"}
+: ${HTTPDCONF:="${HTTPDDIR}/nginx.conf"}
+: ${HTTPDSSLDIR:="${SSLDIR}/nginx"}
+: ${HTTPDKEY:="${HTTPDSSLDIR}/nginx.key"}
+: ${HTTPDCERT:="${HTTPDSSLDIR}/nginx.crt"}
 : ${HTTPDSSLPORT:="443"}
 : ${HTTPDPORT:="80"}
 
@@ -61,7 +70,7 @@
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="2000m"}
+: ${FREENAS_CACHESIZE:="2g"}
 : ${FREENAS_CACHEEXPIRE:="60"}
 
 #
@@ -110,8 +119,8 @@ __get_SRV_record()
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
-		port=$(echo "${line}"|awk '{ print $3 }')
+		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
+		local port=$(echo "${line}"|awk '{ print $3 }')
 
 		__do_AD_query "${host}" "${port}" "" "" "" "base" "" "" >/dev/null 2>&1
 		if [ "$?" = "0" ]
@@ -150,6 +159,7 @@ __do_AD_query()
 	local scope="${6}"
 	local filter="${7}"
 	local attributes="${8}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
 	: ${dcname:="$(AD_get dcname)"}
 	: ${dcport:="$(AD_get dcport)"}
@@ -159,17 +169,23 @@ __do_AD_query()
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${dcname}:${dcport}" \
-		-b "${basedn}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-s "${scope}"  \
-		-x \
-		-z 0 \
-		-E 'pr=16384/noprompt' \
-		-LLL \
-		"${filter}" "${attributes}"
+	    -H "ldap://${dcname}:${dcport}" \
+	    -b "${basedn}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -s "${scope}" \
+	    -x \
+	    -z 0 \
+	    -E 'pr=16384/noprompt' \
+	    -LLL \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 AD_query()
@@ -183,14 +199,22 @@ AD_query()
 	: ${basedn:="$(AD_get basedn)"}
 	: ${filter:='(objectclass=*)'}
 
-	dcname="$(AD_get dcname)"
-	dcport="$(AD_get dcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local dcname="$(AD_get dcname)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
 	__do_AD_query "${dcname}" "${dcport}" "${basedn}" \
 		"${binddn}" "${adminpw}" "sub" "${filter}" \
 		"${attributes}" 2>/dev/null
+}
+
+AD_query_partitions()
+{
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+	local basedn="CN=Partitions,${config}"
+
+	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
 }
 
 AD_query_global_catalog()
@@ -199,47 +223,60 @@ AD_query_global_catalog()
 
 	shift
 	local attributes="${*}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
     	: ${filter:='(objectclass=*)'}
 
-	gchost="$(AD_get gchost)"
-	gcport="$(AD_get gcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local gchost="$(AD_get gchost)"
+	local gcport="$(AD_get gcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${gchost}:${gcport}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-b "" \
-		-s sub \
-		-x \
-		-z 0 \
-		-LLL \
-		"${filter}" ${attributes} 2>/dev/null
+	    -H "ldap://${gchost}:${gcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s sub \
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 AD_query_rootDSE()
 {
 	local filter="${1}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
 	: ${filter:='(objectclass=*)'}
 
-	dcname="$(AD_get dcname)"
-	dcport="$(AD_get dcport)"
-	binddn="$(AD_get binddn)"
-	adminpw="$(AD_get adminpw)"
+	local dcname="$(AD_get dcname)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
 
+	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-		-H "ldap://${dcname}:${dcport}" \
-		-D "${binddn}" \
-		-w "${adminpw}" \
-		-b "" \
-		-s base \
-		-x \
-		-z 0 \
-		-LLL \
-		"${filter}" 2>/dev/null
+	    -H "ldap://${dcname}:${dcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s base \
+	    -x \
+	   -z 0 \
+	   -LLL \
+	   "${filter}"
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
 }
 
 __do_AD_get()
@@ -269,12 +306,7 @@ __do_AD_set()
 	local prefix="${1}"
 	local pair="${2}"
 
-	local name=$(echo ${pair}|cut -s -f1 -d=|xargs)
-	local val=$(echo ${pair}|cut -s -f2- -d=|xargs)
-
-	local var=$(echo "${prefix}${name}")
-
-	eval "${var}=${val}"
+	eval "${prefix}${pair}"
 }
 
 AD_set()
@@ -341,6 +373,18 @@ AD_join_domain()
 	return $?
 }
 
+AD_status_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+
+	/usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	return $?
+}
+
 AD_leave_domain()
 {
 	local adminname="${1}"
@@ -351,11 +395,6 @@ AD_leave_domain()
 
 	/usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
 	return $?
-}
-
-AD_enabled()
-{
-	srv_enabled activedirectory
 }
 
 AD_init()
@@ -395,13 +434,13 @@ __SQL__
 	local domainname=$(AD_get domainname)
 	AD_set binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
 
-	dc=$(AD_get_domain_controller "${domainname}")
+	local dc=$(AD_get_domain_controller "${domainname}")
 	AD_set dcname=$(echo "${dc}"|cut -f1 -d:)
 	AD_set dcport=$(echo "${dc}"|cut -f2 -d:)
 
 	AD_set basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
 
-	gc=$(AD_get_global_catalog "${domainname}")
+	local gc=$(AD_get_global_catalog "${domainname}")
 	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
 	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
 }
@@ -424,17 +463,29 @@ create_cache_filesystem()
 {
 	local dev
 
+	# test to see if /var is an md, if not, presumably it's been moved to
+	# a persistant volume, so skip creating a separate in memory
+	# filesystem for it.
+	mount | awk '$3 == "/var" {print $1}' | grep -qE "/dev/md[[:digit:]]+"
+	if [ $? -ne 0 ] ; then
+		if [ ! -d "${FREENAS_CACHEDIR}" ]; then
+			mkdir -p "${FREENAS_CACHEDIR}"
+		fi
+		return 0
+	fi
+
 	if [ -d "${FREENAS_CACHEDIR}" ]; then
 		dev=$(mount | awk -v "dir=$FREENAS_CACHEDIR" \
 			'$3 == dir { print $1 }')
-		if ! umount $dev; then
+		if [ -n "$dev" ] && ! umount $dev; then
 			return 1
 		fi
 	else
 		mkdir -p "${FREENAS_CACHEDIR}"
 	fi
 
-	mdmfs -s ${FREENAS_CACHESIZE} md "${FREENAS_CACHEDIR}"
+	mdmfs -i 4096 -b 4096 -f 512 -s ${FREENAS_CACHESIZE} \
+	    md "${FREENAS_CACHEDIR}"
 	if [ $? -eq 0 ]; then
 		return 0
 	fi
@@ -468,13 +519,10 @@ srv_enabled()
 	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	    "SELECT srv_enable from services_services where srv_service = '$1'" \
 	    2>/dev/null)
-	if [ $? -eq 0 ]; then
-		if [ "$enabled" -eq 1 ]; then
-			return 0
-		else
-			return 1
-		fi
-	else
-		return 2
+	if [ "$enabled" = 1 ]; then
+		return 0
+	elif [ "$enabled" = 0 ]; then
+		return 1
 	fi
+	return 2
 }

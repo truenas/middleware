@@ -12,13 +12,13 @@ class Migration(SchemaMigration):
         db.add_column('services_cifs', 'cifs_srv_homedir_enable', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Adding field 'CIFS.cifs_srv_aio_enable'
-        db.add_column('services_cifs', 'cifs_srv_aio_enable', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_aio_enable', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
         # Adding field 'CIFS.cifs_srv_aio_rs'
-        db.add_column('services_cifs', 'cifs_srv_aio_rs', self.gf('django.db.models.fields.IntegerField')(default='1', max_length=120), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_aio_rs', self.gf('django.db.models.fields.IntegerField')(default='4096', max_length=120), keep_default=False)
 
         # Adding field 'CIFS.cifs_srv_aio_ws'
-        db.add_column('services_cifs', 'cifs_srv_aio_ws', self.gf('django.db.models.fields.IntegerField')(default='1', max_length=120), keep_default=False)
+        db.add_column('services_cifs', 'cifs_srv_aio_ws', self.gf('django.db.models.fields.IntegerField')(default='4096', max_length=120), keep_default=False)
 
 
     def backwards(self, orm):

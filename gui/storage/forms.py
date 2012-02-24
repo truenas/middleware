@@ -35,19 +35,21 @@ import types
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import QueryDict
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
 
 from dojango import forms
 from dojango.forms import widgets, CheckboxSelectMultiple
-from freeadmin.forms import UserField, GroupField
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import is_mounted, mount, umount
+from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
-from middleware.exceptions import MiddlewareError
+from freenasUI.storage.widgets import UnixPermissionWidget, UnixPermissionField
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -56,12 +58,13 @@ class Disk(object):
     dtype = None
     number = None
     size = None
-    def __init__(self, devname, size):
+    def __init__(self, devname, size, serial=None):
         reg = re.search(r'^(.*?)([0-9]+)', devname)
         if reg:
             self.dtype, number = reg.groups()
         self.number = int(number)
         self.size = size
+        self.serial = serial
         self.human_size = humanize_number_si(size)
         self.dev = devname
     def __lt__(self, other):
@@ -73,7 +76,8 @@ class Disk(object):
     def __repr__(self):
         return u'<Disk: %s>' % str(self)
     def __str__(self):
-        return u'%s (%s)' % (self.dev, humanize_number_si(self.size))
+        extra = ' %s' % (self.serial,) if self.serial else ''
+        return u'%s (%s)%s' % (self.dev, humanize_number_si(self.size), extra)
     def __iter__(self):
         yield self.dev
         yield str(self)
@@ -103,94 +107,8 @@ def _clean_quota_fields(form, attrs, prefix):
                 del cdata[formfield]
     return cdata
 
-class UnixPermissionWidget(widgets.MultiWidget):
-
-    def __init__(self, attrs=None):
-
-        widgets = [forms.widgets.CheckboxInput,] * 9
-        super(UnixPermissionWidget, self).__init__(widgets, attrs)
-
-    def decompress(self, value):
-        rv = [False] * 9
-        if value and type(value) in types.StringTypes:
-            mode = int(value, 8)
-            for i in xrange(len(rv)):
-                rv[i] = bool(mode & pow(2, len(rv)-i-1))
-        return rv
-
-    def format_output(self, rendered_widgets):
-
-        maprow = (
-            __('Read'),
-            __('Write'),
-            __('Execute'),
-        )
-
-        mapcol = (
-            __('Owner'),
-            __('Group'),
-            __('Other'),
-        )
-
-        html = """<table>
-        <thead>
-        <tr>
-        <td></td>
-        <td>%s</td>
-        <td>%s</td>
-        <td>%s</td>
-        </tr>
-        </thead>
-        <tbody>
-        """ % (mapcol[:])
-
-        for i, mode_type in enumerate(maprow):
-            html += "<tr>"
-            html += "<td>%s</td>" % (mode_type, )
-            for j in xrange(len(mapcol)):
-                html += '<td>%s</td>' % (rendered_widgets[j*3+i], )
-            html += "</tr>"
-        html += "</tbody></table>"
-
-        return html
-
-class UnixPermissionField(forms.MultiValueField):
-
-    widget = UnixPermissionWidget()
-
-    def __init__(self, *args, **kwargs):
-        fields = [forms.BooleanField()] * 9
-        super(UnixPermissionField, self).__init__(fields, *args, **kwargs)
-
-    def compress(self, value):
-        if value:
-            owner = 0
-            group = 0
-            other = 0
-            if value[0] == True:
-                owner += 4
-            if value[1] == True:
-                owner += 2
-            if value[2] == True:
-                owner += 1
-            if value[3] == True:
-                group += 4
-            if value[4] == True:
-                group += 2
-            if value[5] == True:
-                group += 1
-            if value[6] == True:
-                other += 4
-            if value[7] == True:
-                other += 2
-            if value[8] == True:
-                other += 1
-
-            return ''.join(map(str, [owner, group, other]))
-        return None
-
 class VolumeWizardForm(forms.Form):
-    volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
+    volume_name = forms.CharField(max_length=30, label=_('Volume name'), required=False)
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
@@ -200,6 +118,12 @@ class VolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
+        qs = models.Volume.objects.filter(vol_fstype='ZFS')
+        if qs.exists():
+            self.fields['volume_add'] = forms.ChoiceField(label = _('Volume add'), required=False )
+            self.fields['volume_add'].choices = [('','-----')] + \
+                                        [(x.vol_name, x.vol_name) for x in qs]
+            self.fields['volume_add'].widget.attrs['onChange'] = 'wizardcheckings(true);'
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
         self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleGeneric("id_ufspathen", ["id_ufspath"], true);'
         if not self.data.get("ufspathen", False):
@@ -238,7 +162,7 @@ class VolumeWizardForm(forms.Form):
         # Grab disk list
         # Root device already ruled out
         for disk, info in notifier().get_disks().items():
-            disks.append(Disk(info['devname'], info['capacity']))
+            disks.append(Disk(info['devname'], info['capacity'], serial=info.get('ident')))
 
         # Exclude what's already added
         used_disks = []
@@ -246,8 +170,7 @@ class VolumeWizardForm(forms.Form):
             used_disks.extend(v.get_disks())
 
         qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(id__in=diskids)])
+        used_disks.extend([i.get_device()[5:] for i in qs])
 
         for d in list(disks):
             if d.dev in used_disks:
@@ -259,8 +182,10 @@ class VolumeWizardForm(forms.Form):
 
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
-        if not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
+        if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
             raise forms.ValidationError(_("The volume name must start with letters and may include numbers, \"-\", \"_\" and \".\" ."))
+        if models.Volume.objects.filter(vol_name=vname).exists():
+            raise forms.ValidationError(_("A volume with that name already exists."))
         return vname
 
     def clean_group_type(self):
@@ -284,6 +209,12 @@ class VolumeWizardForm(forms.Form):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
         disks =  cleaned_data.get("volume_disks")
+        if volume_name and cleaned_data.get("volume_add"):
+            self._errors['__all__'] = self.error_class(["You cannot select an existing ZFS volume and specify a new volume name"])
+        elif not(volume_name or cleaned_data.get("volume_add")):
+            self._errors['__all__'] = self.error_class(["You must specify a new volume name or select an existing ZFS volume to append a virtual device"])
+        elif not volume_name:
+            volume_name = cleaned_data.get("volume_add")
         if cleaned_data.get("volume_fstype", None) not in ('ZFS', 'UFS'):
             msg = _(u"You must select a filesystem")
             self._errors["volume_fstype"] = self.error_class([msg])
@@ -310,7 +241,7 @@ class VolumeWizardForm(forms.Form):
                 msg = _(u"The volume name may NOT start with c[0-9], mirror, raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
-        elif cleaned_data.get("volume_fstype") == 'UFS':
+        elif cleaned_data.get("volume_fstype") == 'UFS' and volume_name:
             if len(volume_name) > 9:
                 msg = _(u"UFS volume names cannot be higher than 9 characters")
                 self._errors["volume_name"] = self.error_class([msg])
@@ -324,7 +255,8 @@ class VolumeWizardForm(forms.Form):
 
     def done(self, request):
         # Construct and fill forms into database.
-        volume_name = self.cleaned_data['volume_name']
+        volume_name = self.cleaned_data.get("volume_name") or \
+                            self.cleaned_data.get("volume_add")
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
@@ -387,6 +319,12 @@ class VolumeWizardForm(forms.Form):
 
             else:
                 notifier().init("volume", volume, groups=grouped, force4khack=force4khack, path=ufspath)
+                if volume.vol_fstype == 'ZFS':
+                    models.Scrub.objects.create(scrub_volume=volume)
+                    try:
+                        notifier().restart("cron")
+                    except:
+                        pass
 
         if mp_path in ('/etc', '/var', '/usr'):
             device = '/dev/ufs/' + volume_name
@@ -440,14 +378,6 @@ class VolumeImportForm(forms.Form):
         for name, part in _parts.items():
             parts.append(Disk(part['devname'], part['capacity']))
 
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            for p in list(parts):
-                if p.dev.startswith(rootdev_base.group(0)):
-                    parts.remove(p)
-
         choices = sorted(parts)
         choices = [tuple(p) for p in choices]
         return choices
@@ -490,6 +420,8 @@ class VolumeImportForm(forms.Form):
         mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
+        notifier().start("ix-fstab")
+        notifier().mount_volume(volume)
         #notifier().reload("disk")
 
 class VolumeAutoImportForm(forms.Form):
@@ -613,33 +545,28 @@ class VolumeAutoImportForm(forms.Form):
 
         notifier().reload("disk")
 
-#=================================
 
-# A partial form for editing disk.
-# we only show disk_name (used as GPT label), disk_disks
-# (device name), and disk_group (which group this disk belongs
-# to), but don't allow editing.
 class DiskFormPartial(ModelForm):
     class Meta:
         model = models.Disk
-        exclude = ('disk_enabled',)
+        exclude = (
+            'disk_transfermode',  # This option isn't used anywhere
+            )
+
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['disk_name'].widget.attrs['readonly'] = True
-            self.fields['disk_name'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
-            self.fields['disk_identifier'].widget.attrs['readonly'] = True
-            self.fields['disk_identifier'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_name'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
             self.fields['disk_serial'].widget.attrs['readonly'] = True
-            self.fields['disk_serial'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['disk_serial'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
+
     def clean_disk_name(self):
         return self.instance.disk_name
-    def clean_disk_identifier(self):
-        return self.instance.disk_identifier
+
 
 class ZFSDataset_CreateForm(Form):
     dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))
@@ -800,13 +727,22 @@ class MountPointAccessForm(Form):
             recursive=self.cleaned_data['mp_recursive'],
             acl=self.cleaned_data['mp_acl'])
 
+
 class PeriodicSnapForm(ModelForm):
+
     class Meta:
         model = models.Task
         widgets = {
-            'task_byweekday': CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES)
-            #'task_bymonth': CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES)
+            'task_byweekday': CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES),
+            'task_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
+            'task_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
         }
+
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
@@ -904,7 +840,7 @@ class DiskReplacementForm(forms.Form):
         self.disk = kwargs.pop('disk', None)
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])))
 
     def _populate_disk_choices(self):
 
@@ -928,16 +864,9 @@ class DiskReplacementForm(forms.Form):
                 diskchoices[devname] = "In-place [%s (%s)]" % (devname, capacity)
             else:
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            for disk in diskchoices.keys():
-                if disk.startswith(rootdev_base.group(0)):
-                    del diskchoices[disk]
 
         choices = diskchoices.items()
-        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])))
         return choices
 
 class ZFSDiskReplacementForm(DiskReplacementForm):
@@ -1039,3 +968,45 @@ class Dataset_Destroy(Form):
                 len(self.datasets)
             )
             self.fields['cascade'] = forms.BooleanField(initial=True, label=label)
+
+
+class ScrubForm(ModelForm):
+    class Meta:
+        model = models.Scrub
+        widgets = {
+            'scrub_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
+            'scrub_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
+            'scrub_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
+            'scrub_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
+            'scrub_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('instance'):
+            ins = kwargs.get('instance')
+            if ins.scrub_month == '*':
+                ins.scrub_month = "1,2,3,4,5,6,7,8,9,a,b,c"
+            else:
+                ins.scrub_month = ins.scrub_month.replace("10", "a").replace("11", "b").replace("12", "c")
+            if ins.scrub_dayweek == '*':
+                ins.scrub_dayweek = "1,2,3,4,5,6,7"
+        super(ScrubForm, self).__init__(*args, **kwargs)
+
+    def clean_scrub_month(self):
+        m = eval(self.cleaned_data.get("scrub_month"))
+        if len(m) == 12:
+            return '*'
+        m = ",".join(m)
+        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
+        return m
+
+    def clean_scrub_dayweek(self):
+        w = eval(self.cleaned_data.get("scrub_dayweek"))
+        if len(w) == 7:
+            return '*'
+        w = ",".join(w)
+        return w
+
+    def save(self):
+        super(ScrubForm, self).save()
+        started = notifier().restart("cron")

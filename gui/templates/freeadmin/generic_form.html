@@ -1,5 +1,5 @@
 {% load i18n freeadmin %}
-<form data-dojo-type="dijit.form.Form">
+<form data-dojo-type="dijit.form.Form" {% if form and form.is_multipart %}enctype="multipart/form-data" {% endif %}method="POST">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e, '{% block formpost %}{{ request.path }}{% endblock %}');
     </script>
@@ -9,15 +9,17 @@
     {% endblock %}
 </table>
     {% block buttons %}
-    <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+    <button data-dojo-type="dojox.form.BusyButton" type="submit" data-dojo-props="type:'submit'" class="submitform">
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
+    {% if not inline %}
     <button data-dojo-type="dijit.form.Button"type="button">
         {% trans "Cancel" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             cancelDialog(this);
         </script>
     </button>
+    {% endif %}
     {% block extra_buttons %}{% endblock %}
     {% endblock %}
 </form>

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:07-0700\n"
-"PO-Revision-Date: 2011-08-21 16:51+0200\n"
-"Last-Translator: Velociraptor <hrspam@gmail.com>\n"
+"PO-Revision-Date: 2012-01-29 07:14+0200\n"
+"Last-Translator: lubos <lubosboucek@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -247,12 +247,11 @@ msgstr "ladění"
 
 #: choices.py:191
 msgid "Default"
-msgstr "výchozí"
+msgstr "Výchozí"
 
 #: choices.py:192
-#, fuzzy
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Strojový čas"
 
 #: choices.py:195
 msgid "No case folding"
@@ -276,7 +275,7 @@ msgstr "soubor"
 
 #: choices.py:204
 msgid "Device"
-msgstr "zařízení"
+msgstr "Zařízení"
 
 #: choices.py:205
 msgid "ZFS Volume"
@@ -383,17 +382,17 @@ msgstr "týden"
 
 #: choices.py:457
 msgid "Month(s)"
-msgstr "měsíc"
+msgstr "měsíc(e)"
 
 #: choices.py:458
 msgid "Year(s)"
-msgstr "rok"
+msgstr "rok(y)"
 
 #: choices.py:462 system/models.py:330 system/models.py:355
 #: system/models.py:497 system/models.py:518 system/models.py:582
 #: system/models.py:601
 msgid "Everyday"
-msgstr "každodenní"
+msgstr "Každý den"
 
 #: choices.py:463
 msgid "Every selected weekday"
@@ -589,9 +588,8 @@ msgid "This field is required."
 msgstr "Toto pole je vyžadováno."
 
 #: account/forms.py:405
-#, fuzzy
 msgid "Disable password"
-msgstr "nové heslo"
+msgstr "Zrušit heslo"
 
 #: account/forms.py:466
 #, fuzzy
@@ -633,9 +631,8 @@ msgid "New password confirmation"
 msgstr "potvrzení nového hesla"
 
 #: account/forms.py:653
-#, fuzzy
 msgid "Change root password as well"
-msgstr "změnit heslo"
+msgstr "Změnit i heslo pro root"
 
 #: account/forms.py:660
 msgid "Old password"
@@ -771,8 +768,8 @@ msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
-"Omlouváme se, ale platnost dat ve formuláři vypršela. Prosím, opakujte "
-"vyplnění formuláře."
+"Omlouváme se, ale platnost formuláře vypršela. Prosím, pokračujte vyplňování "
+"formuláře na této stránce."
 
 #: freeadmin/forms.py:111
 #, python-format
@@ -876,7 +873,7 @@ msgstr ""
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Musíte zvolit mezi IPv4 nebo IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
@@ -924,9 +921,8 @@ msgid "The name must be vlanXX where XX is a integer"
 msgstr "připojení se musí jmenovat vlanXX kde XX je číslo"
 
 #: network/forms.py:192
-#, fuzzy
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "čísla VLANů jsou od 1 do 4095 včetně"
+msgstr "Značení VLAN je od 1 do 4095 včetně"
 
 #: network/forms.py:219
 msgid "Physical NICs in the LAGG"
@@ -1161,9 +1157,8 @@ msgid "LAGG successfully added"
 msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "uživatel %s neexistuje"
+msgstr "Toto není platná maska"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1239,7 +1234,7 @@ msgstr "Službě DynamicDNS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:273
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Umístění musí obsahovat pouze písmena, číslice, podtržítko nebo pomlčku"
 
 #: services/forms.py:280
 msgid "This is not a valid e-mail address"
@@ -1421,6 +1416,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
+"Neplatná IP adresa nebo síť. Klíčové slovo \"ALL\" může být použito k povolení "
+"všeho."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -1441,11 +1438,11 @@ msgstr "Službě SNMP se nepodařilo znovu načíst konfiguraci."
 
 #: services/models.py:43
 msgid "Service"
-msgstr ""
+msgstr "Služba"
 
 #: services/models.py:44
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Název služby, měl by být generovaný automaticky"
 
 #: services/models.py:47
 msgid "Enable Service"
@@ -1515,6 +1512,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Změňte tuto možnost k přepsání uživatelského jména ('nobody' ve výchozím "
+"nastavení), které bude použito pro přístup k službám uvedeným jako "
+"hostující. Práva tohoto uživatele budou propůjčena všem, kteří se připojí k "
+"této službě. Zmíněný uživatel musí existovat v souboru passwd, platné "
+"přihlášení však není vyžadováno. root nemůže být použit jako hostující účet."
 
 #: services/models.py:111
 msgid "Allow guest access"
@@ -1547,7 +1549,7 @@ msgstr ""
 
 #: services/models.py:129
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Pošlete soubory pomocí sendfile(2)"
 
 #: services/models.py:131
 msgid "EA Support"
@@ -1576,7 +1578,7 @@ msgstr ""
 
 #: services/models.py:144
 msgid "Enable/disable home directories for samba user."
-msgstr ""
+msgstr "Povolit/zakázat domovské adresáře pro uživatele protokolu samba."
 
 #: services/models.py:147
 msgid "Enable home directories browsing"
@@ -1771,7 +1773,7 @@ msgstr ""
 
 #: services/models.py:308
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Maximální délka segmentu přijatých dat."
 
 #: services/models.py:314
 msgid "DefaultTime2Wait"
@@ -1914,7 +1916,7 @@ msgstr ""
 
 #: services/models.py:496
 msgid "Authorized network"
-msgstr ""
+msgstr "Autorizovaná síť"
 
 #: services/models.py:498
 msgid ""
@@ -5167,11 +5169,11 @@ msgstr ""
 
 #: templates/storage/disk_offline.html:7
 msgid "Are you sure you want to offline?"
-msgstr ""
+msgstr "Opravdu chcete přejít do režimu offline?"
 
 #: templates/storage/disk_remove.html:7
 msgid "Are you sure you want to remove?"
-msgstr ""
+msgstr "Opravdu to chcete přemístit?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:9
@@ -5236,6 +5238,8 @@ msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
+"UPOZORNĚNÍ: Pro pravidelné snapshoty daného ZFS souborového systému/svazku "
+"je nutno vytvořit replikační úlohu."
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5258,11 +5262,11 @@ msgstr ""
 #: templates/storage/scrub_confirm.html:10
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr ""
+msgstr "Čištění právě probíhá. Opravdu chcete tento proces ZASTAVIT?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "Are you sure you want to scrub?"
-msgstr ""
+msgstr "Opravdu toto chcete vyčistit?"
 
 #: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
@@ -5278,11 +5282,11 @@ msgstr ""
 
 #: templates/storage/snapshots.html:33
 msgid "Destroy Snapshot"
-msgstr ""
+msgstr "Zrušit snapshot"
 
 #: templates/storage/snapshots.html:38
 msgid "Destroy this snapshot"
-msgstr ""
+msgstr "Zrušit tento snapshot"
 
 #: templates/storage/snapshots.html:49
 msgid "Rollback Snapshot"
@@ -5294,7 +5298,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:128
 msgid "Destroy"
-msgstr ""
+msgstr "Zrušit"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5338,7 +5342,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:147
 msgid "There are no periodic snapshots scheduled."
-msgstr ""
+msgstr "Nejsou naplánovány žádné pravidelné snapshoty."
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -5347,7 +5351,7 @@ msgstr "Upravit ZFS svazek"
 #: templates/storage/volume_export.html:9
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "Máte %(used)s obsazeného místa v tomto svazku"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
@@ -5371,9 +5375,8 @@ msgid "Export Volume"
 msgstr "svazek ZFS"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "svazek ZFS"
+msgstr "Vyčištění svazku"
 
 #: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
 #: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
@@ -5381,9 +5384,8 @@ msgid "Edit ZFS Options"
 msgstr "Upravit nastavení ZFS"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
-#, fuzzy
 msgid "Volume Status"
-msgstr "Stav"
+msgstr "Stav svazku"
 
 #: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
 msgid "Destroy Dataset"
@@ -5434,9 +5436,9 @@ msgid "Existing data will be cleared"
 msgstr ""
 
 #: templates/storage/zvols.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Vytvořit svazek ZFS"
+msgstr "Vytvořit ZFS svazek na %(name)s"
 
 #: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
@@ -5456,9 +5458,8 @@ msgstr "Mezipaměť nemohla být znovu vytvořena."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "ladění"
+msgstr "Uložit lazení"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -5483,17 +5484,16 @@ msgid "Update"
 msgstr ""
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Žádné úlohy nejsou naplánovány"
+msgstr "Žádné cron úlohy nejsou definovány."
 
 #: templates/system/cronjob.html:46
 msgid "Add a cron job"
-msgstr ""
+msgstr "Přidat cron úlohu"
 
 #: templates/system/cronjob.html:48
 msgid "Add cron job"
-msgstr ""
+msgstr "Přidat cron úlohu"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5508,19 +5508,20 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"NÁPOVĚDA: Zkušební e-maily byly zaslány root uživatelům. Pro nastavení "
+"užijte Uživatelé -> root -> Změnit e-mail"
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "Nebyly definovány žádné rsync moduly"
+msgstr "Nebyly definovány žádné zavaděče."
 
 #: templates/system/loader.html:38
 msgid "Add loader"
-msgstr ""
+msgstr "Přidat zavaděč"
 
 #: templates/system/loader.html:40
 msgid "Add Loader"
-msgstr ""
+msgstr "Přidat zavaděč"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5563,13 +5564,12 @@ msgid "Yearly Graphs"
 msgstr "Roční Grafy"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Nebyly definovány žádné rsync moduly"
+msgstr "Nebyly definovány žádné rsync úlohy"
 
 #: templates/system/rsync.html:44
 msgid "Add rsync task"
-msgstr ""
+msgstr "Přidat rsync úlohu"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5581,7 +5581,7 @@ msgstr ""
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Tovární nastavení"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5597,34 +5597,28 @@ msgid "Upload Config"
 msgstr "Nahrát konfiguraci"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Nastavení S.M.A.R.T."
+msgstr "Žádné S.M.A.R.T. testy nebyly definovány."
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "Nastavení S.M.A.R.T."
+msgstr "Přidat test S.M.A.R.T."
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "Nastavení S.M.A.R.T."
+msgstr "Přidat test S.M.A.R.T."
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Nebyly definovány žádné rsync moduly"
+msgstr "Žádné sysctl nebyly definovány"
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Přidat %s"
+msgstr "Přidat sysctl"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Přidat %s"
+msgstr "Přidat sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5657,12 +5651,12 @@ msgstr "Krok %(step) z %(step_count)"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
-msgstr ""
+msgstr "Použít aktualizaci"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "Stav svazku %s je ZDRAVÝ"
 
 #: tools/alert.py:79
 #, python-format
@@ -5672,7 +5666,7 @@ msgstr ""
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Stav svazku %(volume) je %(status)."
 
 #: tools/alert.py:87
 msgid ""
@@ -5687,7 +5681,7 @@ msgstr ""
 
 #: tools/alert.py:127
 msgid "Critical Alerts"
-msgstr ""
+msgstr "Kritická upozornění"
 
 #, fuzzy
 msgid "successfully deleted"
@@ -5715,7 +5709,7 @@ msgid "%s successfully update."
 msgstr "%s aktualizace proběhla úspěšně"
 
 msgid "Admin user"
-msgstr "Administrator"
+msgstr "Administrátor"
 
 #, fuzzy
 msgid "ZVol Name"

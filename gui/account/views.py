@@ -94,7 +94,10 @@ def password_change(request):
 
             return JsonResponse(message=_("Password successfully updated."), events=events)
 
-    extra_context.update({ 'passform' : passform, })
+    extra_context.update({
+        'form' : passform,
+        'inline': True,
+        })
     return render(request, 'account/passform.html', extra_context)
 
 def user_change(request):
@@ -108,7 +111,10 @@ def user_change(request):
             changeform.save()
             return JsonResponse(message=_("Admin user successfully updated."))
 
-    extra_context.update({ 'changeform' : changeform, })
+    extra_context.update({
+        'form' : changeform,
+        'inline': True,
+        })
     return render(request, 'account/changeform.html', extra_context)
 
 def group2user_update(request, object_id):

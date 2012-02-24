@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-11-23 18:58+0200\n"
+"PO-Revision-Date: 2011-12-21 11:44+0200\n"
 "Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -435,7 +435,7 @@ msgstr "%(week)s седмица"
 
 #: choices.py:488
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Never - Проверява устройството независимо от режима на консумация"
+msgstr "Newer - Проверява устройството независимо от режима на консумация"
 
 #: choices.py:489
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -570,7 +570,7 @@ msgstr "Не може да се пише в главната директори�
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Паролата е изключена, оставете полето празно."
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -588,7 +588,7 @@ msgstr "Главната директория трябва да започва �
 
 #: account/forms.py:538
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Позволява повторение на GIDs"
 
 #: account/forms.py:551
 msgid "A group with that name already exists."
@@ -608,7 +608,7 @@ msgstr "Външни групи"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Потребителят не може да принадлежи на повече от 64 помощни групи"
 
 #: account/forms.py:627
 msgid "New password"
@@ -797,7 +797,7 @@ msgstr "Изключване"
 
 #: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Не бе възможно да се извлече текущото състояние"
 
 #: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
@@ -808,9 +808,9 @@ msgstr "%s успешно обновени."
 #: storage/views.py:198 storage/views.py:541 storage/views.py:580
 #: storage/views.py:612 storage/views.py:631 storage/views.py:671
 #: storage/views.py:721 system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Грешка"
+msgstr "Грешка: %s"
 
 #: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
@@ -844,44 +844,43 @@ msgstr "Мрежов адаптер"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Трябва да зададете IPv4 адрес"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Трябва да зададете IPv4 мрежова маска"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Трябва да зададете IPv6 адрес"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Трябва да зададете IPv6 мрежова маска"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Трябва да изберете между IPv4 и IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "Трябва да зададете валиден IPv4 или IPv6 с маска"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Обръщението е към не валиден nameserver."
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Неопределени адреси, не са валидни като nameservers"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "В полето не е въведен валиден IP адрес или мрежа"
+msgstr "Това не е валиден nameserver адрес"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr " 169.254/16 подмрежа не е валидна за nameserver"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -922,27 +921,27 @@ msgstr "Мрежата '%s' не е валидна, очаква се CIDR."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv4 адрес и за псевдонима"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv4 мрежова маска и за псевдонима"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv6 адрес и за псевдонима"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Трябва да зададете IPv6 мрежова маска и за псевдонима "
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Трябва да изберете между IPv4 и IPv6 за псевдонима"
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "Трябва да зададете за псевдонима валидни IPv4 или IPv6 адреси с маска "
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -1336,7 +1335,7 @@ msgstr "Услугата iSCSI не успя да се презареди."
 
 #: services/forms.py:483
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN вече съществува на това място."
 
 #: services/forms.py:494 services/models.py:359
 msgid "Controller Auth Group"
@@ -2806,7 +2805,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "Добави разширение"
 
 #: services/nav.py:102
 msgid "View All Extents"
@@ -3937,7 +3936,7 @@ msgstr "NTP сървър 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog сървър"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -3976,13 +3975,12 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Разрешаване на Zeroconf/Bonjour"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
 "Размер на swap файла за всеки диск в GiB, засяга само новите дискове. Трябва "
-"да бъде различен от 0"
+"да бъде различен от 0. Стойност 0 изключва swap (ПРЕПОРЪЧИТЕЛНО)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4006,13 +4004,10 @@ msgid "From email"
 msgstr "От имейл"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
-msgstr ""
-"Адрес на електронна поща, който системата ще използва, за да изпраща писма, "
-"например: freenas@mydomain.com"
+msgstr "Изходящ адрес на електронна поща, например: freenas@mydomain.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4172,17 +4167,14 @@ msgid "Day of week"
 msgstr "Ден от седмицата"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "Разреши AIO"
+msgstr "Избрано"
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
-msgstr "Разписание на задачите"
+msgstr "Разписание на задача"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
 msgstr "Разписание на задачите"
 
@@ -4214,14 +4206,12 @@ msgid "Every month"
 msgstr "Всеки месец"
 
 #: system/models.py:357 system/models.py:520 system/models.py:603
-#, fuzzy
 msgid "Weekdays"
-msgstr "Делничен ден"
+msgstr "Делнични дни"
 
 #: system/models.py:359 system/models.py:522 system/models.py:605
-#, fuzzy
 msgid "Weekends"
-msgstr "Седмица (и)"
+msgstr "Почивни дни"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4326,53 +4316,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Допълнителни опции за rsync командния ред (обикновено празно)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Rsync задача"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Rsync задачи"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. тест"
 
 #: system/models.py:617
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. настройки"
+msgstr "S.M.A.R.T.  тестове"
 
 #: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Достъпен"
+msgstr "Променлив"
 
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Стойност"
 
 #: system/models.py:651
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:652
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loader"
-msgstr "Средно време за зареждане"
+msgstr "Лоудер"
 
 #: system/models.py:684
-#, fuzzy
 msgid "Loaders"
-msgstr "Средно време за зареждане"
+msgstr "Лоудери"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4387,48 +4370,43 @@ msgid "System Information"
 msgstr "Ситемна информация"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "Разписание на задачите"
+msgstr "Преглед на разписанието на задачите"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Преглед на дисковете"
+msgstr "Преглед на Rsync задачите"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. настройки"
+msgstr "Показва S.M.A.R.T. Тестове"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Преглед на дисковете"
+msgstr "Показва Sysctls"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "Преглед на всички потребители"
+msgstr "Показва лоудерите"
 
 #: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "Каченият файл е невалиден."
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Тестово съобщение от"
+msgstr "Тестово съобщение от %s"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Това е тестово съобщение от"
+msgstr "Това е тестово съобщение от %s"
 
 #: system/views.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Вашият тестов имейл не може да бъде изпратен!"
+msgstr "Вашият тестов имейл не може да бъде изпратен!  %s"
 
 #: system/views.py:251
 msgid "Your test email has been sent!"
@@ -4957,7 +4935,7 @@ msgstr "NFS настройки"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
-msgstr "Настройки за синхронизация"
+msgstr "Настройки за Rsync синхронизация"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -5075,11 +5053,11 @@ msgstr "Няма дефинирани модули за синхронизаци
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr "Споделени ресурси"
+msgstr "Активни споделени ресурси"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr "Няма споделени ресурси за Apple."
+msgstr "Няма активни споделени ресурси за Apple."
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
@@ -5140,11 +5118,11 @@ msgstr "Добавяне на споделени ресурси за UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr "Няма споделени ресурси за Windows."
+msgstr "Няма активни Windows споделени ресурси."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr "Редактиране на споделени ресурси за Windows"
+msgstr "Редактиране на Windows споделени ресурси"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
@@ -5257,7 +5235,7 @@ msgstr "Промяна на разрешение за %(path)s към"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr "Промени"
+msgstr "Промяна"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -5372,7 +5350,7 @@ msgstr ", всеки"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr "всекидневен"
+msgstr "всеки ден"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
@@ -5438,7 +5416,7 @@ msgstr "Няма дефинирани дялове"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr "Дискове членове"
+msgstr "Описани дискове"
 
 #: templates/storage/wizard.html:71
 msgid "Group type"
@@ -5462,7 +5440,7 @@ msgstr "Кеш"
 
 #: templates/storage/wizard.html:134
 msgid "Spare"
-msgstr "Свободен"
+msgstr "Резервен"
 
 #: templates/storage/wizard.html:172
 msgid "Add Volume"

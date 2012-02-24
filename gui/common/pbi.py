@@ -33,6 +33,7 @@ from subprocess import Popen, PIPE
 from syslog import syslog, LOG_DEBUG
 
 PBI_PATH = "/usr/local/sbin"
+JEXEC_PATH = "/usr/sbin/jexec"
 
 class pbi_arg(object):
     def __init__(self, int, string, arg=False, argname=None):
@@ -371,7 +372,7 @@ PBID = os.path.join(PBI_PATH, "pbid")
 
 
 class pbi_exception(Exception):
-    def __init__(self, msg = None):
+    def __init__(self, msg=None):
         syslog(LOG_DEBUG, "pbi_exception.__init__: enter")
         if msg:
             syslog(LOG_DEBUG, "pbi_exception.__init__: error = %s" % msg)
@@ -383,6 +384,7 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: enter") 
         syslog(LOG_DEBUG, "pbi_pipe.__init__: cmd = %s" % cmd) 
 
+        self.error = None
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
 
@@ -404,7 +406,7 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: out = %s" % self.__out)
 
         if self.__pipe.returncode != 0:
-            raise pbi_exception(self.__stderr.read().strip())
+            self.error = self.__out 
 
         self.returncode = self.__pipe.returncode
         syslog(LOG_DEBUG, "pbi_pipe.__init__: leave")
@@ -427,6 +429,7 @@ class pbi_base(object):
         self.path = path
         self.flags = flags 
         self.args = "" 
+        self.error = None
 
         if objflags is None:
             objflags = []
@@ -448,18 +451,25 @@ class pbi_base(object):
 
         syslog(LOG_DEBUG, "pbi_base.__init__: leave")
 
-    def run(self):
+    def run(self, jail=False, jid=0):
         syslog(LOG_DEBUG, "pbi_base.run: enter")
 
         cmd = self.path
         if self.args is not None:
             cmd += " %s" % self.args
 
+        if jail == True and jid > 0:
+            cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
+
         syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
+        self.error = pobj.error
 
         syslog(LOG_DEBUG, "pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
+
+    def __str__(self):
+        return self.args
 
 
 class pbi_add(pbi_base):
@@ -475,6 +485,23 @@ class pbi_add(pbi_base):
 
         syslog(LOG_DEBUG, "pbi_add.__init__: pbi = %s" % self.pbi)
         syslog(LOG_DEBUG, "pbi_add.__init__: leave")
+
+    def info(self, jail=False, jid=0, *args):
+         ret = []
+
+         out = super(pbi_add, self).run(jail, jid)
+         if out and out[0] == 0:
+             out = out[1]
+             for line in out.splitlines():
+                 parts = line.split(':')
+                 if not args:
+                     if len(parts) > 1:
+                         ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+                 else: 
+                     for arg in args:
+                         if parts[0].strip().lower() == arg.strip().lower():
+                             ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+         return ret
 
 
 class pbi_addrepo(pbi_base):

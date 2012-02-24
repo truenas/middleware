@@ -1,27 +1,7 @@
-
-<form data-dojo-type="dijit.form.Form">
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_snapshot_delete_bulk %}');
-</script>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
 <input data-dojo-type="dijit.form.TextBox" type="hidden" data-dojo-props="name: 'snaps', type: 'hidden', value: '{{ snaps|force_escape }}'" />
 <input data-dojo-type="dijit.form.TextBox" type="hidden" data-dojo-props="name: 'delete', type: 'hidden', value:true" />
-<table> 
     <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
-    <tr>
-        <td>
-            <button id="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
-                {% trans "Yes" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
-            </button>
-            <button data-dojo-type="dijit.form.Button" class="cancelform">
-                {% trans "Cancel" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    cancelDialog(this);
-                </script>
-            </button>
-        </td>
-    </tr>
-</table>
-</form>
+{% endblock %}
+{% block oklabel %}{% trans "Yes" %}{% endblock %}

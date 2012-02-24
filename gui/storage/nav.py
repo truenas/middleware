@@ -21,17 +21,24 @@ class ViewPeriodic(TreeNode):
 class ViewSnap(TreeNode):
 
         gname = 'View'
-        name = _(u'View All Snapshots')
+        name = _(u'View Snapshots')
         type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
         model = 'Task'
         append_app = False
 
+class ViewScrub(TreeNode):
+
+    gname = 'storage.Scrub.View'
+    name = _('View ZFS Scrubs')
+    view = 'storage_scrubs'
+    append_app = False
+
 class AddVolume(TreeNode):
 
         gname = 'Add'
-        name = _(u'Create Volume')
+        name = _(u'Volume Manager')
         view = 'storage_wizard'
         type = 'volumewizard'
         icon = u'AddVolumeIcon'
@@ -61,6 +68,17 @@ class ViewDisks(TreeNode):
         model = 'Disk'
         append_app = False
 
+class ViewMultipaths(TreeNode):
+
+        gname = 'storage.View.Multipaths'
+        name = _(u'View Multipaths')
+        view = 'storage_multipath_status'
+        type = 'view'
+        icon = u'ViewAllVolumesIcon'
+        app_name = 'storage'
+        model = 'Disk'
+        append_app = False
+
 class AutoImportVolume(TreeNode):
 
         gname = 'AutoImport'
@@ -75,7 +93,7 @@ class AutoImportVolume(TreeNode):
 class ViewVolumes(TreeNode):
 
         gname = 'View'
-        name = _(u'View All Volumes')
+        name = _(u'View Volumes')
         view = u'storage_home'
         type = 'openstorage'
         icon = u'ViewAllVolumesIcon'
@@ -108,7 +126,7 @@ class CreatePeriodicSnap(TreeNode):
 
 class Volumes(TreeNode):
 
-        gname = 'storage.Volume'
+        gname = 'Volume'
         name = _(u'Volumes')
         icon = u'VolumesIcon'
 
@@ -120,6 +138,7 @@ class Volumes(TreeNode):
                                     AutoImportVolume(),
                                     ViewVolumes(),
                                     ViewDisks(),
+                                    ViewMultipaths(),
                                  ])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
 

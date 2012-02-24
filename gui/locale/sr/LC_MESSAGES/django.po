@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:02-0700\n"
-"PO-Revision-Date: 2011-07-20 14:34+0200\n"
-"Last-Translator: djevrek <djevrek@gmail.com>\n"
+"PO-Revision-Date: 2012-01-29 08:51+0200\n"
+"Last-Translator: cebence <cebetarevic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -140,91 +140,91 @@ msgstr "Nivo 254 - Maksimum performansi, maksimalna potrošnja"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "Minimalno"
+msgstr "најмање"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "Srednje"
+msgstr "осредње"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "Maksimalno"
+msgstr "највеће"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr "Januar"
+msgstr "јануар"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr "Februar"
+msgstr "фебруар"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr "Mart"
+msgstr "март"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr "Apr"
+msgstr "април"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr "Maj"
+msgstr "мај"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr "Jun"
+msgstr "јун"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr "Jul"
+msgstr "јул"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr "Avgust"
+msgstr "август"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr "Septembar"
+msgstr "септембар"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr "Oktobar"
+msgstr "октобар"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr "Novembar"
+msgstr "новембар"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr "Decembar"
+msgstr "децембар"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr "Ponedeljak"
+msgstr "понедељак"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr "Utorak"
+msgstr "уторак"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr "Sreda"
+msgstr "среда"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr "Četvrtak"
+msgstr "четвртак"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr "Petak"
+msgstr "петак"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr "Subota"
+msgstr "субота"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr "Nedelja"
+msgstr "недеља"
 
 #: choices.py:163
 msgid "Anonymous"

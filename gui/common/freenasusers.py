@@ -183,7 +183,18 @@ class FreeNAS_Groups(object):
     def __init__(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: enter")
 
-        self.__groups = FreeNAS_Directory_Groups(**kwargs)
+        """
+        FreeNAS_Directory_Groups call may fail for several reasons
+        For now lets just fail silently until we can come up with
+        a better error handling
+
+        TODO: Warn the user in the GUI that "something" happenned
+        """
+        try:
+            self.__groups = FreeNAS_Directory_Groups(**kwargs)
+        except:
+            self.__groups = None
+
         if self.__groups is None:
             self.__groups = []
 
@@ -278,7 +289,18 @@ class FreeNAS_Users(object):
     def __init__(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_Users.__init__: enter")
 
-        self.__users = FreeNAS_Directory_Users(**kwargs)
+        """
+        FreeNAS_Directory_Users call may fail for several reasons
+        For now lets just fail silently until we can come up with
+        a better error handling
+
+        TODO: Warn the user in the GUI that "something" happenned
+        """
+        try:
+            self.__users = FreeNAS_Directory_Users(**kwargs)
+        except:
+            self.__users = None
+
         if self.__users is None:
             self.__users = []
 

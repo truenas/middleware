@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:07-0700\n"
-"PO-Revision-Date: 2011-06-22 15:21+0200\n"
-"Last-Translator: Rully <paradoxnazi@gmail.com>\n"
+"PO-Revision-Date: 2011-12-13 02:14+0200\n"
+"Last-Translator: Hendriyo <hendriyo@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -469,21 +469,21 @@ msgstr "Tes Luring Segera (hanya ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Nama Anda tak dapat dimulai dengan tanda \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Tanda $ hanya bisa digunakan pada akhir kalimat"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Nama Anda tidak boleh ada tanda %s"
 
 #: account/forms.py:71
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Nama panjang Anda terdapat tanda %s"
 
 #: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
@@ -500,9 +500,8 @@ msgid "Username"
 msgstr "Nama Pengguna"
 
 #: account/forms.py:199
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Maksimal 30 huruf, angka dan hanya lambang @/./+/-/_"
+msgstr "Diperlukan 16 huruf atau kurang. Kata, desimal dan /-/_ saja."
 
 #: account/forms.py:200
 #, fuzzy
@@ -535,7 +534,7 @@ msgstr "Matikan login"
 
 #: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
-msgstr ""
+msgstr "Pemakai dikunci"
 
 #: account/forms.py:228
 msgid "Primary Group"
@@ -543,7 +542,7 @@ msgstr "Kelompok Utama"
 
 #: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Kunci umum SSH"
 
 #: account/forms.py:260
 #, fuzzy
@@ -572,7 +571,7 @@ msgstr "Direktori Home harus dimulai dengan /mnt/"
 
 #: account/forms.py:313
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Biarkan kosong, katasandi sedang dimatikan"
 
 #: account/forms.py:318 services/forms.py:595 services/forms.py:857
 #: storage/forms.py:284 system/forms.py:371 system/forms.py:398
@@ -850,27 +849,28 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Anda harus menunjukan alamat IPv4 juga"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Anda harus memilih netmask IPv4 juga"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Anda harus menunjukan alamat IPv6 juga"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Anda harus memilih netmask IPv6 juga"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Anda harus memilih IPv4 atau IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
 msgstr ""
+"Anda wajib menjelaskan baik untuk IPv4 atau IPv6 yang valid dengan maskbit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
@@ -2218,7 +2218,7 @@ msgstr "Kata sandi berbagi"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Pengguna tambahan (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2238,7 +2238,7 @@ msgstr "Alamat tujuan email. Pisahkan alamat email dengan titik koma."
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "Judul Email"
 
 #: services/models.py:827
 msgid ""
@@ -3633,7 +3633,7 @@ msgstr "Modus"
 
 #: storage/forms.py:773
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tipe dari ACL"
 
 #: storage/forms.py:779
 msgid "Set permission recursively"
@@ -3694,7 +3694,7 @@ msgstr ""
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Semua akses berbagi dari volume ini dihapus."
 
 #: storage/forms.py:1038
 msgid "I'm aware this will destroy snapshots within this dataset"
@@ -4013,7 +4013,7 @@ msgstr "Pergantian cakram telah dimulai."
 
 #: storage/views.py:633
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Cakram telah dilepas."
 
 #: storage/views.py:651
 msgid "The volume has been successfully exported"
@@ -4551,7 +4551,7 @@ msgstr "Tersedia"
 #: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "Nilai"
 
 #: system/models.py:651
 msgid "Sysctl"
@@ -4791,7 +4791,7 @@ msgstr "Ganti Kata Sandi Admin"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "BAHAYA"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
@@ -4836,7 +4836,7 @@ msgstr "Perubahan anda berhasil diperbaharui!"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "Simpan"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -5100,7 +5100,7 @@ msgstr "Selamat datang, %(username)s. Terimakasih telah log masuk."
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Selamat datang di %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5120,7 +5120,7 @@ msgstr "Log masuk kembali"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Apakan Anda akan menyalakan servis ini?"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -5381,6 +5381,10 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"Kata tunggal\n"
+"Ini akan menghapus semua file dalam dataset.\n"
+"Kata Jamak\n"
+"Ini akan menghapus semua file dalam dataset beserta cabang-cabangnya.\n"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -5828,7 +5832,7 @@ msgstr "Umum"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Kembalikan kesetting Pabrik"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5910,7 +5914,7 @@ msgstr "Perbaharui"
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "Status dari volume %s adalah baik"
 
 #: tools/alert.py:79
 #, python-format
@@ -5927,6 +5931,8 @@ msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Anda harus mengganti kata sandi sebagai admin (saat ini tidak menggunakan "
+"kata sandi untuk masuk)"
 
 #: tools/alert.py:99
 #, python-format

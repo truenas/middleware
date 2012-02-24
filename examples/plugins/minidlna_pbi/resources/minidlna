@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# $FreeBSD: ports/net/minidlna/files/minidlna.sh.in,v 1.2 2010/12/18 19:57:07 mi Exp $
+#
+# PROVIDE: minidlna
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following line to /etc/rc.conf[.local] to enable minidlna:
+#
+# minidlna_enable="YES"
+
+. /etc/rc.subr
+
+name=minidlna
+rcvar=`set_rcvar`
+#command=/usr/pbi/minidlna-amd64/sbin/minidlna
+command=/usr/local/sbin/minidlna
+
+load_rc_config $name
+
+minidlna_enable=${minidlna_enable-"NO"}
+minidlna_uid=${minidlna_uid-"dlna"}
+
+pidfile="/usr/pbi/minidlna-amd64/minidlna.pid"
+
+start_precmd="rm -f $pidfile"
+stop_postcmd=$start_precmd
+
+command_args="-P $pidfile -u $minidlna_uid"
+#required_dirs="/var/db/minidlna"
+
+minidlna_stop()
+{
+	res=1
+	echo -n 'Stopping minidlna.'
+	if [ -f "${pidfile}" ]
+	then
+		kill -QUIT $(cat "${pidfile}")
+		rm -f ${pidfile}
+		res=$?
+	else
+		killall -QUIT minidlna
+		res=$?
+	fi
+
+	echo
+	return ${res}
+}
+
+stop_cmd='minidlna_stop'
+run_rc_command $1

@@ -5,33 +5,21 @@
 
 # PROVIDE: ix-ssl
 # REQUIRE: FILESYSTEMS
-# BEFORE: ix-httpd
+# BEFORE: ix-nginx
 
 . /etc/rc.freenas
 
 generate_openssl_conf()
 {
-	local org
-	local unit
-	local email
-	local city
-	local state
-	local country
-	local common
-	local _IFS="${IFS}"
 	local IFS="|"
+	local f="ssl_org ssl_unit ssl_email ssl_city ssl_state ssl_country ssl_common"
+	eval local $f
+	local sf=$(var_to_sf $f)
 
-	read org unit email city state country common<<-__SSL__
+	eval read $f <<-__SSL__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ssl_org,
-		ssl_unit,
-		ssl_email,
-		ssl_city,
-		ssl_state,
-		ssl_country,
-		ssl_common
-
+		$sf
 	FROM
 		system_ssl
 
@@ -58,38 +46,38 @@ __SSL__
 		echo 01 > "${SSLCADIR}/serial"
 	fi
 
-	if [ -z "${org}" ]
+	if [ -z "${ssl_org}" ]
 	then
-		org="iXsystems, Inc."
+		ssl_org="iXsystems, Inc."
 	fi
-	if [ -z "${unit}" ]
+	if [ -z "${ssl_unit}" ]
 	then		
-		unit="Systems"
+		ssl_unit="Systems"
 	fi
-	if [ -z "${email}" ]
+	if [ -z "${ssl_email}" ]
 	then
-		email="root@localhost"
+		ssl_email="root@localhost"
 	fi
-	if [ -z "${city}" ]
+	if [ -z "${ssl_city}" ]
 	then
-		city="San Jose"
+		ssl_city="San Jose"
 	fi
-	if [ -z "${state}" ]
+	if [ -z "${ssl_state}" ]
 	then
-		state="California"
+		ssl_state="California"
 	fi
-	if [ -z "${country}" ]
+	if [ -z "${ssl_country}" ]
 	then
-		country="US"
+		ssl_country="US"
 	else
-		country=$(echo "${country}"|sed -E 's|^(..).+|\1|')
+		ssl_country=$(echo "${ssl_country}"|sed -E 's|^(..).+|\1|')
 	fi
-	if [ -z "${common}" ]
+	if [ -z "${ssl_common}" ]
 	then
-		common="localhost"
+		ssl_common="localhost"
 	fi
 
-	cat >"${SSLCONF}" <<-__EOF__
+	cat<<-__EOF__>"${SSLCONF}"
 	[ ca ]
 	default_ca                      = CA_default
 
@@ -127,13 +115,13 @@ __SSL__
 	prompt                          = no
 
 	[ req_distinguished_name ]
-	0.organizationName              = ${org}
-	organizationalUnitName          = ${unit}
-	emailAddress                    = ${email}
-	localityName                    = ${city}
-	stateOrProvinceName             = ${state}
-	countryName                     = ${country}
-	commonName                      = ${common}
+	0.organizationName              = ${ssl_org}
+	organizationalUnitName          = ${ssl_unit}
+	emailAddress                    = ${ssl_email}
+	localityName                    = ${ssl_city}
+	stateOrProvinceName             = ${ssl_state}
+	countryName                     = ${ssl_country}
+	commonName                      = ${ssl_common}
 
 	[ v3_ca ]
 	basicConstraints                = CA:TRUE
@@ -148,24 +136,28 @@ __EOF__
 
 create_CA()
 {
-	local tmp
+	local key="${1}"
+	local crt="${2}"
 
-	if [ -f "${SSLCAKEY}" -a -f "${SSLCACERT}" ]
+	: ${key:="${SSLCAKEY}"}
+	: ${crt:="${SSLCACERT}"}
+
+	if [ -f "${key}" -a -f "${crt}" ]
 	then
 		return
 	fi
 
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	local tmp=$(mktemp /tmp/tmp.XXXXXX)
 	dd if=/dev/urandom count=16 bs=1 | uuencode -|head -2 | \
 	    tail -1 > "${tmp}"
 	${OPENSSL} req -config "${SSLCONF}" -batch -passout file:"${tmp}" \
-	    -new -x509 -keyout "${SSLCAKEY}" -out "${SSLCACERT}"
+	    -new -x509 -keyout "${key}" -out "${crt}"
 
-	cp "${SSLCAKEY}" "${SSLCAKEY}.orig"
-	${OPENSSL} rsa -passin file:"${tmp}" -in "${SSLCAKEY}.orig" \
-	    -out "${SSLCAKEY}"
-	rm -f "${tmp}" "${SSLCAKEY}.orig"
-	chmod 400 "${SSLCAKEY}"
+	cp "${key}" "${key}.orig"
+	${OPENSSL} rsa -passin file:"${tmp}" -in "${key}.orig" \
+	    -out "${key}"
+	rm -f "${tmp}" "${key}.orig"
+	chmod 400 "${key}"
 }
 
 import_certificate()
@@ -218,7 +210,15 @@ import_certificate()
 
 write_key()
 {
-	awk -v key="${SSLCAKEY}" '
+	local infile="${1}"
+	local outfile="${2}"
+
+	if [ -z "${infile}" -o -z "${outfile}" -o ! -f "${infile}" ]
+	then
+		return 1
+	fi
+
+	awk -v key="${outfile}" '
 	BEGIN {
 		inkeyfile = 0
 		keyfile[0] = null;
@@ -240,14 +240,22 @@ write_key()
 		for (i = 0;i < keyfile_size;i++)
 			print keyfile[i] > key
 	}
-	' < "${HTTPDCERT}"
+	' < "${infile}"
 
 	return 0
 }
 
 write_cert()
 {
-	awk -v cert="${SSLCACERT}" '
+	local infile="${1}"
+	local outfile="${2}"
+
+	if [ -z "${infile}" -o -z "${outfile}" -o ! -f "${infile}" ]
+	then
+		return 1
+	fi
+
+	awk -v cert="${outfile}" '
 	BEGIN {
 		incertfile = 0
 		certfile[0] = null;
@@ -269,12 +277,87 @@ write_cert()
 		for (i = 0;i < certfile_size;i++)
 			print certfile[i] > cert
 	}
-	' < "${HTTPDCERT}"
+	' < "${infile}"
 
 	return 0
 }
 
-generate_certificate()
+generate_system_certificate()
+{
+	if ! [ -f "${SSLCAKEY}" -o -f "${SSLCACERT}" ]
+	then
+		create_CA "${SSLCAKEY}" "${SSLCACERT}"
+	fi
+}
+
+
+create_CSR()
+{
+	local outfile="${1}"
+
+	if [ -z "${outfile}" ]
+	then
+		return 1
+	fi
+
+	${OPENSSL} req -config ${SSLCONF} -batch -new -nodes -out "${outfile}"
+	return $?
+}
+
+sign_CSR()
+{
+	local infile="${1}"
+	local outfile="${2}"
+
+	if [ -z "${infile}" -o -z "${outfile}" ]
+	then
+		return 1
+	fi
+
+	${OPENSSL} ca -config ${SSLCONF} -batch -out "${outfile}" -infiles "${infile}"
+	return $?
+}
+
+verify_CA()
+{
+	local infile="${1}"
+
+	if [ -z "${infile}" ]
+	then
+		return 1
+	fi
+
+	${OPENSSL} x509 -in "${infile}" -noout -text -dates -purpose
+	return $?
+}
+
+verify_CSR()
+{
+	local infile="${1}"
+
+	if [ -z "${infile}" ]
+	then
+		return 1
+	fi
+
+	${OPENSSL} req -in "${infile}" -text -verify -noout 
+	return $?
+}
+
+verify_signature()
+{
+	local infile="${1}"
+
+	if [ -z "${infile}" ]
+	then
+		return 1
+	fi
+
+	${OPENSSL} x509 -in "${infile}" -noout -text -dates -purpose
+	return $?
+}
+
+configure_nginx_ssl()
 {
 	local new_cert tmp
 
@@ -290,84 +373,87 @@ generate_certificate()
 		-id
 
 	LIMIT 1
-	" > $tmp
+	" > "${tmp}"
 
-	# HACK: the wc -c part shouldn't be required; the GUI is producing $tmp
-	# with just a newline, which breaks everything else below.
-	size=$(wc -c $tmp | awk '{ print $1 }')
-	#if [ -s "${tmp}" ]; then
-	if [ $size -gt 1 ]; then
-		if ! diff -Nq $tmp $HTTPDCERT >/dev/null; then
-			mv $tmp "${HTTPDCERT}"
+	mkdir -p "${HTTPDSSLDIR}"
+	size=$(wc -c "${tmp}" | awk '{ print $1 }')
+	if [ ${size} -gt 1 ]
+	then
+		local tmpkey="$(mktemp /tmp/tmp.XXXXXX)"
+		local tmpcrt="$(mktemp /tmp/tmp.XXXXXX)"
+
+		write_key "${tmp}" "${tmpkey}"
+		write_cert "${tmp}" "${tmpcrt}"
+
+		diff -Nq "${tmpkey}" "${HTTPDKEY}" >/dev/null
+		local rc1=$?
+
+		diff -Nq "${tmpcrt}" "${HTTPCVERT}" >/dev/null
+		local rc2=$?
+
+		if [ "${rc1}" != "0" -a "${rc2}" != "0" ]
+		then
+			mv "${tmpkey}" "${HTTPDKEY}"
+			mv "${tmpcrt}" "${HTTPDCERT}"
 			new_cert=true
+		else
+			rm -f "${tmpkey}" "${tmpcrt}"
 		fi
+
 	else
-		# User wants to regenerate the file.
-		rm -f ${HTTPDCERT}
+		rm -f "${HTTPDKEY}" "${HTTPDCERT}"
 		new_cert=true
 	fi
 
-	if [ -f "${SSLCAKEY}" -a -f "${SSLCACERT}" ]; then
-		:
-	else
-		if [ -s "${HTTPDCERT}" ]; then
-			write_key
-			write_cert
-		else
-			create_CA
-			new_cert=true
-		fi
+	if ! [ -f "${HTTPDKEY}" -a -f "${HTTPDCERT}" ]
+	then
+		create_CA "${HTTPDKEY}" "${HTTPDCERT}"
+		new_cert=true
 	fi
 
-	if [ -s "${SSLCAKEY}" -a -s "${SSLCACERT}" ]; then
-		if [ ! -s "$HTTPDCERT" ]; then
-			cat "${SSLCAKEY}" "${SSLCACERT}" > "${HTTPDCERT}"
-			chmod 400 "${HTTPDCERT}"
-			new_cert=true
-		fi
-		if $new_cert; then
-			import_certificate "${HTTPDCERT}"
+	if [ -s "${HTTPDKEY}" -a -s "${HTTPDCERT}" ]
+	then
+		if [ ! -z "${new_cert}" ]
+		then
+			local cert=$(mktemp /tmp/tmp.XXXXXX)
+			cat "${HTTPDKEY}" "${HTTPDCERT}" > "${cert}"
+			import_certificate "${cert}"
+			rm -f "${cert}"
 		fi
 	else
-		echo "${SSLCAKEY} and/or ${SSLCACERT} does not exist."
+		echo "${HTTPDKEY} and/or ${HTTPDCERT} does not exist."
 	fi
-}
 
-
-create_CSR()
-{
-	${OPENSSL} req -config ${SSLCONF} -batch -new -nodes -out req.pem 
-}
-
-sign_CSR()
-{
-	${OPENSSL} ca -config ${SSLCONF} -batch -out cert.pem -infiles req.pem 
-}
-
-verify_CA()
-{
-	${OPENSSL} x509 -in cacert.pem -noout -text -dates -purpose
-}
-
-verify_CSR()
-{
-	${OPENSSL} req -in req.pem -text -verify -noout 
-}
-
-verify_signature()
-{
-	${OPENSSL} x509 -in cert.pem -noout -text -dates -purpose
+	rm -f "${tmp}"
 }
 
 do_openssl_config()
 {
 	generate_openssl_conf
-	generate_certificate
+	generate_system_certificate
+
+	for arg in ${ixssl_list}
+	do
+		func="configure_${arg}_ssl"
+		if $(type "${func}" 2>/dev/null|grep -q 'shell function')
+		then
+			eval ${func}
+		fi
+	done	
 }
 
 name="ix-ssl"
 start_cmd='do_openssl_config'
 stop_cmd=':'
-            
+
 load_rc_config $name
-run_rc_command "$1"
+cmd="${1}"
+if [ $# -gt 0 ]
+then
+	shift
+fi
+if [ -n "$*" ]
+then
+	ixssl_list="$*"
+fi
+run_rc_command "${cmd}"

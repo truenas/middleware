@@ -1,0 +1,49 @@
+
+<table class="grid">
+    <thead class="header">
+      <tr>
+        <td>{% trans "Address" %}</td>
+        <td>{% trans "Burst" %}</td>
+        <td>{% trans "iBurst" %}</td>
+        <td>{% trans "Prefer" %}</td>
+        <td>{% trans "Min. Poll" %}</td>
+        <td>{% trans "Max. Poll" %}</td>
+        <td>{% trans "Available actions" %}</td>
+      </tr>
+    </thead>
+    {% for c in ntpservers %}
+        <td>{{ c.ntp_address }}</td>
+        <td>{{ c.ntp_burst }}</td>
+        <td>{{ c.ntp_iburst }}</td>
+        <td>{{ c.ntp_prefer }}</td>
+        <td>{{ c.ntp_minpoll }}</td>
+        <td>{{ c.ntp_maxpoll }}</td>
+        <td>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Edit"|force_escape|force_escape %}', '{{ c.get_edit_url }}', [this,]);
+            </script>
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ c.get_delete_url }}', [this,]);
+            </script>
+            </button>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7">{% trans "No NTP servers defined." %}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    <p class="btn">
+        <button data-dojo-type="dijit.form.Button" type="button">
+            {% trans "Add NTP server" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Add NTP Server"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="NTPServer" %}', [this,]);
+        </script>
+        </button>
+    </p>

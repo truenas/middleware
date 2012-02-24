@@ -1,5 +1,5 @@
 #+
-# Copyright 2010 iXsystems, Inc.
+# Copyright 2010-2012 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,10 +86,10 @@ STATIC_ROOT = os.path.join(HERE, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = MEDIA_URL
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
-    os.path.join(HERE, "media"),
+    os.path.join(HERE, "fnstatic"),
 )
 
 # List of finder classes that know how to find static files in
@@ -110,6 +110,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'freenasUI.freeadmin.middleware.LocaleMiddleware',
+    'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -121,12 +122,13 @@ DOJANGO_DATAGRID_ACCESS = (
     'system',
     'network',
     'storage',
+    'plugins',
     'sharing',
     'services',
 )
 
 DOJANGO_DOJO_PROFILE = 'local_release'
-DOJANGO_DOJO_VERSION = '1.7.0'
+DOJANGO_DOJO_VERSION = '1.7.2'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
 DOJANGO_DOJO_DEBUG = True
 
@@ -165,6 +167,7 @@ INSTALLED_APPS = (
     'storage',
     'sharing',
     'services',
+    'plugins',
 )
 
 BLACKLIST_NAV = (

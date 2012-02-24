@@ -6,26 +6,22 @@
 # PROVIDE: ix-update
 # BEFORE: ix-fstab
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 readonly UPDATE_FAILED_LOG="/data/update.failed"
 
 db_update_real()
 {
-	local i
-
 	echo "Applying database schema changes"
 
-	for i in account freeadmin network services sharing storage system; do
-		yes | /usr/local/bin/python \
-		    /usr/local/www/freenasUI/manage.py migrate --merge $i > \
-		    $UPDATE_FAILED_LOG
-		if [ $? -ne 0 ]; then
-			echo "manage.py migrate $i failed"
-			return 1
-		fi
-	done
-	rm -f $UPDATE_FAILED_LOG 
+	yes | /usr/local/bin/python \
+	    /usr/local/www/freenasUI/manage.py migrate --merge > \
+		$UPDATE_FAILED_LOG 2>&1
+	if [ $? -ne 0 ]; then
+		echo "manage.py migrate failed"
+		return 1
+	fi
+	rm -f $UPDATE_FAILED_LOG
 	return 0
 }
 
@@ -35,18 +31,20 @@ handle_error()
 
 	echo "Reverting to previous state"
 
-	rm -f /data/need-update
+	rm -f $NEED_UPDATE_SENTINEL
 	mv ${FREENAS_CONFIG}.bak ${FREENAS_CONFIG}
-	if [ -f /data/cd_upgrade ]; then
-		rm /data/cd_upgrade
+	if [ -f $CD_UPGRADE_SENTINEL ]; then
+		rm $CD_UPGRADE_SENTINEL
 		cat <<EOF
 Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
 Reverting a failed CD upgrade is not totally possible
 Rebooting in 15 seconds..
 EOF
+		umount /data
 		sleep 15
 		reboot
 	fi
+	umount /data
 
 	. /etc/nanobsd.conf
 
@@ -78,11 +76,11 @@ db_update()
 			exit 1
 		fi
 	fi
-	if ! mount -w /data; then
+	if ! mount -w -onoatime /data; then
 		echo "Cannot mount /data to see if you need an upgrade."
 		exit 1
 	fi
-	if [ ! -f /data/need-update ]; then
+	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
 		# XXX: this seems somewhat dangerous, depending on script
 		# ordering and system state.
 		umount /data 
@@ -100,11 +98,18 @@ db_update()
 	db_update_real || handle_error
 	set -e
 
-	rm -f /data/need-update
-	if [ -f /data/cd_upgrade ]; then
-		rm /data/cd_upgrade
-	fi
-	umount /data
+	rm -f $NEED_UPDATE_SENTINEL
+	rm -f $CD_UPGRADE_SENTINEL
+
+	# Things that need write access to /data can follow this.
+
+
+	# Things that just need to read from /data can follow this.
+	mount -ur /data
+
+	# NOTE: this must be run via the rc.d script, not service(8).
+	env AUTOTUNE_REBOOT=false /etc/rc.d/ix-loader start
+
 	echo "Database upgrade complete.  Rebooting."
 	cd /
 	sleep 2

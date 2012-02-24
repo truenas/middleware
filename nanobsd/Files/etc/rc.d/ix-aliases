@@ -11,17 +11,20 @@
 
 generate_aliases()
 {
-	local IFS=\|
+	local IFS="|"
+	local f="bsdusr_username bsdusr_email"
+	eval local $f
+	local sf=$(var_to_sf $f)
 	local user email
 	cp /conf/base/etc/aliases /etc/aliases
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_username,bsdusr_email FROM account_bsdusers WHERE bsdusr_email != ''" | \
-    while read user email; do
-	    if [ ! -z `egrep "^${user}" /etc/aliases` ]; then
-            sed -E "s/^${user}:.*/${user}: ${email}/" /etc/aliases >> /etc/aliases
-        else
-            echo "${user}: ${email}" >> /etc/aliases
-        fi
-    done
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM account_bsdusers WHERE bsdusr_email != ''" | \
+	while eval read $f; do
+		if grep -q "^${bsdusr_username}" /etc/aliases; then
+			sed -E "s/^${bsdusr_username}:.*/${bsdusr_username}: ${bsdusr_email}/" /etc/aliases >> /etc/aliases
+        	else
+			echo "${bsdusr_username}: ${bsdusr_email}" >> /etc/aliases
+		fi
+	done
 }
 
 name="ix-aliases"

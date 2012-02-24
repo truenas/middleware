@@ -34,17 +34,19 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
 from django.core.validators import email_re
 
-import choices
-from services import models
-from services.exceptions import ServiceFailed
-from storage.models import Volume, MountPoint, Disk
-from storage.forms import UnixPermissionField
+from dojango import forms
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
-from freenasUI.middleware.notifier import notifier
-from dojango import forms
 from freeadmin.forms import DirectoryBrowser
-from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
+from freenasUI.middleware.notifier import notifier
+from freenasUI.services import models
+from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.network.models import Alias, Interfaces
+from freenasUI.storage.models import Volume, MountPoint, Disk
+from freenasUI.storage.widgets import UnixPermissionField
+from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError, \
+                   IPv6Address, IPv4Address 
 
 """ Services """
 
@@ -109,19 +111,35 @@ class NFSForm(ModelForm):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 class PluginsForm(ModelForm):
-    jail_interface = forms.ChoiceField(label = _("Jail interface"))
-
-    def __init__(self, *args, **kwargs):
-        super(PluginsForm, self).__init__(*args, **kwargs)
-        self.fields['jail_interface'].choices = choices.NICChoices(exclude_configured=False)
+    def clean_plugins_path(self):
+        ppath = self.cleaned_data.get("plugins_path")
+        jpath = self.cleaned_data.get("jail_path")
+        jname = self.cleaned_data.get("jail_name")
+        if not ppath:
+            return None
+        ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
+        jpathname = os.path.join(jpath, jname)
+        if ppath == jpath or ppath.startswith(jpathname):
+            raise forms.ValidationError(_("The plugins path cannot be the same or reside within jail path."))
+        return ppath
 
     class Meta:
         model = models.Plugins
+
+    def clean_jail_ip(self):
+        jip = self.cleaned_data.get("jail_ip")
+        if jip == self.instance.jail_ip:
+            return jip
+        if Alias.objects.filter(alias_v4address=jip).exists() or \
+            Interfaces.objects.filter(int_ipv4address=jip).exists():
+            raise forms.ValidationError(_("This IP already exists."))
+        return jip
+
     def save(self):
         super(PluginsForm, self).save()
-        started = notifier().restart("plugins")
+        started = notifier().restart("plugins_jail")
         if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
-            raise ServiceFailed("plugins", _("The Plugins service failed to reload."))
+            raise ServiceFailed("plugins_jail", _("The Plugins service failed to reload."))
 
 
 class FTPForm(ModelForm):
@@ -280,11 +298,6 @@ class DynamicDNSForm(ModelForm):
 class SNMPForm(ModelForm):
     class Meta:
         model = models.SNMP
-    def clean_snmp_location(self):
-        location = self.cleaned_data['snmp_location']
-        if not re.match(r'^[-_a-zA-Z0-9\s]+$', location):
-            raise forms.ValidationError(_(u"The location must contain only alphanumeric characters, _ or -"))
-        return location
     def clean_snmp_contact(self):
         from django.core.validators import email_re
         contact = self.cleaned_data['snmp_contact']
@@ -632,7 +645,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         for mp in MountPoint.objects.all():
             if path == mp.mp_path:
                 raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
-            if path.startswith(mp.mp_path):
+            if path.startswith(mp.mp_path+'/'):
                 valid = True
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
@@ -754,15 +767,24 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
             # label it only if it is a real disk
-            if not self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
+            if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
+                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_extent_disk"]
+                oExtent.iscsi_target_extent_type = 'ZVOL'
+            elif self.cleaned_data["iscsi_extent_disk"].startswith("multipath"):
                 notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
-                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
+                mp_name = self.cleaned_data["iscsi_extent_disk"].split("/")[-1]
+                diskobj = models.Disk.objects.get(disk_multipath_name=mp_name)
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             else:
-                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_extent_disk"]
-                oExtent.iscsi_target_extent_type = 'ZVOL'
+                notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
+                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
+                if diskobj.disk_identifier.startswith("{devicename}"):
+                    notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
+                    notifier().sync_disk(self.cleaned_data["iscsi_extent_disk"])
+                oExtent.iscsi_target_extent_type = 'Disk'
+                oExtent.iscsi_target_extent_path = str(diskobj.id)
             oExtent.iscsi_target_extent_filesize = 0
             oExtent.save()
         started = notifier().reload("iscsitarget")
@@ -785,41 +807,73 @@ class iSCSITargetPortalForm(ModelForm):
         if tag > higher:
             raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
         return tag
-    def clean_iscsi_target_portal_listen(self):
-        val = self.cleaned_data.get("iscsi_target_portal_listen")
-        return val.strip()
     def save(self):
         super(iSCSITargetPortalForm, self).save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+class iSCSITargetPortalIPForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
+            label=self.fields['iscsi_target_portalip_ip'].label,
+            )
+        ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
+        for interface in Interfaces.objects.all():
+            if interface.int_ipv4address:
+                ips.append( (interface.int_ipv4address, interface.int_ipv4address) )
+            elif interface.int_ipv6address:
+                ips.append( (interface.int_ipv6address, interface.int_ipv6address) )
+            for alias in interface.alias_set.all():
+                if alias.alias_v4address:
+                    ips.append( (alias.alias_v4address, alias.alias_v4address) )
+                elif alias.alias_v6address:
+                    ips.append( (alias.alias_v6address, alias.alias_v6address) )
+        self.fields['iscsi_target_portalip_ip'].choices = ips
+    class Meta:
+        model = models.iSCSITargetPortalIP
+        widgets = {
+            'iscsi_target_portalip_port': forms.widgets.TextInput(),
+        }
+
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
         self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
+
     class Meta:
         model = models.iSCSITargetAuthorizedInitiator
         widgets = {
             'iscsi_target_initiator_tag': forms.widgets.HiddenInput(),
         }
+
     def clean_iscsi_target_initiator_tag(self):
         tag = self.cleaned_data["iscsi_target_initiator_tag"]
         higher = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
         if tag > higher:
             raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
         return tag
+
     def clean_iscsi_target_initiator_auth_network(self):
-        auth_network = self.cleaned_data.get('iscsi_target_initiator_auth_network', '').strip().upper()
-        if auth_network != 'ALL':
+        field = self.cleaned_data.get('iscsi_target_initiator_auth_network',
+            '').strip().upper()
+        nets = re.findall(r'\S+', field)
+
+        for auth_network in nets:
+            if auth_network == 'ALL':
+                continue
             try:
                 IPNetwork(auth_network.encode('utf-8'))
             except (NetmaskValueError, ValueError):
                 try:
                     IPAddress(auth_network.encode('utf-8'))
                 except (AddressValueError, ValueError):
-                    raise forms.ValidationError(_("The field is a not a valid IP address or network. The keyword \"ALL\" can be used to allow everything."))
-        return auth_network
+                    raise forms.ValidationError(
+                        _("The field is a not a valid IP address or network. "
+                        "The keyword \"ALL\" can be used to allow everything."))
+        return '\n'.join(nets)
+
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
         started = notifier().reload("iscsitarget")
@@ -830,7 +884,7 @@ class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
     class Meta:
         model = models.iSCSITarget
-        exclude = ('iscsi_target_initialdigest',)
+        exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
         if not kwargs.has_key("instance"):

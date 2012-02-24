@@ -26,6 +26,7 @@
 #
 import os
 import re
+import subprocess
 
 from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
@@ -102,6 +103,16 @@ class Pool(object):
             setattr(self, root.name, root)
         root.parent = self
 
+    def find_not_online(self):
+        """
+        Get disks used within this pool
+        """
+        unavails = []
+        for key in ('data', 'cache', 'spares', 'logs'):
+            if getattr(self, key):
+                unavails.extend(getattr(self, key).find_not_online())
+        return unavails
+
     def get_disks(self):
         """
         Get disks used within this pool
@@ -176,23 +187,16 @@ class Tnode(object):
                 return child
         return None
 
-    def find_unavail(self):
+    def find_not_online(self):
         """
         Find nodes of stauts UNAVAIL
         """
-        if len(self.children) == 0:
-            if self.status != 'ONLINE':
-                return self
-        else:
-            unavails = []
-            for child in self.children:
-                find = child.find_unavail()
-                if find:
-                    if isinstance(find, list):
-                        unavails += find
-                    else:
-                        unavails.append(find)
-            return unavails
+        if len(self.children) == 0 and self.status != 'ONLINE':
+            return [self]
+        unavails = []
+        for child in self.children:
+            unavails.extend(child.find_not_online())
+        return unavails
 
     def append(self, tnode):
         """
@@ -367,6 +371,7 @@ class Dev(Tnode):
 
     disk = None
     devname = None
+    path = None
     def __init__(self, *args, **kwargs):
         self.replacing = kwargs.pop('replacing', False)
         super(Dev, self).__init__(*args, **kwargs)
@@ -383,7 +388,7 @@ class Dev(Tnode):
 
     def treedump(self):
         from django.utils import simplejson
-        #TODO Move django stuff to outside (view)
+        #TODO Move django stuff to outside (view) - hydrate mode
         from freenasUI.storage.models import Disk
         from django.core.urlresolvers import reverse
         disk = None
@@ -457,6 +462,15 @@ class Dev(Tnode):
                 provider = search[0].content
             elif self.status == 'ONLINE':
                 raise Exception("It should be a valid device: %s" % self.name)
+            elif self.name.isdigit():
+                # Lets check whether it is a guid
+                p1 = subprocess.Popen(["/usr/sbin/zdb", "-C", self.parent.parent.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if p1.wait() == 0:
+                    zdb = p1.communicate()[0]
+                    reg = re.search(r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % self.name, zdb, re.M|re.S)
+                    if reg:
+                        self.path = reg.group("path")
+
         if provider:
             search = self._doc.xpathEval("//provider[@id = '%s']"
                                          "/../name" % provider)
@@ -614,7 +628,7 @@ def parse_status(name, doc, data):
                     node.append(node2)
                     pnode = node
             elif ident >= 2:
-                if word != 'replacing':
+                if not word.startswith('replacing'):
                     if ident == 3:
                         replacing = True
                     else:

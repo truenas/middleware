@@ -55,3 +55,7 @@ def system(command, important=True):
     syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Executing: " + command)
     __system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (pipeinfo.name, ))
     syslog.syslog(syslog.LOG_INFO if important else syslog.LOG_DEBUG, "Executed: " + command)
+
+def setname(name):
+    pipeinfo = info()
+    pipeinfo.setname(name)
