@@ -163,7 +163,7 @@ def minidlna_post(environ, start_response, args):
         keep_blank_values=1)
 
     if not form.list:
-        return "Fail."
+        return "A problem occurred."
 
     f = open(minidlna_opts, "w")
     for key in args:
@@ -235,9 +235,9 @@ def minidlna_post(environ, start_response, args):
         os.system("/usr/sbin/chown -R dlna:dlna '%s'" % minidlna_db_dir)
         os.system("/bin/chmod 775 '%s'" % minidlna_db_dir)
 
-    ret = "Bad Stuff."
+    ret = "A problem occurred."
     if os.system(os.path.join(minidlna_pbi_path, "tweak-rcconf")) == 0:
-        ret = "Good Stuff."
+        ret = "Success."
 
     return ret
 
