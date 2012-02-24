@@ -221,17 +221,42 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
     """
-    bsdusr_username = forms.CharField(label=_("Username"), max_length=16)
-    bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
-    bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
-        help_text = _("Enter the same password as above, for verification."), required=False)
-    bsdusr_shell = forms.ChoiceField(label=_("Shell"), initial=u'/bin/csh', choices=())
-    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
+    bsdusr_username = forms.CharField(
+        label=_("Username"),
+        max_length=16)
+    bsdusr_password1 = forms.CharField(
+        label=_("Password"),
+        widget=forms.PasswordInput,
+        required=False)
+    bsdusr_password2 = forms.CharField(
+        label=_("Password confirmation"),
+        widget=forms.PasswordInput,
+        help_text=_("Enter the same password as above, for verification."),
+        required=False)
+    bsdusr_shell = forms.ChoiceField(
+        label=_("Shell"),
+        initial=u'/bin/csh',
+        choices=())
+    bsdusr_password_disabled = forms.BooleanField(
+        label=_("Disable password logins"),
+        required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
-    bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
-    bsdusr_mode = UnixPermissionField(label=_('Home Directory Mode'), initial='755')
-    bsdusr_to_group = FilteredSelectField(label=_('Auxiliary groups'),
+    bsdusr_creategroup = forms.BooleanField(
+        label=_("Create a new primary group for the user"),
+        required=False,
+        initial=True)
+    bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"),
+        queryset=models.bsdGroups.objects.all(),
+        required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"),
+        widget=forms.Textarea,
+        max_length=8192,
+        required=False)
+    bsdusr_mode = UnixPermissionField(
+        label=_('Home Directory Mode'),
+        initial='755')
+    bsdusr_to_group = FilteredSelectField(
+        label=_('Auxiliary groups'),
         choices=(),
         required=False)
     advanced_fields = ['bsdusr_mode']
@@ -241,12 +266,26 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         widgets = {
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
-        exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2',
-            'bsdusr_home', 'bsdusr_mode', 'bsdusr_shell', 'bsdusr_full_name',
-            'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2',
-            'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked',
-            'bsdusr_to_group')
+        exclude = ('bsdusr_unixhash',
+            'bsdusr_smbhash',
+            'bsdusr_group',
+            )
+        fields = ('bsdusr_uid',
+            'bsdusr_username',
+            'bsdusr_creategroup',
+            'bsdusr_group2',
+            'bsdusr_home',
+            'bsdusr_mode',
+            'bsdusr_shell',
+            'bsdusr_full_name',
+            'bsdusr_email',
+            'bsdusr_password1',
+            'bsdusr_password2',
+            'bsdusr_password_disabled',
+            'bsdusr_sshpubkey',
+            'bsdusr_locked',
+            'bsdusr_to_group',
+            )
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -259,7 +298,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+        self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_creategroup", '
+            '["id_bsdusr_group2"], false);')
         self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
+        self.fields['bsdusr_group2'].widget.attrs['disabled'] = 'disabled'
         self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple(
             [x for x in self.fields['bsdusr_group2'].choices][1:])
         self.fields['bsdusr_group2'].required = False
@@ -287,6 +330,13 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         else:
             return self.instance.bsdusr_username
 
+    def clean_bsdusr_group2(self):
+        create = self.cleaned_data.get("bsdusr_creategroup")
+        group = self.cleaned_data.get("bsdusr_group2")
+        if not group and not create:
+            raise forms.ValidationError(_("This field is required"))
+        return group
+
     def clean_bsdusr_password2(self):
         bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
@@ -312,7 +362,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     def clean_bsdusr_to_group(self):
         v = self.cleaned_data.get("bsdusr_to_group")
         if len(v) > 64:
-            raise forms.ValidationError(_("A user cannot belong to more than 64 auxiliary groups"))
+            raise forms.ValidationError(
+                _("A user cannot belong to more than 64 auxiliary groups"))
         return v
 
     def clean(self):
@@ -326,18 +377,21 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         if (self.cleaned_data.get('bsdusr_sshpubkey') and
             not bsdusr_home.startswith(u'/mnt/')):
             del self.cleaned_data['bsdusr_sshpubkey']
-            self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
+            self._errors['bsdusr_sshpubkey'] = self.error_class([
+                _("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
             FIELDS = ['bsdusr_password1', 'bsdusr_password2']
             if password_disable:
                 for field in FIELDS:
                     if cleaned_data.get(field, '') != '':
-                        self._errors[field] = self.error_class([_("Password is disabled, leave this blank")])
+                        self._errors[field] = self.error_class([
+                            _("Password is disabled, leave this blank")])
                         del cleaned_data[field]
             else:
                 for field in FIELDS:
                     if cleaned_data.get(field, '') == '':
-                        self._errors[field] = self.error_class([_("This field is required.")])
+                        self._errors[field] = self.error_class([
+                            _("This field is required.")])
                         del cleaned_data[field]
 
         return cleaned_data
@@ -348,7 +402,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             group = self.cleaned_data['bsdusr_group2']
             if group is None:
                 try:
-                    gid = models.bsdGroups.objects.get(bsdgrp_group = self.cleaned_data['bsdusr_username']).bsdgrp_gid
+                    gid = models.bsdGroups.objects.get(
+                        bsdgrp_group=self.cleaned_data['bsdusr_username']
+                        ).bsdgrp_gid
                 except:
                     gid = -1
             else:
