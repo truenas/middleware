@@ -175,9 +175,19 @@ webshell = (function() {
             /*
              * We need to stop propagation whether this is TAB
              * for command completion in shell
+             *
+             * Also, at least in chrome ctrl+c/d,delete are seen as keydown
              * TODO: Use dojo
              */
-            if (ev.keyCode == 9) {
+            if (
+                    ev.keyCode == 9 ||
+                    (dojo.isWebKit && (
+                        (ev.ctrlKey && (
+                            ev.keyCode == 67 || ev.keyCode == 68
+                        )) ||
+                        ev.keyCode == 8)
+                    )
+                    ) {
                 me.keypress(ev);
             }
 
