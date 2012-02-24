@@ -22,8 +22,8 @@ set_autotune_sysctls()
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 		$autotune \
-			--kernel-reserved=6442450944 \
-			--userland-reserved=4831838208 \
+			--kernel-reserved=1048576 \
+			--userland-reserved=2097152 \
 			--conf-file=/etc/sysctl.conf > $tmp
 
 		if [ $? -eq 0 ]; then
