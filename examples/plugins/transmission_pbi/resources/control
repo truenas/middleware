@@ -153,7 +153,7 @@ def transmission_post(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
 
     if not args:
-        return "Fail."
+        return "A problem occurred."
 
     data = ""
     main_settings = {}
@@ -206,9 +206,9 @@ def transmission_post(environ, start_response, args):
         os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_download_dir"])
         os.system("/bin/chmod 775 '%s'" % main_settings["transmission_download_dir"])
 
-    ret = "Bad Stuff."
+    ret = "A problem occurred."
     if os.system(os.path.join(transmission_pbi_path, "tweak-rcconf")) == 0:
-        ret = "Good Stuff."
+        ret = "Success."
 
     return ret
 

@@ -133,7 +133,7 @@ firefly_daemon_vars = {
     "debuglevel":      { "type": "select", "opt": "-d" },
     "debug_modules":   { "type": "textbox", "opt": "-D" },
     "disable_mdns":    { "type": "checkbox", "opt": "-m" },
-    "non_root_usser":  { "type": "checkbox", "opt": "-y" },
+    "non_root_user":   { "type": "checkbox", "opt": "-y" },
     "ffid":            { "type": "textbox", "opt": "-b" }
 }
 
@@ -181,11 +181,8 @@ vars_and_settings = [
 def firefly_post(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
 
-    form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
-        keep_blank_values=1)
-
-    if not form.list:
-        return "Fail."
+    if not args:
+        return "A problem occurred."
 
     f = open(firefly_opts, "w")
     for key in args:
@@ -260,10 +257,13 @@ def firefly_post(environ, start_response, args):
     if firefly_plugins_settings.has_key("plugin_dir") and firefly_plugins_settings["plugin_dir"]:
         os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_plugins_settings["plugin_dir"])
         os.system("/bin/chmod 775 '%s'" % firefly_plugins_settings["plugin_dir"])
+    if firefly_general_settings.has_key("db_params") and firefly_general_settings["db_params"]:
+        os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_general_settings["db_params"])
+        os.system("/bin/chmod 775 '%s'" % firefly_general_settings["db_params"])
 
-    ret = "Bad Stuff."
+    ret = "A problem occurred."
     if os.system(os.path.join(firefly_pbi_path, "tweak-rcconf")) == 0:
-        ret = "Good Stuff."
+        ret = "Success."
 
     return ret
 
