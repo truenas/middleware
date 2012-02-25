@@ -26,7 +26,7 @@ from django.core.management import setup_environ
 
 setup_environ(settings)
 
-from freenasUI.system.models import Sysctl, Tunable
+from freenasUI.system.models import Advanced, Sysctl, Tunable
 
 MB = 1024 * 1024
 GB = 1024 * MB
@@ -234,6 +234,10 @@ def main(argv):
 
     global KERNEL_RESERVED_MEM
     global USERLAND_RESERVED_MEM
+
+    adv = Advanced.objects.order_by('-id')[0]
+    if not adv.adv_autotune:
+        return
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--conf',
