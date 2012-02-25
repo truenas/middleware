@@ -657,7 +657,7 @@ class SysctlForm(ModelForm):
 
     def save(self):
         super(SysctlForm, self).save()
-        notifier().start("sysctl")
+        notifier().reload("sysctl")
 
 class TunableForm(ModelForm):
     class Meta:
@@ -680,4 +680,4 @@ class TunableForm(ModelForm):
 
     def save(self):
         super(TunableForm, self).save()
-        notifier().start("loader")
+        notifier().reload("loader")
