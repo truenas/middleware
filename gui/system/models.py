@@ -750,7 +750,7 @@ class Sysctl(Model):
 
     def delete(self):
         super(Sysctl, self).delete()
-        notifier().start("sysctl")
+        notifier().reload("sysctl")
 
     class Meta:
         verbose_name = _("Sysctl")
@@ -788,7 +788,7 @@ class Tunable(Model):
 
     def delete(self):
         super(Tunable, self).delete()
-        notifier().start("loader")
+        notifier().reload("loader")
 
     class Meta:
         verbose_name = _("Tunable")

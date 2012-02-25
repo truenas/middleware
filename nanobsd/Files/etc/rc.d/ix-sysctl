@@ -60,8 +60,14 @@ start_sysctl()
 	set_user_sysctls
 }
 
+reload_sysctl()
+{
+	set_user_sysctls
+}
+
 name="ix-sysctl"
 start_cmd='start_sysctl'
+reload_cmd='reload_sysctl'
 stop_cmd=':'
 
 load_rc_config $name

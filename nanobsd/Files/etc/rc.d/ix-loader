@@ -172,8 +172,16 @@ generate_loader_confs()
 	fi
 }
 
+generate_loader_confs_noautotune()
+{
+	reboot_now=false
+
+	generate_boot_loader_conf_local
+}
+
 name="ix-loader"
 start_cmd='generate_loader_confs'
+reload_cmd='generate_loader_confs_noautotune'
 stop_cmd=':'
 
 load_rc_config $name
