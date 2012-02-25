@@ -129,7 +129,7 @@ generate_boot_loader_conf()
 
 		$autotune \
 				--kernel-reserved=1073741824 \
-				--userland-reserved=2147483648 \
+				--userland-reserved=2417483648 \
 				> $tmp
 
 		# End autotuning context.

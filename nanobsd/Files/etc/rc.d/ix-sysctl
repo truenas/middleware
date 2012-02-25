@@ -23,8 +23,8 @@ set_autotune_sysctls()
 
 		$autotune \
 			--kernel-reserved=1073741824 \
-			--userland-reserved=2147483648 \
-			--conf-file=/etc/sysctl.conf > $tmp
+			--userland-reserved=2417483648 \
+			--conf sysctl > $tmp
 
 		if [ $? -eq 0 ]; then
 			grep -v '^#' $tmp | \
