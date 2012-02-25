@@ -38,6 +38,7 @@ from freeadmin.models import PathField
 from storage.models import Disk
 import choices
 
+
 class Settings(Model):
     stg_guiprotocol = models.CharField(
             max_length=120,
@@ -134,35 +135,41 @@ class NTPServer(Model):
         #icon_view = u"NTPServerIcon"
         #icon_add = u"NTPServerIcon"
 
+
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
-            verbose_name = _("Enable Console Menu"))
+            verbose_name=_("Enable Console Menu"))
     adv_serialconsole = models.BooleanField(
-            verbose_name = _("Use Serial Console"))
+            verbose_name=_("Use Serial Console"))
     adv_consolescreensaver = models.BooleanField(
-            verbose_name = _("Enable screen saver"))
+            verbose_name=_("Enable screen saver"))
     adv_firmwarevc = models.BooleanField(
-            verbose_name = _("Automatically Check for New Firmware"))
+            verbose_name=_("Automatically Check for New Firmware"))
     adv_systembeep = models.BooleanField(
-            verbose_name = _("Beep on boot"))
+            verbose_name=_("Beep on boot"))
     adv_tuning = models.BooleanField(
-            verbose_name = _("Enable Special System Tuning"))
+            verbose_name=_("Enable Special System Tuning"))
     adv_powerdaemon = models.BooleanField(
-            verbose_name = _("Enable powerd (Power Saving Daemon)"))
+            verbose_name=_("Enable powerd (Power Saving Daemon)"))
     adv_zeroconfbonjour = models.BooleanField(
-            verbose_name = _("Enable Zeroconf/Bonjour"))
+            verbose_name=_("Enable Zeroconf/Bonjour"))
     adv_swapondrive = models.IntegerField(
             validators=[MinValueValidator(0)],
-            verbose_name = _("Swap size on each drive in GiB, affects new disks only.  Setting this to 0 disables swap creation completely (STRONGLY DISCOURAGED)."),
+            verbose_name=_("Swap size on each drive in GiB, affects new disks "
+                "only. Setting this to 0 disables swap creation completely "
+                "(STRONGLY DISCOURAGED)."),
             default=2)
     adv_consolemsg = models.BooleanField(
-            verbose_name = _("Show console messages in the footer"),
+            verbose_name=_("Show console messages in the footer"),
             default=True)
     adv_traceback = models.BooleanField(
-            verbose_name = _("Show tracebacks in case of fatal errors"),
+            verbose_name=_("Show tracebacks in case of fatal errors"),
             default=True)
     adv_advancedmode = models.BooleanField(
-            verbose_name = _("Show advanced fields by default"),
+            verbose_name=_("Show advanced fields by default"),
+            default=False)
+    adv_autotune = models.BooleanField(
+            verbose_name=_("Enable autotune"),
             default=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
@@ -170,7 +177,7 @@ class Advanced(Model):
     #        default=False)
     adv_motd = models.TextField(
             max_length=1024,
-            verbose_name = _("MOTD banner"),
+            verbose_name=_("MOTD banner"),
             )
 
     class Meta:
