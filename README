@@ -9,10 +9,17 @@ Requirements:
 
 - Your build environment must be FreeBSD 8.1-RELEASE or newer.
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.
-- You need the following ports/packages to build FreeNAS:
+- You will need the following ports/packages when compiling anything
+  FreeNAS-related:
   - devel/git or devel/subversion
   - lang/python26 or lang/python27
+
+- You need the following additional ports/packages to build the FreeNAS base
+  OS image:
   - sysutils/cdrtools
+
+- You need the following additional ports/packages to build the plugins jail:
+  - ports-mgmt/pbi-manager
 
 Building the System Quickstart Flow:
 

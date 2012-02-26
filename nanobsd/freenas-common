@@ -482,6 +482,106 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
+# Beware of dog. A lot of the stuff done here is done in such a way
+# that it doesn't require changes to nanobsd.sh, etc.
+#
+# XXX: this will ultimately all need to be moved into a separate
+# 'freenas-common' file as this is just a really nasty kludge.
+create_pluginsjail()
+{
+	local plugins_jail_obj_dir plugins_jail_world_dir
+
+	plugins_jail_obj_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjobj"
+	plugins_jail_world_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjw"
+
+	nanobsd_vars="MAKEOBJDIRPREFIX NANO_MAKE_CONF_BUILD NANO_MAKE_CONF_INSTALL NANO_OBJ NANO_WORLDDIR"
+
+	# Save the old values
+	for nanobsd_var in $nanobsd_vars
+	do
+		local "old_${nanobsd_var}"
+		eval "old_${nanobsd_var}='\${$nanobsd_var}'"
+	done
+
+	export MAKEOBJDIRPREFIX="$plugins_jail_obj_dir"
+	export NANO_MAKE_CONF_BUILD="$AVATAR_ROOT/examples/plugins/make.conf"
+	export NANO_MAKE_CONF_INSTALL="$AVATAR_ROOT/examples/plugins/make.conf"
+	export NANO_OBJ="$plugins_jail_obj_dir"
+	export NANO_WORLDDIR=$plugins_jail_world_dir
+
+	mkdir -p $NANO_OBJ
+
+	# XXX: maybe do something smarter here, like svn status $NANO_SRC,
+	# generate a checksum, profit from not having to recompile stuff..
+	if [ -s $MAKEOBJDIRPREFIX/_.iw ]
+	then
+		pprint 4 "Skipping plugin jail buildworld (as instructed)"
+	else
+		if $do_clean; then
+			clean_build
+		else
+			pprint 3 "Using existing plugin jail build tree (as instructed)"
+		fi
+		# Build the jailed world.
+		build_world
+
+	fi
+
+	pprint 3 "Installing plugin jail"
+	# Create/install a PBI jailed world.
+	clean_world
+	install_world
+	install_etc
+
+	pprint 3 "Customizing /etc for plugin jail"
+
+	: > "$plugins_jail_world_dir/etc/fstab"
+
+	cat > "$plugins_jail_world_dir/etc/rc.conf" <<EOF
+sendmail_enable="NONE"
+syslogd_flags="-ss"
+pbid_enable="YES"
+EOF
+
+	pprint 3 "Preparing plugins jail ports install"
+	cp $AVATAR_ROOT/examples/plugins/jail_ports.sh $NANO_WORLDDIR/.
+
+	mkdir -p ${NANO_OBJ}/ports/distfiles
+	mkdir -p ${NANO_OBJ}/ports/packages
+	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
+	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
+      	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
+	    ${NANO_WORLDDIR}/usr/ports/packages
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
+	    ${NANO_WORLDDIR}/usr/ports/distfiles
+
+	pprint 4 "Installing plugins jail ports"
+
+	CR "sh -ex /jail_ports.sh"
+
+	umount ${NANO_WORLDDIR}/usr/ports/distfiles
+	umount ${NANO_WORLDDIR}/usr/ports/packages
+	umount ${NANO_WORLDDIR}/usr/ports
+	umount ${NANO_WORLDDIR}/usr/src
+	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
+	rmdir ${NANO_WORLDDIR}/usr/ports/packages
+	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
+	rmdir ${NANO_WORLDDIR}/usr/ports
+	rmdir ${NANO_WORLDDIR}/usr/src
+
+	rm $NANO_WORLDDIR/jail_ports.sh
+
+	# Restore the old values
+	for nanobsd_var in $nanobsd_vars
+	do
+		eval "${nanobsd_var}='\${old_$nanobsd_var}'"
+	done
+
+}
+customize_cmd create_pluginsjail
+
 if [ "${DEBUG}" = 1 ]; then
 
 unmute_console_logging()
@@ -597,7 +697,7 @@ freenas_custom()
 
 	# strip binaries (saves spaces on non-debug images).
 	if [ "${DEBUG}" != 1 ]; then
-		pprint 4 "Stripping binaries and libraries"
+		print 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
 			for f in $(find $dir -type f); do
 				strip 2>/dev/null $f || :
@@ -632,6 +732,8 @@ last_orders() {
 	local cd_image_log
 	local full_image full_image_log
 	local gui_upgrade gui_upgrade_image_log
+	local plugins_jail_log plugins_jail_pbi plugins_jail_pbi_basename
+	local plugins_jail_pbi_version plugins_jail_world_dir
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
@@ -639,6 +741,9 @@ last_orders() {
 
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
 	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+
+	plugins_jail_log="$MAKEOBJDIRPREFIX/_.plugins_jail"
+	plugins_jail_world_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjw"
 
 	if $do_image && $do_copyout_partition; then
 
@@ -676,6 +781,27 @@ last_orders() {
 		sh "$AVATAR_ROOT/build/create_iso.sh"
 
 		) > "${cd_image_log}" 2>&1
+
+		pprint 2 "Creating plugins jail PBI"
+		pprint 3 "log: ${plugins_jail_log}"
+
+		plugins_jail_pbi_basename=$NANO_IMGNAME.Plugins_Jail
+		plugins_jail_pbi=$plugins_jail_pbi_basename.pbi
+		plugins_jail_pbi_version=$(echo $VERSION | sed -E -e 's/-[^-]+//g')
+		(
+
+		pbi_create \
+			-a $NANO_LABEL \
+			-n $$ \
+			-o "$NANO_DISKIMGDIR" \
+			-r $plugins_jail_pbi_version \
+			-w $AVATAR_PROJECT_SITE \
+			$plugins_jail_world_dir
+
+			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
+				$NANO_DISKIMGDIR/$plugins_jail_pbi
+
+		) > "${plugins_jail_log}" 2>&1
 
 	fi
 
