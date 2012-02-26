@@ -464,7 +464,7 @@ performance_sanity_caps()
 		arc_max_in_mb=256
 		;;
 	esac
-	echo "vfs.zfs.arc_max=\"$(( $arc_max_in_mb * 1024 * 1024 ))\""
+	#echo "vfs.zfs.arc_max=\"$(( $arc_max_in_mb * 1024 * 1024 ))\""
 
 	case "$FREENAS_ARCH" in
 	amd64)
@@ -474,7 +474,7 @@ performance_sanity_caps()
 		kmem_size=348
 		;;
 	esac
-	echo "vm.kmem_size=\"${kmem_size}M\""
+	#echo "vm.kmem_size=\"${kmem_size}M\""
 
 	) >> ${NANO_WORLDDIR}/boot/loader.conf
 }

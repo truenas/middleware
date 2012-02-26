@@ -32,6 +32,16 @@ Release Notes for FreeNAS 8.0.4-RC1
   or 4kB).
 
 
+Changes since 8.0.4-RC1:
+
+OS/Third party
+------------------------
+
+1. Remove sane caps for minimum ZFS requirements for lower spec'ed home
+   user machines added in 8.0.4-BETA1. A better solution will be devised
+   in 8.2.0 with automatic system tuning, similar to legacy's
+   zfskerntune.
+
 Changes since 8.0.4-BETA2:
 
 Enhancements
