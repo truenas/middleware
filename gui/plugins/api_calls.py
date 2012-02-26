@@ -31,6 +31,7 @@ import json
 
 from subprocess import Popen, PIPE
 from django.core import serializers
+from django.contrib.auth import authenticate, login
 
 from freenasUI import account, network, plugins, services, sharing, storage, system
 from jsonrpc import jsonrpc_method
@@ -109,15 +110,21 @@ def __api_call_api_version(request):
 @jsonrpc_method("account.bsdgroups.get")
 def __account_bsdgroups_get(request):
     return __serialize(account.models.bsdGroups.objects.order_by("-id"))
+
 @jsonrpc_method("account.bsdgroups.set")
 def __account_bsdgroups_set(request):
     return __api_call_not_implemented(request)
+
 @jsonrpc_method("account.bsdgroups.create")
 def __account_bsdgroups_create(request):
     return __api_call_not_implemented(request)
+
 @jsonrpc_method("account.bsdgroups.destroy")
 def __account_bsdgroups_destroy(request):
     return __api_call_not_implemented(request)
+
+
+
 
 @jsonrpc_method("account.bsdusers.get")
 def __account_bsdusers_get(request):
@@ -935,6 +942,13 @@ def __fs_get_filesystems(request):
 @jsonrpc_method("os.query")
 def  __os_query_system(request):
     return __api_call_not_implemented(request)
+@jsonrpc_method("os.arch")
+def __os_arch(request):
+    pipe = Popen("/usr/bin/uname -m", stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+    arch = pipe.stdout.read().strip()
+    pipe.wait()
+    return arch
 
 
 
