@@ -10,6 +10,9 @@
 # The FreeNAS source and build tree is rooted here.
 : ${AVATAR_ROOT=$(pwd)}
 
+# The website for this avatar project.
+: ${AVATAR_PROJECT_SITE=http://www.freenas.org}
+
 # The support site for this avatar project.
 : ${AVATAR_SUPPORT_SITE=http://support.freenas.org}
 
