@@ -26,6 +26,7 @@
 #####################################################################
 
 import datetime
+import hashlib
 import os
 import re
 import sys
@@ -183,11 +184,13 @@ def adminInterface(request, objtype = None):
         hostname = GlobalConfiguration.objects.order_by('-id')[0].gc_hostname
     except:
         hostname = None
+    sw_version = get_sw_version()
     return render(request, 'freeadmin/index.html', {
         'consolemsg': console,
         'hostname': hostname,
         'sw_name': get_sw_name(),
-        'sw_version': get_sw_version(),
+        'sw_version': sw_version,
+        'cache_hash': hashlib.md5(sw_version).hexdigest(),
     })
 
 def menu(request, objtype = None):
