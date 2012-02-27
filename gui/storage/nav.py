@@ -138,7 +138,8 @@ class Volumes(TreeNode):
                 subnav.icon = u'ChangePasswordIcon'
                 subnav.app_name = 'storage'
 
-                datasets = models.MountPoint.objects.filter(mp_path__startswith=i.mp_path,mp_ischild=True)
+                datasets = models.MountPoint.objects.filter(
+                    mp_path__startswith=i.mp_path+'/', mp_ischild=True)
                 for d in datasets:
 
                     nav2 = TreeNode()
