@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #- 
-# Copyright (c) 2011 iXsystems, Inc.
+# Copyright (c) 2011, 2012 iXsystems, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -195,6 +195,16 @@ for line in lines:
                             snapshots[(fs, snap_ret_policy)] = snap_infodict
                     else:
                         snapshots[(fs, snap_ret_policy)] = snap_infodict
+
+# Exclude snapshots that have clones associated from being deleted
+if len(snapshots_pending_delete) > 0:
+    snapshots_cloned = set()
+    zfsproc = pipeopen("/sbin/zfs list -H -t filesystem,volume -o origin", debug)
+    lines = zfsproc.communicate()[0].split('\n')
+    for snapshot_name in lines:
+        if snapshot_name != '-':
+            snapshots_cloned.add(snapshot_name)
+    snapshots_pending_delete = snapshots_pending_delete.difference(snapshots_cloned)
 
 list_mp = mp_to_task_map.keys()
 
