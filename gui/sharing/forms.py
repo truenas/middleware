@@ -40,23 +40,34 @@ from freenasUI.services.models import services
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 
-""" Shares """
 
 class CIFS_ShareForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(CIFS_ShareForm, self).__init__(*args, **kwargs)
+        self.fields['cifs_guestok'].widget.attrs['onChange'] = ('javascript:'
+            'toggleGeneric("id_cifs_guestok", ["id_cifs_guestonly"], true);')
+        if not self.instance.cifs_guestok:
+            self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
+
     class Meta:
         model = models.CIFS_Share
+
     def clean_cifs_hostsallow(self):
         net = self.cleaned_data.get("cifs_hostsallow")
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         return net
+
     def clean_cifs_hostsdeny(self):
         net = self.cleaned_data.get("cifs_hostsdeny")
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         return net
+
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
         return ret
+
     def done(self, request, events):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
