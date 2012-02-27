@@ -798,7 +798,11 @@ last_orders() {
 			-w $AVATAR_PROJECT_SITE \
 			$plugins_jail_world_dir
 
-			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
+			# XXX: need to enhance pbi_create to specify something
+			#      other than `uname -m` output.
+			#mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
+			#	$NANO_DISKIMGDIR/$plugins_jail_pbi
+			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$(uname -m).pbi \
 				$NANO_DISKIMGDIR/$plugins_jail_pbi
 
 		) > "${plugins_jail_log}" 2>&1
