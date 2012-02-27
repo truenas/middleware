@@ -110,7 +110,12 @@ class NFSForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
+
 class PluginsForm(ModelForm):
+
+    class Meta:
+        model = models.Plugins
+
     def clean_plugins_path(self):
         ppath = self.cleaned_data.get("plugins_path")
         jpath = self.cleaned_data.get("jail_path")
@@ -122,9 +127,6 @@ class PluginsForm(ModelForm):
         if ppath == jpath or ppath.startswith(jpathname):
             raise forms.ValidationError(_("The plugins path cannot be the same or reside within jail path."))
         return ppath
-
-    class Meta:
-        model = models.Plugins
 
     def clean_jail_ip(self):
         jip = self.cleaned_data.get("jail_ip")

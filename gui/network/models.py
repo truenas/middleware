@@ -239,7 +239,10 @@ class Alias(Model):
             )
 
     def __unicode__(self):
+        if self.alias_v4address:
             return u'%s:%s' % (self.alias_interface.int_name, self.alias_v4address)
+        elif self.alias_v6address:
+            return u'%s:%s' % (self.alias_interface.int_name, self.alias_v6address)
 
     def delete(self):
         super(Alias, self).delete()
