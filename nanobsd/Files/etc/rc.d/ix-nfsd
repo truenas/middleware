@@ -87,7 +87,7 @@ generate_exports()
 			if [ -n "${nfs_network}" ]; then
                 echo -n " "
 				echo -n "${nfs_network}" | \
-				    awk -F" " '{ if ($0 !~ /\//) print $0; else printf "-network %s",$0 }'
+				    awk -F" " '{ if ($0 !~ /\//) printf $0; else printf "-network %s",$0 }'
 			fi
 			echo
 		fi
