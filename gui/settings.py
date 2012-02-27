@@ -195,12 +195,22 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'syslog': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.SysLogHandler',
+            'address': '/dev/log',
         }
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
+            'propagate': True,
+        },
+        '': {
+            'handlers': ['syslog'],
+            'level': 'WARNING',
             'propagate': True,
         },
     }
