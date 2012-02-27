@@ -616,6 +616,23 @@
 
     }
 
+    toggleGeneric = function(checkboxid, farray, inverted) {
+
+        if(inverted == undefined) inverted = false;
+
+        var box = dijit.byId(checkboxid);
+        if(inverted == true) {
+            toset = !box.get("value");
+        } else{
+            toset = box.get("value");
+        }
+        for(var i=0;i<farray.length;i++) {
+            dijit.byId(farray[i]).set('disabled', toset);
+        }
+
+    }
+
+
     setMessage = function(msg, css) {
 
         if(!css) css = "success";
