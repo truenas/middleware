@@ -7,13 +7,43 @@
 # NOTES:
 # 1. It's highly advised to run this with lockf, similar to the following:
 #
-# /usr/bin/lockf -k -t 600 /build/automerge/freenas/.old_version \
-#	/bin/sh /build/automerge/freenas/ix/tools/automerge.sh
+# /usr/bin/lockf -k -t 600 /build/automerge/f/branches/8.2.0/.old_version \
+#	/bin/sh \
+#	/build/automerge/f/trunk/tools/automerge.sh /build/automerge/f \
+#	trunk branches/8.2.0
 #
 #    Otherwise 2+ instances of this script can stomp over one another, which
 #    will result in interesting issues based on how svn locking works.
+#
 # 2. You should not run this script on a tainted workspace as it will whack
-#    files not checked into svn.
+#    files not checked into svn (minus .old_version and .new_version, for
+#    obvious reasons below).
+#
+# 3. This script helps manage merging for multiple target branches. If you
+#    have a commit that you do not wish to be automatically merged to another
+#    branch, please use one of the following options:
+#
+# Option 1:
+#
+# Do-Not-Merge: message
+#
+# Option 2:
+#
+# Do-Not-Merge (branches/8.2.0,branches/stable-8): message
+#
+# Option 1 is a blatant "do not merge me anywhere" tag. Its intent was
+# originally to ensure that commits made to SF trunk didn't make it into the
+# ix repo automatically.
+#
+# Option 2 is a bit more interesting: its intent was to make sure that a
+# select set of commits made to a particular branch (say SF trunk) were
+# propagated over to the ix repo, but not necessarily other branches (say
+# branches/8.2.0). Multiple branches can be specified via a comma-delimited
+# list. In the above example, the commit would be propagated anywhere but
+# branches/8.2.0 and branches/stable-8
+#
+# Please note that 'Do-Not-Merge' must be specified at the start of any given
+# line -- not elsewhere in the file.
 #
 # XXX: this script is far from perfect. It's just a stopgap to avoid having
 #      to manually merge files in svn.
@@ -57,6 +87,9 @@ clean_svn() {
 	_do svn cleanup $parent_branch
 	_do svn cleanup $child_branch
 	_do svn revert -R $child_branch
+	# Nuke everything in the directory that's not supposed to be there. Be
+	# sure to preserve FreeBSD, obj.* directories, and .new_version, and
+	# .old_version files to get things back to a sane state.
 	_do svn status $child_branch | \
 		awk '$1 == "?" && $2 !~ /FreeBSD/ && $2 !~ /obj\./ { print $2 }' | \
 		egrep -v '(new|old)_version' | xargs rm -Rf
@@ -64,18 +97,26 @@ clean_svn() {
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-D] base-dir parent-branch child-branch
+usage: ${0##*/} [-Dn] base-dir parent-branch child-branch
+
+-D	- do not honor Do-Not-Merge 'tags'.
+-n	- fake committing (good for testing ;)..).
+
 EOF
 	exit 1
 }
 
+fake_commit=false
 honor_do_not_merge=true
 
-while getopts 'D' optch
+while getopts 'Dn' optch
 do
 	case "$optch" in
 	D)
 		honor_do_not_merge=false
+		;;
+	n)
+		fake_commit=true
 		;;
 	*)
 		usage
@@ -130,6 +171,10 @@ then
 	exit 1
 fi
 
+child_branch_url=$(svn info "$child_branch" | awk '$1 == "URL:" { print $NF }')
+child_branch_rroot=$(svn info "$child_branch" | awk '/^Repository Root:/ { print $NF }')
+child_branch_relroot=$(echo $child_branch_url | sed -e "s,$child_branch_rroot/,,g")
+
 set +e
 
 failed_a_merge=false
@@ -139,7 +184,29 @@ do
 	_do svn log --incremental -r$i $parent_branch > revlog
 	if [ $? -eq 0 -a -s revlog ]
 	then
-		if $honor_do_not_merge && grep -q '^Do-Not-Merge: ' revlog
+
+		do_not_merge=false
+		if $honor_do_not_merge
+		then
+			if grep -q '^Do-Not-Merge: ' revlog
+			then
+				do_not_merge=true
+			else
+				set -x
+				dnm_branches=$(sed -ne 's/^Do-Not-Merge (\(.*\)):\(.*\)/\1/p' revlog)
+				for dnm_branch in $(echo "$dnm_branches" | sed -e 's/,/ /g')
+				do
+					expr -- "$dnm_branch" ':' "$child_branch_relroot" >/dev/null
+					if [ $? -eq 0 ]
+					then
+						do_not_merge=true
+						break
+					fi
+				done
+				set +x
+			fi
+		fi
+		if $do_not_merge
 		then
 			echo "Not merging r$i"
 		else
@@ -151,16 +218,22 @@ do
 			then
 				failed_merge=true
 			else
-				_do svn merge --non-interactive -c $i $parent_branch $child_branch > merge-log
+				_do svn merge --non-interactive -c $i \
+				    $parent_branch $child_branch > merge-log
 				j=0
 				(
 				 echo "Automerging change r$i from $parent_branch to $child_branch"
 				 cat revlog
 				) > commit
-				while [ -n "$(_do svn status $child_branch | awk '$1 != "?"')" -a $j -lt 5 ]; do
-					_do svn ci --non-interactive -F commit $child_branch
-					: $(( j += 1 ))
-				done
+				if ! $fake_commit
+				then
+					while [ -n "$(_do svn status $child_branch | awk '$1 != "?"')" -a $j -lt 5 ]
+					do
+						_do svn ci --non-interactive \
+						           -F commit $child_branch
+						: $(( j += 1 ))
+					done
+				fi
 				clean_svn
 				if [ $j -eq 5 ]
 				then
@@ -183,6 +256,10 @@ do
 	fi
 	: $(( i += 1 ))
 done
+if $fake_commit
+then
+	exit
+fi
 mv $NEW_VERSION_F $OLD_VERSION_F
 if $failed_a_merge
 then
