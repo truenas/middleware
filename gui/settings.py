@@ -114,7 +114,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'dojango.middleware.DojoCollector',
 )
 
 DOJANGO_DATAGRID_ACCESS = (
