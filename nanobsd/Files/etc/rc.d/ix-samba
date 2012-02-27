@@ -407,7 +407,6 @@ generate_exports()
 		cifs_inheritperms,
 		cifs_recyclebin,
 		cifs_showhiddenfiles,
-		cifs_guest,
 		cifs_guestok,
 		cifs_guestonly,
 		cifs_hostsallow,
@@ -419,7 +418,7 @@ generate_exports()
 		cs.id ASC
 	" | \
 	while read -r name comment mountpoint cifsro browsable inheritowner inheritperms \
-		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
+		recyclebin showhiddenfiles guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
 
@@ -503,9 +502,6 @@ EOF
 			fi
 			if [ -n "${hostsdeny}" ]; then
 				echo "    hosts deny = ${hostsdeny}"
-			fi
-			if [ "${guestok}" = "1" -o "${guestonly}" = "1" ]; then
-				echo "    guest account = ${guest}"
 			fi
 			if [ "${guestok}" = "1" ]; then
 				echo "    guest ok = yes"
