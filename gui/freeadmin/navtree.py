@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import re
 import urllib2
 
@@ -35,8 +36,12 @@ from django.http import Http404
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree
+from freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
+    unserialize_tree)
 from freenasUI.plugins.models import Plugins
+
+log = logging.getLogger('freeadmin.navtree')
+
 
 class NavTree(object):
 
@@ -51,7 +56,8 @@ class NavTree(object):
 
     def _get_module(self, where, name):
         try:
-            mod = __import__('%s.%s' % (where,name), globals(), locals(), [name], -1)
+            mod = __import__('%s.%s' % (where, name), globals(), locals(),
+                [name], -1)
             return mod
         except ImportError, e:
             return None
@@ -74,7 +80,6 @@ class NavTree(object):
                     gname.insert(0, current_parent.gname)
                     current_parent = current_parent.parent
                 else:
-                    #print "para", opt, current_parent
                     break
             gname = '.'.join(gname)
             opt._gname = gname
@@ -82,7 +87,7 @@ class NavTree(object):
             gname = opt.gname
             opt._gname = gname
 
-        if self._options.has_key(gname) and opt.gname is not None:
+        if gname in self._options and opt.gname is not None:
             if replace is True:
                 _opt = self._options[gname]
                 _opt.parent.remove_child(_opt)
@@ -101,19 +106,19 @@ class NavTree(object):
 
     def replace_navs(self, nav):
 
-        if nav._gname is not None and self._navs.has_key(nav._gname) and \
+        if nav._gname is not None and nav._gname in self._navs and \
                 hasattr(self._navs[nav._gname], 'append_app') and \
                 self._navs[nav._gname].append_app is False:
-            if self._options.has_key(nav._gname):
-                #print "replace", self._options[nav._gname]
-                old  = self._options[nav._gname]
-                self.register_option(self._navs[nav._gname], old.parent, True, evaluate=False)
+            if nav._gname in self._options:
+                old = self._options[nav._gname]
+                self.register_option(self._navs[nav._gname], old.parent, True,
+                    evaluate=False)
 
         for subnav in nav:
             self.replace_navs(subnav)
 
     def register_option_byname(self, opt, name, replace=False):
-        if self._options.has_key(name):
+        if name in self._options:
             nav = self._options[name]
             return self.register_option(opt, nav, replace)
         return False
@@ -138,7 +143,8 @@ class NavTree(object):
                     new[opt.name] = opt
 
             sort = new.keys()
-            sort = sorted(sort, cmp=lambda x,y: cmp(x.lower(), y.lower()) if x and y else 0)
+            sort = sorted(sort, cmp=lambda x, y: cmp(x.lower(),
+                y.lower()) if x and y else 0)
 
             for opt in sort:
                 opts.append(new[opt])
@@ -155,8 +161,8 @@ class NavTree(object):
 
     def prepare_modelforms(self):
         """
-        This piece of code lookup all ModelForm classes from forms.py and record
-        models as a dict key
+        This piece of code lookup all ModelForm classes from forms.py
+        and record models as a dict key
         """
         self._modelforms.clear()
         for app in settings.INSTALLED_APPS:
@@ -174,7 +180,7 @@ class NavTree(object):
                         continue
 
                     if form.__module__ == modname and subclass:
-                        if _models.has_key(form._meta.model):
+                        if form._meta.model in _models:
                             if isinstance(_models[form._meta.model], dict):
                                 _models[form._meta.model][form.__name__] = form
                             else:
@@ -214,7 +220,7 @@ class NavTree(object):
 
             # Thats the root node for the app tree menu
             nav = TreeRoot(app)
-            tree_roots.register(nav) # We register it to the tree root
+            tree_roots.register(nav)  # We register it to the tree root
 
             modnav = self._get_module(app, 'nav')
             if hasattr(modnav, 'BLACKLIST'):
@@ -262,13 +268,13 @@ class NavTree(object):
                         continue
 
                     if not(model.__module__ == modname and subclass \
-                            and self._modelforms.has_key(model)
+                            and model in self._modelforms
                           ):
                         continue
 
                     if model._admin.deletable is False:
                         navopt = TreeNode(str(model._meta.object_name),
-                            name= model._meta.verbose_name,
+                            name=model._meta.verbose_name,
                             model=c, app_name=app, type='dialog')
                         try:
                             navopt.kwargs = {'app': app, 'model': c, 'oid': \
@@ -286,19 +292,21 @@ class NavTree(object):
                         navopt.order_child = False
 
                     for key in model._admin.nav_extra.keys():
-                        navopt.__setattr__(key, model._admin.nav_extra.get(key))
+                        navopt.__setattr__(key,
+                            model._admin.nav_extra.get(key))
                     if model._admin.icon_model is not None:
                         navopt.icon = model._admin.icon_model
 
                     if model._admin.menu_child_of is not None:
                         reg = self.register_option_byname(navopt,
-                                "%s.%s" % (app,model._admin.menu_child_of))
+                                "%s.%s" % (app, model._admin.menu_child_of))
                     else:
                         reg = self.register_option(navopt, nav)
 
                     if reg and not navopt.type:
 
-                        qs = model.objects.filter(**model._admin.object_filters).order_by('-id')
+                        qs = model.objects.filter(
+                            **model._admin.object_filters).order_by('-id')
                         if qs.count() > 0:
                             if model._admin.object_num > 0:
                                 qs = qs[:model._admin.object_num]
@@ -310,7 +318,11 @@ class NavTree(object):
                                     subopt.icon = model._admin.icon_object
                                 subopt.model = c
                                 subopt.app_name = app
-                                subopt.kwargs = {'app': app, 'model': c, 'oid': e.id}
+                                subopt.kwargs = {
+                                    'app': app,
+                                    'model': c,
+                                    'oid': e.id,
+                                    }
                                 try:
                                     subopt.name = unicode(e)
                                 except:
@@ -331,7 +343,9 @@ class NavTree(object):
 
                         # Node to view all instances of model
                         subopt = TreeNode('View')
-                        subopt.name = _(u'View %s') % model._meta.verbose_name_plural
+                        subopt.name = _(u'View %s') % (
+                            model._meta.verbose_name_plural,
+                            )
                         subopt.view = u'freeadmin_model_datagrid'
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
@@ -342,7 +356,7 @@ class NavTree(object):
                         self.register_option(subopt, navopt)
 
                         for child in model._admin.menu_children:
-                            if self._navs.has_key(child):
+                            if child in self._navs:
                                 self.register_option(self._navs[child], navopt)
 
             self.replace_navs(nav)
@@ -354,33 +368,36 @@ class NavTree(object):
             icon='TopIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon', action='shell')
+        nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon',
+            action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot', icon='RebootIcon', type='dialog', view='system_reboot_dialog')
+        nav = TreeRoot('reboot', name=_('Reboot'), action='reboot',
+            icon='RebootIcon', type='dialog', view='system_reboot_dialog')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon', type='dialog', view='system_shutdown_dialog')
+        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon',
+            type='dialog', view='system_shutdown_dialog')
         tree_roots.register(nav)
 
         """
         Plugin nodes
         """
-        host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(), )
+        host = "%s://%s" % ('https' if request.is_secure() else 'http',
+            request.get_host(), )
         for plugin in Plugins.objects.filter(plugin_enabled=True):
-            try:
-                response = urllib2.urlopen("%s/%s/treemenu" % (host, plugin.plugin_view), None, 1)
-                data = response.read()
-            except urllib2.HTTPError, e:
-                data = None
-            except Exception, e:
-                #TODO LOG
-                print type(e), e
-                data = None
 
-            if not data:
-                #TODO LOG
+            try:
+                url = "%s/%s/treemenu" % (host, plugin.plugin_view)
+                response = urllib2.urlopen(url, None, 1)
+                data = response.read()
+                if not data:
+                    log.warn(_("Empty data returned from %s") % (url,))
+                    continue
+            except Exception, e:
+                log.warn(_("Couldn't retrieve %s: %s") % (url, e))
                 continue
+
 
             try:
                 data = simplejson.loads(data)
@@ -405,8 +422,7 @@ class NavTree(object):
                         tree_roots.register(node)
 
             except Exception, e:
-                #TODO LOG
-                print type(e), e
+                log.warn(_("An error occurred while unserializing from %s: %s") % (url, e))
                 continue
 
     def _build_nav(self):
@@ -458,7 +474,7 @@ class NavTree(object):
             my['children'] = []
 
         for i in o.option_list:
-            opt = self.dehydrate(i, level+1, uid, gname=my['gname'])
+            opt = self.dehydrate(i, level + 1, uid, gname=my['gname'])
             my['children'].append(opt)
 
         return my
@@ -468,6 +484,7 @@ class NavTree(object):
         class ByRef(object):
             def __init__(self, val):
                 self.val = val
+
             def new(self):
                 old = self.val
                 self.val += 1
@@ -479,43 +496,3 @@ class NavTree(object):
         return items
 
 navtree = NavTree()
-
-"""
-If a model is delete it may dissapear from menu
-so we must check it and regenerate if necessary!
-"""
-"""
-### Disable automatic generation of menu based on events ###
-def on_model_delete(**kwargs):
-    if not navtree.isGenerated():
-        return None
-    model = kwargs['sender']
-    instance = kwargs['instance']
-    if model._meta.app_label in [app.split('.')[-1] for app in settings.BLACKLIST_NAV]:
-        return None
-
-    for nav in tree_roots['main']:
-        handle_delete(nav, model, instance)
-
-def handle_delete(nav, model, instance):
-    for subnav in nav:
-        if hasattr(subnav, 'kwargs') and hasattr(instance, 'id') and \
-                subnav.kwargs.get('oid',-1) == instance.id and \
-                subnav.kwargs.get('model', '-1') == model.__name__:
-            navtree.auto_generate()
-        else:
-            handle_delete(subnav, model, instance)
-
-def on_model_save(**kwargs):
-    if not navtree.isGenerated():
-        return None
-    model = kwargs['sender']
-    #instance = kwargs['instance']
-    if model._meta.app_label in [app.split('.')[-1] for app in settings.BLACKLIST_NAV]:
-        return None
-    navtree.auto_generate()
-
-from django.db.models.signals import post_delete, post_save
-post_delete.connect(on_model_delete)
-post_save.connect(on_model_save)
-"""
