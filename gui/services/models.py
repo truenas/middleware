@@ -794,6 +794,10 @@ class Plugins(Model):
         deletable = False
         icon_model = u"SettingsIcon"
 
+    def delete(self, *args, **kwargs):
+        notifier().delete_plugins_jail(self.id)
+        super(Plugins, self).delete(*args, **kwargs)
+
 
 class SNMP(Model):
     snmp_location = models.CharField(
