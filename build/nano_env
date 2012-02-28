@@ -96,7 +96,7 @@ fi
 # us to keep the SVN revision number even when the version string is
 # overloaded with a name.
 #
-# NOTE: set REVISION="" when doing a release.
+# NOTE: comment out REVISION when doing a release.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
 REVISION=${REVISION:-$(echo ${svn}${git})}
 
