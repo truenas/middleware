@@ -185,7 +185,7 @@ for v in $(env | egrep '^(LANG|LC).*='); do
 	unset ${v%=*}
 done
 
-CR()
+fake_target_host()
 {
 	local newvers revision branch
 
@@ -197,8 +197,8 @@ CR()
 	# 2. Use sane defaults to avoid polluting the build environment with
 	#    system specific settings that might have been defined via
 	#    /etc/make.conf (LOCALBASE), etc.
-	mount -t devfs none $NANO_WORLDDIR/dev
-	(set -e
+	(
+	 set -e
 	 env
 	 export UNAME_m=$NANO_ARCH
 	 export UNAME_p=$NANO_ARCH
@@ -206,7 +206,15 @@ CR()
 	 export UNAME_v="$(uname -v | sed -e "s/$(uname -p)/$UNAME_p/" -e "s/$(uname -r)/$UNAME_r/g")"
 	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
 	 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
+	 "$@"
+	)
+}
+
+CR()
+{
+	mount -t devfs none $NANO_WORLDDIR/dev
+	fake_target_host \
+	    chroot ${NANO_WORLDDIR} /bin/sh -exc "$@"
 	umount $NANO_WORLDDIR/dev
 }
 

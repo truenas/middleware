@@ -791,7 +791,8 @@ last_orders() {
 		plugins_jail_pbi_version=$(echo $VERSION | sed -E -e 's/-[^-]+//g')
 		(
 
-		pbi_create \
+		fake_target_host \
+			pbi_create \
 			-a $NANO_LABEL \
 			-n $$ \
 			-o "$NANO_DISKIMGDIR" \
@@ -799,11 +800,7 @@ last_orders() {
 			-w $AVATAR_PROJECT_SITE \
 			$plugins_jail_world_dir
 
-			# XXX: need to enhance pbi_create to specify something
-			#      other than `uname -m` output.
-			#mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
-			#	$NANO_DISKIMGDIR/$plugins_jail_pbi
-			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$(uname -m).pbi \
+			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
 				$NANO_DISKIMGDIR/$plugins_jail_pbi
 
 		) > "${plugins_jail_log}" 2>&1
