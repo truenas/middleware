@@ -43,6 +43,9 @@ GUI
 1. Rename 'loaders' to 'tunables' to target the FreeBSD concept under
    inspection (kernel tunables) (SF r10235, r10236).
 
+Bugfixes
+========================
+
 OS/Third party
 ------------------------
 
