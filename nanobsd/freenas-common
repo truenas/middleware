@@ -791,7 +791,8 @@ last_orders() {
 		plugins_jail_pbi_version=$(echo $VERSION | sed -E -e 's/-[^-]+//g')
 		(
 
-		pbi_create \
+		fake_target_host \
+			pbi_create \
 			-a $NANO_LABEL \
 			-n $$ \
 			-o "$NANO_DISKIMGDIR" \
