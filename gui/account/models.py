@@ -27,7 +27,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
 
 
@@ -36,7 +36,7 @@ class bsdGroups(Model):
             verbose_name=_("Group ID")
             )
     bsdgrp_group = models.CharField(
-            unique = True,
+            unique=True,
             max_length=120,
             verbose_name=_("Group Name")
             )
@@ -104,8 +104,7 @@ class bsdUsers(Model):
             on_delete=models.SET(get_sentinel_group),
             verbose_name=_("Primary Group ID")
             )
-    bsdusr_home = models.CharField(
-            max_length=120,
+    bsdusr_home = PathField(
             default="/nonexistent",
             verbose_name=_("Home Directory")
             )

@@ -28,19 +28,23 @@ from django.db import models
 from django.db.models.base import ModelBase
 from south.modelsinspector import add_introspection_rules
 
-add_introspection_rules([], ["^freeadmin\.models\.UserField"])
-add_introspection_rules([], ["^freeadmin\.models\.GroupField"])
-add_introspection_rules([], ["^freeadmin\.models\.PathField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
+
+
 class UserField(models.CharField):
     def __init__(self, *args, **kwargs):
         self._exclude = kwargs.pop('exclude', [])
         super(UserField, self).__init__(*args, **kwargs)
+
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import UserField as UF
         defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
         return super(UserField, self).formfield(**kwargs)
+
 
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
@@ -49,6 +53,7 @@ class GroupField(models.CharField):
         defaults = {'form_class': GF}
         kwargs.update(defaults)
         return super(GroupField, self).formfield(**kwargs)
+
 
 class PathField(models.CharField):
 
@@ -71,12 +76,13 @@ class PathField(models.CharField):
         kwargs.update(defaults)
         return super(PathField, self).formfield(**kwargs)
 
+
 class FreeAdminWrapper(object):
 
     create_modelform = None
     edit_modelform = None
     delete_form = None
-    delete_form_filter = {} # Ugly workaround for Extent/DeviceExtent
+    delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
     exclude_fields = []
     deletable = True
     menu_child_of = None
@@ -108,18 +114,22 @@ class FreeAdminWrapper(object):
         for i in dir(obj):
             if not i.startswith("__"):
                 if not hasattr(self, i):
-                    raise Exception("The attribute '%s' is a not valid in FreeAdmin" % i)
+                    raise Exception("The attribute '%s' is a not valid "
+                        "in FreeAdmin" % i)
                 self.__setattr__(i, getattr(obj, i))
+
 
 class FreeAdminBase(ModelBase):
     def __new__(cls, name, bases, attrs):
         new_class = ModelBase.__new__(cls, name, bases, attrs)
         if hasattr(new_class, 'FreeAdmin'):
-            new_class.add_to_class('_admin', FreeAdminWrapper(new_class.FreeAdmin))
+            new_class.add_to_class('_admin',
+                 FreeAdminWrapper(new_class.FreeAdmin))
         else:
             new_class.add_to_class('_admin', FreeAdminWrapper())
 
         return new_class
+
 
 class Model(models.Model):
     __metaclass__ = FreeAdminBase
@@ -130,14 +140,14 @@ class Model(models.Model):
     @models.permalink
     def get_add_url(self):
         return ('freeadmin_model_add', (), {
-            'app':self._meta.app_label,
+            'app': self._meta.app_label,
             'model': self._meta.object_name,
             })
 
     @models.permalink
     def get_edit_url(self):
         return ('freeadmin_model_edit', (), {
-            'app':self._meta.app_label,
+            'app': self._meta.app_label,
             'model': self._meta.object_name,
             'oid': self.id,
             })
@@ -145,8 +155,7 @@ class Model(models.Model):
     @models.permalink
     def get_delete_url(self):
         return ('freeadmin_model_delete', (), {
-            'app':self._meta.app_label,
+            'app': self._meta.app_label,
             'model': self._meta.object_name,
             'oid': self.id,
             })
-
