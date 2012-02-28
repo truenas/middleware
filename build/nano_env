@@ -98,8 +98,7 @@ fi
 #
 # NOTE: comment out REVISION when doing a release.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
-#REVISION=${REVISION:-$(echo ${svn}${git})}
-REVISION=
+REVISION=${REVISION:-$(echo ${svn}${git})}
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
