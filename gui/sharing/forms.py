@@ -47,7 +47,11 @@ class CIFS_ShareForm(ModelForm):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
         self.fields['cifs_guestok'].widget.attrs['onChange'] = ('javascript:'
             'toggleGeneric("id_cifs_guestok", ["id_cifs_guestonly"], true);')
-        if not self.instance.cifs_guestok:
+        if self.data:
+            if self.data.get('cifs_guestok') is False:
+                self.fields['cifs_guestonly'].widget.attrs['disabled'] = \
+                    'disabled'
+        elif self.instance.cifs_guestok is False:
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
 
     class Meta:
