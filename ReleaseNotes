@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.3-RELEASE-p1
+Release Notes for FreeNAS 8.2.0-BETA1
 
 *** IMPORTANT ***
 
@@ -30,6 +30,146 @@ Release Notes for FreeNAS 8.0.3-RELEASE-p1
   8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
+
+Changes since 8.0.4-RELEASE:
+
+Enhancements
+========================
+
+Build
+------------------------
+
+
+GUI
+------------------------
+
+
+
+Middleware
+------------------------
+
+
+
+OS/Third party
+------------------------
+
+
+
+Plugins
+------------------------
+
+
+
+AFP
+------------------------
+
+
+
+CIFS
+------------------------
+
+
+
+iSCSI
+------------------------
+
+
+
+NFS
+------------------------
+
+
+
+Tools
+------------------------
+
+
+
+Bugfixes
+========================
+
+Build
+------------------------
+
+
+
+GUI
+------------------------
+
+
+
+Middleware
+------------------------
+
+
+
+OS/Third party
+------------------------
+
+
+
+Plugins
+------------------------
+
+
+
+AFP
+------------------------
+
+
+
+AD/CIFS
+------------------------
+
+
+
+iSCSI
+------------------------
+
+
+
+NFS
+------------------------
+
+
+
+Tools
+------------------------
+
+
+
+
+Changes since 8.0.4-RC1:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Rename 'loaders' to 'tunables' to target the FreeBSD concept under
+   inspection (kernel tunables) (SF r10235, r10236).
+
+Bugfixes
+========================
+
+OS/Third party
+------------------------
+
+1. Remove sane caps for minimum ZFS requirements for lower spec'ed home
+   user machines added in 8.0.4-BETA1. A better solution will be devised
+   in 8.2.0 with automatic system tuning, similar to legacy's
+   zfskerntune (SF r10271).
+
+CIFS
+------------------------
+
+1. Correct guest parameter setting in the GUI as it's a global option,
+   not a per-share option (SF r10296).
+2. Allow Guest Only parameter only makes sense when Allow Guest is
+   specified (SF r10300).
+3. Validate guest setting prior to accepting POST to ensure that the
+   value set for Guest is sane.
 
 
 Changes since 8.0.4-BETA2:
