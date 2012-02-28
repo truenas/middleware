@@ -133,10 +133,9 @@ class CIFS(Model):
     cifs_srv_nullpw = models.BooleanField(
             verbose_name=_("Allow Empty Password"))
     cifs_srv_smb_options = models.TextField(
-            max_length=120,
             verbose_name=_("Auxiliary parameters"),
             blank=True,
-            help_text=_("These parameters are added to [Global] section of smb.conf")
+            help_text=_("These parameters are added to [global] section of smb.conf")
             )
     cifs_srv_homedir_enable = models.BooleanField(
             verbose_name=_("Enable home directories"),
@@ -150,6 +149,11 @@ class CIFS(Model):
     cifs_srv_homedir = PathField(
             verbose_name=_("Home directories"),
             blank=True,
+            )
+    cifs_srv_homedir_aux = models.TextField(
+            verbose_name=_("Homes auxiliary parameters"),
+            blank=True,
+            help_text=_("These parameters are added to [homes] section of smb.conf")
             )
     cifs_srv_unixext = models.BooleanField(
             verbose_name=_("Unix Extensions"),

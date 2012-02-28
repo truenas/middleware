@@ -384,6 +384,16 @@ EOF
                         if [ "${cifs_homedir_mp}" != "" ]; then
                                 echo "    path = ${cifs_homedir_path}"
                         fi
+
+		    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		    SELECT
+		    	cifs_srv_homedir_aux
+		    FROM
+		    	services_cifs
+		    ORDER BY
+		    	-id
+		    LIMIT 1
+		    "
 		fi
 	done
 
