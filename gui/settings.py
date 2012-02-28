@@ -198,7 +198,6 @@ LOGGING = {
         'syslog': {
             'level': 'WARNING',
             'class': 'logging.handlers.SysLogHandler',
-            'address': '/dev/log',
         }
     },
     'loggers': {
