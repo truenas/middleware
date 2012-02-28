@@ -98,7 +98,8 @@ fi
 #
 # NOTE: comment out REVISION when doing a release.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
-REVISION=${REVISION:-$(echo ${svn}${git})}
+#REVISION=${REVISION:-$(echo ${svn}${git})}
+REVISION=
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
@@ -121,7 +122,7 @@ VERSION="8.2.1-ALPHA"
 
 # Image name, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386, see
 # nanobsd/freenas-common:last_orders().
-NANO_NAME="$NANO_LABEL-$VERSION${REVISION+-$REVISION}-$NANO_ARCH_HUMANIZED"
+NANO_NAME="$NANO_LABEL-$VERSION${REVISION:+-$REVISION}-$NANO_ARCH_HUMANIZED"
 NANO_IMGNAME="$NANO_NAME"
 
 # Export these vars to override the NanoBSD defaults.
