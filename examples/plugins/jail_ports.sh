@@ -20,6 +20,9 @@ add_port()
 	echo "DONE"
 }
 
+# XXX: libtool is needed for i386. Need to determine why because this isn't
+# required when compiling the packages in the base system.
+add_port devel/libtool
 add_port converters/libiconv
 add_port converters/iconv
 add_port devel/gettext
