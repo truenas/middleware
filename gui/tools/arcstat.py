@@ -171,7 +171,7 @@ def init():
     i = 2
 
     try:
-        opts, args = getopt.getopt
+        opts, args = getopt.getopt(
             sys.argv[1:],
             'xo:hvrs:f:',
             [
