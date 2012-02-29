@@ -242,19 +242,16 @@ def __account_bsdusers_set(request, pk=None, uid=None, username=None, group=None
     unixhash=None, smbhash=None, home=None, shell=None, full_name=None, builtin=None, email=None):
     l = locals()
 
-    syslog(LOG_DEBUG, "AAA") 
     res = False
     if not pk:
         return json.dumps(res)
 
-    syslog(LOG_DEBUG, "BBB") 
     obj = account.models.bsdUsers.objects.filter(pk=pk)
     if not obj:
         return json.dumps(res)
 
     obj = obj[0]
 
-    syslog(LOG_DEBUG, "CCC") 
     kwargs = {}
     keys = ["uid", "username", "group", "unixhash",
        "smbhash", "home", "shell", "full_name", "builtin", "email"]
@@ -264,7 +261,6 @@ def __account_bsdusers_set(request, pk=None, uid=None, username=None, group=None
         if l.has_key(k) and l[k]:
              kwargs["bsdusr_" + k] = l[k]
 
-    syslog(LOG_DEBUG, "DDD") 
     try:
         obj.__dict__.update(kwargs)
         obj.save()
@@ -275,7 +271,6 @@ def __account_bsdusers_set(request, pk=None, uid=None, username=None, group=None
         syslog(LOG_DEBUG, "account.bsdusers.set: error = %s" % e)
         res = False
 
-    syslog(LOG_DEBUG, "EEE") 
     return json.dumps(res)
 
 @jsonrpc_method("account.bsdusers.create")
