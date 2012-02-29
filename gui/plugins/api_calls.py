@@ -29,12 +29,16 @@ import os
 import sys
 import json
 
-from subprocess import Popen, PIPE
 from django.core import serializers
 from django.contrib.auth import authenticate, login
 
 from freenasUI import account, network, plugins, services, sharing, storage, system
+from freenasUI.middleware.notifier import notifier
+
 from jsonrpc import jsonrpc_method
+from subprocess import Popen, PIPE
+
+from syslog import syslog, LOG_DEBUG
 
 
 PLUGINS_API_VERSION = "0.1"
@@ -48,7 +52,7 @@ def __popen(cmd):
 
 
 def __get_plugins_jail_info():
-    jail_info = services.models.Plugins.objects.order_by("-id")
+    jail_info = services.models.Plugins.objects.order_by("-pk")
     return jail_info[0] if jail_info else None
 
 
@@ -108,40 +112,257 @@ def __api_call_api_version(request):
 #    Account methods
 #
 @jsonrpc_method("account.bsdgroups.get")
-def __account_bsdgroups_get(request):
-    return __serialize(account.models.bsdGroups.objects.order_by("-id"))
+def __account_bsdgroups_get(request, pk=None, gid=None, group=None, builtin=None):
+    l = locals()
+
+    kwargs = {}
+    keys = ["gid", "group", "builtin"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdgrp_" + k] = l[k]
+
+    if kwargs:
+        return __serialize(account.models.bsdGroups.objects.filter(**kwargs))
+    else:
+        return __serialize(account.models.bsdGroups.objects.order_by("-pk"))
 
 @jsonrpc_method("account.bsdgroups.set")
-def __account_bsdgroups_set(request):
-    return __api_call_not_implemented(request)
+def __account_bsdgroups_set(request, pk=None, gid=None, group=None, builtin=None):
+    l = locals()
+
+    res = False
+    if not pk:
+        return json.dumps(res)
+
+    obj = account.models.bsdGroups.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
+
+    obj = obj[0]
+
+    kwargs = {} 
+    keys = ["gid", "group", "builtin"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdgrp_" + k] = l[k]
+
+    try:
+        obj.__dict__.update(kwargs)
+        obj.save()
+        notifier().reload("user")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "account.bsdgroups.set: error = %s" % e)
+        res = False
+
+    return json.dumps(res)
 
 @jsonrpc_method("account.bsdgroups.create")
-def __account_bsdgroups_create(request):
-    return __api_call_not_implemented(request)
+def __account_bsdgroups_create(request, gid=None, group=None, builtin=False):
+    l = locals()
+
+    if not gid:
+        l["gid"] = notifier().user_getnextgid()
+
+    kwargs = {}
+    keys = ["gid", "group", "builtin"]
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdgrp_" + k] = l[k]
+
+    obj = None
+    if kwargs:
+        try:
+            obj = account.models.bsdGroups.objects.create(**kwargs)
+            obj.save()
+            notifier().reload("user")
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "account.bsdgroups.create: error = %s" % e)
+            obj = None
+
+    return __serialize([obj])
 
 @jsonrpc_method("account.bsdgroups.destroy")
-def __account_bsdgroups_destroy(request):
-    return __api_call_not_implemented(request)
+def __account_bsdgroups_destroy(request, pk=None, gid=None, group=None, builtin=None):
+    l = locals()
 
+    res = False
+    kwargs = {}
+    keys = ["gid", "group", "builtin"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdgrp_" + k] = l[k]
 
+    if kwargs:
+        obj = account.models.bsdGroups.objects.filter(**kwargs)
+        if not obj:
+            return json.dumps(res)
+
+        try: 
+            obj.delete()
+            notifier().reload("user")
+            res = True
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "account.bsdgroups.delete: error = %s" % e)
+            res = False
+      
+    return json.dumps(res)
 
 
 @jsonrpc_method("account.bsdusers.get")
-def __account_bsdusers_get(request):
-    return __serialize(account.models.bsdUsers.objects.order_by("-id"))
+def __account_bsdusers_get(request, pk=None, uid=None, username=None, group=None,
+        home=None, shell=None, full_name=None, builtin=None, email=None):
+    l = locals()
+
+    kwargs = {}
+    keys = ["uid", "username", "group", "home",
+        "shell", "full_name", "builtin", "email"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdusr_" + k] = l[k]
+
+    if kwargs:
+        return __serialize(account.models.bsdUsers.objects.filter(**kwargs))
+    else:
+        return __serialize(account.models.bsdUsers.objects.order_by("-pk"))
+
 @jsonrpc_method("account.bsdusers.set")
-def __account_bsdusers_set(request):
-    return __api_call_not_implemented(request)
+def __account_bsdusers_set(request, pk=None, uid=None, username=None, group=None,
+    unixhash=None, smbhash=None, home=None, shell=None, full_name=None, builtin=None, email=None):
+    l = locals()
+
+    syslog(LOG_DEBUG, "AAA") 
+    res = False
+    if not pk:
+        return json.dumps(res)
+
+    syslog(LOG_DEBUG, "BBB") 
+    obj = account.models.bsdUsers.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
+
+    obj = obj[0]
+
+    syslog(LOG_DEBUG, "CCC") 
+    kwargs = {}
+    keys = ["uid", "username", "group", "unixhash",
+       "smbhash", "home", "shell", "full_name", "builtin", "email"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdusr_" + k] = l[k]
+
+    syslog(LOG_DEBUG, "DDD") 
+    try:
+        obj.__dict__.update(kwargs)
+        obj.save()
+        notifier().reload("user")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "account.bsdusers.set: error = %s" % e)
+        res = False
+
+    syslog(LOG_DEBUG, "EEE") 
+    return json.dumps(res)
+
 @jsonrpc_method("account.bsdusers.create")
-def __account_bsdusers_create(request):
-    return __api_call_not_implemented(request)
+def __account_bsdusers_create(request, uid=-1, username=None, password=None, gid=-1,
+    home="/nonexistent", shell="/usr/sbin/nologin", full_name=None, builtin=False, email=None):
+    l = locals()
+
+    if not (username or password or full_name):
+        return json.dumps([None])
+
+    kwargs = {}
+    keys = ["uid", "username", "home", "shell",
+        "full_name", "builtin", "email"]
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdusr_" + k] = l[k]
+
+    uid, gid, unixhash, smbhash = notifier().user_create(
+        username=username,
+        fullname=full_name,
+        password=password,
+        uid=uid,
+        gid=gid,
+        shell=shell,
+        homedir=home
+    )
+
+    try:
+        grp = account.models.bsdGroups.objects.get(bsdgrp_gid=gid)
+
+    except Exception, e:
+        grp = account.models.bsdGroups(bsdgrp_gid=gid,
+            bsdgrp_group=username, bsdgrp_builtin=False)
+        grp.save()
+
+    kwargs["bsdusr_uid"] = uid
+    kwargs["bsdusr_group"] = grp
+    kwargs["bsdusr_unixhash"] = unixhash
+    kwargs["bsdusr_smbhash"] = smbhash
+    
+    try:
+        obj = account.models.bsdUsers.objects.create(**kwargs)
+        obj.save()
+        notifier().reload("user")
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "account.bsdusers.create: error = %s" % e)
+        obj = None
+
+    obj = account.models.bsdUsers.objects.select_related().filter(pk=obj.pk) if obj else [None]
+    return __serialize(obj)
+
 @jsonrpc_method("account.bsdusers.destroy")
-def __account_bsdusers_destroy(request):
-    return __api_call_not_implemented(request)
+def __account_bsdusers_destroy(request, pk=None, uid=None, username=None, group=None,
+        home=None, shell=None, full_name=None, builtin=None, email=None):
+    l = locals()
+
+    res = False
+    kwargs = {}
+    keys = ["uid", "username", "group", "home",
+        "shell", "full_name", "builtin", "email"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["bsdusr_" + k] = l[k]
+
+    if kwargs:
+        obj = account.models.bsdUsers.objects.filter(**kwargs)
+        if not obj:
+            return json.dumps(res)
+
+        try: 
+            obj.delete()
+            notifier().reload("user")
+            res = True
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "account.bsdusers.delete: error = %s" % e)
+            res = False
+      
+    return json.dumps(res)
+
 
 @jsonrpc_method("account.bsdgroupmembership.get")
 def __account_bsdgroupmembership_get(request):
-    return __serialize(account.models.bsdGroupMembership.objects.order_by("-id"))
+    return __serialize(account.models.bsdGroupMembership.objects.order_by("-pk"))
 @jsonrpc_method("account.bsdgroupmembership.set")
 def __account_bsdgroupmembership_set(request):
     return __api_call_not_implemented(request)
@@ -160,7 +381,7 @@ def __account_bsdgroupmembership_destroy(request):
 #
 @jsonrpc_method("network.globalconfiguration.get")
 def __network_globalconfiguration_get(request):
-    return __serialize(network.models.GlobalConfiguration.objects.order_by("-id"))
+    return __serialize(network.models.GlobalConfiguration.objects.order_by("-pk"))
 @jsonrpc_method("network.globalconfiguration.set")
 def __network_globalconfiguration_set(request):
     return __api_call_not_implemented(request)
@@ -173,7 +394,7 @@ def __network_globalconfiguration_destroy(request):
 
 @jsonrpc_method("network.interfaces.get")
 def __network_interfaces_get(request):
-    return __serialize(network.models.Interfaces.objects.order_by("-id"))
+    return __serialize(network.models.Interfaces.objects.order_by("-pk"))
 @jsonrpc_method("network.interfaces.set")
 def __network_interfaces_set(request):
     return __api_call_not_implemented(request)
@@ -186,7 +407,7 @@ def __network_interfaces_destroy(request):
 
 @jsonrpc_method("network.alias.get")
 def __network_alias_get(request):
-    return __serialize(network.models.Alias.objects.order_by("-id"))
+    return __serialize(network.models.Alias.objects.order_by("-pk"))
 @jsonrpc_method("network.alias.set")
 def __network_alias_set(request):
     return __api_call_not_implemented(request)
@@ -199,7 +420,7 @@ def __network_alias_destroy(request):
 
 @jsonrpc_method("network.vlan.get")
 def __network_vlan_get(request):
-    return __serialize(network.models.VLAN.objects.order_by("-id"))
+    return __serialize(network.models.VLAN.objects.order_by("-pk"))
 @jsonrpc_method("network.vlan.set")
 def __network_vlan_set(request):
     return __api_call_not_implemented(request)
@@ -212,7 +433,7 @@ def __network_vlan_destroy(request):
 
 @jsonrpc_method("network.lagginterface.get")
 def __network_lagginterface_get(request):
-    return __serialize(network.models.LAGGInterface.objects.order_by("-id"))
+    return __serialize(network.models.LAGGInterface.objects.order_by("-pk"))
 @jsonrpc_method("network.lagginterface.set")
 def __network_lagginterface_set(request):
     return __api_call_not_implemented(request)
@@ -225,7 +446,7 @@ def __network_lagginterface_destroy(request):
 
 @jsonrpc_method("network.lagginterfacemembers.get")
 def __network_lagginterfacemembers_get(request):
-    return __serialize(network.models.LAGGInterfaceMembers.objects.order_by("-id"))
+    return __serialize(network.models.LAGGInterfaceMembers.objects.order_by("-pk"))
 @jsonrpc_method("network.lagginterfacemembers.set")
 def __network_lagginterfacemembers_set(request):
     return __api_call_not_implemented(request)
@@ -238,7 +459,7 @@ def __network_lagginterfacemembers_destroy(request):
 
 @jsonrpc_method("network.staticroute.get")
 def __network_staticroute_get(request):
-    return __serialize(network.models.StaticRoute.objects.order_by("-id"))
+    return __serialize(network.models.StaticRoute.objects.order_by("-pk"))
 @jsonrpc_method("network.staticroute.set")
 def __network_staticroute_set(request):
     return __api_call_not_implemented(request)
@@ -258,7 +479,7 @@ def __plugins_plugins_get(request, plugin_name=None):
     if plugin_name:
         return __serialize(plugins.models.Plugins.objects.filter(plugin_name=plugin_name))
     else:
-        return __serialize(plugins.models.Plugins.objects.order_by("-id"))
+        return __serialize(plugins.models.Plugins.objects.order_by("-pk"))
 @jsonrpc_method("plugins.plugins.set")
 def __plugins_plugins_set(request):
     return __api_call_not_implemented(request)
@@ -276,7 +497,7 @@ def __plugins_plugins_destroy(request):
 #
 @jsonrpc_method("services.services.get")
 def __services_services_get(request):
-    return __serialize(services.models.services.objects.order_by("-id"))
+    return __serialize(services.models.services.objects.order_by("-pk"))
 @jsonrpc_method("services.services.set")
 def __services_services_set(request):
     return __api_call_not_implemented(request)
@@ -289,7 +510,7 @@ def __services_services_destroy(request):
 
 @jsonrpc_method("services.cifs.get")
 def __services_cifs_get(request):
-    return __serialize(services.models.CIFS.objects.order_by("-id"))
+    return __serialize(services.models.CIFS.objects.order_by("-pk"))
 @jsonrpc_method("services.cifs.set")
 def __services_cifs_set(request):
     return __api_call_not_implemented(request)
@@ -302,7 +523,7 @@ def __services_cifs_destroy(request):
 
 @jsonrpc_method("services.afp.get")
 def __services_afp_get(request):
-    return __serialize(services.models.AFP.objects.order_by("-id"))
+    return __serialize(services.models.AFP.objects.order_by("-pk"))
 @jsonrpc_method("services.afp.set")
 def __services_afp_set(request):
     return __api_call_not_implemented(request)
@@ -315,7 +536,7 @@ def __services_afp_destroy(request):
 
 @jsonrpc_method("services.nfs.get")
 def __services_nfs_get(request):
-    return __serialize(services.models.NFS.objects.order_by("-id"))
+    return __serialize(services.models.NFS.objects.order_by("-pk"))
 @jsonrpc_method("services.nfs.set")
 def __services_nfs_set(request):
     return __api_call_not_implemented(request)
@@ -328,7 +549,7 @@ def __services_nfs_destroy(request):
 
 @jsonrpc_method("services.iscsitargetglobalconfiguration.get")
 def __services_iscsitargetglobalconfiguration_get(request):
-    return __serialize(sevices.models.iSCSITargetGlobalConfiguration.objects.order_by("-id"))
+    return __serialize(sevices.models.iSCSITargetGlobalConfiguration.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargetglobalconfiguration.set")
 def __services_iscsitargetglobalconfiguration_set(request):
     return __api_call_not_implemented(request)
@@ -341,7 +562,7 @@ def __services_iscsitargetglobalconfiguration_destroy(request):
 
 @jsonrpc_method("services.iscsitargetextent.get")
 def __services_iscsitargetextent_get(request):
-    return __serialize(services.iSCSITargetExtent.objects.order_by("-id"))
+    return __serialize(services.iSCSITargetExtent.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargetextent.set")
 def __services_iscsitargetextent_set(request):
     return __api_call_not_implemented(request)
@@ -354,7 +575,7 @@ def __services_iscsitargetextent_destroy(request):
 
 @jsonrpc_method("services.iscsitargetportal.get")
 def __services_iscsitargetportal_get(request):
-    return __serialize(services.models.iSCSITargetPortal.objects.order_by("-id"))
+    return __serialize(services.models.iSCSITargetPortal.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargetportal.set")
 def __services_iscsitargetportal_set(request):
     return __api_call_not_implemented(request)
@@ -367,7 +588,7 @@ def __services_iscsitargetportal_destroy(request):
 
 @jsonrpc_method("services.iscsitargetauthorizedinitiator.get")
 def __services_iscsitargetauthorizedinitiator_get(request):
-    return __serialize(services.models.iSCSITargetAuthorizedInitiator.objects.order_by("-id"))
+    return __serialize(services.models.iSCSITargetAuthorizedInitiator.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargetauthorizedinitiator.set")
 def __services_iscsitargetauthorizedinitiator_set(request):
     return __api_call_not_implemented(request)
@@ -380,7 +601,7 @@ def __services_iscsitargetauthorizedinitiator_destroy(request):
 
 @jsonrpc_method("services.iscsitargetauthcredential.get")
 def __services_iscsitargetauthcredential_get(request):
-    return __serialize(services.models.iSCSITargetAuthCredential.objects.order_by("-id"))
+    return __serialize(services.models.iSCSITargetAuthCredential.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargetauthcredential.set")
 def __services_iscsitargetauthcredential_set(request):
     return __api_call_not_implemented(request)
@@ -393,7 +614,7 @@ def __services_iscsitargetauthcredential_destroy(request):
 
 @jsonrpc_method("services.iscsitarget.get")
 def __services_iscsitarget_get(request):
-    return __serialize(services.models.iSCSITarget.objects.order_by("-id"))
+    return __serialize(services.models.iSCSITarget.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitarget.set")
 def __services_iscsitarget_set(request):
     return __api_call_not_implemented(request)
@@ -406,7 +627,7 @@ def __services_iscsitarget_destroy(request):
 
 @jsonrpc_method("services.iscsitargettoextent.get")
 def __services_iscsitargettoextent_get(request):
-    return __serialize(services.iSCSITargetToExtent.objects.order_by("-id"))
+    return __serialize(services.iSCSITargetToExtent.objects.order_by("-pk"))
 @jsonrpc_method("services.iscsitargettoextent.set")
 def __services_iscsitargettoextent_set(request):
     return __api_call_not_implemented(request)
@@ -419,7 +640,7 @@ def __services_iscsitargettoextent_destroy(request):
 
 @jsonrpc_method("services.dynamicdns.get")
 def __services_dynamicdns_get(request):
-    return __serialize(services.DynamicDNS.objects.order_by("-id"))
+    return __serialize(services.DynamicDNS.objects.order_by("-pk"))
 @jsonrpc_method("services.dynamicdns.set")
 def __services_dynamicdns_set(request):
     return __api_call_not_implemented(request)
@@ -432,7 +653,7 @@ def __services_dynamicdns_destroy(request):
 
 @jsonrpc_method("services.plugins.get")
 def __services_plugins_get(request):
-    return __serialize(services.models.Plugins.objects.order_by("-id"))
+    return __serialize(services.models.Plugins.objects.order_by("-pk"))
 @jsonrpc_method("services.plugins.set")
 def __services_plugins_set(request):
     return __api_call_not_implemented(request)
@@ -445,7 +666,7 @@ def __services_plugins_destroy(request):
 
 @jsonrpc_method("services.snmp.get")
 def __services_snmp_get(request):
-    return __serialize(services.models.SNMP.objects.order_by("-id"))
+    return __serialize(services.models.SNMP.objects.order_by("-pk"))
 @jsonrpc_method("services.snmp.set")
 def __services_snmp_set(request):
     return __api_call_not_implemented(request)
@@ -458,7 +679,7 @@ def __services_snmp_destroy(request):
 
 @jsonrpc_method("services.ups.get")
 def __services_ups_get(request):
-    return __serialize(services.models.UPS.objects.order_by("-id"))
+    return __serialize(services.models.UPS.objects.order_by("-pk"))
 @jsonrpc_method("services.ups.set")
 def __services_ups_set(request):
     return __api_call_not_implemented(request)
@@ -471,7 +692,7 @@ def __services_ups_destroy(request):
 
 @jsonrpc_method("services.ftp.get")
 def __services_ftp_get(request):
-    return __serialize(services.models.FTP.objects.order_by("-id"))
+    return __serialize(services.models.FTP.objects.order_by("-pk"))
 @jsonrpc_method("services.ftp.set")
 def __services_ftp_set(request):
     return __api_call_not_implemented(request)
@@ -484,7 +705,7 @@ def __services_ftp_destroy(request):
 
 @jsonrpc_method("services.tftp.get")
 def __services_tftp_get(request):
-    return __serialize(services.models.TFTP.objects.order_by("-id"))
+    return __serialize(services.models.TFTP.objects.order_by("-pk"))
 @jsonrpc_method("services.tftp.set")
 def __services_tftp_set(request):
     return __api_call_not_implemented(request)
@@ -497,7 +718,7 @@ def __services_tftp_destroy(request):
 
 @jsonrpc_method("services.ssh.get")
 def __services_ssh_get(request):
-    return __serialize(services.models.SSH.objects.order_by("-id"))
+    return __serialize(services.models.SSH.objects.order_by("-pk"))
 @jsonrpc_method("services.ssh.set")
 def __services_ssh_set(request):
     return __api_call_not_implemented(request)
@@ -510,7 +731,7 @@ def __services_ssh_destroy(request):
 
 @jsonrpc_method("services.activedirectory.get")
 def __services_activedirectory_get(request):
-    return __serialize(services.models.ActiveDirectory.objects.order_by("-id"))
+    return __serialize(services.models.ActiveDirectory.objects.order_by("-pk"))
 @jsonrpc_method("services.activedirectory.set")
 def __services_activedirectory_set(request):
     return __api_call_not_implemented(request)
@@ -523,7 +744,7 @@ def __services_activedirectory_destroy(request):
 
 @jsonrpc_method("services.ldap.get")
 def __services_ldap_get(request):
-    return __serialize(services.models.LDAP.objects.order_by("-id"))
+    return __serialize(services.models.LDAP.objects.order_by("-pk"))
 @jsonrpc_method("services.ldap.set")
 def __services_ldap_set(request):
     return __api_call_not_implemented(request)
@@ -536,7 +757,7 @@ def __services_ldap_destroy(request):
 
 @jsonrpc_method("services.rsyncd.get")
 def __services_rsyncd_get(request):
-    return __serialize(services.models.Rsyncd.objects.order_by("-id"))
+    return __serialize(services.models.Rsyncd.objects.order_by("-pk"))
 @jsonrpc_method("services.rsyncd.set")
 def __services_rsyncd_set(request):
     return __api_call_not_implemented(request)
@@ -549,7 +770,7 @@ def __services_rsyncd_destroy(request):
 
 @jsonrpc_method("services.rsyncmod.get")
 def __services_rsyncmod_get(request):
-    return __serialize(services.models.RsyncMod.objects.order_by("-id"))
+    return __serialize(services.models.RsyncMod.objects.order_by("-pk"))
 @jsonrpc_method("services.rsyncmod.set")
 def __services_rsyncmod_set(request):
     return __api_call_not_implemented(request)
@@ -562,7 +783,7 @@ def __services_rsyncmod_destroy(request):
 
 @jsonrpc_method("services.smart.get")
 def __services_smart_get(request):
-    return __serialize(services.models.SMART.objects.order_by("-id"))
+    return __serialize(services.models.SMART.objects.order_by("-pk"))
 @jsonrpc_method("services.smart.set")
 def __services_smart_set(request):
     return __api_call_not_implemented(request)
@@ -580,7 +801,7 @@ def __services_smart_destroy(request):
 #
 @jsonrpc_method("sharing.cifs_share.get")
 def __sharing_cifs_share_get(request):
-    return __serialize(sharing.models.CIFS_Share.objects.order_by("-id"))
+    return __serialize(sharing.models.CIFS_Share.objects.order_by("-pk"))
 @jsonrpc_method("sharing.cifs_share.set")
 def __sharing_cifs_share_set(request):
     return __api_call_not_implemented(request)
@@ -593,7 +814,7 @@ def __sharing_cifs_share_destroy(request):
 
 @jsonrpc_method("sharing.afp_share.get")
 def __sharing_afp_share_get(request):
-    return __serialize(sharing.models.AFP_Share.objects.order_by("-id"))
+    return __serialize(sharing.models.AFP_Share.objects.order_by("-pk"))
 @jsonrpc_method("sharing.afp_share.set")
 def __sharing_afp_share_set(request):
     return __api_call_not_implemented(request)
@@ -606,7 +827,7 @@ def __sharing_afp_share_destroy(request):
 
 @jsonrpc_method("sharing.nfs_share.get")
 def __sharing_nfs_share_get(request):
-    return __serialize(sharing.models.NFS_Share.objects.order_by("-id"))
+    return __serialize(sharing.models.NFS_Share.objects.order_by("-pk"))
 @jsonrpc_method("sharing.nfs_share.set")
 def __sharing_nfs_share_set(request):
     return __api_call_not_implemented(request)
@@ -624,7 +845,7 @@ def __sharing_nfs_share_destroy(request):
 #
 @jsonrpc_method("storage.volume.get")
 def __storage_volume_get(request):
-    return __serialize(storage.models.Volume.objects.order_by("-id"))
+    return __serialize(storage.models.Volume.objects.order_by("-pk"))
 @jsonrpc_method("storage.volume.set")
 def __storage_volume_set(request):
     return __api_call_not_implemented(request)
@@ -637,7 +858,7 @@ def __storage_volume_destroy(request):
 
 @jsonrpc_method("storage.disk.get")
 def __storage_disk_get(request):
-    return __serialize(storage.models.Disk.objects.order_by("-id"))
+    return __serialize(storage.models.Disk.objects.order_by("-pk"))
 @jsonrpc_method("storage.disk.set")
 def __storage_disk_set(request):
     return __api_call_not_implemented(request)
@@ -650,7 +871,7 @@ def __storage_disk_destroy(request):
 
 @jsonrpc_method("storage.mountpoint.get")
 def __storage_mountpoint_get(request):
-    return __serialize(storage.models.MountPoint.objects.order_by("-id"))
+    return __serialize(storage.models.MountPoint.objects.order_by("-pk"))
 @jsonrpc_method("storage.mountpoint.set")
 def __storage_mountpoint_set(request):
     return __api_call_not_implemented(request)
@@ -663,7 +884,7 @@ def __storage_mountpoint_destroy(request):
 
 @jsonrpc_method("storage.replremote.get")
 def __storage_replremote_get(request):
-    return __serialize(storage.models.ReplRemote.objects.order_by("-id"))
+    return __serialize(storage.models.ReplRemote.objects.order_by("-pk"))
 @jsonrpc_method("storage.replremote.set")
 def __storage_replremote_set(request):
     return __api_call_not_implemented(request)
@@ -676,7 +897,7 @@ def __storage_replremote_destroy(request):
 
 @jsonrpc_method("storage.replication.get")
 def __storage_replication_get(request):
-    return __serialize(storage.models.Replication.objects.order_by("-id"))
+    return __serialize(storage.models.Replication.objects.order_by("-pk"))
 @jsonrpc_method("storage.replication.set")
 def __storage_replication_set(request):
     return __api_call_not_implemented(request)
@@ -689,7 +910,7 @@ def __storage_replication_destroy(request):
 
 @jsonrpc_method("storage.task.get")
 def __storage_task_get(request):
-    return __serialize(storage.models.Task.objects.order_by("-id"))
+    return __serialize(storage.models.Task.objects.order_by("-pk"))
 @jsonrpc_method("storage.task.set")
 def __storage_task_set(request):
     return __api_call_not_implemented(request)
@@ -707,7 +928,7 @@ def __storage_task_destroy(request):
 #
 @jsonrpc_method("system.settings.get")
 def __system_settings_get(request):
-    return __serialize(system.models.Settings.objects.order_by("-id"))
+    return __serialize(system.models.Settings.objects.order_by("-pk"))
 @jsonrpc_method("system.settings.set")
 def __system_settings_set(request):
     return __api_call_not_implemented(request)
@@ -720,7 +941,7 @@ def __system_settings_destroy(request):
 
 @jsonrpc_method("system.ntpserver.get")
 def __system_ntpserver_get(request):
-    return __serialize(system.models.NTPServer.objects.order_by("-id"))
+    return __serialize(system.models.NTPServer.objects.order_by("-pk"))
 @jsonrpc_method("system.ntpserver.set")
 def __system_ntpserver_set(request):
     return __api_call_not_implemented(request)
@@ -733,7 +954,7 @@ def __system_ntpserver_destroy(request):
 
 @jsonrpc_method("system.advanced.get")
 def __system_advanced_get(request):
-    return __serialize(system.models.Advanced.objects.order_by("-id"))
+    return __serialize(system.models.Advanced.objects.order_by("-pk"))
 @jsonrpc_method("system.advanced.set")
 def __system_advanced_set(request):
     return __api_call_not_implemented(request)
@@ -746,7 +967,7 @@ def __system_advanced_destroy(request):
 
 @jsonrpc_method("system.email.get")
 def __system_email_get(request):
-    return __serialize(system.models.Email.objects.order_by("-id"))
+    return __serialize(system.models.Email.objects.order_by("-pk"))
 @jsonrpc_method("system.email.set")
 def __system_email_set(request):
     return __api_call_not_implemented(request)
@@ -759,7 +980,7 @@ def __system_email_destroy(request):
 
 @jsonrpc_method("system.ssl.get")
 def __system_ssl_get(request):
-    return __serialize(system.models.SSL.objects.order_by("-id"))
+    return __serialize(system.models.SSL.objects.order_by("-pk"))
 @jsonrpc_method("system.ssl.set")
 def __system_ssl_set(request):
     return __api_call_not_implemented(request)
@@ -772,7 +993,7 @@ def __system_ssl_destroy(request):
 
 @jsonrpc_method("system.cronjob.get")
 def __system_cronjob_get(request):
-    return __serialize(system.models.CronJob.objects.order_by("-id"))
+    return __serialize(system.models.CronJob.objects.order_by("-pk"))
 @jsonrpc_method("system.cronjob.set")
 def __system_cronjob_set(request):
     return __api_call_not_implemented(request)
@@ -785,7 +1006,7 @@ def __system_cronjob_destroy(request):
 
 @jsonrpc_method("system.rsync.get")
 def __system_rsync_get(request):
-    return __serialize(system.models.Rsync.objects.order_by("-id"))
+    return __serialize(system.models.Rsync.objects.order_by("-pk"))
 @jsonrpc_method("system.rsync.set")
 def __system_rsync_set(request):
     return __api_call_not_implemented(request)
@@ -798,7 +1019,7 @@ def __system_rsync_destroy(request):
 
 @jsonrpc_method("system.smarttest.get")
 def __system_smarttest_get(request):
-    return __serialize(system.models.SMARTTest.objects.order_by("-id"))
+    return __serialize(system.models.SMARTTest.objects.order_by("-pk"))
 @jsonrpc_method("system.smarttest.set")
 def __system_smarttest_set(request):
     return __api_call_not_implemented(request)
@@ -811,7 +1032,7 @@ def __system_smarttest_destroy(request):
 
 @jsonrpc_method("system.sysctl.get")
 def __system_sysctl_get(request):
-    return __serialize(system.models.Sysctl.objects.order_by("-id"))
+    return __serialize(system.models.Sysctl.objects.order_by("-pk"))
 @jsonrpc_method("system.sysctl.set")
 def __system_sysctl_set(request):
     return __api_call_not_implemented(request)
@@ -824,7 +1045,7 @@ def __system_sysctl_destroy(request):
 
 @jsonrpc_method("system.tunable.get")
 def __system_tunable_get(request):
-    return __serialize(system.models.Tunable.objects.order_by("-id"))
+    return __serialize(system.models.Tunable.objects.order_by("-pk"))
 @jsonrpc_method("system.tunable.set")
 def __system_tunable_set(request):
     return __api_call_not_implemented(request)
