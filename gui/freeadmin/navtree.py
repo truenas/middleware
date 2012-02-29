@@ -395,7 +395,10 @@ class NavTree(object):
                     log.warn(_("Empty data returned from %s") % (url,))
                     continue
             except Exception, e:
-                log.warn(_("Couldn't retrieve %(url)s: %(error)s") % (url, e))
+                log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+                    'url': url,
+                    'error': e,
+                    })
                 continue
 
             try:
@@ -422,7 +425,7 @@ class NavTree(object):
 
             except Exception, e:
                 log.warn(_("An error occurred while unserializing from "
-                    "%(url)s: %(error)s") % (url, e))
+                    "%(url)s: %(error)s") % {'url': url, 'error': e})
                 continue
 
     def _build_nav(self):
