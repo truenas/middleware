@@ -1,4 +1,3 @@
-
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     {% block onsubmit %}
@@ -9,7 +8,11 @@
 {% if form %}
     {{ form }}
 {% endif %}
-    <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
+    {% block message %}
+    <tr>
+        <td>{% trans "Are you sure you want to delete?" %}</td>
+    </tr>
+    {% endblock %}
     <tr>
         <td>
             <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
