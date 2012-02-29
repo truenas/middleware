@@ -3,21 +3,10 @@
 {{ block.super }}
             <button data-dojo-type="dijit.form.Button" >
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-                    try {
-                        var form = getForm(this);
-                        dojo.query('input[type=button],input[type=submit]', form.domNode).forEach(
-                            function(inputElem){
-                                 dijit.getEnclosingWidget(inputElem).set('disabled',true);
-                             }
-                          );
-                    } catch(err) {}
-
-                    var rnode = getDialog(this);
-                    if(!rnode) rnode = dijit.byId("edit_dialog");
-                    dojo.xhrGet( {
-                        url: '{% url freeadmin_model_delete app=app,model=model,oid=oid %}',
-                        handleAs: 'text',
-                        load: function(data) { rnode.set('content', data); },
-                     });
-                </script>{% trans "Delete" %}</button>
+                    var dialog = getDialog(this);
+                    dialog.hide();
+                    editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{% url freeadmin_model_delete app=app,model=model,oid=oid %}', [this,]);
+                </script>
+                {% trans "Delete" %}
+            </button>
 {% endblock %}
