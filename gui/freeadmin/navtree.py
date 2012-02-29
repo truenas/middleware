@@ -395,9 +395,8 @@ class NavTree(object):
                     log.warn(_("Empty data returned from %s") % (url,))
                     continue
             except Exception, e:
-                log.warn(_("Couldn't retrieve %s: %s") % (url, e))
+                log.warn(_("Couldn't retrieve %(url)s: %(error)s") % (url, e))
                 continue
-
 
             try:
                 data = simplejson.loads(data)
@@ -422,7 +421,8 @@ class NavTree(object):
                         tree_roots.register(node)
 
             except Exception, e:
-                log.warn(_("An error occurred while unserializing from %s: %s") % (url, e))
+                log.warn(_("An error occurred while unserializing from "
+                    "%(url)s: %(error)s") % (url, e))
                 continue
 
     def _build_nav(self):
