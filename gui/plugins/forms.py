@@ -35,10 +35,11 @@ from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
 from freenasUI.account.forms import FilteredSelectField
-from freenasUI import services, storage, network, choices
+from freenasUI import services, choices
 
 
 class PBIFileWizard(FileWizard):
@@ -120,9 +121,9 @@ class JailPBIUploadForm(Form):
             label= _("Jail name"),
             required=True
             )
-    jail_ip = forms.ChoiceField(
+    jail_ip = forms.ModelChoiceField(
             label=_("Jail IP address"),
-            choices=(),
+            queryset=Alias.objects.all(),
             required=True
             )
     plugins_path = forms.ChoiceField(
@@ -140,12 +141,10 @@ class JailPBIUploadForm(Form):
              )
 
     def __init__(self, *args, **kwargs):
-        from freenasUI.network import models
-
         super(JailPBIUploadForm, self).__init__(*args, **kwargs)
 
         path_list = []
-        mp_list = storage.models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+        mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
         for m in mp_list:
             path_list.append(m.mp_path)
 
@@ -154,12 +153,7 @@ class JailPBIUploadForm(Form):
                 for name, dataset in datasets.items():
                     path_list.append(dataset.mountpoint)
 
-        nics = choices.NICChoices(with_alias=True, exclude_configured=False)
-        ifaces = models.Interfaces.objects.filter(int_interface__in=[n[0] for n in nics])
-        aliases = models.Alias.objects.filter(alias_interface__in=[i.id for i in ifaces])
-
         self.fields['jail_path'].choices = [(path, path) for path in path_list]
-        self.fields['jail_ip'].choices = [(a.alias_v4address, a.alias_v4address) for a in aliases]
         self.fields['plugins_path'].choices = [(path, path) for path in path_list]
 
     def clean(self):
@@ -180,12 +174,10 @@ class JailPBIUploadForm(Form):
         return cleaned_data
 
     def done(self, *args, **kwargs):
-        from freenasUI.network import models
 
         cleaned_data = self.cleaned_data
 
-        jail_ip = self.cleaned_data['jail_ip']
-        alias = models.Alias.objects.filter(alias_v4address=jail_ip)[0]
+        alias = self.cleaned_data['jail_ip']
 
         # Create a plugins service entry
         pj = services.models.Plugins()
