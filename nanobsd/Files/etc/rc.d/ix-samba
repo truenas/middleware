@@ -153,6 +153,8 @@ generate_smbconf()
 		    guest account = ${guest}
 		    map to guest = Bad Password
 		    obey pam restrictions = Yes
+		    # NOTE: read smb.conf.
+		    directory name cache size = 0
 EOF
 		if [ "${guestok}" = "1" ]; then
 			echo "    guest ok = yes"
