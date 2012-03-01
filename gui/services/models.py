@@ -738,9 +738,9 @@ class DynamicDNS(Model):
             ) # need to make this a 'password' field, but not available in django Models
     ddns_updateperiod = models.CharField(
             max_length=120,
-            verbose_name = _("Update period"),
+            verbose_name=_("Update period"),
             blank=True,
-            help_text = _("Time in milliseconds")
+            help_text=_("Time in seconds. Default is about 1 min.")
             )
     ddns_fupdateperiod = models.CharField(
             max_length=120,
