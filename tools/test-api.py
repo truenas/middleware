@@ -231,7 +231,7 @@ def account_bsdusers_test(url, csrftoken, sessionid):
 
     _w("account.bsdusers.create: creating user %s: " % username)
     results = freenas_json_call(url, csrftoken, sessionid, "account.bsdusers.create",
-        8888, username, "abcd1234", None, "/nonexistent",
+        8888, username, "mypassword", None, "/nonexistent",
         "/usr/sbin/nologin", "Test User", False, None)
     _w("%s\n" % "ok" if results else "fail")
     if not results:
@@ -260,6 +260,40 @@ def account_bsdusers_test(url, csrftoken, sessionid):
 
     return ret
 
+def network_globalconfiguration_test(url, csrftoken, sessionid):
+    ret = False
+    hostname = "testhost"
+
+    _w("network.globalconfiguration.create: ")
+    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.create",
+        hostname, "freenas.org", "10.0.0.1", None, "10.0.0.1", None, None)
+    _w("%s\n" % "ok" if results else "fail")
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    _w("network.globalconfiguration.get: ")
+    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.get", pk)
+    _w("%s\n" % "ok" if results else "fail")
+    if not results:
+        return ret
+
+    _w("network.globalconfiguration.set: changing host %s to %s: " % (hostname, "blahhost"))
+    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.set", pk,
+        "blahhost")
+    _w("%s\n" % "ok" if results else "fail")
+    if not results:
+        return ret
+
+    _w("network.globalconfiguration.destroy: deleting host %s: " % hostname)
+    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.destroy", pk)
+    _w("%s\n" % "ok" if results else "fail")
+    if results:
+        ret = True
+
+    return ret
+
 def main():
     if len(sys.argv) != 4:
         sys.stderr.write("Usage: %s [user] [pass] [url]\n\n" % sys.argv[0])
@@ -271,8 +305,9 @@ def main():
 
     csrftoken, sessionid, response = freenas_login(url, u, p)
 
-    #account_bsdgroups_test(url, csrftoken, sessionid)
-    #account_bsdusers_test(url, csrftoken, sessionid)
+    account_bsdgroups_test(url, csrftoken, sessionid)
+    account_bsdusers_test(url, csrftoken, sessionid)
+    network_globalconfiguration_test(url, csrftoken, sessionid)
 
     freenas_logout(url, csrftoken, sessionid)
 
