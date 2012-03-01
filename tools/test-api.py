@@ -191,108 +191,103 @@ def freenas_logout(url, csrftoken, sessionid):
     return response
 
 
+def freenas_apicall_test(url, csrftoken, sessionid, unit, method, msg, *args):
+    test = "%s.%s" % (unit, method)
+
+    _w("%s: %s: " % (test, msg if msg else ""))
+    results = freenas_json_call(url, csrftoken, sessionid, test, *args)
+    _w("%s\n" % "ok" if results else "fail")
+
+    return results
+
+
+_t = freenas_apicall_test
+
+
 def account_bsdgroups_test(url, csrftoken, sessionid):
     ret = False
+
+    unit = "account.bsdgroups"
     group = "testgroup"
 
-    _w("account.bsdgroups.create: creating group %s: " % group)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdgroups.create",
-        8888, group, False)
-    _w("%s\n" % "ok" if results else "fail")
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating group %s" % group, 8888, group, False)
     if not results:
         return ret
 
     pk = results[0]["pk"]
 
-    _w("account.bsdgroups.get: getting group %s: " % group)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdgroups.get", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting group %s" % group, pk):
         return ret
 
-    _w("account.bsdgroups.set: changing group %s to %s: " % (group, "blahgroup"))
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdgroups.set", pk,
-        None, "blahgroup")
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing group %s to %s" % (group, "blahgroup"),
+        pk, None, "blahgroup"):
         return ret
 
-    _w("account.bsdgroups.destroy: deleting group %s: " % group)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdgroups.destroy", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if results:
-        ret = True
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting group %s" % group, pk):
+        return ret
 
-    return ret
+    return True
 
 def account_bsdusers_test(url, csrftoken, sessionid):
     ret = False
+
+    unit = "account.bsdusers"
     username = "testuser"
 
-    _w("account.bsdusers.create: creating user %s: " % username)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdusers.create",
-        8888, username, "mypassword", None, "/nonexistent",
-        "/usr/sbin/nologin", "Test User", False, None)
-    _w("%s\n" % "ok" if results else "fail")
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating user %s" % username, 8888, username, "mypassword", None,
+        "/nonexistent", "/usr/sbin/nologin", "Test User", False, None)
     if not results:
         return ret
 
     pk = results[0]["pk"]
 
-    _w("account.bsdusers.get: getting user %s: " % username)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdusers.get", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting user %s" % username, pk):
         return ret
 
-    _w("account.bsdusers.set: changing user %s to %s: " % (username, "blahuser"))
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdusers.set", pk,
-        None, "blahuser")
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing user %s to %s" % (username, "blahuser"),
+        pk, None, None, "blahuser"):
         return ret
 
-    _w("account.bsdusers.destroy: deleting user %s: " % username)
-    results = freenas_json_call(url, csrftoken, sessionid, "account.bsdusers.destroy", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if results:
-        ret = True
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting user %s" % username, pk):
+        return ret
 
-    return ret
+    return True
 
 def network_globalconfiguration_test(url, csrftoken, sessionid):
     ret = False
+
+    unit = "network.globalconfiguration"
     hostname = "testhost"
 
-    _w("network.globalconfiguration.create: ")
-    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.create",
-        hostname, "freenas.org", "10.0.0.1", None, "10.0.0.1", None, None)
-    _w("%s\n" % "ok" if results else "fail")
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating host %s" % hostname, hostname, "freenas.org",
+        "10.0.0.1", None, "10.0.0.1", None, None)
     if not results:
         return ret
 
     pk = results[0]["pk"]
 
-    _w("network.globalconfiguration.get: ")
-    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.get", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "get", None, pk):
         return ret
 
-    _w("network.globalconfiguration.set: changing host %s to %s: " % (hostname, "blahhost"))
-    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.set", pk,
-        "blahhost")
-    _w("%s\n" % "ok" if results else "fail")
-    if not results:
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing host %s to %s" % (hostname, "blahhost"),
+        pk, "blahhost"):
         return ret
 
-    _w("network.globalconfiguration.destroy: deleting host %s: " % hostname)
-    results = freenas_json_call(url, csrftoken, sessionid, "network.globalconfiguration.destroy", pk)
-    _w("%s\n" % "ok" if results else "fail")
-    if results:
-        ret = True
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting host %s" % hostname, pk):
+        return ret
 
-    return ret
+    return True
 
 def main():
     if len(sys.argv) != 4:
