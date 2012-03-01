@@ -406,7 +406,7 @@ def __network_globalconfiguration_set(request, pk=None, hostname=None, domain=No
     try:
         obj.__dict__.update(kwargs)
         obj.save()
-        #notifier().reload("networkgeneral")
+        notifier().reload("networkgeneral")
         res = True
 
     except Exception, e:
@@ -432,7 +432,7 @@ def __network_globalconfiguration_create(request, hostname=None, domain=None,
         try:
             obj = network.models.GlobalConfiguration.objects.create(**kwargs)
             obj.save()
-            #notifier().reload("networkgeneral")
+            notifier().reload("networkgeneral")
 
         except Exception, e:
             syslog(LOG_DEBUG, "network.globalconfiguration.create: error = %s" % e)
@@ -453,7 +453,7 @@ def __network_globalconfiguration_destroy(request, pk=None):
 
     try: 
         obj.delete()
-        #notifier().reload("networkgeneral")
+        notifier().reload("networkgeneral")
         res = True
 
     except Exception, e:
