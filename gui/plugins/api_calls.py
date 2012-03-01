@@ -189,31 +189,24 @@ def __account_bsdgroups_create(request, gid=None, group=None, builtin=False):
     return __serialize([obj])
 
 @jsonrpc_method("account.bsdgroups.destroy")
-def __account_bsdgroups_destroy(request, pk=None, gid=None, group=None, builtin=None):
-    l = locals()
-
+def __account_bsdgroups_destroy(request, pk=None):
     res = False
-    kwargs = {}
-    keys = ["gid", "group", "builtin"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdgrp_" + k] = l[k]
 
-    if kwargs:
-        obj = account.models.bsdGroups.objects.filter(**kwargs)
-        if not obj:
-            return json.dumps(res)
+    if not pk:
+        return json.dumps(res)
 
-        try: 
-            obj.delete()
-            notifier().reload("user")
-            res = True
+    obj = account.models.bsdGroups.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
 
-        except Exception, e:
-            syslog(LOG_DEBUG, "account.bsdgroups.delete: error = %s" % e)
-            res = False
+    try: 
+        obj.delete()
+        notifier().reload("user")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "account.bsdgroups.delete: error = %s" % e)
+        res = False
       
     return json.dumps(res)
 
@@ -324,37 +317,29 @@ def __account_bsdusers_create(request, uid=-1, username=None, password=None, gid
     return __serialize(obj)
 
 @jsonrpc_method("account.bsdusers.destroy")
-def __account_bsdusers_destroy(request, pk=None, uid=None, username=None, group=None,
-        home=None, shell=None, full_name=None, builtin=None, email=None):
-    l = locals()
-
+def __account_bsdusers_destroy(request, pk=None):
     res = False
-    kwargs = {}
-    keys = ["uid", "username", "group", "home",
-        "shell", "full_name", "builtin", "email"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdusr_" + k] = l[k]
 
-    if kwargs:
-        obj = account.models.bsdUsers.objects.filter(**kwargs)
-        if not obj:
-            return json.dumps(res)
+    if not pk:
+        return json.dumps(res)
 
-        try: 
-            obj.delete()
-            notifier().reload("user")
-            res = True
+    obj = account.models.bsdUsers.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
 
-        except Exception, e:
-            syslog(LOG_DEBUG, "account.bsdusers.delete: error = %s" % e)
-            res = False
+    try: 
+        obj.delete()
+        notifier().reload("user")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "account.bsdusers.delete: error = %s" % e)
+        res = False
       
     return json.dumps(res)
 
 
+# XXX
 @jsonrpc_method("account.bsdgroupmembership.get")
 def __account_bsdgroupmembership_get(request):
     return __serialize(account.models.bsdGroupMembership.objects.order_by("-pk"))
@@ -375,17 +360,108 @@ def __account_bsdgroupmembership_destroy(request):
 #    Network methods
 #
 @jsonrpc_method("network.globalconfiguration.get")
-def __network_globalconfiguration_get(request):
-    return __serialize(network.models.GlobalConfiguration.objects.order_by("-pk"))
+def __network_globalconfiguration_get(request, pk=None, hostname=None, domain=None,
+    ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
+    l = locals()
+
+    kwargs = {}
+    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
+        "nameserver1", "nameserver2", "nameserver3"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["gc_" + k] = l[k]
+
+    if kwargs:
+        return __serialize(network.models.GlobalConfiguration.objects.filter(**kwargs))
+
+    else:
+        return __serialize(network.models.GlobalConfiguration.objects.order_by("-pk"))
+
 @jsonrpc_method("network.globalconfiguration.set")
-def __network_globalconfiguration_set(request):
-    return __api_call_not_implemented(request)
+def __network_globalconfiguration_set(request, pk=None, hostname=None, domain=None,
+    ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
+    l = locals()
+
+    res = False
+    if not pk:
+        return json.dumps(res)
+
+    obj = network.models.GlobalConfiguration.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
+
+    obj = obj[0]
+
+    kwargs = {} 
+    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
+        "nameserver1", "nameserver2", "nameserver3"]
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["gc_" + k] = l[k]
+
+    try:
+        obj.__dict__.update(kwargs)
+        obj.save()
+        #notifier().reload("networkgeneral")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "network.globalconfigurations.set: error = %s" % e)
+        res = False
+
+    return json.dumps(res)
+
 @jsonrpc_method("network.globalconfiguration.create")
-def __network_globalconfiguration_create(request):
-    return __api_call_not_implemented(request)
+def __network_globalconfiguration_create(request, hostname=None, domain=None,
+    ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
+    l = locals()
+
+    kwargs = {}
+    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
+        "nameserver1", "nameserver2", "nameserver3"]
+    for k in keys:
+        if l.has_key(k) and l[k]:
+             kwargs["gc_" + k] = l[k]
+
+    obj = None
+    if kwargs:
+        try:
+            obj = network.models.GlobalConfiguration.objects.create(**kwargs)
+            obj.save()
+            #notifier().reload("networkgeneral")
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "network.globalconfiguration.create: error = %s" % e)
+            obj = None
+
+    return __serialize([obj])
+    
 @jsonrpc_method("network.globalconfiguration.destroy")
-def __network_globalconfiguration_destroy(request):
-    return __api_call_not_implemented(request)
+def __network_globalconfiguration_destroy(request, pk=None):
+    res = False
+
+    if not pk:
+        return json.dumps(res)
+
+    obj = network.models.GlobalConfiguration.objects.filter(pk=pk)
+    if not obj:
+        return json.dumps(res)
+
+    try: 
+        obj.delete()
+        #notifier().reload("networkgeneral")
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "network.globalconfigurations.delete: error = %s" % e)
+        res = False
+      
+    return json.dumps(res)
+
 
 @jsonrpc_method("network.interfaces.get")
 def __network_interfaces_get(request):
