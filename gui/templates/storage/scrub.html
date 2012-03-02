@@ -3,6 +3,7 @@
         <thead class="header">
           <tr>
             <td>{% trans "Volume" %}</td>
+            <td>{% trans "Threshold days" %}</td>
             <td>{% trans "Minute" %}</td>
             <td>{% trans "Hour" %}</td>
             <td>{% trans "Day of month" %}</td>
@@ -14,6 +15,7 @@
         </thead>
     {% for c in scrubs %}
         <td>{{ c.scrub_volume }}</td>
+        <td>{{ c.scrub_threshold }}</td>
         <td>{{ c.get_human_minute }}</td>
         <td>{{ c.get_human_hour }}</td>
         <td>{{ c.get_human_daymonth }}</td>
