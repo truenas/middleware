@@ -86,8 +86,124 @@ def __get_plugins_jail_full_path():
     jail_full_path = os.path.join(jail_path, jail_name)
     return jail_full_path
 
+
 def __serialize(objects):
     return serializers.serialize("json", objects)
+
+
+def __create(request, meth, model, prefix, keys, args, func=None, func_args=None):
+    syslog(LOG_DEBUG, "%s: enter" % meth)
+
+    kwargs = {}
+    for k in keys:
+        if args.has_key(k) and args[k]:
+             kwargs[prefix + k] = args[k]
+
+    obj = None
+    if kwargs:
+        try:
+            obj = model.objects.create(**kwargs)
+            obj.save()
+            if func and func_args:
+                func(func_args)
+            elif func:
+                func()
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "%s: error = %s" % (meth, e))
+            obj = None
+
+    syslog(LOG_DEBUG, "%s: leave" % meth)
+    return __serialize([obj])
+
+
+def __destroy(request, meth, model, pk, func=None, func_args=None):
+    syslog(LOG_DEBUG, "%s: enter" % meth)
+
+    res = False
+
+    if not pk:
+        syslog(LOG_DEBUG, "%s: pk is null" % meth)
+        return json.dumps(res)
+
+    obj = model.objects.filter(pk=pk)
+    if not obj:
+        syslog(LOG_DEBUG, "%s: unable to find pk" % meth)
+        return json.dumps(res)
+
+    obj = obj[0]
+    try: 
+        obj.delete()
+        if func and func_args:
+            func(func_args)
+        elif func:
+            func()
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "%s: error = %s" % (meth, e))
+        res = False
+      
+    syslog(LOG_DEBUG, "%s: leave" % meth)
+    return json.dumps(res)
+
+
+def __get(request, meth, model, prefix, keys, pk, args, related=False):
+    syslog(LOG_DEBUG, "%s: enter" % meth)
+
+    kwargs = {}
+    if pk:
+        kwargs["pk"] = pk
+    for k in keys:
+        if args.has_key(k) and args[k]:
+             kwargs[prefix + k] = args[k]
+
+    syslog(LOG_DEBUG, "%s: leave" % meth)
+    if kwargs:
+        return __serialize(model.objects.filter(**kwargs))
+
+    else:
+        return __serialize(model.objects.order_by("-pk"))
+
+
+def __set(request, meth, model, prefix, keys, pk, args, func=None, func_args=None):
+    syslog(LOG_DEBUG, "%s: enter" % meth)
+
+    res = False
+
+    if not pk:
+        return json.dumps(res)
+
+    obj = model.objects.filter(pk=pk)
+    if not obj:
+        syslog(LOG_DEBUG, "%s: unable to find pk" % meth)
+        return json.dumps(res)
+
+    obj = obj[0]
+
+    kwargs = {} 
+    if pk:
+        kwargs["pk"] = pk 
+    for k in keys:
+        if args.has_key(k) and args[k]:
+             kwargs[prefix + k] = args[k]
+
+    try:
+        obj.__dict__.update(kwargs)
+        obj.save()
+        if func and func_args: 
+            func(func_args)
+        elif func:
+            func()
+        res = True
+
+    except Exception, e:
+        syslog(LOG_DEBUG, "%s: error = %s" % (meth, e))
+        res = False
+
+    syslog(LOG_DEBUG, "%s: leave" % meth)
+    return json.dumps(res)
+
 
 def __api_call_not_implemented(request):
     return "not implemented"
@@ -111,124 +227,41 @@ def __api_call_api_version(request):
 #
 #    Account methods
 #
+account_bsdgroups_keys = ["gid", "group", "builtin"]
+
 @jsonrpc_method("account.bsdgroups.get")
 def __account_bsdgroups_get(request, pk=None, gid=None, group=None, builtin=None):
-    l = locals()
-
-    kwargs = {}
-    keys = ["gid", "group", "builtin"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdgrp_" + k] = l[k]
-
-    if kwargs:
-        return __serialize(account.models.bsdGroups.objects.filter(**kwargs))
-    else:
-        return __serialize(account.models.bsdGroups.objects.order_by("-pk"))
+    return __get(request, "account.bsdgroups.get", account.models.bsdGroups,
+        "bsdgrp_", account_bsdgroups_keys, pk, locals())
 
 @jsonrpc_method("account.bsdgroups.set")
 def __account_bsdgroups_set(request, pk=None, gid=None, group=None, builtin=None):
-    l = locals()
-
-    res = False
-    if not pk:
-        return json.dumps(res)
-
-    obj = account.models.bsdGroups.objects.filter(pk=pk)
-    if not obj:
-        return json.dumps(res)
-
-    obj = obj[0]
-
-    kwargs = {} 
-    keys = ["gid", "group", "builtin"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdgrp_" + k] = l[k]
-
-    try:
-        obj.__dict__.update(kwargs)
-        obj.save()
-        notifier().reload("user")
-        res = True
-
-    except Exception, e:
-        syslog(LOG_DEBUG, "account.bsdgroups.set: error = %s" % e)
-        res = False
-
-    return json.dumps(res)
+    return __set(request, "account.bsdgroups.set", account.models.bsdGroups,
+        "bsdgrp_", account_bsdgroups_keys, pk, locals(), notifier().reload, "user")
 
 @jsonrpc_method("account.bsdgroups.create")
 def __account_bsdgroups_create(request, gid=None, group=None, builtin=False):
     l = locals()
-
     if not gid:
         l["gid"] = notifier().user_getnextgid()
 
-    kwargs = {}
-    keys = ["gid", "group", "builtin"]
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdgrp_" + k] = l[k]
-
-    obj = None
-    if kwargs:
-        try:
-            obj = account.models.bsdGroups.objects.create(**kwargs)
-            obj.save()
-            notifier().reload("user")
-
-        except Exception, e:
-            syslog(LOG_DEBUG, "account.bsdgroups.create: error = %s" % e)
-            obj = None
-
-    return __serialize([obj])
+    return __create(request, "account.bsdgroups.create", account.models.bsdGroups,
+        "bsdgrp_", account_bsdgroups_keys, l, notifier().reload, "user")
 
 @jsonrpc_method("account.bsdgroups.destroy")
 def __account_bsdgroups_destroy(request, pk=None):
-    res = False
+    return __destroy(request, "account.bsdgroups.destroy",
+        account.models.bsdGroups, pk, notifier().reload, "user")
 
-    if not pk:
-        return json.dumps(res)
 
-    obj = account.models.bsdGroups.objects.filter(pk=pk)
-    if not obj:
-        return json.dumps(res)
-
-    try: 
-        obj.delete()
-        notifier().reload("user")
-        res = True
-
-    except Exception, e:
-        syslog(LOG_DEBUG, "account.bsdgroups.delete: error = %s" % e)
-        res = False
-      
-    return json.dumps(res)
-
+account_bsdusers_keys = ["uid", "username", "group", "home",
+        "shell", "full_name", "builtin", "email"]
 
 @jsonrpc_method("account.bsdusers.get")
 def __account_bsdusers_get(request, pk=None, uid=None, username=None, group=None,
         home=None, shell=None, full_name=None, builtin=None, email=None):
-    l = locals()
-
-    kwargs = {}
-    keys = ["uid", "username", "group", "home",
-        "shell", "full_name", "builtin", "email"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["bsdusr_" + k] = l[k]
-
-    if kwargs:
-        return __serialize(account.models.bsdUsers.objects.filter(**kwargs))
-    else:
-        return __serialize(account.models.bsdUsers.objects.order_by("-pk"))
+    return __get(request, "account.bsdusers.get", account.models.bsdUsers,
+        "bsdusr_", account_bsdusers_keys, pk, locals())
 
 @jsonrpc_method("account.bsdusers.set")
 def __account_bsdusers_set(request, pk=None, uid=None, username=None, group=None,
@@ -327,13 +360,26 @@ def __account_bsdusers_destroy(request, pk=None):
     if not obj:
         return json.dumps(res)
 
+    obj = obj[0]
+
+    grp_pk = obj.bsdusr_group.pk
+    grp_obj = account.models.bsdGroups.objects.filter(pk=grp_pk)
+    if grp_obj:
+        grp_obj = grp_obj[0]
+
+        try:
+            grp_obj.delete()
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "account.bsdusers.destroy: error = %s" % e)
+
     try: 
         obj.delete()
         notifier().reload("user")
         res = True
 
     except Exception, e:
-        syslog(LOG_DEBUG, "account.bsdusers.delete: error = %s" % e)
+        syslog(LOG_DEBUG, "account.bsdusers.destroy: error = %s" % e)
         res = False
       
     return json.dumps(res)
@@ -359,135 +405,82 @@ def __account_bsdgroupmembership_destroy(request):
 #
 #    Network methods
 #
+network_globalconfiguration_keys = ["hostname", "domain", "ipv4gateway",
+    "ipv6gateway", "nameserver1", "nameserver2", "nameserver3"]
+
 @jsonrpc_method("network.globalconfiguration.get")
 def __network_globalconfiguration_get(request, pk=None, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    l = locals()
-
-    kwargs = {}
-    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
-        "nameserver1", "nameserver2", "nameserver3"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["gc_" + k] = l[k]
-
-    if kwargs:
-        return __serialize(network.models.GlobalConfiguration.objects.filter(**kwargs))
-
-    else:
-        return __serialize(network.models.GlobalConfiguration.objects.order_by("-pk"))
+    return __get(request, "network.globalconfiguration.get", network.models.GlobalConfiguration,
+        "gc_", network_globalconfiguration_keys, pk, locals())
 
 @jsonrpc_method("network.globalconfiguration.set")
 def __network_globalconfiguration_set(request, pk=None, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    l = locals()
-
-    res = False
-    if not pk:
-        return json.dumps(res)
-
-    obj = network.models.GlobalConfiguration.objects.filter(pk=pk)
-    if not obj:
-        return json.dumps(res)
-
-    obj = obj[0]
-
-    kwargs = {} 
-    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
-        "nameserver1", "nameserver2", "nameserver3"]
-    if pk:
-        kwargs["pk"] = pk 
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["gc_" + k] = l[k]
-
-    try:
-        obj.__dict__.update(kwargs)
-        obj.save()
-        notifier().reload("networkgeneral")
-        res = True
-
-    except Exception, e:
-        syslog(LOG_DEBUG, "network.globalconfigurations.set: error = %s" % e)
-        res = False
-
-    return json.dumps(res)
+    return __set(request, "network.globalconfiguration.set", network.models.GlobalConfiguration,
+        "gc_", network_globalconfiguration_keys, pk, locals(), notifier().reload, "networkgeneral")
 
 @jsonrpc_method("network.globalconfiguration.create")
 def __network_globalconfiguration_create(request, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    l = locals()
+    return __create(request, "network.globalconfiguration.create", network.models.GlobalConfiguration,
+        "gc_", network_globalconfiguration_keys, locals(), notifier().reload, "networkgeneral")
 
-    kwargs = {}
-    keys = ["hostname", "domain", "ipv4gateway", "ipv6gateway",
-        "nameserver1", "nameserver2", "nameserver3"]
-    for k in keys:
-        if l.has_key(k) and l[k]:
-             kwargs["gc_" + k] = l[k]
-
-    obj = None
-    if kwargs:
-        try:
-            obj = network.models.GlobalConfiguration.objects.create(**kwargs)
-            obj.save()
-            notifier().reload("networkgeneral")
-
-        except Exception, e:
-            syslog(LOG_DEBUG, "network.globalconfiguration.create: error = %s" % e)
-            obj = None
-
-    return __serialize([obj])
-    
 @jsonrpc_method("network.globalconfiguration.destroy")
 def __network_globalconfiguration_destroy(request, pk=None):
-    res = False
+    return __destroy(request, "network.globalconfiguration.destroy",
+        network.models.GlobalConfiguration, pk, notifier().reload, "networkgeneral")
 
-    if not pk:
-        return json.dumps(res)
 
-    obj = network.models.GlobalConfiguration.objects.filter(pk=pk)
-    if not obj:
-        return json.dumps(res)
-
-    try: 
-        obj.delete()
-        notifier().reload("networkgeneral")
-        res = True
-
-    except Exception, e:
-        syslog(LOG_DEBUG, "network.globalconfigurations.delete: error = %s" % e)
-        res = False
-      
-    return json.dumps(res)
-
+network_interfaces_keys = ["interface", "name", "dhcp", "ipv4address",
+        "v4netmaskbit", "ipv6auto", "ipv6address", "v6netmaskbit", "options"]
 
 @jsonrpc_method("network.interfaces.get")
-def __network_interfaces_get(request):
-    return __serialize(network.models.Interfaces.objects.order_by("-pk"))
+def __network_interfaces_get(request, pk=None, interface=None, name=None,
+    dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
+    ipv6address=None, v6netmaskbit=None, options=None):
+    return __get(request, "network.interfaces.get", network.models.Interfaces,
+        "int_", network_interfaces_keys, pk, locals())
+
 @jsonrpc_method("network.interfaces.set")
-def __network_interfaces_set(request):
-    return __api_call_not_implemented(request)
+def __network_interfaces_set(request, pk=None, interface=None, name=None,
+    dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
+    ipv6address=None, v6netmaskbit=None, options=None):
+    return __set(request, "network.interfaces.set", network.models.Interfaces,
+        "int_", network_interfaces_keys, pk, locals(), notifier().start, "network")
+
 @jsonrpc_method("network.interfaces.create")
-def __network_interfaces_create(request):
-    return __api_call_not_implemented(request)
+def __network_interfaces_create(request, interface=None, name=None,
+    dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
+    ipv6address=None, v6netmaskbit=None, options=None):
+    return __create(request, "network.interfaces.create", network.models.Interfaces,
+        "int_", network_interfaces_keys, locals(), notifier().start, "network")
+
 @jsonrpc_method("network.interfaces.destroy")
-def __network_interfaces_destroy(request):
-    return __api_call_not_implemented(request)
+def __network_interfaces_destroy(request, pk=None):
+    return __destroy(request, "network.interfaces.destroy",
+        network.models.Interfaces, pk, notifier().start, "network")
+
+
+network_alias_keys = ["interface", "v4address",
+    "v4netmaskbit", "v6address", "v6netmaskbit"]
 
 @jsonrpc_method("network.alias.get")
 def __network_alias_get(request):
     return __serialize(network.models.Alias.objects.order_by("-pk"))
+
 @jsonrpc_method("network.alias.set")
 def __network_alias_set(request):
     return __api_call_not_implemented(request)
+
 @jsonrpc_method("network.alias.create")
 def __network_alias_create(request):
     return __api_call_not_implemented(request)
+
 @jsonrpc_method("network.alias.destroy")
 def __network_alias_destroy(request):
     return __api_call_not_implemented(request)
+
 
 @jsonrpc_method("network.vlan.get")
 def __network_vlan_get(request):
