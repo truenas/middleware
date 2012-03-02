@@ -95,6 +95,10 @@ clean_svn() {
 		egrep -v '(new|old)_version' | xargs rm -Rf
 }
 
+info() {
+	echo "${0##*/}: INFO: $*"
+}
+
 usage() {
 	cat <<EOF
 usage: ${0##*/} [-Dn] base-dir parent-branch child-branch
@@ -163,7 +167,7 @@ new_version=$(cat $NEW_VERSION_F)
 
 if [ $new_version -eq $old_version ]
 then
-	echo "${0##*/}: INFO: New and old version are the same; nothing to do."
+	info 'New and old version are the same; nothing to do.'
 	exit 0
 elif [ $new_version -lt $old_version ]
 then
@@ -178,6 +182,7 @@ child_branch_relroot=$(echo $child_branch_url | sed -e "s,$child_branch_rroot/,,
 set +e
 
 failed_a_merge=false
+merged_something=false
 i=$old_version
 while [ $i -le $new_version ]
 do
@@ -238,6 +243,8 @@ do
 				if [ $j -eq 5 ]
 				then
 					failed_merge=true
+				else
+					merged_something=true
 				fi
 				_do svn up --non-interactive $child_branch
 			fi
@@ -264,6 +271,9 @@ mv $NEW_VERSION_F $OLD_VERSION_F
 if $failed_a_merge
 then
 	exit 1
-else
-	exit 0
 fi
+if ! $merged_something
+then
+	info 'no changes to source child source tree from revision noted; nothing to do.'
+fi
+exit 0
