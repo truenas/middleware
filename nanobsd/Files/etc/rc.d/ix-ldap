@@ -43,10 +43,6 @@ generate_ldapconf()
 	local ldapconf="${LDAP_CONF}"
 	local secret="${NSS_LDAP_SECRET}"
 
-	if ! secret=$(mktemp /tmp/tmp.XXXXXXXX); then
-		return $?
-	fi
-
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		services_ldap.id as $sf,
@@ -107,7 +103,6 @@ EOF
 			echo ${opt} >> "${nssconf}"
 		done
 
-		secret=$(mktemp /tmp/tmp.XXXXXXXX)
 		if [ "$ldap_anonbind" != 1 ]; then
 			echo "${ldap_rootbindpw}" > "${secret}"
 			chmod 600 "${secret}"
