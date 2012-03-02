@@ -539,6 +539,7 @@ class VolumeAutoImportForm(forms.Form):
             else:
                 volume.vol_guid = vol['id']
                 volume.save()
+                models.Scrub.objects.create(scrub_volume=volume)
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label'], vol['id']):
                 raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])
