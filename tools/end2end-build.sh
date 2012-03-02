@@ -137,7 +137,7 @@ _cleanup() {
 
 _post_local_files() {
 	if [ -d "$LOCAL_POSTDIR" ]; then
-		sudo cp $file* "$LOCAL_POSTDIR"/.
+		_do sudo cp $file* "$LOCAL_POSTDIR"/.
 	fi
 }
 
@@ -158,8 +158,8 @@ _post_images() {
 	 esac
 	 for file in *.iso *.xz; do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
-		_do _post_local_files $arch $file*
-		_do post_remote_files $arch $file*
+		_post_local_files $arch $file*
+		post_remote_files $arch $file*
 	 done)
 }
 
