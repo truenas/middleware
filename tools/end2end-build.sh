@@ -3,7 +3,7 @@
 # An end-to-end build script which sets up a sourcebase from scratch, builds it
 # for a series of architectures, and posts the images to a .
 #
-# usage: end2end-build.sh [-C] [-A architecture] [-b branch] [-c cvsup-host] \
+# usage: end2end-build.sh [-Cnr] [-A architecture] [-b branch] [-c cvsup-host] \
 #			  [-f config-file] [-p local-postdir-base] \
 #			  [-t build-tmpdir-template]
 #
@@ -15,6 +15,8 @@
 # -- -f can be specified multiple times to source multiple config files (good
 #    idea when working with multiple branches / releases to reduce code
 #    duplication).
+# -- -n fake build/image posting.
+# -- -r release build.
 # -- Look at `User definable functions' for a list of functions that you will
 #    probably want to override.
 #
@@ -35,7 +37,9 @@ BRANCH=trunk
 CONFIG_FILES=
 CVSUP_HOST=cvsup1.freebsd.org
 DEFAULT_ARCHS="amd64 i386"
+ECHO=
 LOCAL_POSTDIR_BASE=/dev/null
+RELEASE_BUILD=false
 TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 
 # User definable functions.
@@ -47,7 +51,7 @@ TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 generate_release_notes() {
 	local release_notes_file
 
-	if tmpdir2=$(mktemp -d); then
+	if TMPDIR2=$(mktemp -d tmp.XXXXXX); then
 		release_notes_file="$TMPDIR2/README"
 		(
 		 cat ReleaseNotes
@@ -81,14 +85,33 @@ pull() {
 # Arguments:
 #   - a list of files to post
 post_remote_files() {
-	scp -o BatchMode=yes $* \
-	    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
+	local arch
+	local branch_reldir
+
+	arch=$1; shift
+
+	case "$BRANCH" in
+	trunk)
+		branch_reldir=FreeNAS-8-nightly
+		;;
+	*)
+		# e.g. FreeNAS-8.2.0/x86
+		branch_reldir=FreeNAS-${RELEASE%%-*}/$arch
+		;;
+	esac
+	_do scp -o BatchMode=yes $* \
+	    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/$branch_reldir
 }
 
 #
 #
 
 # End user definable functions.
+
+_do()
+{
+	$ECHO $*
+}
 
 _setup() {
 	export PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
@@ -135,13 +158,13 @@ _post_images() {
 	 esac
 	 for file in *.iso *.xz; do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
-		_post_local_files $file*
-		post_remote_files $file*
+		_do _post_local_files $arch $file*
+		_do post_remote_files $arch $file*
 	 done)
 }
 
 set -e
-while getopts 'A:b:c:Cf:p:t:' _OPTCH; do
+while getopts 'A:b:c:Cf:np:rt:' _OPTCH; do
 	case "$_OPTCH" in
 	A)
 		_ARCH=
@@ -170,8 +193,14 @@ while getopts 'A:b:c:Cf:p:t:' _OPTCH; do
 	f)
 		CONFIG_FILES="$CONFIG_FILES $OPTARG"
 		;;
+	n)
+		ECHO=echo
+		;;
 	p)
 		LOCAL_POSTDIR_BASE=$OPTARG
+		;;
+	r)
+		RELEASE_BUILD=true
 		;;
 	t)
 		TMPDIR_TEMPLATE=$OPTARG
@@ -195,6 +224,13 @@ else
 	_CLEAN_S='no'
 fi
 
+if $RELEASE_BUILD; then
+	export REVISION=
+	_RELEASE_BUILD_S='yes'
+else
+	_RELEASE_BUILD_S='no'
+fi
+
 _setup
 
 cat <<EOF
@@ -208,11 +244,12 @@ cvsup host:			$CVSUP_HOST
 Image directory:		$LOCAL_POSTDIR
 Build directory:		$TMPDIR
 Clean if successful:		$_CLEAN_S
+Release build:			$_RELEASE_BUILD_S
 ---------------------------------------------------------
 EOF
 
 # Get the release string (see build/nano_env for more details).
-set -- $(sh -c '. build/nano_env && echo "$NANO_LABEL" && echo "$VERSION-$REVISION"')
+set -- $(sh -c '. build/nano_env && echo "$NANO_LABEL" && echo "$VERSION${REVISION:+-$REVISION}"')
 PROJECT_NAME=$1
 RELEASE=$2
 
@@ -235,7 +272,7 @@ for _ARCH in $ARCHS; do
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
+	_do sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
 	_EC=$?
 	echo "[$_ARCH] $(tail -n 1 $_LOG)"
 	if [ $_EC -eq 0 ]; then
@@ -245,14 +282,14 @@ for _ARCH in $ARCHS; do
 		CLEAN=false
 	fi
 	echo "[$_ARCH] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
-	
+
 done
 for ARCH in $_PASSED_ARCHS; do
 	_post_images $ARCH
 done
-if [ "${RELEASE_BUILD:-}" = yes -a -n "$_PASSED_ARCHS" ]; then
+if $RELEASE_BUILD && [ -n "$_PASSED_ARCHS" ]; then
 	if _RELEASE_NOTES_FILE=$(generate_release_notes); then
-		post_remote_files $_RELEASE_NOTES_FILE
+		post_remote_files "" $_RELEASE_NOTES_FILE
 	fi
 fi
 if $CLEAN; then
