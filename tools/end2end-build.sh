@@ -110,7 +110,7 @@ post_remote_files() {
 
 _do()
 {
-	$ECHO $*
+	$ECHO "$@"
 }
 
 _setup() {
