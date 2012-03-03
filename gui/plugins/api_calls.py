@@ -91,7 +91,7 @@ def __serialize(objects):
     return serializers.serialize("json", objects)
 
 
-def __create(request, meth, model, prefix, keys, args, func=None, func_args=None):
+def __create(meth, model, prefix, keys, args, func=None, func_args=None):
     syslog(LOG_DEBUG, "%s: enter" % meth)
 
     kwargs = {}
@@ -117,7 +117,7 @@ def __create(request, meth, model, prefix, keys, args, func=None, func_args=None
     return __serialize([obj])
 
 
-def __destroy(request, meth, model, pk, func=None, func_args=None):
+def __destroy(meth, model, pk, func=None, func_args=None):
     syslog(LOG_DEBUG, "%s: enter" % meth)
 
     res = False
@@ -148,7 +148,7 @@ def __destroy(request, meth, model, pk, func=None, func_args=None):
     return json.dumps(res)
 
 
-def __get(request, meth, model, prefix, keys, pk, args, related=False):
+def __get(meth, model, prefix, keys, pk, args, related=False):
     syslog(LOG_DEBUG, "%s: enter" % meth)
 
     kwargs = {}
@@ -166,7 +166,7 @@ def __get(request, meth, model, prefix, keys, pk, args, related=False):
         return __serialize(model.objects.order_by("-pk"))
 
 
-def __set(request, meth, model, prefix, keys, pk, args, func=None, func_args=None):
+def __set(meth, model, prefix, keys, pk, args, func=None, func_args=None):
     syslog(LOG_DEBUG, "%s: enter" % meth)
 
     res = False
@@ -227,17 +227,17 @@ def __api_call_api_version(request):
 #
 #    Account methods
 #
-account_bsdgroups_keys = ["gid", "group", "builtin"]
+account_bsdgroups_keys = [ "gid", "group", "builtin" ]
 
 @jsonrpc_method("account.bsdgroups.get")
 def __account_bsdgroups_get(request, pk=None, gid=None, group=None, builtin=None):
-    return __get(request, "account.bsdgroups.get", account.models.bsdGroups,
+    return __get("account.bsdgroups.get", account.models.bsdGroups,
         "bsdgrp_", account_bsdgroups_keys, pk, locals())
 
 @jsonrpc_method("account.bsdgroups.set")
 def __account_bsdgroups_set(request, pk=None, gid=None, group=None, builtin=None):
-    return __set(request, "account.bsdgroups.set", account.models.bsdGroups,
-        "bsdgrp_", account_bsdgroups_keys, pk, locals(), notifier().reload, "user")
+    return __set("account.bsdgroups.set", account.models.bsdGroups,
+        "bsdgrp_", account_bsdgroups_keys, pk, locals(), lambda: notifier().reload("user"))
 
 @jsonrpc_method("account.bsdgroups.create")
 def __account_bsdgroups_create(request, gid=None, group=None, builtin=False):
@@ -245,22 +245,22 @@ def __account_bsdgroups_create(request, gid=None, group=None, builtin=False):
     if not gid:
         l["gid"] = notifier().user_getnextgid()
 
-    return __create(request, "account.bsdgroups.create", account.models.bsdGroups,
-        "bsdgrp_", account_bsdgroups_keys, l, notifier().reload, "user")
+    return __create("account.bsdgroups.create", account.models.bsdGroups,
+        "bsdgrp_", account_bsdgroups_keys, l, lambda: notifier().reload("user"))
 
 @jsonrpc_method("account.bsdgroups.destroy")
 def __account_bsdgroups_destroy(request, pk=None):
-    return __destroy(request, "account.bsdgroups.destroy",
-        account.models.bsdGroups, pk, notifier().reload, "user")
+    return __destroy("account.bsdgroups.destroy",
+        account.models.bsdGroups, pk, lambda: notifier().reload("user"))
 
 
-account_bsdusers_keys = ["uid", "username", "group", "home",
-        "shell", "full_name", "builtin", "email"]
+account_bsdusers_keys = [ "uid", "username", "group", "home",
+        "shell", "full_name", "builtin", "email" ]
 
 @jsonrpc_method("account.bsdusers.get")
 def __account_bsdusers_get(request, pk=None, uid=None, username=None, group=None,
         home=None, shell=None, full_name=None, builtin=None, email=None):
-    return __get(request, "account.bsdusers.get", account.models.bsdUsers,
+    return __get("account.bsdusers.get", account.models.bsdUsers,
         "bsdusr_", account_bsdusers_keys, pk, locals())
 
 @jsonrpc_method("account.bsdusers.set")
@@ -405,81 +405,94 @@ def __account_bsdgroupmembership_destroy(request):
 #
 #    Network methods
 #
-network_globalconfiguration_keys = ["hostname", "domain", "ipv4gateway",
-    "ipv6gateway", "nameserver1", "nameserver2", "nameserver3"]
+network_globalconfiguration_keys = [ "hostname", "domain", "ipv4gateway",
+    "ipv6gateway", "nameserver1", "nameserver2", "nameserver3" ]
 
 @jsonrpc_method("network.globalconfiguration.get")
 def __network_globalconfiguration_get(request, pk=None, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    return __get(request, "network.globalconfiguration.get", network.models.GlobalConfiguration,
+    return __get("network.globalconfiguration.get", network.models.GlobalConfiguration,
         "gc_", network_globalconfiguration_keys, pk, locals())
 
 @jsonrpc_method("network.globalconfiguration.set")
 def __network_globalconfiguration_set(request, pk=None, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    return __set(request, "network.globalconfiguration.set", network.models.GlobalConfiguration,
-        "gc_", network_globalconfiguration_keys, pk, locals(), notifier().reload, "networkgeneral")
+    return __set("network.globalconfiguration.set", network.models.GlobalConfiguration,
+        "gc_", network_globalconfiguration_keys, pk, locals(), lambda: notifier().reload("networkgeneral"))
 
 @jsonrpc_method("network.globalconfiguration.create")
 def __network_globalconfiguration_create(request, hostname=None, domain=None,
     ipv4gateway=None, ipv6gateway=None, nameserver1=None, nameserver2=None, nameserver3=None):
-    return __create(request, "network.globalconfiguration.create", network.models.GlobalConfiguration,
-        "gc_", network_globalconfiguration_keys, locals(), notifier().reload, "networkgeneral")
+    return __create("network.globalconfiguration.create", network.models.GlobalConfiguration,
+        "gc_", network_globalconfiguration_keys, locals(), lambda: notifier().reload("networkgeneral"))
 
 @jsonrpc_method("network.globalconfiguration.destroy")
 def __network_globalconfiguration_destroy(request, pk=None):
-    return __destroy(request, "network.globalconfiguration.destroy",
-        network.models.GlobalConfiguration, pk, notifier().reload, "networkgeneral")
+    return __destroy("network.globalconfiguration.destroy",
+        network.models.GlobalConfiguration, pk, lambda: notifier().reload("networkgeneral"))
 
 
-network_interfaces_keys = ["interface", "name", "dhcp", "ipv4address",
-        "v4netmaskbit", "ipv6auto", "ipv6address", "v6netmaskbit", "options"]
+network_interfaces_keys = [ "interface", "name", "dhcp", "ipv4address",
+        "v4netmaskbit", "ipv6auto", "ipv6address", "v6netmaskbit", "options" ]
 
 @jsonrpc_method("network.interfaces.get")
 def __network_interfaces_get(request, pk=None, interface=None, name=None,
     dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
     ipv6address=None, v6netmaskbit=None, options=None):
-    return __get(request, "network.interfaces.get", network.models.Interfaces,
+    return __get("network.interfaces.get", network.models.Interfaces,
         "int_", network_interfaces_keys, pk, locals())
 
 @jsonrpc_method("network.interfaces.set")
 def __network_interfaces_set(request, pk=None, interface=None, name=None,
     dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
     ipv6address=None, v6netmaskbit=None, options=None):
-    return __set(request, "network.interfaces.set", network.models.Interfaces,
-        "int_", network_interfaces_keys, pk, locals(), notifier().start, "network")
+    return __set("network.interfaces.set", network.models.Interfaces,
+        "int_", network_interfaces_keys, pk, locals(), lambda: notifier().start("network"))
 
 @jsonrpc_method("network.interfaces.create")
 def __network_interfaces_create(request, interface=None, name=None,
     dhcp=None, ipv4address=None, v4netmaskbit=None, ipv6auto=None,
     ipv6address=None, v6netmaskbit=None, options=None):
-    return __create(request, "network.interfaces.create", network.models.Interfaces,
-        "int_", network_interfaces_keys, locals(), notifier().start, "network")
+    return __create("network.interfaces.create", network.models.Interfaces,
+        "int_", network_interfaces_keys, locals(), lambda: mnotifier().start("network"))
 
 @jsonrpc_method("network.interfaces.destroy")
 def __network_interfaces_destroy(request, pk=None):
-    return __destroy(request, "network.interfaces.destroy",
-        network.models.Interfaces, pk, notifier().start, "network")
+    return __destroy("network.interfaces.destroy",
+        network.models.Interfaces, pk, lambda: notifier().start("network"))
 
 
-network_alias_keys = ["interface", "v4address",
-    "v4netmaskbit", "v6address", "v6netmaskbit"]
+# This section currently needs work
+network_alias_keys = [ "interface", "v4address",
+    "v4netmaskbit", "v6address", "v6netmaskbit" ]
 
 @jsonrpc_method("network.alias.get")
-def __network_alias_get(request):
-    return __serialize(network.models.Alias.objects.order_by("-pk"))
+def __network_alias_get(request, pk=None, interface=None, v4address=None, 
+    v4netmaskbit=None, v6address=None, v6netmaskbit=None):
+    return __get("network.alias.get", network.models.Alias,
+        "alias_", network_alias_keys, pk, locals())
 
+# XXX
 @jsonrpc_method("network.alias.set")
-def __network_alias_set(request):
-    return __api_call_not_implemented(request)
+def __network_alias_set(request, pk=None, interface=None, v4address=None,
+    v4netmaskbit=None, v6address=None, v6netmaskbit=None):
+    return __set("network.alias.set", network.models.Alias,
+        "alias_", network_alias_keys, pk, locals(),
+        lambda: notifier().start("network"))
 
+# XXX
 @jsonrpc_method("network.alias.create")
-def __network_alias_create(request):
-    return __api_call_not_implemented(request)
+def __network_alias_create(request, interface=None, v4address=None,
+    v4netmaskbit=None, v6address=None, v6netmaskbit=None):
+    return __create("network.alias.create", network.models.Alias,
+        "alias_", network_alias_keys, locals(),
+        lambda: notifier().start("network"))
 
 @jsonrpc_method("network.alias.destroy")
-def __network_alias_destroy(request):
-    return __api_call_not_implemented(request)
+def __network_alias_destroy(request, pk=None):
+    func = lambda: notifier().stop("netif");notifier().start("network")
+    return __destroy("network.alias.destroy", network.models.Alias, pk, func)
+
 
 
 @jsonrpc_method("network.vlan.get")
@@ -555,61 +568,126 @@ def __plugins_plugins_destroy(request):
     return __api_call_not_implemented(request)
 
 
-
 #
 #    Services methods
 #
+services_services_keys = [ "service", "enable" ]
+
 @jsonrpc_method("services.services.get")
-def __services_services_get(request):
-    return __serialize(services.models.services.objects.order_by("-pk"))
+def __services_services_get(request, pk=None, service=None, enable=None):
+    return __get("services.services.get", services.models.services,
+        "srv_", services_services_keys, pk, locals())
+
 @jsonrpc_method("services.services.set")
-def __services_services_set(request):
-    return __api_call_not_implemented(request)
+def __services_services_set(request, pk=None, service=None, enable=None):
+    return __set("services.services.set", services.models.services,
+        "srv_", services_services_keys, pk, locals())
+
 @jsonrpc_method("services.services.create")
-def __services_services_create(request):
-    return __api_call_not_implemented(request)
+def __services_services_create(request, service=None, enable=None):
+    return __create("services.services.create", services.models.services,
+        "srv_", services_services_keys, locals())
+
 @jsonrpc_method("services.services.destroy")
-def __services_services_destroy(request):
-    return __api_call_not_implemented(request)
+def __services_services_destroy(request, pk=None):
+    return __destroy("services.services.destroy",
+        services.models.services, pk)
+
+
+
+services_cifs_keys = [ "authmodel", "netbiosname", "workgroup", "description",
+    "doscharset", "unixcharset", "loglevel", "localmaster", "timeserver",
+    "guest", "guestok", "guestonly", "filemask", "dirmask", "largerw",
+    "sendfile", "easupport", "dosattr", "nullpw", "smb_options",
+    "homedir_enable", "homedir_browseable_enable", "homedir", "homedir_aux",
+    "unixext", "aio_enable", "aio_rs", "aio_ws", "zeroconf" ]
 
 @jsonrpc_method("services.cifs.get")
-def __services_cifs_get(request):
-    return __serialize(services.models.CIFS.objects.order_by("-pk"))
+def __services_cifs_get(request, pk=None, authmodel=None, netbiosname=None,
+    workgroup=None, description=None, doscharset=None, unixcharset=None,
+    loglevel=None, localmaster=None, timeserver=None, guest=None, guestok=None,
+    guestonly=None, filemask=None, dirmask=None, largerw=None, sendfile=None,
+    easupport=None, dosattr=None, nullpw=None, smb_options=None, homedir_enable=None,
+    homedir_browseable_enable=None, homedir=None, homedir_aux=None, unixext=None,
+    aio_enable=None, aio_rs=None, aio_ws=None, zeroconf=None):
+    return __get("services.cifs.get", services.models.CIFS,
+        "cifs_srv_", services_cifs_keys, pk, locals())
+
 @jsonrpc_method("services.cifs.set")
-def __services_cifs_set(request):
-    return __api_call_not_implemented(request)
+def __services_cifs_set(request, pk=None, authmodel=None, netbiosname=None,
+    workgroup=None, description=None, doscharset=None, unixcharset=None,
+    loglevel=None, localmaster=None, timeserver=None, guest=None, guestok=None,
+    guestonly=None, filemask=None, dirmask=None, largerw=None, sendfile=None,
+    easupport=None, dosattr=None, nullpw=None, smb_options=None, homedir_enable=None,
+    homedir_browseable_enable=None, homedir=None, homedir_aux=None, unixext=None,
+    aio_enable=None, aio_rs=None, aio_ws=None, zeroconf=None):
+    return __set("services.cifs.set", services.models.CIFS, "cifs_srv_",
+        services_cifs_keys, pk, locals(), lambda: notifier().reload("cifs"))
+
 @jsonrpc_method("services.cifs.create")
-def __services_cifs_create(request):
-    return __api_call_not_implemented(request)
+def __services_cifs_create(request, authmodel=None, netbiosname=None,
+    workgroup=None, description=None, doscharset=None, unixcharset=None,
+    loglevel=None, localmaster=None, timeserver=None, guest=None, guestok=None,
+    guestonly=None, filemask=None, dirmask=None, largerw=None, sendfile=None,
+    easupport=None, dosattr=None, nullpw=None, smb_options=None, homedir_enable=None,
+    homedir_browseable_enable=None, homedir=None, homedir_aux=None, unixext=None,
+    aio_enable=None, aio_rs=None, aio_ws=None, zeroconf=None):
+    return __create("services.cifs.create", services.models.CIFS, "cifs_srv_",
+        services_cifs_keys, locals(), lambda: notifier().reload("cifs"))
+
 @jsonrpc_method("services.cifs.destroy")
-def __services_cifs_destroy(request):
-    return __api_call_not_implemented(request)
+def __services_cifs_destroy(request, pk=None):
+    return __destroy("services.cifs.destroy", services.models.CIFS,
+        pk, lambda: notifier().reload("cifs"))
+
+
+
+services_afp_keys = [ "name", "guest", "guest_user", "connections_limit" ]
 
 @jsonrpc_method("services.afp.get")
-def __services_afp_get(request):
-    return __serialize(services.models.AFP.objects.order_by("-pk"))
+def __services_afp_get(request, pk=None, name=None, guest_usser=None, connections_limit=None):
+    return __get("services.afp.get", services.models.AFP,
+        "afp_srv_", services_afp_keys, pk, locals())
+
 @jsonrpc_method("services.afp.set")
-def __services_afp_set(request):
-    return __api_call_not_implemented(request)
+def __services_afp_set(request, pk=None, name=None, guest_usser=None, connections_limit=None):
+    return __set("services.afp.set", services.models.AFP, "afp_srv_",
+        services_afp_keys, pk, locals(), lambda: notifier().reload("afp"))
+
 @jsonrpc_method("services.afp.create")
-def __services_afp_create(request):
-    return __api_call_not_implemented(request)
+def __services_afp_create(request, name=None, guest_usser=None, connections_limit=None):
+    return __create("services.afp.create", services.models.AFP, "afp_srv_",
+        services_afp_keys, locals(), lambda: notifier().reload("afp"))
+
 @jsonrpc_method("services.afp.destroy")
-def __services_afp_destroy(request):
-    return __api_call_not_implemented(request)
+def __services_afp_destroy(request, pk=None):
+    return __destroy("services.afp.destroy", services.models.AFP,
+        pk, lambda: notifier().reload("afp"))
+
+
+services_nfs_keys = [ "servers", "async" ]
 
 @jsonrpc_method("services.nfs.get")
-def __services_nfs_get(request):
-    return __serialize(services.models.NFS.objects.order_by("-pk"))
+def __services_nfs_get(request, pk=None, servers=None, async=None):
+    return __get("services.nfs.get", services.models.NFS,
+        "nfs_srv_", services_nfs_keys, pk, locals())
+
 @jsonrpc_method("services.nfs.set")
-def __services_nfs_set(request):
-    return __api_call_not_implemented(request)
+def __services_nfs_set(request, pk=None, servers=None, async=None):
+    return __set("services.nfs.set", services.models.NFS, "nfs_srv_",
+        services_nfs_keys, pk, locals(), lambda: notifier().reload("nfs"))
+
 @jsonrpc_method("services.nfs.create")
-def __services_nfs_create(request):
-    return __api_call_not_implemented(request)
+def __services_nfs_create(request, servers=None, async=None):
+    return __create("services.nfs.create", services.models.NFS, "nfs_srv_",
+        services_nfs_keys, locals(), lambda: notifier().reload("nfs"))
+
 @jsonrpc_method("services.nfs.destroy")
-def __services_nfs_destroy(request):
-    return __api_call_not_implemented(request)
+def __services_nfs_destroy(request, pk=None):
+    return __destroy("services.nfs.destroy", services.models.NFS,
+        pk, lambda: notifier().reload("nfs"))
+
+
 
 @jsonrpc_method("services.iscsitargetglobalconfiguration.get")
 def __services_iscsitargetglobalconfiguration_get(request):
@@ -863,18 +941,41 @@ def __services_smart_destroy(request):
 #
 #    Sharing methods
 #
+sharing_cifs_keywords = [ "name", "comment", "path", "ro", "browsable", 
+    "inheritowner", "inheritperms", "recyclebin", "showhiddenfiles",
+    "guestok", "guestonly", "hostsallow", "hostsdeny", "auxsmbconf" ]
+
 @jsonrpc_method("sharing.cifs_share.get")
-def __sharing_cifs_share_get(request):
-    return __serialize(sharing.models.CIFS_Share.objects.order_by("-pk"))
+def __sharing_cifs_share_get(request, pk=None, name=None, comment=None,
+    path=None, ro=None, browsable=None, inheritowner=None, inheritperms=None,
+    recyclebin=None, showhiddenfiles=None, guestok=None, guestonly=None,
+    hostsallow=None, hostsdeny=None, auxsmbconf=None):
+    return __get("sharing.cifs_share.get", sharing.models.CIFS_Share,
+        "cifs_", sharing_cifs_keys, pk, locals())
+
 @jsonrpc_method("sharing.cifs_share.set")
-def __sharing_cifs_share_set(request):
-    return __api_call_not_implemented(request)
+def __sharing_cifs_share_set(request, pk=None, name=None, comment=None,
+    path=None, ro=None, browsable=None, inheritowner=None, inheritperms=None,
+    recyclebin=None, showhiddenfiles=None, guestok=None, guestonly=None,
+    hostsallow=None, hostsdeny=None, auxsmbconf=None):
+    return __set("sharing.cifs_share.set", sharing.models.CIFS_Share, "cifs_",
+        sharing_cifs_keys, pk, locals(), lambda: notifier().reload("cifs"))
+
 @jsonrpc_method("sharing.cifs_share.create")
-def __sharing_cifs_share_create(request):
-    return __api_call_not_implemented(request)
+def __sharing_cifs_share_create(request, name=None, comment=None,
+    path=None, ro=None, browsable=None, inheritowner=None, inheritperms=None,
+    recyclebin=None, showhiddenfiles=None, guestok=None, guestonly=None,
+    hostsallow=None, hostsdeny=None, auxsmbconf=None):
+    return __create("sharing.cifs_share.create", sharing.models.CIFS_Share, "cifs_",
+        sharing_cifs_keys, locals(), lambda: notifier().reload("cifs"))
+
 @jsonrpc_method("sharing.cifs_share.destroy")
-def __sharing_cifs_share_destroy(request):
-    return __api_call_not_implemented(request)
+def __sharing_cifs_share_destroy(request, pk=None):
+    return __destroy("sharing.cifs_share.destroy", sharing.models.CIFS_Share,
+        pk, lambda: notifier().reload("cifs"))
+
+
+
 
 @jsonrpc_method("sharing.afp_share.get")
 def __sharing_afp_share_get(request):
