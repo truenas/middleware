@@ -175,7 +175,6 @@ webshell = (function() {
             /*
              * We need to stop propagation whether this is TAB
              * for command completion in shell
-<<<<<<< HEAD
              *
              * Also, at least in chrome ctrl+c/d,delete are seen as keydown
              * TODO: Use dojo
@@ -189,11 +188,6 @@ webshell = (function() {
                         ev.keyCode == 8)
                     )
                     ) {
-=======
-             * TODO: Use dojo
-             */
-            if (ev.keyCode == 9) {
->>>>>>> Make the TAB key work in the Webshell
                 me.keypress(ev);
             }
 
