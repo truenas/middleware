@@ -196,7 +196,7 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'syslog': {
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'class': 'logging.handlers.SysLogHandler',
         }
     },
@@ -208,7 +208,7 @@ LOGGING = {
         },
         '': {
             'handlers': ['syslog'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'propagate': True,
         },
     }

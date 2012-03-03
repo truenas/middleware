@@ -406,10 +406,12 @@ class NavTree(object):
 
                 nodes = unserialize_tree(data)
                 for node in nodes:
-                    #We have or TreeNode's, find out where to place them
+                    #We have our TreeNode's, find out where to place them
 
                     found = False
                     if node.append_to:
+                        log.debug("Plugin %s requested to be appended to %s",
+                            plugin.plugin_name, node.append_to)
                         places = node.append_to.split('.')
                         places.reverse()
                         for root in tree_roots:
@@ -418,6 +420,9 @@ class NavTree(object):
                                 find.append_child(node)
                                 found = True
                                 break
+                    else:
+                        log.debug("Plugin %s didn't request to be appended anywhere specific",
+                            plugin.plugin_name)
 
                     if not found:
                         node.tree_root = 'main'
