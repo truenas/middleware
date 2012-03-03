@@ -2007,7 +2007,7 @@ class notifier:
                     ret = True
 
                 except Exception, err:
-                    S(LOG_DEBUG, "delete_plugins_jail: unable to delete pbi %d from database (%s)" % (plugin_id, err))
+                    S(LOG_DEBUG, "delete_pbi: unable to delete pbi %d from database (%s)" % (plugin_id, err))
                     ret = False
 
         return ret
@@ -2071,6 +2071,14 @@ class notifier:
         if p.returncode != 0:
             S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s" % full_jail_path)
             return False
+
+        pbi_path = "%s/%s" % (plugins_path, "pbi")
+        cmd = "/bin/rm -rf %s" % pbi_path
+        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        p = self.__pipeopen(cmd)
+        p.wait()
+        if p.returncode != 0:
+            S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s/*" % pbi_path)
  
         S(LOG_DEBUG, "delete_plugins_jail: deleting jail from database")
         try:
