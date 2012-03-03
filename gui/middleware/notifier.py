@@ -1883,7 +1883,7 @@ class notifier:
                 if res and res[0] == 0:
                     kwargs = {}
                     kwargs['path'] = prefix
-                    kwargs['enabled'] = False
+                    kwargs['enabled'] = True
                     kwargs['ip'] = jail.ip
                     kwargs['name'] = name
                     kwargs['arch'] = arch
