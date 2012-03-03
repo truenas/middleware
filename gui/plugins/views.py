@@ -41,8 +41,11 @@ import freenasUI.plugins.api_calls
 
 
 def plugins_home(request):
+    jail_configured = notifier().plugins_jail_configured()
+
     plugins_list = models.Plugins.objects.all()
     return render(request, "plugins/index.html", {
+        "jail_configured": jail_configured,
         "plugins_list": plugins_list,
     })
 
