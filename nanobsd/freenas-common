@@ -783,6 +783,10 @@ last_orders() {
 
 		) > "${cd_image_log}" 2>&1
 
+if :; then
+	:
+else
+
 		pprint 2 "Creating plugins jail PBI"
 		pprint 3 "log: ${plugins_jail_log}"
 
@@ -804,6 +808,8 @@ last_orders() {
 				$NANO_DISKIMGDIR/$plugins_jail_pbi
 
 		) > "${plugins_jail_log}" 2>&1
+
+fi
 
 	fi
 
