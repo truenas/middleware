@@ -27,7 +27,7 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
@@ -761,29 +761,48 @@ class DynamicDNS(Model):
         deletable = False
         icon_model = u"DDNSIcon"
 
+
+def get_storage_choices():
+    from freenasUI.storage.models import MountPoint
+    path_list = []
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    for m in mp_list:
+        path_list.append(m.mp_path)
+
+        datasets = m.mp_volume.get_datasets()
+        if datasets:
+            for name, dataset in datasets.items():
+                path_list.append(dataset.mountpoint)
+
+    tuples = [(p, p) for p in path_list]
+    return tuples
+
+
 class Plugins(Model):
-    jail_path = PathField(
+    jail_path = models.CharField(
             verbose_name=_("Plugins jail path"),
             help_text = _("Path to the plugins jail"),
             default='',
-            blank=True
+            max_length=255,
+            choices=get_storage_choices()
             )
     jail_name = models.CharField(
             max_length=120,
             verbose_name = _("Jail name"),
             help_text = _("Name of the plugins jail"),
             default='',
-            blank=True
+            validators=[RegexValidator(regex="^[a-zA-Z_][a-zA-Z0-9_]+$", message="Jail name can only contain letters, numbers and underscores.")] 
             )
     jail_ip = models.ForeignKey(
             Alias,
             verbose_name=_("Jail IP address")
             )
-    plugins_path = PathField(
+    plugins_path = models.CharField(
             verbose_name=_("Plugins Path"),
             help_text = _("Path to the plugins directory"),
             default='',
-            blank=True
+            max_length=255,
+            choices=get_storage_choices()
             )
 
     class Meta:
