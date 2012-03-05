@@ -779,12 +779,9 @@ def get_storage_choices():
 
 
 class Plugins(Model):
-    jail_path = models.CharField(
+    jail_path = PathField(
             verbose_name=_("Plugins jail path"),
             help_text = _("Path to the plugins jail"),
-            default='',
-            max_length=255,
-            choices=get_storage_choices()
             )
     jail_name = models.CharField(
             max_length=120,
@@ -797,12 +794,9 @@ class Plugins(Model):
             Alias,
             verbose_name=_("Jail IP address")
             )
-    plugins_path = models.CharField(
+    plugins_path = PathField(
             verbose_name=_("Plugins Path"),
             help_text = _("Path to the plugins directory"),
-            default='',
-            max_length=255,
-            choices=get_storage_choices()
             )
 
     class Meta:
