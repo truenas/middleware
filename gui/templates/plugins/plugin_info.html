@@ -31,3 +31,14 @@
     </tr>
 </table>
 
+<table>
+    <tr colspan="2">
+        <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+            {% trans "OK" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
+            </script>
+        </button>
+    </tr>
+</table>
+
