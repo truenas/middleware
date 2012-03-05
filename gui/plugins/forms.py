@@ -104,6 +104,7 @@ class PBIUploadForm(Form):
         return cleaned_data
     def done(self, *args, **kwargs):
         notifier().install_pbi()
+        notifier().restart("plugins")
 
 class JailPBIUploadForm(ModelForm):
     class Meta:
