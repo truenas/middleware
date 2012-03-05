@@ -105,32 +105,11 @@ class PBIUploadForm(Form):
     def done(self, *args, **kwargs):
         notifier().install_pbi()
 
-class JailPBIUploadForm(Form):
+class JailPBIUploadForm(ModelForm):
+    class Meta:
+        from freenasUI.services import models
+        model = services.models.Plugins
 
-#
-#    Yuck. This is a form-i-fied version of the services Plugin model.
-#    FileWizard does not render the form correctly when using a ModelForm
-#    based class, so we handle it this way... for now.
-#
-    jail_path = forms.ChoiceField(
-            label=_("Plugins jail path"),
-            choices=(),
-            widget=forms.Select(attrs={ 'class': 'required' }),
-            )
-    jail_name = forms.CharField(
-            label= _("Jail name"),
-            required=True
-            )
-    jail_ip = forms.ModelChoiceField(
-            label=_("Jail IP address"),
-            queryset=Alias.objects.all(),
-            required=True
-            )
-    plugins_path = forms.ChoiceField(
-            label=_("Plugins Path"),
-            choices=(),
-            widget=forms.Select(attrs={ 'class': 'required' }),
-            )
     pbifile = FileField(
             label=_("Plugins Jail PBI"),
             required=True
@@ -139,22 +118,6 @@ class JailPBIUploadForm(Form):
             label=_("SHA256 sum for the PBI file"),
             required=True
              )
-
-    def __init__(self, *args, **kwargs):
-        super(JailPBIUploadForm, self).__init__(*args, **kwargs)
-
-        path_list = []
-        mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-        for m in mp_list:
-            path_list.append(m.mp_path)
-
-            datasets = m.mp_volume.get_datasets()
-            if datasets:
-                for name, dataset in datasets.items():
-                    path_list.append(dataset.mountpoint)
-
-        self.fields['jail_path'].choices = [(path, path) for path in path_list]
-        self.fields['plugins_path'].choices = [(path, path) for path in path_list]
 
     def clean(self):
         cleaned_data = self.cleaned_data

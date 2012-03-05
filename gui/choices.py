@@ -302,6 +302,7 @@ class whoChoices:
     def __iter__(self):
         return iter((i, i) for i in self._wholist)
 
+
 ## Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
