@@ -762,21 +762,6 @@ class DynamicDNS(Model):
         icon_model = u"DDNSIcon"
 
 
-def get_storage_choices():
-    from freenasUI.storage.models import MountPoint
-    path_list = []
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    for m in mp_list:
-        path_list.append(m.mp_path)
-
-        datasets = m.mp_volume.get_datasets()
-        if datasets:
-            for name, dataset in datasets.items():
-                path_list.append(dataset.mountpoint)
-
-    tuples = [(p, p) for p in path_list]
-    return tuples
-
 
 class Plugins(Model):
     jail_path = PathField(
