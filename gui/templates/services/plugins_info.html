@@ -17,7 +17,22 @@
         <th>{% trans "Plugins path" %}</th>
         <td>{{ plugins.plugins_path }}</td>
     </tr>
+</table>
+<table>
     <tr colspan="2">
+        <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+            {% trans "OK" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
+            </script>
+        </button>
+        <button data-dojo-type="dijit.form.Button" >
+            <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+                var dialog = getDialog(this);
+                dialog.hide();
+                editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services", model="Plugins", oid=plugins.id %}', [this,]);
+                </script>
+            {% trans "Delete" %}
+        </button>
     </tr>
 </table>
-
