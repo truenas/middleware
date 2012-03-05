@@ -121,8 +121,8 @@ class JailPBIUploadForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        jp = cleaned_data['jail_path']
-        pp = cleaned_data['plugins_path']
+        jp = cleaned_data['jail_path'] + "/"
+        pp = cleaned_data['plugins_path'] + "/"
 
         if (jp in pp):
             self._errors["jail_path"] = self.error_class([_("Jail path cannot contain plugins path.")])
