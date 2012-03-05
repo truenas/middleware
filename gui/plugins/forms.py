@@ -121,6 +121,14 @@ class JailPBIUploadForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        jp = cleaned_data['jail_path']
+        pp = cleaned_data['plugins_path']
+
+        if (jp in pp):
+            self._errors["jail_path"] = self.error_class([_("Jail path cannot contain plugins path.")])
+        if (pp in jp):
+            self._errors["plugins_path"] = self.error_class([_("Plugins path cannot contain jail path.")])
+
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
             with open(filename, 'wb+') as sp:
