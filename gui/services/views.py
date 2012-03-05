@@ -280,3 +280,10 @@ def enable(request, svc):
     return render(request, "services/enable.html", {
         'svc': svc,
     })
+
+def plugins_jail_info(request):
+    plugins = models.Plugins.objects.order_by("-id")[0]
+    if plugins:
+        return render(request, "services/plugins_jail_info.html", {
+            'plugins': plugins,
+    })
