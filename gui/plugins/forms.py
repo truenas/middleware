@@ -174,7 +174,6 @@ class JailPBIUploadForm(Form):
         return cleaned_data
 
     def done(self, *args, **kwargs):
-
         cleaned_data = self.cleaned_data
 
         alias = self.cleaned_data['jail_ip']
