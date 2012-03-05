@@ -78,6 +78,12 @@ def plugin_edit(request, plugin_id):
         'form': plugins_form
     })
 
+def plugin_info(request, plugin_id):
+    plugin = models.Plugins.objects.filter(id=plugin_id)[0]
+    return render(request, 'plugins/plugin_info.html', {
+        'plugin': plugin,
+    })
+
 def plugin_delete(request, plugin_id):
     plugin_id = int(plugin_id)
     plugin = models.Plugins.objects.get(id=plugin_id)
