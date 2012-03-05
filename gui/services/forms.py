@@ -116,6 +116,8 @@ class PluginsForm(ModelForm):
     class Meta:
         model = models.Plugins
 
+    #def clean_jail_name(self):
+
     def clean_plugins_path(self):
         ppath = self.cleaned_data.get("plugins_path")
         jpath = self.cleaned_data.get("jail_path")
