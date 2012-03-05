@@ -65,6 +65,7 @@ class DirectoryBrowser(widgets.Widget):
             'name': name,
             'value': value,
             'attrs': attrs,
+            'id': attrs.get("id", '').replace("-", "_"),
             'dirsonly': self._dirsonly,
             }
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
