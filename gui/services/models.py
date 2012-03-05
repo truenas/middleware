@@ -791,7 +791,7 @@ class Plugins(Model):
             verbose_name = _("Jail name"),
             help_text = _("Name of the plugins jail"),
             default='',
-            validators=[RegexValidator(regex="^[a-zA-Z_][a-zA-Z0-9_]+$", message="Jail name can only contain letters, numbers and underscores.")] 
+            validators=[RegexValidator(regex="^[a-zA-Z][a-zA-Z0-9_]+$", message="Jail name can only contain letters, numbers and underscores.")] 
             )
     jail_ip = models.ForeignKey(
             Alias,
