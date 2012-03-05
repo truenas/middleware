@@ -581,7 +581,7 @@ EOF
 	done
 
 }
-customize_cmd create_pluginsjail
+#customize_cmd create_pluginsjail
 
 if [ "${DEBUG}" = 1 ]; then
 
