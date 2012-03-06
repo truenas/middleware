@@ -18,7 +18,15 @@ from subprocess import Popen, PIPE
 from syslog import syslog, LOG_DEBUG
 from time import ctime
 
-minidlna_pbi_path = "/usr/pbi/minidlna-amd64"
+def get_arch():
+    pipe = Popen("/usr/bin/uname -m", stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+    arch = pipe.stdout.read().strip()
+    pipe.wait()
+    return arch 
+
+
+minidlna_pbi_path = "/usr/pbi/minidlna-" + get_arch()
 minidlna_etc_path = os.path.join(minidlna_pbi_path, "etc")
 minidlna_mnt_path = os.path.join(minidlna_pbi_path, "mnt")
 minidlna_fcgi_pidfile = "/var/run/minidlna_fcgi_server.pid"
@@ -73,34 +81,34 @@ def minidlna_treemenu(environ, start_response, args):
 
     plugin = {
         'name': 'minidlna',
-        'append_to': 'system',
+        'append_to': 'services',
         'children': [
             {
                 'name': 'Edit Mount Points',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
-                'url': '/plugins/minidlna/1.0.22_2/mp_edit',
+                'url': '/plugins/minidlna/1.0.22_3/mp_edit',
 		'kwargs': {'plugin_name': 'minidlna'},
             },
             {
                 'name': 'Edit',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
-                'url': '/plugins/minidlna/1.0.22_2/edit',
+                'url': '/plugins/minidlna/1.0.22_3/edit',
 		'kwargs': {'plugin_name': 'minidlna'},
             },
             {
                 'name': 'Start',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
-                'url': '/plugins/minidlna/1.0.22_2/start',
+                'url': '/plugins/minidlna/1.0.22_3/start',
 		'kwargs': {'plugin_name': 'minidlna'},
             },
             {
                 'name': 'Stop',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
-                'url': '/plugins/minidlna/1.0.22_2/stop',
+                'url': '/plugins/minidlna/1.0.22_3/stop',
 		'kwargs': {'plugin_name': 'minidlna'},
             },
         ] 
@@ -159,10 +167,7 @@ def minidlna_saved(environ, start_response, args):
 def minidlna_post(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
 
-    form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
-        keep_blank_values=1)
-
-    if not form.list:
+    if not args:
         return "A problem occurred."
 
     f = open(minidlna_opts, "w")

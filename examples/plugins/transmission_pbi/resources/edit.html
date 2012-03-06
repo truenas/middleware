@@ -10,6 +10,7 @@
     var plugin_info = null;
     var mounted = null;
     var saved = null;
+    var arch = null;
 
     sd = function(k, v) {
         if (!saved[k]) {
@@ -18,8 +19,8 @@
     }
 
     set_defaults = function() {
-        sd("transmission_conf_dir", "/usr/pbi/transmission-amd64/etc/transmission/home");
-        sd("transmission_download_dir", "/usr/pbi/transmission-amd64/etc/transmission/home/Downloads");
+        sd("transmission_conf_dir", "/usr/pbi/transmission-" + arch + "/etc/transmission/home");
+        sd("transmission_download_dir", "/usr/pbi/transmission-" + arch + "/etc/transmission/home/Downloads");
     }
 
     get_saved = function() {
@@ -63,8 +64,8 @@
 
         dirs = new Array(mp_list.length + 3)
         dirs[0] = "-";
-        dirs[1] = "/usr/pbi/transmission-amd64/etc/transmission/home";
-        dirs[2] = "/usr/pbi/transmission-amd64/etc/transmission/home/Downloads";
+        dirs[1] = "/usr/pbi/transmission-" + arch + "/etc/transmission/home";
+        dirs[2] = "/usr/pbi/transmission-" + arch + "/etc/transmission/home/Downloads";
         for (var i = 0;i < mp_list.length;i++) {   
             dirs[i + 3] = mp_list[i];
         }
@@ -306,8 +307,17 @@
         });
     }
 
+    wait_for_arch = function() {
+        var s = service.callRemote("os.arch");
+        s.addCallback(function(result) {
+            arch = result;
+
+            wait_for_plugin_info();
+        });
+    }
+     
     main = function() {
-        wait_for_plugin_info(); 
+        wait_for_arch(); 
     }
 
     main();

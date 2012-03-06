@@ -13,9 +13,9 @@
 #			     a path.
 # transmission_conf_dir:     Directory where transmission configuration
 #			     data is stored.
-#			     Default: /usr/pbi/transmission-amd64/etc/transmission/home
+#			     Default: /usr/pbi/transmission-$(uname -m)/etc/transmission/home
 # transmission_download_dir: Directory to store downloaded data.
-#			     Default: /usr/pbi/transmission-amd64/etc/transmission/home/Downloads
+#			     Default: /usr/pbi/transmission-$(uname -m)/etc/transmission/home/Downloads
 # transmission_user:	     The user account transmission daemon runs as what
 #			     you want it to be. It uses 'transmission' user by
 #			     default. Do not sets it as empty or it will run
@@ -27,15 +27,15 @@
 name="transmission"
 rcvar=${name}_enable
 
-pidfile=/usr/pbi/transmission-amd64/etc/transmission/transmission.pid
+pidfile=/usr/pbi/transmission-$(uname -m)/etc/transmission/transmission.pid
 command=/usr/local/bin/transmission-daemon
 
 load_rc_config ${name}
 
 : ${transmission_enable:="NO"}
 : ${transmission_user:="transmission"}
-: ${transmission_conf_dir="/usr/pbi/transmission-amd64/etc/transmission/home"}
-: ${transmission_download_dir="/usr/pbi/transmission-amd64/etc/transmission/home/Downloads"}
+: ${transmission_conf_dir="/usr/pbi/transmission-$(uname -m)/etc/transmission/home"}
+: ${transmission_download_dir="/usr/pbi/transmission-$(uname -m)/etc/transmission/home/Downloads"}
 
 transmission_flags=" \
 	${transmission_watch_dir:+-c ${transmission_watch_dir}} \

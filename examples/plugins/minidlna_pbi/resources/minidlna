@@ -14,7 +14,7 @@
 
 name=minidlna
 rcvar=`set_rcvar`
-#command=/usr/pbi/minidlna-amd64/sbin/minidlna
+#command=/usr/pbi/minidlna-$(uname -m)/sbin/minidlna
 command=/usr/local/sbin/minidlna
 
 load_rc_config $name
@@ -22,7 +22,7 @@ load_rc_config $name
 minidlna_enable=${minidlna_enable-"NO"}
 minidlna_uid=${minidlna_uid-"dlna"}
 
-pidfile="/usr/pbi/minidlna-amd64/minidlna.pid"
+pidfile="/usr/pbi/minidlna-$(uname -m)/minidlna.pid"
 
 start_precmd="rm -f $pidfile"
 stop_postcmd=$start_precmd

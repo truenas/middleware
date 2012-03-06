@@ -10,6 +10,7 @@
     var plugin_info = null;
     var mounted = null;
     var saved = null;
+    var arch = null;
 
     get_directories = function() {
         var mp_list = new Array();
@@ -21,8 +22,8 @@
 
         dirs = new Array(mp_list.length + 3)
         dirs[0] = "-";
-        dirs[1] = "/usr/pbi/firefly-amd64/etc/firefly/home";
-        dirs[2] = "/usr/pbi/firefly-amd64/etc/firefly/home/Downloads";
+        dirs[1] = "/usr/pbi/firefly-" + arch + "/etc/firefly/home";
+        dirs[2] = "/usr/pbi/firefly-" + arch + "/etc/firefly/home/Downloads";
         for (var i = 0;i < mp_list.length;i++) {   
             dirs[i + 3] = mp_list[i];
         }
@@ -37,21 +38,21 @@
     }
 
     set_defaults = function(saved) {
-        sd("firefly_general_web_root", "/usr/pbi/firefly-amd64/share/mt-daapd/admin-root");
+        sd("firefly_general_web_root", "/usr/pbi/firefly-" + arch + "/share/mt-daapd/admin-root");
         sd("firefly_general_port", "3689");
         sd("firefly_general_admin_pw", "mt-daapd");
         sd("firefly_general_db_type", "sqlite3");
-        sd("firefly_general_db_parms", "/usr/pbi/firefly-amd64/var/db/firefly");
+        sd("firefly_general_db_parms", "/usr/pbi/firefly-" + arch + "/var/db/firefly");
         sd("firefly_general_servername", "Firefly %v on %h");
         sd("firefly_general_runas", "daapd");
         sd("firefly_general_extensions", ".mp3,.m4a,.m4p,.ogg,.flac");
         sd("firefly_general_ssc_codectypes", "ogg,flac,alac");
-        sd("firefly_general_ssc_prog", "/usr/pbi/firefly-amd64/bin/mt-daapd-ssc.sh");
+        sd("firefly_general_ssc_prog", "/usr/pbi/firefly-" + arch + "/bin/mt-daapd-ssc.sh");
         sd("firefly_general_logfile", "/var/log/mt-daapd.log");
         sd("firefly_general_debuglevel", "5");
         sd("firefly_general_scan_type", "0");
 
-        sd("firefly_plugins_plugin_dir", "/usr/pbi/firefly-amd64/lib/mt-daapd/plugins");
+        sd("firefly_plugins_plugin_dir", "/usr/pbi/firefly-" + arch + "/lib/mt-daapd/plugins");
 
         sd("firefly_scanning_process_playlists", "1");
         sd("firefly_scanning_process_itunes", "1");
@@ -328,7 +329,7 @@
 
     firefly_plugins_config = function() {
         var dirs = get_directories();
-        dirs[dirs.length] = "/usr/pbi/firefly-amd64/lib/mt-daapd/plugins";
+        dirs[dirs.length] = "/usr/pbi/firefly-" + arch + "/lib/mt-daapd/plugins";
         var sel_plugin_dir = new Array(dirs.length);
 
         for (var i = 0;i < dirs.length;i++) {
@@ -410,8 +411,16 @@
         });
     }
 
+    wait_for_arch = function() {
+        var s = service.callRemote("os.arch");
+        s.addCallback(function(result) {
+            arch = result;
+            wait_for_plugin_info();
+        });
+    }
+
     main = function() {
-        wait_for_plugin_info();
+        wait_for_arch();
     }
 
     main();

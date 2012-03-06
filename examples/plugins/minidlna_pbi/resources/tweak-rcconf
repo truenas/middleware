@@ -1,6 +1,6 @@
 #!/bin/sh
 
-minidlna_path=/usr/pbi/minidlna-amd64
+minidlna_path=/usr/pbi/minidlna-$(uname -m)
 tmpfile=$(mktemp /tmp/.XXXXXX)
 
 grep -v 'minidlna_' /etc/rc.conf > ${tmpfile}
