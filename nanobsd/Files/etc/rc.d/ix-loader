@@ -174,6 +174,7 @@ name="ix-loader"
 start_cmd='generate_loader_confs'
 reload_cmd='generate_loader_confs_noautotune'
 stop_cmd=':'
+extra_commands='reload'
 
 load_rc_config $name
 run_rc_command "$1"

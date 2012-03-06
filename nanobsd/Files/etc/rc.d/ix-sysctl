@@ -69,6 +69,7 @@ name="ix-sysctl"
 start_cmd='start_sysctl'
 reload_cmd='reload_sysctl'
 stop_cmd=':'
+extra_commands='reload'
 
 load_rc_config $name
 run_rc_command "$1"
