@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 # Альтернатива SSL/TLS
@@ -618,7 +618,8 @@ msgstr "Дополнительные группы"
 
 #: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Пользователь не может принадлежать более чем 64 вспомогательным группам"
+msgstr ""
+"Пользователь не может принадлежать более чем 64 вспомогательным группам"
 
 #: account/forms.py:627
 msgid "New password"
@@ -1475,9 +1476,14 @@ msgid ""
 msgstr ""
 "Использование Active Directory или LDAP аутентификации заменит эту опцию"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "Имя NetBIOS"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Имя NetBIOS\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Имя компьютера (NetBIOS)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2590,10 +2596,6 @@ msgstr "Доменное имя (DNS/Realm)"
 msgid "Domain Name, eg example.com"
 msgstr "Доменное имя, например \"example.com\""
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Имя компьютера (NetBIOS)"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "Имя хоста"
@@ -3498,8 +3500,8 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Имя тома должно начинаться с буквы и может включать в себя цифры, \" -\", \"_\" "
-"и \".\"."
+"Имя тома должно начинаться с буквы и может включать в себя цифры, \" -\", \"_"
+"\" и \".\"."
 
 #: storage/forms.py:292
 msgid "Path does not exist."
@@ -3561,8 +3563,8 @@ msgstr "Вы должны выбрать том."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
-"Том \"%s\" не удалось импортировать, для подробной информации проверьте статус "
-"пула"
+"Том \"%s\" не удалось импортировать, для подробной информации проверьте "
+"статус пула"
 
 #: storage/forms.py:650
 msgid "Dataset Name"
@@ -6037,15 +6039,15 @@ msgstr "Недоступен"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Используйте эту опцию для изменения имени пользователя ('www' по "
-"умолчанию), которое будет использоваться для гостевого доступа к службам. "
-"Независимо от привилегий, этот пользователь будет доступен для любого "
-"клиента, подключающегося к гостевой службе. Этот пользователь должен "
-"существовать в файле паролей, но не требует корректного логина."
+"Используйте эту опцию для изменения имени пользователя ('www' по умолчанию), "
+"которое будет использоваться для гостевого доступа к службам. Независимо от "
+"привилегий, этот пользователь будет доступен для любого клиента, "
+"подключающегося к гостевой службе. Этот пользователь должен существовать в "
+"файле паролей, но не требует корректного логина."
 
 msgid "ZVol Name"
 msgstr "Имя ZVol"
@@ -6139,8 +6141,7 @@ msgid "Kerberos Keytab File"
 msgstr "Файл Kerberos Keytab"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr "Файл Kerberos Keytab, созданный на сервере Active Directory."
 
 msgid "Auxillary Parameters"

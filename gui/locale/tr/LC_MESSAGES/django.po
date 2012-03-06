@@ -1311,7 +1311,8 @@ msgstr "Parolalar birbirinin aynısı değil"
 
 #: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
-msgstr "Eş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
+msgstr ""
+"Eş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
 
 #: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
@@ -1460,9 +1461,14 @@ msgid ""
 msgstr ""
 "Active Directory veya LDAP kimlik doğrulama, bu seçeneği geçersiz kılar"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS ismi"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS ismi\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Ana bilgisayar adı (NetBIOS adı)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -1593,8 +1599,8 @@ msgstr "Ev dizinlerini taramayı etkinleştir"
 #: services/models.py:148
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için ev dizinlerini taramayı "
-"etkinleştirir\\etkisizleştirir"
+"Bu, samba kullanıcıları için ev dizinlerini taramayı etkinleştirir"
+"\\etkisizleştirir"
 
 #: services/models.py:152
 msgid "Home directories"
@@ -1719,8 +1725,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"'iqn' temel ad değildir, hedef adlarda ekler eklenir. (Örneğin "
-"iqn.2007-09.jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
+"'iqn' temel ad değildir, hedef adlarda ekler eklenir. (Örneğin iqn.2007-09."
+"jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
 
 #: services/models.py:249
 msgid "Discovery Auth Method"
@@ -2568,10 +2574,6 @@ msgstr "Alan adı (DNS/Güvenlik etki alanı-adı)"
 msgid "Domain Name, eg example.com"
 msgstr "Alan Adı, örneğin ornek.com"
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Ana bilgisayar adı (NetBIOS adı)"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "FreeNAS sisteminin ana bilgisayar adı"
@@ -2975,7 +2977,8 @@ msgstr "Tüm harita kullanıcısı tüm harita grubunu gerektirir"
 
 #: sharing/forms.py:139 sharing/forms.py:142
 msgid "Maproot user/group disqualifies Mapall"
-msgstr "Yönetici haritası kullanıcı/grubun Tüm yönetici haritası yetkisini alır"
+msgstr ""
+"Yönetici haritası kullanıcı/grubun Tüm yönetici haritası yetkisini alır"
 
 #: sharing/models.py:40 sharing/models.py:103 storage/models.py:44
 #: storage/models.py:161 templates/network/interface.html:6
@@ -3227,8 +3230,7 @@ msgid ""
 msgstr ""
 "Veritabanı yükünü azaltmak için Afpd ayarlanırsa AppleDouble V2 başlık "
 "dosyalarında depolanan kimlik bilgilerini kullanır. Eğer birimi olmayan AFP "
-"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın "
-"(NFS/SMB/yerel)."
+"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın (NFS/SMB/yerel)."
 
 #: sharing/models.py:171
 msgid "Translate CR/LF"
@@ -3465,7 +3467,8 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Birim adı bir harf ile başlamalıdır sayılar, \"-\", \"_\" ve \".\" içerebilir."
+"Birim adı bir harf ile başlamalıdır sayılar, \"-\", \"_\" ve \".\" "
+"içerebilir."
 
 #: storage/forms.py:292
 msgid "Path does not exist."
@@ -3673,7 +3676,8 @@ msgstr "Uzak ana bilgisayar anahtarı"
 
 #: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
-msgstr "Diskleri yeni olarak belirle (bu işlem diskteki verileri yok edecektir)"
+msgstr ""
+"Diskleri yeni olarak belirle (bu işlem diskteki verileri yok edecektir)"
 
 #: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
@@ -4810,7 +4814,8 @@ msgstr "Uyarı!"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr "Sistemi <strong>YENİDEN BAŞLATMAK</strong> ile ilgili tercihiniz nedir?"
+msgstr ""
+"Sistemi <strong>YENİDEN BAŞLATMAK</strong> ile ilgili tercihiniz nedir?"
 
 #: templates/freeadmin/index.html:65
 msgid "Shutdown the System"

@@ -503,8 +503,8 @@ msgstr "Användarnamn"
 #: account/forms.py:199
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Obligatoriskt. 30 tecken eller färre. Endast bokstäver, siffror och "
-"@/./+/-/_."
+"Obligatoriskt. 30 tecken eller färre. Endast bokstäver, siffror och @/./+/-/"
+"_."
 
 #: account/forms.py:200
 #, fuzzy
@@ -1236,8 +1236,8 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Kontakten kan ändast innehålla alfanumeriska tecken, _, - eller en giltig "
-"e-post adress"
+"Kontakten kan ändast innehålla alfanumeriska tecken, _, - eller en giltig e-"
+"post adress"
 
 #: services/forms.py:287
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -2500,10 +2500,6 @@ msgstr ""
 
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
-msgstr ""
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085
@@ -5737,15 +5733,14 @@ msgstr "Admin-användare"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Använd detta val för att åsidosätta användarnamnet (standard är 'www') "
-"som används för tillgång till tjänster för gästkontot. Alla rättigheter "
-"som användaren har blir tillgängliga för alla som använder gästkontot. "
-"Denna användare måste finnas i lösenordsfilen, men behöver inget giltigt "
-"lösenord."
+"Använd detta val för att åsidosätta användarnamnet (standard är 'www') som "
+"används för tillgång till tjänster för gästkontot. Alla rättigheter som "
+"användaren har blir tillgängliga för alla som använder gästkontot. Denna "
+"användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
 
 #, fuzzy
 msgid "ZVol Name"

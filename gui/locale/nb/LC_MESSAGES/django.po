@@ -506,7 +506,8 @@ msgstr ""
 
 #: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Denne verdien kan kun inneholde bokstaver, tall og symbolene @/./+/-/_."
+msgstr ""
+"Denne verdien kan kun inneholde bokstaver, tall og symbolene @/./+/-/_."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -1455,7 +1456,7 @@ msgid ""
 msgstr ""
 "Bruk av Active Directory eller LDAP-godkjenning vil overstyre dette valget"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "NetBIOS navn"
 
@@ -2545,10 +2546,6 @@ msgstr "Domenenavn (DNS/Realm-Navn)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Domenenavn, etc ekempel.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS navn"
 
 #: services/models.py:1085
 #, fuzzy
@@ -5884,15 +5881,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
-"blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
-"Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
-"kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
-"trenger ikke en gyldig adgang."
+"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som blir "
+"brukt for å gi tilgang til tjenester som er spesifisert som gjest. Den "
+"tilgangen denne brukeren har vil bli tilgjengelig for klienter som kobler "
+"seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men trenger "
+"ikke en gyldig adgang."
 
 #, fuzzy
 msgid "ZVol Name"

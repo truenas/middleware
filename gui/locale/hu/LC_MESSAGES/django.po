@@ -1249,7 +1249,8 @@ msgstr "Port"
 
 #: services/forms.py:315
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr "Használjon alfanumerikus jeleket, valamint: \".\", \"-\" és \"_\" jeleket."
+msgstr ""
+"Használjon alfanumerikus jeleket, valamint: \".\", \"-\" és \"_\" jeleket."
 
 #: services/forms.py:326 services/forms.py:897
 #, python-format
@@ -1448,9 +1449,14 @@ msgstr ""
 "Active Directory, vagy LDAP hitelesítés használata felülbírálja ezt a "
 "lehetőséget."
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS név"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS név\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Host név (NetBIOS-név)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2519,10 +2525,6 @@ msgstr "Domain név (DNS/Realm-Name)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Domain név, pl. valami.hu"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Host név (NetBIOS-név)"
 
 #: services/models.py:1085
 #, fuzzy
@@ -5809,16 +5811,15 @@ msgstr "Admin felhasználó"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Ezzel a beállítással felülbírálható az a felhasználónév ('www' "
-"alapértelmezetten) amivel a vendégként elérhető szolgáltatások "
-"használhatók. Amilyen jogosultság van a felhasználói fiókhoz rendelve, "
-"azt mind elérik a vendégként kapcsolódó felhasználók. Ennek a "
-"felhasználónak szerepelnie kell a jelszó fájlban, de nem szükséges "
-"érvényes bejelentkezési engedély."
+"alapértelmezetten) amivel a vendégként elérhető szolgáltatások használhatók. "
+"Amilyen jogosultság van a felhasználói fiókhoz rendelve, azt mind elérik a "
+"vendégként kapcsolódó felhasználók. Ennek a felhasználónak szerepelnie kell "
+"a jelszó fájlban, de nem szükséges érvényes bejelentkezési engedély."
 
 #, fuzzy
 msgid "ZVol Name"

@@ -1425,7 +1425,7 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr ""
 
@@ -2434,10 +2434,6 @@ msgstr ""
 
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
-msgstr ""
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085

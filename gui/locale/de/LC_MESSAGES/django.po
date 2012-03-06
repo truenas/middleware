@@ -525,8 +525,8 @@ msgstr ""
 #: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Dieser Wert darf nur Buchstaben, Nummern, sowie folgende Zeichen enthalten: "
-"./+/-/_"
+"Dieser Wert darf nur Buchstaben, Nummern, sowie folgende Zeichen "
+"enthalten: ./+/-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -1458,8 +1458,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Das Feld ist eine ungültige IP Adresse oder Netzwerk. Das Schlüsselwort "
-"\"ALL\" kann verwendet werden, um alles zu erlauben."
+"Das Feld ist eine ungültige IP Adresse oder Netzwerk. Das Schlüsselwort \"ALL"
+"\" kann verwendet werden, um alles zu erlauben."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -1505,9 +1505,14 @@ msgstr ""
 "Die Benutzung von Active Directory- oder LDAP-Autentifizierung wird diese "
 "Option außer Kraft setzen."
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS Name"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS Name\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Rechnername (NetBIOS)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2664,10 +2669,6 @@ msgstr "Domäne (DNS/Realm)"
 msgid "Domain Name, eg example.com"
 msgstr "Name der Domäne, z.B. example.com"
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Rechnername (NetBIOS)"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "System Hostname"
@@ -3617,8 +3618,8 @@ msgstr "geben Sie einen individuellen Pfadnamen an"
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
-"Wenn dieses Feld freigelassen wird, erhält das Volume den Standardpfad "
-"/mnt/${VOLUME_NAME}"
+"Wenn dieses Feld freigelassen wird, erhält das Volume den Standardpfad /mnt/"
+"${VOLUME_NAME}"
 
 #: storage/forms.py:278
 msgid ""
@@ -3690,8 +3691,8 @@ msgstr "Sie müssen ein Volume wählen."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
-"Das Volume \"%\" konnte nicht importiert werden. Prüfen Sie den Poolstatus für "
-"weitere Details."
+"Das Volume \"%\" konnte nicht importiert werden. Prüfen Sie den Poolstatus "
+"für weitere Details."
 
 # im deutschen Oracle ZFS Handbuch werden die Begriffe nicht übersetzt
 #: storage/forms.py:650
@@ -3953,8 +3954,8 @@ msgstr ""
 #: storage/models.py:440
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
-"Initialisieren Sie Remote-Seite einmal. (Das kann zu Datenverlust auf "
-"Remote-Seite führen!)"
+"Initialisieren Sie Remote-Seite einmal. (Das kann zu Datenverlust auf Remote-"
+"Seite führen!)"
 
 #: storage/models.py:444
 msgid "Limit (kB/s)"
@@ -5554,7 +5555,8 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] "Dies wird alle Dateien im Datensatz löschen.\n"
-msgstr[1] "Dies wird alle Dateien im Datensatz und in den Datensätzen der Unterordner "
+msgstr[1] ""
+"Dies wird alle Dateien im Datensatz und in den Datensätzen der Unterordner "
 "löschen.\n"
 
 #: templates/storage/dataset_edit.html:9
@@ -6231,15 +6233,15 @@ msgstr "nicht zutreffend"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Verwende diese Funktion, um den Nutzernamen zu überschreiben, der zum "
-"Zugriff auf Gastservices verwendet wird (standardmäßig 'www'). Rechte, "
-"die diesem Nutzer zustehen, sind jedem Client verfügbar, der sich als "
-"Gast verbindet. Dieser Nutzer muss in der Passwortdatei bestehen, "
-"benötigt aber keinen gültigen Login."
+"Zugriff auf Gastservices verwendet wird (standardmäßig 'www'). Rechte, die "
+"diesem Nutzer zustehen, sind jedem Client verfügbar, der sich als Gast "
+"verbindet. Dieser Nutzer muss in der Passwortdatei bestehen, benötigt aber "
+"keinen gültigen Login."
 
 msgid "ZVol Name"
 msgstr "ZVol Name"
@@ -6279,8 +6281,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Bitte geben Sie Ihr altes Passwort ein und geben Sie dann zweimal Ihr "
-"neues Passwort ein, um sicherzustellen, dass es richtig eingegeben wurde."
+"Bitte geben Sie Ihr altes Passwort ein und geben Sie dann zweimal Ihr neues "
+"Passwort ein, um sicherzustellen, dass es richtig eingegeben wurde."
 
 msgid "Password (again)"
 msgstr "Passwort wiederholen"
@@ -6318,8 +6320,7 @@ msgid "Windows Version"
 msgstr "Windows Version"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
-"Die Version von Microsoft Windows auf der das Active Directory läuft."
+msgstr "Die Version von Microsoft Windows auf der das Active Directory läuft."
 
 msgid "Service Principal Name"
 msgstr "Service Principal Name"
@@ -6338,11 +6339,9 @@ msgid "Kerberos Keytab File"
 msgstr "Kerberos Keytab Datei"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
-"Die Kerberos Keytab Datei, die auf dem Active Directory Server erzeugt "
-"wurde."
+"Die Kerberos Keytab Datei, die auf dem Active Directory Server erzeugt wurde."
 
 msgid "Auxillary Parameters"
 msgstr "Zusätzliche Parameter"
