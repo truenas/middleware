@@ -523,15 +523,17 @@ class notifier:
         if self.__system_nolog('/usr/sbin/service ix-kinit status') != 0:
             # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
             #raise Exception('Failed to get a kerberos ticket.')
-            return
-        self.__system("/usr/sbin/service ix-activedirectory quietstart")
+            return False
+        if self.__system_nolog("/usr/sbin/service ix-activedirectory quietstart") != 0:
+            return False
         if (self.__system_nolog('/usr/sbin/service ix-activedirectory status')
             != 0):
             # XXX: Exceptions don't work here on all versions, e.g. 8.0.2.
             #raise Exception('Failed to associate with the domain.')
-            return
+            return False
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
         self.__system("/usr/sbin/service winbindd quietstart")
+        return True
 
     def _stop_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
@@ -542,6 +544,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-activedirectory forcestop")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
         self.__system("/usr/sbin/service winbindd forcestop")
+        return False
 
     def _restart_activedirectory(self):
         self._stop_activedirectory()
