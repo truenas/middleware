@@ -698,7 +698,7 @@ freenas_custom()
 
 	# strip binaries (saves spaces on non-debug images).
 	if [ "${DEBUG}" != 1 ]; then
-		print 4 "Stripping binaries and libraries"
+		pprint 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
 			for f in $(find $dir -type f); do
 				strip 2>/dev/null $f || :
