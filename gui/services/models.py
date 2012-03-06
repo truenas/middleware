@@ -763,6 +763,7 @@ class Plugins(Model):
     jail_path = PathField(
             verbose_name=_("Plugins jail path"),
             help_text = _("Path to the plugins jail"),
+            blank=False
             )
     jail_name = models.CharField(
             max_length=120,
@@ -778,6 +779,7 @@ class Plugins(Model):
     plugins_path = PathField(
             verbose_name=_("Plugins Path"),
             help_text = _("Path to the plugins directory"),
+            blank=False
             )
 
     class Meta:
