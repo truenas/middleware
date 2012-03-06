@@ -1466,9 +1466,14 @@ msgid ""
 msgstr ""
 "Gebruik van Active Directory of LDAP authenticatie zal deze optie vervangen"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS naam"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS naam\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS Naam"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2570,10 +2575,6 @@ msgstr "Domein Naam (DNS/Realm-Naam)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Domein Naam, bijv. voorbeeld.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS Naam"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6059,16 +6060,15 @@ msgstr "% succesvol toegevoegd"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Gebruik deze optie om de gebruikersnaam ('www' is standaard) te "
 "overschrijven welke wordt gebruikt om toegang te krijgen tot diensten die "
 "voor gasten toegankelijk zijn. Ongeacht de privileges voor deze gebruiker "
-"heeft een cliënt verbinding met de gastdiensten. Deze gebruiker moet "
-"bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
-"vereist."
+"heeft een cliënt verbinding met de gastdiensten. Deze gebruiker moet bestaan "
+"in het wachtwoord bestand, maar er is geen geldige aanmelding vereist."
 
 msgid "ZVol Name"
 msgstr "ZVol naam"
@@ -6104,8 +6104,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Vul a.u.b. uw oude wachtwoord in, en vul daarna 2 keer uw nieuwe "
-"wachtwoord in om te verifiëren of het correct getypt is. "
+"Vul a.u.b. uw oude wachtwoord in, en vul daarna 2 keer uw nieuwe wachtwoord "
+"in om te verifiëren of het correct getypt is. "
 
 msgid "Password (again)"
 msgstr "Wachtwoord (opnieuw)"
@@ -6160,8 +6160,7 @@ msgid "Kerberos Keytab File"
 msgstr "Kerberos Keytab Bestand"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
 "Het Kerberos keytab bestand welke is gegenereerd op de Active Directory "
 "server."

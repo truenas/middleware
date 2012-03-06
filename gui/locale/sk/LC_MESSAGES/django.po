@@ -1485,9 +1485,14 @@ msgstr ""
 "Používanie Active Directory alebo LDAP autentifikácie je nadradené tejto "
 "voľbe"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS meno"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS meno\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Názov počítača (NetBIOS názov)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2593,10 +2598,6 @@ msgstr "Doména (DNS/Názov-domény)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Doména, napr. nieco.sk"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Názov počítača (NetBIOS názov)"
 
 #: services/models.py:1085
 #, fuzzy

@@ -1458,9 +1458,14 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "Utilizar Active Directory ou LDAP autenticação vão sobrepor esta opção"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBios nome"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBios nome\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nome do Host"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2574,10 +2579,6 @@ msgstr "Nome do domínio (DNS/Realm-Name)"
 msgid "Domain Name, eg example.com"
 msgstr "Nome do domínio, eg example.com"
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Nome do Host"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "Nome do Host do Sistema"
@@ -3470,8 +3471,8 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_\" e "
-"\".\" ."
+"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_"
+"\" e \".\" ."
 
 #: storage/forms.py:292
 msgid "Path does not exist."
@@ -5999,15 +6000,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Utilize esta opção para substituir o nome de usuário ('www' por padrão) "
-"que será usada para acesso a serviços que são especificados como "
-"convidado. Qualquer privilégios que este utilizador tem estará disponível "
-"para qualquer cliente se conectar ao serviço cliente. Este utilizador "
-"deve existir no arquivo de senha, mas não exige um login válido."
+"Utilize esta opção para substituir o nome de usuário ('www' por padrão) que "
+"será usada para acesso a serviços que são especificados como convidado. "
+"Qualquer privilégios que este utilizador tem estará disponível para qualquer "
+"cliente se conectar ao serviço cliente. Este utilizador deve existir no "
+"arquivo de senha, mas não exige um login válido."
 
 msgid "ZVol Name"
 msgstr "Nome Completo"

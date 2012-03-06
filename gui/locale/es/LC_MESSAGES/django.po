@@ -449,8 +449,7 @@ msgstr ""
 #: choices.py:490
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"En espera - Compruebe que el dispositivo no encuentre en REPOSO o modo "
-"ESPERA"
+"En espera - Compruebe que el dispositivo no encuentre en REPOSO o modo ESPERA"
 
 #: choices.py:491
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -1472,7 +1471,7 @@ msgstr ""
 "La utilización de Directorio Activo (DC) ó autenticación LDAP sustituirá "
 "esta opción"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "Nombre de NetBIOS"
 
@@ -2570,10 +2569,6 @@ msgstr "Nombre de Dominio (DNS/Nombre Real)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Nombre de dominio (Ej: ejemplo.com)"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Nombre de NetBIOS"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6053,16 +6048,16 @@ msgstr "N/D"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Use esta opción para reemplazar el nombre de usuario (\"www\" por "
-"defecto) el cual se utilizará para el acceso a los servicios que se "
-"especifican como invitado. Cualquier privilegio que este usuario pueda "
-"tener, estará disponible a cualquier cliente que se conecte al servicio "
-"de invitado. Este usuario debe existir en el archivo de contraseñas, pero "
-"no requiere un inicio de sesión válido."
+"Use esta opción para reemplazar el nombre de usuario (\"www\" por defecto) "
+"el cual se utilizará para el acceso a los servicios que se especifican como "
+"invitado. Cualquier privilegio que este usuario pueda tener, estará "
+"disponible a cualquier cliente que se conecte al servicio de invitado. Este "
+"usuario debe existir en el archivo de contraseñas, pero no requiere un "
+"inicio de sesión válido."
 
 msgid "ZVol Name"
 msgstr "Nombre del zvol"
@@ -6100,8 +6095,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Por favor introduzca su anterior contraseña, y luego la nueva dos veces "
-"para verificar que la ha escrito correctamente"
+"Por favor introduzca su anterior contraseña, y luego la nueva dos veces para "
+"verificar que la ha escrito correctamente"
 
 msgid "Password (again)"
 msgstr "Contraseña (de nuevo)"
@@ -6155,8 +6150,7 @@ msgid "Kerberos Keytab File"
 msgstr "Fichero keytab de Kerberos"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr "El ficheros keytab de Kerberos ha sido generado en el servidor AD"
 
 msgid "Auxillary Parameters"

@@ -508,7 +508,8 @@ msgstr ""
 
 #: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Această valoare poate conţine numai litere, numere și caracterele ./-/_"
+msgstr ""
+"Această valoare poate conţine numai litere, numere și caracterele ./-/_"
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -1476,9 +1477,14 @@ msgid ""
 msgstr ""
 "Utilizare autentificării Active Directory sau LDAP va înlocui acestă opțiune"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "Nume NetBIOS"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nume NetBIOS\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS Name"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2590,10 +2596,6 @@ msgstr "Nume domeniu (DNS/Realm-Name)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Nume domeniu, de ex. domeniu.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS Name"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6111,16 +6113,15 @@ msgstr "%s adăugat cu succes"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Această opţiune se utilizează pentru a trece peste numele de utilizator "
-"(implicit 'www') folosit pentru a accesa serviciile specifice "
-"vizitatorului. Indiferent de privilegiile avute, ele vor fi disponibile "
-"oricărui client ce se conectează la serviciul de tip vizitator. Acest "
-"utilizator trebuie să existe în fişierul de parole, dar nu este necesară "
-"o logare validă."
+"(implicit 'www') folosit pentru a accesa serviciile specifice vizitatorului. "
+"Indiferent de privilegiile avute, ele vor fi disponibile oricărui client ce "
+"se conectează la serviciul de tip vizitator. Acest utilizator trebuie să "
+"existe în fişierul de parole, dar nu este necesară o logare validă."
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6157,8 +6158,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Introduceţi vechea parolă, apoi introduceţi o nouă parolă de două ori "
-"pentru verificare."
+"Introduceţi vechea parolă, apoi introduceţi o nouă parolă de două ori pentru "
+"verificare."
 
 msgid "Password (again)"
 msgstr "Parola (din nou)"
@@ -6211,8 +6212,7 @@ msgid "Kerberos Keytab File"
 msgstr "Fişier chei Kerberos"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
 "Fişierul cu chei Kerberos care a fost generat pe serverul Active Directory"
 

@@ -2467,10 +2467,6 @@ msgstr ""
 msgid "Domain Name, eg example.com"
 msgstr ""
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr ""
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr ""

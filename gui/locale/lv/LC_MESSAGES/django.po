@@ -1055,7 +1055,8 @@ msgstr "Virtuālais interfeiss"
 
 #: network/models.py:206
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Saskarnes nosaukumiem jābūt vlanXX, kur XX ir skaitlis. Piemērs: vlan0."
+msgstr ""
+"Saskarnes nosaukumiem jābūt vlanXX, kur XX ir skaitlis. Piemērs: vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1148,8 +1149,8 @@ msgstr "Šī nav derīga maska"
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
-"Šis lauks ir obligāts attiecībā uz \"Aktivizēt mājas direktoriju "
-"pārlūkošanai\"."
+"Šis lauks ir obligāts attiecībā uz \"Aktivizēt mājas direktoriju pārlūkošanai"
+"\"."
 
 #: services/forms.py:86
 msgid "This field is required for \"Home directories\"."
@@ -1228,8 +1229,7 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Kontaktam jāsatur tikai alfanumeriski simboli, _, - vai derīga e-pasta "
-"adrese"
+"Kontaktam jāsatur tikai alfanumeriski simboli, _, - vai derīga e-pasta adrese"
 
 #: services/forms.py:287
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -1450,9 +1450,14 @@ msgstr ""
 "Izmantojot Active Directory vai LDAP autentifikāciju, šī iespēja tiks "
 "pārņemta"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "NetBIOS nosuakums"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"NetBIOS nosuakums\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Saimnieka Vārds (NetBIOS-Vārds)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2550,10 +2555,6 @@ msgstr "Domēna vārds (DNS/Realm-Vārds)"
 msgid "Domain Name, eg example.com"
 msgstr "Domēna vārds, piemēram, example.com"
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Saimnieka Vārds (NetBIOS-Vārds)"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "Sistēmas saimnieks"
@@ -3426,15 +3427,16 @@ msgstr "Norādi savādāku ceļu"
 #: storage/forms.py:211
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
-msgstr "Atstājot šo tukšu dos sējumam noklusējuma ceļu /mnt/${SĒJUMA_NOSAUKUMS}"
+msgstr ""
+"Atstājot šo tukšu dos sējumam noklusējuma ceļu /mnt/${SĒJUMA_NOSAUKUMS}"
 
 #: storage/forms.py:278
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Sējuma nosaukumam jāsākas ar burtiem un var saturēt ciparus, \"-\", \"_\" un \".\" "
-"."
+"Sējuma nosaukumam jāsākas ar burtiem un var saturēt ciparus, \"-\", \"_\" un "
+"\".\" ."
 
 #: storage/forms.py:292
 msgid "Path does not exist."
@@ -3541,8 +3543,8 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Datu kopas vārdiem jāsākas ar alfanumerisku simbolu un var saturēt tikai "
-"\"-\", \"_\", \":\" un \".\"."
+"Datu kopas vārdiem jāsākas ar alfanumerisku simbolu un var saturēt tikai \"-"
+"\", \"_\", \":\" un \".\"."
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
@@ -5441,8 +5443,7 @@ msgstr "Tas palielinās sistēmas virstēriņu, kamēr būs progresā"
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Vai tu esi drošs, ka vēlies atgriezt datu kopu uz šo momentuzņēmuma "
-"stāvokli?"
+"Vai tu esi drošs, ka vēlies atgriezt datu kopu uz šo momentuzņēmuma stāvokli?"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"
@@ -5969,15 +5970,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), "
-"kurš tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. "
-"Jebkuras privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram "
-"klientam, kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē "
-"paroļu datnē, bet nevajag derīgu autorizāciju."
+"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), kurš "
+"tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. Jebkuras "
+"privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram klientam, kurš "
+"savienosies ar viesa servisu. Šim lietotājam ir jāeksistē paroļu datnē, bet "
+"nevajag derīgu autorizāciju."
 
 msgid "ZVol Name"
 msgstr "ZVol vārds"

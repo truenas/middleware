@@ -1234,7 +1234,8 @@ msgstr "Službě DynamicDNS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:273
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "Umístění musí obsahovat pouze písmena, číslice, podtržítko nebo pomlčku"
+msgstr ""
+"Umístění musí obsahovat pouze písmena, číslice, podtržítko nebo pomlčku"
 
 #: services/forms.py:280
 msgid "This is not a valid e-mail address"
@@ -1416,8 +1417,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Neplatná IP adresa nebo síť. Klíčové slovo \"ALL\" může být použito k povolení "
-"všeho."
+"Neplatná IP adresa nebo síť. Klíčové slovo \"ALL\" může být použito k "
+"povolení všeho."
 
 #: services/forms.py:820
 msgid "Authentication Group number"
@@ -2477,10 +2478,6 @@ msgstr ""
 
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
-msgstr ""
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085

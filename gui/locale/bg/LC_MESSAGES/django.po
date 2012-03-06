@@ -502,13 +502,14 @@ msgstr "Потребителско име"
 #: account/forms.py:199
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Задължително изискват се 16 или повече символа. Разрешени са букви, символи "
-" \".\"  \"-\"  \"_\" или цифри."
+"Задължително изискват се 16 или повече символа. Разрешени са букви, символи  "
+"\".\"  \"-\"  \"_\" или цифри."
 
 #: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Тази стойност може да съдържа само  букви, символи \".\" \"-\" \"_\" или цифри."
+"Тази стойност може да съдържа само  букви, символи \".\" \"-\" \"_\" или "
+"цифри."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -1461,7 +1462,7 @@ msgid ""
 msgstr ""
 "Използването на Active Directory или LDAP автентикация ще замести тази опция"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "NetBIOS име"
 
@@ -2494,10 +2495,6 @@ msgstr ""
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr ""
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS име"
 
 #: services/models.py:1085
 msgid "System hostname"
@@ -5719,12 +5716,10 @@ msgid "IPv6 Netmask"
 msgstr "IPv6 мрежова маска"
 
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
-"Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
+msgstr "Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
 
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
-"Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
+msgstr "Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
 
 msgid "Enable DDP"
 msgstr "Разреши DDP"

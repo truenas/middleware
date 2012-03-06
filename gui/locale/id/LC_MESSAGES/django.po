@@ -1459,9 +1459,14 @@ msgid ""
 msgstr ""
 "Menggunakan Direktori Aktif atau otentikasi LDAP akan mengganti pilihan ini"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "Nama NetBIOS"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nama NetBIOS\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nama Host (NetBIOS)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2563,10 +2568,6 @@ msgstr "Nama Domain (DNS/Realm)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Nama Domain, e.g. example.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Nama Host (NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy

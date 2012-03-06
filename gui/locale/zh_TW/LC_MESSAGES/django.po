@@ -1437,7 +1437,7 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "使用 Active Directory 或 LDAP 驗證機制將會取代此選項"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "NetBIOS 名稱"
 
@@ -2477,10 +2477,6 @@ msgstr "網域名稱 (DNS/Realm-Name)"
 msgid "Domain Name, eg example.com"
 msgstr "網域名稱(例如：example.com)"
 
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS 名稱"
-
 #: services/models.py:1085
 msgid "System hostname"
 msgstr "舊格式的主機名稱(例如：FREENAS)"
@@ -3056,7 +3052,9 @@ msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
-msgstr "注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模式將磁區作為資料磁區使用。"
+msgstr ""
+"注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模"
+"式將磁區作為資料磁區使用。"
 
 #: sharing/models.py:162
 msgid "Database Path"
@@ -5793,13 +5791,13 @@ msgstr "不適用"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'www') 此帳號的"
-"所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-"裡，但不必是個有效的登入帳號"
+"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'www') 此帳號的所"
+"有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔裡，但"
+"不必是個有效的登入帳號"
 
 msgid "ZVol Name"
 msgstr "ZVol 名稱"
@@ -5885,8 +5883,7 @@ msgid "Kerberos Keytab File"
 msgstr "Kerberos Keytab 檔"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
 
 msgid "Auxillary Parameters"

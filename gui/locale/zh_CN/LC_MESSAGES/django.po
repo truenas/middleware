@@ -1431,7 +1431,7 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "使用AD(活动目录)或LDAP认证将取代该选项"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "NetBIOS 名称"
 
@@ -2472,10 +2472,6 @@ msgstr "域名 （DNS/真实名称）"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "域名，例如：example.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "NetBIOS 名称"
 
 #: services/models.py:1085
 #, fuzzy

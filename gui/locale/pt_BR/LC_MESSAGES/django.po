@@ -512,8 +512,8 @@ msgstr ""
 #: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Este valor pode conter apenas letras, números e os seguintes caracteres "
-"./-/_ ."
+"Este valor pode conter apenas letras, números e os seguintes caracteres ./-/"
+"_ ."
 
 #: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -1457,9 +1457,14 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "Usar autenticação do Active Directory ou LDAP irá sobrepor essa opção"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "Nome do NetBIOS"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nome do NetBIOS\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Nome do Host (Nome NetBIOS)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -1922,7 +1927,7 @@ msgid "Portal"
 msgstr "Portal"
 
 # Esse erro diz que o número de sentenças é diferente. e ai ? o numero de sentenças são iguais
-# 
+#
 #: services/models.py:451
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
@@ -2566,10 +2571,6 @@ msgstr "Nome do Domínio (Nome DNS/Realm)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Nome do Domínio, Ex.: exemplo.com.br"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Nome do Host (Nome NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6072,15 +6073,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Use essa opção para sobrepor o nome do usuário ('www' por padrão) que "
-"será usado para acesso aos serviços cuja especificação seja convidado. "
-"Independente dos privilégios de acesso que o usuário tenha será permitida "
-"a conexão no serviço de convidados. O usuário precisa possuir uma senha, "
-"mas não é necessário um login válido."
+"Use essa opção para sobrepor o nome do usuário ('www' por padrão) que será "
+"usado para acesso aos serviços cuja especificação seja convidado. "
+"Independente dos privilégios de acesso que o usuário tenha será permitida a "
+"conexão no serviço de convidados. O usuário precisa possuir uma senha, mas "
+"não é necessário um login válido."
 
 msgid "ZVol Name"
 msgstr "Nome ZVol"
@@ -6115,8 +6116,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Por favor digite sua senha antiga, e, em seguida, digite a nova senha "
-"duas vezes para verificar se está digitado corretamente."
+"Por favor digite sua senha antiga, e, em seguida, digite a nova senha duas "
+"vezes para verificar se está digitado corretamente."
 
 msgid "Password (again)"
 msgstr "Senha (novamente)"
@@ -6170,10 +6171,8 @@ msgid "Kerberos Keytab File"
 msgstr "Arquivo Kerberos Keytab"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr ""
-"Arquivo kerberos keytab que foi gerado no servidor Active Directory."
+"The kerberos keytab file that was generated on the Active Directory server."
+msgstr "Arquivo kerberos keytab que foi gerado no servidor Active Directory."
 
 msgid "Auxillary Parameters"
 msgstr "Parâmetros Auxiliares"

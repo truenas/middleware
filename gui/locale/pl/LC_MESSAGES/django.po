@@ -1467,7 +1467,7 @@ msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "Użycie autentykacji AD lub LDAP nadpisuje tą opcję"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
 msgid "NetBIOS Name"
 msgstr "Nazwa NetBIOS"
 
@@ -2583,10 +2583,6 @@ msgstr "Nazwa domeny (DNS/Realm-Name)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Nazwa domeny, np. example.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Nazwa NetBIOS"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6046,15 +6042,15 @@ msgstr "%s dodano pomyślnie"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka "
-"będzie używana przy usługach do których dostęp jest anonimowy. Ponadto "
-"uprawnienia tego użytkownika mogą być dostępne dla dowolnego klienta "
-"korzystającego z takiej usługi. Użytkownik ten musi istnieć w pliku z "
-"hasłami, nie jest jednak wymagany prawidłowy login."
+"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka będzie "
+"używana przy usługach do których dostęp jest anonimowy. Ponadto uprawnienia "
+"tego użytkownika mogą być dostępne dla dowolnego klienta korzystającego z "
+"takiej usługi. Użytkownik ten musi istnieć w pliku z hasłami, nie jest "
+"jednak wymagany prawidłowy login."
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6088,8 +6084,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło "
-"dla sprawdzenia poprawności."
+"Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło dla "
+"sprawdzenia poprawności."
 
 msgid "Password (again)"
 msgstr "Hasło (ponownie)"
@@ -6125,8 +6121,7 @@ msgid "Windows Version"
 msgstr "Wersja Windows"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
-"Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
+msgstr "Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
 
 msgid "Service Principal Name"
 msgstr "Nazwa konta użytkownika dla usługi"

@@ -1479,9 +1479,14 @@ msgstr ""
 "Χρησιμοποιώντας πιστοποίηση Active Directory ή LDAP θα αντικαταστήσει αυτή "
 "την επιλογή"
 
-#: services/models.py:68
+#: services/models.py:68 services/models.py:1084
+#, fuzzy
 msgid "NetBIOS Name"
-msgstr "Όνομα NetBIOS"
+msgstr ""
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Όνομα NetBIOS\n"
+"#-#-#-#-#  django.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:72
 msgid "Workgroup"
@@ -2600,10 +2605,6 @@ msgstr "Domain Name (DNS / Realm-Επωνυμία)"
 #: services/models.py:1080
 msgid "Domain Name, eg example.com"
 msgstr "Domain Name, π.χ. example.com"
-
-#: services/models.py:1084
-msgid "NetBIOS Name"
-msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
@@ -6033,8 +6034,7 @@ msgid "IPv6 Netmask"
 msgstr "IPv6 Netmask"
 
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
-"Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 10000, συμπεριλαμβανομένης."
+msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 10000, συμπεριλαμβανομένης."
 
 msgid "This value must be between 0 and 1000, inclusive."
 msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 1000, συμπεριλαμβανομένης."
@@ -6118,16 +6118,16 @@ msgstr "%s προστέθηκε(αν) με επιτυχία"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('www' "
 "από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
-"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του "
-"χρήστη θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία "
-"guest. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, "
-"αλλά δεν απαιτεί μια έγκυρη σύνδεση."
+"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του χρήστη "
+"θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία guest. "
+"Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, αλλά δεν "
+"απαιτεί μια έγκυρη σύνδεση."
 
 msgid "ZVol Name"
 msgstr "Όνομα ZVol"
@@ -6218,11 +6218,9 @@ msgid "Kerberos Keytab File"
 msgstr "Kerberos Αρχείο Keytab"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
-"Το αρχείο keytab Kerberos που δημιουργήθηκε στο διακομιστή Active "
-"Directory."
+"Το αρχείο keytab Kerberos που δημιουργήθηκε στο διακομιστή Active Directory."
 
 msgid "Auxillary Parameters"
 msgstr "Βοηθητικές Παράμετροι"
