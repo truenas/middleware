@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-12-05 08:15+0200\n"
-"Last-Translator: Ersan <yakazan@gmail.com>\n"
+"POT-Creation-Date: 2012-03-06 09:50-0800\n"
+"PO-Revision-Date: 2012-01-16 15:51+0200\n"
+"Last-Translator: deagle <gopal9a@yahoo.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -18,57 +18,66 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:56
+#: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Raporlama"
 
-#: media/lib/js/freeadmin.js:68
+#: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: media/lib/js/freeadmin.js:79
+#: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Sistem Bilgisi"
 
-#: media/lib/js/freeadmin.js:119
+#: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Ağ Ayarları"
 
-#: media/lib/js/freeadmin.js:183
+#: freeadmin/static/lib/js/freeadmin.js:184
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
 msgstr "Hizmetler"
 
-#: media/lib/js/freeadmin.js:224
+#: freeadmin/static/lib/js/freeadmin.js:256
 msgid "Account"
 msgstr "Hesap"
 
-#: media/lib/js/freeadmin.js:263
+#: freeadmin/static/lib/js/freeadmin.js:295
 msgid "Storage"
 msgstr "Depolama"
 
-#: media/lib/js/freeadmin.js:330
-msgid "CronJobs"
-msgstr "Zamanlanmış Görevler"
-
-#: media/lib/js/freeadmin.js:490
+#: freeadmin/static/lib/js/freeadmin.js:465
 msgid "Edit"
 msgstr "Düzenle"
 
-#: media/lib/js/freeadmin.js:492
+#: freeadmin/static/lib/js/freeadmin.js:469
 msgid "Edit Disk"
 msgstr "Disk Düzenleme"
 
-#: media/lib/js/freeadmin.js:760
+#: freeadmin/static/lib/js/freeadmin.js:608
+#: freeadmin/static/lib/js/freeadmin.js:710
+msgid "Please wait..."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:657
+#: freeadmin/static/lib/js/freeadmin.js:775
 msgid "An error occurred!"
 msgstr "Bazı hatalar olustu!"
 
-#: media/lib/js/freeadmin/form/Cron.js:47
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
 msgid "Each selected"
 msgstr "Seçilen her"
 
-#: media/lib/js/freeadmin/form/Cron.js:98
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Her N"
+
+msgid "CronJobs"
+msgstr "Zamanlanmış Görevler"
 
 msgid "Replace"
 msgstr "Yer Değiştir"

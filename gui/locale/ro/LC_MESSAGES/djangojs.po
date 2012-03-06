@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-07-19 22:13+0200\n"
-"Last-Translator: HarryE <harald.ersch@gmail.com>\n"
+"POT-Creation-Date: 2012-03-06 09:50-0800\n"
+"PO-Revision-Date: 2012-01-24 21:46+0200\n"
+"Last-Translator: mijansky <feeddle@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -19,57 +19,66 @@ msgstr ""
 "20)) ? 1 : 2);;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:56
+#: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Rapoarte"
 
-#: media/lib/js/freeadmin.js:68
+#: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Setări"
 
-#: media/lib/js/freeadmin.js:79
+#: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Informaţii sistem"
 
-#: media/lib/js/freeadmin.js:119
+#: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Setări reţea"
 
-#: media/lib/js/freeadmin.js:183
+#: freeadmin/static/lib/js/freeadmin.js:184
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
 msgstr "Servicii"
 
-#: media/lib/js/freeadmin.js:224
+#: freeadmin/static/lib/js/freeadmin.js:256
 msgid "Account"
 msgstr "Cont"
 
-#: media/lib/js/freeadmin.js:263
+#: freeadmin/static/lib/js/freeadmin.js:295
 msgid "Storage"
 msgstr "Stocare"
 
-#: media/lib/js/freeadmin.js:330
-msgid "CronJobs"
-msgstr "Job-uri Cron"
-
-#: media/lib/js/freeadmin.js:490
+#: freeadmin/static/lib/js/freeadmin.js:465
 msgid "Edit"
 msgstr "Modificare"
 
-#: media/lib/js/freeadmin.js:492
+#: freeadmin/static/lib/js/freeadmin.js:469
 msgid "Edit Disk"
 msgstr "Modificare disc"
 
-#: media/lib/js/freeadmin.js:760
+#: freeadmin/static/lib/js/freeadmin.js:608
+#: freeadmin/static/lib/js/freeadmin.js:710
+msgid "Please wait..."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:657
+#: freeadmin/static/lib/js/freeadmin.js:775
 msgid "An error occurred!"
 msgstr "Au apărut unele erori!"
 
-#: media/lib/js/freeadmin/form/Cron.js:47
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
 msgid "Each selected"
 msgstr "Fiecare selectat"
 
-#: media/lib/js/freeadmin/form/Cron.js:98
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Fiecare N"
+
+msgid "CronJobs"
+msgstr "Job-uri Cron"
 
 msgid "Replace"
 msgstr "Înlocuire"

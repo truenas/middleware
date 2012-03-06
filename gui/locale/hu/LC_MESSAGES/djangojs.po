@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-09-09 14:13+0200\n"
-"Last-Translator: RedFox <bareszgeld@freemail.hu>\n"
+"POT-Creation-Date: 2012-03-06 09:50-0800\n"
+"PO-Revision-Date: 2012-01-12 11:35+0200\n"
+"Last-Translator: fgraca <fgraca@dravanet.hu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -18,57 +18,66 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:56
+#: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Jelentések"
 
-#: media/lib/js/freeadmin.js:68
+#: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Beállítások"
 
-#: media/lib/js/freeadmin.js:79
+#: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Rendszer információk"
 
-#: media/lib/js/freeadmin.js:119
+#: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Hálózati beállítások"
 
-#: media/lib/js/freeadmin.js:183
+#: freeadmin/static/lib/js/freeadmin.js:184
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
 msgstr "Szolgáltatások"
 
-#: media/lib/js/freeadmin.js:224
+#: freeadmin/static/lib/js/freeadmin.js:256
 msgid "Account"
 msgstr "Fiók"
 
-#: media/lib/js/freeadmin.js:263
+#: freeadmin/static/lib/js/freeadmin.js:295
 msgid "Storage"
 msgstr "Tároló"
 
-#: media/lib/js/freeadmin.js:330
-msgid "CronJobs"
-msgstr "Időzített feladatok"
-
-#: media/lib/js/freeadmin.js:490
+#: freeadmin/static/lib/js/freeadmin.js:465
 msgid "Edit"
 msgstr "Szerkeszt"
 
-#: media/lib/js/freeadmin.js:492
+#: freeadmin/static/lib/js/freeadmin.js:469
 msgid "Edit Disk"
 msgstr "Lemez szerkesztése"
 
-#: media/lib/js/freeadmin.js:760
+#: freeadmin/static/lib/js/freeadmin.js:608
+#: freeadmin/static/lib/js/freeadmin.js:710
+msgid "Please wait..."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:657
+#: freeadmin/static/lib/js/freeadmin.js:775
 msgid "An error occurred!"
 msgstr "Néhány hiba történt!"
 
-#: media/lib/js/freeadmin/form/Cron.js:47
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
 msgid "Each selected"
 msgstr "Mind kiválasztva"
 
-#: media/lib/js/freeadmin/form/Cron.js:98
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Minden N"
+
+msgid "CronJobs"
+msgstr "Időzített feladatok"
 
 msgid "Replace"
 msgstr "Csere"

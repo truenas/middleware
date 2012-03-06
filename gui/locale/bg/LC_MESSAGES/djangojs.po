@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-11-11 02:01-0800\n"
-"PO-Revision-Date: 2011-11-11 14:29+0200\n"
-"Last-Translator: neohidra <neohidra@gmail.com>\n"
+"POT-Creation-Date: 2012-03-06 09:50-0800\n"
+"PO-Revision-Date: 2011-12-21 11:44+0200\n"
+"Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -18,57 +18,66 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:56
+#: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
 msgstr "Статистика"
 
-#: media/lib/js/freeadmin.js:68
+#: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Настройки"
 
-#: media/lib/js/freeadmin.js:79
+#: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Инф. за системата"
 
-#: media/lib/js/freeadmin.js:119
+#: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Мрежови настройки"
 
-#: media/lib/js/freeadmin.js:183
+#: freeadmin/static/lib/js/freeadmin.js:184
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
 msgstr "Услуги"
 
-#: media/lib/js/freeadmin.js:224
+#: freeadmin/static/lib/js/freeadmin.js:256
 msgid "Account"
 msgstr "Профил"
 
-#: media/lib/js/freeadmin.js:263
+#: freeadmin/static/lib/js/freeadmin.js:295
 msgid "Storage"
 msgstr "Съхранение"
 
-#: media/lib/js/freeadmin.js:330
-msgid "CronJobs"
-msgstr "Разписание на задачите"
-
-#: media/lib/js/freeadmin.js:490
+#: freeadmin/static/lib/js/freeadmin.js:465
 msgid "Edit"
 msgstr "Редактиране"
 
-#: media/lib/js/freeadmin.js:492
+#: freeadmin/static/lib/js/freeadmin.js:469
 msgid "Edit Disk"
 msgstr "Редактиране на диска"
 
-#: media/lib/js/freeadmin.js:760
+#: freeadmin/static/lib/js/freeadmin.js:608
+#: freeadmin/static/lib/js/freeadmin.js:710
+msgid "Please wait..."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:657
+#: freeadmin/static/lib/js/freeadmin.js:775
 msgid "An error occurred!"
 msgstr "Възникна грешка!"
 
-#: media/lib/js/freeadmin/form/Cron.js:47
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
 msgid "Each selected"
 msgstr "Всяко от избраните"
 
-#: media/lib/js/freeadmin/form/Cron.js:98
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Всяко N"
+
+msgid "CronJobs"
+msgstr "Разписание на задачите"
 
 msgid "Replace"
 msgstr "Замяна"
