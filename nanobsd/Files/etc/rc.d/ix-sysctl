@@ -13,29 +13,17 @@ set_autotune_sysctls()
 	local IFS="
 "
 	local autotune
-	local tmp
 
 	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
 
 	autotune=/usr/local/bin/autotune
 	if [ -x $autotune ]; then
-		tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 		$autotune \
 			--kernel-reserved=1073741824 \
 			--userland-reserved=2417483648 \
-			--conf sysctl > $tmp
+			--conf sysctl
 
-		if [ $? -eq 0 ]; then
-			grep -v '^#' $tmp | \
-			egrep -v '^[[:space:]]*$' | \
-			sed -e "s/'//g" -e 's/"//g' | \
-			while read -r line
-			do
-				[ -n "$line" ] || continue
-				sysctl "$line"
-			done
-		fi
 	fi
 }
 
