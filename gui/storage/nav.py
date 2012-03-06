@@ -138,9 +138,13 @@ class Volumes(TreeNode):
                                     AutoImportVolume(),
                                     ViewVolumes(),
                                     ViewDisks(),
-                                    ViewMultipaths(),
                                  ])
+
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
+
+            has_multipath = models.Disk.objects.exclude(disk_multipath_name='').exists()
+            if has_multipath:
+                self.append_child(ViewMultipaths())
 
             mp = models.MountPoint.objects.select_related().order_by('-id')
             for i in mp:
