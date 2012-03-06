@@ -222,16 +222,24 @@ def servicesToggleView(request, formname):
 
     # forcestop then start to make sure the service is of the same
     # status.
-    if changing_service in ("ldap", "activedirectory"):
+    if changing_service == "ldap":
         if svc_entry.srv_enable == 1:
             started = notifier().start(changing_service)
         else:
             started = notifier().stop(changing_service)
-    elif changing_service == 'plugins':
+
+    elif changing_service == "activedirectory":
         if svc_entry.srv_enable == 1:
-            started = notifier().start('plugins_jail')
+            started = notifier()._start_activedirectory()
         else:
-            started = notifier().stop('plugins_jail')
+            started = notifier()._stop_activedirectory()
+
+    elif changing_service == "plugins":
+        if svc_entry.srv_enable == 1:
+            started = notifier().start("plugins_jail")
+        else:
+            started = notifier().stop("plugins_jail")
+
     else:
         started = notifier().restart(changing_service)
 
