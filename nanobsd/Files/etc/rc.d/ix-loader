@@ -109,39 +109,30 @@ loader_user() {
 
 }
 
-generate_boot_loader_conf()
+do_autotune()
 {
 	local autotune
-	local tmp
 
 	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
 
 	autotune=/usr/local/bin/autotune
-	if [ -x $autotune ]; then
-		tmp=$(mktemp /tmp/tmp.XXXXXX)
-
-		# 1. Do autotuning magic here with $autotune
-		# 2. Output the contents of your autotuning magic to $tmp.
-		# 3. Profit!
-		#
-		# Don't remove this context and please don't change the
-		# comments ;)..
+	ec=0
+	if [ -x $autotune ]
+	then
 
 		$autotune \
 				--kernel-reserved=1073741824 \
-				--userland-reserved=2417483648 \
-				> $tmp
-
-		# End autotuning context.
+				--userland-reserved=2417483648
 
 		ec=$?
-		if [ $ec -ne 0 ]; then
-			return $ec
+		# Values changed based on recommendations. Reboot [eventually].
+		if [ $ec -eq 2 ]
+		then
+			ec=0
+			reboot_now=true
 		fi
 	fi
-	if update_persistent_file /boot/loader.conf $tmp; then
-		reboot_now=true
-	fi
+	return $ec
 }
 
 generate_boot_loader_conf_local()
@@ -164,7 +155,7 @@ generate_loader_confs()
 {
 	reboot_now=false
 
-	generate_boot_loader_conf
+	do_autotune
 	generate_boot_loader_conf_local
 
 	if $AUTOTUNE_REBOOT && $reboot_now; then
@@ -176,7 +167,7 @@ generate_loader_confs_noautotune()
 {
 	reboot_now=false
 
-	generate_boot_loader_conf_local
+	do_autotune
 }
 
 name="ix-loader"
