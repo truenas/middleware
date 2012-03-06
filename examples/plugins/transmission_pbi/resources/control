@@ -16,7 +16,17 @@ import Cookie
 from flup.server.fcgi import WSGIServer
 from subprocess import Popen, PIPE
 
-transmission_pbi_path = "/usr/pbi/transmission-amd64"
+def get_arch():
+    cmd = "/usr/bin/uname -m"
+    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+
+    out = pipe.stdout.read().strip()
+    pipe.wait()
+    return out
+
+
+transmission_pbi_path = "/usr/pbi/transmission-" + get_arch()
 transmission_etc_path = os.path.join(transmission_pbi_path, "etc")
 transmission_mnt_path = os.path.join(transmission_pbi_path, "mnt")
 transmission_fcgi_pidfile = "/var/run/transmission_fcgi_server.pid"
@@ -70,7 +80,7 @@ def transmission_treemenu(environ, start_response, args):
 
     plugin = {
         'name': 'transmission',
-        'append_to': 'system',
+        'append_to': 'services',
         'children': [
             {
                 'name': 'Edit Mount Points',

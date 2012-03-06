@@ -1,7 +1,7 @@
 #!/bin/sh
 #########################################
 
-minidlna_pbi_path=/usr/pbi/minidlna-amd64/
+minidlna_pbi_path=/usr/pbi/minidlna-$(uname -m)/
 
 mkdir -p ${minidlna_pbi_path}/mnt
 mkdir -p ${minidlna_pbi_path}/www

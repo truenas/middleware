@@ -18,7 +18,14 @@ from syslog import syslog, LOG_DEBUG
 from subprocess import Popen, PIPE
 from time import ctime
 
-firefly_pbi_path = "/usr/pbi/firefly-amd64"
+def get_arch():
+    pipe = Popen("/usr/bin/uname -m", stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        shell=True, close_fds=True)
+    arch = pipe.stdout.read().strip()
+    pipe.wait()
+    return arch
+
+firefly_pbi_path = "/usr/pbi/firefly-" + get_arch()
 firefly_etc_path = os.path.join(firefly_pbi_path, "etc")
 firefly_mnt_path = os.path.join(firefly_pbi_path, "mnt")
 firefly_fcgi_pidfile = "/var/run/firefly_fcgi_server.pid"
@@ -26,7 +33,6 @@ firefly_fcgi_wwwdir = os.path.join(firefly_pbi_path, "www")
 firefly_control = "/usr/local/etc/rc.d/mt-daapd"
 firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
 firefly_opts = os.path.join(firefly_etc_path, "options")
-
 
 def firefly_start(environ, start_response, args):
     cmd = "%s start" % firefly_control
@@ -75,7 +81,7 @@ def firefly_treemenu(environ, start_response, args):
 
     plugin = {
         'name': 'firefly',
-        'append_to': 'system',
+        'append_to': 'services',
         'children': [
             {
                 'name': 'Edit Mount Points',
@@ -257,9 +263,9 @@ def firefly_post(environ, start_response, args):
     if firefly_plugins_settings.has_key("plugin_dir") and firefly_plugins_settings["plugin_dir"]:
         os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_plugins_settings["plugin_dir"])
         os.system("/bin/chmod 775 '%s'" % firefly_plugins_settings["plugin_dir"])
-    if firefly_general_settings.has_key("db_params") and firefly_general_settings["db_params"]:
-        os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_general_settings["db_params"])
-        os.system("/bin/chmod 775 '%s'" % firefly_general_settings["db_params"])
+    if firefly_general_settings.has_key("db_parms") and firefly_general_settings["db_parms"]:
+        os.system("/usr/sbin/chown -R daapd:daapd '%s'" % firefly_general_settings["db_parms"])
+        os.system("/bin/chmod 775 '%s'" % firefly_general_settings["db_parms"])
 
     ret = "A problem occurred."
     if os.system(os.path.join(firefly_pbi_path, "tweak-rcconf")) == 0:

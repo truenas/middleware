@@ -1,6 +1,6 @@
 #!/bin/sh
 
-firefly_path=/usr/pbi/firefly-amd64
+firefly_path=/usr/pbi/firefly-$(uname -m)
 tmpfile=$(mktemp /tmp/.XXXXXX)
 
 grep -v 'firefly_' /etc/rc.conf > ${tmpfile}

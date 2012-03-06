@@ -1,6 +1,6 @@
 #!/bin/sh
 
-transmission_path=/usr/pbi/transmission-amd64
+transmission_path=/usr/pbi/transmission-$(uname -m)
 tmpfile=$(mktemp /tmp/.XXXXXX)
 
 grep -v 'transmission_' /etc/rc.conf > ${tmpfile}

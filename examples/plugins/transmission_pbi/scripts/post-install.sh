@@ -2,7 +2,7 @@
 #########################################
 
 transmission_rc=/usr/local/bin/transmission-daemon
-transmission_pbi_path=/usr/pbi/transmission-amd64/
+transmission_pbi_path=/usr/pbi/transmission-$(uname -m)/
 
 mkdir -p ${transmission_pbi_path}/mnt
 mkdir -p ${transmission_pbi_path}/www
