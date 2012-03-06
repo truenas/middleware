@@ -350,8 +350,12 @@ class notifier:
         self._restart_iscsitarget()
 
     def _start_sysctl(self):
-        self.__system("/usr/sbin/service ix-sysctl quietstart")
         self.__system("/usr/sbin/service sysctl start")
+        self.__system("/usr/sbin/service ix-sysctl quietstart")
+
+    def _reload_sysctl(self):
+        self.__system("/usr/sbin/service sysctl start")
+        self.__system("/usr/sbin/service ix-sysctl reload")
 
     def _start_network(self):
         c = self.__open_db()
