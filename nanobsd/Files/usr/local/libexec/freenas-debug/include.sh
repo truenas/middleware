@@ -33,7 +33,7 @@
 : ${FREENAS_DEBUG_MODULEDIR:="/usr/local/libexec/freenas-debug"}
 : ${FREENAS_DEBUG_MODULES:=""}
 
-VERSION_FILE=/etc/version
+VERSION_FILE=$(ls /etc/version*)
 
 syslog_debug_on()
 {
