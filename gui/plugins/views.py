@@ -50,7 +50,9 @@ def plugins_home(request):
         s = s[0]
         srv_enable = s.srv_enable
 
-    jail_configured = notifier().plugins_jail_configured() and s
+    jail_configured = notifier().plugins_jail_configured()
+    if not srv_enable:
+        jail_configured = False
 
     plugins_list = plugins.models.Plugins.objects.all()
     return render(request, "plugins/index.html", {
