@@ -111,7 +111,7 @@ NANO_MODULES="cxgb ext2fs geom ipmi iscsi pf pflog smbfs libiconv libmchain sysc
 
 # Feature sets to enable as part of the build.
 #SW_FEATURES="DEBUG MULTIMEDIA REPORTING"
-SW_FEATURES="DEBUG REPORTING"
+SW_FEATURES="REPORTING"
 
 # The GEOM label to use.
 NANO_LABEL="FreeNAS"
