@@ -141,7 +141,7 @@ activedirectory_start()
 	then
 		AD_init
 		if ! AD_join_domain; then
-			return $?
+			return 1
 		fi
 
 		#generate_nss_ldap_conf
@@ -150,6 +150,8 @@ activedirectory_start()
 		create_cache_filesystem
 		mkdir -p ${FREENAS_CACHEDIR}/.samba
 	fi
+	
+	return 0
 }
 
 activedirectory_status()
