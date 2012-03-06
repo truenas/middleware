@@ -2,6 +2,10 @@
 <table class="grid">
         <thead class="header">
           <tr>
+            <td>{% trans "Local Path" %}</td>
+            <td>{% trans "Remote" %}</td>
+            <td>{% trans "Mode" %}</td>
+            <td>{% trans "Direction" %}</td>
             <td>{% trans "Minute" %}</td>
             <td>{% trans "Hour" %}</td>
             <td>{% trans "Day of month" %}</td>
@@ -13,6 +17,10 @@
           </tr>
         </thead>
     {% for c in rsyncs %}
+        <td>{{ c.rsync_path }}</td>
+        <td>{{ c.rsync_remotehost }}{% if c.rsync_mode == 'ssh' %}:{{ c.rsync_remotepath }}{% else %}::{{ c.rsync_remotemodule }}{% endif %}</td>
+        <td>{{ c.rsync_mode }}</td>
+        <td>{{ c.rsync_direction }}</td>
         <td>{{ c.get_human_minute }}</td>
         <td>{{ c.get_human_hour }}</td>
         <td>{{ c.get_human_daymonth }}</td>
