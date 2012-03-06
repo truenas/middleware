@@ -57,9 +57,12 @@ def tasks(request):
 
 
 def volumes(request):
-    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    mp_list = models.MountPoint.objects.exclude(
+        mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    has_multipath = models.Disk.objects.exclude(disk_multipath_name='').exists()
     return render(request, 'storage/volumes.html', {
         'mp_list': mp_list,
+        'has_multipath': has_multipath,
         })
 
 def get_volumes(request):
