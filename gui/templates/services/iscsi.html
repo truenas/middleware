@@ -11,7 +11,7 @@
     {% if focus_tab == "services.ISCSI.iSCSITargetPortal.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetPortal.View" class="objrefresh data_services_iSCSITargetPortal">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Initiator"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Initiators"|force_escape|force_escape %}',
     doLayout: false,
     href: '{% url services_iscsi_authini %}'
     {% if focus_tab == "services.ISCSI.iSCSITargetAuthorizedInitiator.View" %}, selected: true{% endif %},
