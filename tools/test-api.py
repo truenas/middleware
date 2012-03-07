@@ -205,9 +205,9 @@ _t = freenas_apicall_test
 
 
 def account_bsdgroups_test(url, csrftoken, sessionid):
-    ret = False
-
     unit = "account.bsdgroups"
+
+    ret = False
     group = "testgroup"
 
     results = _t(url, csrftoken, sessionid, unit, "create",
@@ -233,9 +233,9 @@ def account_bsdgroups_test(url, csrftoken, sessionid):
     return True
 
 def account_bsdusers_test(url, csrftoken, sessionid):
-    ret = False
-
     unit = "account.bsdusers"
+
+    ret = False
     username = "testuser"
 
     results = _t(url, csrftoken, sessionid, unit, "create",
@@ -262,9 +262,9 @@ def account_bsdusers_test(url, csrftoken, sessionid):
     return True
 
 def network_globalconfiguration_test(url, csrftoken, sessionid):
-    ret = False
-
     unit = "network.globalconfiguration"
+
+    ret = False
     hostname = "testhost"
 
     results = _t(url, csrftoken, sessionid, unit, "create",
@@ -289,6 +289,189 @@ def network_globalconfiguration_test(url, csrftoken, sessionid):
 
     return True
 
+def network_interfaces_test(url, csrftoken, sessionid):
+    unit = "network.interfaces"
+
+    ret = False
+    ip = "192.168.5.33"
+    iface = "em9"
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating interface %s" % iface, iface, "Secondary interface",
+        None, ip, "24", None, None, None, None)
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting interface %s" % iface, pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing %s to %s" % (ip, "192.168.5.44"), pk, None,
+        None, None, "192.168.5.44"):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting interface %s" % iface, pk):
+        return ret
+
+    return True
+
+# this does not work right now
+def network_alias_test(url, csrftoken, sessionid):
+    unit = "network.alias"
+
+    ret = False
+    alias = "192.168.5.33"
+    iface = "em9"
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating alias %s on iface %s" % (alias, iface),
+         iface, alias, "24", None, None)
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting alias %s" % alias, pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing %s to %s" % (alias, "192.168.5.44"),
+        pk, None, "192.168.5.44"):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting alias %s" % alias, pk):
+        return ret
+
+    return True
+
+def services_services_test(url, csrftoken, sessionid):
+    unit = "services.services"
+
+    ret = False
+    srv = "BLAH"
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating service %s" % srv, srv, True)
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting service %s" % srv, pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing service %s to %s" % (srv, "FOO"),
+        pk, "FOO"):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting service %s" % srv, pk):
+        return ret
+
+    return True
+
+def services_cifs_test(url, csrftoken, sessionid):
+    unit = "services.cifs"
+
+    ret = False
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating CIFS service", "share", "freenas", "WORKGROUP")
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting CIFS service", pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing CIFS service %s to %s" % ("freenas", "blahnas"),
+        pk, None, "blahnas"):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting CIFS service", pk):
+        return ret
+
+    return True
+
+def services_afp_test(url, csrftoken, sessionid):
+    unit = "services.afp"
+
+    ret = False
+    name = "MYAFPSHARE"
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating AFP service", name)
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting AFP service", pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing AFP service %s to %s" % (name, "BLAHAFPSHARE"),
+        pk, "BLAHAFPSHARE"):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting AFP service", pk):
+        return ret
+
+    return True
+
+def services_nfs_test(url, csrftoken, sessionid):
+    unit = "services.nfs"
+
+    ret = False
+    name = "MYAFPSHARE"
+
+    results = _t(url, csrftoken, sessionid, unit, "create",
+        "creating NFS service", 4)
+    if not results:
+        return ret
+
+    pk = results[0]["pk"]
+
+    if not _t(url, csrftoken, sessionid, unit, "get",
+        "getting NFS service", pk):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "set",
+        "changing NFS service %d to %d" % (4, 8),
+        pk, 8):
+        return ret
+
+    if not _t(url, csrftoken, sessionid, unit, "destroy",
+        "deleting NFS service", pk):
+        return ret
+
+    return True
+
+
+def sharing_cifs_share_test(url, csrftoken, sessionid):
+    pass
+
+def sharing_afp_share_test(url, csrftoken, sessionid):
+    pass
+
+def sharing_nfs_share_test(url, csrftoken, sessionid):
+    pass
+
+
 def main():
     if len(sys.argv) != 4:
         sys.stderr.write("Usage: %s [user] [pass] [url]\n\n" % sys.argv[0])
@@ -300,9 +483,21 @@ def main():
 
     csrftoken, sessionid, response = freenas_login(url, u, p)
 
-    account_bsdgroups_test(url, csrftoken, sessionid)
-    account_bsdusers_test(url, csrftoken, sessionid)
-    network_globalconfiguration_test(url, csrftoken, sessionid)
+    #account_bsdgroups_test(url, csrftoken, sessionid)
+    #account_bsdusers_test(url, csrftoken, sessionid)
+
+    #network_globalconfiguration_test(url, csrftoken, sessionid)
+    #network_interfaces_test(url, csrftoken, sessionid)
+    #network_alias_test(url, csrftoken, sessionid)
+
+    #services_services_test(url, csrftoken, sessionid)
+    #services_cifs_test(url, csrftoken, sessionid)
+    #services_afp_test(url, csrftoken, sessionid)
+    #services_nfs_test(url, csrftoken, sessionid)
+
+    sharing_cifs_share_test(url, csrftoken, sessionid)
+    sharing_afp_share_test(url, csrftoken, sessionid)
+    sharing_nfs_share_test(url, csrftoken, sessionid)
 
     freenas_logout(url, csrftoken, sessionid)
 
