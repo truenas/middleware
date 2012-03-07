@@ -39,12 +39,15 @@
                         editObject('{% trans "Edit Plugin"|force_escape|force_escape %}', '{% url plugin_edit plugin_id=p.id %}', [this,]);
                     </script>
                 </button>
+
+                {% if jail_configured %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Delete" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                       editObject('{% trans "Delete plugin"|force_escape|force_escape %}', '{% url plugin_delete plugin_id=p.id %}', [this,]);
                   </script>
                 </button>
+                {% endif %}
             </td>
         <tr>
         {% empty %}
