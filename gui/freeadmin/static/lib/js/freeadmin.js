@@ -1288,13 +1288,17 @@
 
                 if(item.type == 'object' ||
                    item.type == 'dialog' ||
+                   item.type == 'scary_dialog' ||
                    item.type == 'editobject' ||
                    item.type == 'volumewizard'
                     ) {
                     var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                     var func;
+
                     if(item.type == 'volumewizard') func = volumeWizard;
+                    else if(item.type == 'scary_dialog') func = editScaryObject;
                     else func = editObject;
+
                     if(data) {
                         widgets = [];
                         data.forEach(function(item, idx) {
@@ -1306,6 +1310,7 @@
                         func(item.name, item.url, widgets);
                     } else
                         func(item.name, item.url);
+
                 } else if(item.type == 'opennetwork') {
                     Menu.openNetwork(item.gname);
                 } else if(item.type == 'en_dis_services') {

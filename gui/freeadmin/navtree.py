@@ -373,11 +373,11 @@ class NavTree(object):
         tree_roots.register(nav)
 
         nav = TreeRoot('reboot', name=_('Reboot'), action='reboot',
-            icon='RebootIcon', type='dialog', view='system_reboot_dialog')
+            icon='RebootIcon', type='scary_dialog', view='system_reboot_dialog')
         tree_roots.register(nav)
 
         nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon',
-            type='dialog', view='system_shutdown_dialog')
+            type='scary_dialog', view='system_shutdown_dialog')
         tree_roots.register(nav)
 
         """
