@@ -27,14 +27,16 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.core.validators import (MinValueValidator, MaxValueValidator,
+    RegexValidator)
 
 from freenasUI import choices
-from freeadmin.models import Model, UserField, GroupField, PathField
-from storage.models import Volume, Disk
+from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
-from services.exceptions import ServiceFailed
+from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.storage.models import Volume, Disk
+
 
 class services(Model):
     srv_service = models.CharField(
@@ -54,6 +56,7 @@ class services(Model):
 
     def save(self, *args, **kwargs):
         super(services, self).save(*args, **kwargs)
+
 
 class CIFS(Model):
     cifs_srv_authmodel = models.CharField(
@@ -380,6 +383,7 @@ class iSCSITargetGlobalConfiguration(Model):
         icon_model = u"SettingsIcon"
         nav_extra = {'type': 'iscsi'}
 
+
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
             max_length=120,
@@ -420,8 +424,10 @@ class iSCSITargetExtent(Model):
         icon_model = u"ExtentIcon"
         icon_add = u"AddExtentIcon"
         icon_view = u"ViewAllExtentsIcon"
+
     def __unicode__(self):
         return unicode(self.iscsi_target_extent_name)
+
     def get_device(self):
         if self.iscsi_target_extent_type not in ("Disk", "ZVOL"):
             return self.iscsi_target_extent_path
@@ -434,6 +440,7 @@ class iSCSITargetExtent(Model):
                     return "/dev/%s" % notifier().identifier_to_device(disk.disk_identifier)
             except:
                 return self.iscsi_target_extent_path
+
     def delete(self):
         if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
             try:
@@ -462,8 +469,10 @@ class iSCSITargetPortal(Model):
             verbose_name = _("Comment"),
             help_text = _("You may enter a description here for your reference.")
             )
+
     class Meta:
         verbose_name = _("Portal")
+
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"PortalIcon"
@@ -476,11 +485,13 @@ class iSCSITargetPortal(Model):
                 'prefix': 'portalip_set',
             },
         ]
+
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
             return u"%s (%s)" % (self.iscsi_target_portal_tag, self.iscsi_target_portal_comment)
         else:
             return unicode(self.iscsi_target_portal_tag)
+
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
@@ -535,19 +546,23 @@ class iSCSITargetAuthorizedInitiator(Model):
             verbose_name = _("Comment"),
             help_text = _("You may enter a description here for your reference.")
             )
+
     class Meta:
         verbose_name = _("Initiator")
+
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"InitiatorIcon"
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
         icon_view = u"ViewAllInitiatorsIcon"
+
     def __unicode__(self):
         if self.iscsi_target_initiator_comment != "":
             return u"%s (%s)" % (self.iscsi_target_initiator_tag, self.iscsi_target_initiator_comment)
         else:
             return unicode(self.iscsi_target_initiator_tag)
+
     def delete(self):
         super(iSCSITargetAuthorizedInitiator, self).delete()
         portals = iSCSITargetAuthorizedInitiator.objects.all().order_by('iscsi_target_initiator_tag')
@@ -583,15 +598,18 @@ class iSCSITargetAuthCredential(Model):
             verbose_name = _("Peer Secret"),
             help_text = _("Initiator side secret. (for mutual CHAP authentication)"),
             )
+
     class Meta:
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
+
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"AuthorizedAccessIcon"
         icon_model = u"AuthorizedAccessIcon"
         icon_add = u"AddAuthorizedAccessIcon"
         icon_view = u"ViewAllAuthorizedAccessIcon"
+
     def __unicode__(self):
         return unicode(self.iscsi_target_auth_tag)
 
@@ -669,8 +687,10 @@ class iSCSITarget(Model):
             verbose_name = _("Logical Block Size"),
             help_text = _("You may specify logical block length (512 by default). The recommended length for compatibility is 512."),
             )
+
     class Meta:
         verbose_name = _("Target")
+
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"TargetIcon"
@@ -680,6 +700,7 @@ class iSCSITarget(Model):
 
     def __unicode__(self):
         return self.iscsi_target_name
+
     def delete(self):
         for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
             te.delete()
@@ -697,16 +718,20 @@ class iSCSITargetToExtent(Model):
             unique=True,
             verbose_name = _("Extent"),
             )
+
     class Meta:
         verbose_name = _("Target / Extent")
         verbose_name_plural = _("Targets / Extents")
+
     def __unicode__(self):
         return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
+
     def delete(self):
         super(iSCSITargetToExtent, self).delete()
         started = notifier().reload("iscsitarget")
         if started is False and services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"TargetExtentIcon"

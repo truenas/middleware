@@ -44,14 +44,14 @@ from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.importlib import import_module
 
-from freenasUI.common.system import get_sw_name, get_sw_version
-from freenasUI.middleware.exceptions import MiddlewareError
-from freeadmin import navtree
-from system.models import Advanced
-from network.models import GlobalConfiguration
-from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
+from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.freeadmin import navtree
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.network.models import GlobalConfiguration
+from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.system.models import Advanced
 
 
 class JsonResponse(HttpResponse):
@@ -60,6 +60,7 @@ class JsonResponse(HttpResponse):
     enclosed = False
     message = ''
     events = []
+
     def __init__(self, *args, **kwargs):
         if kwargs.has_key("error"):
             self.error = kwargs.pop('error')
@@ -82,6 +83,7 @@ class JsonResponse(HttpResponse):
             kwargs['content'] = simplejson.dumps(data)
             kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
+
 
 class JsonResp(HttpResponse):
 
