@@ -12,14 +12,12 @@ cd "$(dirname "$0")/.."
 BUILD=true
 # 0 - build only what's required (src, ports, diskimage, etc).
 # 1 - force src build.
-# 2 - nuke obj.* and build from scratch.
-if [ -s ${NANO_OBJ}/_.ik -a -s ${NANO_OBJ}/_.iw ]; then
-	FORCE_BUILD=0
-else
-	FORCE_BUILD=2
-fi
+# 2 - nuke the obj directories (os-base.*, etc) and build from scratch.
+#FORCE_BUILD=0
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+# Target to build (base, plugins-base, <plugin>).
+TARGET="os-base"
 # Should we update src + ports?
 if [ -f $AVATAR_ROOT/FreeBSD/.pulled ]; then
 	UPDATE=false
@@ -29,22 +27,25 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
+usage: ${0##*/} [-Bfu] [-j make-jobs] [-t target] [-- nanobsd-options]
 
--B - don't build. Will pull the sources and show you the nanobsd.sh invocation
-     string instead. 
--f - if not specified, will pass either -b (if prebuilt) to nanobsd.sh, or
-     nothing if not prebuilt. If specified once, force a
-     buildworld / buildkernel (passes -n to nanobsd). If specified twice, this
-     won't pass any options to nanobsd.sh, which will force a pristine build.
--j - number of make jobs to run; defaults to $MAKE_JOBS.
--u - force an update via csup (warning: there are potential issues with
-     newly created files via patch -- use with caution).
+-B		- don't build. Will pull the sources and show you the
+		  nanobsd.sh invocation string instead. 
+-f  		- if not specified, will pass either -b (if prebuilt) to
+		  nanobsd.sh, or nothing if not prebuilt. If specified once,
+		  force a buildworld / buildkernel (passes -n to nanobsd). If
+		  specified twice, this won't pass any options to nanobsd.sh,
+		  which will force a pristine build.
+-j make-jobs	- number of make jobs to run; defaults to $MAKE_JOBS.
+-t target	- target to build (os-base, plugins-base, <plugin-name>, etc).
+-u		- force an update via csup (warning: there are potential
+		  issues with newly created files via patch -- use with
+		  caution).
 EOF
 	exit 1
 }
 
-while getopts 'Bfj:u' optch; do
+while getopts 'Bfj:t:u' optch; do
 	case "$optch" in
 	B)
 		BUILD=false
@@ -58,6 +59,9 @@ while getopts 'Bfj:u' optch; do
 			usage
 		fi
 		MAKE_JOBS=$OPTARG
+		;;
+	t)
+		TARGET=$OPTARG
 		;;
 	u)
 		UPDATE=true
@@ -81,6 +85,48 @@ esac
 set -e
 if $BUILD; then
 	requires_root
+fi
+
+for path in "$NANO_CFG_BASE/$TARGET" "$TARGET"
+do
+	if [ -f "$path" ]
+	then
+		TARGET=$path
+		break
+	fi
+done
+if [ ! -f "$TARGET" ]
+then
+	error "Build target -- $TARGET -- does not exist"
+fi
+export AVATAR_COMPONENT=${TARGET##*/}
+# XXX: chicken and egg problem. Not doing this will always cause plugins-base,
+# etc to rebuild if os-base isn't already present, or the build to fail if
+# os-base is built and plugins-base isn't, etc.
+export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
+
+# FORCE_BUILD is unset -- apply sane defaults based on what's already been
+# built.
+if [ -z "$FORCE_BUILD" ]
+then
+	FORCE_BUILD=0
+
+	if [ "$AVATAR_COMPONENT" = "os-base" ]
+	then
+		# The base OS distro requires a kernel build.
+		required_logs="_.ik _.iw"
+	else
+		required_logs="_.iw"
+	fi
+
+	for required_log in $required_logs
+	do
+		if [ ! -s "$NANO_OBJ/$required_log" ]
+		then
+			FORCE_BUILD=2
+			break
+		fi
+	done
 fi
 
 if $UPDATE; then
@@ -176,7 +222,7 @@ fi
 
 # OK, now we can build
 cd $NANO_SRC
-args="-c ${NANO_CFG_BASE}/freenas-common"
+args="-c $TARGET"
 if [ $FORCE_BUILD -eq 0 ]; then
 	extra_args="$extra_args -b"
 elif [ $FORCE_BUILD -eq 1 ]; then
