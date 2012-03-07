@@ -37,7 +37,7 @@
 # Helpful functions.
 . "$AVATAR_ROOT/build/functions.sh"
 
-# DEBUG=1, MULTIMEDIA=1, etc.
+# DEBUG=1, etc.
 for feature in $SW_FEATURES; do
 	eval "$(echo "$feature")=1"
 done
@@ -61,20 +61,110 @@ NANO_IMAGES=2
 NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11)/')
 FlashDevice generic 2g
 
+if [ "$DEBUG" = 1 ]; then
+	DEBUG_BUILD="
+DEBUG_FLAGS=		-g
+"
+else
+	DEBUG_INSTALL="
+INSTALL_NODEBUG=	t
+"
+fi
+
+# NB: leave c++ enabled so devd can be built
+CONF_BUILD="
+#WITHOUT_ACPI=true
+WITHOUT_ATM=true
+WITHOUT_AUDIT=true
+WITHOUT_BIND_DNSSEC=true
+WITHOUT_BIND_ETC=true
+WITHOUT_BIND_LIBS_LWRES=true
+WITHOUT_BIND_NAMED=true
+WITHOUT_BLUETOOTH=true
+WITHOUT_CALENDAR=true
+WITHOUT_CTM=true
+WITHOUT_CVS=true
+WITHOUT_DICT=true
+WITHOUT_EXAMPLES=true
+WITHOUT_FORTRAN=true
+WITHOUT_FREEBSD_UPDATE=yes
+WITHOUT_GAMES=true
+WITHOUT_GCOV=true
+WITHOUT_GPIB=true
+WITHOUT_HTML=true
+WITHOUT_I4B=true
+WITHOUT_IPFILTER=true
+WITHOUT_IPX=true
+WITHOUT_LIB32=true
+WITHOUT_LIBKSE=true
+WITHOUT_LOCALES=true
+WITHOUT_LPR=true
+WITHOUT_MAN=true
+WITHOUT_NDIS=true
+WITHOUT_NIS=true
+WITHOUT_NLS=true
+WITHOUT_NS_CACHING=true
+WITHOUT_OBJC=true
+WITHOUT_PORTSNAP=true
+WITHOUT_PPP=true
+WITHOUT_PROFILE=true
+WITHOUT_RCMDS=true
+WITHOUT_SENDMAIL=true
+# Knob needs to be fixed on systems that don't have the docs stuff
+# preinstalled, e.g. 9.x bsdinstall images.
+#WITHOUT_SHAREDOCS=true
+WITHOUT_SSP=true
+WITHOUT_SYSCONS=true
+WITHOUT_SYSINSTALL=true
+# Telnet's a useful tool to have on the remote box.
+#WITHOUT_TELNET=true
+WITHOUT_WIRELESS=true
+WITHOUT_WPA_SUPPLICANT_EAPOL=true
+PYTHON_DEFAULT_VERSION=python2.7
+
+
+LOCAL_DIRS=${NANO_LOCAL_DIRS}
+
+${DEBUG_BUILD}
+"
+CONF_INSTALL="$CONF_BUILD
+NOPORTDOCS=t
+NO_INSTALL_MANPAGES=t
+# devel/apr sucks.
+WITH_BDB_VER=46
+
+${DEBUG_INSTALL}
+"
+# The following would help...
+# WITHOUT_TOOLCHAIN=true		can't build ports
+# WITHOUT_INSTALLLIB=true		libgcc.a
+#
+# from the build
+# WITHOUT_INFO=true			makeinfo
+# WITHOUT_RCS=true
+PKG_ONLY_MAKE_CONF="
+WITHOUT_TOOLCHAIN=true
+WITHOUT_INSTALLLIB=true
+WITHOUT_INFO=true
+WITHOUT_RCS=true
+WITHOUT_SHAREDOCS=true
+"
+
+# Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
 add_port archivers/lzo2
 add_port security/openvpn
 add_port converters/libiconv
+#+editors/nano || converters/iconv
+add_port lang/perl5.12
+#-editors/nano || converters/iconv
 add_port converters/iconv
 add_port devel/gettext
 add_port devel/pkg-config
 add_port devel/libpthread-stubs WITHOUT_X11=y
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
-#+editors/nano
-add_port lang/perl5.12
-#-editors/nano
 add_port editors/nano
 add_port ftp/proftpd
 add_port net-mgmt/bsnmp-ucd
@@ -161,7 +251,7 @@ add_port devel/bison WITHOUT_X11=y
 add_port devel/libffi WITHOUT_X11=y
 add_port devel/gobject-introspection
 
-if [ "${REPORTING}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
+if [ "${REPORTING}" = 1 ]; then
 add_port graphics/png WITHOUT_X11=y
 fi
 
@@ -209,7 +299,9 @@ add_port sysutils/tw_cli
 add_port sysutils/megacli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
+#+add_port devel/dbus*
 add_port sysutils/gnome_subr
+#-add_port devel/dbus*
 add_port devel/dbus WITHOUT_X11=y
 add_port devel/dbus-glib WITHOUT_X11=y
 add_port devel/libdaemon
@@ -247,61 +339,11 @@ add_port devel/py-daemon
 add_port devel/pyrex
 fi
 
-if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
+if [ "${DEBUG}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
 	add_port security/ca_root_nss WITH_ETCSYMLINK=y
 	add_port ftp/curl
 	#-add_port devel/git || net-p2p/transmission-daemon
-fi
-
-if [ "${MULTIMEDIA}" = 1 ]; then
-	#+add_port audio/firefly || net/minidlna
-	#add_port graphics/png WITHOUT_APNG=y
-	#add_port devel/pkg-config
-	add_port audio/libid3tag
-	add_port audio/libogg
-	add_port audio/libvorbis
-	add_port audio/speex
-	#-add_port audio/firefly || net/minidlna
-	add_port audio/libao
-	add_port audio/vorbis-tools
-	add_port multimedia/libkate
-	#add_port databases/sqlite3
-	#-add_port audio/firefly || net/minidlna
-	#+add_port net/minidlna
-	#add_port converters/libiconv
-	add_port multimedia/mp4v2
-	add_port audio/faac
-	add_port audio/flac
-	add_port audio/lame
-	#add_port databases/sqlite3
-	add_port graphics/jpeg
-	#add_port devel/gettext
-	add_port graphics/libexif
-	add_port audio/opencore-amr
-	add_port graphics/opencv-core
-	add_port multimedia/libtheora
-	#add_port devel/yasm ?
-	#add_port lang/perl5.12
-	#add_port shells/bash
-	add_port devel/orc
-	add_port multimedia/schroedinger
-	add_port multimedia/gpac-libgpac WITHOUT_OPENGL=y
-	add_port multimedia/x264 WITHOUT_ASM=y
-	add_port multimedia/xvid WITHOUT_OPTIMIZED_CFLAGS=y
-	#add_port multimedia/libvpx
-	add_port multimedia/ffmpeg	WITH_FAAC=y WITH_LAME=y WITH_SPEEX=y \
-					WITHOUT_FFSERVER=y WITHOUT_FREETYPE=y \
-					WITHOUT_VP8=y
-	#-add_port net/minidlna
-	add_port audio/firefly
-	add_port net/minidlna
-	#+add_port net-p2p/transmission-daemon
-	#add_port devel/pkg-config
-	add_port devel/libevent2
-	add_port www/transmission-web
-	#-add_port net-p2p/transmission-daemon
-	add_port net-p2p/transmission-daemon
 fi
 
 if [ "${DEBUG}" = 1 ]; then 
@@ -483,106 +525,6 @@ configure_pbi_manager()
 }
 customize_cmd configure_pbi_manager
 
-# Beware of dog. A lot of the stuff done here is done in such a way
-# that it doesn't require changes to nanobsd.sh, etc.
-#
-# XXX: this will ultimately all need to be moved into a separate
-# 'freenas-common' file as this is just a really nasty kludge.
-create_pluginsjail()
-{
-	local plugins_jail_obj_dir plugins_jail_world_dir
-
-	plugins_jail_obj_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjobj"
-	plugins_jail_world_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjw"
-
-	nanobsd_vars="MAKEOBJDIRPREFIX NANO_MAKE_CONF_BUILD NANO_MAKE_CONF_INSTALL NANO_OBJ NANO_WORLDDIR"
-
-	# Save the old values
-	for nanobsd_var in $nanobsd_vars
-	do
-		local "old_${nanobsd_var}"
-		eval "old_${nanobsd_var}='\${$nanobsd_var}'"
-	done
-
-	export MAKEOBJDIRPREFIX="$plugins_jail_obj_dir"
-	export NANO_MAKE_CONF_BUILD="$AVATAR_ROOT/examples/plugins/make.conf"
-	export NANO_MAKE_CONF_INSTALL="$AVATAR_ROOT/examples/plugins/make.conf"
-	export NANO_OBJ="$plugins_jail_obj_dir"
-	export NANO_WORLDDIR=$plugins_jail_world_dir
-
-	mkdir -p $NANO_OBJ
-
-	# XXX: maybe do something smarter here, like svn status $NANO_SRC,
-	# generate a checksum, profit from not having to recompile stuff..
-	if [ -s $MAKEOBJDIRPREFIX/_.iw ]
-	then
-		pprint 4 "Skipping plugin jail buildworld (as instructed)"
-	else
-		if $do_clean; then
-			clean_build
-		else
-			pprint 3 "Using existing plugin jail build tree (as instructed)"
-		fi
-		# Build the jailed world.
-		build_world
-
-	fi
-
-	pprint 3 "Installing plugin jail"
-	# Create/install a PBI jailed world.
-	clean_world
-	install_world
-	install_etc
-
-	pprint 3 "Customizing /etc for plugin jail"
-
-	: > "$plugins_jail_world_dir/etc/fstab"
-
-	cat > "$plugins_jail_world_dir/etc/rc.conf" <<EOF
-sendmail_enable="NONE"
-syslogd_flags="-ss"
-pbid_enable="YES"
-EOF
-
-	pprint 3 "Preparing plugins jail ports install"
-	cp $AVATAR_ROOT/examples/plugins/jail_ports.sh $NANO_WORLDDIR/.
-
-	mkdir -p ${NANO_OBJ}/ports/distfiles
-	mkdir -p ${NANO_OBJ}/ports/packages
-	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
-	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
-      	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
-	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
-	    ${NANO_WORLDDIR}/usr/ports/packages
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
-	    ${NANO_WORLDDIR}/usr/ports/distfiles
-
-	pprint 4 "Installing plugins jail ports"
-
-	CR "sh -ex /jail_ports.sh"
-
-	umount ${NANO_WORLDDIR}/usr/ports/distfiles
-	umount ${NANO_WORLDDIR}/usr/ports/packages
-	umount ${NANO_WORLDDIR}/usr/ports
-	umount ${NANO_WORLDDIR}/usr/src
-	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
-	rmdir ${NANO_WORLDDIR}/usr/ports/packages
-	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
-	rmdir ${NANO_WORLDDIR}/usr/ports
-	rmdir ${NANO_WORLDDIR}/usr/src
-
-	rm $NANO_WORLDDIR/jail_ports.sh
-
-	# Restore the old values
-	for nanobsd_var in $nanobsd_vars
-	do
-		eval "${nanobsd_var}='\${old_$nanobsd_var}'"
-	done
-
-}
-#customize_cmd create_pluginsjail
-
 if [ "${DEBUG}" = 1 ]; then
 
 unmute_console_logging()
@@ -732,86 +674,54 @@ if $do_image; then
 last_orders() {
 	local cd_image_log
 	local full_image full_image_log
-	local gui_upgrade gui_upgrade_image_log
-	local plugins_jail_log plugins_jail_pbi plugins_jail_pbi_basename
-	local plugins_jail_pbi_version plugins_jail_world_dir
+	local firmware_img gui_upgrade_bname gui_upgrade_image_log
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 
+	firmware_img="$NANO_DISKIMGDIR/firmware.img"
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
-	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+	gui_upgrade_bname="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 
-	plugins_jail_log="$MAKEOBJDIRPREFIX/_.plugins_jail"
-	plugins_jail_world_dir="$AVATAR_ROOT/obj.$NANO_ARCH/_.pjw"
-
-	if $do_image && $do_copyout_partition; then
+	if $do_copyout_partition; then
 
 		pprint 2 "Compressing GUI upgrade image"
 		pprint 3 "log: ${gui_image_log}"
 
 		(
+		set -x
 
 		# NOTE: keep in synch with create_*_diskimage.
-		mv "$NANO_DISKIMGDIR/_.disk.image" "$gui_upgrade"
-		xz --verbose -9 -f "$gui_upgrade"
+		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
+
+		cat "$firmware_img" | xz --verbose -9 > "$gui_upgrade_bname.xz"
 
 		) > "${gui_image_log}" 2>&1
 
 	fi
 
-	if $do_image; then
+	pprint 2 "Compressing full disk image"
+	pprint 3 "log: ${full_image_log}"
 
-		pprint 2 "Compressing full disk image"
-		pprint 3 "log: ${full_image_log}"
+	(
+	set -x
 
-		(
+	# NOTE: keep in synch with create_iso.sh.
+	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
+	xz --verbose -9 -f "$full_image"
 
-		# NOTE: keep in synch with create_iso.sh.
-		mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
-		xz --verbose -9 -f "$full_image"
+	) > "${full_image_log}" 2>&1
 
-		) > "${full_image_log}" 2>&1
+	pprint 2 "Creating ISO image"
+	pprint 3 "log: ${cd_image_log}"
 
-		pprint 2 "Creating ISO image"
-		pprint 3 "log: ${cd_image_log}"
+	(
+	set -x
 
-		(
+	sh "$AVATAR_ROOT/build/create_iso.sh"
 
-		sh "$AVATAR_ROOT/build/create_iso.sh"
-
-		) > "${cd_image_log}" 2>&1
-
-if :; then
-	:
-else
-
-		pprint 2 "Creating plugins jail PBI"
-		pprint 3 "log: ${plugins_jail_log}"
-
-		plugins_jail_pbi_basename=$NANO_IMGNAME.Plugins_Jail
-		plugins_jail_pbi=$plugins_jail_pbi_basename.pbi
-		plugins_jail_pbi_version=$(echo $VERSION | sed -E -e 's/-[^-]+//g')
-		(
-
-		fake_target_host \
-			pbi_create \
-			-a $NANO_LABEL \
-			-n $$ \
-			-o "$NANO_DISKIMGDIR" \
-			-r $plugins_jail_pbi_version \
-			-w $AVATAR_PROJECT_SITE \
-			$plugins_jail_world_dir
-
-			mv $NANO_DISKIMGDIR/$$-$plugins_jail_pbi_version-$NANO_ARCH.pbi \
-				$NANO_DISKIMGDIR/$plugins_jail_pbi
-
-		) > "${plugins_jail_log}" 2>&1
-
-fi
-
-	fi
+	) > "${cd_image_log}" 2>&1
 
 }
 fi # $do_image

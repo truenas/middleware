@@ -1,6 +1,7 @@
 #!/bin/sh
 #-
-# Copyright (c) 2010, 2011 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2012 Avatar Project. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -87,96 +88,10 @@ buildenv()
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD}
 }
 
+# XXX: move to nanobsd.sh once it has a use there.
 NANO_MAKEFS="makefs -B big \
 	-o bsize=4096,fsize=512,density=8192,optimization=space"
 export NANO_MAKEFS
-
-if [ "$DEBUG" = 1 ]; then
-	DEBUG_BUILD="
-DEBUG_FLAGS=		-g
-"
-else
-	DEBUG_INSTALL="
-INSTALL_NODEBUG=	t
-"
-fi
-# NB: leave c++ enabled so devd can be built
-CONF_BUILD="
-#WITHOUT_ACPI=true
-WITHOUT_ATM=true
-WITHOUT_AUDIT=true
-WITHOUT_BIND_DNSSEC=true
-WITHOUT_BIND_ETC=true
-WITHOUT_BIND_LIBS_LWRES=true
-WITHOUT_BIND_NAMED=true
-WITHOUT_BLUETOOTH=true
-WITHOUT_CALENDAR=true
-WITHOUT_CTM=true
-WITHOUT_CVS=true
-WITHOUT_DICT=true
-WITHOUT_EXAMPLES=true
-WITHOUT_FORTRAN=true
-WITHOUT_FREEBSD_UPDATE=yes
-WITHOUT_GAMES=true
-WITHOUT_GCOV=true
-WITHOUT_GPIB=true
-WITHOUT_HTML=true
-WITHOUT_I4B=true
-WITHOUT_IPFILTER=true
-WITHOUT_IPX=true
-WITHOUT_LIB32=true
-WITHOUT_LIBKSE=true
-WITHOUT_LOCALES=true
-WITHOUT_LPR=true
-WITHOUT_MAN=true
-WITHOUT_NDIS=true
-WITHOUT_NIS=true
-WITHOUT_NLS=true
-WITHOUT_NS_CACHING=true
-WITHOUT_OBJC=true
-WITHOUT_PORTSNAP=true
-WITHOUT_PPP=true
-WITHOUT_PROFILE=true
-WITHOUT_RCMDS=true
-WITHOUT_SENDMAIL=true
-# Knob needs to be fixed on systems that don't have the docs stuff
-# preinstalled, e.g. 9.x bsdinstall images.
-#WITHOUT_SHAREDOCS=true
-WITHOUT_SSP=true
-WITHOUT_SYSCONS=true
-WITHOUT_SYSINSTALL=true
-# Telnet's a useful tool to have on the remote box.
-#WITHOUT_TELNET=true
-WITHOUT_WIRELESS=true
-WITHOUT_WPA_SUPPLICANT_EAPOL=true
-PYTHON_DEFAULT_VERSION=python2.7
-
-LOCAL_DIRS=${NANO_LOCAL_DIRS}
-
-${DEBUG_BUILD}
-"
-CONF_INSTALL="$CONF_BUILD
-NOPORTDOCS=t
-NO_INSTALL_MANPAGES=t
-# devel/apr sucks.
-WITH_BDB_VER=46
-
-${DEBUG_INSTALL}
-"
-# The following would help...
-# WITHOUT_TOOLCHAIN=true		can't build ports
-# WITHOUT_INSTALLLIB=true		libgcc.a
-#
-# from the build
-# WITHOUT_INFO=true			makeinfo
-# WITHOUT_RCS=true
-PKG_ONLY_MAKE_CONF="
-WITHOUT_TOOLCHAIN=true
-WITHOUT_INSTALLLIB=true
-WITHOUT_INFO=true
-WITHOUT_RCS=true
-WITHOUT_SHAREDOCS=true
-"
 
 NANO_PACKAGE_ONLY=1
 
@@ -185,6 +100,40 @@ for v in $(env | egrep '^(LANG|LC).*='); do
 	unset ${v%=*}
 done
 
+# NOTE: the following code consists of temporary shims inherited from the
+# FreeNAS project to get things to work with the predefined src + ports tree
+# pulled by do_build.sh to work with an untainted build environment. This works
+# on amd64/i386, but not in other cross-architecture scenarios.
+#
+# The shims will be removed/folded into nanobsd.sh once a more generic solution
+# is available for solving some of the problems with bsd.ports.mk related to
+# cross-building, package-recursive build issues, etc.
+
+is_release_image()
+{
+	:
+}
+
+if is_release_image
+then
+	AVATAR_DEBUG_BUILD="
+DEBUG_FLAGS=		-g
+"
+else
+	AVATAR_DEBUG_INSTALL="
+INSTALL_NODEBUG=	t
+"
+fi
+
+# NOTE: the following code consists of temporary shims inherited from the
+# FreeNAS project to get things to work with the predefined src + ports tree
+# pulled by do_build.sh to work with an untainted build environment. This works
+# on amd64/i386, but not in other cross-architecture scenarios.
+#
+# The shims will be removed/folded into nanobsd.sh once a more generic solution
+# is available for solving some of the problems with bsd.ports.mk related to
+# cross-building, package-recursive build issues, etc.
+# XXX: chroot is not cross-architecture safe.
 fake_target_host()
 {
 	local newvers revision branch
@@ -283,7 +232,7 @@ do_add_port ()
 # Recursive complex function: Generate one function for each ports
 add_port ()
 {
-    local _add_pkg
+    local _add_pkg PKG_NAME
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
     shift
@@ -292,7 +241,8 @@ add_port ()
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
+    # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a
+    # sourcing chicken and egg problem.
     set +e
     PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
     if [ $? -ne 0 ]; then
@@ -330,6 +280,90 @@ add_port ()
 	NANO_PACKAGE_ONLY=0
     fi
 }
+
+# Fill in stub functions for non-base OS images.
+if [ $AVATAR_COMPONENT != "os-base" ]
+then
+do_image=false
+
+build_kernel()
+{
+	:
+}
+
+install_kernel()
+{
+	:
+}
+
+do_image()
+{
+	:
+}
+fi
+
+generate_avatar_conf()
+{
+	cat > ${NANO_WORLDDIR}/etc/avatar.conf <<EOF
+#!/bin/sh
+#
+# A simple, sourceable script that can be used to derive
+# avatar project specific details, such as name, version, etc.
+# This should be sourced by middleware.
+#
+# Use easy-to parse lines for this script, like:
+#
+# {{{
+# FOO="bar"
+#
+# export FOO
+# }}}
+# Not something like...
+#
+# {{{
+# export FOO="bar"
+# }}}
+#
+# or...
+#
+# {{{
+# for var in FOO; do
+#      eval \${var}="bar"
+# done
+# }}}
+#
+# This file will be parsed sometime in the future without having
+# to invoke /bin/sh.
+
+# The name of the project, e.g. FreeNAS.
+AVATAR_PROJECT="$NANO_NAME"
+
+# The website for the avatar project.
+AVATAR_PROJECT_SITE="$AVATAR_PROJECT_SITE"
+
+# The support site for the avatar project.
+AVATAR_SUPPORT_SITE="$AVATAR_SUPPORT_SITE"
+
+# The version of software, e.g. 8.0.3-RELEASE, 8.2-ALPHA, etc.
+AVATAR_VERSION="$VERSION"
+
+# The build number, e.g. r9310, <git-sha256-hash>, etc.
+AVATAR_BUILD_NUMBER="$SVNREVISION"
+
+# The machine[:processor] for the image with a humanized name,
+# e.g. 'x64', 'mips:mipsel', etc.
+AVATAR_ARCH="$NANO_ARCH_HUMANIZED"
+
+# The avatar project component being built
+AVATAR_COMPONENT="$AVATAR_COMPONENT"
+
+export AVATAR_ARCH AVATAR_COMPONENT
+export AVATAR_PROJECT AVATAR_VERSION AVATAR_BUILD_NUMBER
+export AVATAR_PROJECT_SITE AVATAR_SUPPORT_SITE
+EOF
+
+}
+late_customize_cmd generate_avatar_conf
 
 __a=`mount | grep ${NANO_OBJ}/ | awk '{print length($3), $3;}' | sort -rn | awk '{$1=""; print;}'`
 if [ -n "$__a" ]; then

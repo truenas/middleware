@@ -22,8 +22,8 @@
 : ${FREENAS_ARCH=$(uname -p)}
 NANO_ARCH=$FREENAS_ARCH
 
-# Setup a humanized name for the image. Doesn't affect obj.*'s naming because
-# people would get jangry (sic) having to rebuild their workspaces from
+# Setup a humanized name for the image. Doesn't affect "os-base/*/"'s naming
+# because people would get jangry (sic) having to rebuild their workspaces from
 # scratch, changing NANO_ARCH would require shuffling around kernconfs, hacking
 # TARGET/TARGET_MACHINE before jumping into the [base/ports] build system and
 # because it's not user facing.
@@ -42,7 +42,12 @@ i386)
 	;;
 esac
 
-NANO_OBJ=${AVATAR_ROOT}/obj.${NANO_ARCH}
+# The avatar component being built (os-base, etc).
+: ${AVATAR_COMPONENT=os-base}
+
+# os-base/amd64, etc. Other locations where this is set explicitly and try to
+# figure out why it's done that way before changing this line / ordering..
+NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
 
 # Where the build configuration files used by nanobsd.sh live.
 NANO_CFG_BASE=$AVATAR_ROOT/nanobsd
@@ -110,7 +115,6 @@ NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 NANO_MODULES="cxgb ext2fs geom ipmi iscsi pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 
 # Feature sets to enable as part of the build.
-#SW_FEATURES="DEBUG MULTIMEDIA REPORTING"
 SW_FEATURES="DEBUG REPORTING"
 
 # The GEOM label to use.
