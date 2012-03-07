@@ -312,13 +312,9 @@ class Base_ACL(object):
         pass
 
     def _refresh(self):
-        syslog(LOG_DEBUG, "Base_ACL._refresh: enter")
-
         self.entries = []
         self._load()
         self_dirty = False
-
-        syslog(LOG_DEBUG, "Base_ACL._refresh: leave")
 
     def update(self, *args, **kwargs):
         pass
@@ -377,14 +373,10 @@ class Base_ACL(object):
         return True
             
     def save(self):
-        syslog(LOG_DEBUG, "Base_ACL.save: enter")
-
         if not self.dirty:
             return False
 
         self._refresh()
-
-        syslog(LOG_DEBUG, "Base_ACL.save: leave")
         return True
 
 
@@ -435,14 +427,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: leave")
 
     def __set_directory_defaults(self, acl):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_directory_defaults: enter")
-
         if self.windows:
             self._set_windows_directory_defaults(acl)
         else:
             self._set_unix_directory_defaults(acl)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_directory_defaults: leave")
 
     def __set_defaults(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_defaults: enter")
@@ -461,14 +449,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_defaults: leave")
 
     def set_defaults(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.set_defaults: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__set_defaults, *args, **kwargs)
         else:
             self.__set_defaults(self.path, *args, **kwargs)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.set_defaults: leave")
 
     def __reset(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__reset: enter")
@@ -481,14 +465,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__reset: leave")
 
     def reset(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.reset: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__reset, *args, **kwargs)
         else:
             self.__reset(self.path, *args, **kwargs)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.reset: leave")
 
     def __clear(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__clear: enter")
@@ -501,14 +481,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__clear: leave")
 
     def clear(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.clear: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__clear, *args, **kwargs)
         else:
             self.__clear(self.path, *args, **kwargs)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.clear: leave")
 
     def __add(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__add: enter")
@@ -521,14 +497,11 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__add: leave")
 
     def add(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.add: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__add, *args, **kwargs)
         else:
             self.__add(self.path, *args, **kwargs)
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.add: leave")
 
     def __update(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__update: enter")
@@ -541,14 +514,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__update: leave")
 
     def update(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.update: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__update, *args, **kwargs)
         else:
             self.__update(self.path, *args, **kwargs)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.update: leave")
 
     def __remove(self, path, *args, **kwargs):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__remove: enter")
@@ -561,14 +530,10 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__remove: leave")
 
     def remove(self, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.remove: enter")
-
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
             self._recurse(self.path, self.__remove, *args, **kwargs)
         else:
             self.__remove(self.path, *args, **kwargs)
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.remove: leave")
 
     def __chmod(self, path, mode):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chmod: enter")
@@ -613,9 +578,5 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chown: leave")
 
     def close(self):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.close: enter")
-
         self.path = None
         self.flags = ACL_FLAGS_NONE
-
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.close: leave")

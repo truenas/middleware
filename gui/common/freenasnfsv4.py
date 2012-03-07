@@ -108,7 +108,6 @@ class NFSv4_setfacl(Base_ACL_setfacl):
 
 class NFSv4_ACL_Entry(Base_ACL_Entry):
     def __init__(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__init__: enter")
 
         #
         # ACL tag
@@ -151,13 +150,8 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         #
         self.type = None
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__init__: leave")
 
     def __set_access_permission(self, permission, value):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: permission = %s, value = %s" %
-            (permission, value))
-
         if permission == 'r':
             self.read_data = value
         elif permission == 'w':
@@ -187,7 +181,6 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         elif permission == 's':
             self.synchronize = value
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
 
     def set_access_permissions(self, permissions):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: enter")
@@ -207,16 +200,10 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: leave")
 
     def set_access_permission(self, permission):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: permission = %s" % permission)
-
         self.__set_access_permission(permission, True)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: leave")
 
     def clear_access_permissions(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permissions: enter")
-
         self.read_data = False
         self.write_data = False
         self.execute = False
@@ -232,20 +219,12 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         self.write_owner = False
         self.synchronize = False
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permissions: leave")
 
     def clear_access_permission(self, permission):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: permission = %s" % permission)
-
         self.__set_access_permission(permission, False)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: leave")
 
     def __set_inheritance_flag(self, flag, value):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: flag = %s, value = %s" % (flag, value))
-
         if flag == 'f':
             self.file_inherit = value
         elif flag == 'd':
@@ -255,7 +234,6 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         elif flag == 'n':
             self.no_propagate = value
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: enter")
 
     def set_inheritance_flags(self, flags):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: enter")
@@ -275,30 +253,19 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: leave")
 
     def set_inheritance_flag(self, flag):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: flag = %s" % flag)
-
         self.__set_inheritance_flag(flag, True)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
 
     def clear_inheritance_flags(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_inheritance_flags: enter")
-
         self.file_inherit = False
         self.dir_inherit = False
         self.inherit_only = False
         self.no_propagate = False
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_inheritance_flags: leave")
 
     def clear_inheritance_flag(self, flag):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: flag = %s" % flag)
-
         self.__set_inheritance_flag(flag, False)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
 
     def get_access_permissions(self):
         str = ""
@@ -345,11 +312,7 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 class NFSv4_ACL(Base_ACL):
 
     def _load(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL._load: enter")
-
         for line in NFSv4_getfacl(self.path):
-            syslog(LOG_DEBUG, "NFSv4_ACL._load: line = %s" % line)
-
             if line.startswith("#"):
                 comment_parts = line.split('#')[1:]
                 for c in comment_parts:
@@ -395,16 +358,12 @@ class NFSv4_ACL(Base_ACL):
                 entry.type = acl_type
                 self.entries.append(entry)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL._load: leave")
 
     def _refresh(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL._refresh: enter")
-
         self.entries = []
         self._load()
         self.dirty = False
 
-        syslog(LOG_DEBUG, "NFSv4_ACL._refresh: leave")
 
     def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
         syslog(LOG_DEBUG, "NFSv4_ACL.update: enter")
@@ -505,16 +464,11 @@ class NFSv4_ACL(Base_ACL):
         syslog(LOG_DEBUG, "NFSv4_ACL.remove: leave")
 
     def reset(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL.reset: enter")
-
         NFSv4_setfacl(self.path, None, SETFACL_FLAGS_SET_DEFAULTS)
         self._refresh()
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.reset: leave")
 
     def clear(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL.clear: enter")
-
         self.reset()
         self._refresh()
 
@@ -522,7 +476,6 @@ class NFSv4_ACL(Base_ACL):
             if not (entry.tag == 'everyone@' and entry.type == 'allow'):
                 self.remove(entry.tag, entry.qualifier, entry.type)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.clear: leave")
             
     def chmod(self, mode):
         syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
@@ -571,14 +524,10 @@ class NFSv4_ACL(Base_ACL):
         syslog(LOG_DEBUG, "NFSv4_ACL.chmod: leave")
 
     def save(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL.save: enter")
-
         if not self.dirty:
             return False
 
         self._refresh()
-
-        syslog(LOG_DEBUG, "NFSv4_ACL.save: leave")
         return True
 
 
@@ -631,6 +580,4 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
         syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: leave")
 
     def new_ACL(self, path):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy.new_ACL: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy.new_ACL: leave")
         return NFSv4_ACL(path)
