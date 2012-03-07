@@ -101,8 +101,6 @@ class POSIX_setfacl(Base_ACL_setfacl):
 
 class POSIX_ACL_Entry(Base_ACL_Entry):
     def __init__(self):
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.__init__: enter")
-
         #
         # ACL tag
         #
@@ -120,21 +118,13 @@ class POSIX_ACL_Entry(Base_ACL_Entry):
         self.write = False
         self.execute = False
 
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.__init__: leave")
-
     def __set_access_permission(self, permission, value):
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.__set_access_permission: enter")
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.__set_access_permission: permission = %s, value = %s" %
-            (permission, value))
-
         if permission == 'r':
             self.read = value
         elif permission == 'w':
             self.write = value
         elif permission == 'x':
             self.execute = value
-
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.__set_access_permission: enter")
 
     def set_access_permissions(self, permissions):
         syslog(LOG_DEBUG, "POSIX_ACL_Entry.set_access_permissions: enter")
@@ -154,29 +144,15 @@ class POSIX_ACL_Entry(Base_ACL_Entry):
         syslog(LOG_DEBUG, "POSIX_ACL_Entry.set_access_permissions: leave")
 
     def set_access_permission(self, permission):
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.set_access_permission: enter")
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.set_access_permission: permission = %s" % permission)
-
         self.__set_access_permission(permission, True)
 
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.set_access_permission: leave")
-
     def clear_access_permissions(self):
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.clear_access_permissions: enter")
-
         self.read = False
         self.write = False
         self.execute = False
 
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.clear_access_permissions: leave")
-
     def clear_access_permission(self, permission):
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.clear_access_permission: enter")
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.clear_access_permission: permission = %s" % permission)
-
         self.__set_access_permission(permission, False)
-
-        syslog(LOG_DEBUG, "POSIX_ACL_Entry.clear_access_permission: leave")
 
     def get_access_permissions(self):
         str = ""
@@ -200,8 +176,6 @@ class POSIX_ACL_Entry(Base_ACL_Entry):
 
 class POSIX_ACL(Base_ACL):
     def _load(self):
-        syslog(LOG_DEBUG, "POSIX_ACL._load: enter")
-
         for line in POSIX_getfacl(self.path):
             syslog(LOG_DEBUG, "POSIX_ACL._load: line = %s" % line)
 
@@ -232,8 +206,6 @@ class POSIX_ACL(Base_ACL):
                         entry.set_access_permission(a)
 
                 self.entries.append(entry)
-
-        syslog(LOG_DEBUG, "POSIX_ACL._load: enter")
 
     def update(self, tag, qualifier, permissions):
         syslog(LOG_DEBUG, "POSIX_ACL.update: enter")
@@ -312,12 +284,8 @@ class POSIX_ACL(Base_ACL):
         syslog(LOG_DEBUG, "POSIX_ACL.remove: leave")
 
     def reset(self):
-        syslog(LOG_DEBUG, "POSIX_ACL.reset: enter")
-
         POSIX_setfacl(self.path, None, SETFACL_POSIX_FLAGS_SET_DEFAULTS)
         self._refresh()
-
-        syslog(LOG_DEBUG, "POSIX_ACL.reset: leave")
 
     def chmod(self, mode):
         syslog(LOG_DEBUG, "POSIX_ACL.chmod: enter")
@@ -377,6 +345,4 @@ class POSIX_ACL_Hierarchy(Base_ACL_Hierarchy):
         syslog(LOG_DEBUG, "POSIX_ACL_Hierarchy._set_unix_directory_defaults: leave")
 
     def new_ACL(self, path):
-        syslog(LOG_DEBUG, "POSIX_ACL_Hierarchy.new_ACL: enter")
-        syslog(LOG_DEBUG, "POSIX_ACL_Hierarchy.new_ACL: leave")
         return POSIX_ACL(path)
