@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-01-28 01:39+0200\n"
-"Last-Translator: victor <pi_victor@yahoo.es>\n"
+"PO-Revision-Date: 2012-03-07 19:15+0200\n"
+"Last-Translator: efrasoft <efrasoft@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -576,7 +576,7 @@ msgstr "Un usuario con este nombre ya existe."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
-msgstr "Un usuario con ese nombre ya existe."
+msgstr "Ya existe el nombre de usuario."
 
 #: account/forms.py:337 storage/forms.py:223 system/forms.py:302
 #: system/forms.py:308 system/forms.py:313 system/forms.py:545

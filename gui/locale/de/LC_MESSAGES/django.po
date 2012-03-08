@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:42-0800\n"
-"PO-Revision-Date: 2012-01-05 16:30+0200\n"
-"Last-Translator: Dirk <dirk@dreinhardt.net>\n"
+"PO-Revision-Date: 2012-03-08 00:52+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -473,14 +473,12 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "\"Sofort Offline\"-Test (nur ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
-msgstr "Rsync Module"
+msgstr "Rsync Modul"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Rsync Module"
+msgstr "Rsync über SSH"
 
 #: choices.py:563
 msgid "Push"
@@ -578,9 +576,8 @@ msgstr "Öffentlicher SSH Schlüssel"
 
 # vielleicht doch besser "Home Verzeichnis"
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Heimatverzeichnis"
+msgstr "Modus des Heimatverzeichnisses"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -762,9 +759,8 @@ msgid "Account"
 msgstr "Benutzerkonto"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Benutzerkonto"
+msgstr "Admin-Konto"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -820,7 +816,7 @@ msgid "Add %s"
 msgstr "Füge %s hinzu"
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
 msgstr "Alle %s anzeigen"
 
@@ -967,9 +963,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Physikalische Netzwerkkarten der Gruppe"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Physische Netzwerkkarte"
+msgstr "LAGG physische Netzwerkkarte"
 
 #: network/forms.py:298
 #, python-format
@@ -1253,13 +1248,12 @@ msgid "Plugins path cannot contain jail path."
 msgstr ""
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "Domainname"
+msgstr "Plugin-Name"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Name es Plugins"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
@@ -1270,18 +1264,16 @@ msgid "Info name of the plugin"
 msgstr ""
 
 #: plugins/models.py:48
-#, fuzzy
 msgid "Plugin version"
-msgstr "Windows Version"
+msgstr "Plugin Version"
 
 #: plugins/models.py:49
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "Verschlüsselung der Verbindung"
+msgstr "Version des Plugins"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Plugin Architektur"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
 #, fuzzy
@@ -1305,7 +1297,7 @@ msgstr ""
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Plugin aktiviert"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
@@ -1315,9 +1307,8 @@ msgstr "IP-Adresse des Controllers"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "TCP Port"
+msgstr "Plugin TCP Port"
 
 #: plugins/models.py:96 plugins/models.py:97
 #, fuzzy
@@ -1328,7 +1319,7 @@ msgstr "Pfad zum Einhängepunkt"
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "Plugins"
 
 #: plugins/nav.py:40
 #, fuzzy
@@ -1797,7 +1788,6 @@ msgid "Auxiliary parameters"
 msgstr "Zusatzparameter"
 
 #: services/models.py:138
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
 msgstr "Diese Parameter im Bereich [Global] der smb.conf hinzufügen"
 
@@ -2168,7 +2158,7 @@ msgstr "Kommentar"
 
 #: services/models.py:411 services/models.py:463 services/models.py:536
 msgid "You may enter a description here for your reference."
-msgstr "Sie können hier eine Beschreibung eingeben. "
+msgstr "Sie können hier eine Beschreibung eingeben."
 
 # mir ist keine sinnvolle fachliche Übersetzung für "Extent" bekannt
 #: services/models.py:414 services/models.py:698
@@ -2299,7 +2289,7 @@ msgstr "Gruppen ID des Initiators"
 
 #: services/models.py:645 services/models.py:657
 msgid "Auth Method"
-msgstr "Autentifizierungsmethode"
+msgstr "Authentifizierungsmethode"
 
 # bitte Gegenprüfung :)
 #: services/models.py:646 services/models.py:658
@@ -5980,29 +5970,24 @@ msgid "No shares defined"
 msgstr "Keine Freigaben angegeben"
 
 #: templates/sharing/apple.html:49
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Apple Freigabe hinzufügen"
+msgstr "Apple Freigabe (CIFS) hinzufügen"
 
 #: templates/sharing/apple.html:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Apple Freigabe hinzufügen"
+msgstr "Apple Freigabe (AFP) hinzufügen"
 
 #: templates/sharing/index.html:2
-#, fuzzy
 msgid "Apple (AFP)"
-msgstr "Apple Freigabe hinzufügen (AFP)"
+msgstr "Apple Freigabe (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "UNIX Freigabe hinzufügen (NFS)"
+msgstr "UNIX Freigabe (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Windows Freigabe hinzufügen (CIFS)"
+msgstr "Windows Freigabe (CIFS)"
 
 #: templates/sharing/unix.html:7
 #, fuzzy
@@ -6480,17 +6465,15 @@ msgstr ""
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Kein Nameserver angegeben"
+msgstr "Kein Nameserver angegeben."
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP Rechner 1"
+msgstr "NTP Server 1"
 
 #: templates/system/ntpserver.html:46
 #, fuzzy

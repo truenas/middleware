@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2011-11-03 17:19+0200\n"
-"Last-Translator: skimpax <skimpax@gmail.com>\n"
+"PO-Revision-Date: 2012-03-07 20:09+0200\n"
+"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -468,22 +468,22 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Test hors-ligne immédiat (ATA seulement)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "Module Rsync"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Module Rsync"
+msgstr "Rsync via SSH"
 
 #: choices.py:563
+#, fuzzy
 msgid "Push"
-msgstr ""
+msgstr "Pousser"
 
 #: choices.py:564
+#, fuzzy
 msgid "Pull"
-msgstr ""
+msgstr "Récupérer"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -561,7 +561,7 @@ msgstr "Verrouiller l'utilisateur"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Créer un nouveau groupe primaire pour l'utilisateur"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -572,9 +572,8 @@ msgid "SSH Public Key"
 msgstr "Clé publique SSH"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Répertoire personnel"
+msgstr "Permissions du répertoire personnel"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -747,9 +746,8 @@ msgid "Account"
 msgstr "Compte"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Compte"
+msgstr "Compte Administrateur"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -820,19 +818,19 @@ msgid "Shutdown"
 msgstr "Éteindre"
 
 #: freeadmin/navtree.py:395
-#, python-format
+#, fuzzy, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Donnée vide renvoyée par %s"
 
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Impossible de récupérer %(url)s : %(error)s"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Une erreur est survenue pendant la labélisation du disque."
+msgstr "Une erreur est survenue lors de délinéarisation de %(url)s : %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -878,6 +876,8 @@ msgstr "Interface réseau"
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
+"Vous ne pouvez pas configurer plusieurs interfaces avec la même adresse IP ("
+"%s)"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -950,9 +950,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Interfaces physiques dans le LAGG"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Interface réseau physique"
+msgstr "Interface physique LAGG"
 
 #: network/forms.py:298
 #, python-format
@@ -1179,7 +1178,6 @@ msgid "Create Link Aggregation"
 msgstr "Créer une agrégation de liens"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
 msgstr "Voir les agrégations de liens"
 
@@ -1189,28 +1187,24 @@ msgid "LAGG successfully added"
 msgstr "LAGG ajouté avec succès"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid "Place to temporarily place PBI file"
-msgstr "Emplacement où stocker temporairement le fichier du firmware"
+msgstr "Emplacement où stocker temporairement le fichier PBI"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
 "Le système utilisera cet emplacement pour stocker temporairement le fichier "
-"du firmware avant qu'il ne soit appliqué."
+"PBI avant qu'il ne soit installé."
 
 #: plugins/forms.py:87
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "Nouvelle image à installer"
+msgstr "Fichier PBI à installer"
 
 #: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "Somme SHA256 de l'image"
+msgstr "Somme SHA256 du fichier PBI"
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
@@ -1218,25 +1212,25 @@ msgid "Invalid checksum"
 msgstr "Somme de contrôle invalide"
 
 #: plugins/forms.py:115
+#, fuzzy
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Prison des modules PBI"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "Le chemin de la prison ne peut contenir le chemin des modules."
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "Le chemin des modules ne peut contenir le chemin de la prison."
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "Nom de domaine"
+msgstr "Nom du module"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Nom du module"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
@@ -1247,23 +1241,20 @@ msgid "Info name of the plugin"
 msgstr ""
 
 #: plugins/models.py:48
-#, fuzzy
 msgid "Plugin version"
-msgstr "Version de Windows"
+msgstr "Version du module"
 
 #: plugins/models.py:49
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "chiffrement de la connexion"
+msgstr "Version du module"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Architecture du module"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Nom de domaine"
+msgstr ""
 
 #: plugins/models.py:61
 msgid "UName of the plugin"
@@ -1272,64 +1263,57 @@ msgstr ""
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin view"
-msgstr ""
+msgstr "Vue du module"
 
 #: plugins/models.py:72 plugins/models.py:73
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin icon"
-msgstr ""
+msgstr "Icône du module"
 
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Module activé"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "Adresse IP du contrôleur"
+msgstr "Adresse IP du module"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "Port TCP"
+msgstr "Port TCP du module"
 
 #: plugins/models.py:96 plugins/models.py:97
-#, fuzzy
 msgid "Path to plugin"
-msgstr "Chemin du point de montage"
+msgstr "Chemin du module"
 
 #: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "Modules"
 
 #: plugins/nav.py:40
-#, fuzzy
 msgid "Control Plugins"
-msgstr "Contrôle des services"
+msgstr "Contrôle des modules"
 
 #: plugins/nav.py:48
-#, fuzzy
 msgid "Configure Plugins"
-msgstr "Configurer rsyncd"
+msgstr "Configurer les modules"
 
 #: plugins/views.py:69
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s mis(e) à jour avec succès."
+msgstr "Module mis à jour avec succès."
 
 #: plugins/views.py:95
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "Volume ajouté avec succès."
+msgstr "Module supprimé avec succès."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Impossible de supprimer le module."
 
 #: services/forms.py:65
 msgid "This is not a valid mask"
@@ -1358,18 +1342,19 @@ msgid "The NFS service failed to reload."
 msgstr "Le rechargement du service NFS a échoué."
 
 #: services/forms.py:130
+#, fuzzy
 msgid "The plugins path cannot be the same or reside within jail path."
 msgstr ""
+"Le chemin des modules ne peut être le même ou résider au sein du chemin "
+"d'une prison."
 
 #: services/forms.py:139
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Un groupe avec ce GID existe déjà."
+msgstr "Cette adresse IP existe déjà."
 
 #: services/forms.py:146
-#, fuzzy
 msgid "The Plugins service failed to reload."
-msgstr "Le rechargement du service AFP a échoué."
+msgstr "Le rechargement du service des modules a échoué."
 
 #: services/forms.py:151
 msgid "File Permission"
@@ -1774,9 +1759,8 @@ msgid "Auxiliary parameters"
 msgstr "Paramètres supplémentaires"
 
 #: services/models.py:138
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Ces paramètres sont ajoutés à la section [Global] du fichier smb.conf"
+msgstr "Ces paramètres sont ajoutés à la section [global] du fichier smb.conf"
 
 #: services/models.py:141
 msgid "Enable home directories"
@@ -1801,24 +1785,26 @@ msgid "Home directories"
 msgstr "Répertoires personnels"
 
 #: services/models.py:154
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "Paramètres supplémentaires"
+msgstr "Paramètres supplémentaires des répertoires utilisateur"
 
 #: services/models.py:156
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Ces paramètres sont ajoutés à la section [Share] de smb.conf"
+msgstr "Ces paramètres sont ajoutés à la section [homes] de smb.conf"
 
 #: services/models.py:159
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Extensions Unix"
 
 #: services/models.py:161
+#, fuzzy
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Ces extensions permettent à Samba de mieux servir les clients CIFS UNIX en "
+"supportant des fonctionnalités telles que les liens symboliques, liens "
+"physiques, etc ..."
 
 #: services/models.py:165
 msgid "Enable AIO"
@@ -1833,28 +1819,26 @@ msgid "Minimum AIO read size"
 msgstr "Taille minimale en lecture AIO"
 
 #: services/models.py:171
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
 "Samba lira de façon asynchrone si la taille de la requête est supérieure à "
-"cette valeur. La valeur par défaut est 1."
+"cette valeur."
 
 #: services/models.py:176
 msgid "Minimum AIO write size"
 msgstr "Taille minimale en écriture AIO"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
 "Samba écrira de façon asynchrone si la taille de la requête est supérieure à "
-"cette valeur. La valeur par défaut est 1."
+"cette valeur."
 
 #: services/models.py:181
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Découverte zeroconf du partage"
 
 #: services/models.py:183
 msgid ""
@@ -1862,6 +1846,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Le support zeroconf via Avahi permet aux clients (le finder MAC OSX en "
+"particulier) de découvrir automatique des partages CIFS du système de façon "
+"similaire au service \"Explorateur d'ordinateurs\" de Windows."
 
 #: services/models.py:187 services/models.py:188
 #: templates/services/index.html:29
@@ -2149,14 +2136,12 @@ msgid "Portal"
 msgstr "Portail"
 
 #: services/models.py:500
-#, fuzzy
 msgid "IP Address"
-msgstr "Adresse IPv4"
+msgstr "Adresse IP"
 
 #: services/models.py:512
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portail"
+msgstr "Portail IP"
 
 #: services/models.py:522 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2334,7 +2319,7 @@ msgstr "Période de mise à jour"
 
 #: services/models.py:743
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Temps en secondes. Environ une minute par défaut."
 
 #: services/models.py:747
 msgid "Forced update period"
@@ -2352,35 +2337,31 @@ msgstr "DNS Dynamique"
 
 #: services/models.py:768
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Chemin de la prison des modules"
 
 #: services/models.py:769
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Chemin de l'extension"
+msgstr "Chemin vers la prison des modules"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
-#, fuzzy
 msgid "Jail name"
-msgstr "Nom de domaine"
+msgstr "Nom de la prison"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Nom de la prison des modules"
 
 #: services/models.py:781
-#, fuzzy
 msgid "Jail IP address"
-msgstr "Adresse e-mail"
+msgstr "Adresse IP de la prison"
 
 #: services/models.py:784
 msgid "Plugins Path"
-msgstr ""
+msgstr "Chemin des modules"
 
 #: services/models.py:785
-#, fuzzy
 msgid "Path to the plugins directory"
-msgstr "Le chemin n'est pas un répertoire."
+msgstr "Chemin vers le répertoire des modules"
 
 #: services/models.py:805
 msgid "Location"
@@ -2610,7 +2591,6 @@ msgid "Masquerade address"
 msgstr "Adresse de masquage"
 
 #: services/models.py:982
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
@@ -2853,25 +2833,22 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Nom du groupe de travail dans l'ancien format, e.g. WORKGROUP"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Autoriser les GID en doublon"
+msgstr "Autoriser les domaines approuvés"
 
 #: services/models.py:1182
 msgid "Administrator Name"
 msgstr "Nom de l'administrateur"
 
 #: services/models.py:1183
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Mot de passe du compte administrateur du domaine."
+msgstr "Nom du compte administrateur du domaine."
 
 #: services/models.py:1187
 msgid "Administrator Password"
 msgstr "Mot de passe de l'administrateur"
 
 #: services/models.py:1188
-#, fuzzy
 msgid "Domain Administrator account password."
 msgstr "Mot de passe du compte administrateur du domaine."
 
@@ -3193,20 +3170,17 @@ msgid "View Device Extents"
 msgstr "Voir les périphériques d'extensions"
 
 #: services/nav.py:91
-#, fuzzy
 msgid "File Extents"
-msgstr "Périphériques d'extensions"
+msgstr "Fichiers d'extension"
 
 #: services/nav.py:110 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
-#, fuzzy
 msgid "Add File Extent"
-msgstr "Ajouter un périphérique d'extension"
+msgstr "Ajouter un fichier d'extension"
 
 #: services/nav.py:117
-#, fuzzy
 msgid "View File Extents"
-msgstr "Voir les extensions"
+msgstr "Voir les fichiers d'extension"
 
 #: services/nav.py:130 templates/services/index.html:64
 msgid "iSCSI"
@@ -3238,9 +3212,9 @@ msgid "Confirm Share Password"
 msgstr "Confirmer le mot de passe du partage"
 
 #: sharing/forms.py:123
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Le chemin n'existe pas."
+msgstr "Le chemin %s n'existe pas"
 
 #: sharing/forms.py:140
 msgid "The field is a not a valid IP address or network"
@@ -3304,6 +3278,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Si la valeur est à vrai, aucun mot de passe n'est requis pour se connecter "
+"au partage. Les privilèges seront ceux du compte invité."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3314,6 +3290,9 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Si la valeur est à vrai, seules les connexions invitées au partage sont "
+"autorisées. Ce paramètre n'a aucun effet si \"Autoriser l'accès invité\" n'est "
+"pas activé pour ce partage."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3356,14 +3335,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Ces paramètres sont ajoutés à la section [Share] de smb.conf"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Partage Windows"
+msgstr "Partage Windows (CIFS)"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Partages Windows"
+msgstr "Partages Windows (CIFS)"
 
 # Les termes sont à vérifier avec ceux réellement utilisés sur Macintosh
 #: sharing/models.py:114
@@ -3551,19 +3528,16 @@ msgstr ""
 "par des ordinateurs Macintosh."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
-msgstr "Pas de .AppleDouble"
+msgstr "Activer .AppleDouble"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
-"Interdire la création automatique des répertoires .AppleDouble. Cette option "
-"ne devrait pas être utilisée si les fichiers sont accédés principalement par "
-"des ordinateurs Macintosh."
+"Active la création automatique des répertoires .AppleDouble. Cette option "
+"devrait être utilisée si les fichiers sont accédés par des ordinateurs Mac."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3629,12 +3603,11 @@ msgstr "Utiliser les privilèges unix d'AFP3."
 #: sharing/models.py:228
 #, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "Partage AFP"
+msgstr "Partage Apple (AFP)"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Partages AFP"
+msgstr "Partages Apple (AFP)"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3715,14 +3688,12 @@ msgid "Group to map all users to"
 msgstr "Groupe auquel lier tous les utilisateurs"
 
 #: sharing/models.py:311
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "Modifier le partage NFS"
+msgstr "Partage Unix (NFS)"
 
 #: sharing/models.py:312
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "Partages NFS"
+msgstr "Partages Unix (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3752,9 +3723,8 @@ msgid "Specify custom path"
 msgstr "Préciser le chemin personnalisé"
 
 #: storage/forms.py:123
-#, fuzzy
 msgid "Volume add"
-msgstr "Nom du volume"
+msgstr "Ajouter un volume"
 
 #: storage/forms.py:131
 msgid ""
@@ -3771,9 +3741,8 @@ msgstr ""
 "'-', '_' et '.'."
 
 #: storage/forms.py:188
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Un groupe avec ce nom existe déjà."
+msgstr "Un volume avec ce nom existe déjà."
 
 #: storage/forms.py:202
 msgid "Path does not exist."
@@ -3980,9 +3949,8 @@ msgid "Remote hostname"
 msgstr "Nom d'hôte distant"
 
 #: storage/forms.py:904 storage/models.py:604
-#, fuzzy
 msgid "Remote port"
-msgstr "Hôte distant"
+msgstr "Port distant"
 
 #: storage/forms.py:905 storage/models.py:608
 msgid "Remote hostkey"
@@ -4032,11 +4000,11 @@ msgstr "Volume"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Intervalle"
 
 #: storage/models.py:190
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Détermine le nombre minimum de jours entre chaque nettoyage"
 
 #: storage/models.py:200 system/models.py:320 system/models.py:468
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4093,12 +4061,11 @@ msgstr "Activé"
 
 #: storage/models.py:231
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "Nettoyage ZFS"
 
 #: storage/models.py:232
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "Partages NFS"
+msgstr "Nettoyages ZFS"
 
 #: storage/models.py:246 system/models.py:367 system/models.py:569
 msgid "Every minute"
@@ -4144,11 +4111,12 @@ msgstr "Weekend"
 #: storage/models.py:323
 #, fuzzy
 msgid "Multipath name"
-msgstr "Nom du module"
+msgstr "Nom du multipath"
 
 #: storage/models.py:329
+#, fuzzy
 msgid "Multipath member"
-msgstr ""
+msgstr "Membres du multipath"
 
 #: storage/models.py:342 storage/views.py:226
 msgid "Transfer Mode"
@@ -4219,9 +4187,8 @@ msgid "Remote Host"
 msgstr "Hôte distant"
 
 #: storage/models.py:636
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Système de fichiers ZFS distant"
+msgstr "Nom du système de fichiers ZFS distant"
 
 #: storage/models.py:637
 msgid ""
