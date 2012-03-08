@@ -100,7 +100,7 @@ post_remote_files() {
 		;;
 	esac
 	_do scp -o BatchMode=yes $* \
-	    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/$branch_reldir
+	    ${SFUSER:-yaberauneya},freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/$branch_reldir
 }
 
 #
