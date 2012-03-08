@@ -8,7 +8,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/shell.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/msg.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript">
-var STORAGE_URL = '{% url storage_wizard %}';
 require(["dojo/ready"], function(ready) {
     ready(function(){
         Menu.urlInfo = '{% url system_info %}';
@@ -32,7 +31,7 @@ require(["dojo/ready"], function(ready) {
 
 {% block dojango_content %}
 {{ block.super }}
-<div id="top_dialog" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% trans "Running Processes"|force_escape|force_escape %}'" style="min-height:400px;">
+<div id="top_dialog" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% trans "Running Processes"|force_escape|force_escape %}'">
     <script type="dojo/method" data-dojo-event="onShow">
         ttop.stop();
         ttop.start();
@@ -41,34 +40,34 @@ require(["dojo/ready"], function(ready) {
 </div>
 <div id="shell_dialog_holder">
 </div>
-<div id="log_dialog" data-dojo-type="dijit.Dialog" dojo-data-props="title: '/var/log/messages'" style="min-height:400px;background-color:black;">
+<div id="log_dialog" data-dojo-type="dijit.Dialog" dojo-data-props="title: '/var/log/messages'">
     <script type="dojo/method" data-dojo-event="onShow">
         document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape|force_escape %}';
     _msg_t.stop();
     _msg_t.start();
     loadlog(true);
     </script>
-    <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
-    <input id="stopmsgrefresh" data-dojo-type="dijit.form.CheckBox" /><label for="stopmsgrefresh" style="color:white;">Stop refresh</label>
+    <pre class="ix" id="msgfull_output">{% trans "Loading..." %}</pre>
+    <input id="stopmsgrefresh" data-dojo-type="dijit.form.CheckBox" /><label for="stopmsgrefresh">Stop refresh</label>
 </div>
 
-<div data-dojo-type="dijit.Dialog" id="helpDialog" data-dojo-props="title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support"|force_escape|force_escape %}'"  style="background:#fff;width:400px;">
-    <img src="{{ STATIC_URL }}images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">
+<div data-dojo-type="dijit.Dialog" id="helpDialog" data-dojo-props="title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support"|force_escape|force_escape %}'">
+    <img src="{{ STATIC_URL }}images/ui/menu/help.png" class="helpIcon">
     <h2>{{ sw_version }}</h2>
-    <div style="float:left;">
+    <div class="left">
     <h3>{% trans "Forum" %}</h3>
     <ul>
         <li><a href="http://forums.freenas.org/" title="FreeNAS Community Support Forum" target="_blank">{% trans "Community Forum" %}</a></li>
     </ul>
     </div>
    
-    <div style="float:left;padding-left:36px;">
+    <div class="float36">
     <h3>{% trans "IRC (Chat)" %}</h3>
     <ul>
         <li><a href="http://webchat.freenode.net/?channels=freenas" target="_blank" title="#freenas on freenode">{% trans "#freenas on freenode" %}</a></li>
     </ul>
     </div>
-    <div style="float:left;padding-left:24px;">
+    <div class="float24">
     <h3>{% trans "Mailing Lists" %}</h3>
     <ul>
         <li><a href="http://lists.sourceforge.net/mailman/listinfo/freenas-announce" title="FreeNAS Announce" target="_blank">{% trans "FreeNAS Announce" %}</a></li>
@@ -80,20 +79,20 @@ require(["dojo/ready"], function(ready) {
     </ul>
     </div>
 
-    <div style="float:left;padding-left:24px;">
+    <div class="float24">
     <h3>{% trans "Support Issues" %}</h3>
     <ul>
         <li><a href="http://support.freenas.org" title="FreeNAS Bug Tracker" target="_blank">{% trans "Bug Tracker" %}</a></li>
     </ul>
     </div>
 
-    <div style="float:left;padding-left:24px;">
+    <div class="float24">
     <h3>{% trans "Documentation" %}</h3>
     <ul>
         <li><a href="http://doc.freenas.org" target="_blank" title="FreeNAS Documentation">{% trans "FreeNAS Documentation" %}</a></li>
     </ul>
     </div>
-    <div style="clear:both;"></div>
+    <div class="clear"></div>
 
     <br />
    </div>

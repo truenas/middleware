@@ -31,22 +31,22 @@
 	<br />
         <span>{% trans "Plugins" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" class="menu_icon" onClick="alert_open();" style="float:right;" >
+    <div dojoType="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
     <div dojoType="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
         <span>Alert</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/logout.png">
 	<br />
         <span>{% trans "Log Out" %}</span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="dijit.byId('helpDialog').show();" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="dijit.byId('helpDialog').show();" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/help.png">
 	<br />
         <span>{% trans "Help" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/account.png">
 	<br />
         <span>{% trans "Account" %}</span>
