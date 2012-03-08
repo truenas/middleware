@@ -33,8 +33,14 @@
 #shell_dialog .dijitDialogPaneContent { background-color:#000 !important; }
 #shell_dialog pre {border:none !important;}
 #log_dialog .dijitDialogPaneContent { width:800px;background-color:#000 !important; }
+#log_dialog {
+min-height:400px;background-color:black;
+}
 .dijitDialogPaneContent { border-top:1px solid #333 !important; }
 #top_dialog pre {border:none !important;}
+#top_dialog {
+min-height:400px;
+}
 .error {
 background-color:#F7977A;
 border:1px solid #222;
@@ -42,6 +48,19 @@ max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;op
 }
 #msgfull_output {
 min-width:900px;
+max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;
+}
+#helpDialog {
+background:#fff;width:400px;
+}
+#helpDialog .helpIcon {
+float:left;position:relative;top:-36px;right:5px;
+}
+#helpDialog .float24 {
+float:left;padding-left:24px;
+}
+#helpDialog .float36 {
+float:left;padding-left:36px;
 }
 pre.message {
 font-family: monospace, Courier New, Courier;
@@ -587,4 +606,20 @@ position:relative;
 
 #messages {
 position:absolute;left: 400px; min-width:250px;opacity:0.6;
+}
+
+.clear {
+clear: both;
+}
+
+.left {
+float: left;
+}
+
+.right {
+float: right;
+}
+
+label[for=stopmsgrefresh] {
+color:white;
 }
