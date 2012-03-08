@@ -93,8 +93,8 @@ class Plugins(Model):
 
     plugin_path = models.CharField(
         max_length=1024,
-        verbose_name=_("Path to plugin"),
-        help_text=_("Path to plugin")
+        verbose_name=_("Plugin archive path"),
+        help_text=_("Path where the plugins are saved after installation")
         )
 
     class Meta:
