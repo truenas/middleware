@@ -39,9 +39,11 @@ import ctypes
 import errno
 import glob
 import grp
+import logging
 import os
 import pwd
 import re
+import select
 import shlex
 import shutil
 import signal
@@ -52,6 +54,7 @@ import subprocess
 import sys
 import syslog
 import tempfile
+import threading
 import time
 import types
 
@@ -79,8 +82,9 @@ from freenasUI.common.jail import Jls, Jexec
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 
-import select
-import threading
+log = logging.getLogger('middleware.notifier')
+
+
 class StartNotify(threading.Thread):
     """
     Use kqueue to watch for an event before actually calling start/stop
@@ -112,13 +116,13 @@ class StartNotify(threading.Thread):
         kq = select.kqueue()
         ev = kq.control(evts, 1, 3)
 
+
 class notifier:
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
     IDENTIFIER = 'notifier'
     def __system(self, command):
-        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
+        log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
         libc = ctypes.cdll.LoadLibrary("libc.so.7")
@@ -132,11 +136,10 @@ class notifier:
                            % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
+        log.debug("Executed: %s", command)
 
     def __system_nolog(self, command):
-        syslog.openlog(self.IDENTIFIER, syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
+        log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
         libc = ctypes.cdll.LoadLibrary("libc.so.7")
@@ -149,21 +152,18 @@ class notifier:
             retval = self.___system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        syslog.syslog(syslog.LOG_DEBUG, "Executed: " + command)
+        log.debug("Executed: %s", command)
         return retval
 
-    def __pipeopen(self, command, log=True):
-        if log:
-            syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
-            syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
-        return Popen(command, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True, close_fds = True)
+    def __pipeopen(self, command):
+        log.debug("Popen()ing: %s", command)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
 
     def _do_nada(self):
         pass
 
     def _simplecmd(self, action, what):
-        syslog.openlog('middleware', syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
+        log.debug("Calling: %s(%s) ", action, what)
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
@@ -989,8 +989,7 @@ class notifier:
             volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
             volume.save()
         else:
-            #FIXME: warn about it?
-            pass
+            log.warn("The guid of the pool %s could not be retrieved", z_name)
 
         self.zfs_inherit_option(z_name, 'mountpoint')
 
@@ -1481,7 +1480,7 @@ class notifier:
             raise MiddlewareError("Operation could not be performed. %s" % msg)
 
         if msg != "":
-            syslog.syslog(syslog.LOG_DEBUG, "Command reports " + msg)
+            log.debug("Command reports %s", msg)
 
     def __smbpasswd(self, username, password):
         """
@@ -1795,12 +1794,11 @@ class notifier:
         return False
 
     def update_firmware(self, path):
-        syslog.openlog('updater', syslog.LOG_CONS | syslog.LOG_PID)
         try:
             cmd1 = '/usr/bin/xzcat %s' % (path, )
             cmd2 = 'sh -x /root/update'
-            syslog.syslog(syslog.LOG_NOTICE,
-                          'Executing: %s | %s' % (cmd1, cmd2, ))
+            # 5 is NOTICE
+            log.log(syslog.LOG_NOTICE, 'Executing: %s | %s', cmd1, cmd2)
             p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
             output = subprocess.check_output(shlex.split(cmd2),
                                              stdin=p1.stdout,
@@ -1809,7 +1807,6 @@ class notifier:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
             os.unlink(path)
-            syslog.closelog()
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def apply_servicepack(self):
@@ -1982,21 +1979,20 @@ class notifier:
         return ret
 
     def delete_pbi(self, plugin_id):
-        from syslog import syslog as S, LOG_DEBUG
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
         c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()
         if not jail_name:
-            S(LOG_DEBUG, "delete_pbi: plugins jail info not in database")
+            log.debug("delete_pbi: plugins jail info not in database")
             return False
         jail_name = jail_name[0]
 
         jail = None
         for j in Jls():
             if j.hostname == jail_name:
-                jail = j 
+                jail = j
                 break
 
         if jail is not None:
@@ -2004,7 +2000,7 @@ class notifier:
                 "WHERE id = :plugin_id", {'plugin_id': plugin_id})
             plugin_pbiname = c.fetchone()
             if not plugin_pbiname: 
-                S(LOG_DEBUG, "delete_pbi: pbi info for %d not in database" % plugin_id)
+                log.debug("delete_pbi: pbi info for %d not in database", plugin_id)
                 return False
             plugin_pbiname = plugin_pbiname[0]
 
@@ -2017,80 +2013,79 @@ class notifier:
                     ret = True
 
                 except Exception, err:
-                    S(LOG_DEBUG, "delete_pbi: unable to delete pbi %d from database (%s)" % (plugin_id, err))
+                    log.debug("delete_pbi: unable to delete pbi %d from database (%s)", plugin_id, err)
                     ret = False
 
         return ret
 
     def delete_plugins_jail(self, jail_id):
-        from syslog import syslog as S, LOG_DEBUG
         (c, conn) = self.__open_db(ret_conn=True)
         ret = False
 
-        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins")
+        log.debug("delete_plugins_jail: stopping plugins")
         self._stop_plugins()
 
-        S(LOG_DEBUG, "delete_plugins_jail: getting plugins id's from the database")
+        log.debug("delete_plugins_jail: getting plugins id's from the database")
         c.execute("SELECT id FROM plugins_plugins")
         plugin_ids = [p[0] for p in c.fetchall()]
         for plugin_id in plugin_ids:
             if not self.delete_pbi(plugin_id):
                 S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugin %d" % plugin_id)
 
-        S(LOG_DEBUG, "delete_plugins_jail: stopping plugins jail")
+        log.debug("delete_plugins_jail: stopping plugins jail")
         self._stop_plugins_jail()
 
-        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        log.debug("delete_plugins_jail: checking if jail stopped")
         if self._started_plugins_jail():
-            S(LOG_DEBUG, "delete_plugins_jail: plugins jail not stopped, forcing")
+            log.debug("delete_plugins_jail: plugins jail not stopped, forcing")
             self._force_stop_jail()
 
-        S(LOG_DEBUG, "delete_plugins_jail: checking if jail stopped")
+        log.debug("delete_plugins_jail: checking if jail stopped")
         if self._started_plugins_jail():
-            S(LOG_DEBUG, "delete_plugins_jail: unable to stop plugins jail")
+            log.debug("delete_plugins_jail: unable to stop plugins jail")
             return False
 
-        S(LOG_DEBUG, "delete_plugins_jail: getting jail info from database")
+        log.debug("delete_plugins_jail: getting jail info from database")
         c.execute("SELECT jail_name, jail_path, plugins_path "
             "FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
         jail_info = c.fetchone()
         if not jail_info:
-            S(LOG_DEBUG, "delete_plugins_jail: plugins jail info not in database")
+            log.debug("delete_plugins_jail: plugins jail info not in database")
             return False
 
         (jail_name, jail_path, plugins_path) = jail_info
         full_jail_path = os.path.join(jail_path, jail_name)
 
-        S(LOG_DEBUG, "delete_plugins_jail: checking jail path in filesystem")
+        log.debug("delete_plugins_jail: checking jail path in filesystem")
         if not os.access(full_jail_path, os.F_OK):
-            S(LOG_DEBUG, "delete_plugins_jail: unable to access %s" % full_jail_path)
+            log.debug("delete_plugins_jail: unable to access %s", full_jail_path)
             return False
 
         cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
-        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
         p.wait()
         if p.returncode != 0:
-            S(LOG_DEBUG, "delete_plugins_jail: unable to chflags on %s" % full_jail_path)
+            log.debug("delete_plugins_jail: unable to chflags on %s", full_jail_path)
             return False
-                   
+
         cmd = "/bin/rm -rf %s" % full_jail_path
-        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
         p.wait()
         if p.returncode != 0:
-            S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s" % full_jail_path)
+            log.debug("delete_plugins_jail: unable to rm -rf %s", full_jail_path)
             return False
 
         pbi_path = "%s/%s" % (plugins_path, "pbi")
         cmd = "/bin/rm -rf %s" % pbi_path
-        S(LOG_DEBUG, "delete_plugins_jail: %s" % cmd)
+        log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
         p.wait()
         if p.returncode != 0:
-            S(LOG_DEBUG, "delete_plugins_jail: unable to rm -rf %s/*" % pbi_path)
- 
-        S(LOG_DEBUG, "delete_plugins_jail: deleting jail from database")
+            log.debug("delete_plugins_jail: unable to rm -rf %s/*", pbi_path)
+
+        log.debug("delete_plugins_jail: deleting jail from database")
         try:
             c.execute("DELETE FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
             c.execute("UPDATE services_services set srv_enabled = 0 WHERE srv_service = 'plugins'")
@@ -2098,17 +2093,17 @@ class notifier:
             ret = True
 
         except Exception, err:
-            S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugins jail from database (%s)" % err)
+            log.debug("delete_plugins_jail: unable to delete plugins jail from database (%s)", err)
             ret = False
 
-        S(LOG_DEBUG, "delete_plugins_jail: returning %s" % ret)
+        log.debug("delete_plugins_jail: returning %s", ret)
         return ret
 
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            p1 = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False)
+            p1 = self.__pipeopen('zpool list -H -o health %s' % str(name))
             if p1.wait() == 0:
                 status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
@@ -2125,7 +2120,7 @@ class notifier:
                     status = search[0].content
 
             else:
-                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % (name, ), log=False)
+                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
                 p1.communicate()
                 if p1.returncode == 0:
                     status = 'HEALTHY'
@@ -3225,8 +3220,7 @@ class notifier:
             AssertionError: sysctlbyname(3) returned an error
         """
 
-        syslog.openlog('middleware', syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_DEBUG, "sysctlbyname: %s" % (name, ))
+        log.debug("sysctlbyname: %s", name)
 
         if value:
             #TODO: set sysctl
