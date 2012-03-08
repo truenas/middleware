@@ -127,7 +127,7 @@ class PluginsForm(ModelForm):
         ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
         jpathname = os.path.join(jpath, jname)
         if ppath == jpath or ppath.startswith(jpathname):
-            raise forms.ValidationError(_("The plugins path cannot be the same or reside within jail path."))
+            raise forms.ValidationError(_("The plugins archive path cannot be a subset of the plugins jail path."))
         return ppath
 
     def clean_jail_ip(self):

@@ -806,8 +806,8 @@ class Plugins(Model):
             verbose_name=_("Jail IP address")
             )
     plugins_path = PathField(
-            verbose_name=_("Plugins Path"),
-            help_text = _("Path to the plugins directory"),
+            verbose_name=_("Plugins archive path"),
+            help_text = _("Path where the plugins are saved after installation"),
             blank=False
             )
 

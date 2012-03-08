@@ -126,9 +126,9 @@ class JailPBIUploadForm(ModelForm):
         pp = cleaned_data['plugins_path'] + "/"
 
         if (jp in pp):
-            self._errors["jail_path"] = self.error_class([_("Jail path cannot contain plugins path.")])
+            self._errors["jail_path"] = self.error_class([_("The plugins jail path cannot be a subset of the plugins archive path.")])
         if (pp in jp):
-            self._errors["plugins_path"] = self.error_class([_("Plugins path cannot contain jail path.")])
+            self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
 
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
