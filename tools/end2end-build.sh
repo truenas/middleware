@@ -5,7 +5,7 @@
 #
 # usage: end2end-build.sh [-Cnr] [-A architecture] [-b branch] [-c cvsup-host] \
 #			  [-f config-file] [-p local-postdir-base] \
-#			  [-t build-tmpdir-template]
+#			  [-t build-tmpdir-template] [-T build-target]
 #
 # NOTES:
 #
@@ -19,6 +19,7 @@
 # -- -r release build.
 # -- Look at `User definable functions' for a list of functions that you will
 #    probably want to override.
+# -- build-target is an option that can be 
 #
 
 # Values you shouldn't change.
@@ -52,7 +53,8 @@ TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 generate_release_notes() {
 	local release_notes_file
 
-	if TMPDIR2=$(mktemp -d tmp.XXXXXX); then
+	if TMPDIR2=$(mktemp -d tmp.XXXXXX)
+	then
 		release_notes_file="$TMPDIR2/README"
 		(
 		 cat ReleaseNotes
@@ -124,7 +126,8 @@ _setup() {
 	tail -n 30 $TMPDIR/pull.log
 	cd $TMPDIR
 	patch_source $TMPDIR
-	if [ -d "$LOCAL_POSTDIR_BASE" ]; then
+	if [ -d "$LOCAL_POSTDIR_BASE" ]
+	then
 		LOCAL_POSTDIR="$LOCAL_POSTDIR_BASE/$(env LC_LANG=C date '+%Y-%m-%d')"
 		sudo mkdir -p "$LOCAL_POSTDIR"
 	else
@@ -137,18 +140,19 @@ _cleanup() {
 }
 
 _post_local_files() {
-	if [ -d "$LOCAL_POSTDIR" ]; then
+	if [ -d "$LOCAL_POSTDIR" ]
+	then
 		_do sudo cp $file* "$LOCAL_POSTDIR"/.
 	fi
 }
 
 _post_images() {
-	local arch file target
+	local arch file build_target
 
 	arch=$1
-	target=$2
+	build_target=$2
 
-	(cd $target/$arch
+	(cd $build_target/$arch
 	 # End-user rebranding; see build/nano_env for more details.
 	 case "$arch" in
 	 amd64)
@@ -158,7 +162,8 @@ _post_images() {
 		arch=x86
 		;;
 	 esac
-	 for file in *.iso *.pbi *.xz; do
+	 for file in *.iso *.pbi *.xz
+	 do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
 		_post_local_files $arch $file*
 		post_remote_files $arch $file*
@@ -166,17 +171,21 @@ _post_images() {
 }
 
 set -e
-while getopts 'A:b:c:Cf:np:rt:T:' _OPTCH; do
+while getopts 'A:b:c:Cf:np:rt:T:' _OPTCH
+do
 	case "$_OPTCH" in
 	A)
 		_ARCH=
-		for _ARCH in $DEFAULT_ARCHS; do
-			if [ "$_ARCH" = "$OPTARG" ]; then
+		for _ARCH in $DEFAULT_ARCHS
+		do
+			if [ "$_ARCH" = "$OPTARG" ]
+			then
 				_ARCH=$OPTARG
 				break
 			fi
 		done
-		if [ -z "$_ARCH" ]; then
+		if [ -z "$_ARCH" ]
+		then
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
 			exit 1
 		fi
@@ -219,17 +228,20 @@ done
 
 : ${ARCHS=$DEFAULT_ARCHS}
 
-for CONFIG_FILE in $CONFIG_FILES; do
+for CONFIG_FILE in $CONFIG_FILES
+do
 	. $CONFIG_FILE
 done
 
-if $CLEAN; then
+if $CLEAN
+then
 	_CLEAN_S='yes'
 else
 	_CLEAN_S='no'
 fi
 
-if $RELEASE_BUILD; then
+if $RELEASE_BUILD
+then
 	export REVISION=
 	_RELEASE_BUILD_S='yes'
 else
@@ -262,43 +274,48 @@ RELEASE=$2
 # report the problem in an intuitive manner and keep on going..
 set +e
 
-for _ARCH in $ARCHS; do
+for _BUILD_TARGET in $BUILD_TARGETS
+do
+	for _ARCH in $ARCHS
+	do
+		_LOG=build-$_ARCH-$_BUILD_TARGET.log
 
-	_LOG=build-$_ARCH.log
+		# Build
+		BUILD="sh build/do_build.sh -t $_BUILD_TARGET"
+		BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
+		BUILD_PASS2_ENV=""
 
-	# Build
-	BUILD="sh build/do_build.sh"
-	BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
-	BUILD_PASS2_ENV=""
+		echo "[$_ARCH:$_BUILD_TARGET] Build started on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
 
-	echo "[$_ARCH] Build started on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
-
-	# Build twice so the resulting image is smaller than the fat image
-	# required for producing ports.
-	# XXX: this should really be done in the nanobsd files to only have to
-	# do this once, but it requires installing world twice.
-	_do sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
-	_EC=$?
-	echo "[$_ARCH] $(tail -n 1 $_LOG)"
-	if [ $_EC -eq 0 ]; then
-		_PASSED_ARCHS="$_PASSED_ARCHS $_ARCH"
-	else
-		tail -n 10 $_LOG | head -n 9
-		CLEAN=false
-	fi
-	echo "[$_ARCH] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
-
-done
-for _BUILD_TARGET in $BUILD_TARGETS; do
-	for ARCH in $_PASSED_ARCHS; do
+		# Build twice so the resulting image is smaller than the fat image
+		# required for producing ports.
+		# XXX: this should really be done in the nanobsd files to only have to
+		# do this once, but it requires installing world twice.
+		_do sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
+		_EC=$?
+		echo "[$_ARCH] $(tail -n 1 $_LOG)"
+		if [ $_EC -eq 0 ]
+		then
+			_PASSED_ARCHS="$_PASSED_ARCHS $_ARCH"
+		else
+			tail -n 10 $_LOG | head -n 9
+			CLEAN=false
+		fi
+		echo "[$_ARCH:$_BUILD_TARGET] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
+	done
+	for ARCH in $_PASSED_ARCHS
+	do
 		_post_images $ARCH $_BUILD_TARGET
 	done
 done
-if $RELEASE_BUILD && [ -n "$_PASSED_ARCHS" ]; then
-	if _RELEASE_NOTES_FILE=$(generate_release_notes); then
+if $RELEASE_BUILD && [ -n "$_PASSED_ARCHS" ]
+then
+	if _RELEASE_NOTES_FILE=$(generate_release_notes)
+	then
 		post_remote_files "" $_RELEASE_NOTES_FILE
 	fi
 fi
-if $CLEAN; then
+if $CLEAN
+then
 	cd /; _cleanup
 fi
