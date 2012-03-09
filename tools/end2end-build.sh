@@ -19,7 +19,8 @@
 # -- -r release build.
 # -- Look at `User definable functions' for a list of functions that you will
 #    probably want to override.
-# -- build-target is an option that can be 
+# -- build-target is an option that can be specified multiple times, and the
+#    implied / ever present build target is os-base.
 #
 
 # Values you shouldn't change.
