@@ -41,20 +41,23 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.http import Http404
 
-from freeadmin.forms import CronMultiple
-from freenasUI.storage.models import MountPoint
-from freenasUI.common.forms import ModelForm, Form
-from freenasUI.system import models
-from freenasUI.middleware.notifier import notifier
-from freenasUI.freeadmin.views import JsonResponse
 from dojango import forms
-import choices
+from freenasUI import choices
+from freenasUI.common.forms import ModelForm, Form
+from freenasUI.freeadmin.forms import CronMultiple
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.notifier import notifier
+from freenasUI.storage.models import MountPoint
+from freenasUI.system import models
+
 
 class FileWizard(FormWizard):
+
     def __init__(self, *args, **kwargs):
         self.templates = kwargs.pop('templates', [])
         self.saved_prefix = kwargs.pop("prefix", '')
         super(FileWizard, self).__init__(*args, **kwargs)
+
     @method_decorator(csrf_protect)
     def __call__(self, request, *args, **kwargs):
         """
@@ -72,7 +75,7 @@ class FileWizard(FormWizard):
         self.extra_context.update({'postpath': request.path})
         current_step = self.determine_step(request, *args, **kwargs)
         self.parse_params(request, *args, **kwargs)
-        previous_form_list = []
+        self.previous_form_list = []
         for i in range(current_step):
             f = self.get_form(i, request.POST, request.FILES)
             if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
@@ -83,7 +86,7 @@ class FileWizard(FormWizard):
                 return self.render_revalidation_failure(request, i, f)
             else:
                 self.process_step(request, f, i)
-                previous_form_list.append(f)
+                self.previous_form_list.append(f)
         if request.method == 'POST':
             form = self.get_form(current_step, request.POST, request.FILES)
         else:
@@ -93,12 +96,13 @@ class FileWizard(FormWizard):
             next_step = current_step + 1
 
             if next_step == self.num_steps():
-                return self.done(request, previous_form_list + [form])
+                return self.done(request, self.previous_form_list + [form])
             else:
                 form = self.get_form(next_step)
                 self.step = current_step = next_step
 
         return self.render(form, request, current_step)
+
     def get_form(self, step, data=None, files=None):
         """
         This is also required to pass request.FILES to the form
@@ -109,6 +113,7 @@ class FileWizard(FormWizard):
             return self.form_list[step](data, files, prefix=self.prefix_for_step(step), initial=self.initial.get(step, None))
         else:
             return super(FileWizard, self).get_form(step, data)
+
     def done(self, request, form_list):
         response = render_to_response('system/done.html', {
             #'form_list': form_list,
@@ -117,6 +122,7 @@ class FileWizard(FormWizard):
         if not request.is_ajax():
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
+
     def get_template(self, step):
         if self.templates:
             for i, tpl in enumerate(self.templates):
@@ -124,15 +130,41 @@ class FileWizard(FormWizard):
                     self.templates[i] = tpl % step
             return self.templates
         return ['system/wizard_%s.html' % step, 'system/wizard.html']
+
     def process_step(self, request, form, step):
         super(FileWizard, self).process_step(request, form, step)
         """
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done(request=request)
+            retval = form.done(request=request,
+                previous_form_list=self.previous_form_list)
             if step == self.num_steps()-1:
                 self.retval = retval
+
+    def render(self, form, request, step, context=None):
+        """
+        IMPORTANT
+        Stole from django to replace Dojango fields
+
+        Renders the given Form object, returning an HttpResponse.
+        """
+        old_data = request.POST
+        prev_fields = []
+        if old_data:
+            hidden = forms.HiddenInput()
+            # Collect all data from previous steps and render it as HTML hidden fields.
+            for i in range(step):
+                old_form = self.get_form(i, old_data)
+                hash_name = 'hash_%s' % i
+                for bf in old_form:
+                    html = bf.as_hidden()
+                    prev_fields.append(
+                        html.replace('type="hidden"',
+                            'type="hidden" data-dojo-type="dijit.form.TextBox"')
+                        )
+                prev_fields.append(hidden.render(hash_name, old_data.get(hash_name, self.security_hash(request, old_form))))
+        return self.render_template(request, form, ''.join(prev_fields), step, context)
 
     def render_template(self, request, *args, **kwargs):
         response = super(FileWizard, self).render_template(request, *args, **kwargs)
@@ -140,17 +172,21 @@ class FileWizard(FormWizard):
         if not request.is_ajax():
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
         return response
+
     def prefix_for_step(self, step):
         "Given the step, returns a Form prefix to use."
         return '%s%s' % (self.saved_prefix, str(step))
 
+
 class SettingsForm(ModelForm):
+
     class Meta:
         model = models.Settings
         widgets = {
             'stg_timezone': forms.widgets.FilteringSelect(),
             'stg_language': forms.widgets.FilteringSelect(),
         }
+
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
@@ -161,6 +197,7 @@ class SettingsForm(ModelForm):
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(label=self.fields['stg_guiaddress'].label)
         self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices())
+
     def clean_stg_guiport(self):
         val = self.cleaned_data.get("stg_guiport")
         if val == '':
@@ -172,11 +209,13 @@ class SettingsForm(ModelForm):
         except ValueError:
             raise forms.ValidationError(_("Number is required."))
         return val
+
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
+
     def done(self, request, events):
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
@@ -194,13 +233,18 @@ class SettingsForm(ModelForm):
                 notifier().start_ssl("nginx")
             events.append("restartHttpd('%s')" % newurl)
 
+
 class NTPForm(ModelForm):
+
     force = forms.BooleanField(label=_("Force"), required=False)
+
     class Meta:
         model = models.NTPServer
+
     def __init__(self, *args, **kwargs):
         super(NTPForm, self).__init__( *args, **kwargs)
         self.usable = True
+
     def clean_ntp_address(self):
         addr = self.cleaned_data.get("ntp_address")
         p1 = subprocess.Popen(["ntpq", "-c", "rv", addr],
@@ -210,27 +254,33 @@ class NTPForm(ModelForm):
         if not re.search(r'version=', data):
             self.usable = False
         return addr
+
     def clean_ntp_maxpoll(self):
         maxp = self.cleaned_data.get("ntp_maxpoll")
         minp = self.cleaned_data.get("ntp_minpoll")
         if not maxp > minp:
             raise forms.ValidationError(_("Max Poll should be higher than Min Poll"))
         return maxp
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("force", False) and not self.usable:
             self._errors['ntp_address'] = self.error_class([_("Server could not be reached. Check \"Force\" to continue regardless.")])
             del cdata['ntp_address']
         return cdata
+
     def save(self):
         super(NTPForm, self).save()
         notifier().start("ix-ntpd")
         notifier().restart("ntpd")
 
+
 class AdvancedForm(ModelForm):
+
     class Meta:
         exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
         model = models.Advanced
+
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.instance._original_adv_motd = self.instance.adv_motd
@@ -240,6 +290,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
+
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:

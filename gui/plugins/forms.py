@@ -36,6 +36,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
+from freenasUI.services.models import Plugins
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
 from freenasUI.account.forms import FilteredSelectField
@@ -55,6 +56,7 @@ class PBIFileWizard(FileWizard):
             events=events,
             )
 
+
 class PluginsForm(ModelForm):
     class Meta:
         model = models.Plugins
@@ -73,7 +75,7 @@ class PBITemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label=_("Place to temporarily place PBI file"), help_text = _("The system will use this place to temporarily store the PBI file before it's installed."), choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
         super(PBITemporaryLocationForm, self).__init__(*args, **kwargs)
-        mp = services.models.Plugins.objects.order_by("-id")
+        mp = Plugins.objects.order_by("-id")
         if mp and notifier().plugins_jail_configured():
             mp = mp[0]
             self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
@@ -106,10 +108,25 @@ class PBIUploadForm(Form):
         notifier().install_pbi()
         notifier().restart("plugins")
 
-class JailPBIUploadForm(ModelForm):
+
+class JailInfoForm(ModelForm):
     class Meta:
-        from freenasUI.services import models
-        model = services.models.Plugins
+        model = Plugins
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        jp = cleaned_data['jail_path'] + "/"
+        pp = cleaned_data['plugins_path'] + "/"
+
+        if (jp in pp):
+            self._errors["jail_path"] = self.error_class([_("The plugins jail path cannot be a subset of the plugins archive path.")])
+        if (pp in jp):
+            self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
+
+        return cleaned_data
+
+
+class JailPBIUploadForm(Form):
 
     pbifile = FileField(
             label=_("Plugins Jail PBI"),
@@ -122,14 +139,6 @@ class JailPBIUploadForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        jp = cleaned_data['jail_path'] + "/"
-        pp = cleaned_data['plugins_path'] + "/"
-
-        if (jp in pp):
-            self._errors["jail_path"] = self.error_class([_("The plugins jail path cannot be a subset of the plugins archive path.")])
-        if (pp in jp):
-            self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
-
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
             with open(filename, 'wb+') as sp:
@@ -146,16 +155,16 @@ class JailPBIUploadForm(ModelForm):
         return cleaned_data
 
     def done(self, *args, **kwargs):
-        cleaned_data = self.cleaned_data
 
-        alias = self.cleaned_data['jail_ip']
+        prev = kwargs['previous_form_list']
+        jailinfo = prev[1]
 
         # Create a plugins service entry
-        pj = services.models.Plugins()
-        pj.jail_path = cleaned_data.get('jail_path')
-        pj.jail_name = cleaned_data.get('jail_name')
-        pj.jail_ip = alias
-        pj.plugins_path = cleaned_data.get('plugins_path')
+        pj = Plugins()
+        pj.jail_path = jailinfo.cleaned_data.get('jail_path')
+        pj.jail_name = jailinfo.cleaned_data.get('jail_name')
+        pj.jail_ip = jailinfo.cleaned_data['jail_ip']
+        pj.plugins_path = jailinfo.cleaned_data.get('plugins_path')
 
         # Install the jail PBI
         if notifier().install_jail_pbi(pj.jail_path, pj.jail_name, pj.plugins_path):

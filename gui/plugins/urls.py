@@ -26,11 +26,11 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from system.forms import FileWizard
 from django.contrib.formtools.wizard import FormWizard
-from plugins.forms import PBIFileWizard, PBITemporaryLocationForm, \
-    PBIUploadForm, JailPBIUploadForm
 
+from freenasUI.plugins.forms import (PBIFileWizard, PBITemporaryLocationForm,
+    PBIUploadForm, JailInfoForm, JailPBIUploadForm)
+from freenasUI.system.forms import FileWizard
 from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
@@ -45,7 +45,7 @@ urlpatterns = patterns('plugins.views',
     url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^jailpbi/$', PBIFileWizard(
-            [PBITemporaryLocationForm, JailPBIUploadForm],
+            [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],
             prefix="jailpbi",
             templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
