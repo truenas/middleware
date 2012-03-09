@@ -26,11 +26,10 @@
 #####################################################################
 import re
 from collections import OrderedDict
-from datetime import datetime, time
+from datetime import datetime
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
 from stat import S_ISDIR
-import types
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -426,7 +425,6 @@ class VolumeImportForm(forms.Form):
 
 class VolumeAutoImportForm(forms.Form):
 
-    #volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
 
     def __init__(self, *args, **kwargs):
@@ -460,13 +458,6 @@ class VolumeAutoImportForm(forms.Form):
             else:
                 devname = "%s [%s]" % (vol['label'],vol['type'])
             diskchoices[vol['label']] = "%s" % (devname,)
-        # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            for part in diskchoices.keys():
-                if part.startswith(rootdev_base.group(0)):
-                    del diskchoices[part]
 
         choices = diskchoices.items()
         return choices
