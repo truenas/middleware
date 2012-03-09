@@ -641,10 +641,15 @@ freenas_custom()
 	# strip binaries (saves spaces on non-debug images).
 	if [ "${DEBUG}" != 1 ]; then
 		pprint 4 "Stripping binaries and libraries"
-		for dir in $(find ${NANO_WORLDDIR}/ -name '*bin' -or -name 'lib' -maxdepth 3); do
+		for dir in $(find ${NANO_WORLDDIR}/usr/local -name '*bin' -or -name 'libexec' -maxdepth 3); do
 			for f in $(find $dir -type f); do
 				strip 2>/dev/null $f || :
 			done
+		done
+		# .so's are the only thing that need to be stripped. The rest
+		# should remain untouched.
+		for f in $(find ${NANO_WORLDDIR}/usr/local/lib -name '*.so' -or -name '*.so.*' -maxdepth 3); do
+			strip 2>/dev/null $f || :
 		done
 	fi
 
