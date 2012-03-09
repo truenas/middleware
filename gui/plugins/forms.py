@@ -24,11 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import os
-
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _, ugettext as __
-from django.shortcuts import render_to_response
 
 from . import models
 from dojango import forms
@@ -39,8 +36,6 @@ from freenasUI.network.models import Alias
 from freenasUI.services.models import Plugins
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
-from freenasUI.account.forms import FilteredSelectField
-from freenasUI import services, choices
 
 
 class PBIFileWizard(FileWizard):
