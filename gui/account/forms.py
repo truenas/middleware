@@ -383,13 +383,13 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             FIELDS = ['bsdusr_password1', 'bsdusr_password2']
             if password_disable:
                 for field in FIELDS:
-                    if cleaned_data.get(field, '') != '':
+                    if field in cleaned_data and cleaned_data.get(field) != '':
                         self._errors[field] = self.error_class([
                             _("Password is disabled, leave this blank")])
                         del cleaned_data[field]
             else:
                 for field in FIELDS:
-                    if cleaned_data.get(field, '') == '':
+                    if field in cleaned_data and cleaned_data.get(field) == '':
                         self._errors[field] = self.error_class([
                             _("This field is required.")])
                         del cleaned_data[field]
