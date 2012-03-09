@@ -34,6 +34,7 @@ TMPDIR=/dev/null
 # Values you can specify via the command-line (or the config file).
 
 BRANCH=trunk
+BUILD_TARGETS="os-base"
 CONFIG_FILES=
 CVSUP_HOST=cvsup1.freebsd.org
 DEFAULT_ARCHS="amd64 i386"
@@ -142,11 +143,12 @@ _post_local_files() {
 }
 
 _post_images() {
-	local arch file
+	local arch file target
 
 	arch=$1
+	target=$2
 
-	(cd obj.$arch
+	(cd $target/$arch
 	 # End-user rebranding; see build/nano_env for more details.
 	 case "$arch" in
 	 amd64)
@@ -156,7 +158,7 @@ _post_images() {
 		arch=x86
 		;;
 	 esac
-	 for file in *.iso *.xz; do
+	 for file in *.iso *.pbi *.xz; do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
 		_post_local_files $arch $file*
 		post_remote_files $arch $file*
@@ -164,7 +166,7 @@ _post_images() {
 }
 
 set -e
-while getopts 'A:b:c:Cf:np:rt:' _OPTCH; do
+while getopts 'A:b:c:Cf:np:rt:T:' _OPTCH; do
 	case "$_OPTCH" in
 	A)
 		_ARCH=
@@ -204,6 +206,9 @@ while getopts 'A:b:c:Cf:np:rt:' _OPTCH; do
 		;;
 	t)
 		TMPDIR_TEMPLATE=$OPTARG
+		;;
+	T)
+		BUILD_TARGETS="$BUILD_TARGETS $OPTARG"
 		;;
 	*)
 		echo "${0##*/}: ERROR: unhandled/unknown option: $_OPTCH"
@@ -284,8 +289,10 @@ for _ARCH in $ARCHS; do
 	echo "[$_ARCH] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
 
 done
-for ARCH in $_PASSED_ARCHS; do
-	_post_images $ARCH
+for _BUILD_TARGET in $BUILD_TARGETS; do
+	for ARCH in $_PASSED_ARCHS; do
+		_post_images $ARCH $_BUILD_TARGET
+	done
 done
 if $RELEASE_BUILD && [ -n "$_PASSED_ARCHS" ]; then
 	if _RELEASE_NOTES_FILE=$(generate_release_notes); then
