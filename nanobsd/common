@@ -336,7 +336,7 @@ generate_avatar_conf()
 # to invoke /bin/sh.
 
 # The name of the project, e.g. FreeNAS.
-AVATAR_PROJECT="$NANO_NAME"
+AVATAR_PROJECT="$NANO_LABEL"
 
 # The website for the avatar project.
 AVATAR_PROJECT_SITE="$AVATAR_PROJECT_SITE"
