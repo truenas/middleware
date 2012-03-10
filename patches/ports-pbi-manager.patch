@@ -1,0 +1,12 @@
+--- ports-mgmt/pbi-manager/Makefile~	2012-03-09 18:58:19.320973235 -0800
++++ ports-mgmt/pbi-manager/Makefile	2012-03-09 19:00:24.162147951 -0800
+@@ -13,7 +13,9 @@
+ MAINTAINER=	kmoore@FreeBSD.org
+ COMMENT=	Push Button Installer Manager
+ 
++.if !defined(WITHOUT_X11)
+ RUN_DEPENDS=	xdg-desktop-icon:${PORTSDIR}/devel/xdg-utils
++.endif
+ 
+ USE_BZIP2=	yes
+ NO_BUILD=	yes
