@@ -29,6 +29,9 @@ import syslog
 class MiddlewareError(Exception):
     def __init__(self, value):
         self.value = value
+        if not value:
+            raise ValueError('You deserve to be shot for not providing an '
+                             'actionable error message mister developer')
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_ERR, str(self))
         syslog.closelog()
