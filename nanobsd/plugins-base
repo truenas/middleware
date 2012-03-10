@@ -113,6 +113,26 @@ add_port dns/libidn
 add_port ftp/wget
 add_port devel/py-lockfile
 add_port devel/py-daemon
+add_port ports-mgmt/pbi-manager WITHOUT_X11=y
+
+setup_nanobsd_etc()
+{
+	(
+	cd $NANO_WORLDDIR
+
+	# Create an empty fstab
+	: > etc/fstab
+
+	# XXX: put this in dist/
+	cat > etc/rc.conf <<EOF
+sendmail_enable="NONE"
+syslogd_flags="-ss"
+pbid_enable="YES"
+EOF
+
+	)
+
+}
 
 last_orders()
 {
