@@ -406,8 +406,8 @@ class pbi_pipe(object):
         syslog(LOG_DEBUG, "pbi_pipe.__init__: out = %s" % self.__out)
 
         if self.__pipe.returncode != 0:
-            self.error = \
-                'The command %s failed: "%s"' % (cmd, self.__stderr.read(), )
+            self.error = 'The command %s failed: "%s"' % \
+                             (cmd, self.__stderr.read() or self.__out, )
 
         self.returncode = self.__pipe.returncode
         syslog(LOG_DEBUG, "pbi_pipe.__init__: leave")
