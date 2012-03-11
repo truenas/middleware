@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-01-16 15:51+0200\n"
-"Last-Translator: deagle <gopal9a@yahoo.de>\n"
+"PO-Revision-Date: 2012-03-10 17:39+0200\n"
+"Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -465,22 +465,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Çevrimdışı acil test (Sadece ATA mod)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
-msgstr "Rsync Modül"
+msgstr "Rsync Modülü"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Rsync Modül"
+msgstr "SSH üzerinden Rsync"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Bas"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Çek"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -556,7 +554,7 @@ msgstr "Kullanıcıyı kilitle"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Kullanıcı için yeni bir birincil grup oluştur"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -567,9 +565,8 @@ msgid "SSH Public Key"
 msgstr "SSH Genel Anahtarı"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Ev dizini"
+msgstr "Ev dizini modu"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -741,9 +738,8 @@ msgid "Account"
 msgstr "Hesap"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Hesap"
+msgstr "Yönetici Hesabı"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -816,7 +812,7 @@ msgstr "Kapat"
 #: freeadmin/navtree.py:395
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "%s boş veri döndürüldü"
 
 #: freeadmin/navtree.py:398
 #, python-format
@@ -871,7 +867,7 @@ msgstr "NIC (Ağ arabirim kontrol kartı)"
 #: network/forms.py:344
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Aynı IP adresi (%s) ile birden çok arabirimi yapılandıramazsınız"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -1189,14 +1185,12 @@ msgstr ""
 "geçici olarak burayı kullanabilirsiniz."
 
 #: plugins/forms.py:87
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "Kurulacak yeni imaj"
+msgstr "Kurulan PBI dosyası"
 
 #: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "İmaj için SHA256 değeri "
+msgstr "PBI dosyası için SHA256 değeri "
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
@@ -1216,105 +1210,95 @@ msgid "Plugins path cannot contain jail path."
 msgstr ""
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "Alan adı"
+msgstr "Eklenti adı"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Eklentinin adı"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
-msgstr ""
+msgstr "Eklentinin ad bilgisi"
 
 #: plugins/models.py:43
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Eklentinin ad bilgisi"
 
 #: plugins/models.py:48
 msgid "Plugin version"
-msgstr ""
+msgstr "Eklenti sürümü"
 
 #: plugins/models.py:49
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "Bağlantının şifreleme türü"
+msgstr "Eklentinin sürümü"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Eklenti mimarisi"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Alan adı"
+msgstr "Eklentinin unix adı"
 
 #: plugins/models.py:61
 msgid "UName of the plugin"
-msgstr ""
+msgstr "Eklentinin Unix Adı"
 
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin view"
-msgstr ""
+msgstr "Eklenti görünümü"
 
 #: plugins/models.py:72 plugins/models.py:73
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin icon"
-msgstr ""
+msgstr "Eklenti simgesi"
 
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Etkin eklenti"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "Kontrolör IP adresi"
+msgstr "Eklenti IP adresi"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "TCP bağlantı noktası"
+msgstr "Eklenti TCP bağlantı noktası"
 
 #: plugins/models.py:96 plugins/models.py:97
-#, fuzzy
 msgid "Path to plugin"
-msgstr "Bağlantı noktası yolu"
+msgstr "Eklentinin yolu"
 
 #: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "Eklentiler"
 
 #: plugins/nav.py:40
-#, fuzzy
 msgid "Control Plugins"
-msgstr "Kontrol Hizmetleri"
+msgstr "Eklenti Kontrolü"
 
 #: plugins/nav.py:48
-#, fuzzy
 msgid "Configure Plugins"
-msgstr "Rsyncd Yapılandırma"
+msgstr "Eklentileri Yapılandırma"
 
 #: plugins/views.py:69
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s başarıyla yüklendi"
+msgstr "Eklenti başarıyla güncellendi."
 
 #: plugins/views.py:95
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "Birim başarıyla eklendi."
+msgstr "Eklenti başarıyla silindi."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Eklenti kaldırılamıyor."
 
 #: services/forms.py:65
 msgid "This is not a valid mask"
@@ -1345,14 +1329,12 @@ msgid "The plugins path cannot be the same or reside within jail path."
 msgstr ""
 
 #: services/forms.py:139
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Bu gid ile bir grup zaten var."
+msgstr "Bu IP zaten mevcut."
 
 #: services/forms.py:146
-#, fuzzy
 msgid "The Plugins service failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "Eklenti hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:151
 msgid "File Permission"
@@ -1754,9 +1736,8 @@ msgid "Auxiliary parameters"
 msgstr "Yardımcı parametreler"
 
 #: services/models.py:138
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Bu parametreler smb.conf'un [Global] bölümüne eklenmiştir"
+msgstr "Bu parametreler smb.conf [Global] bölümüne eklendi."
 
 #: services/models.py:141
 msgid "Enable home directories"
@@ -1782,18 +1763,16 @@ msgid "Home directories"
 msgstr "Ev dizinleri"
 
 #: services/models.py:154
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "Yardımcı parametreler"
+msgstr "Evlerin yardımcı parametreleri"
 
 #: services/models.py:156
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Bu parametreler smb.conf dosyasında [Share] bölümüne eklenir"
+msgstr "Bu parametreler smb.conf dosyasında [homes] bölümüne eklenir"
 
 #: services/models.py:159
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix Uzantıları"
 
 #: services/models.py:161
 msgid ""
@@ -1814,24 +1793,18 @@ msgid "Minimum AIO read size"
 msgstr "En küçük AIO okuma boyutu"
 
 #: services/models.py:171
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
-msgstr ""
-"İstek boyutu bu değerden büyükse Samba uyumsuz okuyacaktır. Varsayılan okuma "
-"boyutu 1 dir."
+msgstr "İstek boyutu bu değerden büyükse Samba uyumsuz okuyacaktır."
 
 #: services/models.py:176
 msgid "Minimum AIO write size"
 msgstr "En küçük AIO yazma boyutu"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
-msgstr ""
-"İstek boyutu bu değerden büyükse Samba uyumsuz yazacaktır. Varsayılan yazma "
-"boyutu 1 dir."
+msgstr "İstek boyutu bu değerden büyükse Samba uyumsuz yazacaktır."
 
 #: services/models.py:181
 msgid "Zeroconf share discovery"
@@ -2126,14 +2099,12 @@ msgid "Portal"
 msgstr "Portal"
 
 #: services/models.py:500
-#, fuzzy
 msgid "IP Address"
-msgstr "IPv4 adresi"
+msgstr "IP adresi"
 
 #: services/models.py:512
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portal"
+msgstr "Portal IP"
 
 #: services/models.py:522 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2306,7 +2277,7 @@ msgstr "Güncelleme süresi"
 
 #: services/models.py:743
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Saniye cinsinden zaman. Standardı 1 dakika kadardır."
 
 #: services/models.py:747
 msgid "Forced update period"
@@ -2346,12 +2317,11 @@ msgstr "E-posta adresi"
 
 #: services/models.py:784
 msgid "Plugins Path"
-msgstr ""
+msgstr "Eklentilerin Yolu"
 
 #: services/models.py:785
-#, fuzzy
 msgid "Path to the plugins directory"
-msgstr "Bu yol bir dizin değil."
+msgstr "Eklentiler dizinin yolu"
 
 #: services/models.py:805
 msgid "Location"
@@ -2816,27 +2786,24 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Eski biçimde çalışma grubu veya etki alanı adı, örneğin WORKGROUP"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Tekrarlanan GID dosyalarına izin ver"
+msgstr "İzin Verilen Güvenilir Alan Adları"
 
 #: services/models.py:1182
 msgid "Administrator Name"
 msgstr "Yönetici adı"
 
 #: services/models.py:1183
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Alan Adı Yönetici Hesabının Parolası."
+msgstr "Alan adı yöneticinin hesap adı"
 
 #: services/models.py:1187
 msgid "Administrator Password"
 msgstr "Yönetci parolası"
 
 #: services/models.py:1188
-#, fuzzy
 msgid "Domain Administrator account password."
-msgstr "Alan Adı Yönetici Hesabının Parolası."
+msgstr "Alan adı yöneticisinin parolası."
 
 #: services/models.py:1192 services/models.py:1193
 #: templates/services/index.html:18
@@ -3196,9 +3163,9 @@ msgid "Confirm Share Password"
 msgstr "Paylaşılan Parola Onayı"
 
 #: sharing/forms.py:123
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Böyle bir yol mevcut değil."
+msgstr "%s yolu mevcut değil"
 
 #: sharing/forms.py:140
 msgid "The field is a not a valid IP address or network"
@@ -3264,6 +3231,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Eğer doğruysa paylaşıma bağlanmak için parolaya gerek yoktur. Konuk hesabı "
+"olanlar ayrıcalıklı olacaktır."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3314,14 +3283,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Bu parametreler smb.conf dosyasında [Share] bölümüne eklenir"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Windows Paylaşımı"
+msgstr "Windows (CIFS) Paylaşımı"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Windows Paylaşımları"
+msgstr "Windows (CIFS) Paylaşımları"
 
 #: sharing/models.py:114
 msgid ""
@@ -3505,18 +3472,17 @@ msgstr ""
 "paylar için tavsiye edilmez."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
-msgstr "AppleDouble yok"
+msgstr ".AppleDouble Etkinleştir"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
-"AppleDouble dizinleri otomatik olarak bunun oluşturulmasını engeller. Mac "
-"bilgisayarlar tarafından erişilen dosyalar için bu seçenek kullanılmalıdır."
+"Bu seçenek etkinleştirilirse .AppleDouble dizinlerinin otomatik olarak "
+"oluşturulmasını sağlayacaktır. Mac bilgisayarlar tarafından erişilen "
+"dosyalar için bu seçenek kullanılmalıdır."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3582,14 +3548,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "AFP3 unix ayrıcalıklarını kullan."
 
 #: sharing/models.py:228
-#, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "AFP Paylaşımı"
+msgstr "Apple (AFP) Paylaşımı"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "AFP Paylaşımları"
+msgstr "Apple (AFP) AFP Paylaşımları"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3667,14 +3631,12 @@ msgid "Group to map all users to"
 msgstr "Gruptan tüm harita kullanıcılarına"
 
 #: sharing/models.py:311
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "NFS Paylaşımı Düzenle"
+msgstr "Unix (NFS) Paylaşımı"
 
 #: sharing/models.py:312
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "NFS Paylaşımları"
+msgstr "Unix (NFS) Paylaşımları"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3703,9 +3665,8 @@ msgid "Specify custom path"
 msgstr "Özel yol belirt"
 
 #: storage/forms.py:123
-#, fuzzy
 msgid "Volume add"
-msgstr "Birim adı"
+msgstr "Birim ekle"
 
 #: storage/forms.py:131
 msgid ""
@@ -3722,9 +3683,8 @@ msgstr ""
 "içerebilir."
 
 #: storage/forms.py:188
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Bu ada sahip bir grup zaten var."
+msgstr "Bu ada sahip bir birim zaten var."
 
 #: storage/forms.py:202
 msgid "Path does not exist."
@@ -3922,9 +3882,8 @@ msgid "Remote hostname"
 msgstr "Uzak ana bilgisayar adı"
 
 #: storage/forms.py:904 storage/models.py:604
-#, fuzzy
 msgid "Remote port"
-msgstr "Uzak ana bilgisayar"
+msgstr "Uzak bağlantı noktası"
 
 #: storage/forms.py:905 storage/models.py:608
 msgid "Remote hostkey"
@@ -3972,7 +3931,7 @@ msgstr "Birim"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Eşik günler"
 
 #: storage/models.py:190
 msgid "Determine how many days shall be between scrubs"
@@ -4082,13 +4041,12 @@ msgid "Weekends"
 msgstr "Hafta sonları"
 
 #: storage/models.py:323
-#, fuzzy
 msgid "Multipath name"
-msgstr "Modül adı"
+msgstr "Çoklu yol adı"
 
 #: storage/models.py:329
 msgid "Multipath member"
-msgstr ""
+msgstr "Çoklu yol üyesi"
 
 #: storage/models.py:342 storage/views.py:226
 msgid "Transfer Mode"
@@ -4115,9 +4073,8 @@ msgid "S.M.A.R.T. extra options"
 msgstr "Ekstra S.M.A.R.T. seçenekleri"
 
 #: storage/models.py:425
-#, fuzzy
 msgid "Disks"
-msgstr "Disk"
+msgstr "Diskler"
 
 #: storage/models.py:438
 msgid "Mount Point"
@@ -4160,9 +4117,8 @@ msgid "Remote Host"
 msgstr "Uzak ana bilgisayar"
 
 #: storage/models.py:636
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Uzak ZFS dosya sistemi"
+msgstr "Uzak ZFS dosya sistemi adı"
 
 #: storage/models.py:637
 msgid ""
@@ -4215,18 +4171,16 @@ msgid "Begin"
 msgstr "Başlangıç"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Anlık durum görüntüsünü tutmak için"
+msgstr "Önce anlık durum görüntüsünü yapmayın"
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Son"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Anlık durum görüntüsünü tutmak için"
+msgstr "Sonra anlık durum görüntüsünü yapmayın"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4263,9 +4217,8 @@ msgid "Storage"
 msgstr "Depolama"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "Tüm Anlık Durum Görüntülerini Göster"
+msgstr "Anlık Durum Görüntülerini Göster"
 
 #: storage/nav.py:34
 #, fuzzy
