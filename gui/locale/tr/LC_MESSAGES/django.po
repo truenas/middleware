@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-10 17:39+0200\n"
+"PO-Revision-Date: 2012-03-12 08:57+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -793,9 +793,9 @@ msgid "Add %s"
 msgstr "%s Ekle "
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "%s Tümünü Göster "
+msgstr "%s Göster "
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
@@ -817,7 +817,7 @@ msgstr "%s boş veri döndürüldü"
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "%(url) alınamadı: %(error)"
 
 #: freeadmin/navtree.py:432
 #, fuzzy, python-format
@@ -938,9 +938,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "LAGG içindeki Fiziksel NIC'lar"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fiziksel NIC (ethernet kartı)"
+msgstr "LAGG Fiziksel NIC (ethernet kartı)"
 
 #: network/forms.py:298
 #, python-format
@@ -1162,27 +1161,24 @@ msgid "Create Link Aggregation"
 msgstr "Bağlantı Birleştir"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "Tüm Birleştirilmiş Bağlantıları Göster"
+msgstr "Birleştirilmiş Bağlantıları Göster"
 
 #: network/views.py:188
 msgid "LAGG successfully added"
 msgstr "LAGG başarıyla eklendi"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid "Place to temporarily place PBI file"
-msgstr "Geçici olarak aygıt yazılım dosyasının yükleneceği bir yer seçin"
+msgstr "Geçici olarak yerleştirilecek PBI dosyasının yükleneceği yer"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"Sisteme uygulamadan önce aygıt yazılımı güncelleme dosyasını saklamak için "
-"geçici olarak burayı kullanabilirsiniz."
+"Sisteme uygulamadan önce PBI dosyasını saklamak için geçici olarak burayı "
+"kullanabilirsiniz."
 
 #: plugins/forms.py:87
 msgid "PBI file to be installed"
@@ -1199,15 +1195,15 @@ msgstr "Geçersiz toplama sağlaması"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Jail PBI Eklentileri"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "Jail yolu eklentilerin yolunu içeremez."
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "Eklentilerin yolu jail yolunu içeremez."
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
 msgid "Plugin name"
@@ -1326,7 +1322,7 @@ msgstr "NFS hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:130
 msgid "The plugins path cannot be the same or reside within jail path."
-msgstr ""
+msgstr "Eklentilerin yolu aynı olmaz veya jail yolu içinde bulunamaz."
 
 #: services/forms.py:139
 msgid "This IP already exists."
