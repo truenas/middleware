@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+import logging
 import os
 import re
 import subprocess
@@ -32,6 +33,11 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common import humanize_size
+
+log = logging.getLogger('middleware.zfs')
+
+ZPOOL_NAME_RE = r'[a-z][a-z0-9_\-\.]+'
+
 
 def _is_vdev(name):
     """
