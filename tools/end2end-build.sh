@@ -25,6 +25,7 @@
 
 # Values you shouldn't change.
 
+BUILD_ENV_COMMON=
 CLEAN=true
 # Define beforehand to work around shell bugs.
 LOCAL_POSTDIR=/dev/null
@@ -243,7 +244,7 @@ fi
 
 if $RELEASE_BUILD
 then
-	export REVISION=
+	BUILD_ENV_COMMON="$BUILD_ENV_COMMON REVISION="
 	_RELEASE_BUILD_S='yes'
 else
 	_RELEASE_BUILD_S='no'
@@ -283,8 +284,8 @@ do
 
 		# Build
 		BUILD="sh build/do_build.sh -t $_BUILD_TARGET"
-		BUILD_PASS1_ENV="FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
-		BUILD_PASS2_ENV=""
+		BUILD_PASS1_ENV="$BUILD_ENV_COMMON FREEBSD_CVSUP_HOST=$CVSUP_HOST PACKAGE_PREP_BUILD=1"
+		BUILD_PASS2_ENV="$BUILD_ENV_COMMON"
 
 		echo "[$_ARCH:$_BUILD_TARGET] Build started on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
 
