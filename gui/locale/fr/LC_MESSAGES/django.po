@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-03-07 20:09+0200\n"
+"PO-Revision-Date: 2012-03-12 23:08+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -3601,7 +3601,6 @@ msgid "Use AFP3 unix privileges."
 msgstr "Utiliser les privilèges unix d'AFP3."
 
 #: sharing/models.py:228
-#, fuzzy
 msgid "Apple (AFP) Share"
 msgstr "Partage Apple (AFP)"
 
@@ -4191,10 +4190,13 @@ msgid "Remote ZFS filesystem name"
 msgstr "Nom du système de fichiers ZFS distant"
 
 #: storage/models.py:637
+#, fuzzy
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : "
+"pool/dataset et non le point de montage ou le chemin du système de fichier"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4241,18 +4243,16 @@ msgid "Begin"
 msgstr "Début"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Garder l'instantané pendant"
+msgstr "Ne pas faire d'instantané avant"
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Fin"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Garder l'instantané pendant"
+msgstr "Ne pas faire d'instantané après"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4289,20 +4289,17 @@ msgid "Storage"
 msgstr "Stockage"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
 msgstr "Voir les instantanés"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Voir les groupes"
+msgstr "Voir les nettoyages ZFS"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "Nom du volume"
+msgstr "Gestionnaire de volumes"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4317,8 +4314,9 @@ msgstr "Voir les disques"
 
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
+#, fuzzy
 msgid "View Multipaths"
-msgstr ""
+msgstr "Voir les multipaths"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4326,7 +4324,6 @@ msgid "Auto Import Volume"
 msgstr "Import automatique de volume"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
 msgstr "Voir les volumes"
 
@@ -4360,7 +4357,6 @@ msgid "Volume successfully added."
 msgstr "Volume ajouté avec succès."
 
 #: storage/views.py:226
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Options S.M.A.R.T. supplémentaires"
 
@@ -4446,9 +4442,8 @@ msgid "Disk has been removed."
 msgstr "Le disque a été supprimé."
 
 #: storage/views.py:633
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "Le volume a été exporté avec succès"
+msgstr "Le volume a été détaché avec succès"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
@@ -4468,7 +4463,7 @@ msgstr "Ce nombre est requis."
 
 #: system/forms.py:198
 msgid "Force"
-msgstr ""
+msgstr "Forcer"
 
 #: system/forms.py:217
 msgid "Max Poll should be higher than Min Poll"
@@ -4477,6 +4472,7 @@ msgstr ""
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
+"Le serveur ne peut être joint. Cocher \"Forcer\" pour continuer malgré tout."
 
 #: system/forms.py:391
 msgid "Place to temporarily place firmware file"
@@ -4519,6 +4515,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Pour utiliser rsync via SSH, vous avez besoin d'un utilisateur avec une<br "
+"/>clé publique (DSA/ECDSA/RSA) de configurée dans son répertoire personnel."
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
@@ -4553,43 +4551,56 @@ msgid "Settings"
 msgstr "Paramètres"
 
 #: system/models.py:88 templates/system/ntpserver.html:5
-#, fuzzy
 msgid "Address"
-msgstr "Adresse IPv4"
+msgstr "Adresse"
 
 #: system/models.py:92 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "Rafale"
 
 #: system/models.py:94
+#, fuzzy
 msgid ""
 "When the server is reachable, send a burst of eight packets instead of the "
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Lorsque le serveur est accessible, envoyer une rafale de huit paquets au "
+"lieu d'un seul habituellement. Ceci est conçu dans le but d'améliorer la "
+"qualité de la comptabilisation du temps avec les commandes et adresses du "
+"serveur."
 
 #: system/models.py:97
+#, fuzzy
 msgid "IBurst"
-msgstr ""
+msgstr "IRafale"
 
 #: system/models.py:99
+#, fuzzy
 msgid ""
 "When the server is unreachable, send a burst of eight packets instead of the "
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"Lorsque le serveur est inaccessible, envoyer une rafale de huit paquets au "
+"lieu d'un seul habituellement. Ceci est conçu dans le but d'accélérer "
+"l'acquisition de la première synchronisation avec les commandes et adresses "
+"du serveur."
 
 # Chiffrement bittorrent
 #: system/models.py:102 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "Préféré"
 
 #: system/models.py:104
+#, fuzzy
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Marquer le serveur comme préféré. Toutes autres choses étant égalent, cet "
+"hôte sera choisi pour la synchronisation parmi une liste d'hôtes "
+"fonctionnant correctement."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"

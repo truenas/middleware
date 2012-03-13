@@ -3,552 +3,556 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2012-03-13 10:59+0200\n"
+"Last-Translator: Nick <jjstccean@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: af\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr ""
+msgstr "Vlakte"
 
 #: choices.py:41 choices.py:553 system/models.py:298
 #: templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:42 choices.py:554
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:47
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:48
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:53 choices.py:223
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Altyd Op"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Gestremd"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Vlak 1 - Minimum krag gebruik met Standby (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Level 64 - Intermediêre kraggebruik met Standby"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Vlak 127 - Intermediêre kraggebruik met Standby"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
+msgstr "Vlak 128 - Minimum krag gebruik sonder Standby (geen spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "Vlak 192 - Intermediêre kraggebruik sonder Standby"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Vlak 254 - maksimum prestasie, maksimum krag gebruik"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Medium"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Maksimum"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr ""
+msgstr "Januarie"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr ""
+msgstr "Februarie"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr ""
+msgstr "Maart"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr ""
+msgstr "April"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr ""
+msgstr "Mei"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr ""
+msgstr "Junie"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr ""
+msgstr "Julie"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr ""
+msgstr "Augustus"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr ""
+msgstr "Setember"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr ""
+msgstr "Oktober"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr ""
+msgstr "November"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr ""
+msgstr "Desember"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr ""
+msgstr "Maandag"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr ""
+msgstr "Dinsdag"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr ""
+msgstr "Woensdag"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr ""
+msgstr "Donderdag"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr ""
+msgstr "Vrydag"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr ""
+msgstr "Saterdag"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr ""
+msgstr "Sondag"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anoniem"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Plaaslike Gebruiker"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normaal"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Vol"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Ontfout"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Default"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "Geen geval vou"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Kleinletters name in albei rigtings"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Kliënt sien klein letters, server sien hoofletters"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Kliënt sien hoofletters, bediener sien kleinletters"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Lêer"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Toestel"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Deel"
 
 #: choices.py:209 storage/models.py:424 system/models.py:628
 #: templates/storage/autoimport.html:5 templates/storage/import.html:18
 #: templates/storage/wizard.html:114
 msgid "Disk"
-msgstr ""
+msgstr "Skyf"
 
 #: choices.py:217
 msgid "read-write"
-msgstr ""
+msgstr "lees-en skryf"
 
 #: choices.py:218
 msgid "read-only"
-msgstr ""
+msgstr "net lees"
 
 #: choices.py:222 choices.py:228 services/forms.py:532 services/forms.py:534
 #: services/forms.py:912 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
-msgstr ""
+msgstr "Geen"
 
 #: choices.py:224
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:225
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Mutual CHAP"
 
 #: choices.py:247
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS bereik lae battery"
 
 #: choices.py:248
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS gaan op die battery"
 
 #: choices.py:251
 msgid "Preferred"
-msgstr ""
+msgstr "Voorkeur"
 
 #: choices.py:252
 msgid "Tolerated"
-msgstr ""
+msgstr "Geduld"
 
 #: choices.py:253
 msgid "Required"
-msgstr ""
+msgstr "Vereiste"
 
 #: choices.py:280 choices.py:286
 msgid "Inherit"
-msgstr ""
+msgstr "Beërwe"
 
 #: choices.py:281
 msgid "On"
-msgstr ""
+msgstr "Op"
 
 #: choices.py:282 choices.py:287 choices.py:552
 msgid "Off"
-msgstr ""
+msgstr "Af"
 
 #: choices.py:288
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (aanbevole)"
 
 #: choices.py:289
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (default vlak, 6)"
 
 #: choices.py:290
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (vinnigste)"
 
 #: choices.py:291
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (maksimum, stadig)"
 
 #: choices.py:485
 msgid "Hour(s)"
-msgstr ""
+msgstr "Uur(e)"
 
 #: choices.py:486
 msgid "Day(s)"
-msgstr ""
+msgstr "Day(s)"
 
 #: choices.py:487
 msgid "Week(s)"
-msgstr ""
+msgstr "Week(s)"
 
 #: choices.py:488
 msgid "Month(s)"
-msgstr ""
+msgstr "Maand(e)"
 
 #: choices.py:489
 msgid "Year(s)"
-msgstr ""
+msgstr "Jaar(e)"
 
 #: choices.py:493 storage/models.py:262 storage/models.py:287
 #: system/models.py:383 system/models.py:408 system/models.py:585
 #: system/models.py:606 system/models.py:672 system/models.py:693
 msgid "Everyday"
-msgstr ""
+msgstr "Elkedag"
 
 #: choices.py:494
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Elke gekose weeksdag"
 
 #: choices.py:500
 msgid "Read-only"
-msgstr ""
+msgstr "Lees-alleenlik"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr ""
+msgstr "Skryf-alleenlik"
 
 #: choices.py:502
 msgid "Read and Write"
-msgstr ""
+msgstr "Lees en Skrywe"
 
 #: choices.py:506 choices.py:507
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s minutes"
 
 #: choices.py:508
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s hour"
 
 #: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s hours"
 
 #: choices.py:514
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s day"
 
 #: choices.py:515
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s week"
 
 #: choices.py:519
 msgid "Never - Check the device regardless of its power mode"
 msgstr ""
+"Moet nooit - die Toestel nagaan, tensy bevestiging van krag beheer toestand"
 
 #: choices.py:520
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Slaap - Kyk op die toestel, Tensy dit is in slaapstand is"
 
 #: choices.py:521
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Kyk op die toestel, tensy dit in die slaap of standby-af is"
 
 #: choices.py:522
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Luier - Gaan die toestel na, tensy dit aan die SLAAP, STANDBY of LUIER "
+"posisie is"
 
 #: choices.py:526
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Lang Self-toets"
 
 #: choices.py:527
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kort Self-toets"
 
 #: choices.py:528
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Vervoer Self-toets(ATA alleenlik)"
 
 #: choices.py:529
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Offline Onmiddelike Toets (ATA alleenlik)"
 
 #: choices.py:558
 msgid "Rsync module"
-msgstr ""
+msgstr "Resync module"
 
 #: choices.py:559
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Resync oor SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Druk"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Trek"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Jou naam mag nie begin met 'n \"-\""
 
 #: account/forms.py:54
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Die karakter $ word slegs toegelaat as die finale karakter"
 
 #: account/forms.py:61
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Jou naam bevat ongeldige karakters (% s)."
 
 #: account/forms.py:70
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Jou volle naam bevat ongeldige karakters (%S)."
 
 #: account/forms.py:120 templates/storage/volumes.html:61
 msgid "Available"
-msgstr ""
+msgstr "Beskikbaar"
 
 #: account/forms.py:171
 msgid "Selected"
-msgstr ""
+msgstr "Gekies"
 
 #: account/forms.py:199 account/forms.py:225 account/forms.py:456
 #: account/models.py:88 services/models.py:733 services/models.py:1047
 #: system/models.py:224 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr ""
+msgstr "Gebruiksnaam"
 
 #: account/forms.py:200
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
+msgstr "Vereis. 16 karakters of minder. Letters, syfers en /-/ _ alleenlik."
 
 #: account/forms.py:201
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
+msgstr "Hierdie waarde kan alleenlik letters, syfers en /-/ _ karakters bevat."
 
 #: account/forms.py:228 account/forms.py:457 services/models.py:737
 #: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr ""
+msgstr "Wagwoord"
 
 #: account/forms.py:232 account/forms.py:458 system/forms.py:273
 msgid "Password confirmation"
-msgstr ""
+msgstr "Wagwoord bevestiging"
 
 #: account/forms.py:234 account/forms.py:459 system/forms.py:274
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Tik dieselfde wagwoord as hierbo, vir verifiëring."
 
 #: account/forms.py:237 account/forms.py:500 account/models.py:114
 #: freeadmin/navtree.py:371 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:241 account/forms.py:498
 msgid "Disable password logins"
-msgstr ""
+msgstr "Skakel wagwoord logins"
 
 #: account/forms.py:243 account/forms.py:499
 msgid "Lock user"
-msgstr ""
+msgstr "Sluit gebruiker"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Skep 'n nuwe premêre groep vir die gebruiker"
 
 #: account/forms.py:248
 msgid "Primary Group"
-msgstr ""
+msgstr "Primêre Groep"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Openbare Sleutel"
 
 #: account/forms.py:256
 msgid "Home Directory Mode"
@@ -556,15 +560,15 @@ msgstr ""
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Hulp groepe"
 
 #: account/forms.py:318
 msgid "A user with that uid already exists."
-msgstr ""
+msgstr "'N gebruiker met dié UID bestaan ​​reeds."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "'N gebruiker met die gebruikersnaam bestaan ​​reeds."
 
 #: account/forms.py:337 storage/forms.py:223 system/forms.py:302
 #: system/forms.py:308 system/forms.py:313 system/forms.py:545
@@ -576,7 +580,7 @@ msgstr ""
 #: services/forms.py:284 services/forms.py:381 sharing/forms.py:98
 #: system/forms.py:317
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Die twee wagwoord velde is nie ooreen nie."
 
 #: account/forms.py:351
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -598,7 +602,7 @@ msgstr ""
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
 #: system/forms.py:423 system/forms.py:451
 msgid "This field is required."
-msgstr ""
+msgstr "Hierdie geliasseer word vereis"
 
 #: account/forms.py:562
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -618,15 +622,15 @@ msgstr ""
 
 #: account/forms.py:675
 msgid "Member users"
-msgstr ""
+msgstr "Lid gebruikers"
 
 #: account/forms.py:720
 msgid "New password"
-msgstr ""
+msgstr "Nuwe wagwoord"
 
 #: account/forms.py:721
 msgid "New password confirmation"
-msgstr ""
+msgstr "Nuwe wagwoord bevestiging"
 
 #: account/forms.py:746
 msgid "Change root password as well"
@@ -634,11 +638,11 @@ msgstr ""
 
 #: account/forms.py:753
 msgid "Old password"
-msgstr ""
+msgstr "Ou wagwoord"
 
 #: account/forms.py:770
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Jou ou wagwoord is nie korrek nie. Voer dit weer."
 
 #: account/forms.py:778
 msgid "Do you want to delete all users with this primary group?"
@@ -649,17 +653,17 @@ msgstr ""
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr ""
+msgstr "Groep ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Groep Naam"
 
 #: account/models.py:49 account/models.py:171 services/models.py:1339
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
-msgstr ""
+msgstr "Groep"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
@@ -668,46 +672,46 @@ msgstr ""
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Groep% s is gebou in en kan nie geskrap word nie!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr ""
+msgstr "Gebruiker ID"
 
 #: account/models.py:87
 msgid "User &"
-msgstr ""
+msgstr "Gebruiker &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX wagwoord"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB wagwoord"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primêre Groep ID"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr ""
+msgstr "Huis Gids"
 
 #: account/models.py:118
 msgid "Full Name"
-msgstr ""
+msgstr "Volle Naam"
 
 #: account/models.py:125 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr ""
+msgstr "E-pos"
 
 #: account/models.py:130 account/models.py:175 services/models.py:567
 #: services/models.py:1332 system/models.py:306 system/models.py:495
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
-msgstr ""
+msgstr "Gebruiker"
 
 #: account/models.py:131 templates/account/index.html:19
 msgid "Users"
