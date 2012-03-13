@@ -17,6 +17,7 @@ Requirements:
 - You need the following additional ports/packages to build the FreeNAS base
   OS image:
   - sysutils/cdrtools
+  - devel/py-polib
 
 - You need the following additional ports/packages to build the plugins jail:
   - ports-mgmt/pbi-manager
