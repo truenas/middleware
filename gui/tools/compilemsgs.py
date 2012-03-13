@@ -24,9 +24,13 @@ def pocompile(src, dest):
         if not translated:
             continue
 
+        if 'python-format' not in entry.flags:
+            continue
+
         for fmt in RE_FORMAT.findall(entry.msgid):
             if fmt not in translated:
-                po.remove(entry)
+                if 'fuzzy' not in entry.flags:
+                    entry.flags.append('fuzzy')
                 break
 
     #po.save()
