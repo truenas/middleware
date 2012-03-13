@@ -54,13 +54,16 @@ TMPDIR_TEMPLATE=e2e-bld.XXXXXXXX
 # otherwise.
 generate_release_notes() {
 	local release_notes_file
+	local build_target_arch
+
+	build_target_arch=$1
 
 	if TMPDIR2=$(mktemp -d tmp.XXXXXX)
 	then
 		release_notes_file="$TMPDIR2/README"
 		(
 		 cat ReleaseNotes
-		 "$SCRIPTDIR/checksum-to-release-format.sh"
+		 "$SCRIPTDIR/checksum-to-release-format.sh" $build_target_arch
 		 ) > "$TMPDIR2/README"
 	else
 		return $?
@@ -305,18 +308,18 @@ do
 		fi
 		echo "[$_ARCH:$_BUILD_TARGET] Build completed on: $(env LC_LANG=C date '+%m-%d-%Y %H:%M:%S')"
 	done
-	for ARCH in $_PASSED_ARCHS
+	for _ARCH in $_PASSED_ARCHS
 	do
-		_post_images $ARCH $_BUILD_TARGET
+		_post_images $_ARCH $_BUILD_TARGET
+		if $RELEASE_BUILD
+		then
+			if _RELEASE_NOTES_FILE=$(generate_release_notes $_BUILD_TARGET/$_ARCH)
+			then
+				post_remote_files $_ARCH $_RELEASE_NOTES_FILE
+			fi
+		fi
 	done
 done
-if $RELEASE_BUILD && [ -n "$_PASSED_ARCHS" ]
-then
-	if _RELEASE_NOTES_FILE=$(generate_release_notes)
-	then
-		post_remote_files "" $_RELEASE_NOTES_FILE
-	fi
-fi
 if $CLEAN
 then
 	cd /; _cleanup
