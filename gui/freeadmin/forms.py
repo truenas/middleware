@@ -37,12 +37,13 @@ from django.utils.translation import ugettext_lazy as _
 from dojango.forms.widgets import DojoWidgetMixin
 from dojango import forms
 from dojango.forms import widgets
+from freenasUI.account.forms import FilteredSelectJSON
 from freenasUI.common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER, \
     FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
-from account.forms import FilteredSelectJSON
-from storage.models import MountPoint
+from freenasUI.storage.models import MountPoint
+
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
@@ -56,19 +57,16 @@ class CronMultiple(DojoWidgetMixin, Widget):
             final_attrs['typeChoice'] = "selected"
         return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
 
-class DirectoryBrowser(widgets.Widget):
+
+class DirectoryBrowser(TextInput):
     def __init__(self, *args, **kwargs):
-        self._dirsonly = kwargs.pop('dirsonly', True)
+        dirsonly = kwargs.pop('dirsonly', True)
         super(DirectoryBrowser, self).__init__(*args, **kwargs)
-    def render(self, name, value, attrs=None):
-        context = {
-            'name': name,
-            'value': value,
-            'attrs': attrs,
-            'id': attrs.get("id", '').replace("-", "_"),
-            'dirsonly': self._dirsonly,
-            }
-        return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
+        self.attrs.update({
+            'dojoType': 'freeadmin.form.PathSelector',
+            'dirsonly': dirsonly,
+            })
+
 
 class UserField(forms.ChoiceField):
     widget = widgets.Select()
@@ -146,15 +144,13 @@ class GroupField(forms.ChoiceField):
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 
+
 class PathField(forms.CharField):
 
     def __init__(self, *args, **kwargs):
         dirsonly = kwargs.pop('dirsonly', True)
         self.abspath = kwargs.pop('abspath', True)
-        self.widget = TextInput(attrs={
-            'dojoType': 'freeadmin.form.PathSelector',
-            'dirsonly': dirsonly,
-            })
+        self.widget = DirectoryBrowser(dirsonly=dirsonly)
         super(PathField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
