@@ -27,7 +27,7 @@
 import os
 import re
 
-from django.forms.widgets import Widget
+from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import StrAndUnicode, force_unicode
@@ -147,11 +147,16 @@ class GroupField(forms.ChoiceField):
         return group
 
 class PathField(forms.CharField):
+
     def __init__(self, *args, **kwargs):
         dirsonly = kwargs.pop('dirsonly', True)
         self.abspath = kwargs.pop('abspath', True)
-        self.widget = DirectoryBrowser(dirsonly=dirsonly)
+        self.widget = TextInput(attrs={
+            'dojoType': 'freeadmin.form.PathSelector',
+            'dirsonly': dirsonly,
+            })
         super(PathField, self).__init__(*args, **kwargs)
+
     def clean(self, value):
         value = value.strip()
         if value not in ('', None):
