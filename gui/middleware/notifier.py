@@ -2276,11 +2276,11 @@ class notifier:
                     'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
                     })
 
-        RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
+        pool_name = re.compile(r'pool: (?P<name>%s)' % (zfs.ZPOOL_NAME_RE, ), re.I)
         p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
 
-        for pool in RE_POOL_NAME.findall(res):
+        for pool in pool_name.findall(res):
             # get status part of the pool
             status = res.split('pool: %s\n' % pool)[1].split('pool:')[0]
             roots = zfs.parse_status(pool, doc, status)

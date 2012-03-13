@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2011-12-13 02:14+0200\n"
-"Last-Translator: Hendriyo <hendriyo@gmail.com>\n"
+"PO-Revision-Date: 2012-03-10 16:45+0200\n"
+"Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -457,22 +457,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Tes Luring Segera (hanya ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "Modul Rsync"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Modul Rsync"
+msgstr "Modul Rsync di atas SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Dorong"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Tarik"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -537,9 +535,8 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:241 account/forms.py:498
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Matikan login"
+msgstr "Matikan sandi login"
 
 #: account/forms.py:243 account/forms.py:499
 msgid "Lock user"
@@ -547,7 +544,7 @@ msgstr "Pemakai dikunci"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Buat satu grup utama baru untuk pemakai"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -558,16 +555,14 @@ msgid "SSH Public Key"
 msgstr "Kunci umum SSH"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Direktori Home"
+msgstr "Mode Direktori Home"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
 msgstr "Grup tambahan"
 
 #: account/forms.py:318
-#, fuzzy
 msgid "A user with that uid already exists."
 msgstr "Nama pengguna telah terdaftar. Cari yg lain."
 
@@ -588,18 +583,16 @@ msgid "The two password fields didn't match."
 msgstr "Kedua kolom sandi tidak cocok."
 
 #: account/forms.py:351
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Direktori Home harus dimulai dengan /mnt/"
+msgstr "Direktori Home harus dimulai dengan /mnt/ atau menjadi /nonexistent"
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Seorang pengguna tidak boleh memiliki lebih dari 64 grup-grup bantu"
 
 #: account/forms.py:381 account/forms.py:582
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Direktori Home harus dimulai dengan /mnt/"
+msgstr "Direktori Home tidak bisa ditulisi, tinggalkan ini kosongan"
 
 #: account/forms.py:388
 msgid "Password is disabled, leave this blank"
@@ -612,23 +605,20 @@ msgid "This field is required."
 msgstr "Kotak ini harus diisi."
 
 #: account/forms.py:562
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Direktori Home harus dimulai dengan /mnt/"
+msgstr "Direktori Home harus dimulai dengan /mnt atau menjadi /nonexistent"
 
 #: account/forms.py:634
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Ijinkan pengulangan GIDs"
 
 #: account/forms.py:647
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Nama pengguna telah terdaftar. Cari yg lain."
+msgstr "Nama grup telah terdaftar. Cari yg lain."
 
 #: account/forms.py:665
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Nama pengguna telah terdaftar. Cari yg lain."
+msgstr "Nama grup dengan GID ini telah ada"
 
 #: account/forms.py:675
 msgid "Member users"
@@ -643,9 +633,8 @@ msgid "New password confirmation"
 msgstr "Konfirmasi kata sandi yang baru"
 
 #: account/forms.py:746
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Ganti kata sandi"
+msgstr "Ganti kata sandi root juga"
 
 #: account/forms.py:753
 msgid "Old password"
@@ -657,7 +646,7 @@ msgstr "Anda keliru memasukkan kata sandi lama Anda. Coba masukkan lagi."
 
 #: account/forms.py:778
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Anda ingin menghapus seluruh pengguna dalam grup utama ini?"
 
 #: account/models.py:36 services/models.py:518 services/models.py:563
 #: templates/services/iscsi_auth.html:5
@@ -738,9 +727,8 @@ msgid "Account"
 msgstr "Akun"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Akun"
+msgstr "Akun Admin"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -784,9 +772,9 @@ msgid "The path must reside within a volume mount point"
 msgstr "Path harus ada dalam volume mount point"
 
 #: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Kesalahan"
+msgstr "Kesalahan: %s"
 
 #: freeadmin/navtree.py:334
 #, python-format
@@ -794,7 +782,7 @@ msgid "Add %s"
 msgstr "Tambahkan %s"
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
 msgstr "Lihat semua %s"
 
@@ -827,7 +815,7 @@ msgstr "Beberapa kesalahan muncul ketika memberi label pada cakram."
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Tidak memungkinkan untuk mengambil status saat ini"
 
 #: freeadmin/views.py:428 freeadmin/views.py:648 freeadmin/views.py:650
 #, python-format
@@ -869,6 +857,8 @@ msgstr "NIC"
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
+"Anda tidak dapat mengkonfigurasi beragam antarmuka dengan alamat IP yang "
+"sama (%s)"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -899,13 +889,12 @@ msgid "Unspecified addresses are not valid as nameservers"
 msgstr ""
 
 #: network/forms.py:138
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Isian pada kolom adalah alamat IP atau jaringan yang tidak valid"
+msgstr "Ini bukan alamat nameserver yang sah"
 
 #: network/forms.py:140
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "sub jaringan 169.254/16 adalah tidak sah untuk nameserver"
 
 #: network/forms.py:160
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -6549,9 +6538,8 @@ msgstr "Tape"
 msgid "Pass"
 msgstr "Lewati"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Kata sandi berbagi"
+msgstr "Matikan kata sandi"
 
 msgid "My Account"
 msgstr "Akun Saya"

@@ -69,6 +69,13 @@ clean_packages()
 }
 customize_cmd clean_packages
 
+# XXX: until the directories are restructured in such a way that this is more
+# sane, do not copy over things from the base system into plugins-base, etc,
+# otherwise stuff won't work when starting up plugins jails because the bits
+# in nanobsd/Files make assumptions in terms of how things are laid out / done
+# in the base system, which doesn't work for plugins-jails, et all.
+if [ $AVATAR_COMPONENT = "os-base" ]
+then
 cust_install_machine_files()
 {
 	echo "cd ${NANO_CFG_BASE}/Files"
@@ -77,6 +84,7 @@ cust_install_machine_files()
 }
 customize_cmd cust_install_files
 customize_cmd cust_install_machine_files 
+fi
 
 buildenv()
 {
@@ -297,6 +305,16 @@ install_kernel()
 }
 
 do_image()
+{
+	:
+}
+
+setup_nanobsd()
+{
+	:
+}
+
+setup_nanobsd_etc()
 {
 	:
 }

@@ -66,14 +66,14 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
 
-        for tun_var, tun_value, tun_comment in get_default_tunables():
-            if orm.Tunable.objects.filter(tun_var=tun_var).exists():
-                continue
-            orm.Tunable.objects.create(
-                tun_var=tun_var,
-                tun_value=tun_value,
-                tun_comment=tun_comment,
-                )
+        """
+        As discussed internally, this migration should not exist...
+        This is the rule for the autotune script, not migration
+
+        DO NOT REMOVE THIS FILE
+        --------
+        It might cause ghost migration issues
+        """
 
 
     def backwards(self, orm):

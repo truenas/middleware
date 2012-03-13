@@ -97,13 +97,10 @@ if [ -z "${SVNVERSION}" ]; then
 	fi
 fi
 
-# REVISION gets overloaded when doing tagged versions, SVNREVISION allows
-# us to keep the SVN revision number even when the version string is
-# overloaded with a name.
-#
-# NOTE: comment out REVISION when doing a release.
+# REVISION gets set to "" when doing tagged versions, SVNREVISION allows
+# us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
-REVISION=${REVISION:-$(echo ${svn}${git})}
+: ${REVISION=$(echo ${svn}${git})}
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 

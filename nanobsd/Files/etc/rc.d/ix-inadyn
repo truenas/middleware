@@ -17,7 +17,7 @@ generate_inadyn_real()
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM services_dynamicdns ORDER BY -id LIMIT 1" | \
-	while eval read $f; do
+	while eval read -r $f; do
 		if [ -n "${ddns_provider}" ]; then
 			echo -n "--dyndns_system ${ddns_provider} "
 		fi
@@ -31,6 +31,9 @@ generate_inadyn_real()
 		if [ -n "${ddns_options}" ]; then
 			echo -n "${ddns_options} "
 		fi
+		# hash and backslash must be escaped
+		ddns_password=$(echo ${ddns_password}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
+		ddns_username=$(echo ${ddns_username}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
 		echo "--background --syslog --username ${ddns_username} --password ${ddns_password} --alias ${ddns_domain}"
 	done
 }
