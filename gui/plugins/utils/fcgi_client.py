@@ -399,8 +399,3 @@ class FCGIApp(object):
             if n.upper() == n:
                 result[n] = environ[n]
         return result
-
-if __name__ == '__main__':
-    app = FCGIApp(connect=('localhost', 4242))
-    #import paste.lint
-    #app = paste.lint.middleware(app)
