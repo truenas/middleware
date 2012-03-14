@@ -8,6 +8,7 @@ import struct
 import socket
 import errno
 import types
+import urllib
 
 # Constants from the spec.
 FCGI_LISTENSOCK_FILENO = 0
@@ -212,7 +213,7 @@ class FCGIApp(object):
         self._connect = connect
         self._filterEnviron = filterEnviron
 
-    def __call__(self, environ, start_response=None):
+    def __call__(self, environ, start_response=None, args={}):
         # For sanity's sake, we don't care about FCGI_MPXS_CONN
         # (connection multiplexing). For every request, we obtain a new
         # transport socket, perform the request, then discard the socket.
@@ -235,23 +236,26 @@ class FCGIApp(object):
             params = self._defaultFilterEnviron(environ)
         else:
             params = self._lightFilterEnviron(environ)
-        # TODO: Anything not from environ that needs to be sent also?
+
         self._fcgiParams(sock, requestId, params)
         self._fcgiParams(sock, requestId, {})
 
-        # Transfer wsgi.input to FCGI_STDIN
-        content_length = int(environ.get('CONTENT_LENGTH') or 0)
-        s = ''
+        data = urllib.urlencode(args)
         while True:
-            #chunk_size = min(content_length, 4096)
-            #s = environ['wsgi.input'].read(chunk_size)
-            content_length -= len(s)
             rec = Record(FCGI_STDIN, requestId)
-            rec.contentData = s
-            rec.contentLength = len(s)
+            length = min(4096, len(data))
+            rec.contentData = data[:length]
+            rec.contentLength = length
             rec.write(sock)
+            data = data[length:]
 
-            if not s: break
+            if not data:
+                rec = Record(FCGI_STDIN, requestId)
+                rec.contentData = ''
+                rec.contentLength = 0
+                rec.write(sock)
+                break
+
 
         # Empty FCGI_DATA stream
         rec = Record(FCGI_DATA, requestId)

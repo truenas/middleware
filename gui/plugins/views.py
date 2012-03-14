@@ -126,6 +126,7 @@ def plugin_fcgi_client(request, name, version, path):
     env.pop('wsgi.run_once', None)
     env.pop('HTTP_COOKIE', None)
     env['SCRIPT_NAME'] = env['PATH_INFO']
-    status, header, body, raw = app(env)
+    args = request.POST if request.method == "POST" else request.GET
+    status, header, body, raw = app(env, args=args)
 
     return HttpResponse(body)
