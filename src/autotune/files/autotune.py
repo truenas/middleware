@@ -26,7 +26,11 @@ from django.core.management import setup_environ
 
 setup_environ(settings)
 
-from freenasUI.system.models import Advanced, Sysctl, Tunable
+try:
+    from freenasUI.system.models import Advanced, Sysctl, Tunable
+except ImportError:
+    # Not working state, abort
+    sys.exit(1)
 
 MB = 1024 * 1024
 GB = 1024 * MB
