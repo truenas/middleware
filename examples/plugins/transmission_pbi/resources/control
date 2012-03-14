@@ -16,6 +16,65 @@ import Cookie
 from flup.server.fcgi import WSGIServer
 from subprocess import Popen, PIPE
 
+class JsonResponse(object):
+
+    _is_ajax = False
+    error = False
+    type = 'page'
+    force_json = False
+    message = ''
+    events = []
+
+    def __init__(self, *args, **kwargs):
+
+        self.error = kwargs.pop('error', False)
+        self.message = kwargs.pop('message', '')
+        self.events = kwargs.pop('events', [])
+        self.force_json = kwargs.pop('force_json', False)
+        self.type = kwargs.pop('type', None)
+
+        if self.message:
+            self.type = 'message'
+        if not self.type:
+            self.type = 'page'
+
+        self.data = dict()
+
+        if self.type == 'message':
+            self.data.update({
+                'error': self.error,
+                'message': self.message,
+            })
+        else:
+            raise NotImplementedError
+
+        self.data.update({
+            'events': self.events,
+        })
+        super(JsonResponse, self).__init__(*args, **kwargs)
+
+    def _process_environ(self, environ):
+        if environ.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            self._is_ajax = True
+
+    def __call__(self, *args, **kwargs):
+        environ = kwargs.pop('environ', None)
+        response = kwargs.pop('response', None)
+
+        if environ:
+            self._process_environ(environ)
+
+        if self._is_ajax or self.force_json:
+            content = json.dumps(self.data)
+            content_type = 'application/json'
+        else:
+            content = "<html><body><textarea>"+json.dumps(data)+"</textarea></boby></html>"
+            content_type = 'text/html'
+        if response:
+            response('200 OK', [('Content-Type', content_type)])
+
+        return content
+
 def get_arch():
     cmd = "/usr/bin/uname -m"
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -24,7 +83,6 @@ def get_arch():
     out = pipe.stdout.read().strip()
     pipe.wait()
     return out
-
 
 transmission_pbi_path = "/usr/pbi/transmission-" + get_arch()
 transmission_etc_path = os.path.join(transmission_pbi_path, "etc")
@@ -62,16 +120,18 @@ def transmission_stop(environ, start_response, args):
 def transmission_edit(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
 
-    file = os.path.join(transmission_fcgi_wwwdir, "edit.html")
-    data = open(file).read()
+    _file = os.path.join(transmission_fcgi_wwwdir, "edit.html")
+    with open(_file, 'r') as f:
+        data = f.read()
     return data
 
 
 def transmission_mp_edit(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'text/plain')])
 
-    file = os.path.join(transmission_fcgi_wwwdir, "mp_edit.html")
-    data = open(file).read()
+    _file = os.path.join(transmission_fcgi_wwwdir, "mp_edit.html")
+    with open(_file, 'r') as f:
+        data = f.read()
     return data
 
 
@@ -79,7 +139,7 @@ def transmission_treemenu(environ, start_response, args):
     start_response('200 OK', [('Content-Type', 'application/json')])
 
     plugin = {
-        'name': 'transmission',
+        'name': 'Transmission',
         'append_to': 'services',
         'children': [
             {
@@ -87,30 +147,30 @@ def transmission_treemenu(environ, start_response, args):
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
                 'url': '/plugins/transmission/2.42/mp_edit',
-		'kwargs': {'plugin_name': 'transmission'},
+                'kwargs': {'plugin_name': 'transmission'},
             },
             {
                 'name': 'Edit',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
                 'url': '/plugins/transmission/2.42/edit',
-		'kwargs': {'plugin_name': 'transmission'},
+                'kwargs': {'plugin_name': 'transmission'},
             },
             {
                 'name': 'Start',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
                 'url': '/plugins/transmission/2.42/start',
-		'kwargs': {'plugin_name': 'transmission'},
+                'kwargs': {'plugin_name': 'transmission'},
             },
             {
                 'name': 'Stop',
                 'icon': 'SettingsIcon',
                 'type': 'pluginsfcgi',
                 'url': '/plugins/transmission/2.42/stop',
-		'kwargs': {'plugin_name': 'transmission'},
+                'kwargs': {'plugin_name': 'transmission'},
             },
-        ] 
+        ]
     }
 
     return json.dumps([plugin])
@@ -149,62 +209,57 @@ def transmission_saved(environ, start_response, args):
 
     saved = {}
     if os.access(transmission_opts, os.F_OK):
-        f = open(transmission_opts, "r") 
-        for line in f:
-            line = line.strip()
-            parts = line.split("=")
-            if len(parts) > 1:
-                saved[parts[0]] = parts[1]
-        f.close()
+        with open(transmission_opts, "r") as f:
+            for line in f:
+                line = line.strip()
+                parts = line.split("=")
+                if len(parts) > 1:
+                    saved[parts[0]] = parts[1]
 
     return json.dumps(saved)
 
 def transmission_post(environ, start_response, args):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
 
     if not args:
-        return "A problem occurred."
+        return JsonResponse(error=True, message="A problem occurred.")
 
     data = ""
     main_settings = {}
     advanced_settings = {}
 
-    f = open(transmission_opts, "w")
-    for key in args:
-        value = args[key]
-        if value and value != "false":
-            f.write("%s=%s\n" % (key, value))
-        if transmission_main_vars.has_key(key):
-            if key == "transmission_enable":
-                main_settings[key] = "YES"
+    with open(transmission_opts, "w") as f:
+        for key, value in args.items():
+            if value and value != "false":
+                f.write("%s=%s\n" % (key, value))
+            if transmission_main_vars.has_key(key):
+                if key == "transmission_enable":
+                    main_settings[key] = "YES"
 
-            elif value != "-":
-                main_settings[key] = value
+                elif value != "-":
+                    main_settings[key] = value
 
-        elif transmission_advanced_vars.has_key(key):
-            info = transmission_advanced_vars[key]
-            if info["type"] == "checkbox" and value != "false":
-                advanced_settings[key] = info["on"]
+            elif transmission_advanced_vars.has_key(key):
+                info = transmission_advanced_vars[key]
+                if info["type"] == "checkbox" and value != "false":
+                    advanced_settings[key] = info["on"]
 
-            elif info["type"] == "textbox" and value:
-                advanced_settings[key] = "%s %s" % (info["opt"], value)
-    f.close()
+                elif info["type"] == "textbox" and value:
+                    advanced_settings[key] = "%s %s" % (info["opt"], value)
 
     rcconf = os.path.join(transmission_etc_path, "rc.conf")
-    f = open(rcconf, "w")
-    for field in main_settings:
-        if main_settings[field]:
-            f.write('%s="%s"\n' % (field, main_settings[field]))
+    with open(rcconf, "w") as f:
+        for field in main_settings:
+            if main_settings[field]:
+                f.write('%s="%s"\n' % (field, main_settings[field]))
 
-    transmission_flags = ""
-    if advanced_settings:
-        for field in advanced_settings:
-            if field:
-                transmission_flags += "%s " % advanced_settings[field]
+        transmission_flags = ""
+        if advanced_settings:
+            for field in advanced_settings:
+                if field:
+                    transmission_flags += "%s " % advanced_settings[field]
 
-    if transmission_flags: 
-        f.write('transmission_flags="%s"\n' % transmission_flags)
-    f.close()
+        if transmission_flags:
+            f.write('transmission_flags="%s"\n' % transmission_flags)
 
     if main_settings.has_key("transmission_watch_dir") and main_settings["transmission_watch_dir"]:
         os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_watch_dir"])
@@ -216,11 +271,10 @@ def transmission_post(environ, start_response, args):
         os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_download_dir"])
         os.system("/bin/chmod 775 '%s'" % main_settings["transmission_download_dir"])
 
-    ret = "A problem occurred."
     if os.system(os.path.join(transmission_pbi_path, "tweak-rcconf")) == 0:
-        ret = "Success."
+        return JsonResponse(error=True, message="Transmission settings successfully saved.")
 
-    return ret
+    return JsonResponse(error=True, message="A problem occurred while saving settings.")
 
 
 def transmission_default(environ, start_response, args):
@@ -254,7 +308,10 @@ def transmission_fcgi_app(environ, start_response):
     if action not in transmission_fcgi_handlers.keys():
         action = 'default'
 
-    yield transmission_fcgi_handlers[action](environ, start_response, args)
+    response = transmission_fcgi_handlers[action](environ, start_response, args)
+    if isinstance(response, str):
+        yield response
+    yield response(environ=environ, response=start_response, args=args)
 
 
 def transmission_fcgi_start(args):
@@ -278,12 +335,12 @@ def transmission_fcgi_start(args):
         fp.close()
 
         res = WSGIServer(transmission_fcgi_app, bindAddress=(ip, port)).run()
-            
+
     return res
 
 
 def transmission_fcgi_stop(args):
-    res = False 
+    res = False
     if os.access(transmission_fcgi_pidfile, os.F_OK):
         with open(transmission_fcgi_pidfile, "r") as fp:
             pid = long(fp.read())
@@ -299,7 +356,7 @@ def transmission_fcgi_stop(args):
 
 
 def transmission_fcgi_status(args):
-    res = False 
+    res = False
     if os.access(transmission_fcgi_pidfile, os.F_OK):
         with open(transmission_fcgi_pidfile, "r") as fp:
             pid = long(fp.read())
@@ -315,7 +372,7 @@ def transmission_fcgi_configure(args):
 
 def main(argc, argv):
     if argc < 2:
-        sys.exit(1) 
+        sys.exit(1)
 
     commands = {
         'start': transmission_fcgi_start,
