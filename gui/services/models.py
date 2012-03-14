@@ -348,17 +348,18 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
-    iscsi_luc_authnetwork = models.IPAddressField(
+    iscsi_luc_authnetwork = models.CharField(
             max_length=120,
-            verbose_name=_("Controller Authorized netmask"),
-            default = "255.255.255.0",
-            help_text=_("Logical Unit Controller Authorized netmask (255.255.255.0 by default)"),
+            verbose_name=_("Controller Authorized Network"),
+            default="127.0.0.1/8",
+            help_text=_("Logical Unit Controller Authorized netmask "
+                "(127.0.0.1/8 by default)"),
             blank=True,
             )
     iscsi_luc_authmethod = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
-            default = "chap",
+            default="chap",
             verbose_name=_("Controller Auth Method"),
             help_text=_("The method can be accepted in the controller."),
             blank=True,
@@ -366,7 +367,8 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_luc_authgroup = models.IntegerField(
             max_length=120,
             verbose_name=_("Controller Auth Group"),
-            help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."),
+            help_text=_("The istgtcontrol can access the targets with correct "
+                "user and secret in specific Auth Group."),
             blank=True,
             null=True,
             )

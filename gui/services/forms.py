@@ -521,11 +521,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     iscsi_luc_authgroup = forms.ChoiceField(label=_("Controller Auth Group"),
             help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."))
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
+
     class Meta:
         model = models.iSCSITargetGlobalConfiguration
         widgets = {
             'iscsi_lucport': forms.widgets.TextInput(),
         }
+
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_luc_authgroup'].required = False
@@ -611,6 +613,14 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
             return None
         return lucgroup
 
+    def clean_iscsi_luc_authnetwork(self):
+        network = self.cleaned_data.get('iscsi_luc_authnetwork').strip()
+        try:
+            network = IPNetwork(network.encode('utf-8'))
+        except (NetmaskValueError, ValueError):
+            raise forms.ValidationError(_("This is not a valid network"))
+        return str(network)
+
     def clean(self):
         cdata = self.cleaned_data
 
@@ -633,6 +643,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
