@@ -24,7 +24,6 @@ main()
 
 	OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
-	# A command forged by the gods themselves, change at your own risk
 	MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
 			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
 			 -b boot/cdboot ${ISODIR}"
