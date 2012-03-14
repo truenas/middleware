@@ -388,7 +388,7 @@ class NavTree(object):
         for plugin in Plugins.objects.filter(plugin_enabled=True):
 
             try:
-                url = "%s/%s/treemenu" % (host, plugin.plugin_view)
+                url = "%s%s/treemenu" % (host, plugin.plugin_view)
                 response = urllib2.urlopen(url, None, 1)
                 data = response.read()
                 if not data:

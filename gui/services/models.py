@@ -30,8 +30,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import (MinValueValidator, MaxValueValidator,
     RegexValidator)
 
+# Do not change import path to do not cause unnecessary migration
+from freeadmin.models import Model, UserField, GroupField, PathField
+
 from freenasUI import choices
-from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
 from freenasUI.services.exceptions import ServiceFailed
@@ -109,10 +111,6 @@ class CIFS(Model):
             verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('nobody' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login. The user root can not be used as guest account.")
             )
-    cifs_srv_guestok = models.BooleanField(
-            verbose_name=_("Allow guest access"))
-    cifs_srv_guestonly = models.BooleanField(
-            verbose_name=_("Only allow guest access"))
     cifs_srv_filemask = models.CharField(
             max_length=120,
             verbose_name=_("File mask"),

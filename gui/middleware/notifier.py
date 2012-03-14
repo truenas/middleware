@@ -1797,7 +1797,6 @@ class notifier:
         try:
             cmd1 = '/usr/bin/xzcat %s' % (path, )
             cmd2 = 'sh -x /root/update'
-            # 5 is NOTICE
             log.log(syslog.LOG_NOTICE, 'Executing: %s | %s', cmd1, cmd2)
             p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
             output = subprocess.check_output(shlex.split(cmd2),

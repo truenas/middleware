@@ -26,26 +26,25 @@
 #####################################################################
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.plugins import models, forms
-from freenasUI.middleware.notifier import notifier
-from freeadmin.views import JsonResponse, JsonResp
-
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.jail import Jls, Jexec
+from freenasUI.freeadmin.views import JsonResponse, JsonResp
+from freenasUI.middleware.notifier import notifier
+from freenasUI.plugins import models, forms
+from freenasUI.plugins.utils.fcgi_client import FCGIApp
+from freenasUI.services.models import services
 
 import freenasUI.plugins.api_calls
 
 
 def plugins_home(request):
-    from freenasUI import services
-    from freenasUI import plugins
 
     srv_enable = False
-    s = services.models.services.objects.filter(srv_service='plugins')
+    s = services.objects.filter(srv_service='plugins')
     if s:
         s = s[0]
         srv_enable = s.srv_enable
@@ -54,7 +53,7 @@ def plugins_home(request):
     if not srv_enable:
         jail_configured = False
 
-    plugins_list = plugins.models.Plugins.objects.all()
+    plugins_list = models.Plugins.objects.all()
     return render(request, "plugins/index.html", {
         "plugins_list": plugins_list,
         "jail_configured": jail_configured,
@@ -103,3 +102,30 @@ def plugin_delete(request, plugin_id):
         return render(request, 'plugins/plugin_confirm_delete.html', {
             'plugin': plugin,
         })
+
+"""
+This is a view that works as a FCGI client
+It is used for development server (no nginx) for easier development
+"""
+from freenasUI.freeadmin.middleware import public
+@public
+def plugin_fcgi_client(request, name, version, path):
+    qs = models.Plugins.objects.filter(plugin_name=name)
+    if not qs.exists():
+        raise Http404
+
+    plugin = qs[0]
+
+    app = FCGIApp(host=plugin.plugin_ip, port=plugin.plugin_port)
+    env = request.META.copy()
+    env.pop('wsgi.file_wrapper', None)
+    env.pop('wsgi.version', None)
+    env.pop('wsgi.input', None)
+    env.pop('wsgi.errors', None)
+    env.pop('wsgi.multiprocess', None)
+    env.pop('wsgi.run_once', None)
+    env.pop('HTTP_COOKIE', None)
+    env['SCRIPT_NAME'] = env['PATH_INFO']
+    status, header, body, raw = app(env)
+
+    return HttpResponse(body)

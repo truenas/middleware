@@ -44,8 +44,6 @@ generate_smbconf()
 		cifs_srv_localmaster,
 		cifs_srv_timeserver,
 		cifs_srv_guest,
-		cifs_srv_guestok,
-		cifs_srv_guestonly,
 		cifs_srv_filemask,
 		cifs_srv_dirmask,
 		cifs_srv_largerw,
@@ -114,7 +112,7 @@ generate_smbconf()
 	LIMIT 1
 	" | \
 	while read -r authmodel netbiosname workgroup cifs_description doscharset \
-		unixcharset loglevel localmaster timeserver guest guestok guestonly \
+		unixcharset loglevel localmaster timeserver guest \
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
@@ -156,14 +154,6 @@ generate_smbconf()
 		    # NOTE: read smb.conf.
 		    directory name cache size = 0
 EOF
-		if [ "${guestok}" = "1" ]; then
-			echo "    guest ok = yes"
-		else
-			echo "    guest ok = no"
-		fi
-		if [ "${guestonly}" = "1" ]; then
-			echo "    guest only = yes"
-		fi
 
 		if [ "${ad_enable}" = "0" ]; then
 			echo "    netbios name = ${netbiosname}"
