@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-03-12 14:11+0200\n"
+"PO-Revision-Date: 2012-03-13 18:51+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -560,7 +560,6 @@ msgid "SSH Public Key"
 msgstr "Clave Pública SSH"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
 msgstr "Directorio Personal"
 
@@ -814,7 +813,7 @@ msgstr "Vaciar datos devueltos por %s"
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "No puedo recuperar %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
 #, fuzzy, python-format
@@ -1431,7 +1430,7 @@ msgstr[1] "Los siguientes emails no son validos: %(email)s"
 
 #: services/forms.py:365
 msgid "The UPS service failed to reload."
-msgstr "Ha fallado el reinicio del servicio UPS (SAI)"
+msgstr "Ha fallado el reinicio del servicio SAI (UPS)"
 
 #: services/forms.py:369
 msgid "Confirm Administrator Password"
@@ -1487,7 +1486,7 @@ msgstr "La contraseña del \"peer\" no puede ser la misma que la del usuario"
 
 #: services/forms.py:451 services/forms.py:454
 msgid "The peer user is required if you set a peer secret."
-msgstr "Debe establecer una contraseña si crea un usuario \"peer\""
+msgstr "El usuario peer es necesario si desea establecer una contraseña de peer"
 
 #: services/forms.py:471 services/forms.py:518 services/forms.py:635
 #: services/forms.py:693 services/forms.py:796 services/forms.py:818
@@ -1837,6 +1836,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"El soporte Zeroconf via Avahi permite el descubrimiento automatico de "
+"compartidos windows (CIFS) de forma parecida a como lo hace Windows con "
+"\"Explorar la red\" "
 
 #: services/models.py:187 services/models.py:188
 #: templates/services/index.html:29
@@ -1864,9 +1866,8 @@ msgid "Allows guest access to all apple shares on this box."
 msgstr "permitir acceso de invitado a todos los compartidos AFP"
 
 #: services/models.py:213
-#, fuzzy
 msgid "Max. Connections"
-msgstr "Máximo número conexiones"
+msgstr "Máximo número de conexiones"
 
 #: services/models.py:215
 msgid ""
@@ -2191,7 +2192,7 @@ msgstr "Alias del destino"
 
 #: services/models.py:612
 msgid "Optional user-friendly string of the target."
-msgstr "Opcional - apodo del destino"
+msgstr "Opcional - \"Alias\" del destino"
 
 #: services/models.py:615 storage/models.py:318 storage/views.py:226
 msgid "Serial"
@@ -2429,7 +2430,7 @@ msgstr ""
 
 #: services/models.py:880
 msgid "UPS Master User Password"
-msgstr "Contraseña del Usuario Maestro de la UPS"
+msgstr "Contraseña del Usuario Maestro de la SAI (UPS)"
 
 #: services/models.py:884
 msgid "Extra users (upsd.users)"
@@ -2788,9 +2789,8 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Nombre del grupo de trabajo (Ej: WORKGROUP)"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Permitir GIDs (Identificadores De Grupo) repetidas"
+msgstr "Permitir dominios autenticados"
 
 #: services/models.py:1182
 msgid "Administrator Name"
@@ -3900,7 +3900,11 @@ msgid_plural ""
 "I'm aware this will destroy all child datasets and snapshots within this "
 "dataset"
 msgstr[0] ""
+"Soy consciente de que esta acción destruira la instantanea de este conjunto "
+"de datos"
 msgstr[1] ""
+"Soy consciente de que esta acción destruira todas las instantaneas de este "
+"conjunto de datos"
 
 #: storage/forms.py:978 system/forms.py:465 system/forms.py:512
 msgid "minute"
@@ -3927,12 +3931,11 @@ msgstr "Volumen"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Umbral de dias"
 
 #: storage/models.py:190
-#, fuzzy
 msgid "Determine how many days shall be between scrubs"
-msgstr "Determina cuantos dias deben pasar entre scrubs"
+msgstr "Determina cuantos dias deben pasar entre Reconstruciones (scrubs)"
 
 #: storage/models.py:200 system/models.py:320 system/models.py:468
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -3989,12 +3992,11 @@ msgstr "Habilitado"
 
 #: storage/models.py:231
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "Reconstrucción ZFS (ZFS Scrub)"
 
 #: storage/models.py:232
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "Compartido Unix (NFS)"
+msgstr "Reconstrucción ZFS (ZFS Scrub)"
 
 #: storage/models.py:246 system/models.py:367 system/models.py:569
 msgid "Every minute"
@@ -4099,9 +4101,8 @@ msgstr "Anfitriones de Réplica Remotos"
 
 #: storage/models.py:625 storage/models.py:679
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Tipo de sistema de archivos"
+msgstr "Sistema de archivos / Volumen"
 
 #: storage/models.py:630
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4135,6 +4136,8 @@ msgstr ""
 #: storage/models.py:645
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Inicializar lado remoto una vez. (Puede causar pérdida de datos en el lado "
+"remoto!)"
 
 #: storage/models.py:649
 msgid "Limit (kB/s)"
@@ -4171,18 +4174,16 @@ msgid "Begin"
 msgstr "Inicio"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Mantenga instantánea para"
+msgstr "No realizar instantaneas antes de..."
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Fin"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Mantenga instantánea para"
+msgstr "No realizar instantaneas despues de..."
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4222,9 +4223,8 @@ msgid "View Snapshots"
 msgstr "Ver todas las instantaneas"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Ver Todos los Grupos"
+msgstr "Ver Reconstrucciones  (Scrub) ZFS"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
@@ -4362,22 +4362,20 @@ msgid "Disk detach has been successfully done."
 msgstr "La desconexión del disco se ha realizado correctamente"
 
 #: storage/views.py:599
-#, fuzzy
 msgid "Disk offline operation has been issued."
-msgstr "Remplazo de disco iniciado"
+msgstr "La operación de poner fuera de linea el Disco ha sido iniciada."
 
 #: storage/views.py:614
 msgid "Disk has been removed."
 msgstr "El disco ha sido eliminado."
 
 #: storage/views.py:633
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "Volumen exportado correctamente"
+msgstr "El volumen ha sido correctamente desmontado"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "El proceso de reconstrucción ha comenzado"
 
 #: system/forms.py:161
 msgid "Language (Require UI reload)"
@@ -4397,7 +4395,7 @@ msgstr "Forzar"
 
 #: system/forms.py:217
 msgid "Max Poll should be higher than Min Poll"
-msgstr ""
+msgstr "Max Poll debe ser mayor que Min Poll"
 
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
@@ -4489,7 +4487,6 @@ msgid "Burst"
 msgstr "Rafaga"
 
 #: system/models.py:94
-#, fuzzy
 msgid ""
 "When the server is reachable, send a burst of eight packets instead of the "
 "usual one. This is designed to improve timekeeping quality with the server "
@@ -4503,7 +4500,6 @@ msgid "IBurst"
 msgstr "IBurst"
 
 #: system/models.py:99
-#, fuzzy
 msgid ""
 "When the server is unreachable, send a burst of eight packets instead of the "
 "usual one. This is designed to speed the initial synchronization acquisition "
@@ -4513,7 +4509,6 @@ msgstr ""
 "lugar de uno solo. Esto mejora la sincronización con el servidor."
 
 #: system/models.py:102 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "Preferido"
 
@@ -4522,10 +4517,13 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Marcar el servidor como preferido. el resto de parametros se mantienen. Este "
+"servidor será usado preferentemente de entre todos los que funcionen "
+"correctamente."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Min Poll"
 
 #: system/models.py:110
 msgid ""
@@ -4537,7 +4535,7 @@ msgstr ""
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Max Poll"
 
 #: system/models.py:116
 msgid ""
@@ -4769,7 +4767,7 @@ msgstr "Nombre del modulo remoto"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Nombre del modulo definido en el demonio de Rsync remoto"
 
 #: system/models.py:449
 msgid "Remote Path"
@@ -4924,14 +4922,12 @@ msgid "Sysctls"
 msgstr "Sysctls"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Tunable"
-msgstr "Habilitar AIO"
+msgstr "Ajuste (Tunable)"
 
 #: system/models.py:795
-#, fuzzy
 msgid "Tunables"
-msgstr "Habilitar AIO"
+msgstr "Ajustes (Tunables)"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4958,28 +4954,24 @@ msgid "View S.M.A.R.T. Tests"
 msgstr "Ver datos S.M.A.R.T."
 
 #: system/nav.py:54
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Ver Discos"
+msgstr "Ver Sysctls"
 
 #: system/nav.py:61
-#, fuzzy
 msgid "View Tunables"
-msgstr "Ver Todos los Usuarios"
+msgstr "Ver Ajustes"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
 msgstr "El fichero subido no es válido."
 
 #: system/views.py:245
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Contraseña de root obligatoria"
+msgstr "Ha comenzado el reinicio"
 
 #: system/views.py:267
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Apagar el Sistema"
+msgstr "Ha comenzado el apagado"
 
 #: system/views.py:297
 #, python-format
@@ -5101,9 +5093,8 @@ msgid "Change Admin Password"
 msgstr "Cambiar contraseña de Administrador"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Modulo Rsync"
+msgstr "Modo Básico"
 
 #: templates/freeadmin/advanced_btn.html:27
 msgid "Advanced Mode"
@@ -5462,9 +5453,8 @@ msgid "Please wait..."
 msgstr "Por favor espere..."
 
 #: templates/plugins/pbiwizard.html:16
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Subir configuración"
+msgstr "Cargar Plugin"
 
 #: templates/registration/login.html:42
 msgid "Your username and password didn't match. Please try again."
@@ -5566,7 +5556,7 @@ msgstr "Configuración TFTP"
 
 #: templates/services/index.html:175
 msgid "UPS Settings"
-msgstr "Configuración UPS"
+msgstr "Configuración SAI"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5813,7 +5803,6 @@ msgid "Are you sure you want to offline?"
 msgstr "¿Está seguro de que quiere desconectar?"
 
 #: templates/storage/disk_remove.html:7
-#, fuzzy
 msgid "Are you sure you want to remove?"
 msgstr "¿Está seguro de que quiere borrar?"
 
@@ -5905,29 +5894,27 @@ msgid "No ZFS replication available"
 msgstr "No está disponible la replicación ZFS"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "No hay tareas de Scrub definidas"
+msgstr "No hay tareas de Reconstrución (scrub) definidas"
 
 #: templates/storage/scrub.html:48
-#, fuzzy
 msgid "Add ZFS Scrub Task"
-msgstr "ñadir una tarea de Scrub"
+msgstr "Añadir una tarea de Reconstrucción (Scrub)"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Añadir Scrub ZFS"
+msgstr "Añadir una Reconstrución (scrub) ZFS"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
+"La reconstrucción se esta ejecutando. ¿Esta segúro de que desea parar la "
+"recostrucción (STOP SCRUB)?"
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "¿Está seguro de que desea realizar un scrub?"
+msgstr "¿Está seguro de que desea realizar una reconstrucción (scrub)?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
@@ -6032,14 +6019,12 @@ msgid "Status"
 msgstr "Estado"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Crear un Volumen"
+msgstr "Desmontar Volumen"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "Volumen ZFS"
+msgstr "Recostruir Volumen (scrub)"
 
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
@@ -6317,21 +6302,18 @@ msgid "Add S.M.A.R.T. test"
 msgstr "Añadir prueba S.M.A.R.T."
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "No hay RSyncs definidos"
+msgstr "No hay Sysctl definidos"
 
 # ¿Se podria tradudir RSync por tarea de sincronización?
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Añadir un RSync"
+msgstr "Añadir un Sysctl"
 
 # ¿Se podria tradudir RSync por tarea de sincronización?
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Añadir un RSync"
+msgstr "Añadir un Sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6359,22 +6341,19 @@ msgstr "Carga Media"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Conectado atraves de"
 
 #: templates/system/tunable.html:32
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "No se ha definido destino"
+msgstr "No hay ajustes definidos."
 
 #: templates/system/tunable.html:38
-#, fuzzy
 msgid "Add Tunable"
-msgstr "Añadir Destino"
+msgstr "Añadir un ajuste"
 
 #: templates/system/tunable.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "Añadir Portal"
+msgstr "Añadir cargador"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6393,7 +6372,7 @@ msgstr "El estado del volumen %s DEGRADADO"
 #: tools/alert.py:107
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "El estado del volumen %(volume)s es %(status)s: %(message)s"
 
 #: tools/alert.py:111
 #, python-format
@@ -6419,6 +6398,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Las siguientes direcciones IP se han definido como portal iSCSI pero no se "
+"encuentran en la red:%s"
 
 #: tools/alert.py:169
 msgid "Critical Alerts"
@@ -6547,9 +6528,8 @@ msgstr "¿Está seguro de querer exportar?"
 msgid "Export Volume"
 msgstr "Exportar Volumen"
 
-#, fuzzy
 msgid "Add loader"
-msgstr "Añadir Portal"
+msgstr "Añadir cargador"
 
 msgid "Volume from which this dataset will be created on"
 msgstr "Volumen donde será creado este conjunto de datos (Dataset)"

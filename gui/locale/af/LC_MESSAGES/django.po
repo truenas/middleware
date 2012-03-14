@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-13 10:59+0200\n"
+"PO-Revision-Date: 2012-03-13 13:50+0200\n"
 "Last-Translator: Nick <jjstccean@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: af\n"
@@ -109,7 +109,7 @@ msgstr "Altyd Op"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Gestremd"
+msgstr "Buite Staat"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -141,7 +141,7 @@ msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "Medium"
+msgstr "Gemiddeld"
 
 #: choices.py:98
 msgid "Maximum"
@@ -361,7 +361,7 @@ msgstr "Uur(e)"
 
 #: choices.py:486
 msgid "Day(s)"
-msgstr "Day(s)"
+msgstr "Dag(ae)"
 
 #: choices.py:487
 msgid "Week(s)"
@@ -400,12 +400,12 @@ msgstr "Lees en Skrywe"
 #: choices.py:506 choices.py:507
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)s minutes"
+msgstr "%(minute) minute"
 
 #: choices.py:508
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)s hour"
+msgstr "%(uur)e uur"
 
 #: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
 #, python-format
@@ -429,17 +429,15 @@ msgstr ""
 
 #: choices.py:520
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Slaap - Kyk op die toestel, Tensy dit is in slaapstand is"
+msgstr "Slaap - Gaan die toestel na, tensy dit in slaapstand is"
 
 #: choices.py:521
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Standby - Kyk op die toestel, tensy dit in die slaap of standby-af is"
+msgstr "Standby - Gaan die toestel na, tensy dit in slaap of standby-af is"
 
 #: choices.py:522
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
-"Luier - Gaan die toestel na, tensy dit aan die SLAAP, STANDBY of LUIER "
-"posisie is"
+msgstr "Luier - Gaan die toestel na, tensy dit slaap, Standby of idle mode is"
 
 #: choices.py:526
 msgid "Long Self-Test"
@@ -556,7 +554,7 @@ msgstr "SSH Openbare Sleutel"
 
 #: account/forms.py:256
 msgid "Home Directory Mode"
-msgstr ""
+msgstr "Huis Gids Mode"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -584,19 +582,19 @@ msgstr "Die twee wagwoord velde is nie ooreen nie."
 
 #: account/forms.py:351
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr ""
+msgstr "Huis gids mag net begin met /mnt/ of /nonexistent"
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "'N gebruiker kan nie aan meer as 64 hulp groepe behoort nie"
 
 #: account/forms.py:381 account/forms.py:582
 msgid "Home directory is not writable, leave this blank"
-msgstr ""
+msgstr "Huis gids is nie skryfbaar is nie, los dit leeg"
 
 #: account/forms.py:388
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Wagwoord is gestremd, los dit leeg"
 
 #: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
@@ -606,19 +604,19 @@ msgstr "Hierdie geliasseer word vereis"
 
 #: account/forms.py:562
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr ""
+msgstr "Home gids moet begin met /mnt/ of /nonexistent"
 
 #: account/forms.py:634
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Laat herhaalde GIDs toe"
 
 #: account/forms.py:647
 msgid "A group with that name already exists."
-msgstr ""
+msgstr "'N groep met daardie naam  bestaan reeds."
 
 #: account/forms.py:665
 msgid "A group with this gid already exists"
-msgstr ""
+msgstr "Daar bestaan reeds 'n groep met hierdie gid"
 
 #: account/forms.py:675
 msgid "Member users"
@@ -634,7 +632,7 @@ msgstr "Nuwe wagwoord bevestiging"
 
 #: account/forms.py:746
 msgid "Change root password as well"
-msgstr ""
+msgstr "Verander ook die root wagwoord"
 
 #: account/forms.py:753
 msgid "Old password"
@@ -667,7 +665,7 @@ msgstr "Groep"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
-msgstr ""
+msgstr "Groepe"
 
 #: account/models.py:67
 #, python-format
@@ -715,12 +713,12 @@ msgstr "Gebruiker"
 
 #: account/models.py:131 templates/account/index.html:19
 msgid "Users"
-msgstr ""
+msgstr "Gebruikers"
 
 #: account/models.py:150
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Gebruiker% s is in gebou en kan nie geskrap word nie!"
 
 #: account/nav.py:5 templates/menubar.html:53
 msgid "Account"
@@ -734,12 +732,12 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
-msgstr ""
+msgstr "Verander wagwoord"
 
 #: account/nav.py:22 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr ""
+msgstr "Verander Admin gebruiker"
 
 #: account/views.py:95
 msgid "Password successfully updated."
@@ -779,7 +777,7 @@ msgstr ""
 #: freeadmin/navtree.py:334
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Voeg %s"
 
 #: freeadmin/navtree.py:346
 #, python-format
@@ -788,15 +786,15 @@ msgstr ""
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
-msgstr ""
+msgstr "Vertoon Stelsel Prosesse"
 
 #: freeadmin/navtree.py:375 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr ""
+msgstr "Herbingin"
 
 #: freeadmin/navtree.py:379 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr ""
+msgstr "Afsluiting"
 
 #: freeadmin/navtree.py:395
 #, python-format
@@ -820,7 +818,7 @@ msgstr ""
 #: freeadmin/views.py:428 freeadmin/views.py:648 freeadmin/views.py:650
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s suksesvol opgedateer."
 
 #: freeadmin/views.py:432 freeadmin/views.py:652
 msgid "The service failed to restart."
@@ -829,7 +827,7 @@ msgstr ""
 #: freeadmin/views.py:761 freeadmin/views.py:765
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s suksesvol verwyder."
 
 #: middleware/zfs.py:527 storage/models.py:556
 msgid "Error getting total space"
