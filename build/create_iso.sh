@@ -61,12 +61,13 @@ main()
 	ln -s ../rescue ${INSTALLUFSDIR}/sbin
 	tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
-	cat > $INSTALLUFSDIR/etc/version-info <<EOF
-SW_ARCH=$NANO_ARCH_HUMANIZED
-SW_NAME="$NANO_LABEL"
-SW_FULL_VERSION="$NANO_NAME"
-SW_VERSION="$VERSION"
-EOF
+	cp "$AVATAR_CONF" ${INSTALLUFSDIR}/etc/.
+	mkdir -p ${INSTALLUFSDIR}/usr/local/
+	tar -cf - -C${INSTALLER_FILES} --exclude .svn . | tar -xpf - -C ${INSTALLUFSDIR}/usr/local/.
+
+	# XXX: tied too much to the host system to be of value in the
+	# installer code.
+	rm -f "$INSTALLUFSDIR/etc/rc.conf.local"
 
 	# Compress what's left of the image after mangling it
 	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
