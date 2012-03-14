@@ -1,17 +1,5 @@
-.wrapper800 {
-   width:1000px;
-   position:relative;
-        }
-#cronjob ul {
-    padding-left:0px;
-    margin:0 0 0 0;
-    line-height:12px;
-    list-style-type: none;
-    }
-
- 
 body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td {
-	margin: 0; 
+	margin: 0;
 	padding: 0;
 }
 
@@ -21,11 +9,8 @@ div h1,h2,h3,h4,h5,h6,table{
 
 fieldset, img { border: 0; }
 
- 
 a:focus { outline: none; }
 
- 
-body { overflow-y: scroll; }
 
 /*
  * default values
@@ -36,7 +21,6 @@ p {
 	padding-bottom: 8px;
 }
 
- 
 ul, ol, dl {
 	margin: 10px 0;
 	padding-left: 30px
@@ -45,75 +29,18 @@ ul, ol, dl {
 dl { margin: 10px 0; }
 dd { padding-left: 40px; }
 
- 
 td, th { padding: 1px; }
 
 a:link, a:visited { text-decoration: none; }
 a:hover { text-decoration: none; }
 
- 
 fieldset {
 	margin: 10px 0 10px 0;
 	padding: 0 10px 10px 10px;
 	border: 1px solid #c8c8c8;
 }
 
-legend {
-	padding: 0 10px 0 10px;
-	background: #ffffff;
-}
 
-
-textarea { padding: 1px 0 1px 5px; }
-
-option { padding: 0 0 1px 5px; }
-
-input[type='hidden'] { display: none; }
-
-input[type='text'],
-input[type='password'] { padding: 1px 0 1px 5px; }
-
-button,
-input[type='button'],
-input[type='submit'] {
-	padding: 2px 4px 2px 1px;
-	line-height: 100%;
-}
-
-input[type='button'],
-input[type='submit'],
-input[type='checkbox'],
-input[type='image'],
-input[type='radio'],
-input[type='reset'],
-select,
-button { cursor: pointer; }
-
- 
-textarea,
-input[type='text'],
-input[type='password'],
-select {
-	border: 1px solid #c8c8c8;
-	background: #ffffff;
-}
-
- 
-textarea:hover,
-input[type='text']:hover,
-input[type='password']:hover,
-select:hover { border-color: #aaaaaa; }
-
- 
-textarea:focus,
-input[type='text']:focus,
-input[type='password']:focus,
-select:focus {
-	border-color: #8c8c8c;
-	outline: 2px solid #dcdcdc;
-}
-
- 
 h1, h2, h3, h4, h5, h6 {
 	margin-bottom: 10px;
 	font-weight: normal;
@@ -126,7 +53,6 @@ h4 { font-size: 14px; line-height: 18px; margin-top: 13px; }
 h5 { font-size: 14px; line-height: 18px; margin-top: 12px; }
 h6 { font-size: 10px; line-height: 10px; margin-top: 10px; }
 
- 
 hr {
 	margin: 15px 0 15px 0;
 	display: block;
@@ -135,17 +61,6 @@ hr {
 	border: none;
 }
 
- 
-q { font-style: italic; }
-
-blockquote {
-	margin: 10px 0 10px 15px;
-	font-style: italic;
-	font-size: 130%
-}
-blockquote > *:first-child:first-letter { font-size: 150% }
-
- 
 pre.ix {
 	margin: 10px 0 10px 0px;
     background:#000000;
@@ -155,12 +70,4 @@ pre.ix {
 	font-family: "Courier New", Courier, monospace;
 	white-space: pre-wrap;
     width:600px;
-}
-
- 
-acronym, abbr {
-	border-bottom: 1px dashed #969696;
-	cursor: help;
-	font-variant: small-caps;
-	text-transform: lowercase;
 }
