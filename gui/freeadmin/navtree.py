@@ -454,7 +454,7 @@ class NavTree(object):
             options.append(option)
         return options
 
-    def dehydrate(self, o, level, uid, gname=None):
+    def dehydrate(self, o, uid, gname=None):
 
         # info about current node
         my = {
@@ -483,7 +483,7 @@ class NavTree(object):
             my['children'] = []
 
         for i in o.option_list:
-            opt = self.dehydrate(i, level + 1, uid, gname=my['gname'])
+            opt = self.dehydrate(i, uid, gname=my['gname'])
             my['children'].append(opt)
 
         return my
@@ -501,7 +501,7 @@ class NavTree(object):
         items = []
         uid = ByRef(1)
         for n in self._build_nav():
-            items.append(self.dehydrate(n, level=0, uid=uid))
+            items.append(self.dehydrate(n, uid=uid))
         return items
 
 navtree = NavTree()
