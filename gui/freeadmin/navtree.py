@@ -62,15 +62,16 @@ class NavTree(object):
         except ImportError, e:
             return None
 
-    """
-    This is used for Menu Item replacement
-
-    Every option added to the tree register its name in a dict
-    If the name was already registered before it can be replaced or not
-
-    Return Value: Item has been added to the tree or not
-    """
     def register_option(self, opt, parent, replace=False, evaluate=True):
+        """
+        This is used for Menu Item replacement
+
+        Every option added to the tree register its name in a dict
+        If the name was already registered before it can be replaced or not
+
+        Returns::
+            bool: Item has been added to the tree or not
+        """
 
         if evaluate:
             current_parent = parent
@@ -193,21 +194,21 @@ class NavTree(object):
                             _models[form._meta.model] = form
             self._modelforms.update(_models)
 
-    """
-    Tree Menu Auto Generate
-
-    Every app listed at INSTALLED_APPS is scanned
-    1st - app_name.forms is imported. All its objects/classes are scanned
-        looking for ModelForm classes
-    2nd - app_name.nav is imported. TreeNode classes are scanned for hard-coded
-        menu entries or overwriting
-    3rd - app_name.models is imported. models.Model classes are scanned,
-        if a related ModelForm is found several entries are Added to the Menu
-            - Objects
-            - Add (Model)
-            - View (Model)
-    """
     def generate(self, request=None):
+        """
+        Tree Menu Auto Generate
+
+        Every app listed at INSTALLED_APPS is scanned
+        1st - app_name.forms is imported. All its objects/classes are scanned
+            looking for ModelForm classes
+        2nd - app_name.nav is imported. TreeNode classes are scanned for hard-coded
+            menu entries or overwriting
+        3rd - app_name.models is imported. models.Model classes are scanned,
+            if a related ModelForm is found several entries are Added to the Menu
+                - Objects
+                - Add (Model)
+                - View (Model)
+        """
 
         self._generated = True
         self._options.clear()

@@ -40,7 +40,7 @@ class UserField(models.CharField):
 
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
-        from freeadmin.forms import UserField as UF
+        from freenasUI.freeadmin.forms import UserField as UF
         defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
         return super(UserField, self).formfield(**kwargs)
@@ -49,7 +49,7 @@ class UserField(models.CharField):
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
-        from freeadmin.forms import GroupField as GF
+        from freenasUI.freeadmin.forms import GroupField as GF
         defaults = {'form_class': GF}
         kwargs.update(defaults)
         return super(GroupField, self).formfield(**kwargs)
@@ -68,7 +68,7 @@ class PathField(models.CharField):
 
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
-        from freeadmin.forms import PathField as PF
+        from freenasUI.freeadmin.forms import PathField as PF
         defaults = {
             'form_class': PF,
             'abspath': self.abspath,
