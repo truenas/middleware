@@ -538,10 +538,6 @@ Errata:
   an install.  A 2 GB device is required, but the install will appear to
   complete successfully on smaller devices, only to fail at boot.
 
-- The installer will let you switch from i386 to amd64 architecture and
-  vice-versa, but some files, such as the rrd files used by the statistics
-  graphing package are architecture dependent.
-
 - There are known interoperability issues with FreeNAS and Samba 4.x being
   used as a PDC due to Samba 4.x not conforming to the Microsoft CIFS
   specification and the way LDAP queries are executed on FreeNAS. Please see
