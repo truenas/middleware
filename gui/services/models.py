@@ -446,13 +446,19 @@ class iSCSITargetExtent(Model):
             try:
                 disk = Disk.objects.get(id=self.iscsi_target_extent_path)
                 if self.iscsi_target_extent_type == "Disk":
-                    notifier().unlabel_disk(disk.identifier_to_device())
-                disk.delete()
+                    devname = disk.identifier_to_device()
+                    if devname:
+                        notifier().unlabel_disk(disk.identifier_to_device())
+                        notifier().sync_disk(devname)
+                    else:
+                        disk.disk_enabled = False
+                        disk.save()
                 expected_iscsi_volume_name = 'iscsi:' + self.iscsi_target_extent_name
                 vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
                 vol.delete()
             except:
                 pass
+
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()
         super(iSCSITargetExtent, self).delete()
