@@ -71,3 +71,19 @@ pre.ix {
 	white-space: pre-wrap;
     width:600px;
 }
+
+input[type="text"], input[type="password"] {
+    padding: 1px 0 1px 5px;
+}
+
+textarea, input[type="text"], input[type="password"], select {
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 1px solid #C8C8C8;
+}
+textarea:hover, input[type="text"]:hover, input[type="password"]:hover, select:hover {
+    border-color: #AAAAAA;
+}
+textarea:focus, input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    border-color: #8C8C8C;
+    outline: 2px solid #DCDCDC;
+}
