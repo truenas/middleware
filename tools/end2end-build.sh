@@ -167,7 +167,7 @@ _post_images() {
 		arch=x86
 		;;
 	 esac
-	 for file in $(ls *.iso *.pbi *.xz)
+	 for file in $(ls *.iso *.pbi *.txz *.xz)
 	 do
 		sudo sh -c "sha256 $file > $file.sha256.txt"
 		_post_local_files $arch $file*
