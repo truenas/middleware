@@ -2036,7 +2036,7 @@ class notifier:
         plugin_ids = [p[0] for p in c.fetchall()]
         for plugin_id in plugin_ids:
             if not self.delete_pbi(plugin_id):
-                S(LOG_DEBUG, "delete_plugins_jail: unable to delete plugin %d" % plugin_id)
+                log.debug("delete_plugins_jail: unable to delete plugin %d", plugin_id)
 
         log.debug("delete_plugins_jail: stopping plugins jail")
         self._stop_plugins_jail()
