@@ -8,7 +8,7 @@ export HOME
 TERM=${TERM:-cons25}
 export TERM
 
-. /etc/version-info
+. /etc/avatar.conf
 
 get_product_path()
 {
@@ -17,7 +17,38 @@ get_product_path()
 
 get_image_name()
 {
-    find "$(get_product_path)" -name "$SW_NAME-$SW_ARCH.img.xz" -type f
+    find "$(get_product_path)" -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
+}
+
+# Convert /etc/version* to /etc/avatar.conf
+#
+# 1 - old /etc/version* file
+# 2 - dist version of avatar.conf
+# 3 - destination avatar.conf
+upgrade_version_to_avatar_conf()
+{
+    local destconf srcconf srcversion
+    local project version revision arch
+
+    srcversion=$1
+    srcconf=$2
+    destconf=$3
+
+    set -- $(sed -E -e 's/-amd64/-x64/' -e 's/-i386/-x86/' -e 's/(.*)-([^-]+) \((.*)\)/\1-\3-\2/' -e 's/-/ /' -e 's/-([^-]+)$/ \1/' -e 's/-([^-]+)$/ \1/' < $srcversion)
+
+    project=$1
+    version=$2
+    revision=$3
+    arch=$4
+
+    sed \
+        -e "s/^AVATAR_ARCH=\".*\"/AVATAR_ARCH=\"$arch\"/g" \
+        -e "s/^AVATAR_BUILD_NUMBER=\".*\"\$/AVATAR_BUILD_NUMBER=\"$revision\"/g" \
+        -e "s/^AVATAR_PROJECT=\".*\"\$/AVATAR_PROJECT=\"$project\"/g" \
+        -e "s/^AVATAR_VERSION=\".*\"\$/AVATAR_VERSION=\"$version\"/g" \
+        < $srcconf > $destconf.$$
+
+    mv $destconf.$$ $destconf
 }
 
 build_config()
@@ -127,7 +158,7 @@ Proceed with the ${_type}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "$SW_NAME ${_type}" --yesno "${_msg}" 13 74
+    dialog --title "$AVATAR_PROJECT ${_type}" --yesno "${_msg}" 13 74
     [ $? -eq 0 ] || exit 1
 }
 
@@ -136,7 +167,7 @@ ask_upgrade()
     local _disk="$1"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-The $SW_NAME installer can preserve your existing parameters, or
+The $AVATAR_PROJECT installer can preserve your existing parameters, or
 it can do a fresh install overwriting the current settings,
 configuration, etc.
 
@@ -144,7 +175,7 @@ Would you like to upgrade the installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this $SW_NAME installation" --yesno "${_msg}" 8 74
+    dialog --title "Upgrade this $AVATAR_PROJECT installation" --yesno "${_msg}" 8 74
     return $?
 }
 
@@ -232,7 +263,7 @@ menu_install()
         _menuheight=$((${_menuheight} + ${_items}))
     fi
     eval "dialog --title 'Choose destination media' \
-          --menu 'Select the drive where $SW_NAME should be installed.' \
+          --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
           ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
     [ $? -eq 0 ] || exit 1
     _disk=`cat "${_tmpfile}"`
@@ -256,12 +287,30 @@ menu_install()
     _config_file="/tmp/pc-sysinstall.cfg"
 
     # Start critical section.
-    trap "dialog --msgbox \"The $SW_NAME $_action on $_disk has failed\" 6 74" EXIT
+    trap "dialog --msgbox \"The $AVATAR_PROJECT $_action on $_disk has failed\" 6 74" EXIT
     set -e
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
     build_config  ${_disk} "$(get_image_name)" ${_config_file}
+
+    if [ ${_do_upgrade} -eq 1 ]
+    then
+        /etc/rc.d/dmesg start
+        mkdir /tmp/data
+        mount /dev/${_disk}s1a /tmp/data
+        # pre-avatar.conf build. Convert it!
+        if [ ! -e /tmp/data/etc/avatar.conf ]
+        then
+            upgrade_version_to_avatar_conf \
+		    /tmp/data/etc/version* \
+		    /etc/avatar.conf \
+		    /tmp/data/etc/avatar.conf
+        fi
+        install_worker.sh -D / -m /tmp/data pre-install
+        umount /tmp/data
+        rmdir /tmp/data
+    fi
 
     # Run pc-sysinstall against the config generated
 
@@ -298,14 +347,14 @@ menu_install()
         umount /tmp/data
         rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
-$SW_NAME will migrate this file, if necessary, to the current format." 6 74
+$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     fi
 
     # End critical section.
     set +e
 
     trap - EXIT
-    dialog --msgbox "The $SW_NAME $_action on ${_disk} succeeded!
+    dialog --msgbox "The $AVATAR_PROJECT $_action on ${_disk} succeeded!
 Please remove the CDROM and reboot." 6 74
 
     return 0
@@ -335,7 +384,7 @@ main()
 
     while :; do
 
-        dialog --clear --title "$SW_NAME $SW_VERSION Console Setup" --menu "" 12 73 6 \
+        dialog --clear --title "$AVATAR_PROJECT $AVATAR_VERSION Console Setup" --menu "" 12 73 6 \
             "1" "Install/Upgrade" \
             "2" "Shell" \
             "3" "Reboot System" \

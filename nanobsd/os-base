@@ -701,7 +701,20 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
-		cat "$firmware_img" | xz --verbose -9 > "$gui_upgrade_bname.xz"
+		# NOTE: this is still needed after the .txz payload has been
+		# added because pc-sysinstall doesn't support raw images
+		# (-.-).
+		xz --keep --verbose -9 < "$firmware_img" > \
+		    "$gui_upgrade_bname.xz"
+
+		tar --options=xz:compression-level=9 -cJpvf \
+		    "$gui_upgrade_bname.txz" \
+			-C "$NANO_WORLDDIR" \
+				etc/avatar.conf \
+			-C "$AVATAR_ROOT/nanobsd/Installer" \
+				. \
+			-C "$NANO_DISKIMGDIR" \
+				${firmware_img##*/}
 
 		) > "${gui_image_log}" 2>&1
 

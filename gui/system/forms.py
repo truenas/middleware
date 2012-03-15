@@ -451,7 +451,7 @@ class FirmwareUploadForm(Form):
     sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/firmware.xz'
+        filename = '/var/tmp/firmware/firmware.txz'
         if cleaned_data.get('firmware'):
             if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
                 shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
@@ -474,7 +474,7 @@ class FirmwareUploadForm(Form):
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self, request, *args, **kwargs):
-        notifier().update_firmware('/var/tmp/firmware/firmware.xz')
+        notifier().update_firmware('/var/tmp/firmware/firmware.txz')
         request.session['allow_reboot'] = True
 
 class ServicePackUploadForm(Form):

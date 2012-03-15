@@ -381,7 +381,7 @@ export AVATAR_PROJECT_SITE AVATAR_SUPPORT_SITE
 EOF
 
 }
-late_customize_cmd generate_avatar_conf
+customize_cmd generate_avatar_conf
 
 __a=`mount | grep ${NANO_OBJ}/ | awk '{print length($3), $3;}' | sort -rn | awk '{$1=""; print;}'`
 if [ -n "$__a" ]; then

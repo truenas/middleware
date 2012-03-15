@@ -1795,14 +1795,31 @@ class notifier:
         self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
     def validate_xz(self, path):
-        ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
-        if ret == 0:
-            return True
-        return False
+
+        os.chdir(os.path.dirname(path))
+
+        try:
+            ret = self.__system_nolog('/usr/bin/tar -xJpf %s' % (path, ))
+            if ret != 0:
+                return False
+
+            p = subprocess.Popen(
+                                 ['bin/install_worker.sh', 'pre-install'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT,
+                                 )
+            output = p.communicate()[0]
+            if p.returncode != 0:
+                log.log(syslog.LOG_NOTICE,
+                        'install_worker pre-install failed; see the following '
+                        'output for more details:\n%s', output)
+            return p.returncode == 0
+        finally:
+            os.chdir('/')
 
     def update_firmware(self, path):
         try:
-            cmd1 = '/usr/bin/xzcat %s' % (path, )
+            cmd1 = 'cat %s/firmware.img' % (os.path.dirname(path), )
             cmd2 = 'sh -x /root/update'
             log.log(syslog.LOG_NOTICE, 'Executing: %s | %s', cmd1, cmd2)
             p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
