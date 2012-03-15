@@ -44,13 +44,24 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+DATABASE_PATH = '/data/freenas-v1.db'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/data/freenas-v1.db',
+        'NAME': DATABASE_PATH,
         'TEST_NAME': os.path.join(HERE, "test.db"),
     }
 }
+
+"""
+Make sure the database is never world readable
+TODO: We might want to check for file ownership as well
+"""
+if os.path.exists(DATABASE_PATH):
+    mode = os.stat(DATABASE_PATH).st_mode & 0xfff
+    if mode != 0o640:
+        os.chmod(DATABASE_PATH, 0o640)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
