@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-14 07:54+0200\n"
+"PO-Revision-Date: 2012-03-15 09:06+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -562,7 +562,7 @@ msgstr "Birincil grup"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
-msgstr "SSH Genel Anahtarı"
+msgstr "SSH genel anahtarı"
 
 #: account/forms.py:256
 msgid "Home Directory Mode"
@@ -1077,7 +1077,7 @@ msgstr "Takma Ad"
 #: network/models.py:266 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr "Sanal Arabirim"
+msgstr "Sanal arabirim"
 
 #: network/models.py:267
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
@@ -1769,7 +1769,7 @@ msgstr "Bu parametreler smb.conf dosyasında [homes] bölümüne eklenir"
 
 #: services/models.py:159
 msgid "Unix Extensions"
-msgstr "Unix Uzantıları"
+msgstr "Unix uzantıları"
 
 #: services/models.py:161
 msgid ""
@@ -1808,7 +1808,7 @@ msgstr "İstek boyutu bu değerden büyükse Samba uyumsuz yazacaktır."
 
 #: services/models.py:181
 msgid "Zeroconf share discovery"
-msgstr "Sıfır ayarlama baylaşım keşfi"
+msgstr "Sıfır ayarlama paylaşım keşfi"
 
 #: services/models.py:183
 msgid ""
@@ -1880,7 +1880,7 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
-"Gigabit ağ hızı aşan performansa yardımcı olamak için uyumsuz biçimi "
+"Gigabit ağ hızı aşan performansa yardımcı olmak için uyumsuz biçimi "
 "etkinleştirin."
 
 #: services/models.py:241 services/models.py:242
@@ -2786,7 +2786,7 @@ msgstr "Eski biçimde çalışma grubu veya etki alanı adı, örneğin WORKGROU
 
 #: services/models.py:1178
 msgid "Allow Trusted Domains"
-msgstr "İzin Verilen Güvenilir Alan Adları"
+msgstr "İzin verilen güvenilir alan adları"
 
 #: services/models.py:1182
 msgid "Administrator Name"
@@ -3155,7 +3155,7 @@ msgstr "Servis başlatılamadı."
 
 #: sharing/forms.py:81
 msgid "Confirm Share Password"
-msgstr "Paylaşılan Parola Onayı"
+msgstr "Paylaşılan parola onayı"
 
 #: sharing/forms.py:123
 #, python-format
@@ -4102,7 +4102,7 @@ msgstr "Ana Bilgisayarları Uzaktan Kopyalama"
 #: storage/models.py:625 storage/models.py:679
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 msgid "Filesystem/Volume"
-msgstr "DosyaSistem/Birim"
+msgstr "Dosya Sistemi/Birim"
 
 #: storage/models.py:630
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4173,7 +4173,7 @@ msgstr "Başlangıç"
 
 #: storage/models.py:698
 msgid "Do not snapshot before"
-msgstr "Önce anlık durum görüntüsünü yapmayın"
+msgstr "Daha önce anlık durum görüntüsü alma"
 
 #: storage/models.py:702
 msgid "End"
@@ -4181,7 +4181,7 @@ msgstr "Son"
 
 #: storage/models.py:703
 msgid "Do not snapshot after"
-msgstr "Sonra anlık durum görüntüsünü yapmayın"
+msgstr "Daha sonra anlık durum görüntüsü alma"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4191,7 +4191,7 @@ msgstr "Aralık"
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
-"Son bir yeni anlık durum görüntüsü yapılmadan önce kaç dakikada geçilecek."
+"Son bir yeni anlık durum görüntüsü yapılmadan önce ne kadar zaman geçecek."
 
 #: storage/models.py:716
 msgid "Occurrence"
@@ -4551,11 +4551,11 @@ msgstr ""
 
 #: system/models.py:128
 msgid "NTP Server"
-msgstr "NTP sunucu"
+msgstr "NTP Sunucu"
 
 #: system/models.py:129
 msgid "NTP Servers"
-msgstr "NTP sunucu"
+msgstr "NTP Sunucu"
 
 #: system/models.py:141
 msgid "Enable Console Menu"
@@ -4788,7 +4788,7 @@ msgstr "Yön"
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
-msgstr "İtin - Yerelden uzak makineye. Çekin - Uzaktan yerel makineye."
+msgstr "Bas - Yerelden uzak makineye. Çek - Uzaktan yerel makineye."
 
 #: system/models.py:500
 msgid "Recurse into directories"
@@ -4808,7 +4808,7 @@ msgstr "Sıkıştırma"
 
 #: system/models.py:510
 msgid "Compress data during the transfer"
-msgstr "veriyi aktarım sırasında sıkıştır"
+msgstr "Veriyi aktarım sırasında sıkıştır"
 
 #: system/models.py:514
 msgid "Archive"
@@ -6192,11 +6192,11 @@ msgstr "Henüz bir NTP sunucsu yok"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr "NTP sunucu ekle"
+msgstr "NTP Sunucu ekle"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
-msgstr "NTP sunucu ekle"
+msgstr "NTP Sunucu Ekle"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6351,7 +6351,7 @@ msgstr "Ortalama yük"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr "Aracılığıyla bağlandı"
+msgstr "Bağlantı adresi"
 
 #: templates/system/tunable.html:32
 msgid "No tunable setting defined."

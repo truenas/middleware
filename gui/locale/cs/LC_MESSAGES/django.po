@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-01-29 07:14+0200\n"
+"PO-Revision-Date: 2012-03-14 14:37+0200\n"
 "Last-Translator: lubos <lubosboucek@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -398,7 +398,7 @@ msgstr "pouze zápis"
 
 #: choices.py:502
 msgid "Read and Write"
-msgstr ""
+msgstr "Čtení a zápis"
 
 #: choices.py:506 choices.py:507
 #, fuzzy, python-format
@@ -461,16 +461,15 @@ msgstr ""
 
 #: choices.py:529
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Okamžitý offline test (pouze ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
-msgstr "Asynchronní režim"
+msgstr "Rsync modul"
 
 #: choices.py:559
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync přes SSH"
 
 #: choices.py:563
 msgid "Push"
@@ -1084,7 +1083,7 @@ msgstr ""
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr ""
+msgstr "Aliasy"
 
 #: network/models.py:266 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -1447,7 +1446,7 @@ msgstr ""
 
 #: services/forms.py:392
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Službě activedirectory se nepodařilo znovu načíst."
 
 #: services/forms.py:403
 msgid "The ldap service failed to reload."
@@ -1503,7 +1502,7 @@ msgstr "Pokud nastavíte uživatele musíte nastavit i heslo"
 #: services/forms.py:885 services/forms.py:940 services/models.py:492
 #: services/models.py:709
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Nepodařilo se znovu načíst službu iSCSI."
 
 #: services/forms.py:510
 msgid "LUN already exists in the same target."
@@ -1574,7 +1573,7 @@ msgstr ""
 #: services/forms.py:859
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Vaše skupinové ID nemůže být vyšší než %d"
 
 #: services/forms.py:877
 msgid ""
@@ -1611,7 +1610,7 @@ msgstr "Název služby, měl by být generovaný automaticky"
 
 #: services/models.py:46
 msgid "Enable Service"
-msgstr ""
+msgstr "Povolit službu"
 
 #: services/models.py:49 services/models.py:50 services/nav.py:7
 #: templates/menubar.html:28 templates/services/index.html:3
@@ -1620,7 +1619,7 @@ msgstr "Služby"
 
 #: services/models.py:62
 msgid "Authentication Model"
-msgstr ""
+msgstr "Ověřovací model"
 
 #: services/models.py:63
 msgid ""
@@ -1633,7 +1632,7 @@ msgstr "NetBIOS Jméno"
 
 #: services/models.py:71
 msgid "Workgroup"
-msgstr ""
+msgstr "Pracovní skupina"
 
 #: services/models.py:72
 msgid ""
@@ -1647,11 +1646,11 @@ msgstr ""
 
 #: services/models.py:84
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS znaková sada"
 
 #: services/models.py:90
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX znaková sada"
 
 #: services/models.py:96
 msgid "Log level"
@@ -1685,15 +1684,15 @@ msgstr ""
 
 #: services/models.py:110
 msgid "Allow guest access"
-msgstr ""
+msgstr "Povolit účet hosta"
 
 #: services/models.py:112
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Povolit pouze účet hosta"
 
 #: services/models.py:115 services/models.py:959
 msgid "File mask"
-msgstr ""
+msgstr "Maska souboru"
 
 #: services/models.py:117
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1701,12 +1700,12 @@ msgstr ""
 
 #: services/models.py:121 services/models.py:965
 msgid "Directory mask"
-msgstr ""
+msgstr "Maska adresáře"
 
 #: services/models.py:123
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr ""
+msgstr "Použijte tuto možnost k přepsání masky (výchozí hodnota 0777)."
 
 #: services/models.py:126
 msgid "Large RW support"
