@@ -795,7 +795,8 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             else:
                 notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
-                if diskobj.disk_identifier.startswith("{devicename}"):
+                if diskobj.disk_identifier.startswith("{devicename}") or \
+                        diskobj.disk_identifier.startswith("{uuid}"):
                     notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
                     notifier().sync_disk(self.cleaned_data["iscsi_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
