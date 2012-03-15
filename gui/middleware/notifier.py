@@ -881,6 +881,8 @@ class notifier:
         else:
             commands.append("gpart add -b 128 -t %s %s" % (type, devname))
 
+        # Install a dummy boot block so system gives meaningful message if booting
+        # from the wrong disk.
         commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
 
         for command in commands:
@@ -889,8 +891,11 @@ class notifier:
             if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
-        # Install a dummy boot block so system gives meaningful message if booting
-        # from the wrong disk.
+        # We might need to sync with reality (e.g. devname -> uuid)
+        # Invalidating confxml is required or changes wont be seen
+        self.__confxml = None
+        self.sync_disk(devname)
+
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
@@ -903,6 +908,11 @@ class notifier:
         # Wipe out the partition table by doing an additional iterate of create/destroy
         self.__system("gpart create -s gpt /dev/%s" % devname)
         self.__system("gpart destroy -F /dev/%s" % devname)
+
+        # We might need to sync with reality (e.g. uuid -> devname)
+        # Invalidating confxml is required or changes wont be seen
+        self.__confxml = None
+        self.sync_disk(devname)
 
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
@@ -928,7 +938,6 @@ class notifier:
                 test4k = False
                 want4khack = rv
 
-        self.__confxml = None
         for disk in disks:
 
             devname = self.part_type_from_device('zfs', disk)
@@ -1163,7 +1172,7 @@ class notifier:
 
         # Clear out disks associated with the volume
         for disk in disks:
-            self.__gpt_unlabeldisk(devname = disk)
+            self.__gpt_unlabeldisk(devname=disk)
 
     def __create_ufs_volume(self, volume, swapsize, group):
         geom_vdev = ""
@@ -1265,10 +1274,8 @@ class notifier:
         if from_disk == to_disk:
             self.__system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
 
-        self.__gpt_labeldisk(type = "freebsd-zfs", devname = to_disk, swapsize=swapsize)
+        self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
 
-        # invalidate cache
-        self.__confxml = None
         # There might be a swap after __gpt_labeldisk
         to_swap = self.part_type_from_device('swap', to_disk)
         # It has to be a freebsd-zfs partition there
