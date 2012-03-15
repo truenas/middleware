@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import re
+
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _, ugettext as __
 
@@ -83,6 +85,11 @@ class PBITemporaryLocationForm(Form):
 class PBIUploadForm(Form):
     pbifile = FileField(label=_("PBI file to be installed"), required=True)
     sha256 = forms.CharField(label=_("SHA256 sum for the PBI file"), required=True)
+
+    def clean_sha256(self):
+        sha256 = re.sub(r'\s+', '', self.cleaned_data.get("sha256", ''))
+        return sha256
+
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
@@ -99,6 +106,7 @@ class PBIUploadForm(Form):
         else:
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
+
     def done(self, *args, **kwargs):
         notifier().install_pbi()
         notifier().restart("plugins")
@@ -131,6 +139,10 @@ class JailPBIUploadForm(Form):
             label=_("SHA256 sum for the PBI file"),
             required=True
              )
+
+    def clean_sha256(self):
+        sha256 = re.sub(r'\s+', '', self.cleaned_data.get("sha256", ''))
+        return sha256
 
     def clean(self):
         cleaned_data = self.cleaned_data
