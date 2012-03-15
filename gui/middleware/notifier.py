@@ -228,9 +228,9 @@ class notifier:
 
             if pidfile:
                 procname = " " + procname if procname else ""
-                retval = self.__system_nolog("/bin/pgrep -F %s%s" % (pidfile, procname))
+                retval = self.__pipeopen("/bin/pgrep -F %s%s" % (pidfile, procname)).wait()
             else:
-                retval = self.__system_nolog("/bin/pgrep %s" % (procname,))
+                retval = self.__pipeopen("/bin/pgrep %s" % (procname,)).wait()
 
             if retval == 0:
                 return True
