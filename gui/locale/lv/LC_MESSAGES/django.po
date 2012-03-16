@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2011-11-28 21:18+0200\n"
+"PO-Revision-Date: 2012-03-15 22:09+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -460,22 +460,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Bezsaistes tūlītējs tests (tikai ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "Rsync modulis"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Rsync modulis"
+msgstr "Rsync caur SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Grūst"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Vilkt"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -548,7 +546,7 @@ msgstr "Slēgt lietotāju"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Izveidot jaunu primāro grupu lietotājam"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -559,9 +557,8 @@ msgid "SSH Public Key"
 msgstr "SSH Publiskā atslēga"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Sākuma katalogs"
+msgstr "Sākuma Kataloga Režīms"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -732,9 +729,8 @@ msgid "Account"
 msgstr "Lietotājs"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Lietotājs"
+msgstr "Administratora Lietotājs"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -788,9 +784,9 @@ msgid "Add %s"
 msgstr "Pievieno %s"
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Skatīt visus %s"
+msgstr "Skatīt %s"
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
@@ -807,17 +803,17 @@ msgstr "Izslēgt"
 #: freeadmin/navtree.py:395
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Tīrīt datus, kuri ieradās no %s"
 
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Neizdevās iegūt %(url)us: %(error)us"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Notika kāda kļūda nosaucot disku."
+msgstr "Notika kļūda, kamēr atserializējot no %(url)us: %(error)us"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -862,7 +858,7 @@ msgstr "NIC"
 #: network/forms.py:344
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Tu vari konfigurēt vairākas saskarnes ar to pašu IP adresi (%s)"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -933,9 +929,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Fiziskās NICs iekš LAGG"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fiziskās NIC"
+msgstr "LAGG Fiziskais NIC"
 
 #: network/forms.py:298
 #, python-format
@@ -1161,37 +1156,32 @@ msgid "Create Link Aggregation"
 msgstr "Izveidot saišu savākšanu"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "Skatīt visas saišu savākšanas"
+msgstr "Skatīt Saišu Savākšanas"
 
 #: network/views.py:188
 msgid "LAGG successfully added"
 msgstr "LAGG veiksmīgi pievienots"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid "Place to temporarily place PBI file"
-msgstr "Vieta, kur uz pagaidu laiku uzglabāt programmatūras datni"
+msgstr "Vieta, kur uz pagaidu laiku uzglabāt FBI datni"
 
 #: plugins/forms.py:73
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"Sistēma lietos šo vietu, lai uz pagaidu laiku glabātu programmatūru, pirms "
-"tā tiks uzstādīta."
+"Sistēma lietos šo vietu, lai uz pagaidu laiku glabātu FBI datni, pirms tā "
+"tiks uzstādīta."
 
 #: plugins/forms.py:87
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "Jaunā bilde, ko instalēt"
+msgstr "PBI datne, ko instalēt"
 
 #: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "SHA256 summa attēlam"
+msgstr "SHA256 summa PBI datnei"
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
@@ -1200,112 +1190,102 @@ msgstr "Nederīga kontrolsumma"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Spraudņi Cietumā PBI"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "Cietuma ceļš nevar saturēt spraudņa ceļu."
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "Spraudņa ceļš nevar saturēt cietuma ceļu."
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "Domēna vārds"
+msgstr "Spraudņa vārds"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Spraudņa nosaukums"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
-msgstr ""
+msgstr "Spraudņa info vārds"
 
 #: plugins/models.py:43
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Info vārds spraudnim"
 
 #: plugins/models.py:48
 msgid "Plugin version"
-msgstr ""
+msgstr "Spraudņa versija"
 
 #: plugins/models.py:49
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "savienojuma šifrēšana"
+msgstr "Spraudņa versija"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Spraudņa arhitektūra"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Domēna vārds"
+msgstr "Spraudņa uname"
 
 #: plugins/models.py:61
 msgid "UName of the plugin"
-msgstr ""
+msgstr "UName spraudnim"
 
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin view"
-msgstr ""
+msgstr "Spraudņa skats"
 
 #: plugins/models.py:72 plugins/models.py:73
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin icon"
-msgstr ""
+msgstr "Spraudņa ikona"
 
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Spraudnis iespējots"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "Kontroliera IP adrese"
+msgstr "Spraudņa IP adrese"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "TCP Ports"
+msgstr "Spraudņa TCP Ports"
 
 #: plugins/models.py:96 plugins/models.py:97
-#, fuzzy
 msgid "Path to plugin"
-msgstr "Ceļš uz montēšanas punktu"
+msgstr "Ceļš uz spraudni"
 
 #: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "Spraudņi"
 
 #: plugins/nav.py:40
-#, fuzzy
 msgid "Control Plugins"
-msgstr "Kontrolēt Servisus"
+msgstr "Kontrolēt Spraudņus"
 
 #: plugins/nav.py:48
-#, fuzzy
 msgid "Configure Plugins"
-msgstr "Konfigurēt Rsuncd"
+msgstr "Konfigurēt Spraudņus"
 
 #: plugins/views.py:69
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s veiksmīgi atjaunināts."
+msgstr "Spraudnis veiksmīgi atjaunināts."
 
 #: plugins/views.py:95
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "Sējums veiksmīgi izveidots."
+msgstr "Spraudnis veiksmīgi noņemts."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."

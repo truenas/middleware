@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-15 09:06+0200\n"
+"PO-Revision-Date: 2012-03-16 08:15+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1195,7 +1195,7 @@ msgstr "Geçersiz toplama sağlaması"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr "Jail PBI Eklentileri"
+msgstr "Jail PBI eklentileri"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
@@ -1254,7 +1254,7 @@ msgstr "Eklenti simgesi"
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr "Etkin eklenti"
+msgstr "Eklenti etkin"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
@@ -1282,7 +1282,7 @@ msgstr "Eklenti Kontrolü"
 
 #: plugins/nav.py:48
 msgid "Configure Plugins"
-msgstr "Eklentileri Yapılandırma"
+msgstr "Eklentileri Yapılandır"
 
 #: plugins/views.py:69
 msgid "Plugin successfully updated."
