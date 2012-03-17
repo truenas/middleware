@@ -197,7 +197,6 @@ do
 			then
 				do_not_merge=true
 			else
-				set -x
 				dnm_branches=$(sed -ne 's/^Do-Not-Merge (\(.*\)):\(.*\)/\1/p' revlog)
 				for dnm_branch in $(echo "$dnm_branches" | sed -e 's/,/ /g')
 				do
@@ -208,7 +207,6 @@ do
 						break
 					fi
 				done
-				set +x
 			fi
 		fi
 		if $do_not_merge
