@@ -5,6 +5,7 @@ Simple script for pruning old builds.
 Garrett Cooper, February 2012
 """
 
+import fnmatch
 import optparse
 import os
 import sys
@@ -16,7 +17,7 @@ DAY = 24 * 3600
 
 
 def rm_old_files(rootdir, excludes=None, includes=None,
-                 expire_time=(30 * DAY)):
+                 expire_time=(30 * DAY), fake=False):
     """Nuke everything under '''rootdir''' that doesn't match
        '''exclude''' that's older than '''expire_time'''.
     """
@@ -27,27 +28,33 @@ def rm_old_files(rootdir, excludes=None, includes=None,
     if includes is None:
         includes = []
 
-    # TODO: add in basic filter logic so wanted files that are
-    # older than a specific date aren't nuked (e.g. README ;)..).
-
-    #def is_wanted(path):
-    #    not (exclude) or
-
     os.chdir(rootdir)
 
     expiration_date = time.time() - expire_time
 
-    for path in \
-        filter(lambda e: os.stat(e).st_ctime < expiration_date,
-               os.listdir('.')):
+    def nuke(path):
+        if filter(lambda e: fnmatch.fnmatchcase(path, e), excludes):
+            return False
+        if os.stat(path).st_ctime < expiration_date:
+            return True
+        return False
+
+    def nukeit(function, path):
+        if nuke(path):
+            if fake:
+                sys.stdout.write('%s("%s")\n' % (function.__name__, path))
+            else:
+                function(path)
+
+    for path in filter(lambda e: nuke(e), os.listdir('.')):
         sys.stdout.write('Removing "%s/%s"\n' % (rootdir, path, ))
         if os.path.isdir(path):
             for root, __, files, in os.walk(path, topdown=False):
                 for f in files:
-                    os.unlink(os.path.join(root, f))
-            os.rmdir(path)
+                    nukeit(os.unlink, os.path.join(root, f))
+            nukeit(os.rmdir, path)
         else:
-            os.unlink(path)
+            nukeit(os.unlink, path)
 
 
 def main(argv):
@@ -67,6 +74,11 @@ def main(argv):
                       help='Globs of files to include',
                       )
 
+    parser.add_option('-n', '--no-exec', dest='fake',
+                      action='store_true',
+                      help='Do not remove files',
+                      )
+
     parser.add_option('-X', '--exclude', dest='exclude',
                       type='str',
                       action='append',
@@ -78,7 +90,12 @@ def main(argv):
         parser.error('you must specify one or more directories')
 
     for buildroot in dirs:
-        rm_old_files(buildroot, expire_time=(args.expire_date * DAY))
+        rm_old_files(buildroot,
+                     expire_time=(args.expire_date * DAY),
+                     excludes=args.exclude,
+                     fake=args.fake,
+                     includes=args.include,
+                     )
 
 
 if __name__ == '__main__':
