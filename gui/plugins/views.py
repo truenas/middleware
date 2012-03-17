@@ -130,3 +130,25 @@ def plugin_fcgi_client(request, name, version, path):
     status, header, body, raw = app(env, args=args)
 
     return HttpResponse(body)
+
+def plugins_jail_import(request):
+    if request.method == "POST":
+        form = forms.JailImportForm(request.POST) 
+        variables = { "form": form}
+
+        if form.is_valid():
+            jail_path = form.cleaned_data["jail_path"]
+            jail_ip = form.cleaned_data["jail_ip"]
+            plugins_path = form.cleaned_data["plugins_path"]
+
+            if not notifier().import_jail(jail_path, jail_ip, plugins_path):
+                return JsonResp(request, message=_("There was a problem importing the jail."))
+            else:
+                return JsonResp(request, message=_("Jail successfully imported."))
+
+        else: 
+            return JsonResp(request, error=True, message=_("Unable to import jail."))
+ 
+    else:
+        form = forms.JailImportForm()
+        return render(request, "plugins/jail_import.html", { "form": form })

@@ -1,4 +1,4 @@
-#+
+#i+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -1292,6 +1292,7 @@ def __fs_mount_filesystem(request, src, dst):
 
     return False if p.returncode != 0 else True
 
+
 @jsonrpc_method("fs.umount")
 def __fs_umount_filesystem(request, dst):
     jail_path = __get_plugins_jail_full_path()
@@ -1309,12 +1310,40 @@ def __fs_umount_filesystem(request, dst):
 
     return False if p.returncode != 0 else True
 
+
 @jsonrpc_method("fs.directory.get")
-def __fs_get_directory(request):
-    return __api_call_not_implemented(request)
+def __fs_get_directory(request, path=None):
+    files = None 
+    if path:
+        files = os.listdir(path) 
+
+    return json.dumps(files)
+
 
 @jsonrpc_method("fs.file.get")
-def __fs_get_file(request):
+def __fs_get_file(request, path=None):
+    file = None
+    if not path: 
+        return file
+
+    try:
+        f = open(path, "r")
+
+    except:
+        return file
+
+    file = f.readlines()  
+    f.close()
+
+    return json.dumps(file)
+
+
+@jsonrpc_method("fs.file.set")
+def __fs_set_file(request, path=None, data=None):
+    return __api_call_not_implemented(request)
+
+@jsonrpc_method("fs.file.create")
+def __fs_set_file(request, path=None, data=None):
     return __api_call_not_implemented(request)
 
 @jsonrpc_method("fs.filesystems.get")

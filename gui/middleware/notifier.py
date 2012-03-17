@@ -2001,6 +2001,57 @@ class notifier:
 
         return ret
 
+    def import_jail(self, jail_path, jail_ip, plugins_path):
+        import string
+
+        ret = False
+
+        if not jail_path:
+            return ret
+        if not jail_ip:
+            return ret
+        if not plugins_path:
+            return ret
+
+        if not os.access(jail_path, os.F_OK):
+            return ret
+        if not os.access(plugins_path, os.F_OK):
+            return ret
+
+        parts = jail_path.split('/')
+        if not parts:
+            return ret
+
+        plen = len(parts)
+        last = plen - 1
+        jail_path = string.join(parts[0:last], '/')
+        if not jail_path:
+            jail_path = "/"
+        jail_name = parts[last] 
+
+        #
+        # XXX: At some point (soon), plugins/jail need to support IPv6
+        #
+        (c, conn) = self.__open_db(ret_conn=True)
+        c.execute("SELECT alias_interface_id, alias_v4address, alias_v4netmaskbit "
+            "FROM network_alias WHERE alias_v4address = :jail_ip", { 'jail_ip': jail_ip })
+        (alias_id, alias_addr, alias_mask) = c.fetchone()
+
+        sqlvars = "jail_path, jail_name, jail_ip_id, plugins_path"
+        sqlvals = "'%s', '%s', '%s', '%s'" % (jail_path, jail_name, alias_id, plugins_path)
+
+        sql = "INSERT INTO services_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
+        try:
+            c.execute(sql)
+            conn.commit()
+            ret = True
+
+        except Exception, err:
+            syslog(LOG_DEBUG, "import_jail: failed %s" % err)
+            ret = False
+
+        return ret
+
     def delete_pbi(self, plugin_id):
         ret = False
 

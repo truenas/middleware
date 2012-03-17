@@ -44,6 +44,7 @@ urlpatterns = patterns('plugins.views',
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
     url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
+    url(r'^jailimport/$', 'plugins_jail_import', name="plugins_jail_import"),
     url(r'^jailpbi/$', PBIFileWizard(
             [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],
             prefix="jailpbi",

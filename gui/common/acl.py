@@ -382,6 +382,11 @@ class Base_ACL(object):
 
 class Base_ACL_Hierarchy(Base_ACL):
 
+    def __init__(self, path, acl = None):
+        super(Base_ACL_Hierarchy, self).__init__(path, acl)
+        
+        self.__jobs = []
+
     def _recurse(self, path, callback, *args, **kwargs):
         callback(path, *args, **kwargs)
 
@@ -580,3 +585,6 @@ class Base_ACL_Hierarchy(Base_ACL):
     def close(self):
         self.path = None
         self.flags = ACL_FLAGS_NONE
+
+    def run(self):
+        pass

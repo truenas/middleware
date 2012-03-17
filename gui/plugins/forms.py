@@ -33,11 +33,13 @@ from . import models
 from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
 from freenasUI.services.models import Plugins
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
+from freenasUI import choices
 
 
 class PBIFileWizard(FileWizard):
@@ -127,6 +129,31 @@ class JailInfoForm(ModelForm):
             self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
 
         return cleaned_data
+
+
+class JailImportForm(Form):
+    jail_path = PathField(
+            label=_("Plugins jail path"),
+            )
+    jail_ip = forms.ChoiceField(
+            label=_("Jail IP address"),
+            choices=(),
+            required=True
+            )
+    plugins_path = PathField(
+            label=_("Plugins archive Path"),
+            )
+
+    def __init__(self, *args, **kwargs):
+        from freenasUI.network import models
+
+        super(JailImportForm, self).__init__(*args, **kwargs)
+
+        nics = choices.NICChoices(with_alias=True, exclude_configured=False)
+        ifaces = models.Interfaces.objects.filter(int_interface__in=[n[0] for n in nics])
+        aliases = models.Alias.objects.filter(alias_interface__in=[i.id for i in ifaces])
+
+        self.fields['jail_ip'].choices = [(a.alias_v4address, a.alias_v4address) for a in aliases]
 
 
 class JailPBIUploadForm(Form):
