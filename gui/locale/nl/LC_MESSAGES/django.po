@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-03-09 11:11+0200\n"
-"Last-Translator: johanvl <johanvanlent@gmail.com>\n"
+"PO-Revision-Date: 2012-03-17 01:24+0200\n"
+"Last-Translator: brekker <petrus.ward@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -477,7 +477,7 @@ msgstr ""
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Je naam mag niet beginnen met \"-\""
 
 #: account/forms.py:54
 msgid "The character $ is only allowed as the final character"
@@ -486,12 +486,12 @@ msgstr ""
 #: account/forms.py:61
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Uw naam bevat ongeldige tekens (%s)."
 
 #: account/forms.py:70
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Uw volledige naam bevat ongeldige tekens (%s)."
 
 #: account/forms.py:120 templates/storage/volumes.html:61
 msgid "Available"
@@ -549,7 +549,7 @@ msgstr ""
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Creëer een nieuwe primaire groep voor de gebruiker"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -557,7 +557,7 @@ msgstr "Hoofd Groep"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH publieke sleutel"
 
 #: account/forms.py:256
 #, fuzzy
@@ -605,7 +605,7 @@ msgstr "Thuismap moet beginnen met /mnt/"
 
 #: account/forms.py:388
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Wachtwoord is uitgeschakeld, laat dit leeg"
 
 #: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
@@ -789,9 +789,9 @@ msgstr ""
 "point."
 
 #: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Fout"
+msgstr "Fout: %s"
 
 #: freeadmin/navtree.py:334
 #, python-format
@@ -893,7 +893,7 @@ msgstr ""
 
 #: network/forms.py:118
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Je moet kiezen tussen IPv4 of IPv6."
 
 #: network/forms.py:133
 msgid "Loopback is not a valid nameserver"
@@ -973,7 +973,7 @@ msgstr ""
 
 #: network/forms.py:372
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "U moet kiezen tussen IPv4 of IPv6 per alias."
 
 #: network/forms.py:374
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -1081,9 +1081,8 @@ msgid "Alias"
 msgstr "Alias"
 
 #: network/models.py:254
-#, fuzzy
 msgid "Aliases"
-msgstr "Alias"
+msgstr "Aliassen "
 
 #: network/models.py:266 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -1405,9 +1404,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "De naam mag geen / of ] bevatten."
 
 #: services/forms.py:272
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Wachtwoord Wijzigen"
+msgstr "Bevestig wachtwoord"
 
 #: services/forms.py:300
 msgid "The DynamicDNS service failed to reload."
@@ -1454,9 +1452,8 @@ msgid "The UPS service failed to reload."
 msgstr "De NFS service herstarten is mislukt."
 
 #: services/forms.py:369
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Administrator Wachtwoord"
+msgstr "Bevestig Administrator Wachtwoord"
 
 #: services/forms.py:392
 msgid "The activedirectory service failed to reload."
@@ -6549,9 +6546,8 @@ msgstr "Tape"
 msgid "Pass"
 msgstr "Geslaagd"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Wachtwoord delen"
+msgstr "Wachtwoord uitschakelen "
 
 msgid "My Account"
 msgstr "Mijn Account"
