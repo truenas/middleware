@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-16 08:15+0200\n"
-"Last-Translator: Ersan <yakazan@gmail.com>\n"
+"PO-Revision-Date: 2012-03-18 02:49+0200\n"
+"Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -4923,11 +4923,11 @@ msgstr "Sysctls"
 
 #: system/models.py:794
 msgid "Tunable"
-msgstr "Ayarlanabilir"
+msgstr "Yükleyici"
 
 #: system/models.py:795
 msgid "Tunables"
-msgstr "Ayarlanabilir"
+msgstr "Yükleyiciler"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4959,7 +4959,7 @@ msgstr "Sysctl Görüntüle"
 
 #: system/nav.py:61
 msgid "View Tunables"
-msgstr "Ayarlanabilirleri Görüntüle"
+msgstr "Yükleyicileri Görüntüle"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
@@ -5779,14 +5779,6 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
-"\n"
-"         Bu veri kümesi içerisindeki tüm dosyaları silecektir.\n"
-"        "
-msgstr[1] ""
-"\n"
-"        Bu veri kümesi ve çocuk veri kümeleri içerisindeki tüm dosyaları "
-"silecektir.\n"
-"        "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -6355,11 +6347,11 @@ msgstr "Bağlantı adresi"
 
 #: templates/system/tunable.html:32
 msgid "No tunable setting defined."
-msgstr "Ayarlanabilir ayarı yapılandırılmamış."
+msgstr "Yükleyici ayarı yapılandırılmamış."
 
 #: templates/system/tunable.html:38
 msgid "Add Tunable"
-msgstr "Ayarlanabilir Ekle"
+msgstr "Yükleyici Ekle"
 
 #: templates/system/tunable.html:40
 msgid "Add Loader"

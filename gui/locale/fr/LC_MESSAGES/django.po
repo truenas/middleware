@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-03-12 23:08+0200\n"
+"PO-Revision-Date: 2012-03-17 16:16+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -4466,8 +4466,9 @@ msgid "Force"
 msgstr "Forcer"
 
 #: system/forms.py:217
+#, fuzzy
 msgid "Max Poll should be higher than Min Poll"
-msgstr ""
+msgstr "Max Poll doit être supérieur à Min Poll"
 
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."

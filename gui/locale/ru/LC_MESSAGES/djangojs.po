@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:50-0800\n"
-"PO-Revision-Date: 2012-01-29 15:11+0200\n"
-"Last-Translator: djhrum <djhrum@gmail.com>\n"
+"PO-Revision-Date: 2012-03-18 02:18+0200\n"
+"Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -37,7 +37,7 @@ msgstr "Настройки сети"
 
 #: freeadmin/static/lib/js/freeadmin.js:184
 msgid "Plugins"
-msgstr ""
+msgstr "Плагины"
 
 #: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
@@ -62,7 +62,7 @@ msgstr "Редактирование диска"
 #: freeadmin/static/lib/js/freeadmin.js:608
 #: freeadmin/static/lib/js/freeadmin.js:710
 msgid "Please wait..."
-msgstr ""
+msgstr "Подождите..."
 
 #: freeadmin/static/lib/js/freeadmin.js:657
 #: freeadmin/static/lib/js/freeadmin.js:775
