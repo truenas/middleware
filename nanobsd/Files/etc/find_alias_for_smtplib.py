@@ -7,6 +7,7 @@ import re
 import sys
 
 from django.core.management import setup_environ
+from django.utils.translation import ugettext_lazy as _
 
 sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
 
@@ -43,7 +44,16 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     margs = {}
     margs['extra_headers'] = dict(em)
     margs['subject'] = em.get('Subject')
-    margs['text'] = ''.join(email.iterators.body_line_iterator(em))
+
+    if em.is_multipart():
+        margs['attachments'] = filter(lambda part: part.get_content_maintype() != 'multipart',
+                                      em.walk())
+        margs['text'] = u"%s" % _('This is a MIME formatted message.  If you see '
+                                  'this text it means that your email software '
+                                  'does not support MIME formatted messages.')
+    else:
+        margs['text'] = ''.join(email.iterators.body_line_iterator(em))
+
     if to_addrs_repl:
         margs['to'] = to_addrs_repl
 

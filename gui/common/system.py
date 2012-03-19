@@ -31,6 +31,7 @@ import sqlite3
 import subprocess
 import traceback
 import syslog
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
@@ -86,7 +87,9 @@ def send_mail(subject=None,
               interval=timedelta(),
               channel=get_sw_name().lower(),
               to=None,
-              extra_headers=None):
+              extra_headers=None,
+              attachments=None,
+              ):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
@@ -105,7 +108,12 @@ def send_mail(subject=None,
     em = Email.objects.all().order_by('-id')[0]
     if not to:
         to = [ bsdUsers.objects.get(bsdusr_username='root').bsdusr_email ]
-    msg = MIMEText(text, _charset='utf-8')
+    if attachments:
+        msg = MIMEMultipart()
+        msg.preamble  = MIMEText(text, _charset='utf-8')
+        map(lambda attachment: msg.attach(attachment), attachments)
+    else:
+        msg = MIMEText(text, _charset='utf-8')
     if subject:
         msg['Subject'] = subject
     msg['From'] = em.em_fromemail
