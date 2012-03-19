@@ -35,17 +35,25 @@ save_certificate()
 
 generate_ldapconf()
 {
-	local IFS="|"
-	local f="ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix ldap_ssl"
-	eval local $f
-	local sf=$(var_to_sf $f)
+	local IFS=\|
 	local nssconf="${NSS_LDAP_CONF}"
 	local ldapconf="${LDAP_CONF}"
 	local secret="${NSS_LDAP_SECRET}"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		services_ldap.id as $sf,
+		services_ldap.id as ldap_id,
+		ldap_hostname, 	 
+		ldap_basedn, 	 
+		ldap_anonbind, 	 
+		ldap_rootbasedn, 	 
+		ldap_rootbindpw, 	 
+		ldap_pwencryption, 	 
+		ldap_usersuffix, 	 
+		ldap_groupsuffix, 	 
+		ldap_passwordsuffix, 	 
+		ldap_machinesuffix, 	 
+		ldap_ssl,
 		trim(
 			rtrim(
 				replace(
@@ -70,7 +78,10 @@ generate_ldapconf()
 
 	LIMIT 1
 	" | \
-	while eval read $f; do
+	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
+		ldap_rootbindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix \
+		ldap_passwordsuffix ldap_machinesuffix ldap_ssl ldap_options;
+	do
 		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
 
 		cat >"${nssconf}" <<-EOF
@@ -82,6 +93,7 @@ generate_ldapconf()
 		nss_base_group ${ldap_groupsuffix},${ldap_basedn}
 		nss_override_attribute_value loginShell /bin/sh
 EOF
+	
 		if [ "${ldap_ssl}" = "start_tls" ]; then
 			save_certificate "${ldap_id}"
 
