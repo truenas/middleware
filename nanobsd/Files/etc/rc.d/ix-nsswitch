@@ -5,7 +5,6 @@
 
 # PROVIDE: ix-nsswitch
 # REQUIRE: root
-# REQUIRE: ix-kerberos
 # BEFORE: nsswitch
 
 . /etc/rc.freenas
@@ -75,7 +74,6 @@ EOF
 	rpc: files
 EOF
 	
-	/etc/rc.d/nsswitch start
 	return 0
 }
 
