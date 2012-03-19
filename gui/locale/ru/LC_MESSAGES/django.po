@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-18 02:41+0200\n"
+"PO-Revision-Date: 2012-03-18 19:40+0200\n"
 "Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -469,7 +469,6 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Немедленный Offline тест (только ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "Модуль Rsync"
 
@@ -825,9 +824,10 @@ msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr "Невозможно получить %(url)ов: %(error)s"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Ошибки при маркировке диска."
+msgstr ""
+"Произошла ошибка при десериализации (unserializing) от %(url)s: %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -1208,7 +1208,6 @@ msgid "Invalid checksum"
 msgstr "Неверная контрольная сумма"
 
 #: plugins/forms.py:115
-#, fuzzy
 msgid "Plugins Jail PBI"
 msgstr "Plugins Jail PBI"
 
@@ -1229,13 +1228,12 @@ msgid "Name of the plugin"
 msgstr "Имя плагина"
 
 #: plugins/models.py:42
-#, fuzzy
 msgid "Plugin info name"
 msgstr "Plugin info имя"
 
 #: plugins/models.py:43
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Info имя плагина"
 
 #: plugins/models.py:48
 msgid "Plugin version"
@@ -1773,7 +1771,6 @@ msgid "Home directories"
 msgstr "Домашние каталоги"
 
 #: services/models.py:154
-#, fuzzy
 msgid "Homes auxiliary parameters"
 msgstr "Дополнительные параметры"
 
@@ -2574,7 +2571,6 @@ msgid "Masquerade address"
 msgstr "Маскарадный адрес"
 
 #: services/models.py:982
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
@@ -2703,7 +2699,7 @@ msgstr "Указывает имя пользователя под которым
 
 #: services/models.py:1052
 msgid "umask"
-msgstr "Umask (маска режима создания пользовательских файлов)"
+msgstr "umask (маска режима создания пользовательских файлов)"
 
 #: services/models.py:1053
 msgid ""
@@ -4035,7 +4031,6 @@ msgid "Enabled"
 msgstr "Включить"
 
 #: storage/models.py:231
-#, fuzzy
 msgid "ZFS Scrub"
 msgstr "ZFS Scrub"
 
@@ -4089,7 +4084,6 @@ msgid "Multipath name"
 msgstr "Multipath имя"
 
 #: storage/models.py:329
-#, fuzzy
 msgid "Multipath member"
 msgstr "Multipath member"
 
@@ -4170,6 +4164,8 @@ msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Это должно быть имя файловой системы ZFS на удалённой стороне. Т.е. "
+"poolname/datasetname это не точка монтирования или путь файловой системы"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4328,7 +4324,6 @@ msgid "Volume successfully added."
 msgstr "Том успешно добавлен."
 
 #: storage/views.py:226
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Дополнительные параметры S.M.A.R.T."
 
@@ -4484,6 +4479,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Для использования rsync через SSH вам потребуется пользователь<br />с "
+"публичным ключём (DSA/ECDSA/RSA) установленным в домашнем каталоге."
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
@@ -4523,7 +4520,7 @@ msgstr "Адрес"
 
 #: system/models.py:92 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "Burst"
 
 #: system/models.py:94
 msgid ""
@@ -4531,10 +4528,12 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Когда сервер доступен, посылать пачку из восьми пакетов вместо одного. Это "
+"сделано для улучшения качества хранения времени."
 
 #: system/models.py:97
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:99
 msgid ""
@@ -4542,9 +4541,10 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"Когда сервер не доступен, посылать пачку из восьми пакетов вместо одного. "
+"Это сделано для улучшения качества хранения времени."
 
 #: system/models.py:102 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "Предпочтительный"
 
@@ -4553,20 +4553,25 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Отмечает сервер как предпочитаемый. При прочих равных, этот хост будет "
+"выбран для синхронизации среди множества корректно функционирующих хостов."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Минимальный Poll"
 
 #: system/models.py:110
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"Минимальный интервал для отсылки NTP сообщений, по степеням 2ки в секундах. "
+"По умолчанию 6 (64 сек), но может быть уменьшено до нижнего предела в 4 (16 "
+"сек)"
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Максимальный Poll"
 
 #: system/models.py:116
 msgid ""
@@ -4574,16 +4579,17 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"Максимальный интервал для отсылки NTP сообщений, по степеням 2ки в секундах. "
+"По умолчанию 10 (1,024 сек), но может быть увеличено до верхнего предела в "
+"17 (36.4 ч)"
 
 #: system/models.py:128
-#, fuzzy
 msgid "NTP Server"
-msgstr "NTP-сервер 1 (сервер синхронизации времени)"
+msgstr "NTP сервер"
 
 #: system/models.py:129
-#, fuzzy
 msgid "NTP Servers"
-msgstr "NTP-сервер 1 (сервер синхронизации времени)"
+msgstr "NTP серверы"
 
 #: system/models.py:141
 msgid "Enable Console Menu"
@@ -4619,19 +4625,16 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Включить Zeroconf / Bonjour"
 
 #: system/models.py:158
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Размер файла подкачки в ГБ, влияет только на новые диски. Значение 0 "
+"Размер файла подкачки в Гб, влияет только на новые диски. Значение 0 "
 "отключает создание файла подкачки (НАСТОЯТЕЛЬНО НЕ РЕКОМЕНДУЕТСЯ)."
 
 #: system/models.py:163
-#, fuzzy
 msgid "Show console messages in the footer"
-msgstr ""
-"Показывать сообщения в нижней части консоли (требуется перезагрузка UI)"
+msgstr "Показывать консольные сообщения в нижней части страницы"
 
 #: system/models.py:166
 msgid "Show tracebacks in case of fatal errors"
@@ -4639,12 +4642,11 @@ msgstr "Показать tracebacks в случае серьезных ошиб�
 
 #: system/models.py:169
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "По умолчанию показывать продвинутые настройки"
 
 #: system/models.py:172
-#, fuzzy
 msgid "Enable autotune"
-msgstr "Включить atime"
+msgstr "Разрешить autotune"
 
 #: system/models.py:180
 msgid "MOTD banner"
@@ -4804,26 +4806,26 @@ msgstr "Имя удалённого модуля"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Имя модуля, указанное в удалённом rsync демоне"
 
 #: system/models.py:449
-#, fuzzy
 msgid "Remote Path"
-msgstr "Удаленный хост"
+msgstr "Удаленный путь"
 
 #: system/models.py:451
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Путь на удалённом хосте для rsync т.е.  /mnt/tank напимер"
 
 #: system/models.py:455 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "Каталог"
+msgstr "Напавление"
 
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Push - с локальной на удалённую машину. Pull - с удалённой на локальную "
+"машину."
 
 #: system/models.py:500
 msgid "Recurse into directories"
@@ -4954,14 +4956,12 @@ msgid "Sysctls"
 msgstr "Sysctls"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Tunable"
-msgstr "Включить"
+msgstr "Настраеваемый"
 
 #: system/models.py:795
-#, fuzzy
 msgid "Tunables"
-msgstr "Включить"
+msgstr "Параметры настройки"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4992,9 +4992,8 @@ msgid "View Sysctls"
 msgstr "Показать Sysctls"
 
 #: system/nav.py:61
-#, fuzzy
 msgid "View Tunables"
-msgstr "Посмотреть открытый ключ"
+msgstr "Посмотреть параметры настройки"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
@@ -5002,14 +5001,12 @@ msgstr "Загруженный файл неправильный."
 
 # корневая связь - тупой перевод))
 #: system/views.py:245
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Пароль администратора"
+msgstr "Перезагрузка была затребована"
 
 #: system/views.py:267
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Выключить систему"
+msgstr "Выключение было затребовано"
 
 #: system/views.py:297
 #, python-format
@@ -5131,14 +5128,12 @@ msgid "Change Admin Password"
 msgstr "Изменение пароля администратора"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Модуль Rsync"
+msgstr "Базовый режим"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Расширенный"
+msgstr "Расширенный режим"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:13
@@ -5447,34 +5442,31 @@ msgstr "Добавить VLAN интерфейс"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Установлено..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Установить плагин"
 
 #: templates/plugins/index.html:29
-#, fuzzy
 msgid "Info"
-msgstr "Неофициальный"
+msgstr "Информация"
 
 #: templates/plugins/index.html:31
 msgid "Plugin info"
-msgstr ""
+msgstr "Информация о плагине"
 
 #: templates/plugins/index.html:37
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Изменить портал"
+msgstr "Изменить плагин"
 
 #: templates/plugins/index.html:43
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Удалить репликацию"
+msgstr "Удалить плагин"
 
 #: templates/plugins/index.html:50
 msgid "No plugins installed"
-msgstr ""
+msgstr "Нет установленных плагинов"
 
 #: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
 #: templates/system/wizard.html:3
@@ -5484,7 +5476,7 @@ msgstr "Шаг %(step) из %(step_count)"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Загрузить Jail PBI"
 
 #: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
 #: templates/plugins/plugin_info.html:39
@@ -5498,9 +5490,8 @@ msgid "Please wait..."
 msgstr "Пожалуйста, подождите..."
 
 #: templates/plugins/pbiwizard.html:16
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Загрузить конфигурацию"
+msgstr "Загрузить плагин"
 
 #: templates/registration/login.html:42
 msgid "Your username and password didn't match. Please try again."
@@ -5575,13 +5566,12 @@ msgid "NFS Settings"
 msgstr "Настройки NFS"
 
 #: templates/services/index.html:106 templates/services/index.html.py:108
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "Настройки AFP"
+msgstr "Настройки плагинов"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Установить Jail PBI"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5616,7 +5606,6 @@ msgid "Portals"
 msgstr "Порталы"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
 msgstr "Авторизованный инициатор"
 
@@ -5677,9 +5666,8 @@ msgstr "Добавить экстент"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "Экстенты устройства"
+msgstr "Экстенты файла"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5687,7 +5675,7 @@ msgstr "Прослушивание"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Для этого портала не установлено IP адреса"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5709,25 +5697,24 @@ msgstr "Добавить Цель"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "Все файлы в песочнице плагинов будут удалены."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "Удалить основной файл"
+msgstr "Удалить Plugins Jail"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Jail путь"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
-msgstr ""
+msgstr "Jail IP"
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
-msgstr ""
+msgstr "Путь плагинов"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5764,19 +5751,16 @@ msgid "Add Apple (AFP) Share"
 msgstr "Добавить общий ресурс Apple (AFP) "
 
 #: templates/sharing/index.html:2
-#, fuzzy
 msgid "Apple (AFP)"
-msgstr "Добавить общие ресурсы Apple (AFP)"
+msgstr "Apple (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "Добавить общие ресурсы UNIX (NFS)"
+msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Добавить общие ресурсы Windows (CIFS)"
+msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
@@ -5958,18 +5942,16 @@ msgid "No ZFS replication available"
 msgstr "Не доступны ZFS репликации"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Задачи rsync не определены"
+msgstr "Задачи scrub не определены."
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Добавить задачу ZFS Scrub"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Добавить том ZFS"
+msgstr "Добавить ZFS Scrub"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6015,9 +5997,8 @@ msgid "Destroy"
 msgstr "Уничтожить"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Клонировать снимок"
+msgstr "Удалить снимки"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6085,9 +6066,8 @@ msgid "Status"
 msgstr "Состояние"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Создать том"
+msgstr "Отключить том"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
@@ -6115,9 +6095,8 @@ msgid "No volumes defined"
 msgstr "Тома не определены"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Статус тома"
+msgstr "Том для расширения"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6156,9 +6135,8 @@ msgid "Existing data will be cleared"
 msgstr "Существующие данные будут стёрты"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
-msgstr "Заменить диск"
+msgstr "Замените диск"
 
 #: templates/storage/zvols.html:3
 #, python-format
@@ -6238,21 +6216,19 @@ msgstr ""
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
 msgid "No NTP servers defined."
 msgstr "NTP сервер не определён."
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP-сервер 1 (сервер синхронизации времени)"
+msgstr "Добавить NTP сервер"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "NTP-сервер 1 (сервер синхронизации времени)"
+msgstr "Добавить NTP сервер"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6306,14 +6282,12 @@ msgid "Yearly Graphs"
 msgstr "Годовой график"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Локальный Мастер"
+msgstr "Локальный путь"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "Удалить"
+msgstr "Удалённый"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
@@ -6408,17 +6382,15 @@ msgstr "Средняя нагрузка"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Подключение через"
 
 #: templates/system/tunable.html:32
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Не определенны настройки загрузчика"
+msgstr "Настройки не определены."
 
 #: templates/system/tunable.html:38
-#, fuzzy
 msgid "Add Tunable"
-msgstr "Добавить Цель"
+msgstr "Добавить настройку"
 
 #: templates/system/tunable.html:40
 msgid "Add Loader"
@@ -6439,9 +6411,9 @@ msgid "The volume %s status is DEGRADED"
 msgstr "Состояние тома %s - РАЗРУШЕН"
 
 #: tools/alert.py:107
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Состояние тома %(volume)s %(status)s"
+msgstr "Том %(volume)s статус %(status)s: %(message)s"
 
 #: tools/alert.py:111
 #, python-format
@@ -6467,6 +6439,7 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Следующие IP адреса назначены iSCSI порталу но не были найдены в системе: %s"
 
 #: tools/alert.py:169
 msgid "Critical Alerts"

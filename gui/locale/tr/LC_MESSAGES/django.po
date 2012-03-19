@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-18 02:49+0200\n"
-"Last-Translator: Evilupe <evilupe@gmail.com>\n"
+"PO-Revision-Date: 2012-03-19 08:24+0200\n"
+"Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -542,7 +542,7 @@ msgstr "Doğrulama için, parolayı yukarıdaki gibi tekrar girin."
 #: freeadmin/navtree.py:371 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "Terminal"
+msgstr "Kabuk"
 
 #: account/forms.py:241 account/forms.py:498
 msgid "Disable password logins"
@@ -5769,7 +5769,6 @@ msgstr "Silmek istediğinizden emin misiniz? - \"%(name)s\""
 
 # Burası neden çevrile miyor?
 #: templates/storage/dataset_confirm_delete.html:8
-#, fuzzy
 msgid ""
 "\n"
 "        This will delete all files within the dataset.\n"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:49-0800\n"
-"PO-Revision-Date: 2012-03-18 01:40+0200\n"
+"PO-Revision-Date: 2012-03-18 18:54+0200\n"
 "Last-Translator: Alessandro <alessandro.pellegrini@tin.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -3162,9 +3162,8 @@ msgstr "Extent dei file"
 
 #: services/nav.py:110 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
-#, fuzzy
 msgid "Add File Extent"
-msgstr "Aggiungi un Extent di tipo periferica"
+msgstr "Aggiungi un Extent per un File"
 
 #: services/nav.py:117
 msgid "View File Extents"
@@ -3597,9 +3596,8 @@ msgid "Apple (AFP) Share"
 msgstr "Condivisione Apple (AFP)"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Condivisioni AFP"
+msgstr "Condivisioni Apple (AFP)"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3681,14 +3679,12 @@ msgid "Group to map all users to"
 msgstr "Gruppo verso cui mappare tutti gli utenti"
 
 #: sharing/models.py:311
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "Modifica condivisione NFS"
+msgstr "Condivisione Unix (NFS)"
 
 #: sharing/models.py:312
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "Condivisioni NFS"
+msgstr "Condivisioni Unix (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3719,9 +3715,8 @@ msgid "Specify custom path"
 msgstr "Specificare un percorso personalizzato"
 
 #: storage/forms.py:123
-#, fuzzy
 msgid "Volume add"
-msgstr "Nome Volume"
+msgstr "Aggiungi Volume"
 
 #: storage/forms.py:131
 msgid ""
@@ -3739,9 +3734,8 @@ msgstr ""
 "\", \"_\" e \".\" ."
 
 #: storage/forms.py:188
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Un gruppo con questo nome esiste già."
+msgstr "Un volume con questo nome esiste già."
 
 #: storage/forms.py:202
 msgid "Path does not exist."
@@ -3942,9 +3936,8 @@ msgid "Remote hostname"
 msgstr "Nome host remoto"
 
 #: storage/forms.py:904 storage/models.py:604
-#, fuzzy
 msgid "Remote port"
-msgstr "Host Remoto"
+msgstr "Porta remota"
 
 #: storage/forms.py:905 storage/models.py:608
 msgid "Remote hostkey"
@@ -3994,11 +3987,11 @@ msgstr "Volume"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Giorni di soglia"
 
 #: storage/models.py:190
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Determina quanti giorni ci devono essere tra due scrub"
 
 #: storage/models.py:200 system/models.py:320 system/models.py:468
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4055,12 +4048,11 @@ msgstr "Abilitato"
 
 #: storage/models.py:231
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "Scrub ZFS"
 
 #: storage/models.py:232
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "Condivisioni NFS"
+msgstr "Scrub ZFS"
 
 #: storage/models.py:246 system/models.py:367 system/models.py:569
 msgid "Every minute"
@@ -4104,13 +4096,12 @@ msgid "Weekends"
 msgstr "Fine settimana"
 
 #: storage/models.py:323
-#, fuzzy
 msgid "Multipath name"
-msgstr "Nome modulo"
+msgstr "Nome multipath"
 
 #: storage/models.py:329
 msgid "Multipath member"
-msgstr ""
+msgstr "Membro multipath"
 
 #: storage/models.py:342 storage/views.py:226
 msgid "Transfer Mode"
@@ -4181,15 +4172,16 @@ msgid "Remote Host"
 msgstr "Host Remoto"
 
 #: storage/models.py:636
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Filesystem ZFS remoto"
+msgstr "Nome del filesystem ZFS remoto"
 
 #: storage/models.py:637
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"È il nome del filesystem ZFS sul lato remoto. es: nomepool/nomedataset non "
+"il punto di mount o il percorso del filesystem"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4199,6 +4191,8 @@ msgstr ""
 #: storage/models.py:645
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Inizializza il lato remoto per questa volta. (Può causare perdita di dati "
+"sul lato remoto!)"
 
 #: storage/models.py:649
 msgid "Limit (kB/s)"
@@ -4235,18 +4229,16 @@ msgid "Begin"
 msgstr "Inizio"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Conserva snapshot per"
+msgstr "Non catturare uno snapshot prima di"
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Fine"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Conserva snapshot per"
+msgstr "Non catturare uno snapshot dopo"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4284,20 +4276,17 @@ msgid "Storage"
 msgstr "Storage"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "Visualizza tutti gli snapshots"
+msgstr "Visualizza gli snapshot"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Visualizza tutti i gruppi"
+msgstr "Visualizza scrub ZFS"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "Nome Volume"
+msgstr "Manager dei Volumi"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4313,7 +4302,7 @@ msgstr "Visualizza Dischi"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Visualizza Multipath"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4321,9 +4310,8 @@ msgid "Auto Import Volume"
 msgstr "Importazione Automatica Volume"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "Visualizza Tutti i Volumi"
+msgstr "Visualizza Volumi"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4355,9 +4343,8 @@ msgid "Volume successfully added."
 msgstr "Volume aggiunto con successo."
 
 #: storage/views.py:226
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
-msgstr "Opzioni S.M.A.R.T. extra"
+msgstr "Opzioni S.M.A.R.T aggiuntive"
 
 #: storage/views.py:317
 msgid "Dataset successfully added."
@@ -4432,18 +4419,16 @@ msgid "Disk detach has been successfully done."
 msgstr "Il disco è stato scollegato con successo."
 
 #: storage/views.py:599
-#, fuzzy
 msgid "Disk offline operation has been issued."
-msgstr "Sostituzione disco iniziata."
+msgstr "L'operazione offline del disco si è conclusa"
 
 #: storage/views.py:614
 msgid "Disk has been removed."
 msgstr "Il disco è stato rimosso."
 
 #: storage/views.py:633
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "Il volume è stato esportato con successo"
+msgstr "Il volume è stato scollegato con successo"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
@@ -4463,15 +4448,16 @@ msgstr "Il numero è richiesto."
 
 #: system/forms.py:198
 msgid "Force"
-msgstr ""
+msgstr "Forza"
 
 #: system/forms.py:217
 msgid "Max Poll should be higher than Min Poll"
-msgstr ""
+msgstr "Poll Massimo deve essere maggiore di Poll Minimo"
 
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
+"Impossibile raggiungere il server. Abilita \"Forza\" per continuare lo stesso."
 
 #: system/forms.py:391
 msgid "Place to temporarily place firmware file"
@@ -4514,6 +4500,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Per usare rsync su SSH è necessario un utente <br /> con una chiave pubblica "
+"(DSA/ECDSA/RSA) impostata nella cartella home."
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
@@ -4548,13 +4536,12 @@ msgid "Settings"
 msgstr "Impostazioni"
 
 #: system/models.py:88 templates/system/ntpserver.html:5
-#, fuzzy
 msgid "Address"
-msgstr "Indirizzo IPv4"
+msgstr "Indirizzo"
 
 #: system/models.py:92 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "Burst"
 
 #: system/models.py:94
 msgid ""
@@ -4562,10 +4549,13 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Quando il server è raggiungibile, invia un burst di otto pacchetti invece "
+"dell'unico usuale. Ciò può migliorare la qualità di risposta dei comandi del "
+"server e s indirizzi."
 
 #: system/models.py:97
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:99
 msgid ""
@@ -4573,31 +4563,39 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"Quando il server non è raggiungibile, invia un burst di otto pacchetti "
+"invece dell'unico usuale. Ciò può migliorare la velocità dell'acquisizione "
+"della sincronizzazione iniziale con il comando del server e s indirizzi."
 
 #: system/models.py:102 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
-msgstr "Preferito"
+msgstr "Preferisci"
 
 #: system/models.py:104
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Segna il server come preferito. Con le altre impostazioni identiche, questo "
+"host verrà scelto per la sincronizzazion nell'insieme degli host che operano "
+"correttamente."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Poll Minimo"
 
 #: system/models.py:110
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"L'intervallo di polling minimo per messaggi NTP, come potenza di 2 in "
+"secondi. Il valore predefinito è 6 (64 s), ma può essere ridotto fino a un "
+"limite di 4 (16 s)"
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Poll Massimo"
 
 #: system/models.py:116
 msgid ""
@@ -4605,11 +4603,13 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"L'intervallo di polling massimo per messaggi NTP, come potenza di 2 in "
+"secondi. Il valore predefinito è 10 (1024 s), ma può essere aumentato fino a "
+"un limite di 17 (36,4 h)"
 
 #: system/models.py:128
-#, fuzzy
 msgid "NTP Server"
-msgstr "NTP server 1"
+msgstr "Server NTP"
 
 #: system/models.py:129
 #, fuzzy

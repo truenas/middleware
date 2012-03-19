@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-03-17 16:16+0200\n"
+"PO-Revision-Date: 2012-03-18 15:17+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -476,12 +476,10 @@ msgid "Rsync over SSH"
 msgstr "Rsync via SSH"
 
 #: choices.py:563
-#, fuzzy
 msgid "Push"
 msgstr "Pousser"
 
 #: choices.py:564
-#, fuzzy
 msgid "Pull"
 msgstr "Récupérer"
 
@@ -1212,7 +1210,6 @@ msgid "Invalid checksum"
 msgstr "Somme de contrôle invalide"
 
 #: plugins/forms.py:115
-#, fuzzy
 msgid "Plugins Jail PBI"
 msgstr "Prison des modules PBI"
 
@@ -1342,7 +1339,6 @@ msgid "The NFS service failed to reload."
 msgstr "Le rechargement du service NFS a échoué."
 
 #: services/forms.py:130
-#, fuzzy
 msgid "The plugins path cannot be the same or reside within jail path."
 msgstr ""
 "Le chemin des modules ne peut être le même ou résider au sein du chemin "
@@ -1797,7 +1793,6 @@ msgid "Unix Extensions"
 msgstr "Extensions Unix"
 
 #: services/models.py:161
-#, fuzzy
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
@@ -4190,13 +4185,13 @@ msgid "Remote ZFS filesystem name"
 msgstr "Nom du système de fichiers ZFS distant"
 
 #: storage/models.py:637
-#, fuzzy
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
 "Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : "
-"pool/dataset et non le point de montage ou le chemin du système de fichier"
+"pool/dataset et non pas au point de montage ou au chemin du système de "
+"fichier"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4435,7 +4430,7 @@ msgstr "Le disque a été détaché avec succès."
 
 #: storage/views.py:599
 msgid "Disk offline operation has been issued."
-msgstr "L'opération de mise hors-ligne du disque a été traité."
+msgstr "Une demande de mise hors-ligne du disque a été émise."
 
 #: storage/views.py:614
 msgid "Disk has been removed."
@@ -4556,8 +4551,9 @@ msgid "Address"
 msgstr "Adresse"
 
 #: system/models.py:92 templates/system/ntpserver.html:6
+#, fuzzy
 msgid "Burst"
-msgstr "Rafale"
+msgstr "Burst"
 
 #: system/models.py:94
 #, fuzzy
@@ -4574,7 +4570,7 @@ msgstr ""
 #: system/models.py:97
 #, fuzzy
 msgid "IBurst"
-msgstr "IRafale"
+msgstr "IBurst"
 
 #: system/models.py:99
 #, fuzzy
@@ -4604,8 +4600,9 @@ msgstr ""
 "fonctionnant correctement."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
+#, fuzzy
 msgid "Min. Poll"
-msgstr ""
+msgstr "Min. Poll"
 
 #: system/models.py:110
 msgid ""
@@ -4614,8 +4611,9 @@ msgid ""
 msgstr ""
 
 #: system/models.py:113 templates/system/ntpserver.html:10
+#, fuzzy
 msgid "Max. Poll"
-msgstr ""
+msgstr "Max. Poll"
 
 #: system/models.py:116
 msgid ""
@@ -4625,14 +4623,12 @@ msgid ""
 msgstr ""
 
 #: system/models.py:128
-#, fuzzy
 msgid "NTP Server"
-msgstr "Serveur NTP 1"
+msgstr "Serveur NTP"
 
 #: system/models.py:129
-#, fuzzy
 msgid "NTP Servers"
-msgstr "Serveur NTP 1"
+msgstr "Serveurs NTP"
 
 #: system/models.py:141
 msgid "Enable Console Menu"
@@ -4667,22 +4663,18 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Activer Zeroconf/Bonjour"
 
 #: system/models.py:158
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
 "Taille de la partition d'échange sur chaque disque en Gio, ne concerne que "
 "les nouveaux disques. Configurer cette valeur à 0 désactive complètement la "
-"création de la partition d'échange (FORTEMENT DECONSEILLE)"
+"création de la partition d'échange (FORTEMENT DECONSEILLE)."
 
 # Meilleur terme pour "reload" que "recharger" ?
 #: system/models.py:163
-#, fuzzy
 msgid "Show console messages in the footer"
-msgstr ""
-"Afficher les messages de la console en pied de page (nécessite de recharger "
-"l'interface)"
+msgstr "Afficher les messages de la console en pied de page"
 
 #: system/models.py:166
 msgid "Show tracebacks in case of fatal errors"
@@ -4690,12 +4682,12 @@ msgstr "Montrer les traces en cas d'erreur fatale"
 
 #: system/models.py:169
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Afficher les champs avancés par défaut"
 
 #: system/models.py:172
 #, fuzzy
 msgid "Enable autotune"
-msgstr "Activer atime"
+msgstr "Activer l'autotune"
 
 # Garder MOTD (Message Of The Day) ou le traduire ?
 #: system/models.py:180
@@ -4854,26 +4846,26 @@ msgstr "Nom du module distant"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Nom du module défini dans le démon rsync distant"
 
 #: system/models.py:449
-#, fuzzy
 msgid "Remote Path"
-msgstr "Hôte distant"
+msgstr "Chemin distant"
 
 #: system/models.py:451
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Chemin sur l'hôte distant vers lequel faire un rsync, e.g. /mnt/tank"
 
 #: system/models.py:455 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "Répertoire"
+msgstr "Direction"
 
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Pousser - Local vers la machine distante. Récupérer - De la machine distante "
+"vers local."
 
 #: system/models.py:500
 msgid "Recurse into directories"
@@ -5011,12 +5003,12 @@ msgstr "Sysctls"
 #: system/models.py:794
 #, fuzzy
 msgid "Tunable"
-msgstr "Activé"
+msgstr "Tunable"
 
 #: system/models.py:795
 #, fuzzy
 msgid "Tunables"
-msgstr "Activé"
+msgstr "Tunables"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -5049,7 +5041,7 @@ msgstr "Voir les sysctls"
 #: system/nav.py:61
 #, fuzzy
 msgid "View Tunables"
-msgstr "Voir la clé publique"
+msgstr "Voir les Tunables"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
@@ -5057,14 +5049,12 @@ msgstr "Le fichier envoyé n'est pas valide."
 
 # A quoi correspond Root dans ce cas ?
 #: system/views.py:245
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Mot de passe du super-utilisateur"
+msgstr "Une demande de redémarrage a été émise"
 
 #: system/views.py:267
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Éteindre le système"
+msgstr "Une demande d'arrêt a été émise"
 
 #: system/views.py:297
 #, python-format
@@ -5187,14 +5177,12 @@ msgid "Change Admin Password"
 msgstr "Modifier le mot de passe administrateur"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Module Rsync"
+msgstr "Mode Basic"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Avancé"
+msgstr "Mode Avancé"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:13
@@ -5501,34 +5489,31 @@ msgstr "Ajouter une interface VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Installé..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Installer un module"
 
 #: templates/plugins/index.html:29
-#, fuzzy
 msgid "Info"
-msgstr "Informel"
+msgstr "Info"
 
 #: templates/plugins/index.html:31
 msgid "Plugin info"
-msgstr ""
+msgstr "Info du module"
 
 #: templates/plugins/index.html:37
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Modifier le Portail"
+msgstr "Modifier le module"
 
 #: templates/plugins/index.html:43
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Supprimer la réplication"
+msgstr "Supprimer le module"
 
 #: templates/plugins/index.html:50
 msgid "No plugins installed"
-msgstr ""
+msgstr "Aucun module n'est installé"
 
 #: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
 #: templates/system/wizard.html:3
@@ -5538,7 +5523,7 @@ msgstr "Étape %(step)s de %(step_count)s"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Charger une prison PBI"
 
 #: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
 #: templates/plugins/plugin_info.html:39
@@ -5552,9 +5537,8 @@ msgid "Please wait..."
 msgstr "Merci de patienter..."
 
 #: templates/plugins/pbiwizard.html:16
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Charger une configuration"
+msgstr "Charger un module"
 
 #: templates/registration/login.html:42
 msgid "Your username and password didn't match. Please try again."
@@ -5629,13 +5613,12 @@ msgid "NFS Settings"
 msgstr "Paramètres NFS"
 
 #: templates/services/index.html:106 templates/services/index.html.py:108
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "Paramètres AFP"
+msgstr "Paramètres des modules"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Installer une prison PBI"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5670,9 +5653,8 @@ msgid "Portals"
 msgstr "Portails"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
-msgstr "Initiateur autorisé"
+msgstr "Initiateurs autorisés"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5740,7 +5722,7 @@ msgstr "Écoute"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Aucune IP n'est définie pour ce portail"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5763,24 +5745,25 @@ msgstr "Ajouter une cible"
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
+"Tous les fichiers de la prison du module seront supprimés de façon "
+"permanente."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "Supprimer le fichier associé"
+msgstr "Supprimer la prison des modules"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Chemin de la prison"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
-msgstr ""
+msgstr "IP de la prison"
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
-msgstr ""
+msgstr "Chemin des modules"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5792,19 +5775,16 @@ msgid "Active Shares"
 msgstr "Partages actifs"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
-msgstr "Aucun partage Apple n'est actif."
+msgstr "Aucun partage Apple (AFP) n'est actif."
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
-msgstr "Modifier le partage Apple"
+msgstr "Modifier le partage Apple (AFP)"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
-msgstr "Supprimer le partage Apple"
+msgstr "Supprimer le partage Apple (AFP)"
 
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
@@ -5812,73 +5792,60 @@ msgid "No shares defined"
 msgstr "Aucun partage n'est défini"
 
 #: templates/sharing/apple.html:49
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Ajouter un partage Apple"
+msgstr "Ajouter un partage Apple (CIFS)"
 
 #: templates/sharing/apple.html:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Ajouter un partage Apple"
-
-#: templates/sharing/index.html:2
-#, fuzzy
-msgid "Apple (AFP)"
 msgstr "Ajouter un partage Apple (AFP)"
 
+#: templates/sharing/index.html:2
+msgid "Apple (AFP)"
+msgstr "Apple (AFP)"
+
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "Ajouter un partage UNIX (NFS)"
+msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Ajouter un partage Windows (CIFS)"
+msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Aucun partage UNIX n'est actif."
+msgstr "Aucun partage UNIX (NFS) n'est actif."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
 msgstr "Point de montage"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
-msgstr "Modifier le partage NFS"
+msgstr "Modifier le partage UNIX (NFS)"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
-msgstr "Supprimer le partage NFS"
+msgstr "Supprimer le partage UNIX (NFS)"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
-msgstr "Ajouter un partage UNIX"
+msgstr "Ajouter un partage UNIX (NFS)"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Aucun partage Windows n'est actif."
+msgstr "Aucun partage Windows (CIFS) n'est actif."
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
-msgstr "Modifier le partage Windows"
+msgstr "Modifier le partage Windows (CIFS)"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
-msgstr "Supprimer le partage Windows"
+msgstr "Supprimer le partage Windows (CIFS)"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
-msgstr "Ajouter un partage Windows"
+msgstr "Ajouter un partage Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6022,18 +5989,16 @@ msgid "No ZFS replication available"
 msgstr "Aucune réplication ZFS n'est disponible"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Aucune tâche rsync n'est définie."
+msgstr "Aucune tâche de nettoyage n'est définie."
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Ajouter une tâche de nettoyage ZFS"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Ajouter un Volume ZFS"
+msgstr "Ajouter un nettoyage ZFS"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6082,9 +6047,8 @@ msgid "Destroy"
 msgstr "Détruire"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Cloner l'instantané"
+msgstr "Supprimer les instantanés"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6152,9 +6116,8 @@ msgid "Status"
 msgstr "Statut"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Créer un volume"
+msgstr "Détacher le volume"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
@@ -6182,9 +6145,8 @@ msgid "No volumes defined"
 msgstr "Aucun volume n'est défini"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "État du volume"
+msgstr "Volume à étendre"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6223,7 +6185,6 @@ msgid "Existing data will be cleared"
 msgstr "Les données existantes seront supprimées"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
 msgstr "Remplacer le disque"
 
@@ -6304,23 +6265,21 @@ msgstr ""
 "Utilisateurs -> root -> Modifier l'e-mail"
 
 #: templates/system/ntpserver.html:7
+#, fuzzy
 msgid "iBurst"
-msgstr ""
+msgstr "iRafale"
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Aucun serveur de noms n'est défini"
+msgstr "Aucun serveur NTP n'est défini."
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "Serveur NTP 1"
+msgstr "Ajouter un serveur NTP"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "Serveur NTP 1"
+msgstr "Ajouter un serveur NTP"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6376,14 +6335,12 @@ msgid "Yearly Graphs"
 msgstr "Graphiques Annuels"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Maître local"
+msgstr "Chemin local"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "Supprimer"
+msgstr "Distant"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
@@ -6480,17 +6437,17 @@ msgstr "Charge moyenne"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Connecté via"
 
 #: templates/system/tunable.html:32
 #, fuzzy
 msgid "No tunable setting defined."
-msgstr "Aucun paramètre du chargeur n'a été défini."
+msgstr "Aucun paramètre tunable n'est défini."
 
 #: templates/system/tunable.html:38
 #, fuzzy
 msgid "Add Tunable"
-msgstr "Ajouter une cible"
+msgstr "Ajouter un tunable"
 
 #: templates/system/tunable.html:40
 msgid "Add Loader"
@@ -6511,9 +6468,9 @@ msgid "The volume %s status is DEGRADED"
 msgstr "Le status du volume %s est DÉGRADÉ"
 
 #: tools/alert.py:107
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Le status du volume %(volume)s est %(status)s"
+msgstr "Le status du volume %(volume)s est %(status)s : %(message)s"
 
 #: tools/alert.py:111
 #, python-format
@@ -6540,6 +6497,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Les adresses IP suivantes sont liées à un portail iSCSI mais ne sont pas "
+"présentes sur le système: %s"
 
 #: tools/alert.py:169
 msgid "Critical Alerts"
@@ -6755,7 +6714,7 @@ msgid "Docs"
 msgstr "Docs"
 
 msgid "Welcome to"
-msgstr "Bienvenue sur8"
+msgstr "Bienvenue sur"
 
 msgid "LUN"
 msgstr "LUN"
