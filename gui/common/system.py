@@ -81,8 +81,12 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject=None, text=None, interval=timedelta(),
-              channel=get_sw_name().lower(), to=None, extra_headers=None):
+def send_mail(subject=None,
+              text=None,
+              interval=timedelta(),
+              channel=get_sw_name().lower(),
+              to=None,
+              extra_headers=None):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
