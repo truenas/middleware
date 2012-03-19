@@ -1,5 +1,6 @@
 
 <h1>Plugins jail information</h1>
+{% if plugins %}
 <table>
     <tr>
         <th>{% trans "Jail path" %}</th>
@@ -18,6 +19,16 @@
         <td>{{ plugins.plugins_path }}</td>
     </tr>
 </table>
+{% else %}
+<table>
+    <tr>
+        <th>Plugins jail is not installed</th>
+	<td>&nbsp;</td>
+    </tr>
+</table>
+
+{% endif %}
+
 <table>
     <tr colspan="2">
         <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
@@ -26,6 +37,7 @@
                 this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
             </script>
         </button>
+{% if plugins %}
         <button data-dojo-type="dijit.form.Button" >
             <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                 var dialog = getDialog(this);
@@ -34,5 +46,6 @@
                 </script>
             {% trans "Delete" %}
         </button>
+{% endif %}
     </tr>
 </table>

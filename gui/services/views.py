@@ -290,8 +290,12 @@ def enable(request, svc):
     })
 
 def plugins_info(request):
-    plugins = models.Plugins.objects.order_by("-id")[0]
-    if plugins:
-        return render(request, "services/plugins_info.html", {
-            'plugins': plugins,
+    try:
+        plugins = models.Plugins.objects.order_by("-id")[0]
+    except:
+        plugins = None
+
+    return render(request, "services/plugins_info.html", {
+        'plugins': plugins,
     })
+
