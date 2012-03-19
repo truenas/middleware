@@ -80,6 +80,7 @@
 : ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
+: ${LDAP_TIMEOUT:="0"}
 
 #
 #	PAM settings
@@ -180,6 +181,7 @@ __do_AD_query()
 	    -z 0 \
 	    -E 'pr=16384/noprompt' \
 	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
 	    "${filter}" \
 	    ${attributes}
 __EOF__
@@ -242,6 +244,7 @@ AD_query_global_catalog()
 	    -x \
 	    -z 0 \
 	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
 	    "${filter}" \
 	    ${attributes}
 __EOF__
@@ -270,8 +273,9 @@ AD_query_rootDSE()
 	    -b "" \
 	    -s base \
 	    -x \
-	   -z 0 \
-	   -LLL \
+	    -z 0 \
+	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
 	   "${filter}"
 __EOF__
 
