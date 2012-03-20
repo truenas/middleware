@@ -462,6 +462,11 @@ class notifier:
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
+        if (self.__system_nolog('/usr/sbin/service ix-ldap status') != 0):
+            return False
+
+        return True
+
     def _started_ldap(self):
         from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled, FLAGS_DBINIT
 
@@ -489,6 +494,7 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
+        return False
 
     def _restart_ldap(self):
         self._stop_ldap()

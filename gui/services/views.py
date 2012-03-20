@@ -220,13 +220,19 @@ def servicesToggleView(request, formname):
             svc_entry.srv_enable = 1
     svc_entry.save()
 
-    # forcestop then start to make sure the service is of the same
-    # status.
+    #
+    # forcestop then start to make sure the service is of the same status.
+    #
+    # Active Directory and LDAP are special cases, they are also mutually exclusive.
+    # It would be nice if they weren't, ... another time, another place. The return
+    # status from notifier needs to be checked to make sure that we were able to join
+    # the Active Directory or LDAP domain.
+    #
     if changing_service == "ldap":
         if svc_entry.srv_enable == 1:
-            started = notifier().start(changing_service)
+            started = notifier()._start_ldap()
         else:
-            started = notifier().stop(changing_service)
+            started = notifier()._stop_ldap()
 
     elif changing_service == "activedirectory":
         if svc_entry.srv_enable == 1:
