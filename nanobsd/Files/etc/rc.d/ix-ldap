@@ -178,6 +178,80 @@ setup_homedirs()
 	fi
 }
 
+ldap_status()
+{
+	local IFS=\|
+	local ret=0
+	local fail="/tmp/.ldap_fail"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ldap_anonbind, 	 
+		ldap_rootbasedn, 	 
+		ldap_rootbindpw, 	 
+		ldap_ssl
+	FROM
+		services_ldap
+
+	ORDER BY
+		-services_ldap.id
+
+	LIMIT 1
+	" | \
+	while eval read ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_ssl
+	do
+		local res=1
+		local ldapwhoami=/usr/local/bin/ldapwhoami
+		local options=
+
+		if [ "${ldap_ssl}" = "start_tls" ]
+		then
+			options="-Z"
+		fi
+
+		if [ "${ldap_anonbind}" = "0" ]
+		then
+			local temp=$(mktemp /tmp/tmp.XXXXXX)
+		
+			chmod 400 "${temp}"
+			echo -n "${ldap_rootbindpw}" > "${temp}"
+
+			local out=$(${ldapwhoami} ${options} -D "${ldap_rootbasedn}" -y "${temp}")
+			res=$?
+
+			rm -f "${temp}"
+			local dn=$(echo "${out}"|cut -f2 -d:)
+
+			if [ "${dn}" != "${ldap_rootbasedn}" ]
+			then
+				res=1
+			fi
+		else		
+			local out=$(${ldapwhoami} -D '' ${options})
+			res=$?
+
+			local dn=$(echo "${out}"|cut -f2 -d:)
+			if [ "${dn}" != "anonymous" ]
+			then
+				res=1
+			fi
+		fi
+
+		if [ "${res}" = "1" ]
+		then
+			touch "${fail}"
+		fi
+	done
+
+	if [ -f "${fail}" ]
+	then
+		rm -f "${fail}"
+		ret=1
+	fi
+
+	return ${ret}
+}
+
 generate_ldap_config()
 {
 	if srv_enabled ldap; then
@@ -194,6 +268,7 @@ expire_cache()
 
 name="ix-ldap"
 start_cmd='generate_ldap_config'
+status_cmd='ldap_status'
 stop_cmd='expire_cache'
             
 load_rc_config $name
