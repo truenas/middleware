@@ -76,7 +76,7 @@ reset_permissions()
 {
 	local dir="${1}"
 
-	find "${dir}" -exec $0 ${MAGIC} {} \;
+	find "${dir}" \( -type f -o -type d \) -exec $0 ${MAGIC} {} \;
 	return $?
 }
 
