@@ -197,7 +197,7 @@ do
 			then
 				do_not_merge=true
 			else
-				dnm_branches=$(sed -ne 's/^Do-Not-Merge (\(.*\)):\(.*\)/\1/p' revlog)
+				dnm_branches=$(sed -ne 's/^Do-Not-Merge *(\(.*\)):\(.*\)/\1/p' revlog)
 				for dnm_branch in $(echo "$dnm_branches" | sed -e 's/,/ /g')
 				do
 					echo "$child_branch_relroot" | grep -q "$dnm_branch\$"
