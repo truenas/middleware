@@ -3092,8 +3092,7 @@ class notifier:
             if number not in numbers:
                 break
         else:
-            #FIXME
-            raise
+            raise ValueError('Could not find multipaths')
         return "disk%d" % number
 
     def multipath_sync(self):
