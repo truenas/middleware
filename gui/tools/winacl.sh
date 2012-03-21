@@ -11,12 +11,53 @@ usage()
 	    -g group
 	    -d directory
 __EOF__
+
+	exit 1
 }
 
 
 winacl_reset()
 {
 	local path="${1}"
+
+	local owner_access
+	local owner_inherit
+	if [ -d "${path}" ]
+	then
+		owner_access="rwxpdDaARWcCo"
+		owner_inherit="fd"
+	else
+		owner_access="rwxpdDaARWcCo"
+		owner_inherit=""
+	fi
+
+
+	local group_access
+	local group_inherit
+	if [ -d "${path}" ]
+	then
+		group_access="rxs"
+		group_inherit="fd"
+	else
+		group_access="rxs"
+		group_inherit=""
+	fi
+
+	local everyone_access
+	local everyone_inherit
+	if [ -d "${path}" ]
+	then
+		everyone_access="rxaRcs"
+		everyone_inherit="fd"
+	else
+		everyone_access="rxaRcs"
+		everyone_inherit=""
+	fi
+
+	local owner_entry="owner@:${owner_access}:${owner_inherit}:allow"
+	local group_entry="group@:${group_access}:${group_inherit}:allow"
+	local everyone_entry="everyone@:${everyone_access}:${everyone_inherit}:allow"
+
 
 	echo "${path}"
 	setfacl -b "${path}"
@@ -25,9 +66,9 @@ winacl_reset()
 		setfacl -x 0 "${path}"
 	done
 
-	setfacl -a 0 group@:rxs::allow "${path}"
-	setfacl -a 1 everyone@:rxaRcs::allow "${path}"
-	setfacl -a 2 owner@:rwxpdDaARWcCo::allow "${path}"
+	setfacl -a 0 "${group_entry}" "${path}"
+	setfacl -a 1 "${everyone_entry}" "${path}"
+	setfacl -a 2 "${owner_entry}" "${path}"
 	setfacl -x 3 "${path}"
 }
 
@@ -52,6 +93,10 @@ main()
 	then
 		winacl_reset "${path}"
 		return 0
+
+	elif [ "$#" -lt "2" ]
+	then
+		usage
 	fi
 
 	while getopts "o:g:d:" opt
