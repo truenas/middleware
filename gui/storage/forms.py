@@ -981,18 +981,8 @@ class ManualSnapshotForm(Form):
                 )
         return self.cleaned_data['ms_name']
 
-    def commit(self, path):
-        # TODO: Better handling of the path parameter,
-        # ideally change it to supply dataset instead.
-        if path.startswith('/mnt/'):
-            dataset = path.__str__()[5:]
-        elif path.startswith('mnt/'):
-            dataset = path.__str__()[4:]
-        elif path.startswith('/dev/zvol/'):
-            dataset = path.__str__()[10:]
-        else:
-            raise(ValueError(_('Invalid prefix')))
-        notifier().zfs_mksnap(dataset, str(self.cleaned_data['ms_name']),
+    def commit(self, fs):
+        notifier().zfs_mksnap(fs, str(self.cleaned_data['ms_name']),
             self.cleaned_data['ms_recursively'])
 
 

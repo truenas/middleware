@@ -145,7 +145,7 @@
     <button id="snapBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            editObject('{% trans "Create Snapshot"|force_escape|force_escape %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);
+            editObject('{% trans "Create Snapshot"|force_escape|force_escape %}', '{% url storage_manualsnap fs=m.mp_volume.vol_name %}', [this,]);
         </script>
     </button>
     <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'snapBtn{{ m.id }}', position: ['above']">
@@ -223,7 +223,7 @@
             <button id="snapBtn{{ m.id }}{{ name }}" data-dojo-type="dijit.form.Button" type="button">
                 <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=dataset.mountpoint %}', [this,]);
+                    editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap fs=dataset.path %}', [this,]);
                 </script>
             </button>
             <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'snapBtn{{ m.id }}{{ name }}', position: ['above']">
@@ -249,6 +249,15 @@
                 </button>
                 <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delZVolBtn{{ m.mp_volume.vol_name }}{{ forloop.counter }}', position: ['above']">
                     <strong>{% trans "Destroy ZFS Volume" %}</strong>
+                </div>
+                <button id="snapBtnZvol{{ m.id }}{{ zvol }}" data-dojo-type="dijit.form.Button" type="button">
+                    <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap fs=zvol %}', [this,]);
+                    </script>
+                </button>
+                <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'snapBtn{{ m.id }}{{ name }}', position: ['above']">
+                    <strong>{% trans "Create Snapshot" %}</strong>
                 </div>
             </td>
         </tr>

@@ -527,17 +527,17 @@ def periodicsnap(request):
         'extra_js': models.Task._admin.extra_js,
     })
 
-def manualsnap(request, path):
+def manualsnap(request, fs):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
-            form.commit(path)
+            form.commit(fs)
             return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
         'form': form,
-        'path': path,
+        'fs': fs,
     })
 
 def clonesnap(request, snapshot):
