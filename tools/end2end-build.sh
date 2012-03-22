@@ -298,7 +298,7 @@ do
 		# do this once, but it requires installing world twice.
 		_do sudo sh -c "export FREENAS_ARCH=$_ARCH; env $BUILD_PASS1_ENV $BUILD && env $BUILD_PASS2_ENV $BUILD" > $_LOG 2>&1
 		_EC=$?
-		echo "[$_ARCH] $(tail -n 1 $_LOG)"
+		echo "[$_ARCH:$_BUILD_TARGET] $(tail -n 1 $_LOG)"
 		if [ $_EC -eq 0 ]
 		then
 			_PASSED_ARCHS="$_PASSED_ARCHS $_ARCH"
