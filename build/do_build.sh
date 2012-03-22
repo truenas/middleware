@@ -234,7 +234,7 @@ if ! $BUILD; then
 	exit 0
 fi
 if sh $trace $cmd; then
-	echo "$NANO_LABEL build PASSED"
+	echo "$NANO_LABEL $TARGET build PASSED"
 else
-	error "$NANO_LABEL build FAILED; please check above log for more details"
+	error "$NANO_LABEL $TARGET build FAILED; please check above log for more details"
 fi
