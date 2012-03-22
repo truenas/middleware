@@ -307,7 +307,7 @@ menu_install()
 		    /etc/avatar.conf \
 		    /tmp/data/etc/avatar.conf
         fi
-        install_worker.sh -D / -m /tmp/data pre-install
+        install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
     fi
