@@ -8,7 +8,13 @@
 
 PERSIST_FILE="/data/rrd_dir.tar.bz2"
 
-
-if [ -d /var/db/collectd ]; then
-    (cd /var/db && tar jcf ${PERSIST_FILE} collectd)
+cd /var/db
+if [ -d collectd ]
+then
+	if tar jcf $PERSIST_FILE.$$ collectd
+	then
+		mv $PERSIST_FILE.$$ $PERSIST_FILE
+	else
+		rm -f $PERSIST_FILE.$$
+	fi
 fi
