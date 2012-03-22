@@ -1,6 +1,7 @@
 #!/bin/sh
 
 MAGIC="WINACL"
+VFUNC=":"
 
 usage()
 {
@@ -10,6 +11,7 @@ usage()
 	    -o owner
 	    -g group
 	    -d directory
+	    -v
 __EOF__
 
 	exit 1
@@ -19,6 +21,7 @@ __EOF__
 winacl_reset()
 {
 	local path="${1}"
+	local func="${2}"
 
 	local owner_access
 	local owner_inherit
@@ -58,8 +61,7 @@ winacl_reset()
 	local group_entry="group@:${group_access}:${group_inherit}:allow"
 	local everyone_entry="everyone@:${everyone_access}:${everyone_inherit}:allow"
 
-
-	echo "${path}"
+	${func} "${path}"
 	setfacl -b "${path}"
 	for i in $(jot 5)
 	do
@@ -76,6 +78,7 @@ reset_permissions()
 {
 	local dir="${1}"
 
+	${VFUNC} find "${dir}" \( -type f -o -type d \) -exec $0 ${MAGIC} {} \;
 	find "${dir}" \( -type f -o -type d \) -exec $0 ${MAGIC} {} \;
 	return $?
 }
@@ -85,13 +88,19 @@ main()
 	local owner
 	local group
 	local dir
+	local verbose="0"
 
 	local magic="${1}"
 	local path="${2}"
 
-	if [ "${magic}" = "${MAGIC}" -a -e "${path}" ]
+	if [ "${magic}" = "${MAGIC}" -o "${magic}" = "${MAGIC}_v" -a -e "${path}" ]
 	then
-		winacl_reset "${path}"
+		if [ "${magic}" = "${MAGIC}_v" ]
+		then
+			VFUNC="echo"
+		fi
+
+		winacl_reset "${path}" "${VFUNC}"
 		return 0
 
 	elif [ "$#" -lt "2" ]
@@ -99,27 +108,39 @@ main()
 		usage
 	fi
 
-	while getopts "o:g:d:" opt
+	while getopts "o:g:d:v" opt
 	do
 		case "${opt}" in 
 			o) owner="${OPTARG}" ;;
 			g) group="${OPTARG}" ;;
 			d) dir="${OPTARG}" ;;
+			v) verbose=1 ;;
 			:|\?) usage ;;
 		esac
 	done
 
+	local flags="-R"
+	if [ "${verbose}" = "1" ]
+	then
+		MAGIC="${MAGIC}_v"
+		VFUNC="echo"
+		flags="-Rvv"
+	fi
+
 	if [ -n "${owner}" -a -n "${group}" ]
 	then
-		chown -R "${owner}:${group}" "${dir}"
+		${VFUNC} chown "${flags}" "${owner}:${group}" "${dir}"
+		chown "${flags}" "${owner}:${group}" "${dir}"
 
 	elif [ -n "${owner}" ]
 	then
-		chown -R "${owner}" "${dir}"
+		${VFUNC} chown "${flags}" "${owner}" "${dir}"
+		chown "${flags}" "${owner}" "${dir}"
 
 	elif [ -n "${group}" ]
 	then
-		chgrp -R "${group}" "${dir}"
+		${VFUNC} chgrp "${flags}" "${group}" "${dir}"
+		chgrp "${flags}" "${group}" "${dir}"
 	fi
 
 	reset_permissions "${dir}"
