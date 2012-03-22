@@ -2053,7 +2053,7 @@ class notifier:
             ret = True
 
         except Exception, err:
-            syslog(LOG_DEBUG, "import_jail: failed %s" % err)
+            syslog.syslog(syslog.LOG_DEBUG, "import_jail: failed %s" % (str(err), ))
             ret = False
 
         return ret
