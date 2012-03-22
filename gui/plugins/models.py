@@ -29,6 +29,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freeadmin.models import Model
+from freenasUI.common.system import is_mounted, mount, umount
+from freenasUI.services import models as smodels
+
 
 class Plugins(Model):
     plugin_name = models.CharField(
@@ -103,3 +106,53 @@ class Plugins(Model):
 
     class FreeAdmin:
         icon_model = u"PluginsIcon"
+
+
+class NullMountPoint(Model):
+
+    source = models.CharField(
+        max_length=300,
+        verbose_name=_("Source"),
+        )
+
+    destination = models.CharField(
+        max_length=300,
+        verbose_name=_("Destination"),
+        )
+
+    class Meta:
+        verbose_name = _(u"Mount Point")
+        verbose_name_plural = _(u"Mount Points")
+
+    class FreeAdmin:
+        icon_model = u"PluginsIcon"
+
+    def __unicode__(self):
+        return self.source
+
+    def delete(self, *args, **kwargs):
+        if self.mounted:
+            self.umount()
+        super(NullMountPoint, self).delete(*args, **kwargs)
+
+    @property
+    def mounted(self):
+        return is_mounted(device=self.source, path=self.destination)
+
+    def __get_jail(self):
+        if not hasattr(self, "__jail"):
+            self.__jail = smodels.Plugins.objects.order_by('-id')[0]
+        return self.__jail
+
+    @property
+    def destination_jail(self):
+        jail = self.__get_jail()
+        return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
+
+    def mount(self):
+        mount(self.source, self.destination_jail, fstype="nullfs")
+        return self.mounted
+
+    def umount(self):
+        umount(self.destination_jail)
+        return not self.mounted

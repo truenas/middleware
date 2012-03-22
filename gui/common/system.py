@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import logging
 import os
 import smtplib
 import sqlite3
@@ -42,6 +43,9 @@ from account.models import bsdUsers
 VERSION_FILE = '/etc/version'
 
 _VERSION = None
+
+log = logging.getLogger("common.system")
+
 
 def get_sw_version(strip_build_num=False):
     """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64."""
@@ -215,26 +219,40 @@ def is_mounted(**kwargs):
 
     return ret
 
-def mount(dev, path, mntopts=None):
+
+def mount(dev, path, mntopts=None, fstype=None):
     if mntopts:
         opts = ['-o', mntopts]
     else:
         opts = []
 
-    try:
-        subprocess.check_call(['/sbin/mount', ] + opts + [dev, path, ])
-    except:
+    fstype = ['-t', fstype] if fstype else []
+
+    proc = subprocess.Popen(['/sbin/mount'] + opts + fstype + [dev, path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    output = proc.communicate()[0]
+
+    if proc.returncode != 0:
+        log.debug("Mount failed (%s): %s", proc.returncode, output)
         return False
     else:
         return True
 
+
 def umount(path):
-    try:
-        subprocess.check_call(['/sbin/umount', path, ])
-    except:
+
+    proc = subprocess.Popen(['/sbin/umount', path, ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    output = proc.communicate()[0]
+
+    if proc.returncode != 0:
+        log.debug("Umount failed (%s): %s", e.returncode, e.output)
         return False
     else:
         return True
+
 
 def service_enabled(name):
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")

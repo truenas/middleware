@@ -25,26 +25,35 @@
 #
 #####################################################################
 
+from django.utils.translation import ugettext_lazy as _
 
 from freeadmin.tree import TreeNode
-from django.utils.translation import ugettext_lazy as _
 from freenasUI.plugins import models
 
 NAME = _('Plugins')
 BLACKLIST = ['Plugins']
 ICON = u'SettingsIcon'
 
+
 class EnDisPlugins(TreeNode):
 
-    gname = 'plugins.ControlPlugins'
+    gname = 'ControlPlugins'
     name = _(u'Control Plugins')
     type = u'en_dis_plugins'
     icon = u'SettingsIcon'
     order = -1
 
+
+class MountPoints(TreeNode):
+
+    gname = 'plugins.NullMountPoint.View'
+    view = 'plugins_mountpoints'
+    append_app = False
+
+
 class ConfigurePlugins(TreeNode):
 
-    gname = 'plugins.ConfigurePlugins'
+    gname = 'ConfigurePlugins'
     name = _('Configure Plugins')
     icon = u'SettingsIcon'
 

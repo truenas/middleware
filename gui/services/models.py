@@ -793,19 +793,20 @@ class DynamicDNS(Model):
         icon_model = u"DDNSIcon"
 
 
-
 class Plugins(Model):
     jail_path = PathField(
             verbose_name=_("Plugins jail path"),
-            help_text = _("Path to the plugins jail"),
+            help_text=_("Path to the plugins jail"),
             blank=False
             )
     jail_name = models.CharField(
             max_length=120,
-            verbose_name = _("Jail name"),
-            help_text = _("Name of the plugins jail"),
+            verbose_name=_("Jail name"),
+            help_text=_("Name of the plugins jail"),
             default='',
-            validators=[RegexValidator(regex="^[a-zA-Z][a-zA-Z0-9_]+$", message="Jail name can only contain letters, numbers and underscores.")] 
+            validators=[RegexValidator(regex="^[a-zA-Z][a-zA-Z0-9_]+$",
+                message=_("Jail name can only contain letters, numbers and "
+                    "underscores."))]
             )
     jail_ip = models.ForeignKey(
             Alias,
@@ -813,7 +814,7 @@ class Plugins(Model):
             )
     plugins_path = PathField(
             verbose_name=_("Plugins archive path"),
-            help_text = _("Path where the plugins are saved after installation"),
+            help_text=_("Path where the plugins are saved after installation"),
             blank=False
             )
 

@@ -33,10 +33,10 @@ generate_plugins_conf()
 	ORDER BY
 		-id
 	" | \
-	while read name uname view icon enabled ip port path
+	while read -r name uname view icon enabled ip port path
 	do
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
-		location ~ ${view} {
+		location ~ /plugins/${name}/ {
 		    fastcgi_pass   ${ip}:${port};
 		    include        fastcgi_params;
 		}

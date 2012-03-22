@@ -36,7 +36,7 @@ from django.views.generic import TemplateView
 from freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
 
-from freeadmin import navtree
+from freenasUI.freeadmin import navtree
 navtree.prepare_modelforms()
 
 handler500 = 'freeadmin.views.server_error'

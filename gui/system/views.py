@@ -31,6 +31,7 @@ import shutil
 import socket
 import subprocess
 import time
+import urllib
 import xmlrpclib
 
 from django.contrib.auth import login, get_backends
@@ -49,11 +50,13 @@ from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
+from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
+
 
 def _system_info(request=None):
     # OS, hostname, release
@@ -318,20 +321,29 @@ def clearcache(request):
         'errmsg': errmsg,
         }))
 
-class DojoFileStore(object):
-    def __init__(self, path, dirsonly=False):
-        from storage.models import MountPoint
-        self.mp = [os.path.abspath(mp.mp_path) for mp in MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))]
 
-        self.path = path.replace("..", "")
-        if not self.path.startswith('/mnt/'):
-            self.path = '/mnt/'+self.path
+class DojoFileStore(object):
+
+    def __init__(self, path, dirsonly=False, root="/", filterVolumes=True):
+        self.root = os.path.abspath(root)
+        self.filterVolumes = filterVolumes
+        if self.filterVolumes:
+            self.mp = [os.path.abspath(mp.mp_path) \
+                for mp in MountPoint.objects.filter(
+                    mp_volume__vol_fstype__in=('ZFS','UFS'))]
+
+        self.path = os.path.join(self.root, path.replace("..", ""))
         self.path = os.path.abspath(self.path)
+        # POSIX allows one or two initial slashes, but treats three or more
+        # as single slash.
+        if self.path.startswith('//'):
+            self.path = self.path[1:]
+
         self.dirsonly = dirsonly
         self._lookupurl = 'system_dirbrowser' if self.dirsonly else 'system_filebrowser'
 
     def items(self):
-        if self.path == '/mnt':
+        if self.path == self.root:
             return self.children(self.path)
 
         node = self._item(self.path, self.path)
@@ -340,43 +352,68 @@ class DojoFileStore(object):
         return node
 
     def children(self, entry):
-        _children = [self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path, entry).startswith(f + '/') or os.path.join(self.path, entry) == f]) > 0]
+        _children = []
+        for _entry in sorted(os.listdir(entry)):
+            if _entry.startswith("."):
+                continue
+            full_path = os.path.join(self.path, _entry)
+            if self.filterVolumes and len([f for f in self.mp if full_path.startswith(f + '/') or full_path == f or full_path.startswith('/mnt')]) > 0:
+                _children.append(self._item(self.path, _entry))
         if self.dirsonly:
             _children = [child for child in _children if child['directory']]
         return _children
 
     def _item(self, path, entry):
         full_path = os.path.join(path, entry)
+
+        if full_path.startswith(self.root):
+            path = full_path.replace(self.root, "/", 1)
+        else:
+            path = full_path
+
+        if path.startswith("//"):
+            path = path[1:]
+
         isdir = os.path.isdir(full_path)
         item = {
-                 'name': os.path.basename(entry),
-                 'directory': isdir,
-                 'path': full_path,
-               }
+            'name': os.path.basename(full_path),
+            'directory': isdir,
+            'path': path,
+            }
         if isdir:
             item['children'] = True
 
-        item['$ref'] = os.path.abspath(reverse(self._lookupurl,
-                                       kwargs={ 'path' : full_path }))
+        item['$ref'] = os.path.abspath(
+            reverse(self._lookupurl, kwargs={
+                'path': path + '?root=' + urllib.quote_plus(self.root),
+                }
+                )
+            )
         item['id'] = item['$ref']
         return item
 
 def directory_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
-    if not path.startswith('/'):
-        path = '/%s' % path
+    #if not path.startswith('/'):
+    #    path = '/%s' % path
 
-    directories = DojoFileStore(path, dirsonly=True).items()
+    directories = DojoFileStore(path,
+        dirsonly=True,
+        root=request.GET.get("root", "/"),
+        ).items()
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
 
 def file_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
-    if not path.startswith('/'):
-        path = '/%s' % path
+    #if not path.startswith('/'):
+    #    path = '/%s' % path
 
-    directories = DojoFileStore(path, dirsonly=False).items()
+    directories = DojoFileStore(path,
+        dirsonly=False,
+        root=request.GET.get("root", "/"),
+        ).items()
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')

@@ -81,6 +81,9 @@ class RequireLoginMiddleware(object):
             return None
         if hasattr(view_func, '__is_public'):
             return None
+        #SECURITY BREACH: FIXXXXXXXXXXXXX ME, API FAIL
+        if request.path.startswith('/plugins/'):
+            return None
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
 

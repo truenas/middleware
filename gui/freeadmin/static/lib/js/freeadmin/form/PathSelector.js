@@ -14,6 +14,7 @@ define([
         templateString : cache("freeadmin", "templates/pathselector.html"),
         name : "",
         value: "",
+        root: "/",
         dirsonly: true,
         textfield: null,
         _getValueAttr: function() {
@@ -27,21 +28,22 @@ define([
             var path = this;
             var target;
             if(this.dirsonly) {
-                target = '/system/lsdir//';
+                target = '/system/lsdir/';
             } else {
-                target = '/system/lsfiles//';
+                target = '/system/lsfiles/';
             }
 
             var store = new freeadmin.tree.JsonRestStore({
                 target: target,
                 labelAttribute: 'name',
+                allowNoTrailingSlash: true,
             });
 
             var model = new freeadmin.tree.ForestStoreModel({
                 store: store,
-                query: {},
+                query: {root: this.root},
                 rootId: 'items',
-                rootLabel: '/mnt',
+                rootLabel: this.root,
                 childrenAttrs: ['children'],
                 deferItemLoadingUntilExpand: true,
             });

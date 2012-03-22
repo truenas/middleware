@@ -79,7 +79,7 @@ generate_istgt_config()
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf2 FROM services_iscsitargetportalip WHERE iscsi_target_portalip_portal_id=${id}" | \
 		while eval read -r $f2; do
-			if [ -z $(/sbin/ifconfig -a|grep "${iscsi_target_portalip_ip}") ]; then
+			if [ -z $(/sbin/ifconfig -a|grep "${iscsi_target_portalip_ip}") ] && [ "${iscsi_target_portalip_ip}" != "0.0.0.0" ]; then
 				echo "${iscsi_target_portalip_ip}" >> ${ALERT_PORTAL_IP}
 				iscsi_target_portalip_ip="0.0.0.0"
 			fi
@@ -198,7 +198,7 @@ generate_istgt_auth()
 	local f2="iscsi_target_auth_user iscsi_target_auth_secret iscsi_target_auth_peeruser iscsi_target_auth_peersecret"
 	local sf2=$(var_to_sf $f2)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT $sf FROM services_iscsitargetauthcredential ORDER BY iscsi_target_auth_tag" | \
-	while eval read $f; do
+	while eval read -r $f; do
 		echo "[AuthGroup${iscsi_target_auth_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		     "SELECT $sf2
@@ -238,9 +238,9 @@ generate_istgt_ctlfile()
 				${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 				    "SELECT $sf2
 				     FROM services_iscsitargetauthcredential
-				     WHERE iscsi_target_auth_tag=${iscsi_target_auth_tag}
+				     WHERE iscsi_target_auth_tag=${iscsi_luc_authgroup}
 				     ORDER BY id" | \
-				while eval read $f2; do
+				while eval read -r $f2; do
 					echo "  Auth \"${iscsi_target_auth_user}\" \"${iscsi_target_auth_secret}\" \"${iscsi_target_auth_peeruser}\" \"${iscsi_target_auth_peersecret}\""
 				done
 			fi

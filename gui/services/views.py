@@ -24,14 +24,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import namedtuple
+import logging
+import urllib2
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.plugins import models as pmodels
 from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
+
+log = logging.getLogger("services.views")
+
 
 def home(request):
 
@@ -107,6 +114,46 @@ def home(request):
     except IndexError:
         plugins = None
 
+    """
+    TODO: This is blocking,
+    We could do that using green threads or multithreads...
+    Or even, we could do those requests on client side
+    """
+    _list = []
+    service_list = []
+    Service = namedtuple('Service', [
+        'name',
+        'status',
+        'pid',
+        'start_url',
+        'stop_url',
+        'status_url',
+        ])
+    for plugin in pmodels.Plugins.objects.filter(plugin_enabled=True):
+        url = "%s://%s/plugins/%s/_s/status" % (
+            'https' if request.is_secure() else 'http',
+            request.get_host(),
+            plugin.plugin_name)
+        try:
+            response = urllib2.urlopen(url, None, 2).read()
+            json = simplejson.loads(response)
+        except Exception, e:
+            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+                'url': url,
+                'error': e,
+                })
+            continue
+        service_list.append(
+            Service(
+                name=plugin.plugin_name,
+                status=json['status'],
+                pid=json.get("pid", None),
+                start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
+                stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
+                status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
+                )
+            )
+
     srv = models.services.objects.all()
     return render(request, 'services/index.html', {
         'srv': srv,
@@ -114,12 +161,9 @@ def home(request):
         'afp': afp,
         'nfs': nfs,
         'rsyncd': rsyncd,
-        #'unison': unison,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
         'ups': ups,
-        #'webserver': webserver,
-        #'bittorrent': bittorrent,
         'ftp': ftp,
         'tftp': tftp,
         'smart': smart,
@@ -127,6 +171,7 @@ def home(request):
         'activedirectory': activedirectory,
         'ldap': ldap,
         'plugins': plugins,
+        'service_list': service_list,
         })
 
 def iscsi(request):

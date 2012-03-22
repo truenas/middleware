@@ -1,0 +1,42 @@
+<table class="grid">
+    <thead class="header">
+        <tr>
+            <td>{% trans "Source" %}</td>
+            <td>{% trans "Destination" %}</td>
+            <td>{% trans "Mounted?" %}</td>
+            <td>{% trans "Actions" %}</td>
+        </tr>
+    </thead>
+    {% for i in mp_list %}
+        <tr class="{% cycle 'odd' 'even' %}">
+            <td>{{ i.source }}</td>
+            <td>{{ i.destination_jail }}</td>
+            <td>{{ i.mounted }}</td>
+            <td>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editObject('{% trans "Edit Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="plugins",model="NullMountPoint",oid=i.id %}', [this,]);
+                </script>
+            </button>
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editObject('{% trans "Delete Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="plugins",model="NullMountPoint",oid=i.id %}', [this,]);
+                </script>
+            </button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">{% trans "No mount points defined" %}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<button data-dojo-type="dijit.form.Button" type="button">
+    {% trans "Add Mount Point" %}
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        addObject('{% trans "Add Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_add app="plugins",model="NullMountPoint" %}', [this,]);
+    </script>
+</button>

@@ -1,8 +1,9 @@
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.middleware.notifier import notifier
-from freeadmin.tree import TreeNode
 from . import models
+from freenasUI.middleware.notifier import notifier
+from freenasUI.plugins import models as pmodels
+from freeadmin.tree import TreeNode
 
 NAME = _('Services')
 BLACKLIST = ['services', 'iSCSITargetPortalIP']
@@ -160,6 +161,24 @@ class RsyncModView(TreeNode):
     icon = u'ViewAllrsyncModIcon'
     append_app = False
 
+
+class PluginsSettings(TreeNode):
+
+    gname = 'services.Plugins.Settings'
+    name = _(u'Settings')
+    type = 'object'
+    icon = models.Plugins._admin.icon_model
+
+    def __init__(self, *args, **kwargs):
+        super(PluginsSettings, self).__init__(*args, **kwargs)
+        if notifier().plugins_jail_configured():
+            oid = models.Plugins.objects.order_by('-id')[0].id
+            self.view = 'freeadmin_model_edit'
+            self.kwargs = {'app': 'services', 'model': 'Plugins', 'oid': oid}
+        else:
+            self.view = 'plugins_jailpbi'
+
+
 class Plugins(TreeNode):
 
     gname = 'Plugins'
@@ -169,9 +188,4 @@ class Plugins(TreeNode):
 
     def __init__(self, *args, **kwargs):
         super(Plugins, self).__init__(*args, **kwargs)
-        if notifier().plugins_jail_configured():
-            oid = models.Plugins.objects.order_by('-id')[0].id
-            self.view = 'freeadmin_model_edit'
-            self.kwargs = {'app': 'services', 'model': 'Plugins', 'oid': oid}
-        else:
-            self.view = 'plugins_jailpbi'
+        self.append_children([PluginsSettings()])

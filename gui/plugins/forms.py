@@ -24,22 +24,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+import os
 import re
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _, ugettext as __
 
-from . import models
 from dojango import forms
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
+from freenasUI.plugins import models
 from freenasUI.services.models import Plugins
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
 from freenasUI import choices
+
+log = logging.getLogger('plugins.forms')
 
 
 class PBIFileWizard(FileWizard):
@@ -203,3 +208,57 @@ class JailPBIUploadForm(Form):
         # Install the jail PBI
         if notifier().install_jail_pbi(pj.jail_path, pj.jail_name, pj.plugins_path):
             pj.save()
+
+
+class NullMountPointForm(ModelForm):
+
+    mounted = forms.BooleanField(
+        label=_("Mounted?"),
+        required=False,
+        initial=True,
+        )
+
+    class Meta:
+        model = models.NullMountPoint
+        widgets = {
+            'source': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+            'destination': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+        }
+
+    def clean_source(self):
+        src = self.cleaned_data.get("source")
+        src = os.path.abspath(src.strip().replace("..", ""))
+        return src
+
+    def clean_detination(self):
+        dest = self.cleaned_data.get("destination")
+        dest = os.path.abspath(dest.strip().replace("..", ""))
+        return dest
+
+    def __init__(self, *args, **kwargs):
+        super(NullMountPointForm, self).__init__(*args, **kwargs)
+        jail = Plugins.objects.order_by("-pk")[0]
+        self.fields['destination'].widget.attrs['root'] = (
+                os.path.join(jail.jail_path, jail.jail_name)
+            )
+        if self.instance.id:
+            self.fields['mounted'].initial = self.instance.mounted
+        else:
+            self.fields['mounted'].widget = forms.widgets.HiddenInput()
+
+    def save(self, *args, **kwargs):
+        obj = super(NullMountPointForm, self).save(*args, **kwargs)
+        mounted = self.cleaned_data.get("mounted")
+        if mounted == obj.mounted:
+            return obj
+        if mounted and not obj.mount():
+            #FIXME better error handling, show the user why
+            raise MiddlewareError(_("The path could not be mounted %s") % (obj.source, ))
+        if not mounted and not obj.umount():
+            #FIXME better error handling, show the user why
+            raise MiddlewareError(_("The path could not be umounted %s") % (obj.source, ))
+        return obj

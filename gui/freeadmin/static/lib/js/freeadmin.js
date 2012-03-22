@@ -425,6 +425,37 @@
 
     }
 
+    formsetAddForm = function(attrs) {
+
+        dojo.xhrGet({
+            url: attrs['url'],
+            content: {
+                prefix: attrs['prefix'],
+            },
+            sync: true,
+            load: function(data, ioArgs) {
+
+                var extra = dijit.byId("id_"+attrs['prefix']+"-TOTAL_FORMS");
+                var extran = extra.get("value");
+                var data = data.replace(new RegExp(attrs['emptyholder'], 'g'), extran);
+                var tr = dojo.create("tr");
+
+                tr.innerHTML = data;
+                dojo.parser.parse(tr);
+
+                if(typeof(attrs.insertItems) != 'undefined') {
+                    attrs['insertItems'](tr.childNodes);
+                } else if(typeof(attrs.insert) != 'undefined') {
+                    attrs['insert'](tr);
+                }
+                extra.set('value', parseInt(extran) + 1);
+
+            },
+        });
+
+    }
+
+
     toggle_service = function(obj) {
         var td = obj.parentNode;
         var n = dojo.create("div", {  }, td);
@@ -452,6 +483,66 @@
             }
         }
         var deferred = dojo.xhrPost(xhrArgs);
+
+    }
+
+
+    togglePluginService = function(from, name) {
+
+        var td = from.parentNode;
+        var _status = dojo.attr(from, "status");
+        var action;
+        var n = dojo.create("div", {}, td);
+        dojo.addClass(n, "dijitIconLoading");
+        dojo.style(n, "height", "25px");
+        dojo.style(n, "float", "left");
+
+        if(_status == "on") {
+            action = "stop";
+        } else {
+            action = "start";
+        }
+
+        var checkStatus = function(name) {
+
+            var args = {
+                url: "/plugins/"+name+"/_s/status",
+                handleAs: "json",
+                load: function(data) {
+                    if(data.status == 'RUNNING') {
+                        from.src = '/static/images/ui/buttons/on.png';
+                        dojo.attr(from, "status", "on");
+                    } else if(data.status == 'STOPPED') {
+                        from.src = '/static/images/ui/buttons/off.png';
+                        dojo.attr(from, "status", "off");
+                    } else {
+                        setTimeout('checkStatus(name);', 1000);
+                        return;
+                    }
+                    if(data.error) {
+                        setMessage(data.message, "error");
+                    }
+                    dojo.destroy(n);
+                },
+            }
+            var deferred = dojo.xhrGet(args);
+            return deferred;
+
+        }
+
+        var xhrArgs = {
+            url: "/plugins/" + name + "/_s/" + action,
+            handleAs: "text",
+            load: function(data) {
+                setTimeout(function() { checkStatus(name); }, 1000);
+            },
+            error: function(error) {
+                dojo.destroy(n);
+                setMessage(gettext("Some error occurred"), "error");
+            }
+        }
+        var deferred = dojo.xhrGet(xhrArgs);
+        return deferred;
 
     }
 
@@ -567,6 +658,14 @@
 
             } else {
                 //form.reset();
+                if(rnode.isInstanceOf(dijit.Dialog))
+                    rnode.hide();
+            }
+
+        } else {
+
+            if(rnode.isInstanceOf(dijit.Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
+                rnode.hide();
             }
 
         }
@@ -585,9 +684,6 @@
             setMessage(data.message);
         }
 
-        if(rnode.isInstanceOf(dijit.Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
-            rnode.hide();
-        }
 
     }
 

@@ -25,12 +25,16 @@
 #
 #####################################################################
 
+import datetime
 import os
 import sys
 import json
 
+
+from django.conf import settings
 from django.core import serializers
-from django.contrib.auth import authenticate, login
+from django.contrib import auth
+from django.utils.importlib import import_module
 
 from freenasUI import account, network, plugins, services, sharing, storage, system
 from freenasUI.middleware.notifier import notifier
@@ -566,6 +570,26 @@ def __plugins_plugins_create(request):
 @jsonrpc_method("plugins.plugins.destroy")
 def __plugins_plugins_destroy(request):
     return __api_call_not_implemented(request)
+
+@jsonrpc_method("plugins.jail.info")
+def __plugins_jail_info(request):
+    return __serialize([__get_plugins_jail_info()])
+
+@jsonrpc_method("plugins.is_authenticated")
+def __plugins_is_authenticated(request, sessionid):
+    engine = import_module(settings.SESSION_ENGINE)
+    session = engine.SessionStore(sessionid)
+
+    try:
+        user_id = session[auth.SESSION_KEY]
+        backend_path = session[auth.BACKEND_SESSION_KEY]
+        backend = auth.load_backend(backend_path)
+        user = backend.get_user(user_id)
+    except KeyError, e:
+        return False
+    if user and user.is_authenticated():
+        return True
+    return False
 
 
 #
@@ -1262,11 +1286,13 @@ def __fs_mounted_get(request, path=None):
     p = __popen(cmd)
     lines = p.communicate()[0].strip().split('\n')
     for line in lines:
+        if not line:
+            continue
         parts = line.split()
         if path and parts:
             dst = parts[1]
             i = dst.find(path)
-            dst = dst[i:] 
+            dst = dst[i:]
             parts[1] = dst
         path_list.append(parts)
 
@@ -1288,9 +1314,12 @@ def __fs_mount_filesystem(request, src, dst):
 
     full_dst = "%s/%s" % (jail_path, dst)
     p = __popen("/sbin/mount_nullfs %s %s" % (src, full_dst))
-    p.wait()
+    stdout, stderr = p.communicate()
 
-    return False if p.returncode != 0 else True
+    return {
+        'error': False if p.returncode == 0 else True,
+        'message': stderr,
+        }
 
 
 @jsonrpc_method("fs.umount")

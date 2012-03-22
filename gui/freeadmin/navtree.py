@@ -43,10 +43,36 @@ from freenasUI.plugins.models import Plugins
 log = logging.getLogger('freeadmin.navtree')
 
 
+class ModelFormsDict(dict):
+
+    def __getitem__(self, item):
+        item = item.__module__ + '.' + item._meta.object_name
+        if not item.startswith('freenasUI'):
+            item = 'freenasUI.' + item
+        return dict.__getitem__(self, item)
+
+    def __setitem__(self, item, val):
+        item = item.__module__ + '.' + item._meta.object_name
+        if not item.startswith('freenasUI'):
+            item = 'freenasUI.' + item
+        dict.__setitem__(self, item, val)
+
+    def __contains__(self, key):
+        key = key.__module__ + '.' + key._meta.object_name
+        if not key.startswith('freenasUI'):
+            key = 'freenasUI.' + key
+        isin = dict.__contains__(self, key)
+        return isin
+
+    def update(self, d):
+        for key, val in d.items():
+            self[key] = val
+
+
 class NavTree(object):
 
     def __init__(self):
-        self._modelforms = {}
+        self._modelforms = ModelFormsDict()
         self._options = {}
         self._navs = {}
         self._generated = False
@@ -221,7 +247,6 @@ class NavTree(object):
 
             # Thats the root node for the app tree menu
             nav = TreeRoot(app)
-            tree_roots.register(nav)  # We register it to the tree root
 
             modnav = self._get_module(app, 'nav')
             if hasattr(modnav, 'BLACKLIST'):
@@ -254,6 +279,11 @@ class NavTree(object):
                             self.register_option(obj, nav, True, evaluate=True)
                         else:
                             self._navs[obj.gname] = obj
+            else:
+                log.debug("App %s has no nav.py module, skipping", app)
+                continue
+
+            tree_roots.register(nav)  # We register it to the tree root
 
             modmodels = self._get_module(app, 'models')
             if modmodels:
@@ -261,16 +291,22 @@ class NavTree(object):
                 modname = '%s.models' % app
                 for c in dir(modmodels):
                     if c in BLACKLIST:
+                        log.debug("Model %s from app %s blacklisted, skipping",
+                            c,
+                            app,
+                            )
                         continue
                     model = getattr(modmodels, c)
                     try:
-                        subclass = issubclass(model, models.Model)
+                        if not issubclass(model, models.Model):
+                            continue
                     except TypeError:
                         continue
 
-                    if not(model.__module__ == modname and subclass \
+                    if not(model.__module__ in (modname, 'freenasUI.' + modname) \
                             and model in self._modelforms
                           ):
+                        log.debug("Model %s does not have a ModelForm", model)
                         continue
 
                     if model._admin.deletable is False:
@@ -389,7 +425,7 @@ class NavTree(object):
         for plugin in Plugins.objects.filter(plugin_enabled=True):
 
             try:
-                url = "%s%s/treemenu" % (host, plugin.plugin_view)
+                url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
                 response = urllib2.urlopen(url, None, 1)
                 data = response.read()
                 if not data:

@@ -44,6 +44,7 @@ urlpatterns = patterns('plugins.views',
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
     url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
+    url(r'^_mountpoints/$', 'mountpoints', name="plugins_mountpoints"),
     url(r'^jailimport/$', 'plugins_jail_import', name="plugins_jail_import"),
     url(r'^jailpbi/$', PBIFileWizard(
             [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],
@@ -51,5 +52,5 @@ urlpatterns = patterns('plugins.views',
             templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
     url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
-    url(r'^(?P<name>[^/]+)/(?P<version>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
+    url(r'^(?P<name>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
     )

@@ -79,11 +79,13 @@ def plugin_edit(request, plugin_id):
         'form': plugins_form
     })
 
+
 def plugin_info(request, plugin_id):
     plugin = models.Plugins.objects.filter(id=plugin_id)[0]
     return render(request, 'plugins/plugin_info.html', {
         'plugin': plugin,
     })
+
 
 def plugin_delete(request, plugin_id):
     plugin_id = int(plugin_id)
@@ -103,13 +105,20 @@ def plugin_delete(request, plugin_id):
             'plugin': plugin,
         })
 
+
+def mountpoints(request):
+    qs = models.NullMountPoint.objects.all()
+    return render(request, "plugins/mountpoints.html", {
+        'mp_list': qs,
+        })
+
 """
 This is a view that works as a FCGI client
 It is used for development server (no nginx) for easier development
 """
 from freenasUI.freeadmin.middleware import public
 @public
-def plugin_fcgi_client(request, name, version, path):
+def plugin_fcgi_client(request, name, path):
     qs = models.Plugins.objects.filter(plugin_name=name)
     if not qs.exists():
         raise Http404
@@ -124,7 +133,6 @@ def plugin_fcgi_client(request, name, version, path):
     env.pop('wsgi.errors', None)
     env.pop('wsgi.multiprocess', None)
     env.pop('wsgi.run_once', None)
-    env.pop('HTTP_COOKIE', None)
     env['SCRIPT_NAME'] = env['PATH_INFO']
     args = request.POST if request.method == "POST" else request.GET
     status, header, body, raw = app(env, args=args)
