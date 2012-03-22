@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-18 19:40+0200\n"
+"PO-Revision-Date: 2012-03-22 00:51+0200\n"
 "Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -397,11 +397,11 @@ msgstr "Каждый выбранный день недели"
 
 #: choices.py:500
 msgid "Read-only"
-msgstr "только чтение"
+msgstr "Только Чтение"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr "только запись"
+msgstr "Только Запись"
 
 #: choices.py:502
 msgid "Read and Write"
@@ -816,7 +816,7 @@ msgstr "Выключить"
 #: freeadmin/navtree.py:395
 #, python-format
 msgid "Empty data returned from %s"
-msgstr "%s вернул пустые данные"
+msgstr "Пустые данные вернулись из %s"
 
 #: freeadmin/navtree.py:398
 #, python-format
@@ -1515,7 +1515,7 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol может получить доступ к цели с правильным пользователем и "
+"Istgtcontrol может получить доступ к цели с правильным пользователем и "
 "секретом в выбранной группе аунтификации."
 
 #: services/forms.py:523 services/models.py:262
@@ -3981,7 +3981,7 @@ msgstr "Установите сколько дней должно быть ме�
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
-msgstr "минута"
+msgstr "Минута"
 
 #: storage/models.py:201 system/models.py:321 system/models.py:469
 msgid "Values 0-59 allowed."
@@ -5033,11 +5033,11 @@ msgstr "Страница не найдена"
 
 #: templates/base.html:50
 msgid "expand all"
-msgstr "Развернуть все"
+msgstr "развернуть все"
 
 #: templates/base.html:51
 msgid "collapse all"
-msgstr "Свернуть все"
+msgstr "свернуть все"
 
 #: templates/menubar.html:42
 msgid "Log Out"
@@ -5054,7 +5054,7 @@ msgstr "Войти"
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
 msgid "ID"
-msgstr "идентификатор"
+msgstr "Идентификатор"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5957,8 +5957,8 @@ msgstr "Добавить ZFS Scrub"
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
-"\"Scrub\" в настоящее время работает! Вы действительно хотите ОСТАНОВИТЬ "
-"процесс \"Scrub\"?"
+"Scrub в настоящее время работает! Вы действительно хотите ОСТАНОВИТЬ процесс "
+"Scrub?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
@@ -6071,7 +6071,7 @@ msgstr "Отключить том"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
-msgstr "\"Scrub\" тома"
+msgstr "Scrub тома"
 
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
@@ -6641,7 +6641,7 @@ msgstr "Развитие"
 
 # имя собственное?
 msgid "Docs"
-msgstr "документация"
+msgstr "Документация"
 
 msgid "Welcome to"
 msgstr "Добро пожаловать в"
@@ -6720,7 +6720,7 @@ msgid "/var/log/messages"
 msgstr "/var/log/messages"
 
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "Справка и поддержка"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Справка и поддержка"
 
 msgid "Success!"
 msgstr "Успешно!"
