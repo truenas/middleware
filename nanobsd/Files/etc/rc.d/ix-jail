@@ -58,7 +58,7 @@ generate_plugins_jail_config()
 
 	LIMIT 1
 	" | \
-	while read path name ip plugins
+	while read -r path name ip plugins
 	do
 		local mntpath_plugins="${path}/${name}/mnt/plugins"
 		local mntpath_pbi="${path}/${name}/usr/pbi"
@@ -78,6 +78,18 @@ generate_plugins_jail_config()
 
 		echo "${plugins} ${mntpath_plugins} nullfs ro 0 0" > "/etc/fstab.${name}"
 		echo "${plugins}/pbi ${mntpath_pbi} nullfs rw 0 0" >> "/etc/fstab.${name}"
+
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			source,
+			destination
+		FROM
+			plugins_nullmountpoint
+		" | \
+		while read -r source destination
+		do
+			echo "${source} ${path}/${name}/${destination} nullfs rw 0 0" >> "/etc/fstab.${name}"
+		done
 
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
 		sysctl security.jail.allow_raw_sockets=1
