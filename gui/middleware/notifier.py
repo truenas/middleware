@@ -1863,111 +1863,137 @@ class notifier:
 
 
     def install_pbi(self):
+        """
+        Install a .pbi file into the plugins jail
+
+        Returns:
+            bool: installation successful?
+
+        Raises::
+            MiddlewareError: pbi_add failed
+        """
         ret = False
 
-        if self._started_plugins_jail():
-            (c, conn) = self.__open_db(ret_conn=True)
+        if not self._started_plugins_jail():
+            return False
 
-            c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
-            jail_name = c.fetchone()
-            if not jail_name:
-                return False 
-            jail_name = jail_name[0]
+        (c, conn) = self.__open_db(ret_conn=True)
 
-            c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
-            plugins_path = c.fetchone()
-            if not plugins_path:
-                return False
-            plugins_path = plugins_path[0]
+        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        jail_name = c.fetchone()
+        if not jail_name:
+            return False
+        jail_name = jail_name[0]
 
-            jail = None
-            for j in Jls():
-                if j.hostname == jail_name:
-                    jail = j 
-                    break
+        c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
+        plugins_path = c.fetchone()
+        if not plugins_path:
+            return False
+        plugins_path = plugins_path[0]
 
-            # this stuff needs better error checking.. .. ..
-            if jail is not None:
-                pbi = pbiname = prefix = name = version = arch = None
+        jail = None
+        for j in Jls():
+            if j.hostname == jail_name:
+                jail = j
+                break
 
-                p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
-                out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
-                for pair in out:
-                    (var, val) = pair.split('=')
+        # this stuff needs better error checking.. .. ..
+        if jail is None:
+            raise MiddlewareError("The plugins jail is not running, start "
+                "it before proceeding")
+        pbi = pbiname = prefix = name = version = arch = None
 
-                    var = var.lower()
-                    if var == 'pbi information for':
-                        pbiname = val  
-                        pbi = "%s.pbi" % val
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
+        out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
-                    elif var == 'prefix':
-                        prefix = val
+        if not out:
+            raise MiddlewareError("This file was not identified as in PBI "
+                "format, it might as well be corrupt.")
 
-                    elif var == 'name':
-                        name = val
+        for pair in out:
+            (var, val) = pair.split('=', 1)
 
-                    elif var == 'version':
-                        version = val
+            var = var.lower()
+            if var == 'pbi information for':
+                pbiname = val
+                pbi = "%s.pbi" % val
 
-                    elif var == 'arch':
-                        arch = val
+            elif var == 'prefix':
+                prefix = val
 
-                self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+            elif var == 'name':
+                name = val
 
-                p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/plugins/%s" % pbi)
-                res = p.run(jail=True, jid=jail.jid)
-                if res and res[0] == 0:
-                    kwargs = {}
-                    kwargs['path'] = prefix
-                    kwargs['enabled'] = True
-                    kwargs['ip'] = jail.ip
-                    kwargs['name'] = name
-                    kwargs['arch'] = arch
-                    kwargs['version'] = version
-                    kwargs['pbiname'] = pbiname 
-                    kwargs['view'] = "/plugins/%s/%s" % (name, version)
+            elif var == 'version':
+                version = val
 
-                    # icky, icky icky, this is how we roll though.
-                    port = 12345
-                    c.execute("SELECT count(*) FROM plugins_plugins")
-                    count = c.fetchone()[0]
-                    if count > 0: 
-                        c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
-                        port = int(c.fetchone()[0])
+            elif var == 'arch':
+                arch = val
 
-                    kwargs['port'] = port + 1
-                    kwargs['uname'] = "system.%s" % name
-                    kwargs['icon'] = "default.png"
+        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
-                    out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
-                    if out and out[0] == 0:
-                        out = out[1]
-                        for line in out.splitlines():
-                            parts = line.split(':')
-                            key = parts[0].strip().lower()
-                            if key in ('uname', 'icon'):
-                                kwargs[key] = parts[1].strip()
+        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/plugins/%s" % pbi)
+        res = p.run(jail=True, jid=jail.jid)
+        if res and res[0] == 0:
+            kwargs = {}
+            kwargs['path'] = prefix
+            kwargs['enabled'] = True
+            kwargs['ip'] = jail.ip
+            kwargs['name'] = name
+            kwargs['arch'] = arch
+            kwargs['version'] = version
+            kwargs['pbiname'] = pbiname
+            kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
-                    sqlvars = ""
-                    sqlvals = ""
-                    for key in kwargs:
-                        sqlvars += "plugin_%s," % key
-                        sqlvals += ":%s," % key
+            # icky, icky icky, this is how we roll though.
+            port = 12345
+            c.execute("SELECT count(*) FROM plugins_plugins")
+            count = c.fetchone()[0]
+            if count > 0:
+                c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
+                port = int(c.fetchone()[0])
 
-                    sqlvars = sqlvars.rstrip(',')
-                    sqlvals = sqlvals.rstrip(',')
+            kwargs['port'] = port + 1
+            kwargs['uname'] = "system.%s" % name
+            kwargs['icon'] = "default.png"
 
-                    sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
-                    try:
-                        c.execute(sql, kwargs)
-                        conn.commit()
-                        ret = True
+            out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
+            if out and out[0] == 0:
+                out = out[1]
+                for line in out.splitlines():
+                    parts = line.split(':')
+                    key = parts[0].strip().lower()
+                    if key in ('uname', 'icon'):
+                        kwargs[key] = parts[1].strip()
 
-                    except Exception, err:
-                        ret = False                     
+            sqlvars = ""
+            sqlvals = ""
+            for key in kwargs:
+                sqlvars += "plugin_%s," % key
+                sqlvals += ":%s," % key
 
-                elif res and res[0] != 0:
-                    raise MiddlewareError(p.error)
+            sqlvars = sqlvars.rstrip(',')
+            sqlvals = sqlvals.rstrip(',')
+
+            sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
+            try:
+                c.execute(sql, kwargs)
+                conn.commit()
+                ret = True
+
+            except Exception, err:
+                ret = False
+
+        elif res and res[0] != 0:
+            # pbid seems to return 255 for any kind of error
+            # lets use error str output to find out what happenned
+            if re.search(r'failed checksum', res[1], re.I|re.S|re.M):
+                raise MiddlewareError("The file %s seems to be "
+                    "corrupt, please try download it again." % (
+                        pbiname,
+                        )
+                    )
+            raise MiddlewareError(p.error)
 
         return ret
 

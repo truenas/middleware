@@ -27,7 +27,7 @@
 
 from django.utils.translation import ugettext_lazy as _
 
-from freeadmin.tree import TreeNode
+from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.plugins import models
 
 NAME = _('Plugins')
