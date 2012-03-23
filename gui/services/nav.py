@@ -168,6 +168,7 @@ class PluginsSettings(TreeNode):
     name = _(u'Settings')
     type = 'object'
     icon = models.Plugins._admin.icon_model
+    append_app = False
 
     def __init__(self, *args, **kwargs):
         super(PluginsSettings, self).__init__(*args, **kwargs)
