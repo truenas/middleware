@@ -156,14 +156,6 @@ class JailPBIUploadForm(Form):
             label=_("Plugins Jail PBI"),
             required=True
             )
-    sha256 = forms.CharField(
-            label=_("SHA256 sum for the PBI file"),
-            required=True
-             )
-
-    def clean_sha256(self):
-        sha256 = re.sub(r'\s+', '', self.cleaned_data.get("sha256", ''))
-        return sha256
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -172,12 +164,6 @@ class JailPBIUploadForm(Form):
             with open(filename, 'wb+') as sp:
                 for c in cleaned_data['pbifile'].chunks():
                     sp.write(c)
-            if 'sha256' in cleaned_data:
-                checksum = notifier().checksum(filename)
-                if checksum != str(cleaned_data['sha256']):
-                    msg = _(u"Invalid checksum")
-                    self._errors["pbifile"] = self.error_class([msg])
-                    del cleaned_data["pbifile"]
         else:
             self._errors["pbifile"] = self.error_class([_("This field is required.")])
         return cleaned_data
