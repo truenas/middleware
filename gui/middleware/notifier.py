@@ -1998,13 +1998,27 @@ class notifier:
         return ret
 
     def install_jail_pbi(self, path, name, plugins_path):
+        """
+        Install the plugins jail PBI
+
+        Returns::
+            bool: installation succeeded?
+
+        Raises::
+            MiddlewareError: pbi file corrupt or invalid
+        """
         ret = False
 
         prefix = ename = pbi = None
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
         out = p.info(False, -1, 'prefix', 'pbi information for')
+
+        if not out:
+            raise MiddlewareError("This file was not identified as in PBI "
+                "format, it might as well be corrupt.")
+
         for pair in out:
-            (var, val) = pair.split('=')
+            (var, val) = pair.split('=', 1)
             var = var.lower()
             if var == 'prefix':
                 prefix = val
@@ -2029,13 +2043,19 @@ class notifier:
             self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
             ret = True
         else:
+            # pbid seems to return 255 for any kind of error
+            # lets use error str output to find out what happenned
+            if re.search(r'failed checksum', res[1], re.I|re.S|re.M):
+                raise MiddlewareError("The file %s seems to be "
+                    "corrupt, please try download it again." % (
+                        pbiname,
+                        )
+                    )
             raise MiddlewareError(p.error)
 
         return ret
 
     def import_jail(self, jail_path, jail_ip, plugins_path):
-        import string
-
         ret = False
 
         if not jail_path:
@@ -2054,12 +2074,10 @@ class notifier:
         if not parts:
             return ret
 
-        plen = len(parts)
-        last = plen - 1
-        jail_path = string.join(parts[0:last], '/')
+        jail_path = '/'.join(parts[:-1])
         if not jail_path:
             jail_path = "/"
-        jail_name = parts[last] 
+        jail_name = parts[-1]
 
         #
         # XXX: At some point (soon), plugins/jail need to support IPv6
