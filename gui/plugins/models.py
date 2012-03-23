@@ -29,9 +29,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freeadmin.models import Model
-from freenasUI.common.system import is_mounted, mount, umount
-from freenasUI.services import models as smodels
-
 
 class Plugins(Model):
     plugin_name = models.CharField(
@@ -137,9 +134,11 @@ class NullMountPoint(Model):
 
     @property
     def mounted(self):
+        from freenasUI.common.system import is_mounted
         return is_mounted(device=self.source, path=self.destination)
 
     def __get_jail(self):
+        from freenasUI.services import models as smodels
         if not hasattr(self, "__jail"):
             self.__jail = smodels.Plugins.objects.order_by('-id')[0]
         return self.__jail
@@ -150,9 +149,11 @@ class NullMountPoint(Model):
         return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
 
     def mount(self):
+        from freenasUI.common.system import mount
         mount(self.source, self.destination_jail, fstype="nullfs")
         return self.mounted
 
     def umount(self):
+        from freenasUI.common.system import umount
         umount(self.destination_jail)
         return not self.mounted
