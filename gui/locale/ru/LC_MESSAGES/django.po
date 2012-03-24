@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-22 00:51+0200\n"
+"PO-Revision-Date: 2012-03-23 20:47+0200\n"
 "Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -108,7 +108,7 @@ msgstr "SATA 3 Гбит/с"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Всегда включен"
+msgstr "Всегда включён"
 
 # или Отключено
 #: choices.py:86 choices.py:95
@@ -233,11 +233,11 @@ msgstr "Воскресенье"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr "Аномимный"
+msgstr "Анонимный"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "Локальный пользователь"
+msgstr "Локальный Пользователь"
 
 #: choices.py:185
 msgid "Normal"
@@ -257,7 +257,7 @@ msgstr "По умолчанию"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "Машина времени"
+msgstr "Машина Времени"
 
 #: choices.py:195
 msgid "No case folding"
@@ -265,16 +265,16 @@ msgstr "Без учета регистра"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr "Имена в нижнем регистре для Клиента и Сервера"
+msgstr "Имена в нижнем регистре в обоих случаях"
 
 # Капс?
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Клиент видит строчные буквы, сервер видит ЗАГЛАВНЫЕ"
+msgstr "Клиент видит строчные буквы, сервер видит заглавные"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Клиент видит ЗАГЛАВНЫЕ буквы, сервер видит строчные"
+msgstr "Клиент видит заглавные буквы, сервер видит строчные"
 
 #: choices.py:203
 msgid "File"
@@ -342,11 +342,11 @@ msgstr "Наследуется"
 
 #: choices.py:281
 msgid "On"
-msgstr "Включен"
+msgstr "Вкл"
 
 #: choices.py:282 choices.py:287 choices.py:552
 msgid "Off"
-msgstr "Выключен"
+msgstr "Выкл"
 
 #: choices.py:288
 msgid "lzjb (recommended)"
@@ -358,7 +358,7 @@ msgstr "gzip (6 уровень по умолчанию)"
 
 #: choices.py:290
 msgid "gzip (fastest)"
-msgstr "gzip (самый быстрый)"
+msgstr "gzip (быстрейший)"
 
 #: choices.py:291
 msgid "gzip (maximum, slow)"
@@ -397,11 +397,11 @@ msgstr "Каждый выбранный день недели"
 
 #: choices.py:500
 msgid "Read-only"
-msgstr "Только Чтение"
+msgstr "Только чтение"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr "Только Запись"
+msgstr "Только запись"
 
 #: choices.py:502
 msgid "Read and Write"
@@ -410,27 +410,27 @@ msgstr "Чтение и Запись"
 #: choices.py:506 choices.py:507
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) минут"
+msgstr "%(minutes)s минут"
 
 #: choices.py:508
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) часов"
+msgstr "%(hour)s час"
 
 #: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hour) часов"
+msgstr "%(hours)s часов"
 
 #: choices.py:514
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) дней"
+msgstr "%(day)s день"
 
 #: choices.py:515
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) недель"
+msgstr "%(week)s неделя"
 
 #: choices.py:519
 msgid "Never - Check the device regardless of its power mode"
@@ -438,7 +438,7 @@ msgstr "Никогда - Проверять устройство независ�
 
 #: choices.py:520
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Проверять устройство за исключением спящего (SLEEP) режима"
+msgstr "Sleep - Проверять устройство за исключением находящихся в спящем режиме"
 
 #: choices.py:521
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -454,23 +454,23 @@ msgstr ""
 
 #: choices.py:526
 msgid "Long Self-Test"
-msgstr "Длинная самодиагностика"
+msgstr "Длинная Само-Диагностика"
 
 #: choices.py:527
 msgid "Short Self-Test"
-msgstr "Короткая самодиагностика"
+msgstr "Короткая Само-Диагностика"
 
 #: choices.py:528
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Передача самодиагностики (только ATA)"
+msgstr "Передача самодиагностики (ATA  только)"
 
 #: choices.py:529
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Немедленный Offline тест (только ATA)"
+msgstr "Немедленный Offline Тест (только ATA)"
 
 #: choices.py:558
 msgid "Rsync module"
-msgstr "Модуль Rsync"
+msgstr "Rsync модуль "
 
 #: choices.py:559
 msgid "Rsync over SSH"
@@ -495,7 +495,7 @@ msgstr "Символ $ допускается только в качестве �
 #: account/forms.py:61
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "В имени присутствуют недопустимые символы (%s)"
+msgstr "В имени присутствуют недопустимые символы (%s)."
 
 #: account/forms.py:70
 #, python-format
@@ -521,7 +521,7 @@ msgstr "Имя пользователя"
 #: account/forms.py:200
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Обязательно. Не больше 16 символов. Только латинские буквы, цифры и ./-/_."
+"Обязательно. Не больше 16 символов. Английские буквы, цифры и ./-/_ только."
 
 #: account/forms.py:201
 msgid "This value may contain only letters, numbers and ./-/_ characters."
@@ -562,15 +562,15 @@ msgstr "Создать новую основную(primary) группу для 
 
 #: account/forms.py:248
 msgid "Primary Group"
-msgstr "Основная группа"
+msgstr "Основная Группа"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
-msgstr "Открытый ключ SSH"
+msgstr "Открытый Ключ SSH"
 
 #: account/forms.py:256
 msgid "Home Directory Mode"
-msgstr "Режим домашнего каталога"
+msgstr "Режим Домашнего Каталога"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
@@ -578,7 +578,7 @@ msgstr "Дополнительные группы"
 
 #: account/forms.py:318
 msgid "A user with that uid already exists."
-msgstr "Пользователь с таким идентификатором (uid) уже существует."
+msgstr "Пользователь с таким uid уже существует."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
@@ -633,7 +633,7 @@ msgstr "Группа с таким именем уже существует."
 
 #: account/forms.py:665
 msgid "A group with this gid already exists"
-msgstr "Группа с таким GID (групповым идентификатором) уже существует"
+msgstr "Группа с таким gid (групповым идентификатором) уже существует"
 
 #: account/forms.py:675
 msgid "Member users"
@@ -672,7 +672,7 @@ msgstr "ID группы"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Название группы"
+msgstr "Имя Группы"
 
 #: account/models.py:49 account/models.py:171 services/models.py:1339
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -703,19 +703,19 @@ msgstr "Хеш пароля UNIX"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Хеш SMB-пароля"
+msgstr "Хеш SMB пароля"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "ID основной группы"
+msgstr "ID Основной Группы"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "Домашний каталог"
+msgstr "Домашний Каталог"
 
 #: account/models.py:118
 msgid "Full Name"
-msgstr "Полное имя"
+msgstr "Полное Имя"
 
 #: account/models.py:125 templates/account/bsdusers.html:90
 msgid "E-mail"
@@ -749,7 +749,7 @@ msgstr "Учётная запись администратора"
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
-msgstr "Сменить пароль"
+msgstr "Сменить Пароль"
 
 #: account/nav.py:22 templates/account/changeform.html:2
 #: templates/account/index.html:3
@@ -762,7 +762,7 @@ msgstr "Пароль успешно обновлен."
 
 #: account/views.py:112
 msgid "Admin user successfully updated."
-msgstr "Пользователь Admin успешно обновлен."
+msgstr "Admin успешно обновлен."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -821,7 +821,7 @@ msgstr "Пустые данные вернулись из %s"
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr "Невозможно получить %(url)ов: %(error)s"
+msgstr "Невозможно получить %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
 #, python-format
@@ -898,35 +898,36 @@ msgstr "Вы должны выбрать между IPv4 или IPv6"
 
 #: network/forms.py:133
 msgid "Loopback is not a valid nameserver"
-msgstr "Loopback не является допустимым DNS"
+msgstr "Loopback не является допустимым nameserver"
 
 #: network/forms.py:135
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Не указаны адреса действительных DNS"
+msgstr "Не указаны адреса действительных nameserver"
 
 #: network/forms.py:138
 msgid "This is not a valid nameserver address"
-msgstr "Это не правильный адрес DNS"
+msgstr "Это не правильный адрес nameserver"
 
 #: network/forms.py:140
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 подсеть не распространяется на DNS"
+msgstr "169.254/16 подсеть не подходит для nameserver"
 
 #: network/forms.py:160
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Необходимо вначале заполнить DNS 2 для заполнения DNS 3"
+msgstr ""
+"Необходимо вначале заполнить nameserver 2 перед заполнением nameserver 3"
 
 #: network/forms.py:163 network/forms.py:170 network/forms.py:181
 msgid "Required when using nameserver 3"
-msgstr "Необходимо, когда используется DNS 3"
+msgstr "Необходимо, когда используется nameserver 3"
 
 #: network/forms.py:167
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Необходимо вначале заполнить DNS 1 для заполнения DNS 3"
+msgstr "Необходимо вначале заполнить nameserver 1 для заполнения nameserver 3"
 
 #: network/forms.py:178
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Необходимо вначале заполнить DNS 1 для заполнения DNS 2"
+msgstr "Необходимо вначале заполнить nameserver 1 для заполнения nameserver 2"
 
 #: network/forms.py:193
 msgid "Parent Interface"
@@ -998,15 +999,15 @@ msgstr "Шлюз IPv6 по умолчанию"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "DNS 1"
+msgstr "Nameserver 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "DNS 2"
+msgstr "Nameserver 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "DNS 3"
+msgstr "Nameserver 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:21
 #: templates/network/index.html:3
@@ -1372,11 +1373,11 @@ msgstr "Это поле является обязательным для ано�
 
 #: services/forms.py:212
 msgid "The ftp service failed to start."
-msgstr "Не удалось запустить службу FTP."
+msgstr "Не удалось запустить службу ftp."
 
 #: services/forms.py:224
 msgid "The tftp service failed to reload."
-msgstr "Службу TFTP не удалось перезагрузить."
+msgstr "Службу tftp не удалось перезагрузить."
 
 #: services/forms.py:231
 msgid "The SSH service failed to reload."
@@ -1431,9 +1432,9 @@ msgstr "Используйте буквы, цифры, \".\" \"-\" и \"_\"."
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Почтовый ящик %(email) неправильный"
-msgstr[1] "Следующие почтовые ящики неправильные: %(email)"
-msgstr[2] "Следующие почтовые ящики неправильные: %(email)"
+msgstr[0] "Почтовый ящик %(email)s неправильный"
+msgstr[1] "Следующие почтовые ящики неправильные: %(email)s"
+msgstr[2] "Следующие почтовые ящики неправильные: %(email)s"
 
 #: services/forms.py:365
 msgid "The UPS service failed to reload."
@@ -1445,11 +1446,11 @@ msgstr "Подтвердите пароль администратора"
 
 #: services/forms.py:392
 msgid "The activedirectory service failed to reload."
-msgstr "Службу ActiveDirectory не удалось перезагрузить."
+msgstr "Службу activedirectory не удалось перезагрузить."
 
 #: services/forms.py:403
 msgid "The ldap service failed to reload."
-msgstr "Службу LDAP не удалось перезагрузить."
+msgstr "Службу ldap не удалось перезагрузить."
 
 #: services/forms.py:409 services/models.py:572
 msgid "Secret"
@@ -1489,7 +1490,7 @@ msgstr "Секрет пира требуется, если вы установи
 
 #: services/forms.py:448
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Секрет пира не может совпадать с Секретом пользователя"
+msgstr "Секрет пира не может совпадать с секретом пользователя."
 
 #: services/forms.py:451 services/forms.py:454
 msgid "The peer user is required if you set a peer secret."
@@ -1548,7 +1549,7 @@ msgstr "Вам нужно указать путь к файлу, а не кат�
 
 #: services/forms.py:651
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Вы должны указать файл внутри Вашего раздела/набора данных."
+msgstr "Вы должны указать файл внутри вашего раздела/набора данных."
 
 #: services/forms.py:655
 msgid ""
@@ -1576,12 +1577,12 @@ msgstr "Дисковое устройство"
 #: services/forms.py:812
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Ваш 'ID группы портала' не может быть больше чем %d"
+msgstr "Ваш Portal Group ID не может быть больше чем %d"
 
 #: services/forms.py:859
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "Ваш 'ID группы' не может быть больше чем %d"
+msgstr "Ваш Group ID не может быть больше чем %d"
 
 #: services/forms.py:877
 msgid ""
@@ -1646,7 +1647,7 @@ msgstr "Рабочая группа"
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr "Имя раБочей группы, (максимум 15 символов)."
+msgstr "Имя рабочей группы (максимум 15 символов)."
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
@@ -1755,7 +1756,7 @@ msgstr "Включить домашние каталоги"
 
 #: services/models.py:142
 msgid "Enable/disable home directories for samba user."
-msgstr "Включает\\отключает домашние каталоги для пользователя Samba."
+msgstr "Включает/отключает домашние каталоги для пользователя samba."
 
 #: services/models.py:145
 msgid "Enable home directories browsing"
@@ -1763,8 +1764,7 @@ msgstr "Включить просмотр домашних каталогов"
 
 #: services/models.py:146
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
-"Включает\\отключает просмотр домашних каталогов для пользователей Samba."
+msgstr "Включает/отключает просмотр домашних каталогов для пользователей samba."
 
 #: services/models.py:150
 msgid "Home directories"
@@ -1856,12 +1856,12 @@ msgstr "Гостевой доступ"
 #: services/models.py:202
 msgid "Allows guest access to all apple shares on this box."
 msgstr ""
-"Разрешает гостевой доступ на все свободно доступные ресурсы Apple на этом "
+"Разрешает гостевой доступ на все свободно доступные ресурсы apple на этом "
 "хранилище."
 
 #: services/models.py:213
 msgid "Max. Connections"
-msgstr "Макс. соединений"
+msgstr "Макс. Соединений"
 
 #: services/models.py:215
 msgid ""
@@ -1914,8 +1914,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"Базовое имя (например, iqn.2007-09.jp.ne.peach.istgt, см. RFC 3720 и 3721 "
-"для подробной информации) добавит назначение не начинающееся с 'iqn'."
+"Базовое имя (т.е. iqn.2007-09.jp.ne.peach.istgt, смотри RFC 3720 и 3721 для "
+"подробной информации) добавит назначение не начинающееся с 'iqn.'"
 
 #: services/models.py:258
 msgid "Discovery Auth Method"
@@ -1973,7 +1973,7 @@ msgstr "Максимально выдающийся R2T"
 
 #: services/models.py:300
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "Параметр инициализации iSCSI (16 по умолчанию)."
+msgstr "iSCSI начальный параметр (16 по умолчанию)."
 
 #: services/models.py:305
 msgid "First burst length"
@@ -1981,7 +1981,7 @@ msgstr "Длина первого разрыва"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "Параметр инициализации iSCSI (65536 по умолчанию)."
+msgstr "iSCSI начальный параметр (65536 по умолчанию)."
 
 #: services/models.py:311
 msgid "Max burst length"
@@ -1989,7 +1989,7 @@ msgstr "Длина максимального разрыва"
 
 #: services/models.py:312 services/models.py:318
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "Параметр инициализации iSCSI (262144 по умолчанию)."
+msgstr "iSCSI начальный параметр (262144 по умолчанию)."
 
 #: services/models.py:317
 msgid "Max receive data segment length"
@@ -2001,7 +2001,7 @@ msgstr "Время ожидания по умолчанию"
 
 #: services/models.py:324
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "Параметр инициализации iSCSI (2 по умолчанию)."
+msgstr "iSCSI начальный параметр (2 по умолчанию)."
 
 #: services/models.py:329
 msgid "DefaultTime2Retain"
@@ -2009,7 +2009,7 @@ msgstr "Время хранения по умолчанию"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "Параметр инициализации iSCSI (60 по умолчанию)."
+msgstr "iSCSI начальный параметр (60 по умолчанию)."
 
 #: services/models.py:335
 msgid "Enable LUC"
@@ -2077,8 +2077,7 @@ msgstr "Путь к экстенту"
 #: services/models.py:399
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
-"Путь к файлу (например /mnt/sharename/extent/extent0) используемый как "
-"экстент"
+"Путь к файлу (т.е. /mnt/sharename/extent/extent0) используемый как экстент."
 
 #: services/models.py:404
 msgid "Extent size"
@@ -2139,7 +2138,7 @@ msgid ""
 "for any initiators."
 msgstr ""
 "Инициатор авторизуется к целевому iSCSI. Он получает имя, или принимает "
-"значение \"ALL\" для любого инициатора."
+"значение 'ALL' для любого инициатора."
 
 #: services/models.py:528
 msgid "Authorized network"
@@ -2151,7 +2150,7 @@ msgid ""
 "addresses or 'ALL' for any IPs."
 msgstr ""
 "Сеть авторизуется к целевому iSCSI. Она получает IP-адрес, CIDR-адрес, или "
-"принимает значение \"ALL\" для любого IP-адреса."
+"принимает значение 'ALL' для любого IP-адреса."
 
 #: services/models.py:539
 msgid "Initiator"
@@ -2183,7 +2182,7 @@ msgstr "Имя цели"
 
 #: services/models.py:604
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Базовое имя будет добавлено ​​автоматически при запуске без \"iqn.\"."
+msgstr "Базовое имя будет добавлено ​​автоматически при запуске без 'iqn.'."
 
 #: services/models.py:611
 msgid "Target Alias"
@@ -2326,7 +2325,7 @@ msgstr "Путь к plugins jail"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
 msgid "Jail name"
-msgstr "Имя Jail"
+msgstr "Jail имя"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
@@ -2353,8 +2352,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Информация о расположении, т.е. физическое расположение системы: \"Первый "
-"этаж здания, комната xyzzy\"."
+"Информация о расположении, т.е. физическое расположение системы: 'Первый "
+"этаж здания, комната xyzzy'."
 
 #: services/models.py:811
 msgid "Contact"
@@ -2366,7 +2365,7 @@ msgid ""
 "system: 'admin@email.address'."
 msgstr ""
 "Контактная информация, т.е. имя или электронная почта сотрудника, "
-"отвечающего за данную систему: \"admin@email.address\"."
+"отвечающего за данную систему: 'admin@email.address'."
 
 #: services/models.py:817
 msgid "Community"
@@ -2374,7 +2373,7 @@ msgstr "Сообщество"
 
 #: services/models.py:818
 msgid "In most cases, 'public' is used here."
-msgstr "В большинстве случаев здесь используется \"public\"."
+msgstr "В большинстве случаев здесь используется 'public'."
 
 #: services/models.py:821
 msgid "Send SNMP Traps"
@@ -2679,8 +2678,8 @@ msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
-"Директория, содержащая файлы, которые Вы бы хотели опубликовать, Удаленный "
-"хост не обязан передавать отдельно имя директории при передачи"
+"Директория, содержащая файлы, которые Вы бы хотели опубликовать. Удаленный "
+"хост не обязан передавать отдельно имя директории при передачи."
 
 #: services/models.py:1038
 msgid "Allow New Files"
@@ -2947,7 +2946,7 @@ msgstr "Самоподписанный сертификат"
 
 #: services/models.py:1265
 msgid "Place the contents of your self signed certificate file here."
-msgstr "Поместите сюда содержимое файла Вашего самоподписанного сертификата."
+msgstr "Поместите сюда содержимое файла вашего самоподписанного сертификата."
 
 #: services/models.py:1269 sharing/models.py:81
 msgid "Auxiliary Parameters"
@@ -3009,8 +3008,8 @@ msgid ""
 "use default settings"
 msgstr ""
 "Этот параметр задает имя пользователя для передачи файлов в/из модуля. В "
-"сочетании с опцией \"Группа' определяет возможные права для доступа к "
-"файлам. Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
+"сочетании с опцией 'Группа' определяет возможные права для доступа к файлам. "
+"Оставьте это поле пустым, чтобы использовать настройки по умолчанию"
 
 #: services/models.py:1340
 msgid ""
@@ -3333,7 +3332,7 @@ msgstr ""
 "Имя тома, которое появляется в списке 'Подключиться к серверу' "
 "соответственно отображается на Macintosh как общий ресурс. Если имя тома не "
 "определено, используется последняя часть пути. Два тома не могут иметь "
-"одинаковое имя. Имя тома не может содержать символ ':' Имя тома искажается, "
+"одинаковое имя. Имя тома не может содержать ':' символ. Имя тома искажается, "
 "если оно очень длинное. Mac кодировка ограничена 27 символами. Длина имени "
 "тома UTF8-MAC не должно превышать параметр 'Длина имени тома' в службе Apple "
 "Share"
@@ -3439,9 +3438,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"Обратите внимание! Выбор \"Машина времени\" на нескольких общих ресурсах "
-"может привести к непредсказуемому поведению в MacOS. По умолчанию "
-"используется режим экспорта тома как тома данных."
+"Обратите внимание! Выбор 'Машина Времени' на нескольких общих ресурсах может "
+"привести к непредсказуемому поведению в MacOS. По умолчанию используется "
+"режим экспорта тома как тома данных."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3485,8 +3484,8 @@ msgstr ""
 "Разрешает использование CR/LF в текстовых файлах, автоматически "
 "преобразовывыя разрывы строк Macintosh в Unix. Использование этой опции "
 "может быть опасным, так как некоторые старые программы хранят бинарные файлы "
-"как текстовые. AFPD может потенциально уничтожить такие файлы, когда "
-"\"ошибочно\" Изменит байт для того, чтобы сделать перевод строки."
+"как 'текстовые'. AFPD может потенциально уничтожить такие файлы, когда "
+"'ошибочно' Изменит байт для того, чтобы сделать перевод строки."
 
 #: sharing/models.py:185
 msgid "Windows File Names"
@@ -3523,8 +3522,8 @@ msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
-"Всегда используйте 0 для номера устройства. Это помогает, если номер "
-"устройства не является постоянной при перезагрузке, например в кластере, ..."
+"Всегда используйте 0 для номера устройства; помогает, если номер устройства "
+"не является постоянной при перезагрузке, например в кластере, ..."
 
 #: sharing/models.py:200
 msgid "Disable File ID"
@@ -3545,7 +3544,7 @@ msgid ""
 "the '/' character illegal."
 msgstr ""
 "Отключить :hex трансляцию всего, кроме точки в файлах. Эта опция делает "
-"символ \"/\" недопустимым."
+"символ '/' недопустимым."
 
 #: sharing/models.py:208
 msgid "ProDOS"
@@ -3564,7 +3563,7 @@ msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
-"Не включать путь к тому в список томов. Это полезно для автомонтирования или "
+"Не включать путь к тому в список томов; это полезно для автомонтирования или "
 "для томов, созданных по сценарию preexec."
 
 #: sharing/models.py:216
@@ -4164,7 +4163,7 @@ msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
-"Это должно быть имя файловой системы ZFS на удалённой стороне. Т.е. "
+"Это должно быть имя файловой системы ZFS на удалённой стороне. те: "
 "poolname/datasetname это не точка монтирования или путь файловой системы"
 
 #: storage/models.py:641
@@ -4184,7 +4183,7 @@ msgstr "Лимит кБ/с"
 #: storage/models.py:650
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
-"Максимальная скорость репликации, в килобайтах/секунду. 0 = не ограничена"
+"Максимальная скорость репликации. В килобайтах/секунду. 0 = не ограничена."
 
 #: storage/models.py:654
 msgid "Replication Task"
@@ -4558,7 +4557,7 @@ msgstr ""
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr "Минимальный Poll"
+msgstr "Мин. Poll"
 
 #: system/models.py:110
 msgid ""
@@ -4571,7 +4570,7 @@ msgstr ""
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr "Максимальный Poll"
+msgstr "Макс. Poll"
 
 #: system/models.py:116
 msgid ""
@@ -4666,7 +4665,7 @@ msgid ""
 "it sends, eg: freenas@example.com"
 msgstr ""
 "Адрес электронной почты, который система будет использовать при отправке "
-"почты. Например, freenas@example.com"
+"почты. те: freenas@example.com"
 
 #: system/models.py:199
 msgid "Outgoing mail server"
@@ -4985,7 +4984,7 @@ msgstr "Показать задачи Rsync"
 
 #: system/nav.py:47
 msgid "View S.M.A.R.T. Tests"
-msgstr "Показать тест S.M.A.R.T."
+msgstr "Показать S.M.A.R.T. Тесты"
 
 #: system/nav.py:54
 msgid "View Sysctls"
@@ -5472,7 +5471,7 @@ msgstr "Нет установленных плагинов"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "Шаг %(step) из %(step_count)"
+msgstr "Шаг %(step)s из %(step_count)s"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
@@ -5502,7 +5501,7 @@ msgstr ""
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Добро пожаловать, %(username). Спасибо за вход."
+msgstr "Добро пожаловать, %(username)s. Спасибо за вход."
 
 #: templates/registration/login.html:48
 #, python-format
@@ -5599,7 +5598,7 @@ msgstr "Настройки UPS"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
-msgstr "Управление iSCSI"
+msgstr "управление iSCSI"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
@@ -5835,7 +5834,7 @@ msgstr "Изменить набор данных"
 #: templates/storage/datasets.html:3
 #, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Создание набора данных ZFS в %(fs)"
+msgstr "Создание набора данных ZFS в %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -5900,7 +5899,7 @@ msgstr "Изменить права"
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr "Изменить права для %(path) к"
+msgstr "Изменить права для %(path)s к"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -6047,7 +6046,7 @@ msgstr "Имеются не периодические запланирован�
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr "У вас есть %(used) из использованного места в этом томе"
+msgstr "У вас есть %(used)s из использованного места в этом томе"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
@@ -6338,7 +6337,7 @@ msgstr "Тесты S.M.A.R.T. не определены"
 
 #: templates/system/smarttest.html:42
 msgid "Add S.M.A.R.T. Test"
-msgstr "Добавить S.M.A.R.T. тест"
+msgstr "Добавить S.M.A.R.T. Тест"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. test"
@@ -6451,6 +6450,7 @@ msgstr "DVD"
 msgid "Tape"
 msgstr "Лента"
 
+# проход ???
 msgid "Pass"
 msgstr "Передать"
 
@@ -6483,7 +6483,7 @@ msgstr "Локальный доступ"
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
 "Разрешить пользователям с локальными учетными записями доступ к публичным "
-"ресурсам Apple на этом хранилище."
+"ресурсам apple на этом хранилище."
 
 msgid ""
 "The portal takes the form of 'address:port'. for example "
@@ -6492,11 +6492,11 @@ msgid ""
 "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
 "same address family."
 msgstr ""
-"Портал имеет вид \"адрес:порт\". Например \"192.168.1.1:3260\" для IPv4, "
-"\"[2001:db8:1:1::1]:3260\" для IPv6. Порт 3260 является стандартным iSCSI "
+"Портал имеет вид 'адрес:порт'. например '192.168.1.1:3260' для IPv4, "
+"'[2001:db8:1:1::1]:3260' для IPv6. порт 3260 является стандартным iSCSI "
 "портом. Для произвольного IP-адреса (подстановочный адрес), используйте "
-"\"0.0.0.0:3260\" и/или \"[::]:3260\". Не применяйте вместе подстановочные "
-"и другие IP-адреса в том же самом семействе адресов."
+"'0.0.0.0:3260' и/или '[::]:3260'. Не применяйте вместе подстановочные и "
+"другие IP-адреса в том же самом семействе адресов."
 
 msgid "Time in milliseconds"
 msgstr "Время в миллисекундах"
