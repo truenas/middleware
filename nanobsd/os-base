@@ -701,9 +701,6 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
-		# NOTE: this is still needed after the .txz payload has been
-		# added because pc-sysinstall doesn't support raw images
-		# (-.-).
 		xz --keep --verbose -9 < "$firmware_img" > \
 		    "$gui_upgrade_bname.xz"
 
@@ -727,6 +724,9 @@ last_orders() {
 	set -x
 
 	# NOTE: keep in synch with create_iso.sh.
+	# NOTE: this is still needed after the .txz payload has been
+	# added because pc-sysinstall doesn't support raw images
+	# (-.-).
 	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
 	xz --verbose -9 -f "$full_image"
 
