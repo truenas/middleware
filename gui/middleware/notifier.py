@@ -152,7 +152,7 @@ class notifier:
             retval = self.___system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        log.debug("Executed: %s", command)
+        log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
     def __pipeopen(self, command):
