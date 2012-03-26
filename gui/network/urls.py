@@ -36,5 +36,4 @@ urlpatterns = patterns('network.views',
     url(r'^static-route/$', 'staticroute', name='network_staticroute'),
     url(r'^lagg/add/$', 'lagg_add', name='network_lagg_add'),
     url(r'lagg/members/(?P<object_id>\d+)/$', 'lagg_members', name="network_lagg_members"),
-    url(r'^global-configuration/$', 'globalconf', name='network_globalconf'),
     )

@@ -27,19 +27,17 @@
 
 from subprocess import Popen, PIPE
 
-from django.shortcuts import render_to_response, render
-from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
-from freeadmin.views import JsonResponse
-from freenasUI.network import forms
-from freenasUI.network import models
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.network import forms, models
 
-## Network Section
+
 def _lagg_performadd(lagg):
     # Search for a available slot for laggX interface
     interface_names = [v[0] for v in
-                       models.Interfaces.objects.all().values_list('int_interface')]
+                  models.Interfaces.objects.all().values_list('int_interface')]
     candidate_index = 0
     while ("lagg%d" % (candidate_index)) in interface_names:
         candidate_index += 1
@@ -48,28 +46,29 @@ def _lagg_performadd(lagg):
     lagg_member_list = lagg.cleaned_data['lagg_interfaces']
     # Step 1: Create an entry in interface table that
     # represents the lagg interface
-    lagg_interface = models.Interfaces(int_interface = lagg_name,
-                                int_name = lagg_name,
-                                int_dhcp = False,
-                                int_ipv6auto = False
+    lagg_interface = models.Interfaces(int_interface=lagg_name,
+                                int_name=lagg_name,
+                                int_dhcp=False,
+                                int_ipv6auto=False
                                 )
     lagg_interface.save()
     # Step 2: Write associated lagg attributes
-    lagg_interfacegroup = models.LAGGInterface(lagg_interface = lagg_interface,
-                                        lagg_protocol = lagg_protocol
+    lagg_interfacegroup = models.LAGGInterface(lagg_interface=lagg_interface,
+                                        lagg_protocol=lagg_protocol
                                         )
     lagg_interfacegroup.save()
     # Step 3: Write lagg's members in the right order
     order = 0
     for interface in lagg_member_list:
         lagg_member_entry = models.LAGGInterfaceMembers(
-                                      lagg_interfacegroup = lagg_interfacegroup,
-                                      lagg_ordernum = order,
-                                      lagg_physnic = interface,
-                                      lagg_deviceoptions = 'up'
+                                      lagg_interfacegroup=lagg_interfacegroup,
+                                      lagg_ordernum=order,
+                                      lagg_physnic=interface,
+                                      lagg_deviceoptions='up'
                                       )
         lagg_member_entry.save()
         order = order + 1
+
 
 def network(request):
 
@@ -78,16 +77,21 @@ def network(request):
     except IndexError:
         globalconf = models.GlobalConfiguration.objects.create().id
     return render(request, 'network/index.html', {
-        'focus_form' : request.GET.get('tab','network'),
+        'focus_form': request.GET.get('tab', 'network'),
         'globalconf': globalconf,
     })
+
 
 def summary(request):
 
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
-    int_list = filter(lambda y: y not in ('lo0', 'pfsync0', 'pflog0'), int_list)
+    int_list = filter(lambda y: y not in (
+        'lo0',
+        'pfsync0',
+        'pflog0',
+        ), int_list)
 
     ifaces = []
     for iface in int_list:
@@ -146,7 +150,7 @@ def summary(request):
     default = None
     if p3.returncode == 0:
         output = p3.communicate()[0]
-        default = output.replace('\n','')
+        default = output.replace('\n', '')
 
     return render(request, 'network/summary.html', {
         'ifaces': ifaces,
@@ -154,29 +158,34 @@ def summary(request):
         'default': default,
     })
 
+
 def interface(request):
     int_list = models.Interfaces.objects.order_by("-id")
     return render(request, 'network/interface.html', {
         'int_list': int_list,
     })
 
+
 def vlan(request):
-    vlan_list = models.VLAN.objects.order_by("-id").values()
+    vlan_list = models.VLAN.objects.order_by("-id")
     return render(request, 'network/vlan.html', {
         'vlan_list': vlan_list,
     })
 
+
 def staticroute(request):
-    sr_list = models.StaticRoute.objects.order_by("-id").values()
+    sr_list = models.StaticRoute.objects.order_by("-id")
     return render(request, 'network/staticroute.html', {
         'sr_list': sr_list,
     })
 
+
 def lagg(request):
-    lagg_list = models.LAGGInterface.objects.order_by("-id").all()
+    lagg_list = models.LAGGInterface.objects.order_by("-id")
     return render(request, 'network/lagg.html', {
         'lagg_list': lagg_list,
     })
+
 
 def lagg_add(request):
 
@@ -191,28 +200,11 @@ def lagg_add(request):
         'form': lagg,
     })
 
-def globalconf(request):
-
-    extra_context = {}
-    gc = forms.GlobalConfigurationForm(
-            data = models.GlobalConfiguration.objects.order_by("-id").values()[0],
-            auto_id=False
-            )
-    if request.method == 'POST':
-        gc = forms.GlobalConfigurationForm(request.POST,auto_id=False)
-        if gc.is_valid():
-            gc.save()
-            extra_context['saved'] = True
-
-    extra_context.update({
-        'gc': gc,
-    })
-    return render(request, 'network/globalconf.html', extra_context)
 
 def lagg_members(request, object_id):
     laggmembers = models.LAGGInterfaceMembers.objects.filter(
-                      lagg_interfacegroup = object_id
-                      ) 
+                      lagg_interfacegroup=object_id
+                      )
     return render(request, 'network/lagg_members.html', {
         'laggmembers': laggmembers,
     })
