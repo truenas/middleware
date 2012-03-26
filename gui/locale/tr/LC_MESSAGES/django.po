@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-19 08:24+0200\n"
+"PO-Revision-Date: 2012-03-26 07:17+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3550,7 +3550,7 @@ msgstr "Apple (AFP) Paylaşımı"
 
 #: sharing/models.py:229
 msgid "Apple (AFP) Shares"
-msgstr "Apple (AFP) AFP Paylaşımları"
+msgstr "Apple (AFP) Paylaşımları"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3864,7 +3864,7 @@ msgstr "Anlık Durum Görüntüsü"
 
 #: storage/forms.py:803
 msgid "Clone Name (must be on same volume)"
-msgstr "Klon Adı (aynı birimde olmalıdır)"
+msgstr "Klon adı (aynı birimde olmalıdır)"
 
 #: storage/forms.py:818
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
@@ -4326,31 +4326,31 @@ msgstr "Veri kümesi başarıyla silindi."
 
 #: storage/views.py:474
 msgid "Snapshot successfully deleted."
-msgstr "Anlık Durum Görüntüsü başarıyla silindi."
+msgstr "Anlık durum görüntüsü başarıyla silindi."
 
 #: storage/views.py:494
 msgid "Snapshots successfully deleted."
-msgstr "Anlık Durum Görüntüsü başarıyla silindi."
+msgstr "Anlık durum görüntüleri başarıyla silindi."
 
 #: storage/views.py:505
 msgid "Rollback successful."
-msgstr "Geri Alma başarılı."
+msgstr "Geri alma başarılı."
 
 #: storage/views.py:522
 msgid "Snapshot successfully added."
-msgstr "Anlık Durum Görüntüsü başarıyla eklendi."
+msgstr "Anlık durum görüntüsü başarıyla eklendi."
 
 #: storage/views.py:535
 msgid "Snapshot successfully taken."
-msgstr "Anlık Durum Görüntüsü başarıyla gerçekleştirildi."
+msgstr "Anlık durum görüntüsü başarıyla alındı."
 
 #: storage/views.py:550
 msgid "Snapshot successfully cloned."
-msgstr "Anlık Durum Görüntüsü başarı ile çoğaltıldı."
+msgstr "Anlık durum görüntüsü başarı ile çoğaltıldı."
 
 #: storage/views.py:567 storage/views.py:696
 msgid "Disk replacement has been initiated."
-msgstr "Diski değiştirme başlatılmıştır."
+msgstr "Disk değiştirme başlatılmıştır."
 
 #: storage/views.py:569 storage/views.py:698
 msgid "An error occurred."
@@ -4362,7 +4362,7 @@ msgstr "Başarıyla disk ayrıldı."
 
 #: storage/views.py:599
 msgid "Disk offline operation has been issued."
-msgstr "Diski değiştirme başlatılmıştır."
+msgstr "Çevrimdışı disk çalışması hazırlanmıştır.."
 
 #: storage/views.py:614
 msgid "Disk has been removed."
@@ -5760,7 +5760,7 @@ msgstr "Windows (CIFS) Paylaşımı Ekle"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr "Anlık Durum Görüntüsü Klonu"
+msgstr "Anlık Durum Görüntüsünü Çoğaltma"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
@@ -5808,7 +5808,7 @@ msgstr "Silmek istediğinizden emin misiniz?"
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
 msgid "Replacing disk"
-msgstr "Disk değiştirme"
+msgstr "Değiştirilecek disk:"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
@@ -5846,12 +5846,12 @@ msgstr "Değiştir"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr "Değiştirme İzni"
+msgstr "İzin Değiştirme"
 
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr "%(path)s yolu üzerindeki değiştirme izni"
+msgstr "%(path)s yolu üzerindeki izni değiştir"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -5925,7 +5925,7 @@ msgstr "Önceki anlık durum görüntüsüne almak istediğinize emin misiniz?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
-msgstr "Anlık durum görüntüsü klonla"
+msgstr "Anlık Durum Görüntüsünü Çoğalt"
 
 #: templates/storage/snapshots.html:32
 msgid "Destroy Snapshot"
@@ -5933,7 +5933,7 @@ msgstr "Anlık Durum Görüntüsünü Sil"
 
 #: templates/storage/snapshots.html:37
 msgid "Destroy this snapshot"
-msgstr "Bu anlık durum görüntüsünü sil"
+msgstr "Bu Anlık Durum Görüntüsünü Sil"
 
 #: templates/storage/snapshots.html:48
 msgid "Rollback Snapshot"
@@ -5941,7 +5941,7 @@ msgstr "Anlık Durum Görüntüsünü Geri Al"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
-msgstr "Anlık durum görüntüsünü geri al"
+msgstr "Bu Anlık Durum Görüntüsünü Geri Al"
 
 #: templates/storage/snapshots.html:126
 msgid "Destroy"
