@@ -83,7 +83,7 @@ class Alert(object):
                 if stdout.find("pool '%s' is healthy" % (vol.vol_name, )) != -1:
                     status = 'HEALTHY'
                 else:
-                    reg1 = re.search('^\s*state: (.+)', stdout, re.S|re.M)
+                    reg1 = re.search('^\s*state: (\w+)', stdout)
                     if reg1:
                         status = reg1.group(1)
                     else:
