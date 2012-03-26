@@ -527,6 +527,10 @@
                     }
                     dojo.destroy(n);
                 },
+                error: function(data) {
+                    setMessage(gettext("Some error occurred"), "error");
+                    dojo.destroy(n);
+                },
             }
             var deferred = dojo.xhrGet(args);
             return deferred;
