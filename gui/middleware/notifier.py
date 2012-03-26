@@ -2046,11 +2046,8 @@ class notifier:
             # pbid seems to return 255 for any kind of error
             # lets use error str output to find out what happenned
             if re.search(r'failed checksum', res[1], re.I|re.S|re.M):
-                raise MiddlewareError("The file %s seems to be "
-                    "corrupt, please try download it again." % (
-                        pbiname,
-                        )
-                    )
+                raise MiddlewareError("The PBI file ('%s') is corrupt"
+                                      % (os.path.basename(path), ) )
             raise MiddlewareError(p.error)
 
         return ret
