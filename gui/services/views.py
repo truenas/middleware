@@ -52,8 +52,6 @@ def plugins(request):
     We could do that using green threads or multithreads...
     Or even, we could do those requests on client side
     """
-    _list = []
-    service_list = []
     Service = namedtuple('Service', [
         'name',
         'status',
@@ -62,7 +60,9 @@ def plugins(request):
         'stop_url',
         'status_url',
         ])
-    for plugin in pmodels.Plugins.objects.filter(plugin_enabled=True):
+
+    plugins = pmodels.Plugins.objects.filter(plugin_enabled=True)
+    for plugin in plugins:
         url = "%s://%s/plugins/%s/_s/status" % (
             'https' if request.is_secure() else 'http',
             request.get_host(),
@@ -76,18 +76,28 @@ def plugins(request):
                 'error': e,
                 })
             continue
-        service_list.append(
-            Service(
-                name=plugin.plugin_name,
-                status=json['status'],
-                pid=json.get("pid", None),
-                start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
-                stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
-                status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
-                )
+        plugin.service = Service(
+            name=plugin.plugin_name,
+            status=json['status'],
+            pid=json.get("pid", None),
+            start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
+            stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
+            status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
             )
+
+    srv_enable = False
+    s = models.services.objects.filter(srv_service='plugins')
+    if s:
+        s = s[0]
+        srv_enable = s.srv_enable
+
+    jail_configured = notifier().plugins_jail_configured()
+    if not srv_enable:
+        jail_configured = False
+
     return render(request, "services/plugins.html", {
-        'service_list': service_list,
+        'plugins': plugins,
+        'jail_configured': jail_configured,
     })
 
 
