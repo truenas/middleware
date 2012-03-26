@@ -173,4 +173,4 @@ main()
 	return $?
 }
 
-main $*
+main "$@"
