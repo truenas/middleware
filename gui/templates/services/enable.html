@@ -1,4 +1,3 @@
-
 <div data-dojo-type="dijit.layout.ContentPane">
     <p>
         {% blocktrans %}Would you like to enable this service?{% endblocktrans %}
@@ -6,12 +5,11 @@
     <button data-dojo-type="dijit.form.Button">
         {% trans "Yes" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        var thisbtn = this;
-        Menu.openServices(function() {
-            var svc = dojo.byId("{{ svc }}_toggle");
+        Menu.openServices(null, '{{ svc|escapejs }}');
+        var svc = dojo.byId("{{ svc }}_toggle");
+        if(svc)
             toggle_service(svc);
-            cancelDialog(thisbtn);
-        });
+        cancelDialog(this);
         </script>
     </button>
     <button data-dojo-type="dijit.form.Button">

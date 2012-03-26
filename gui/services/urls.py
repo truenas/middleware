@@ -27,10 +27,10 @@
 
 from django.conf.urls.defaults import patterns, url
 
-# Active FreeNAS URLs
-
 urlpatterns = patterns('services.views',
-    url(r'^home/$', 'home', name="services_home"),
+    url(r'^index/$', 'index', name="services_home"),
+    url(r'^core/$', 'core', name="services_core"),
+    url(r'^plugins/$', 'plugins', name="services_plugins"),
     url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
     url(r'^iscsi/targets/$', 'iscsi_targets', name="services_iscsi_targets"),
     url(r'^iscsi/assoc-targets/$', 'iscsi_assoctargets', name="services_iscsi_assoctargets"),

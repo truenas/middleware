@@ -1,188 +1,22 @@
-<div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Services" %}" data-dojo-props="doLayout: false">
-   <table class="srv">
-       <tr>
-           <td>
-               <strong>{% trans "AFP" %}</strong>
-           </td>
-           <td>
-           <img id="afp_toggle" name="afp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="afp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "AFP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="AFP",oid=afp.id %}');" title="{% trans "AFP Settings" %}">
-           </td>
-       </tr>
-           <tr>
-           <td>
-               <strong>{% trans "Active Directory" %}</strong>
-           </td>
-           <td>
-           <img id="activedirectory_toggle" name="activedirectory_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="ad_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Active Directory Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="ActiveDirectory",oid=activedirectory.id %}');" title="{% trans "Active Directory Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "CIFS" %}</strong>
-           </td>
-           <td>
-           <img id="cifs_toggle" name="cifs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "CIFS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="CIFS",oid=cifs.id %}');" title="{% trans "CIFS Settings" %}">
-           </td>
-       </tr>
-      <tr>
-           <td>
-               <strong>{% trans "Dynamic DNS" %}</strong>
-           </td>
-           <td>
-           <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="dynamicdns_settings"
-               src="{{ STATIC_URL }}images/ui/buttons/settings.png"
-               onClick="editObject('{% trans "Dynamic DNS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="DynamicDNS",oid=dynamicdns.id %}');" title="{% trans "Dynamic DNS Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "FTP" %}</strong>
-           </td>
-           <td>
-           <img id="ftp_toggle" name="ftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="ftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "FTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="FTP",oid=ftp.id %}');" title="{% trans "FTP Settings" %}">
-           </td>
-       </tr>
-      <tr>
-           <td>
-               <strong>{% trans "iSCSI" %}</strong>
-           </td>
-           <td>
-           <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="istgt_settings"
-               src="{{ STATIC_URL }}images/ui/buttons/settings.png"
-               onClick="Menu.openISCSI();" title="{% trans "ISCSI Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "LDAP" %}</strong>
-           </td>
-           <td>
-           <img id="ldap_toggle" name="ldap_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="ldap_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "LDAP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="LDAP",oid=ldap.id %}');" title="{% trans "LDAP Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "NFS" %}</strong>
-           </td>
-           <td>
-                   <img id="nfs_toggle" name="nfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="nfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "NFS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="NFS",oid=nfs.id %}');" title="{% trans "NFS Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "Plugins" %}</strong>
-           </td>
-           <td>
-                   <img id="plugins_toggle" name="plugins_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "plugins" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               {% if plugins %}
-               <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Plugins Settings"|force_escape|force_escape %}', '{% url plugins_info %}');" title="{% trans "Plugins Settings" %}">
-               {% else %}
-               <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Install Jail PBI"|force_escape|force_escape %}', '{% url plugins_jailpbi %}');" title="{% trans "Plugins Settings" %}">
-               {% endif %}
-           </td>
-       </tr>
-      <tr>
-           <td>
-               <strong>{% trans "Rsync" %}</strong>
-           </td>
-           <td>
-           <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "rsync" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="rsync_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Rsync Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="Rsyncd",oid=rsyncd.id %}');" title="{% trans "Rsync Settings" %}">
-           </td>
-       </tr>
-      <tr>
-           <td>
-               <strong>{% trans "SNMP" %}</strong>
-           </td>
-           <td>
-           <img id="snmp_toggle" name="snmp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="snmp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SNMP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="SNMP",oid=snmp.id %}');" title="{% trans "SNMP Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "S.M.A.R.T." %}</strong>
-           </td>
-           <td>
-                <img id="smartd_toggle" name="smartd_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "smartd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="smartd_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "S.M.A.R.T. Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="SMART",oid=smart.id %}');" title="{% trans "S.M.A.R.T. Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "SSH" %}</strong>
-           </td>
-           <td>
-           <img id="ssh_toggle" name="ssh_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="ssh_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SSH Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="SSH",oid=ssh.id %}');" title="{% trans "SSH Settings" %}">
-           </td>
-       </tr>
-       <tr>
-           <td>
-               <strong>{% trans "TFTP" %}</strong>
-           </td>
-           <td>
-           <img id="tftp_toggle" name="tftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="TFTP",oid=tftp.id %}');" title="{% trans "TFTP Settings" %}">
-           </td>
-      </tr>
-      <tr>
-           <td>
-               <strong>{% trans "UPS" %}</strong>
-           </td>
-           <td>
-                <img id="ups_toggle" name="ups_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-           </td>
-           <td>
-               <img id="ups_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "UPS Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="UPS",oid=ups.id %}');" title="{% trans "UPS Settings" %}">
-           </td>
-      </tr>
-{% for service in service_list %}
-      <tr>
-           <td>
-               <strong>{{ service.name|capfirst }}</strong>
-           </td>
-           <td>
-                <img src="{{ STATIC_URL }}images/ui/buttons/{% if service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ service.name|escapejs }}')" status="{% if service.status == "RUNNING" %}on{% else %}off{% endif %}">
-           </td>
-           <td>
-           </td>
-      </tr>
-{% endfor %}
-    </table>
+<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_services">
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Core"|force_escape|force_escape %}'
+        {% if focus_form == "services.services" %}, selected: true{% endif %},
+        href: '{% url services_core %}',
+        doLayout: false,
+        {% if toggleCore %}toggleCore: '{{ toggleCore|escapejs }}',{% endif %}
+        refreshOnShow: true" class="objrefresh data_services_services" tab="services.services">
+            <script type="dojo/event" data-dojo-event="onLoad" data-dojo-args="data">
+                if(this.toggleCore) {
+                    var svc = dojo.byId(this.toggleCore + "_toggle");
+                    toggle_service(svc);
+                    this.toggleCore = null;
+                }
+            </script>
+        </div>
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Plugins"|force_escape|force_escape %}'
+        {% if focus_form == "serices.Plugins" %}, selected: true{% endif %},
+        href: '{% url services_plugins %}',
+        doLayout: false,
+        refreshOnShow: true" class="objrefresh data_services_Plugins" tab="services.Plugins">
+        </div>
+</div>

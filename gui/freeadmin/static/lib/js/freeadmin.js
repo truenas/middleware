@@ -179,6 +179,7 @@
                     if(onload) onload();
                 }
             }
+
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({
                     title: gettext('Plugins'),
@@ -197,30 +198,32 @@
             editObject(item.name, item.url);
         },
 
-        openServices: function(onload) {
+        openServices: function(onload, svc) {
             if(!onload) onload = function() {};
             var opened = false;
             var p = dijit.byId("content");
+            var href = this.urlServices;
+            if(svc) href += '?toggleCore=' + svc;
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
                 if(c[i].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
-                    if(onload) onload();
+                    if(onload) dojo.hitch(this, onload)();
                 }
             }
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({
                     title: gettext('Services'),
                     closable: true,
-                    href: this.urlServices,
+                    href: href,
                     onLoad: onload,
                 });
                 pane.tab = 'services';
                 p.addChild(pane);
                 p.selectChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
+                dojo.addClass(pane.domNode,["objrefresh", "data_services_services"]);
             }
 
         },

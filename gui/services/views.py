@@ -28,8 +28,8 @@ from collections import namedtuple
 import logging
 import urllib2
 
+from django.http import HttpResponse
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -40,7 +40,58 @@ from freenasUI.middleware.notifier import notifier
 log = logging.getLogger("services.views")
 
 
-def home(request):
+def index(request):
+    return render(request, 'services/index.html', {
+        'toggleCore': request.GET.get('toggleCore'),
+    })
+
+
+def plugins(request):
+    """
+    TODO: This is blocking,
+    We could do that using green threads or multithreads...
+    Or even, we could do those requests on client side
+    """
+    _list = []
+    service_list = []
+    Service = namedtuple('Service', [
+        'name',
+        'status',
+        'pid',
+        'start_url',
+        'stop_url',
+        'status_url',
+        ])
+    for plugin in pmodels.Plugins.objects.filter(plugin_enabled=True):
+        url = "%s://%s/plugins/%s/_s/status" % (
+            'https' if request.is_secure() else 'http',
+            request.get_host(),
+            plugin.plugin_name)
+        try:
+            response = urllib2.urlopen(url, None, 2).read()
+            json = simplejson.loads(response)
+        except Exception, e:
+            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+                'url': url,
+                'error': e,
+                })
+            continue
+        service_list.append(
+            Service(
+                name=plugin.plugin_name,
+                status=json['status'],
+                pid=json.get("pid", None),
+                start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
+                stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
+                status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
+                )
+            )
+    return render(request, "services/plugins.html", {
+        'service_list': service_list,
+    })
+
+
+def core(request):
 
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
@@ -114,48 +165,8 @@ def home(request):
     except IndexError:
         plugins = None
 
-    """
-    TODO: This is blocking,
-    We could do that using green threads or multithreads...
-    Or even, we could do those requests on client side
-    """
-    _list = []
-    service_list = []
-    Service = namedtuple('Service', [
-        'name',
-        'status',
-        'pid',
-        'start_url',
-        'stop_url',
-        'status_url',
-        ])
-    for plugin in pmodels.Plugins.objects.filter(plugin_enabled=True):
-        url = "%s://%s/plugins/%s/_s/status" % (
-            'https' if request.is_secure() else 'http',
-            request.get_host(),
-            plugin.plugin_name)
-        try:
-            response = urllib2.urlopen(url, None, 2).read()
-            json = simplejson.loads(response)
-        except Exception, e:
-            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                'url': url,
-                'error': e,
-                })
-            continue
-        service_list.append(
-            Service(
-                name=plugin.plugin_name,
-                status=json['status'],
-                pid=json.get("pid", None),
-                start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
-                stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
-                status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
-                )
-            )
-
     srv = models.services.objects.all()
-    return render(request, 'services/index.html', {
+    return render(request, 'services/core.html', {
         'srv': srv,
         'cifs': cifs,
         'afp': afp,
@@ -171,8 +182,8 @@ def home(request):
         'activedirectory': activedirectory,
         'ldap': ldap,
         'plugins': plugins,
-        'service_list': service_list,
         })
+
 
 def iscsi(request):
     gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id

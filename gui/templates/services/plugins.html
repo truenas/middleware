@@ -1,0 +1,16 @@
+<table class="srv">
+{% for service in service_list %}
+      <tr>
+           <td>
+               <strong>{{ service.name|capfirst }}</strong>
+           </td>
+           <td>
+                <img src="{{ STATIC_URL }}images/ui/buttons/{% if service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ service.name|escapejs }}')" status="{% if service.status == "RUNNING" %}on{% else %}off{% endif %}">
+           </td>
+           <td>
+           </td>
+      </tr>
+{% empty %}
+{% trans "No available plugins services" %}
+{% endfor %}
+</table>
