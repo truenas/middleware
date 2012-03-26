@@ -79,21 +79,29 @@ class Alert(object):
             if  vol.vol_fstype == 'ZFS':
                 p1 = subprocess.Popen(["zpool", "status", "-x", vol.vol_name],
                         stdout=subprocess.PIPE)
-                stdout, stderr = p1.communicate()
-                reg1 = re.search(r'^\s*status: (.*?)\n\s*\w+:', stdout, re.S|re.M)
-                reg2 = re.search(r'^\s*action: (.*?)\n\s*\w+:', stdout, re.S|re.M)
-                if reg1:
-                    if status == 'HEALTHY':
+                stdout = p1.communicate()[0]
+                if stdout.find("pool '%s' is healthy" % (vol.vol_name, )) != -1:
+                    status = 'HEALTHY'
+                else:
+                    reg1 = re.search('^\s*state: (.+)', stdout, re.S|re.M)
+                    if reg1:
+                        status = reg1.group(1)
+                    else:
+                        # The default case doesn't print out anything helpful,
+                        # but instead coredumps ;).
                         status = 'UNKNOWN'
-                    msg = reg1.group(1)
-                    msg = re.sub(r'\s+', ' ', msg)
-                    message += msg
-                if reg2:
-                    if status == 'HEALTHY':
-                        status = 'UNKNOWN'
-                    msg = reg2.group(1)
-                    msg = re.sub(r'\s+', ' ', msg)
-                    message += msg
+                    reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
+                                     stdout, re.S|re.M)
+                    reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
+                                     stdout, re.S|re.M)
+                    if reg1:
+                        msg = reg1.group(1)
+                        msg = re.sub(r'\s+', ' ', msg)
+                        message += msg
+                    if reg2:
+                        msg = reg2.group(1)
+                        msg = re.sub(r'\s+', ' ', msg)
+                        message += msg
 
             if status == 'HEALTHY':
                 self.log(self.LOG_OK,
