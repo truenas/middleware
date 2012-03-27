@@ -5,6 +5,7 @@ from . import models
 NAME = _('Account')
 ICON = u'AccountIcon'
 
+
 class AdminAccount(TreeNode):
 
     gname = 'AdminAccount'
@@ -26,12 +27,12 @@ class AdminAccount(TreeNode):
 
 class ViewUsers(TreeNode):
 
-    gname = 'account.bsdUsers.View'
+    gname = 'View'
     type = 'openaccount'
-    append_app = False
+    append_to = 'account.bsdUsers'
 
 class ViewGroups(TreeNode):
 
-    gname = 'account.bsdGroups.View'
+    gname = 'View'
     type = 'openaccount'
-    append_app = False
+    append_to = 'account.bsdGroups'

@@ -7,23 +7,23 @@ NAME = _('Network')
 ICON = u'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers','Alias']
 
+
 class NetSummary(TreeNode):
 
     gname = 'NetworkSummary'
     name = _(u'Network Summary')
     type = 'opennetwork'
     icon = u'SettingsIcon'
-    app_name = 'network'
+
 
 class GlobalConf(TreeNode):
 
-    gname = u'network.GlobalConfiguration'
+    gname = 'GlobalConfiguration'
     name = _(u'Global Configuration')
     type = 'opennetwork'
-    model = 'GlobalConfiguration'
     icon = u'SettingsIcon'
-    app_name = 'network'
-    append_app = False
+    append_to = 'network'
+
 
 class Linkss(TreeNode):
 
@@ -90,18 +90,20 @@ class Linkss(TreeNode):
 
 class ViewInterfaces(TreeNode):
 
-    gname = 'network.Interfaces.View'
+    gname = 'View'
     type = 'opennetwork'
-    append_app = False
+    append_to = 'network.Interfaces'
+
 
 class ViewVLAN(TreeNode):
 
-    gname = 'network.VLAN.View'
+    gname = 'View'
     type = 'opennetwork'
-    append_app = False
+    append_to = 'network.VLAN'
+
 
 class ViewSR(TreeNode):
 
-    gname = 'network.StaticRoute.View'
+    gname = 'View'
     type = 'opennetwork'
-    append_app = False
+    append_to = 'network.StaticRoute'

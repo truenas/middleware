@@ -25,51 +25,5 @@
 #
 #####################################################################
 
-from django.utils.translation import ugettext_lazy as _
-
-from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.plugins import models
-
-NAME = _('Plugins')
-BLACKLIST = ['Plugins']
-ICON = u'SettingsIcon'
-
-
-class EnDisPlugins(TreeNode):
-
-    gname = 'ControlPlugins'
-    name = _(u'Control Plugins')
-    type = u'en_dis_plugins'
-    icon = u'SettingsIcon'
-    order = -1
-
-
-class MountPoints(TreeNode):
-
-    gname = 'plugins.NullMountPoint.View'
-    view = 'plugins_mountpoints'
-    append_app = False
-
-
-class ConfigurePlugins(TreeNode):
-
-    gname = 'ConfigurePlugins'
-    name = _('Configure Plugins')
-    icon = u'SettingsIcon'
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigurePlugins, self).__init__(*args, **kwargs)
-
-        plugins = models.Plugins.objects.order_by("plugin_name")
-        if not plugins.exists():
-            self.append_app = False
-
-        for p in plugins:
-            nav = TreeNode(p.plugin_name)
-            nav.name = p.plugin_name
-            nav.icon = u'SettingsIcon'
-            nav.view = 'plugin_edit'
-            nav.kwargs = {'plugin_id': p.id}
-            nav.type = 'object'
-
-            self.insert_child(0, nav)
+def init(tree_roots, nav):
+    tree_roots.unregister(nav)

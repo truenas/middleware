@@ -122,6 +122,7 @@ class NullMountPoint(Model):
         verbose_name_plural = _(u"Mount Points")
 
     class FreeAdmin:
+        menu_child_of = u"services.Plugins.management"
         icon_model = u"PluginsIcon"
 
     def __unicode__(self):

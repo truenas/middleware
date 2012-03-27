@@ -5,66 +5,69 @@ BLACKLIST = ['Email', 'Advanced', 'Settings', 'SSL']
 NAME = _('System')
 ICON = u'SystemIcon'
 
+
 class Reporting(TreeNode):
 
-        gname = 'Reporting'
-        name = _(u'Reporting')
-        view = 'system_reporting'
-        icon = u"ReportingIcon"
+    gname = 'Reporting'
+    name = _(u'Reporting')
+    view = 'system_reporting'
+    icon = u"ReportingIcon"
+
 
 class Info(TreeNode):
 
-        gname = 'SysInfo'
-        name = _(u'System Information')
-        view = 'system_info'
-        icon = u"InfoIcon"
+    gname = 'SysInfo'
+    name = _(u'System Information')
+    view = 'system_info'
+    icon = u"InfoIcon"
+
 
 class Settings(TreeNode):
 
-        gname = 'Settings'
-        name = _(u'Settings')
-        view = 'system_settings'
-        icon = u"SettingsIcon"
+    gname = 'Settings'
+    name = _(u'Settings')
+    view = 'system_settings'
+    icon = u"SettingsIcon"
+
 
 class ViewCron(TreeNode):
 
-        gname = 'system.CronJob.View'
-        name = _('View Cron Jobs')
-        view = 'system_cronjobs'
-        append_app = False
+    gname = 'View'
+    view = 'system_cronjobs'
+    append_to = 'system.CronJob'
+
 
 class ViewRsync(TreeNode):
 
-        gname = 'system.Rsync.View'
-        name = _('View Rsync Tasks')
-        view = 'system_rsyncs'
-        append_app = False
+    gname = 'View'
+    view = 'system_rsyncs'
+    append_to = 'system.Rsync'
+
 
 class ViewSmarttest(TreeNode):
 
-        gname = 'system.SMARTTest.View'
-        view = 'system_smarttests'
-        name = _('View S.M.A.R.T. Tests')
-        append_app = False
+    gname = 'View'
+    view = 'system_smarttests'
+    append_to = 'system.SMARTTest'
+
 
 class ViewSysctl(TreeNode):
 
-        gname = 'system.Sysctl.View'
-        view = 'system_sysctls'
-        name = _('View Sysctls')
-        append_app = False
+    gname = 'View'
+    view = 'system_sysctls'
+    append_to = 'system.Sysctl'
+
 
 class ViewTunable(TreeNode):
 
-        gname = 'system.Tunable.View'
-        view = 'system_tunables'
-        name = _('View Tunables')
-        append_app = False
+    gname = 'View'
+    view = 'system_tunables'
+    append_to = 'system.Tunable'
+
 
 class ViewNTPServer(TreeNode):
 
-        gname = 'system.NTPServer.View'
-        view = 'system_ntpservers'
-        #name = _('View NTP Servers')
-        append_app = False
+    gname = 'View'
+    view = 'system_ntpservers'
+    append_to = 'system.NTPServer'
 

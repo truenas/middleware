@@ -19,33 +19,33 @@ class EnDisServices(TreeNode):
 
 class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITargetAuthorizedInitiator.View'
+    gname = 'View'
     type = u'iscsi'
-    append_app = False
+    append_to = 'services.ISCSI.iSCSITargetAuthorizedInitiator'
 
 class ISCSITargetAuthCredentialView(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITargetAuthCredential.View'
+    gname = 'View'
     type = u'iscsi'
-    append_app = False
+    append_to = 'services.ISCSI.iSCSITargetAuthCredential'
 
 class ISCSITargetPortalView(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITargetPortal.View'
+    gname = 'View'
     type = u'iscsi'
-    append_app = False
+    append_to = 'services.ISCSI.iSCSITargetPortal'
 
 class ISCSITargetToExtentView(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITargetToExtent.View'
+    gname = 'View'
     type = u'iscsi'
-    append_app = False
+    append_to = 'services.ISCSI.iSCSITargetToExtent'
 
 class ISCSITargetView(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITarget.View'
+    gname = 'View'
     type = u'iscsi'
-    append_app = False
+    append_to = 'services.ISCSI.iSCSITarget'
 
 class ISCSIDevice(TreeNode):
 
@@ -54,7 +54,7 @@ class ISCSIDevice(TreeNode):
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
-    append_app = False
+    skip = True
 
     def __init__(self, *args, **kwargs):
 
@@ -93,7 +93,7 @@ class ISCSIExt(TreeNode):
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
-    append_app = False
+    append_to = 'services.ISCSI'
 
     def __init__(self, *args, **kwargs):
 
@@ -145,48 +145,30 @@ class Rsync(TreeNode):
 
 class RsyncModAdd(TreeNode):
 
-    gname = 'services.Rsync.RsyncMod.Add'
+    gname = 'Add'
     name = _(u'Add Rsync Module')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'RsyncMod', 'mf': 'RsyncModForm'}
     icon = u'AddrsyncModIcon'
-    append_app = False
+    append_to = 'services.Rsync.RsyncMod'
 
 class RsyncModView(TreeNode):
 
-    gname = 'services.Rsync.RsyncMod.View'
+    gname = 'View'
     name = _(u'View Rsync Modules')
     view = u'services_rsyncmod'
     icon = u'ViewAllrsyncModIcon'
-    append_app = False
-
-
-class Plugins(TreeNode):
-
-    gname = 'services.Plugins.Settings'
-    name = _(u'Settings')
-    type = 'object'
-    icon = models.Plugins._admin.icon_model
-    append_app = False
-
-    def __init__(self, *args, **kwargs):
-        super(PluginsSettings, self).__init__(*args, **kwargs)
-        if notifier().plugins_jail_configured():
-            oid = models.Plugins.objects.order_by('-id')[0].id
-            self.view = 'freeadmin_model_edit'
-            self.kwargs = {'app': 'services', 'model': 'Plugins', 'oid': oid}
-        else:
-            self.view = 'plugins_jailpbi'
+    append_to = 'services.Rsync.RsyncMod'
 
 
 class PluginsSettings(TreeNode):
 
-    gname = 'services.Plugins.Settings'
+    gname = 'Settings'
     name = _(u'Settings')
     type = 'object'
     icon = models.Plugins._admin.icon_model
-    append_app = False
+    skip = True
 
     def __init__(self, *args, **kwargs):
         super(PluginsSettings, self).__init__(*args, **kwargs)
@@ -203,11 +185,18 @@ class PluginsManagement(TreeNode):
     gname = 'management'
     name = _(u'Management')
     icon = models.Plugins._admin.icon_model
-    append_app = False
+    skip = True
 
     def __init__(self, *args, **kwargs):
         super(PluginsManagement, self).__init__(*args, **kwargs)
         self.append_children([PluginsSettings()])
+
+
+class MountPoints(TreeNode):
+
+    gname = 'View'
+    view = 'plugins_mountpoints'
+    append_to = 'services.Plugins.management.NullMountPoint'
 
 
 class Plugins(TreeNode):

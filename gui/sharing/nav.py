@@ -4,20 +4,24 @@ from django.utils.translation import ugettext_lazy as _
 NAME = _('Sharing')
 ICON = u'SharingIcon'
 
+
 class ViewUNIX(TreeNode):
 
-        gname = 'sharing.NFS_Share.View'
-        type = 'opensharing'
-        append_app = False
+    gname = 'View'
+    type = 'opensharing'
+    append_to = 'sharing.NFS_Share'
+
 
 class ViewApple(TreeNode):
 
-        gname = 'sharing.AFP_Share.View'
-        type = 'opensharing'
-        append_app = False
+    gname = 'View'
+    type = 'opensharing'
+    append_to = 'sharing.AFP_Share'
+
 
 class ViewWin(TreeNode):
 
-        gname = 'sharing.CIFS_Share.View'
-        type = 'opensharing'
-        append_app = False
+    gname = 'View'
+    type = 'opensharing'
+    append_app = False
+    append_to = 'sharing.CIFS_Share'
