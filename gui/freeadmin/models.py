@@ -61,6 +61,7 @@ class PathField(models.CharField):
 
     def __init__(self, *args, **kwargs):
         self.abspath = kwargs.pop("abspath", True)
+        self.includes = kwargs.pop("includes", [])
         kwargs['max_length'] = 255
         if kwargs.get('blank', False):
             kwargs['null'] = True
@@ -72,6 +73,7 @@ class PathField(models.CharField):
         defaults = {
             'form_class': PF,
             'abspath': self.abspath,
+            'includes': self.includes,
             }
         kwargs.update(defaults)
         return super(PathField, self).formfield(**kwargs)

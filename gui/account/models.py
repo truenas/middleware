@@ -106,7 +106,8 @@ class bsdUsers(Model):
             )
     bsdusr_home = PathField(
             default="/nonexistent",
-            verbose_name=_("Home Directory")
+            verbose_name=_("Home Directory"),
+            includes=["/root", "/nonexistent"],
             )
     bsdusr_shell = models.CharField(
             max_length=120,

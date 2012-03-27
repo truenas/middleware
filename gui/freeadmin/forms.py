@@ -29,31 +29,33 @@ import re
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.encoding import StrAndUnicode, force_unicode
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from dojango.forms.widgets import DojoWidgetMixin
 from dojango import forms
 from dojango.forms import widgets
+from dojango.forms.widgets import DojoWidgetMixin
 from freenasUI.account.forms import FilteredSelectJSON
-from freenasUI.common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER, \
-    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
-from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_User, \
-                                         FreeNAS_Groups, FreeNAS_Group
+from freenasUI.common.freenasldap import (FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
+from freenasUI.common.freenasusers import (FreeNAS_Users, FreeNAS_User,
+    FreeNAS_Groups, FreeNAS_Group)
 from freenasUI.storage.models import MountPoint
 
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
+
     def render(self, name, value, attrs=None):
-        if value is None: value = ''
+        if value is None:
+            value = ''
         final_attrs = self.build_attrs(attrs, name=name)
         final_attrs['value'] = force_unicode(value)
         if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"
-        elif re.search(r'^[0-9].*',value):
+        elif re.search(r'^[0-9].*', value):
             final_attrs['typeChoice'] = "selected"
         return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
 
@@ -90,7 +92,9 @@ class UserField(forms.ChoiceField):
             kwargs = {}
             if len(self._exclude) > 0:
                 kwargs['exclude'] = ','.join(self._exclude)
-            self.widget = FilteredSelectJSON(url=("account_bsduser_json", None, (), kwargs))
+            self.widget = FilteredSelectJSON(
+                url=("account_bsduser_json", None, (), kwargs)
+                )
         else:
             ulist = []
             if not self.required:
@@ -109,6 +113,7 @@ class UserField(forms.ChoiceField):
         if FreeNAS_User(user, flags=FLAGS_DBINIT) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
+
 
 class GroupField(forms.ChoiceField):
     widget = widgets.Select()
@@ -150,6 +155,7 @@ class PathField(forms.CharField):
     def __init__(self, *args, **kwargs):
         dirsonly = kwargs.pop('dirsonly', True)
         self.abspath = kwargs.pop('abspath', True)
+        self.includes = kwargs.pop('includes', [])
         self.widget = DirectoryBrowser(dirsonly=dirsonly)
         super(PathField, self).__init__(*args, **kwargs)
 
@@ -162,6 +168,8 @@ class PathField(forms.CharField):
                 if absv.startswith(mp[0]+'/') or absv == mp[0]:
                     valid = True
                     break
+            if not valid and absv in self.includes:
+                valid = True
             if not valid:
                 raise forms.ValidationError(_("The path must reside within a volume mount point"))
             return value if not self.abspath else absv
