@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:42-0800\n"
-"PO-Revision-Date: 2012-03-20 04:39+0200\n"
+"PO-Revision-Date: 2012-03-27 05:40+0200\n"
 "Last-Translator: lutz.willek <lutz.willek@belug.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -454,7 +454,7 @@ msgstr "Standby - Überprüfe Gerät außer es ist im SCHLAF oder STANDBY Modus"
 
 #: choices.py:522
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr "Idle - Überprüfe Gerät außer es ist im SCHLAG, STANDBY oder IDLE Modus"
+msgstr "Idle - Überprüfe Gerät außer es ist im SCHLAF, STANDBY oder IDLE Modus"
 
 #: choices.py:526
 msgid "Long Self-Test"

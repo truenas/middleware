@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-01-28 01:39+0200\n"
-"Last-Translator: multipetros <petros.kyladitis@gmail.com>\n"
+"PO-Revision-Date: 2012-03-27 10:54+0200\n"
+"Last-Translator: thaaanos <thaaanos+freenas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Βασικό"
+msgstr "Απλό"
 
 #: choices.py:41 choices.py:553 system/models.py:298
 #: templates/system/settings.html:9
@@ -445,11 +445,11 @@ msgstr ""
 
 #: choices.py:526
 msgid "Long Self-Test"
-msgstr "Long Self-Test"
+msgstr "Εκτεταμένο αυτοδιαγνωστικό"
 
 #: choices.py:527
 msgid "Short Self-Test"
-msgstr "Short Self-Test"
+msgstr "Σύντομο αυτοδιαγνωστικό"
 
 #: choices.py:528
 msgid "Conveyance Self-Test (ATA  only)"
@@ -460,22 +460,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Offline άμεσο Test (ΑΤΑ μόνο)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "Μονάδα Rsync"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Μονάδα Rsync"
+msgstr "Rsync πάνω από SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Προώθηση"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Λήψη"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -486,7 +484,7 @@ msgid "The character $ is only allowed as the final character"
 msgstr "Ο χαρακτήρας $ επιτρέπεται μόνο ως τελικός χαρακτήρας"
 
 #: account/forms.py:61
-#, fuzzy, python-format
+#, python-format
 msgid "Your name contains invalid characters (%s)."
 msgstr "Το όνομά σας περιέχει μη έγκυρους χαρακτήρες (%s)."
 
@@ -516,11 +514,10 @@ msgstr ""
 "Απαιτούνται. 16 χαρακτήρες ή λιγότεροι. Γράμματα, ψηφία και ./+/-/_ μόνο."
 
 #: account/forms.py:201
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Αυτή η τιμή μπορεί να περιέχει μόνο γράμματα, αριθμούς και χαρακτήρες/./+/-/"
-"_."
+"Αυτή η τιμή μπορεί να περιέχει μόνο γράμματα, αριθμούς και χαρακτήρες ./-/_ "
+"."
 
 #: account/forms.py:228 account/forms.py:457 services/models.py:737
 #: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
@@ -553,29 +550,27 @@ msgstr "Κλείδωμα χρήστη"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Δημιουργήστε μία κύρια ομάδα για τον χρήστη"
 
 #: account/forms.py:248
 msgid "Primary Group"
-msgstr "Πρωτοβάθμια Ομάδα"
+msgstr "Κύρια Ομάδα"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
 msgstr "Δημόσιο κλειδί SSH"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Αρχικός Κατάλογος"
+msgstr "Λειτουργία οικίου καταλόγου"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
 msgstr "Βοηθητικές ομάδες"
 
 #: account/forms.py:318
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Ένας χρήστης με αυτό το όνομα υπάρχει ήδη."
+msgstr "Ένας χρήστης με αυτό το αναγνωριστικό (uid) υπάρχει ήδη."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
@@ -591,26 +586,23 @@ msgstr "Αυτό το πεδίο είναι υποχρεωτικό"
 #: services/forms.py:284 services/forms.py:381 sharing/forms.py:98
 #: system/forms.py:317
 msgid "The two password fields didn't match."
-msgstr "Τα δύο πεδία των κωδικών πρόσβασης δεν ταιριάζουν."
+msgstr "Οι κωδικοί δεν ταιριάζουν."
 
 #: account/forms.py:351
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Ο Αρχικός κατάλογος πρέπει να ξεκινάει με /mnt/"
+msgstr "Ο Οικίος κατάλογος πρέπει να ξεκινάει με /mnt/ ή να είναι /nonexistent"
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Ένας χρήστης δέ μπορεί να ανήκει σε περισσότερες απο 64 άλλες ομάδες"
 
 #: account/forms.py:381 account/forms.py:582
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Ο Αρχικός κατάλογος πρέπει να ξεκινάει με /mnt/"
+msgstr "Ο οικίος κατάλογος δεν είναι εγγράψιμος, αφήστε το κενό"
 
 #: account/forms.py:388
-#, fuzzy
 msgid "Password is disabled, leave this blank"
-msgstr "Ο κωδικός έχει απενεργοποιηθεί, αφήστε αυτό το πεδίο κενό."
+msgstr "Ο κωδικός έχει απενεργοποιηθεί, αφήστε το κενό."
 
 #: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
@@ -619,9 +611,8 @@ msgid "This field is required."
 msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
 
 #: account/forms.py:562
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Ο Αρχικός κατάλογος πρέπει να ξεκινάει με /mnt/"
+msgstr "Ο οικίος κατάλογος πρέπει να ξεκινάει με /mnt ή να είναι /nonexistent"
 
 #: account/forms.py:634
 msgid "Allow repeated GIDs"
@@ -637,7 +628,7 @@ msgstr "Μια ομάδα με αυτό το όνομα υπάρχει ήδη."
 
 #: account/forms.py:675
 msgid "Member users"
-msgstr "Χρήστες μέλή"
+msgstr "Χρήστες μέλη"
 
 #: account/forms.py:720
 msgid "New password"
@@ -662,8 +653,9 @@ msgstr ""
 "ξανά."
 
 #: account/forms.py:778
+#, fuzzy
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Θέλετε να διαγράψετε όλους τους χρήστες σε αυτήν την ομάδα;"
 
 #: account/models.py:36 services/models.py:518 services/models.py:563
 #: templates/services/iscsi_auth.html:5
@@ -744,9 +736,8 @@ msgid "Account"
 msgstr "Λογαριασμός"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Λογαριασμός"
+msgstr "Διαχειριστής"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -819,17 +810,17 @@ msgstr "Απενεργοποίηση"
 #: freeadmin/navtree.py:395
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Δεν επιστράφηκαν δεδομένα από το %s"
 
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Δεν μπόρεσα να ανακτήσω το %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Μερικές σφάλμα occurred ενώ η σήμανση του δίσκου."
+msgstr "Ένα σφάλμα συνέβη κατά την ανάκτηση δεδομένων από %(url)s: %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -875,6 +866,7 @@ msgstr "NIC"
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
+"Δεν μπορείτε να ρυθμίσετε πολλαπλές διεπαφές με την ίδια διεύθυνση IP (%s)"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -898,7 +890,7 @@ msgstr "Μπορείτε να επιλέξετε μεταξύ IPv4 ή IPv6"
 
 #: network/forms.py:133
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Η διεύθυνση loopback δεν είναι έγκυρη για εξυπηρέτη ονομάτων"
 
 #: network/forms.py:135
 msgid "Unspecified addresses are not valid as nameservers"
@@ -910,7 +902,7 @@ msgstr "Το πεδίο δεν είναι μια έγκυρη διεύθυνση
 
 #: network/forms.py:140
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "Το υποδίκτυο 169.254/16 δεν είναι έγκυρο για εξυπηρέτη ονομάτων"
 
 #: network/forms.py:160
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -948,9 +940,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Φυσικές NICs στο LAGG"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Φυσική NIC"
+msgstr "LAGG Φυσικών NIC"
 
 #: network/forms.py:298
 #, python-format
@@ -959,27 +950,28 @@ msgstr "Το δίκτυο '%s' δεν είναι έγκυρο, αναμενότ�
 
 #: network/forms.py:360
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Χρειάζεται να καθορίσετε και μία διεύθυνση IPv4 για κάθε ψευδώνυμο"
 
 #: network/forms.py:362
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Χρειάζεται να επιλέξετε και μια μάσκα δικτύου IPv4 για κάθε ψευδώνυμο"
 
 #: network/forms.py:367
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Χρειάζεται να καθορίσετε και μία διεύθυνση IPv6 για κάθε ψευδώνυμο"
 
 #: network/forms.py:369
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Χρειάζεται να επιλέξετε και μια μάσκα δικτύου IPv6 για κάθε ψευδώνυμο"
 
 #: network/forms.py:372
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Πρέπει να επιλέξετε μεταξύ IPv4 or IPv6 για κάθε ψευδώνυμο"
 
 #: network/forms.py:374
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Πρέπει να καθορίσετε μια έγκυρη IPv4 ή IPv6 με μάσκα bit για κάθε ψευδώνυμο"
 
 #: network/models.py:42 services/models.py:1202
 #: templates/system/system_info.html:5
@@ -1084,9 +1076,8 @@ msgid "Alias"
 msgstr "Ψευδώνυμο"
 
 #: network/models.py:254
-#, fuzzy
 msgid "Aliases"
-msgstr "Ψευδώνυμο"
+msgstr "Ψευδώνυμα"
 
 #: network/models.py:266 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -1094,9 +1085,10 @@ msgid "Virtual Interface"
 msgstr "Εικονική Διασύνδεση"
 
 #: network/models.py:267
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "Διασύνδεση ονόματα πρέπει να vlanXX όπου XX είναι ο αριθμός"
+msgstr ""
+"Τα ονόματα διεπαφών πρέπει να είναι της μορφής vlanXX όπου XX αριθμός. Πχ: "
+"vlan0."
 
 #: network/models.py:272 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1210,9 +1202,8 @@ msgstr "SHA256 σύνολο για την εικόνα"
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Άκυρο firmware ή checksum"
+msgstr "Άκυρο checksum"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
@@ -1385,8 +1376,7 @@ msgstr ""
 #: services/forms.py:186
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
-"Η τιμή αυτή πρέπει να είναι μεταξύ 1024 και 65535, συμπεριλαμβανομένης. 0 "
-"για προεπιλογή."
+"Η τιμή αυτή πρέπει να είναι από 1024 και καί 65535. Δώστε 0 για προεπιλογή."
 
 #: services/forms.py:205
 msgid "This field is required for anonymous login"
@@ -1479,7 +1469,7 @@ msgstr "Μυστικό"
 
 #: services/forms.py:411 services/models.py:573
 msgid "Target side secret."
-msgstr "Μυστικό του στόχου."
+msgstr "Μυστικό πλευράς στόχου."
 
 #: services/forms.py:412
 msgid "Secret (Confirm)"
@@ -1491,23 +1481,23 @@ msgstr "Πληκτρολογήστε το ίδιο μυστικό παραπάν
 
 #: services/forms.py:415
 msgid "Initiator Secret"
-msgstr "Μυστικό εισηγητή"
+msgstr "Μυστικό εκκινητή "
 
 #: services/forms.py:417 services/models.py:579 services/models.py:584
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Μυστικό πλευράς εισηγητή. (Για την επαλήθευση του mutual CHAP)"
+msgstr "Μυστικό πλευράς εκκινητή. (Για την επαλήθευση του mutual CHAP)"
 
 #: services/forms.py:420
 msgid "Initiator Secret (Confirm)"
-msgstr "Μυστικό εισηγητή (Επιβεβαίωση)"
+msgstr "Μυστικό εκκινητή (Επιβεβαίωση)"
 
 #: services/forms.py:429
 msgid "Secret does not match"
-msgstr "Το Μυστικό δεν ταιριάζει"
+msgstr "Τα Μυστικά δεν ταιριάζουν"
 
 #: services/forms.py:444 services/forms.py:445
 msgid "The peer secret is required if you set a peer user."
-msgstr "Το μυστικό peer είναι απαραίτητο εάν ορίσετε έναν χρήστη peer."
+msgstr "Το μυστικό peer είναι απαραίτητο εάν ορίσετε έναν peer χρήστη."
 
 #: services/forms.py:448
 msgid "The peer secret cannot be the same as user secret."
@@ -1556,8 +1546,8 @@ msgstr ""
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Το πεδίο αυτό απαιτείται αν η μέθοδος ανεύρεσης έχει οριστεί σε CHAP ή CHAP "
-"mutual."
+"Το πεδίο αυτό απαιτείται αν η μέθοδος ανεύρεσης έχει οριστεί σε CHAP ή "
+"mutual CHAP ."
 
 #: services/forms.py:609
 msgid ""
@@ -1614,7 +1604,7 @@ msgstr "Το πεδίο είναι μια μη έγκυρη διεύθυνση I
 
 #: services/forms.py:888
 msgid "Authentication Group number"
-msgstr "Αριθμός πιστοποίησης ομάδας"
+msgstr "Αριθμός Ομάδας Πιστοποίησης"
 
 #: services/forms.py:917
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1656,8 +1646,8 @@ msgstr "Μοντέλο πιστοποίησης"
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Χρησιμοποιώντας πιστοποίηση Active Directory ή LDAP θα αντικαταστήσει αυτή "
-"την επιλογή"
+"Η χρήση πιστοποίησης Active Directory ή LDAP θα αντικαταστήσει αυτή την "
+"επιλογή"
 
 #: services/models.py:67
 msgid "NetBIOS name"
@@ -1668,25 +1658,24 @@ msgid "Workgroup"
 msgstr "Ομάδα εργασίας"
 
 #: services/models.py:72
-#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"Ομάδα εργασίας του server θα φαίνεται ότι, όταν ερωτάται από τους πελάτες "
-"(μέγιστο 15 χαρακτήρες)."
+"Ομάδα εργασίας στην οποία θα εμφανίζεται οτι ανήκει ο εξυπηρέτης, όταν "
+"ερωτάται από πελάτες (μέγιστο 15 χαρακτήρες)."
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
-msgstr "Περιγραφή server. Αυτό μπορεί συνήθως να μείνει κενό."
+msgstr "Περιγραφή εξυπηρέτη. Αυτό μπορεί συνήθως να μείνει κενό."
 
 #: services/models.py:84
 msgid "DOS charset"
-msgstr "DOS charset"
+msgstr "Κωδικοποίηση χαρακτήρων DOS "
 
 #: services/models.py:90
 msgid "UNIX charset"
-msgstr "UNIX charset"
+msgstr "Κωδικοποίηση χαρακτήρων UNIX"
 
 #: services/models.py:96
 msgid "Log level"
@@ -3182,7 +3171,7 @@ msgstr "Έλεγχος Υπηρεσίες"
 
 #: services/nav.py:52 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr "Εκτάσεις Συσκευών"
+msgstr "Extents Συσκευής"
 
 #: services/nav.py:71
 msgid "Add Device Extent"
@@ -3220,7 +3209,7 @@ msgstr "Rsync"
 #: services/nav.py:148 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr "Προσθήκη Rsync Module"
+msgstr "Προσθήκη μονάδας rsync"
 
 #: services/nav.py:158
 #, fuzzy
@@ -3634,14 +3623,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Χρησιμοποιήστε AFP3 προνόμια unix."
 
 #: sharing/models.py:228
-#, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "Apple Share"
+msgstr "Κοινόχρηστο Apple (AFP)"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Apple κοινόχρηστα στοιχεία"
+msgstr "Κοινόχρηστα Apple (AFP)"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3723,14 +3710,12 @@ msgid "Group to map all users to"
 msgstr "Group to map all users to"
 
 #: sharing/models.py:311
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "Επεξεργασία NFS Share"
+msgstr "Επεξεργασία κοινοχρήστου UNIX (NFS)"
 
 #: sharing/models.py:312
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "UNIX Shares"
+msgstr "Κοινόχρηστα UNIX (NFS)."
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3779,9 +3764,8 @@ msgstr ""
 "αριθμούς, \"-\", \"_\"."
 
 #: storage/forms.py:188
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Μια ομάδα με αυτό το όνομα υπάρχει ήδη."
+msgstr "Ένας Τόμος με αυτό το όνομα υπάρχει ήδη."
 
 #: storage/forms.py:202
 #, fuzzy
@@ -3882,27 +3866,24 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Αποκλειστικός χώρος γι 'αυτό το σύνολο δεδομένων και όλα τα παιδιά"
 
 #: storage/forms.py:588
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Σύνολο δεδομένων ονόματα πρέπει να αρχίζουν με έναν αλφαριθμητικό χαρακτήρα "
-"και μπορεί να περιέχει μόνο (-), (_), (:) και (.)."
+"Τα ονόματα των Dataset πρέπει να αρχίζουν με έναν αλφαριθμητικό χαρακτήρα "
+"και μπορεί να περιέχει μόνο \"-\", \"_\", \":\" και \".\"."
 
 #: storage/forms.py:595 storage/forms.py:678
 msgid "You already have a dataset with the same name"
 msgstr "Έχετε ήδη ένα σύνολο δεδομένων με το ίδιο όνομα"
 
 #: storage/forms.py:637
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Ποσόστωση για αυτό το σύνολο δεδομένων"
+msgstr "Ποσόστωση σε αυτό τον τόμο"
 
 #: storage/forms.py:638
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Αποκλειστικός χώρος γι 'αυτό το σύνολο δεδομένων"
+msgstr "Δεσμευμένος χώρος για αυτόν τον τόμο"
 
 #: storage/forms.py:663
 msgid "ZFS Volume Name"
@@ -3913,9 +3894,8 @@ msgid "Size for this ZFS Volume"
 msgstr "Μέγεθος για αυτόν τον ZFS τόμο"
 
 #: storage/forms.py:664
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0 = Δεν υφίσταται? Παράδειγμα: 1g"
+msgstr "Παράδειγμα: 1g"
 
 #: storage/forms.py:672
 msgid ""
@@ -3939,7 +3919,7 @@ msgstr "Λειτουργία"
 
 #: storage/forms.py:696
 msgid "Type of ACL"
-msgstr ""
+msgstr "Τύπος λίστας ελέγχου πρόσβασης (ACL)"
 
 #: storage/forms.py:702
 msgid "Set permission recursively"
@@ -3986,9 +3966,8 @@ msgid "Remote hostname"
 msgstr "Απομακρυσμένο hostname"
 
 #: storage/forms.py:904 storage/models.py:604
-#, fuzzy
 msgid "Remote port"
-msgstr "Remote Host"
+msgstr "Απομακρυσμένη θύρα"
 
 #: storage/forms.py:905 storage/models.py:608
 msgid "Remote hostkey"
@@ -3996,19 +3975,21 @@ msgstr "Απομακρυσμένο hostkey"
 
 #: storage/forms.py:948
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Θέσε τους δίσκους ώς νέους (καταστρέφει τα δεδομένα τους)"
 
 #: storage/forms.py:957
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Διέγραψε όλα τα κοινόχρηστα σχετικά με αυτόν τον τόμο"
 
 #: storage/forms.py:967
 msgid "I'm aware this will destroy snapshots within this dataset"
 msgid_plural ""
 "I'm aware this will destroy all child datasets and snapshots within this "
 "dataset"
-msgstr[0] ""
+msgstr[0] "Κατανοώ οτι αυτό θα καταστρέψει τα στιγμιότυπα σε αυτό το dataset"
 msgstr[1] ""
+"Κατανοώ οτι αυτό θα καταστρέψει όλα τα θυγατρικά dataset και στιγμιότυπα σε "
+"αυτό το dataset"
 
 #: storage/forms.py:978 system/forms.py:465 system/forms.py:512
 msgid "minute"
@@ -4035,11 +4016,11 @@ msgstr "Τόμος"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Μετά από αριθμό ημερών"
 
 #: storage/models.py:190
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Καθορίστε το διάστημα ημερών μεταξύ των εργασιών scrub"
 
 #: storage/models.py:200 system/models.py:320 system/models.py:468
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4049,7 +4030,7 @@ msgstr "Λεπτό"
 
 #: storage/models.py:201 system/models.py:321 system/models.py:469
 msgid "Values 0-59 allowed."
-msgstr "Τιμές 0-59 επιτρέπονται."
+msgstr "Επιτρεπόμενες τιμές 0-59."
 
 #: storage/models.py:206 system/models.py:326 system/models.py:474
 #: system/models.py:643 templates/storage/scrub.html:8
@@ -4061,7 +4042,7 @@ msgstr "Ώρα"
 #: storage/models.py:207 system/models.py:327 system/models.py:475
 #: system/models.py:644
 msgid "Values 0-23 allowed."
-msgstr "Τιμές 0-23 επιτρέπονται."
+msgstr "Επιτρεπόμενες τιμές 0-23."
 
 #: storage/models.py:212 system/models.py:332 system/models.py:480
 #: system/models.py:648 templates/storage/scrub.html:9
@@ -4073,7 +4054,7 @@ msgstr "Μέρα του μήνα"
 #: storage/models.py:213 system/models.py:333 system/models.py:481
 #: system/models.py:649
 msgid "Values 1-31 allowed."
-msgstr "Τιμές 1-31 επιτρέπονται."
+msgstr "Επιτρεπόμενες τιμές 1-31."
 
 #: storage/models.py:218 system/models.py:338 system/models.py:486
 #: system/models.py:654 templates/storage/scrub.html:10
@@ -4097,12 +4078,11 @@ msgstr "Ενεργοποίηση AIO"
 
 #: storage/models.py:231
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "ZFS Scrub"
 
 #: storage/models.py:232
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "UNIX Shares"
+msgstr "ZFS Scrubs"
 
 #: storage/models.py:246 system/models.py:367 system/models.py:569
 msgid "Every minute"
@@ -4148,13 +4128,12 @@ msgid "Weekends"
 msgstr "Εβδομάδα(ες)"
 
 #: storage/models.py:323
-#, fuzzy
 msgid "Multipath name"
-msgstr "Όνομα module"
+msgstr "Όνομα multipath"
 
 #: storage/models.py:329
 msgid "Multipath member"
-msgstr ""
+msgstr "Μέλος multipath "
 
 #: storage/models.py:342 storage/views.py:226
 msgid "Transfer Mode"
@@ -4210,9 +4189,8 @@ msgstr "Απομακρυσμένους Υπολογιστές Replication"
 
 #: storage/models.py:625 storage/models.py:679
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Τύπος Συστήματος αρχείων"
+msgstr "Συστήμα αρχείων/Τόμος"
 
 #: storage/models.py:630
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4226,15 +4204,17 @@ msgid "Remote Host"
 msgstr "Remote Host"
 
 #: storage/models.py:636
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Απομακρυσμένη ZFS filesystem"
+msgstr "Όνομα απομακρυσμένου συστήματος αρχείων ZFS"
 
 #: storage/models.py:637
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Αυτό θα πρέπει να είναι το όνομα του συστήματος αρχείων ZFS στην άλλη "
+"πλευρά. π.χ. poolname/datasetname ούτε σημείο προσάρτησης ούτε διαδρομή "
+"αρχείων"
 
 #: storage/models.py:641
 #, fuzzy
@@ -4244,14 +4224,18 @@ msgstr "Recursively replicate and remove stale snapshot on remote side"
 #: storage/models.py:645
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Αρχικοποίησε την απομακρυσμένη πλευρά μια φορά. (Μπορούν να χαθούν δεδομένα "
+"στην άλλη πλευρά)"
 
 #: storage/models.py:649
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Όριο (kB/s)"
 
 #: storage/models.py:650
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
+"Περιόρισε την ταχύτητα αναπαραγωγής. Σε kilobytes/δευτερόλεπτο. 0 = χωρίς "
+"όριο"
 
 #: storage/models.py:654
 msgid "Replication Task"
@@ -4278,18 +4262,16 @@ msgid "Begin"
 msgstr "Ξεκινήστε"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Κρατήστε στιγμιότυπο για"
+msgstr "Μην πάρεις στιγμιότυπο πριν από"
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Τέλος"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Κρατήστε στιγμιότυπο για"
+msgstr "Μην πάρεις στιγμιότυπο μετά από"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4323,23 +4305,20 @@ msgstr "Περιοδικές Εργασίες Στιγμιότυπο"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr "Αποθήκευση"
+msgstr "Αποθήκη"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "Δείτε όλα τα Στιγμιότυπα"
+msgstr "Προβολή Στιγμιοτύπων"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Προβολή όλων των ομάδων"
+msgstr "Προβολή ZFS Scrubs"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "Όνομα τόμου"
+msgstr "Διαχείριση Τόμων"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4355,7 +4334,7 @@ msgstr "Προβολή δίσκων"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Προβολή Multipaths"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4363,9 +4342,8 @@ msgid "Auto Import Volume"
 msgstr "Αυτόματη εισαγωγή τόμου"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "Δείτε όλους τους Τόμους"
+msgstr "Προβολή Τόμων"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4397,7 +4375,6 @@ msgid "Volume successfully added."
 msgstr "Ο τόμος προστέθηκε επιτυχώς."
 
 #: storage/views.py:226
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Επιπλέον επιλογές S.M.A.R.T."
 
@@ -4411,7 +4388,7 @@ msgstr "Το dataset επεξεργάσθηκε επιτυχώς."
 
 #: storage/views.py:353 storage/views.py:428
 msgid "An error occurred when setting the options"
-msgstr "Μερικά σφάλματα occurred ενώ θέτει τις επιλογές"
+msgstr "Ένα σφάλμα συνέβη κατα την εφαρμογή των επιλογών."
 
 #: storage/views.py:374
 msgid "ZFS Volume successfully added."
@@ -4444,9 +4421,8 @@ msgid "Snapshot successfully deleted."
 msgstr "Στιγμιότυπο διαγράφηκε επιτυχώς."
 
 #: storage/views.py:494
-#, fuzzy
 msgid "Snapshots successfully deleted."
-msgstr "Στιγμιότυπο διαγράφηκε επιτυχώς."
+msgstr "Τα Στιγμιότυπα διαγράφηκαν επιτυχώς."
 
 #: storage/views.py:505
 msgid "Rollback successful."
@@ -4470,20 +4446,19 @@ msgstr "Η αντικατάσταση δίσκου έχει ξεκινήσει."
 
 #: storage/views.py:569 storage/views.py:698
 msgid "An error occurred."
-msgstr "Κάποιο λάθος occurred."
+msgstr "Κάποιο λάθος συνέβη."
 
 #: storage/views.py:584
 msgid "Disk detach has been successfully done."
 msgstr "Η απόσπαση του δίσκου έγινε με επιτυχία."
 
 #: storage/views.py:599
-#, fuzzy
 msgid "Disk offline operation has been issued."
-msgstr "Η αντικατάσταση δίσκου έχει ξεκινήσει."
+msgstr "Ζητήθηκε αποσύνδεση δίσκου"
 
 #: storage/views.py:614
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Ο δίσκος αφαιρέθηκε."
 
 #: storage/views.py:633
 #, fuzzy
@@ -4492,21 +4467,19 @@ msgstr "Ο τόμος εξήχθη επιτυχώς"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "Η εργασία διάγνωσης και αυτοδιόρθωσης scrub ξεκίνησε"
 
 #: system/forms.py:161
 msgid "Language (Require UI reload)"
 msgstr "Γλώσσα (απαιτεί επαναφόρτωση του UI)"
 
 #: system/forms.py:171
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 65535, συμπεριλαμβανομένης."
+msgstr "Καθορίστε αριθμό από 1 εώς και 65535"
 
 #: system/forms.py:173
-#, fuzzy
 msgid "Number is required."
-msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
+msgstr "Απαιτείται αριθμός."
 
 #: system/forms.py:198
 msgid "Force"
@@ -4541,18 +4514,16 @@ msgid "SHA256 sum for the image"
 msgstr "SHA256 σύνολο για την εικόνα"
 
 #: system/forms.py:413
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Άκυρο firmware ή checksum"
+msgstr "Άκυρο firmware"
 
 #: system/forms.py:430
 msgid "Service Pack image to be installed"
 msgstr "Service Pack εικονικό για να εγκατασταθεί"
 
 #: system/forms.py:441
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "Άκυρα service pack ή checksum"
+msgstr "Άκυρo service pack"
 
 #: system/forms.py:458
 msgid "New config to be installed"
@@ -4573,13 +4544,12 @@ msgid "Protocol"
 msgstr "Πρωτόκολλο"
 
 #: system/models.py:53
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 Διεύθυνση"
+msgstr "Διεύθυνση WebGUI"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Θύρα WebGUI"
 
 #: system/models.py:65
 msgid "Language"
@@ -4587,11 +4557,11 @@ msgstr "Γλώσσα"
 
 #: system/models.py:71
 msgid "Timezone"
-msgstr "Timezone"
+msgstr "Ζώνη ώρας"
 
 #: system/models.py:77
 msgid "Syslog server"
-msgstr ""
+msgstr "Εξυπηρέτης καταγραφής συμβάντων (syslog)"
 
 #: system/models.py:81 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4634,20 +4604,26 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Θέτει τον εξυπηρέτη ως προτιμώμενο. Εαν δεν συντρέχει άλλος λόγος αυτός ο "
+"εξυπηρέτης θα επιλεχτεί για συγχρονισμό από ένα σύνολο λειτουργικών "
+"εξυπηρετών."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Τουλάχιστον κάθε"
 
 #: system/models.py:110
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"Το ελάχιστο διάστημα μεταξυ μηνυμάτων συγχρονισμού NTP, ώς δύναμη του 2 σε "
+"δευτερόλεπτα. Προεπιλεγμένο σε 6 (64 s), αλλά μπορεί να μειωθεί εώς το 4 (16 "
+"s)"
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Το πολύ κάθε"
 
 #: system/models.py:116
 msgid ""
@@ -4655,16 +4631,17 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"Το μέγιστο διάστημα μεταξύ μηνυμάτων συγχρονισμού (NTP), ώς δύναμη του 2 σε "
+"δευτερόλεπτα. Προεπιλεγμένο σε 10 (1,024 s), αλλά μπορεί να αυξηθεί έως το "
+"17 (36.4 h)"
 
 #: system/models.py:128
-#, fuzzy
 msgid "NTP Server"
-msgstr "NTP server 1"
+msgstr "Εξυπηρέτης συγχρονισμού (NTP)"
 
 #: system/models.py:129
-#, fuzzy
 msgid "NTP Servers"
-msgstr "NTP server 1"
+msgstr "Εξυπηρέτες συγχρονισμού (NTP)"
 
 #: system/models.py:141
 msgid "Enable Console Menu"
@@ -4699,31 +4676,28 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Ενεργοποίηση Zeroconf / Bonjour"
 
 #: system/models.py:158
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Μέγεθος swap σε κάθε δίσκο σε GiB, επηρεάζει μόνο νέους δίσκους. Πρέπει να "
-"είναι μη μηδενικό"
+"Μέγεθος swap σε κάθε δίσκο σε GiB, επηρεάζει μόνο νέους δίσκους. Εαν τεθεί 0 "
+"δεν δημιουργείται swap (Αποθαρρύνετε Ισχυρά)."
 
 #: system/models.py:163
-#, fuzzy
 msgid "Show console messages in the footer"
-msgstr "Εμφάνιση κονσόλα μηνύματα στο υποσέλιδο (Απαιτεί UI reload)"
+msgstr "Εμφάνιση μηνυμάτων κονσόλας στο υποσέλιδο"
 
 #: system/models.py:166
 msgid "Show tracebacks in case of fatal errors"
-msgstr "Εμφάνιση tracebacks σε περίοπτωση σοβαρών σφαλμάτων"
+msgstr "Εμφάνιση tracebacks σε περίπτωση μοιραίων σφαλμάτων"
 
 #: system/models.py:169
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Εμφάνιση προηγμένων πεδίων ως προεπιλογή"
 
 #: system/models.py:172
-#, fuzzy
 msgid "Enable autotune"
-msgstr "Ενεργοποίηση atime"
+msgstr "Ενεργοποίηση αυτο-μικρορύθμισης"
 
 #: system/models.py:180
 msgid "MOTD banner"
@@ -4738,13 +4712,12 @@ msgid "From email"
 msgstr "Από το e-mail"
 
 #: system/models.py:194
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
 "Μια διεύθυνση ηλεκτρονικού ταχυδρομείου που το σύστημα θα χρησιμοποιήσει για "
-"την αποστολή διεύθυνση αλληλογραφίας που στέλνει, π.χ.: freenas@mydomain.com"
+"την αποστολή αλληλογραφίας, π.χ.: freenas@example.com"
 
 #: system/models.py:199
 msgid "Outgoing mail server"
@@ -4864,7 +4837,7 @@ msgstr "Εντολή"
 #: system/models.py:314 system/models.py:462 system/models.py:638
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
-msgstr "Μικρή περιγραφή"
+msgstr "Σύντομη περιγραφή"
 
 #: system/models.py:350
 #, fuzzy
@@ -4878,38 +4851,40 @@ msgstr "CronJobs"
 
 #: system/models.py:434
 msgid "IP Address or hostname"
-msgstr "Διεύθυνση IP ή hostname"
+msgstr "Διεύθυνση IP ή όνομα μηχανήματος"
 
 #: system/models.py:443
 msgid "Remote Module Name"
-msgstr "Απομακρυσμένο όνομα module"
+msgstr "Όνομα απομακρυσμένης μονάδας"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Το όνομα της απομακρυσμένης rsync μονάδας"
 
 #: system/models.py:449
-#, fuzzy
 msgid "Remote Path"
-msgstr "Remote Host"
+msgstr "Απομακρυσμένη διαδρομή"
 
 #: system/models.py:451
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr ""
+"Διαδρομή στην οποία θα γίνει rsync στον απομακρυσμένο υπολογιστή, π.χ. "
+"/mnt/tank"
 
 #: system/models.py:455 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "Κατάλογος"
+msgstr "Κατεύθυνση"
 
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Προώθηση - Τοπικό προς απομακρυσμένο μηχάνημα. Λήψη - Απο απομακρυσμένο στο "
+"τοπικό μηχάνημα"
 
 #: system/models.py:500
 msgid "Recurse into directories"
-msgstr "Αναδρομή μέσα στους καταλόγους"
+msgstr "Αναδρομικά στους υποκαταλόγους"
 
 #: system/models.py:504
 msgid "Times"
@@ -4917,7 +4892,7 @@ msgstr "Φορές"
 
 #: system/models.py:505
 msgid "Preserve modification times"
-msgstr "Διατήρηση του αριθμού αλλαγών"
+msgstr "Διατήρηση χρόνου αλλαγών"
 
 #: system/models.py:509
 msgid "Compress"
@@ -4929,11 +4904,11 @@ msgstr "Συμπίεση δεδομένων κατά την μεταφορά"
 
 #: system/models.py:514
 msgid "Archive"
-msgstr "Archive"
+msgstr "Αρχειοθέτηση"
 
 #: system/models.py:515
 msgid "Archive mode"
-msgstr "Κατάσταση Archive"
+msgstr "Λειτουργία αρχειοθέτησης (Archive)"
 
 #: system/models.py:519 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
@@ -4988,23 +4963,23 @@ msgid ""
 "be the same as the source permissions"
 msgstr ""
 "Η επιλογή αυτή προκαλεί το rsync που λαμβάνει, να ορίσει τα δικαιώματα του "
-"προορισμού να είναι τα ίδια με τα δικαιώματα της προέλευσης"
+"προορισμού ίδια με τα δικαιώματα της προέλευσης"
 
 #: system/models.py:534
 msgid "Preserve extended attributes"
-msgstr "Διατήρηση πρόσθετων attributes"
+msgstr "Διατήρηση εκτεταμένων ιδιοτήτων"
 
 #: system/models.py:535
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
-"Η επιλογή αυτή προκαλεί το rsync να ενημερώσετε τα απομακρυσμένα attributes "
-"να είναι τα ίδια με τα τοπικά"
+"Η επιλογή αυτή προκαλεί το rsync να ενημερώσει τις απομακρυσμένες ιδιότητες "
+"αρχείων ίδιες με των τοπικά"
 
 #: system/models.py:541
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Έξτρα επιλογές της γραμμής εντολών rsync (συνήθως άδειο)"
+msgstr "Έξτρα επιλογές στην γραμμή εντολών rsync (συνήθως άδειο)"
 
 #: system/models.py:549
 #, fuzzy
@@ -5046,14 +5021,12 @@ msgid "Sysctls"
 msgstr ""
 
 #: system/models.py:794
-#, fuzzy
 msgid "Tunable"
-msgstr "Ενεργοποίηση AIO"
+msgstr "Μικρορύθμιση"
 
 #: system/models.py:795
-#, fuzzy
 msgid "Tunables"
-msgstr "Ενεργοποίηση AIO"
+msgstr "Μικρορυθμίσεις"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -5061,65 +5034,58 @@ msgstr "Σύστημα"
 
 #: system/nav.py:11 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr "Εκθέσεις"
+msgstr "Αναφορές"
 
 #: system/nav.py:18
 msgid "System Information"
-msgstr "Πληροφοριακό Σύστημα"
+msgstr "Πληροφορίες Σύστηματος"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "CronJobs"
+msgstr "Προβολή εργασιών Cron"
 
 #: system/nav.py:39
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "Δείτε Όλες τις εργασίες αναπαραγωγής"
+msgstr "Προβολή εργασιών rsync"
 
 #: system/nav.py:47
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. επιλογές"
+msgstr "Προβολή διαγνωστικών S.M.A.R.T."
 
 #: system/nav.py:54
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Προβολή δίσκων"
+msgstr "Προβολή παραμέτρων Πυρήνα (sysctls)"
 
 #: system/nav.py:61
-#, fuzzy
 msgid "View Tunables"
-msgstr "Προβολή όλων των χρηστών"
+msgstr "Προβολή Μικρορυθμίσεων"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
 msgstr "Το αρχείο που ανέβηκε δεν είναι έγκυρο."
 
 #: system/views.py:245
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Root password δεσμεύοντας"
+msgstr "Ζητήθηκε επανεκκίνηση"
 
 #: system/views.py:267
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Τερματισμός λειτουργίας του συστήματος"
+msgstr "Ζητήθηκε τερματισμός λειτουργίας"
 
 #: system/views.py:297
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Δοκιμαστικό μήνυμα από το"
+msgstr "Δοκιμαστικό μήνυμα από %s"
 
 #: system/views.py:299
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Αυτό είναι ένα δοκιμαστικό μήνυμα από το"
+msgstr "Αυτό είναι ένα δοκιμαστικό μήνυμα από τον %s"
 
 #: system/views.py:302
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Το δοκιμαστικό email σας δεν μπόρεσε να αποσταλει:"
+msgstr "Το δοκιμαστικό email σας δεν μπόρεσε να αποσταλει: %s"
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
@@ -5139,7 +5105,7 @@ msgstr "κλείσιμο όλων"
 
 #: templates/menubar.html:42
 msgid "Log Out"
-msgstr "Έξοδος"
+msgstr "Αποσύνδεση"
 
 #: templates/menubar.html:48
 msgid "Help"
@@ -5188,7 +5154,7 @@ msgstr "Προσθήκη νέας ομάδας"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
-msgstr "Αρχική Σελίδα"
+msgstr "Οικίος κατάλογος"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5198,7 +5164,7 @@ msgstr "Τροποποίηση Χρήστη"
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
 msgid "Auxiliary Groups"
-msgstr "Βοηθητικές Ομάδες"
+msgstr "Άλλες Ομάδες"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
@@ -5211,7 +5177,7 @@ msgstr "Διαγραφή Χρήστη"
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
 msgid "No users defined"
-msgstr "Δεν υπάρχουν χρήστες που ορίζεται"
+msgstr "Δεν ορίστηκαν χρήστες"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
@@ -5223,15 +5189,13 @@ msgstr "Αλλαγή E-mail"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
-msgstr "Αλλάξτε τον κωδικό πρόσβασης admin"
+msgstr "Αλλάξτε τον κωδικό πρόσβασης διαχειριστή"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Μονάδα Rsync"
+msgstr "Βασική"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
 msgstr "Προηγμένη"
 
@@ -5248,16 +5212,16 @@ msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "ΠΡΟΣΟΧΗ"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "ΚΡΙΣΙΜH"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:8
 msgid "Browse"
-msgstr "Περιήγηση"
+msgstr "Εξερεύνηση"
 
 #: templates/freeadmin/directory_browser.html:6
 #: templates/freeadmin/directory_browser.html:11
@@ -5286,7 +5250,7 @@ msgstr "Ακύρωση"
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να το διαγράψετε;"
 
 #: templates/freeadmin/generic_model_delete.html:19
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5309,7 +5273,7 @@ msgstr "Οι αλλαγές σας έχουν ενημερωθεί επιτυχ�
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "Αποθήκευση"
 
 #: templates/freeadmin/index.html:35
 msgid "Running Processes"
@@ -5330,7 +5294,7 @@ msgstr "Φόρουμ"
 
 #: templates/freeadmin/index.html:61
 msgid "Community Forum"
-msgstr "Κοινότητα Φόρουμ"
+msgstr "Φόρουμ κοινότητας"
 
 #: templates/freeadmin/index.html:66
 msgid "IRC (Chat)"
@@ -5342,11 +5306,11 @@ msgstr "#freenas στο freenode"
 
 #: templates/freeadmin/index.html:72
 msgid "Mailing Lists"
-msgstr "Λίστες Mailing"
+msgstr "Λίστες αλληλογραφίας"
 
 #: templates/freeadmin/index.html:74
 msgid "FreeNAS Announce"
-msgstr "FreeNAS Ανακοινώσεις"
+msgstr "Ανακοινώσεις FreeNAS"
 
 #: templates/freeadmin/index.html:75
 msgid "FreeNAS Commit"
@@ -5358,7 +5322,7 @@ msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:77
 msgid "FreeNAS Testing"
-msgstr "FreeNAS Δοκιμές"
+msgstr "Δοκιμές FreeNAS"
 
 #: templates/freeadmin/index.html:78
 msgid "FreeNAS Docs"
@@ -5435,19 +5399,19 @@ msgstr "Επεξεργασία διεπαφής"
 
 #: templates/network/interface.html:34 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr "Διαγραφή Interface"
+msgstr "Διαγραφή διεπαφής"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr "Δεν ορίστηκαν διασυνδέσεις"
+msgstr "Δεν ορίστηκαν διεπαφές"
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
-msgstr "Προσθήκη διασύνδεσης"
+msgstr "Προσθήκη διεπαφής"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
-msgstr "Δράσεις"
+msgstr "Ενέργειες"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
@@ -5471,7 +5435,7 @@ msgstr "Προσθήκη LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
-msgstr "Προτεραιότητα Παραγγελίας"
+msgstr "Προτεραιότητα ταξινόμησης"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
@@ -5492,31 +5456,31 @@ msgstr "Προορισμός"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr "Επεξεργασία Static Route"
+msgstr "Επεξεργασία Στατικής Διαδρομής"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr "Διαγραφή Static Route"
+msgstr "Διαγραφή Στατικής Διαδρομής"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr "Δεν έχει ορίστεί static route"
+msgstr "Δεν έχει οριστεί Στατική Διαδρομή"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr "Προσθήκη Static Route"
+msgstr "Προσθήκη Στατικής Διαδρομής"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr "Nameserver"
+msgstr "Εξυπηρέτης ονομάτων δικτύου (NS)"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr "Δεν έχει οριστεί nameserver"
+msgstr "Δεν έχει οριστεί εξυπηρέτης ονομάτων δικτύου"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr "Προεπιλεγμένη διαδρομή"
+msgstr "Προεπιλεγμένη Διαδρομή"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
@@ -5540,34 +5504,31 @@ msgstr "Προσθήκη VLAN διεπαφής"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Εγκαταστάθηκε..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Εγκατάσταση επέκτασης"
 
 #: templates/plugins/index.html:29
-#, fuzzy
 msgid "Info"
-msgstr "Τυπική"
+msgstr "Πληροφορίες"
 
 #: templates/plugins/index.html:31
 msgid "Plugin info"
-msgstr ""
+msgstr "Πληροφορίες επέκτασης"
 
 #: templates/plugins/index.html:37
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Επεξεργασία Portal"
+msgstr "Επεξεργασία επέκτασης"
 
 #: templates/plugins/index.html:43
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Διαγραφή Replication"
+msgstr "Διαγραφή επέκτασης"
 
 #: templates/plugins/index.html:50
 msgid "No plugins installed"
-msgstr ""
+msgstr "Δεν υπάρχουν εγκατεστημένες επεκτάσεις"
 
 #: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
 #: templates/system/wizard.html:3
@@ -5577,7 +5538,7 @@ msgstr "Βήμα %(step)s από %(step_count)s"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Ανεβάστε το αρχείο εγκατάστασης υποδομής (Jail PBI)"
 
 #: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
 #: templates/plugins/plugin_info.html:39
@@ -5591,9 +5552,8 @@ msgid "Please wait..."
 msgstr "Παρακαλώ περιμένετε..."
 
 #: templates/plugins/pbiwizard.html:16
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Ανεβάστε Config"
+msgstr "Ανεβάστε επέκταση"
 
 #: templates/registration/login.html:42
 msgid "Your username and password didn't match. Please try again."
@@ -5607,17 +5567,17 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Καλώς ορίσατε, %(username)s. Ευχαριστώ για την σύνδεση."
 
 #: templates/registration/login.html:48
-#, python-format
+#, fuzzy, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Καλώς ήρθατε στο %(sw_name)s&trade, %(sw_login_version)s"
 
 #: templates/registration/login.html:49
 msgid "Please log in."
-msgstr "Παρακαλώ εισέλθετε."
+msgstr "Παρακαλώ συνδεθείτε."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr "Αποσύνδέθηκε"
+msgstr "Αποσυνδεθήκατε"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
@@ -5625,11 +5585,11 @@ msgstr "Έχετε αποσυνδεθεί."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
-msgstr "Επανασύνδεση"
+msgstr "Επανασυνδεθείτε"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Θα θέλατε να ενεργοποιήσετε αυτή την υπηρεσία;"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -5637,44 +5597,43 @@ msgstr "Δεν"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
-msgstr "AFP Ρυθμίσεις"
+msgstr "Ρυθμίσεις AFP"
 
 #: templates/services/index.html:24
 msgid "Active Directory Settings"
-msgstr "Active Directory Ρυθμίσεις"
+msgstr "Ρυθμίσεις Active Directory"
 
 #: templates/services/index.html:35
 msgid "CIFS Settings"
-msgstr "CIFS Ρυθμίσεις"
+msgstr "Ρυθμίσεις CIFS"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr "Dynamic DNS ρυθμίσεις"
+msgstr "Ρυθμίσεις Dynamic DNS"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
-msgstr "FTP Ρυθμίσεις"
+msgstr "Ρυθμίσεις FTP"
 
 #: templates/services/index.html:72
 msgid "ISCSI Settings"
-msgstr "ISCSI Ρυθμίσεις"
+msgstr "Ρυθμίσεις ISCSI"
 
 #: templates/services/index.html:83
 msgid "LDAP Settings"
-msgstr "LDAP ρυθμίσεις"
+msgstr "Ρυθμίσεις LDAP"
 
 #: templates/services/index.html:94
 msgid "NFS Settings"
-msgstr "NFS Ρυθμίσεις"
+msgstr "Ρυθμίσεις NFS"
 
 #: templates/services/index.html:106 templates/services/index.html.py:108
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "AFP Ρυθμίσεις"
+msgstr "Ρυθμίσεις επεκτάσεων"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Εγκατάσταση υποδομής επεκτάσεων (Jail PBI)"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5682,37 +5641,35 @@ msgstr "Ρυθμίσεις Rsync"
 
 #: templates/services/index.html:131
 msgid "SNMP Settings"
-msgstr "SNMP Ρυθμίσεις"
+msgstr "Ρυθμίσεις SNMP"
 
 #: templates/services/index.html:142
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. επιλογές"
+msgstr "Ρυθμίσεις S.M.A.R.T."
 
 #: templates/services/index.html:153
 msgid "SSH Settings"
-msgstr "SSH Ρυθμίσεις"
+msgstr "Ρυθμίσεις SSH"
 
 #: templates/services/index.html:164
 msgid "TFTP Settings"
-msgstr "TFTP Ρυθμίσεις"
+msgstr "Ρυθμίσεις TFTP"
 
 #: templates/services/index.html:175
-#, fuzzy
 msgid "UPS Settings"
-msgstr "NFS Ρυθμίσεις"
+msgstr "Ρυθμίσεις UPS"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
-msgstr "iSCSI Διαχείριση"
+msgstr "Διαχείριση iSCSI"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
 msgstr "Πύλες"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
-msgstr "Εξουσιοδοτημένος Initiator"
+msgstr "Εξουσιοδοτημένοι εκκινητές (Initiators)"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5722,13 +5679,14 @@ msgstr "Πιστοποίηση"
 msgid "Targets"
 msgstr "Στόχοι"
 
+# Ας μείνει αμετάφραστο μια και δεν είναι ευρέως χρησιμοποιούμενη ορολογία αλλά μόνο για το iSCSI
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr "Εκτάσεις"
+msgstr "Extents"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr "Συνεργαζόμενος Στόχοι"
+msgstr "Συσχετισμένοι Στόχοι"
 
 #: templates/services/iscsi_assoctargets.html:31
 #: templates/services/iscsi_authini.html:35
@@ -5741,15 +5699,15 @@ msgstr "Δεν έχουν τεθεί στόχοι που ορίζονται"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
-msgstr "Προσθέστε Βαθμός στον Target"
+msgstr "Προσθέστε Extent στον Στόχο"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr "Προσθέστε Έκταση Προς Target"
+msgstr "Προσθέστε Extent στον Στόχο"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
-msgstr "Peer"
+msgstr "Ομότιμος (peer)"
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
@@ -5762,172 +5720,156 @@ msgstr "Εξουσιοδοτημένο Δίκτυο"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr "Προσθήκη Εξουσιοδοτημένο Initiator"
+msgstr "Προσθήκη εξουσιοδοτημένου Εκκινητή"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 msgid "Add Extent"
-msgstr "Προσθήκη Έκτασης"
+msgstr "Προσθήκη Extent"
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "Εκτάσεις Συσκευών"
+msgstr "Extent αρχείου"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
-msgstr "Ακούω"
+msgstr "Άκου"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Δεν έχει οριστεί διεύθυνση IP για αυτήν την πύλη"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
-msgstr "Επεξεργασία Portal"
+msgstr "Επεξεργασία Πύλης"
 
 #: templates/services/iscsi_portals.html:32
 msgid "Delete Portal"
-msgstr "Διαγραφή πύλης"
+msgstr "Διαγραφή Πύλης"
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
-msgstr "Προσθήκη πύλης"
+msgstr "Προσθήκη Πύλης"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr "Προσθήκη στόχου"
+msgstr "Προσθήκη Στόχου"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
+"Όλα τα αρχεία μέσα στην υποδομή (jail) επεκτάσεων θα διαγραφούν οριστικά."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "Διαγραφή του παρακάτω αρχείου"
+msgstr "Διαγραφή τής υποδομής (jail) επεκτάσεων"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Διαδρομή υποδομής (Jail)"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
-msgstr ""
+msgstr "Διεύθυνση IP υποδομής (Jail)"
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
-msgstr ""
+msgstr "Διαδρομή επεκτάσεων"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr "Δεν έχουν ορίστεί rsync modules"
+msgstr "Δεν έχουν ορίστεί μονάδες rsync"
 
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr "Active Shares"
+msgstr "Ενεργά κοινόχρηστα"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
-msgstr "Δεν υπάρχουν ενεργά Apple shares."
+msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα Apple (AFP)."
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
-msgstr "Επεξεργασία Apple share"
+msgstr "Επεξεργασία κοινόχρηστου Apple (AFP)"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
-msgstr "Διαγραφή Apple share"
+msgstr "Διαγραφή κοινόχρηστου Apple (AFP)"
 
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
 msgid "No shares defined"
-msgstr "Δεν ορίζονται shares"
+msgstr "Δεν ορίστηκαν κοινόχρηστα"
 
 #: templates/sharing/apple.html:49
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Προσθήκη Apple share"
+msgstr "Προσθήκη κοινόχρηστου Apple (CIFS)"
 
 #: templates/sharing/apple.html:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Προσθήκη Apple share"
+msgstr "Προσθήκη κοινόχρηστου Apple (AFP)"
 
 #: templates/sharing/index.html:2
 #, fuzzy
 msgid "Apple (AFP)"
-msgstr "Προσθήκη Apple share (AFP)"
+msgstr "κοινόχρηστα Apple (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "Προσθήκη UNIX share (NFS)"
+msgstr "κοινόχρηστα UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Προσθήκη Windows Share (CIFS)"
+msgstr "κοινόχρηστα Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Δεν υπάρχουν ενεργά UNIX shares."
+msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα UNIX (NFS)."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
-msgstr "Mountpoint"
+msgstr "Σημείο προσάρτησης"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
-msgstr "Επεξεργασία NFS Share"
+msgstr "Επεξεργασία κοινόχρηστου UNIX (NFS)"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
-msgstr "Διαγραφή NFS share"
+msgstr "Διαγραφή κοινόχρηστου UNIX (NFS)"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
-msgstr "Προσθήκη UNIX Share"
+msgstr "Προσθήκη κοινόχρηστου UNIX (NFS)"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Δεν υπάρχουν ενεργά Windows shares."
+msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα Windows (CIFS)."
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
-msgstr "Επεξεργασία Windows Share"
+msgstr "Επεξεργασία κοινόχρηστου Windows (CIFS)"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
-msgstr "Διαγραφή Windows Share"
+msgstr "Διαγραφή κοινόχρηστου Windows (CIFS)"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
-msgstr "Προσθήκη Windows Share"
+msgstr "Προσθήκη κοινόχρηστου Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr "Κλώνος Στιγμιότυπου"
+msgstr "Κλώνος Στιγμιοτύπου"
 
 #: templates/storage/dataset_confirm_delete.html:5
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε το \"%(name)s\";"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -5939,30 +5881,33 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"Αυτό θα διαγράψει όλα τα αρχεία στο dataset.\n"
 msgstr[1] ""
+"\n"
+"Αυτό θα διαγράψει όλα τα αρχεία στο dataset και όλα τα θυγατρικά του.\n"
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
-msgstr "Επεξεργασία συνόλου δεδομένων"
+msgstr "Επεξεργασία Dataset"
 
 #: templates/storage/datasets.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Δημιουργία ZFS Dataset"
+msgstr "Δημιουργία ZFS dataset μέσα στο %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
-msgstr "Προσθήκη Σύνολο δεδομένων"
+msgstr "Προσθήκη Dataset"
 
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
 msgid "Are you sure you want to detach?"
-msgstr "Είστε σίγουροι ότι θέλετε να αφαιρέσετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να τον αποσπάσετε;"
 
 #: templates/storage/disk_offline.html:3
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να αποσυνδέσετε;"
 
 #: templates/storage/disk_remove.html:7
 #, fuzzy
@@ -5972,37 +5917,37 @@ msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετ�
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
 msgid "Replacing disk"
-msgstr "Δίσκος αντικατάστασης"
+msgstr "Αντικατάσταση δίσκου"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr "Αντικατάσταση δίσκου"
+msgstr "Αντικαταστήστε δίσκο"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:54
 msgid "Filesystem type"
-msgstr "Τύπος Συστήματος αρχείων"
+msgstr "Τύπος συστήματος αρχείων"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
-msgstr "Ενεργό Τόμος"
+msgstr "Ενεργοί Τόμοι"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
-msgstr "ZFS Στιγμιότυπα"
+msgstr "Στιγμιότυπα ZFS"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr "ZFS Replication"
+msgstr "Αναπαραγωγή ZFS"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
-msgstr "Χειροκίνητη Δημιουργία στιγμιότυπου"
+msgstr "Χειροκίνητη Δημιουργία στιγμιοτύπου"
 
 #: templates/storage/periodicsnap.html:2 templates/storage/volumes.html:149
 #: templates/storage/volumes.html.py:153 templates/storage/volumes.html:227
 #: templates/storage/volumes.html.py:231
 msgid "Create Snapshot"
-msgstr "Δημιουργία στιγμιότυπου"
+msgstr "Δημιουργία στιγμιοτύπου"
 
 #: templates/storage/permission.html:2
 msgid "Change"
@@ -6019,22 +5964,24 @@ msgstr "Αλλαγή άδειας για την %(path)s στο"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr "Προσθήκη Replication"
+msgstr "Προσθήκη Αναπαραγωγής"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Προβολή δημοσίου κλειδιού"
 
 #: templates/storage/replications.html:16
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
+"ΠΡΟΣΟΧΗ: Για να προγραμματιστεί μια εργασία αναπαραγωγής χρειάζονται "
+"περιοδικά στιγμιότυπα του εν' λόγω ZFS συστήματος/τόμου"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
-msgstr "Τελευταία στιγμιότυπο"
+msgstr "Τελευταίο στιγμιότυπο"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
@@ -6043,84 +5990,74 @@ msgstr "Απομακρυσμένη ZFS filesystem"
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
 msgid "Delete Replication"
-msgstr "Διαγραφή Replication"
+msgstr "Διαγραφή Αναπαραγωγής"
 
 #: templates/storage/replications.html:46
 #: templates/storage/replications.html:50
 msgid "Edit Replication"
-msgstr "Επεξεργασία Replication"
+msgstr "Επεξεργασία Αναπαραγωγής"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
-msgstr "Δεν είναι διαθέσημη η αντιγραφή του ZFS"
+msgstr "Δεν υπάρχουν διαθέσιμες αναπαραγωγές  ZFS"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Δεν ορίστηκαν rsyncs"
+msgstr "Δεν έχει προγραμματιστεί scrub"
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Προγραμματισμός εργασίας scrub"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Προσθήκη τόμου ZFS"
+msgstr "Προσθήκη ZFS Scrub"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr ""
+msgstr "Το scrub εκτελείτε! Είστε σίγουρος ότι θέλετε να το σταματήσετε;"
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Είστε σίγουροι ότι θέλετε να αφαιρέσετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να κάνετε scrub;"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "Αυτό θα επιβαρύνει το σύστημα για όσο διαρκέσει"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Είστε σίγουροι ότι θέλετε να πάει πίσω το στιγμιότυπο στην προηγούμενη "
-"κατάσταση;"
+"Είστε σίγουροι ότι θέλετε να επαναφέρετε το dataset σε αυτό το στιγμιότυπο;"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
 msgstr "Κλώνοποίηση στιγμιότυπου"
 
 #: templates/storage/snapshots.html:32
-#, fuzzy
 msgid "Destroy Snapshot"
-msgstr "Καταστροφή στιγμιότυπο"
+msgstr "Καταστροφή στιγμιοτύπου"
 
 #: templates/storage/snapshots.html:37
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "Καταστροφή στιγμιότυπο"
+msgstr "Καταστροφή αυτού του στιγμιοτύπου"
 
 #: templates/storage/snapshots.html:48
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "Επιστροφή σε αυτό το στιγμιότυπο"
+msgstr "Επαναφορά στιγμιοτύπου"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
 msgstr "Επιστροφή σε αυτό το στιγμιότυπο"
 
 #: templates/storage/snapshots.html:126
-#, fuzzy
 msgid "Destroy"
 msgstr "Καταστροφή τόμου"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Κλώνοποίηση στιγμιότυπου"
+msgstr "Διαγραφή στιγμιότυπου"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6163,14 +6100,13 @@ msgid "on every"
 msgstr "σε κάθε"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "Δεν έχουν προγραμματιστεί περιοδικά στιγμιότυπα"
+msgstr "Δεν έχουν προγραμματιστεί περιοδικά στιγμιότυπα."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "Έχετε %(used)s χώρο σε χρήση στον τόμο αυτό"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
@@ -6189,14 +6125,12 @@ msgid "Status"
 msgstr "Κατάσταση"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Δημιουργία τόμου"
+msgstr "Απόσπαση τόμου"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS τόμος"
+msgstr "Scrub τόμου"
 
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
@@ -6204,9 +6138,8 @@ msgid "Edit ZFS Options"
 msgstr "Επεξεργασία Επιλογών ZFS"
 
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
-#, fuzzy
 msgid "Volume Status"
-msgstr "Διαδρομή τόμος"
+msgstr "Κατάσταση τόμου"
 
 #: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
 msgid "Destroy Dataset"
@@ -6214,16 +6147,15 @@ msgstr "Καταστροφή Dataset"
 
 #: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
 msgid "Destroy ZFS Volume"
-msgstr "Καταστροφή τόμου ZFS"
+msgstr "Διαγραφή τόμου ZFS"
 
 #: templates/storage/volumes.html:259
 msgid "No volumes defined"
 msgstr "Δεν έχουν ορίστεί τόμοι"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Διαδρομή τόμος"
+msgstr "Τόμος προς επέκταση"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6267,9 +6199,9 @@ msgid "Replace Disk"
 msgstr "Αντικατάσταση δίσκου"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Δημιουργία τόμου ZFS"
+msgstr "Δημιουργία τόμου ZFS στο %(name)s"
 
 #: templates/storage/zvols.html:6
 msgid "Add ZFS Volume"
@@ -6277,26 +6209,26 @@ msgstr "Προσθήκη τόμου ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
-msgstr "Ανακατασκευή LDAP/AD Cache"
+msgstr "Αναδόμηση κρυφής μνήμης LDAP/AD"
 
 #: templates/system/advanced_edit.html:18
 msgid "The cache is being rebuilt."
-msgstr "Η μνήμη cache είναι υπό ανοικοδόμηση."
+msgstr "Η κρυφή μνήμη αναδομείται."
 
 #: templates/system/advanced_edit.html:20
 msgid "The cache could not be rebuilt"
-msgstr "Η cache δεν θα μπορούσε να ανακατασκευαστεί"
+msgstr "Η κρυφή μνήμη δεν μπόρεσε να αναδομηθεί"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
 #, fuzzy
 msgid "Save Debug"
-msgstr "Αποσφαλμάτωση"
+msgstr "Αποθήκευση Αποσφαλμάτωσης"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Firmware Update"
+msgstr "Ενημέρωση Λειτουργικού"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -6316,19 +6248,16 @@ msgid "Update"
 msgstr "Ενημέρωση"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Δεν ορίστηκαν CronJobs"
+msgstr "Δεν ορίστηκαν εργασίες Cron"
 
 #: templates/system/cronjob.html:47
-#, fuzzy
 msgid "Add a cron job"
-msgstr "Προσθήκη CronJob"
+msgstr "Προσθήκη μιας εργασίας Cron"
 
 #: templates/system/cronjob.html:49
-#, fuzzy
 msgid "Add cron job"
-msgstr "Προσθήκη CronJob"
+msgstr "Προσθήκη εργασίας Cron"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6343,25 +6272,24 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"Σημείωση: Δοκιμαστικά email αποστέλονται στον root χρήστη. Για ρύθμιση στο "
+"μενου Χρήστες -> root -> Αλλαγή email "
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Δεν έχει οριστεί nameserver"
+msgstr "Δεν έχει οριστεί εξυπηρέτης Συγχρονισμού (NTP)."
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP server 1"
+msgstr "Προσθήκη εξυπηρέτη NTP"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "NTP server 1"
+msgstr "Προσθήκη εξυπηρέτη NTP"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6373,16 +6301,16 @@ msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
 msgstr ""
-"Είστε έτοιμος να <strong> ΕΠΑΝΕΚΚΙΝΗΣΕΤΕ </strong> το σύστημα, τι θα θέλατε "
-"να κάνετε;"
+"Ετοιμάζεστε να <strong> ΕΠΑΝΕΚΚΙΝΗΣΕΤΕ </strong> το σύστημα, τι θα θέλατε να "
+"κάνετε;"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr "Ωριαίος"
+msgstr "Ωριαία"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr "Ωριαία Διαγράμματα"
+msgstr "Ωριαία Γραφήματα"
 
 #: templates/system/reporting.html:16
 msgid "Daily"
@@ -6390,7 +6318,7 @@ msgstr "Ημερησίως"
 
 #: templates/system/reporting.html:17
 msgid "Daily Graphs"
-msgstr "Ημερήσια Διαγράμματα"
+msgstr "Ημερήσια Γραφήματα"
 
 #: templates/system/reporting.html:28
 msgid "Weekly"
@@ -6398,7 +6326,7 @@ msgstr "Εβδομαδιαία"
 
 #: templates/system/reporting.html:29
 msgid "Weekly Graphs"
-msgstr "Εβδομαδιαία Διαγράμματα"
+msgstr "Εβδομαδιαία Γραφήματα"
 
 #: templates/system/reporting.html:40
 msgid "Monthly"
@@ -6406,7 +6334,7 @@ msgstr "Μηνιαία"
 
 #: templates/system/reporting.html:41
 msgid "Monthly Graphs"
-msgstr "Μηνιαία Διαγράμματα"
+msgstr "Μηνιαία Γραφήματα"
 
 #: templates/system/reporting.html:52
 msgid "Yearly"
@@ -6414,31 +6342,27 @@ msgstr "Ετήσια"
 
 #: templates/system/reporting.html:53
 msgid "Yearly Graphs"
-msgstr "Ετήσια Διαγράμματα"
+msgstr "Ετήσια Γραφήματα"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Τοπικός Master"
+msgstr "Τοπική διαδρομή"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "Κατάργηση"
+msgstr "Απομακρυσμένο"
 
 #: templates/system/rsync.html:48
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "Δεν ορίστηκαν rsyncs"
+msgstr "Δεν ορίστηκαν εργασίες rsync "
 
 #: templates/system/rsync.html:54
-#, fuzzy
 msgid "Add rsync task"
-msgstr "Προσθήκη Rsync"
+msgstr "Προσθήκη εργασίας rsync"
 
 #: templates/system/rsync.html:56
 msgid "Add Rsync"
-msgstr "Προσθήκη Rsync"
+msgstr "Προσθήκη rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6446,27 +6370,27 @@ msgstr "Γενικά"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Επιστροφή στις εργοστασιακές ρυθμίσεις"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
-msgstr "Επαναφορά σύνθεσης"
+msgstr "Επαναφορά αρχείου Σχηματισμού"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
-msgstr "Save Config"
+msgstr "Αποθήκευση αρχείου Σχηματισμού"
 
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr "Ανεβάστε Config"
+msgstr "Ανεβάστε αρχείο Σχηματισμού"
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
-"Είστε έτοιμος να <strong>ΤΕΡΜΑΤΙΣΕΤΕ</strong> το σύστημα, τι θα θέλατε να "
+"Ετοιμάζεστε να <strong>ΤΕΡΜΑΤΙΣΕΤΕ</strong> το σύστημα, τι θα θέλατε να "
 "κάνετε;"
 
 #: templates/system/smarttest.html:14
@@ -6474,38 +6398,32 @@ msgid "Unknown"
 msgstr "Άγνωστο"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Δεν έχουν τεθεί στόχοι που ορίζονται"
+msgstr "Δεν έχουν οριστεί διαγνωστικά S.M.A.R.T."
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Προσθήκη διαγνωστικών S.M.A.R.T."
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Προσθήκη διαγνωστικού S.M.A.R.T."
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Δεν ορίστηκαν rsyncs"
+msgstr "Δεν ορίστηκαν παράμετροι πυρήνα (sysctl)."
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Προσθήκη Rsync"
+msgstr "Προσθήκη παραμέτρων Πυρήνα (sysctl)"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Προσθήκη Rsync"
+msgstr "Προσθήκη παραμέτρων Πυρήνα (sysctl)"
 
 #: templates/system/system_info.html:9
 msgid "Build"
-msgstr "Build"
+msgstr "Σειρά"
 
 #: templates/system/system_info.html:13
 msgid "Platform"
@@ -6521,7 +6439,7 @@ msgstr "Ώρα συστήματος"
 
 #: templates/system/system_info.html:25
 msgid "Uptime"
-msgstr "Uptime"
+msgstr "Διάρκεια λειτουργίας"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
@@ -6529,17 +6447,15 @@ msgstr "Μέσο φορτίο"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Σύνδεση μέσω"
 
 #: templates/system/tunable.html:32
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Δεν έχουν τεθεί στόχοι που ορίζονται"
+msgstr "Δεν έχουν οριστεί μικρορυθμίσεις."
 
 #: templates/system/tunable.html:38
-#, fuzzy
 msgid "Add Tunable"
-msgstr "Προσθήκη στόχου"
+msgstr "Προσθήκη Μικρορύθμισης"
 
 #: templates/system/tunable.html:40
 #, fuzzy
@@ -6547,40 +6463,43 @@ msgid "Add Loader"
 msgstr "Προσθήκη πύλης"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Ενημέρωση"
+msgstr "Εφαρμογή ενημέρωσης"
 
 #: tools/alert.py:100
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "Ο Τόμος %s είναι ΥΓΙΗΣ"
 
 #: tools/alert.py:103
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Ο Τόμος %s είναι ΥΠΟΒΑΘΜΙΣΜΕΝΟΣ"
 
 #: tools/alert.py:107
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "Ο Τόμος %(volume)s βρίσκεται στην κατάσταση %(status)s: %(message)s"
 
 #: tools/alert.py:111
-#, python-format
+#, fuzzy, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Ο τόμος %(volume)s είναι %(status)s"
 
 #: tools/alert.py:117
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Πρέπει να αλλάξετε τον κωδικό πρόσβασης του διαχειριστή (admin) (προς το "
+"παρόν δεν απαιτείται κωδικός)"
 
 #: tools/alert.py:129
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr ""
+"Η διεύθυνση του WebGUI δεν μπόρεσε να συσχετιστεί με την %s, τέθηκε σε "
+"γενική"
 
 #: tools/alert.py:139
 #, python-format
@@ -6588,11 +6507,12 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Οι ακόλουθες διευθύνσεις IP έχουν συσχετιστεί με την πύλη του iSCSI αλλά δεν "
+"βρέθηκαν στο σύστημα: %s"
 
 #: tools/alert.py:169
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Κρίσιμη"
+msgstr "Κρίσιμες Ειδοποιήσεις"
 
 msgid "DVD"
 msgstr "DVD"
@@ -6717,7 +6637,7 @@ msgid "Edit Disk"
 msgstr "Επεξεργασία δίσκου"
 
 msgid "Are you sure you want to export?"
-msgstr "Είστε σίγουροι ότι θέλετε να το εξάγετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να τον εξάγετε;"
 
 msgid "Export Volume"
 msgstr "Εξαγωγή τόμου"
@@ -6783,7 +6703,7 @@ msgid "The volume failed to export"
 msgstr "Ο τόμος απέτυχε να εξαχθεί"
 
 msgid "Cron Scheduler"
-msgstr "Προγραμματιστής Cron"
+msgstr "Χρονοπρογραμματιστής εργασιών Cron"
 
 msgid "Devel"
 msgstr "Devel"
@@ -6792,13 +6712,13 @@ msgid "Docs"
 msgstr "Docs"
 
 msgid "Welcome to"
-msgstr "Καλώς ήρθατε στο8"
+msgstr "Καλώς ήρθατε στο"
 
 msgid "LUN"
 msgstr "LUN"
 
 msgid "Mount point"
-msgstr "Τοποθετήστε το σημείο"
+msgstr "Σημείο προσάρτησης"
 
 msgid "Dataset name"
 msgstr "Όνομα Dataset"
@@ -6822,7 +6742,7 @@ msgid "Restore to Factory Defaults"
 msgstr "Επαναφορά στις εργοστασιακές ρυθμίσεις"
 
 msgid "Config"
-msgstr "Ρυθμίσεις"
+msgstr "Σχηματισμός"
 
 msgid "OS Version"
 msgstr "Έκδοση OS"
@@ -6863,7 +6783,7 @@ msgid "/var/log/messages"
 msgstr "/var/log/messages"
 
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Βοήθεια & Υποστήριξη"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Βοήθεια & Υποστήριξη"
 
 msgid "Success!"
 msgstr "Επιτυχία!"
@@ -6973,10 +6893,10 @@ msgid "View All Periodic Snapshot Tasks"
 msgstr "Δείτε όλες τις περιοδικές εργασίες Snapshot"
 
 msgid "sucessfully edited"
-msgstr "επιτυχή επεξεργασία"
+msgstr "επιτυχής επεξεργασία"
 
 msgid "Lagg Interface was successfully added"
 msgstr "Η διεπαφή Lagg προστέθηκε επιτυχώς"
 
 msgid "ActiveDirectory Settings"
-msgstr "ActiveDirectory Ρυθμίσεις"
+msgstr "Ρυθμίσεις Active Directory"
