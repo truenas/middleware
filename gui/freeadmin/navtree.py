@@ -239,6 +239,7 @@ class NavTree(object):
         self._generated = True
         self._options.clear()
         tree_roots.clear()
+        _childs_of = []
         for app in settings.INSTALLED_APPS:
 
             # If the app is listed at settings.BLACKLIST_NAV, skip it!
@@ -335,8 +336,8 @@ class NavTree(object):
                         navopt.icon = model._admin.icon_model
 
                     if model._admin.menu_child_of is not None:
-                        reg = self.register_option_byname(navopt,
-                                "%s.%s" % (app, model._admin.menu_child_of))
+                        _childs_of.append((navopt, model))
+                        reg = True
                     else:
                         reg = self.register_option(navopt, nav)
 
@@ -416,6 +417,9 @@ class NavTree(object):
         nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon',
             type='scary_dialog', view='system_shutdown_dialog')
         tree_roots.register(nav)
+
+        for nav, model in _childs_of:
+            self.register_option_byname(nav, model._admin.menu_child_of)
 
         """
         Plugin nodes

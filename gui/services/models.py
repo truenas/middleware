@@ -379,7 +379,7 @@ class iSCSITargetGlobalConfiguration(Model):
 
     class FreeAdmin:
         deletable = False
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_model = u"SettingsIcon"
         nav_extra = {'type': 'iscsi'}
 
@@ -419,7 +419,7 @@ class iSCSITargetExtent(Model):
     class FreeAdmin:
         delete_form = "ExtentDelete"
         delete_form_filter = {'iscsi_target_extent_type__exact': 'File'} #FIXME hack for DevExtent
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"ExtentIcon"
         icon_model = u"ExtentIcon"
         icon_add = u"AddExtentIcon"
@@ -480,7 +480,7 @@ class iSCSITargetPortal(Model):
         verbose_name = _("Portal")
 
     class FreeAdmin:
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"PortalIcon"
         icon_model = u"PortalIcon"
         icon_add = u"AddPortalIcon"
@@ -557,7 +557,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         verbose_name = _("Initiator")
 
     class FreeAdmin:
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"InitiatorIcon"
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
@@ -610,7 +610,7 @@ class iSCSITargetAuthCredential(Model):
         verbose_name_plural = _("Authorized Accesses")
 
     class FreeAdmin:
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"AuthorizedAccessIcon"
         icon_model = u"AuthorizedAccessIcon"
         icon_add = u"AddAuthorizedAccessIcon"
@@ -698,7 +698,7 @@ class iSCSITarget(Model):
         verbose_name = _("Target")
 
     class FreeAdmin:
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"TargetIcon"
         icon_model = u"TargetIcon"
         icon_add = u"AddTargetIcon"
@@ -739,7 +739,7 @@ class iSCSITargetToExtent(Model):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
     class FreeAdmin:
-        menu_child_of = "ISCSI"
+        menu_child_of = "services.ISCSI"
         icon_object = u"TargetExtentIcon"
         icon_model = u"TargetExtentIcon"
         icon_add = u"AddTargetExtentIcon"
@@ -1329,7 +1329,7 @@ class Rsyncd(Model):
 
     class FreeAdmin:
         deletable = False
-        menu_child_of = "Rsync"
+        menu_child_of = "services.Rsync"
         icon_model = u"rsyncdIcon"
 
 class RsyncMod(Model):
@@ -1394,7 +1394,7 @@ class RsyncMod(Model):
         ordering = ["rsyncmod_name"]
 
     class FreeAdmin:
-        menu_child_of = 'Rsync'
+        menu_child_of = 'services.Rsync'
         icon_model = u"rsyncModIcon"
 
     def __unicode__(self):
