@@ -200,13 +200,10 @@ def menu(request, objtype = None):
     try:
         navtree.generate(request)
         final = navtree.dijitTree()
-        json = simplejson.dumps(final, indent=3)
+        json = simplejson.dumps(final)
     except Exception, e:
-        #FIX ME
-        print e
+        log.debug("Fatal error while generating the tree json: %s", e)
         json = ""
-    #from freenasUI.nav import json2nav
-    #json2nav(json)['main']
 
     return HttpResponse(json, mimetype="application/json")
 
