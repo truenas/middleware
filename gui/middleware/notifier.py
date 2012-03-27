@@ -1798,7 +1798,6 @@ class notifier:
 
         self.__system("/bin/rm -rf %s" % vardir)
         self.__system("/bin/mkdir -p %s/.freenas" % path)
-        self.__system("/bin/chmod 0770 %s/.freenas" % path)
         self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
         self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
