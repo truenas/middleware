@@ -1264,13 +1264,11 @@ class LDAP(Model):
     ldap_usersuffix = models.CharField(
             max_length=120,
             verbose_name = _("User Suffix"),
-            blank=True,
             help_text = _("This parameter specifies the suffix that is used for users when these are added to the LDAP directory, e.g. ou=Users")
             )
     ldap_groupsuffix = models.CharField(
             max_length=120,
             verbose_name = _("Group Suffix"),
-            blank=True,
             help_text = _("This parameter specifies the suffix that is used for groups when these are added to the LDAP directory, e.g. ou=Groups")
             )
     ldap_passwordsuffix = models.CharField(
