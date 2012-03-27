@@ -373,10 +373,10 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 cleaned_data.get("bsdusr_locked", False)
         password_disable = cleaned_data["bsdusr_password_disabled"] = \
                 cleaned_data.get("bsdusr_password_disabled", False)
-        bsdusr_home = self.cleaned_data.get('bsdusr_home', '')
-        if (self.cleaned_data.get('bsdusr_sshpubkey') and
+        bsdusr_home = cleaned_data.get('bsdusr_home', '')
+        if (bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
             not bsdusr_home.startswith(u'/mnt/')):
-            del self.cleaned_data['bsdusr_sshpubkey']
+            del cleaned_data['bsdusr_sshpubkey']
             self._errors['bsdusr_sshpubkey'] = self.error_class([
                 _("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
@@ -447,7 +447,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 m.save()
 
             _notifier.reload("user")
-            bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
+            bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
             if bsdusr_sshpubkey:
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
@@ -576,9 +576,9 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
     def clean(self):
         cleaned_data = self.cleaned_data
         bsdusr_home = self.cleaned_data.get('bsdusr_home', '')
-        if (self.cleaned_data.get('bsdusr_sshpubkey') and
+        if (bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
             not (bsdusr_home.startswith(u'/mnt/') or bsdusr_home == '/root')):
-            del self.cleaned_data['bsdusr_sshpubkey']
+            del cleaned_data['bsdusr_sshpubkey']
             self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
         return cleaned_data
 
