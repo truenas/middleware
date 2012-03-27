@@ -160,6 +160,8 @@ _host_config()
 					echo "nameserver ${ns}"
 				fi
 			done) > /etc/resolv.conf
+		else
+			echo > /etc/resolv.conf
 		fi
 	done
 }
