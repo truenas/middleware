@@ -239,7 +239,7 @@ class TreeRoots(object):
         if not isinstance(tnode, TreeType):
             raise TypeError("You can only register a Nav not a %r" % tnode)
 
-        if not self._roots.has_key(tnode.tree_root):
+        if tnode.tree_root not in self._roots:
             self._roots[tnode.tree_root] = []
 
         if tnode not in self._roots[tnode.tree_root]:

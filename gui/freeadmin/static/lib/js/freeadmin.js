@@ -1266,7 +1266,7 @@
             });
     }
 
-    viewModel = function(name, url) {
+    viewModel = function(name, url, tab) {
         var p = dijit.byId("content");
         var c = p.getChildren();
         for(var i=0; i<c.length; i++){
@@ -1283,6 +1283,8 @@
             parseOnLoad: true,
             refreshOnShow: true,
         });
+        if(tab)
+            pane.tab = tab;
         dojo.addClass(pane.domNode, "objrefresh" );
         p.addChild(pane);
         p.selectChild(pane);
