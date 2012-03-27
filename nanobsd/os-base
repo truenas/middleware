@@ -58,7 +58,7 @@ NANO_RAM_TMPVARSIZE=327680
 
 NANO_IMAGES=2
 # Remove X11 crud too.
-NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11)/')
+NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11|\.orig$|\.rej$)/')
 FlashDevice generic 2g
 
 if [ "$DEBUG" = 1 ]; then
@@ -409,7 +409,7 @@ add_gui()
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
 	( cd ${gui}
-	  find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
+	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"

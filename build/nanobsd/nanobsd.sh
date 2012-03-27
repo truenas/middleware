@@ -169,7 +169,7 @@ SRCCONF=${SRCCONF:=/dev/null}
 MAKEOBJDIRPREFIX=/usr/obj
 
 # Files to exclude via find(1)
-NANO_IGNORE_FILES_EXPR='/(CVS|\.git|\.svn)'
+NANO_IGNORE_FILES_EXPR='(CVS|\.git|\.svn)'
 
 #######################################################################
 #
@@ -465,7 +465,7 @@ populate_slice ( ) (
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . \! -regex "$NANO_IGNORE_FILES_EXPR" | cpio -R root:wheel -dumpv ${mnt}
+	find . | egrep -v "$NANO_IGNORE_FILES_EXPR" | cpio -R root:wheel -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
@@ -725,7 +725,7 @@ cust_allow_ssh_root () (
 
 cust_install_files () (
 	cd ${NANO_TOOLS}/Files
-	find . \! -regex "${NANO_IGNORE_FILES_EXPR}" | \
+	find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | \
 	    cpio -R root:wheel -Ldumpv ${NANO_WORLDDIR}
 )
 
