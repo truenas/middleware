@@ -41,25 +41,6 @@ from freenasUI.services.models import services
 import freenasUI.plugins.api_calls
 
 
-def plugins_home(request):
-
-    srv_enable = False
-    s = services.objects.filter(srv_service='plugins')
-    if s:
-        s = s[0]
-        srv_enable = s.srv_enable
-
-    jail_configured = notifier().plugins_jail_configured()
-    if not srv_enable:
-        jail_configured = False
-
-    plugins_list = models.Plugins.objects.all()
-    return render(request, "plugins/index.html", {
-        "plugins_list": plugins_list,
-        "jail_configured": jail_configured,
-    })
-
-
 def plugin_edit(request, plugin_id):
     plugin = models.Plugins.objects.filter(id=plugin_id)[0]
 

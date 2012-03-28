@@ -166,34 +166,6 @@
 
         },
 
-        openPlugins: function(onload) {
-            if(!onload) onload = function() {};
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'plugins'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(onload) onload();
-                }
-            }
-
-            if(opened != true) {
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Plugins'),
-                    closable: true,
-                    href: this.urlPlugins,
-                    onLoad: onload,
-                });
-                pane.tab = 'plugins';
-                p.addChild(pane);
-                p.selectChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
-            }
-        },
-
         openPluginsFcgi: function(p, item) {
             editObject(item.name, item.url);
         },

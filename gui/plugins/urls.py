@@ -35,7 +35,6 @@ from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
 urlpatterns = patterns('plugins.views',
-    url(r'^home/$', 'plugins_home', name='plugins_home'),
     url(r'^pbiwizard/$', PBIFileWizard(
             [PBITemporaryLocationForm, PBIUploadForm],
             prefix="pbi",
