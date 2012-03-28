@@ -89,10 +89,26 @@ generate_ldapconf()
 		base ${ldap_basedn}
 		rootbinddn ${ldap_rootbasedn}
 		pam_password ${ldap_pwencryption}
-		nss_base_passwd ${ldap_usersuffix},${ldap_basedn}
-		nss_base_group ${ldap_groupsuffix},${ldap_basedn}
 		nss_override_attribute_value loginShell /bin/sh
 EOF
+		if [ -z "${ldap_usersuffix}" ]; then
+			cat >>"${nssconf}" <<-EOF
+			nss_base_passwd ${ldap_basedn}
+EOF
+		else
+			cat >>"${nssconf}" <<-EOF
+			nss_base_passwd ${ldap_usersuffix},${ldap_basedn}
+EOF
+		fi
+		if [ -z "${ldap_groupsuffix}" ]; then
+			cat >>"${nssconf}" <<-EOF
+			nss_base_group ${ldap_basedn}
+EOF
+		else
+			cat >>"${nssconf}" <<-EOF
+			nss_base_group ${ldap_groupsuffix},${ldap_basedn}
+EOF
+		fi
 	
 		if [ "${ldap_ssl}" = "start_tls" ]; then
 			save_certificate "${ldap_id}"
