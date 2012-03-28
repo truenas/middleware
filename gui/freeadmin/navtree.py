@@ -353,7 +353,9 @@ class NavTree(object):
             icon='TopIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shell', name=_('Shell'), icon='TopIcon',
+        nav = TreeRoot('shell',
+            name=_('Shell'),
+            icon='TopIcon',
             action='shell')
         tree_roots.register(nav)
 
@@ -365,8 +367,11 @@ class NavTree(object):
             view='system_reboot_dialog')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown', name=_('Shutdown'), icon='ShutdownIcon',
-            type='scary_dialog', view='system_shutdown_dialog')
+        nav = TreeRoot('shutdown',
+            name=_('Shutdown'),
+            icon='ShutdownIcon',
+            type='scary_dialog',
+            view='system_shutdown_dialog')
         tree_roots.register(nav)
 
         for opt, model in _childs_of:
@@ -461,27 +466,28 @@ class NavTree(object):
         # info about current node
         my = {
             'id': str(uid.new()),
+            'name': unicode(getattr(o, "rename", o.name)),
         }
-        my['name'] = unicode(getattr(o, "rename", o.name))
-        my['gname'] = getattr(o, "gname", my['name'])
         if gname:
-            my['gname'] = "%s.%s" % (gname, my['gname'])
-        #my['gname'] = o.evaluate_gname()
+            my['gname'] = "%s.%s" % (gname, o.gname)
+        else:
+            my['gname'] = getattr(o, "gname", my['name'])
+
         if not o.option_list:
             my['type'] = getattr(o, 'type', None)
             my['url'] = o.get_absolute_url()
             if o.append_url:
                 my['url'] += o.append_url
         for attr in ('model', 'app_name', 'icon', 'action'):
-            if getattr(o, attr):
-                my[attr] = getattr(o, attr)
+            value = getattr(o, attr)
+            if value:
+                my[attr] = value
 
-        # this node has no childs
+        # this node has no children
         if not o.option_list:
             return my
-        else:
-            my['children'] = []
 
+        my['children'] = []
         for i in o.option_list:
             opt = self.dehydrate(i, uid, gname=my['gname'])
             my['children'].append(opt)
