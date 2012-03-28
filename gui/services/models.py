@@ -829,6 +829,7 @@ class Plugins(Model):
     def delete(self, *args, **kwargs):
         notifier().delete_plugins_jail(self.id)
         super(Plugins, self).delete(*args, **kwargs)
+        services.objects.filter(srv_service='plugins').update(srv_enable=False)
 
 
 class SNMP(Model):
