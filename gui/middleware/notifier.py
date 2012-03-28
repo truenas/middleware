@@ -2757,9 +2757,11 @@ class notifier:
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
             return self.__diskserial.get(devname)
-        p1 = Popen(["/sbin/camcontrol", "inquiry", devname, "-S"], stdout=PIPE, stderr=PIPE)
-        serial = p1.communicate()[0].split('\n')[0]
-        if serial:
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+        output = p1.communicate()[0]
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+        if search:
+            serial = search.group("serial")
             self.__diskserial[devname] = serial
             return serial
         return None
