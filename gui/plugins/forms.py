@@ -117,9 +117,15 @@ class JailInfoForm(ModelForm):
         jp = cleaned_data['jail_path'] + "/"
         pp = cleaned_data['plugins_path'] + "/"
 
-        if (jp in pp):
+        try:
+            # TODO: This could be improved checking whether the paths exists
+            samefs = os.stat(jp).st_dev == os.stat(pp).st_dev
+        except OSError:
+            samefs = True
+
+        if (jp in pp and samefs):
             self._errors["jail_path"] = self.error_class([_("The plugins jail path cannot be a subset of the plugins archive path.")])
-        if (pp in jp):
+        if (pp in jp and samefs):
             self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
 
         return cleaned_data
