@@ -88,7 +88,6 @@ class FreeAdminWrapper(object):
     exclude_fields = []
     deletable = True
     menu_child_of = None
-    menu_children = []
 
     advanced_fields = []
 

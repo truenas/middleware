@@ -347,10 +347,6 @@ class NavTree(object):
                         subopt.type = 'viewmodel'
                         self.register_option(subopt, navopt)
 
-                        for child in model._admin.menu_children:
-                            if child in self._navs:
-                                self.register_option(self._navs[child], navopt)
-
         nav = TreeRoot('display',
             name=_('Display System Processes'),
             action='displayprocs',

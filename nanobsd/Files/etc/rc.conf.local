@@ -149,9 +149,17 @@ _host_config()
 		if [ -n "${ipv6gateway}" ]; then
 			echo ipv6_defaultrouter=\"${ipv6gateway}\"
 		fi
+
 		# Generate resolv.conf
+		if [ -f "/etc/resolv.conf" ]; then
+			before=$(sed -E -n '/# Generated from GUI/q;p' /etc/resolv.conf)
+			echo ${before} > /etc/resolv.conf
+		fi
+
 		if [ -n "${nameserver1}" ]; then
-			(echo search ${domainname}
+
+			(echo "# Generated from GUI (DO NOT DELETE THIS LINE)"
+			echo search ${domainname}
 			for ns in \
 				"${nameserver1}" "${nameserver2}" \
 				"${nameserver3}"
@@ -159,7 +167,9 @@ _host_config()
 				if [ -n "${ns:-}" ]; then
 					echo "nameserver ${ns}"
 				fi
-			done) > /etc/resolv.conf
+			done) > /etc/resolv.conf.tail
+			# .tail is used by dhclient-script
+			cat /etc/resolv.conf.tail >> /etc/resolv.conf
 		fi
 	done
 }
