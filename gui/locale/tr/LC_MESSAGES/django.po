@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-27 10:58+0200\n"
+"PO-Revision-Date: 2012-03-27 11:49+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -4093,11 +4093,11 @@ msgstr "Bağlantı noktası seçeneklerini buraya girin"
 
 #: storage/models.py:612
 msgid "Remote Replication Host"
-msgstr "Ana Bilgisayarı Uzaktan Kopyalama"
+msgstr "Ana Bilgisayarı Uzaktan Kopyala"
 
 #: storage/models.py:613
 msgid "Remote Replication Hosts"
-msgstr "Ana Bilgisayarları Uzaktan Kopyalama"
+msgstr "Ana Bilgisayarları Uzaktan Kopyala"
 
 #: storage/models.py:625 storage/models.py:679
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
@@ -4107,7 +4107,7 @@ msgstr "Dosya Sistemi/Birim"
 #: storage/models.py:630
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
-"Son anlık durum görüntüsü uzaktaki tarafına gönderdi (tam çoğaltma için boş "
+"Son anlık durum görüntüsü uzak tarafına gönder (tam kopyalama için boş "
 "bırakın)"
 
 #: storage/models.py:633 system/models.py:433
@@ -4145,15 +4145,15 @@ msgstr "Sınır (kB/s)"
 
 #: storage/models.py:650
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
-msgstr "Çoğaltma hız sınırı. Birimi kilobayt/saniye. 0 = sınırsız."
+msgstr "Kopyalama hız sınırı. Birimi kilobayt/saniye. 0 = sınırsız."
 
 #: storage/models.py:654
 msgid "Replication Task"
-msgstr "Çoğaltma Görevi"
+msgstr "Kopyalama Görevi"
 
 #: storage/models.py:655
 msgid "Replication Tasks"
-msgstr "Çoğaltma Görevi"
+msgstr "Kopyalama Görevleri"
 
 #: storage/models.py:683 system/models.py:499 templates/storage/tasks.html:22
 msgid "Recursive"
@@ -5855,7 +5855,7 @@ msgstr "%(path)s yolu üzerindeki izni değiştir"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr "Kopyalam Ekle"
+msgstr "Kopya Ekle"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -5868,7 +5868,7 @@ msgid ""
 "to create a replication task"
 msgstr ""
 "DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
-"görüntüsünü çoğaltma görevi oluşturmak için gerekli olan alan"
+"görüntüsünün kopyalama görevi oluşturulması için gerekli olan alan"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
