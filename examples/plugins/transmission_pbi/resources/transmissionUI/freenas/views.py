@@ -167,11 +167,13 @@ def edit(request):
         server = jsonrpclib.Server('http://127.0.0.1:8001/plugins/json/')
         auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
         assert auth
+        token = server.auth.getToken("keyhere")
+        server = jsonrpclib.Server('http://freenas:%s@127.0.0.1:8001/plugins/json/' % (token, ))
         plugin = json.loads(server.plugins.plugins.get("transmission"))[0]
         mounted = server.fs.mounted.get(plugin['fields']['plugin_path'])
         jail = json.loads(server.plugins.jail.info())[0]
     except Exception, e:
-        raise
+        raise e
 
     if request.method == "GET":
         form = forms.TransmissionForm(instance=transmission,
