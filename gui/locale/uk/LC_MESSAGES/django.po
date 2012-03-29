@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:42-0800\n"
-"PO-Revision-Date: 2011-11-28 20:24+0200\n"
-"Last-Translator: KAPnik <KAPnik76@gmail.com>\n"
+"PO-Revision-Date: 2012-03-28 23:39+0200\n"
+"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -515,10 +515,8 @@ msgid "Username"
 msgstr "Ім'я користувача"
 
 #: account/forms.py:200
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"Обов'язково. До 30 символів. Лише латинські літери, цифри та @/./+/-/_."
+msgstr "Обов'язково. До 16 символів. Лише латинські літери, цифри та @/./+/-/_."
 
 #: account/forms.py:201
 #, fuzzy
@@ -547,9 +545,8 @@ msgid "Shell"
 msgstr "Оболонка"
 
 #: account/forms.py:241 account/forms.py:498
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Заборонити вхід"
+msgstr "Відключити вхід під паролем"
 
 #: account/forms.py:243 account/forms.py:499
 msgid "Lock user"
@@ -603,7 +600,7 @@ msgstr "Домашній каталог має починатися з /mnt/"
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Користувач не може належати більш ніж 64 допоміжним групам"
 
 #: account/forms.py:381 account/forms.py:582
 msgid "Home directory is not writable, leave this blank"
@@ -620,18 +617,17 @@ msgid "This field is required."
 msgstr "Це поле обов'язкове."
 
 #: account/forms.py:562
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Домашній каталог має починатися з /mnt/"
+msgstr ""
+"Домашній каталог має починатися з /mnt/ або бути /nonexistent (неіснуючим)"
 
 #: account/forms.py:634
 msgid "Allow repeated GIDs"
 msgstr ""
 
 #: account/forms.py:647
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Користувач за таким ім'ям вже існує."
+msgstr "Група з таким ім'ям вже існує."
 
 #: account/forms.py:665
 #, fuzzy
@@ -651,9 +647,8 @@ msgid "New password confirmation"
 msgstr "Підтвердження нового пароля"
 
 #: account/forms.py:746
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Змінити пароль"
+msgstr "Змінити також пароль root"
 
 #: account/forms.py:753
 msgid "Old password"
@@ -665,7 +660,7 @@ msgstr "Ваш застарілий пароль введено невірно. 
 
 #: account/forms.py:778
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Ви хочете видалити всіх користувачів цієї основної групи?"
 
 #: account/models.py:36 services/models.py:518 services/models.py:563
 #: templates/services/iscsi_auth.html:5
@@ -746,9 +741,8 @@ msgid "Account"
 msgstr "Обліковий запис"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Обліковий запис"
+msgstr "Обліковий запис адміністратора"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -792,9 +786,9 @@ msgid "The path must reside within a volume mount point"
 msgstr "Шлях повинен знаходитися в точці монтування томів."
 
 #: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Помилка"
+msgstr "Помилка: %s"
 
 #: freeadmin/navtree.py:334
 #, python-format
@@ -802,9 +796,9 @@ msgid "Add %s"
 msgstr "Додати %s"
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Переглянути всіх %s"
+msgstr "Переглянути %s"
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
@@ -826,7 +820,7 @@ msgstr ""
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Неможливо отримати %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
 #, fuzzy, python-format
@@ -835,7 +829,7 @@ msgstr "Помилки при маркуванні диска."
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Не вдалося отримати поточний статус"
 
 #: freeadmin/views.py:428 freeadmin/views.py:648 freeadmin/views.py:650
 #, python-format
@@ -6549,9 +6543,8 @@ msgstr "Стрічка"
 msgid "Pass"
 msgstr "Прохід"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Пароль для загального доступу"
+msgstr "Відключити пароль"
 
 msgid "My Account"
 msgstr "Мій обліковий запис"

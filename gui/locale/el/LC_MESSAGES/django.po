@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-27 10:54+0200\n"
+"PO-Revision-Date: 2012-03-28 14:16+0200\n"
 "Last-Translator: thaaanos <thaaanos+freenas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -2324,7 +2324,7 @@ msgstr "Περίοδος ενημέρωσης"
 
 #: services/models.py:743
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Χρόνος σε δευτερόλεπτα. Προεπιλογή περίπου 1 λεπτό."
 
 #: services/models.py:747
 msgid "Forced update period"
@@ -2342,34 +2342,31 @@ msgstr "Δυναμική DNS"
 
 #: services/models.py:768
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Διαδρομή υποδομής επεκτάσεων"
 
 #: services/models.py:769
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Μονοπάτι προς την έκταση"
+msgstr "Διαδρομή προς την υποδομή των επεκτάσεων (Jail)"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
-#, fuzzy
 msgid "Jail name"
-msgstr "Domain name"
+msgstr "Όνομα υποδομής επεκτάσεων (Jail)"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Το όνομα της υποδομής επεκτάσεων (jail)"
 
 #: services/models.py:781
-#, fuzzy
 msgid "Jail IP address"
-msgstr "Ηλεκτρονική Διεύθυνση"
+msgstr "Διεύθυνση IP υποδομής επεκτάσεων"
 
 #: services/models.py:784
 msgid "Plugins Path"
-msgstr ""
+msgstr "Διαδρομή επεκτάσεων"
 
 #: services/models.py:785
 msgid "Path to the plugins directory"
-msgstr ""
+msgstr "Διαδρομή προς τον κατάλογο των επεκτάσεων"
 
 #: services/models.py:805
 msgid "Location"
@@ -2999,7 +2996,7 @@ msgstr "LDAP"
 
 #: services/models.py:1286
 msgid "Alternate TCP port. Default is 873"
-msgstr "Αναπληρωματική θύρα TCP. Η προεπιλογή είναι 873"
+msgstr "Εναλλακτική θύρα TCP. Η προεπιλογή είναι 873"
 
 #: services/models.py:1291
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -3012,11 +3009,11 @@ msgstr ""
 
 #: services/models.py:1306
 msgid "Module name"
-msgstr "Όνομα module"
+msgstr "Όνομα μονάδας"
 
 #: services/models.py:1315
 msgid "Path to be shared"
-msgstr "Path για να μοιραστούν"
+msgstr "Διαδρομή προς κοινόχρηστα"
 
 #: services/models.py:1321
 msgid "Access Mode"
@@ -3024,11 +3021,12 @@ msgstr "Λειτουργία πρόσβασης"
 
 #: services/models.py:1322
 msgid "This controls the access a remote host has to this module"
-msgstr "Αυτό ελέγχει την πρόσβαση σε έναν απομακρυσμένο υπολογιστή"
+msgstr ""
+"Αυτό ελέγχει την πρόσβαση ενός απομακρυσμένου υπολογιστή σε αυτήν την μονάδα"
 
 #: services/models.py:1326
 msgid "Maximum connections"
-msgstr "Max. συνδέσεις"
+msgstr "Μέγιστος αριθμός συνδέσεων"
 
 #: services/models.py:1327
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
@@ -3042,23 +3040,23 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"Η επιλογή αυτή καθορίζει το όνομα χρήστη που μεταφορά αρχείων από και προς "
-"την εν λόγω ενότητα θα πρέπει να λάβει χώρα. Σε συνδυασμό με το 'Συγκρότημα' "
-"επιλογή αυτή καθορίζει τις άδειες αρχείων είναι διαθέσιμα. Αφήστε κενό αυτό "
-"το πεδίο για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις"
+"Η επιλογή αυτή καθορίζει το όνομα χρήστη κάτω από τον οποίο η μεταφορά "
+"αρχείων από και προς την εν λόγω μονάδα θα πρέπει να λάβει χώρα. Σε "
+"συνδυασμό με την επιλογή 'Ομάδα' καθορίζει ποία δικαιώματα αρχείων είναι "
+"διαθέσιμα. Αφήστε κενό αυτό το πεδίο για τις προεπιλεγμένες ρυθμίσεις"
 
 #: services/models.py:1340
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
-"Αυτή η επιλογή καθορίζει το όνομα της ομάδας ότι η μεταφορά αρχείων από και "
-"προς την εν λόγω ενότητα θα πρέπει να λάβει χώρα. Αφήστε κενό αυτό το πεδίο "
-"για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις"
+"Αυτή η επιλογή καθορίζει το όνομα της ομάδας κάτω από την οποία η μεταφορά "
+"αρχείων από και προς την εν λόγω μονάδα θα πρέπει να λάβει χώρα. Αφήστε κενό "
+"αυτό το πεδίο για τις προεπιλεγμένες ρυθμίσεις"
 
 #: services/models.py:1344
 msgid "Hosts allow"
-msgstr "Φιλοξενείες Επιτρέψτε"
+msgstr "Επιτρεπόμενα μηχανήματα"
 
 #: services/models.py:1345
 msgid ""
@@ -3066,14 +3064,14 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
-"σύνολο των δυνάμεων που επιτρέπεται να έχουν πρόσβαση το μερίδιο αυτό. "
-"Μπορείτε να καθορίσετε τους φιλοξενούμενους με το όνομα ή αριθμός IP. Αφήστε "
-"αυτό το πεδίο κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις"
+"Η επιλογή αυτή είναι ένα σύνολο μηχανημάτων οριοθετημένα με κόμμα, διάστημα, "
+"ή tab οι οποίοι επιτρέπονται να προσπελάσουν το κοινόχρηστο. Μπορείτε τους "
+"καθορίσετε με το όνομα τους ή με την διεύθυνση IP τους. Για προεπιλογή "
+"αφήστε το πεδίο κενό."
 
 #: services/models.py:1349
 msgid "Hosts deny"
-msgstr "Άρνηση hosts"
+msgstr "Μη επιτρεπόμενα μηχανήματα"
 
 #: services/models.py:1350
 msgid ""
@@ -3084,14 +3082,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή καρτέλα που οριοθετούνται της "
-"υποδοχής, το οποίο δεν επιτρέπεται η πρόσβαση σε αυτή την ενότητα. Σε "
-"περίπτωση που η σύγκρουση τους καταλόγους, το επιτρέπουν λίστα έχει το "
-"προβάδισμα. Σε περίπτωση που είναι απαραίτητο για να αρνηθεί όλα από "
-"προεπιλογή, χρησιμοποιήστε τη λέξη-κλειδί ALL (ή το netmask 0.0.0.0 / 0) και "
-"στη συνέχεια να αναφέρονται ρητώς στο φιλοξενεί επιτρέψει παράμετρο αυτούς "
-"τους υπολογιστές που θα πρέπει να επιτρέπεται η πρόσβαση. Αφήστε κενό αυτό "
-"το πεδίο για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις"
+"Η επιλογή αυτή είναι ένα σύνολο μηχανημάτων οριοθετημένα με κόμμα, διάστημα, "
+"ή tab οι οποίοι ΔΕΝ επιτρέπονται να προσπελάσουν το κοινόχρηστο. Σε "
+"περίπτωση διαφωνίας με την λίστα επιτρεπόμενων υπερισχύει η τελευταία. Έτσι "
+"σε περίπτωση που είναι αναγκαίο να αρνηθείτε πρόσβαση σε όλους ως "
+"προεπιλογή, χρησιμοποιείστε την λέξη ALL (ή την μάσκα δικτύου 0.0.0.0 / 0) "
+"και στη συνέχεια αναφέρετε ρητά ποιοι θα επιτρέπονται στην λίστα "
+"επιτρεπόμενων. Αφήστε αυτό το πεδίο κενό για να τις προεπιλεγμένες ρυθμίσεις"
 
 #: services/models.py:1355
 msgid ""
@@ -3175,7 +3172,7 @@ msgstr "Extents Συσκευής"
 
 #: services/nav.py:71
 msgid "Add Device Extent"
-msgstr "Προσθήκη επέκτασης συσκευής"
+msgstr "Προσθήκη Extent συσκευής"
 
 #: services/nav.py:78
 #, fuzzy
@@ -3222,7 +3219,7 @@ msgstr "Η υπηρεσία δεν μπόρεσε να σταματήσει."
 
 #: services/views.py:251
 msgid "The service could not be started."
-msgstr "Η υπηρεσία cache δεν μπορεί να ξεκινήσει."
+msgstr "Η υπηρεσία δεν μπορεί να ξεκινήσει."
 
 #: sharing/forms.py:81
 #, fuzzy
@@ -3245,15 +3242,15 @@ msgstr "Η IP '%s' δεν είναι έγκυρη."
 
 #: sharing/forms.py:157
 msgid "Maproot group requires Maproot user"
-msgstr "Maproot ομάδα απαιτεί Maproot χρηστών"
+msgstr "H Maproot ομάδα απαιτεί χρήστη Maproot "
 
 #: sharing/forms.py:159
 msgid "Mapall group requires Mapall user"
-msgstr "Mapall ομάδα απαιτεί Mapall χρηστών"
+msgstr "Η Mapall ομάδα απαιτεί χρήστη Mapall "
 
 #: sharing/forms.py:162 sharing/forms.py:165
 msgid "Maproot user/group disqualifies Mapall"
-msgstr "Maproot χρήστη / ομάδα αποκλείει Mapall"
+msgstr "O Maproot χρήστης /ομάδα αποκλείει Mapall"
 
 #: sharing/models.py:39 sharing/models.py:113 storage/models.py:44
 #: storage/models.py:309 storage/views.py:226
@@ -3282,11 +3279,11 @@ msgstr "Κληρονόμηση Δικαιωμάτων"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr "Εξαγωγή Recycle Bin"
+msgstr "Εξαγωγή Κάδου Ανακύκλωσης"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr "Εμφάνιση κρυμμένων αρχείων"
+msgstr "Εμφάνιση κρυφών αρχείων"
 
 #: sharing/models.py:61
 msgid "Allow Guest Access"
@@ -3300,7 +3297,7 @@ msgstr ""
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr "Μόνο να επιτρέπουν πρόσβαση επισκεπτών"
+msgstr "Να επιτρέπουν μόνο πρόσβαση επισκεπτών"
 
 #: sharing/models.py:66
 msgid ""
@@ -3310,7 +3307,7 @@ msgstr ""
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
-msgstr "Φιλοξενεί Επιτρέψτε"
+msgstr "Επιτρεπόμενα μηχανήματα"
 
 #: sharing/models.py:72
 msgid ""
@@ -3318,14 +3315,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
-"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
-"σύνολο των δυνάμεων που επιτρέπεται να έχουν πρόσβαση το μερίδιο αυτό. "
-"Μπορείτε να καθορίσετε τους φιλοξενούμενους με το όνομα ή αριθμός IP. Αφήστε "
-"αυτό το πεδίο κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις."
+"Η επιλογή αυτή είναι ένα σύνολο μηχανημάτων οριοθετημένα με κόμμα, διάστημα, "
+"ή tab οι οποίοι επιτρέπονται να προσπελάσουν το κοινόχρηστο. Μπορείτε τους "
+"καθορίσετε με το όνομα τους ή με την διεύθυνση IP τους. Για προεπιλογή "
+"αφήστε το πεδίο κενό."
 
 #: sharing/models.py:76
 msgid "Hosts Deny"
-msgstr "Hosts Deny"
+msgstr "Μη επιτρεπόμενα μηχανήματα"
 
 #: sharing/models.py:77
 msgid ""
@@ -3336,14 +3333,14 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
-"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
-"σύνολο της υποδοχής, το οποίο δεν επιτρέπεται η πρόσβαση σε αυτή τη μετοχή. "
-"Σε περίπτωση που η σύγκρουση καταλόγους, η λίστα αποδοχής υπερισχύει. Σε "
-"περίπτωση που είναι αναγκαίο να αρνηθεί όλες τις από προεπιλογή, "
-"χρησιμοποιούν την λέξη ALL (ή το netmask 0.0.0.0 / 0) και στη συνέχεια να "
-"αναφέρονται ρητώς στους οικοδεσπότες επιτρέπουν παράμετρος αυτών "
-"οικοδεσπότες που θα πρέπει να επιτρέπεται η πρόσβαση. Αφήστε αυτό το πεδίο "
-"κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις."
+"Η επιλογή αυτή είναι ένα σύνολο μηχανημάτων οριοθετημένα με κόμμα, διάστημα, "
+"ή tab οι οποίοι ΔΕΝ επιτρέπονται να προσπελάσουν το κοινόχρηστο. Σε "
+"περίπτωση διαφωνίας με την λίστα επιτρεπόμενων υπερισχύει η τελευταία. Έτσι "
+"σε περίπτωση που είναι αναγκαίο να αρνηθείτε πρόσβαση σε όλους ως "
+"προεπιλογή, χρησιμοποιείστε την λέξη ALL (ή την μάσκα δικτύου 0.0.0.0 / 0) "
+"και στη συνέχεια αναφέρετε ρητά ποιοι θα επιτρέπονται στην λίστα "
+"επιτρεπόμενων. Αφήστε αυτό το πεδίο κενό για να τις προεπιλεγμένες "
+"ρυθμίσεις."
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -3380,11 +3377,11 @@ msgstr ""
 
 #: sharing/models.py:118
 msgid "Share Comment"
-msgstr "Σχόλιο Share"
+msgstr "Σχόλιο κοινοχρήστου"
 
 #: sharing/models.py:125
 msgid "Share password"
-msgstr "Κωδικός share"
+msgstr "Κωδικός κοινοχρήστου"
 
 #: sharing/models.py:127
 msgid ""
@@ -3392,25 +3389,25 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
-"Αυτή η επιλογή σας επιτρέπει να ορίσετε έναν κωδικό πρόσβασης όγκου, που "
-"μπορεί να είναι το πολύ 8 χαρακτήρες (με τη χρήση ASCII συνιστάται κατά τη "
-"διάρκεια αυτού του γραψίματος)."
+"Αυτή η επιλογή σας επιτρέπει να ορίσετε έναν κωδικό πρόσβασης τόμου, που "
+"μπορεί να είναι το πολύ 8 χαρακτήρες (η χρήση ASCII συνιστάται προς το "
+"παρόν)."
 
 #: sharing/models.py:131
 msgid "Share Character Set"
-msgstr "Κοινό σετ χαρακτήρων"
+msgstr "Κωδικοποίηση χαρακτήρων κοινοχρήστου"
 
 #: sharing/models.py:133
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
-"Καθορίζει το κοινό σετ χαρακτήρων. Για παράδειγμα UTF8, UTF8-MAC, "
-"ISO-8859-15, κ.α."
+"Καθορίζει την κωδικοποίηση χαρακτήρων αυτού του κοινοχρήστου. Για παράδειγμα "
+"UTF8, UTF8-MAC, ISO-8859-15, κ.α."
 
 #: sharing/models.py:137
 msgid "Allow List"
-msgstr "Κατάλογος επιτρεπόμενων"
+msgstr "Λίστα επιτρεπόμενων"
 
 #: sharing/models.py:139
 msgid ""
@@ -3419,21 +3416,21 @@ msgid ""
 "by a @ prefix."
 msgstr ""
 "Αυτή η επιλογή επιτρέπει να καθοριστούν οι χρήστες και οι ομάδες που θα "
-"έχουν πρόσβαση στο κοινόχρηστο στοιχείο. Οι χρήστες και οι ομάδες που "
-"αναφέρονται, οριοθετούνται με κόμμα. Οι ομάδες ορίζονται από το πρόθεμα @."
+"έχουν πρόσβαση στο κοινόχρηστο. Οι χρήστες και οι ομάδες που αναφέρονται, "
+"οριοθετούνται με κόμμα. Οι ομάδες προσδιορίζονται με το πρόθεμα @."
 
 #: sharing/models.py:143
 msgid "Deny List"
-msgstr "Κατάλογος ανεπιτρεπόμενων"
+msgstr "Λίστα μη-επιτρεπόμενων"
 
 #: sharing/models.py:145
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
-"Η επιλογή ανεπιτρεπόμενων καθορίζει τους χρήστες και τις ομάδες που δεν "
+"Η επιλογή μη-επιτρεπόμενων καθορίζει τους χρήστες και τις ομάδες που δεν "
 "έχουν πρόσβαση στο κοινόχρηστο στοιχείο. Ακολουθεί την ίδια μορφή όπως η "
-"επιλογή επιτρπόμενων."
+"επιλογή επιτρεπόμενων."
 
 #: sharing/models.py:149
 msgid "Read-only Access"
@@ -3462,19 +3459,20 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
-msgstr "Εύρεση δίσκων"
+msgstr "Ανακάλυψη δίσκων"
 
 #: sharing/models.py:161
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
-"Αφήστε άλλα συστήματα να ανακαλύψουν το κοινόχρηστο στοιχείο αυτό ως δίσκο "
-"για δεδομένα, ως έναν τόμο αντιγράφων εφεδρείας του Time Machine ή καθόλου."
+"Επιτρέπει σε άλλα συστήματα να ανακαλύψουν το κοινόχρηστο αυτό ως δίσκο για "
+"δεδομένα, ως έναν τόμο αντιγράφων εφεδρείας του Time Machine ή και να μην "
+"εμφανίζεται καθόλου."
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
-msgstr "Λειτουργία Εύρεση Δίσκων"
+msgstr "Λειτουργία Ανακάλυψης δίσκων"
 
 #: sharing/models.py:168
 msgid ""
@@ -3687,7 +3685,7 @@ msgstr "User to map root to"
 
 #: sharing/models.py:282
 msgid "Maproot Group"
-msgstr "Maproot Group"
+msgstr "Ομάδα Maproot"
 
 #: sharing/models.py:286
 msgid "Group to map root to"
@@ -3695,7 +3693,7 @@ msgstr "Group to map root to"
 
 #: sharing/models.py:289
 msgid "Mapall User"
-msgstr "Mapall χρήστη"
+msgstr "Χρήστης Mapall "
 
 #: sharing/models.py:293
 msgid "User to map all users to"
@@ -3703,7 +3701,7 @@ msgstr "User to map all users to"
 
 #: sharing/models.py:296
 msgid "Mapall Group"
-msgstr "Mapall Group"
+msgstr "Ομάδα Mapall"
 
 #: sharing/models.py:300
 msgid "Group to map all users to"

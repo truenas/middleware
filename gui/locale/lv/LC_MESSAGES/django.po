@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-15 22:09+0200\n"
+"PO-Revision-Date: 2012-03-28 21:20+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -1289,7 +1289,7 @@ msgstr "Spraudnis veiksmīgi noņemts."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Neizdevās noņemt spraudni."
 
 #: services/forms.py:65
 msgid "This is not a valid mask"
@@ -1319,17 +1319,15 @@ msgstr "NFS servisam neizdevās startēties."
 
 #: services/forms.py:130
 msgid "The plugins path cannot be the same or reside within jail path."
-msgstr ""
+msgstr "Spraudņu ceļš nevar būt tas pats vai atrasties iekš cietuma ceļa."
 
 #: services/forms.py:139
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Grupa ar šo gid jau eksistē"
+msgstr "IP jau eksistē."
 
 #: services/forms.py:146
-#, fuzzy
 msgid "The Plugins service failed to reload."
-msgstr "AFP servisam neizdevās startēties."
+msgstr "Spraudņu servisam neizdevās startēties."
 
 #: services/forms.py:151
 msgid "File Permission"
@@ -1721,9 +1719,8 @@ msgid "Auxiliary parameters"
 msgstr "Palīgparametri"
 
 #: services/models.py:138
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Šos parametrus pievieno [Global] sekcijai iekš smb.conf"
+msgstr "Šos parametrus pievienoja [global] sekcijai iekš smb.conf"
 
 #: services/models.py:141
 msgid "Enable home directories"
@@ -1746,24 +1743,24 @@ msgid "Home directories"
 msgstr "Mājas mapes"
 
 #: services/models.py:154
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "Palīgparametri"
+msgstr "Māju papildparametri"
 
 #: services/models.py:156
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Šie parametri ir pievienoti uz [Share] sekciju iekš smdb.conf"
+msgstr "Šie parametri ir pievienoti iekš [homes] sekcijas iekš smdb.conf"
 
 #: services/models.py:159
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix Paplašinājumi"
 
 #: services/models.py:161
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Šie papildinājumi ļauj Sambai labāk apkalpot UNIX CIFS klientus, piedāvājot "
+"iespējas kā simboliskās saites, cietās saites, citus..."
 
 #: services/models.py:165
 msgid "Enable AIO"
@@ -1778,28 +1775,24 @@ msgid "Minimum AIO read size"
 msgstr "Minimālais AIO lasīšanas lielums"
 
 #: services/models.py:171
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
-"Samba lasīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
-"Noklusējuma lasīšanas izmērs ir 1."
+"Samba lasīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība."
 
 #: services/models.py:176
 msgid "Minimum AIO write size"
 msgstr "Minimālais AIO rakstīšanas lielums"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
-"Samba rakstīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
-"Noklusējuma rakstīšanas izmērs ir 1."
+"Samba rakstīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība."
 
 #: services/models.py:181
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Zeroconf kopīgojuma atrašana"
 
 #: services/models.py:183
 msgid ""
@@ -1807,6 +1800,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Zeroconf atbalsts caur Avahi ļauj klientiem (it īpaši Mac OSX finder) "
+"automātiski atrast CIFS kopīgojumus uz sistēmas, kas līdzīga Datoru Pārlūkam "
+"uz Windows."
 
 #: services/models.py:187 services/models.py:188
 #: templates/services/index.html:29
@@ -2093,14 +2089,12 @@ msgid "Portal"
 msgstr "Portāls"
 
 #: services/models.py:500
-#, fuzzy
 msgid "IP Address"
-msgstr "IPv4 adrese"
+msgstr "IP Adrese"
 
 #: services/models.py:512
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portāls"
+msgstr "Portāla IP"
 
 #: services/models.py:522 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2275,7 +2269,7 @@ msgstr "Atjaunošanas periods"
 
 #: services/models.py:743
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Laiks sekundēs. Noklusējumā ir apmēram 1 minūte."
 
 #: services/models.py:747
 msgid "Forced update period"
@@ -2293,35 +2287,31 @@ msgstr "Dinamiskais DNS"
 
 #: services/models.py:768
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Spraudņu cietuma ceļš"
 
 #: services/models.py:769
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Ceļš uz apjomu"
+msgstr "Ceļš uz spraudņu cietumu"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
-#, fuzzy
 msgid "Jail name"
-msgstr "Domēna vārds"
+msgstr "Cietuma vārds"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Spraudņu cietuma nosaukums"
 
 #: services/models.py:781
-#, fuzzy
 msgid "Jail IP address"
-msgstr "E-pasta adrese"
+msgstr "Cietuma IP adrese"
 
 #: services/models.py:784
 msgid "Plugins Path"
-msgstr ""
+msgstr "Spraudņu Ceļš"
 
 #: services/models.py:785
-#, fuzzy
 msgid "Path to the plugins directory"
-msgstr "Ceļš nav mape."
+msgstr "Ceļš uz spraudņu mapi"
 
 #: services/models.py:805
 msgid "Location"
@@ -2544,15 +2534,14 @@ msgid "Masquerade address"
 msgstr "Maskēt adresi"
 
 #: services/models.py:982
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
-"Liek serverim rādīt tīkla informāciju priekš specifiskas IP adreses "
-"klientam, pēc pieņēmuma, ka IP adrese vai DNS saimnieks darbojas kā NAT "
-"vartēja vai portu pārsūtītājs serverim."
+"Liek serverim rādīt tīkla informāciju priekš specifiskas adreses klientam, "
+"pēc pieņēmuma, ka IP adrese vai DNS saimnieks darbojas kā NAT vartēja vai "
+"portu pārsūtītājs serverim."
 
 #: services/models.py:986
 msgid "Minimum passive port"
@@ -2778,27 +2767,24 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Darbagrupas vai domēna vārds vecajā formātā, piem. WORKGROUP"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Atļaut atkārtous GIDus"
+msgstr "Atļaut Uzticamus Domēnus"
 
 #: services/models.py:1182
 msgid "Administrator Name"
 msgstr "Administratora vārds"
 
 #: services/models.py:1183
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Domēna administratora lietotāja parole."
+msgstr "Domēna Administratora lietotāja vārds."
 
 #: services/models.py:1187
 msgid "Administrator Password"
 msgstr "Administratora Parole"
 
 #: services/models.py:1188
-#, fuzzy
 msgid "Domain Administrator account password."
-msgstr "Domēna administratora lietotāja parole."
+msgstr "Domēna Administratora lietotāja parole."
 
 #: services/models.py:1192 services/models.py:1193
 #: templates/services/index.html:18
@@ -3101,25 +3087,21 @@ msgid "Add Device Extent"
 msgstr "Pievienot ierīces apjomu"
 
 #: services/nav.py:78
-#, fuzzy
 msgid "View Device Extents"
-msgstr "Skatīt visus ierīču apjomus"
+msgstr "Skatīt ierīces apjomus"
 
 #: services/nav.py:91
-#, fuzzy
 msgid "File Extents"
-msgstr "Ierīču Apjomi"
+msgstr "Datņu Apjomi"
 
 #: services/nav.py:110 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
-#, fuzzy
 msgid "Add File Extent"
-msgstr "Pievienot ierīces apjomu"
+msgstr "Pievienot datnes apjomu"
 
 #: services/nav.py:117
-#, fuzzy
 msgid "View File Extents"
-msgstr "Skatīt visus apjomus"
+msgstr "Skatīt datnes apjomus"
 
 #: services/nav.py:130 templates/services/index.html:64
 msgid "iSCSI"
@@ -3151,9 +3133,9 @@ msgid "Confirm Share Password"
 msgstr "Apstiprināt Kopīgojuma paroli"
 
 #: sharing/forms.py:123
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Ceļš neesksitē."
+msgstr "Ceļš %s neesksitē."
 
 #: sharing/forms.py:140
 msgid "The field is a not a valid IP address or network"
@@ -3217,6 +3199,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Ja taisnība, tad parole nav obligāta, lai pievienotos kopīgojumam. "
+"Privilēģijas būs tās, kuras ir viesa lietotājam."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3227,6 +3211,8 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Ja patiess, tad tikai viesa pieslēgumi kopīgojumam būs atļauti. Šim  "
+"parametram nebūs efekta, ja Atļaut Viesa Pieeju nebūs uzstādīts kopīgojumam."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3268,14 +3254,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Šie parametri ir pievienoti uz [Share] sekciju iekš smdb.conf"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Windows Kopīgojums"
+msgstr "Windows (CIFS) Kopīgojums"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Windows Kopīgojumi"
+msgstr "Windows (CIFS) Kopīgojumi"
 
 #: sharing/models.py:114
 msgid ""
@@ -3456,18 +3440,16 @@ msgstr ""
 "nav ieteicams kopīgojumiem, kurus izmanto Mac datori."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
-msgstr "No .AppleDouble"
+msgstr "Iespējot .AppleDouble"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
-"Šis noklusinās automātisko .AppleDouble mapju veidošanos. Šo iespēju "
-"nevajadzētu lietot, ja datnēm piekļust Mac datori."
+"Šis iespējos automātisko .AppleDouble mapju veidošanos. Šo iespēju vajadzētu "
+"lietot, ja datnēm piekļust Mac datori."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3530,14 +3512,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Lietot AFP3 unix privilēģijas."
 
 #: sharing/models.py:228
-#, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "AFP kopīgojums"
+msgstr "Apple (AFP) Kopīgojums"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "AFP Kopīgojumi"
+msgstr "Apple (AFP) Kopīgojumi"
 
 #: sharing/models.py:258
 msgid "Authorized network or IP addresses"
@@ -3616,14 +3596,12 @@ msgid "Group to map all users to"
 msgstr "Pie visiem lietotājiem kartējamā grupa"
 
 #: sharing/models.py:311
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "Labot NFS Kopīgojumu"
+msgstr "Unix (NFS) Kopīgojums"
 
 #: sharing/models.py:312
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "NFS Kopīgojumi"
+msgstr "Unix (NFS) Kopīgojumi"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3652,9 +3630,8 @@ msgid "Specify custom path"
 msgstr "Norādi savādāku ceļu"
 
 #: storage/forms.py:123
-#, fuzzy
 msgid "Volume add"
-msgstr "Sējuma nosaukums"
+msgstr "Pievienot sējumu"
 
 #: storage/forms.py:131
 msgid ""
@@ -3671,9 +3648,8 @@ msgstr ""
 "\".\" ."
 
 #: storage/forms.py:188
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Grupa ar šo vārdu jau eksistē."
+msgstr "Sējums ar šo vārdu jau eksistē."
 
 #: storage/forms.py:202
 msgid "Path does not exist."
@@ -3871,9 +3847,8 @@ msgid "Remote hostname"
 msgstr "Attālinātā saimniekdatora nosaukums"
 
 #: storage/forms.py:904 storage/models.py:604
-#, fuzzy
 msgid "Remote port"
-msgstr "Attālinātais saimnieks"
+msgstr "Attālinātā vartēja"
 
 #: storage/forms.py:905 storage/models.py:608
 msgid "Remote hostkey"
@@ -3925,11 +3900,11 @@ msgstr "Sējums"
 
 #: storage/models.py:188 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Slieksnis dienās"
 
 #: storage/models.py:190
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Nosaka, cik dienām jābūt starp mazgāšanām"
 
 #: storage/models.py:200 system/models.py:320 system/models.py:468
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -3986,12 +3961,11 @@ msgstr "Iespējots"
 
 #: storage/models.py:231
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "ZFS Mazgāšana"
 
 #: storage/models.py:232
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "NFS Kopīgojumi"
+msgstr "ZFS Mazgāšana"
 
 #: storage/models.py:246 system/models.py:367 system/models.py:569
 msgid "Every minute"
@@ -4035,13 +4009,12 @@ msgid "Weekends"
 msgstr "Brīvdienas"
 
 #: storage/models.py:323
-#, fuzzy
 msgid "Multipath name"
-msgstr "Moduļa vārds"
+msgstr "Multiceļu nosaukums"
 
 #: storage/models.py:329
 msgid "Multipath member"
-msgstr ""
+msgstr "Multiceļu biedrs"
 
 #: storage/models.py:342 storage/views.py:226
 msgid "Transfer Mode"
@@ -4068,7 +4041,6 @@ msgid "S.M.A.R.T. extra options"
 msgstr "S.M.A.R.T. papildus iespējas"
 
 #: storage/models.py:425
-#, fuzzy
 msgid "Disks"
 msgstr "Disks"
 
@@ -4113,15 +4085,16 @@ msgid "Remote Host"
 msgstr "Attālinātais saimnieks"
 
 #: storage/models.py:636
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Attālinātā ZFS datņu sistēma"
+msgstr "Attālinātās ZFS datņu sistēmas nosaukums"
 
 #: storage/models.py:637
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Šim vajadzētu būt ZFS datņu sistēmas nosaukumam attālinātajā pusē. piem: "
+"pūla vārds/datu kopas vārds , nevis montēšanas punkts vai datņu sistēma"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4167,18 +4140,16 @@ msgid "Begin"
 msgstr "Sākt"
 
 #: storage/models.py:698
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Turēt uzņēmumu priekš"
+msgstr "Neveidot momentuzņēmumu pirms"
 
 #: storage/models.py:702
 msgid "End"
 msgstr "Beigt"
 
 #: storage/models.py:703
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Turēt uzņēmumu priekš"
+msgstr "Neveidot momentuzņēmumu pēc"
 
 #: storage/models.py:709
 msgid "Interval"
@@ -4215,20 +4186,17 @@ msgid "Storage"
 msgstr "Glabātuve"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "Skatīt visus uzņēmumus"
+msgstr "Skatīt visus momentuzņēmumus"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Skatīt visus grupas"
+msgstr "Skatīt ZFS mazgāšanas"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "Sējuma nosaukums"
+msgstr "Sējumu Menedžeris"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4244,7 +4212,7 @@ msgstr "Skatīt Diskus"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Skatīt Multiceļus"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4252,9 +4220,8 @@ msgid "Auto Import Volume"
 msgstr "Automātiski Importēt Sējumu"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "Skatīt visus sējumus"
+msgstr "Skatīt Sējumus"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4286,7 +4253,6 @@ msgid "Volume successfully added."
 msgstr "Sējums veiksmīgi izveidots."
 
 #: storage/views.py:226
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "S.M.A.R.T. papildus iespējas"
 
@@ -4371,9 +4337,8 @@ msgid "Disk has been removed."
 msgstr "Disks ir noņemts."
 
 #: storage/views.py:633
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "Sējums ir veiksmīgi eksportēts"
+msgstr "Sējums ir veiksmīgi noņemts"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
@@ -4393,7 +4358,7 @@ msgstr "Skaitlis ir obligāts."
 
 #: system/forms.py:198
 msgid "Force"
-msgstr ""
+msgstr "Uzspiest"
 
 #: system/forms.py:217
 msgid "Max Poll should be higher than Min Poll"
