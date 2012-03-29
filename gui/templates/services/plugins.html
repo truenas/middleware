@@ -60,6 +60,10 @@
            </td>
       </tr>
 {% empty %}
-{% trans "No available plugins services" %}
+      <tr>
+        <td colspan="3">
+            {% trans "No available plugins services" %}
+        </td>
+      </tr>
 {% endfor %}
 </table>
