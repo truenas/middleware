@@ -477,35 +477,6 @@ class FirmwareUploadForm(Form):
         notifier().apply_update('/var/tmp/firmware/firmware.txz')
         request.session['allow_reboot'] = True
 
-class ServicePackUploadForm(Form):
-    servicepack = FileField(label=_("Service Pack image to be installed"), required=True)
-    sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/servicepack.txz'
-        if cleaned_data.get('servicepack'):
-            with open(filename, 'wb+') as sp:
-                for c in cleaned_data['servicepack'].chunks():
-                    sp.write(c)
-            retval = notifier().validate_update(filename)
-            if not retval:
-                msg = _(u"Invalid service pack")
-                self._errors["servicepack"] = self.error_class([msg])
-                del cleaned_data["servicepack"]
-            elif 'sha256' in cleaned_data:
-                checksum = notifier().checksum(filename)
-                if checksum != str(cleaned_data['sha256']):
-                    msg = _(u"Invalid checksum")
-                    self._errors["servicepack"] = self.error_class([msg])
-                    del cleaned_data["servicepack"]
-        else:
-            self._errors["servicepack"] = self.error_class([_("This field is required.")])
-        return cleaned_data
-    def done(self, request, *args, **kwargs):
-        filename = '/var/tmp/firmware/servicepack.txz'
-        return notifier().apply_update(filename)
-        request.session['allow_reboot'] = True
-
 class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
 
