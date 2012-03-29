@@ -443,7 +443,37 @@ def reset_factory_defaults():
         notifier().config_restore()
         os.system("/sbin/shutdown -r now")
 
+
 def configure_lagg_interface():
+
+    menu = [
+        [ _("Create Link Aggregation"), create_lagg_interface ],
+        [ _("Delete Link Aggregation"), delete_lagg_interface ],
+              ]
+    menu_map = {}
+    menu_max = 0
+    for item in menu:
+        menu_max = menu_max + 1
+        menu_map[menu_max] = item
+
+    while True:
+        print
+
+        for index in menu_map:
+            print "%d) %s" % (index, menu_map[index][0])
+
+
+        _input = raw_input(_("Enter an option from 1-%d (enter q to quit): ") % (menu_max))
+        if _input.isdigit() and int(_input) in range(1, menu_max + 1):
+            ch = int(_input)
+            if ch in menu_map:
+                menu_map[ch][1]()
+                break
+        elif _input.lower().startswith("q"):
+            return False
+        continue
+
+def create_lagg_interface():
     lagg_index = 0
     lagg_interfaces = LAGGInterface.objects.all()
     for li in lagg_interfaces:
@@ -499,6 +529,54 @@ def configure_lagg_interface():
         order += 1
 
     print _("The system must be rebooted for these changes to take effect.")
+    return True
+
+def delete_lagg_interface():
+    lagg_interfaces = LAGGInterface.objects.all()
+
+    if not lagg_interfaces.exists():
+        print
+        print "No lagg interfaces configured"
+        print
+        print "Press enter to continue"
+        raw_input()
+        return False
+
+    lagg_map = {}
+    while True:
+        print
+        print "Select which lagg interface you would like to delete:"
+        print
+
+        for idx, li in enumerate(lagg_interfaces):
+            lagg_index = int(re.split('([0-9]+)$', str(li.lagg_interface))[1]) + 1
+            lagg_map[idx + 1] = li
+
+            print "%d) lagg%s" % (idx + 1, re.split('([0-9]+)$', str(li.lagg_interface))[1])
+
+        print
+
+        _input = raw_input(_("Select an interface (q to quit): "))
+        if _input.isdigit() and int(_input) in range(1, idx + 2):
+            ch = int(_input)
+            if ch in lagg_map:
+                lagg = lagg_map[ch]
+                break
+        elif _input.lower().startswith("q"):
+            return False
+        continue
+
+
+    print _("Deleting lagg interface:"),
+    try:
+        lagg.lagg_interface.delete()
+        lagg.delete()
+    except:
+        print _("Failed")
+        return False
+    print _("Ok")
+
+
     return True
 
 def create_vlan():
