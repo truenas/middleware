@@ -811,7 +811,9 @@ class Plugins(Model):
             )
     jail_ip = models.ForeignKey(
             Alias,
-            verbose_name=_("Jail IP address")
+            on_delete=models.SET_NULL,
+            null=True,
+            verbose_name=_("Jail IP address"),
             )
     plugins_path = PathField(
             verbose_name=_("Plugins archive path"),
