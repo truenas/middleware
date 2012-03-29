@@ -13,12 +13,6 @@ This document discusses the design and goals for FreeNAS build system.
 The document will note the technologies in use and the components in the
 system.
 
-The document will also briefly touch upon related topics, such as
-packaging and installation.
-
-Finally, the document will briefly discuss the roadmap items dealing
-with installation format and the proposed installation mechanism.
-
 =====
 Goals
 =====
@@ -187,7 +181,6 @@ Longterm goals for the FreeNAS project's build system are as follows:
   #. Make create_*_image/create_iso.sh use makefs.
   #. Cross-build the entire system.
   #. Convert pre-built FreeNAS workspaces into SDKs.
-  #. Convert monolithic os-base disk image to more flexible payloads
 
 Decrease Iterative Build Times
 ==============================
@@ -317,21 +310,3 @@ goo, e.g. not third-party packages or the underlying base system.
 It would be really nice if FreeNAS workspaces could be distributed and
 developed on in a manner similar to Android and iOS apps.
 
-Convert monolithic os-base disk image to more flexible payloads
-===============================================================
-
-The current mechanism / payload makes sense with a fixed
-BOM / configuration, but FreeNAS as a project isn't limited to a single
-model or hardware line. As such disk images don't make much sense
-except when evaluating FreeNAS as a project for the first time.
-
-What makes more sense is to convert the payload to a tarfile and have
-an mtree file provide verification of the contents written out to disk
-at install time, so the installer can dynamically size the root
-partition to a specific size and go from there.
-
-Alternatively, distributing the system in GUI_Upgrade image form and
-bypassing the Full_Image payload might be more desirable as it would
-allow the system to be upgraded in a less destructive manner, but this
-would be tricky because then one would need to dd the entire filesystem
-out to the partition and rewrite the filesystem after the fact.
