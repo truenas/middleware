@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# Intended for use internally only to make 'service pack' style images.
+# Intended for use internally only to make 'hotpatch' style images.
 #
 
 MD1=
@@ -60,7 +60,7 @@ set -e
 
 echo -n "Creating temporary working directory... "
 
-PREFIX=$(realpath "$(mktemp -d sp.XXXXXX)")
+PREFIX=$(realpath "$(mktemp -d hp.XXXXXX)")
 trap cleanup EXIT
 
 
@@ -83,10 +83,10 @@ set -u
 # NOTE: Do not add trailing slashes to these values ;)
 OLD_DIR=$PREFIX/release
 NEW_DIR=$PREFIX/patched
-SP_DIR=$PREFIX/servicepack
+HP_DIR=$PREFIX/hotpatch
 
 # Trees to mount
-mkdir $OLD_DIR $NEW_DIR $SP_DIR
+mkdir $OLD_DIR $NEW_DIR $HP_DIR
 
 # Mount images at mountpoints
 mount -o ro /dev/${MD1}s1a $OLD_DIR
@@ -121,15 +121,15 @@ echo "Done!"
 echo -n "Copying changed files... "
 
 (tar cf - -C $NEW_DIR -T $PREFIX/changed.list && : > $PREFIX/.copy-ok) | \
-	tar xpf - -C $SP_DIR
+	tar xpf - -C $HP_DIR
 [ -f ${PREFIX}/.copy-ok ]
 
 echo "Done!"
 
 echo -n "Generating post-install files... "
 
-SP_SCRIPTS=$PREFIX/sp-scripts
-INSTALL_SCRIPT_DIR="$SP_SCRIPTS/install"
+HP_SCRIPTS=$PREFIX/hp-scripts
+INSTALL_SCRIPT_DIR="$HP_SCRIPTS/install"
 
 mkdir -p $INSTALL_SCRIPT_DIR
 
@@ -138,7 +138,7 @@ cat > $INSTALL_SCRIPT_DIR/0003.remove_old_files.sh <<EOF
 #!/bin/sh
 #
 # Remove all files and directories which shouldn't be present in the image
-# post-servicepack installation.
+# post-hotpatch installation.
 #
 # Garrett Cooper, March 2012
 
@@ -149,25 +149,28 @@ sed -e 's/^\./rm -rf /' $PREFIX/removed.list >> \
 
 echo "Done!"
 
-echo "Packing the service pack... "
+echo -n "Packaging the hotpatch... "
 
-cat > $PREFIX/create_servicepack.sh <<EOF
+MK_HOTPATCH=$PREFIX/mk_hotpatch.sh
+cat > $MK_HOTPATCH <<EOF
 #!/bin/sh
 
-tar -cpJf $PREFIX/servicepack.txz \\
+tar -cpJf $PREFIX/hotpatch.txz \\
 	-C "$OLD_DIR/conf/base" \\
 		etc/avatar.conf \\
 	-C $AVATAR_ROOT/nanobsd/Installer \\
 		. \\
-	-C $AVATAR_ROOT/nanobsd/ServicePack \\
+	-C $AVATAR_ROOT/nanobsd/Hotpatch \\
 		. \\
-	-C $SP_SCRIPTS \\
+	-C $HP_SCRIPTS \\
 		. \\
 	-C $PREFIX \\
 		payload.tar
 EOF
-tar -cpf $PREFIX/payload.tar -C $SP_DIR .
-sh $PREFIX/create_servicepack.sh
+tar -cpf $PREFIX/payload.tar -C $HP_DIR .
+sh $MK_HOTPATCH 
+
+echo "Done!"
 
 echo -n "Unmounting and destroying md devices... "
 
@@ -178,8 +181,8 @@ echo "Done!"
 cat <<EOF
 All done!
 
-If you want to make any changes to the service pack, add your customizations to
-\`$INSTALL_SCRIPT_DIR/0004.custom_servicepack.sh', then execute
-\`sh $PREFIX/create_servicepack.sh' to re-roll the service pack.
+If you want to make any changes to the hotpatch, add your customizations to
+\`$INSTALL_SCRIPT_DIR/0004.custom_hotpatch.sh', then execute
+\`sh $MK_HOTPATCH' to re-roll the hotpatch.
 
 EOF

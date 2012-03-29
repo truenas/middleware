@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Unpack the servicepack payload.
+# Unpack the hotpatch payload.
 #
 # Garrett Cooper, March 2012
 

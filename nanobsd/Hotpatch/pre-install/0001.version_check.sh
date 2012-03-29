@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Ensure that the service pack is built for the running system.
+# Ensure that the hotpatch is built for the running system.
 #
 # Garrett Cooper, March 2012
 
@@ -18,10 +18,10 @@ compare_version \
 ec=$?
 case $ec in
 0)
-	# Service pack is usable.
+	# Hotpatch is usable.
 	;;
 1|2)
-	error "Service pack not valid on this version of software ($old_version != $new_version)"
+	error "hotpatch not valid on this version of software ($old_version != $new_version)"
 	;;
 *)
 	error "an unknown error occurred (exit code = $ec)"
