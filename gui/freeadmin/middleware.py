@@ -25,6 +25,9 @@
 #
 #####################################################################
 from cStringIO import StringIO
+import base64
+import datetime
+import json
 import os
 import re
 import sys
@@ -34,6 +37,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
+from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
 from django.utils.translation import ugettext as _
@@ -42,6 +46,7 @@ from freenasUI import settings as mysettings
 from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
 
 COMMENT_SYNTAX = (
@@ -53,6 +58,51 @@ COMMENT_SYNTAX = (
 def public(f):
     f.__is_public = True
     return f
+
+
+def http_auth_basic(func):
+
+    def view(request, *args, **kwargs):
+        authorized = False
+        try:
+            data = json.loads(request.POST.keys()[0])
+            method = data.get("method")
+            if method in (
+                'plugins.is_authenticated',
+                'auth.getToken',
+                ):
+                authorized = True
+            else:
+                auth = request.META.get("HTTP_AUTHORIZATION")
+                _type, encoded = auth.split(' ', 1)
+                assert _type == 'Basic'
+                user, token = base64.b64decode(encoded).split(':', 1)
+                # Currently the rpc token expires if not used
+                # Do we really want that?
+                qs = RPCToken.objects.filter(token=token,
+                    last_used__gte=datetime.datetime.now() - \
+                        datetime.timedelta(hours=1))
+                if qs:
+                    token = qs[0]
+                    token.last_used = datetime.datetime.now()
+                    token.save()
+                    authorized = True
+            if authorized:
+                return func(request, *args, **kwargs)
+        except:
+            pass
+
+        # FIXME: better error handling
+        return HttpResponse(json.dumps({
+            'jsonrpc': data.get("jsonrpc"),
+            'error': {
+                'code': '500',
+                'message': 'Not authenticated',
+                },
+            'id': data.get("id"),
+        }))
+
+    return view
 
 
 class RequireLoginMiddleware(object):
@@ -81,9 +131,11 @@ class RequireLoginMiddleware(object):
             return None
         if hasattr(view_func, '__is_public'):
             return None
-        #SECURITY BREACH: FIXXXXXXXXXXXXX ME, API FAIL
-        if request.path.startswith('/plugins/'):
-            return None
+
+        # JSON-RPC calls are authenticated through HTTP Basic
+        if request.path.startswith('/plugins/json/'):
+            return http_auth_basic(view_func)(request, *view_args, **view_kwargs)
+
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
 

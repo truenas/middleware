@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import datetime
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -1441,3 +1442,8 @@ class SMART(Model):
         deletable = False
         icon_model = u"SMARTIcon"
 
+
+class RPCToken(Model):
+
+    token = models.CharField(max_length=64)
+    last_used = models.DateTimeField(default=datetime.datetime.now)
