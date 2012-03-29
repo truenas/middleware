@@ -459,7 +459,7 @@ class FirmwareUploadForm(Form):
                 with open(filename, 'wb+') as fw:
                     for c in cleaned_data['firmware'].chunks():
                         fw.write(c)
-            retval = notifier().validate_xz(filename)
+            retval = notifier().validate_update(filename)
             if not retval:
                 msg = _(u"Invalid firmware")
                 self._errors["firmware"] = self.error_class([msg])
@@ -474,7 +474,7 @@ class FirmwareUploadForm(Form):
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self, request, *args, **kwargs):
-        notifier().update_firmware('/var/tmp/firmware/firmware.txz')
+        notifier().apply_update('/var/tmp/firmware/firmware.txz')
         request.session['allow_reboot'] = True
 
 class ServicePackUploadForm(Form):
@@ -487,7 +487,7 @@ class ServicePackUploadForm(Form):
             with open(filename, 'wb+') as sp:
                 for c in cleaned_data['servicepack'].chunks():
                     sp.write(c)
-            retval = notifier().validate_xz(filename)
+            retval = notifier().validate_update(filename)
             if not retval:
                 msg = _(u"Invalid service pack")
                 self._errors["servicepack"] = self.error_class([msg])
@@ -502,7 +502,8 @@ class ServicePackUploadForm(Form):
             self._errors["servicepack"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self, request, *args, **kwargs):
-        return notifier().apply_servicepack()
+        filename = '/var/tmp/firmware/servicepack.txz'
+        return notifier().apply_update(filename)
         request.session['allow_reboot'] = True
 
 class ConfigUploadForm(Form):

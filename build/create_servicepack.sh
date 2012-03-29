@@ -32,11 +32,11 @@ PREFIX=
 
 cleanup() {
 	trap - EXIT
-	for md in $MD1 $MD2; do
-		umount /dev/$md
+	for md in $MD1 $MD2
+	do
+		umount /dev/${md}s1a
 		mdconfig -d -u $md
 	done || :
-	rm -Rf $PREFIX
 }
 
 AVATAR_ROOT="$(realpath "$(dirname "$0")/..")"
@@ -45,117 +45,141 @@ AVATAR_ROOT="$(realpath "$(dirname "$0")/..")"
 
 requires_root
 
-if [ $# != 2 ]; then
+if [ $# -ne 2 ]
+then
 	cat <<EOF
-usage: ${0##*/} release-image new-image
-both images needs to be raw and not compressed with xz
+usage: ${0##*/} old.img new.img
 EOF
 	exit 1
 fi
 
-RELEASE_IMAGE=$1
+OLD_IMAGE=$1
 NEW_IMAGE=$2
 
 set -e
 
 echo -n "Creating temporary working directory... "
 
-PREFIX=$(mktemp -d servicepack.XXXXXX)
+PREFIX=$(realpath "$(mktemp -d sp.XXXXXX)")
 trap cleanup EXIT
+
 
 echo "Done!"
 
 echo -n "Creating vnode-based mds... "
 
 # Original image
-MD1=`mdconfig -a -t vnode -f "$RELEASE_IMAGE"`
+MD1=$(mdconfig -a -f "$OLD_IMAGE")
 
 # Latest image
-MD2=`mdconfig -a -t vnode -f "$NEW_IMAGE"`
+MD2=$(mdconfig -a -f "$NEW_IMAGE")
 
 echo "Done!"
 
 echo -n "Mounting mds... "
 
+set -u
+
+# NOTE: Do not add trailing slashes to these values ;)
+OLD_DIR=$PREFIX/release
+NEW_DIR=$PREFIX/patched
+SP_DIR=$PREFIX/servicepack
+
 # Trees to mount
-rm -rf ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
-mkdir -p ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
+mkdir $OLD_DIR $NEW_DIR $SP_DIR
 
 # Mount images at mountpoints
-mount -o ro /dev/${MD1}s1a ${PREFIX}/release
-mount -o ro /dev/${MD2}s1a ${PREFIX}/patched
+mount -o ro /dev/${MD1}s1a $OLD_DIR
+mount -o ro /dev/${MD2}s1a $NEW_DIR
 
 echo "Done!"
 
-echo -n "Computing SHA256 checksums... "
+echo -n "Comparing old and new releases... "
 
-# Generate sha256 checksums
-for dir in release patched; do
-	cd ${PREFIX}/$dir
-	find . | sort > ${PREFIX}/$dir.files
-	find . -type f | sort | xargs sha256 > ${PREFIX}/$dir.sha256
+
+for dir in $OLD_DIR $NEW_DIR
+do
+	(
+	cd $dir
+	find . | sort > $dir.files
+	find . -type f -print0 | xargs -n 1 -0 sha256 | sort -k 2 > $dir.sha256
+	)
 done
 
-comm -23 ${PREFIX}/release.files ${PREFIX}/patched.files > ${PREFIX}/removed.list
-comm -13 ${PREFIX}/release.sha256 ${PREFIX}/patched.sha256 | cut -c9- | rev | cut -c69- | rev > ${PREFIX}/changed.list.tmp
-grep ^\./conf/base/ ${PREFIX}/changed.list.tmp | cut -c12- | sed -e s/^/./ > ${PREFIX}/changed.list.exclude
-comm -23 ${PREFIX}/changed.list.tmp ${PREFIX}/changed.list.exclude > ${PREFIX}/changed.list
-rm -f ${PREFIX}/changed.list.tmp ${PREFIX}/changed.list.exclude
+comm -23 $OLD_DIR.files $NEW_DIR.files
+comm -23 $OLD_DIR.files $NEW_DIR.files > $PREFIX/removed.list
+comm -13 $OLD_DIR.sha256 $NEW_DIR.sha256 | cut -c9- | rev | cut -c69- | rev > \
+    $PREFIX/changed.list.tmp
+grep ^\./conf/base/ $PREFIX/changed.list.tmp | cut -c12- | sed -e s/^/./ > \
+    $PREFIX/changed.list.exclude
+comm -23 $PREFIX/changed.list.tmp $PREFIX/changed.list.exclude > \
+    $PREFIX/changed.list
+rm -f $PREFIX/changed.list.tmp $PREFIX/changed.list.exclude
 
 echo "Done!"
 
 echo -n "Copying changed files... "
 
-tar cf - -T ${PREFIX}/changed.list | tar xf - -C ${PREFIX}/servicepack
+(tar cf - -C $NEW_DIR -T $PREFIX/changed.list && : > $PREFIX/.copy-ok) | \
+	tar xpf - -C $SP_DIR
+[ -f ${PREFIX}/.copy-ok ]
 
 echo "Done!"
 
 echo -n "Generating post-install files... "
 
-mkdir -p ${PREFIX}/servicepack/etc/servicepack
-VERSION_FILE=$(find ${PREFIX}/release/etc -name 'version*')
-cp $VERSION_FILE ${PREFIX}/servicepack/etc/servicepack/version.expected
+SP_SCRIPTS=$PREFIX/sp-scripts
+INSTALL_SCRIPT_DIR="$SP_SCRIPTS/install"
 
-POSTINSTALL=${PREFIX}/servicepack/etc/servicepack/post-install
+mkdir -p $INSTALL_SCRIPT_DIR
 
-echo '#!/bin/sh' > ${POSTINSTALL}
-echo 'mount -uw /' >> ${POSTINSTALL}
-echo 'rm -f /etc/servicepack/version.expected' >> ${POSTINSTALL}
+# Installation cleanup script.
+cat > $INSTALL_SCRIPT_DIR/0003.remove_old_files.sh <<EOF
+#!/bin/sh
+#
+# Remove all files and directories which shouldn't be present in the image
+# post-servicepack installation.
+#
+# Garrett Cooper, March 2012
 
-sed -e 's/^/rm -rf /' ${PREFIX}/removed.list >> ${POSTINSTALL}
-
-echo '# All changes to firmware volume must be done before this line'
-echo 'mount -ur /' >> ${POSTINSTALL}
-
-chmod +x ${POSTINSTALL}
+# XXX: what if the payload unpack fails?
+EOF
+sed -e 's/^\./rm -rf /' $PREFIX/removed.list >> \
+	$INSTALL_SCRIPT_DIR/0003.remove_old_files.sh
 
 echo "Done!"
 
 echo "Packing the service pack... "
 
-rm -f ${PREFIX}/servicepack.tar.xz
-cd ${PREFIX}
-tar cf servicepack.tar -C ${PREFIX}/servicepack .
-xz -9ve servicepack.tar
+cat > $PREFIX/create_servicepack.sh <<EOF
+#!/bin/sh
+
+tar -cpJf $PREFIX/servicepack.txz \\
+	-C "$OLD_DIR/conf/base" \\
+		etc/avatar.conf \\
+	-C $AVATAR_ROOT/nanobsd/Installer \\
+		. \\
+	-C $AVATAR_ROOT/nanobsd/ServicePack \\
+		. \\
+	-C $SP_SCRIPTS \\
+		. \\
+	-C $PREFIX \\
+		payload.tar
+EOF
+tar -cpf $PREFIX/payload.tar -C $SP_DIR .
+sh $PREFIX/create_servicepack.sh
 
 echo -n "Unmounting and destroying md devices... "
 
-umount -f ${PREFIX}/release
-mdconfig -d -u $MD1
-umount -f ${PREFIX}/patched
-mdconfig -d -u $MD2
-
-mv "$NEW_IMAGE_TMP" "$NEW_IMAGE"
+cleanup
 
 echo "Done!"
 
 cat <<EOF
-All done!  If you want to make any changes to the service pack as a
-post-install action, change ${POSTINSTALL} then execute:
+All done!
 
-	rm -f ${PREFIX}/servicepack.tar.xz
-	cd ${PREFIX}
-	tar --options xz:compression-level=9 -cJpf - -C ${PREFIX}/servicepack.xz .
+If you want to make any changes to the service pack, add your customizations to
+\`$INSTALL_SCRIPT_DIR/0004.custom_servicepack.sh', then execute
+\`sh $PREFIX/create_servicepack.sh' to re-roll the service pack.
 
-To re-roll the service pack.
 EOF

@@ -1801,66 +1801,44 @@ class notifier:
         self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
         self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
-    def validate_xz(self, path):
+
+    def validate_update(self, path):
 
         os.chdir(os.path.dirname(path))
 
-        try:
-            ret = self.__system_nolog('/usr/bin/tar -xJpf %s' % (path, ))
-            if ret != 0:
-                return False
+        # XXX: ugly
+        self.__system("rm -rf */")
 
-            p = subprocess.Popen(
-                                 ['bin/install_worker.sh', 'pre-install'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT,
-                                 )
-            output = p.communicate()[0]
-            if p.returncode != 0:
-                log.log(syslog.LOG_NOTICE,
-                        'install_worker pre-install failed; see the following '
-                        'output for more details:\n%s', output)
-            return p.returncode == 0
+        if self.__system_nolog('/usr/bin/tar -xJpf %s' % (path, )):
+            os.chdir('/')
+            raise MiddlewareError('The firmware is invalid')
+        try:
+            subprocess.check_output(
+                                    ['bin/install_worker.sh', 'pre-install'],
+                                    stderr=subprocess.STDOUT,
+                                    )
+        except subprocess.CalledProcessError, cpe:
+            raise MiddlewareError('The firmware is does not meet the '
+                                  'pre-install criteria: %s' % (str(cpe), ))
         finally:
             os.chdir('/')
+        # XXX: bleh
+        return True
 
-    def update_firmware(self, path):
+
+    def apply_update(self, path):
+        os.chdir(os.path.dirname(path))
         try:
-            cmd1 = 'cat %s/firmware.img' % (os.path.dirname(path), )
-            cmd2 = 'sh -x /root/update'
-            log.log(syslog.LOG_NOTICE, 'Executing: %s | %s', cmd1, cmd2)
-            p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
-            output = subprocess.check_output(shlex.split(cmd2),
-                                             stdin=p1.stdout,
-                                             stderr=subprocess.PIPE)
+            subprocess.check_output(
+                                    ['bin/install_worker.sh', 'install'],
+                                    stderr=subprocess.STDOUT,
+                                    )
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
+            os.chdir('/')
             os.unlink(path)
         open(NEED_UPDATE_SENTINEL, 'w').close()
-
-    def apply_servicepack(self):
-        self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
-        try:
-            with open(VERSION_FILE) as f:
-                freenas_build = f.read()
-        except:
-            raise MiddlewareError('Could not determine software version from '
-                                  'running system')
-        try:
-            with open('/var/tmp/firmware/etc/servicepack/version.expected') as f:
-                expected_build = f.read()
-        except:
-            raise MiddlewareError('Could not determine software version from '
-                                  'service pack')
-        if freenas_build != expected_build:
-            raise MiddlewareError('Software versions did not match ("%s" != '
-                                  '"%s")' % (freenas_build, expected_build))
-        self.__system("/sbin/mount -uw -onoatime /")
-        self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
-        self.__system("/bin/sh /etc/servicepack/post-install")
-        self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.txz")
-        self.__system("/bin/rm -fr /var/tmp/firmware/etc")
 
 
     def install_pbi(self):

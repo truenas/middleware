@@ -710,6 +710,8 @@ last_orders() {
 				etc/avatar.conf \
 			-C "$AVATAR_ROOT/nanobsd/Installer" \
 				. \
+			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/}
 
