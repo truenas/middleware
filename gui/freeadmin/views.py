@@ -26,6 +26,7 @@
 #####################################################################
 
 import datetime
+import logging
 import hashlib
 import os
 import re
@@ -52,6 +53,8 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.system.models import Advanced
+
+log = logging.getLogger('freeadmin.views')
 
 
 class JsonResponse(HttpResponse):
