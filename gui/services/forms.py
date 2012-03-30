@@ -969,6 +969,22 @@ class ExtentDelete(Form):
             os.unlink(self.instance.iscsi_target_extent_path)
 
 
+class PluginsJailDeleteForm(Form):
+    delete = forms.BooleanField(
+        label=_("Are you sure you want to delete?"),
+        initial=False,
+        required=True,
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(PluginsJailDeleteForm, self).__init__(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        events = kwargs.pop('events', None)
+        events.append("refreshPlugins()")
+
+
 class SMARTForm(ModelForm):
     class Meta:
         model = models.SMART

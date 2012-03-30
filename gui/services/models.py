@@ -827,6 +827,7 @@ class Plugins(Model):
 
     class FreeAdmin:
         deletable = False
+        delete_form = "PluginsJailDeleteForm"
         icon_model = u"SettingsIcon"
 
     def delete(self, *args, **kwargs):
@@ -1335,6 +1336,7 @@ class Rsyncd(Model):
         deletable = False
         menu_child_of = "services.Rsync"
         icon_model = u"rsyncdIcon"
+
 
 class RsyncMod(Model):
     rsyncmod_name = models.CharField(
