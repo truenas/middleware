@@ -822,8 +822,8 @@ class PluginsJail(Model):
             )
 
     class Meta:
-        verbose_name = _("Plugins Jail")
-        verbose_name_plural = _("Plugins Jail")
+        verbose_name = _("Plugins")
+        verbose_name_plural = _("Plugins")
 
     class FreeAdmin:
         deletable = False

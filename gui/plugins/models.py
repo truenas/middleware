@@ -123,7 +123,7 @@ class NullMountPoint(Model):
         verbose_name_plural = _(u"Mount Points")
 
     class FreeAdmin:
-        menu_child_of = u"services.Plugins.management"
+        menu_child_of = u"services.PluginsJail.management"
         icon_model = u"PluginsIcon"
 
     def __unicode__(self):
@@ -140,9 +140,9 @@ class NullMountPoint(Model):
         return is_mounted(device=self.source, path=self.destination)
 
     def __get_jail(self):
-        from freenasUI.services import models as smodels
+        from freenasUI.services.models import PluginsJail
         if not hasattr(self, "__jail"):
-            self.__jail = smodels.Plugins.objects.order_by('-id')[0]
+            self.__jail = PluginsJail.objects.order_by('-id')[0]
         return self.__jail
 
     @property
