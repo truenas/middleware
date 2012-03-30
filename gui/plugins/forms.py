@@ -48,6 +48,7 @@ log = logging.getLogger('plugins.forms')
 
 
 class PBIFileWizard(FileWizard):
+
     def done(self, request, form_list):
         retval = getattr(self, 'retval', None)
         events = []
@@ -62,6 +63,7 @@ class PBIFileWizard(FileWizard):
 
 
 class PluginsForm(ModelForm):
+
     class Meta:
         model = models.Plugins
         exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version', 'plugin_path')
@@ -76,7 +78,14 @@ class PluginsForm(ModelForm):
 
 
 class PBITemporaryLocationForm(Form):
-    mountpoint = forms.ChoiceField(label=_("Place to temporarily place PBI file"), help_text = _("The system will use this place to temporarily store the PBI file before it's installed."), choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
+    mountpoint = forms.ChoiceField(
+        label=_("Place to temporarily place PBI file"),
+        help_text=_("The system will use this place to temporarily store the "
+            "PBI file before it's installed."),
+        choices=(),
+        widget=forms.Select(attrs={'class': 'required'}),
+        )
+
     def __init__(self, *args, **kwargs):
         super(PBITemporaryLocationForm, self).__init__(*args, **kwargs)
         mp = Plugins.objects.order_by("-id")
@@ -85,6 +94,7 @@ class PBITemporaryLocationForm(Form):
             self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
         else:
             self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
+
     def done(self, *args, **kwargs):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 

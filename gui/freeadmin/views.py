@@ -41,7 +41,7 @@ from django.template.defaultfilters import force_escape, pprint
 from django.template.loader import get_template, template_source_loaders, render_to_string
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.utils.encoding import smart_unicode, smart_str
+from django.utils.encoding import smart_unicode
 from django.utils.importlib import import_module
 
 from dojango.views import datagrid_list
@@ -243,14 +243,15 @@ def alert_detail(request):
     else:
         return HttpResponse(_("It was not possible to retrieve the current status"))
 
-"""
-We use the django debug 500 classes to show the traceback to the user
-instead of the useless "An error occurred" used by dojo in case of
-HTTP 500 responses.
 
-As this is not a public API of django we need to duplicate some code
-"""
 class ExceptionReporter(debug.ExceptionReporter):
+    """
+    We use the django debug 500 classes to show the traceback to the user
+    instead of the useless "An error occurred" used by dojo in case of
+    HTTP 500 responses.
+
+    As this is not a public API of django we need to duplicate some code
+    """
 
     is_email = False
     def get_traceback_html(self):
@@ -754,10 +755,13 @@ def generic_model_delete(request, app, model, oid):
         if form:
             form_i = form(request.POST, instance=instance)
             if form_i.is_valid():
+                events = []
                 if hasattr(form_i, "done"):
-                    form_i.done()
+                    form_i.done(events=events)
                 instance.delete()
-                return JsonResponse(message=_("%s successfully deleted.") % m._meta.verbose_name)
+                return JsonResponse(
+                    message=_("%s successfully deleted.") % m._meta.verbose_name,
+                    events=events)
 
         else:
             instance.delete()

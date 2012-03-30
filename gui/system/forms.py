@@ -319,6 +319,7 @@ class AdvancedForm(ModelForm):
             #Invalidate cache
             request.session.pop("adv_mode", None)
 
+
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
     em_pass2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
@@ -438,17 +439,28 @@ class SMARTTestForm(ModelForm):
             'smarttest_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }
 
+
 class FirmwareTemporaryLocationForm(Form):
-    mountpoint = forms.ChoiceField(label=_("Place to temporarily place firmware file"), help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
+    mountpoint = forms.ChoiceField(
+        label=_("Place to temporarily place firmware file"),
+        help_text=_("The system will use this place to temporarily store the "
+            "firmware file before it's being applied."),
+        choices=(),
+        widget=forms.Select(attrs={'class': 'required'}),
+        )
+
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
+
     def done(self, *args, **kwargs):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
+
 
 class FirmwareUploadForm(Form):
     firmware = FileField(label=_("New image to be installed"), required=True)
     sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
+
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.txz'
@@ -473,14 +485,18 @@ class FirmwareUploadForm(Form):
         else:
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
+
     def done(self, request, *args, **kwargs):
         notifier().apply_update('/var/tmp/firmware/firmware.txz')
         request.session['allow_reboot'] = True
 
+
 class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
 
+
 class CronJobForm(ModelForm):
+
     class Meta:
         model = models.CronJob
         widgets = {
@@ -491,6 +507,7 @@ class CronJobForm(ModelForm):
             'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
             'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }
+
     def __init__(self, *args, **kwargs):
         if kwargs.has_key('instance'):
             ins = kwargs.get('instance')
@@ -501,6 +518,7 @@ class CronJobForm(ModelForm):
             if ins.cron_dayweek == '*':
                 ins.cron_dayweek = "1,2,3,4,5,6,7"
         super(CronJobForm, self).__init__(*args, **kwargs)
+
     def clean_cron_user(self):
         user = self.cleaned_data.get("cron_user")
         # See #1061 or FreeBSD PR 162976
@@ -511,6 +529,7 @@ class CronJobForm(ModelForm):
         if ' ' in user:
             raise forms.ValidationError("Usernames cannot have spaces")
         return user
+
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
         if len(m) == 12:
@@ -518,17 +537,21 @@ class CronJobForm(ModelForm):
         m = ",".join(m)
         m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
+
     def clean_cron_dayweek(self):
         w = eval(self.cleaned_data.get("cron_dayweek"))
         if len(w) == 7:
             return '*'
         w = ",".join(w)
         return w
+
     def save(self):
         super(CronJobForm, self).save()
         started = notifier().restart("cron")
 
+
 class RsyncForm(ModelForm):
+
     class Meta:
         model = models.Rsync
         widgets = {
@@ -538,6 +561,7 @@ class RsyncForm(ModelForm):
             'rsync_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
             'rsync_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }
+
     def __init__(self, *args, **kwargs):
         if kwargs.has_key('instance'):
             ins = kwargs.get('instance')
@@ -549,6 +573,7 @@ class RsyncForm(ModelForm):
                 ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
         self.fields['rsync_mode'].widget.attrs['onChange'] = "rsyncModeToggle();"
+
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
         # See #1061 or FreeBSD PR 162976

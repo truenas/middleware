@@ -784,6 +784,6 @@ class DeleteGroupForm(forms.Form):
         self.instance = kwargs.pop('instance', None)
         super(DeleteGroupForm, self).__init__(*args, **kwargs)
 
-    def done(self):
+    def done(self, *args, **kwargs):
         if self.cleaned_data.get("cascade") is True:
             models.bsdUsers.objects.filter(bsdusr_group=self.instance).delete()

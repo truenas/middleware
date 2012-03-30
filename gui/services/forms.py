@@ -951,16 +951,23 @@ class iSCSITargetForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+
 class ExtentDelete(Form):
-    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False, required=False)
+    delete = forms.BooleanField(
+        label=_("Delete underlying file"),
+        initial=False,
+        required=False,
+        )
+
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(ExtentDelete, self).__init__(*args, **kwargs)
 
-    def done(self):
+    def done(self, *args, **kwargs):
         if self.cleaned_data['delete'] and \
             self.instance.iscsi_target_extent_type == 'File':
             os.unlink(self.instance.iscsi_target_extent_path)
+
 
 class SMARTForm(ModelForm):
     class Meta:
