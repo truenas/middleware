@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-23 20:47+0200\n"
+"PO-Revision-Date: 2012-03-30 10:59+0200\n"
 "Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -104,7 +104,7 @@ msgstr "SATA 1.5 Гбит/с"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3 Гбит/с"
+msgstr "SATA 3.0Гбит/с"
 
 #: choices.py:72
 msgid "Always On"
@@ -470,7 +470,7 @@ msgstr "Немедленный Offline Тест (только ATA)"
 
 #: choices.py:558
 msgid "Rsync module"
-msgstr "Rsync модуль "
+msgstr "Rsync модуль"
 
 #: choices.py:559
 msgid "Rsync over SSH"
@@ -784,7 +784,7 @@ msgstr "Группа %s является недопустимой."
 
 #: freeadmin/forms.py:165
 msgid "The path must reside within a volume mount point"
-msgstr "Путь должен находиться в пределах точки монтирования тома."
+msgstr "Путь должен находиться в пределах точки монтирования тома"
 
 #: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
 #, python-format
@@ -952,7 +952,7 @@ msgstr "LAGG физический сетевой интерфейс (NIC)"
 #: network/forms.py:298
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Сеть '%s' неверна, просрочен CIDR"
+msgstr "Сеть '%s' неверна, просрочен CIDR."
 
 #: network/forms.py:360
 msgid "You have to specify IPv4 address as well per alias"
@@ -1214,11 +1214,11 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr "Jail путь не может содержать plugin путь"
+msgstr "Jail путь не может содержать plugin путь."
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr "Путь плагинов не может содержать jail путь"
+msgstr "Путь плагинов не может содержать jail путь."
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
 msgid "Plugin name"
@@ -1339,7 +1339,7 @@ msgstr "Службу NFS не удалось перезагрузить."
 
 #: services/forms.py:130
 msgid "The plugins path cannot be the same or reside within jail path."
-msgstr "Путь плагинов не может быть или содержать jail путь"
+msgstr "Путь плагинов не может быть или содержать jail путь."
 
 #: services/forms.py:139
 msgid "This IP already exists."
@@ -1360,7 +1360,7 @@ msgstr "Разрешения на каталог"
 #: services/forms.py:180
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
-"Это значение должно быть от 1024 до 65535 включительно. 0 - по умолчанию."
+"Это значение должно быть от 1024 до 65535 включительно. 0 - по умолчанию"
 
 #: services/forms.py:186
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1369,7 +1369,7 @@ msgstr ""
 
 #: services/forms.py:205
 msgid "This field is required for anonymous login"
-msgstr "Это поле является обязательным для анонимного входа."
+msgstr "Это поле является обязательным для анонимного входа"
 
 #: services/forms.py:212
 msgid "The ftp service failed to start."
@@ -1458,7 +1458,7 @@ msgstr "Секрет"
 
 #: services/forms.py:411 services/models.py:573
 msgid "Target side secret."
-msgstr "Секрет целевой стороны"
+msgstr "Секрет целевой стороны."
 
 #: services/forms.py:412
 msgid "Secret (Confirm)"
@@ -1788,7 +1788,7 @@ msgid ""
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 "Эти расширения позволяют Samba лучше обслуживать UNIX CIFS клиентов "
-"благодаря поддержке символических ссылок, жёстких ссылок итд."
+"благодаря поддержке символических ссылок, жёстких ссылок итд..."
 
 #: services/models.py:165
 msgid "Enable AIO"
@@ -1796,7 +1796,7 @@ msgstr "Включить AIO"
 
 #: services/models.py:166
 msgid "Enable/disable AIO support."
-msgstr "Включает/отключает AIO"
+msgstr "Включает/отключает поддержку AIO."
 
 #: services/models.py:170
 msgid "Minimum AIO read size"
@@ -1923,7 +1923,7 @@ msgstr "Метод аутентификации для просмотра"
 
 #: services/models.py:269
 msgid "I/O Timeout"
-msgstr "I/O Таймаут "
+msgstr "I/O Таймаут"
 
 #: services/models.py:270
 msgid "I/O timeout in seconds (30 by default)."
@@ -2060,7 +2060,7 @@ msgstr "Имя экстента"
 
 #: services/models.py:388
 msgid "String identifier of the extent."
-msgstr "Строковый идентификатор экстента"
+msgstr "Строковый идентификатор экстента."
 
 #: services/models.py:392
 msgid "Extent Type"
@@ -2068,7 +2068,7 @@ msgstr "Тип экстента"
 
 #: services/models.py:393
 msgid "Type used as extent."
-msgstr "Тип, используемый как экстент"
+msgstr "Тип, используемый как экстент."
 
 #: services/models.py:398
 msgid "Path to the extent"
@@ -2577,7 +2577,7 @@ msgid ""
 msgstr ""
 "Основание для сервера отображать сетевую информацию для заданного IP адреса "
 "клиенту, предполагая, что этот IP адрес или DNS хост выступает в качестве "
-"NAT-а или на нем проброшены необходимые порты"
+"NAT-а или на нем проброшены необходимые порты."
 
 #: services/models.py:986
 msgid "Minimum passive port"
@@ -2833,7 +2833,7 @@ msgstr "Active Directory"
 
 #: services/models.py:1204
 msgid "The name or IP address of the LDAP server"
-msgstr "Имя или IP-адрес сервера LDAP."
+msgstr "Имя или IP-адрес сервера LDAP"
 
 # DN - не совсем понятно что
 #: services/models.py:1208
@@ -2998,7 +2998,7 @@ msgstr "Максимум соединений"
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr ""
 "Максимальное число одновременных подключений. По умолчанию 0 (без "
-"ограничений)."
+"ограничений)"
 
 #: services/models.py:1333
 msgid ""
@@ -3017,7 +3017,7 @@ msgid ""
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
 "Этот параметр указывает имя группы для передачи файлов в/из модуля. Оставьте "
-"это поле пустым, чтобы использовать настройки по умолчанию."
+"это поле пустым, чтобы использовать настройки по умолчанию"
 
 #: services/models.py:1344
 msgid "Hosts allow"
@@ -3031,7 +3031,7 @@ msgid ""
 msgstr ""
 "Набор хостов разделённых запятой, пробелом или табуляцией, которым разрешен "
 "доступ к этому ресурсу. Вы можете указать хосты по имени или по IP-адресу. "
-"Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
+"Оставьте это поле пустым, чтобы использовать настройки по умолчанию"
 
 #: services/models.py:1349
 msgid "Hosts deny"
@@ -3051,7 +3051,7 @@ msgstr ""
 "приоритеты. В случае, если по умолчанию необходимо запретить все, "
 "используйте параметр ALL (или маску 0.0.0.0/0), а затем явно укажите хосты, "
 "доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
-"настройки по умолчанию."
+"настройки по умолчанию"
 
 #: services/models.py:1355
 msgid ""
@@ -3115,7 +3115,7 @@ msgstr "E-mail для сообщения"
 
 #: services/models.py:1402
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "E-mail получателя. Разделяйте несколько адресов точкой с запятой."
+msgstr "E-mail получателя. Разделяйте несколько адресов точкой с запятой"
 
 #: services/models.py:1405 services/models.py:1406
 #: templates/services/index.html:136
@@ -3188,7 +3188,7 @@ msgstr "Подтвердите пароль для общего доступа"
 #: sharing/forms.py:123
 #, python-format
 msgid "The path %s does not exist"
-msgstr "Путь %s не существует."
+msgstr "Путь %s не существует"
 
 #: sharing/forms.py:140
 msgid "The field is a not a valid IP address or network"
@@ -3568,7 +3568,7 @@ msgstr ""
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
-msgstr "AFP3 привилегии UNIX."
+msgstr "AFP3 привилегии UNIX"
 
 #: sharing/models.py:217
 msgid "Use AFP3 unix privileges."
@@ -3712,8 +3712,8 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Имя тома должно начинаться с буквы и может включать в себя цифры, \" -\", \"_"
-"\" и \".\"."
+"Имя тома должно начинаться с буквы и может включать в себя цифры, \" -\", \"_\" "
+"и \".\" ."
 
 #: storage/forms.py:188
 msgid "A volume with that name already exists."
@@ -4108,7 +4108,7 @@ msgstr "Включить S.M.A.R.T."
 
 #: storage/models.py:368
 msgid "S.M.A.R.T. extra options"
-msgstr "Дополнительные параметры S.M.A.R.T."
+msgstr "S.M.A.R.T. дополнительные параметры"
 
 #: storage/models.py:425
 msgid "Disks"
@@ -4324,7 +4324,7 @@ msgstr "Том успешно добавлен."
 
 #: storage/views.py:226
 msgid "S.M.A.R.T. Extra Options"
-msgstr "Дополнительные параметры S.M.A.R.T."
+msgstr "S.M.A.R.T. дополнительные параметры"
 
 #: storage/views.py:317
 msgid "Dataset successfully added."
@@ -4344,7 +4344,7 @@ msgstr "Том ZFS успешно добавлен."
 
 #: storage/views.py:389
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr "Цель iSCSI уже используется, пожалуйста сначала удалите"
+msgstr "Цель iSCSI уже используется, пожалуйста сначала удалите."
 
 #: storage/views.py:392
 msgid "ZFS Volume successfully destroyed."
@@ -4424,7 +4424,7 @@ msgstr "Это значение должно быть от 1 до 65535 вклю
 
 #: system/forms.py:173
 msgid "Number is required."
-msgstr "Необходимо значение"
+msgstr "Необходимо значение."
 
 #: system/forms.py:198
 msgid "Force"
@@ -4753,7 +4753,7 @@ msgstr "Страна"
 
 #: system/models.py:281
 msgid "Country Name (2 letter code)"
-msgstr "Название страны (двухбуквенный код)"
+msgstr "Название страны (2-х буквенный код)"
 
 #: system/models.py:287
 msgid "Common Name"
@@ -4917,7 +4917,7 @@ msgstr "Rsync обновит расширенные атрибуты, как у 
 
 #: system/models.py:541
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Дополнительные параметры rsync командной строки (обычно пусто)."
+msgstr "Дополнительные параметры rsync командной строки (обычно пусто)"
 
 #: system/models.py:549
 msgid "Rsync Task"
@@ -4929,11 +4929,11 @@ msgstr "Задачи Rsync"
 
 #: system/models.py:715
 msgid "S.M.A.R.T. Test"
-msgstr "Тест S.M.A.R.T."
+msgstr "S.M.A.R.T. тест"
 
 #: system/models.py:716
 msgid "S.M.A.R.T. Tests"
-msgstr "Тесты S.M.A.R.T."
+msgstr "S.M.A.R.T. Тесты"
 
 # или Доступно
 #: system/models.py:732 system/models.py:770 templates/system/sysctl.html:5
@@ -5582,7 +5582,7 @@ msgstr "Настройки SNMP"
 
 #: templates/services/index.html:142
 msgid "S.M.A.R.T. Settings"
-msgstr "Настройки S.M.A.R.T."
+msgstr "S.M.A.R.T. Настройки"
 
 #: templates/services/index.html:153
 msgid "SSH Settings"
@@ -5747,7 +5747,7 @@ msgstr "Добавить общий ресурс Apple (CIFS)"
 
 #: templates/sharing/apple.html:51
 msgid "Add Apple (AFP) Share"
-msgstr "Добавить общий ресурс Apple (AFP) "
+msgstr "Добавить общий ресурс Apple (AFP)"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -6187,7 +6187,7 @@ msgstr "Обновить"
 
 #: templates/system/cronjob.html:41
 msgid "No cron jobs defined."
-msgstr "Задания Cron не определены"
+msgstr "Задания Cron не определены."
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
@@ -6290,7 +6290,7 @@ msgstr "Удалённый"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
-msgstr "Задачи rsync не определены"
+msgstr "Задачи rsync не определены."
 
 #: templates/system/rsync.html:54
 msgid "Add rsync task"
@@ -6341,7 +6341,7 @@ msgstr "Добавить S.M.A.R.T. Тест"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. test"
-msgstr "Добавить тест S.M.A.R.T."
+msgstr "Добавить тест  S.M.A.R.T"
 
 #: templates/system/sysctl.html:32
 msgid "No sysctl defined."
@@ -6733,9 +6733,9 @@ msgstr "Изменить пароль"
 
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] "Пожалуйста, исправьте следующую ошибку"
-msgstr[1] "Пожалуйста, исправьте следующие ошибки"
-msgstr[2] "Пожалуйста, исправьте следующие ошибки"
+msgstr[0] "Пожалуйста, исправьте следующую ошибку."
+msgstr[1] "Пожалуйста, исправьте следующие ошибки."
+msgstr[2] "Пожалуйста, исправьте следующие ошибки."
 
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
@@ -6787,7 +6787,7 @@ msgid "Service Principal Name Password"
 msgstr "Пароль службы поддержка имён"
 
 msgid "Password of the Service Principal Name account."
-msgstr "Пароль учетной записи службы поддержка имён"
+msgstr "Пароль учетной записи службы Service Principal Name."
 
 msgid "Kerberos Keytab File"
 msgstr "Файл Kerberos Keytab"

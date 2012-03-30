@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-28 21:20+0200\n"
+"PO-Revision-Date: 2012-03-29 18:00+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -4362,11 +4362,11 @@ msgstr "Uzspiest"
 
 #: system/forms.py:217
 msgid "Max Poll should be higher than Min Poll"
-msgstr ""
+msgstr "Maksimālajam Pūlim jābūt lielākam nekā Minimālajam Pūlim"
 
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
-msgstr ""
+msgstr "Serveri nevar sasniegt. Ieķeksē \"Uzspiest\", lai vienalga turpinātu ."
 
 #: system/forms.py:391
 msgid "Place to temporarily place firmware file"
@@ -4409,6 +4409,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Lai lietotu rsync caur SSH tev vajadzīgs lietotājs<br />ar publisko atslēgu "
+"(DSA/ECDSA/RSA) uzstādītu iekš mājas mapes."
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
@@ -4443,13 +4445,12 @@ msgid "Settings"
 msgstr "Uzstādījumi"
 
 #: system/models.py:88 templates/system/ntpserver.html:5
-#, fuzzy
 msgid "Address"
-msgstr "IPv4 adrese"
+msgstr "Adrese"
 
 #: system/models.py:92 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "Uzliesmojums"
 
 #: system/models.py:94
 msgid ""
@@ -4457,10 +4458,13 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Kad serveris ir sasniedzams, sūtīt uzliesmojumu ar astoņām paketēm, izņemot "
+"tikai parasto vienu. Šis ir veidots, lai uzlabotu laika precizitātes "
+"kvalitāti ar servera komandu un s adresēm."
 
 #: system/models.py:97
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:99
 msgid ""
@@ -4468,9 +4472,11 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"Kad serveris nav sasniedzams, sūtīt uzliesmojumu ar astoņām paketēm, nevis "
+"ierasto vienu. Šis ir veidots, lai paātrinātu sākuma sinhronizācijas "
+"iegūšanu ar servera komandu un s adresēm."
 
 #: system/models.py:102 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "Vēlamais"
 
@@ -4479,20 +4485,25 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Atzīmē serveri kā vēlamu. Visām citām lietām esot vienlīdzīgām, šis "
+"saimnieks tiks izmantots sinhronizācijai starp pareizi darbojošos saimnieku "
+"kopu."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Min. Pūls"
 
 #: system/models.py:110
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"Minimālais pūla intervāls NTP ziņojumiem, kā jauda kvadrātā sekundēs. "
+"Noklusējumā 6 (64 s), bet var samazināt līdz zemākam limitam 4 (16 s)"
 
 #: system/models.py:113 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Max. Pūls"
 
 #: system/models.py:116
 msgid ""
@@ -4500,16 +4511,16 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"Maksimālais pūla intervāls NTP ziņojumiem, kā jauda kvadrātā sekundēs. "
+"Noklusējumā 10 (1,024 s), bet var samazināt līdz zemākam limitam 17 (36.4 h)"
 
 #: system/models.py:128
-#, fuzzy
 msgid "NTP Server"
-msgstr "NTP serveris 1"
+msgstr "NTP serveris"
 
 #: system/models.py:129
-#, fuzzy
 msgid "NTP Servers"
-msgstr "NTP serveris 1"
+msgstr "NTP serveris"
 
 #: system/models.py:141
 msgid "Enable Console Menu"
@@ -4544,18 +4555,17 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Iespējot Zeroconf/Bonjour"
 
 #: system/models.py:158
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Swap izmērs uz katra diska iekš GiB, skar tikai jaunus diskus.  Uzstādot šo "
-"uz 0 atspējo swap veidošanu pilnībā (STRONGLY DISCOURAGED)."
+"Lapošanas izmērs uz katra diska iekš GiB, skar tikai jaunus diskus.  "
+"Uzstādot šo uz 0 atspējo lapošanas datnes veidošanu pilnībā (STINGRI "
+"NEIETEICAMS)."
 
 #: system/models.py:163
-#, fuzzy
 msgid "Show console messages in the footer"
-msgstr "Rādīt konsoles ziņojumus kājenē (Pieprasa UI pārlādi)"
+msgstr "Rādīt konsoles ziņojumus kājenē"
 
 #: system/models.py:166
 msgid "Show tracebacks in case of fatal errors"
@@ -4563,12 +4573,11 @@ msgstr "Rādīt atpakaļtrases, ja ir fatālas kļūdas"
 
 #: system/models.py:169
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Rādīt uzlabotos laukus pēc noklusējuma"
 
 #: system/models.py:172
-#, fuzzy
 msgid "Enable autotune"
-msgstr "Iespējot atime"
+msgstr "Iespējot automātisko tūnēšanu"
 
 #: system/models.py:180
 msgid "MOTD banner"
@@ -4727,26 +4736,26 @@ msgstr "Attālinātā moduļa nosaukums"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Moduļa, kurš definēt iekš attālinātā rsync dēmona, nosaukums"
 
 #: system/models.py:449
-#, fuzzy
 msgid "Remote Path"
-msgstr "Attālinātais saimnieks"
+msgstr "Attālinātais Ceļš"
 
 #: system/models.py:451
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Ceļš uz attālinātā saimnieka rsync, piem. /mnt/tank"
 
 #: system/models.py:455 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "Mape"
+msgstr "Virziens"
 
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Grūst - No vietējās uz attālināto iekārtu. Vilkt - No attālinātās uz vietējo "
+"iekārtu."
 
 #: system/models.py:500
 msgid "Recurse into directories"
@@ -4880,14 +4889,12 @@ msgid "Sysctls"
 msgstr "Sysctli"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Tunable"
-msgstr "Iespējots"
+msgstr "Tūnējams"
 
 #: system/models.py:795
-#, fuzzy
 msgid "Tunables"
-msgstr "Iespējots"
+msgstr "Tūnējumi"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4918,23 +4925,20 @@ msgid "View Sysctls"
 msgstr "Skatīt Sysctlus"
 
 #: system/nav.py:61
-#, fuzzy
 msgid "View Tunables"
-msgstr "Skatīt Publisko Atslēgu"
+msgstr "Skatīt tūnējumus"
 
 #: system/views.py:118
 msgid "The uploaded file is not valid."
 msgstr "Augšupielādes datne nav derīga."
 
 #: system/views.py:245
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Root siešanas parole"
+msgstr "Pārlāde tiek izsaukta"
 
 #: system/views.py:267
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Izslēgt sistēmu"
+msgstr "Izslēgšana tiek izsaukta"
 
 #: system/views.py:297
 #, python-format
@@ -5056,14 +5060,12 @@ msgid "Change Admin Password"
 msgstr "Mainīt administratora paroli"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Rsync modulis"
+msgstr "Vienkāršais Režīms"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Paplašināti"
+msgstr "Uzlabotais Režīms"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:13
@@ -5370,34 +5372,31 @@ msgstr "Pievienot VLAN interfeisu"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Uzstādīts..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Uzstādīt Spraudni"
 
 #: templates/plugins/index.html:29
-#, fuzzy
 msgid "Info"
-msgstr "Neformāls"
+msgstr "Informācija"
 
 #: templates/plugins/index.html:31
 msgid "Plugin info"
-msgstr ""
+msgstr "Spraudņa informācija"
 
 #: templates/plugins/index.html:37
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Labot Portālu"
+msgstr "Labot Spraudni"
 
 #: templates/plugins/index.html:43
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Dzēst Reprodukciju"
+msgstr "Dzēst spraudni"
 
 #: templates/plugins/index.html:50
 msgid "No plugins installed"
-msgstr ""
+msgstr "Nav uzstādītu spraudņu"
 
 #: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
 #: templates/system/wizard.html:3
@@ -5407,7 +5406,7 @@ msgstr "Solis %(step)s no %(step_count)s"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Augšupielādēt Cietuma PBI"
 
 #: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
 #: templates/plugins/plugin_info.html:39
@@ -5421,9 +5420,8 @@ msgid "Please wait..."
 msgstr "Lūdzu uzgaidi..."
 
 #: templates/plugins/pbiwizard.html:16
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Augšupielādēt Konfigurāciju"
+msgstr "Augšupielādēt Spraudni"
 
 #: templates/registration/login.html:42
 msgid "Your username and password didn't match. Please try again."
@@ -5496,13 +5494,12 @@ msgid "NFS Settings"
 msgstr "NFS Uzstādījumi"
 
 #: templates/services/index.html:106 templates/services/index.html.py:108
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "AFP Uzstādījumi"
+msgstr "Spraudņa Uzstādījumi"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Uzstādīt Cietuma PBI"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5537,9 +5534,8 @@ msgid "Portals"
 msgstr "Portāli"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
-msgstr "Autorizēts Iniciators"
+msgstr "Autorizētie Iniciatori"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5597,9 +5593,8 @@ msgid "Add Extent"
 msgstr "Pievienot Apjomu"
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "Ierīču Apjomi"
+msgstr "Datņu Apjomi"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5607,7 +5602,7 @@ msgstr "Klausīties"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Nav definēta IP priekš šī Portāla"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5629,25 +5624,24 @@ msgstr "Pievienot Mērķi"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "Visas datnes iekš spraudņu cietuma tiks neatgriezeniski dzēstas."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "Dzēst apakšā esošo datni"
+msgstr "Dzēst Spraudņu Cietumu"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Cietuma ceļš"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
-msgstr ""
+msgstr "Cietuma IP"
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
-msgstr ""
+msgstr "Spraudņu ceļš"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5659,19 +5653,16 @@ msgid "Active Shares"
 msgstr "Aktīvie kopīgojumi"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
-msgstr "Šeit nav aktīvu Apple kopīgojumu."
+msgstr "Šeit nav aktīvu Apple (AFP) kopīgojumu."
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
-msgstr "Labot Apple Kopīgojumus"
+msgstr "Labot Apple (AFP) Kopīgojumus"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
-msgstr "Dzēst Apple Kopīgojumus"
+msgstr "Dzēst Apple (AFP) Kopīgojumus"
 
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
@@ -5679,73 +5670,60 @@ msgid "No shares defined"
 msgstr "Nav definētu kopīgojumu"
 
 #: templates/sharing/apple.html:49
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Pievienot Apple Kopīgojumu"
+msgstr "Pievienot Apple (CIFS) Kopīgojumu"
 
 #: templates/sharing/apple.html:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Pievienot Apple Kopīgojumu"
+msgstr "Pievienot Apple (AFP) Kopīgojumu"
 
 #: templates/sharing/index.html:2
-#, fuzzy
 msgid "Apple (AFP)"
-msgstr "Pievienot Apple Kopīgojumu (AFP)"
+msgstr "Apple (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "Pievienot UNIX Kopīgojumu (NFS)"
+msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Pievienot Windows Kopīgojumu (CIFS)"
+msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Šeit nav aktīvu UNIX Kopīgojumu."
+msgstr "Šeit nav aktīvu UNIX (NFS) Kopīgojumu."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
 msgstr "Montēšanas punkts"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
-msgstr "Labot NFS Kopīgojumu"
+msgstr "Labot UNIX (NFS) Kopīgojumu"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
-msgstr "Dzēst NFS Kopīgojumu"
+msgstr "Dzēst UNIX (NFS) Kopīgojumu"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
-msgstr "Pievienot UNIX Kopīgojumu"
+msgstr "Pievienot UNIX (NFS) Kopīgojumu"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Nav aktīvu Windows Kopīgojumu."
+msgstr "Nav aktīvu Windows (CIFS) Kopīgojumu."
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
-msgstr "Labot Windows Kopīgojumu"
+msgstr "Labot Windows (CIFS) Kopīgojumu"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
-msgstr "Dzēst Windows Kopīgojumu"
+msgstr "Dzēst Windows (CIFS) Kopīgojumu"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
-msgstr "Pievienot Windows Kopīgojumu"
+msgstr "Pievienot Windows (CIFS) Kopīgojumu"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -5895,18 +5873,16 @@ msgid "No ZFS replication available"
 msgstr "Nav pieejama ZFS reprodukcija"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Nav definētu rsync uzdevumu."
+msgstr "Nav definētu mazgāšanas uzdevumu."
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Pievienot ZFS Mazgāšanas Uzdevumu"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Pievienot ZFS sējumu"
+msgstr "Pievienot ZFS mazgājumu"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -5951,9 +5927,8 @@ msgid "Destroy"
 msgstr "Iznīcināt"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Klonēt uzņēmumu"
+msgstr "Dzēst momentuzņēmumus"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6021,9 +5996,8 @@ msgid "Status"
 msgstr "Statuss"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Veidot sējumu"
+msgstr "Atvienot Sējumu"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
@@ -6051,9 +6025,8 @@ msgid "No volumes defined"
 msgstr "Nav definētu sējumu"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Sējuma statuss"
+msgstr "Sējums, kuru paplašināt"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6092,7 +6065,6 @@ msgid "Existing data will be cleared"
 msgstr "Esošie dati tiks dzēsti"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
 msgstr "Mainīt disku"
 
@@ -6174,22 +6146,19 @@ msgstr ""
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Nav definēta vārdu servera"
+msgstr "Nav definēts NTP serveris"
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP serveris 1"
+msgstr "Pievienot NTP serveri"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "NTP serveris 1"
+msgstr "Pievienot NTP serveri"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6244,14 +6213,12 @@ msgid "Yearly Graphs"
 msgstr "Gada grafiki"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Lokālais Galvenais"
+msgstr "Lokālais Ceļš"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "Noņemt"
+msgstr "Attālinātais"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
@@ -6347,17 +6314,15 @@ msgstr "Vidējā slodze"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Savienots caur"
 
 #: templates/system/tunable.html:32
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Nav definētu ielādētāja uzstādījumu."
+msgstr "Nav definētu tūnējuma uzstādījumu."
 
 #: templates/system/tunable.html:38
-#, fuzzy
 msgid "Add Tunable"
-msgstr "Pievienot Mērķi"
+msgstr "Pievienot tūnējumu"
 
 #: templates/system/tunable.html:40
 msgid "Add Loader"
@@ -6378,9 +6343,9 @@ msgid "The volume %s status is DEGRADED"
 msgstr "Sējuma %s statuss ir DEGRADĒTS"
 
 #: tools/alert.py:107
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Sējuma %(volume)s statuss ir %(status)s"
+msgstr "Sējuma %(volume)s statuss ir %(status)s: %(message)s"
 
 #: tools/alert.py:111
 #, python-format
@@ -6406,6 +6371,7 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Sekojošās IP ir sasietas ar iSCSI Portālu, bet netika atrastas sistēmā: %s"
 
 #: tools/alert.py:169
 msgid "Critical Alerts"
