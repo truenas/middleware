@@ -287,8 +287,8 @@ menu_install()
     _config_file="/tmp/pc-sysinstall.cfg"
 
     # Start critical section.
-    trap "dialog --msgbox \"The $AVATAR_PROJECT $_action on $_disk has failed\" 6 74" EXIT
-    set -e
+    trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
+    set -ex
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
