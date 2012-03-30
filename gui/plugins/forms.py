@@ -39,7 +39,7 @@ from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
 from freenasUI.plugins import models
-from freenasUI.services.models import Plugins
+from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
 from freenasUI import choices
@@ -88,7 +88,7 @@ class PBITemporaryLocationForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(PBITemporaryLocationForm, self).__init__(*args, **kwargs)
-        mp = Plugins.objects.order_by("-id")
+        mp = PluginsJail.objects.order_by("-id")
         if mp and notifier().plugins_jail_configured():
             mp = mp[0]
             self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
@@ -120,7 +120,7 @@ class PBIUploadForm(Form):
 
 class JailInfoForm(ModelForm):
     class Meta:
-        model = Plugins
+        model = PluginsJail
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -190,7 +190,7 @@ class JailPBIUploadForm(Form):
         jailinfo = prev[1]
 
         # Create a plugins service entry
-        pj = Plugins()
+        pj = PluginsJail()
         pj.jail_path = jailinfo.cleaned_data.get('jail_path')
         pj.jail_name = jailinfo.cleaned_data.get('jail_name')
         pj.jail_ip = jailinfo.cleaned_data['jail_ip']
@@ -232,7 +232,7 @@ class NullMountPointForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(NullMountPointForm, self).__init__(*args, **kwargs)
-        jail = Plugins.objects.order_by("-pk")[0]
+        jail = PluginsJail.objects.order_by("-pk")[0]
         self.fields['destination'].widget.attrs['root'] = (
                 os.path.join(jail.jail_path, jail.jail_name)
             )

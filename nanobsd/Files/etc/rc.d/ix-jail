@@ -15,7 +15,7 @@ get_plugins_jail_name()
 		jail_name
 
 	FROM
-		services_plugins
+		services_pluginsjail
 
 	ORDER BY	
 		-id
@@ -41,7 +41,7 @@ generate_plugins_jail_config()
 		plugins_path
 
 	FROM
-		services_plugins
+		services_pluginsjail
 
 	INNER JOIN
 		network_alias as na
@@ -54,7 +54,7 @@ generate_plugins_jail_config()
 		na.alias_interface_id = ni.id
 
 	ORDER BY	
-		-services_plugins.id
+		-services_pluginsjail.id
 
 	LIMIT 1
 	" | \

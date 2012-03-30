@@ -20,7 +20,7 @@ get_jid()
 			jail_name
 
 		FROM
-			services_plugins
+			services_pluginsjail
 
 		ORDER BY
 			-id
@@ -63,7 +63,7 @@ get_jail_path()
 	SELECT
 		jail_path || '/' || jail_name as jp
 	FROM
-		services_plugins
+		services_pluginsjail
 	ORDER BY
 		-id
 	LIMIT 1
@@ -76,7 +76,7 @@ get_jail_name()
 	SELECT
 		jail_name
 	FROM
-		services_plugins
+		services_pluginsjail
 	ORDER BY
 		-id
 	LIMIT 1

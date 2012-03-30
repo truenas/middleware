@@ -111,10 +111,10 @@ class NFSForm(ModelForm):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 
-class PluginsForm(ModelForm):
+class PluginsJailForm(ModelForm):
 
     class Meta:
-        model = models.Plugins
+        model = models.PluginsJail
 
     #def clean_jail_name(self):
 
@@ -140,10 +140,10 @@ class PluginsForm(ModelForm):
         return jip
 
     def save(self):
-        super(PluginsForm, self).save()
+        super(PluginsJailForm, self).save()
         started = notifier().restart("plugins_jail")
         if started is False and models.services.objects.get(srv_service='plugins').srv_enable:
-            raise ServiceFailed("plugins_jail", _("The Plugins service failed to reload."))
+            raise ServiceFailed("plugins_jail", _("The Plugins Jail service failed to reload."))
 
 
 class FTPForm(ModelForm):

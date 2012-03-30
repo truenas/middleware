@@ -689,7 +689,7 @@ class notifier:
     
     def _started_plugins_jail(self):
         c = self.__open_db()
-        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()[0]
 
         retval = 1
@@ -732,7 +732,7 @@ class notifier:
     def plugins_jail_configured(self):
         res = False
         c = self.__open_db()
-        c.execute("SELECT count(*) from services_plugins")
+        c.execute("SELECT count(*) from services_pluginsjail")
         if int(c.fetchone()[0]) > 0:
             c.execute("""
             SELECT
@@ -741,7 +741,7 @@ class notifier:
                 jail_ip_id,
                 plugins_path
             FROM
-                services_plugins
+                services_pluginsjail
             ORDER BY
                 -id
             LIMIT 1
@@ -1858,13 +1858,13 @@ class notifier:
 
         (c, conn) = self.__open_db(ret_conn=True)
 
-        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()
         if not jail_name:
             return False
         jail_name = jail_name[0]
 
-        c.execute("SELECT plugins_path FROM services_plugins ORDER BY -id LIMIT 1")
+        c.execute("SELECT plugins_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
         plugins_path = c.fetchone()
         if not plugins_path:
             return False
@@ -2066,7 +2066,7 @@ class notifier:
         sqlvars = "jail_path, jail_name, jail_ip_id, plugins_path"
         sqlvals = "'%s', '%s', '%s', '%s'" % (jail_path, jail_name, alias_id, plugins_path)
 
-        sql = "INSERT INTO services_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
+        sql = "INSERT INTO services_pluginsjail (%s) VALUES (%s)" % (sqlvars, sqlvals)
         try:
             c.execute(sql)
             conn.commit()
@@ -2082,7 +2082,7 @@ class notifier:
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT jail_name FROM services_plugins ORDER BY -id LIMIT 1")
+        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()
         if not jail_name:
             log.debug("delete_pbi: plugins jail info not in database")
@@ -2147,7 +2147,7 @@ class notifier:
 
         log.debug("delete_plugins_jail: getting jail info from database")
         c.execute("SELECT jail_name, jail_path, plugins_path "
-            "FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+            "FROM services_pluginsjail WHERE id = :jail_id", {'jail_id': jail_id})
         jail_info = c.fetchone()
         if not jail_info:
             log.debug("delete_plugins_jail: plugins jail info not in database")
@@ -2187,7 +2187,7 @@ class notifier:
 
         log.debug("delete_plugins_jail: deleting jail from database")
         try:
-            c.execute("DELETE FROM services_plugins WHERE id = :jail_id", {'jail_id': jail_id})
+            c.execute("DELETE FROM services_pluginsjail WHERE id = :jail_id", {'jail_id': jail_id})
             c.execute("UPDATE services_services set srv_enabled = 0 WHERE srv_service = 'plugins'")
             conn.commit()
             ret = True

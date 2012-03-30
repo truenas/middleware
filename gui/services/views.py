@@ -33,7 +33,7 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.plugins import models as pmodels
+from freenasUI.plugins.models import Plugins
 from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
 
@@ -61,7 +61,7 @@ def plugins(request):
         'status_url',
         ])
 
-    plugins = pmodels.Plugins.objects.filter(plugin_enabled=True)
+    plugins = Plugins.objects.filter(plugin_enabled=True)
     for plugin in plugins:
         url = "%s://%s/plugins/%s/_s/status" % (
             'https' if request.is_secure() else 'http',
@@ -171,7 +171,7 @@ def core(request):
     plugins = None
     try:
         if notifier().plugins_jail_configured():
-            plugins = models.Plugins.objects.order_by("-id")[0]
+            plugins = models.PluginsJail.objects.order_by("-id")[0]
     except IndexError:
         plugins = None
 
@@ -363,7 +363,7 @@ def enable(request, svc):
 
 def plugins_info(request):
     try:
-        plugins = models.Plugins.objects.order_by("-id")[0]
+        plugins = models.PluginsJail.objects.order_by("-id")[0]
     except:
         plugins = None
 

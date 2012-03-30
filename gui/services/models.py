@@ -794,7 +794,7 @@ class DynamicDNS(Model):
         icon_model = u"DDNSIcon"
 
 
-class Plugins(Model):
+class PluginsJail(Model):
     jail_path = PathField(
             verbose_name=_("Plugins jail path"),
             help_text=_("Path to the plugins jail"),
@@ -822,8 +822,8 @@ class Plugins(Model):
             )
 
     class Meta:
-        verbose_name = _("Plugins")
-        verbose_name_plural = _("Plugins")
+        verbose_name = _("Plugins Jail")
+        verbose_name_plural = _("Plugins Jail")
 
     class FreeAdmin:
         deletable = False
@@ -832,7 +832,7 @@ class Plugins(Model):
 
     def delete(self, *args, **kwargs):
         notifier().delete_plugins_jail(self.id)
-        super(Plugins, self).delete(*args, **kwargs)
+        super(PluginsJail, self).delete(*args, **kwargs)
         services.objects.filter(srv_service='plugins').update(srv_enable=False)
 
 
