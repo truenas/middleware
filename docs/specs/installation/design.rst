@@ -174,23 +174,30 @@ Longterm Goals
 
 Longterm goals for the FreeNAS project's build system are as follows:
 
-  #. Convert monolithic os-base disk image to more flexible payloads
+  #. install-v03 branch work
 
-Convert monolithic os-base disk image to more flexible payloads
-===============================================================
+install-v03 Branch Work
+=======================
 
-The current mechanism / payload makes sense with a fixed
-BOM / configuration, but FreeNAS as a project isn't limited to a single
-model or hardware line. As such disk images don't make much sense
-except when evaluating FreeNAS as a project for the first time.
+Some of the work the author originally started in branches/install-v03
+was to add several missing enhancements and move towards a more
+intelligent mechanism for saving/restoring files during upgrades, and
+for installing on media.
 
-What makes more sense is to convert the payload to a tarfile and have
-an mtree file provide verification of the contents written out to disk
-at install time, so the installer can dynamically size the root
-partition to a specific size and go from there.
+Some of the goals of the work were the following:
 
-Alternatively, distributing the system in GUI_Upgrade image form and
-bypassing the Full_Image payload might be more desirable as it would
-allow the system to be upgraded in a less destructive manner, but this
-would be tricky because then one would need to dd the entire filesystem
-out to the partition and rewrite the filesystem after the fact.
+   #. Move away from BSD slices to GPT partitions to avoid the
+      complexity associated with trying to setup and manage
+      "extended partitions" so additional partitions could be created
+      and managed for things like swap, configuration files, or other
+      non-FreeNAS specific data.
+   #. Convert Full_Install images to tarballs. This would allow
+      pc-sysinstall to generate the necessary partition tables and
+      labels, then splat the contents of the tarballs on to the install
+      media.
+   #. Add in flexible gmirror/graid support so the install media could
+      be redundant to avoid having failures in the install media take
+      down the entire system. CF/USB media is great, but SATA DOMs and
+      other faster media are generally faster and more reliable.
+
+
