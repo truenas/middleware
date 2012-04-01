@@ -194,7 +194,8 @@ Some of the goals of the work were the following:
    #. Convert Full_Install images to tarballs. This would allow
       pc-sysinstall to generate the necessary partition tables and
       labels, then splat the contents of the tarballs on to the install
-      media.
+      media, and verify the install via mtree files to ensure that the
+      installation was done successfully and nothing was corrupted.
    #. Add in flexible gmirror/graid support so the install media could
       be redundant to avoid having failures in the install media take
       down the entire system. CF/USB media is great, but SATA DOMs and
