@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-27 11:49+0200\n"
+"PO-Revision-Date: 2012-04-01 09:20+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1761,7 +1761,7 @@ msgstr "Ev dizinleri"
 
 #: services/models.py:154
 msgid "Homes auxiliary parameters"
-msgstr "Evlerin yardımcı parametreleri"
+msgstr "Ev dizinlerinin yardımcı parametreleri"
 
 #: services/models.py:156
 msgid "These parameters are added to [homes] section of smb.conf"
@@ -3122,11 +3122,11 @@ msgstr "Aygıt Dosyası"
 #: services/nav.py:110 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr "Dosya Aygıtı Ekle"
+msgstr "Aygıt Dosyası Ekle"
 
 #: services/nav.py:117
 msgid "View File Extents"
-msgstr "Dosya Aygıtlarını Göster"
+msgstr "Aygıt Dosyalarını Göster"
 
 #: services/nav.py:130 templates/services/index.html:64
 msgid "iSCSI"
@@ -4901,7 +4901,7 @@ msgstr "S.M.A.R.T. Test"
 
 #: system/models.py:716
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T Testleri"
+msgstr "S.M.A.R.T. Testleri"
 
 #: system/models.py:732 system/models.py:770 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
@@ -4951,7 +4951,7 @@ msgstr "Rsync Görevleri Görüntüle"
 
 #: system/nav.py:47
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T Test Görüntüle"
+msgstr "S.M.A.R.T. Testleri Görüntüle"
 
 #: system/nav.py:54
 msgid "View Sysctls"
@@ -5544,7 +5544,7 @@ msgstr "SNMP Ayarları"
 
 #: templates/services/index.html:142
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T Ayarları"
+msgstr "S.M.A.R.T. Ayarları"
 
 #: templates/services/index.html:153
 msgid "SSH Settings"
@@ -5572,7 +5572,7 @@ msgstr "Yetkili Başlatıcılar"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
-msgstr "Kimlik doğrulama"
+msgstr "Kimlik Doğrulama"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5657,7 +5657,7 @@ msgstr "Hedef Ekle"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "Eklentileri jail içinden tüm dosyaları kalıcı olarak silinecek."
+msgstr "Jail içindeki tüm eklenti dosyaları kalıcı olarak silinecek."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
@@ -6398,7 +6398,7 @@ msgstr "%s WebGUI Adresine bağlanamadı; joker karakter kullanıyorsanız"
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
-msgstr "Aşağıdaki IP'leri iSCSI Portalına bağlı ancak sistemde bulunmadı: %s"
+msgstr "Aşağıdaki IP'ler iSCSI Portalına bağlı ancak sistemde bulunmadı: %s"
 
 #: tools/alert.py:169
 msgid "Critical Alerts"
