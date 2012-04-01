@@ -294,6 +294,8 @@ menu_install()
     # we can now build a config file for pc-sysinstall
     build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
+    # For one of the install_worker ISO scripts
+    export INSTALL_MEDIA=${_disk}
     if [ ${_do_upgrade} -eq 1 ]
     then
         /etc/rc.d/dmesg start
@@ -310,6 +312,11 @@ menu_install()
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
+    else
+        # Run through some sanity checks on new installs ;).. some of the
+        # checks won't make sense, but others might (e.g. hardware sanity
+        # checks).
+        install_worker.sh -D / -m / pre-install
     fi
 
     # Run pc-sysinstall against the config generated
