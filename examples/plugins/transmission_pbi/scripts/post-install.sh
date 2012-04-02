@@ -8,7 +8,8 @@ mkdir -p ${transmission_pbi_path}/mnt
 mkdir -p ${transmission_pbi_path}/www
 mkdir -p ${transmission_pbi_path}/etc/transmission/home/Downloads
 
-find ${transmission_pbi_path}/lib -iname "*.pyc" -delete
+find ${transmission_pbi_path}/lib -iname "*.py[co]" -delete
+rm -rf ${transmission_pbi_path}/share/doc
 
 mv ${transmission_pbi_path}/transmission /usr/local/etc/rc.d/
 
