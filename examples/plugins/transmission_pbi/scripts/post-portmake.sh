@@ -6,4 +6,3 @@
 transmission_pbi_path=/usr/pbi/transmission-$(uname -m)/
 
 find ${transmission_pbi_path}/lib -iname "*.py[co]" -delete
-rm -rf ${transmission_pbi_path}/share/doc
