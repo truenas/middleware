@@ -62,7 +62,7 @@ class Migration(SchemaMigration):
             ('cifs_srv_description', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('cifs_srv_doscharset', self.gf('django.db.models.fields.CharField')(default='CP437', max_length=120)),
             ('cifs_srv_unixcharset', self.gf('django.db.models.fields.CharField')(default='UTF-8', max_length=120)),
-            ('cifs_srv_loglevel', self.gf('django.db.models.fields.CharField')(default='Minimum', max_length=120)),
+            ('cifs_srv_loglevel', self.gf('django.db.models.fields.CharField')(default='1', max_length=120)),
             ('cifs_srv_localmaster', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('cifs_srv_timeserver', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('cifs_srv_guest', self.gf('django.db.models.fields.CharField')(default='www', max_length=120)),
@@ -293,7 +293,7 @@ class Migration(SchemaMigration):
         cifs.cifs_srv_description='%s Server' % (SW_NAME, )
         cifs.cifs_srv_doscharset='CP437'
         cifs.cifs_srv_unixcharset='UTF-8'
-        cifs.cifs_srv_loglevel='Minimum'
+        cifs.cifs_srv_loglevel = '1'
         cifs.cifs_srv_localmaster=True
         cifs.cifs_srv_timeserver=True
         cifs.cifs_srv_guest='nobody'

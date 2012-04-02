@@ -98,7 +98,7 @@ class CIFS(Model):
     cifs_srv_loglevel = models.CharField(
             max_length=120,
             choices=choices.LOGLEVEL_CHOICES,
-            default = "Minimum",
+            default=choices.LOGLEVEL_CHOICES[0][0],
             verbose_name=_("Log level")
             )
     cifs_srv_localmaster = models.BooleanField(
