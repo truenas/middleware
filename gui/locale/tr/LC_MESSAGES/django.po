@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-04-01 09:20+0200\n"
+"PO-Revision-Date: 2012-04-02 06:56+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -474,11 +474,11 @@ msgstr "SSH üzerinden Rsync"
 
 #: choices.py:563
 msgid "Push"
-msgstr "Bas"
+msgstr "Gönder"
 
 #: choices.py:564
 msgid "Pull"
-msgstr "Çek"
+msgstr "Al"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -4788,7 +4788,7 @@ msgstr "Yön"
 #: system/models.py:456
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
-msgstr "Bas - Yerelden uzak makineye. Çek - Uzaktan yerel makineye."
+msgstr "Gönder - Yerelden uzak makineye. Al - Uzaktan yerel makineye."
 
 #: system/models.py:500
 msgid "Recurse into directories"

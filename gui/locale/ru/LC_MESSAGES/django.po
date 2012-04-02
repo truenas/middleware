@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-03-30 11:09+0200\n"
-"Last-Translator: Evilupe <evilupe@gmail.com>\n"
+"PO-Revision-Date: 2012-04-01 14:58+0200\n"
+"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -799,7 +799,7 @@ msgstr "Добавить %s"
 #: freeadmin/navtree.py:346
 #, python-format
 msgid "View %s"
-msgstr "Смотерть %s"
+msgstr "Смотреть %s"
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
