@@ -209,7 +209,7 @@ def treemenu(request):
 
     plugin = {
         'name': 'Transmission',
-        'append_to': 'services.Plugins',
+        'append_to': 'services.PluginsJail',
         'icon': 'SettingsIcon',
         'type': 'pluginsfcgi',
         'url': reverse('transmission_edit'),
