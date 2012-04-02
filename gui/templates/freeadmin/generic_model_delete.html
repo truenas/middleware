@@ -9,6 +9,17 @@
     {{ form }}
 {% endif %}
     {% block message %}
+    {% if related_num > 0 %}
+    <tr>
+        <td>{% blocktrans with related_num=related_num %}There are {{ related_num }} related entries that are going to be delete as well because depend on this{% endblocktrans %}:
+            <ul>
+                {% for name, objs in related.items %}
+                    <li>{{ name }}: {% for obj in objs %}{{ obj }}{% if not forloop.last %}, {% endif %}{% endfor %}</li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+    {% endif %}
     <tr>
         <td>{% trans "Are you sure you want to delete?" %}</td>
     </tr>

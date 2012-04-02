@@ -49,6 +49,7 @@ from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin import navtree
+from freenasUI.freeadmin.utils import get_related_objects
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services.exceptions import ServiceFailed
@@ -745,12 +746,15 @@ def generic_model_delete(request, app, model, oid):
     except:
         form = None
 
+    related, related_num = get_related_objects(instance)
     context = {
         'app': app,
         'model': model,
         'oid': oid,
         'object': instance,
         'verbose_name': instance._meta.verbose_name,
+        'related': related,
+        'related_num': related_num,
     }
 
     form_i = None
