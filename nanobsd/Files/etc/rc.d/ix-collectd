@@ -52,7 +52,10 @@ LoadPlugin uptime
 <Plugin "df">
 EOF
 
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path FROM storage_mountpoint WHERE mp_path LIKE '/%'" | sed -e 's,^,    Mountpoint ",g' -e 's,$,",g' >> ${cfg}
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path FROM storage_mountpoint m LEFT JOIN storage_volume v ON m.mp_volume_id=v.id WHERE m.mp_path LIKE '/%' AND v.vol_fstype != 'ZFS'" | sed -e 's,^,    Mountpoint ",g' -e 's,$,",g' >> ${cfg}
+    for fs in `zfs list -t filesystem -o mountpoint -H`; do
+        echo "    Mountpoint \"${fs}\"" >> ${cfg}
+    done
 echo '    IgnoreSelected false' >> ${cfg}
 echo '</Plugin>' >> ${cfg}
 }
