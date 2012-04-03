@@ -275,7 +275,7 @@ class VolumeWizardForm(forms.Form):
         if cleaned_data.get("volume_fstype") not in ('ZFS', 'UFS'):
             msg = _(u"You must select a filesystem")
             self._errors["volume_fstype"] = self.error_class([msg])
-            cleaned_data.pop("volume_fstype")
+            cleaned_data.pop("volume_fstype", None)
         if len(disks) == 0 and models.Volume.objects.filter(
                 vol_name=volume_name).count() == 0:
             msg = _(u"This field is required")
