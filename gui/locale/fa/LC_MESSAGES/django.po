@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:42-0800\n"
-"PO-Revision-Date: 2012-02-01 07:50+0200\n"
-"Last-Translator: ghazizadeh <ghazizadeh_a@yahoo.com>\n"
+"PO-Revision-Date: 2012-04-02 13:58+0200\n"
+"Last-Translator: alamati <alamati@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
@@ -338,43 +338,43 @@ msgstr ""
 
 #: choices.py:282 choices.py:287 choices.py:552
 msgid "Off"
-msgstr ""
+msgstr "خاموش"
 
 #: choices.py:288
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (توصیه می‌شود)"
 
 #: choices.py:289
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (سطح پیش‌فرض، ۶)"
 
 #: choices.py:290
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (سریع‌ترین)"
 
 #: choices.py:291
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (بیشینه، کُند)"
 
 #: choices.py:485
 msgid "Hour(s)"
-msgstr ""
+msgstr "ساعت(ها)"
 
 #: choices.py:486
 msgid "Day(s)"
-msgstr ""
+msgstr "روز(ها)"
 
 #: choices.py:487
 msgid "Week(s)"
-msgstr ""
+msgstr "هفته(ها)"
 
 #: choices.py:488
 msgid "Month(s)"
-msgstr ""
+msgstr "ماه(ها)"
 
 #: choices.py:489
 msgid "Year(s)"
-msgstr ""
+msgstr "سال(ها)"
 
 #: choices.py:493 storage/models.py:262 storage/models.py:287
 #: system/models.py:383 system/models.py:408 system/models.py:585
@@ -388,11 +388,11 @@ msgstr ""
 
 #: choices.py:500
 msgid "Read-only"
-msgstr ""
+msgstr "تنها خواندنی"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr ""
+msgstr "تنها نوشتنی"
 
 #: choices.py:502
 msgid "Read and Write"
@@ -502,7 +502,7 @@ msgstr ""
 #: system/models.py:224 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr ""
+msgstr "شناسه"
 
 #: account/forms.py:200
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
