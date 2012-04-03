@@ -2606,16 +2606,32 @@ class notifier:
         return retval
 
     def zfs_set_option(self, name, item, value):
+        """
+        Set a ZFS attribute using zfs set
+
+        Returns:
+            tuple(bool, str)
+                bool -> Success?
+                str -> Error message in case of error
+        """
         name = str(name)
         item = str(item)
         value = str(value)
         zfsproc = self.__pipeopen('zfs set %s=%s "%s"' % (item, value, name))
-        zfsproc.wait()
+        err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
-            return True
-        return False
+            return True, None
+        return False, err
 
     def zfs_inherit_option(self, name, item, recursive=False):
+        """
+        Inherit a ZFS attribute using zfs inherit
+
+        Returns:
+            tuple(bool, str)
+                bool -> Success?
+                str -> Error message in case of error
+        """
         name = str(name)
         item = str(item)
         if recursive:
@@ -2623,8 +2639,10 @@ class notifier:
         else:
             zfscmd = 'zfs inherit %s %s' % (item, name)
         zfsproc = self.__pipeopen(zfscmd)
-        zfsproc.wait()
-        return (zfsproc.returncode == 0)
+        err = zfsproc.communicate()[1]
+        if zfsproc.returncode == 0:
+            return True, None
+        return False, err
 
     def zfs_dataset_release_snapshots(self, name, recursive=False):
         name = str(name)

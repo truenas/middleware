@@ -334,23 +334,38 @@ def dataset_edit(request, dataset_name):
                 dataset_form.cleaned_data["dataset_refquota"] = "none"
 
             error = False
+            errors = {}
 
-            for attr in ('compression', 'atime'):
+            for attr in ('compression',
+                    'atime',
+                    'reservation',
+                    'refreservation',
+                    'quota',
+                    'refquota',
+                    ):
                 formfield = 'dataset_%s' % attr
                 if dataset_form.cleaned_data[formfield] == "inherit":
-                    error |= not notifier().zfs_inherit_option(dataset_name, attr)
+                    success, err = notifier().zfs_inherit_option(
+                        dataset_name,
+                        attr,
+                        )
                 else:
-                    error |= not notifier().zfs_set_option(dataset_name, attr, dataset_form.cleaned_data[formfield])
-
-            error |= not notifier().zfs_set_option(dataset_name, "reservation", dataset_form.cleaned_data["dataset_reservation"])
-            error |= not notifier().zfs_set_option(dataset_name, "refreservation", dataset_form.cleaned_data["dataset_refreservation"])
-            error |= not notifier().zfs_set_option(dataset_name, "quota", dataset_form.cleaned_data["dataset_quota"])
-            error |= not notifier().zfs_set_option(dataset_name, "refquota", dataset_form.cleaned_data["dataset_refquota"])
+                    success, err = notifier().zfs_set_option(
+                        dataset_name,
+                        attr,
+                        dataset_form.cleaned_data[formfield],
+                        )
+                error |= not success
+                if not success:
+                    errors[formfield] = err
 
             if not error:
                 return JsonResponse(message=_("Dataset successfully edited."))
             else:
-                dataset_form.set_error(_("An error occurred when setting the options"))
+                for field, err in errors.items():
+                    dataset_form._errors[field] = dataset_form.error_class([
+                        err,
+                        ])
     else:
         dataset_form = forms.ZFSDataset_EditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
@@ -397,9 +412,12 @@ def zvol_delete(request, name):
             'name': name,
         })
 
+
 def zfsvolume_edit(request, object_id):
+
     mp = models.MountPoint.objects.get(pk=object_id)
     volume_form = forms.ZFSVolume_EditForm(mp=mp)
+
     if request.method == 'POST':
         volume_form = forms.ZFSVolume_EditForm(request.POST, mp=mp)
         if volume_form.is_valid():
@@ -410,22 +428,35 @@ def zfsvolume_edit(request, object_id):
             if volume_form.cleaned_data["volume_refquota"] == "0":
                 volume_form.cleaned_data["volume_refquota"] = "none"
 
-            error = False
-
-            for attr in ('compression', 'atime'):
+            error, errors = False, {}
+            for attr in ('compression',
+                    'atime',
+                    'refquota',
+                    'refreservation',
+                    ):
                 formfield = 'volume_%s' % attr
                 if volume_form.cleaned_data[formfield] == "inherit":
-                    error |= not notifier().zfs_inherit_option(volume_name, attr)
+                    success, err = notifier().zfs_inherit_option(
+                        volume_name,
+                        attr,
+                        )
                 else:
-                    error |= not notifier().zfs_set_option(volume_name, attr, volume_form.cleaned_data[formfield])
-
-            error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
-            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreservation"])
+                    success, err = notifier().zfs_set_option(
+                        volume_name,
+                        attr,
+                        volume_form.cleaned_data[formfield],
+                        )
+                if not success:
+                    error = True
+                    errors[formfield] = err
 
             if not error:
                 return JsonResponse(message=_("Native dataset successfully edited."))
             else:
-                volume_form.set_error(_("An error occurred when setting the options"))
+                for field, err in errors.items():
+                    volume_form._errors[field] = volume_form.error_class([
+                        err,
+                        ])
     return render(request, 'storage/volume_edit.html', {
         'mp': mp,
         'form': volume_form
