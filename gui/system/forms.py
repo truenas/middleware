@@ -728,4 +728,4 @@ class TunableForm(ModelForm):
 
     def save(self):
         super(TunableForm, self).save()
-        notifier().reload("loader")
+        notifier().reload("ix-loader")
