@@ -5,7 +5,8 @@ class FreenasController extends Zend_Controller_Action
 
     public function init()
     {
-	    $this->_helper->viewRenderer->setNoRender(TRUE);
+        $this->_helper->viewRenderer->setNoRender(TRUE);
+        $this->getResponse()->setHeader('Content-type', 'application/json');
     }
 
     public function treemenuAction()
