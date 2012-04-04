@@ -167,7 +167,7 @@ generate_loader_confs_noautotune()
 {
 	reboot_now=false
 
-	do_autotune
+	generate_boot_loader_conf_local
 }
 
 name="ix-loader"
