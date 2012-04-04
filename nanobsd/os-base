@@ -251,6 +251,9 @@ add_port devel/bison WITHOUT_X11=y
 add_port devel/libffi WITHOUT_X11=y
 add_port devel/gobject-introspection
 
+add_port www/py-httplib2
+add_port net/py-oauth2
+
 if [ "${REPORTING}" = 1 ]; then
 add_port graphics/png WITHOUT_X11=y
 fi
