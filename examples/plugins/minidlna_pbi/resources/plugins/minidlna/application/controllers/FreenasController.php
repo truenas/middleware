@@ -16,7 +16,7 @@ class FreenasController extends Zend_Controller_Action
                 'name' => 'MiniDLNA',
                 'append_to' => 'services.PluginsJail',
                 'type' => 'pluginsfcgi',
-                'url' => '/plugins/minidlna/edit',
+                'url' => '/plugins/minidlna/index/edit',
             ),
         ));
     }
