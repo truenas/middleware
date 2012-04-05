@@ -10,7 +10,7 @@ class FreeNAS_Lib_MiniDLNA {
             'opt' => '-d',
             ),
     );
-    const CONTROL = "/usr/local/etc/rc.d/minidlna";
+    const CONTROL = "/usr/local/bin/sudo /usr/local/etc/rc.d/minidlna";
 
     function __construct() {
 
@@ -71,7 +71,6 @@ class FreeNAS_Lib_MiniDLNA {
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
         $proc = proc_open(self::CONTROL . " start", $desc, $pipes);
-        echo self::CONTROL . " start";
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
