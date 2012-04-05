@@ -11,70 +11,30 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
         ));
         $this->setDecorators(array(
             'FormElements',
+            array('HtmlTag', array('tag' => 'table')),
             'DijitForm',
         ));
-        $textForm = new Zend_Dojo_Form_SubForm();
-        $textForm->setAttribs(array(
-            'name'   => 'textboxtab',
-            'legend' => 'Text Elements',
-            'dijitParams' => array(
-                'title' => 'Text Elements',
-            ),
+        $this->setElementDecorators(array(
+            'DijitElement',
+            'Errors',
+            array(array('data' => 'HtmlTag'), array('tag' => 'td')),
+            array('Label', array('tag' => 'td')),
+            array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
         ));
-        $textForm->addElement(
-                'TextBox',
-                'textbox',
+        $this->addElement(
+                'CheckBox',
+                'enabled',
                 array(
-                    'value'      => 'some text',
-                    'label'      => 'TextBox',
-                    'trim'       => true,
-                    'propercase' => true,
+                    'label'      => 'Enabled',
                 )
             )
             ->addElement(
                 'DateTextBox',
                 'datebox',
                 array(
-                    'value' => '2008-07-05',
-                    'label' => 'DateTextBox',
+                    'value'     => '2008-07-05',
+                    'label'     => 'DateTextBox',
                     'required'  => true,
-                )
-            )
-            ->addElement(
-                'TimeTextBox',
-                'timebox',
-                array(
-                    'label' => 'TimeTextBox',
-                    'required'  => true,
-                )
-            )
-            ->addElement(
-                'CurrencyTextBox',
-                'currencybox',
-                array(
-                    'label' => 'CurrencyTextBox',
-                    'required'  => true,
-                    // 'currency' => 'USD',
-                    'invalidMessage' => 'Invalid amount. ' .
-                                        'Include dollar sign, commas, ' .
-                                        'and cents.',
-                    // 'fractional' => true,
-                    // 'symbol' => 'USD',
-                    // 'type' => 'currency',
-                )
-            )
-            ->addElement(
-                'NumberTextBox',
-                'numberbox',
-                array(
-                    'label' => 'NumberTextBox',
-                    'required'  => true,
-                    'invalidMessage' => 'Invalid elevation.',
-                    'constraints' => array(
-                        'min' => -20000,
-                        'max' => 20000,
-                        'places' => 0,
-                    )
                 )
             )
             ->addElement(
@@ -87,17 +47,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                     'invalidMessage' => 'Invalid non-space text.',
                 )
             )
-            ->addElement(
-                'Textarea',
-                'textarea',
-                array(
-                    'label'    => 'Textarea',
-                    'required' => true,
-                    'style'    => 'width: 200px;',
-                )
-            );
-
-        $this->addSubForm($textForm, 'textboxtab');
+            ;
 
     }
 }
