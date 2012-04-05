@@ -72,6 +72,7 @@ class IndexController extends Zend_Controller_Action
         } else {
             $form->enabled->setValue($minidlna->getEnabled());
             $form->media_dir->setValue($minidlna->getMediaDir());
+            $form->port->setValue($minidlna->getPort());
             $this->view->form = $form;
         }
     }

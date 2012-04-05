@@ -36,6 +36,11 @@ class MiniDLNA
      */
     protected $media_dir = null;
 
+    /**
+     * @var     integer
+     * @Column(type="integer")
+     */
+    protected $port = 8200;
 
     public function __construct()
     {
@@ -91,6 +96,23 @@ class MiniDLNA
     public function setMediaDir($mediadir)
     {
         $this->media_dir = $mediadir;
+    }
+
+    /**
+     * @return  integer
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * @param   integer  $username
+     * @return  void
+     */
+    public function setPort($port)
+    {
+        $this->port = $port;
     }
 
 }
