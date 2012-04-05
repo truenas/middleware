@@ -14,7 +14,7 @@ class FreeNAS_Lib_MiniDLNA {
 
     function __construct() {
 
-        $this->ARCH = trim(shell_exec('/usr/bin/uname -m'));
+        $this->ARCH = php_uname("m");
         $this->BASE = "/usr/pbi/minidlna-" . $this->ARCH;
         $this->CONF = $this->BASE . "/etc/minidlna.conf";
         $this->RCCONF = $this->BASE . "/etc/rc.conf";
@@ -71,6 +71,20 @@ class FreeNAS_Lib_MiniDLNA {
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
         $proc = proc_open(self::CONTROL . " start", $desc, $pipes);
+        $stdout = stream_get_contents($pipes[1]);
+        $retval = proc_close($proc);
+        return $stdout;
+
+    }
+
+    public function stop() {
+
+        $desc = array(
+           0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+           1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
+           2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
+        );
+        $proc = proc_open(self::CONTROL . " stop", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
