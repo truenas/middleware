@@ -13,10 +13,10 @@ control_start() {
 	port=$2
 
 	tmp=$(mktemp -t php)
-	sed -e "s/^listen.*/listen = $ip:$port/" -e "s,^pid .*,pid = ${PHP_FPM_PID}," ${PHP_FPM_CONF} > ${tmp}
+	sed -e "s/^listen\s*=\s*.*/listen = $ip:$port/" -e "s,^pid .*,pid = ${PHP_FPM_PID}," ${PHP_FPM_CONF} > ${tmp}
 	mv ${tmp} ${PHP_FPM_CONF}
 
-	${PHP_FPM} -y ${PHP_FPM_CONF} -d cgi.fix_pathinfo=0
+	${PHP_FPM} -y ${PHP_FPM_CONF}
 
 	return $?
 
