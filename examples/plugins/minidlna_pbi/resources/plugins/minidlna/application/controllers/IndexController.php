@@ -20,8 +20,6 @@ class IndexController extends Zend_Controller_Action
         $minidlna = $em->getRepository('Entity\MiniDLNA')->findAll();
         if(count($minidlna) != 0) {
             $minidlna = $minidlna[0];
-            //$em->persist($paul);
-            //$em->flush();
         } else {
             $minidlna = new Entity\MiniDLNA();
         }
@@ -34,12 +32,21 @@ class IndexController extends Zend_Controller_Action
             $this->getResponse()->setHeader('Content-type', 'application/json');
 
             if($form->isValid($_POST)) {
+                //foreach($form->getValues() as $field => $value) {
+
+                //}
+                $values = $form->getValues();
+                $minidlna->setEnabled($values['enabled']);
+                $minidlna->setMediaDir($values['media_dir']);
+                $em->persist($minidlna);
+                $em->flush();
                 echo json_encode(
                     array(
                         'error' => false,
                         'message' => 'Settings successfully updated',
                     )
                 );
+
             } else {
 
                 $data =    array(
@@ -59,7 +66,9 @@ class IndexController extends Zend_Controller_Action
             }
 
         } else {
+                $a = new FreeNAS_Lib_MiniDLNA();
             $form->enabled->setValue($minidlna->getEnabled());
+            $form->media_dir->setValue($minidlna->getMediaDir());
             $this->view->form = $form;
         }
     }

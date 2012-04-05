@@ -25,10 +25,16 @@ class MiniDLNA
     protected $enabled = false;
 
     /**
+     * @var     boolean
+     * @Column(type="boolean")
+     */
+    protected $debug = false;
+
+    /**
      * @var     string
      * @Column(type="string")
      */
-    protected $email = null;
+    protected $media_dir = null;
 
 
     public function __construct()
@@ -68,6 +74,23 @@ class MiniDLNA
     public function setEnabled($enabled)
     {
         $this->enabled = $enabled;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getMediaDir()
+    {
+        return $this->media_dir;
+    }
+
+    /**
+     * @param   string  $username
+     * @return  void
+     */
+    public function setMediaDir($mediadir)
+    {
+        $this->media_dir = $mediadir;
     }
 
 }

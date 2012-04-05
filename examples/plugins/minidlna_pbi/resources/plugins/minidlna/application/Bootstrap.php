@@ -24,7 +24,12 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'resourceTypes' => array(
                     'forms' => array(
                         'path' => '/forms',
-                        'namespace' => 'Form')
+                        'namespace' => 'Form',
+                        ),
+                    'libs' => array(
+                        'path' => 'libs/',
+                        'namespace' => 'Lib',
+                        )
                 )
             )
         );
@@ -72,7 +77,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         // the proxy classes' namespace
         $configuration->setProxyNamespace($zendConfig['doctrine']['proxyNamespace']);
 
-        // the next option tells doctrine which description language we want to use for the mapping 
+        // the next option tells doctrine which description language we want to use for the mapping
         // information
         $configuration->setMetadataDriverImpl(
             $configuration->newDefaultAnnotationDriver(

@@ -20,6 +20,20 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
         ));
 
+        $media_dir = new Zend_Form_Element_Text(array(
+            'name' => 'media_dir',
+            'label' => 'Media Directory',
+            'required' => true,
+            'dojoType' => 'freeadmin.form.PathSelector')
+            );
+        $media_dir->setDecorators(array(
+            'ViewHelper',
+            'Errors',
+            array(array('data' => 'HtmlTag'), array('tag' => 'td')),
+            array('Label', array('tag' => 'td')),
+            array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
+            ));
+
         $this->addElement(
                 'CheckBox',
                 'enabled',
@@ -29,15 +43,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                     'allowEmpty' => true,
                 )
             )
-            ->addElement(
-                'DateTextBox',
-                'datebox',
-                array(
-                    'value'     => '2008-07-05',
-                    'label'     => 'DateTextBox',
-                    'required'  => true,
-                )
-            )
+            ->addElement($media_dir)
             ;
 
     }
