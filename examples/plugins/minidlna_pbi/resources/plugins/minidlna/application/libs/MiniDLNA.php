@@ -34,6 +34,8 @@ class FreeNAS_Lib_MiniDLNA {
         fwrite($fp, sprintf("media_dir=%s\n", $obj->getMediaDir()));
         fclose($fp);
 
+        shell_exec($this->BASE . "/tweak-rcconf");
+
     }
 
     public function status() {
@@ -58,6 +60,21 @@ class FreeNAS_Lib_MiniDLNA {
             'status' => $status,
             'pid' => $pid,
         );
+
+    }
+
+    public function start() {
+
+        $desc = array(
+           0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+           1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
+           2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
+        );
+        $proc = proc_open(self::CONTROL . " start", $desc, $pipes);
+        echo self::CONTROL . " start";
+        $stdout = stream_get_contents($pipes[1]);
+        $retval = proc_close($proc);
+        return $stdout;
 
     }
 

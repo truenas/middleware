@@ -24,6 +24,11 @@ class FreenasController extends Zend_Controller_Action
     public function startAction()
     {
 
+        $lib = new FreeNAS_Lib_MiniDLNA();
+        echo json_encode(
+            $lib->start()
+        );
+
     }
 
     public function stopAction()
@@ -35,7 +40,6 @@ class FreenasController extends Zend_Controller_Action
     {
 
         $lib = new FreeNAS_Lib_MiniDLNA();
-
         echo json_encode(
             $lib->status()
         );
