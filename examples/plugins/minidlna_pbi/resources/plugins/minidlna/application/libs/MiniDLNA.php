@@ -24,7 +24,7 @@ class FreeNAS_Lib_MiniDLNA {
     public function writeConf($obj) {
 
         $fp = fopen($this->RCCONF, "w");
-        fwrite($fp, sprintf("%s %s", '-d', $obj->getId());
+        fwrite($fp, sprintf("%s %s", '-d', $obj->getId()));
         fclose($fp);
 
     }
