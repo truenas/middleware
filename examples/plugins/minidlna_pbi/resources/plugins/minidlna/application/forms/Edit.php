@@ -11,8 +11,6 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
         ));
         $this->setDecorators(array(
             'FormElements',
-            array('HtmlTag', array('tag' => 'table')),
-            'DijitForm',
         ));
         $this->setElementDecorators(array(
             'DijitElement',
@@ -21,11 +19,14 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             array('Label', array('tag' => 'td')),
             array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
         ));
+
         $this->addElement(
                 'CheckBox',
                 'enabled',
                 array(
                     'label'      => 'Enabled',
+                    'required' => false,
+                    'allowEmpty' => true,
                 )
             )
             ->addElement(
@@ -35,16 +36,6 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                     'value'     => '2008-07-05',
                     'label'     => 'DateTextBox',
                     'required'  => true,
-                )
-            )
-            ->addElement(
-                'ValidationTextBox',
-                'validationbox',
-                array(
-                    'label' => 'ValidationTextBox',
-                    'required'  => true,
-                    'regExp' => '[\w]+',
-                    'invalidMessage' => 'Invalid non-space text.',
                 )
             )
             ;

@@ -19,10 +19,10 @@ class MiniDLNA
     protected $id = null;
 
     /**
-     * @var     string
-     * @Column(type="string")
+     * @var     boolean
+     * @Column(type="boolean")
      */
-    protected $enabled = null;
+    protected $enabled = false;
 
     /**
      * @var     string
@@ -68,23 +68,6 @@ class MiniDLNA
     public function setEnabled($enabled)
     {
         $this->enabled = $enabled;
-    }
-
-    /**
-     * @return  string
-     */
-    public function getEmail()
-    {
-        return $this->email;
-    }
-
-    /**
-     * @param   string  $email
-     * @return  void
-     */
-    public function setEmail($email)
-    {
-        $this->email = $email;
     }
 
 }

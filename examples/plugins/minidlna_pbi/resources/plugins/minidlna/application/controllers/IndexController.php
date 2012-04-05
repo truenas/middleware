@@ -27,8 +27,41 @@ class IndexController extends Zend_Controller_Action
         }
 
         $form = new FreeNAS_Form_Edit;
-        $form->enabled->setValue(1);
-        $this->view->form = $form;
+
+        if($this->getRequest()->isPost()) {
+
+            $this->_helper->viewRenderer->setNoRender(TRUE);
+            $this->getResponse()->setHeader('Content-type', 'application/json');
+
+            if($form->isValid($_POST)) {
+                echo json_encode(
+                    array(
+                        'error' => false,
+                        'message' => 'Settings successfully updated',
+                    )
+                );
+            } else {
+
+                $data =    array(
+                        'error' => true,
+                        'type' => 'form',
+                        'formid' => $_POST['__form_id'],
+                    );
+                $errors = array();
+                foreach($form->getMessages() as $field => $val) {
+                    $errors[$field] = array();
+                    foreach($val as $error => $msg) {
+                        $errors[$field][] = $msg;
+                    }
+                }
+                $data['errors'] = $errors;
+                echo json_encode($data);
+            }
+
+        } else {
+            $form->enabled->setValue($minidlna->getEnabled());
+            $this->view->form = $form;
+        }
     }
 
 
