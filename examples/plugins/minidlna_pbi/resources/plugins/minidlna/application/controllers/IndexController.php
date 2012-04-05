@@ -40,6 +40,10 @@ class IndexController extends Zend_Controller_Action
                 $minidlna->setMediaDir($values['media_dir']);
                 $em->persist($minidlna);
                 $em->flush();
+
+                $lib = new FreeNAS_Lib_MiniDLNA();
+                $lib->writeConf($minidlna);
+
                 echo json_encode(
                     array(
                         'error' => false,
@@ -66,7 +70,6 @@ class IndexController extends Zend_Controller_Action
             }
 
         } else {
-                $a = new FreeNAS_Lib_MiniDLNA();
             $form->enabled->setValue($minidlna->getEnabled());
             $form->media_dir->setValue($minidlna->getMediaDir());
             $this->view->form = $form;
