@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:43-0800\n"
-"PO-Revision-Date: 2011-12-22 16:20+0200\n"
+"PO-Revision-Date: 2012-04-04 16:56+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -455,22 +455,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "בדיקה מיידית לא מקוונת (ATA בלבד)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
 msgstr "יחידת תפקוד Rsync"
 
 #: choices.py:559
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "יחידת תפקוד Rsync"
+msgstr "Rsync דרך SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "דחוף"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "משוך"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""

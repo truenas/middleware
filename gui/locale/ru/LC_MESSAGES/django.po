@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-04-01 14:58+0200\n"
-"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
+"PO-Revision-Date: 2012-04-04 19:32+0200\n"
+"Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -526,7 +526,7 @@ msgstr ""
 #: account/forms.py:201
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
-"Это значение может содержать только латинские буквы, цифры и символы ./-/_."
+"Это значение может содержать только латинские буквы, цифры и ./-/_ символы."
 
 #: account/forms.py:228 account/forms.py:457 services/models.py:737
 #: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
@@ -1964,8 +1964,8 @@ msgid ""
 "actual number is limited to QueueDepth of the target."
 msgstr ""
 "Максимальное количество предварительно отправленных R2T в каждом соединении "
-"(32 по умолчанию). Фактическое количество ограничено параметром \"QueueDepth"
-"\" цели."
+"(32 по умолчанию). Фактическое количество ограничено параметром QueueDepth "
+"цели."
 
 #: services/models.py:299
 msgid "MaxOutstandingR2T"
@@ -2373,7 +2373,7 @@ msgstr "Сообщество"
 
 #: services/models.py:818
 msgid "In most cases, 'public' is used here."
-msgstr "В большинстве случаев здесь используется 'public'."
+msgstr "Используется 'public' в большинстве случаев."
 
 #: services/models.py:821
 msgid "Send SNMP Traps"
@@ -2788,7 +2788,7 @@ msgstr "Доменное имя (DNS/Realm)"
 
 #: services/models.py:1164
 msgid "Domain Name, eg example.com"
-msgstr "Доменное имя, например \"example.com\""
+msgstr "Доменное имя, например example.com"
 
 #: services/models.py:1168
 msgid "NetBIOS Name"
@@ -3049,7 +3049,7 @@ msgstr ""
 "Набор хостов разделённых запятой, пробелом или табуляцией, которым НЕ "
 "разрешен доступ к этому ресурсу. При этом конфликт-лист позволяет расставить "
 "приоритеты. В случае, если по умолчанию необходимо запретить все, "
-"используйте параметр ALL (или маску 0.0.0.0/0), а затем явно укажите хосты, "
+"используйте параметр ALL (или маску 0.0.0.0/0) а затем явно укажите хосты, "
 "доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
 "настройки по умолчанию"
 
@@ -3202,20 +3202,20 @@ msgstr "IP-адрес '%s' является недопустимым."
 #: sharing/forms.py:157
 msgid "Maproot group requires Maproot user"
 msgstr ""
-"Закрепление идентификатора \"root\" за группой требует закрепления "
-"идентификатора \"root\" за пользователем"
+"Закрепление идентификатора root за группой требует закрепления "
+"идентификатора root за пользователем"
 
 #: sharing/forms.py:159
 msgid "Mapall group requires Mapall user"
 msgstr ""
-"Закрепление идентификатора \"all\" за группой требует закрепления "
-"идентификатора \"all\" за пользователем"
+"Закрепление идентификатора all за группой требует закрепления идентификатора "
+"all за пользователем"
 
 #: sharing/forms.py:162 sharing/forms.py:165
 msgid "Maproot user/group disqualifies Mapall"
 msgstr ""
-"Закрепление идентификатора \"root\" за пользователем/группой отменяет "
-"закрепление идентификатора \"all\""
+"Закрепление идентификатора root за пользователем/группой отменяет "
+"закрепление идентификатора all"
 
 #: sharing/models.py:39 sharing/models.py:113 storage/models.py:44
 #: storage/models.py:309 storage/views.py:226
@@ -3378,7 +3378,7 @@ msgid ""
 msgstr ""
 "Это опция разрешает выбранным пользователям и группам доступ к общему "
 "ресурсу. Пользователи и группы должны быть разделены запятыми. Группы "
-"обозначаются префиксом \"@\"."
+"обозначаются @ префиксом."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -3481,11 +3481,12 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
-"Разрешает использование CR/LF в текстовых файлах, автоматически "
+"Разрешает использование crlf в текстовых файлах, автоматически "
 "преобразовывыя разрывы строк Macintosh в Unix. Использование этой опции "
 "может быть опасным, так как некоторые старые программы хранят бинарные файлы "
-"как 'TEXT'. AFPD может потенциально уничтожить такие файлы, когда "
-"'ошибочно' Изменит байт для того, чтобы сделать перевод строки."
+"как 'TEXT' когда сохраняют их, изменяя тип файла следующим шагом. AFPD "
+"может потенциально уничтожить такие файлы, когда 'ошибочно' Изменит байт для "
+"того, чтобы сделать перевод строки."
 
 #: sharing/models.py:185
 msgid "Windows File Names"
@@ -3532,7 +3533,7 @@ msgstr "Отключить ID файла"
 # совсем не понятно
 #: sharing/models.py:201
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "Не оповещать о \"createfileid\", \"resolveid\", \"deleteid\"."
+msgstr "Не оповещать о createfileid, resolveid, deleteid вызовах."
 
 #: sharing/models.py:204
 msgid "Disable :hex Names"
@@ -3631,36 +3632,36 @@ msgstr ""
 # http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
 #: sharing/models.py:275
 msgid "Maproot User"
-msgstr "Закрепить идентификатор \"root\" за пользователем"
+msgstr "Закрепить идентификатор root за пользователем"
 
 # опять про maproot и mapall ))
 #: sharing/models.py:279
 msgid "User to map root to"
-msgstr "Назначить пользователю права доступа \"root\""
+msgstr "Назначить пользователю права доступа root"
 
 #: sharing/models.py:282
 msgid "Maproot Group"
-msgstr "Закрепить идентификатор \"root\" за группой"
+msgstr "Закрепить идентификатор root за группой"
 
 #: sharing/models.py:286
 msgid "Group to map root to"
-msgstr "Назначить группе права доступа \"all\""
+msgstr "Назначить группе права доступа all"
 
 #: sharing/models.py:289
 msgid "Mapall User"
-msgstr "Закрепить идентификатор \"all\" за пользователем"
+msgstr "Закрепить идентификатор all за пользователем"
 
 #: sharing/models.py:293
 msgid "User to map all users to"
-msgstr "Назначить пользователю права доступа \"all\""
+msgstr "Назначить пользователю права доступа all"
 
 #: sharing/models.py:296
 msgid "Mapall Group"
-msgstr "Закрепить идентификатор \"all\" за группой"
+msgstr "Закрепить идентификатор all за группой"
 
 #: sharing/models.py:300
 msgid "Group to map all users to"
-msgstr "Назначить группе пользователей права доступа \"all\""
+msgstr "Назначить группе пользователей права доступа all"
 
 #: sharing/models.py:311
 msgid "Unix (NFS) Share"
@@ -3741,8 +3742,7 @@ msgstr "\"log\" зарезервированое слово и не может �
 
 #: storage/forms.py:241
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
-"Имя тома НЕ может начаться с [0-9], \"mirror\", \"raidz\" или \"spare\""
+msgstr "Имя тома НЕ может начаться с [0-9], mirror, raidz или spare"
 
 #: storage/forms.py:246
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3854,7 +3854,7 @@ msgid ""
 "contain (-), (_), (:) and (.)."
 msgstr ""
 "Имена томов ZFS должны начинаться с алфавитно-цифрового символа и могут "
-"содержать \"-\", \"_\", \":\", \".\"."
+"содержать(-), (_), (:) и (.)."
 
 #: storage/forms.py:693
 msgid "Owner (user)"
@@ -4412,7 +4412,7 @@ msgstr "Том был успешно отключён"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
-msgstr "Процесс \"Scrub\" начался"
+msgstr "Процесс scrub начался"
 
 #: system/forms.py:161
 msgid "Language (Require UI reload)"
@@ -4621,7 +4621,7 @@ msgstr "Включить Powerd (энергосберегающий демон)"
 
 #: system/models.py:155
 msgid "Enable Zeroconf/Bonjour"
-msgstr "Включить Zeroconf / Bonjour"
+msgstr "Включить Zeroconf/Bonjour"
 
 #: system/models.py:158
 msgid ""
@@ -4717,7 +4717,7 @@ msgstr "Организация"
 
 #: system/models.py:246
 msgid "Organization Name (eg, company)"
-msgstr "Название организации (например \"компания\")"
+msgstr "Название организации (например company)"
 
 #: system/models.py:252
 msgid "Organizational Unit"
@@ -4725,7 +4725,7 @@ msgstr "Подразделение"
 
 #: system/models.py:253
 msgid "Organizational Unit Name (eg, section)"
-msgstr "Название подразделения (например \"отдел\")"
+msgstr "Название подразделения (например section)"
 
 #: system/models.py:259 system/models.py:260
 msgid "Email Address"
@@ -4737,7 +4737,7 @@ msgstr "Местоположение"
 
 #: system/models.py:267
 msgid "Locality Name (eg, city)"
-msgstr "Название местности (например \"город\")"
+msgstr "Название местности (например city)"
 
 #: system/models.py:273
 msgid "State"
@@ -4813,7 +4813,7 @@ msgstr "Удаленный путь"
 
 #: system/models.py:451
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr "Путь на удалённом хосте для rsync т.е.  /mnt/tank напимер"
+msgstr "Путь на удалённом хосте для rsync т.е. /mnt/tank напимер"
 
 #: system/models.py:455 templates/system/rsync.html:8
 msgid "Direction"
@@ -5364,7 +5364,7 @@ msgstr "Не определены LAGG интерфейсы"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "Добавить LAGG интерфейс"
+msgstr "Добавить LAGG Интерфейс"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
@@ -5726,7 +5726,7 @@ msgstr "Активные общие ресурсы"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
-msgstr "Нет активных общих ресурсов Apple (AFP)."
+msgstr "Нет активных общих Apple (AFP) ресурсов."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
@@ -5763,7 +5763,7 @@ msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Нет активных общих ресурсов UNIX (NFS)."
+msgstr "Нет активных общих UNIX (NFS) ресурсов."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
@@ -5783,7 +5783,7 @@ msgstr "Добавить общий ресурс UNIX (NFS)"
 
 #: templates/sharing/windows.html:7
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Нет активных общих ресурсов Windows (CIFS)."
+msgstr "Нет активных общих Windows (CIFS) ресурсов."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -5961,7 +5961,7 @@ msgstr ""
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
-msgstr "Вы уверены, что хотите начать \"Scrub\"?"
+msgstr "Вы уверены, что хотите начать scrub?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
@@ -6341,7 +6341,7 @@ msgstr "Добавить S.M.A.R.T. Тест"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. test"
-msgstr "Добавить тест  S.M.A.R.T"
+msgstr "Добавить тест S.M.A.R.T"
 
 #: templates/system/sysctl.html:32
 msgid "No sysctl defined."
