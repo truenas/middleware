@@ -43,6 +43,12 @@ class MiniDLNA
     protected $tivo = false;
 
     /**
+     * @var     boolean
+     * @Column(type="boolean")
+     */
+    protected $rescan = false;
+
+    /**
      * @var     string
      * @Column(type="string")
      */
@@ -137,6 +143,23 @@ class MiniDLNA
     public function setTivo($tivo)
     {
         $this->tivo = $tivo;
+    }
+
+    /**
+     * @return  boolean
+     */
+    public function getRescan()
+    {
+        return $this->rescan;
+    }
+
+    /**
+     * @param   boolean  $rescan
+     * @return  void
+     */
+    public function setRescan($rescan)
+    {
+        $this->rescan= $rescan;
     }
 
     /**

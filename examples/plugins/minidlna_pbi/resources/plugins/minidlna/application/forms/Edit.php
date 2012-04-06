@@ -64,6 +64,13 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $friendly_name->setDecorators($decs);
 
+        $rescan = new Zend_Form_Element_Checkbox(array(
+            'name' => 'rescan',
+            'label' => 'Rescan on (re)start',
+            'dojoType' => 'dijit.form.CheckBox')
+            );
+        $rescan->setDecorators($decs);
+
         $this->addElement($enabled)
              ->addElement($friendly_name)
              ->addElement($media_dir)
@@ -87,6 +94,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                  )
              )
              ->addElement($tivo)
+             ->addElement($rescan)
              ;
 
     }

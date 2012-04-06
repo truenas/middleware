@@ -6,8 +6,9 @@ class FreeNAS_Lib_MiniDLNA {
     public $BASE = null;
     public $CONF = null;
     public $RCOPTIONS = array(
-        'port' => array(
-            'opt' => '-d',
+        'getRescan' => array(
+            'opt' => '-R',
+            'type' => 'boolean',
             ),
     );
     const CONTROL = "/usr/local/bin/sudo /usr/local/etc/rc.d/minidlna";
@@ -28,6 +29,16 @@ class FreeNAS_Lib_MiniDLNA {
             fwrite($fp, "minidlna_enable=\"YES\"\n");
         else
             fwrite($fp, "minidlna_enable=\"NO\"\n");
+
+        $flags = "";
+        foreach($this->RCOPTIONS as $key => $val) {
+            if(!method_exists($obj, $key)) continue;
+            if($val['type'] == "boolean") {
+                if($obj->$key())
+                    $flags .= $val['opt'] . " ";
+            }
+        }
+        fwrite($fp, sprintf("minidlna_flags=\"%s\"\n", $flags));
         fclose($fp);
 
         $fp = fopen($this->CONF, "w");
