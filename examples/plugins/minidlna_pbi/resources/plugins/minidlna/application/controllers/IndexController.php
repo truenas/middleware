@@ -39,6 +39,7 @@ class IndexController extends Zend_Controller_Action
                 $minidlna->setEnabled($values['enabled']);
                 $minidlna->setMediaDir($values['media_dir']);
                 $minidlna->setInotify($values['inotify']);
+                $minidlna->setNotifyInterval($values['notify_interval']);
                 $em->persist($minidlna);
                 $em->flush();
 
@@ -75,6 +76,7 @@ class IndexController extends Zend_Controller_Action
             $form->media_dir->setValue($minidlna->getMediaDir());
             $form->port->setValue($minidlna->getPort());
             $form->inotify->setValue($minidlna->getInotify());
+            $form->notify_interval->setValue($minidlna->getNotifyInterval());
             $this->view->form = $form;
         }
     }

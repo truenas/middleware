@@ -30,7 +30,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
 
         $media_dir = new Zend_Form_Element_Text(array(
             'name' => 'media_dir',
-            'label' => 'Media Directory',
+            'label' => 'Media directory',
             'required' => true,
             'dojoType' => 'freeadmin.form.PathSelector')
             );
@@ -38,7 +38,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
 
         $inotify = new Zend_Form_Element_Checkbox(array(
             'name' => 'inotify',
-            'label' => 'Automatic Discover',
+            'label' => 'Automatic discover',
             'dojoType' => 'dijit.form.CheckBox')
             );
         $inotify->setDecorators($decs);
@@ -62,6 +62,15 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                  )
              )
              ->addElement($inotify)
+             ->addElement(
+                 'TextBox',
+                 'notify_interval',
+                 array(
+                     'label'      => 'Discover interval (seconds)',
+                     'required' => true,
+                     'allowEmpty' => false,
+                 )
+             )
              ;
 
     }

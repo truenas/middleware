@@ -48,6 +48,12 @@ class MiniDLNA
      */
     protected $port = 8200;
 
+    /**
+     * @var     integer
+     * @Column(type="integer")
+     */
+    protected $notify_interval = 895;
+
     public function __construct()
     {
         //$this->setGroups(new ArrayCollection());
@@ -136,6 +142,23 @@ class MiniDLNA
     public function setPort($port)
     {
         $this->port = $port;
+    }
+
+    /**
+     * @return  integer
+     */
+    public function getNotifyInterval()
+    {
+        return $this->notify_interval;
+    }
+
+    /**
+     * @param   integer  $notify_interval
+     * @return  void
+     */
+    public function setNotifyInterval($notify_interval)
+    {
+        $this->notify_interval = $notify_interval;
     }
 
 }
