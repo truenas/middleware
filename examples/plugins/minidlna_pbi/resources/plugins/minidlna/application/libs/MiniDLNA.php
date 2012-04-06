@@ -1,5 +1,7 @@
 <?php
 
+require_once APPLICATION_PATH . '/../library/tivoka/include.php';
+
 class FreeNAS_Lib_MiniDLNA {
 
     public $ARCH = null;
@@ -19,6 +21,18 @@ class FreeNAS_Lib_MiniDLNA {
         $this->BASE = "/usr/pbi/minidlna-" . $this->ARCH;
         $this->CONF = $this->BASE . "/etc/minidlna.conf";
         $this->RCCONF = $this->BASE . "/etc/rc.conf";
+
+    }
+
+    public static function isAuthorized($session) {
+
+        // FIX HTTPS
+        $target = sprintf('http://%s/plugins/json/', $_SERVER['HTTP_HOST']);
+        $request = Tivoka::createRequest('1', 'plugins.is_authenticated', array($session));
+        Tivoka::connect($target)->send($request);
+        if($request->isError() || $request->result !== TRUE) {
+            exit("Not authorized");
+        }
 
     }
 
