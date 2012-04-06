@@ -397,7 +397,9 @@ class NavTree(object):
 
             try:
                 url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
-                response = urllib2.urlopen(url, None, 1)
+                opener = urllib2.build_opener()
+                opener.addheaders = [('Cookie', 'sessionid=%s' % request.COOKIES.get("sessionid", ''))]
+                response = opener.open(url, None, 1)
                 data = response.read()
                 if not data:
                     log.warn(_("Empty data returned from %s") % (url,))

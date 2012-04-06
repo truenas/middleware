@@ -68,7 +68,9 @@ def plugins(request):
             request.get_host(),
             plugin.plugin_name)
         try:
-            response = urllib2.urlopen(url, None, 2).read()
+            opener = urllib2.build_opener()
+            opener.addheaders = [('Cookie', 'sessionid=%s' % request.COOKIES.get("sessionid", ''))]
+            response = opener.open(url, None, 1).read()
             json = simplejson.loads(response)
         except Exception, e:
             log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
