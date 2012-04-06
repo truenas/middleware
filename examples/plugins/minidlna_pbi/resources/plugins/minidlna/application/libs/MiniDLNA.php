@@ -96,7 +96,7 @@ class FreeNAS_Lib_MiniDLNA {
            1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
-        $proc = proc_open(self::CONTROL . " stop", $desc, $pipes);
+        $proc = proc_open(self::CONTROL . " forcestop", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
