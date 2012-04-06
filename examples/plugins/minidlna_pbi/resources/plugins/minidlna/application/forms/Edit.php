@@ -50,6 +50,13 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $enabled->setDecorators($decs);
 
+        $tivo = new Zend_Form_Element_Checkbox(array(
+            'name' => 'tivo',
+            'label' => 'Enable TiVo',
+            'dojoType' => 'dijit.form.CheckBox')
+            );
+        $tivo->setDecorators($decs);
+
         $friendly_name = new Zend_Form_Element_Text(array(
             'name' => 'friendly_name',
             'label' => 'Friendly name',
@@ -79,6 +86,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                      'allowEmpty' => false,
                  )
              )
+             ->addElement($tivo)
              ;
 
     }

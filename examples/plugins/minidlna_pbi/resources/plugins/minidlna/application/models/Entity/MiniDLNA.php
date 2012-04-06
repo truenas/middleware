@@ -37,6 +37,12 @@ class MiniDLNA
     protected $inotify = true;
 
     /**
+     * @var     boolean
+     * @Column(type="boolean")
+     */
+    protected $tivo = false;
+
+    /**
      * @var     string
      * @Column(type="string")
      */
@@ -100,7 +106,7 @@ class MiniDLNA
     }
 
     /**
-     * @return  string
+     * @return  boolean
      */
     public function getInotify()
     {
@@ -108,12 +114,29 @@ class MiniDLNA
     }
 
     /**
-     * @param   string  $inotify
+     * @param   boolean  $inotify
      * @return  void
      */
     public function setInotify($inotify)
     {
         $this->inotify = $inotify;
+    }
+
+    /**
+     * @return  boolean
+     */
+    public function getTivo()
+    {
+        return $this->tivo;
+    }
+
+    /**
+     * @param   boolean  $tivo
+     * @return  void
+     */
+    public function setTivo($tivo)
+    {
+        $this->tivo = $tivo;
     }
 
     /**

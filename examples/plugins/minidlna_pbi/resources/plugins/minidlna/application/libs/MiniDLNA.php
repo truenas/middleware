@@ -37,6 +37,10 @@ class FreeNAS_Lib_MiniDLNA {
             fwrite($fp, "inotify=yes\n");
         else
             fwrite($fp, "inotify=no\n");
+        if($obj->getTivo())
+            fwrite($fp, "enable_tivo=yes\n");
+        else
+            fwrite($fp, "enable_tivo=no\n");
         fwrite($fp, sprintf("notify_interval=%d\n", $obj->getNotifyInterval()));
         if($obj->getFriendlyName())
             fwrite($fp, sprintf("friendly_name=%s\n", $obj->getFriendlyName()));

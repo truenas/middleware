@@ -41,6 +41,7 @@ class IndexController extends Zend_Controller_Action
                 $minidlna->setInotify($values['inotify']);
                 $minidlna->setNotifyInterval($values['notify_interval']);
                 $minidlna->setFriendlyName($values['friendly_name']);
+                $minidlna->setTivo($values['tivo']);
                 $em->persist($minidlna);
                 $em->flush();
 
@@ -79,6 +80,7 @@ class IndexController extends Zend_Controller_Action
             $form->inotify->setValue($minidlna->getInotify());
             $form->notify_interval->setValue($minidlna->getNotifyInterval());
             $form->friendly_name->setValue($minidlna->getFriendlyName());
+            $form->tivo->setValue($minidlna->getTivo());
             $this->view->form = $form;
         }
     }
