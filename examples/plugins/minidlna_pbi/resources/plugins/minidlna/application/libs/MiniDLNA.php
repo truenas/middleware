@@ -33,9 +33,13 @@ class FreeNAS_Lib_MiniDLNA {
         $fp = fopen($this->CONF, "w");
         fwrite($fp, sprintf("media_dir=%s\n", $obj->getMediaDir()));
         fwrite($fp, sprintf("port=%d\n", $obj->getPort()));
+        if($obj->getInotify())
+            fwrite($fp, "inotify=yes\n");
+        else
+            fwrite($fp, "inotify=no\n");
         fclose($fp);
 
-        shell_exec($this->BASE . "/tweak-rcconf");
+        shell_exec("/usr/local/bin/sudo " . $this->BASE . "/tweak-rcconf");
 
     }
 

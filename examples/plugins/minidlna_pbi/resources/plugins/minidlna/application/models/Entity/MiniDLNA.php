@@ -31,6 +31,12 @@ class MiniDLNA
     protected $debug = false;
 
     /**
+     * @var     boolean
+     * @Column(type="boolean")
+     */
+    protected $inotify = true;
+
+    /**
      * @var     string
      * @Column(type="string")
      */
@@ -79,6 +85,23 @@ class MiniDLNA
     public function setEnabled($enabled)
     {
         $this->enabled = $enabled;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getInotify()
+    {
+        return $this->inotify;
+    }
+
+    /**
+     * @param   string  $inotify
+     * @return  void
+     */
+    public function setInotify($inotify)
+    {
+        $this->inotify = $inotify;
     }
 
     /**

@@ -53,6 +53,15 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                     'allowEmpty' => false,
                 )
             )
+            ->addElement(
+                'CheckBox',
+                'inotify',
+                array(
+                    'label' => 'Automatic discover',
+                    'required' => false,
+                    'allowEmpty' => true,
+                )
+            )
             ;
 
     }
