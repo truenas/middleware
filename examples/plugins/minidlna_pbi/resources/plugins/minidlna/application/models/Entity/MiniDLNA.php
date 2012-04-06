@@ -43,6 +43,12 @@ class MiniDLNA
     protected $media_dir = null;
 
     /**
+     * @var     string
+     * @Column(type="string")
+     */
+    protected $friendly_name = null;
+
+    /**
      * @var     integer
      * @Column(type="integer")
      */
@@ -125,6 +131,23 @@ class MiniDLNA
     public function setMediaDir($mediadir)
     {
         $this->media_dir = $mediadir;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getFriendlyName()
+    {
+        return $this->friendly_name;
+    }
+
+    /**
+     * @param   string  $friendly_name
+     * @return  void
+     */
+    public function setFriendlyName($friendly_name)
+    {
+        $this->friendly_name = $friendly_name;
     }
 
     /**

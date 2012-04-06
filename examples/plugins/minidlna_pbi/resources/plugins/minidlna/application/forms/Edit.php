@@ -50,7 +50,15 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $enabled->setDecorators($decs);
 
+        $friendly_name = new Zend_Form_Element_Text(array(
+            'name' => 'friendly_name',
+            'label' => 'Friendly name',
+            'dojoType' => 'dijit.form.TextBox')
+            );
+        $friendly_name->setDecorators($decs);
+
         $this->addElement($enabled)
+             ->addElement($friendly_name)
              ->addElement($media_dir)
              ->addElement(
                  'NumberTextBox',

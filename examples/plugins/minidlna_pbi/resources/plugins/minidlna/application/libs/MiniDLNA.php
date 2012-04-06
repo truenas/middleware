@@ -37,6 +37,9 @@ class FreeNAS_Lib_MiniDLNA {
             fwrite($fp, "inotify=yes\n");
         else
             fwrite($fp, "inotify=no\n");
+        fwrite($fp, sprintf("notify_interval=%d\n", $obj->getNotifyInterval()));
+        if($obj->getFriendlyName())
+            fwrite($fp, sprintf("friendly_name=%s\n", $obj->getFriendlyName()));
         fclose($fp);
 
         shell_exec("/usr/local/bin/sudo " . $this->BASE . "/tweak-rcconf");
