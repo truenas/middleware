@@ -126,7 +126,10 @@ def all(request):
 
 def start(request):
 
-    server = jsonrpclib.Server('http://127.0.0.1:8001/plugins/json/')
+    server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
+        's' if request.is_secure() else '',
+        request.get_host(),
+        ))
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
     assert auth
 
@@ -140,7 +143,10 @@ def start(request):
 
 def stop(request):
 
-    server = jsonrpclib.Server('http://127.0.0.1:8001/plugins/json/')
+    server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
+        's' if request.is_secure() else '',
+        request.get_host(),
+        ))
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
     assert auth
 
@@ -164,7 +170,10 @@ def edit(request):
         transmission = models.Transmission.objects.create()
 
     try:
-        server = jsonrpclib.Server('http://127.0.0.1:8001/plugins/json/')
+        server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
+            's' if request.is_secure() else '',
+            request.get_host(),
+            ))
         auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
         assert auth
         token = server.auth.getToken("keyhere")
