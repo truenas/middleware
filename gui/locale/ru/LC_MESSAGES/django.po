@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:47-0800\n"
-"PO-Revision-Date: 2012-04-04 19:32+0200\n"
+"PO-Revision-Date: 2012-04-07 02:43+0200\n"
 "Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -2698,7 +2698,7 @@ msgstr "Указывает имя пользователя под которым
 
 #: services/models.py:1052
 msgid "umask"
-msgstr "umask (маска режима создания пользовательских файлов)"
+msgstr "umask (маска режима создания файлов)"
 
 #: services/models.py:1053
 msgid ""
