@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-03-15 14:17+0200\n"
-"Last-Translator: zozie82 <zkasnya@gmail.com>\n"
+"PO-Revision-Date: 2012-04-07 23:39+0200\n"
+"Last-Translator: nem <nemethnandor67@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -265,11 +265,11 @@ msgstr "Kisbetűs nevek mindkét irányba"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Kliens kisbetűst lát, szerver nagybetűst"
+msgstr "Kliens kisbetűvel, szerver nagybetűvel jelenjen meg"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Kliens nagybetűst lát, szerver kisbetűst"
+msgstr "Kliens nagybetűvel, szerver kisbetűvel jelenjen meg"
 
 #: choices.py:203
 msgid "File"
@@ -291,7 +291,7 @@ msgstr "Lemez"
 
 #: choices.py:217
 msgid "read-write"
-msgstr "olvasás-írás"
+msgstr "olvasható-írható"
 
 #: choices.py:218
 msgid "read-only"
@@ -548,7 +548,7 @@ msgstr "Felhasználó zárolása"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Készíts egy új elsődleges csoportot a felhasználónak"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -559,18 +559,16 @@ msgid "SSH Public Key"
 msgstr "SSH Nyilvános kulcs"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Saját könyvtár"
+msgstr "Saját könyvtár mód"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
 msgstr "Külső csoportok"
 
 #: account/forms.py:318
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Ilyen nevű felhasználó már létezik."
+msgstr "Ezzel az egyedi azonosítóval (uid) már létezik egy felhasználó."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
@@ -595,7 +593,7 @@ msgstr ""
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Egy felhasználó legfeljebb 64 külső csoporthoz tartozhat."
+msgstr "Egy felhasználó legfeljebb 64 kiegészítő csoporthoz tartozhat."
 
 #: account/forms.py:381 account/forms.py:582
 msgid "Home directory is not writable, leave this blank"
@@ -867,7 +865,7 @@ msgstr "Hálókártya"
 #: network/forms.py:344
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Nem határozhat meg több hálózati csatolót ugyanazzal az IP címmel (%s)"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -1176,13 +1174,15 @@ msgstr "LAGG sikeresen hozzáadva"
 
 #: plugins/forms.py:73
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "PBI fájlok ideiglenes tárolásának helye"
 
 #: plugins/forms.py:73
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
+"A rendszer ezt a területet, installálásig, átmenetileg PBI fájl tárolására "
+"használja.  "
 
 #: plugins/forms.py:87
 msgid "PBI file to be installed"
@@ -5938,9 +5938,8 @@ msgid "Status"
 msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Kötet létrehozása"
+msgstr "Kötet lecsatolása"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 #, fuzzy
@@ -5971,9 +5970,8 @@ msgid "No volumes defined"
 msgstr ""
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Kötetek"
+msgstr "Kötet kiterjesztése"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6013,7 +6011,7 @@ msgstr ""
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
-msgstr ""
+msgstr "Lemez áthelyezése"
 
 #: templates/storage/zvols.html:3
 #, fuzzy, python-format
@@ -6096,19 +6094,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "NTP kiszolgáló 1"
+msgstr "Nincs NTP kiszolgáló kijelölve. "
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP kiszolgáló 1"
+msgstr "NTP kiszolgáló hozzáadása"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "NTP kiszolgáló 1"
+msgstr "NTP kiszolgáló hozzáadása"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6162,9 +6157,8 @@ msgid "Yearly Graphs"
 msgstr ""
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Helyi főtallózó"
+msgstr "Helyi elérési út"
 
 #: templates/system/rsync.html:6
 #, fuzzy
@@ -6327,9 +6321,8 @@ msgid ""
 msgstr ""
 
 #: tools/alert.py:169
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Kritikus"
+msgstr "Kritikus riasztások"
 
 msgid "DVD"
 msgstr "DVD"
@@ -6341,7 +6334,7 @@ msgid "Pass"
 msgstr "Átengedés"
 
 msgid "Disable password"
-msgstr "Jelszó kikapcsolása"
+msgstr "Jelszó letiltása"
 
 msgid "My Account"
 msgstr "Saját fiókom"
