@@ -633,9 +633,9 @@
                 var first = null;
                 for(key in data.errors) {
 
-                    //fieldid = data.form_auto_id.replace('%s', key);
-                    field = dijit.byId(key);
-                    if(!field) continue;
+                    field = dojo.query("input[name="+key+"]", form.domNode);
+                    if(field.length == 0) continue;
+                    field = dijit.getEnclosingWidget(field[0]);
                     if(!first && field.focus)
                         first = field;
                     var ul = dojo.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");

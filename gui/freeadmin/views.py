@@ -37,9 +37,11 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import debug
 from django.conf import settings
-from django.template import Context, TemplateDoesNotExist, TemplateSyntaxError, RequestContext
+from django.template import (Context, TemplateDoesNotExist,
+    TemplateSyntaxError, RequestContext)
 from django.template.defaultfilters import force_escape, pprint
-from django.template.loader import get_template, template_source_loaders, render_to_string
+from django.template.loader import (get_template, template_source_loaders,
+    render_to_string)
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode
@@ -66,14 +68,10 @@ class JsonResponse(HttpResponse):
     events = []
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key("error"):
-            self.error = kwargs.pop('error')
-        if kwargs.has_key("message"):
-            self.message = kwargs.pop('message')
-        if kwargs.has_key("events"):
-            self.events = kwargs.pop('events')
-        if kwargs.has_key("enclosed"):
-            self.enclosed = kwargs.pop('enclosed')
+        self.error = kwargs.pop('error', False)
+        self.message = kwargs.pop('message', '')
+        self.events = kwargs.pop('events', [])
+        self.enclosed = kwargs.pop('enclosed', False)
 
         data = {
             'error': self.error,
@@ -82,7 +80,9 @@ class JsonResponse(HttpResponse):
         }
 
         if self.enclosed:
-            kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
+            kwargs['content'] = ("<html><body><textarea>"
+                + simplejson.dumps(data) +
+                "</textarea></boby></html>")
         else:
             kwargs['content'] = simplejson.dumps(data)
             kwargs['content_type'] = 'application/json'
@@ -125,7 +125,6 @@ class JsonResp(HttpResponse):
             data.update({
                 'type': 'form',
                 'formid': request.POST.get("__form_id"),
-                'form_auto_id': self.form.auto_id,
                 })
             error = False
             errors = {}
@@ -135,7 +134,7 @@ class JsonResp(HttpResponse):
                         field = self.__class__.form_field_all(self.form)
                         errors[field] = [unicode(v) for v in val]
                     else:
-                        errors[self.form.auto_id % key] = [unicode(v) for v in val]
+                        errors[key] = [unicode(v) for v in val]
                 error = True
 
             for name, fs in self.formsets.items():
@@ -147,7 +146,10 @@ class JsonResp(HttpResponse):
                                 field = self.__class__.form_field_all(form)
                                 errors[field] = [unicode(v) for v in val]
                             else:
-                                errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
+                                errors["%s-%s" % (
+                                    form.prefix,
+                                    key,
+                                    )] = [unicode(v) for v in val]
             data.update({
                 'error': error,
                 'errors': errors,
@@ -169,18 +171,21 @@ class JsonResp(HttpResponse):
             kwargs['content'] = simplejson.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
-            kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
+            kwargs['content'] = ("<html><body><textarea>"
+                + simplejson.dumps(data) +
+                "</textarea></boby></html>")
         super(JsonResp, self).__init__(*args, **kwargs)
 
     @staticmethod
     def form_field_all(form):
         if form.prefix:
-            field = form.auto_id % form.prefix + "-__all__-" + type(form).__name__
+            field = form.prefix + "-__all__"
         else:
-            field = form.auto_id % "__all__-" + type(form).__name__
+            field = "__all__"
         return field
 
-def adminInterface(request, objtype = None):
+
+def adminInterface(request, objtype=None):
 
     try:
         console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
@@ -199,7 +204,8 @@ def adminInterface(request, objtype = None):
         'cache_hash': hashlib.md5(sw_version).hexdigest(),
     })
 
-def menu(request, objtype = None):
+
+def menu(request, objtype=None):
 
     try:
         navtree.generate(request)
@@ -211,6 +217,7 @@ def menu(request, objtype = None):
 
     return HttpResponse(json, mimetype="application/json")
 
+
 def alert_status(request):
     if os.path.exists('/var/tmp/alert'):
         current = 'OK'
@@ -221,11 +228,12 @@ def alert_status(request):
                 continue
             status, message = entry.split(': ', 1)
             if (status == 'WARN' and current == 'OK') or \
-              status == 'CRIT' and current in ('OK','WARN'):
+              status == 'CRIT' and current in ('OK', 'WARN'):
                 current = status
         return HttpResponse(current)
     else:
         return HttpResponse('WARN')
+
 
 def alert_detail(request):
     if os.path.exists('/var/tmp/alert'):
@@ -245,7 +253,9 @@ def alert_detail(request):
             'alerts': alerts,
             })
     else:
-        return HttpResponse(_("It was not possible to retrieve the current status"))
+        return HttpResponse(
+            _("It was not possible to retrieve the current status")
+            )
 
 
 class ExceptionReporter(debug.ExceptionReporter):
@@ -258,6 +268,7 @@ class ExceptionReporter(debug.ExceptionReporter):
     """
 
     is_email = False
+
     def get_traceback_html(self):
         """
         Copied from debug.ExceptionReporter
@@ -320,7 +331,7 @@ class ExceptionReporter(debug.ExceptionReporter):
             'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
             'server_time': datetime.datetime.now(),
             'sw_version': get_sw_version(),
-            'sys_path' : sys.path,
+            'sys_path': sys.path,
             'template_info': self.template_info,
             'template_does_not_exist': self.template_does_not_exist,
             'loader_debug_info': self.loader_debug_info,
