@@ -16,6 +16,10 @@ set_include_path(implode(PATH_SEPARATOR, array(
     get_include_path(),
 )));
 
+set_include_path(implode(PATH_SEPARATOR, array(
+    realpath(APPLICATION_PATH . '/../../../share/ZendFramework/library'),
+    get_include_path(),
+)));
 
 require_once 'Zend/Application.php';
 

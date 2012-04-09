@@ -7,13 +7,13 @@ class FreeNAS_Lib_MiniDLNA {
     public $ARCH = null;
     public $BASE = null;
     public $CONF = null;
+    public $CONTROL = null;
     public $RCOPTIONS = array(
         'getRescan' => array(
             'opt' => '-R',
             'type' => 'boolean',
             ),
     );
-    const CONTROL = "/usr/local/bin/sudo /usr/local/etc/rc.d/minidlna";
 
     function __construct() {
 
@@ -21,6 +21,7 @@ class FreeNAS_Lib_MiniDLNA {
         $this->BASE = "/usr/pbi/minidlna-" . $this->ARCH;
         $this->CONF = $this->BASE . "/etc/minidlna.conf";
         $this->RCCONF = $this->BASE . "/etc/rc.conf";
+        $this->CONTROL = $this->BASE . "/bin/sudo /usr/local/etc/rc.d/minidlna";
 
     }
 
@@ -71,7 +72,7 @@ class FreeNAS_Lib_MiniDLNA {
             fwrite($fp, sprintf("friendly_name=%s\n", $obj->getFriendlyName()));
         fclose($fp);
 
-        shell_exec("/usr/local/bin/sudo " . $this->BASE . "/tweak-rcconf");
+        shell_exec($this->BASE . "/bin/sudo " . $this->BASE . "/tweak-rcconf");
 
     }
 
@@ -107,7 +108,7 @@ class FreeNAS_Lib_MiniDLNA {
            1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
-        $proc = proc_open(self::CONTROL . " start", $desc, $pipes);
+        $proc = proc_open($this->CONTROL . " start", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
@@ -121,7 +122,7 @@ class FreeNAS_Lib_MiniDLNA {
            1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
-        $proc = proc_open(self::CONTROL . " forcestop", $desc, $pipes);
+        $proc = proc_open($this->CONTROL . " forcestop", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
