@@ -16,6 +16,10 @@ import Cookie
 from flup.server.fcgi import WSGIServer
 from subprocess import Popen, PIPE
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(HERE, "lib/python2.7/site-packages"))
+
+
 def get_arch():
     cmd = "/usr/bin/uname -m"
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,

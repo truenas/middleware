@@ -1,8 +1,10 @@
 # Django settings for transmissionUI project.
 
 import os
+import sys
 
 HERE = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(HERE, "../lib/python2.7/site-packages"))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
