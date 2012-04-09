@@ -26,7 +26,7 @@
 #####################################################################
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponse, Http404
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -120,9 +120,10 @@ def plugin_fcgi_client(request, name, path):
 
     return HttpResponse(body)
 
+
 def plugins_jail_import(request):
     if request.method == "POST":
-        form = forms.JailImportForm(request.POST) 
+        form = forms.JailImportForm(request.POST)
         variables = { "form": form}
 
         if form.is_valid():
@@ -135,9 +136,9 @@ def plugins_jail_import(request):
             else:
                 return JsonResp(request, message=_("Jail successfully imported."))
 
-        else: 
+        else:
             return JsonResp(request, error=True, message=_("Unable to import jail."))
- 
+
     else:
         form = forms.JailImportForm()
         return render(request, "plugins/jail_import.html", { "form": form })
