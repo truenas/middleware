@@ -41,6 +41,7 @@ import glob
 import grp
 import logging
 import os
+import platform
 import pwd
 import re
 import select
@@ -79,6 +80,7 @@ from freenasUI.common.pbi import pbi_add, pbi_delete, \
     PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR, \
     PBI_ADD_FLAGS_FORCE
 from freenasUI.common.jail import Jls, Jexec
+from freenasUI.common.system import get_mounted_filesystems, umount
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 
@@ -1844,6 +1846,22 @@ class notifier:
             os.unlink(path)
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
+    def __umount_filesystems_within(self, path):
+        """
+        Try to umount filesystems within a certain path
+
+        Raises:
+            MiddlewareError - Could not umount
+        """
+        for mounted in get_mounted_filesystems():
+            if mounted['fs_file'].startswith(path):
+                if not umount(mounted['fs_file']):
+                    print "raise"
+                    raise MiddlewareError('Unable to umount %s' % (
+                        mounted['fs_file'],
+                        ))
+                else:
+                    print "ok", mounted['fs_file']
 
     def install_pbi(self):
         """
@@ -2086,12 +2104,12 @@ class notifier:
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        jail_name = c.fetchone()
-        if not jail_name:
+        c.execute("SELECT jail_name, jail_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
+        row = c.fetchone()
+        if not row:
             log.debug("delete_pbi: plugins jail info not in database")
             return False
-        jail_name = jail_name[0]
+        jail_name, jail_path = row
 
         jail = None
         for j in Jls():
@@ -2100,13 +2118,21 @@ class notifier:
                 break
 
         if jail is not None:
-            c.execute("SELECT plugin_pbiname FROM plugins_plugins "
+            c.execute("SELECT plugin_pbiname, plugin_name FROM plugins_plugins "
                 "WHERE id = :plugin_id", {'plugin_id': plugin_id})
-            plugin_pbiname = c.fetchone()
-            if not plugin_pbiname: 
+            row = c.fetchone()
+            if not row:
                 log.debug("delete_pbi: pbi info for %d not in database", plugin_id)
                 return False
-            plugin_pbiname = plugin_pbiname[0]
+            plugin_pbiname, plugin_name = row
+
+            pbi_path = os.path.join(
+                jail_path,
+                jail_name,
+                "usr/pbi",
+                "%s-%s" % (plugin_name, platform.machine()),
+                )
+            self.__umount_filesystems_within(pbi_path)
 
             p = pbi_delete(pbi=plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
