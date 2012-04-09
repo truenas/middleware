@@ -919,6 +919,7 @@
                             var perc = Math.ceil((obj.received / obj.size)*100);
                             if(perc == 100) {
                                 pbar.update({'indeterminate': true});
+                                return;
                             } else {
                                 pbar.update({maximum: 100, progress: perc, indeterminate: false});
                             }
