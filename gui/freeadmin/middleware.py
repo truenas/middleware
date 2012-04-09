@@ -25,6 +25,7 @@
 #
 #####################################################################
 from cStringIO import StringIO
+
 import base64
 import datetime
 import json
@@ -32,11 +33,13 @@ import os
 import re
 import sys
 import cProfile
+import oauth2 as oauth
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
+from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
@@ -48,6 +51,8 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
+
+from syslog import syslog, LOG_DEBUG
 
 COMMENT_SYNTAX = (
     (re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
@@ -65,31 +70,70 @@ def http_auth_basic(func):
     def view(request, *args, **kwargs):
         authorized = False
         try:
-            data = json.loads(request.POST.keys()[0])
-            method = data.get("method")
-            if method in (
-                'plugins.is_authenticated',
-                'auth.getToken',
-                ):
+            params = None
+            syslog(LOG_DEBUG, "+-----------------------------------------------+")
+            for key in request.REQUEST:
+                syslog(LOG_DEBUG, "key: %s, val: %s" % (key, request.REQUEST[key]))
+            
+
+            for key in request.REQUEST:
+                try:
+                    params = json.loads(key)
+                    break
+
+                except:
+                    params = None
+
+            key = request.REQUEST.get("oauth_consumer_key", None)
+            host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(),)
+            uurl = host + request.path
+
+            oreq = oauth.Request(request.method, uurl, request.REQUEST, '', False)
+            server = oauth.Server()
+ 
+            cons = oauth.Consumer(key, settings.OAUTH_PARTNERS[key])
+            server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
+
+            try:
+                server.verify_request(oreq, cons, None)
                 authorized = True
-            else:
-                auth = request.META.get("HTTP_AUTHORIZATION")
-                _type, encoded = auth.split(' ', 1)
-                assert _type == 'Basic'
-                user, token = base64.b64decode(encoded).split(':', 1)
-                # Currently the rpc token expires if not used
-                # Do we really want that?
-                qs = RPCToken.objects.filter(token=token,
-                    last_used__gte=datetime.datetime.now() - \
-                        datetime.timedelta(hours=1))
-                if qs:
-                    token = qs[0]
-                    token.last_used = datetime.datetime.now()
-                    token.save()
+
+            except oauth.Error, e:
+                syslog(LOG_DEBUG, "auth error = %s" % e)
+                authorized = False
+
+            except KeyError, e:
+                syslog(LOG_DEBUG, "auth error = %s" % e)
+                authorized = False
+
+            if not authorized:
+                return HttpResponse(json.dumps({
+                    'jsonrpc': params.get('jsonrpc'),
+                    'error': {
+                        'code': '500',
+                        'message': 'Not authenticated',
+                        },
+                    'id': params.get('id'),
+                }))
+
+            syslog(LOG_DEBUG, "AUTHORIZED = %s" % authorized)
+
+            if request.method == "POST":
+                data = json.loads(request.POST.keys()[0])
+                method = data.get("method")
+
+                if method in (
+                    'plugins.is_authenticated',
+                    'auth.getToken',
+                    ):
                     authorized = True
+
             if authorized:
+                syslog(LOG_DEBUG, "FUNC = %s" % func)
                 return func(request, *args, **kwargs)
-        except:
+
+        except Exception, e:
+            syslog(LOG_DEBUG, "AUTHORIZATION ERROR: %s" % e)
             pass
 
         # FIXME: better error handling
