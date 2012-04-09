@@ -37,13 +37,8 @@ from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
 
-from freenasUI.system.models import Email
-from account.models import bsdUsers
-
 VERSION_FILE = '/etc/version'
-
 _VERSION = None
-
 log = logging.getLogger("common.system")
 
 
@@ -59,15 +54,18 @@ def get_sw_version(strip_build_num=False):
         return _VERSION.split(' ')[0]
     return _VERSION
 
+
 def get_sw_login_version():
     """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
 
     return '-'.join(get_sw_version(strip_build_num=True).split('-')[1:-2])
 
+
 def get_sw_name():
     """Return the software name, e.g. FreeNAS"""
 
     return get_sw_version().split('-')[0]
+
 
 def get_freenas_var_by_file(f, var):
     assert f and var
@@ -80,11 +78,13 @@ def get_freenas_var_by_file(f, var):
 
     return val
 
-def get_freenas_var(var, default = None):
+
+def get_freenas_var(var, default=None):
     val = get_freenas_var_by_file("/etc/rc.freenas", var)
     if not val:
         val = default
     return val
+
 
 def send_mail(subject=None,
               text=None,
@@ -94,6 +94,8 @@ def send_mail(subject=None,
               extra_headers=None,
               attachments=None,
               ):
+    from freenasUI.system.models import Email
+    from freenasUI.account.models import bsdUsers
     if not channel:
         channel = get_sw_name().lower()
     if interval > timedelta():
@@ -113,10 +115,10 @@ def send_mail(subject=None,
     errmsg = ''
     em = Email.objects.all().order_by('-id')[0]
     if not to:
-        to = [ bsdUsers.objects.get(bsdusr_username='root').bsdusr_email ]
+        to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
     if attachments:
         msg = MIMEMultipart()
-        msg.preamble  = MIMEText(text, _charset='utf-8')
+        msg.preamble = MIMEText(text, _charset='utf-8')
         map(lambda attachment: msg.attach(attachment), attachments)
     else:
         msg = MIMEText(text, _charset='utf-8')
@@ -138,8 +140,8 @@ def send_mail(subject=None,
     try:
         if not em.em_outgoingserver or not em.em_port:
             # See NOTE below.
-            raise ValueError('you must provide an outgoing mailserver and mail '
-                             'server port when sending mail')
+            raise ValueError('you must provide an outgoing mailserver and mail'
+                             ' server port when sending mail')
         if em.em_security == 'ssl':
             server = smtplib.SMTP_SSL(em.em_outgoingserver, em.em_port,
                                       timeout=10)
@@ -149,7 +151,8 @@ def send_mail(subject=None,
             if em.em_security == 'tls':
                 server.starttls()
         if em.em_smtp:
-            server.login(em.em_user.encode('utf-8'), em.em_pass.encode('utf-8'))
+            server.login(em.em_user.encode('utf-8'),
+                em.em_pass.encode('utf-8'))
         # NOTE: Don't do this.
         #
         # If smtplib.SMTP* tells you to run connect() first, it's because the
@@ -177,6 +180,7 @@ def send_mail(subject=None,
         error = True
     return error, errmsg
 
+
 def get_fstype(path):
     assert path
 
@@ -188,6 +192,7 @@ def get_fstype(path):
     out = (lines[len(lines) - 1]).split()
 
     return (out[1].upper())
+
 
 def get_mounted_filesystems():
     mounted = []
@@ -204,6 +209,7 @@ def get_mounted_filesystems():
         mounted.append(mountinfo)
 
     return mounted
+
 
 def is_mounted(**kwargs):
     ret = False
