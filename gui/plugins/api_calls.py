@@ -56,7 +56,7 @@ def __popen(cmd):
 
 
 def __get_plugins_jail_info():
-    jail_info = services.models.Plugins.objects.order_by("-pk")
+    jail_info = services.models.PluginsJail.objects.order_by("-pk")
     return jail_info[0] if jail_info else None
 
 
@@ -837,7 +837,7 @@ def __services_dynamicdns_destroy(request):
 
 @jsonrpc_method("services.plugins.get")
 def __services_plugins_get(request):
-    return __serialize(services.models.Plugins.objects.order_by("-pk"))
+    return __serialize(services.models.PluginsJail.objects.order_by("-pk"))
 @jsonrpc_method("services.plugins.set")
 def __services_plugins_set(request):
     return __api_call_not_implemented(request)
