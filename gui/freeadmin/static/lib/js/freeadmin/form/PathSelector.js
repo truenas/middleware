@@ -68,12 +68,16 @@ define([
             var browse = new Button({
                 label: 'Browse',
                 onClick: function() {
+                    var dialog = getDialog(path);
                     if(this.get('label') == 'Close') {
                         dojo.style(path.treeContainer, 'display', 'none');
                         this.set('label', 'Browse');
                     } else {
                         dojo.style(path.treeContainer, 'display', 'block');
                         this.set('label', 'Close');
+                    }
+                    if(dialog) {
+                        dialog.layout();
                     }
                 },
             }, this.pathButton);
