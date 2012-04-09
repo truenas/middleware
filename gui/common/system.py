@@ -256,7 +256,7 @@ def umount(path):
     output = proc.communicate()[0]
 
     if proc.returncode != 0:
-        log.debug("Umount failed (%s): %s", e.returncode, e.output)
+        log.debug("Umount failed (%s): %s", proc.returncode, output)
         return False
     else:
         return True
