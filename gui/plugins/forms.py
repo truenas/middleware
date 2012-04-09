@@ -53,7 +53,7 @@ class PBIFileWizard(FileWizard):
         retval = getattr(self, 'retval', None)
         events = []
         if not retval:
-            events.append('restartHttpd()')
+            events.append('reloadHttpd()')
         return JsonResponse(
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),

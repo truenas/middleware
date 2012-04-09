@@ -360,6 +360,23 @@
 
     }
 
+    reloadHttpd = function(newurl) {
+
+        dojo.xhrGet({
+            url: '/system/reload-httpd/',
+            sync: true,
+            failOk: true,
+            handle: function(a1,a2) {
+                if(newurl) {
+                    setTimeout(function () {
+                        window.location = newurl;
+                    }, 1500);
+                }
+            },
+        });
+
+    }
+
     ask_service = function(srv) {
 
         dialog = new dijit.Dialog({

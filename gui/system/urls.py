@@ -59,5 +59,6 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^tunables/$', 'tunables', name="system_tunables"),
     url(r'^ntpservers/$', 'ntpservers', name="system_ntpservers"),
     url(r'^restart-httpd/$', 'restart_httpd', name="system_restart_httpd"),
+    url(r'^reload-httpd/$', 'reload_httpd', name="system_reload_httpd"),
     url(r'^terminal/$', 'terminal', name="system_terminal"),
     )

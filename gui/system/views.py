@@ -459,6 +459,13 @@ def restart_httpd(request):
     notifier().restart("http")
     return HttpResponse('OK')
 
+
+def reload_httpd(request):
+    """ restart httpd """
+    notifier().reload("http")
+    return HttpResponse('OK')
+
+
 def debug(request):
     """Save freenas-debug output to DEBUG_TEMP"""
     p1 = subprocess.Popen(["/usr/local/bin/freenas-debug", "-a", "-g", "-h", "-l", "-n", "-s", "-y", "-t", "-z"], stdout=subprocess.PIPE)
