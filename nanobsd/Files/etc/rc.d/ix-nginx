@@ -66,7 +66,7 @@ __EOF__
 				}
 			}
 			" > ${tmp}
-			nginx -t -c ${tmp} 2> /dev/null > /dev/null
+			${HTTPD} -t -c ${tmp} 2> /dev/null > /dev/null
 			if [ $? -eq 0 ]; then
 				cat ${nginx_location} >> "${NGINX_PLUGINS_CONF}"
 			fi
