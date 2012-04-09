@@ -63,6 +63,7 @@ define([
 
             this.textfield = new TextBox({
                 value: path.value,
+                name: path.name,
             }, this.pathField);
 
             var browse = new Button({
