@@ -2159,7 +2159,9 @@ class notifier:
         c.execute("SELECT id FROM plugins_plugins")
         plugin_ids = [p[0] for p in c.fetchall()]
         for plugin_id in plugin_ids:
-            if not self.delete_pbi(plugin_id):
+            try:
+                assert self.delete_pbi(plugin_id)
+            except Exception:
                 log.debug("delete_plugins_jail: unable to delete plugin %d", plugin_id)
 
         log.debug("delete_plugins_jail: stopping plugins jail")
@@ -2190,6 +2192,8 @@ class notifier:
         if not os.access(full_jail_path, os.F_OK):
             log.debug("delete_plugins_jail: unable to access %s", full_jail_path)
             return False
+
+        self.__umount_filesystems_within(full_jail_path)
 
         cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
         log.debug("delete_plugins_jail: %s", cmd)
