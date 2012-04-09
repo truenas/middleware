@@ -347,10 +347,8 @@ class notifier:
         self.__system("/usr/sbin/service istgt forcestop")
 
     def _reload_iscsitarget(self):
-        #TODO: istgt does not accept HUP yet
-        #self.__system("/usr/sbin/service ix-istgt quietstart")
-        #self.__system("/usr/sbin/service istgt reload")
-        self._restart_iscsitarget()
+        self.__system("/usr/sbin/service ix-istgt quietstart")
+        self.__system("/usr/sbin/service istgt reload")
 
     def _start_sysctl(self):
         self.__system("/usr/sbin/service sysctl start")
