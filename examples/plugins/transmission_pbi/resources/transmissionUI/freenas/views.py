@@ -74,7 +74,7 @@ class JsonResponse(HttpResponse):
                         field = self.__class__.form_field_all(self.form)
                         errors[field] = [unicode(v) for v in val]
                     else:
-                        errors[self.form.auto_id % key] = [unicode(v) for v in val]
+                        errors[key] = [unicode(v) for v in val]
                 error = True
 
             for name, fs in self.formsets.items():
@@ -86,7 +86,10 @@ class JsonResponse(HttpResponse):
                                 field = self.__class__.form_field_all(form)
                                 errors[field] = [unicode(v) for v in val]
                             else:
-                                errors["%s-%s" % (form.auto_id % form.prefix, key)] = [unicode(v) for v in val]
+                                errors["%s-%s" % (
+                                    form.prefix,
+                                    key,
+                                    )] = [unicode(v) for v in val]
             data.update({
                 'error': error,
                 'errors': errors,
@@ -113,9 +116,9 @@ class JsonResponse(HttpResponse):
     @staticmethod
     def form_field_all(form):
         if form.prefix:
-            field = form.auto_id % form.prefix + "-__all__-" + type(form).__name__
+            field = form.prefix + "-__all__"
         else:
-            field = form.auto_id % "__all__-" + type(form).__name__
+            field = "__all__"
         return field
 
 
@@ -176,13 +179,11 @@ def edit(request):
             ))
         auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
         assert auth
-        token = server.auth.getToken("keyhere")
-        server = jsonrpclib.Server('http://freenas:%s@127.0.0.1:8001/plugins/json/' % (token, ))
         plugin = json.loads(server.plugins.plugins.get("transmission"))[0]
         mounted = server.fs.mounted.get(plugin['fields']['plugin_path'])
         jail = json.loads(server.plugins.jail.info())[0]
     except Exception, e:
-        raise e
+        raise
 
     if request.method == "GET":
         form = forms.TransmissionForm(instance=transmission,
