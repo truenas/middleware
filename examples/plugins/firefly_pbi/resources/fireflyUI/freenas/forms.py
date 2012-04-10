@@ -12,12 +12,18 @@ class FireflyForm(forms.ModelForm):
 
     class Meta:
         model = models.Firefly
+        widgets = {
+            'admin_pw': forms.widgets.PasswordInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         self.mountpoints = kwargs.pop('mountpoints', [])
         self.plugin = kwargs.pop('plugin')
         self.jail = kwargs.pop('jail')
         super(FireflyForm, self).__init__(*args, **kwargs)
+
+        if self.instance.admin_pw:
+            self.fields['admin_pw'].required = False
 
         self.fields['mp3_dir'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
@@ -38,6 +44,12 @@ class FireflyForm(forms.ModelForm):
                 ),
             'dirsonly': 'false',
             })
+
+    def clean_admin_pw(self):
+        admin_pw = self.cleaned_data.get("admin_pw")
+        if not admin_pw:
+            return self.instance.admin_pw
+        return admin_pw
 
     def save(self, *args, **kwargs):
         obj = super(FireflyForm, self).save(*args, **kwargs)
@@ -87,7 +99,7 @@ class FireflyForm(forms.ModelForm):
                 platform.machine(),
                 ))
             f.write("port = %d\n" % (obj.port, ))
-            f.write("admin_pw = %s\n" % ("12345", ))
+            f.write("admin_pw = %s\n" % (obj.admin_pw, ))
             f.write("db_type = %s\n" % ("sqlite3", ))
             f.write("db_params = %s\n" % ("/var/cache/mt-daapd", ))
             f.write("mp3_dir = %s\n" % (obj.mp3_dir, ))

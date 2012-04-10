@@ -8,6 +8,7 @@ class Firefly(models.Model):
 
     enable = models.BooleanField(default=False)
     port = models.IntegerField(default=3689)
+    admin_pw = models.CharField(max_length=50)
     servername = models.CharField(max_length=500, default='Firefly %v on %h', blank=True)
     extensions = models.CharField(max_length=500, default='.mp3,.m4a,.m4p,.ogg,.flac', blank=True)
     mp3_dir = models.CharField(max_length=500)

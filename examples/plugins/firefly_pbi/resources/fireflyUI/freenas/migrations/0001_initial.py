@@ -13,6 +13,7 @@ class Migration(SchemaMigration):
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('enable', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('port', self.gf('django.db.models.fields.IntegerField')(default=3689)),
+            ('admin_pw', self.gf('django.db.models.fields.CharField')(max_length=50)),
             ('servername', self.gf('django.db.models.fields.CharField')(default='Firefly %v on %h', max_length=500, blank=True)),
             ('extensions', self.gf('django.db.models.fields.CharField')(default='.mp3,.m4a,.m4p,.ogg,.flac', max_length=500, blank=True)),
             ('mp3_dir', self.gf('django.db.models.fields.CharField')(max_length=500)),
@@ -30,6 +31,7 @@ class Migration(SchemaMigration):
     models = {
         'freenas.firefly': {
             'Meta': {'object_name': 'Firefly'},
+            'admin_pw': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'extensions': ('django.db.models.fields.CharField', [], {'default': "'.mp3,.m4a,.m4p,.ogg,.flac'", 'max_length': '500', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
