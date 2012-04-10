@@ -35,7 +35,9 @@ class TransmissionForm(forms.ModelForm):
             'dirsonly': 'false',
             })
 
-        self.fields['conf_dir'].widget = self.fields['download_dir'].widget = self.fields['watch_dir'].widget = forms.widgets.TextInput(attrs={
+        self.fields['conf_dir'].widget = \
+        self.fields['download_dir'].widget = \
+        self.fields['watch_dir'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
             'root': os.path.join(
                 self.jail['fields']['jail_path'],
@@ -44,6 +46,12 @@ class TransmissionForm(forms.ModelForm):
                 ),
             'dirsonly': 'true',
             })
+
+    def clean_rpc_password(self):
+        rpc_password = self.cleaned_data.get("rpc_password")
+        if not rpc_password:
+            return self.instance.rpc_password
+        return rpc_password
 
     def save(self, *args, **kwargs):
         obj = super(TransmissionForm, self).save(*args, **kwargs)

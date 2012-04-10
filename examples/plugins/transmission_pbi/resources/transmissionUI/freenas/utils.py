@@ -36,10 +36,6 @@ transmission_advanced_vars = {
         "type": "textbox",
         "opt": "-u",
         },
-    "rpc_password": {
-        "type": "textbox",
-        "opt": "-v",
-        },
     "dht": {
         "type": "checkbox",
         "on": "-o",
