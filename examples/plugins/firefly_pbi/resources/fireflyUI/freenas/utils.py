@@ -7,88 +7,32 @@ firefly_etc_path = os.path.join(firefly_pbi_path, "etc")
 firefly_mnt_path = os.path.join(firefly_pbi_path, "mnt")
 firefly_fcgi_pidfile = "/var/run/firefly_fcgi_server.pid"
 firefly_fcgi_wwwdir = os.path.join(firefly_pbi_path, "www")
-firefly_control = "/usr/local/etc/rc.d/firefly"
+firefly_control = "/usr/local/etc/rc.d/mt-daapd"
+firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
 
 firefly_advanced_vars = {
-    'allow': {
-        "type": "textbox",
-        "opt": "-a",
-        },
-    "blocklist": {
+    "set_cwd": {
         "type": "checkbox",
-        "on": "-b",
-        "off": "-B",
+        "on": "-a",
         },
-    "logfile": {
+    "debuglevel": {
         "type": "textbox",
-        "opt": "-e",
+        "opt": "-d",
         },
-    "rpc_port": {
+    "debug_modules": {
         "type": "textbox",
-        "opt": "-p",
+        "opt": "-D",
         },
-    "rpc_auth": {
-        "type": "checkbox",
-        "on": "-t",
-        "off": "-T",
-        },
-    "rpc_username": {
-        "type": "textbox",
-        "opt": "-u",
-        },
-    "rpc_password": {
-        "type": "textbox",
-        "opt": "-v",
-        },
-    "dht": {
-        "type": "checkbox",
-        "on": "-o",
-        "off": "-O",
-        },
-    "lpd": {
-        "type": "checkbox",
-        "on": "-y",
-        "off": "-Y",
-        },
-    "utp": {
-        "type": "checkbox",
-        "on": "--utp",
-        "off": "--no-utp",
-        },
-    "peer_port": {
-        "type": "textbox",
-        "opt": "-P",
-        },
-    "portmap": {
+    "disable_mdns": {
         "type": "checkbox",
         "on": "-m",
-        "off": "-M",
         },
-    "peerlimit_global": {
-        "type": "textbox",
-        "opt": "-L",
-        },
-    "peerlimit_torrent": {
-        "type": "textbox",
-        "opt": "-l",
-        },
-    "encryption_required": {
+    "non_root_user": {
         "type": "checkbox",
-        "on": "-er",
-        "off": None,
+        "on": "-y",
         },
-    "encryption_preferred": {
-        "type": "checkbox",
-        "on": "-ep",
-        "off": None,
-        },
-    "encryption_tolerated": {
-        "type": "checkbox",
-        "on": "-et",
-        "off": None,
-        },
-    "global_seedratio": {
+    "ffid": {
         "type": "textbox",
-        "opt": "-gsr",
-        }
+        "opt": "-b",
+        },
 }

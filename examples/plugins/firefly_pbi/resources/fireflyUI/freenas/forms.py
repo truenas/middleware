@@ -69,3 +69,17 @@ class FireflyForm(forms.ModelForm):
             os.chmod(obj.download_dir, 0o755)
 
         os.system(os.path.join(utils.firefly_pbi_path, "tweak-rcconf"))
+
+        with open(utils.firefly_config, "w") as f:
+            f.write("[general]\n")
+            f.write("webroot = /usr/pbi/firefly-%s/share/mt-daapd/admin-root\n" % (
+                platform.machine(),
+                ))
+            f.write("port = %d\n" % (obj.port, ))
+            f.write("admin_pw = %s\n" % ("12345", ))
+            f.write("db_type = %s\n" % ("sqlite3", ))
+            f.write("db_params = %s\n" % ("/var/cache/mt-daapd", ))
+            f.write("servername = %s\n" % (obj.servername, ))
+            f.write("runas = %s\n" % (obj.servername, ))
+            f.write("extensions = %s\n" % (obj.extensions, ))
+            f.write("logfile = %s\n" % (obj.logfile, ))
