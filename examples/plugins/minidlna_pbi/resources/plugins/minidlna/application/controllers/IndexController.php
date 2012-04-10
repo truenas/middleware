@@ -40,10 +40,12 @@ class IndexController extends Zend_Controller_Action
                 $values = $form->getValues();
                 $minidlna->setEnabled($values['enabled']);
                 $minidlna->setMediaDir($values['media_dir']);
-                $minidlna->setInotify($values['inotify']);
+                if(isset($values['inotify']))
+                    $minidlna->setInotify($values['inotify']);
                 $minidlna->setNotifyInterval($values['notify_interval']);
                 $minidlna->setFriendlyName($values['friendly_name']);
-                $minidlna->setTivo($values['tivo']);
+                if(isset($values['tivo']))
+                    $minidlna->setTivo($values['tivo']);
                 $minidlna->setRescan($values['rescan']);
                 $em->persist($minidlna);
                 $em->flush();

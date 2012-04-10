@@ -36,12 +36,14 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $media_dir->setDecorators($decs);
 
-        $inotify = new Zend_Form_Element_Checkbox(array(
+        //$inotify = new Zend_Form_Element_Checkbox(array(
+        $inotify = new Zend_Form_Element_Hidden(array(
             'name' => 'inotify',
             'label' => 'Automatic discover',
-            'dojoType' => 'dijit.form.CheckBox')
-            );
-        $inotify->setDecorators($decs);
+            //'dojoType' => 'dijit.form.CheckBox',
+            ));
+        //$inotify->setDecorators($decs);
+        $inotify->setDecorators(array('ViewHelper'));
 
         $enabled = new Zend_Form_Element_Checkbox(array(
             'name' => 'enabled',
@@ -50,12 +52,14 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $enabled->setDecorators($decs);
 
-        $tivo = new Zend_Form_Element_Checkbox(array(
+        //$tivo = new Zend_Form_Element_Checkbox(array(
+        $tivo = new Zend_Form_Element_Hidden(array(
             'name' => 'tivo',
             'label' => 'Enable TiVo',
-            'dojoType' => 'dijit.form.CheckBox')
-            );
-        $tivo->setDecorators($decs);
+            //'dojoType' => 'dijit.form.CheckBox'
+            ));
+        //$tivo->setDecorators($decs);
+        $tivo->setDecorators(array('ViewHelper'));
 
         $friendly_name = new Zend_Form_Element_Text(array(
             'name' => 'friendly_name',
