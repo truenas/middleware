@@ -352,9 +352,9 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_luc_authnetwork = models.CharField(
             max_length=120,
             verbose_name=_("Controller Authorized Network"),
-            default="127.0.0.1/8",
+            default="127.0.0.0/8",
             help_text=_("Logical Unit Controller Authorized netmask "
-                "(127.0.0.1/8 by default)"),
+                "(127.0.0.0/8 by default)"),
             blank=True,
             )
     iscsi_luc_authmethod = models.CharField(
