@@ -70,53 +70,40 @@ def http_auth_basic(func):
     def view(request, *args, **kwargs):
         authorized = False
         try:
-            params = None
-            syslog(LOG_DEBUG, "+-----------------------------------------------+")
+            json_params = {}
+            oauth_params = {}
             for key in request.REQUEST:
-                syslog(LOG_DEBUG, "key: %s, val: %s" % (key, request.REQUEST[key]))
-            
+                if key.startswith("oauth"):
+                    oauth_params[key] = request.REQUEST.get(key)
+                else:
+                    json_params = json.loads(key) 
 
-            for key in request.REQUEST:
-                try:
-                    params = json.loads(key)
-                    break
-
-                except:
-                    params = None
-
-            key = request.REQUEST.get("oauth_consumer_key", None)
+            key = oauth_params.get("oauth_consumer_key", None)
             host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(),)
             uurl = host + request.path
 
-            oreq = oauth.Request(request.method, uurl, request.REQUEST, '', False)
+            oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
             server = oauth.Server()
  
-            cons = oauth.Consumer(key, settings.OAUTH_PARTNERS[key])
-            server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
-
             try:
+                cons = oauth.Consumer(key, settings.OAUTH_PARTNERS[key])
+                server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
                 server.verify_request(oreq, cons, None)
                 authorized = True
 
-            except oauth.Error, e:
-                syslog(LOG_DEBUG, "auth error = %s" % e)
-                authorized = False
-
-            except KeyError, e:
+            except Exception, e:
                 syslog(LOG_DEBUG, "auth error = %s" % e)
                 authorized = False
 
             if not authorized:
                 return HttpResponse(json.dumps({
-                    'jsonrpc': params.get('jsonrpc'),
+                    'jsonrpc': json_params.get('jsonrpc'),
                     'error': {
                         'code': '500',
                         'message': 'Not authenticated',
                         },
-                    'id': params.get('id'),
+                    'id': json_params.get('id'),
                 }))
-
-            syslog(LOG_DEBUG, "AUTHORIZED = %s" % authorized)
 
             if request.method == "POST":
                 data = json.loads(request.POST.keys()[0])
@@ -133,7 +120,6 @@ def http_auth_basic(func):
                 return func(request, *args, **kwargs)
 
         except Exception, e:
-            syslog(LOG_DEBUG, "AUTHORIZATION ERROR: %s" % e)
             pass
 
         # FIXME: better error handling
