@@ -236,7 +236,7 @@ def status(request):
     """
     pid = None
 
-    proc = Popen(["/usr/bin/pgrep", "firefly-daemon"], stdout=PIPE, stderr=PIPE)
+    proc = Popen(["/usr/bin/pgrep", "mt-daap"], stdout=PIPE, stderr=PIPE)
 
     stdout = proc.communicate()[0]
 

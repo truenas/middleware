@@ -1,5 +1,6 @@
 import os
-import urllib
+import platform
+import pwd
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -58,28 +59,33 @@ class FireflyForm(forms.ModelForm):
                 firefly_flags += value + " "
             f.write('firefly_flags="%s"\n' % (firefly_flags, ))
 
-        if obj.watch_dir:
-            #os.system("/usr/sbin/chown -R firefly:firefly '%s'" % (obj.watch_dir, ))
-            os.chmod(obj.watch_dir, 0o755)
-        if obj.conf_dir:
-            #os.system("/usr/sbin/chown -R firefly:firefly '%s'" % main_settings["firefly_conf_dir"])
-            os.chmod(obj.conf_dir, 0o755)
-        if obj.download_dir:
-            #os.system("/usr/sbin/chown -R firefly:firefly '%s'" % main_settings["firefly_download_dir"])
-            os.chmod(obj.download_dir, 0o755)
+        #if obj.download_dir:
+        #    #os.system("/usr/sbin/chown -R firefly:firefly '%s'" % main_settings["firefly_download_dir"])
+        #    os.chmod(obj.download_dir, 0o755)
 
         os.system(os.path.join(utils.firefly_pbi_path, "tweak-rcconf"))
 
+        try:
+            os.makedirs("/var/cache/mt-daapd")
+            os.chown("/var/cache/mt-daapd", *pwd.getpwnam('daapd')[2:4])
+        except Exception:
+            pass
+
         with open(utils.firefly_config, "w") as f:
             f.write("[general]\n")
-            f.write("webroot = /usr/pbi/firefly-%s/share/mt-daapd/admin-root\n" % (
+            f.write("web_root = /usr/pbi/firefly-%s/share/mt-daapd/admin-root\n" % (
                 platform.machine(),
                 ))
             f.write("port = %d\n" % (obj.port, ))
             f.write("admin_pw = %s\n" % ("12345", ))
             f.write("db_type = %s\n" % ("sqlite3", ))
             f.write("db_params = %s\n" % ("/var/cache/mt-daapd", ))
+            f.write("mp3_dir = %s\n" % ("/mnt", ))
             f.write("servername = %s\n" % (obj.servername, ))
-            f.write("runas = %s\n" % (obj.servername, ))
+            f.write("runas = %s\n" % ("daapd", ))
             f.write("extensions = %s\n" % (obj.extensions, ))
             f.write("logfile = %s\n" % (obj.logfile, ))
+            f.write("\n[scanning]\n")
+            f.write("process_playlists = %d\n" % (obj.process_playlists, ))
+            f.write("process_itunes = %d\n" % (obj.process_itunes, ))
+            f.write("process_m3u = %d\n" % (obj.process_m3u, ))
