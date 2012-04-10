@@ -1,3 +1,5 @@
+import hashlib
+import json
 import os
 import urllib
 
@@ -11,6 +13,11 @@ class TransmissionForm(forms.ModelForm):
 
     class Meta:
         model = models.Transmission
+        widgets = {
+            'rpc_port': forms.widgets.TextInput(),
+            'peer_port': forms.widgets.TextInput(),
+            'rpc_password': forms.widgets.PasswordInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         self.mountpoints = kwargs.pop('mountpoints', [])
@@ -28,29 +35,15 @@ class TransmissionForm(forms.ModelForm):
             'dirsonly': 'false',
             })
 
-        choices = [
-            ('', '-----'),
-            ( (utils.transmission_pbi_path + "/etc/transmission/home", ) * 2),
-            ( (utils.transmission_pbi_path + "/etc/transmission/home/Downloads", ) * 2),
-            ]
-
-        for mp in self.mountpoints:
-            choices.append((mp[1], ) * 2)
-
-        self.fields['watch_dir'] = forms.ChoiceField(
-            label=self.fields['watch_dir'].label,
-            choices=choices,
-        )
-
-        self.fields['download_dir'] = forms.ChoiceField(
-            label=self.fields['download_dir'].label,
-            choices=choices,
-        )
-
-        self.fields['conf_dir'] = forms.ChoiceField(
-            label=self.fields['conf_dir'].label,
-            choices=choices,
-        )
+        self.fields['conf_dir'].widget = self.fields['download_dir'].widget = self.fields['watch_dir'].widget = forms.widgets.TextInput(attrs={
+            'data-dojo-type': 'freeadmin.form.PathSelector',
+            'root': os.path.join(
+                self.jail['fields']['jail_path'],
+                self.jail['fields']['jail_name'],
+                #self.plugin['fields']['plugin_path'][1:],
+                ),
+            'dirsonly': 'true',
+            })
 
     def save(self, *args, **kwargs):
         obj = super(TransmissionForm, self).save(*args, **kwargs)
@@ -93,12 +86,41 @@ class TransmissionForm(forms.ModelForm):
 
         if obj.watch_dir:
             #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % (obj.watch_dir, ))
+            os.chown
             os.chmod(obj.watch_dir, 0o755)
-        if obj.conf_dir:
-            #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_conf_dir"])
-            os.chmod(obj.conf_dir, 0o755)
+
+        #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_conf_dir"])
+        os.chmod(obj.conf_dir, 0o755)
+
         if obj.download_dir:
             #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_download_dir"])
             os.chmod(obj.download_dir, 0o755)
+
+        if not os.path.exists(obj.conf_dir):
+            try:
+                os.makedirs(obj.conf_dir)
+            except OSError:
+                pass
+
+        settingsfile = os.path.join(obj.conf_dir, "settings.json")
+        if os.path.exists(settingsfile):
+            with open(settingsfile, 'r') as f:
+                settings = json.loads(f.read())
+        else:
+            try:
+                open(settingsfile, 'w').close()
+            except OSError:
+                #FIXME
+                pass
+            settings = {}
+
+        settings['rpc-whitelist'] = obj.rpc_whitelist
+        settings['rpc-enabled'] = obj.rpc_auth
+        settings['rpc-authentication-required'] = obj.rpc_auth_required
+        if obj.rpc_password:
+            settings['rpc-password'] = '{' + hashlib.sha1(obj.rpc_password).hexdigest()
+        settings['rpc-whitelist-enabled'] = obj.rpc_whitelist_enabled
+        with open(settingsfile, 'w') as f:
+            f.write(json.dumps(settings, sort_keys=True, indent=4))
 
         os.system(os.path.join(utils.transmission_pbi_path, "tweak-rcconf"))
