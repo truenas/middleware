@@ -19,6 +19,16 @@ class FireflyForm(forms.ModelForm):
         self.jail = kwargs.pop('jail')
         super(FireflyForm, self).__init__(*args, **kwargs)
 
+        self.fields['mp3_dir'].widget = forms.widgets.TextInput(attrs={
+            'data-dojo-type': 'freeadmin.form.PathSelector',
+            'root': os.path.join(
+                self.jail['fields']['jail_path'],
+                self.jail['fields']['jail_name'],
+                #self.plugin['fields']['plugin_path'][1:],
+                ),
+            'dirsonly': 'true',
+            })
+
         self.fields['logfile'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
             'root': os.path.join(
@@ -80,7 +90,7 @@ class FireflyForm(forms.ModelForm):
             f.write("admin_pw = %s\n" % ("12345", ))
             f.write("db_type = %s\n" % ("sqlite3", ))
             f.write("db_params = %s\n" % ("/var/cache/mt-daapd", ))
-            f.write("mp3_dir = %s\n" % ("/mnt", ))
+            f.write("mp3_dir = %s\n" % (obj.mp3_dir, ))
             f.write("servername = %s\n" % (obj.servername, ))
             f.write("runas = %s\n" % ("daapd", ))
             f.write("extensions = %s\n" % (obj.extensions, ))
