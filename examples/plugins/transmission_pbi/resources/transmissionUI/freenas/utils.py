@@ -68,21 +68,6 @@ transmission_advanced_vars = {
         "type": "textbox",
         "opt": "-l",
         },
-    "encryption_required": {
-        "type": "checkbox",
-        "on": "-er",
-        "off": None,
-        },
-    "encryption_preferred": {
-        "type": "checkbox",
-        "on": "-ep",
-        "off": None,
-        },
-    "encryption_tolerated": {
-        "type": "checkbox",
-        "on": "-et",
-        "off": None,
-        },
     "global_seedratio": {
         "type": "textbox",
         "opt": "-gsr",

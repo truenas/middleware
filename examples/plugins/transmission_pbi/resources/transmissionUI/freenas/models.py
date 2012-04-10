@@ -34,14 +34,28 @@ class Transmission(models.Model):
     rpc_password = models.CharField(max_length=120, blank=True)
     rpc_whitelist_enabled = models.BooleanField(default=True)
     rpc_whitelist = models.TextField(blank=True)
-    dht = models.BooleanField(default=True)
-    lpd = models.BooleanField(default=True)
-    utp = models.BooleanField(default=True)
+    dht = models.BooleanField(
+        default=True,
+        verbose_name="Distributed Hash Table (DHT)",
+        )
+    lpd = models.BooleanField(
+        default=True,
+        verbose_name="Local Peer Discovery (LPD)",
+        )
+    utp = models.BooleanField(
+        default=True,
+        verbose_name=u"Micro Transport Protocol (\xb5TP)"
+        )
     peer_port = models.IntegerField(default=51413, blank=True)
     portmap = models.BooleanField(default=True)
     peerlimit_global = models.IntegerField(default=240)
     peerlimit_torrent = models.IntegerField(default=60)
-    encryption_required = models.BooleanField(default=True)
-    encryption_preferred = models.BooleanField(default=True)
-    encryption_tolerated = models.BooleanField(default=True)
+    encryption = models.IntegerField(
+        default=1,
+        choices=(
+            (0, 'Prefer unencrypted'),
+            (1, 'Prefer encrypted'),
+            (2, 'Require encrypted'),
+        ),
+        )
     global_seedratio = models.IntegerField(default=2)

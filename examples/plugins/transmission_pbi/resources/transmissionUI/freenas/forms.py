@@ -122,6 +122,7 @@ class TransmissionForm(forms.ModelForm):
                 pass
             settings = {}
 
+        settings['encryption'] = obj.encryption
         settings['rpc-whitelist'] = obj.rpc_whitelist
         settings['rpc-enabled'] = obj.rpc_auth
         settings['rpc-authentication-required'] = obj.rpc_auth_required

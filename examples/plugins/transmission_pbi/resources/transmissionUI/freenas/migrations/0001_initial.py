@@ -32,9 +32,7 @@ class Migration(SchemaMigration):
             ('portmap', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('peerlimit_global', self.gf('django.db.models.fields.IntegerField')(default=240)),
             ('peerlimit_torrent', self.gf('django.db.models.fields.IntegerField')(default=60)),
-            ('encryption_required', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('encryption_preferred', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('encryption_tolerated', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('encryption', self.gf('django.db.models.fields.IntegerField')(default=1)),
             ('global_seedratio', self.gf('django.db.models.fields.IntegerField')(default=2)),
         ))
         db.send_create_signal('freenas', ['Transmission'])
@@ -55,9 +53,7 @@ class Migration(SchemaMigration):
             'dht': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'download_dir': ('django.db.models.fields.CharField', [], {'default': "'/usr/pbi/transmission-amd64/etc/transmission/home/Downloads'", 'max_length': '500'}),
             'enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'encryption_preferred': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'encryption_required': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'encryption_tolerated': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'encryption': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'global_seedratio': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'logfile': ('django.db.models.fields.CharField', [], {'max_length': '500', 'blank': 'True'}),
