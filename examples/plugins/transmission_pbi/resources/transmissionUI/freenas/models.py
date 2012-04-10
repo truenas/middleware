@@ -39,7 +39,7 @@ class Transmission(models.Model):
         verbose_name="Distributed Hash Table (DHT)",
         )
     lpd = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name="Local Peer Discovery (LPD)",
         )
     utp = models.BooleanField(
