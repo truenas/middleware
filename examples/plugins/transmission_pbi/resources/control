@@ -1,41 +1,14 @@
 #!/usr/local/bin/python
 
 import os
-import re
 import sys
-import stat
 import signal
 
-import cgi
-import json
-import urllib
-import urllib2
-import cookielib
-import Cookie
-
 from flup.server.fcgi import WSGIServer
-from subprocess import Popen, PIPE
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(HERE, "lib/python2.7/site-packages"))
-
-
-def get_arch():
-    cmd = "/usr/bin/uname -m"
-    pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        shell=True, close_fds=True)
-
-    out = pipe.stdout.read().strip()
-    pipe.wait()
-    return out
-
-transmission_pbi_path = "/usr/pbi/transmission-" + get_arch()
-transmission_etc_path = os.path.join(transmission_pbi_path, "etc")
-transmission_mnt_path = os.path.join(transmission_pbi_path, "mnt")
 transmission_fcgi_pidfile = "/var/run/transmission_fcgi_server.pid"
-transmission_fcgi_wwwdir = os.path.join(transmission_pbi_path, "www")
-transmission_control = "/usr/local/etc/rc.d/transmission"
-transmission_opts = os.path.join(transmission_etc_path, "options")
 
 
 def transmission_fcgi_start(args):
