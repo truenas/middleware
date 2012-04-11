@@ -28,6 +28,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.freeadmin.models import Model
 
 
@@ -148,7 +149,6 @@ class NullMountPoint(Model):
 
     @property
     def mounted(self):
-        from freenasUI.common.system import is_mounted
         return is_mounted(device=self.source, path=self.destination)
 
     def __get_jail(self):
@@ -163,11 +163,9 @@ class NullMountPoint(Model):
         return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
 
     def mount(self):
-        from freenasUI.common.system import mount
         mount(self.source, self.destination_jail, fstype="nullfs")
         return self.mounted
 
     def umount(self):
-        from freenasUI.common.system import umount
         umount(self.destination_jail)
         return not self.mounted
