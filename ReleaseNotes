@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.4-RELEASE
+Release Notes for FreeNAS 8.0.4-RELEASE-p1
 
 *** IMPORTANT ***
 
@@ -31,6 +31,34 @@ Release Notes for FreeNAS 8.0.4-RELEASE
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
 
+Changes since 8.0.4-RELEASE:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Selecting reboot now causes the screen to turn red during the confirmation
+   dialog, adding emphasis to the fact that this operation will affect
+   availability.
+
+Bugfixes
+========================
+
+OS/Third party
+------------------------
+
+1. Samba has been upgraded to 3.6.4 to address CVE-2012-1182 which is a
+   critical vulnerability.  All FreeNAS users who are using CIFS are
+   urged to upgrade.
+
+2. Create the ldap and nss secret files when LDAP integration is enabled.
+
+3. Ensure the configuration database is not world readable.
+
+4. Remove failsafe from the PAM group file, this prevents a situation where
+   the wheel group being empty allowed any user to su to root.
 
 Changes since 8.0.4-RC1:
 
