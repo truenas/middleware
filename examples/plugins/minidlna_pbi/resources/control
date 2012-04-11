@@ -18,6 +18,8 @@ control_start() {
 
 	${PHP_FPM} -y ${PHP_FPM_CONF}
 
+    chown www:www "${PBIPATH}/.oauth" > /dev/null 2>&1
+
 	return $?
 
 }
