@@ -29,7 +29,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils import simplejson
 
-from account import models, forms
+from freenasUI.account import models, forms
 from freeadmin.tests import TestCase
 
 class UrlsTest(TestCase):
