@@ -9,6 +9,29 @@ firefly_fcgi_pidfile = "/var/run/firefly_fcgi_server.pid"
 firefly_fcgi_wwwdir = os.path.join(firefly_pbi_path, "www")
 firefly_control = "/usr/local/etc/rc.d/mt-daapd"
 firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
+firefly_oauth_file = os.path.join(firefly_pbi_path, ".oauth")
+
+def get_firefly_oauth_creds():
+    f = open(firefly_oauth_file)
+    lines = f.readlines()
+    f.close()
+
+    key = secret = None
+    for l in lines:
+        l = l.strip()
+
+        if l.startswith("key"):
+            pair = l.split("=")
+            if len(pair) > 1:
+                key = pair[1].strip()
+
+        elif l.startswith("secret"):
+            pair = l.split("=")
+            if len(pair) > 1:
+                secret = pair[1].strip()
+
+    return key, secret
+
 
 firefly_advanced_vars = {
     "set_cwd": {
