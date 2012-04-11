@@ -29,11 +29,11 @@ from cStringIO import StringIO
 import base64
 import datetime
 import json
+import logging
 import os
 import re
 import sys
 import cProfile
-import oauth2 as oauth
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -44,6 +44,7 @@ from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
 from django.utils.translation import ugettext as _
+import oauth2 as oauth
 
 from freenasUI import settings as mysettings
 from freenasUI.freeadmin.views import JsonResponse
@@ -53,7 +54,7 @@ from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
 from freenasUI.plugins.models import Plugins
 
-from syslog import syslog, LOG_DEBUG
+log = logging.getLogger('freeadmin.middleware')
 
 COMMENT_SYNTAX = (
     (re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
@@ -66,18 +67,19 @@ def public(f):
     return f
 
 
-def http_auth_basic(func):
+def http_oauth(func):
 
     def view(request, *args, **kwargs):
         authorized = False
+        json_params = {}
+        oauth_params = {}
+
         try:
-            json_params = {}
-            oauth_params = {}
             for key in request.REQUEST:
                 if key.startswith("oauth"):
                     oauth_params[key] = request.REQUEST.get(key)
                 else:
-                    json_params = json.loads(key) 
+                    json_params = json.loads(key)
 
             key = oauth_params.get("oauth_consumer_key", None)
             host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(),)
@@ -88,10 +90,10 @@ def http_auth_basic(func):
 
             secret = None
             plugins = Plugins.objects.filter(plugin_key=key)
-            if plugins: 
+            if plugins:
                 plugins = plugins[0]
-                secret = plugins.plugin_secret  
-          
+                secret = plugins.plugin_secret
+
             try:
                 cons = oauth.Consumer(key, secret)
                 server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
@@ -99,22 +101,11 @@ def http_auth_basic(func):
                 authorized = True
 
             except Exception, e:
-                syslog(LOG_DEBUG, "auth error = %s" % e)
+                log.debug("auth error = %s" % e)
                 authorized = False
 
-            if not authorized:
-                return HttpResponse(json.dumps({
-                    'jsonrpc': json_params.get('jsonrpc'),
-                    'error': {
-                        'code': '500',
-                        'message': 'Not authenticated',
-                        },
-                    'id': json_params.get('id'),
-                }))
-
             if request.method == "POST":
-                data = json.loads(request.POST.keys()[0])
-                method = data.get("method")
+                method = json_params.get("method")
 
                 if method in (
                     'plugins.is_authenticated',
@@ -130,12 +121,12 @@ def http_auth_basic(func):
 
         # FIXME: better error handling
         return HttpResponse(json.dumps({
-            'jsonrpc': data.get("jsonrpc"),
+            'jsonrpc': json_params.get("jsonrpc", "2.0"),
             'error': {
                 'code': '500',
                 'message': 'Not authenticated',
                 },
-            'id': data.get("id"),
+            'id': json_params.get("id", "1"),
         }))
 
     return view
@@ -170,7 +161,7 @@ class RequireLoginMiddleware(object):
 
         # JSON-RPC calls are authenticated through HTTP Basic
         if request.path.startswith('/plugins/json/'):
-            return http_auth_basic(view_func)(request, *view_args, **view_kwargs)
+            return http_oauth(view_func)(request, *view_args, **view_kwargs)
 
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
