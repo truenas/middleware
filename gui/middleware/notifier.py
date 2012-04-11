@@ -1881,23 +1881,11 @@ class notifier:
 
         (c, conn) = self.__open_db(ret_conn=True)
 
-        c.execute("SELECT jail_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        jail_path = c.fetchone()
-        if not jail_path:
+        c.execute("SELECT jail_path, jail_name, plugins_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
+        row = c.fetchone()
+        if not row:
             return False
-        jail_path = jail_path[0]
-
-        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        jail_name = c.fetchone()
-        if not jail_name:
-            return False
-        jail_name = jail_name[0]
-
-        c.execute("SELECT plugins_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        plugins_path = c.fetchone()
-        if not plugins_path:
-            return False
-        plugins_path = plugins_path[0]
+        jail_path, jail_name, plugins_path = row
 
         jail = None
         for j in Jls():
