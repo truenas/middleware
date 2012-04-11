@@ -8,7 +8,8 @@ class IndexController extends Zend_Controller_Action
         Zend_Dojo_View_Helper_Dojo::setUseDeclarative();
         $this->view->addHelperPath('Zend/Dojo/View/Helper/', 'Zend_Dojo_View_Helper');
         $session = $this->getRequest()->getCookie('sessionid');
-        FreeNAS_Lib_MiniDLNA::isAuthorized($session);
+        $lib = new FreeNAS_Lib_MiniDLNA();
+        $lib->isAuthorized($session);
     }
 
     public function indexAction()
