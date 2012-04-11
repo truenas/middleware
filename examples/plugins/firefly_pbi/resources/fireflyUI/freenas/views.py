@@ -17,6 +17,7 @@ import jsonrpclib
 import urllib2
 import oauth2 as oauth
 
+
 class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
     def __init__(self, host, verbose=None, use_datetime=0, key=None, secret=None):
         jsonrpclib.jsonrpc.SafeTransport.__init__(self)
@@ -166,6 +167,8 @@ def start(request):
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
+    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    assert auth
 
     cmd = "%s start" % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -183,6 +186,8 @@ def stop(request):
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
+    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    assert auth
 
     cmd = "%s stop " % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
