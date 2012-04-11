@@ -12,7 +12,7 @@
 generate_collectd()
 {
     if [ -f "/data/rrd_dir.tar.bz2" ]; then
-        if [ -d "/var/db" ]; then
+        if [ -d "/var/db" -a ! -d /var/db/collectd/rrd ]; then
             (cd /var/db && tar jxf /data/rrd_dir.tar.bz2)
             /usr/local/bin/python /usr/local/bin/graph.py
         fi
