@@ -1881,6 +1881,12 @@ class notifier:
 
         (c, conn) = self.__open_db(ret_conn=True)
 
+        c.execute("SELECT jail_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
+        jail_path = c.fetchone()
+        if not jail_path:
+            return False
+        jail_path = jail_path[0]
+
         c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
         jail_name = c.fetchone()
         if not jail_name:
@@ -1971,6 +1977,13 @@ class notifier:
             kwargs['key'] = str(uuid.uuid4())
             h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
             kwargs['secret'] = str(h.hexdigest())
+
+            oauth_file = "%s/%s/%s/.oauth" % (jail_path, jail_name, kwargs["path"])
+
+            fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
+            os.write(fd,"key = %s\n" % kwargs['key'])
+            os.write(fd, "secret = %s\n" % kwargs['secret'])
+            os.close(fd)
 
             sqlvars = ""
             sqlvals = ""
