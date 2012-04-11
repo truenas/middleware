@@ -58,9 +58,6 @@ import tempfile
 import threading
 import time
 import types
-import uuid
-import hmac
-import hashlib
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -1874,6 +1871,7 @@ class notifier:
         Raises::
             MiddlewareError: pbi_add failed
         """
+        from freenasUI.services.models import RPCToken
         ret = False
 
         if not self._started_plugins_jail():
@@ -1962,15 +1960,13 @@ class notifier:
                     if key in ('uname', 'icon'):
                         kwargs[key] = parts[1].strip()
 
-            kwargs['key'] = str(uuid.uuid4())
-            h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
-            kwargs['secret'] = str(h.hexdigest())
+            rpctoken = RPCToken.new()
 
             oauth_file = "%s/%s/%s/.oauth" % (jail_path, jail_name, kwargs["path"])
 
             fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
-            os.write(fd,"key = %s\n" % kwargs['key'])
-            os.write(fd, "secret = %s\n" % kwargs['secret'])
+            os.write(fd,"key = %s\n" % rpctoken.key)
+            os.write(fd, "secret = %s\n" % rpctoken.secret)
             os.close(fd)
 
             sqlvars = ""

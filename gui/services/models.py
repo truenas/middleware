@@ -25,6 +25,9 @@
 #
 #####################################################################
 import datetime
+import hashlib
+import hmac
+import uuid
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -1449,5 +1452,16 @@ class SMART(Model):
 
 class RPCToken(Model):
 
-    token = models.CharField(max_length=64)
-    last_used = models.DateTimeField(default=datetime.datetime.now)
+    key = models.CharField(max_length=1024)
+    secret = models.CharField(max_length=1024)
+
+    @classmethod
+    def new(cls):
+        key = str(uuid.uuid4())
+        h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
+        secret = str(h.hexdigest())
+        instance = cls.objects.create(
+            key=key,
+            secret=secret,
+            )
+        return instance

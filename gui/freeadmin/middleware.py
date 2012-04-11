@@ -52,7 +52,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
-from freenasUI.plugins.models import Plugins
 
 log = logging.getLogger('freeadmin.middleware')
 
@@ -89,10 +88,9 @@ def http_oauth(func):
             server = oauth.Server()
 
             secret = None
-            plugins = Plugins.objects.filter(plugin_key=key)
-            if plugins:
-                plugins = plugins[0]
-                secret = plugins.plugin_secret
+            rpctoken = RPCToken.objects.get(key=key)
+            if rpctoken:
+                secret = rpctoken.secret
 
             if not key or not secret:
                 raise Exception
