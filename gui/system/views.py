@@ -91,9 +91,11 @@ def _system_info(request=None):
         'host': host,
     }
 
+
 def system_info(request):
     sysinfo = _system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
+
 
 def config_restore(request):
     if request.method == "POST":
@@ -105,6 +107,7 @@ def config_restore(request):
         login(request, user)
         return render(request, 'system/config_ok2.html')
     return render(request, 'system/config_restore.html')
+
 
 def config_upload(request):
 
@@ -144,10 +147,9 @@ def config_upload(request):
             'form': form,
         })
 
+
 def config_save(request):
 
-    from django.core.servers.basehttp import FileWrapper
-    from network.models import GlobalConfiguration
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     filename = '/data/freenas-v1.db'
     wrapper = FileWrapper(file(filename))
@@ -165,6 +167,7 @@ def config_save(request):
         'attachment; filename=%s-%s-%s.db' % (hostname.encode('utf-8'), freenas_build, time.strftime('%Y%m%d%H%M%S'))
     return response
 
+
 def reporting(request):
 
     graphs = {}
@@ -178,6 +181,7 @@ def reporting(request):
     return render(request, 'system/reporting.html', {
         'graphs': graphs,
     })
+
 
 def settings(request):
     try:
@@ -207,20 +211,6 @@ def settings(request):
         'advanced': advanced,
     })
 
-def advanced(request):
-
-    extra_context = {}
-    advanced = forms.AdvancedForm(data = models.Advanced.objects.order_by("-id").values()[0], auto_id=False)
-    if request.method == 'POST':
-        advanced = forms.AdvancedForm(request.POST, auto_id=False)
-        if advanced.is_valid():
-            advanced.save()
-            extra_context['saved'] = True
-
-    extra_context.update({
-        'advanced': advanced,
-    })
-    return render(request, 'system/advanced.html', extra_context)
 
 def varlogmessages(request, lines):
     if lines is None:
