@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+import time
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -11,7 +12,43 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 
 from transmissionUI.freenas import forms, models, utils
+
 import jsonrpclib
+import urllib2
+import oauth2 as oauth
+
+
+class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
+    def __init__(self, host, verbose=None, use_datetime=0, key=None, secret=None):
+        jsonrpclib.jsonrpc.SafeTransport.__init__(self)
+        self.verbose = verbose
+        self._use_datetime = use_datetime
+        self.host = host
+        self.key = key
+        self.secret = secret
+
+    def oauth_request(self, url, moreparams={}, body=''):
+        params = {
+            'oauth_version': "1.0",
+            'oauth_nonce': oauth.generate_nonce(),
+            'oauth_timestamp': int(time.time())
+        }
+        consumer = oauth.Consumer(key=self.key, secret=self.secret)
+        params['oauth_consumer_key'] = consumer.key
+        params.update(moreparams)
+
+        req = oauth.Request(method='POST', url=url, parameters=params, body=body)
+        signature_method = oauth.SignatureMethod_HMAC_SHA1()
+        req.sign_request(signature_method, consumer, None)
+        return req
+
+    def request(self, host, handler, request_body, verbose=0):
+        request = self.oauth_request(url=self.host, body=request_body)
+        req = urllib2.Request(request.to_url())
+        req.add_header('Content-Type', 'text/json')
+        req.add_data(request_body)
+        f = urllib2.urlopen(req)
+        return(self.parse_response(f))
 
 
 class JsonResponse(HttpResponse):
@@ -128,13 +165,14 @@ def all(request):
 
 
 def start(request):
+    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
 
-    server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
-        's' if request.is_secure() else '',
-        request.get_host(),
-        ))
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
-    assert auth
+    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
+        else '', request.get_host(),)
+    trans = OAuthTransport(url, key=transmission_key,
+        secret=transmission_secret)
+
+    server = jsonrpclib.Server(url, transport=trans)
 
     cmd = "%s start" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -145,13 +183,13 @@ def start(request):
 
 
 def stop(request):
+    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
+    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
+        else '', request.get_host(),)
+    trans = OAuthTransport(url, key=transmission_key,
+        secret=transmission_secret)
 
-    server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
-        's' if request.is_secure() else '',
-        request.get_host(),
-        ))
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
-    assert auth
+    server = jsonrpclib.Server(url, transport=trans)
 
     cmd = "%s stop " % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -162,6 +200,11 @@ def stop(request):
 
 
 def edit(request):
+    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
+    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
+        else '', request.get_host(),)
+    trans = OAuthTransport(url, key=transmission_key,
+        secret=transmission_secret)
 
     """
     Get the Transmission object
@@ -173,15 +216,11 @@ def edit(request):
         transmission = models.Transmission.objects.create()
 
     try:
-        server = jsonrpclib.Server('http%s://%s/plugins/json/' % (
-            's' if request.is_secure() else '',
-            request.get_host(),
-            ))
-        auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
-        assert auth
+        server = jsonrpclib.Server(url, transport=trans)
         plugin = json.loads(server.plugins.plugins.get("transmission"))[0]
         mounted = server.fs.mounted.get(plugin['fields']['plugin_path'])
         jail = json.loads(server.plugins.jail.info())[0]
+
     except Exception, e:
         raise
 
