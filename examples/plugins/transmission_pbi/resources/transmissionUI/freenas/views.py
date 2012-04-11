@@ -173,6 +173,8 @@ def start(request):
         secret=transmission_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
+    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    assert auth
 
     cmd = "%s start" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -190,6 +192,8 @@ def stop(request):
         secret=transmission_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
+    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    assert auth
 
     cmd = "%s stop " % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
