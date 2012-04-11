@@ -8,7 +8,8 @@ class FreenasController extends Zend_Controller_Action
         $this->_helper->viewRenderer->setNoRender(TRUE);
         $this->getResponse()->setHeader('Content-type', 'application/json');
         $session = $this->getRequest()->getCookie('sessionid');
-        FreeNAS_Lib_MiniDLNA::isAuthorized($session);
+        $lib = new FreeNAS_Lib_MiniDLNA();
+        $lib->isAuthorized($session);
     }
 
     public function treemenuAction()

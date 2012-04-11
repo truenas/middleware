@@ -50,3 +50,29 @@ pear install pearhub/tivoka
 ## License ##
 **GNU General Public License** - as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.  
 See the `LICENSE` file.
+
+## Changelog ##
+
+2.0.2
+
+ * Introduced new directory structure
+ * Fixed #10
+ * Some Exception messages changed slightly to be more specific
+
+***
+
+2.0.1
+
+ * Patched http method spelling (make uppercase, so all servers accept it)
+
+***
+
+2.0.0
+
+ * complete Code base rework
+ * major API change
+ * removed Response Class
+ * Added aa number of shortcuts
+ * Implemented native remote interface
+
+***

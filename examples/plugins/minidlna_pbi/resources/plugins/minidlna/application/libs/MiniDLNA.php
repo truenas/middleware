@@ -25,12 +25,40 @@ class FreeNAS_Lib_MiniDLNA {
 
     }
 
-    public static function isAuthorized($session) {
+    public function getOAuthConsumer() {
+
+        $consumer_key = $consumer_secret = null;
+        $credsfile = $this->BASE . '/.oauth';
+        $fp = fopen($credsfile, 'r');
+        while (($line = fgets($fp)) !== false) {
+            if(!strstr($line, "=")) continue;
+            list($key, $val) = preg_split("/=/", $line);
+            $key = trim($key);
+            $val = trim($val);
+            if($key == "key") {
+                $consumer_key = $val;
+            } elseif($key == "secret") {
+                $consumer_secret = $val;
+            }
+
+        }
+
+        if($consumer_key && $consumer_secret) {
+            return new OAuth_Consumer($consumer_key, $consumer_secret);
+        }
+        throw new Exception('OAuth keys not found');
+
+    }
+
+    public function isAuthorized($session) {
 
         // FIX HTTPS
         $target = sprintf('http://%s/plugins/json/', $_SERVER['HTTP_HOST']);
         $request = Tivoka::createRequest('1', 'plugins.is_authenticated', array($session));
-        Tivoka::connect($target)->send($request);
+        $oauth_consumer = $this->getOAuthConsumer();
+        $connection = Tivoka::connect($target);
+        $connection->setOAuthConsumer($oauth_consumer);
+        $connection->send($request);
         if($request->isError() || $request->result !== TRUE) {
             exit("Not authorized");
         }

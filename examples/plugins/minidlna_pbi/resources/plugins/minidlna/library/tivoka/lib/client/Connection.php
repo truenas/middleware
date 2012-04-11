@@ -9,7 +9,7 @@
  * @package Tivoka
  */
 class Tivoka_Connection {
-	
+	public $oauth_consumer;
 	/**
 	 * Constructs connection
 	 * @access private
@@ -44,9 +44,14 @@ class Tivoka_Connection {
 		));
 	
 		//sending...
-		$response = @file_get_contents($this->target, false, $context);
+		if($this->oauth_consumer) {
+			$oauth = new OAuth_Request($this->oauth_consumer, 'POST', $this->target, array(), (string) $request);
+			$response = $oauth->request($context);
+		} else {
+			$response = @file_get_contents($this->target, false, $context);
+		}
 		if($response === FALSE) {
-			throw new Tivoka_Exception('Connection Failed', Tivoka::ERR_CONNECTION_FAILED);
+			throw new Tivoka_Exception('Connection to "'.$this->target.'" failed', Tivoka::ERR_CONNECTION_FAILED);
 		}
 		
 		$request->setResponse($response);
@@ -72,6 +77,10 @@ class Tivoka_Connection {
 	 */
 	public function sendNotification($method, $params=null) {
 		$this->send(Tivoka::createNotification($method, $params));
+	}
+
+	public function setOAuthConsumer($oauth) {
+		$this->oauth_consumer = $oauth;
 	}
 }
 ?>
