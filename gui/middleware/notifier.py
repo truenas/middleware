@@ -58,6 +58,9 @@ import tempfile
 import threading
 import time
 import types
+import uuid
+import hmac
+import hashlib
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -1964,6 +1967,10 @@ class notifier:
                     key = parts[0].strip().lower()
                     if key in ('uname', 'icon'):
                         kwargs[key] = parts[1].strip()
+
+            kwargs['key'] = str(uuid.uuid4())
+            h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
+            kwargs['secret'] = str(h.hexdigest())
 
             sqlvars = ""
             sqlvals = ""

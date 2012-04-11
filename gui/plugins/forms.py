@@ -66,7 +66,8 @@ class PluginsForm(ModelForm):
 
     class Meta:
         model = models.Plugins
-        exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version', 'plugin_path')
+        exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version',
+            'plugin_path', 'plugin_key', 'plugin_secret')
 
     def __init__(self, *args, **kwargs):
         super(PluginsForm, self).__init__(*args, **kwargs)

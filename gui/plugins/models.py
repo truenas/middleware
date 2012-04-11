@@ -98,6 +98,18 @@ class Plugins(Model):
         help_text=_("Path where the plugins are saved after installation")
         )
 
+    plugin_key = models.CharField(
+        max_length=1024,
+        verbose_name=_("Plugin oauth key"),
+        help_text=_("Plugin oauth key")
+        )
+
+    plugin_secret = models.CharField(
+        max_length=1024,
+        verbose_name=_("Plugin oauth secret"),
+        help_text=_("Plugin oauth secret")
+        )
+
     class Meta:
         verbose_name = _(u"Plugins")
         verbose_name_plural = _(u"Plugins")

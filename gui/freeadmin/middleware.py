@@ -51,6 +51,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
+from freenasUI.plugins.models import Plugins
 
 from syslog import syslog, LOG_DEBUG
 
@@ -84,9 +85,15 @@ def http_auth_basic(func):
 
             oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
             server = oauth.Server()
- 
+
+            secret = None
+            plugins = Plugins.objects.filter(plugin_key=key)
+            if plugins: 
+                plugins = plugins[0]
+                secret = plugins.plugin_secret  
+          
             try:
-                cons = oauth.Consumer(key, settings.OAUTH_PARTNERS[key])
+                cons = oauth.Consumer(key, secret)
                 server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
                 server.verify_request(oreq, cons, None)
                 authorized = True
@@ -116,7 +123,6 @@ def http_auth_basic(func):
                     authorized = True
 
             if authorized:
-                syslog(LOG_DEBUG, "FUNC = %s" % func)
                 return func(request, *args, **kwargs)
 
         except Exception, e:
