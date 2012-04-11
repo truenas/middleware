@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:42-0800\n"
-"PO-Revision-Date: 2012-01-29 08:51+0200\n"
-"Last-Translator: cebence <cebetarevic@yahoo.com>\n"
+"PO-Revision-Date: 2012-04-10 22:46+0200\n"
+"Last-Translator: DeDaMrAz <dragan.savatic@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -114,7 +114,7 @@ msgstr "Onemogućeno"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivo 1 - Minimalna potrošnja struje na čekanju ( smanjen broj obrtaja)"
+msgstr "Nivo 1 - Minimalna potrošnja struje na čekanju (smanjen broj obrtaja)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -140,91 +140,91 @@ msgstr "Nivo 254 - Maksimum performansi, maksimalna potrošnja"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "најмање"
+msgstr "Najmanje"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "осредње"
+msgstr "Srednje"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "највеће"
+msgstr "Najveće"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr "јануар"
+msgstr "Januar"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr "фебруар"
+msgstr "Februar"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr "март"
+msgstr "Mart"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr "април"
+msgstr "April"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr "мај"
+msgstr "Maj"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr "јун"
+msgstr "Jun"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr "јул"
+msgstr "Jul"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr "август"
+msgstr "Avgust"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr "септембар"
+msgstr "Septembar"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr "октобар"
+msgstr "Oktobar"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr "новембар"
+msgstr "Novembar"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr "децембар"
+msgstr "Decembar"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr "понедељак"
+msgstr "Ponedeljak"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr "уторак"
+msgstr "Utorak"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr "среда"
+msgstr "Sreda"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr "четвртак"
+msgstr "Četvrtak"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr "петак"
+msgstr "Petak"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr "субота"
+msgstr "Subota"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr "недеља"
+msgstr "Nedelja"
 
 #: choices.py:163
 msgid "Anonymous"
@@ -404,22 +404,22 @@ msgstr "Čitanje i Pisanje"
 #: choices.py:506 choices.py:507
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) minuta"
+msgstr "%(minutes)-a minuta"
 
 #: choices.py:508
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) sati"
+msgstr "%(hour)-a sati"
 
 #: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours) sati"
+msgstr "%(hours)-a sati"
 
 #: choices.py:514
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) dan"
+msgstr "%(day)-a dan"
 
 #: choices.py:515
 #, python-format
@@ -432,17 +432,19 @@ msgstr ""
 "Nikada - Proveravaj uređaj bez obzira na režim napajanja u kojem se nalazi"
 
 #: choices.py:520
-#, fuzzy
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Spavanje - Proverite uređaj osim ako nije u režimu spavanja"
+msgstr "Spavanje - Proverite uređaj osim ako nije u režimu SPAVANJE"
 
 #: choices.py:521
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"Pripravnost - Proveri uređaj ukoliko nije u režimu SPAVANJA ili PRIPRAVNOSTI"
 
 #: choices.py:522
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Pasivno - Proveri uređaj ukoliko nije u režimu SPAVANJA, PRIPRAVNOSTI ili "
+"PASIVNO"
 
 #: choices.py:526
 msgid "Long Self-Test"
@@ -459,16 +461,15 @@ msgstr "Samo-testiranje prenosa (samo ATA)"
 
 #: choices.py:529
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Neposredan test van rada (samo ATA)"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
-msgstr "Dodaj Rsync modul"
+msgstr "Rsync modul"
 
 #: choices.py:559
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync preko SSH"
 
 #: choices.py:563
 msgid "Push"
@@ -480,21 +481,21 @@ msgstr ""
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Vaše ime ne može početi sa \"-\""
 
 #: account/forms.py:54
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Karakter $ je jedino dozvoljen kao poslednji"
 
 #: account/forms.py:61
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše ime sadrži nepodržane karaktere (%s)."
 
 #: account/forms.py:70
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše puno ime sadrži nepodržane karaktere (%s)."
 
 #: account/forms.py:120 templates/storage/volumes.html:61
 msgid "Available"
@@ -512,9 +513,8 @@ msgid "Username"
 msgstr "Korisničko ime"
 
 #: account/forms.py:200
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Obavezno. 30 znakova i manje. Slova, brojevi i @/./+/-/_ isključivo."
+msgstr "Obavezno. 16 znakova i manje. Slova, brojevi i @/./+/-/_ isključivo."
 
 #: account/forms.py:201
 #, fuzzy
@@ -543,17 +543,16 @@ msgid "Shell"
 msgstr "Ljuska"
 
 #: account/forms.py:241 account/forms.py:498
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Onemogući prijavu"
+msgstr "Onemogući prijavu lozinkom"
 
 #: account/forms.py:243 account/forms.py:499
 msgid "Lock user"
-msgstr ""
+msgstr "Zaključaj korisnika"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Kreiraj novu primarnu grupu za korisnika"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -561,21 +560,19 @@ msgstr "Osnovna grupa"
 
 #: account/forms.py:251 account/forms.py:504
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH javni ključ"
 
 #: account/forms.py:256
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Korisnički Direktorijum"
+msgstr "Mod korisničkog direktorijuma"
 
 #: account/forms.py:259 account/forms.py:693
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Ostale grupe"
 
 #: account/forms.py:318
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Korisnik sa tim imenom već postoji."
+msgstr "Korisnik sa tim UID-om već postoji."
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
@@ -594,22 +591,21 @@ msgid "The two password fields didn't match."
 msgstr "Šifre se ne poklapaju."
 
 #: account/forms.py:351
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Korisnički direktorijum mora da počinje sa /mnt/"
+msgstr ""
+"Korisnički direktorijum mora da počinje sa /mnt/ ili da bude /nonexistent"
 
 #: account/forms.py:366 account/forms.py:703
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Korisnik ne može pripadati u više od 64 pomoćne grupe"
 
 #: account/forms.py:381 account/forms.py:582
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Korisnički direktorijum mora da počinje sa /mnt/"
+msgstr "Korisnički direktorijum nije promenjiv, ostavite prazno"
 
 #: account/forms.py:388
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Lozinka je isključena, ostavite prazno"
 
 #: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
@@ -618,27 +614,25 @@ msgid "This field is required."
 msgstr "Ovo polje je obavezno."
 
 #: account/forms.py:562
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Korisnički direktorijum mora da počinje sa /mnt/"
+msgstr ""
+"Korisnički direktorijum mora da počinje sa /mnt/ ili da bude /nonexistent"
 
 #: account/forms.py:634
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Dozvoli ponavljanje GID-a"
 
 #: account/forms.py:647
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Korisnik sa tim imenom već postoji."
+msgstr "Grupa sa tim imenom već postoji."
 
 #: account/forms.py:665
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Korisnik sa tim imenom već postoji."
+msgstr "Grupa sa tim GID-om već postoji."
 
 #: account/forms.py:675
 msgid "Member users"
-msgstr ""
+msgstr "Članovi korisnici"
 
 #: account/forms.py:720
 msgid "New password"
@@ -649,9 +643,8 @@ msgid "New password confirmation"
 msgstr "Potvrda nove šifre"
 
 #: account/forms.py:746
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Promeni Šifru"
+msgstr "Promeni takođe i ROOT šifru"
 
 #: account/forms.py:753
 msgid "Old password"
@@ -689,7 +682,7 @@ msgstr "Grupe"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Grupa %s je deo sistema i ne može biti obrisana!"
 
 #: account/models.py:82
 msgid "User ID"
@@ -701,11 +694,11 @@ msgstr "Korisnik &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "HASH-ovana UNIX lozinka"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "HASH-ovana SMB lozinka"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -737,7 +730,7 @@ msgstr "Korisnik"
 #: account/models.py:150
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Korisnik %s je deo sistema i ne može biti obrisan!"
 
 #: account/nav.py:5 templates/menubar.html:53
 msgid "Account"
@@ -873,7 +866,7 @@ msgstr ""
 
 #: network/forms.py:40 network/models.py:86
 msgid "NIC"
-msgstr "Mrežna karta"
+msgstr "NIC"
 
 #: network/forms.py:77 network/forms.py:88 network/forms.py:330
 #: network/forms.py:344
@@ -950,9 +943,8 @@ msgid "Physical NICs in the LAGG"
 msgstr ""
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fizička mrežna karta"
+msgstr ""
 
 #: network/forms.py:298
 #, python-format
@@ -1019,7 +1011,7 @@ msgstr "Globalna Konfiguracija"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Odaberi tvoju mrežnu kartu"
+msgstr "Odaberi svoj NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
@@ -1027,7 +1019,7 @@ msgstr "Naziv interfejsa"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Dodaj naziv tvojoj mrežnoj karti"
+msgstr "Dodaj naziv svom NIC-u"
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1145,7 +1137,7 @@ msgstr "LAGG Prioritetni Broj"
 
 #: network/models.py:355
 msgid "Physical NIC"
-msgstr "Fizička mrežna karta"
+msgstr "Fizički NIC"
 
 #: network/models.py:385
 msgid "Destination network"
@@ -1181,9 +1173,8 @@ msgid "View Link Aggregations"
 msgstr "Pogledaj sve agregirane linkove"
 
 #: network/views.py:188
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s uspešno dodati."
+msgstr "LAGG uspešno dodati."
 
 #: plugins/forms.py:73
 msgid "Place to temporarily place PBI file"
@@ -1302,23 +1293,20 @@ msgstr ""
 
 # ako % predstavlja user  kao users 
 #: plugins/views.py:69
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s uspešno ažurirani."
+msgstr "Dodatak uspesno ažuriran."
 
 #: plugins/views.py:95
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "%s uspešno dodati."
+msgstr "Dodatak uspošno uklonjen."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
 msgstr ""
 
 #: services/forms.py:65
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Korisnik %s nije ispravan."
+msgstr "Ovo nije ispravna maska"
 
 #: services/forms.py:82
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -4093,33 +4081,29 @@ msgid "Change Permissions"
 msgstr ""
 
 #: storage/views.py:159 storage/views.py:187 storage/views.py:209
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s uspešno dodati."
+msgstr "Particija uspešno dodata."
 
 #: storage/views.py:226
 msgid "S.M.A.R.T. Extra Options"
 msgstr ""
 
 #: storage/views.py:317
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s uspešno dodati."
+msgstr "Dataset uspešno dodat."
 
 # ako % predstavlja user  kao users 
 #: storage/views.py:351
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s uspešno ažurirani."
+msgstr "Dataset uspešno ažuriran."
 
 #: storage/views.py:353 storage/views.py:428
 msgid "An error occurred when setting the options"
 msgstr ""
 
 #: storage/views.py:374
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s uspešno dodati."
+msgstr "ZFS particija uspešno dodata."
 
 #: storage/views.py:389
 msgid "This is in use by the iscsi target, please remove it there first."
@@ -6225,9 +6209,8 @@ msgstr "Traka"
 msgid "Pass"
 msgstr "Prolaz"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Nova šifra"
+msgstr "Onemogući lozinku"
 
 msgid "My Account"
 msgstr "Moj Nalog"
