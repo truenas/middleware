@@ -94,6 +94,9 @@ def http_oauth(func):
                 plugins = plugins[0]
                 secret = plugins.plugin_secret
 
+            if not key or not secret:
+                raise Exception
+
             try:
                 cons = oauth.Consumer(key, secret)
                 server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
