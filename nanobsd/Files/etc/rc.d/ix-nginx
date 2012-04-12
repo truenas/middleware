@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-nginx
-# BEFORE: nginx 
+# REQUIRE: django
+# BEFORE: nginx
 
 . /etc/rc.freenas
 
@@ -48,6 +49,64 @@ nginx_cmd()
 	fi
 
 	return 1
+}
+
+
+nginx_start()
+{
+	local st="${1}"
+
+	nginx_cmd "start"
+	if [ "$?" = "0" ]
+	then
+		nginx_cmd "status"
+		if [ "$?" = "0" ]
+		then
+			if [ -n "${st}" ]
+			then
+				sleep "${st}" >/dev/null 2>&1
+			fi
+			return 0
+		fi
+	fi
+
+	return 1
+}
+
+
+nginx_reload()
+{
+	local st="${1}"
+
+	nginx_cmd "reload"
+	if [ "$?" = "0" ]
+	then
+		nginx_cmd "status"
+		if [ "$?" = "0" ]
+		then
+			if [ -n "${st}" ]
+			then
+				sleep "${st}" >/dev/null 2>&1
+			fi
+			return 0
+		fi
+	fi
+
+	return 1
+}
+
+
+nginx_stop()
+{
+	nginx_cmd "stop"
+	return $?
+}
+
+
+nginx_status()
+{
+	nginx_cmd "status"
+	return $?
 }
 
 
@@ -234,16 +293,18 @@ test_nginx_conf()
 	echo -n "Waiting for ${proto}... "
 	while [ "${try}" -lt "${ntries}" ]
 	do
-		fetch -q -o /dev/null "${proto}://${host}" \
-		    >/dev/null 2>&1
-		if [ $? -eq 0 ]; then
+		fetch -q -o /dev/null "${proto}://${host}" >/dev/null 2>&1
+		if [ "$?" = "0" ]
+		then
 			rc=0
 			break		
 		fi
 
 		: $(( try += 1 ))
+		sleep 1
 	done
-	if [ $rc -eq 0 ]; then
+	if [ "${rc}" = "0" ]
+	then
 		echo "Done."
 	else
 		echo "Failed."
@@ -418,14 +479,14 @@ ix_nginx_reload()
 	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
 	then
 		restore_nginx_conf
-		nginx_cmd "reload"
+		nginx_reload
 		return 1
 	fi
 
-	if ! nginx_cmd "reload"
+	if ! nginx_reload
 	then
 		restore_nginx_conf
-		nginx_cmd "reload"
+		nginx_reload
 		return 1
 	fi
 
@@ -456,28 +517,28 @@ ix_nginx_start()
 	backup_nginx_conf
 	generate_nginx_conf "${proto}" "${addr}" "${port}"
 
-	if nginx_cmd "status"
+	if nginx_status
 	then
-		nginx_cmd "reload"
+		nginx_reload 5
 	else
-		nginx_cmd "start"
+		nginx_start 5
 	fi
 	
 	if [ "$?" != "0" ]
 	then
 		restore_nginx_conf
-		nginx_cmd "stop"
+		nginx_stop
 		return 1
 	fi
 
 	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
 	then
 		restore_nginx_conf
-		nginx_cmd "stop"
+		nginx_stop
 		return 1
 	fi
 
-	nginx_cmd "stop"
+	nginx_stop
 	return 0
 }
 
