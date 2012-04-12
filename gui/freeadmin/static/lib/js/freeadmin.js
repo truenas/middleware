@@ -633,7 +633,7 @@
                 var first = null;
                 for(key in data.errors) {
 
-                    field = dojo.query("input[name="+key+"]", form.domNode);
+                    field = dojo.query("input[name="+key+"],textarea[name="+key+"]", form.domNode);
                     if(field.length == 0) continue;
                     field = dijit.getEnclosingWidget(field[0]);
                     if(!first && field.focus)
