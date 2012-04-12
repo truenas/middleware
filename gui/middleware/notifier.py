@@ -1872,6 +1872,7 @@ class notifier:
             MiddlewareError: pbi_add failed
         """
         from freenasUI.services.models import RPCToken
+        from freenasUI.plugins.models import Plugins
         ret = False
 
         if not self._started_plugins_jail():
@@ -1986,6 +1987,10 @@ class notifier:
 
             except Exception, err:
                 ret = False
+
+            plugin = Plugins.objects.get(plugin_name=kwargs['name'])
+            rpctoken.plugin = plugin
+            rpctoken.save()
 
         elif res and res[0] != 0:
             # pbid seems to return 255 for any kind of error
