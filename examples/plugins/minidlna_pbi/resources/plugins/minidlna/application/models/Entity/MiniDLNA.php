@@ -49,6 +49,12 @@ class MiniDLNA
     protected $rescan = false;
 
     /**
+     * @var     boolean
+     * @Column(type="boolean")
+     */
+    protected $strict_dlna = false;
+
+    /**
      * @var     string
      * @Column(type="string")
      */
@@ -160,6 +166,23 @@ class MiniDLNA
     public function setRescan($rescan)
     {
         $this->rescan= $rescan;
+    }
+
+    /**
+     * @return  boolean
+     */
+    public function getStrictDLNA()
+    {
+        return $this->strict_dlna;
+    }
+
+    /**
+     * @param   boolean  $rescan
+     * @return  void
+     */
+    public function setStrictDLNA($strict_dlna)
+    {
+        $this->strict_dlna = $strict_dlna;
     }
 
     /**

@@ -75,6 +75,13 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $rescan->setDecorators($decs);
 
+        $strict_dlna = new Zend_Form_Element_Checkbox(array(
+            'name' => 'strict_dlna',
+            'label' => 'Strict DLNA',
+            'dojoType' => 'dijit.form.CheckBox')
+            );
+        $strict_dlna->setDecorators($decs);
+
         $this->addElement($enabled)
              ->addElement($friendly_name)
              ->addElement($media_dir)
@@ -98,6 +105,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
                  )
              )
              ->addElement($tivo)
+             ->addElement($strict_dlna)
              ->addElement($rescan)
              ;
 
