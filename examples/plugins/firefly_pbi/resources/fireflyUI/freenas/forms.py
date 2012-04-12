@@ -17,8 +17,6 @@ class FireflyForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.mountpoints = kwargs.pop('mountpoints', [])
-        self.plugin = kwargs.pop('plugin')
         self.jail = kwargs.pop('jail')
         super(FireflyForm, self).__init__(*args, **kwargs)
 

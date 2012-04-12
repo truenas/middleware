@@ -215,16 +215,14 @@ def edit(request):
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
-        plugin = json.loads(server.plugins.plugins.get("firefly"))[0]
-        mounted = server.fs.mounted.get(plugin['fields']['plugin_path'])
         jail = json.loads(server.plugins.jail.info())[0]
+        auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+        assert auth
     except Exception, e:
         raise
 
     if request.method == "GET":
         form = forms.FireflyForm(instance=firefly,
-            plugin=plugin,
-            mountpoints=mounted,
             jail=jail)
         return render(request, "edit.html", {
             'form': form,
@@ -235,8 +233,6 @@ def edit(request):
 
     form = forms.FireflyForm(request.POST,
         instance=firefly,
-        plugin=plugin,
-        mountpoints=mounted,
         jail=jail)
     if form.is_valid():
         form.save()
