@@ -20,8 +20,6 @@ class TransmissionForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.mountpoints = kwargs.pop('mountpoints', [])
-        self.plugin = kwargs.pop('plugin')
         self.jail = kwargs.pop('jail')
         super(TransmissionForm, self).__init__(*args, **kwargs)
 
@@ -93,22 +91,22 @@ class TransmissionForm(forms.ModelForm):
             f.write('transmission_flags="%s"\n' % (transmission_flags, ))
 
         if obj.watch_dir:
-            #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % (obj.watch_dir, ))
-            os.chown
+            #FIXME use os.chown
+            os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.watch_dir, ))
             os.chmod(obj.watch_dir, 0o755)
-
-        #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_conf_dir"])
-        os.chmod(obj.conf_dir, 0o755)
-
-        if obj.download_dir:
-            #os.system("/usr/sbin/chown -R transmission:transmission '%s'" % main_settings["transmission_download_dir"])
-            os.chmod(obj.download_dir, 0o755)
 
         if not os.path.exists(obj.conf_dir):
             try:
                 os.makedirs(obj.conf_dir)
             except OSError:
                 pass
+
+        os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.conf_dir, ))
+        os.chmod(obj.conf_dir, 0o755)
+
+        if obj.download_dir:
+            os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.download_dir, ))
+            os.chmod(obj.download_dir, 0o755)
 
         settingsfile = os.path.join(obj.conf_dir, "settings.json")
         if os.path.exists(settingsfile):

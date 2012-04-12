@@ -6,5 +6,4 @@ urlpatterns = patterns('transmissionUI.freenas.views',
      url(r'^_s/start$', 'start', name="start"),
      url(r'^_s/stop$', 'stop', name="stop"),
      url(r'^_s/status$', 'status', name="status"),
-     url(r'.*', 'all'),
 )
