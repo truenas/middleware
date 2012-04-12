@@ -101,7 +101,6 @@ class JsonResponse(HttpResponse):
             data.update({
                 'type': 'form',
                 'formid': request.POST.get("__form_id"),
-                'form_auto_id': self.form.auto_id,
                 })
             error = False
             errors = {}

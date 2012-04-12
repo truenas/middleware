@@ -114,3 +114,5 @@ class FireflyForm(forms.ModelForm):
             f.write("process_playlists = %d\n" % (obj.process_playlists, ))
             f.write("process_itunes = %d\n" % (obj.process_itunes, ))
             f.write("process_m3u = %d\n" % (obj.process_m3u, ))
+            if obj.auxiliary:
+                f.write("%s\n" % (obj.auxiliary, ))
