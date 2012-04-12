@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-03-13 18:51+0200\n"
+"PO-Revision-Date: 2012-04-11 17:39+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -1204,7 +1204,7 @@ msgstr ""
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "La ruta Jail no puede contener una ruta plugins"
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
@@ -1330,6 +1330,7 @@ msgstr "Ha fallado el reinicio del servicio NFS"
 #: services/forms.py:130
 msgid "The plugins path cannot be the same or reside within jail path."
 msgstr ""
+"La ruta de plugins no puede ser la misma o residr dentro de la ruta de jail"
 
 #: services/forms.py:139
 msgid "This IP already exists."
@@ -2316,7 +2317,7 @@ msgstr "DNS Dinamica"
 
 #: services/models.py:768
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Ruta de acceso a los plugins del jail"
 
 #: services/models.py:769
 #, fuzzy
@@ -2324,18 +2325,16 @@ msgid "Path to the plugins jail"
 msgstr "Ruta al medio"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
-#, fuzzy
 msgid "Jail name"
-msgstr "Nombre de dominio"
+msgstr "Nombre del Jail"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Nombre del Jail del Plugin"
 
 #: services/models.py:781
-#, fuzzy
 msgid "Jail IP address"
-msgstr "Dirección de correo (e-mail)"
+msgstr "Dirección IP del Jail"
 
 #: services/models.py:784
 msgid "Plugins Path"
@@ -4785,6 +4784,8 @@ msgstr "Dirección"
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Enviar - Desde una máquina local a una remota. Recuperar - Desde una máquina "
+"remota a una local."
 
 # "Home" translates into casa, hogar in Spanish. I suggest that we evaluate the option to use one of the following words for better translation:
 # PERSONAL --- I have personally used this
@@ -5778,7 +5779,11 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"Esto borrara todos los archivos del conjunto de datos \n"
 msgstr[1] ""
+"\n"
+"Esto borrara todos los archivos del conjunto de datos y su descendientes \n"
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -5921,9 +5926,10 @@ msgid "This will increase system overhead while in progress"
 msgstr "Esto aumentará la sobrecarga del sistema mientras está en proceso"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "¿Estás seguro de que desea deshacer la instantánea al estado definido?"
+msgstr ""
+"¿Estás seguro de que desea deshacer el conjunto de datos al estado definido "
+"en la instantanea?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
