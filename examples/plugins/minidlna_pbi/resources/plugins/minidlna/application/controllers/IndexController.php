@@ -3,13 +3,15 @@
 class IndexController extends Zend_Controller_Action
 {
 
+    public $lib;
+
     public function init()
     {
         Zend_Dojo_View_Helper_Dojo::setUseDeclarative();
         $this->view->addHelperPath('Zend/Dojo/View/Helper/', 'Zend_Dojo_View_Helper');
         $session = $this->getRequest()->getCookie('sessionid');
-        $lib = new FreeNAS_Lib_MiniDLNA();
-        $lib->isAuthorized($session);
+        $this->lib = new FreeNAS_Lib_MiniDLNA();
+        $this->lib->isAuthorized($session);
     }
 
     public function indexAction()
@@ -28,6 +30,10 @@ class IndexController extends Zend_Controller_Action
         }
 
         $form = new FreeNAS_Form_Edit;
+        $jail = Tivoka::createRequest('1', 'plugins.jail.info');
+        $this->lib->getRpc()->send($jail);
+        $jail = json_decode($jail->result);
+        $form->media_dir->setAttrib('root', $jail[0]->fields->jail_path . '/' . $jail[0]->fields->jail_name);
 
         if($this->getRequest()->isPost()) {
 

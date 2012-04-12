@@ -14,6 +14,7 @@ class FreeNAS_Lib_MiniDLNA {
             'type' => 'boolean',
             ),
     );
+    private $_rpc = null;
 
     function __construct() {
 
@@ -50,15 +51,25 @@ class FreeNAS_Lib_MiniDLNA {
 
     }
 
-    public function isAuthorized($session) {
+    public function getRpc() {
 
+        if($this->_rpc)
+            return $this->_rpc;
         // FIX HTTPS
         $target = sprintf('http://%s/plugins/json/', $_SERVER['HTTP_HOST']);
-        $request = Tivoka::createRequest('1', 'plugins.is_authenticated', array($session));
         $oauth_consumer = $this->getOAuthConsumer();
         $connection = Tivoka::connect($target);
         $connection->setOAuthConsumer($oauth_consumer);
-        $connection->send($request);
+        $this->_rpc = $connection;
+        return $connection;
+
+    }
+
+    public function isAuthorized($session) {
+
+        $request = Tivoka::createRequest('1', 'plugins.is_authenticated', array($session));
+        $rpc = $this->getRpc();
+        $rpc->send($request);
         if($request->isError() || $request->result !== TRUE) {
             exit("Not authorized");
         }
