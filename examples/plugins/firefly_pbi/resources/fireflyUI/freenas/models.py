@@ -25,3 +25,4 @@ class Firefly(models.Model):
     process_playlists = models.BooleanField(default=True)
     process_itunes = models.BooleanField(default=True)
     process_m3u = models.BooleanField(default=True)
+    auxiliary = models.TextField(verbose_name="Auxiliary parameters", blank=True)

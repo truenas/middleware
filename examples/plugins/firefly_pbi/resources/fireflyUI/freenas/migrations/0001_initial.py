@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
-
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        
         # Adding model 'Firefly'
         db.create_table('freenas_firefly', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -24,18 +24,23 @@ class Migration(SchemaMigration):
             ('process_playlists', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('process_itunes', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('process_m3u', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('auxiliary', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal('freenas', ['Firefly'])
 
+
     def backwards(self, orm):
+        
         # Deleting model 'Firefly'
         db.delete_table('freenas_firefly')
+
 
     models = {
         'freenas.firefly': {
             'Meta': {'object_name': 'Firefly'},
             'admin_pw': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'always_scan': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'auxiliary': ('django.db.models.fields.TextField', [], {}),
             'enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'extensions': ('django.db.models.fields.CharField', [], {'default': "'.mp3,.m4a,.m4p,.ogg,.flac'", 'max_length': '500', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
