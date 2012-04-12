@@ -61,8 +61,7 @@ class IndexController extends Zend_Controller_Action
                 $em->persist($minidlna);
                 $em->flush();
 
-                $lib = new FreeNAS_Lib_MiniDLNA();
-                $lib->writeConf($minidlna);
+                $this->lib->writeConf($minidlna);
 
                 echo json_encode(
                     array(
