@@ -68,6 +68,27 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $friendly_name->setDecorators($decs);
 
+        $model_number = new Zend_Form_Element_Text(array(
+            'name' => 'model_number',
+            'label' => 'Model number',
+            'dojoType' => 'dijit.form.TextBox')
+            );
+        $model_number->setDecorators($decs);
+
+        $serial = new Zend_Form_Element_Text(array(
+            'name' => 'serial',
+            'label' => 'Serial',
+            'dojoType' => 'dijit.form.TextBox')
+            );
+        $serial->setDecorators($decs);
+
+        $auxiliary = new Zend_Form_Element_Text(array(
+            'name' => 'auxiliary',
+            'label' => 'Auxiliary parameters',
+            'dojoType' => 'dijit.form.Textarea')
+            );
+        $auxiliary->setDecorators($decs);
+
         $rescan = new Zend_Form_Element_Checkbox(array(
             'name' => 'rescan',
             'label' => 'Rescan on (re)start',
@@ -106,7 +127,10 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
              )
              ->addElement($tivo)
              ->addElement($strict_dlna)
+             ->addElement($model_number)
+             ->addElement($serial)
              ->addElement($rescan)
+             ->addElement($auxiliary)
              ;
 
     }

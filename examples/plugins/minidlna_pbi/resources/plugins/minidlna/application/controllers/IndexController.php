@@ -55,6 +55,9 @@ class IndexController extends Zend_Controller_Action
                     $minidlna->setTivo($values['tivo']);
                 $minidlna->setRescan($values['rescan']);
                 $minidlna->setStrictDLNA($values['strict_dlna']);
+                $minidlna->setModelNumber($values['model_number']);
+                $minidlna->setSerial($values['serial']);
+                $minidlna->setAuxiliary($values['auxiliary']);
                 $em->persist($minidlna);
                 $em->flush();
 
@@ -95,6 +98,9 @@ class IndexController extends Zend_Controller_Action
             $form->friendly_name->setValue($minidlna->getFriendlyName());
             $form->tivo->setValue($minidlna->getTivo());
             $form->strict_dlna->setValue($minidlna->getStrictDLNA());
+            $form->model_number->setValue($minidlna->getModelNumber());
+            $form->serial->setValue($minidlna->getSerial());
+            $form->auxiliary->setValue($minidlna->getAuxiliary());
             $form->rescan->setValue($minidlna->getRescan());
             $this->view->form = $form;
         }

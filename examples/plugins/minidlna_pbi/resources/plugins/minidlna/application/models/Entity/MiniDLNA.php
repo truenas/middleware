@@ -67,6 +67,24 @@ class MiniDLNA
     protected $friendly_name = null;
 
     /**
+     * @var     string
+     * @Column(type="string")
+     */
+    protected $model_number = null;
+
+    /**
+     * @var     string
+     * @Column(type="string")
+     */
+    protected $serial = null;
+
+    /**
+     * @var     text
+     * @Column(type="text")
+     */
+    protected $auxiliary = null;
+
+    /**
      * @var     integer
      * @Column(type="integer")
      */
@@ -217,6 +235,57 @@ class MiniDLNA
     public function setFriendlyName($friendly_name)
     {
         $this->friendly_name = $friendly_name;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getModelNumber()
+    {
+        return $this->model_number;
+    }
+
+    /**
+     * @param   string  $model_number
+     * @return  void
+     */
+    public function setModelNumber($model_number)
+    {
+        $this->model_number = $model_number;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getSerial()
+    {
+        return $this->serial;
+    }
+
+    /**
+     * @param   string  #serial
+     * @return  void
+     */
+    public function setSerial($serial)
+    {
+        $this->serial = $serial;
+    }
+
+    /**
+     * @return  string
+     */
+    public function getAuxiliary()
+    {
+        return $this->auxiliary;
+    }
+
+    /**
+     * @param   string  $auxiliary
+     * @return  void
+     */
+    public function setAuxiliary($auxiliary)
+    {
+        $this->auxiliary = $auxiliary;
     }
 
     /**

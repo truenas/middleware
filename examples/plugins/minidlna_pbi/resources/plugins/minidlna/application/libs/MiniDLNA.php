@@ -113,6 +113,12 @@ class FreeNAS_Lib_MiniDLNA {
         fwrite($fp, sprintf("notify_interval=%d\n", $obj->getNotifyInterval()));
         if($obj->getFriendlyName())
             fwrite($fp, sprintf("friendly_name=%s\n", $obj->getFriendlyName()));
+        if($obj->getModelNumber())
+            fwrite($fp, sprintf("model_number=%s\n", $obj->getModelNumber()));
+        if($obj->getSerial())
+            fwrite($fp, sprintf("serial=%s\n", $obj->getSerial()));
+        if($obj->getAuxiliary())
+            fwrite($fp, sprintf("%s\n", $obj->getAuxiliary()));
         fclose($fp);
 
         shell_exec($this->BASE . "/bin/sudo " . $this->BASE . "/tweak-rcconf");
