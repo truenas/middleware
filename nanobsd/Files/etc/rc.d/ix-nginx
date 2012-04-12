@@ -10,6 +10,46 @@
 
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
+NGINX_BACKUP_CONF="${HTTPDCONF}.working"
+
+
+backup_nginx_conf()
+{
+	if [ -f "${HTTPDCONF}" ]
+	then
+		cp "${HTTPDCONF}" "${NGINX_BACKUP_CONF}"
+		return $?
+	fi
+
+	return 1
+}
+
+
+restore_nginx_conf()
+{
+	if [ -f "${NGINX_BACKUP_CONF}" ]
+	then
+		mv "${NGINX_BACKUP_CONF}" "${HTTPDCONF}"
+		return $?
+	fi
+
+	return 1
+}
+
+
+nginx_cmd()
+{
+	local cmd="${1}" 
+
+	${HTTPDSCRIPT} "${cmd}" >/dev/null 2>&1
+	if [ "$?" = "0" ]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 
 generate_plugins_conf()
 {
@@ -84,24 +124,23 @@ __EOF__
 generate_nginx_conf()
 {
 	local res=1
-	local ssl_enable="${1}"
-	local bind_addr="${2}"
-	local bind_port="${3}"
-	local tmp
+	local proto="${1}"
+	local addr="${2}"
+	local port="${3}"
+	local ssl_enable=0
 
-	# XXX: IPv6
-	if [ "${bind_addr}" != "0.0.0.0" -a -n "${bind_addr}" -a \
-		-z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
-		bind_addr="0.0.0.0"
+	if [ "${proto}" = "https" ]
+	then
+		ssl_enable=1
 	fi
 
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
+	mv "${HTTPDCONF}" "${HTTPDCONF}.tmp"
 	awk -v ssl_enable="${ssl_enable}" \
 		-v ssl_key="${HTTPDKEY}" \
 		-v ssl_cert="${HTTPDCERT}" \
-		-v httpd_addr="${bind_addr}" \
-		-v httpd_port="${bind_port}" '
+		-v httpd_addr="${addr}" \
+		-v httpd_port="${port}" '
 		BEGIN { }
 
 		function makeline(ch, len)
@@ -155,19 +194,8 @@ generate_nginx_conf()
 			}
 		}
 		END { }
-	' < "${HTTPDCONF}" > "${tmp}"
-
-	mv "${HTTPDCONF}" "${HTTPDCONF}.working"
-	mv "${tmp}" "${HTTPDCONF}"
-
-	${HTTPD} -t -q -c "${HTTPDCONF}" >/dev/null 2>&1
-	rc=$?
-	if [ "${rc}" != "0" ]
-	then
-		mv "${HTTPDCONF}.working" "${HTTPDCONF}"
-	fi
-
-	return $rc
+	' < "${HTTPDCONF}.tmp" > "${HTTPDCONF}"
+	rm -f "${HTTPDCONF}.tmp"
 }
 
 
@@ -184,20 +212,15 @@ get_host_ip()
 }
 
 
-test_nginx_config()
+test_nginx_conf()
 {
-	local ssl_enable="${1}"
+	local proto="${1}"
 	local addr="${2}"
 	local port="${3}"
-	local proto="http"
 	local ntries=5
 	local res=1
 	local try=0
-
-	if [ "${ssl_enable}" = "1" ]
-	then
-		proto="https"
-	fi
+	local rc=1
 	
 	local host=$(get_host_ip "${addr}")
 	if [ -n "${port}" ]
@@ -205,40 +228,25 @@ test_nginx_config()
 		host="${host}:${port}"
 	fi
 
-	cmd="start"
-	${HTTPDSCRIPT} status >/dev/null 2>&1
-	if [ "$?" = "0" ]
-	then
-		cmd="restart"
-	fi
+	export HTTP_TIMEOUT=1
+	export FTP_TIMEOUT=1
 
-	${HTTPDSCRIPT} "${cmd}" >/dev/null 2>&1
-	rc=$?
-	if [ $rc -eq 0 ]; then
-		echo -n "Waiting for ${proto}... "
-		export HTTP_TIMEOUT=1
-		export FTP_TIMEOUT=1
-		while [ "${try}" -lt "${ntries}" ]
-		do
-			fetch -q -o /dev/null "${proto}://${host}" \
-			    >/dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				rc=0
-				break		
-			fi
-
-			: $(( try += 1 ))
-		done
-		if [ $rc -eq 0 ]; then
-			echo "Done."
-		else
-			echo "Failed."
+	echo -n "Waiting for ${proto}... "
+	while [ "${try}" -lt "${ntries}" ]
+	do
+		fetch -q -o /dev/null "${proto}://${host}" \
+		    >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			rc=0
+			break		
 		fi
-	fi
 
-	if [ "${cmd}" = "start" ]
-	then
-		${HTTPDSCRIPT} stop >/dev/null 2>&1
+		: $(( try += 1 ))
+	done
+	if [ $rc -eq 0 ]; then
+		echo "Done."
+	else
+		echo "Failed."
 	fi
 
 	return $rc
@@ -263,6 +271,26 @@ set_stg_guiprotocol()
 
 	return ${res}
 }
+
+
+set_stg_guiport()
+{
+	local res=1
+	local port="${1}"
+
+	: $((port += 0))
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	UPDATE
+		system_settings
+	SET
+		stg_guiport = '${port}'
+	"
+	res=$?
+
+	return ${res}
+}
+
 
 generate_fastcgi_params()
 {
@@ -303,72 +331,162 @@ generate_fastcgi_params()
 }
 
 
-do_configure_nginx()
+get_nginx_settings()
 {
-	local IFS="|"
+	local settings=$(
+		local IFS="|"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			stg_guiprotocol,
+			stg_guiaddress,
+			stg_guiport
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		stg_guiprotocol,
-		stg_guiaddress,
-		stg_guiport
+		FROM
+			system_settings
 
-	FROM
-		system_settings
+		ORDER BY
+			-id
 
-	ORDER BY
-		-id
+		LIMIT 1
+		" | \
+		while read stg_guiprotocol stg_guiaddress stg_guiport
+		do
+			echo "${stg_guiprotocol}:${stg_guiaddress}:${stg_guiport}"
+		done
+	)
 
-	LIMIT 1
-	" | \
-	while read stg_guiprotocol stg_guiaddress stg_guiport
-	do
-		local ssl_enable=0
+	local proto=$(echo ${settings}|cut -f1 -d: -s|tr A-Z a-z)
+	local addr=$(echo ${settings}|cut -f2 -d: -s)
+	local port=$(echo ${settings}|cut -f3 -d: -s)
 
-		stg_guiprotocol=$(echo "${stg_guiprotocol}"|tr a-z A-Z)
-		case "${stg_guiprotocol}" in
-			HTTP) ssl_enable=0; ;;
-			HTTPS) ssl_enable=1; ;;
-		esac
+	: ${proto:="http"}
+	: ${addr:="0.0.0.0"}
 
-		if [ "${ssl_enable}" = "1" -a ! -f "${SSLCONF}" ]
-		then
-			set_stg_guiprotocol "http"
-			ssl_enable=0
-		fi
+	if [ "${proto}" = "https" -a -z "${port}" ]
+	then
+		port="443"
+	elif [ "${proto}" = "http" -a -z "${port}" ]
+	then
+		port="80"
+	fi
 
-		generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
-		if ! test_nginx_config "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
-		then
-			if [ "${ssl_enable}" = "1" ]
-			then
-				ssl_enable=0
-				set_stg_guiprotocol "http"
-			fi
+	# XXX: IPv6
+	if [ "${addr}" != "0.0.0.0" -a -n "${addr}" -a \
+		-z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
+		addr="0.0.0.0"
+	fi
 
-			generate_nginx_conf "${ssl_enable}" "${stg_guiaddress}" "${stg_guiport}"
-
-			${HTTPDSCRIPT} status >/dev/null 2>&1
-			if [ "$?" = "0" ]
-			then
-				${HTTPDSCRIPT} restart >/dev/null 2>&1
-			else
-				${HTTPDSCRIPT} stop >/dev/null 2>&1
-			fi
-		fi
-	done
+	echo "${proto}:${addr}:${port}"
 }
 
-configure_nginx()
+
+verify_nginx_conf()
 {
+	${HTTPD} -t -q -c "${HTTPDCONF}" >/dev/null 2>&1
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	return 0
+}
+
+
+ix_nginx_reload()
+{
+	local settings=$(get_nginx_settings)
+
+	local proto=$(echo "${settings}"|cut -f1 -d:)
+	local addr=$(echo "${settings}"|cut -f2 -d:)
+	local port=$(echo "${settings}"|cut -f3 -d:)
+
+	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
+	then
+		port="80"
+		proto="http"
+
+		set_stg_guiprotocol "${proto}"
+		set_stg_guiport "${port}"
+	fi
+
 	generate_plugins_conf
 	generate_fastcgi_params
-	do_configure_nginx
+
+	backup_nginx_conf
+	generate_nginx_conf "${proto}" "${addr}" "${port}"
+
+	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
+	then
+		restore_nginx_conf
+		nginx_cmd "reload"
+		return 1
+	fi
+
+	if ! nginx_cmd "reload"
+	then
+		restore_nginx_conf
+		nginx_cmd "reload"
+		return 1
+	fi
+
+	return 0
 }
 
+
+ix_nginx_start()
+{
+	local settings=$(get_nginx_settings)
+
+	local proto=$(echo "${settings}"|cut -f1 -d:)
+	local addr=$(echo "${settings}"|cut -f2 -d:)
+	local port=$(echo "${settings}"|cut -f3 -d:)
+
+	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
+	then
+		port="80"
+		proto="http"
+
+		set_stg_guiprotocol "${proto}"
+		set_stg_guiport "${port}"
+	fi
+
+	generate_plugins_conf
+	generate_fastcgi_params
+
+	backup_nginx_conf
+	generate_nginx_conf "${proto}" "${addr}" "${port}"
+
+	if nginx_cmd "status"
+	then
+		nginx_cmd "reload"
+	else
+		nginx_cmd "start"
+	fi
+	
+	if [ "$?" != "0" ]
+	then
+		restore_nginx_conf
+		nginx_cmd "stop"
+		return 1
+	fi
+
+	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
+	then
+		restore_nginx_conf
+		nginx_cmd "stop"
+		return 1
+	fi
+
+	nginx_cmd "stop"
+	return 0
+}
+
+
 name="ix-nginx"
-start_cmd='configure_nginx'
+start_cmd='ix_nginx_start'
+reload_cmd='ix_nginx_reload'
 stop_cmd=':'
             
+extra_commands="reload"
 load_rc_config $name
 run_rc_command "$1"
