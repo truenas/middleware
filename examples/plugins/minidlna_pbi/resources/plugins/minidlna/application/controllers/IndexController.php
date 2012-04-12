@@ -11,6 +11,10 @@ class IndexController extends Zend_Controller_Action
         $this->view->addHelperPath('Zend/Dojo/View/Helper/', 'Zend_Dojo_View_Helper');
         $session = $this->getRequest()->getCookie('sessionid');
         $this->lib = new FreeNAS_Lib_MiniDLNA();
+        /*
+         * We need to make sure the user viewing this is logged in the FreeNAS GUI
+         * Pass the sessionid via JSON-RPC and make sure it has access
+         */
         $this->lib->isAuthorized($session);
     }
 
@@ -41,9 +45,7 @@ class IndexController extends Zend_Controller_Action
             $this->getResponse()->setHeader('Content-type', 'application/json');
 
             if($form->isValid($_POST)) {
-                //foreach($form->getValues() as $field => $value) {
 
-                //}
                 $values = $form->getValues();
                 $minidlna->setEnabled($values['enabled']);
                 $minidlna->setMediaDir($values['media_dir']);
@@ -72,7 +74,21 @@ class IndexController extends Zend_Controller_Action
 
             } else {
 
-                $data =    array(
+                /*
+                 * This is an internal API of the FreeNAS GUI
+                 *
+                 * The JSON returned in case of form validation error must
+                 * return the following object:
+                 * {
+                 * 'error': true,
+                 * 'type': 'form',
+                 * 'formid': 'formid', // Id of the dijit form
+                 * 'errors': {   // Array of errors with fieldnames as keys
+                 *  'fieldname': ['error 1', 'error 2'],
+                 *   }
+                 * }
+                 */
+                $data = array(
                         'error' => true,
                         'type' => 'form',
                         'formid' => $_POST['__form_id'],
@@ -86,9 +102,11 @@ class IndexController extends Zend_Controller_Action
                 }
                 $data['errors'] = $errors;
                 echo json_encode($data);
+
             }
 
         } else {
+
             $form->enabled->setValue($minidlna->getEnabled());
             $form->media_dir->setValue($minidlna->getMediaDir());
             $form->port->setValue($minidlna->getPort());
@@ -102,9 +120,9 @@ class IndexController extends Zend_Controller_Action
             $form->auxiliary->setValue($minidlna->getAuxiliary());
             $form->rescan->setValue($minidlna->getRescan());
             $this->view->form = $form;
+
         }
     }
 
-
 }
-
+?>
