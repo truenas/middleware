@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import urllib2
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -11,11 +12,9 @@ from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
 
-from transmissionUI.freenas import forms, models, utils
-
 import jsonrpclib
-import urllib2
 import oauth2 as oauth
+from transmissionUI.freenas import forms, models, utils
 
 
 class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
@@ -159,11 +158,6 @@ class JsonResponse(HttpResponse):
         return field
 
 
-def all(request):
-    print request.path
-    return HttpResponse()
-
-
 def start(request):
     transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
 
@@ -221,17 +215,14 @@ def edit(request):
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
-        plugin = json.loads(server.plugins.plugins.get("transmission"))[0]
-        mounted = server.fs.mounted.get(plugin['fields']['plugin_path'])
         jail = json.loads(server.plugins.jail.info())[0]
-
+        auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+        assert auth
     except Exception, e:
         raise
 
     if request.method == "GET":
         form = forms.TransmissionForm(instance=transmission,
-            plugin=plugin,
-            mountpoints=mounted,
             jail=jail)
         return render(request, "edit.html", {
             'form': form,
@@ -242,8 +233,6 @@ def edit(request):
 
     form = forms.TransmissionForm(request.POST,
         instance=transmission,
-        plugin=plugin,
-        mountpoints=mounted,
         jail=jail)
     if form.is_valid():
         form.save()
