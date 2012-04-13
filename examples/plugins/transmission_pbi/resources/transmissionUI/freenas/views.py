@@ -189,7 +189,7 @@ def stop(request):
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
     assert auth
 
-    cmd = "%s stop " % utils.transmission_control
+    cmd = "%s onestop" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
