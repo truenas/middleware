@@ -38,7 +38,7 @@ EOF
 				;;
 			esac
 			if [ -z "$(/usr/local/sbin/smartctl -i /dev/${disk_name}|grep "SMART support is: Enabled")" ]; then
-				continue
+				/usr/local/sbin/smartctl -s on /dev/${disk_name} > /dev/null 2>&1 || continue
 			fi
 			echo -n "/dev/${disk_name}"
 			echo -n " -n ${smart_powermode}"
