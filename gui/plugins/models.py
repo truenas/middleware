@@ -99,6 +99,11 @@ class Plugins(Model):
         help_text=_("Path where the plugins are saved after installation")
         )
 
+    plugin_secret = models.ForeignKey(
+        'services.RPCToken',
+        on_delete=models.PROTECT,  # Do not allow foreign key to be deleted
+        )
+
     class Meta:
         verbose_name = _(u"Plugins")
         verbose_name_plural = _(u"Plugins")
