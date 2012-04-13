@@ -1454,16 +1454,14 @@ class RPCToken(Model):
 
     key = models.CharField(max_length=1024)
     secret = models.CharField(max_length=1024)
-    plugin = models.ForeignKey('plugins.Plugins', null=True)
 
     @classmethod
-    def new(cls, plugin=None):
+    def new(cls):
         key = str(uuid.uuid4())
         h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
         secret = str(h.hexdigest())
         instance = cls.objects.create(
             key=key,
             secret=secret,
-            plugin=plugin,
             )
         return instance
