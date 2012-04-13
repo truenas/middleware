@@ -16,7 +16,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             'DijitElement',
             'Errors',
             array(array('data' => 'HtmlTag'), array('tag' => 'td')),
-            array('Label', array('tag' => 'td')),
+            array('Label', array('tag' => 'th')),
             array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
         ));
 
@@ -24,7 +24,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             'ViewHelper',
             'Errors',
             array(array('data' => 'HtmlTag'), array('tag' => 'td')),
-            array('Label', array('tag' => 'td')),
+            array('Label', array('tag' => 'th')),
             array(array('row' => 'HtmlTag'), array('tag' => 'tr'))
             );
 
