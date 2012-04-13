@@ -228,25 +228,6 @@ def __api_call_api_version(request):
 
 
 #
-#   Authentication methods
-#
-@jsonrpc_method("auth.getToken")
-def __auth_get_token(request, key):
-
-    # FIXME: authenticate the key
-    if False:
-        return False
-
-    # FIXME: Generate the token in a secure way
-    import hashlib
-    import time
-    _token = hashlib.sha256("%s:%s" % (time.strftime("%s"), key)).hexdigest()
-
-    services.models.RPCToken.objects.create(token=_token)
-    return _token
-
-
-#
 #    Account methods
 #
 account_bsdgroups_keys = [ "gid", "group", "builtin" ]

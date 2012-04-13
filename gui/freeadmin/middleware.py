@@ -110,7 +110,6 @@ def http_oauth(func):
 
                 if method in (
                     'plugins.is_authenticated',
-                    'auth.getToken',
                     ):
                     authorized = True
 
