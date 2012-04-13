@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import is_mounted, mount, umount
@@ -110,6 +110,11 @@ class Plugins(Model):
 
     class FreeAdmin:
         icon_model = u"PluginsIcon"
+
+    def delete(self, *args, **kwargs):
+        with transaction.commit_on_success():
+            super(Plugins, self).delete(*args, **kwargs)
+            self.plugin_secret.delete()
 
 
 class NullMountPoint(Model):
