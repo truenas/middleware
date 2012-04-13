@@ -1961,7 +1961,7 @@ class notifier:
                         kwargs[key] = parts[1].strip()
 
             rpctoken = RPCToken.new()
-            kwargs['secret'] = rpctoken.id
+            kwargs['secret_id'] = rpctoken.id
 
             oauth_file = "%s/%s/%s/.oauth" % (jail_path, jail_name, kwargs["path"])
 
