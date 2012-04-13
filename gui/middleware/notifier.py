@@ -1854,12 +1854,9 @@ class notifier:
         for mounted in get_mounted_filesystems():
             if mounted['fs_file'].startswith(path):
                 if not umount(mounted['fs_file']):
-                    print "raise"
                     raise MiddlewareError('Unable to umount %s' % (
                         mounted['fs_file'],
                         ))
-                else:
-                    print "ok", mounted['fs_file']
 
     def install_pbi(self):
         """
@@ -2103,7 +2100,7 @@ class notifier:
 
         return ret
 
-    def delete_pbi(self, plugin_id):
+    def delete_pbi(self, plugin):
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
@@ -2121,32 +2118,24 @@ class notifier:
                 break
 
         if jail is not None:
-            c.execute("SELECT plugin_pbiname, plugin_name FROM plugins_plugins "
-                "WHERE id = :plugin_id", {'plugin_id': plugin_id})
-            row = c.fetchone()
-            if not row:
-                log.debug("delete_pbi: pbi info for %d not in database", plugin_id)
-                return False
-            plugin_pbiname, plugin_name = row
 
             pbi_path = os.path.join(
                 jail_path,
                 jail_name,
                 "usr/pbi",
-                "%s-%s" % (plugin_name, platform.machine()),
+                "%s-%s" % (plugin.plugin_name, platform.machine()),
                 )
             self.__umount_filesystems_within(pbi_path)
 
-            p = pbi_delete(pbi=plugin_pbiname)
+            p = pbi_delete(pbi=plugin.plugin_pbiname)
             res = p.run(jail=True, jid=jail.jid)
             if res and res[0] == 0:
                 try:
-                    c.execute("DELETE FROM plugins_plugins WHERE id = :plugin_id", {'plugin_id': plugin_id})
-                    conn.commit()
+                    plugin.delete()
                     ret = True
 
                 except Exception, err:
-                    log.debug("delete_pbi: unable to delete pbi %d from database (%s)", plugin_id, err)
+                    log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
                     ret = False
 
         return ret
