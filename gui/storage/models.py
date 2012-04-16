@@ -734,8 +734,11 @@ class Task(Model):
 #            blank = True,
 #            )
     def __unicode__(self):
-        return '%s_%s_%d%s' % (self.task_filesystem,
-                self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
+        return '%s - every %s - %d%s' % (self.task_filesystem,
+                self.get_task_interval_display(),
+                self.task_ret_count,
+                self.task_ret_unit,
+                )
 
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
