@@ -167,9 +167,20 @@ def start(request):
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
-    cmd = "%s start" % utils.firefly_control
+    try:
+        firefly = models.Firefly.objects.order_by('-id')[0]
+        firefly.enable = True
+        firefly.save()
+    except IndexError:
+        firefly = models.Firefly.objects.create(enable=True)
+        form = forms.FireflyForm(firefly.__dict__, instance=firefly, jail=jail)
+        form.is_valid()
+        form.save()
+
+    cmd = "%s onestart" % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
@@ -187,6 +198,13 @@ def stop(request):
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
     assert auth
+
+    try:
+        firefly = models.Firefly.objects.order_by('-id')[0]
+        firefly.enable = False
+        firefly.save()
+    except IndexError:
+        models.Firefly.objects.create(enable=False)
 
     cmd = "%s onestop" % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
