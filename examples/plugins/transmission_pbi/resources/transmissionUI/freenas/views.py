@@ -168,9 +168,20 @@ def start(request):
 
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
-    cmd = "%s start" % utils.transmission_control
+    try:
+        transmission = models.Transmission.objects.order_by('-id')[0]
+        transmission.enable = True
+        transmission.save()
+    except IndexError:
+        transmission = models.Transmission.objects.create(enable=True)
+        form = forms.TransmissionForm(transmission.__dict__, instance=transmission, jail=jail)
+        form.is_valid()
+        form.save()
+
+    cmd = "%s onestart" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
@@ -188,6 +199,13 @@ def stop(request):
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
     assert auth
+
+    try:
+        transmission = models.Transmission.objects.order_by('-id')[0]
+        transmission.enable = False
+        transmission.save()
+    except IndexError:
+        models.Transmission.objects.create(enable=False)
 
     cmd = "%s onestop" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,

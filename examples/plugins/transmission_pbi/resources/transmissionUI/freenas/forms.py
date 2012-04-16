@@ -18,6 +18,9 @@ class TransmissionForm(forms.ModelForm):
             'peer_port': forms.widgets.TextInput(),
             'rpc_password': forms.widgets.PasswordInput(),
         }
+        exclude = (
+            'enable',
+            )
 
     def __init__(self, *args, **kwargs):
         self.jail = kwargs.pop('jail')
