@@ -684,6 +684,7 @@ SYSCTL_VARNAME_FORMAT_RE = \
 TUNABLE_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
+
 class SysctlForm(ModelForm):
     class Meta:
         model = models.Sysctl
@@ -692,7 +693,7 @@ class SysctlForm(ModelForm):
         return self.cleaned_data.get('sysctl_comment').strip()
 
     def clean_sysctl_mib(self):
-        value = self.cleaned_data.get('sysctl_mib')
+        value = self.cleaned_data.get('sysctl_mib').strip()
         if SYSCTL_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
@@ -706,6 +707,7 @@ class SysctlForm(ModelForm):
     def save(self):
         super(SysctlForm, self).save()
         notifier().reload("sysctl")
+
 
 class TunableForm(ModelForm):
     class Meta:
@@ -721,7 +723,7 @@ class TunableForm(ModelForm):
         return value
 
     def clean_ldr_var(self):
-        value = self.cleaned_data.get('ldr_var')
+        value = self.cleaned_data.get('ldr_var').strip()
         if TUNABLE_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
