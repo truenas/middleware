@@ -15,6 +15,9 @@ class FireflyForm(forms.ModelForm):
         widgets = {
             'admin_pw': forms.widgets.PasswordInput(),
         }
+        exclude = (
+            'enable',
+            )
 
     def __init__(self, *args, **kwargs):
         self.jail = kwargs.pop('jail')
