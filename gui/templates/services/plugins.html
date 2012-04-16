@@ -41,12 +41,6 @@
                         editObject('{% trans "Plugin info"|force_escape|force_escape %}', '{% url plugin_info plugin_id=p.id %}', [this,]);
                     </script>
                 </button>
-                <button id="editPluginBtn{{ p.id }}" data-dojo-type="dijit.form.Button" type="button">
-                    {% trans "Edit" %}
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Edit Plugin"|force_escape|force_escape %}', '{% url plugin_edit plugin_id=p.id %}', [this,]);
-                    </script>
-                </button>
 
                 {% if jail_configured %}
                 <button data-dojo-type="dijit.form.Button" type="button">
