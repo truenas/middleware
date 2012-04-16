@@ -57,24 +57,6 @@ class Plugins(Model):
         help_text=_("Plugin architecture")
         )
 
-    plugin_uname = models.CharField(
-        max_length=120,
-        verbose_name=_("Plugin uname"),
-        help_text=_("UName of the plugin")
-        )
-
-    plugin_view = models.CharField(
-        max_length=120,
-        verbose_name=_("Plugin view"),
-        help_text=_("Plugin view")
-        )
-
-    plugin_icon = models.CharField(
-        max_length=120,
-        verbose_name=_("Plugin icon"),
-        help_text=_("Plugin icon")
-        )
-
     plugin_enabled = models.BooleanField(
         verbose_name=_("Plugin enabled"),
         help_text=_("Plugin enabled"),

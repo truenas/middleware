@@ -1933,7 +1933,6 @@ class notifier:
             kwargs['arch'] = arch
             kwargs['version'] = version
             kwargs['pbiname'] = pbiname
-            kwargs['view'] = "/plugins/%s/%s" % (name, version)
 
             # icky, icky icky, this is how we roll though.
             port = 12345
@@ -1944,17 +1943,6 @@ class notifier:
                 port = int(c.fetchone()[0])
 
             kwargs['port'] = port + 1
-            kwargs['uname'] = "system.%s" % name
-            kwargs['icon'] = "default.png"
-
-            out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
-            if out and out[0] == 0:
-                out = out[1]
-                for line in out.splitlines():
-                    parts = line.split(':')
-                    key = parts[0].strip().lower()
-                    if key in ('uname', 'icon'):
-                        kwargs[key] = parts[1].strip()
 
             rpctoken = RPCToken.new()
             kwargs['secret_id'] = rpctoken.id
