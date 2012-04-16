@@ -42,7 +42,7 @@
             <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                 var dialog = getDialog(this);
                 dialog.hide();
-                editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services", model="Plugins", oid=plugins.id %}', [this,]);
+                editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services", model="PluginsJail", oid=plugins.id %}', [this,]);
                 </script>
             {% trans "Delete" %}
         </button>
