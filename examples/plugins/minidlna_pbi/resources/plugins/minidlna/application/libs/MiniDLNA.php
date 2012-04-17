@@ -152,12 +152,29 @@ class FreeNAS_Lib_MiniDLNA {
 
     public function start() {
 
+        $em = Zend_Registry::get('em');
+        $minidlna = $em->getRepository('Entity\MiniDLNA')->findAll();
+        if(count($minidlna) != 0) {
+            $minidlna = $minidlna[0];
+            $minidlna->setEnabled(true);
+        } else {
+            $minidlna = new Entity\MiniDLNA();
+            $minidlna->setEnabled(true);
+            $this->writeConf($minidlna);
+        }
+
+        try {
+            $em->persist($minidlna);
+            $em->flush();
+        } catch(Exception $e) {
+        }
+
         $desc = array(
            0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
            1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
-        $proc = proc_open($this->CONTROL . " start", $desc, $pipes);
+        $proc = proc_open($this->CONTROL . " onestart", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;
@@ -166,12 +183,29 @@ class FreeNAS_Lib_MiniDLNA {
 
     public function stop() {
 
+        $em = Zend_Registry::get('em');
+        $minidlna = $em->getRepository('Entity\MiniDLNA')->findAll();
+        if(count($minidlna) != 0) {
+            $minidlna = $minidlna[0];
+            $minidlna->setEnabled(false);
+        } else {
+            $minidlna = new Entity\MiniDLNA();
+            $minidlna->setEnabled(false);
+            $this->writeConf($minidlna);
+        }
+
+        try {
+            $em->persist($minidlna);
+            $em->flush();
+        } catch(Exception $e) {
+        }
+
         $desc = array(
            0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
            1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
            2 => array("pipe", "STDOUT"),  // stdout is a pipe that the child will write to
         );
-        $proc = proc_open($this->CONTROL . " forcestop", $desc, $pipes);
+        $proc = proc_open($this->CONTROL . " onestop", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
         return $stdout;

@@ -8,8 +8,8 @@ class FreenasController extends Zend_Controller_Action
         $this->_helper->viewRenderer->setNoRender(TRUE);
         $this->getResponse()->setHeader('Content-type', 'application/json');
         $session = $this->getRequest()->getCookie('sessionid');
-        $lib = new FreeNAS_Lib_MiniDLNA();
-        $lib->isAuthorized($session);
+        $this->lib = new FreeNAS_Lib_MiniDLNA();
+        $this->lib->isAuthorized($session);
     }
 
     public function treemenuAction()
@@ -28,9 +28,8 @@ class FreenasController extends Zend_Controller_Action
     public function startAction()
     {
 
-        $lib = new FreeNAS_Lib_MiniDLNA();
         echo json_encode(
-            $lib->start()
+            $this->lib->start()
         );
 
     }
@@ -38,9 +37,8 @@ class FreenasController extends Zend_Controller_Action
     public function stopAction()
     {
 
-        $lib = new FreeNAS_Lib_MiniDLNA();
         echo json_encode(
-            $lib->stop()
+            $this->lib->stop()
         );
 
     }
@@ -48,12 +46,12 @@ class FreenasController extends Zend_Controller_Action
     public function statusAction()
     {
 
-        $lib = new FreeNAS_Lib_MiniDLNA();
         echo json_encode(
-            $lib->status()
+            $this->lib->status()
         );
 
     }
 
 }
 
+?>
