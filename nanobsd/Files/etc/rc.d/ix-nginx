@@ -128,9 +128,6 @@ generate_plugins_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		plugin_name,
-		plugin_uname,
-		plugin_view,
-		plugin_icon,
 		plugin_enabled,
 		plugin_ip,
 		plugin_port,
@@ -142,7 +139,7 @@ generate_plugins_conf()
 	ORDER BY
 		-id
 	" | \
-	while read -r name uname view icon enabled ip port path
+	while read -r name enabled ip port path
 	do
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
