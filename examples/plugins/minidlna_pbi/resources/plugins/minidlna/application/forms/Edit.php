@@ -45,12 +45,12 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
         //$inotify->setDecorators($decs);
         $inotify->setDecorators(array('ViewHelper'));
 
-        $enabled = new Zend_Form_Element_Checkbox(array(
-            'name' => 'enabled',
-            'label' => 'Enabled',
-            'dojoType' => 'dijit.form.CheckBox')
-            );
-        $enabled->setDecorators($decs);
+        //$enabled = new Zend_Form_Element_Checkbox(array(
+        //    'name' => 'enabled',
+        //    'label' => 'Enabled',
+        //    'dojoType' => 'dijit.form.CheckBox')
+        //    );
+        //$enabled->setDecorators($decs);
 
         //$tivo = new Zend_Form_Element_Checkbox(array(
         $tivo = new Zend_Form_Element_Hidden(array(
@@ -103,8 +103,8 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
             );
         $strict_dlna->setDecorators($decs);
 
-        $this->addElement($enabled)
-             ->addElement($friendly_name)
+        $this->addElement($friendly_name)
+             //->addElement($enabled)
              ->addElement($media_dir)
              ->addElement(
                  'NumberTextBox',
