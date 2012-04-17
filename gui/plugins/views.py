@@ -36,7 +36,7 @@ from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
-from freenasUI.services.models import services
+from freenasUI.services.models import services, PluginsJail
 
 import freenasUI.plugins.api_calls
 
@@ -84,6 +84,37 @@ def plugin_delete(request, plugin_id):
     else:
         return render(request, 'plugins/plugin_confirm_delete.html', {
             'plugin': plugin,
+        })
+
+
+def plugin_install(request):
+
+    if request.method == "POST":
+        pj = PluginsJail.objects.order_by("-id")[0]
+        notifier().change_upload_location(pj.plugins_path)
+        form = forms.PBIUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            events = []
+            form.done()
+            return JsonResponse(
+                message=_('Plugin successfully installed'),
+                events=events,
+                enclosed=True)
+        else:
+            resp = render(request, "plugins/plugin_install.html", {
+                'form': form,
+            })
+            resp.content = (
+                "<html><body><textarea>"
+                + resp.content +
+                "</textarea></boby></html>"
+                )
+            return resp
+    else:
+        form = forms.PBIUploadForm()
+
+    return render(request, "plugins/plugin_install.html", {
+        'form': form,
         })
 
 
