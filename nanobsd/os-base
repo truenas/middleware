@@ -57,8 +57,9 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=327680
 
 NANO_IMAGES=2
-# Remove X11 crud too.
-NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|X11|\.orig$|\.rej$)/')
+# Remove .orig and .rej too
+# Removing X11 needs more work, it blows rdd + fonts
+NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|\.orig$|\.rej$)/')
 FlashDevice generic 2g
 
 if [ "$DEBUG" = 1 ]; then
