@@ -186,6 +186,7 @@ class PluginsManagement(TreeNode):
     name = _(u'Management')
     icon = models.PluginsJail._admin.icon_model
     skip = True
+    order = -1
 
     def __init__(self, *args, **kwargs):
         super(PluginsManagement, self).__init__(*args, **kwargs)
