@@ -816,7 +816,8 @@ class PluginsJail(Model):
             Alias,
             on_delete=models.SET_NULL,
             null=True,
-            verbose_name=_("Jail IP address"),
+            verbose_name=_("Jail IP address. This must be an interface alias "
+                "(Network->Interfaces->Edit)"),
             )
     plugins_path = PathField(
             verbose_name=_("Plugins archive path"),
@@ -842,27 +843,32 @@ class PluginsJail(Model):
 class SNMP(Model):
     snmp_location = models.CharField(
             max_length=255,
-            verbose_name = _("Location"),
+            verbose_name=_("Location"),
             blank=True,
-            help_text = _("Location information, e.g. physical location of this system: 'Floor of building, Room xyzzy'.")
+            help_text=_("Location information, e.g. physical location of this "
+                "system: 'Floor of building, Room xyzzy'.")
             )
     snmp_contact = models.CharField(
             max_length=120,
-            verbose_name = _("Contact"),
+            verbose_name=_("Contact"),
             blank=True,
-            help_text = _("Contact information, e.g. name or email of the person responsible for this system: 'admin@email.address'.")
+            help_text=_("Contact information, e.g. name or email of the "
+                "person responsible for this system: "
+                "'admin@email.address'.")
             )
     snmp_community = models.CharField(
             max_length=120,
-            verbose_name = _("Community"),
-            help_text = _("In most cases, 'public' is used here.")
+            verbose_name=_("Community"),
+            help_text=_("In most cases, 'public' is used here.")
             )
     snmp_traps = models.BooleanField(
-            verbose_name = _("Send SNMP Traps"))
+            verbose_name=_("Send SNMP Traps"),
+            )
     snmp_options = models.TextField(
-            verbose_name = _("Auxiliary parameters"),
+            verbose_name=_("Auxiliary parameters"),
             blank=True,
-            help_text = _("These parameters will be added to global settings in inadyn.conf.")
+            help_text=_("These parameters will be added to global settings "
+                "in inadyn.conf.")
             )
 
     class Meta:
@@ -873,6 +879,7 @@ class SNMP(Model):
         deletable = False
         icon_model = u"SNMPIcon"
         advanced_fields = ('snmp_traps',)
+
 
 class UPS(Model):
     ups_identifier = models.CharField(
@@ -946,6 +953,7 @@ class UPS(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"UPSIcon"
+
 
 class FTP(Model):
     ftp_port = models.PositiveIntegerField(
@@ -1069,6 +1077,7 @@ class FTP(Model):
         deletable = False
         icon_model = "FTPIcon"
 
+
 class TFTP(Model):
     tftp_directory = PathField(
             verbose_name = _("Directory"),
@@ -1106,6 +1115,7 @@ class TFTP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "TFTPIcon"
+
 
 class SSH(Model):
     ssh_tcpport = models.PositiveIntegerField(
@@ -1192,6 +1202,7 @@ class SSH(Model):
         deletable = False
         icon_model = "OpenSSHIcon"
 
+
 class ActiveDirectory(Model):
     ad_dcname = models.CharField(
             max_length=120,
@@ -1235,6 +1246,7 @@ class ActiveDirectory(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "ActiveDirectoryIcon"
+
 
 class LDAP(Model):
     ldap_hostname = models.CharField(
@@ -1318,6 +1330,7 @@ class LDAP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+
 
 class Rsyncd(Model):
     rsyncd_port = models.IntegerField(
@@ -1408,6 +1421,7 @@ class RsyncMod(Model):
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)
+
 
 class SMART(Model):
     smart_interval = models.IntegerField(
