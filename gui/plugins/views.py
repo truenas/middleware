@@ -94,11 +94,10 @@ def plugin_install(request):
         notifier().change_upload_location(pj.plugins_path)
         form = forms.PBIUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            events = []
             form.done()
             return JsonResponse(
                 message=_('Plugin successfully installed'),
-                events=events,
+                events=['reloadHttpd()'],
                 enclosed=True)
         else:
             resp = render(request, "plugins/plugin_install.html", {
