@@ -1163,7 +1163,6 @@
                 } else {
                     if(entry.domNode) entry = entry.domNode;
                     var par = dojo.query(entry).parents(".objrefresh").first()[0];
-                    console.log(par);
                     var cp = dijit.getEnclosingWidget(par);
                     if(cp) cp.refresh();
                 }
