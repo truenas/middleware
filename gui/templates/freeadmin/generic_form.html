@@ -1,7 +1,9 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form" {% if form and form.is_multipart %}enctype="multipart/form-data" {% endif %}method="POST">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+        {% block onSubmit %}
         formSubmit(this, e, '{% block formpost %}{{ request.path }}{% endblock %}');
+        {% endblock %}
     </script>
 <table>
     {% block form %}
