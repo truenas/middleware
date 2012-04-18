@@ -2413,7 +2413,7 @@ class notifier:
         return volumes
 
     def zfs_import(self, name, id):
-        imp = self.__pipeopen('zpool import -R /mnt %s' % id)
+        imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
         stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool
