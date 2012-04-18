@@ -65,22 +65,13 @@ def volumes(request):
         'has_multipath': has_multipath,
         })
 
-def get_volumes(request):
-    _volumes = []
-    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    for m in mp_list:
-        _volumes.append(m.mp_path)
-        datasets = m.mp_volume.get_datasets()
-        if datasets:
-            for dataset in datasets.values():
-                _volumes.append(dataset.mountpoint) 
-    return JsonResponse(message=_volumes)
 
 def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
     return render(request, 'storage/replications.html', {
         'zfsrepl_list': zfsrepl_list,
         })
+
 
 def replications_public_key(request):
     if os.path.exists('/data/ssh/replication.pub') and os.path.isfile('/data/ssh/replication.pub'):
@@ -92,11 +83,13 @@ def replications_public_key(request):
         'key': key,
         })
 
+
 def snapshots(request):
     zfsnap_list = notifier().zfs_snapshot_list()
     return render(request, 'storage/snapshots.html', {
         'zfsnap_list': zfsnap_list,
         })
+
 
 def snapshots_data(request):
     zfsnap = notifier().zfs_snapshot_list().items()
@@ -149,6 +142,7 @@ def snapshots_data(request):
         resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
     return resp
 
+
 def wizard(request):
 
     if request.method == "POST":
@@ -177,6 +171,7 @@ def wizard(request):
         'zfsversion': notifier().zfs_get_version(),
     })
 
+
 def volimport(request):
 
     if request.method == "POST":
@@ -199,6 +194,7 @@ def volimport(request):
         'disks': disks
     })
 
+
 def volautoimport(request):
 
     if request.method == "POST":
@@ -220,6 +216,7 @@ def volautoimport(request):
         'form': form,
         'disks': disks
     })
+
 
 def disks_datagrid(request):
 
@@ -250,6 +247,7 @@ def disks_datagrid(request):
         'fields': fields,
     })
 
+
 def disks_datagrid_json(request):
 
     disks = models.Disk.objects.filter(disk_enabled=True)
@@ -279,6 +277,7 @@ def disks_datagrid_json(request):
         to_dojo_data(complete, identifier=models.Disk._meta.pk.name, num_rows=len(disks))
     ))
 
+
 def volume_disks(request, volume_id):
     volume = models.Volume.objects.get(id=volume_id)
     disk_list = models.Disk.objects.filter(disk_group__group_volume=volume_id)
@@ -287,6 +286,7 @@ def volume_disks(request, volume_id):
         'volume': volume,
         'disk_list': disk_list,
     })
+
 
 def dataset_create(request, fs):
     defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
@@ -323,6 +323,7 @@ def dataset_create(request, fs):
         'form': dataset_form,
         'fs': fs,
     })
+
 
 def dataset_edit(request, dataset_name):
     if request.method == 'POST':
@@ -373,6 +374,7 @@ def dataset_edit(request, dataset_name):
         'form': dataset_form
     })
 
+
 def zvol_create(request, volume_name):
     defaults = {'zvol_compression': 'inherit', }
     if request.method == 'POST':
@@ -395,6 +397,7 @@ def zvol_create(request, volume_name):
         'form': zvol_form,
         'volume_name': volume_name,
     })
+
 
 def zvol_delete(request, name):
 
@@ -462,6 +465,7 @@ def zfsvolume_edit(request, object_id):
         'form': volume_form
     })
 
+
 def mp_permission(request, path):
     path = '/' + path
     if request.method == 'POST':
@@ -475,6 +479,7 @@ def mp_permission(request, path):
         'path': path,
         'form': form,
     })
+
 
 def dataset_delete(request, name):
 
@@ -496,6 +501,7 @@ def dataset_delete(request, name):
         'datasets': datasets,
     })
 
+
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
@@ -510,6 +516,7 @@ def snapshot_delete(request, dataset, snapname):
             'snapname': snapname,
             'dataset': dataset,
         })
+
 
 def snapshot_delete_bulk(request):
 
@@ -528,6 +535,7 @@ def snapshot_delete_bulk(request):
         'snaps': snaps,
     })
 
+
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
@@ -541,6 +549,7 @@ def snapshot_rollback(request, dataset, snapname):
             'snapname': snapname,
             'dataset': dataset,
         })
+
 
 def periodicsnap(request):
 
@@ -558,6 +567,7 @@ def periodicsnap(request):
         'extra_js': models.Task._admin.extra_js,
     })
 
+
 def manualsnap(request, fs):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
@@ -570,6 +580,7 @@ def manualsnap(request, fs):
         'form': form,
         'fs': fs,
     })
+
 
 def clonesnap(request, snapshot):
     initial = {'cs_snapshot': snapshot}
@@ -588,6 +599,7 @@ def clonesnap(request, snapshot):
         'snapshot': snapshot,
     })
 
+
 def geom_disk_replace(request, vname):
 
     volume = models.Volume.objects.get(vol_name=vname)
@@ -605,6 +617,7 @@ def geom_disk_replace(request, vname):
         'form': form,
         'vname': vname,
     })
+
 
 def disk_detach(request, vname, label):
 
@@ -635,6 +648,7 @@ def disk_offline(request, vname, label):
         'disk': disk,
     })
 
+
 def zpool_disk_remove(request, vname, label):
 
     volume = models.Volume.objects.get(vol_name=vname)
@@ -649,6 +663,7 @@ def zpool_disk_remove(request, vname, label):
         'label': label,
         'disk': disk,
     })
+
 
 def volume_detach(request, vid):
 
@@ -673,6 +688,7 @@ def volume_detach(request, vid):
         'services': services,
     })
 
+
 def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     pool = notifier().zpool_parse(volume.vol_name)
@@ -688,12 +704,14 @@ def zpool_scrub(request, vid):
         'scrub': pool.scrub,
     })
 
+
 def volume_status(request, vid):
     volume = models.Volume.objects.get(id=vid)
     return render(request, 'storage/volume_status.html', {
         'name': volume.vol_name,
         'volume': volume,
     })
+
 
 def volume_status_json(request, vid):
     volume = models.Volume.objects.get(id=vid)
@@ -716,6 +734,7 @@ def volume_status_json(request, vid):
         'items': items,
     }, indent=2), content_type='application/json')
 
+
 def zpool_disk_replace(request, vname, label):
 
     disk = notifier().label_to_disk(label)
@@ -737,10 +756,10 @@ def zpool_disk_replace(request, vname, label):
         'disk': disk,
     })
 
-def multipath_status(request):
 
-    return render(request, 'storage/multipath_status.html', {
-    })
+def multipath_status(request):
+    return render(request, 'storage/multipath_status.html')
+
 
 def multipath_status_json(request):
 
@@ -772,6 +791,7 @@ def multipath_status_json(request):
         'label': 'name',
         'items': items,
     }, indent=2), content_type='application/json')
+
 
 def scrubs(request):
     scrubs = models.Scrub.objects.all().order_by('id')
