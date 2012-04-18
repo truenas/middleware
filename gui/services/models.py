@@ -816,7 +816,8 @@ class PluginsJail(Model):
             Alias,
             on_delete=models.SET_NULL,
             null=True,
-            verbose_name=_("Jail IP address. This must be an interface alias "
+            verbose_name=_("Jail IP address"),
+            help_text=_("This must be an interface alias "
                 "(Network->Interfaces->Edit)"),
             )
     plugins_path = PathField(
