@@ -510,6 +510,10 @@
             url: "/plugins/" + name + "/_s/" + action,
             handleAs: "text",
             load: function(data) {
+                var json = dojo.fromJson(data);
+                if(json && json.error == true) {
+                    setMessage(json.message, 'error');
+                }
                 setTimeout(function() { checkStatus(name); }, 1000);
             },
             error: function(error) {
