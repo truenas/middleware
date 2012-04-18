@@ -1153,7 +1153,7 @@
              };
             dojo.fadeOut(fadeArgs).play();
             dojo.forEach(nodes, function(entry, i) {
-                if(entry.isInstanceOf(dijit.layout.ContentPane)) {
+                if(entry.isInstanceOf && entry.isInstanceOf(dijit.layout.ContentPane)) {
                     entry.refresh();
                     var par = dijit.getEnclosingWidget(entry.domNode.parentNode);
                     par.selectChild(entry);
@@ -1161,7 +1161,9 @@
                     if(par2 && par2.isInstanceOf(dijit.layout.ContentPane))
                         dijit.byId("content").selectChild(par2);
                 } else {
-                    var par = dojo.query(entry.domNode).parents(".objrefresh").first()[0];
+                    if(entry.domNode) entry = entry.domNode;
+                    var par = dojo.query(entry).parents(".objrefresh").first()[0];
+                    console.log(par);
                     var cp = dijit.getEnclosingWidget(par);
                     if(cp) cp.refresh();
                 }
