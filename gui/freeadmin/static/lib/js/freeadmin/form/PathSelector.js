@@ -7,7 +7,7 @@ define([
     "dijit/form/Button",
     "dijit/layout/TabContainer",
     "dijit/layout/ContentPane",
-    "dojox/string/sprintf",
+    "dojox/string/sprintf"
     ], function(declare, cache, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane) {
 
     var PathSelector = declare("freeadmin.form.PathSelector", [ _Widget, _Templated ], {
