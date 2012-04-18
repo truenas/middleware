@@ -703,24 +703,25 @@ class Task(Model):
             help_text=_("Do not snapshot after"),
             )
     task_interval = models.PositiveIntegerField(
-            default = 60,
-            choices = choices.TASK_INTERVAL,
-            max_length = 120,
-            verbose_name = _("Interval"),
-            help_text = _("How many minutes passed before a new snapshot is made after the last one."),
+            default=60,
+            choices=choices.TASK_INTERVAL,
+            max_length=120,
+            verbose_name=_("Interval"),
+            help_text=_("How much time has been passed between two snapshot "
+                "attempts."),
             )
     task_repeat_unit = models.CharField(
-            default = 'weekly',
-            max_length = 120,
+            default='weekly',
+            max_length=120,
             choices=choices.RepeatUnit_Choices,
-            verbose_name = _("Occurrence"),
-            help_text = _("How the task is repeated"),
+            verbose_name=_("Occurrence"),
+            help_text=_("How the task is repeated"),
             )
     task_byweekday = models.CharField(
-            max_length = 120,
-            default = "1,2,3,4,5",
-            verbose_name = _("Weekday"),
-            blank = True,
+            max_length=120,
+            default="1,2,3,4,5",
+            verbose_name=_("Weekday"),
+            blank=True,
             )
 #    task_bymonth = models.CharField(
 #            max_length = 120,
@@ -733,6 +734,7 @@ class Task(Model):
 #            verbose_name = _("Day"),
 #            blank = True,
 #            )
+
     def __unicode__(self):
         return '%s - every %s - %d%s' % (self.task_filesystem,
                 self.get_task_interval_display(),
