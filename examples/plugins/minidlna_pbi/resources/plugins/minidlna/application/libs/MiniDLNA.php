@@ -160,13 +160,17 @@ class FreeNAS_Lib_MiniDLNA {
         } else {
             $minidlna = new Entity\MiniDLNA();
             $minidlna->setEnabled(true);
-            $this->writeConf($minidlna);
         }
 
         try {
+            $this->writeConf($minidlna);
             $em->persist($minidlna);
             $em->flush();
         } catch(Exception $e) {
+            return array(
+                'error' => true,
+                'message' => 'MiniDLNA data did not validate, configure it first.',
+            );
         }
 
         $desc = array(
@@ -177,7 +181,10 @@ class FreeNAS_Lib_MiniDLNA {
         $proc = proc_open($this->CONTROL . " onestart", $desc, $pipes);
         $stdout = stream_get_contents($pipes[1]);
         $retval = proc_close($proc);
-        return $stdout;
+        return array(
+            'error' => false,
+            'message' => $stdout,
+            );
 
     }
 
