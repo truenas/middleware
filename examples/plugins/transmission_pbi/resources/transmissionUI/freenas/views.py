@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
+from django.utils import simplejson
 
 import jsonrpclib
 import oauth2 as oauth
@@ -177,16 +178,26 @@ def start(request):
         transmission.save()
     except IndexError:
         transmission = models.Transmission.objects.create(enable=True)
+
+    try:
         form = forms.TransmissionForm(transmission.__dict__, instance=transmission, jail=jail)
         form.is_valid()
         form.save()
+    except ValueError:
+        return HttpResponse(simplejson.dumps({
+            'error': True,
+            'message': 'Transmission data did not validate, configure it first.',
+            }), content_type='application/json')
 
     cmd = "%s onestart" % utils.transmission_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
     out = pipe.communicate()[0]
-    return HttpResponse(out)
+    return HttpResponse(simplejson.dumps({
+        'error': False,
+        'message': out,
+        }), content_type='application/json')
 
 
 def stop(request):
