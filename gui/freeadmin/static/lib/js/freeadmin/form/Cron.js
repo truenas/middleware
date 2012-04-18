@@ -8,7 +8,7 @@ define([
     "dijit/form/HorizontalRuleLabels",
     "dijit/layout/TabContainer",
     "dijit/layout/ContentPane",
-    "dojox/string/sprintf",
+    "dojox/string/sprintf"
     ], function(declare, cache, _Widget, _Templated, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, TabContainer, ContentPane) {
 
     var Cron = declare("freeadmin.form.Cron", [ _Widget, _Templated ], {

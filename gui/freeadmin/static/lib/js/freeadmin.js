@@ -1322,7 +1322,7 @@
         "dojox/layout/ExpandoPane",
         "dojox/uuid/_base",
         "dojox/uuid/generateRandomUuid",
-        "dojox/validate",
+        "dojox/validate"
         ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
         dojo.registerModulePath("freeadmin", "../../../../../static/lib/js/freeadmin");
@@ -1463,7 +1463,7 @@
                 "freeadmin/tree/JsonRestStore",
                 "freeadmin/tree/ForestStoreModel",
                 "freeadmin/form/Cron",
-                "freeadmin/form/PathSelector",
+                "freeadmin/form/PathSelector"
                 ], function(Tree, ESCDialog) {
                 mytree = new freeadmin.tree.Tree({
                     id: "fntree",

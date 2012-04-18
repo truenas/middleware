@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-
 {% block dojango_content %}
 <script type="text/javascript">
     require([
@@ -13,9 +12,8 @@
         "dijit/layout/TabContainer",
         "dijit/Dialog",
         "dijit/MenuBar",
-        "dijit/MenuBarItem",
+        "dijit/MenuBarItem"
         ], function(ready) {
-
         ready(function() {
               dijit.byId("login").show();
         });
@@ -26,8 +24,8 @@
 {% if form.errors %}
 <script type="dojo/method">
     dojo.addOnLoad(function() {
-         var easingArea = dojo.byId("login");
-             var easingCoords = dojo.coords(easingArea);
+        var easingArea = dojo.byId("login");
+        var easingCoords = dojo.coords(easingArea);
         dojo.animateProperty({
              node: dojo.byId("login"),
              easing: dojo.fx.easing["elasticInOut"],

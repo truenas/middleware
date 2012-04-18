@@ -27,7 +27,7 @@
 
 require([
     "dojo/ready",
-    "dojox/timing",
+    "dojox/timing"
     ], function(ready, Timer) {
 
     _msg_t = new dojox.timing.Timer(1000);
