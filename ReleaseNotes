@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.2.0-BETA1
+Release Notes for FreeNAS 8.2.0-BETA3
 
 *** IMPORTANT ***
 
@@ -31,6 +31,90 @@ Release Notes for FreeNAS 8.2.0-BETA1
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
 
+Changes in the 8.2 branch versus 8.0.x
+
+
+Overview
+========================
+
+The 8.2 branch of FreeNAS introduces many functional changes when
+compared with the 8.0.x releases. 
+
+ZFS can be manipulated from the CLI, and changes for supported items
+tracked by FreeNAS will be reflected in the GUI.  zvols, datasets, and
+entire volumes can be created, destroyed, or manipulated on the CLI and
+will be propagated to the GUI.
+
+The GUI now supports active-passive multipath capable hardware, which
+targets mainly SAS drives on dual expander backplanes.  Any multipath
+capable devices that are detected will be placed in multipath units
+which are then exposed to the GUI, and the parent devices will be
+hidden.
+
+Plugins are now available.  Third party modules can be added to FreeNAS
+which will persist across upgrades and can be manipulated and configured
+from the GUI.  Documentation on using and creating plugins is available
+at http://doc.freenas.org/index.php/Plugins_Configuration . BitTorrent,
+DLNA/uPNP, and iTunes plugins are available as of this writing.
+
+The GUI now includes a webshell, which allows you to access a root
+shell from within a web browser.
+
+The "Create Volume" modal was renamed to "Volume Manager".  Extending
+existing pools is more intuitive than it was previously; selecting
+multiple disks for a storage volume is now done via a multiselect
+widget instead of checkboxes to improve ease of use when creating
+volumes.
+
+ZFS volumes can now have periodic scrub tasks configured for them; the
+default is set to 35 days to be consistent with the OS default.
+
+An autotuning script is now available -- disabled by default.  It sets
+various tunables and sysctls based on system resources and components.
+The predetermined values are exposed through the GUI from the Sysctls
+and Tunables panes.
+
+A newer web toolkit is used, which behaves better with modal dialogs
+and more intuitively in general when compared with older versions.
+It also has better browser compatibility, including compatibility with
+Android / iOS mobile devices!
+
+A more responsive service state detection mechanism was added to
+improve FreeNAS interoperability in VM software (VMware, VirtualBox,
+etc).
+
+Changes since 8.2.0-BETA2:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. A major refactoring of the plugin structure has been done.
+
+iSCSI
+------------------------
+
+1. Target reload is now supported for adding and removing (but not changing)
+   targets on the fly.  The Logical Unit Controller is used for this, reload
+   wil not function if the LUC is not enabled.
+
+CIFS
+------------------------
+
+1. Samba has been upgraded to 3.6.4 to address the security issues in 3.6.3
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix a javascript error that affected IE8
+
+
+
 Changes since 8.0.4-RELEASE:
 
 Enhancements
@@ -39,20 +123,62 @@ Enhancements
 Build
 ------------------------
 
+1.  Refactoring of the build system was done to ease release
+    engineering and make FreeNAS software development easier, faster,
+    and more deterministic.
+
+2.  Plugin jail generation was integrated into the build system.
+
 
 GUI
 ------------------------
 
+1.  The current password box for changing the admin password is hidden
+    when there isn't an admin password set.
 
+2.  Adding users allows for placing users into additional groups, as well
+    as greater clarity about the primary group the user will be in.
+
+3.  The NTP configuration fields are split in to separate fields instead
+    of overloading a single field.
+
+4.  Create Volume is now renamed to Volume manager, and has a different
+    widgit for selecting multiple disks, as well as a better GUI for
+    extending existing volumes versus adding new volumes.
+
+5.  Create dataset and create zvol are now buttons listed per pool, in
+    addition nested datasets can be created as a dataset has an add
+    dataset button.
+
+6.  Deleting volumes and datasets properly cascades to shares and
+    services; notification is provided if a filesystem is in use and
+    the configuration database is guaranteed to be more consistent with
+    the system state.
+
+7.  Update the GUI to reflect the fact that the dynamic DNS update period
+    is in seconds, not milliseconds.
+
+8.  Add the ability to enable or disable the autotuner to system -> 
+    settings -> advanced.
+
+9.  Alias IPs are displayed in the interface configuration screen.
+
+10. ZFS scrubs can be scheduled via the GUI.
+
+11. The IP address used to connect to the FreeNAS box is displayed in
+    the GUI.
 
 Middleware
 ------------------------
 
+1.  Significant refactoring of the middleware was done to support
+    various changes made to the GUI.
 
 
 OS/Third party
 ------------------------
 
+1.  Add the iSCSI initiator kernel module to the system.
 
 
 Plugins
@@ -73,6 +199,7 @@ CIFS
 iSCSI
 ------------------------
 
+1.  Use configured IPs on the system as candidates for portal addresses.
 
 
 NFS
@@ -96,6 +223,13 @@ Build
 GUI
 ------------------------
 
+1.  Exclude snapshots with existing clones from the pending delete list.
+    This fixes an issue where a clone will prevent an existing snapshot
+    from being deleted by the autosnapper.
+
+2.  Browser cache can become confused when the same browser is used to
+    access multiple versions of FreeNAS.  Version specific cache data
+    was added to mitigate this issue.
 
 
 Middleware
@@ -118,14 +252,22 @@ AFP
 
 
 
-AD/CIFS
+AD/CIFS/LDAP
 ------------------------
 
+1.  Disable directory name caching, which improves performance on BSD.
 
+2.  Remove the ability to set a guest account per share, this is a global
+    setting only.
+
+3.  Change the default guest account to nobody.
+
+4.  Add anonymous LDAP bind support.
 
 iSCSI
 ------------------------
 
+1.  Ensure that a file extent resides in a volume.
 
 
 NFS
@@ -538,11 +680,12 @@ Errata:
   an install.  A 2 GB device is required, but the install will appear to
   complete successfully on smaller devices, only to fail at boot.
 
+- The installer will let you switch from i386 to amd64 architecture and
+  vice-versa, but some files, such as the rrd files used by the statistics
+  graphing package are architecture dependent.
+
 - There are known interoperability issues with FreeNAS and Samba 4.x being
   used as a PDC due to Samba 4.x not conforming to the Microsoft CIFS
   specification and the way LDAP queries are executed on FreeNAS. Please see
   the following support ticket for more details:
   http://support.freenas.org/ticket/1135 .
-
-- Shadow copies via CIFS do not work in 8.0.3. Please see
-  https://support.freenas.org/ticket/1186 for more details.
