@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
+from django.utils import simplejson
 
 from fireflyUI.freenas import forms, models, utils
 
@@ -176,16 +177,26 @@ def start(request):
         firefly.save()
     except IndexError:
         firefly = models.Firefly.objects.create(enable=True)
+
+    try:
         form = forms.FireflyForm(firefly.__dict__, instance=firefly, jail=jail)
         form.is_valid()
         form.save()
+    except ValueError:
+        return HttpResponse(simplejson.dumps({
+            'error': True,
+            'message': 'Firefly data did not validate, please configure it first.',
+            }), content_type='application/json')
 
     cmd = "%s onestart" % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
     out = pipe.communicate()[0]
-    return HttpResponse(out)
+    return HttpResponse(simplejson.dumps({
+        'error': False,
+        'message': out,
+        }))
 
 
 def stop(request):
