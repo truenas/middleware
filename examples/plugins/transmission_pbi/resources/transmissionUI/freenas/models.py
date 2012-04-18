@@ -27,12 +27,15 @@ class Transmission(models.Model):
     allowed = models.TextField(blank=True)
     blocklist = models.TextField(blank=True)
     logfile = models.CharField(max_length=500, blank=True)
+    rpc_auth = models.BooleanField(
+        verbose_name="RPC/WebUI Enabled",
+        default=True,
+        )
     rpc_port = models.IntegerField(default=9091, blank=True)
-    rpc_auth = models.BooleanField(default=True)
     rpc_auth_required = models.BooleanField(default=False)
     rpc_username = models.CharField(max_length=120, blank=True)
     rpc_password = models.CharField(max_length=120, blank=True)
-    rpc_whitelist_enabled = models.BooleanField(default=True)
+    rpc_whitelist_enabled = models.BooleanField(default=False)
     rpc_whitelist = models.TextField(blank=True)
     dht = models.BooleanField(
         default=True,

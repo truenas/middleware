@@ -23,7 +23,7 @@ class Migration(SchemaMigration):
             ('rpc_auth_required', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('rpc_username', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('rpc_password', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
-            ('rpc_whitelist_enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('rpc_whitelist_enabled', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('rpc_whitelist', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('dht', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('lpd', self.gf('django.db.models.fields.BooleanField')(default=True)),
@@ -68,7 +68,7 @@ class Migration(SchemaMigration):
             'rpc_port': ('django.db.models.fields.IntegerField', [], {'default': '9091', 'blank': 'True'}),
             'rpc_username': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'rpc_whitelist': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'rpc_whitelist_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'rpc_whitelist_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'utp': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'watch_dir': ('django.db.models.fields.CharField', [], {'default': "'/usr/pbi/transmission-amd64/etc/transmission/home/Downloads'", 'max_length': '500'})
         }
