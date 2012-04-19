@@ -24,7 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from freenasUI.common.freenasldap import *
+
+log = logging.getLogger("common.freenasusers")
 
 
 def bsdUsers_objects(**kwargs):
@@ -192,7 +196,8 @@ class FreeNAS_Groups(object):
         """
         try:
             self.__groups = FreeNAS_Directory_Groups(**kwargs)
-        except:
+        except Exception, e:
+            log.error("FreeNAS Directory Groups could not be retrieved: %s", str(e))
             self.__groups = None
 
         if self.__groups is None:
@@ -298,7 +303,8 @@ class FreeNAS_Users(object):
         """
         try:
             self.__users = FreeNAS_Directory_Users(**kwargs)
-        except:
+        except Exception, e:
+            log.error("FreeNAS Directory Users could not be retrieved: %s", str(e))
             self.__users = None
 
         if self.__users is None:
