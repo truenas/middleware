@@ -3047,13 +3047,13 @@ class notifier:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
                 status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
-                qs = Disk.objects.filter(disk_name=name)
+                qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
                 if qs:
                     actions = {'edit_url': reverse('freeadmin_model_edit',
                         kwargs={
                         'app':'storage',
                         'model': 'Disk',
-                        'oid': qs.get().id,
+                        'oid': qs[0].id,
                         })+'?deletable=false'}
                 else:
                     actions = {}
@@ -3080,13 +3080,13 @@ class notifier:
                 uid += 1
         elif class_name == 'PART':
             name = provider.xpathEval("../name")[0].content
-            qs = Disk.objects.filter(disk_name=name)
+            qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
             if qs:
                 actions = {'edit_url': reverse('freeadmin_model_edit',
                     kwargs={
                     'app':'storage',
                     'model': 'Disk',
-                    'oid': qs.get().id,
+                    'oid': qs[0].id,
                     })+'?deletable=false'}
             else:
                 actions = {}
