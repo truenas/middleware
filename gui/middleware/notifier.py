@@ -2952,7 +2952,8 @@ class notifier:
             if qs.exists():
                 disk = qs[0]
                 if qs.count() > 1:
-                    Disk.objects.filter(disk_name=devname).exclude(self=disk).delete()
+                    Disk.objects.filter(disk_name=devname).exclude(
+                        id=disk.id).delete()
             else:
                 disk = Disk()
             disk.disk_name = devname
