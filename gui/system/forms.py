@@ -359,6 +359,7 @@ class EmailForm(ModelForm):
                 self.cleaned_data['em_pass1'] == "":
             raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_pass1']
+
     def clean_em_pass2(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data.get('em_pass2', "") == "":
@@ -368,12 +369,14 @@ class EmailForm(ModelForm):
         if pass1 != pass2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return pass2
+
     def save(self, commit=True):
         email = super(EmailForm, self).save(commit=False)
         if commit:
             email.em_pass = self.cleaned_data['em_pass2']
             email.save()
         return email
+
 
 class SSLForm(ModelForm):
     def save(self):
@@ -382,7 +385,9 @@ class SSLForm(ModelForm):
     class Meta:
         model = models.SSL
 
+
 class SMARTTestForm(ModelForm):
+
     def __init__(self, *args, **kwargs):
         if kwargs.has_key('instance'):
             ins = kwargs.get('instance')
@@ -404,9 +409,11 @@ class SMARTTestForm(ModelForm):
                 if everyx == hours:
                     ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
+
     def save(self):
         super(SMARTTestForm, self).save()
         notifier().restart("smartd")
+
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
         if h.startswith('*/'):
@@ -414,6 +421,7 @@ class SMARTTestForm(ModelForm):
             if each == 1:
                 return ".."
         return h
+
     def clean_smarttest_daymonth(self):
         h = self.cleaned_data.get("smarttest_daymonth")
         if h.startswith('*/'):
@@ -421,15 +429,18 @@ class SMARTTestForm(ModelForm):
             if each == 1:
                 return ".."
         return h
+
     def clean_smarttest_month(self):
         m = eval(self.cleaned_data.get("smarttest_month"))
         m = ",".join(m)
         m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
+
     def clean_smarttest_dayweek(self):
         w = eval(self.cleaned_data.get("smarttest_dayweek"))
         w = ",".join(w)
         return w
+
     class Meta:
         model = models.SMARTTest
         widgets = {
