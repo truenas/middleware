@@ -2177,7 +2177,7 @@ class notifier:
         cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
         log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
-        p.wait()
+        p.communicate()
         if p.returncode != 0:
             log.debug("delete_plugins_jail: unable to chflags on %s", full_jail_path)
             return False
@@ -2185,7 +2185,7 @@ class notifier:
         cmd = "/bin/rm -rf %s" % full_jail_path
         log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
-        p.wait()
+        p.communicate()
         if p.returncode != 0:
             log.debug("delete_plugins_jail: unable to rm -rf %s", full_jail_path)
             return False
@@ -2194,7 +2194,7 @@ class notifier:
         cmd = "/bin/rm -rf %s" % pbi_path
         log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
-        p.wait()
+        p.communicate()
         if p.returncode != 0:
             log.debug("delete_plugins_jail: unable to rm -rf %s/*", pbi_path)
 
