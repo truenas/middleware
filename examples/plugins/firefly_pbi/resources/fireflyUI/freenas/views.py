@@ -208,6 +208,7 @@ def stop(request):
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
     try:
@@ -215,14 +216,24 @@ def stop(request):
         firefly.enable = False
         firefly.save()
     except IndexError:
-        models.Firefly.objects.create(enable=False)
+        firefly = models.Firefly.objects.create(enable=False)
+
+    try:
+        form = forms.FireflyForm(firefly.__dict__, instance=firefly, jail=jail)
+        form.is_valid()
+        form.save()
+    except ValueError:
+        pass
 
     cmd = "%s onestop" % utils.firefly_control
     pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         shell=True, close_fds=True)
 
     out = pipe.communicate()[0]
-    return HttpResponse(out)
+    return HttpResponse(simplejson.dumps({
+        'error': False,
+        'message': out,
+        }))
 
 
 def edit(request):
