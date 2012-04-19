@@ -198,10 +198,10 @@ class FreeNAS_Lib_MiniDLNA {
         } else {
             $minidlna = new Entity\MiniDLNA();
             $minidlna->setEnabled(false);
-            $this->writeConf($minidlna);
         }
 
         try {
+            $this->writeConf($minidlna);
             $em->persist($minidlna);
             $em->flush();
         } catch(Exception $e) {
