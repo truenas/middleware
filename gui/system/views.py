@@ -99,6 +99,7 @@ def system_info(request):
 
 def config_restore(request):
     if request.method == "POST":
+        request.session['allow_reboot'] = True
         notifier().config_restore()
         user = User.objects.all()[0]
         backend = get_backends()[0]
@@ -123,6 +124,7 @@ def config_upload(request):
                 form._errors['__all__'] = \
                     form.error_class([_('The uploaded file is not valid.'),])
             else:
+                request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
 
         if request.GET.has_key('iframe'):
@@ -220,6 +222,7 @@ def varlogmessages(request, lines):
         'msg': msg,
     }, content_type='text/xml')
 
+
 def top(request):
     top_pipe = os.popen('top')
     try:
@@ -231,6 +234,7 @@ def top(request):
         'top': top_output,
     }, content_type='text/xml')
 
+
 def reboot_dialog(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True
@@ -238,6 +242,7 @@ def reboot_dialog(request):
                     message=_("Reboot is being issued"),
                     events=['window.location="%s"' % reverse('system_reboot')])
     return render(request, 'system/reboot_dialog.html')
+
 
 def reboot(request):
     """ reboots the system """
@@ -249,9 +254,11 @@ def reboot(request):
         'sw_version': get_sw_version(),
     })
 
+
 def reboot_run(request):
     notifier().restart("system")
     return HttpResponse('OK')
+
 
 def shutdown_dialog(request):
     if request.method == "POST":
@@ -260,6 +267,7 @@ def shutdown_dialog(request):
                     message=_("Shutdown is being issued"),
                     events=['window.location="%s"' % reverse('system_shutdown')])
     return render(request, 'system/shutdown_dialog.html')
+
 
 def shutdown(request):
     """ shuts down the system and powers off the system """
@@ -271,9 +279,11 @@ def shutdown(request):
         'sw_version': get_sw_version(),
     })
 
+
 def shutdown_run(request):
     notifier().stop("system")
     return HttpResponse('OK')
+
 
 def testmail(request):
 
@@ -298,6 +308,7 @@ def testmail(request):
     transaction.savepoint_rollback(sid)
 
     return JsonResp(request, error=error, message=errmsg)
+
 
 def clearcache(request):
 
@@ -382,6 +393,7 @@ class DojoFileStore(object):
         item['id'] = item['$ref']
         return item
 
+
 def directory_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
     #if not path.startswith('/'):
@@ -394,6 +406,7 @@ def directory_browser(request, path='/'):
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
+
 
 def file_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
@@ -408,11 +421,13 @@ def file_browser(request, path='/'):
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
 
+
 def cronjobs(request):
     crons = models.CronJob.objects.all().order_by('id')
     return render(request, "system/cronjob.html", {
         'cronjobs': crons,
         })
+
 
 def smarttests(request):
     tests = models.SMARTTest.objects.all().order_by('id')
@@ -420,11 +435,13 @@ def smarttests(request):
         'smarttests': tests,
         })
 
+
 def rsyncs(request):
     syncs = models.Rsync.objects.all().order_by('id')
     return render(request, 'system/rsync.html', {
         'rsyncs': syncs,
         })
+
 
 def sysctls(request):
     sysctls = models.Sysctl.objects.all().order_by('id')
@@ -432,17 +449,20 @@ def sysctls(request):
         'sysctls': sysctls,
         })
 
+
 def tunables(request):
     tunables = models.Tunable.objects.all().order_by('id')
     return render(request, 'system/tunable.html', {
         'tunables': tunables,
         })
 
+
 def ntpservers(request):
     ntpservers = models.NTPServer.objects.all().order_by('id')
     return render(request, 'system/ntpserver.html', {
         'ntpservers': ntpservers,
         })
+
 
 def restart_httpd(request):
     """ restart httpd """
@@ -464,6 +484,7 @@ def debug(request):
         f.write(debug)
     return render(request, 'system/debug.html')
 
+
 def debug_save(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     wrapper = FileWrapper(file(DEBUG_TEMP))
@@ -471,7 +492,10 @@ def debug_save(request):
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(DEBUG_TEMP)
     response['Content-Disposition'] = \
-        'attachment; filename=debug-%s-%s.txt' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
+        'attachment; filename=debug-%s-%s.txt' % (
+            hostname.encode('utf-8'),
+            time.strftime('%Y%m%d%H%M%S'),
+            )
     return response
 
 
