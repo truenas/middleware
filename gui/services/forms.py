@@ -982,7 +982,8 @@ class PluginsJailDeleteForm(Form):
 
     def done(self, *args, **kwargs):
         events = kwargs.pop('events', None)
-        events.append("refreshPlugins()")
+        if events is not None:
+            events.append("refreshPlugins()")
 
 
 class SMARTForm(ModelForm):
