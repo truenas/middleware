@@ -212,18 +212,16 @@ def get_mounted_filesystems():
 
 
 def is_mounted(**kwargs):
-    ret = False
 
     mounted = get_mounted_filesystems()
     for mountpt in mounted:
+        ret = False
         if 'device' in kwargs:
-            if mountpt['fs_spec'] == kwargs['device']:
-                ret = True
-                break
-        elif 'path' in kwargs:
-            if mountpt['fs_file'] == kwargs['path']:
-                ret = True
-                break
+            ret = True if mountpt['fs_spec'] == kwargs['device'] else False
+        if 'path' in kwargs:
+            ret = True if mountpt['fs_file'] == kwargs['path'] else False
+        if ret:
+            break
 
     return ret
 
