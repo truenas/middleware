@@ -28,6 +28,8 @@
     <thead class="header">
         <tr>
             <td>{% trans "Plugin name" %}</td>
+            <td>{% trans "Version" %}</td>
+            <td>{% trans "PBI" %}</td>
             <td>{% trans "Service status" %}</td>
             <td>{% trans "Actions" %}</td>
         </tr>
@@ -38,16 +40,15 @@
                {{ p.plugin_name|capfirst }}
            </td>
            <td>
+               {{ p.plugin_version }}
+           </td>
+           <td>
+               {{ p.plugin_pbiname }}
+           </td>
+           <td>
                 <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}')" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
            </td>
            <td>
-                <button id="infoPluginBtn{{ p.id }}" data-dojo-type="dijit.form.Button" type="button">
-                    {% trans "Info" %}
-                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Plugin info"|force_escape|force_escape %}', '{% url plugin_info plugin_id=p.id %}', [this,]);
-                    </script>
-                </button>
-
                 {% if jail_configured %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Delete" %}
@@ -56,7 +57,6 @@
                   </script>
                 </button>
                 {% endif %}
-
            </td>
       </tr>
 {% empty %}
