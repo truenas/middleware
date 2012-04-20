@@ -1157,6 +1157,12 @@
         }
     }
 
+    refreshPlugins = function() {
+        var par = dojo.query("#plugins_settings").parents(".objrefresh").first()[0];
+        var cp = dijit.getEnclosingWidget(par);
+        if(cp) cp.refresh();
+    }
+
     __stack = [];
     addToStack = function(f) {
         __stack.push(f);
@@ -1229,7 +1235,8 @@
             id: "editscary_dialog",
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             name: name,
-            url: url,nodes: nodes
+            url: url,
+            nodes: nodes
             });
     };
 
