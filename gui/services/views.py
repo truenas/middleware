@@ -93,9 +93,8 @@ def plugins(request):
         s = s[0]
         srv_enable = s.srv_enable
 
-    jail_configured = notifier().plugins_jail_configured()
-    if not srv_enable:
-        jail_configured = False
+    jail_configured = notifier().plugins_jail_configured() and \
+        notifier()._started_plugins_jail() and srv_enable
 
     return render(request, "services/plugins.html", {
         'plugins': plugins,
