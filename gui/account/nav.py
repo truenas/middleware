@@ -4,6 +4,7 @@ from . import models
 
 NAME = _('Account')
 ICON = u'AccountIcon'
+BLACKLIST = ['bsdGroupMembership']
 
 
 class AdminAccount(TreeNode):

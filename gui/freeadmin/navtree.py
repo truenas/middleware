@@ -242,17 +242,19 @@ class NavTree(object):
 
                 modname = '%s.models' % app
                 for c in dir(modmodels):
+                    model = getattr(modmodels, c)
+                    try:
+                        if not issubclass(model, models.Model) or \
+                            model._meta.app_label != app:
+                            continue
+                    except TypeError:
+                        continue
+
                     if c in BLACKLIST:
                         log.debug("Model %s from app %s blacklisted, skipping",
                             c,
                             app,
                             )
-                        continue
-                    model = getattr(modmodels, c)
-                    try:
-                        if not issubclass(model, models.Model):
-                            continue
-                    except TypeError:
                         continue
 
                     if not(model.__module__ in (modname,

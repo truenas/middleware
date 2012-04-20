@@ -6,7 +6,7 @@ from freenasUI.plugins import models as pmodels
 from freeadmin.tree import TreeNode
 
 NAME = _('Services')
-BLACKLIST = ['services', 'iSCSITargetPortalIP']
+BLACKLIST = ['services', 'iSCSITargetPortalIP', 'RPCToken']
 ICON = u'ServicesIcon'
 
 class EnDisServices(TreeNode):

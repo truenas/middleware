@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 import models
 
 NAME = _('Storage')
-BLACKLIST = ['Disk','ReplRemote']
+BLACKLIST = ['Disk', 'ReplRemote', 'Volume', 'MountPoint']
 ICON = u'StorageIcon'
 
 class ViewRemote(TreeNode):
