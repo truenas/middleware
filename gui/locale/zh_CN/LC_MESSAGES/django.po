@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-03-29 15:42+0200\n"
-"Last-Translator: johnsonh7 <johnsonh7@qq.com>\n"
+"PO-Revision-Date: 2012-04-20 10:48+0200\n"
+"Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr "通俗的"
+msgstr "不加密"
 
 #: choices.py:41 choices.py:553 system/models.py:298
 #: templates/system/settings.html:9
@@ -105,7 +105,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "总是开启"
+msgstr "一直开着"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -313,7 +313,7 @@ msgstr "UPS 电池电量不足"
 
 #: choices.py:248
 msgid "UPS goes on battery"
-msgstr "UPS 改为电池供电"
+msgstr "UPS 转为电池供电"
 
 #: choices.py:251
 msgid "Preferred"
@@ -341,7 +341,7 @@ msgstr "关"
 
 #: choices.py:288
 msgid "lzjb (recommended)"
-msgstr "lzjb (推荐)"
+msgstr "lzjb算法压缩（推荐）"
 
 #: choices.py:289
 msgid "gzip (default level, 6)"
@@ -448,16 +448,15 @@ msgstr "短自检"
 
 #: choices.py:528
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "传输过程自我测试（仅仅支持ATA)"
+msgstr "传输过程自我测试（仅支持ATA)"
 
 #: choices.py:529
 msgid "Offline Immediate Test (ATA only)"
 msgstr "离线后立即测试（仅仅支持ATA硬盘）"
 
 #: choices.py:558
-#, fuzzy
 msgid "Rsync module"
-msgstr "增加Rsync备份模块"
+msgstr "Rsync备份模块"
 
 #: choices.py:559
 msgid "Rsync over SSH"
@@ -473,7 +472,7 @@ msgstr ""
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
-msgstr "你的名字不能用\"-\"开头"
+msgstr "你的名字不能以\"-\"开头"
 
 #: account/forms.py:54
 msgid "The character $ is only allowed as the final character"
@@ -542,7 +541,7 @@ msgstr "锁定用户"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "为该用户创建一个新的首选用户组"
 
 #: account/forms.py:248
 msgid "Primary Group"
@@ -566,7 +565,7 @@ msgstr "该UID的用户已经存在。"
 
 #: account/forms.py:329
 msgid "A user with that username already exists."
-msgstr "用户名已存在。"
+msgstr "用户名已经存在。"
 
 #: account/forms.py:337 storage/forms.py:223 system/forms.py:302
 #: system/forms.py:308 system/forms.py:313 system/forms.py:545
@@ -594,7 +593,7 @@ msgstr "主目录是不可写的，离开这个空格"
 
 #: account/forms.py:388
 msgid "Password is disabled, leave this blank"
-msgstr "密码被禁用，留空"
+msgstr "密码被禁用，此处请留空"
 
 #: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
 #: services/forms.py:622 services/forms.py:925 storage/forms.py:194
@@ -632,7 +631,7 @@ msgstr "新密码确认"
 
 #: account/forms.py:746
 msgid "Change root password as well"
-msgstr "更改root密码"
+msgstr "同样更改root密码"
 
 #: account/forms.py:753
 msgid "Old password"
@@ -727,7 +726,7 @@ msgstr "帐户"
 #: account/nav.py:11 templates/account/index.html:2
 #, fuzzy
 msgid "Admin Account"
-msgstr "帐户"
+msgstr "管理员帐户"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -759,7 +758,7 @@ msgstr "组已成功更新。"
 #: freeadmin/forms.py:112
 #, python-format
 msgid "The user %s is not valid."
-msgstr "用户 %s 无效。"
+msgstr "用户 %s 无效"
 
 #: freeadmin/forms.py:146
 #, python-format
@@ -800,12 +799,12 @@ msgstr "关机"
 #: freeadmin/navtree.py:395
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "清空数据后回收了 %s"
 
 #: freeadmin/navtree.py:398
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "无法获取 %(url): %(error)"
 
 #: freeadmin/navtree.py:432
 #, python-format
@@ -855,7 +854,7 @@ msgstr "网卡"
 #: network/forms.py:344
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "你不能将相同的IP地址(%s)配置到多个网络接口上"
 
 #: network/forms.py:106
 msgid "You have to specify IPv4 address as well"
@@ -863,7 +862,7 @@ msgstr "你必须同时指定IPv4地址"
 
 #: network/forms.py:108
 msgid "You have to choose IPv4 netmask as well"
-msgstr "你必须选择IPv4子网掩码"
+msgstr "你必须同时选择IPv4子网掩码"
 
 #: network/forms.py:113
 msgid "You have to specify IPv6 address as well"
@@ -883,7 +882,7 @@ msgstr "环回不是一个有效的NameServer"
 
 #: network/forms.py:135
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "有效的域名服务器(nameservers)需要指定地址"
 
 #: network/forms.py:138
 msgid "This is not a valid nameserver address"
@@ -891,7 +890,7 @@ msgstr "这不是一个有效的域名服务器地址"
 
 #: network/forms.py:140
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254.0.0(255.255.0.0)子网段不能作为域名服务器的地址"
 
 #: network/forms.py:160
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -926,9 +925,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "LAGG 中的物理网卡"
 
 #: network/forms.py:241
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "物理网卡"
+msgstr "LAGG物理网卡"
 
 #: network/forms.py:298
 #, python-format
@@ -937,11 +935,11 @@ msgstr "无效的网络 '%s'，请使用无类别域间路由（CIDR）。"
 
 #: network/forms.py:360
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "必须为每一个别名指定一个IPv4的地址"
 
 #: network/forms.py:362
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr "需要为IP地址配置子网掩码"
+msgstr "需要为指定IP地址配置一个别名"
 
 #: network/forms.py:367
 msgid "You have to specify IPv6 address as well per alias"
@@ -953,11 +951,11 @@ msgstr "需要指定一个IPV6掩码"
 
 #: network/forms.py:372
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "您需要为每个别名选择使用 IPv4 或 IPv6"
 
 #: network/forms.py:374
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "您需要为每个别名指定一个有效的 IPv4 或 IPv6 的子网掩码"
 
 #: network/models.py:42 services/models.py:1202
 #: templates/system/system_info.html:5
@@ -966,7 +964,7 @@ msgstr "主机名"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "域名"
+msgstr "域"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
@@ -1069,9 +1067,8 @@ msgid "Virtual Interface"
 msgstr "虚拟接口"
 
 #: network/models.py:267
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "接口名称必须是 vlanXX，其中 XX 是数字"
+msgstr "接口名称必须是 vlanXX，其中 XX 是数字。例如：vlan0。"
 
 #: network/models.py:272 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1124,7 +1121,7 @@ msgstr "物理网卡"
 
 #: network/models.py:385
 msgid "Destination network"
-msgstr "目的网络"
+msgstr "目标网络"
 
 #: network/models.py:389 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1140,7 +1137,7 @@ msgstr "静态路由"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
-msgstr "网络面板"
+msgstr "网络"
 
 #: network/nav.py:13 templates/network/index.html:29
 msgid "Network Summary"
@@ -1167,70 +1164,68 @@ msgstr ""
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
-msgstr ""
+msgstr "系统将会使用这个地方临时储存PBI安装前的文件。"
 
 #: plugins/forms.py:87
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "PBI文件已安装"
 
 #: plugins/forms.py:88 plugins/forms.py:119
 msgid "SHA256 sum for the PBI file"
-msgstr ""
+msgstr "PBI文件的SHA256码"
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
 msgid "Invalid checksum"
-msgstr ""
+msgstr "无效的校验和"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Jail PBI插件"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "Jail路径不包括插件路径."
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "插件路径不包含Jail路径."
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "域名"
+msgstr "插件名称"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "插件名称"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
-msgstr ""
+msgstr "插件信息"
 
 #: plugins/models.py:43
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "插件信息"
 
 #: plugins/models.py:48
 msgid "Plugin version"
-msgstr ""
+msgstr "插件版本"
 
 #: plugins/models.py:49
 msgid "Version of the plugin"
-msgstr ""
+msgstr "插件版本"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
 msgstr ""
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
 msgid "Plugin uname"
-msgstr "域名"
+msgstr "插件名"
 
 #: plugins/models.py:61
 msgid "UName of the plugin"
-msgstr ""
+msgstr "插件名"
 
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
@@ -1240,24 +1235,22 @@ msgstr ""
 #: plugins/models.py:72 plugins/models.py:73
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin icon"
-msgstr ""
+msgstr "插件图标"
 
 #: plugins/models.py:77 plugins/models.py:78
 #: templates/plugins/plugin_info.html:21
 msgid "Plugin enabled"
-msgstr ""
+msgstr "启用插件"
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "管理员IP地址"
+msgstr "插件IP地址"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "TCP端口"
+msgstr "插件TCP端口"
 
 #: plugins/models.py:96 plugins/models.py:97
 msgid "Path to plugin"
@@ -1267,55 +1260,51 @@ msgstr ""
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "插件"
 
 #: plugins/nav.py:40
-#, fuzzy
 msgid "Control Plugins"
-msgstr "控制服务"
+msgstr "插件控制"
 
 #: plugins/nav.py:48
 msgid "Configure Plugins"
-msgstr ""
+msgstr "插件配置"
 
 #: plugins/views.py:69
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s 已成功更新。"
+msgstr "插件更新成功。"
 
 #: plugins/views.py:95
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "卷添加成功"
+msgstr "插件移除成功."
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "无法移除插件."
 
 #: services/forms.py:65
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "用户 %s 无效。"
+msgstr "无效的掩码"
 
 #: services/forms.py:82
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "这个字段是“启用主目录浏览”所必需的。"
+msgstr "要“启用主目录浏览”的功能必需赶写此栏信息。"
 
 #: services/forms.py:85
 msgid "This field is required for \"Home directories\"."
-msgstr "这个字段是“主目录”所必需的。"
+msgstr "要使用“主目录”的功能必需赶写此栏信息。"
 
 #: services/forms.py:93
 msgid "The CIFS service failed to reload."
-msgstr "CIFS/Samba 服务重加载失败。"
+msgstr "CIFS服务重新加载失败。"
 
 #: services/forms.py:102
 msgid "The AFP service failed to reload."
-msgstr "AFP 服务未能重新加载。"
+msgstr "AFP 服务未重新加载失败"
 
 #: services/forms.py:111
 msgid "The NFS service failed to reload."
-msgstr "NFS服务重新加载失败。"
+msgstr "NFS服务重新加载失败"
 
 #: services/forms.py:130
 msgid "The plugins path cannot be the same or reside within jail path."
@@ -1372,9 +1361,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "名字不能包斜杠或者右括号。"
 
 #: services/forms.py:272
-#, fuzzy
 msgid "Confirm Password"
-msgstr "更改密码"
+msgstr "确认密码"
 
 #: services/forms.py:300
 msgid "The DynamicDNS service failed to reload."
@@ -1388,7 +1376,7 @@ msgstr "这不是一个合法的e-mail地址"
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
-msgstr "联系方式只能包含字母、数字和下划线，或者是一个合法的电子邮件地址"
+msgstr "只能包含字母、数字和下划线，或一个合法的e-mail地址"
 
 #: services/forms.py:317
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -1407,7 +1395,7 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、“.”“-”和 “_”。"
 
-# 邮件地址%(email)不合法
+# 不合法的邮件地址: %(email)
 #: services/forms.py:356 services/forms.py:965
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1527,7 +1515,7 @@ msgstr "你需要指定一个位于卷或数据集的文件。"
 #: services/forms.py:655
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "指定的 extent 路径必须在分区/数据集挂点之下。"
+msgstr "您的扩展分区(extent)路径必须位于一个分区/数据集挂载点下。"
 
 #: services/forms.py:669
 msgid ""
@@ -1573,7 +1561,7 @@ msgstr "删除对应的文件存储"
 
 #: services/forms.py:974
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "S.M.A.R.T服务重加载失败。"
+msgstr "S.M.A.R.T服务重新加载失败。"
 
 #: services/models.py:42
 msgid "Service"
@@ -1599,7 +1587,7 @@ msgstr "认证模式"
 #: services/models.py:63
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr "使用AD(活动目录)或LDAP认证将取代该选项"
+msgstr "使用 Active Directory 或 LDAP 认证将取代该选项"
 
 #: services/models.py:67
 msgid "NetBIOS name"
@@ -1651,9 +1639,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'nobody'用户）。"
-"这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件中"
-"必须存在，但不必拥有登录权限。root作为访客帐户使用。"
+"请使用此选项重新定义存取访客服务的帐号（缺省为'nobody'）。些帐号的所有权限都将应用至每个连接到访客服务的用户端。些帐号必须存在于 "
+"password 文件中，但不必是个有效的登录帐号。root帐号不能作为访客帐号。"
 
 #: services/models.py:110
 msgid "Allow guest access"
@@ -1846,7 +1833,7 @@ msgstr "异步模式"
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
-msgstr "使用不同步模式，这将帮助性能超过网络速度"
+msgstr "使用异步模式，这将有助于性能超越千兆网络速度。"
 
 #: services/models.py:241 services/models.py:242
 #: templates/services/index.html:88
@@ -1855,7 +1842,7 @@ msgstr "NFS"
 
 #: services/models.py:251
 msgid "Base Name"
-msgstr "返回路径中的文件名部分"
+msgstr "基本名称(Base Name)"
 
 #: services/models.py:252
 msgid ""
@@ -4050,7 +4037,7 @@ msgstr ""
 
 #: storage/models.py:722
 msgid "Weekday"
-msgstr ""
+msgstr "工作日"
 
 #: storage/models.py:741
 msgid "Periodic Snapshot Task"
@@ -4062,23 +4049,20 @@ msgstr ""
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr "存储器面板"
+msgstr "存储器"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "ZFS 快照"
+msgstr "查看快照"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "查看所有组"
+msgstr "查看ZFS Scrubs"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "卷名称"
+msgstr "卷管理"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4113,7 +4097,7 @@ msgstr "创建 ZFS 卷"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "添加定期快照"
 
 #: storage/nav.py:130
 msgid "Volumes"
@@ -4123,7 +4107,7 @@ msgstr "卷"
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "创建ZFS数据集"
 
 #: storage/nav.py:173 storage/nav.py:198 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
@@ -5835,9 +5819,8 @@ msgid "Destroy"
 msgstr "销毁卷"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "克隆快照"
+msgstr "删除快照"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6067,19 +6050,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "没有设置域名服务器"
+msgstr "没有设置NTP服务器"
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "网络授时服务器 1"
+msgstr "NTP对时服务器 1"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "网络授时服务器 1"
+msgstr "NTP对时服务器 1"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6138,9 +6118,8 @@ msgid "Local Path"
 msgstr "LMB本地主浏览服务器"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "删除"
+msgstr "远程"
 
 #: templates/system/rsync.html:48
 #, fuzzy
