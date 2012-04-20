@@ -287,7 +287,10 @@ PBI_INDEXTOOL_FLAGS = [
 
 
 PBI_INFO = os.path.join(PBI_PATH, "pbi_info")
-# no flags...
+PBI_INFO_FLAGS_VERBOSE = pbi_arg(0x00000001, "-v")
+PBI_INFO_FLAGS = [
+    PBI_INFO_FLAGS_VERBOSE,
+]
 
 
 PBI_LISTREPO = os.path.join(PBI_PATH, "pbi_listrepo")
@@ -617,7 +620,7 @@ class pbi_info(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
         syslog(LOG_DEBUG, "pbi_info.__init__: enter")
 
-        super(pbi_info, self).__init__(PBI_INFO, None, flags, **kwargs) 
+        super(pbi_info, self).__init__(PBI_INFO, PBI_INFO_FLAGS, flags, **kwargs)
 
         self.pbi = None
         if kwargs.has_key("pbi") and kwargs["pbi"] is not None:
