@@ -139,9 +139,9 @@ _interface_config()
 _host_config()
 {
 	local IFS=\|
-	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway
+	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway jail_path
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
-	while read hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
+	while read -r hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
 		echo hostname=\"${hostname}.${domainname}\"
 		if [ -n "${ipv4gateway}" ]; then
 			echo defaultrouter=\"${ipv4gateway}\"
@@ -160,6 +160,15 @@ _host_config()
 					echo "nameserver ${ns}"
 				fi
 			done) > /etc/resolv.conf
+			jail_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+			SELECT
+				jail_path || '/' || jail_name
+			FROM
+				services_pluginsjail
+			ORDER BY -id LIMIT 1")
+			if [ -n "${jail_path}" ]; then
+				cp /etc/resolv.conf "${jail_path}/etc/resolv.conf"
+			fi
 		fi
 	done
 }
