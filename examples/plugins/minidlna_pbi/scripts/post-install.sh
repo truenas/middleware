@@ -16,6 +16,7 @@ touch ${minidlna_pbi_path}/etc/rc.conf
 chown -R www:www ../data/db ${minidlna_pbi_path}/etc/rc.conf ${minidlna_pbi_path}/etc/minidlna.conf
 chmod u+w ${minidlna_pbi_path}/etc/rc.conf ${minidlna_pbi_path}/etc/minidlna.conf
 mkdir -p /var/db/minidlna
-chown -R minidlna:minidlna /var/db/minidlna
+chown -R dlna:dlna /var/db/minidlna
+chmod -R 744 /var/db/minidlna
 
 echo "www ALL=(ALL) NOPASSWD: /usr/local/etc/rc.d/minidlna, ${minidlna_pbi_path}tweak-rcconf" >> ${minidlna_pbi_path}/etc/sudoers
