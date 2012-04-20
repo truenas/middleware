@@ -129,7 +129,7 @@ class NullMountPoint(Model):
 
     @property
     def mounted(self):
-        return is_mounted(device=self.source, path=self.destination)
+        return is_mounted(device=self.source, path=self.destination_jail)
 
     def __get_jail(self):
         from freenasUI.services.models import PluginsJail
