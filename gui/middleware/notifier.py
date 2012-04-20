@@ -75,10 +75,11 @@ from django.db.models import Q
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import pbi_add, pbi_delete, \
-    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO, \
-    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR, \
-    PBI_ADD_FLAGS_FORCE
+from freenasUI.common.pbi import (pbi_add, pbi_delete, pbi_info,
+    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
+    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
+    PBI_ADD_FLAGS_FORCE,
+    PBI_INFO_FLAGS_VERBOSE)
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.system import get_mounted_filesystems, umount
 from middleware import zfs
@@ -1868,23 +1869,21 @@ class notifier:
         Raises::
             MiddlewareError: pbi_add failed
         """
-        from freenasUI.services.models import RPCToken
+        from freenasUI.services.models import RPCToken, PluginsJail
+        from freenasUI.plugins.models import Plugins
         ret = False
 
         if not self._started_plugins_jail():
             return False
 
-        (c, conn) = self.__open_db(ret_conn=True)
-
-        c.execute("SELECT jail_path, jail_name, plugins_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        row = c.fetchone()
-        if not row:
+        qs = PluginsJail.objects.order_by('-id')
+        if qs.count() == 0:
             return False
-        jail_path, jail_name, plugins_path = row
+        pjail = qs[0]
 
         jail = None
         for j in Jls():
-            if j.hostname == jail_name:
+            if j.hostname == pjail.jail_name:
                 jail = j
                 break
 
@@ -1892,6 +1891,7 @@ class notifier:
         if jail is None:
             raise MiddlewareError("The plugins jail is not running, start "
                 "it before proceeding")
+
         pbi = pbiname = prefix = name = version = arch = None
 
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
@@ -1921,55 +1921,63 @@ class notifier:
             elif var == 'arch':
                 arch = val
 
-        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+        info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
+        res = info.run(jail=True, jid=jail.jid)
+        if res[1]:
+            plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
+            if name in plugins:
+                #FIXME: do pbi_update instead
+                pass
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG, pbi="/mnt/plugins/%s" % pbi)
+        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (
+            pjail.plugins_path,
+            pbi,
+            ))
+
+        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="/mnt/plugins/%s" % pbi)
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
-            kwargs = {}
-            kwargs['path'] = prefix
-            kwargs['enabled'] = True
-            kwargs['ip'] = jail.ip
-            kwargs['name'] = name
-            kwargs['arch'] = arch
-            kwargs['version'] = version
-            kwargs['pbiname'] = pbiname
+            qs = Plugins.objects.filter(plugin_name=name)
+            if qs.count() > 0:
+                log.warn("Plugin named %s already exists in database, "
+                    "overwriting.", name)
+                plugin = qs[0]
+            else:
+                plugin = Plugins()
+
+            plugin.plugin_path = prefix
+            plugin.plugin_enabled = True
+            plugin.plugin_ip = jail.ip
+            plugin.plugin_name = name
+            plugin.plugin_arch = arch
+            plugin.plugin_version = version
+            plugin.plugin_pbiname = pbiname
 
             # icky, icky icky, this is how we roll though.
             port = 12345
-            c.execute("SELECT count(*) FROM plugins_plugins")
-            count = c.fetchone()[0]
-            if count > 0:
-                c.execute("SELECT plugin_port FROM plugins_plugins ORDER BY plugin_port DESC LIMIT 1")
-                port = int(c.fetchone()[0])
+            qs = Plugins.objects.order_by('-plugin_port')
+            if qs.count() > 0:
+                port = int(qs[0].plugin_port)
 
-            kwargs['port'] = port + 1
+            plugin.plugin_port = port + 1
 
             rpctoken = RPCToken.new()
-            kwargs['secret_id'] = rpctoken.id
+            plugin.plugin_secret = rpctoken
 
-            oauth_file = "%s/%s/%s/.oauth" % (jail_path, jail_name, kwargs["path"])
+            oauth_file = "%s/%s/%s/.oauth" % (
+                pjail.jail_path,
+                pjail.jail_name,
+                plugin.plugin_path,
+                )
 
             fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
             os.write(fd,"key = %s\n" % rpctoken.key)
             os.write(fd, "secret = %s\n" % rpctoken.secret)
             os.close(fd)
 
-            sqlvars = ""
-            sqlvals = ""
-            for key in kwargs:
-                sqlvars += "plugin_%s," % key
-                sqlvals += ":%s," % key
-
-            sqlvars = sqlvars.rstrip(',')
-            sqlvals = sqlvals.rstrip(',')
-
-            sql = "INSERT INTO plugins_plugins(%s) VALUES(%s)" % (sqlvars, sqlvals)
             try:
-                c.execute(sql, kwargs)
-                conn.commit()
+                plugin.save()
                 ret = True
-
             except Exception, err:
                 ret = False
 
@@ -2105,26 +2113,35 @@ class notifier:
                 jail = j
                 break
 
-        if jail is not None:
+        if jail is None:
+            return ret
 
-            pbi_path = os.path.join(
-                jail_path,
-                jail_name,
-                "usr/pbi",
-                "%s-%s" % (plugin.plugin_name, platform.machine()),
-                )
-            self.__umount_filesystems_within(pbi_path)
+        info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
+        res = info.run(jail=True, jid=jail.jid)
+        plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
+        # Plugin is not installed in the jail at all
+        if plugin.plugin_name not in plugins:
+            plugin.delete()
+            return True
 
-            p = pbi_delete(pbi=plugin.plugin_pbiname)
-            res = p.run(jail=True, jid=jail.jid)
-            if res and res[0] == 0:
-                try:
-                    plugin.delete()
-                    ret = True
+        pbi_path = os.path.join(
+            jail_path,
+            jail_name,
+            "usr/pbi",
+            "%s-%s" % (plugin.plugin_name, platform.machine()),
+            )
+        self.__umount_filesystems_within(pbi_path)
 
-                except Exception, err:
-                    log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
-                    ret = False
+        p = pbi_delete(pbi=plugin.plugin_pbiname)
+        res = p.run(jail=True, jid=jail.jid)
+        if res and res[0] == 0:
+            try:
+                plugin.delete()
+                ret = True
+
+            except Exception, err:
+                log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
+                ret = False
 
         return ret
 
