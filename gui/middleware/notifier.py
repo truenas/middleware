@@ -2146,6 +2146,8 @@ class notifier:
         return ret
 
     def delete_plugins_jail(self, jail_id):
+        from freenasUI.services.models import PluginsJail
+        from freenasUI.plugins.models import Plugins
         (c, conn) = self.__open_db(ret_conn=True)
         ret = False
 
@@ -2154,12 +2156,15 @@ class notifier:
 
         log.debug("delete_plugins_jail: getting plugins id's from the database")
         c.execute("SELECT id FROM plugins_plugins")
-        plugin_ids = [p[0] for p in c.fetchall()]
-        for plugin_id in plugin_ids:
+        for plugin in Plugins.objects.all():
             try:
-                assert self.delete_pbi(plugin_id)
+                if not self.delete_pbi(plugin):
+                    plugin.delete()
             except Exception:
-                log.debug("delete_plugins_jail: unable to delete plugin %d", plugin_id)
+                log.debug("delete_plugins_jail: unable to delete plugin %s (%d)",
+                    plugin.plugin_name,
+                    plugin.id)
+
 
         log.debug("delete_plugins_jail: stopping plugins jail")
         self._stop_plugins_jail()
@@ -2174,16 +2179,17 @@ class notifier:
             log.debug("delete_plugins_jail: unable to stop plugins jail")
             return False
 
+        log.debug("delete_plugins_jail: deleting plugins from the database")
+        Plugins.objects.all().delete()
+
         log.debug("delete_plugins_jail: getting jail info from database")
-        c.execute("SELECT jail_name, jail_path, plugins_path "
-            "FROM services_pluginsjail WHERE id = :jail_id", {'jail_id': jail_id})
-        jail_info = c.fetchone()
-        if not jail_info:
+        try:
+            pjail = PluginsJail.objects.get(id=jail_id)
+        except PluginsJail.DoesNotExist:
             log.debug("delete_plugins_jail: plugins jail info not in database")
             return False
 
-        (jail_name, jail_path, plugins_path) = jail_info
-        full_jail_path = os.path.join(jail_path, jail_name)
+        full_jail_path = os.path.join(pjail.jail_path, pjail.jail_name)
 
         log.debug("delete_plugins_jail: checking jail path in filesystem")
         if not os.access(full_jail_path, os.F_OK):
@@ -2208,7 +2214,7 @@ class notifier:
             log.debug("delete_plugins_jail: unable to rm -rf %s", full_jail_path)
             return False
 
-        pbi_path = "%s/%s" % (plugins_path, "pbi")
+        pbi_path = "%s/%s" % (pjail.plugins_path, "pbi")
         cmd = "/bin/rm -rf %s" % pbi_path
         log.debug("delete_plugins_jail: %s", cmd)
         p = self.__pipeopen(cmd)
@@ -2218,11 +2224,8 @@ class notifier:
 
         log.debug("delete_plugins_jail: deleting jail from database")
         try:
-            c.execute("DELETE FROM services_pluginsjail WHERE id = :jail_id", {'jail_id': jail_id})
-            c.execute("UPDATE services_services set srv_enabled = 0 WHERE srv_service = 'plugins'")
-            conn.commit()
+            pjail.delete()
             ret = True
-
         except Exception, err:
             log.debug("delete_plugins_jail: unable to delete plugins jail from database (%s)", err)
             ret = False
