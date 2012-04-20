@@ -16,6 +16,12 @@
     </script>
 </button>
 
+{% else %}
+
+    <div>
+    <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: The plugins service is not running, several functionalities have been disabled." %}</span></p>
+    </div>
+
 {% endif %}
 
 <table class="grid">
