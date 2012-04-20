@@ -1923,7 +1923,7 @@ class notifier:
 
         info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
         res = info.run(jail=True, jid=jail.jid)
-        if res[1]:
+        if res[0] == 0 and res[1]:
             plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
             if name in plugins:
                 #FIXME: do pbi_update instead
@@ -2120,7 +2120,7 @@ class notifier:
         res = info.run(jail=True, jid=jail.jid)
         plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
         # Plugin is not installed in the jail at all
-        if plugin.plugin_name not in plugins:
+        if res[0] == 0 and plugin.plugin_name not in plugins:
             plugin.delete()
             return True
 
@@ -2148,14 +2148,12 @@ class notifier:
     def delete_plugins_jail(self, jail_id):
         from freenasUI.services.models import PluginsJail
         from freenasUI.plugins.models import Plugins
-        (c, conn) = self.__open_db(ret_conn=True)
         ret = False
 
         log.debug("delete_plugins_jail: stopping plugins")
         self._stop_plugins()
 
-        log.debug("delete_plugins_jail: getting plugins id's from the database")
-        c.execute("SELECT id FROM plugins_plugins")
+        log.debug("delete_plugins_jail: getting plugins from the database")
         for plugin in Plugins.objects.all():
             try:
                 if not self.delete_pbi(plugin):
@@ -2179,7 +2177,7 @@ class notifier:
             log.debug("delete_plugins_jail: unable to stop plugins jail")
             return False
 
-        log.debug("delete_plugins_jail: deleting plugins from the database")
+        # Make sure there are no plugins left in database
         Plugins.objects.all().delete()
 
         log.debug("delete_plugins_jail: getting jail info from database")
@@ -2232,7 +2230,6 @@ class notifier:
 
         log.debug("delete_plugins_jail: returning %s", ret)
         return ret
-
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
