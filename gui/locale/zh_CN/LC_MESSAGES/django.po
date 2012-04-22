@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-21 01:48+0200\n"
+"PO-Revision-Date: 2012-04-22 09:03+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -460,7 +460,7 @@ msgstr "Rsync备份模块"
 
 #: choices.py:559
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "通过SSH进行Rsync同步"
 
 #: choices.py:563
 msgid "Push"
@@ -468,7 +468,7 @@ msgstr "推送"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "取回"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -780,9 +780,9 @@ msgid "Add %s"
 msgstr "添加 %s"
 
 #: freeadmin/navtree.py:346
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "查看所有 %s"
+msgstr "查看 %s"
 
 #: freeadmin/navtree.py:366
 msgid "Display System Processes"
@@ -809,7 +809,7 @@ msgstr "无法获取 %(url): %(error)"
 #: freeadmin/navtree.py:432
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "未进行序列号的错误来自于 %(url)s: %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -831,15 +831,15 @@ msgstr "%s 已成功删除。"
 
 #: middleware/zfs.py:527 storage/models.py:556
 msgid "Error getting total space"
-msgstr ""
+msgstr "获取整个空间发生错误"
 
 #: middleware/zfs.py:533 storage/models.py:562
 msgid "Error getting available space"
-msgstr ""
+msgstr "获取可用空间发生错误"
 
 #: middleware/zfs.py:544 storage/models.py:573
 msgid "Error getting used space"
-msgstr ""
+msgstr "获取已用空间时发生错误"
 
 #: middleware/zfs.py:550 middleware/zfs.py:557 storage/models.py:89
 #: storage/models.py:579 storage/models.py:586
@@ -1057,7 +1057,6 @@ msgid "Alias"
 msgstr "别名"
 
 #: network/models.py:254
-#, fuzzy
 msgid "Aliases"
 msgstr "别名"
 
@@ -1148,9 +1147,8 @@ msgid "Create Link Aggregation"
 msgstr "创建链路聚合"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "查看所有链路聚合"
+msgstr "查看链路聚合"
 
 #: network/views.py:188
 msgid "LAGG successfully added"
@@ -1158,7 +1156,7 @@ msgstr "LAGG添加成功"
 
 #: plugins/forms.py:73
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "将转移至临时PBI文件"
 
 #: plugins/forms.py:73
 msgid ""
@@ -1217,7 +1215,7 @@ msgstr "插件版本"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "插件架构"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
 msgid "Plugin uname"
@@ -1230,7 +1228,7 @@ msgstr "插件名"
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin view"
-msgstr ""
+msgstr "插件一览"
 
 #: plugins/models.py:72 plugins/models.py:73
 #: templates/plugins/plugin_info.html:17
@@ -1254,7 +1252,7 @@ msgstr "插件TCP端口"
 
 #: plugins/models.py:96 plugins/models.py:97
 msgid "Path to plugin"
-msgstr ""
+msgstr "插件路径"
 
 #: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
 #: services/models.py:790 services/models.py:791 services/nav.py:166
@@ -1311,14 +1309,12 @@ msgid "The plugins path cannot be the same or reside within jail path."
 msgstr ""
 
 #: services/forms.py:139
-#, fuzzy
 msgid "This IP already exists."
-msgstr "使用这个GID的组已经存在"
+msgstr "该IP早已存在。"
 
 #: services/forms.py:146
-#, fuzzy
 msgid "The Plugins service failed to reload."
-msgstr "AFP 服务未能重新加载。"
+msgstr "插件服务未能重新加载。"
 
 #: services/forms.py:151
 msgid "File Permission"
@@ -1459,9 +1455,8 @@ msgid "The peer secret cannot be the same as user secret."
 msgstr "对端密钥必须与用户密钥不同"
 
 #: services/forms.py:451 services/forms.py:454
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr "指定对端用户时，必须同时填写对端密钥"
+msgstr "用户必须使用指定的密匙."
 
 #: services/forms.py:471 services/forms.py:518 services/forms.py:635
 #: services/forms.py:693 services/forms.py:796 services/forms.py:818
@@ -1541,11 +1536,10 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "您的群组ID不能大于 %d"
 
 #: services/forms.py:877
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "该域不是一个合法的IP地址或网络"
+msgstr "该域不是一个合法的IP地址或网络。使用关键字\"ALL\"来允许全部内容。"
 
 #: services/forms.py:888
 msgid "Authentication Group number"
@@ -1693,7 +1687,6 @@ msgid "Auxiliary parameters"
 msgstr "附加参数"
 
 #: services/models.py:138
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
 msgstr "这些参数已经添加到 smb.conf 的 [Global] 小节"
 
@@ -3338,7 +3331,7 @@ msgstr "禁用文件 ID"
 
 #: sharing/models.py:201
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "不通告 createfileid, resolveid, deleteid 的呼叫"
 
 #: sharing/models.py:204
 msgid "Disable :hex Names"
@@ -3414,7 +3407,7 @@ msgstr "只读"
 
 #: sharing/models.py:268
 msgid "Export the share read only. Writes are not permitted."
-msgstr ""
+msgstr "此共享为只读，无法写入"
 
 #: sharing/models.py:271 system/models.py:524
 #, fuzzy
@@ -3493,7 +3486,7 @@ msgstr "强制4k扇区尺寸"
 
 #: storage/forms.py:116 templates/storage/wizard.html:138
 msgid "Specify custom path"
-msgstr ""
+msgstr "指定自定义路径"
 
 #: storage/forms.py:123
 #, fuzzy
@@ -3517,13 +3510,12 @@ msgid "A volume with that name already exists."
 msgstr "组名已存在。"
 
 #: storage/forms.py:202
-#, fuzzy
 msgid "Path does not exist."
-msgstr "该范围的路径"
+msgstr "路径不存在"
 
 #: storage/forms.py:205
 msgid "Path is not a directory."
-msgstr ""
+msgstr "路径不是目录"
 
 #: storage/forms.py:219
 msgid "You must select a filesystem"
@@ -3535,20 +3527,19 @@ msgstr "卷名重复"
 
 #: storage/forms.py:236
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "“log”是保留用词，不能被使用"
 
 #: storage/forms.py:241
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "卷名的开头不能是数字、mirror、raidz或spare"
 
 #: storage/forms.py:246
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "您的群组ID不能大于 %d"
+msgstr "UFS卷名不能超过9个字符"
 
 #: storage/forms.py:250
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "USF 卷名只能包含字母和数字"
 
 #: storage/forms.py:352 storage/forms.py:430 storage/forms.py:838
 msgid "Member disk"
@@ -3564,7 +3555,7 @@ msgstr ""
 
 #: storage/forms.py:483
 msgid "You must select a volume."
-msgstr ""
+msgstr "必须选择一个卷"
 
 #: storage/forms.py:545
 #, python-format
@@ -3574,12 +3565,12 @@ msgstr ""
 
 #: storage/forms.py:573
 msgid "Dataset Name"
-msgstr ""
+msgstr "数据集名称"
 
 #: storage/forms.py:574 storage/forms.py:606 storage/forms.py:635
 #: storage/forms.py:665
 msgid "Compression level"
-msgstr ""
+msgstr "压缩级别"
 
 #: storage/forms.py:575 storage/forms.py:607 storage/forms.py:636
 msgid "Enable atime"
@@ -3587,12 +3578,12 @@ msgstr ""
 
 #: storage/forms.py:576 storage/forms.py:608
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "数据集的磁盘配额"
 
 #: storage/forms.py:576 storage/forms.py:577 storage/forms.py:608
 #: storage/forms.py:609 storage/forms.py:637
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=无限制；例如：1g"
 
 #: storage/forms.py:577 storage/forms.py:609
 msgid "Quota for this dataset and all children"
@@ -3600,26 +3591,26 @@ msgstr ""
 
 #: storage/forms.py:578 storage/forms.py:610
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "为数据集保留的空间"
 
 #: storage/forms.py:578 storage/forms.py:579 storage/forms.py:610
 #: storage/forms.py:611 storage/forms.py:638
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=不预留；例如：1g"
 
 #: storage/forms.py:579 storage/forms.py:611
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "为数据集和它的子集保留的空间"
 
 #: storage/forms.py:588
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
-msgstr ""
+msgstr "数据集名只能包含字母、数字、\"-\"、 \"_\"、 \":\" 和 \".\""
 
 #: storage/forms.py:595 storage/forms.py:678
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "和已有的数据集重名"
 
 #: storage/forms.py:637
 #, fuzzy
@@ -3648,23 +3639,23 @@ msgstr ""
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
-msgstr ""
+msgstr "ZFS卷名只能包含字母、数字、（-）（_）（;）和（.）"
 
 #: storage/forms.py:693
 msgid "Owner (user)"
-msgstr ""
+msgstr "所有者（用户）"
 
 #: storage/forms.py:694
 msgid "Owner (group)"
-msgstr ""
+msgstr "所有者（组）"
 
 #: storage/forms.py:695 templates/system/rsync.html:7
 msgid "Mode"
-msgstr ""
+msgstr "模式"
 
 #: storage/forms.py:696
 msgid "Type of ACL"
-msgstr ""
+msgstr "ACL的类型"
 
 #: storage/forms.py:702
 msgid "Set permission recursively"
@@ -3672,35 +3663,35 @@ msgstr ""
 
 #: storage/forms.py:773
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "必须至少选择一天"
 
 #: storage/forms.py:778
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "循环快照"
 
 #: storage/forms.py:779
 msgid "Snapshot Name"
-msgstr ""
+msgstr "快照名"
 
 #: storage/forms.py:786
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "快照名只能包含字母和数字"
 
 #: storage/forms.py:798
 msgid "Invalid prefix"
-msgstr ""
+msgstr "无效的前缀"
 
 #: storage/forms.py:802
 msgid "Snapshot"
-msgstr ""
+msgstr "快照"
 
 #: storage/forms.py:803
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "克隆名字（必须在同一个卷内）"
 
 #: storage/forms.py:818
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "克隆名只能包含以下字符  [a-z A-Z 0-9 -_. /]"
 
 #: storage/forms.py:824
 msgid "Clone must be within the same volume"
@@ -3708,7 +3699,7 @@ msgstr ""
 
 #: storage/forms.py:903 storage/models.py:600
 msgid "Remote hostname"
-msgstr ""
+msgstr "远程主机名"
 
 #: storage/forms.py:904 storage/models.py:604
 #, fuzzy
@@ -3721,11 +3712,11 @@ msgstr ""
 
 #: storage/forms.py:948
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "将磁盘标记为新添加（失去所有数据）"
 
 #: storage/forms.py:957
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "删除所有此卷的共享"
 
 #: storage/forms.py:967
 msgid "I'm aware this will destroy snapshots within this dataset"
@@ -3775,7 +3766,7 @@ msgstr "分钟，"
 
 #: storage/models.py:201 system/models.py:321 system/models.py:469
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "只能在0-59之间"
 
 #: storage/models.py:206 system/models.py:326 system/models.py:474
 #: system/models.py:643 templates/storage/scrub.html:8
@@ -3815,7 +3806,7 @@ msgstr "每月"
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "每周第几天"
 
 #: storage/models.py:227 system/models.py:347 system/models.py:546
 #: system/models.py:745 system/models.py:783 templates/plugins/index.html:14
@@ -3872,9 +3863,8 @@ msgstr "每周"
 
 #: storage/models.py:291 system/models.py:412 system/models.py:610
 #: system/models.py:697
-#, fuzzy
 msgid "Weekends"
-msgstr "周"
+msgstr "周末"
 
 #: storage/models.py:323
 #, fuzzy
@@ -3907,7 +3897,7 @@ msgstr "启用S.M.A.R.T."
 
 #: storage/models.py:368
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T.额外选项"
 
 #: storage/models.py:425
 #, fuzzy
@@ -3924,7 +3914,7 @@ msgstr ""
 
 #: storage/models.py:443
 msgid "Mount options"
-msgstr ""
+msgstr "挂载选项"
 
 #: storage/models.py:444
 msgid "Enter Mount Point options here"
@@ -3974,15 +3964,15 @@ msgstr ""
 
 #: storage/models.py:649
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "限制(kB/s)"
 
 #: storage/models.py:650
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
-msgstr ""
+msgstr "限制替换速度，单位KB/s。 0=无限制"
 
 #: storage/models.py:654
 msgid "Replication Task"
-msgstr ""
+msgstr "复制任务"
 
 #: storage/models.py:655
 msgid "Replication Tasks"
@@ -3990,15 +3980,15 @@ msgstr ""
 
 #: storage/models.py:683 system/models.py:499 templates/storage/tasks.html:22
 msgid "Recursive"
-msgstr ""
+msgstr "循环"
 
 #: storage/models.py:687
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "快照保存时限"
 
 #: storage/models.py:693
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "快照保留时限单位"
 
 #: storage/models.py:697
 msgid "Begin"
@@ -4026,15 +4016,15 @@ msgstr "间隔"
 #: storage/models.py:710
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "设定两个快照建立的间隔时间（分钟）"
 
 #: storage/models.py:716
 msgid "Occurrence"
-msgstr ""
+msgstr "出现"
 
 #: storage/models.py:717
 msgid "How the task is repeated"
-msgstr ""
+msgstr "如何设定重复执行任务"
 
 #: storage/models.py:722
 msgid "Weekday"
@@ -4042,11 +4032,11 @@ msgstr "工作日"
 
 #: storage/models.py:741
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "定期快照任务"
 
 #: storage/models.py:742 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "定期快照任务"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
@@ -4172,7 +4162,7 @@ msgstr "快照成功删除"
 
 #: storage/views.py:505
 msgid "Rollback successful."
-msgstr ""
+msgstr "回滚成功"
 
 #: storage/views.py:522
 msgid "Snapshot successfully added."
