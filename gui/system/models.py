@@ -535,8 +535,7 @@ class Rsync(Model):
             help_text=_("This option causes rsync to update the remote extended attributes to be the same as the local ones"),
             default=False,
             )
-    rsync_extra = models.CharField(
-            max_length=120,
+    rsync_extra = models.TextField(
             verbose_name=_("Extra options"),
             help_text=_("Extra options to rsync command line (usually empty)"),
             blank=True

@@ -626,6 +626,12 @@ class RsyncForm(ModelForm):
         w = ",".join(w)
         return w
 
+    def clean_rsync_extra(self):
+        extra = self.cleaned_data.get("rsync_extra")
+        if extra:
+            extra = extra.replace('\n', ' ')
+        return extra
+
     def clean(self):
         cdata = self.cleaned_data
         mode = cdata.get("rsync_mode")
