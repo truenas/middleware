@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import pwd
 import urllib
 
 from django.utils.translation import ugettext_lazy as _
@@ -86,17 +87,25 @@ class TransmissionForm(forms.ModelForm):
                 f.write('transmission_conf_dir="%s"\n' % (obj.conf_dir, ))
 
             if obj.download_dir:
-                f.write('transmission_download_dir="%s"\n' % (obj.conf_dir, ))
+                f.write('transmission_download_dir="%s"\n' % (obj.download_dir, ))
 
             transmission_flags = ""
             for value in advanced_settings.values():
                 transmission_flags += value + " "
             f.write('transmission_flags="%s"\n' % (transmission_flags, ))
 
+        try:
+            user_ids = pwd.getpwnam("transmission")[2:4]
+        except:
+            user_ids = None
+
         if obj.watch_dir:
-            #FIXME use os.chown
-            os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.watch_dir, ))
-            os.chmod(obj.watch_dir, 0o755)
+            try:
+                os.chmod(obj.watch_dir, 0o755)
+                if user_ids:
+                    os.chown(obj.watch_dir, *user_ids)
+            except:
+                pass
 
         if not os.path.exists(obj.conf_dir):
             try:
@@ -104,12 +113,20 @@ class TransmissionForm(forms.ModelForm):
             except OSError:
                 pass
 
-        os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.conf_dir, ))
-        os.chmod(obj.conf_dir, 0o755)
+        try:
+            os.chmod(obj.conf_dir, 0o755)
+            if user_ids:
+                os.chown(obj.conf_dir, *user_ids)
+        except:
+            pass
 
         if obj.download_dir:
-            os.system("/usr/sbin/chown transmission:transmission '%s'" % (obj.download_dir, ))
-            os.chmod(obj.download_dir, 0o755)
+            try:
+                os.chmod(obj.download_dir, 0o755)
+                if user_ids:
+                    os.chown(obj.download_dir, *user_ids)
+            except:
+                pass
 
         settingsfile = os.path.join(obj.conf_dir, "settings.json")
         if os.path.exists(settingsfile):
