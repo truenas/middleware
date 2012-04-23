@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-22 09:03+0200\n"
+"PO-Revision-Date: 2012-04-23 11:00+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -724,7 +724,6 @@ msgid "Account"
 msgstr "帐户"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
 msgstr "管理员帐户"
 
@@ -1711,24 +1710,22 @@ msgid "Home directories"
 msgstr "主目录"
 
 #: services/models.py:154
-#, fuzzy
 msgid "Homes auxiliary parameters"
 msgstr "附加参数"
 
 #: services/models.py:156
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "这些参数增加到 smb.conf 的[共享]部分"
+msgstr "这些参数增加到 smb.conf 的[homes]部分"
 
 #: services/models.py:159
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix扩展"
 
 #: services/models.py:161
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
-msgstr ""
+msgstr "这些扩展使Samba能更好地支持UNIX CIFS客户端所支持的功能，如符号链接，硬件链接等......"
 
 #: services/models.py:165
 msgid "Enable AIO"
@@ -1743,20 +1740,18 @@ msgid "Minimum AIO read size"
 msgstr "AIO读取最小数据块"
 
 #: services/models.py:171
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
-msgstr "如果要求的大小比这个值大，Samba将不同步地读取。默认读取值为1。"
+msgstr "如果要求的大小比这个值大，Samba将不同步地读取。"
 
 #: services/models.py:176
 msgid "Minimum AIO write size"
 msgstr "AIO写入最小数据块"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
-msgstr "若需求的文件大小超过这个值，Samba将采用非同步写入。默认值为1."
+msgstr "若需求的文件大小超过这个值，Samba将采用非同步写入。"
 
 #: services/models.py:181
 msgid "Zeroconf share discovery"
@@ -1767,7 +1762,7 @@ msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
-msgstr ""
+msgstr "支持via Avahi的Zeroconf允许客户端（尤其是Mac OSX Finder）自动寻找到类型Windows网上邻居的CIFS共享。"
 
 #: services/models.py:187 services/models.py:188
 #: templates/services/index.html:29
@@ -1793,7 +1788,6 @@ msgid "Allows guest access to all apple shares on this box."
 msgstr "允许访客访问这台服务器上的 全部Apple共享内容"
 
 #: services/models.py:213
-#, fuzzy
 msgid "Max. Connections"
 msgstr "最大连接数"
 
@@ -2041,14 +2035,12 @@ msgid "Portal"
 msgstr "入口"
 
 #: services/models.py:500
-#, fuzzy
 msgid "IP Address"
 msgstr "IPv4 地址"
 
 #: services/models.py:512
-#, fuzzy
 msgid "Portal IP"
-msgstr "入口"
+msgstr "站点的IP"
 
 #: services/models.py:522 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2113,7 +2105,6 @@ msgid "Optional user-friendly string of the target."
 msgstr "目标机额外的人性化文字说明选项"
 
 #: services/models.py:615 storage/models.py:318 storage/views.py:226
-#, fuzzy
 msgid "Serial"
 msgstr "串口"
 
@@ -2213,7 +2204,7 @@ msgstr "更新期间"
 
 #: services/models.py:743
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "在几秒钟的时间。默认约1分钟。"
 
 #: services/models.py:747
 msgid "Forced update period"
@@ -2229,8 +2220,9 @@ msgid "Dynamic DNS"
 msgstr "动态DNS"
 
 #: services/models.py:768
+#, fuzzy
 msgid "Plugins jail path"
-msgstr ""
+msgstr "插件的内部路径"
 
 #: services/models.py:769
 #, fuzzy
@@ -2238,7 +2230,6 @@ msgid "Path to the plugins jail"
 msgstr "该范围的路径"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
-#, fuzzy
 msgid "Jail name"
 msgstr "域名"
 
@@ -3675,7 +3666,7 @@ msgstr "快照名"
 
 #: storage/forms.py:786
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr "快照名只能包含字母和数字"
+msgstr "快照名只能包含如下字符 [-a-zA-Z0-9_.] "
 
 #: storage/forms.py:798
 msgid "Invalid prefix"
@@ -4125,7 +4116,7 @@ msgstr "成功删除数据集。"
 
 #: storage/views.py:353 storage/views.py:428
 msgid "An error occurred when setting the options"
-msgstr ""
+msgstr "设置选项时发生错误"
 
 #: storage/views.py:374
 msgid "ZFS Volume successfully added."
@@ -4178,7 +4169,7 @@ msgstr "成功克隆快照。"
 
 #: storage/views.py:567 storage/views.py:696
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "磁盘替换已完成初始化"
 
 #: storage/views.py:569 storage/views.py:698
 msgid "An error occurred."
@@ -4190,11 +4181,11 @@ msgstr ""
 
 #: storage/views.py:599
 msgid "Disk offline operation has been issued."
-msgstr ""
+msgstr "磁盘离线已公布"
 
 #: storage/views.py:614
 msgid "Disk has been removed."
-msgstr ""
+msgstr "磁盘已删除"
 
 #: storage/views.py:633
 #, fuzzy
@@ -4207,7 +4198,7 @@ msgstr ""
 
 #: system/forms.py:161
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "语言(需要重新加载界面)"
 
 #: system/forms.py:171
 #, fuzzy
@@ -4251,7 +4242,7 @@ msgstr ""
 
 #: system/forms.py:413
 msgid "Invalid firmware"
-msgstr ""
+msgstr "无效的固件"
 
 #: system/forms.py:430
 msgid "Service Pack image to be installed"
@@ -4274,7 +4265,7 @@ msgstr ""
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "不允许使用引号"
 
 #: system/models.py:47
 msgid "Protocol"
@@ -4287,7 +4278,7 @@ msgstr "IPv4 地址"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Web 界面端口"
 
 #: system/models.py:65
 msgid "Language"
@@ -4299,7 +4290,7 @@ msgstr "时区"
 
 #: system/models.py:77
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog 服务器"
 
 #: system/models.py:81 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4430,7 +4421,7 @@ msgstr ""
 
 #: system/models.py:180
 msgid "MOTD banner"
-msgstr ""
+msgstr "登入信息看板"
 
 #: system/models.py:184 templates/system/settings.html:5
 msgid "Advanced"
@@ -4448,7 +4439,7 @@ msgstr ""
 
 #: system/models.py:199
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "外发邮件服务器"
 
 #: system/models.py:200
 msgid ""
@@ -4458,23 +4449,23 @@ msgstr ""
 
 #: system/models.py:206
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "输入整数从1-65535，通常是：25、465或587"
 
 #: system/models.py:207
 msgid "Port to connect to"
-msgstr ""
+msgstr "连接到端口"
 
 #: system/models.py:213
 msgid "encryption of the connection"
-msgstr ""
+msgstr "加密链接"
 
 #: system/models.py:214
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:217
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "使用 SMTP 认证"
 
 #: system/models.py:225
 msgid "A username to authenticate to the remote server"
@@ -4494,7 +4485,7 @@ msgstr "组织"
 
 #: system/models.py:246
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "组织名称（或公司名）"
 
 #: system/models.py:252
 msgid "Organizational Unit"
@@ -4510,15 +4501,15 @@ msgstr "电邮地址"
 
 #: system/models.py:266
 msgid "Locality"
-msgstr ""
+msgstr "地区"
 
 #: system/models.py:267
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "地区名称(如：城市)"
 
 #: system/models.py:273
 msgid "State"
-msgstr ""
+msgstr "州(省)"
 
 #: system/models.py:274
 msgid "State or Province Name (full name)"
@@ -4526,7 +4517,7 @@ msgstr ""
 
 #: system/models.py:280
 msgid "Country"
-msgstr ""
+msgstr "国家"
 
 #: system/models.py:281
 msgid "Country Name (2 letter code)"
@@ -4542,7 +4533,7 @@ msgstr ""
 
 #: system/models.py:293
 msgid "SSL Certificate"
-msgstr ""
+msgstr "SSL 凭证"
 
 #: system/models.py:294
 msgid ""
@@ -4559,9 +4550,8 @@ msgstr "命令行"
 
 #: system/models.py:314 system/models.py:462 system/models.py:638
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
-#, fuzzy
 msgid "Short description"
-msgstr "说明"
+msgstr "摘要"
 
 #: system/models.py:350
 #, fuzzy
@@ -4575,7 +4565,7 @@ msgstr "添加计划任务"
 
 #: system/models.py:434
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP地址或主机名"
 
 #: system/models.py:443
 msgid "Remote Module Name"
@@ -4611,7 +4601,7 @@ msgstr "启用主目录"
 
 #: system/models.py:504
 msgid "Times"
-msgstr ""
+msgstr "耗时"
 
 #: system/models.py:505
 msgid "Preserve modification times"
@@ -4701,7 +4691,7 @@ msgstr ""
 
 #: system/models.py:549
 msgid "Rsync Task"
-msgstr ""
+msgstr "Rsync 任务"
 
 #: system/models.py:550
 msgid "Rsync Tasks"
@@ -4748,11 +4738,11 @@ msgstr "启用 AIO"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
-msgstr "系统面板"
+msgstr "系统"
 
 #: system/nav.py:11 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr ""
+msgstr "报告"
 
 #: system/nav.py:18
 msgid "System Information"
@@ -4843,7 +4833,7 @@ msgstr "登录"
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -4863,7 +4853,7 @@ msgstr "删除"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "编辑组"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
@@ -4890,7 +4880,7 @@ msgstr "修改用户"
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "附加组"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
@@ -4903,7 +4893,7 @@ msgstr "删除用户"
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
 msgid "No users defined"
-msgstr ""
+msgstr "无用户被指定"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
@@ -4940,7 +4930,7 @@ msgstr "确定"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
@@ -4954,7 +4944,7 @@ msgstr "浏览"
 #: templates/freeadmin/directory_browser.html:6
 #: templates/freeadmin/directory_browser.html:11
 msgid "Close"
-msgstr ""
+msgstr "关闭"
 
 #: templates/freeadmin/generic_form.html:17
 #: templates/freeadmin/generic_model_add.html:53
@@ -5014,9 +5004,8 @@ msgid "Loading..."
 msgstr "正在重启系统..."
 
 #: templates/freeadmin/index.html:55
-#, fuzzy
 msgid "Help & Support"
-msgstr "EA 支持"
+msgstr "帮助 &  支持"
 
 #: templates/freeadmin/index.html:59
 msgid "Forum"
@@ -5172,7 +5161,7 @@ msgstr ""
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "启动选项"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
 msgid "Action"
@@ -5312,7 +5301,7 @@ msgstr "请登录"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "注销"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
@@ -5415,7 +5404,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
-msgstr ""
+msgstr "iSCSI目标"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
@@ -5452,7 +5441,7 @@ msgstr "添加 iSCIS 用户"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "授权的网络"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5617,7 +5606,7 @@ msgstr "添加Windows共享"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "克隆快照"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, fuzzy, python-format
@@ -5646,7 +5635,7 @@ msgstr ""
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
-msgstr ""
+msgstr "添加数据集"
 
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
@@ -5670,7 +5659,7 @@ msgstr "正在替换磁盘"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "更换磁盘"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:54
 msgid "Filesystem type"
@@ -5678,7 +5667,7 @@ msgstr "文件系统类型"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
-msgstr ""
+msgstr "激活卷"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
@@ -5709,11 +5698,11 @@ msgstr "权限变更"
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "改变 %(paths) 权限到"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr ""
+msgstr "添加复制"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -5939,7 +5928,7 @@ msgstr "ZIL设备"
 
 #: templates/storage/wizard.html:117
 msgid "Cache"
-msgstr "L2ARC设备"
+msgstr "缓存"
 
 #: templates/storage/wizard.html:118
 msgid "Spare"
@@ -5969,7 +5958,7 @@ msgstr "添加 ZFS 卷"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
-msgstr "重建 LDAP/AD 缓存"
+msgstr "重建 LDAP/AD 快取缓存"
 
 #: templates/system/advanced_edit.html:18
 msgid "The cache is being rebuilt."

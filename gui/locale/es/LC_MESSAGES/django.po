@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-11 17:39+0200\n"
+"PO-Revision-Date: 2012-04-23 09:49+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -472,11 +472,11 @@ msgstr "Rsync sobre SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "Empujar"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "Tirar"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -816,9 +816,9 @@ msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr "No puedo recuperar %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Error al etiquetar el disco"
+msgstr "Un error ha ocurrido mientras se comunicaba con %(url)s: %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -1200,7 +1200,7 @@ msgstr "Suma de Comprobacion Erronea"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
@@ -1208,7 +1208,7 @@ msgstr "La ruta Jail no puede contener una ruta plugins"
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "La ruta del plugin no puede contener la ruta del jail"
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
 msgid "Plugin name"
@@ -1394,7 +1394,7 @@ msgstr "Ha fallado el reinicio del servicio DynDNS"
 
 #: services/forms.py:310
 msgid "This is not a valid e-mail address"
-msgstr "No es una dirección de e-mail valida"
+msgstr "Esta no es una dirección de e-mail válida"
 
 #: services/forms.py:312
 msgid ""
@@ -2320,9 +2320,8 @@ msgid "Plugins jail path"
 msgstr "Ruta de acceso a los plugins del jail"
 
 #: services/models.py:769
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Ruta al medio"
+msgstr "Ruta al Jail de los Plugins"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
 msgid "Jail name"
@@ -5440,7 +5439,7 @@ msgstr "Paso %(step)s de %(step_count)s"
 
 #: templates/plugins/jailpbi.html:19
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Subir Jail PBI"
 
 #: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
 #: templates/plugins/plugin_info.html:39
@@ -5533,7 +5532,7 @@ msgstr "Configuración Plugins"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Instalar Jail PBI"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5658,21 +5657,20 @@ msgstr "Añadir Destino"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "Todos los archivosn en este plugins jail serán borrados."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "Borrar el fichero seleccionado"
+msgstr "Borrar Plugins jail"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Ruta del jail"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
-msgstr ""
+msgstr "Jail IP"
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
@@ -6054,9 +6052,8 @@ msgid "No volumes defined"
 msgstr "No hay Volumenes Definidos"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Ruta del volumen"
+msgstr "Volumen a extender"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6396,7 +6393,7 @@ msgstr ""
 #: tools/alert.py:129
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "La dirección IP del WebGUI no puede ser alcanzada usando comodines: %s"
 
 #: tools/alert.py:139
 #, python-format
