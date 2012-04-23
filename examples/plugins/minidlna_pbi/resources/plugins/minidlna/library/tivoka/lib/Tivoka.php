@@ -38,7 +38,7 @@ abstract class Tivoka
 		
 		//validate scheme...
 		$t = parse_url($target);
-		if($t['scheme'] !== 'http')
+		if(!in_array($t['scheme'], array('http', 'https')))
 		throw new Tivoka_Exception('Unknown or unsupported scheme given.', Tivoka::ERR_INVALID_TARGET);
 		
 		return new Tivoka_Connection($target);
