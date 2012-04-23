@@ -208,6 +208,8 @@ class TreeType(object):
         else:
             return None
 
+    def pre_dehydrate(self):
+        pass
 
 class TreeNode(TreeType):
     pass

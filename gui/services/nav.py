@@ -192,6 +192,15 @@ class PluginsManagement(TreeNode):
         super(PluginsManagement, self).__init__(*args, **kwargs)
         self.append_children([PluginsSettings()])
 
+    def pre_dehydrate(self):
+        if notifier().plugins_jail_configured():
+            return
+
+        for nav in list(self.option_list):
+            if nav.gname == 'NullMountPoint':
+                self.option_list.remove(nav)
+                break
+
 
 class MountPoints(TreeNode):
 

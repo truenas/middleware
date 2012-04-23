@@ -467,6 +467,8 @@ class NavTree(object):
 
     def dehydrate(self, o, uid, gname=None):
 
+        o.pre_dehydrate()
+
         # info about current node
         my = {
             'id': str(uid.new()),
