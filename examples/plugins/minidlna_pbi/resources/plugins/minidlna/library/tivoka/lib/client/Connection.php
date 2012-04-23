@@ -32,9 +32,10 @@ class Tivoka_Connection {
 		
 		if(!($request instanceof Tivoka_Request)) throw new Tivoka_Exception('Invalid data type to be sent to server');
 		
+		$parse = parse_url($this->target);
 		// preparing connection...
 		$context = stream_context_create(array(
-				'http' => array(
+				$parse['scheme'] => array(
 					'content' => (string) $request,
 					'header' => "Content-Type: application/json\r\n".
 								"Connection: Close\r\n",
