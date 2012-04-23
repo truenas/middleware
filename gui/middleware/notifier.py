@@ -2023,18 +2023,22 @@ class notifier:
                 pbi = "%s.pbi" % val
 
         parts = prefix.split('/')
+        ename = parts[-1]
+        src = os.path.join(path, ename)
+        dst = os.path.join(path, name)
 
-        ename = parts[0]
-        if len(parts) > 1:
-            ename = parts[len(parts) - 1]
+        if os.path.exists(src):
+            self.__umount_filesystems_within(src)
+            cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % (src, )
+            log.debug("Temporary jail path already exists (%s), removing schg flags", src)
+            p = self.__pipeopen(cmd)
+            p.communicate()
 
         p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
             pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
         res = p.run()
 
         if res and res[0] == 0:
-            src = os.path.join(path, ename)
-            dst = os.path.join(path, name)
             if src != dst:
                 self.__system("/bin/mv '%s' '%s'" % (src, dst))
             self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))

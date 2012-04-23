@@ -128,6 +128,15 @@ class JailInfoForm(ModelForm):
         jp = cleaned_data['jail_path'] + "/"
         pp = cleaned_data['plugins_path'] + "/"
 
+        full_path = os.path.join(
+            cleaned_data['jail_path'],
+            cleaned_data['jail_name'],
+            )
+        if os.path.exists(full_path):
+            self._errors['__all__'] = self.error_class([
+                _("The path %s already exists") % (full_path, ),
+            ])
+
         try:
             # TODO: This could be improved checking whether the paths exists
             samefs = os.stat(jp).st_dev == os.stat(pp).st_dev
