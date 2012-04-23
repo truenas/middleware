@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-20 10:48+0200\n"
+"PO-Revision-Date: 2012-04-21 01:48+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1848,11 +1848,13 @@ msgstr "基本名称(Base Name)"
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
-msgstr "返回路径中的文件名部分 （例如 ）"
+msgstr ""
+"基本名称 (例如 “iqn.2007-09.jp.ne.peach.istgt”，详细内容请查阅RFC "
+"3720和3721)会自动附加目标名称，无需以\"iqn\"开头。"
 
 #: services/models.py:258
 msgid "Discovery Auth Method"
-msgstr "发现自生的方法"
+msgstr "寻找认证方法"
 
 #: services/models.py:269
 msgid "I/O Timeout"
@@ -1860,7 +1862,7 @@ msgstr "I/O 超时"
 
 #: services/models.py:270
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O端口登出时间（默认为30秒）"
+msgstr "I/O超时，单位秒（默认为30秒）"
 
 #: services/models.py:275
 msgid "NOPIN Interval"
@@ -1963,7 +1965,7 @@ msgstr "逻辑单元管理员IP地址TCP端口（默认为3261）"
 
 #: services/models.py:352
 msgid "Controller Authorized netmask"
-msgstr "控制器认证的子网掩码"
+msgstr "控制器授权的子网掩码"
 
 #: services/models.py:354
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
@@ -2115,7 +2117,7 @@ msgstr "目标别名"
 
 #: services/models.py:612
 msgid "Optional user-friendly string of the target."
-msgstr "可选用户 - 目标机友好界面字符串。"
+msgstr "目标机额外的人性化文字说明选项"
 
 #: services/models.py:615 storage/models.py:318 storage/views.py:226
 #, fuzzy
@@ -2222,7 +2224,7 @@ msgstr ""
 
 #: services/models.py:747
 msgid "Forced update period"
-msgstr "强制更新期间"
+msgstr "强制更新周期"
 
 #: services/models.py:753 services/models.py:825
 msgid "These parameters will be added to global settings in inadyn.conf."
@@ -2344,7 +2346,7 @@ msgstr "关机定时器"
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
-msgstr "关机前等待的秒数。如果UPS在秒数有剩余前恢复，则取消关机操作。"
+msgstr "开始关机前的等待秒数。如果UPS在时间到期前恢复，则取消关机操作。"
 
 #: services/models.py:880
 msgid "UPS Master User Password"
@@ -2448,7 +2450,7 @@ msgstr "允许本地用户登录"
 
 #: services/models.py:952
 msgid "Banner"
-msgstr "看板"
+msgstr ""
 
 #: services/models.py:954
 msgid "Greeting banner displayed by FTP when a connection first comes in."
@@ -2576,7 +2578,7 @@ msgstr "目录"
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
-msgstr ""
+msgstr "这个目录包含你要发布的文件。远程主机不需要传输这部分目录。"
 
 #: services/models.py:1038
 msgid "Allow New Files"
@@ -2749,7 +2751,7 @@ msgstr "允许匿名绑定"
 
 #: services/models.py:1216
 msgid "Root bind DN"
-msgstr "Root连接DN"
+msgstr "Root 绑定 DN"
 
 #: services/models.py:1218
 msgid ""
@@ -2759,7 +2761,7 @@ msgstr "可辨别的名称，用于连接到目录服务器，例如： cn=admin
 
 #: services/models.py:1222
 msgid "Root bind password"
-msgstr "Root连接密码"
+msgstr "Root 绑定密码"
 
 #: services/models.py:1224
 msgid "The credentials with which to bind."
@@ -2849,11 +2851,11 @@ msgstr "备用的TCP连接端口号。预设为873"
 
 #: services/models.py:1291
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr "这些参数将添加到 rsyncd.conf 的 [Global] 小节"
+msgstr "这些参数将添加到  rsyncd.conf 的 [Global] 小节"
 
 #: services/models.py:1295 services/models.py:1296
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Rsyncd 配置"
 
 #: services/models.py:1306
 msgid "Module name"
@@ -2870,7 +2872,7 @@ msgstr "访问模式"
 
 #: services/models.py:1322
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "这个模块包括远程主机访问控制"
 
 #: services/models.py:1326
 msgid "Maximum connections"
@@ -2926,7 +2928,7 @@ msgstr "这些参数已经添加到 rsyncd.conf 的模块配置部分"
 
 #: services/models.py:1360
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync 模块"
 
 #: services/models.py:1361
 msgid "Rsync Modules"
@@ -2934,7 +2936,7 @@ msgstr ""
 
 #: services/models.py:1374
 msgid "Check interval"
-msgstr ""
+msgstr "检查时间间隔"
 
 #: services/models.py:1375
 msgid ""
@@ -2956,9 +2958,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1390
-#, fuzzy
 msgid "Informal"
-msgstr "标准"
+msgstr "非正式"
 
 #: services/models.py:1391 services/models.py:1396
 msgid ""
@@ -2993,7 +2994,7 @@ msgstr ""
 
 #: services/nav.py:71
 msgid "Add Device Extent"
-msgstr ""
+msgstr "新增设备的扩展区"
 
 #: services/nav.py:78
 #, fuzzy
@@ -3021,7 +3022,7 @@ msgstr "iSCSI"
 
 #: services/nav.py:141 templates/services/index.html:114
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync 同步"
 
 #: services/nav.py:148 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -3190,11 +3191,11 @@ msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
-msgstr ""
+msgstr "这个选项允许你设置一个卷密码，密码最多为8个字符（强烈建议使用ASICII码）"
 
 #: sharing/models.py:131
 msgid "Share Character Set"
-msgstr ""
+msgstr "共享编码设置"
 
 #: sharing/models.py:133
 msgid ""
@@ -3211,7 +3212,7 @@ msgid ""
 "This option allows the users and groups that access a share to be specified. "
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
-msgstr ""
+msgstr "这个选项允许用户和群组存取一个指定的共享。用户和群组用逗号进行指定区分。建立群组需要增加前缀@."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -3246,17 +3247,17 @@ msgstr "允许确定的用户和群组拥有对共享的读写权限。格式和
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
-msgstr ""
+msgstr "寻找硬盘"
 
 #: sharing/models.py:161
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
-msgstr ""
+msgstr "允许其他系统将此共享发现为磁盘、Time Machine备份盘或其它设备。"
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "寻找磁盘模式"
 
 #: sharing/models.py:168
 msgid ""
@@ -3290,7 +3291,7 @@ msgstr ""
 
 #: sharing/models.py:181
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "转换 CR/LF"
 
 #: sharing/models.py:182
 msgid ""
@@ -3309,7 +3310,7 @@ msgstr "Windows文件名"
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
-msgstr ""
+msgstr "这个强制要求文件名是Windows下可设定的字符。这个名称不建议给主要用Mac电脑共享的使用。"
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"
@@ -3323,7 +3324,7 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "零设备编号"
 
 #: sharing/models.py:197
 msgid ""
@@ -3359,7 +3360,7 @@ msgstr "提供与Apple II客户端的兼容性。"
 
 #: sharing/models.py:212
 msgid "No Stat"
-msgstr ""
+msgstr "没有统计"
 
 #: sharing/models.py:213
 msgid ""
