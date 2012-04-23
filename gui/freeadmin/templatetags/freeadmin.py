@@ -34,6 +34,7 @@ from freenasUI.system.models import Advanced
 
 register = template.Library()
 
+
 class FormRender(template.Node):
     def __init__(self, arg):
         self.arg = arg
@@ -56,13 +57,18 @@ class FormRender(template.Node):
 
         top_errors = form.non_field_errors()
         if top_errors:
-            output.append("<tr><td colspan=\"2\">%s</td></tr>" % force_unicode(top_errors))
+            output.append("<tr><td colspan=\"2\">%s</td></tr>" % (
+                force_unicode(top_errors),
+                ))
         else:
             if form.prefix:
                 prefix = form.prefix + "-__all__"
             else:
                 prefix = "__all__"
-            output.append("""<tr><td colspan="2"><input type="hidden" data-dojo-type="dijit.form.TextBox" name="%s"></div></td></tr>""" % (prefix,))
+            output.append("""<tr>
+                <td colspan="2">
+                <input type="hidden" data-dojo-type="dijit.form.TextBox" name="%s" />
+                </td></tr>""" % (prefix,))
 
         if model:
             for label, fields in model._admin.composed_fields:
@@ -95,7 +101,13 @@ class FormRender(template.Node):
                         help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, bf.help_text, bf.auto_id)
                     else:
                         help_text = ""
-                    html = u"""<tr%s><th>%s</th><td>%s%s %s</td></tr>""" % (_hide, bf.label_tag(), bf_errors, bf, help_text)
+                    html = u"""<tr%s><th>%s</th><td>%s%s %s</td></tr>""" % (
+                        is_adv,
+                        bf.label_tag(),
+                        bf_errors,
+                        bf,
+                        help_text,
+                        )
                     output.append(html)
 
         if hidden_fields:
