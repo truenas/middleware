@@ -163,15 +163,18 @@ CIFSAUTH_CHOICES = (
         ('share', _('Anonymous')),
         ('user', _('Local User')),
         )
+
 DOSCHARSET_CHOICES = (
         ('CP437', 'CP437'),
         ('CP850', 'CP850'),
         ('CP852', 'CP852'),
         ('CP866', 'CP866'),
         ('CP932', 'CP932'),
+        ('CP1026', 'CP1026'),
         ('CP1251', 'CP1251'),
         ('ASCII', 'ASCII'),
         )
+
 UNIXCHARSET_CHOICES = (
         ('UTF-8', 'UTF-8'),
         ('iso-8859-1', 'iso-8859-1'),
@@ -180,6 +183,7 @@ UNIXCHARSET_CHOICES = (
         ('EUC-JP', 'EUC-JP'),
         ('ASCII', 'ASCII'),
         )
+
 LOGLEVEL_CHOICES = (
         ('1',  _('Minimum')),
         ('2',  _('Normal')),
