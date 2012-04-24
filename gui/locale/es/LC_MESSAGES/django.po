@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-23 09:49+0200\n"
+"PO-Revision-Date: 2012-04-24 08:34+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -472,11 +472,11 @@ msgstr "Rsync sobre SSH"
 
 #: choices.py:563
 msgid "Push"
-msgstr "Empujar"
+msgstr "Enviar"
 
 #: choices.py:564
 msgid "Pull"
-msgstr "Tirar"
+msgstr "Recuperar"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
