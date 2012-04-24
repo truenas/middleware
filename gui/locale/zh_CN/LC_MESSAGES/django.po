@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-23 11:00+0200\n"
+"PO-Revision-Date: 2012-04-24 10:02+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1304,8 +1304,9 @@ msgid "The NFS service failed to reload."
 msgstr "NFS服务重新加载失败"
 
 #: services/forms.py:130
+#, fuzzy
 msgid "The plugins path cannot be the same or reside within jail path."
-msgstr ""
+msgstr "插件路径不能与Jail内的路径相同"
 
 #: services/forms.py:139
 msgid "This IP already exists."
@@ -2238,17 +2239,16 @@ msgid "Name of the plugins jail"
 msgstr ""
 
 #: services/models.py:781
-#, fuzzy
 msgid "Jail IP address"
-msgstr "电邮地址"
+msgstr "Jail IP地址"
 
 #: services/models.py:784
 msgid "Plugins Path"
-msgstr ""
+msgstr "插件路径"
 
 #: services/models.py:785
 msgid "Path to the plugins directory"
-msgstr ""
+msgstr "插件目录"
 
 #: services/models.py:805
 msgid "Location"
@@ -2293,9 +2293,8 @@ msgid "Identifier"
 msgstr "标识符"
 
 #: services/models.py:841
-#, fuzzy
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr "该名称作为系统中UPS的唯一标识符。"
+msgstr "此为此系统上所使用UPS的不可重复标识"
 
 #: services/models.py:845
 msgid "Driver"
@@ -2310,9 +2309,8 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "UPS连接在哪个串口或者USB端口上。"
 
 #: services/models.py:857
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "附加参数"
+msgstr "附加参数(ups.conf)"
 
 #: services/models.py:859
 msgid "Additional parameters to the hardware-specific part of the driver."
@@ -2382,9 +2380,8 @@ msgid "Clients"
 msgstr "客户端"
 
 #: services/models.py:921
-#, fuzzy
 msgid "Maximum number of simultaneous clients."
-msgstr "客户端最大并发连接数。"
+msgstr "最大并发客户端数。"
 
 #: services/models.py:925
 msgid "Connections"
@@ -2661,9 +2658,8 @@ msgid "AD or PDC name."
 msgstr "域控制器或主域控制器名称。"
 
 #: services/models.py:1163
-#, fuzzy
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr "域名 （DNS/真实名称）"
+msgstr "域名（DNS/Realm-Name）"
 
 #: services/models.py:1164
 msgid "Domain Name, eg example.com"
@@ -4255,7 +4251,7 @@ msgstr "应用快速升级包"
 
 #: system/forms.py:458
 msgid "New config to be installed"
-msgstr ""
+msgstr "新的配置已安装"
 
 #: system/forms.py:582
 msgid ""
@@ -4695,7 +4691,7 @@ msgstr "Rsync 任务"
 
 #: system/models.py:550
 msgid "Rsync Tasks"
-msgstr ""
+msgstr "Rsync 任务"
 
 #: system/models.py:715
 #, fuzzy
@@ -4742,7 +4738,7 @@ msgstr "系统"
 
 #: system/nav.py:11 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr "报告"
+msgstr "报表"
 
 #: system/nav.py:18
 msgid "System Information"
@@ -4934,7 +4930,7 @@ msgstr "警告"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "严重"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:8
@@ -4987,7 +4983,7 @@ msgstr "是"
 
 #: templates/freeadmin/generic_model_edit.html:13
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "变更成功!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
@@ -5174,7 +5170,7 @@ msgstr ""
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "目的端"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5446,7 +5442,7 @@ msgstr "授权的网络"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "添加授权起始人"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5626,7 +5622,7 @@ msgstr[0] ""
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
-msgstr ""
+msgstr "编辑数据集"
 
 #: templates/storage/datasets.html:3
 #, python-format
@@ -5655,7 +5651,7 @@ msgstr "你确定需要删除吗?"
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
 msgid "Replacing disk"
-msgstr "正在替换磁盘"
+msgstr "替换磁盘中"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
@@ -5804,7 +5800,7 @@ msgstr "删除快照"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr "定期快照"
+msgstr "快照工作周期"
 
 #: templates/storage/tasks.html:13
 msgid "Periodic Snapshot Schedule"
@@ -5861,9 +5857,8 @@ msgid "Used"
 msgstr "已用"
 
 #: templates/storage/volumes.html:62
-#, fuzzy
 msgid "Size"
-msgstr "大小"
+msgstr "容量"
 
 #: templates/storage/volumes.html:63
 msgid "Status"
@@ -5986,7 +5981,7 @@ msgstr "应用快速升级包"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "重启中"
+msgstr "正在重启系统..."
 
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
@@ -6117,11 +6112,11 @@ msgstr "添加 Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr "通常"
+msgstr "通用"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "还原到出厂状态"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -6134,7 +6129,7 @@ msgstr "保存配置"
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr "上传配置文件"
+msgstr "上传配置"
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
@@ -6242,7 +6237,7 @@ msgstr ""
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "卷%(volume)的状态为%(status)"
 
 #: tools/alert.py:117
 msgid ""
@@ -6312,7 +6307,7 @@ msgstr ""
 "他IP地址相混淆。"
 
 msgid "Time in milliseconds"
-msgstr "时间为毫秒"
+msgstr "时间在毫秒级"
 
 msgid "Username of Domain Administrator Account"
 msgstr "域管理员帐户"
@@ -6321,7 +6316,7 @@ msgid "ISCSI"
 msgstr "ISCSI"
 
 msgid "Guest Account"
-msgstr "来宾账户"
+msgstr "访客帐号"
 
 msgid ""
 "Use this option to override the username ('ftp' by default) which will be "
@@ -6412,9 +6407,8 @@ msgstr "为低层appletalk访问启用DDP支持"
 msgid "Turn on/off TLS"
 msgstr "开/关 TLS"
 
-#, fuzzy
 msgid "The volume failed to export"
-msgstr "重启服务失败。"
+msgstr "卷无法提供服务"
 
 #, fuzzy
 msgid "Cron Scheduler"
@@ -6430,7 +6424,7 @@ msgid "Mount point"
 msgstr "挂载点"
 
 msgid "Dataset name"
-msgstr "数据集名称"
+msgstr "数据集名"
 
 msgid "Snapshot name"
 msgstr "快照名称"
@@ -6442,7 +6436,7 @@ msgid "No ZFS snapshot available"
 msgstr "目前尚无ZFS快照"
 
 msgid "Restore to Factory Defaults"
-msgstr "恢复出厂设置"
+msgstr "恢复为出厂设置"
 
 msgid "Config"
 msgstr "配置"
@@ -6484,4 +6478,4 @@ msgid "View All Interfaces"
 msgstr "查看所有接口"
 
 msgid "View All VLANs"
-msgstr "查看所有虚拟局域网"
+msgstr "查看所有 VLAN"
