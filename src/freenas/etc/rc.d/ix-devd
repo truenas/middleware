@@ -37,14 +37,39 @@ E*O*F
 SUBSYSTEM=\$1
 EVENT=\$2
 
+if [ \${SUBSYSTEM} != "carp0" ]; then
+	exit
+fi
+
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
+
+    touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
+    WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
+
     sleep 3
-    STATUS=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
-    echo \${STATUS} | logger
+    STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
+# Test if the heartbeat cable thinks we are master
+    STATUS1=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep MASTER | wc -l\`
+    STATUS2=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep BACKUP | wc -l\`
+
+    echo \${STATUS0}:\${STATUS1}:\${STATUS2} | logger
     if [ \$STATUS != "MASTER" ]; then
         exit
     fi
+
+    if [ \$STATUS1 -ne 2 -o \$STATUS2 -ne 0 ]; then
+	if [ ! -e /tmp/coldboot ]; then
+        	exit
+	else
+		rm -f /tmp/coldboot;
+	fi
+    fi
+
+    if [ \$WASCONNECTED -ne 1 ]; then
+	exit
+    fi
+
     ifconfig \${SUBSYSTEM} advskew 1
 #
 # Restart statd.  If we're head1, then copy head2's statd database over
@@ -100,6 +125,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Exported ${volumename}!" | logger
 fi
 E*O*F
+		touch /tmp/heartbeat_state /tmp/coldboot
 	else
 		/usr/bin/truncate -s 0 /etc/pf.conf
 	fi
