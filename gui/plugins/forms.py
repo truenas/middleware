@@ -37,7 +37,7 @@ from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Alias
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import MountPoint
@@ -92,12 +92,18 @@ class PBITemporaryLocationForm(Form):
         mp = PluginsJail.objects.order_by("-id")
         if mp and notifier().plugins_jail_configured():
             mp = mp[0]
-            self.fields['mountpoint'].choices = [(mp.plugins_path, mp.plugins_path)]
+            self.fields['mountpoint'].choices = [
+                (mp.plugins_path, mp.plugins_path),
+                ]
         else:
-            self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
+            self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) \
+                for x in MountPoint.objects.exclude(
+                    mp_volume__vol_fstype='iscsi')]
 
     def done(self, *args, **kwargs):
-        notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
+        notifier().change_upload_location(
+            self.cleaned_data["mountpoint"].__str__()
+            )
 
 
 class PBIUploadForm(Form):
@@ -111,7 +117,9 @@ class PBIUploadForm(Form):
                 for c in cleaned_data['pbifile'].chunks():
                     sp.write(c)
         else:
-            self._errors["pbifile"] = self.error_class([_("This field is required.")])
+            self._errors["pbifile"] = self.error_class([
+                _("This field is required."),
+                ])
         return cleaned_data
 
     def done(self, *args, **kwargs):
@@ -144,9 +152,15 @@ class JailInfoForm(ModelForm):
             samefs = True
 
         if (jp in pp and samefs):
-            self._errors["jail_path"] = self.error_class([_("The plugins jail path cannot be a subset of the plugins archive path.")])
+            self._errors["jail_path"] = self.error_class([
+                _("The plugins jail path cannot be a subset of the plugins "
+                    "archive path."),
+                ])
         if (pp in jp and samefs):
-            self._errors["plugins_path"] = self.error_class([_("The plugins archive path cannot be a subset of the plugins jail path.")])
+            self._errors["plugins_path"] = self.error_class([
+                _("The plugins archive path cannot be a subset of the plugins "
+                    "jail path."),
+                ])
 
         return cleaned_data
 
@@ -165,15 +179,16 @@ class JailImportForm(Form):
             )
 
     def __init__(self, *args, **kwargs):
-        from freenasUI.network import models
-
         super(JailImportForm, self).__init__(*args, **kwargs)
 
         nics = choices.NICChoices(with_alias=True, exclude_configured=False)
-        ifaces = models.Interfaces.objects.filter(int_interface__in=[n[0] for n in nics])
-        aliases = models.Alias.objects.filter(alias_interface__in=[i.id for i in ifaces])
+        ifaces = Interfaces.objects.filter(
+            int_interface__in=[n[0] for n in nics])
+        aliases = Alias.objects.filter(
+            alias_interface__in=[i.id for i in ifaces])
 
-        self.fields['jail_ip'].choices = [(a.alias_v4address, a.alias_v4address) for a in aliases]
+        self.fields['jail_ip'].choices = [
+            (a.alias_v4address, a.alias_v4address) for a in aliases]
 
 
 class JailPBIUploadForm(Form):
@@ -191,7 +206,9 @@ class JailPBIUploadForm(Form):
                 for c in cleaned_data['pbifile'].chunks():
                     sp.write(c)
         else:
-            self._errors["pbifile"] = self.error_class([_("This field is required.")])
+            self._errors["pbifile"] = self.error_class([
+                _("This field is required."),
+                ])
         return cleaned_data
 
     def done(self, *args, **kwargs):
@@ -207,7 +224,8 @@ class JailPBIUploadForm(Form):
         pj.plugins_path = jailinfo.cleaned_data.get('plugins_path')
 
         # Install the jail PBI
-        if notifier().install_jail_pbi(pj.jail_path, pj.jail_name, pj.plugins_path):
+        if notifier().install_jail_pbi(pj.jail_path,
+                pj.jail_name, pj.plugins_path):
             pj.save()
 
 
@@ -235,9 +253,15 @@ class NullMountPointForm(ModelForm):
         src = os.path.abspath(src.strip().replace("..", ""))
         return src
 
-    def clean_detination(self):
+    def clean_destination(self):
         dest = self.cleaned_data.get("destination")
         dest = os.path.abspath(dest.strip().replace("..", ""))
+        jail = PluginsJail.objects.order_by('-id')[0]
+        full = "%s/%s%s" % (jail.jail_path, jail.jail_name, dest)
+        if len(full) > 88:
+            raise forms.ValidationError(
+                _("The full path cannot exceed 88 characters")
+                )
         return dest
 
     def __init__(self, *args, **kwargs):
@@ -258,8 +282,12 @@ class NullMountPointForm(ModelForm):
             return obj
         if mounted and not obj.mount():
             #FIXME better error handling, show the user why
-            raise MiddlewareError(_("The path could not be mounted %s") % (obj.source, ))
+            raise MiddlewareError(_("The path could not be mounted %s") % (
+                obj.source,
+                ))
         if not mounted and not obj.umount():
             #FIXME better error handling, show the user why
-            raise MiddlewareError(_("The path could not be umounted %s") % (obj.source, ))
+            raise MiddlewareError(_("The path could not be umounted %s") % (
+                obj.source,
+                ))
         return obj
