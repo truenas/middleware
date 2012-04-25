@@ -74,14 +74,14 @@ from django.db.models import Q
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
+from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
 from freenasUI.common.pbi import (pbi_add, pbi_delete, pbi_info,
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
     PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
     PBI_ADD_FLAGS_FORCE,
     PBI_INFO_FLAGS_VERBOSE)
-from freenasUI.common.jail import Jls, Jexec
-from freenasUI.common.system import get_mounted_filesystems, umount
+from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 
@@ -3268,10 +3268,8 @@ class notifier:
         Raises:
              AssertionError: the root device couldn't be determined.
         """
-        # XXX: circular dependency
-        import common.system
 
-        sw_name = common.system.get_sw_name()
+        sw_name = get_sw_name()
         doc = self.__geom_confxml()
 
         for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
