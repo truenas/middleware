@@ -84,6 +84,7 @@ from freenasUI.common.pbi import (pbi_add, pbi_delete, pbi_info,
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.multipath import Multipath
 
 log = logging.getLogger('middleware.notifier')
 
@@ -3130,7 +3131,6 @@ class notifier:
         Returns:
             A list of Multipath objects
         """
-        from middleware.multipath import Multipath
         doc = self.__geom_confxml()
         return [Multipath(doc=doc, xmlnode=geom) \
                 for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
