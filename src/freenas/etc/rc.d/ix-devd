@@ -126,6 +126,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 fi
 E*O*F
 		touch /tmp/heartbeat_state /tmp/coldboot
+		chown nobody /tmp/heartbeat_state
 	else
 		/usr/bin/truncate -s 0 /etc/pf.conf
 	fi
