@@ -228,6 +228,9 @@ class GlobalConfigurationForm(ModelForm):
 class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label=_("Parent Interface"))
 
+    class Meta:
+        model = models.VLAN
+
     def __init__(self, *args, **kwargs):
         super(VLANForm, self).__init__(*args, **kwargs)
         self.fields['vlan_pint'].choices = list(
@@ -236,19 +239,18 @@ class VLANForm(ModelForm):
 
     def clean_vlan_vint(self):
         name = self.cleaned_data['vlan_vint']
-        if not re.match(r'vlan\d+', name):
+        reg = re.search(r'^vlan(?P<num>\d+)$', name)
+        if not reg:
             raise forms.ValidationError(
-                _("The name must be vlanXX where XX is a integer"))
-        return name
+                _("The name must be vlanXX where XX is an integer")
+                )
+        return "vlan%d" % (int(reg.group("num")), )
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
         if  tag > 4095:
             raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
         return tag
-
-    class Meta:
-        model = models.VLAN
 
     def save(self):
         vlan_pint = self.cleaned_data['vlan_pint']
