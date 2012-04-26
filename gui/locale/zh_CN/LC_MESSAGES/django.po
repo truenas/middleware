@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-24 10:02+0200\n"
+"PO-Revision-Date: 2012-04-26 03:07+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -2226,17 +2226,16 @@ msgid "Plugins jail path"
 msgstr "插件的内部路径"
 
 #: services/models.py:769
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "该范围的路径"
+msgstr "插件的 jail 路径"
 
 #: services/models.py:774 templates/services/plugins_info.html:9
 msgid "Jail name"
-msgstr "域名"
+msgstr "Jail 名称"
 
 #: services/models.py:775
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "插件 Jail 名称"
 
 #: services/models.py:781
 msgid "Jail IP address"
@@ -2392,7 +2391,6 @@ msgid "Maximum number of connections per IP address (0 = unlimited)."
 msgstr "每个IP地址最大连接数 (0代表不限)"
 
 #: services/models.py:931
-#, fuzzy
 msgid "Login Attempts"
 msgstr "登录尝试"
 
@@ -2431,7 +2429,7 @@ msgstr "允许本地用户登录"
 
 #: services/models.py:952
 msgid "Banner"
-msgstr ""
+msgstr "看板"
 
 #: services/models.py:954
 msgid "Greeting banner displayed by FTP when a connection first comes in."
@@ -5129,7 +5127,7 @@ msgstr "添加网络接口"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
-msgstr ""
+msgstr "启用"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
@@ -5161,7 +5159,7 @@ msgstr "启动选项"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
 msgid "Action"
-msgstr ""
+msgstr "启用"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -5911,7 +5909,7 @@ msgstr "磁盘组类型"
 
 #: templates/storage/wizard.html:105
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS 扩展"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-04-16 16:25+0200\n"
-"Last-Translator: Cesar <cesar@bsd.com.br>\n"
+"PO-Revision-Date: 2012-04-25 21:46+0200\n"
+"Last-Translator: thiagocantero <thiagocantero@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -4185,6 +4185,9 @@ msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Este deve ser o nome do sistema de arquivo ZFS no servidor remoto. ex: "
+"poolname/datasetname e não o ponto de montagem ou caminho do sistema de "
+"arquivo"
 
 #: storage/models.py:641
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4303,7 +4306,7 @@ msgstr "Visualizar Discos"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Visualizar Caminhos"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4438,7 +4441,7 @@ msgstr "Volume exportado com sucesso"
 
 #: storage/views.py:653
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "O processo Scrub iniciou"
 
 #: system/forms.py:161
 msgid "Language (Require UI reload)"
@@ -4464,7 +4467,7 @@ msgstr ""
 
 #: system/forms.py:222
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
-msgstr ""
+msgstr "O Servidor não foi encontrado. Selecione \"Forçar\" para continuar"
 
 #: system/forms.py:391
 msgid "Place to temporarily place firmware file"
@@ -4509,10 +4512,12 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Para utilizar o rsync sobre SSH você precisará de um usuário <br/> com uma "
+"chave pública (DSA/ECDSA/RSA), encontrado no diretório home."
 
 #: system/forms.py:655 system/forms.py:672
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Aspas não são permitidas"
 
 #: system/models.py:47
 msgid "Protocol"
@@ -4537,7 +4542,7 @@ msgstr "Timezone"
 
 #: system/models.py:77
 msgid "Syslog server"
-msgstr ""
+msgstr "Servidor Syslog"
 
 #: system/models.py:81 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -4580,6 +4585,8 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Define o servidor como preferido. Todos os outros serão iguais, esta máquina "
+"será escolhida para a sincronização entre um ambiente de máquinas clientes."
 
 #: system/models.py:107 templates/system/ntpserver.html:9
 msgid "Min. Poll"
@@ -4830,7 +4837,7 @@ msgstr "Nome Hostname Remoto"
 
 #: system/models.py:445
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Nome do módulo definido no rsync daemon remoto"
 
 #: system/models.py:449
 #, fuzzy
@@ -4850,6 +4857,8 @@ msgstr "Diretório"
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Puxe - Do local para computador Remoto. Puxe - Do computador remoto para o "
+"computador local."
 
 #: system/models.py:500
 msgid "Recurse into directories"
@@ -5192,11 +5201,11 @@ msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "ATENÇÃO"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "CRÍTICO"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:8
@@ -5253,7 +5262,7 @@ msgstr "As alterações foram atualizadas com sucesso!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "Salvar"
 
 #: templates/freeadmin/index.html:35
 msgid "Running Processes"
@@ -5486,11 +5495,11 @@ msgstr "Adicionar Interface VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Instalado..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Instalar Plugin"
 
 #: templates/plugins/index.html:29
 #, fuzzy
@@ -5513,7 +5522,7 @@ msgstr "Excluir Replicação"
 
 #: templates/plugins/index.html:50
 msgid "No plugins installed"
-msgstr ""
+msgstr "Não há plugins instalados"
 
 # Não sei se (step) é uma variável ou tem que traduzir!
 #: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
@@ -5555,7 +5564,7 @@ msgstr "Bem-Vindo, %(username)s. Obrigado por acessar."
 #: templates/registration/login.html:48
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Bem Vindo ao %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:49
 msgid "Please log in."
@@ -5620,7 +5629,7 @@ msgstr "Configurações do AFP"
 
 #: templates/services/index.html:108
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Instalar Jail PBI"
 
 #: templates/services/index.html:120
 msgid "Rsync Settings"
@@ -5729,7 +5738,7 @@ msgstr "Aguardar conexão"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Não há IP definido para este Portal"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5752,7 +5761,7 @@ msgstr "Adicionar Target"
 
 #: templates/services/plugins_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "Todos os arquivos do plugin jail serão apagados permanentemente."
 
 #: templates/services/plugins_edit.html:8
 #: templates/services/plugins_info.html:33
@@ -5762,7 +5771,7 @@ msgstr "Excluir arquivo subjacente"
 
 #: templates/services/plugins_info.html:5
 msgid "Jail path"
-msgstr ""
+msgstr "Caminho do Jail"
 
 #: templates/services/plugins_info.html:13
 msgid "Jail IP"
@@ -5770,7 +5779,7 @@ msgstr ""
 
 #: templates/services/plugins_info.html:17
 msgid "Plugins path"
-msgstr ""
+msgstr "Caminho dos plugins"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5888,8 +5897,10 @@ msgid_plural ""
 "\n"
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
-msgstr[0] ""
+msgstr[0] "Isto irá apagar todos os arquivos com este dataset.\n"
 msgstr[1] ""
+"Isto irá apagar todos com com este dataset e datasets filhos. \n"
+" "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -5974,7 +5985,7 @@ msgstr "Adicionar Replicação"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Visualizar Chave Pública"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -6022,6 +6033,8 @@ msgstr "Adicionar Volume ZFS"
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
+"Scrub está em execução!Você tem certeza que quer parar o processo de sua "
+"execução?"
 
 #: templates/storage/scrub_confirm.html:8
 #, fuzzy
@@ -6031,6 +6044,7 @@ msgstr "Tem certeza que deseja desconectar?"
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
 msgstr ""
+"Isto poderá afetar o desempenho do sistema enquanto estiver em andamento"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 #, fuzzy
@@ -6291,6 +6305,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"DICA: Emails de testes são enviados para o usuário root. Para configurar "
+"para os demais Usuários ->root ->Mudar E-mail"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6478,7 +6494,7 @@ msgstr "Carga Média"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Conectado através "
 
 # Não traduz a palavra target no iscsi
 #: templates/system/tunable.html:32
@@ -6505,12 +6521,12 @@ msgstr "Update"
 #: tools/alert.py:100
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "O volume %s está em condições de uso"
 
 #: tools/alert.py:103
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "O volume % está danificado"
 
 #: tools/alert.py:107
 #, python-format
@@ -6701,7 +6717,7 @@ msgid "successfully edited"
 msgstr "editado com sucesso"
 
 msgid "There are no active volumes."
-msgstr "Não há volumes ativo."
+msgstr "Não há volumes ativos."
 
 msgid "%s successfully added."
 msgstr "%s adicionado com sucesso."
