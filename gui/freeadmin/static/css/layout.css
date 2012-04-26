@@ -124,6 +124,9 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
 .right {
     float: right;
 }
+.selector {
+    width: 400px;
+}
 .select-available {
     width:45%;
     float:left;
