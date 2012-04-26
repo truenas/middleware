@@ -54,15 +54,42 @@ if [ \${EVENT} = "LINK_UP" ]; then
     STATUS2=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep BACKUP | wc -l\`
 
     echo \${STATUS0}:\${STATUS1}:\${STATUS2} | logger
-    if [ \$STATUS != "MASTER" ]; then
+    if [ \$STATUS0 != "MASTER" ]; then
+	echo "Promoted then demoted, quitting." | logger
+	# Just in case.  Demote ourselves.
+	ifconfig \${SUBSYSTEM} advskew 100
         exit
     fi
 
     if [ \$STATUS1 -ne 2 -o \$STATUS2 -ne 0 ]; then
 	if [ ! -e /tmp/coldboot ]; then
-        	exit
+		echo "No coldboot seal!" | logger
+		# It's Okay if heartbeat say we are the master.
+		if [ \$STATUS1 -eq 1 -a \$STATUS2 -eq 1 ]; then
+			STATUS_CARP1=\`ifconfig carp1 | grep "carp:" | awk '{print \$2}'\`
+			if [ \$STATUS_CARP1 = "MASTER" ]; then
+				# Consider ourselves the master in this case.
+				# This assignment is not really needed, but
+				# we set it here in case the daemon didn't do
+				# it.
+				WASCONNECTED=1
+				echo "Elected master based on carp1/2 states" | logger
+			else
+				echo "Defeated as backup on carp1/2 states" | logger
+				# Just in case.  Demote ourselves.
+				ifconfig \${SUBSYSTEM} advskew 200
+				exit
+			fi
+		else
+			echo "WARNING! May be splitting brain!" | logger
+			# Just in case.  Demote ourselves.
+			ifconfig \${SUBSYSTEM} advskew 100
+			exit
+		fi
 	else
+		echo "Found coldboot seal, removing before continue" | logger
 		rm -f /tmp/coldboot;
+		WASCONNECTED=1
 	fi
     fi
 
@@ -71,21 +98,6 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     ifconfig \${SUBSYSTEM} advskew 1
-#
-# Restart statd.  If we're head1, then copy head2's statd database over
-# and retstart statd.  We do this for the fail-back case so that we get
-# the machines that have locks that need to be notified of the 'reset' of
-# the nfs server.  If were head2, we copy this file all the time in background
-# and are becoming master because head1 just failed, so we can't do the
-# copy now for obvious reasons...
-#
-#    if [ `hostname` = head1.ixsystems.com ] && 
-#	ping -t 1 -qo head2.ixsystems.com ;
-#    then
-#	scp head2:/var/db/statd.status /var/db/statd.status.copy
-#    fi
-#    [ -r /var/db/statd.status.copy ] && \
-#	cp /var/db/statd.status.copy /var/db/statd.status
     /sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
     /sbin/zpool set cachefile=/data/zfs/zpool.cache ${volumename}
 
@@ -110,8 +122,9 @@ if [ \${EVENT} = "LINK_UP" ]; then
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
+    rm -f /tmp/coldboot;
     echo "Entering DOWN!" | logger
-    ifconfig \${SUBSYSTEM} advskew 20
+    ifconfig \${SUBSYSTEM} advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
     echo "block drop in quick proto tcp from any to any port 860" >> /etc/pf.conf.block
     echo "block drop in quick proto udp from any to any port 860" >> /etc/pf.conf.block
