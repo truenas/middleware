@@ -27,15 +27,17 @@
 import os
 
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
 from django.utils.safestring import mark_safe
 from django.http import QueryDict
 
 from dojango import forms
-from freenasUI.common.forms import ModelForm, Form
 from freenasUI.account import models
+from freenasUI.common.forms import ModelForm, Form
+from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
+
 
 class bsdUserGroupMixin:
     def _populate_shell_choices(self):
@@ -43,7 +45,7 @@ class bsdUserGroupMixin:
             shells = map(str.rstrip,
                          filter(lambda x: x.startswith('/'), fd.readlines()))
         shell_dict = {}
-        for shell in shells + [ '/sbin/nologin' ]:
+        for shell in shells + ['/sbin/nologin']:
             shell_dict[shell] = os.path.basename(shell)
         return shell_dict.items()
 
@@ -51,14 +53,20 @@ class bsdUserGroupMixin:
         if bsdusr_username.startswith('-'):
             raise forms.ValidationError(_("Your name cannot start with \"-\""))
         if bsdusr_username.find('$') not in (-1, len(bsdusr_username) - 1):
-            raise forms.ValidationError(_("The character $ is only allowed as the final character"))
+            raise forms.ValidationError(
+                _("The character $ is only allowed as the final character")
+                )
         INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
         invalids = []
         for char in bsdusr_username:
             if char in INVALID_CHARS and char not in invalids:
                 invalids.append(char)
         if invalids:
-            raise forms.ValidationError(_("Your name contains invalid characters (%s).") % ", ".join(invalids))
+            raise forms.ValidationError(
+                _("Your name contains invalid characters (%s).") % (
+                    ", ".join(invalids),
+                    )
+                )
 
     def pw_checkfullname(self, name):
         INVALID_CHARS = ':'
@@ -67,7 +75,12 @@ class bsdUserGroupMixin:
             if char in INVALID_CHARS and char not in invalids:
                 invalids.append(char)
         if invalids:
-            raise forms.ValidationError(_("Your full name contains invalid characters (%s).") % ", ".join(invalids))
+            raise forms.ValidationError(
+                _("Your full name contains invalid characters (%s).") % (
+                    ", ".join(invalids),
+                    )
+                )
+
 
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
@@ -80,7 +93,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
 
     def render(self, name, value, attrs={}, choices=()):
         self.url = reverse(*self.url)
-        store = 'state'+attrs['id']
+        store = 'state' + attrs['id']
         attrs.update({
             'store': store,
             'searchAttr': 'name',
@@ -88,7 +101,8 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
             'intermediateChanges': 'true',
             'displayedValue': value or '',
             })
-        ret = super(FilteredSelectJSON, self).render(name, value, attrs, choices)
+        ret = super(FilteredSelectJSON, self).render(name,
+            value, attrs, choices)
         ret = ret.split("</select>")
         ret = "".join(ret[:-1]) + """ <script type="dojo/method" event="onChange" args="e">
         var sel = dijit.byId("%s");
@@ -97,14 +111,14 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         store.url = store.url.split('?')[0] + '?q='+t;
         store.close();
         store.fetch();
-        </script>""" % (attrs['id'] ) + "</select>" + ret[-1]
+        </script>""" % (attrs['id']) + "</select>" + ret[-1]
         ret = """<div dojoType="dojo.data.ItemFileReadStore" jsId="%s" clearOnClose="true" url="%s"></div>""" % (store, self.url) + ret
         return ret
+
 
 class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 
     def __init__(self, attrs=None, choices=()):
-
         super(FilteredSelectMultiple, self).__init__(attrs, choices)
 
     def render(self, name, value, attrs=None, choices=()):
@@ -117,24 +131,28 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
                 selected.append(choice)
                 self.choices.remove(choice)
 
-        output = ['<div class="selector" style>', '<div class="select-available">%s<br/>' % _('Available')]
-        _from = super(FilteredSelectMultiple, self).render('select_from', value, {'id': 'select_from'}, ())
+        output = [
+            '<div class="selector">',
+            '<div class="select-available">%s<br/>' % (__('Available'), ),
+            ]
+        _from = super(FilteredSelectMultiple, self).render('select_from',
+            value, {'id': 'select_from'}, ())
         _from = _from.split('</select>')
         output.append(u''.join(_from[:-1]))
         output.append("""
         <script type="dojo/method">
-                var turn = this;
-                     while(1) {
-                        turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
-                         if(turn.isInstanceOf(dijit.form.Form)) break;
-                   }
+            var turn = this;
+            while(1) {
+                turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+                if(turn.isInstanceOf(dijit.form.Form)) break;
+            }
             old = turn.onSubmit;
             turn.onSubmit = function(e) {
                 dojo.query("select", turn.domNode).forEach(function(s) {
-                                for (var i = 0; i < s.length; i++) {
-                                        s.options[i].selected = 'selected';
-                                   }
-                       });
+                    for (var i = 0; i < s.length; i++) {
+                        s.options[i].selected = 'selected';
+                    }
+                });
                 old.call(turn, e);
                 };
         </script>
@@ -147,7 +165,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
         sel.domNode.appendChild(c);
         s.parentNode.removeChild(s);
         </script>
-        """ % attrs['id'])
+        """ % (attrs['id'], ))
         output.append('</select>')
         output.append('</div>')
 
@@ -156,7 +174,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick=" var s=dijit.byId('%s'); var s2=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
+            <a href="#" onClick="var s=dijit.byId('%s'); var s2=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
                 &lt;&lt;
             </a>
             <br />
@@ -168,10 +186,10 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             </div>
             <div class="select-selected">
             %s<br/>
-        ''' % (attrs['id'], attrs['id'], _('Selected')))
+        ''' % (attrs['id'], attrs['id'], __('Selected')))
 
-        #print output
-        _from = forms.widgets.SelectMultiple().render(name, value, attrs, selected)
+        _from = forms.widgets.SelectMultiple().render(name,
+            value, attrs, selected)
         _from = _from.split('</select>')
         output.append(u''.join(_from[:-1]))
         output.append("""
@@ -184,21 +202,31 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
         sel.domNode.appendChild(c);
         s.parentNode.removeChild(s);
         </script>
-        """ % 'select_from')
+        """ % ('select_from', ))
         output.append('</select>')
         output.append('</div></div>')
         return mark_safe(u''.join(output))
 
-class FilteredSelectField(forms.fields.MultipleChoiceField):
 
+class FilteredSelectField(forms.fields.MultipleChoiceField):
     widget = FilteredSelectMultiple
+
     def __init__(self, *args, **kwargs):
         super(FilteredSelectField, self).__init__(*args, **kwargs)
 
+
 class UserChangeForm(ModelForm):
-    username = forms.RegexField(label=_("Username"), max_length=16, regex=r'^[\w.-_]+$',
-        help_text = _("Required. 16 characters or fewer. Letters, digits and ./-/_ only."),
-        error_messages = {'invalid': _("This value may contain only letters, numbers and ./-/_ characters.")})
+    username = forms.RegexField(
+        label=_("Username"),
+        max_length=16,
+        regex=r'^[\w.-_]+$',
+        help_text=_("Required. 16 characters or fewer. Letters, digits and "
+            "./-/_ only."),
+        error_messages={
+            'invalid': _("This value may contain only letters, numbers and "
+                "./-/_ characters."),
+            },
+        )
 
     class Meta:
         fields = ('username', 'first_name', 'last_name',)
@@ -214,12 +242,12 @@ class UserChangeForm(ModelForm):
         obj = super(UserChangeForm, self).save()
         return obj
 
+
 class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
-    #TODO: move it away
-    from freenasUI.storage.widgets import UnixPermissionField
     """
     # Yanked from django/contrib/auth/
-    A form that creates a user, with no privileges, from the given username and password.
+    A form that creates a user, with no privileges,
+    from the given username and password.
     """
     bsdusr_username = forms.CharField(
         label=_("Username"),
@@ -288,7 +316,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             )
 
     def __init__(self, *args, **kwargs):
-        #FIXME: Workaround for DOJO not showing select options with blank values
+        #FIXME: Workaround for DOJO not showing select with blank values
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
             if new.get('bsdusr_group2', None) == '-----':
@@ -315,7 +343,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         if self.instance.id is not None:
             users = users.exclude(id=self.instance.id)
         if users.exists():
-            raise forms.ValidationError(_("A user with that uid already exists."))
+            raise forms.ValidationError(
+                _("A user with that uid already exists.")
+                )
         return bsdusr_uid
 
     def clean_bsdusr_username(self):
@@ -326,7 +356,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
             except models.bsdUsers.DoesNotExist:
                 return bsdusr_username
-            raise forms.ValidationError(_("A user with that username already exists."))
+            raise forms.ValidationError(
+                _("A user with that username already exists.")
+                )
         else:
             return self.instance.bsdusr_username
 
@@ -341,15 +373,18 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
         if bsdusr_password1 != bsdusr_password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+                )
         return bsdusr_password2
 
     def clean_bsdusr_home(self):
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
             return self.cleaned_data['bsdusr_home']
-        raise forms.ValidationError(_('Home directory has to start with /mnt/ '
-                                      'or be /nonexistent'))
+        raise forms.ValidationError(
+            _('Home directory has to start with /mnt/ or be /nonexistent')
+            )
 
     def clean_bsdusr_sshpubkey(self):
         return self.cleaned_data.get('bsdusr_sshpubkey', '')
@@ -410,31 +445,33 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             else:
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = _notifier.user_create(
-                username = str(self.cleaned_data['bsdusr_username']),
-                fullname = self.cleaned_data['bsdusr_full_name'].encode('utf8', 'ignore').replace(':', ''),
-                password = self.cleaned_data['bsdusr_password2'].encode('utf8', 'ignore'),
-                uid = self.cleaned_data['bsdusr_uid'],
-                gid = gid,
-                shell = str(self.cleaned_data['bsdusr_shell']),
-                homedir = str(self.cleaned_data['bsdusr_home']),
-                homedir_mode = int(self.cleaned_data['bsdusr_mode'], 8),
-                password_disabled = self.cleaned_data['bsdusr_password_disabled'],
-                locked = self.cleaned_data['bsdusr_locked']
+                username=str(self.cleaned_data['bsdusr_username']),
+                fullname=self.cleaned_data['bsdusr_full_name'].encode('utf8', 'ignore').replace(':', ''),
+                password=self.cleaned_data['bsdusr_password2'].encode('utf8', 'ignore'),
+                uid=self.cleaned_data['bsdusr_uid'],
+                gid=gid,
+                shell=str(self.cleaned_data['bsdusr_shell']),
+                homedir=str(self.cleaned_data['bsdusr_home']),
+                homedir_mode=int(self.cleaned_data['bsdusr_mode'], 8),
+                password_disabled=self.cleaned_data['bsdusr_password_disabled'],
+                locked=self.cleaned_data['bsdusr_locked']
             )
             bsduser = super(bsdUserCreationForm, self).save(commit=False)
             try:
                 grp = models.bsdGroups.objects.get(bsdgrp_gid=gid)
             except models.bsdGroups.DoesNotExist:
-                grp = models.bsdGroups(bsdgrp_gid=gid,
-                                       bsdgrp_group=self.cleaned_data['bsdusr_username'],
-                                       bsdgrp_builtin=False)
+                grp = models.bsdGroups(
+                    bsdgrp_gid=gid,
+                    bsdgrp_group=self.cleaned_data['bsdusr_username'],
+                    bsdgrp_builtin=False,
+                    )
                 grp.save()
-            bsduser.bsdusr_group=grp
-            bsduser.bsdusr_uid=uid
-            bsduser.bsdusr_shell=self.cleaned_data['bsdusr_shell']
-            bsduser.bsdusr_unixhash=unixhash
-            bsduser.bsdusr_smbhash=smbhash
-            bsduser.bsdusr_builtin=False
+            bsduser.bsdusr_group = grp
+            bsduser.bsdusr_uid = uid
+            bsduser.bsdusr_shell = self.cleaned_data['bsdusr_shell']
+            bsduser.bsdusr_unixhash = unixhash
+            bsduser.bsdusr_smbhash = smbhash
+            bsduser.bsdusr_builtin = False
             bsduser.save()
 
             models.bsdGroupMembership.objects.filter(
@@ -449,14 +486,24 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             _notifier.reload("user")
             bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
             if bsdusr_sshpubkey:
-                _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
+                _notifier.save_pubkey(bsduser.bsdusr_home,
+                    bsdusr_sshpubkey,
+                    bsduser.bsdusr_username,
+                    bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
+
 
 class bsdUserPasswordForm(ModelForm):
     bsdusr_username2 = forms.CharField(label=_("Username"), required=False)
-    bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
-        help_text = _("Enter the same password as above, for verification."))
+    bsdusr_password1 = forms.CharField(
+        label=_("Password"),
+        widget=forms.PasswordInput,
+        )
+    bsdusr_password2 = forms.CharField(
+        label=_("Password confirmation"),
+        widget=forms.PasswordInput,
+        help_text=_("Enter the same password as above, for verification."),
+        )
 
     class Meta:
         model = models.bsdUsers
@@ -478,30 +525,42 @@ class bsdUserPasswordForm(ModelForm):
         bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
         if bsdusr_password1 != bsdusr_password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+                )
         return bsdusr_password2
 
     def save(self, commit=True):
         if commit:
             _notifier = notifier()
             unixhash, smbhash = _notifier.user_changepassword(
-                username = str(self.instance.bsdusr_username),
-                password = str(self.cleaned_data['bsdusr_password2']),
+                username=str(self.instance.bsdusr_username),
+                password=str(self.cleaned_data['bsdusr_password2']),
             )
-            self.instance.bsdusr_unixhash=unixhash
-            self.instance.bsdusr_smbhash=smbhash
+            self.instance.bsdusr_unixhash = unixhash
+            self.instance.bsdusr_smbhash = smbhash
             self.instance.save()
             _notifier.reload("user")
         return self.instance
 
+
 class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
-    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
+    bsdusr_password_disabled = forms.BooleanField(
+        label=_("Disable password logins"),
+        required=False,
+        )
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
-    bsdusr_shell = forms.ChoiceField(label=_("Shell"),
-                                     initial=u'/bin/csh',
-                                     choices=()
-                                     )
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_shell = forms.ChoiceField(
+        label=_("Shell"),
+        initial=u'/bin/csh',
+        choices=(),
+        )
+    bsdusr_sshpubkey = forms.CharField(
+        label=_("SSH Public Key"),
+        widget=forms.Textarea,
+        max_length=8192,
+        required=False,
+        )
 
     class Meta:
         model = models.bsdUsers
@@ -514,24 +573,28 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_username'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdusr_username'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled '
+                'dijitValidationTextBoxDisabled')
         if self.instance.bsdusr_builtin:
             self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_uid'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdusr_uid'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
             self.fields['bsdusr_group'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_group'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitSelectDisabled'
+            self.fields['bsdusr_group'].widget.attrs['class'] = (
+                'dijitDisabled dijitSelectDisabled')
             self.fields['bsdusr_home'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_home'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdusr_home'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
         if self.instance.bsdusr_unixhash == '*':
             self.fields['bsdusr_password_disabled'].initial = True
         if self.instance.bsdusr_unixhash.startswith('*LOCKED*'):
             self.fields['bsdusr_locked'].initial = True
         try:
-            self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (self.instance.bsdusr_home)).read()
+            self.fields['bsdusr_sshpubkey'].initial = open(
+                '%s/.ssh/authorized_keys' % (
+                    self.instance.bsdusr_home,
+                    )).read()
         except:
             self.fields['bsdusr_sshpubkey'].initial = ''
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
@@ -579,7 +642,9 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         if (bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
             not (bsdusr_home.startswith(u'/mnt/') or bsdusr_home == '/root')):
             del cleaned_data['bsdusr_sshpubkey']
-            self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
+            self._errors['bsdusr_sshpubkey'] = self.error_class([
+                _("Home directory is not writable, leave this blank"),
+                ])
         return cleaned_data
 
     def save(self):
@@ -604,30 +669,39 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == '/root'):
             if bsdusr_sshpubkey:
-                _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
+                _notifier.save_pubkey(bsduser.bsdusr_home,
+                    bsdusr_sshpubkey,
+                    bsduser.bsdusr_username,
+                    bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
+
 class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
+
     class Meta:
         model = models.bsdUsers
         fields = ('bsdusr_email',)
+
     def save(self):
         bsduser = super(bsdUserEmailForm, self).save(commit=True)
         notifier().reload("user")
         return bsduser
 
+
 class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
+
     class Meta:
         model = models.bsdGroups
         widgets = {
                 'bsdgrp_gid': forms.widgets.ValidationTextInput(),
                 }
+
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
-            self.fields['bsdgrp_gid'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            self.fields['bsdgrp_gid'].widget.attrs['class'] = ('dijitDisabled'
+                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
         else:
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
             self.fields['allow'] = forms.BooleanField(
@@ -644,7 +718,9 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
             except models.bsdGroups.DoesNotExist:
                 return bsdgrp_group
-            raise forms.ValidationError(_("A group with that name already exists."))
+            raise forms.ValidationError(
+                _("A group with that name already exists.")
+                )
         else:
             return self.instance.bsdgrp_group
 
@@ -662,7 +738,9 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
             if self.instance and self.instance.id:
                 grps = grps.exclude(bsdgrp_gid=self.instance.bsdgrp_gid)
             if grps.exists():
-                self._errors['bsdgrp_gid'] = self.error_class([_("A group with this gid already exists")])
+                self._errors['bsdgrp_gid'] = self.error_class([
+                    _("A group with this gid already exists"),
+                    ])
                 cdata.pop('bsdgrp_gid', None)
         return cdata
 
@@ -671,54 +749,96 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         notifier().reload("user")
         return ins
 
+
 class bsdGroupToUserForm(Form):
-    bsdgroup_to_user = FilteredSelectField(label = _('Member users'), choices=(), required=False)
+    bsdgroup_to_user = FilteredSelectField(
+        label=_('Member users'),
+        choices=(),
+        required=False,
+        )
+
     def __init__(self, groupid, *args, **kwargs):
         super(bsdGroupToUserForm, self).__init__(*args, **kwargs)
         self.groupid = groupid
         group = models.bsdGroups.objects.get(id=self.groupid)
-        self.fields['bsdgroup_to_user'].choices = [(x.id, x.bsdusr_username) for x in models.bsdUsers.objects.all()]
-        self.fields['bsdgroup_to_user'].initial = [(x.bsdgrpmember_user.id) for x in models.bsdGroupMembership.objects.filter(bsdgrpmember_group=group)]
+        self.fields['bsdgroup_to_user'].choices = [(x.id, x.bsdusr_username) \
+            for x in models.bsdUsers.objects.all()]
+        self.fields['bsdgroup_to_user'].initial = [(x.bsdgrpmember_user.id) \
+            for x in models.bsdGroupMembership.objects.filter(
+                bsdgrpmember_group=group
+                )]
+
     def save(self):
         group = models.bsdGroups.objects.get(id=self.groupid)
-        models.bsdGroupMembership.objects.filter(bsdgrpmember_group=group).delete()
+        models.bsdGroupMembership.objects.filter(
+            bsdgrpmember_group=group
+            ).delete()
         userid_list = self.cleaned_data['bsdgroup_to_user']
         for userid in userid_list:
             user = models.bsdUsers.objects.get(id=userid)
-            m = models.bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
+            m = models.bsdGroupMembership(bsdgrpmember_group=group,
+                bsdgrpmember_user=user)
             m.save()
         notifier().reload("user")
 
+
 class bsdUserToGroupForm(Form):
-    bsduser_to_group = FilteredSelectField(label = _('Auxiliary groups'), choices=(), required=False)
+    bsduser_to_group = FilteredSelectField(
+        label=_('Auxiliary groups'),
+        choices=(),
+        required=False,
+        )
+
     def __init__(self, userid, *args, **kwargs):
         super(bsdUserToGroupForm, self).__init__(*args, **kwargs)
         self.userid = userid
         user = models.bsdUsers.objects.get(id=self.userid)
-        self.fields['bsduser_to_group'].choices = [(x.id, x.bsdgrp_group) for x in models.bsdGroups.objects.all()]
-        self.fields['bsduser_to_group'].initial = [(x.bsdgrpmember_group.id) for x in models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user)]
+        self.fields['bsduser_to_group'].choices = [
+            (x.id, x.bsdgrp_group)
+            for x in models.bsdGroups.objects.all()
+            ]
+        self.fields['bsduser_to_group'].initial = [
+            x.bsdgrpmember_group.id
+            for x in models.bsdGroupMembership.objects.filter(
+                bsdgrpmember_user=user
+                )
+            ]
+
     def clean_bsduser_to_group(self):
         v = self.cleaned_data.get("bsduser_to_group")
         if len(v) > 64:
-            raise forms.ValidationError(_("A user cannot belong to more than 64 auxiliary groups"))
+            raise forms.ValidationError(
+                _("A user cannot belong to more than 64 auxiliary groups")
+                )
         return v
+
     def save(self):
         user = models.bsdUsers.objects.get(id=self.userid)
-        models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user).delete()
+        models.bsdGroupMembership.objects.filter(
+            bsdgrpmember_user=user
+            ).delete()
         groupid_list = self.cleaned_data['bsduser_to_group']
         for groupid in groupid_list:
             group = models.bsdGroups.objects.get(id=groupid)
-            m = models.bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
+            m = models.bsdGroupMembership(bsdgrpmember_group=group,
+                bsdgrpmember_user=user)
             m.save()
         notifier().reload("user")
+
 
 class SetPasswordForm(forms.Form):
     """
     A form that lets a user change set his/her password without
     entering the old password
     """
-    new_password1 = forms.CharField(label=_("New password"), widget=forms.PasswordInput)
-    new_password2 = forms.CharField(label=_("New password confirmation"), widget=forms.PasswordInput)
+    new_password1 = forms.CharField(
+        label=_("New password"),
+        widget=forms.PasswordInput,
+        )
+    new_password2 = forms.CharField(
+        label=_("New password confirmation"),
+        widget=forms.PasswordInput,
+        )
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
@@ -729,7 +849,9 @@ class SetPasswordForm(forms.Form):
         password2 = self.cleaned_data.get('new_password2')
         if password1 and password2:
             if password1 != password2:
-                raise forms.ValidationError(_("The two password fields didn't match."))
+                raise forms.ValidationError(
+                    _("The two password fields didn't match.")
+                    )
         return password2
 
     def save(self, commit=True):
@@ -738,20 +860,25 @@ class SetPasswordForm(forms.Form):
             self.user.save()
         return self.user
 
+
 class PasswordChangeForm(SetPasswordForm):
     """
     A form that lets a user change his/her password by entering
     their old password.
     """
-    change_root = forms.BooleanField(label=_("Change root password as well"),
+    change_root = forms.BooleanField(
+        label=_("Change root password as well"),
         initial=True,
-        required=False)
+        required=False,
+        )
 
     def __init__(self, *args, **kwargs):
         super(PasswordChangeForm, self).__init__(*args, **kwargs)
         if self.user.has_usable_password():
-            self.fields['old_password'] = forms.CharField(label=_("Old password"),
-                    widget=forms.PasswordInput)
+            self.fields['old_password'] = forms.CharField(
+                label=_("Old password"),
+                widget=forms.PasswordInput,
+                )
             self.fields.keyOrder = ['old_password', 'new_password1',
                 'new_password2', 'change_root']
         else:
@@ -775,10 +902,10 @@ class PasswordChangeForm(SetPasswordForm):
 class DeleteGroupForm(forms.Form):
 
     cascade = forms.BooleanField(
-            label=_("Do you want to delete all users with this primary group?"),
-            required=False,
-            initial=False,
-            )
+        label=_("Do you want to delete all users with this primary group?"),
+        required=False,
+        initial=False,
+        )
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)

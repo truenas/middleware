@@ -26,15 +26,17 @@
 #####################################################################
 import types
 
-from django.utils.translation import ugettext_lazy as _, ugettext as __, ungettext
+from django.utils.translation import (ugettext_lazy as _,
+    ugettext as __, ungettext)
 
 from dojango import forms
 from dojango.forms import widgets
 
+
 class UnixPermissionWidget(widgets.MultiWidget):
     def __init__(self, attrs=None):
 
-        widgets = [forms.widgets.CheckboxInput,] * 9
+        widgets = [forms.widgets.CheckboxInput, ] * 9
         super(UnixPermissionWidget, self).__init__(widgets, attrs)
 
     def decompress(self, value):
@@ -42,7 +44,7 @@ class UnixPermissionWidget(widgets.MultiWidget):
         if value and type(value) in types.StringTypes:
             mode = int(value, 8)
             for i in xrange(len(rv)):
-                rv[i] = bool(mode & pow(2, len(rv)-i-1))
+                rv[i] = bool(mode & pow(2, len(rv) - i - 1))
         return rv
 
     def format_output(self, rendered_widgets):
@@ -75,11 +77,12 @@ class UnixPermissionWidget(widgets.MultiWidget):
             html += "<tr>"
             html += "<td>%s</td>" % (mode_type, )
             for j in xrange(len(mapcol)):
-                html += '<td>%s</td>' % (rendered_widgets[j*3+i], )
+                html += '<td>%s</td>' % (rendered_widgets[j * 3 + i], )
             html += "</tr>"
         html += "</tbody></table>"
 
         return html
+
 
 class UnixPermissionField(forms.MultiValueField):
 
