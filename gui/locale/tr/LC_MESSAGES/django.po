@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2012-04-24 06:59+0200\n"
+"PO-Revision-Date: 2012-04-26 06:43+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1182,7 +1182,7 @@ msgstr ""
 
 #: plugins/forms.py:87
 msgid "PBI file to be installed"
-msgstr "Kurulan PBI dosyası"
+msgstr "Kurulacak PBI dosyası"
 
 #: plugins/forms.py:88 plugins/forms.py:119
 msgid "SHA256 sum for the PBI file"
