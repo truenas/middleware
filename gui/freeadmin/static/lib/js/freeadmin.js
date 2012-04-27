@@ -1372,10 +1372,6 @@
                 childrenAttrs: ["children"]
             });
 
-            var geticons = function(item,opened) {
-                if(item.icon) return item.icon;
-            };
-
             var treeclick = function(item) {
                 var p = dijit.byId("content");
 
@@ -1488,7 +1484,18 @@
                         dojo.fadeIn(fadeArgs).play();
                     },
                     openOnClick: true,
-                    getIconClass: geticons,
+                    getIconClass: function(item, opened) {
+                        if(item.icon && item.icon.search("/") == -1)
+                            return item.icon;
+                    },
+                    getIconStyle: function(item, opened) {
+                        if(item.icon && item.icon.search("/") != -1)
+                            return {
+                                backgroundImage: "url("+item.icon+")",
+                                height: '16px',
+                                width: '16px'
+                                };
+                    },
                 }
                 );
                 dijit.byId("menupane").set('content', mytree);
