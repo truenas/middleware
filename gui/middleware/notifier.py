@@ -1962,6 +1962,19 @@ class notifier:
 
             plugin.plugin_port = port + 1
 
+            """
+            Check freenas file within pbi dir for settings
+            Currently the API only looks for api_version
+            """
+            out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
+            if out and out[0] == 0:
+                for line in out[1].splitlines():
+                    key, value = [i.strip() for i in line.split(':', 1)]
+                    key = key.lower()
+                    value = value.strip()
+                    if key in ('api_version', ):
+                        setattr(plugin, 'plugin_%s' % (key, ), value)
+
             rpctoken = RPCToken.new()
             plugin.plugin_secret = rpctoken
 
