@@ -10,16 +10,21 @@ cd "$(dirname "$0")/.."
 
 # Should we build?
 BUILD=true
+
 # 0 - build only what's required (src, ports, diskimage, etc).
 # 1 - force src build.
 # 2 - nuke the obj directories (os-base.*, etc) and build from scratch.
 #FORCE_BUILD=0
+
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+
 # Target to build (base, plugins-base, <plugin>).
 TARGET="os-base"
+
 # Should we update src + ports?
-if [ -f $AVATAR_ROOT/FreeBSD/.pulled ]; then
+if [ -f $AVATAR_ROOT/FreeBSD/.pulled ]
+then
 	UPDATE=false
 else
 	UPDATE=true
@@ -83,7 +88,8 @@ case "$-" in
 esac
 
 set -e
-if $BUILD; then
+if $BUILD
+then
 	requires_root
 fi
 
@@ -95,10 +101,12 @@ do
 		break
 	fi
 done
+
 if [ ! -f "$TARGET" ]
 then
 	error "Build target -- $TARGET -- does not exist"
 fi
+
 export AVATAR_COMPONENT=${TARGET##*/}
 # XXX: chicken and egg problem. Not doing this will always cause plugins-base,
 # etc to rebuild if os-base isn't already present, or the build to fail if
@@ -129,8 +137,10 @@ then
 	done
 fi
 
-if $UPDATE; then
-	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
+if $UPDATE
+then
+	if [ -z "$FREEBSD_CVSUP_HOST" ]
+	then
 		error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
 	fi
 	mkdir -p $AVATAR_ROOT/FreeBSD
@@ -176,11 +186,14 @@ EOF
 		xargs rm -Rf
 	[ -f "$svn_status_ok" ]
 
-	for file in $(find $AVATAR_ROOT/FreeBSD/ports -name '*.orig' -size 0); do
+	for file in $(find $AVATAR_ROOT/FreeBSD/ports -name '*.orig' -size 0)
+	do
 		rm -f "$(echo $file | sed -e 's/.orig$//')"
 	done
+
 	echo "Checking out ports tree from ${FREEBSD_CVSUP_HOST}..."
 	csup -L 1 $SUPFILE
+
 	# Force a repatch.
 	: > $AVATAR_ROOT/FreeBSD/src-patches
 	: > $AVATAR_ROOT/FreeBSD/ports-patches
@@ -188,7 +201,8 @@ EOF
 fi
 
 _lp=last-patch.$$.log
-for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
+for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch)
+do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/src &&
@@ -199,7 +213,9 @@ for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
 	fi
 done
-for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
+
+for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch)
+do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
 		(cd FreeBSD/ports &&
@@ -216,24 +232,34 @@ done
 # 2. The mode is 0644 by default, and using a pattern like ${SHELL}
 #    in the Makefile snippet won't work with csh users because the
 #    script uses /bin/sh constructs.
-if [ -f "$NANO_SRC/include/mk-osreldate.sh.orig" ]; then
+if [ -f "$NANO_SRC/include/mk-osreldate.sh.orig" ]
+then
 	chmod +x $NANO_SRC/include/mk-osreldate.sh
 fi
 
 # OK, now we can build
 cd $NANO_SRC
 args="-c $TARGET"
-if [ $FORCE_BUILD -eq 0 ]; then
+
+if [ $FORCE_BUILD -eq 0 ]
+then
 	extra_args="$extra_args -b"
-elif [ $FORCE_BUILD -eq 1 ]; then
+
+elif [ $FORCE_BUILD -eq 1 ]
+then
 	extra_args="$extra_args -n"
 fi
+export FORCE_BUILD
+
 cmd="$AVATAR_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
-echo $cmd
-if ! $BUILD; then
+
+if ! $BUILD
+then
 	exit 0
 fi
-if sh $trace $cmd; then
+
+if sh $trace $cmd
+then
 	echo "$NANO_LABEL $TARGET build PASSED"
 else
 	error "$NANO_LABEL $TARGET build FAILED; please check above log for more details"

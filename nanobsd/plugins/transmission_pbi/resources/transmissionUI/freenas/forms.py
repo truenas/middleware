@@ -16,9 +16,8 @@ class TransmissionForm(forms.ModelForm):
         model = models.Transmission
         widgets = {
             'rpc_port': forms.widgets.TextInput(),
-            'rpc_password': forms.widgets.PasswordInput(),
             'peer_port': forms.widgets.TextInput(),
-            'global_seedratio': forms.widgets.TextInput(),
+            'rpc_password': forms.widgets.PasswordInput(),
         }
         exclude = (
             'enable',
