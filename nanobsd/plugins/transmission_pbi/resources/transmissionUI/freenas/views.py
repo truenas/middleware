@@ -289,7 +289,7 @@ def treemenu(request):
     plugin = {
         'name': 'Transmission',
         'append_to': 'services.PluginsJail',
-        'icon': 'SettingsIcon',
+        'icon': reverse('treemenu_icon'),
         'type': 'pluginsfcgi',
         'url': reverse('transmission_edit'),
         'kwargs': {'plugin_name': 'transmission'},
@@ -325,3 +325,11 @@ def status(request):
             'pid': pid,
         }),
         content_type='application/json')
+
+
+def treemenu_icon(request):
+
+    with open(utils.transmission_icon, 'rb') as f:
+        icon = f.read()
+
+    return HttpResponse(icon, content_type='image/png')
