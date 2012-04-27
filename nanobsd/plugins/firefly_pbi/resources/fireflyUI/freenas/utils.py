@@ -11,6 +11,12 @@ firefly_control = "/usr/local/etc/rc.d/mt-daapd"
 firefly_config = os.path.join(firefly_etc_path, "mt-daapd.conf")
 firefly_oauth_file = os.path.join(firefly_pbi_path, ".oauth")
 
+
+def get_rpc_url(request):
+    return 'http%s://%s/plugins/json-rpc/v1/' % ('s' if request.is_secure() \
+            else '', request.get_host(),)
+
+
 def get_firefly_oauth_creds():
     f = open(firefly_oauth_file)
     lines = f.readlines()
