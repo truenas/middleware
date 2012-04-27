@@ -80,6 +80,11 @@ then
 fi
 
 #
+# logfile for build
+#
+PLUGINLOG="${PLUGINOUT}/${PLUGIN}.log"
+
+#
 # Trick NanoBSD
 #
 unset -f clean_build
@@ -122,7 +127,7 @@ PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-$(uname -m).pbi"
 
 if [ "${FORCE_BUILD}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
 then
-	${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs
+	${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs > "${PLUGINLOG}" 2>&1
 	if [ "$?" != "0" ]
 	then
 		echo "${PLUGIN}: failed to build PBI!"
