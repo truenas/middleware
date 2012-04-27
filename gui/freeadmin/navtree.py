@@ -39,6 +39,7 @@ from django.utils.translation import ugettext_lazy as _
 from freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
     unserialize_tree)
 from freenasUI.plugins.models import Plugins
+from freenasUI.plugins.utils import get_base_url
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -393,8 +394,8 @@ class NavTree(object):
         Plugin nodes
         TODO: It is a blocking operation, we could use green threads
         """
-        host = "%s://%s" % ('https' if request.is_secure() else 'http',
-            request.get_host(), )
+        host = get_base_url(request)
+
         for plugin in Plugins.objects.filter(plugin_enabled=True):
 
             try:

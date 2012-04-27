@@ -33,9 +33,10 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.plugins.models import Plugins
-from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
+from freenasUI.plugins.models import Plugins
+from freenasUI.plugins.utils import get_base_url
+from freenasUI.services import models
 
 log = logging.getLogger("services.views")
 
@@ -62,10 +63,10 @@ def plugins(request):
         ])
 
     plugins = Plugins.objects.filter(plugin_enabled=True)
+    host = get_base_url(request)
     for plugin in plugins:
-        url = "%s://%s/plugins/%s/_s/status" % (
-            'https' if request.is_secure() else 'http',
-            request.get_host(),
+        url = "%s/plugins/%s/_s/status" % (
+            host,
             plugin.plugin_name)
         try:
             opener = urllib2.build_opener()
