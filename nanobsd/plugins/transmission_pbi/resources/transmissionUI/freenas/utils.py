@@ -10,6 +10,12 @@ transmission_fcgi_wwwdir = os.path.join(transmission_pbi_path, "www")
 transmission_control = "/usr/local/etc/rc.d/transmission"
 transmission_oauth_file = os.path.join(transmission_pbi_path, ".oauth")
 
+
+def get_rpc_url(request):
+    return 'http%s://%s/plugins/json-rpc/v1/' % ('s' if request.is_secure() \
+            else '', request.get_host(),)
+
+
 def get_transmission_oauth_creds():
     f = open(transmission_oauth_file)
     lines = f.readlines()
@@ -24,7 +30,7 @@ def get_transmission_oauth_creds():
             if len(pair) > 1:
                 key = pair[1].strip()
 
-        elif l.startswith("secret"): 
+        elif l.startswith("secret"):
             pair = l.split("=")
             if len(pair) > 1:
                 secret = pair[1].strip()

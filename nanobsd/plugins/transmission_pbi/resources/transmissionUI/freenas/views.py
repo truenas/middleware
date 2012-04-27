@@ -162,8 +162,7 @@ class JsonResponse(HttpResponse):
 def start(request):
     transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
 
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
 
@@ -202,8 +201,7 @@ def start(request):
 
 def stop(request):
     transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
 
@@ -239,8 +237,7 @@ def stop(request):
 
 def edit(request):
     transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
 
