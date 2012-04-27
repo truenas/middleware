@@ -44,6 +44,6 @@ urlpatterns = patterns('plugins.views',
             prefix="jailpbi",
             templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
-    url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
+    url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
     url(r'^(?P<name>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
     )

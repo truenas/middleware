@@ -51,6 +51,12 @@ class Plugins(Model):
         help_text=_("Version of the plugin")
         )
 
+    plugin_api_version = models.CharField(
+        max_length=20,
+        default="1",
+        verbose_name=_("Plugin API version"),
+        )
+
     plugin_arch = models.CharField(
         max_length=120,
         verbose_name=_("Plugin architecture"),
