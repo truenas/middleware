@@ -219,6 +219,16 @@ class FreeNAS_Lib_MiniDLNA {
 
     }
 
+    public function getIcon() {
+
+        $icon = $this->BASE . "/default.png";
+        $fp = fopen($icon, 'rb')
+        $content = fread($fp, filesize($icon));
+        fclose($fp);
+        return $content;
+
+    }
+
 }
 
 ?>
