@@ -1,0 +1,133 @@
+#
+# firefly - nanobsd build script for firefly
+#
+
+
+#
+# Name of this plugin
+#
+PLUGIN="firefly"
+
+#
+# Path to pbi_makeport 
+#
+PBIMAKEPORT=/usr/local/sbin/pbi_makeport
+if [ ! -f "${PBIMAKEPORT}" ]
+then
+	echo "${PLUGIN}: ${PBIMAKEPORT} does not exist!"
+	exit 1
+fi
+
+#
+# Path to ports collection
+#
+PLUGINPORTSDIR="${AVATAR_ROOT}/FreeBSD/ports"
+if [ ! -d "${PLUGINPORTSDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINSPORTDIR} does not exist!"
+	exit 1
+fi
+
+#
+# Path to port directory
+#
+PLUGINPORT="${PLUGINPORTSDIR}/audio/firefly"
+if [ ! -d "${PLUGINPORT}" ]
+then
+	echo "${PLUGIN}: ${PLUGINPORT} does not exist!"
+	exit 1
+fi
+
+#
+# Where to put the PBI
+#
+PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}"
+mkdir -p "${PLUGINOUT}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINOUT}!"
+	exit 1
+fi
+
+#
+# Where plugin directories are located
+#
+PLUGINSDIR="${AVATAR_ROOT}/nanobsd/plugins"
+if [ ! -d "${PLUGINSDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINSDIR} does not exist!"
+	exit 1
+fi
+
+#
+# Where the configuration for this plugin is located
+#
+PLUGINCONFDIR="${PLUGINSDIR}/${PLUGIN}_pbi"
+if [ ! -d "${PLUGINCONFDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINCONFDIR} does not exist!"
+	exit 1
+fi
+
+#
+# pbi.conf for this plugin
+#
+PLUGINCONF="${PLUGINCONFDIR}/pbi.conf"
+if [ ! -f "${PLUGINCONF}" ]
+then
+	echo "${PLUGIN}: ${PLUGINCONF} does not exist!"
+	exit 1
+fi
+
+#
+# Trick NanoBSD
+#
+unset -f clean_build
+unset -f build_world
+unset -f build_kernel
+unset -f clean_world
+unset -f make_conf_install
+unset -f install_world
+unset -f install_etc
+unset -f install_kernel
+
+. ${PLUGINCONF}
+
+#
+# Ripped out of pbi-maanger to determine PBI name
+#
+if [ -z "${PBI_PROGVERSION}" ]
+then
+	PORTVER="$(make -C ${PLUGINPORT} -V DISTVERSION 2>/dev/null)"
+	PORTREV="$(make -C ${PLUGINPORT} -V PORTREVISION 2>/dev/null)"
+	if [ ! -z "${PORTREV}" -a "${PORTREV}" != "0" ]
+	then
+		PORTVER="${PORTVER}_${PORTREV}"
+	fi
+	PBI_PROGVERSION="${PORTVER}"
+fi
+
+if [ -z "${PBI_PROGVERSION}" ]
+then
+	echo "${PLUGIN}: unable to determine program version!"
+	exit 1
+fi
+
+if [ ! -z "${PBI_PROGREVISION}" ]
+then
+	PBI_PROGVERSION="${PBI_PROGVERSION}_${PBI_PROGREVISION}"
+fi
+
+PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-$(uname -m).pbi"
+
+if [ "${FORCE_BUILD}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
+then
+	${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs
+	if [ "$?" != "0" ]
+	then
+		echo "${PLUGIN}: failed to build PBI!"
+		exit 1
+	fi
+fi
+
+exit 0
