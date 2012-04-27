@@ -160,7 +160,7 @@ class RequireLoginMiddleware(object):
             return None
 
         # JSON-RPC calls are authenticated through HTTP Basic
-        if request.path.startswith('/plugins/json/'):
+        if request.path.startswith('/plugins/json-rpc/'):
             return http_oauth(view_func)(request, *view_args, **view_kwargs)
 
         return login_required(view_func)(request, *view_args, **view_kwargs)
