@@ -122,5 +122,12 @@ class IndexController extends Zend_Controller_Action
         }
     }
 
+    public function treemenuiconAction()
+    {
+        $this->_helper->viewRenderer->setNoRender(TRUE);
+        $this->getResponse()->setHeader('Content-type', 'image/png');
+        echo $this->lib->getIcon();
+    }
+
 }
 ?>
