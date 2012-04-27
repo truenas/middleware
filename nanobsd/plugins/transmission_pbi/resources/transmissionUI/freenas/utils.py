@@ -8,6 +8,7 @@ transmission_mnt_path = os.path.join(transmission_pbi_path, "mnt")
 transmission_fcgi_pidfile = "/var/run/transmission_fcgi_server.pid"
 transmission_fcgi_wwwdir = os.path.join(transmission_pbi_path, "www")
 transmission_control = "/usr/local/etc/rc.d/transmission"
+transmission_icon = os.path.join(transmission_pbi_path, "default.png")
 transmission_oauth_file = os.path.join(transmission_pbi_path, ".oauth")
 
 
