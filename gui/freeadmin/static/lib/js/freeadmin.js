@@ -1131,13 +1131,17 @@
 
     };
 
+    refreshTree = function() {
+        var fadeArgs = {
+           node: "fntree",
+           onEnd: function() { dijit.byId("fntree").reload(); }
+         };
+        dojo.fadeOut(fadeArgs).play();
+    }
+
     refreshTabs = function(nodes) {
         if(nodes && canceled == false) {
-            var fadeArgs = {
-               node: "fntree",
-               onEnd: function() { dijit.byId("fntree").reload(); }
-             };
-            dojo.fadeOut(fadeArgs).play();
+            refreshTree();
             dojo.forEach(nodes, function(entry, i) {
                 if(entry.isInstanceOf && entry.isInstanceOf(dijit.layout.ContentPane)) {
                     entry.refresh();
