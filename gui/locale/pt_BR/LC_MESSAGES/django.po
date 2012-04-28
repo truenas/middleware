@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2012-04-27 04:28+0200\n"
+"PO-Revision-Date: 2012-04-27 15:29+0200\n"
 "Last-Translator: thiagocantero <thiagocantero@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -815,9 +815,10 @@ msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr "Não foi possivel obter %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Alguns erros ocorreram enquanto nomeava o disco."
+msgstr ""
+"Alguns erros ocorreram enquanto havia comunicação  do %(url)s: %(error)s"
 
 #: freeadmin/views.py:245
 msgid "It was not possible to retrieve the current status"
@@ -897,9 +898,8 @@ msgid "Unspecified addresses are not valid as nameservers"
 msgstr "Endereço não especificado não são validos para Servidores de Domínios"
 
 #: network/forms.py:138
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "O campo não é um endereço IP válido ou rede"
+msgstr "Este não é um Endereço de Nome de Domínio válido"
 
 #: network/forms.py:140
 msgid "169.254/16 subnet is not valid for nameserver"
