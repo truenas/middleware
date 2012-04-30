@@ -1,0 +1,29 @@
+Index: net/samba36/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/samba36/Makefile,v
+retrieving revision 1.6
+diff -u -p -r1.6 Makefile
+--- net/samba36/Makefile	13 Apr 2012 09:15:59 -0000	1.6
++++ net/samba36/Makefile	30 Apr 2012 17:42:08 -0000
+@@ -6,8 +6,7 @@
+ #
+ 
+ PORTNAME=		${SAMBA_BASENAME}36
+-PORTVERSION=		3.6.4
+-PORTREVISION?=		0
++PORTVERSION=		3.6.5
+ CATEGORIES?=		net
+ MASTER_SITES=		${MASTER_SITE_SAMBA}
+ MASTER_SITE_SUBDIR=	. old-versions rc pre
+Index: net/samba36/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/net/samba36/distinfo,v
+retrieving revision 1.4
+diff -u -p -r1.4 distinfo
+--- net/samba36/distinfo	10 Apr 2012 22:33:01 -0000	1.4
++++ net/samba36/distinfo	30 Apr 2012 17:42:11 -0000
+@@ -1,2 +1,2 @@
+-SHA256 (samba-3.6.4.tar.gz) = 590ac2fc7f6dd70e947b3aded5fcb4431a5abba4dc3cc1bec566627e132b5914
+-SIZE (samba-3.6.4.tar.gz) = 29007087
++SHA256 (samba-3.6.5.tar.gz) = 8af65ff3b8c1155e7897c89a895e3155534ec3c5b97877ee2f05fc9d8bab80c4
++SIZE (samba-3.6.5.tar.gz) = 29009444
