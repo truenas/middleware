@@ -201,6 +201,11 @@ FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[%(name)s:%(lineno)s] %(message)s'
+        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
@@ -208,7 +213,8 @@ LOGGING = {
         },
         'syslog': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.SysLogHandler',
+            'class': 'freeadmin.handlers.SysLogHandler',
+            'formatter': 'simple',
         }
     },
     'loggers': {
