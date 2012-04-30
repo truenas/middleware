@@ -87,11 +87,13 @@ if [ \${EVENT} = "LINK_UP" ]; then
 			exit
 		fi
 	else
-		echo "Found coldboot seal, removing before continue" | logger
-		rm -f /tmp/coldboot;
+		echo "Found coldboot seal, continuing!" | logger
 		WASCONNECTED=1
 	fi
     fi
+
+    # Remove the seal here, to be safe.
+    rm -f /tmp/coldboot;
 
     if [ \$WASCONNECTED -ne 1 ]; then
 	exit
@@ -122,7 +124,6 @@ if [ \${EVENT} = "LINK_UP" ]; then
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
-    rm -f /tmp/coldboot;
     echo "Entering DOWN!" | logger
     ifconfig \${SUBSYSTEM} advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
