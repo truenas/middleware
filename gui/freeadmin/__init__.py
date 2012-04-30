@@ -24,4 +24,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from freenasUI.freeadmin.navtree import navtree

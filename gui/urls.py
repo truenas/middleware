@@ -36,9 +36,6 @@ from django.views.generic import TemplateView
 from freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
 
-from freenasUI.freeadmin import navtree
-navtree.prepare_modelforms()
-
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
 
