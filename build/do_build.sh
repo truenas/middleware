@@ -65,6 +65,7 @@ while getopts 'Bfj:t:u' optch; do
 		fi
 		MAKE_JOBS=$OPTARG
 		;;
+
 	t)
 		TARGET=$OPTARG
 		;;
@@ -123,6 +124,11 @@ then
 	then
 		# The base OS distro requires a kernel build.
 		required_logs="_.ik _.iw"
+
+	elif echo "${TARGET}" | grep -E "^${NANO_CFG_BASE}\/plugins\/" >/dev/null 2>&1
+	then
+		required_logs=""
+
 	else
 		required_logs="_.iw"
 	fi
@@ -249,7 +255,8 @@ elif [ $FORCE_BUILD -eq 1 ]
 then
 	extra_args="$extra_args -n"
 fi
-export FORCE_BUILD
+
+export FORCE_BUILD MAKE_JOBS
 
 cmd="$AVATAR_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
 

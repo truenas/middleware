@@ -2,6 +2,63 @@
 # firefly - nanobsd build script for firefly
 #
 
+#
+# NanoBSD stuff
+#
+CONF_BUILD=""
+CONF_INSTALL="${CONF_BUILD}"
+
+. ${NANO_CFG_BASE}/common
+
+#
+# Tell pbi_create what directory to use
+#
+PBI_APPDIR="${AVATAR_ROOT}/pbi"
+export PBI_APPDIR
+
+#
+# Force pbi_create to checkout 8.0-RELEASE source
+#
+PBI_OSREL="8.0-RELEASE"
+export PBI_OSREL
+
+#
+#
+# Tell pbi_create where the source code is
+#
+PBI_BUILDSRC="${PBI_APPDIR}/src"
+export PBI_BUILDSRC 
+
+#
+# Where to install the chroot
+#
+PBI_BUILDTARGET="${PBI_APPDIR}/target"
+export PBI_BUILDTARGET
+
+#
+# Remove source after installworld?
+#
+PBI_DELETE_BUILDSRC=0
+export PBI_DELETE_BUILDSRC
+
+#
+# Remove target after installworld?
+#
+PBI_DELETE_BUILDTARGET=0
+export PBI_DELETE_BUILDTARGET
+
+#
+# Remove source/build?
+#
+PBI_DELETE_BUILD=0
+export PBI_DELETE_BUILD
+
+#
+# PBI chroot build flags
+#
+PBI_BUILDFLAGS="-j ${MAKE_JOBS}"
+export PBI_BUILDFLAGS
+
 
 #
 # Name of this plugin
@@ -17,6 +74,7 @@ then
 	echo "${PLUGIN}: ${PBIMAKEPORT} does not exist!"
 	exit 1
 fi
+export PBIMAKEPORT
 
 #
 # Path to ports collection
@@ -27,6 +85,7 @@ then
 	echo "${PLUGIN}: ${PLUGINSPORTDIR} does not exist!"
 	exit 1
 fi
+export PLUGINPORTSDIR
 
 #
 # Path to port directory
@@ -37,17 +96,19 @@ then
 	echo "${PLUGIN}: ${PLUGINPORT} does not exist!"
 	exit 1
 fi
+export PLUGINPORT
 
 #
 # Where to put the PBI
 #
 PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}"
-mkdir -p "${PLUGINOUT}"
+mkdir -p "${PLUGINOUT}/${NANO_ARCH}"
 if [ "$?" != "0" ]
 then
 	echo "${PLUGIN}: unable to create ${PLUGINOUT}!"
 	exit 1
 fi
+export PLUGINOUT
 
 #
 # Where plugin directories are located
@@ -58,6 +119,7 @@ then
 	echo "${PLUGIN}: ${PLUGINSDIR} does not exist!"
 	exit 1
 fi
+export PLUGINSDIR
 
 #
 # Where the configuration for this plugin is located
@@ -68,6 +130,7 @@ then
 	echo "${PLUGIN}: ${PLUGINCONFDIR} does not exist!"
 	exit 1
 fi
+export PLUGINCONFDIR
 
 #
 # pbi.conf for this plugin
@@ -78,23 +141,57 @@ then
 	echo "${PLUGIN}: ${PLUGINCONF} does not exist!"
 	exit 1
 fi
+export PLUGINCONF
 
 #
 # logfile for build
 #
 PLUGINLOG="${PLUGINOUT}/${PLUGIN}.log"
+export PLUGINLOG
 
 #
 # Trick NanoBSD
 #
-unset -f clean_build
-unset -f build_world
-unset -f build_kernel
-unset -f clean_world
-unset -f make_conf_install
-unset -f install_world
-unset -f install_etc
-unset -f install_kernel
+clean_build()
+{
+	:
+}
+build_world()
+{
+	:
+}
+build_kernel()
+{
+	:
+}
+clean_world()
+{
+	:
+}
+make_conf_install()
+{
+	:
+}
+install_world()
+{
+	:
+}
+install_etc()
+{
+	:
+}
+install_kernel()
+{
+	:
+}
+
+#
+# This is enough into trickying NanoBSD to not build anything
+#
+mkdir -p "${AVATAR_ROOT}/${PLUGIN}/${NANO_ARCH}/_.w"
+mtree -deU -f ${AVATAR_ROOT}/os-base/${NANO_ARCH}/_.w/etc/mtree/BSD.root.dist \
+	-p ${AVATAR_ROOT}/${PLUGIN}/${NANO_ARCH}/_.w >/dev/null
+
 
 . ${PLUGINCONF}
 
@@ -125,14 +222,22 @@ fi
 
 PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-$(uname -m).pbi"
 
-if [ "${FORCE_BUILD}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
-then
-	${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs > "${PLUGINLOG}" 2>&1
-	if [ "$?" != "0" ]
-	then
-		echo "${PLUGIN}: failed to build PBI!"
-		exit 1
-	fi
-fi
+NANO_NAME="${PBIFILE}"
+NANO_IMGNAME="${NANO_NAME}"
+export NANO_NAME NANO_IMGNAME
 
-exit 0
+last_orders()
+{
+	if [ "${FORCE_BUILD}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
+	then
+		pprint 2 "Creating PBI"
+		pprint 3 "log: ${PLUGINLOG}"
+
+		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs > "${PLUGINLOG}" 2>&1
+		if [ "$?" != "0" ]
+		then
+			echo "${PLUGIN}: failed to build PBI!"
+			exit 1
+		fi
+	fi
+}
