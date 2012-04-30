@@ -37,6 +37,7 @@ options 	PREEMPTION		# Enable kernel thread preemption
 options 	INET			# InterNETworking
 options 	INET6			# IPv6 communications protocols
 #options 	SCTP			# Stream Control Transmission Protocol
+options 	VIMAGE
 options 	FFS			# Berkeley Fast Filesystem
 options 	SOFTUPDATES		# Enable FFS soft updates support
 options 	UFS_ACL			# Support for access control lists
@@ -295,6 +296,8 @@ device		faith		# IPv6-to-IPv4 relaying (translation)
 device		firmware	# firmware assist module
 device		crypto		# hardware crypto access driver
 device		cryptodev	# hardware crypto access driver
+device		epair
+device		if_bridge
 
 # The `bpf' device enables the Berkeley Packet Filter.
 # Be aware of the administrative consequences of enabling this!
