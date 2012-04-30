@@ -50,12 +50,14 @@ from django.utils.importlib import import_module
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 from freenasUI.common.system import get_sw_name, get_sw_version
-from freenasUI.freeadmin import navtree
+from freenasUI.freeadmin.navtree import navtree
 from freenasUI.freeadmin.utils import get_related_objects
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.system.models import Advanced
+
+navtree.prepare_modelforms()
 
 log = logging.getLogger('freeadmin.views')
 
