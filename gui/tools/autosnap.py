@@ -25,11 +25,11 @@
 # SUCH DAMAGE.
 #
 
+import logging
 import os
 import re
 import subprocess
 import sys
-import syslog
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
@@ -43,6 +43,8 @@ from datetime import datetime, time, timedelta
 
 from freenasUI.common.pipesubr import setname, pipeopen, system
 from freenasUI.common.locks import mntlock
+
+log = logging.getLogger('tools.autosnap')
 
 # NOTE
 #
@@ -106,16 +108,14 @@ def isMatchingTime(task, snaptime):
 
 # Detect if another instance is running
 def exit_if_running(pid):
-    syslog.syslog(syslog.LOG_DEBUG,
-                  "Checking if process %d is still alive" % (pid, ))
+    log.debug("Checking if process %d is still alive", pid)
     try:
         os.kill(pid, 0)
         # If we reached here, there is another process in progress
-        syslog.syslog(syslog.LOG_DEBUG,
-                      "Process %d still working, quitting" % (pid, ))
+        log.debug("Process %d still working, quitting", pid)
         sys.exit(0)
     except OSError:
-        syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (pid, ))
+        log.debug("Process %d gone", pid)
 
 mypid = os.getpid()
 
