@@ -162,7 +162,7 @@ class JsonResponse(HttpResponse):
 def start(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = get_rpc_url(request)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
@@ -201,7 +201,7 @@ def start(request):
 def stop(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = get_rpc_url(request)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
@@ -237,7 +237,7 @@ def stop(request):
 def edit(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = get_rpc_url(request)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
 
