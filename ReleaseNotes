@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.4-RELEASE-p1
+Release Notes for FreeNAS 8.0.4-RELEASE-p2
 
 *** IMPORTANT ***
 
@@ -30,6 +30,18 @@ Release Notes for FreeNAS 8.0.4-RELEASE-p1
   8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
+
+Changes since 8.0.4-RELEASE-p1:
+
+Bugfixes
+========================
+
+OS/Third party
+------------------------
+
+1. Samba has been upgraded to 3.6.5 to address CVE-2012-2011 which is a
+   critical vulnerability.  All FreeNAS users who are using CIFS are
+   urged to upgrade.
 
 Changes since 8.0.4-RELEASE:
 
