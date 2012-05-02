@@ -33,11 +33,14 @@ from django.conf import settings
 from django.template.loader import add_to_builtins
 from django.views.generic import TemplateView
 
-from freeadmin.middleware import public
+from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
+from freenasUI.freeadmin.navtree import navtree
 
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
+
+navtree.prepare_modelforms()
 
 add_to_builtins('django.templatetags.i18n')
 
