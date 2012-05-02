@@ -57,8 +57,6 @@ from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.system.models import Advanced
 
-navtree.prepare_modelforms()
-
 log = logging.getLogger('freeadmin.views')
 
 
