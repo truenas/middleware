@@ -3934,15 +3934,25 @@ class notifier:
                 for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
             ]
 
-    def multipath_create(self, name, consumers):
+    def multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
 
+        Modes:
+            A - Active/Active
+            R - Active/Read
+            None - Active/Passive
+
         Returns:
             True in case the label succeeded and False otherwise
         """
-        p1 = subprocess.Popen(["/sbin/gmultipath", "label", name] + consumers, stdout=subprocess.PIPE)
+        cmd = ["/sbin/gmultipath", "label", name] + consumers
+        if mode:
+            cmd.insert(2, "-%s" % (mode, ))
+        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        if p1.wait() != 0:
+            return False
         # We need to invalidate confxml cache
         self.__confxml = None
         if p1.wait() != 0:
