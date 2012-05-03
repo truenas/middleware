@@ -42,7 +42,7 @@ compare_project()
 	project1=$1
 	project2=$2
 
-	if [ "$project1" = "$project2" ]
+	if [ -z "$project1" -o "$project1" = "$project2" ]
 	then
 		return 0
 	fi
@@ -68,6 +68,12 @@ compare_version()
 	if [ -z "$version2" ]
 	then
 		error "malformed upgrade version specified (is NIL)"
+	fi
+
+	# Consider empty version as smaller.
+	if [ -z "$version1" ]
+	then
+		return 1
 	fi
 
 	if [ "$version1" = "$version2" ]
