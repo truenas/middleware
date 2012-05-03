@@ -49,7 +49,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.services.models import iSCSITargetExtent
+from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionWidget, UnixPermissionField
 
@@ -657,6 +657,8 @@ class DiskFormPartial(ModelForm):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
+            self._original_smart_en = self.instance.disk_togglesmart
+            self._original_smart_opts = self.instance.disk_smartoptions
             self.fields['disk_name'].widget.attrs['readonly'] = True
             self.fields['disk_name'].widget.attrs['class'] = ('dijitDisabled'
                         ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
@@ -666,6 +668,17 @@ class DiskFormPartial(ModelForm):
 
     def clean_disk_name(self):
         return self.instance.disk_name
+
+    def save(self, *args, **kwargs):
+        obj = super(DiskFormPartial, self).save(*args, **kwargs)
+        if obj.disk_togglesmart != self._original_smart_en or \
+            obj.disk_smartoptions != self._original_smart_opts:
+            started = notifier().restart("smartd")
+            if started is False and \
+              services.objects.get(srv_service='smartd').srv_enable:
+                raise ServiceFailed("smartd",
+                    _("The SMART service failed to restart."))
+        return obj
 
 
 class ZFSDataset_CreateForm(Form):
