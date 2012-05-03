@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 
 . build/nano_env
 . build/functions.sh
+. build/pbi_env
 
 # Should we build?
 BUILD=true
@@ -18,9 +19,19 @@ BUILD=true
 
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+export MAKE_JOBS
 
-# Targets to build (base, plugins-base, plugins/<plugin>).
-TARGETS="os-base"
+# Available targets to build
+BUILD_TARGETS="\
+os-base \
+plugins-base \
+plugins/transmission \
+plugins/firefly \
+plugins/minidlna \
+"
+
+# Targets to build (os-base, plugins-base, plugins/<plugin>).
+TARGETS=""
 
 # Should we update src + ports?
 UPDATE=true
@@ -35,6 +46,7 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
+
 usage() {
 	cat <<EOF
 usage: ${0##*/} [-Bfu] [-j make-jobs] [-t target] [-- nanobsd-options]
@@ -47,23 +59,34 @@ usage: ${0##*/} [-Bfu] [-j make-jobs] [-t target] [-- nanobsd-options]
 		  force a buildworld / buildkernel (passes -n to nanobsd). If
 		  specified twice, this won't pass any options to nanobsd.sh,
 		  which will force a pristine build.
--j make-jobs	- number of make jobs to run; defaults to $MAKE_JOBS.
+-j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
+-s		- show build targets
 -t target	- target to build (os-base, plugins-base, <plugin-name>, etc).
 		  This switch can be used more than once to specify multiple targets.
 -u		- force an update via csup (warning: there are potential
 		  issues with newly created files via patch -- use with
 		  caution).
--x		- enable sh -x  debugging
+-x		- enable sh -x debugging
 EOF
+	exit 1
+}
+
+show_build_targets()
+{
+	for _target in ${BUILD_TARGETS}
+	do
+		echo "${_target}"
+	done
 	exit 1
 }
 
 parse_cmdline()
 {
-	while getopts 'aBfj:t:ux' _optch
+	while getopts 'aBfj:st:ux' _optch
 	do
 		case "${_optch}" in
 		a)
+			TARGETS="${BUILD_TARGETS}"
 			;;
 		B)
 			BUILD=false
@@ -76,7 +99,10 @@ parse_cmdline()
 			if [ $? -ne 0 ]; then
 				usage
 			fi
-			MAKE_JOBS=$OPTARG
+			MAKE_JOBS=${OPTARG}
+			;;
+		s)	
+			show_build_targets
 			;;
 		t)
 			TARGETS="${TARGETS} ${OPTARG}"
@@ -117,10 +143,24 @@ expand_targets()
 	fi
 }
 
+is_plugin()
+{
+	local _res=1
+	local _target="${1}"
+
+	if echo "${_target}" | grep -E "^${NANO_CFG_BASE}\/plugins\/" >/dev/null 2>&1	
+	then
+		_res=0
+	fi
+
+	return ${_res}
+}
+
 build_target()
 {
 	local _target="${1}"
 	local _args="${NANO_ARGS}"
+	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
 
 	export AVATAR_COMPONENT=${_target##*/}
 
@@ -130,8 +170,6 @@ build_target()
 	# os-base is built and plugins-base isn't, etc.
 	#
 	export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
-	env|egrep '(NANO|AVATAR)'
-	return 0
 
 	#
 	# FORCE_BUILD is unset -- apply sane defaults based on what's already been built.
@@ -152,7 +190,7 @@ build_target()
 		# For plugins, we don't need to build a NanoBSD image, however, the PBI
 		# tools will build a chroot and use it in the future for all plugin builds.
 		#
-		elif echo "${_target}" | grep -E "^${NANO_CFG_BASE}\/plugins\/" >/dev/null 2>&1	
+		elif is_plugin "${_target}"
 		then
 			_required_logs=""
 		fi
@@ -177,7 +215,6 @@ build_target()
 	fi
 	export FORCE_BUILD
 
-	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
 
 	if ! $BUILD
@@ -196,6 +233,11 @@ build_target()
 
 build_targets()
 {
+	#
+	# For now do this iteratively. Eventually it would be nice to
+	# be able to background building each target, but currently
+	# that needs some more kung-fu. 
+	#
 	cd ${NANO_SRC}
 	for _target in ${TARGETS}
 	do
@@ -319,6 +361,14 @@ apply_patches()
 main()
 {
 	parse_cmdline "$@"
+
+	#
+	# Assume os-base if no targets are specified
+	#
+	if [ -z "${TARGETS}" ]
+	then
+		TARGETS="os-base"
+	fi
 
 	#
 	# You must be root to build FreeNAS
