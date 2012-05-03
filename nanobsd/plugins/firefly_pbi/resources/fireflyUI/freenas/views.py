@@ -162,8 +162,7 @@ class JsonResponse(HttpResponse):
 def start(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
@@ -202,8 +201,7 @@ def start(request):
 def stop(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
@@ -239,8 +237,7 @@ def stop(request):
 def edit(request):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
-    url = 'http%s://%s/plugins/json/' % ('s' if request.is_secure() \
-        else '', request.get_host(),)
+    url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=firefly_key,
         secret=firefly_secret)
 
@@ -292,7 +289,7 @@ def treemenu(request):
     plugin = {
         'name': 'Firefly',
         'append_to': 'services.PluginsJail',
-        'icon': 'SettingsIcon',
+        'icon': reverse("treemenu_icon"),
         'type': 'pluginsfcgi',
         'url': reverse('firefly_edit'),
         'kwargs': {'plugin_name': 'firefly'},
@@ -328,3 +325,10 @@ def status(request):
             'pid': pid,
         }),
         content_type='application/json')
+
+
+def treemenu_icon(request):
+    with open(utils.firefly_icon, 'rb') as f:
+        icon = f.read()
+
+    return HttpResponse(icon, content_type='image/png')

@@ -1,22 +1,17 @@
 #
-#    Makefile - Built example PBIs for FreeNAS
+#    Makefile - Build example PBI's for FreeNAS
 #
 
 ARCH		!= uname -m
 
-PBIPATH		= /usr/pbi
-PBIBUILDPATH	= /usr/pbibuild
+PBIPATH		?= /usr/pbi
+PBIBUILDPATH	?= /usr/pbibuild
 TOP		= ${PBIBUILDPATH}
 
-JAILPATH	= ${TOP}/plugins
-JAILNAME	= plugins_jail
-JAILVERSION	= 8.2
-JAILURL		= http:/www.freenas.org
-
 .if ${ARCH} == "amd64"
-PBIOUTPATH	= ${PBIBUILDPATH}/pbiout64
+PBIOUTPATH	?= ${PBIBUILDPATH}/pbiout64
 .else
-PBIOUTPATH	= ${PBIBUILDPATH}/pbiout32
+PBIOUTPATH	?= ${PBIBUILDPATH}/pbiout32
 .endif
 
 
@@ -57,14 +52,11 @@ ${t}-distclean:
 
 ${t}-build:
 .if exists(${t}_pbi)
-	${PBI_MAKEPORT} -c ${PBIOUTPATH}/${t}_pbi -k -o ${PBIOUTPATH} --tmpfs ${${t}_port}
+	${PBI_MAKEPORT} -c ${PBIOUTPATH}/${t}_pbi -o ${PBIOUTPATH} --tmpfs ${${t}_port}
 .endif
 
 ${t}: ${t}-build
 .endfor
-
-jailpbi:
-	${PBI_CREATE} -a FreeNAS -n ${JAILNAME} -o ${PBIOUTPATH} -r ${JAILVERSION} -w ${JAILURL} ${JAILPATH}
 
 clean: ${CLEAN_TARGETS}
 distclean: ${DISTCLEAN_TARGETS}

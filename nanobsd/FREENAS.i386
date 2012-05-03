@@ -86,6 +86,7 @@ options		GEOM_ELI
 options		NULLFS
 options		UNIONFS
 options		VFS_AIO
+options		VIMAGE
 
 options		KVA_PAGES=512
 
@@ -306,6 +307,8 @@ device		faith		# IPv6-to-IPv4 relaying (translation)
 device		firmware	# firmware assist module
 device		crypto		# hardware crypto access driver
 device		cryptodev	# hardware crypto access driver
+device		epair   # A pair of virtual back-to-back connected Ethernet interface
+device		if_bridge   # network bridge device
 
 # The `bpf' device enables the Berkeley Packet Filter.
 # Be aware of the administrative consequences of enabling this!

@@ -1,0 +1,262 @@
+diff -urN net/minidlna/Makefile net/minidlna/Makefile
+--- net/minidlna/Makefile	2011-12-22 11:12:40.000000000 -0800
++++ net/minidlna/Makefile	2012-02-16 07:57:23.000000000 -0800
+@@ -2,12 +2,12 @@
+ # Date created:		2010-06-13
+ # Whom:			Mikhail Teterin <mi@aldan.algebra.com>
+ #
+-# $FreeBSD: ports/net/minidlna/Makefile,v 1.5 2011/12/22 19:12:40 mi Exp $
++# $FreeBSD: ports/net/minidlna/Makefile,v 1.7 2012/02/16 15:57:23 ashish Exp $
+ #
+ 
+ PORTNAME=	minidlna
+ PORTVERSION=	1.0.22
+-PORTREVISION=	1
++PORTREVISION=	3
+ PORTEPOCH=	1
+ CATEGORIES=	net multimedia www
+ MASTER_SITES=	SF
+diff -urN net/minidlna/files/minidlna.sh.in net/minidlna/files/minidlna.sh.in
+--- net/minidlna/files/minidlna.sh.in	2010-12-18 11:57:07.000000000 -0800
++++ net/minidlna/files/minidlna.sh.in	2012-01-14 00:56:18.000000000 -0800
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ 
+-# $FreeBSD: ports/net/minidlna/files/minidlna.sh.in,v 1.2 2010/12/18 19:57:07 mi Exp $
++# $FreeBSD: ports/net/minidlna/files/minidlna.sh.in,v 1.3 2012/01/14 08:56:18 dougb Exp $
+ #
+ # PROVIDE: minidlna
+ # REQUIRE: LOGIN
+@@ -13,7 +13,7 @@
+ . /etc/rc.subr
+ 
+ name=minidlna
+-rcvar=`set_rcvar`
++rcvar=minidlna_enable
+ command=%%PREFIX%%/sbin/minidlna
+ 
+ load_rc_config $name
+diff -urN net/minidlna/files/patch-bravia-dlnapn net/minidlna/files/patch-bravia-dlnapn
+--- net/minidlna/files/patch-bravia-dlnapn	1969-12-31 16:00:00.000000000 -0800
++++ net/minidlna/files/patch-bravia-dlnapn	2012-01-09 12:45:07.000000000 -0800
+@@ -0,0 +1,15 @@
++From:
++
++http://sourceforge.net/tracker/?func=detail&aid=3413830&group_id=243163&atid=1121518
++
++--- upnpsoap.c	2011-08-19 01:24:17.000000000 +0200
+++++ upnpsoap.c	2011-09-25 14:54:00.000000000 +0200
++@@ -915,7 +915,7 @@
++ 					     strncmp(dlna_pn, "AVC_TS_MP_HD_AC3", 16) == 0 ||
++ 					     strncmp(dlna_pn, "AVC_TS_HP_HD_AC3", 16) == 0))
++ 					{
++-						sprintf(dlna_buf, "DLNA.ORG_PN=AVC_TS_HD_50_AC3;DLNA.ORG_OP=01;DLNA.ORG_CI=0");
+++					        sprintf(dlna_buf, "DLNA.ORG_PN=AVC_TS_HD_50_AC3%s", dlna_pn + 16);
++ 						add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
++ 						        resolution, dlna_buf, mime, detailID, ext, passed_args);
++ 					}
+diff -urN net/minidlna/files/patch-coverpic net/minidlna/files/patch-coverpic
+--- net/minidlna/files/patch-coverpic	1969-12-31 16:00:00.000000000 -0800
++++ net/minidlna/files/patch-coverpic	2012-01-09 12:45:07.000000000 -0800
+@@ -0,0 +1,16 @@
++From:
++
++http://sourceforge.net/tracker/?func=detail&aid=3425414&group_id=243163&atid=1121518
++
++*** tagutils/tagutils-mp3.c	2010-11-12 00:48:14.000000000 +0100
++--- tagutils/tagutils-mp3.c	2011-10-18 22:36:22.000000000 +0200
++*************** _get_mp3tags(char *file, struct song_met
++*** 78,83 ****
++--- 78,84 ----
++  		else if(!strcmp(pid3frame->id, "APIC") && !image_size)
++  		{
++  			if( (strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "image/jpeg") == 0) ||
+++ 			    (strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "image/jpg") == 0) ||
++  			    (strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "jpeg") == 0) )
++  			{
++  				image = id3_field_getbinarydata(&pid3frame->fields[4], &image_size);
+diff -urN net/minidlna/files/patch-lg net/minidlna/files/patch-lg
+--- net/minidlna/files/patch-lg	1969-12-31 16:00:00.000000000 -0800
++++ net/minidlna/files/patch-lg	2012-01-09 12:45:07.000000000 -0800
+@@ -0,0 +1,19 @@
++Patch from:
++
++http://sourceforge.net/tracker/?func=detail&aid=3459128&group_id=243163&atid=1121518
++
++diff -u -b -p -d -r1.104 upnpsoap.c
++--- upnpsoap.c	23 Nov 2011 22:41:42 -0000	1.104
+++++ upnpsoap.c	13 Dec 2011 20:45:33 -0000
++@@ -754,9 +754,9 @@ callback(void *args, int argc, char **ar
++ 			ret = strcatf(str, " refID=\"%s\"", refID);
++ 		}
++ 		ret = strcatf(str, "&gt;"
++-		                   "&lt;dc:title&gt;%s&lt;/dc:title&gt;"
+++		                   "&lt;dc:title&gt;%s%s&lt;/dc:title&gt;"
++ 		                   "&lt;upnp:class&gt;object.%s&lt;/upnp:class&gt;",
++-		                   title, class);
+++		                   title, ((strchr(title, '.') == NULL  &&  (passed_args->filter & FILTER_RES)  &&  *mime == 'v'  &&  passed_args->client == ELGDevice) ? "." : ""), class);
++ 		if( comment && (passed_args->filter & FILTER_DC_DESCRIPTION) ) {
++ 			ret = strcatf(str, "&lt;dc:description&gt;%.384s&lt;/dc:description&gt;", comment);
++ 		}
+diff -urN net/minidlna/files/patch-minidlna.c net/minidlna/files/patch-minidlna.c
+--- net/minidlna/files/patch-minidlna.c	2011-09-20 22:06:12.000000000 -0700
++++ net/minidlna/files/patch-minidlna.c	2012-01-09 12:45:07.000000000 -0800
+@@ -56,16 +56,11 @@
+ +			"\t\t[-u uid_to_run_as]\n"
+  			"\t\t[-w url] [-R] [-V] [-h]\n"
+  		        "\nNotes:\n\tNotify interval is in seconds. Default is 895 seconds.\n"
+-@@ -831,5 +855,10 @@
++@@ -831,5 +855,5 @@
+  
+  	/* set signal handler */
+ -	signal(SIGCLD, SIG_IGN);
+-+	memset(&sa, 0, sizeof(struct sigaction));
+-+	sa.sa_handler = SIG_IGN;
+-+	sa.sa_flags = SA_NOCLDSTOP|SA_NOCLDWAIT;
+-+#ifndef SIGCHLD
+-+#	define SIGCHLD	SIGCLD
+-+#endif
+++	signal(SIGCHLD, SIG_IGN);
+  	memset(&sa, 0, sizeof(struct sigaction));
+  	sa.sa_handler = sigterm;
+ @@ -849,4 +878,7 @@
+diff -urN net/minidlna/files/patch-samsung-subtitle-menu-3 net/minidlna/files/patch-samsung-subtitle-menu-3
+--- net/minidlna/files/patch-samsung-subtitle-menu-3	1969-12-31 16:00:00.000000000 -0800
++++ net/minidlna/files/patch-samsung-subtitle-menu-3	2012-01-09 12:45:07.000000000 -0800
+@@ -0,0 +1,136 @@
++From:
++
++https://sourceforge.net/tracker/?func=detail&aid=3387389&group_id=243163&atid=1121518
++
++Index: minidlnatypes.h
++===================================================================
++RCS file: /cvsroot/minidlna/minidlna/minidlnatypes.h,v
++retrieving revision 1.26
++diff -u -p -r1.26 minidlnatypes.h
++--- minidlnatypes.h	18 Aug 2011 23:24:17 -0000	1.26
+++++ minidlnatypes.h	26 Aug 2011 21:32:40 -0000
++@@ -68,7 +68,7 @@ enum file_types {
++ enum client_types {
++ 	EXbox = 1,
++ 	EPS3,
++-	ESamsungTV,
+++	ESamsungSeriesC,
++ 	EDenonReceiver,
++ 	EFreeBox,
++ 	EPopcornHour,
++Index: upnpdescgen.c
++===================================================================
++RCS file: /cvsroot/minidlna/minidlna/upnpdescgen.c,v
++retrieving revision 1.18
++diff -u -p -r1.18 upnpdescgen.c
++--- upnpdescgen.c	2 May 2011 23:50:52 -0000	1.18
+++++ upnpdescgen.c	26 Aug 2011 21:32:40 -0000
++@@ -675,18 +675,40 @@ genRootDesc(int * len)
++ {
++ 	char * str;
++ 	int tmplen;
++-	tmplen = 2048;
+++	tmplen = 2560;
++ 	str = (char *)malloc(tmplen);
++ 	if(str == NULL)
++ 		return NULL;
++ 	* len = strlen(xmlver);
++-	/*strcpy(str, xmlver); */
++ 	memcpy(str, xmlver, *len + 1);
++ 	str = genXML(str, len, &tmplen, rootDesc);
++ 	str[*len] = '\0';
++ 	return str;
++ }
++ 
+++char *
+++genRootDescSamsung(int * len)
+++{
+++	char * str;
+++	int tmplen;
+++	struct XMLElt samsungRootDesc[sizeof(rootDesc)/sizeof(struct XMLElt)];
+++	tmplen = 2560;
+++	str = (char *)malloc(tmplen);
+++	if(str == NULL)
+++		return NULL;
+++	* len = strlen(xmlver);
+++	memcpy(str, xmlver, *len + 1);
+++	/* Replace the optional modelURL and manufacturerURL fields with Samsung foo */
+++	memcpy(&samsungRootDesc, &rootDesc, sizeof(rootDesc));
+++	samsungRootDesc[8+PNPX].eltname = "/sec:ProductCap";
+++	samsungRootDesc[8+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+++	samsungRootDesc[12+PNPX].eltname = "/sec:X_ProductCap";
+++	samsungRootDesc[12+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+++	str = genXML(str, len, &tmplen, samsungRootDesc);
+++	str[*len] = '\0';
+++	return str;
+++}
+++
++ /* genServiceDesc() :
++  * Generate service description with allowed methods and 
++  * related variables. */
++Index: upnpdescgen.h
++===================================================================
++RCS file: /cvsroot/minidlna/minidlna/upnpdescgen.h,v
++retrieving revision 1.5
++diff -u -p -r1.5 upnpdescgen.h
++--- upnpdescgen.h	17 Feb 2011 23:17:24 -0000	1.5
+++++ upnpdescgen.h	26 Aug 2011 21:32:40 -0000
++@@ -74,6 +74,9 @@ struct stateVar {
++ char *
++ genRootDesc(int * len);
++ 
+++char *
+++genRootDescSamsung(int * len);
+++
++ /* for the two following functions */
++ char *
++ genContentDirectory(int * len);
++Index: upnphttp.c
++===================================================================
++RCS file: /cvsroot/minidlna/minidlna/upnphttp.c,v
++retrieving revision 1.87
++diff -u -p -r1.87 upnphttp.c
++--- upnphttp.c	18 Aug 2011 18:34:59 -0000	1.87
+++++ upnphttp.c	26 Aug 2011 21:32:40 -0000
++@@ -304,10 +304,12 @@ intervening space) by either an integer 
++ 				}
++ 				else if(strstrc(p, "SEC_HHP_", '\r'))
++ 				{
++-					h->req_client = ESamsungTV;
+++					h->req_client = ESamsungSeriesC;
++ 					h->reqflags |= FLAG_SAMSUNG;
++ 					h->reqflags |= FLAG_DLNA;
++ 					h->reqflags |= FLAG_NO_RESIZE;
+++					if(strstrc(p, "SEC_HHP_TV", '\r'))
+++						h->reqflags |= FLAG_SAMSUNG_TV;
++ 				}
++ 				else if(strncmp(p, "SamsungWiselinkPro", 18)==0)
++ 				{
++@@ -844,6 +846,10 @@ ProcessHttpQuery_upnphttp(struct upnphtt
++ 				sendXMLdesc(h, genRootDesc);
++ 				friendly_name[i] = '\0';
++ 			}
+++			else if( h->reqflags & FLAG_SAMSUNG_TV )
+++			{
+++				sendXMLdesc(h, genRootDescSamsung);
+++			}
++ 			else
++ 			{
++ 				sendXMLdesc(h, genRootDesc);
++Index: upnphttp.h
++===================================================================
++RCS file: /cvsroot/minidlna/minidlna/upnphttp.h,v
++retrieving revision 1.27
++diff -u -p -r1.27 upnphttp.h
++--- upnphttp.h	18 Aug 2011 23:24:17 -0000	1.27
+++++ upnphttp.h	26 Aug 2011 21:32:40 -0000
++@@ -113,7 +113,8 @@ struct upnphttp {
++ #define FLAG_NO_RESIZE          0x02000000
++ #define FLAG_MS_PFS             0x04000000 // Microsoft PlaysForSure client
++ #define FLAG_SAMSUNG            0x08000000
++-#define FLAG_AUDIO_ONLY         0x10000000
+++#define FLAG_SAMSUNG_TV         0x10000000
+++#define FLAG_AUDIO_ONLY         0x20000000
++ 
++ #define FLAG_FREE_OBJECT_ID     0x00000001
++ #define FLAG_ROOT_CONTAINER     0x00000002
