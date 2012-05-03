@@ -69,7 +69,7 @@ def main_loop():
         os.unlink(SOCKFILE)
     server = SocketServer.UnixStreamServer(SOCKFILE, XMLRPCHandler)
     os.chmod(SOCKFILE, 0o700)
-    dispatcher.register_instance(Multiplex("bash", "xterm-color"))
+    dispatcher.register_instance(Multiplex("/usr/local/bin/bash", "xterm-color"))
     server.dispatcher = dispatcher
     server.serve_forever()
 
@@ -1194,18 +1194,21 @@ class Multiplex:
             if len(ls) < 2:
                 ls = ['en_US', 'UTF-8']
             try:
-                os.putenv('COLUMNS', str(w))
-                os.putenv('LINES', str(h))
-                os.putenv('TERM', self.env_term)
-                os.putenv('PATH', os.environ['PATH'])
-                os.putenv('LANG', ls[0] + '.UTF-8')
-                os.chdir('/root')
+                env = {
+                    'COLUMNS': str(w),
+                    'LINES': str(h),
+                    'TERM': self.env_term,
+                    'PATH': os.environ['PATH'],
+                    'LANG': ls[0] + '.UTF-8',
+                    'HOME': '/root',
+                    'SHELL': self.cmd,
+                }
 
                 libc = cdll.LoadLibrary('libc.so.7')
                 buff = create_string_buffer(len(self.cmd)+1)
                 buff.value = self.cmd
                 libc.setproctitle(byref(buff))
-                os.system(self.cmd)
+                os.execve(self.cmd, ['bash'], env)
             except (IOError, OSError), e:
                 pass
 #           self.proc_finish(sid)
