@@ -72,6 +72,7 @@ if [ -z "${SVNVERSION}" ]; then
 		svn=$(sh -c "echo r\$(cd ${AVATAR_ROOT} && /usr/bin/env LANG=C $svnversion)") || svn=""
 	fi
 	[ "${svn}" = "rUnversioned directory" ] && svn=""
+	echo "${svn}" | grep -q '^^rUncommitted' && svn="" >/dev/null 2>&1
 	if [ -z "$svn" ]; then
 		if [ -n "$git_cmd" ] ; then
 			git=`$git_cmd rev-parse --verify --short HEAD 2>/dev/null`

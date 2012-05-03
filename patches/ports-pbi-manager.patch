@@ -10,3 +10,1521 @@
  
  USE_BZIP2=	yes
  NO_BUILD=	yes
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ ports-mgmt/pbi-manager/files/patch-pbi-manager	2012-05-03 00:47:48.644783640 -0700
+@@ -0,0 +1,1515 @@
++--- pbi-manager	2012-05-03 00:27:00.194793821 -0700
+++++ pbi-manager	2012-05-03 00:27:12.364792756 -0700
++@@ -161,8 +161,10 @@
++ usage: `basename $0` [options] oldpbi newpbi
++                 
++ Options:
++-  -o outdir    -- Save the .PBP file to outdir
++-  --sign key   -- Sign the PBI with specified openssl key
+++  -o outdir      -- Save the .PBP file to outdir
+++  --sign key     -- Sign the PBI with specified openssl key
+++  --no-checksig  -- Ignore signature verification and force install
+++
++ 
++ EOF
++         exit_trap
++@@ -403,6 +405,15 @@
++                 case "$1" in
++                 -v)     PBI_VERBOSE="YES" 
++                         ;;
+++         --refresh)     # Schedule us to refresh the index
+++			echo "Your meta and index files will begin refreshing in a moment..."
+++			echo "Details available in /var/log/pbid.log"
+++			rm ${PBI_DBINDEXDIR}/*.time >/dev/null 2>/dev/null
+++			if [ -e "/usr/local/etc/rc.d/pbid" ]; then
+++			   /usr/local/etc/rc.d/pbid restart >/dev/null 2>/dev/null
+++			fi
+++			exit 0
+++                        ;;
++ 		esac
++ 		shift
++ 	done
++@@ -443,6 +454,7 @@
++             --sign)     if [ $# -eq 1 ]; then usage_makepatch_pbi; fi
++                         shift; PBI_SSLPRIVKEY="$1"
++                         ;;
+++     --no-checksig)     PBI_SKIPSIGVERIFY="YES" ;;
++                  *)	if [ $# -gt 2  ]; then usage_makepatch_pbi; fi
++                        	PBI_OLDFILENAME="$1"
++ 			shift
++@@ -617,7 +629,7 @@
++ 		     if [ ! -f "${PBI_IT_ADDINDEX}" ] ; then 
++ 			exit_err "No such file ${PBI_IT_ADDINDEX}"
++ 		     fi
++-		     if [ ! -z "${PBI_IT_ADDKEEP}" ] ; then 
+++		     if [ -n "${PBI_IT_ADDKEEP}" ] ; then 
++ 			expr ${PBI_IT_ADDKEEP} + 1 >/dev/null 2>/dev/null
++ 			if [ "$?" != "0" ] ; then
++ 				exit_err "-k option must be a integer!"
++@@ -653,7 +665,7 @@
++         done
++ 
++ 	# Get / check the repoid
++-	if [ ! -z "${PBI_BROWSE_RID}" ] ; then
+++	if [ -n "${PBI_BROWSE_RID}" ] ; then
++ 		ls ${PBI_DBREPODIR}/${PBI_BROWSE_RID}.* >/dev/null 2>/dev/null
++ 		if [ "$?" != "0" ] ; then
++ 			exit_err "The specified repoid ${PBI_BROWSE_RID} does not exist!"
++@@ -700,11 +712,11 @@
++ 	if [ "${PBI_LISTREPO_DOWN}" = "YES" -a -z "${PBI_LISTREPO_ID}" ]; then
++ 		exit_err "Missing Repo ID to move down in priority."
++ 	fi
++-	if [ ! -z "${PBI_LISTREPO_MIRROR}" -a -z "${PBI_LISTREPO_ID}" ]; then
+++	if [ -n "${PBI_LISTREPO_MIRROR}" -a -z "${PBI_LISTREPO_ID}" ]; then
++ 		exit_err "Missing Repo ID to change a specific mirror URL."
++ 	fi
++ 
++-	if [ ! -z "${PBI_LISTREPO_ID}" ] ; then
+++	if [ -n "${PBI_LISTREPO_ID}" ] ; then
++ 		ls ${PBI_DBREPODIR}/${PBI_LISTREPO_ID}.* >/dev/null 2>/dev/null
++ 		if [ "$?" != "0" ] ; then
++ 			exit_err "The specified repoid ${PBI_LISTREPO_ID} does not exist!"
++@@ -838,7 +850,7 @@
++                 # If extracting to a alt-outdir, set it now
++                 PBI_PROGDIRPATH="`pwd`/${PBI_PROGDIRNAME}"
++         
++-                if [ ! -z "${PBI_ALTEXTRACT_DIR}" ]; then
+++                if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
++                         PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
++                 fi      
++         else
++@@ -935,7 +947,7 @@
++ 		# If extracting to a alt-outdir, set it now
++ 		PBI_PROGDIRPATH="`pwd`/${PBI_PROGDIRNAME}"
++ 
++-		if [ ! -z "${PBI_ALTEXTRACT_DIR}" ]; then
+++		if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
++ 			PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
++ 		fi
++ 	else
++@@ -949,7 +961,7 @@
++         while [ $# -gt 0 ]; do
++                 case "$1" in
++                 -c)     if [ $# -eq 1 ]; then usage_autob_pbi; fi
++-                        if [ ! -z "${PBI_AB_CONFDIR}" ]; then usage_autob_pbi; fi
+++                        if [ -n "${PBI_AB_CONFDIR}" ]; then usage_autob_pbi; fi
++                         shift
++                         get_abspath "$1"
++                         PBI_AB_CONFDIR="$_ABSPATH"
++@@ -1060,12 +1072,12 @@
++         done
++ 
++ 	# Make sure this port exists
++-        if [ ! -z "${PBI_MAKEPORT}" -a ! -d "${PORTSDIR}/${PBI_MAKEPORT}" ]; then
+++        if [ -n "${PBI_MAKEPORT}" -a ! -d "${PORTSDIR}/${PBI_MAKEPORT}" ]; then
++ 		exit_err "No port (${PORTSDIR}/${PBI_MAKEPORT})"
++ 	fi
++ 
++ 	# Load the name / version from specified port
++-        if [ ! -z "${PBI_MAKEPORT}" ]; then
+++        if [ -n "${PBI_MAKEPORT}" ]; then
++ 		get_pbi_progversion
++ 		get_pbi_progname
++         fi
++@@ -1078,11 +1090,11 @@
++ 
++ # Override any pbi.conf values with passed command-line values
++ parse_cmdline_overrides() {
++-	if [ ! -z "${PBI_CNAME}" ] ; then PBI_PROGNAME="${PBI_CNAME}" ; fi
++-	if [ ! -z "${PBI_CVERSION}" ] ; then PBI_PROGVERSION="${PBI_CVERSION}" ; fi
++-	if [ ! -z "${PBI_CWEB}" ] ; then PBI_PROGWEB="${PBI_CWEB}" ; fi
++-	if [ ! -z "${PBI_CAUTHOR}" ] ; then PBI_PROGAUTHOR="${PBI_CAUTHOR}" ; fi
++-	if [ ! -z "${PBI_CICON}" ] ; then PBI_PROGICON="${PBI_CICON}" ; fi
+++	if [ -n "${PBI_CNAME}" ] ; then PBI_PROGNAME="${PBI_CNAME}" ; fi
+++	if [ -n "${PBI_CVERSION}" ] ; then PBI_PROGVERSION="${PBI_CVERSION}" ; fi
+++	if [ -n "${PBI_CWEB}" ] ; then PBI_PROGWEB="${PBI_CWEB}" ; fi
+++	if [ -n "${PBI_CAUTHOR}" ] ; then PBI_PROGAUTHOR="${PBI_CAUTHOR}" ; fi
+++	if [ -n "${PBI_CICON}" ] ; then PBI_PROGICON="${PBI_CICON}" ; fi
++ }
++ 
++ # Parse the command line
++@@ -1093,7 +1105,7 @@
++                         ;;
++                 -c)
++                         if [ $# -eq 1 ]; then usage_make_pbi; fi
++-                        if [ ! -z "${PBI_CONFDIR}" ]; then usage_make_pbi; fi
+++                        if [ -n "${PBI_CONFDIR}" ]; then usage_make_pbi; fi
++                         shift
++ 			get_abspath "$1"
++ 			PBI_CONFDIR="$_ABSPATH"
++@@ -1120,7 +1132,7 @@
++ 			PBI_CREATE_OUTDIR="$_ABSPATH"
++                         ;;
++                 -p)	if [ $# -eq 1 ]; then usage_make_pbi; fi
++-                        if [ ! -z "${PBI_MAKEPREFIX}" ]; then usage_make_pbi; fi
+++                        if [ -n "${PBI_MAKEPREFIX}" ]; then usage_make_pbi; fi
++                         shift; PBI_MAKEPREFIX="$1"
++                         ;;
++             --sign)	if [ $# -eq 1 ]; then usage_create_pbi; fi
++@@ -1138,10 +1150,10 @@
++ 
++ 	# Override some locations if working in chroot environment
++ 	if [ "`basename $0`" = "pbi_makeport_chroot" ] ; then 
++-		if [ ! -z "${PBI_CONFDIR}" ] ; then PBI_CONFDIR="/pbimodule" ; fi
++-		if [ ! -z "${PBI_SSLPRIVKEY}" ] ; then PBI_SSLPRIVKEY="/privkey.pem" ; fi
++-		if [ ! -z "${PBI_CREATE_OUTDIR}" ] ; then PBI_CREATE_OUTDIR="/pbiout" ; fi
++-		if [ ! -z "${PORTSDIR}" ] ; then PORTSDIR="/usr/ports" ; fi
+++		if [ -n "${PBI_CONFDIR}" ] ; then PBI_CONFDIR="/pbimodule" ; fi
+++		if [ -n "${PBI_SSLPRIVKEY}" ] ; then PBI_SSLPRIVKEY="/privkey.pem" ; fi
+++		if [ -n "${PBI_CREATE_OUTDIR}" ] ; then PBI_CREATE_OUTDIR="/pbiout" ; fi
+++		if [ -n "${PORTSDIR}" ] ; then PORTSDIR="/usr/ports" ; fi
++ 	fi
++ 
++ 	# Make sure this port exists
++@@ -1150,12 +1162,12 @@
++ 	fi
++ 
++ 	# Make sure we have a valid PBI_CONFDIR
++-	if [ ! -z "${PBI_CONFDIR}" -a ! -d "${PBI_CONFDIR}" ] ; then
+++	if [ -n "${PBI_CONFDIR}" -a ! -d "${PBI_CONFDIR}" ] ; then
++ 		exit_err "Invalid confdir (${PBI_CONFDIR})"
++ 	fi
++ 
++ 	# Source the config file
++-	if [ ! -z "${PBI_CONFDIR}" ]; then load_pbi_conffile ; fi
+++	if [ -n "${PBI_CONFDIR}" ]; then load_pbi_conffile ; fi
++ 
++         if [ -z "${PBI_MAKEPORT}" ]; then
++                 usage_make_pbi
++@@ -1172,7 +1184,7 @@
++      --enable-auto)	PBI_UPENABLEAUTO="YES" ;; 
++       --update-all)	PBI_UPDATEAPP="ALL" ;; 
++                  *)     if [ $# -gt 1 ]; then usage_update_pbi; fi
++-			if [ ! -z "$PBI_UPDATEAPP" ] ; then usage_update_pbi ; fi
+++			if [ -n "$PBI_UPDATEAPP" ] ; then usage_update_pbi ; fi
++ 			if [ ! -e "${PBI_DBAPPDIR}/${1}" ] ; then
++                                 exit_err "can't find installed pbi (${1})"
++                         fi
++@@ -1182,15 +1194,15 @@
++                 shift
++         done
++ 
++-	if [ "${PBI_UPDATEAPP}" = "ALL" -a ! -z "${PBI_UPCHECK}" ] ; then
+++	if [ "${PBI_UPDATEAPP}" = "ALL" -a -n "${PBI_UPCHECK}" ] ; then
++                 usage_update_pbi
++         fi
++ 
++ 	# Make sure we aren't trying to enable auto-updating for ALL
++-	if [ "${PBI_UPDATEAPP}" = "ALL" -a ! -z "${PBI_UPENABLEAUTO}" ] ; then
+++	if [ "${PBI_UPDATEAPP}" = "ALL" -a -n "${PBI_UPENABLEAUTO}" ] ; then
++                 usage_update_pbi
++         fi
++-	if [ -z "${PBI_UPDATEAPP}" -a ! -z "${PBI_UPENABLEAUTO}" ] ; then
+++	if [ -z "${PBI_UPDATEAPP}" -a -n "${PBI_UPENABLEAUTO}" ] ; then
++                 usage_update_pbi
++         fi
++ 
++@@ -1246,8 +1258,10 @@
++ 	FBSDMAJOR=`uname -r | cut -c 1`
++         PROGBASE="/usr/local" 
++ 	SYS_LOCALBASE="/usr/local"
++-	PBI_APPDIR="/usr/pbi"
++-	PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world.tbz"
+++	if [ -z "${PBI_APPDIR}" -o "`basename $0`" = "pbi_makeport_chroot" ] ; then
+++		PBI_APPDIR="/usr/pbi"
+++        fi
+++	PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world.txz"
++ 	if [ `id -u` = "0" ] ; then 
++ 		PBI_HASHDIR="${PBI_APPDIR}/.hashdir"
++ 	else
++@@ -1452,18 +1466,18 @@
++ 		load_pbi_conffile
++ 
++ 		# If we have PBI_PROGVERSION now set
++-		if [ ! -z "${PBI_PROGVERSION}" ] ; then return 0 ; fi
+++		if [ -n "${PBI_PROGVERSION}" ] ; then return 0 ; fi
++ 	else
++ 		return 0
++ 	fi
++ 
++-	if [ -z "${PBI_PROGVERSION}" -a ! -z "${PORTSDIR}" -a ! -z "${PBI_MAKEPORT}" ] ; then
+++	if [ -z "${PBI_PROGVERSION}" -a -n "${PORTSDIR}" -a -n "${PBI_MAKEPORT}" ] ; then
++ 		PORTVER="`make -C ${PORTSDIR}/${PBI_MAKEPORT} -V DISTVERSION 2>/dev/null`"
++ 
++   		# Check if we have a portrevision to use in version number
++   		PORTREV=""
++   		PORTREV="`make -C ${PORTSDIR}/${PBI_MAKEPORT} -V PORTREVISION 2>/dev/null`"
++-  		if [ ! -z "${PORTREV}" -a "${PORTREV}" != "0" ]
+++  		if [ -n "${PORTREV}" -a "${PORTREV}" != "0" ]
++  		then
++    			PORTVER="${PORTVER}_${PORTREV}"
++ 		fi
++@@ -1479,7 +1493,7 @@
++ 	fi
++ 
++ 	# If we have a REVISION, use it as well
++-	if [ ! -z "$PBI_PROGREVISION" ] ; then
+++	if [ -n "$PBI_PROGREVISION" ] ; then
++ 		PBI_PROGVERSION="${PBI_PROGVERSION}_${PBI_PROGREVISION}"
++ 	fi
++ }
++@@ -1493,7 +1507,7 @@
++ 		return 0
++ 	fi
++ 
++-	if [ -z "${PBI_PROGNAME}" -a ! -z "${PORTSDIR}" -a ! -z "${PBI_MAKEPORT}" ] ; then
+++	if [ -z "${PBI_PROGNAME}" -a -n "${PORTSDIR}" -a -n "${PBI_MAKEPORT}" ] ; then
++ 		PBI_PROGNAME="`make -C ${PORTSDIR}/${PBI_MAKEPORT} -V PORTNAME`"
++ 	else
++ 		exit_err "Failed to locate PBI_PROGNAME"
++@@ -1508,6 +1522,9 @@
++ 
++ 	tmp="`echo ${PBI_PROGNAME} | tr -d ' ' | tr '[A-Z]' '[a-z]'`"
++ 	ARCH="`uname -m`"
+++	if [ -n "${PBI_OSARCH}" ] ; then
+++		ARCH="${PBI_OSARCH}"
+++	fi
++ 	if [ -z "${PBI_PROGDIRNAME}" ] ; then
++ 		PBI_PROGDIRNAME="${tmp}-${ARCH}"
++ 	fi
++@@ -1535,17 +1552,17 @@
++ 		echo "Cleaning up patch data..."
++ 	fi
++ 
++-	if [ ! -z "${_pbiNewDir}" -a -d "${_pbiNewDir}" -a "${_pbiNewDir}" != "/" ] ; then
+++	if [ -n "${_pbiNewDir}" -a -d "${_pbiNewDir}" -a "${_pbiNewDir}" != "/" ] ; then
++ 	 	rm -rf "${_pbiNewDir}" >/dev/null 2>/dev/null
++ 	 	chflags -R noschg "${_pbiNewDir}" >/dev/null 2>/dev/null
++ 	 	rm -rf "${_pbiNewDir}" >/dev/null 2>/dev/null
++ 	fi
++-	if [ ! -z "${_pbiOldDir}" -a -d "${_pbiOldDir}" -a "${_pbiOldDir}" != "/" ] ; then
+++	if [ -n "${_pbiOldDir}" -a -d "${_pbiOldDir}" -a "${_pbiOldDir}" != "/" ] ; then
++ 	 	rm -rf "${_pbiOldDir}" >/dev/null 2>/dev/null
++ 	 	chflags -R noschg "${_pbiOldDir}" >/dev/null 2>/dev/null
++ 	 	rm -rf "${_pbiOldDir}" >/dev/null 2>/dev/null
++ 	fi
++-	if [ ! -z "${_pbiPatchDir}" -a -d "${_pbiPatchDir}" -a "${_pbiPatchDir}" != "/" ] ; then
+++	if [ -n "${_pbiPatchDir}" -a -d "${_pbiPatchDir}" -a "${_pbiPatchDir}" != "/" ] ; then
++ 	 	rm -rf "${_pbiPatchDir}" >/dev/null 2>/dev/null
++ 	 	chflags -R noschg "${_pbiPatchDir}" >/dev/null 2>/dev/null
++ 	 	rm -rf "${_pbiPatchDir}" >/dev/null 2>/dev/null
++@@ -1555,7 +1572,7 @@
++ # Check if we need to delete a remotely dl'd file
++ clean_remote_dl() {
++ 	# If this was a remote fetch, remove dl'd file
++-	if [ "$PBI_REMOTEFETCH" = "YES" -a ! -z "$PBI_FILENAME" ]; then 
+++	if [ "$PBI_REMOTEFETCH" = "YES" -a -n "$PBI_FILENAME" ]; then 
++ 		rm "$PBI_FILENAME" >/dev/null 2>/dev/null
++ 	fi
++ }
++@@ -1593,7 +1610,7 @@
++ 		echo "WRKDIRPREFIX=/usr/wrkdirprefix" >> ${MAKE_CONF}
++ 	fi
++ 
++-	if [ ! -z "$PBI_MAKEOPTS" ] ; then
+++	if [ -n "$PBI_MAKEOPTS" ] ; then
++ 		# Check if we have custom make opts
++ 		echo "${PBI_MAKEOPTS}" >> ${MAKE_CONF}
++ 	fi
++@@ -2000,15 +2017,15 @@
++ 	_rArch=`uname -m`
++ 
++ 	# Figure out which type of display we are doing
++-	if [ ! -z "$PBI_BROWSE_LISTALLPBI" ] ; then
+++	if [ -n "$PBI_BROWSE_LISTALLPBI" ] ; then
++ 		echo "Using RepoID: $PBI_BROWSE_RID"
++ 		echo "Listing all available PBIs"
++ 		grep -i -e "^App=" $PBI_BROWSE_METAFILE > ${PBI_TMPDIR}/.meta.$$
++-	elif [ ! -z "$PBI_BROWSE_CAT" ] ; then
+++	elif [ -n "$PBI_BROWSE_CAT" ] ; then
++ 		echo "Using RepoID: $PBI_BROWSE_RID"
++ 		echo "Available PBIs for Category: $PBI_BROWSE_CAT"
++ 		grep -i -e "^App=" -i -e ";${PBI_BROWSE_CAT};" $PBI_BROWSE_METAFILE > ${PBI_TMPDIR}/.meta.$$
++-	elif [ ! -z "$PBI_BROWSE_SEARCH" ] ; then
+++	elif [ -n "$PBI_BROWSE_SEARCH" ] ; then
++ 		echo "Using RepoID: $PBI_BROWSE_RID"
++ 		echo "Searching for: $PBI_BROWSE_SEARCH"
++ 		grep -i -e "^App=" $PBI_BROWSE_METAFILE > ${PBI_TMPDIR}/.meta.$$
++@@ -2023,7 +2040,7 @@
++ 		aName=`echo $line | cut -d ';' -f 1 2>/dev/null`
++ 
++ 		# Make sure this is from the correct category
++-		if [ ! -z "$PBI_BROWSE_CAT" ] ; then
+++		if [ -n "$PBI_BROWSE_CAT" ] ; then
++ 			_cCheck=`echo $catCheck | tr '[:lower:]' '[:upper:]'`
++ 			_cCheck2=`echo $PBI_BROWSE_CAT | tr '[:lower:]' '[:upper:]'`
++ 			if [ "$_cCheck" != "$_cCheck2" ]; then 
++@@ -2067,12 +2084,12 @@
++ 
++ 		# Check for a translation to the description
++ 		get_meta_trans "App" "$cName" "${PBI_BROWSE_METAFILE}"
++-		if [ ! -z "$MTRANS" ] ; then
+++		if [ -n "$MTRANS" ] ; then
++ 			aDesc="$MTRANS"
++ 		fi
++ 
++ 		# Search the description / keywords
++-		if [ ! -z "$PBI_BROWSE_SEARCH" ] ; then
+++		if [ -n "$PBI_BROWSE_SEARCH" ] ; then
++ 			echo "$aName,$aDesc,$aKeywords,$MTRANS" | grep -i "$PBI_BROWSE_SEARCH" >/dev/null 2>/dev/null
++ 			if [ "$?" != "0" ]; then continue ; fi
++ 		fi
++@@ -2084,10 +2101,10 @@
++ 		echo "------------------------------------"
++ 		echo "Application: $aName"
++ 		echo "Version: $PBI_UPNVER"
++-		if [ ! -z "$PBI_UPSIZE" ] ; then
+++		if [ -n "$PBI_UPSIZE" ] ; then
++ 			echo "Size: $PBI_UPSIZE"
++ 		fi
++-		if [ ! -z "$PBI_BROWSE_LISTALLPBI" ] ; then
+++		if [ -n "$PBI_BROWSE_LISTALLPBI" ] ; then
++ 			echo "Category: $catCheck"
++ 		fi
++ 		echo "Created: `echo $PBI_UPMDATE`"
++@@ -2133,7 +2150,7 @@
++ 		
++ 		# Check for a translation to the description
++ 		get_meta_trans "Cat" "$cName" "${PBI_BROWSE_METAFILE}"
++-		if [ ! -z "$MTRANS" ] ; then
+++		if [ -n "$MTRANS" ] ; then
++ 			cDesc="$MTRANS"
++ 		fi
++ 
++@@ -2167,7 +2184,7 @@
++ 	for l in $lCheck
++ 	do
++ 		catTrans=`grep "^${tag}\[$l\]=${name}" ${metaFile}`	
++-		if [ ! -z "$catTrans" ] ; then
+++		if [ -n "$catTrans" ] ; then
++ 			MTRANS=`echo $catTrans | cut -d ";" -f 2`
++ 			return
++ 		fi
++@@ -2183,15 +2200,15 @@
++ 	if [ -z "$PBI_LISTREPO_ID" ] ; then
++ 		list_all_pbi_repo
++ 	else
++-		if [ ! -z "${PBI_LISTREPO_UP}" ]; then
+++		if [ -n "${PBI_LISTREPO_UP}" ]; then
++ 			require_root
++ 			move_repo_up "${PBI_LISTREPO_ID}" 
++ 			list_all_pbi_repo
++-		elif [ ! -z "${PBI_LISTREPO_DOWN}" ] ; then
+++		elif [ -n "${PBI_LISTREPO_DOWN}" ] ; then
++ 			require_root
++ 			move_repo_down "${PBI_LISTREPO_ID}"
++ 			list_all_pbi_repo
++-		elif [ ! -z "${PBI_LISTREPO_MIRROR}" ] ; then
+++		elif [ -n "${PBI_LISTREPO_MIRROR}" ] ; then
++ 			require_root
++ 			change_repo_mirror "${PBI_LISTREPO_ID}"
++ 			listrepo_details "${PBI_LISTREPO_ID}"
++@@ -2345,8 +2362,16 @@
++         newDir="${PBI_DBAPPDIR}/${_pbilow}-${PBI_PATCHVERSION}-${PBI_APPARCH}"
++ 	mv "$oldDir" "$newDir"
++ 	rm ${newDir}/*.sha1 >/dev/null 2>/dev/null
+++
+++	# Register the app
++ 	pbi_add_register_app	
++ 
+++        # Check if we need to run a post-install.sh script again
+++	if [ -e "${newDir}/${MOD_POSTINS}" ] ; then
+++          export_script_vars
+++          sh "${newDir}/${MOD_POSTINS}"
+++        fi
+++
++ 	# Cleanup after our selves
++ 	if [ -d "$PBI_EXTRACTDIR" ] ; then
++ 		echo "Cleaning up..."
++@@ -2628,11 +2653,11 @@
++ 	echo "-----------------------------------------------------"
++ 	echo "Name: ${PBI_PROGNAME}"
++ 
++-	if [ ! -z "$PBI_PATCHVERSION" ] ; then
+++	if [ -n "$PBI_PATCHVERSION" ] ; then
++ 		echo "PatchTarget: $PBI_PATCHTARGET"
++ 	fi
++ 
++-	if [ ! -z "$PBI_INSTALLED_BY" ] ; then
+++	if [ -n "$PBI_INSTALLED_BY" ] ; then
++ 		echo "InstalledBy: $PBI_INSTALLED_BY"
++ 	fi
++ 
++@@ -2660,7 +2685,7 @@
++ 		*) echo "Signature: <Unknown>" ;;
++ 	esac
++ 
++-	if [ ! -z "${PBI_REPO}" ] ; then
+++	if [ -n "${PBI_REPO}" ] ; then
++ 		local _rDesc="`cat ${PBI_DBREPODIR}/*.${PBI_REPO} | grep "Desc:" | sed 's|Desc: ||g'`"
++ 		local _rID="`ls ${PBI_DBREPODIR}/*.${PBI_REPO}`"
++ 		_rID=`basename $_rID | cut -d '.' -f 1`
++@@ -2751,7 +2776,7 @@
++ 	
++ 	# Extract the header files 
++ 	tar xvf "${PBI_FILENAME}" -C "${PBI_HEADER_TMPDIR}" >/dev/null 2>/dev/null
++-	if [ "$?" != "0" ] ; then exit_err "Failed to read PBI header!" ; fi
+++	if [ "$?" != "0" ] ; then exit_err "Failed to read PBI header! Possible corrupt PBI, or wrong PBI version for this OS." ; fi
++ 
++ }
++ 
++@@ -2933,7 +2958,7 @@
++ 		file="`echo $hl | sed 's/:::.*$//g'`"
++ 
++ 		# If we are trying to merge a PBI which was deleted, stop
++-		if [ ! -z "${2}" -a -e "${2}" ] ; then
+++		if [ -n "${2}" -a -e "${2}" ] ; then
++ 			echo "HASHDONE - Deleted" 
++ 			return
++ 		fi
++@@ -3039,7 +3064,7 @@
++         tar cvf - -C "${PBI_HEADER_TMPDIR}" . 2>/dev/null | tar xvf - -C "$dir" 2>/dev/null
++ 
++ 	# If this was a patch, use the original path
++-	if [ ! -z "${PBI_ORIGPROGDIRPATH}" ] ; then
+++	if [ -n "${PBI_ORIGPROGDIRPATH}" ] ; then
++ 		echo "${PBI_ORIGPROGDIRPATH}" >${dir}/pbi_installedpath
++ 	else
++ 		echo "${PBI_PROGDIRPATH}" >${dir}/pbi_installedpath
++@@ -3047,7 +3072,7 @@
++ 
++ 	# See which repo / key this PBI associates to, if any
++ 	check_valid_sigs "${dir}"
++-	if [ ! -z "$PBI_VALIDKEYSIG" ] ; then
+++	if [ -n "$PBI_VALIDKEYSIG" ] ; then
++ 		_rMd5="`echo ${PBI_VALIDKEYSIG} | cut -d '.' -f 1`"
++ 		echo "$_rMd5" | sed "s|${PBI_DBKEYDIR}/||g" > ${dir}/pbi_repo
++ 	fi
++@@ -3174,6 +3199,7 @@
++ 	tar="xvf -"
++ 
++ 	if [ "$PBI_VERBOSE" = "YES" ] ; then
+++		echo "TOTALFILES: ${PBI_ARCHIVE_COUNT}"
++ 		tail +$PBI_SKIP_ARCHLINES "${PBI_FILENAME}" | tar ${tar} -C "${PBI_EXTRACTDIR}"
++ 		err="$?"
++ 	else
++@@ -3324,7 +3350,7 @@
++ 
++ 		# Check if this hash file is excluded
++ 		_hfound="0"
++-		if [ ! -z "${PBI_HASH_EXCLUDES}" ] ; then
+++		if [ -n "${PBI_HASH_EXCLUDES}" ] ; then
++ 			for _hexcl in ${PBI_HASH_EXCLUDES}
++ 			do
++ 				if [ "$_hexcl" = "$line" ] ; then
++@@ -3381,6 +3407,7 @@
++ 		_wraponly="NO"
++ 		_crashhandle="YES"
++ 		_keep="YES"
+++		_linux="NO"
++                 echo $line | tr '\t' ' ' | tr -s ' ' | grep "^#" >/dev/null 2>/dev/null
++                 if [ "$?" != "0" ] ; then
++                         src="`echo $line | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 1`"
++@@ -3403,6 +3430,7 @@
++ 				       nocrash) _crashhandle="NO" ;;
++ 				          keep) _keep="YES" ;;
++ 				       replace) _keep="NO" ;;
+++				         linux) _bin="YES" ; _linux="YES" ;;
++ 					*) echo "Warning: Unknown option \"$i\" in ${MOD_EXTLINKFILE}";;
++ 				esac
++ 				
++@@ -3422,7 +3450,7 @@
++ 				if [ "$?" = "0" ] ; then continue ; fi
++ 				
++ 				# Make the binary wrapper
++-				mk_path_wrappers "$src" "$tar" "$_crashhandle" "$_wraponly"
+++				mk_path_wrappers "$src" "$tar" "$_crashhandle" "$_wraponly" "$_linux"
++ 
++ 				# This binary is done, save it now so we don't duplicate later
++ 				_donewrap="$_donewrap #${src}#"
++@@ -3465,6 +3493,7 @@
++ 	tar="${2}"
++ 	ch="${3}"
++ 	onlywrap="${4}"
+++	linwrap="${5}"
++ 
++ 	# Check if the fake-bin wrapper already exists, and if so use
++ 	# a different name
++@@ -3506,12 +3535,25 @@
++   done
++ fi
++ 
++-#Setup our LD_LIBRARY_PATH variable with all found lib dirs
++-LD_LIBRARY_PATH="${LDCONFIGDIRS}:${PROGDIR}/lib/:${PROGDIR}/kde4/lib:${PROGDIR}/lib/qt4"
++-LD_32_LIBRARY_PATH="${LDCONFIGDIRS}:${PROGDIR}/lib/:${PROGDIR}/kde4/lib:${PROGDIR}/lib/qt4"
+++'>>${dir}/${fbin}
+++
+++	# If this is marked as a linux app, make sure we point to the linux libs first
+++	if [ "$linwrap" = "YES" ] ; then
+++		echo '#Setup our LD_LIBRARY_PATH variable with all found lib dirs
+++LD_LIBRARY_PATH="${PROGDIR}/linuxlib"
+++LD_32_LIBRARY_PATH="${PROGDIR}/linuxlib"
+++export LD_LIBRARY_PATH LD_32_LIBRARY_PATH
+++
+++'>>${dir}/${fbin}
+++	else
+++	# Not a linux app, set regular LD_LIBRARY_PATH stuff
+++		echo '#Setup our LD_LIBRARY_PATH variable with all found lib dirs
+++LD_LIBRARY_PATH="${LDCONFIGDIRS}:${PROGDIR}/lib"
+++LD_32_LIBRARY_PATH="${LDCONFIGDIRS}:${PROGDIR}/lib"
++ export LD_LIBRARY_PATH LD_32_LIBRARY_PATH
++ 
++ '>>${dir}/${fbin}
+++	fi
++ 
++ 	# See if we need the crash-handler
++ 	if [ "$ch" = "YES" ] ; then
++@@ -3773,6 +3815,8 @@
++ 
++ # Create a dir for staging the final archive
++ mk_stage_dir() {
+++	local _excOpts=""
+++
++ 	PBI_STAGEDIR="${PBI_PROGDIRPATH}/.stagedir"
++ 	echo "Creating Stage Dir: ${PBI_STAGEDIR}"
++ 	if [ -e "${PBI_STAGEDIR}" ] ; then 
++@@ -3783,7 +3827,7 @@
++ 	mkdir -p ${PBI_STAGEDIR}
++ 
++ 	# Build module list of excludes
++-	if [ ! -z "$PBI_EXCLUDELIST" ] ; then
+++	if [ -n "$PBI_EXCLUDELIST" ] ; then
++ 		for excl in $PBI_EXCLUDELIST
++ 		do
++ 			if [ -z "$_excOpts" ] ; then
++@@ -3864,9 +3908,19 @@
++ 
++ # Start copying pbi details into header file
++ save_pbi_details_to_header() {
+++	local _osArch="`uname -m`"
+++	if [ -n "${PBI_OSARCH}" ] ; then
+++		_osArch="${PBI_OSARCH}"
+++	fi
+++
+++	local _osRel="`uname -r`"
+++	if [ -n "${PBI_OSREL}" ] ; then
+++		_osRel="${PBI_OSREL}"
+++	fi
+++
++ 	if [ "${PBI_CREATEONLY}" = "YES" ] ; then
++ 		_pbilow="`echo ${PBI_PROGNAME} | tr '[:upper:]' '[:lower:]' | sed 's| ||g'`"
++-		echo "${PBI_APPDIR}/${_pbilow}-`uname -m`" > "${PBI_HEADERDIR}/pbi_defaultpath"
+++		echo "${PBI_APPDIR}/${_pbilow}-${_osArch}" > "${PBI_HEADERDIR}/pbi_defaultpath"
++ 	else	
++ 		echo "${PBI_PROGDIRPATH}" > "${PBI_HEADERDIR}/pbi_defaultpath"
++ 	fi
++@@ -3906,7 +3960,7 @@
++ 	fi
++ 
++ 	# Copy over our icon
++-	if [ ! -z "${PBI_PROGICON}" -a -e "${PBI_STAGEDIR}/${PBI_PROGICON}" ] ; then
+++	if [ -n "${PBI_PROGICON}" -a -e "${PBI_STAGEDIR}/${PBI_PROGICON}" ] ; then
++ 		# Get the file extension
++ 		_iconExt=`echo "$PBI_PROGICON" | awk -F . '{print $NF}'`
++ 		cp "${PBI_STAGEDIR}/${PBI_PROGICON}" "${PBI_HEADERDIR}/pbi_icon.${_iconExt}"
++@@ -3924,8 +3978,8 @@
++ 	fi
++ 
++ 	# Save the uname details
++-	echo "`uname -m`" > "${PBI_HEADERDIR}/pbi_arch"
++-	echo "`uname -r`" > "${PBI_HEADERDIR}/pbi_fbsdver"
+++	echo "${_osArch}" > "${PBI_HEADERDIR}/pbi_arch"
+++	echo "${_osRel}" > "${PBI_HEADERDIR}/pbi_fbsdver"
++ 	echo "${PROGVERSION}" > "${PBI_HEADERDIR}/pbi_createver"
++ 
++ 	# Get the total number of files in the STAGEDIR
++@@ -3954,14 +4008,18 @@
++ 
++ # All the pieces are ready, spit out the final PBI file
++ mk_output_pbi() {
++-        if [ ! -z "${PBI_PROGICON}" -a -e "${PBI_STAGEDIR}/${PBI_PROGICON}" ] ; then
+++	if [ -z "${PBI_OSARCH}" ] ; then
+++		PBI_OSARCH="`uname -m`"
+++	fi
+++
+++        if [ -n "${PBI_PROGICON}" -a -e "${PBI_STAGEDIR}/${PBI_PROGICON}" ] ; then
++                 icon="${PBI_STAGEDIR}/${PBI_PROGICON}"
++         else
++                 icon="${PBI_DEFAULT_ICON_CHROOT}"
++         fi
++ 	_pbilow="`echo ${PBI_PROGNAME} | tr '[:upper:]' '[:lower:]' | sed 's| ||g'`"
++ 
++-	outfile="${PBI_CREATE_OUTDIR}/${_pbilow}-${PBI_PROGVERSION}-`uname -m`.pbi"
+++	outfile="${PBI_CREATE_OUTDIR}/${_pbilow}-${PBI_PROGVERSION}-${PBI_OSARCH}.pbi"
++ 	mark1="${PBI_CREATE_OUTDIR}/.pbimark1.$$"
++ 	mark2="${PBI_CREATE_OUTDIR}/.pbimark2.$$"
++ 
++@@ -4093,7 +4151,16 @@
++ run_remove_script() {
++ 	uisc="${PBI_PROGDIRPATH}/${PBI_FAKEBIN_DIR}/.pbi-uninstall.sh"
++ 	if [ ! -e "$uisc" ] ; then return 0 ; fi
++-	
+++
+++	# If not running as root, be sure to cleanup path links
+++	if [ "`id -u`" != "0" ]; then
+++	 	cat ${PBI_PROGDIRPATH}/${PBI_FAKEBIN_DIR}/${PBI_UNINS_PATHSCRIPT} | grep 'rm "$SYS_LOCALBASE/bin' | sed 's|$SYS_LOCALBASE|${HOME}|g' >${PBI_TMPDIR}/.binlnks
+++         	while read lnk
+++          	do
+++               	 	/bin/sh -c "${lnk}"
+++          	done <${PBI_TMPDIR}/.binlnks
+++          	rm ${PBI_TMPDIR}/.binlnks
+++        fi
++         export_script_vars
++ 	if [ "$PBI_VERBOSE" = "YES" ] ; then
++        		sh "${uisc}"
++@@ -4102,6 +4169,31 @@
++ 	fi
++ }
++ 
+++# Function to check the supplied $1 dir for any mounts before we
+++# do a rm -rf
+++umount_before_rm()
+++{
+++   	if [ -z "${1}" ] ; then return 0 ; fi
+++
+++        local _ddir="$1"
+++        echo "$_ddir" | rev | grep -q '^/'	
+++	if [ $? -ne 0 ] ; then
+++	   _ddir="${_ddir}/"
+++	fi
+++	
+++	mount | grep -q "on ${_ddir}"
+++	if [ $? -ne 0 ] ; then return 0; fi
+++
+++        for i in `mount | grep "on ${_ddir}" | awk '{print $3}'`
+++	do
+++	   umount -f ${i} >/dev/null 2>/dev/null
+++	   if [ $? -ne 0 ] ; then 
+++		exit_err "Could not umount ${i} before rm -rf, bailing!"
+++	   fi
+++	done
+++	return 0
+++}
+++
++ # Remove the pbi directory
++ remove_pbidir() {
++ 	if [ -z "${PBI_PROGDIRPATH}" ] ; then return 0 ; fi
++@@ -4110,6 +4202,10 @@
++ 	if [ "$PBI_VERBOSE" = "YES" ] ; then
++ 		echo "Removing: ${PBI_PROGDIRPATH}"
++ 	fi
+++
+++        # Make sure we are unmounted
+++        umount_before_rm "${PBI_PROGDIRPATH}"
+++	
++ 	rm -rf "${PBI_PROGDIRPATH}" >/dev/null 2>/dev/null
++ 
++ 	# Do we have leftovers?
++@@ -4263,7 +4359,12 @@
++ # Start the PBID daemon
++ do_pbid() {
++ 
++-	_pbid_log="/var/log/pbid.log"
+++	# Allow user supplied logfile
+++        if [ -z "${PBID_LOGFILE}" ] ; then
+++	  _pbid_log="/var/log/pbid.log"
+++	else
+++          _pbid_log="${PBID_LOGFILE}"
+++        fi
++ 
++ 	# Set verbosity 
++ 	_redir="&1"
++@@ -4296,7 +4397,7 @@
++ 		check_autoupdate_pbis "$_pbid_log" "$_redir"
++ 
++ 		# Check if we need to merge files into the hashdir
++-		if [ ! -z "`ls ${PBI_DBHASHQUEUEDIR}`" ] ; then
+++		if [ -n "`ls ${PBI_DBHASHQUEUEDIR}`" ] ; then
++ 			init_tmpdir
++ 			for _hpbi in `ls ${PBI_DBHASHQUEUEDIR}`
++ 			do
++@@ -4690,13 +4791,13 @@
++ 	check_enable_disable_auto
++ 
++ 	# Stop here if we are just enabling / disabling auto-update
++-	if [ ! -z "$PBI_UPENABLEAUTO" ] ; then return 0 ; fi
+++	if [ -n "$PBI_UPENABLEAUTO" ] ; then return 0 ; fi
++ 
++ 	start_update_checks
++ 	if [ "$?" != "0" ] ; then rm_tmpdir ; exit 1 ; fi
++ 
++ 	# Stop here if only doing update checks
++-	if [ ! -z "${PBI_UPCHECK}" ]; then return 0 ; fi
+++	if [ -n "${PBI_UPCHECK}" ]; then return 0 ; fi
++ 
++   	require_root_or_group
++ 
++@@ -4723,7 +4824,7 @@
++ 
++         # See which repo / key this PBI associates to, if any
++ 	check_valid_sigs "${1}"
++-	if [ "$?" = "0" -a ! -z "$PBI_VALIDKEYSIG" ] ; then
+++	if [ "$?" = "0" -a -n "$PBI_VALIDKEYSIG" ] ; then
++ 		_rMd5="`echo ${PBI_VALIDKEYSIG} | cut -d '.' -f 1`"
++ 		echo "$_rMd5" | sed "s|${PBI_DBKEYDIR}/||g" > ${1}/pbi_repo
++ 	fi
++@@ -4821,7 +4922,7 @@
++ 		_upURL="${_rURL}"
++ 	fi
++ 
++-	fetch -a -o "${_tmpPbiIndex}.bz2" "${_upURL}/${PBI_INDEXUPFILE}.bz2" >/dev/null 2>/dev/null
+++	fetch -o "${_tmpPbiIndex}.bz2" "${_upURL}/${PBI_INDEXUPFILE}.bz2" >/dev/null 2>/dev/null
++ 	if [ "$?" != "0" ] ; then
++ 		return
++ 	fi
++@@ -4838,7 +4939,7 @@
++  	sleep 1
++ 
++ 	# Now check for an optional meta file update
++-	fetch -a -o "${_tmpPbiMeta}.bz2" "${_upURL}/${PBI_METAUPFILE}.bz2" >/dev/null 2>/dev/null
+++	fetch -o "${_tmpPbiMeta}.bz2" "${_upURL}/${PBI_METAUPFILE}.bz2" >/dev/null 2>/dev/null
++ 	if [ "$?" = "0" ] ; then
++ 		bzip2 -d "${_tmpPbiMeta}.bz2" >/dev/null 2>/dev/null
++ 		if [ "$?" = "0" ] ; then
++@@ -4887,11 +4988,12 @@
++ 
++ 		# Now fetch the file
++ 		sFile="${PBI_DBICONDIR}/${_repoMd5}-${iName}.${ext}"
++-		fetch -a -o "${sFile}" "${aIcon}" >/dev/null 2>/dev/null
+++		fetch -o "${sFile}" "${aIcon}" >/dev/null 2>/dev/null
+++		if [ $? -ne 0 ]; then
+++		  # Wait a moment before trying the next
+++		  sleep 40 
+++		fi
++ 		
++-		# Wait a sec
++-		sleep 1
++-
++ 	done < ${_repoMeta}
++ }
++ 
++@@ -4954,7 +5056,7 @@
++ 		PBI_UPMIRROR="`cat ${PBI_DBMIRRORDIR}/${_rMd5} 2>/dev/null`"
++ 		PBI_UPREPO="${_rMd5}"
++ 
++-		if [ ! -z "${PBI_UPNVER}" ] ; then break; fi
+++		if [ -n "${PBI_UPNVER}" ] ; then break; fi
++ 		if [ "${_urepo}" != "AUTO" ] ; then break; fi
++ 
++ 	done
++@@ -4963,7 +5065,7 @@
++ 	if [ -z "$PBI_UPNVER" ] ; then return 1 ; fi
++ 
++ 	# See if this update is newer than the installed date
++-	if [ ! -z "$_omdate" ] ; then
+++	if [ -n "$_omdate" ] ; then
++ 		nDay=`echo $PBI_UPMDATE | cut -d ' ' -f 1`
++ 		nHour=`echo $PBI_UPMDATE | cut -d ' ' -f 2`
++ 		oDay=`echo $_omdate | cut -d ' ' -f 1`
++@@ -4989,7 +5091,7 @@
++ 
++ # Start PBI update process
++ do_pbi_update() {
++-	if [ ! -z "${PBI_UPCHECK}" ]; then return 0 ; fi
+++	if [ -n "${PBI_UPCHECK}" ]; then return 0 ; fi
++ 
++ 	if [ "$PBI_UPDATEAPP" = "ALL" ] ; then
++ 		# Loop and check all PBIs for updates
++@@ -5027,10 +5129,10 @@
++ 
++ 	# Check if the user overrode the arch / versions we want to install
++ 	_rArch=`uname -m`
++-	if [ ! -z "$PBI_ADD_ALTARCH" ] ; then _rArch=$PBI_ADD_ALTARCH ; fi
+++	if [ -n "$PBI_ADD_ALTARCH" ] ; then _rArch=$PBI_ADD_ALTARCH ; fi
++ 
++ 	_rVer="current"
++-	if [ ! -z "$PBI_ADD_ALTVER" ] ; then _rVer=$PBI_ADD_ALTVER ; fi
+++	if [ -n "$PBI_ADD_ALTVER" ] ; then _rVer=$PBI_ADD_ALTVER ; fi
++ 
++ 
++ 	check_pbi_update "$_rtar" "nodisplay" \
++@@ -5173,7 +5275,7 @@
++ 	_dl_loc="${PBI_APPDIR}/.`basename $PBI_UPFILE`.$$"
++ 
++ 	# Have a patch file to download instead, make that the active file to try
++-	if [ ! -z "$_tPatch" ] ; then
+++	if [ -n "$_tPatch" ] ; then
++ 		_bDir=`dirname $PBI_UPFILE`
++ 		_uFile="${_bDir}/${_tPatch}"
++ 	else
++@@ -5217,26 +5319,23 @@
++ 	# Wait a sec
++ 	sleep 1
++ 
++-	# Make sure FTP_PASSIVE_MODE is set for fetch to work
++-	FTP_PASSIVE_MODE=YES
++-	export FTP_PASSIVE_MODE
++-
++ 	init_tmpdir
++ 	if [ -e "${_lf}" ] ; then rm "$_lf" ; fi
++ 
++ 	if [ "$PBI_FETCH_PARSING" != "YES" ] ; then
++-		fetch -a -o "${_lf}" "${_rf}"
+++		fetch -o "${_lf}" "${_rf}"
++ 		_err=$?
++ 	else
++ 		# Doing a front-end download, parse the output of fetch
++ 		_eFile="${PBI_TMPDIR}/.fetch-exit.$$"
++-		fetch -a -s "${_rf}" > ${PBI_TMPDIR}/.fetch-size.$$ 2>/dev/null
+++		fetch -s "${_rf}" > ${PBI_TMPDIR}/.fetch-size.$$ 2>/dev/null
++ 		_fSize=`cat ${PBI_TMPDIR}/.fetch-size.$$ 2>/dev/null`
++ 		_fSize="`expr ${_fSize} / 1024 2>/dev/null`"
++ 		rm "${PBI_TMPDIR}/.fetch-size.$$" 2>/dev/null
+++		_time=0
++ 
++-		( fetch -a -o "${_lf}" "${_rf}" >/dev/null 2>/dev/null ; echo "$?" > ${_eFile} ) &
++-		FETCH_PID=`ps -auwwwx | grep -v grep | grep "fetch -a -o ${_lf}" | awk '{print $2}'`
+++		( fetch -o "${_lf}" "${_rf}" >/dev/null 2>/dev/null ; echo "$?" > ${_eFile} ) &
+++		FETCH_PID=`ps -auwwwx | grep -v grep | grep "fetch -o ${_lf}" | awk '{print $2}'`
++ 		FETCH_TFILE="${_lf}"
++ 		while
++ 		z=1
++@@ -5245,7 +5344,8 @@
++ 				_dSize=`du -k ${_lf} | tr -d '\t' | cut -d '/' -f 1`
++ 				if [ $(is_num "$_dSize") ] ; then
++ 					if [ ${_fSize} -lt ${_dSize} ] ; then _dSize="$_fSize" ; fi
++-					echo "SIZE: ${_fSize} DOWNLOADED: ${_dSize}"
+++					_kbs=`expr ${_dSize} \/ $_time`
+++					echo "SIZE: ${_fSize} DOWNLOADED: ${_dSize} SPEED: ${_kbs}KBs"
++ 				fi
++ 			fi
++ 
++@@ -5253,6 +5353,7 @@
++ 			ps -p $FETCH_PID >/dev/null 2>/dev/null
++ 			if [ "$?" != "0" ] ; then break ; fi
++ 			sleep 2
+++			_time=`expr $_time + 2`
++ 		done
++ 
++ 		_err="`cat ${_eFile}`"
++@@ -5324,7 +5425,7 @@
++ 		. ${pbi}
++ 
++ 		# If we have a PBI already and this one has no version we can continue
++-	        if [ -z "${PBI_AB_PRIORITY}" -a ! -z "${CUR_WORKING_PBI}"  ] ; then continue ; fi
+++	        if [ -z "${PBI_AB_PRIORITY}" -a -n "${CUR_WORKING_PBI}"  ] ; then continue ; fi
++ 
++ 		_cd=$(dirname $pbi | sed 's|./||')
++ 
++@@ -5420,7 +5521,7 @@
++ 	do
++ 		if [ "${i}" = "." -o "${i}" = ".." ] ; then continue ; fi
++ 		_pDir=`dirname ${i}`
++-		if [ -d "${i}" -a ! -z "${i}" ] ; then
+++		if [ -d "${i}" -a -n "${i}" ] ; then
++     			if [ ! -e "${PBI_AB_CONFDIR}/${_pDir}" ] ; then
++       			# Not in our module tree anymore, remove it
++       			echo "Auto-Prune: ${PBI_AB_OUTDIR}/${_pDir}"
++@@ -5441,7 +5542,7 @@
++ 	local _abkey="$6"
++ 	_flags=""
++ 	_flags="-c ${_cd} -d ${PORTSDIR} -o ${_od} --delbuild"
++-	if [ ! -z "${PBI_AB_SSLPRIVKEY}" ] ; then
+++	if [ -n "${PBI_AB_SSLPRIVKEY}" ] ; then
++ 		_flags="${_flags} --sign ${PBI_AB_SSLPRIVKEY}"
++ 	fi
++ 
++@@ -5462,7 +5563,7 @@
++ 	echo "$_abkey" > ${_od}/.abkey
++ 	
++ 	# Save the build key for this PBI
++-	if [ ! -z "$_bk" ] ; then
+++	if [ -n "$_bk" ] ; then
++ 		echo "$_bk" > "${_od}/pbi-buildkey"
++ 	else
++ 		echo "__NONE__" > "${_od}/pbi-buildkey"
++@@ -5502,7 +5603,7 @@
++ 		# Save the mdate file
++ 		date "+%Y%m%d %H%M%S" >${_od}/pbi-mdate
++ 
++-		if [ ! -z "${PBI_AB_HELPS}" ] ; then
+++		if [ -n "${PBI_AB_HELPS}" ] ; then
++ 			${PBI_AB_HELPS} "OK" "${_od}"
++ 		fi
++ 
++@@ -5527,7 +5628,7 @@
++ 		tar cvf - -C "${PORTSDIR}/${_mp}" . 2>/dev/null | md5 -q >${_od}/.failed-csum
++ 
++ 		echo "Failed" > "${_od}/pbi-result"
++-		if [ ! -z "${PBI_AB_HELPS}" ] ; then
+++		if [ -n "${PBI_AB_HELPS}" ] ; then
++ 			${PBI_AB_HELPS} "FAILED" "${_od}"
++ 		fi
++ 	fi
++@@ -5545,7 +5646,7 @@
++ 	rm ${_curPBIdir}/*.pbp 2>/dev/null
++ 
++ 	# Make sure to enable signing of the patch files
++-	if [ ! -z "${PBI_AB_SSLPRIVKEY}" ] ; then
+++	if [ -n "${PBI_AB_SSLPRIVKEY}" ] ; then
++         	local _mpflags="-o $_curPBIdir --sign ${PBI_AB_SSLPRIVKEY}"
++ 	else
++ 		local _mpflags="-o $_curPBIdir"
++@@ -5616,11 +5717,16 @@
++ 	mkdir -p "$_pbiOldDir"
++ 	mkdir -p "$_pbiPatchDir"
++ 
+++	local _opts="-e --licagree"
+++	if [ "${PBI_SKIPSIGVERIFY}" = "YES" ] ; then
+++		_opts="${_opts} --no-checksig"
+++	fi
+++
++ 	# Extract the two PBIs
++ 	echo "Extracting PBI: $_pbiNew"
++-	pbi_add -e --licagree -o "${_pbiNewDir}" "${_pbiNew}" >/dev/null 2>/dev/null
+++	pbi_add ${_opts} -o "${_pbiNewDir}" "${_pbiNew}" >/dev/null 2>/dev/null
++ 	echo "Extracting PBI: $_pbiOld"
++-	pbi_add -e --licagree -o "${_pbiOldDir}" "${_pbiOld}" >/dev/null 2>/dev/null
+++	pbi_add ${_opts} -o "${_pbiOldDir}" "${_pbiOld}" >/dev/null 2>/dev/null
++ 
++ 	if [ ! -d "${_pbiNewDir}/${_pbiNewPrefix}" -o ! -d "${_pbiOldDir}/${_pbiOldPrefix}" ] ; then 
++ 		exit_err "Failed Extracting PBIs for comparision!"
++@@ -5629,7 +5735,7 @@
++ 	# Get a list of files which are removed in the new PBI vs the old
++ 	gen_rem_list "$_pbiNewDir/$_pbiNewPrefix" "$_pbiOldDir/$_pbiOldPrefix"
++ 	_rFileList="$VAL"
++-	if [ ! -z "$_rFileList" ] ; then
+++	if [ -n "$_rFileList" ] ; then
++ 		echo "Saving removed file list..."
++ 		mv "${_rFileList}" ${_pbiPatchDir}/PBI-rmList
++ 	fi
++@@ -5637,7 +5743,7 @@
++ 	# Get archive of files/dirs which are new to the PBI
++ 	gen_newfile_list "$_pbiNewDir/$_pbiNewPrefix" "$_pbiOldDir/$_pbiOldPrefix"
++ 	_nFileList="$VAL"
++-	if [ ! -z "$_nFileList" ] ; then
+++	if [ -n "$_nFileList" ] ; then
++ 		echo "Saving new files archive..."
++ 		tar cvf "$_pbiPatchDir/PBI-newFiles.tar" \
++ 			-C "$_pbiNewDir/$_pbiNewPrefix" -T "$_nFileList" >/dev/null 2>/dev/null
++@@ -5647,7 +5753,7 @@
++ 	# Get a listing of permissions
++ 	gen_chmod_list "$_pbiNewDir/$_pbiNewPrefix" "$_pbiOldDir/$_pbiOldPrefix"
++ 	_cFileList="$VAL"
++-	if [ ! -z "$_cFileList" ] ; then
+++	if [ -n "$_cFileList" ] ; then
++ 		echo "Saving permissions list..."
++ 		mv "${_cFileList}" ${_pbiPatchDir}/PBI-permList
++ 	fi
++@@ -5953,7 +6059,7 @@
++ 	# Check PBI_BUILDKEY, see if we have a manual rebuild triggered
++ 	if [ -e "${PBI_AB_OUTDIR}/${_cd}/pbi-buildkey" ] ; then
++ 		if [ "`cat ${PBI_AB_OUTDIR}/${_cd}/pbi-buildkey`" != "$_bk" \
++-			 -a ! -z "${_bk}" ]
+++			 -a -n "${_bk}" ]
++         	then echo "BUILDKEY bump, rebuild triggered." ; return 0 ; fi
++ 	fi
++ 
++@@ -6054,7 +6160,9 @@
++ 
++   	# Start our build
++   	start_pbi_mkportbefore
+++  	start_prebuild_script
++   	start_pbi_makeport
+++  	start_postbuild_script
++   	start_pbi_mkportafter
++ 
++   	# Prune any proto / build specific ports
++@@ -6081,28 +6189,46 @@
++ 	exit 0
++ }
++ 
+++# Source any pre-build script to allow a custom script to modify the port
+++start_prebuild_script()
+++{
+++	if [ -e "/pre-build.sh" ] ; then
+++		chmod 755 /pre-build.sh
+++		# Source the script
+++		. /pre-build.sh
+++	fi
+++}
+++
+++# Source any post-build script to allow a custom script to modify the port
+++start_postbuild_script()
+++{
+++	if [ -e "/post-build.sh" ] ; then
+++		chmod 755 /post-build.sh
+++		# Source the script
+++		. /post-build.sh
+++	fi
+++}
+++
++ # Check if we created any linux stuff, and copy it into the correct PREFIX
++ auto_copy_linuxbase()
++ {
++ 	echo "Checking for Linux libraries to copy..."
++-	if [ -d "/compat/linux/lib" ] ; then
++-		echo "Copying /compat/linux -> ${PBI_PROGDIRPATH}"
++-		tar cvf - -C /compat/linux . 2>/dev/null | \
++-		tar xvf - -C ${PBI_PROGDIRPATH} 2>/dev/null
++-		rm -rf ${PBI_PROGDIRPATH}/usr/lib >/dev/null 2>/dev/null
++-	fi
++ 	if [ -d "/compat/linux/usr/lib" ] ; then
++-		echo "Copying /compat/linux/usr/lib -> ${PBI_PROGDIRPATH}/lib"
+++		mkdir ${PBI_PROGDIRPATH}/linuxlib
+++		echo "Copying /compat/linux/lib -> ${PBI_PROGDIRPATH}/linuxlib"
+++		tar cvf - -C /compat/linux/lib . 2>/dev/null | \
+++		tar xvf - -C ${PBI_PROGDIRPATH}/linuxlib 2>/dev/null
+++		echo "Copying /compat/linux/usr/lib -> ${PBI_PROGDIRPATH}/linuxlib"
++ 		tar cvf - -C /compat/linux/usr/lib . 2>/dev/null | \
++-		tar xvf - -C ${PBI_PROGDIRPATH}/lib 2>/dev/null
+++		tar xvf - -C ${PBI_PROGDIRPATH}/linuxlib 2>/dev/null
++ 	fi
++ }
++ 
++ # Clean the chroot environment
++ chroot_make_cleanup() {
++-	if [ -z "${PBI_CHROOTDIR}" ] ; then return ; fi
++-	if [ ! -d "${PBI_CHROOTDIR}" ] ; then return ; fi
++-	if [ "${PBI_CHROOTDIR}" = "/" ] ; then return ; fi
+++	[ -z "${PBI_CHROOTDIR}" ] && return
+++	[ -d "${PBI_CHROOTDIR}" ] || return
+++	[ "${PBI_CHROOTDIR}" = "/" ] && return
++ 	
++ 	# Unmount /dev if mounted
++ 	echo "Cleaning $PBI_CHROOTDIR"
++@@ -6122,7 +6248,7 @@
++ chroot_extract() {
++ 
++ 	# If no chroot file exists, make it first
++-	if [ ! -e "${PBI_CHROOTFILE}" ] ; then mk_chroot_file ; fi
+++	[ -e "${PBI_CHROOTFILE}" ] || mk_chroot_file
++ 
++ 	# Set the chroot path
++ 	PBI_CHROOTDIR="${PBI_PROGDIRPATH}.chroot"
++@@ -6134,23 +6260,17 @@
++ 	mkdir -p "${PBI_CHROOTDIR}"
++ 	echo "Extracting chroot environment..."
++ 	tar xvf ${PBI_CHROOTFILE} -C "${PBI_CHROOTDIR}" >/dev/null 2>/dev/null
++-	if [ "$?" != "0" ] ; then
++-		exit_err "Failed extracting chroot environment!"
++-	fi
+++	[ $? -ne 0 ] && exit_err "Failed extracting chroot environment!"
++ 
++ 	# Copy resolv.conf
++ 	cp /etc/resolv.conf ${PBI_CHROOTDIR}/etc/resolv.conf
++ 
++ 	# If we have a custom PBI_MAKECONF include it
++-	if [ -e "${PBI_MAKECONF}" ] ; then
++-		cp ${PBI_MAKECONF} ${PBI_CHROOTDIR}/etc/make.conf
++-	fi
+++	[ -e "${PBI_MAKECONF}" ] && cp ${PBI_MAKECONF} ${PBI_CHROOTDIR}/etc/make.conf
++ 
++ 	#echo "Copying ${PORTSDIR} -> ${PBI_CHROOTDIR}/usr/ports"
++ 	#tar cvf - -C "${PORTSDIR}" --exclude ./distfiles . 2>/dev/null | tar xvf - -C "${PBI_CHROOTDIR}/usr/ports" 2>/dev/null
++-	if [ ! -d "${PORTSDIR}/distfiles" ] ; then
++-		mkdir -p ${PORTSDIR}/distfiles
++-	fi
+++	[ -d "${PORTSDIR}/distfiles" ] || mkdir -p ${PORTSDIR}/distfiles
++ 	mkdir -p ${PBI_CHROOTDIR}/usr/ports
++ 	mount_nullfs ${PORTSDIR} ${PBI_CHROOTDIR}/usr/ports
++ 
++@@ -6176,18 +6296,31 @@
++ 	cp -r ${PBI_DBDIR} ${PBI_CHROOTDIR}${PBI_DBDIR}
++ 	
++ 	# Copy over the confdir as well
++-	if [ ! -z "${PBI_CONFDIR}" ] ; then
+++	if [ -n "${PBI_CONFDIR}" ] ; then
++ 		mkdir -p "${PBI_CHROOTDIR}/pbimodule"
++ 		echo "Copying ${PBI_CONFDIR} -> ${PBI_CHROOTDIR}/pbimodule"
++ 	 	tar cvf - -C "${PBI_CONFDIR}" . 2>/dev/null | tar xvf - -C "${PBI_CHROOTDIR}/pbimodule" 2>/dev/null
++ 	fi
++ 
++ 	# Copy over the ssl priv key if used
++-	if [ ! -z "$PBI_SSLPRIVKEY" ] ; then
+++	if [ -n "$PBI_SSLPRIVKEY" ] ; then
++ 	 	cp "${PBI_SSLPRIVKEY}" "${PBI_CHROOTDIR}/privkey.pem"
++ 		chmod 600 "${PBI_CHROOTDIR}/privkey.pem"
++ 	fi
++ 
+++	# Check if we have a pre-make script to run
+++	if [ -n "${PBI_PREMAKE_SCRIPT}" ] ; then
+++		if [ -e "${PBI_PREMAKE_SCRIPT}" ] ; then
+++			cp ${PBI_PREMAKE_SCRIPT} ${PBI_CHROOTDIR}/pre-build.sh
+++		fi
+++	fi
+++	# Check if we have a post-make script to run
+++	if [ -n "${PBI_POSTMAKE_SCRIPT}" ] ; then
+++		if [ -e "${PBI_POSTMAKE_SCRIPT}" ] ; then
+++			cp ${PBI_POSTMAKE_SCRIPT} ${PBI_CHROOTDIR}/post-build.sh
+++		fi
+++	fi
+++
++ 	# Start devfs in the chroot
++ 	if [ ! -d "${PBI_CHROOTDIR}/dev" ] ; then
++ 		mkdir ${PBI_CHROOTDIR}/dev
++@@ -6202,7 +6335,7 @@
++ 	mkdir -p ${PBI_CHROOTDIR}${PBI_CREATE_OUTDIR} >/dev/null 2>/dev/null
++ 
++ 	# Check for ccache being enabled on the host and nullfs mount it to the chroot
++-	if [ ! -z "${CCACHE_DIR}" -a -d "${CCACHE_DIR}" ] ; then
+++	if [ -n "${CCACHE_DIR}" -a -d "${CCACHE_DIR}" ] ; then
++ 		mkdir ${PBI_CHROOTDIR}/.ccache
++ 		mount_nullfs ${CCACHE_DIR} ${PBI_CHROOTDIR}/.ccache	
++ 	fi
++@@ -6212,101 +6345,141 @@
++ # No chroot environment tar file exists yet, lets build or extract
++ mk_chroot_file() {
++ 
++-	# Check if on PC-BSD and we can instead fetch fbsd-release.tbz
+++	# Check if on PC-BSD and we can instead fetch fbsd-release.txz
++ 	if [ -e "$PCBSD_ETCCONF" ]; then
++ 
++ 	  cd "$PBI_APPDIR"
++ 
++ 	  # Set the mirror URL
++-  	  MIRRORURL="`cat ${PCBSD_ETCCONF} | grep 'PCBSD_MIRROR: ' | sed 's|PCBSD_MIRROR:||g'`"
+++  	  MIRRORURL="`sed -n 's/PCBSD_MIRROR: //p' ${PCBSD_ETCCONF}`"
++ 
++   	  # Get the system version we are checking for updates to
++   	  SYSVER="`pbreg get /PC-BSD/Version`" ; export SYSVER
++ 
++   	  # Set the system arch type
++   	  ARCH=`uname -m`
+++	  if [ -n "${PBI_OSARCH}" ] ; then
+++	  	ARCH="${PBI_OSARCH}"
+++	  fi
++ 
++   	  # To fetch the jail environment
++  	  echo "Fetching FreeBSD chroot environment... This may take a while..."
++-  	  fetch -a -o rel.tbz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.tbz
++-    	  fetch -a -o rel.md5 ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.tbz.md5
+++  	  fetch -o rel.txz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz
+++    	  fetch -o rel.md5 ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz.md5
++ 
++-    	  if [ `md5 -q rel.tbz` != `cat rel.md5` ] ; then
++-    	    exit_err "Error in download data, checksum mismatch.. Please try again later."
++-	  fi
+++    	  [ `md5 -q rel.txz` != `cat rel.md5` ] && exit_err "Error in download data, checksum mismatch.. Please try again later."
++ 
++-	  mv rel.tbz ${PBI_CHROOTFILE}
+++	  mv rel.txz ${PBI_CHROOTFILE}
++ 	  rm rel.md5
++ 	  return
++  	fi
++ 
+++        local _srcdir="/usr/src"
+++        if [ -z "${PBI_BUILDSRC}" ] ; then
+++                PBI_BUILDSRC="${_srcdir}"
+++        fi
+++
+++        local _targetDir="${PBI_APPDIR}/.worldTarget.$$"
+++        if [ -z "${PBI_BUILDTARGET}" ] ; then
+++                PBI_BUILDTARGET="${_targetDir}"
+++        fi
+++
+++        # Delete source code/build if not /usr/src and PBI_DELETE_BUILD is true
+++        if [ -z "${PBI_DELETE_BUILD}" ] ; then
+++                PBI_DELETE_BUILD=1
+++        fi
+++ 
++ 	# Use existing sources
++-	if [ -e "/usr/src/COPYRIGHT" ] ; then
++-		PBI_BUILDSRC="/usr/src"
++-		PBI_BUILDTARGET="${PBI_APPDIR}/.worldTarget.$$"
+++        if [ -e "${PBI_BUILDSRC}/COPYRIGHT" -a -z "${PBI_OSREL}" ] ; then
++ 		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
++-		echo "" > ${PBI_BUILDLOG}
+++		: > ${PBI_BUILDLOG}
++ 		mkdir -p "${PBI_BUILDTARGET}"
++ 	
++ 	else
++ 		# Make sure SVN is installed
++ 		which svn >/dev/null 2>/dev/null
++-		if [ "$?" != "0" ] ; then
++-			exit_err "Subversion is required to rebuild the chroot environment!"
++-		fi
+++		[ "$?" -ne 0 ] && exit_err "Subversion is required to rebuild the chroot environment!"
+++
+++                local _osRel=`uname -r`
+++                if [ -n "${PBI_OSREL}" ]; then
+++                        _osRel="${PBI_OSREL}"
+++                fi
++ 
++ 		echo "Building the PBI chroot environment... This may take a while..."
++-		PBI_BUILDSRC="${PBI_APPDIR}/.tmpSRC.$$"
++-		PBI_BUILDTARGET="${PBI_APPDIR}/.worldTarget.$$"
++ 		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
++ 		echo "" > ${PBI_BUILDLOG}
++ 		mkdir -p "${PBI_BUILDSRC}"
++ 		mkdir -p "${PBI_BUILDTARGET}"
++ 	
++ 		# Figure out which version of FreeBSD to checkout
++-		local _osRel=`uname -r`
++-		echo $_osRel | grep "RELEASE" >/dev/null 2>/dev/null
++-		if [ "$?" = "0" ] ; then
++-			local _osMajor=`echo $_osRel | cut -c 1-1`
++-			local svnUrl="svn://svn.freebsd.org/base/releng/${_osMajor}.0"
++-			echo "Using $svnUrl for sources"
++-		else
++-			echo $_osRel | grep "CURRENT" >/dev/null 2>/dev/null
++-			if [ "$?" = "0" ] ; then
++-		    	      local svnUrl="svn://svn.freebsd.org/base/head"
++-			      echo "Using $svnUrl for sources"
++-			else
++-		   	   echo $_osRel | grep "STABLE" >/dev/null 2>/dev/null
++-			      if [ "$?" = "0" ] ; then
++-				    local _osMajor=`echo $_osRel | cut -c 1-1`
++-				    local svnUrl="svn://svn.freebsd.org/base/stable/${_osMajor}"
++-				    "Using $svnUrl for sources"
++-			      else
++-			   	 local svnUrl="svn://svn.freebsd.org/base/head"
++-			    	echo "Using $svnUrl for sources"
++-				    echo "Assuming a BETA|RC or rarely used FreeBSD version. Using CURRENT!"
++-			      fi
++-			fi
++-		fi
+++		case $_osRel in
+++			*RELEASE)
+++				local _osMajor=${_osRel%%.*}
+++				local svnUrl="svn://svn.freebsd.org/base/releng/${_osMajor}.0"
+++				echo "Using $svnUrl for sources"
+++				;;
+++			*CURRENT)
+++				local svnUrl="svn://svn.freebsd.org/base/head"
+++				echo "Using $svnUrl for sources"
+++				;;
+++			*STABLE)
+++				local _osMajor=${_osRel%%.*}
+++				local svnUrl="svn://svn.freebsd.org/base/stable/${_osMajor}"
+++				"Using $svnUrl for sources"
+++				;;
+++			*)
+++				local svnUrl="svn://svn.freebsd.org/base/head"
+++				echo "Using $svnUrl for sources"
+++				echo "Assuming a BETA|RC or rarely used FreeBSD version. Using CURRENT!"
+++				;;
+++		esac
++ 
++ 		echo "Checking out FreeBSD sources from $svnUrl"
++-		svn co ${svnUrl} ${PBI_BUILDSRC} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
++-		if [ "$?" != "0" ] ; then
++-			rm -rf "${PBI_BUILDSRC}"
++-			rm -rf "${PBI_BUILDTARGET}"
+++                if [ -e "${PBI_BUILDSRC}/COPYRIGHT" ] ; then
+++                        svn update ${PBI_BUILDSRC} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+++                else
+++                        svn co ${svnUrl} ${PBI_BUILDSRC} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+++                fi
+++		touch ${PBI_BUILDSRC}/Makefile
+++
+++                if [ "$?" != "0" ] ; then
+++                        if [ "${PBI_DELETE_BUILD}" = "1" ] ; then
+++                                rm -rf "${PBI_BUILDSRC}"
+++                                rm -rf "${PBI_BUILDTARGET}"
+++                        fi
++ 			exit_err "Subversion checkout failed! Logfile saved: ${PBI_BUILDLOG}"
++ 		fi
++ 	fi # End of subversion checkout
++ 
++ 	echo "Running buildworld / installworld"
++ 	cd ${PBI_BUILDSRC}
++-	make buildworld installworld distribution DESTDIR=${PBI_BUILDTARGET} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
++-	if [ "$?" != "0" ] ; then
++-		cd
++-		if [ "${PBI_BUILDSRC}" != "/usr/src" ] ; then rm -rf "${PBI_BUILDSRC}"; fi
++-		rm -rf "${PBI_BUILDTARGET}"
++-		exit_err "Buildworld failed! Logfile saved: ${PBI_BUILDLOG}"
++-	fi
+++        make ${PBI_BUILDFLAGS} buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+++        if [ "$?" != "0" ] ; then
+++                cd
+++                if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
+++                        rm -rf "${PBI_BUILDSRC}"
+++                        rm -rf "${PBI_BUILDTARGET}"
+++                fi
+++                exit_err "Buildworld failed! Logfile saved: ${PBI_BUILDLOG}"
+++        fi
+++        make ${PBI_BUILDFLAGS} installworld DESTDIR=${PBI_BUILDTARGET} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+++        if [ "$?" != "0" ] ; then
+++                cd
+++                if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
+++                        rm -rf "${PBI_BUILDSRC}"
+++                        rm -rf "${PBI_BUILDTARGET}"
+++                fi
+++                exit_err "Buildworld failed! Logfile saved: ${PBI_BUILDLOG}"
+++        fi
+++        make ${PBI_BUILDFLAGS} distribution DESTDIR=${PBI_BUILDTARGET} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+++        if [ "$?" != "0" ] ; then
+++                cd
+++                if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
+++                        rm -rf "${PBI_BUILDSRC}"
+++                        rm -rf "${PBI_BUILDTARGET}"
+++                fi
+++                exit_err "Buildworld failed! Logfile saved: ${PBI_BUILDLOG}"
+++        fi
++ 
++ 	# Copy the source since some ports need kern sources
++ 	echo "Copying FreeBSD sources to chroot environment"
++@@ -6315,18 +6488,24 @@
++ 
++ 	echo "Creating chroot environment tarball"
++ 	tar cvjf ${PBI_CHROOTFILE} -C ${PBI_BUILDTARGET} . >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
++-	if [ "$?" != "0" ] ; then
+++	if [ $? -ne 0 ] ; then
++ 		cd
++-		if [ "${PBI_BUILDSRC}" != "/usr/src" ] ; then rm -rf "${PBI_BUILDSRC}"; fi
++-		rm -rf "${PBI_BUILDTARGET}"
+++                if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
+++                        rm -rf "${PBI_BUILDSRC}"
+++                        rm -rf "${PBI_BUILDTARGET}"
+++                fi
++ 		rm -rf "${PBI_CHROOTFILE}"
++ 		exit_err "Making chroot environment tarball failed! Logfile saved: ${PBI_BUILDLOG}"
++ 	fi
++ 
++ 	# Cleanup after ourselves
++ 	chflags -R noschg "${PBI_BUILDTARGET}" >/dev/null 2>/dev/null
++-	if [ "${PBI_BUILDSRC}" != "/usr/src" ] ; then rm -rf "${PBI_BUILDSRC}"; fi
++-	rm -rf "${PBI_BUILDTARGET}" >/dev/null 2>/dev/null
+++        if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
+++                rm -rf "${PBI_BUILDSRC}"
+++        fi
+++        if [ "${PBI_DELETE_BUILD}" = "1" ] ; then
+++                rm -rf "${PBI_BUILDTARGET}" >/dev/null 2>/dev/null
+++        fi
++ 	rm ${PBI_BUILDLOG}
++ }
++ 
++@@ -6345,20 +6524,17 @@
++ 
++ 	_ef="${PBI_PROGDIRPATH}/${MOD_AUTOEXTLINKFILE}"
++ 
++-	if [ -e "$_ef" ]; then rm "$_ef" ; fi
+++	[ -e "$_ef" ] && rm "$_ef"
++ 
++ 	while read f
++ 	do
++ 		bin="NO"
++-		if [ -z "${f}" ] ; then continue ; fi 
++-		if [ ! -e "${PBI_PROGDIRPATH}/${f}" ] ; then continue ; fi 
+++		[ -z "${f}" ] && continue
+++		[ -e "${PBI_PROGDIRPATH}/${f}" ] || continue
++ 
++ 		# See if this is executable and set it as binary
++ 		dirname ${f} | grep -e "bin" -e "sbin" >/dev/null 2>/dev/null
++-		if [ -x "${PBI_PROGDIRPATH}/${f}" -a "$?" = "0" ]; then bin="YES" ; fi
++-
++-		# If we are working on a binary, mark it as such
++-		if  [ "$bin" = "YES" ] ; then
+++		if [ -x "${PBI_PROGDIRPATH}/${f}" -a $? -eq 0 ] ; then
++ 			echo "${f}	${f}	binary,nocrash" >> "$_ef"
++ 		else
++ 			echo "${f}	${f}	replace" >> "$_ef"
++@@ -6373,7 +6549,7 @@
++  	for _dsd in $DBUS_SEARCH_DIRS
++ 	do
++ 		# Check if we have a valid dbus directory
++-		if [ ! -d "${PBI_PROGDIRPATH}/${_dsd}" ] ; then continue ; fi
+++		[ -d "${PBI_PROGDIRPATH}/${_dsd}" ] || continue
++ 
++ 		# Make a list of files to include
++ 		find ${PBI_PROGDIRPATH}/${_dsd} -type f | sed "s|${PBI_PROGDIRPATH}/${_dsd}/||g" > ${PBI_TMPDIR}/.dbus.$$
++@@ -6382,28 +6558,22 @@
++ 		while read _dbfile
++ 		do
++ 			# Get the file extension, only .xml and .service are valid
++-			echo "${_dsd}/${_dbfile}" | grep -e ".xml" -e ".service" >/dev/null 2>/dev/null
++-			if [ "$?" != "0" ]; then continue ; fi
++-
++-			# Check if this is a .service or .xml file
++-		 	echo "${_dsd}/$_dbfile" | grep ".service" >/dev/null 2>/dev/null
++-			if [ "$?" = "0" ] ; then
++-				dbext=".service"
++-
++-				# We have a service file, find the target binary and make sure its added as a wrapper only
++-				_dbbin="`grep 'Exec' ${PBI_PROGDIRPATH}/${_dsd}/${_dbfile} | cut -d '=' -f 2 | cut -d ' ' -f 1`"
++-				_dbbin=`echo "$_dbbin" | sed "s|${PBI_PROGDIRPATH}/||g"`
++-				if [ ! -z "$_dbbin" ] ; then
++-				echo "${_dbbin}		${_dbbin}	binwrapper" >> "$_ef"
++-				fi
++-
++-				# Massage the service file to point to the fakebin wrapper
++-				rmBaseDir="`dirname ${_dbbin}`"
++-	                        sed -i.bak "s|${PBI_PROGDIRPATH}/${rmBaseDir}/|${PBI_PROGDIRPATH}/${PBI_FAKEBIN_DIR}/|g" "${PBI_PROGDIRPATH}/${_dsd}/${_dbfile}"
++-	                        rm "${PBI_PROGDIRPATH}/${_dsd}/${_dbfile}.bak"
++-			else
++-				dbext=".xml"
++-			fi
+++			case "${_dsd}/${_dbfile}" in
+++				*.xml) dbext=".xml" ;;
+++				*.service)
+++					dbext=".service"
+++
+++					# We have a service file, find the target binary and make sure its added as a wrapper only
+++					_dbbin="`grep 'Exec' ${PBI_PROGDIRPATH}/${_dsd}/${_dbfile} | cut -d '=' -f 2 | cut -d ' ' -f 1`"
+++					_dbbin=`echo "$_dbbin" | sed "s|${PBI_PROGDIRPATH}/||g"`
+++					[ -n "$_dbbin" ] && echo "${_dbbin}		${_dbbin}	binwrapper" >> "$_ef"
+++
+++					# Massage the service file to point to the fakebin wrapper
+++					rmBaseDir="`dirname ${_dbbin}`"
+++					sed -i '' "s|${PBI_PROGDIRPATH}/${rmBaseDir}/|${PBI_PROGDIRPATH}/${PBI_FAKEBIN_DIR}/|g" "${PBI_PROGDIRPATH}/${_dsd}/${_dbfile}"
+++					;;
+++				*) continue ;;
+++			esac
++ 
++ 			echo "${_dsd}/${_dbfile}	${_dsd}/${_dbfile}.${_pname}.${dbext}	replace" >> "$_ef"
++ 		done < ${PBI_TMPDIR}/.dbus.$$
++@@ -6416,7 +6586,7 @@
++ # Init the crash handler routine
++ pbi_crash_init() {
++ 	which "pbi-crashhandler-gui" >/dev/null 2>/dev/null
++-	if [ "$?" = "0" -a ! -z "${DISPLAY}" ] ; then
+++	if [ "$?" = "0" -a -n "${DISPLAY}" ] ; then
++ 		#pbi-crashhandler-gui "$@"
++ 	fi
++ }
++@@ -6429,7 +6599,7 @@
++ # Cleanup after caught exit
++ exit_trap() {
++ 	# If a download is running, kill it
++-	if [ ! -z "${FETCH_PID}" ] ; then 
+++	if [ -n  "${FETCH_PID}" ] ; then 
++ 	   echo "Killing ${FETCH_PID}"
++ 	   kill -9 ${FETCH_PID}
++ 	   sleep 1
++@@ -6443,12 +6613,16 @@
++ # Read in the global pbi.conf
++ load_pbi_etcconf() {
++ 
+++	# FTP_PASSIVE_MODE needs to be enabled by default
+++	FTP_PASSIVE_MODE=YES
+++	export FTP_PASSIVE_MODE
+++
++ 	PBI_PUBKEYS="`ls ${PBI_DBKEYDIR}/*.ssl 2>/dev/null`"
++ 
++ 	[ -e "${PBI_ETCCONF}" ] || return 0
++ 
++ 	# See if we have a custom index refresh rate
++-	_ckPBIIR="`sed -n 's/^PBI_INDEXREFRESH: //g' ${PBI_ETCCONF}`"
+++	_ckPBIIR="`sed -n 's/^PBI_INDEXREFRESH: //gp' ${PBI_ETCCONF}`"
++ 	if [ -n "${_ckPBIIR}" -a $(is_num "$_ckPBIIR") ] ; then 
++ 		PBI_INDEXREFRESH="${_ckPBIIR}"
++ 	fi
++@@ -6470,11 +6644,11 @@
++ 
++ 	# If empty proxy config, check if configured for master pcbsd.conf file
++ 	if [ -z "$PBI_PROXYURL" -a -e "${PCBSD_ETCCONF}" ] ; then
++-		PBI_PROXYURL="`sed -n 's/PBI_PROXYURL: //p' ${PCBSD_ETCCONF}`"
++-		PBI_PROXYPORT="`sed -n 's/PBI_PROXYPORT: //p' ${PCBSD_ETCCONF}`"
++-		PBI_PROXYTYPE="`sed -n 's/PBI_PROXYTYPE: //p' ${PCBSD_ETCCONF}`"
++-		PBI_PROXYUSER="`sed -n 's/PBI_PROXYUSER: //p' ${PCBSD_ETCCONF}`"
++-		PBI_PROXYPASS="`sed -n 's/PBI_PROXYPASS: //p' ${PCBSD_ETCCONF}`"
+++		PBI_PROXYURL="`sed -n 's/PCBSD_PROXYURL: //p' ${PCBSD_ETCCONF}`"
+++		PBI_PROXYPORT="`sed -n 's/PCBSD_PROXYPORT: //p' ${PCBSD_ETCCONF}`"
+++		PBI_PROXYTYPE="`sed -n 's/PCBSD_PROXYTYPE: //p' ${PCBSD_ETCCONF}`"
+++		PBI_PROXYUSER="`sed -n 's/PCBSD_PROXYUSER: //p' ${PCBSD_ETCCONF}`"
+++		PBI_PROXYPASS="`sed -n 's/PCBSD_PROXYPASS: //p' ${PCBSD_ETCCONF}`"
++ 	fi
++ 
++ 
++@@ -6482,10 +6656,12 @@
++ 	if [ -n "$PBI_PROXYURL" ] ; then
++ 		if [ -n "$PBI_PROXYPORT" ] ; then
++ 			HTTP_PROXY="${PBI_PROXYURL}:${PBI_PROXYPORT}"
++-			export HTTP_PROXY
+++			FTP_PROXY="${PBI_PROXYURL}:${PBI_PROXYPORT}"
+++			export HTTP_PROXY FTP_PROXY
++ 		else
++ 			HTTP_PROXY="${PBI_PROXYURL}"
++-			export HTTP_PROXY
+++			FTP_PROXY="${PBI_PROXYURL}"
+++			export HTTP_PROXY FTP_PROXY
++ 		fi
++ 		if [ -n "$PBI_PROXYUSER" ] ; then
++ 			if [ -n "$PBI_PROXYPASS" ] ; then
