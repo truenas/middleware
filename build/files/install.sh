@@ -42,10 +42,10 @@ upgrade_version_to_avatar_conf()
     arch=$4
 
     sed \
-        -e "s/^AVATAR_ARCH=\".*\"/AVATAR_ARCH=\"$arch\"/g" \
-        -e "s/^AVATAR_BUILD_NUMBER=\".*\"\$/AVATAR_BUILD_NUMBER=\"$revision\"/g" \
-        -e "s/^AVATAR_PROJECT=\".*\"\$/AVATAR_PROJECT=\"$project\"/g" \
-        -e "s/^AVATAR_VERSION=\".*\"\$/AVATAR_VERSION=\"$version\"/g" \
+        -e "s,^AVATAR_ARCH=\".*\",AVATAR_ARCH=\"$arch\",g" \
+        -e "s,^AVATAR_BUILD_NUMBER=\".*\"\$,AVATAR_BUILD_NUMBER=\"$revision\",g" \
+        -e "s,^AVATAR_PROJECT=\".*\"\$,AVATAR_PROJECT=\"$project\",g" \
+        -e "s,^AVATAR_VERSION=\".*\"\$,AVATAR_VERSION=\"$version\",g" \
         < $srcconf > $destconf.$$
 
     mv $destconf.$$ $destconf
@@ -301,6 +301,7 @@ menu_install()
         /etc/rc.d/dmesg start
         mkdir /tmp/data
         mount /dev/${_disk}s1a /tmp/data
+	# XXX need to find out why
 	ls /tmp/data > /dev/null
         # pre-avatar.conf build. Convert it!
         if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]
