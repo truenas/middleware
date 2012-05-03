@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-04-26 03:07+0200\n"
+"PO-Revision-Date: 2012-05-02 08:56+0200\n"
 "Last-Translator: hdcola <huangdong@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -2677,9 +2677,8 @@ msgid "Workgroup Name"
 msgstr "工作组名称"
 
 #: services/models.py:1174
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "旧格式工作组名，例如EXAMPLE"
+msgstr "旧格式的工作组名，例如 WORKGROUP"
 
 #: services/models.py:1178
 #, fuzzy
