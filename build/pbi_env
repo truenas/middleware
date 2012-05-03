@@ -1,0 +1,47 @@
+#
+# Global PBI configuration for plugins. All settings here can
+# be overridden in plugin configuration files.
+#
+
+#
+# Tell pbi_create what directory to use
+#
+PBI_APPDIR="${AVATAR_ROOT}/pbi"
+export PBI_APPDIR
+
+#
+# Force pbi_create to checkout 8.0-RELEASE source
+#
+PBI_OSREL="8.0-RELEASE"
+export PBI_OSREL
+
+#
+#
+# Tell pbi_create where the source code is
+# 
+PBI_BUILDSRC="${PBI_APPDIR}/src"
+export PBI_BUILDSRC
+
+#
+# Where to install the chroot
+# 
+PBI_BUILDTARGET="${PBI_APPDIR}/target"
+export PBI_BUILDTARGET
+
+#
+# Remove source after installworld?
+#
+PBI_DELETE_BUILDSRC=0
+export PBI_DELETE_BUILDSRC
+
+#
+# Remove target after installworld?
+#
+PBI_DELETE_BUILDTARGET=0
+export PBI_DELETE_BUILDTARGET
+
+#
+# Remove source/build?
+#
+PBI_DELETE_BUILD=0
+export PBI_DELETE_BUILD
