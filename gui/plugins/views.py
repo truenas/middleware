@@ -88,11 +88,35 @@ def plugin_delete(request, plugin_id):
 
 
 def plugin_update(request, plugin_id):
-    pass
+    if request.method == "POST":
+        pj = PluginsJail.objects.order_by("-id")[0]
+        notifier().change_upload_location(pj.plugins_path)
+        form = forms.PBIUpdateForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.done()
+            return JsonResponse(
+                message=_('Plugin successfully updated'),
+                events=['reloadHttpd()'],
+                enclosed=True)
+        else:
+            resp = render(request, "plugins/plugin_update.html", {
+                'form': form,
+            })
+            resp.content = (
+                "<html><body><textarea>"
+                + resp.content +
+                "</textarea></boby></html>"
+                )
+            return resp
+    else:
+        form = forms.PBIUpdateForm()
+
+    return render(request, "plugins/plugin_update.html", {
+        'form': form,
+        })
 
 
 def plugin_install(request):
-
     if request.method == "POST":
         pj = PluginsJail.objects.order_by("-id")[0]
         notifier().change_upload_location(pj.plugins_path)

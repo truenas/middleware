@@ -127,6 +127,12 @@ class PBIUploadForm(Form):
         notifier().restart("plugins")
 
 
+class PBIUpdateForm(PBIUploadForm):
+    def done(self, *args, **kwargs):
+        notifier().update_pbi()
+        notifier().restart("plugins")
+
+
 class JailInfoForm(ModelForm):
     class Meta:
         model = PluginsJail

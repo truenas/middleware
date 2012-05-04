@@ -2010,6 +2010,9 @@ class notifier:
 
         return ret
 
+    def update_pbi(self):
+        pass 
+
     def install_jail_pbi(self, path, name, plugins_path):
         """
         Install the plugins jail PBI
