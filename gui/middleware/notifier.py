@@ -742,7 +742,8 @@ class notifier:
             SELECT
                 jail_path,
                 jail_name,
-                jail_ip_id,
+                jail_ipv4address,
+                jail_ipv4netmask,
                 plugins_path
             FROM
                 services_pluginsjail
