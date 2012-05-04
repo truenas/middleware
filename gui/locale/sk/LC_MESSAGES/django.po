@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:49-0800\n"
-"PO-Revision-Date: 2011-08-05 15:18+0200\n"
-"Last-Translator: ataman <mk@ataman.sk>\n"
+"PO-Revision-Date: 2012-05-03 20:03+0200\n"
+"Last-Translator: duri <foo.bar@centrum.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -6303,9 +6303,8 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Doménový (DNS) server nieje definovaný"
+msgstr "Doménový (DNS) server nie je definovaný"
 
 #: templates/system/ntpserver.html:44
 #, fuzzy
