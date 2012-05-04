@@ -25,7 +25,7 @@ get_plugins_jail_name()
 
 	echo "${jail_name}"
 }
-    
+	
 generate_plugins_jail_config()
 {
 	local IFS="|"
@@ -37,28 +37,16 @@ generate_plugins_jail_config()
 	SELECT
 		jail_path,
 		jail_name,
-		na.alias_v4address as jail_ip,
 		plugins_path
-
 	FROM
 		services_pluginsjail
 
-	INNER JOIN
-		network_alias as na
-	ON
-		na.id = jail_ip_id
-
-	INNER JOIN
-		network_interfaces as ni
-	ON
-		na.alias_interface_id = ni.id
-
-	ORDER BY	
+	ORDER BY
 		-services_pluginsjail.id
 
 	LIMIT 1
 	" | \
-	while read -r path name ip plugins
+	while read -r path name plugins
 	do
 		local mntpath_plugins="${path}/${name}/mnt/plugins"
 		local mntpath_pbi="${path}/${name}/usr/pbi"
@@ -91,7 +79,7 @@ generate_plugins_jail_config()
 			echo "${source} ${path}/${name}/${destination} nullfs rw 0 0" >> "/etc/fstab.${name}"
 		done
 
-		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf
+		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf 2> /dev/null
 		sysctl security.jail.allow_raw_sockets=1
 
 		# No VIM colors needed here
@@ -99,16 +87,17 @@ generate_plugins_jail_config()
 
 		jail_${name}_rootdir="${path}/${name}"
 		jail_${name}_hostname="${name}"
-		jail_${name}_ip="${ip}"
 		jail_${name}_devfs_enable="YES"
 		jail_${name}_devfs_ruleset="devfsrules_jail"
 		jail_${name}_procfs_enable="YES"
 		jail_${name}_mount_enable="YES"
+		jail_${name}_vnet_enable="YES"
 		jail_sysvipc_allow="YES"
 		jail_list="${name}"
+		jail_v2_enable="YES"
 		jail_enable="YES"
 __EOF__
-	done	
+	done
 
 	mv "${tmpfile}" /etc/rc.conf
 	return $?
@@ -123,6 +112,50 @@ plugins_jail_start()
 
 		generate_plugins_jail_config
 		/etc/rc.d/jail start "${jail_name}"
+		rc=$?
+
+		if [ ${rc} -eq 0 ]; then
+
+			jail=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+			SELECT
+				jail_ipv4address,
+				jail_ipv4netmask
+			FROM
+				services_pluginsjail
+			ORDER BY
+				-id
+			LIMIT 1;
+			")
+
+			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
+			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
+			bridge=$(ifconfig bridge create)
+			epair=$(ifconfig epair create)
+			ifconfig ${epair} up
+			epairb=$(echo ${epair}|sed -E "s/([0-9])a$/\1b/g")
+			ifconfig ${bridge} addm ${epair} up
+			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
+			ifconfig ${epairb} vnet ${jail_id}
+			defaultroute=$(netstat -rn | grep default|awk '{print $2}')
+			defaultif=$(netstat -rn | grep default|awk '{print $6}')
+			jexec ${jail_id} ifconfig lo0 127.0.0.1
+			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
+			if [ -n "${defaultroute}" ]; then
+				jexec ${jail_id} route add default ${defaultroute}
+			fi
+			if [ -n "${defaultif}" ]; then
+				ifconfig ${bridge} addm ${defaultif}
+			fi
+
+			cat<<-__EOF__>> /etc/rc.conf
+			jail_${jail_name}_exec_poststop0="ifconfig ${bridge} destroy"
+			jail_${jail_name}_exec_poststop1="ifconfig ${epair} destroy"
+__EOF__
+
+		fi
+
+		return ${rc}
+
 	fi
 }
 
@@ -149,6 +182,6 @@ plugins_jail_stop()
 name="ix-jail"
 start_cmd='plugins_jail_start'
 stop_cmd='plugins_jail_stop'
-            
+
 load_rc_config $name
 run_rc_command "$1"

@@ -125,11 +125,19 @@ generate_plugins_conf()
 		-id
 	LIMIT 1")
 
+	ip=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jail_ipv4address
+	FROM
+		services_pluginsjail
+	ORDER BY
+		-id
+	LIMIT 1")
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		plugin_name,
 		plugin_enabled,
-		plugin_ip,
 		plugin_port,
 		plugin_path
 
@@ -139,7 +147,7 @@ generate_plugins_conf()
 	ORDER BY
 		-id
 	" | \
-	while read -r name enabled ip port path
+	while read -r name enabled port path
 	do
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"

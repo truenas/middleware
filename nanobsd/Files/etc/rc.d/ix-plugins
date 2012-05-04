@@ -83,6 +83,19 @@ get_jail_name()
 	"
 }
 
+get_jail_ip()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jail_ipv4address
+	FROM
+		services_pluginsjail
+	ORDER BY
+		-id
+	LIMIT 1
+	"
+}
+
 plugins_start()
 {
 	local args="$*"
@@ -98,7 +111,6 @@ plugins_start()
 		plugin_name,
 		plugin_path,
 		plugin_enabled,
-		plugin_ip,
 		plugin_port
 	FROM
 		plugins_plugins
@@ -130,17 +142,18 @@ plugins_start()
 
 	local jn=$(get_jail_name)
 	local jp=$(get_jail_path)
+	local jip=$(get_jail_ip)
 
 	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
-	while read name path enabled ip port
+	while read name path enabled port
 	do
 		if [ "${enabled}" != "1" -a "${rc_force}" != "yes" ]
 		then
 			continue
 		fi
 
-		jexec ${jid} "${path}/control" start "${ip}" "${port}" 2>/dev/null
+		jexec ${jid} "${path}/control" start "${jip}" "${port}" 2>/dev/null
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"
