@@ -5,6 +5,7 @@
             <td>{% trans "Variable" %}</td>
             <td>{% trans "Value" %}</td>
             <td>{% trans "Comment" %}</td>
+            <td>{% trans "Enabled" %}</td>
             <td>{% trans "Available actions" %}</td>
           </tr>
         </thead>
@@ -12,6 +13,7 @@
         <td>{{ c.tun_var }}</td>
         <td>{{ c.tun_value }}</td>
         <td>{{ c.tun_comment }}</td>
+        <td>{{ c.tun_enabled }}</td>
         <td>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
