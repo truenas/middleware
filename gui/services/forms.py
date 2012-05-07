@@ -614,6 +614,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return lucgroup
 
     def clean_iscsi_luc_authnetwork(self):
+        luc = self.cleaned_data.get('iscsi_toggleluc')
+        if not luc:
+            return ''
         network = self.cleaned_data.get('iscsi_luc_authnetwork').strip()
         try:
             network = IPNetwork(network.encode('utf-8'))
