@@ -37,6 +37,7 @@ from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.services.models import services
+from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 
@@ -76,41 +77,57 @@ class CIFS_ShareForm(ModelForm):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
 
+
 class AFP_ShareForm(ModelForm):
+
     afp_sharepw2 = forms.CharField(max_length=50,
             label=_("Confirm Share Password"),
             widget=forms.widgets.PasswordInput(render_value=False),
             required=False,
             )
+
     class Meta:
         model = models.AFP_Share
         widgets = {
             'afp_sharepw': forms.widgets.PasswordInput(render_value=False),
         }
+
     def __init__(self, *args, **kwargs):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
+        self.fields['afp_fperm'] = UnixPermissionField(
+            label=self.fields['afp_fperm'].label,
+            )
+        self.fields['afp_dperm'] = UnixPermissionField(
+            label=self.fields['afp_dperm'].label,
+            )
         if self.instance.id:
             self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
+
     def clean_afp_sharepw2(self):
         password1 = self.cleaned_data.get("afp_sharepw")
         password2 = self.cleaned_data.get("afp_sharepw2")
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("afp_sharepw"):
             cdata['afp_sharepw'] = self.instance.afp_sharepw
         return cdata
+
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
         return ret
+
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
             events.append('ask_service("afp")')
+
 AFP_ShareForm.base_fields.keyOrder.remove('afp_sharepw2')
 AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
+
 
 class NFS_ShareForm(ModelForm):
 
