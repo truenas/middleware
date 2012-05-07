@@ -55,12 +55,12 @@ EOF
 generate_av_default()
 {
     local IFS="|"
-    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_adouble afp_nodev afp_nofileid afp_nohex afp_prodos afp_nostat afp_upriv"
+    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_adouble afp_nodev afp_nofileid afp_nohex afp_prodos afp_nostat afp_upriv afp_fperm afp_dperm"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT ${sf}, afp_path FROM sharing_afp_share AS aps ORDER BY aps.id DESC" | \
-    while eval read $f mountpoint; do
+    while eval read -r $f mountpoint; do
 	if [ -d "${mountpoint}" ]; then
 		echo "# ${afp_comment}"
 		echo -n "\"${mountpoint}\" \"${afp_name}\""
@@ -76,6 +76,9 @@ generate_av_default()
 		fi
 		if [ ${afp_diskdiscovery} -eq 1 -a ${afp_discoverymode} = "time-machine" ]; then
 			echo -n ",tm"
+		fi
+		if [ ${afp_upriv} -eq 1 ]; then
+			echo -n " dperm:0${afp_dperm} fperm:0${afp_fperm}"
 		fi
 		echo -n "${afp_allow:+ allow:${afp_allow}}"
 		echo -n "${afp_deny:+ deny:${afp_deny}}"

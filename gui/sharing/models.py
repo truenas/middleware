@@ -216,6 +216,16 @@ class AFP_Share(Model):
             verbose_name=_("AFP3 Unix Privs"),
             help_text=_("Use AFP3 unix privileges.")
             )
+    afp_fperm = models.CharField(
+            max_length=3,
+            default="770",
+            verbose_name=_("Default file permission"),
+            )
+    afp_dperm = models.CharField(
+            max_length=3,
+            default="660",
+            verbose_name=_("Default directory permission"),
+            )
 
     def __unicode__(self):
         return unicode(self.afp_name)
