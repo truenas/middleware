@@ -138,7 +138,7 @@ class JailInfoForm(ModelForm):
 
         full_path = os.path.join(
             cleaned_data['jail_path'],
-            cleaned_data['jail_name'],
+            cleaned_data.get('jail_name', ''),
             )
         if os.path.exists(full_path):
             self._errors['__all__'] = self.error_class([
@@ -220,7 +220,8 @@ class JailPBIUploadForm(Form):
         pj = PluginsJail()
         pj.jail_path = jailinfo.cleaned_data.get('jail_path')
         pj.jail_name = jailinfo.cleaned_data.get('jail_name')
-        pj.jail_ip = jailinfo.cleaned_data['jail_ip']
+        pj.jail_ipv4address = jailinfo.cleaned_data['jail_ipv4address']
+        pj.jail_ipv4netmask = jailinfo.cleaned_data['jail_ipv4netmask']
         pj.plugins_path = jailinfo.cleaned_data.get('plugins_path')
 
         # Install the jail PBI
