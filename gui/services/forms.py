@@ -130,7 +130,7 @@ class PluginsJailForm(ModelForm):
             raise forms.ValidationError(_("The plugins archive path cannot be a subset of the plugins jail path."))
         return ppath
 
-    def clean_jail_ip(self):
+    def clean_jail_ipv4address(self):
         jip = self.cleaned_data.get("jail_ip")
         if jip == self.instance.jail_ip:
             return jip

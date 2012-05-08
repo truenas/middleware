@@ -38,6 +38,7 @@ from django.core.validators import (MinValueValidator, MaxValueValidator,
 from freeadmin.models import Model, UserField, GroupField, PathField
 
 from freenasUI import choices
+from freenasUI.contrib.IPAddressField import IPAddressField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias
 from freenasUI.services.exceptions import ServiceFailed
@@ -812,13 +813,13 @@ class PluginsJail(Model):
                 message=_("Jail name can only contain letters, numbers and "
                     "underscores."))]
             )
-    jail_ip = models.ForeignKey(
-            Alias,
-            on_delete=models.SET_NULL,
-            null=True,
+    jail_ipv4address = IPAddressField(
             verbose_name=_("Jail IP address"),
-            help_text=_("This must be an interface alias "
-                "(Network->Interfaces->Edit)"),
+            )
+    jail_ipv4netmask = models.CharField(
+            max_length=3,
+            verbose_name=_("Jail IP Netmask"),
+            choices=choices.v4NetmaskBitList,
             )
     plugins_path = PathField(
             verbose_name=_("Plugins archive path"),
