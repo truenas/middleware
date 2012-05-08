@@ -65,15 +65,18 @@ class Volume(Model):
                     pool = n.zpool_parse(self.vol_name)
                     self._disks = pool.get_disks()
                 else:
-                    prov = n.get_label_consumer(self.vol_fstype.lower(), self.vol_name)
-                    self._disks = n.get_disks_from_provider(prov) if prov else []
+                    prov = n.get_label_consumer(self.vol_fstype.lower(),
+                        self.vol_name)
+                    self._disks = n.get_disks_from_provider(prov) \
+                        if prov else []
             return self._disks
         except Exception, e:
             return []
 
     def get_datasets(self):
         if self.vol_fstype == 'ZFS':
-            return notifier().list_zfs_datasets(path=self.vol_name, recursive=True)
+            return notifier().list_zfs_datasets(path=self.vol_name,
+                recursive=True)
 
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
@@ -83,7 +86,8 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                self._status = notifier().get_volume_status(self.vol_name, self.vol_fstype)
+                self._status = notifier().get_volume_status(self.vol_name,
+                    self.vol_fstype)
             return self._status
         except Exception, e:
             return _(u"Error")
@@ -306,7 +310,7 @@ class Scrub(Model):
 class Disk(Model):
     disk_name = models.CharField(
             max_length=120,
-            verbose_name = _("Name")
+            verbose_name=_("Name")
             )
     disk_identifier = models.CharField(
             max_length=42,
@@ -315,7 +319,7 @@ class Disk(Model):
             )
     disk_serial = models.CharField(
             max_length=30,
-            verbose_name = _("Serial"),
+            verbose_name=_("Serial"),
             blank=True,
             )
     disk_multipath_name = models.CharField(
@@ -332,40 +336,40 @@ class Disk(Model):
             )
     disk_description = models.CharField(
             max_length=120,
-            verbose_name = _("Description"),
+            verbose_name=_("Description"),
             blank=True
             )
     disk_transfermode = models.CharField(
             max_length=120,
             choices=choices.TRANSFERMODE_CHOICES,
             default="Auto",
-            verbose_name = _("Transfer Mode")
+            verbose_name=_("Transfer Mode")
             )
     disk_hddstandby = models.CharField(
             max_length=120,
             choices=choices.HDDSTANDBY_CHOICES,
             default="Always On",
-            verbose_name = _("HDD Standby")
+            verbose_name=_("HDD Standby")
             )
     disk_advpowermgmt = models.CharField(
             max_length=120,
             choices=choices.ADVPOWERMGMT_CHOICES,
             default="Disabled",
-            verbose_name = _("Advanced Power Management")
+            verbose_name=_("Advanced Power Management")
             )
     disk_acousticlevel = models.CharField(
             max_length=120,
             choices=choices.ACOUSTICLVL_CHOICES,
             default="Disabled",
-            verbose_name = _("Acoustic Level")
+            verbose_name=_("Acoustic Level")
             )
     disk_togglesmart = models.BooleanField(
             default=True,
-            verbose_name = _("Enable S.M.A.R.T."),
+            verbose_name=_("Enable S.M.A.R.T."),
             )
     disk_smartoptions = models.CharField(
             max_length=120,
-            verbose_name = _("S.M.A.R.T. extra options"),
+            verbose_name=_("S.M.A.R.T. extra options"),
             blank=True
             )
     disk_enabled = models.BooleanField(
@@ -399,7 +403,9 @@ class Disk(Model):
     def get_disk_size(self):
         #FIXME
         import subprocess
-        p1 = subprocess.Popen(["/usr/sbin/diskinfo", self.devname], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p1 = subprocess.Popen(["/usr/sbin/diskinfo", self.devname],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
         if p1.wait() == 0:
             out = p1.communicate()[0]
             return out.split('\t')[3]
@@ -427,23 +433,23 @@ class Disk(Model):
 
     def __unicode__(self):
         return unicode(self.disk_name)
-        #ident = self.identifier_to_device() or _('Unknown')
-        #return u"%s" % (ident,)
+
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
     mp_path = models.CharField(
             unique=True,
             max_length=120,
-            verbose_name = _("Mount Point"),
-            help_text = _("Path to mount point"),
+            verbose_name=_("Mount Point"),
+            help_text=_("Path to mount point"),
             )
     mp_options = models.CharField(
             max_length=120,
-            verbose_name = _("Mount options"),
-            help_text = _("Enter Mount Point options here"),
+            verbose_name=_("Mount options"),
+            help_text=_("Enter Mount Point options here"),
             null=True,
             )
+
     def is_my_path(self, path):
         if path == self.mp_path:
             return True
@@ -530,7 +536,8 @@ class MountPoint(Model):
 
         if self.mp_volume.vol_fstype == 'ZFS':
             Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
-            Replication.objects.filter(repl_filesystem=self.mp_path[5:]).delete()
+            Replication.objects.filter(
+                repl_filesystem=self.mp_path[5:]).delete()
 
         if do_reload:
             svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
@@ -539,8 +546,10 @@ class MountPoint(Model):
                     notifier().restart(svc)
 
         super(MountPoint, self).delete()
+
     def __unicode__(self):
         return self.mp_path
+
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
             try:
@@ -548,35 +557,43 @@ class MountPoint(Model):
             except:
                 self.__vfs = None
         return self.__vfs
+
     def _get_total_si(self):
         try:
-            totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
+            totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
             return u"%s" % (humanize_size(totalbytes))
         except:
             return _(u"Error getting total space")
+
     def _get_avail_si(self):
         try:
-            availbytes = self._vfs.f_bavail*self._vfs.f_frsize
+            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
             return u"%s" % (humanize_size(availbytes))
         except:
             return _(u"Error getting available space")
+
     def _get_used_bytes(self):
         try:
-            return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
+                self._vfs.f_frsize
         except:
             return 0
+
     def _get_used_si(self):
         try:
             usedbytes = self._get_used_bytes()
             return u"%s" % (humanize_size(usedbytes))
         except:
             return _(u"Error getting used space")
+
     def _get_used_pct(self):
         try:
-            availpct = 100*(self._vfs.f_blocks-self._vfs.f_bavail)/self._vfs.f_blocks
+            availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
+                self._vfs.f_blocks
             return u"%d%%" % (availpct)
         except:
             return _(u"Error")
+
     def _get_status(self):
         try:
             if not hasattr(self, '_status'):
@@ -584,6 +601,7 @@ class MountPoint(Model):
             return self._status
         except Exception:
             return _(u"Error")
+
     _vfs = property(_get__vfs)
     total_si = property(_get_total_si)
     avail_si = property(_get_avail_si)
@@ -620,34 +638,41 @@ class ReplRemote(Model):
     def __unicode__(self):
         return self.ssh_remote_hostname
 
+
 class Replication(Model):
     repl_filesystem = models.CharField(max_length=150,
-            verbose_name = _("Filesystem/Volume"),
-            blank = True,
+            verbose_name=_("Filesystem/Volume"),
+            blank=True,
             )
     repl_lastsnapshot = models.CharField(max_length=120,
-            blank = True,
-            verbose_name = _("Last snapshot sent to remote side (leave blank for full replication)"),
+            blank=True,
+            verbose_name=_("Last snapshot sent to remote side (leave blank "
+                "for full replication)"),
             )
     repl_remote = models.ForeignKey(ReplRemote,
-            verbose_name = _("Remote Host"),
+            verbose_name=_("Remote Host"),
             )
     repl_zfs = models.CharField(max_length=120,
-            verbose_name = _("Remote ZFS filesystem name"),
-            help_text = _("This should be the name of the ZFS filesystem on remote side. eg: poolname/datasetname not the mountpoint or filesystem path"),
+            verbose_name=_("Remote ZFS filesystem name"),
+            help_text=_("This should be the name of the ZFS filesystem on "
+                "remote side. eg: poolname/datasetname not the mountpoint or "
+                "filesystem path"),
             )
     repl_userepl = models.BooleanField(
-            default = False,
-            verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
+            default=False,
+            verbose_name=_("Recursively replicate and remove stale snapshot "
+                "on remote side"),
             )
     repl_resetonce = models.BooleanField(
-            default = False,
-            verbose_name = _("Initialize remote side for once. (May cause data loss on remote side!)"),
+            default=False,
+            verbose_name=_("Initialize remote side for once. (May cause data"
+                " loss on remote side!)"),
             )
     repl_limit = models.IntegerField(
-            default = 0,
-            verbose_name = _("Limit (kB/s)"),
-            help_text = _("Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."),
+            default=0,
+            verbose_name=_("Limit (kB/s)"),
+            help_text=_("Limit the replication speed. Unit in "
+                "kilobytes/seconds. 0 = unlimited."),
             )
 
     class Meta:
@@ -662,7 +687,8 @@ class Replication(Model):
         icon_object = u"ReplIcon"
 
     def __unicode__(self):
-        return '%s -> %s' % (self.repl_filesystem, self.repl_remote.ssh_remote_hostname)
+        return '%s -> %s' % (self.repl_filesystem,
+            self.repl_remote.ssh_remote_hostname)
 
     def delete(self):
         try:
@@ -676,21 +702,21 @@ class Replication(Model):
 
 class Task(Model):
     task_filesystem = models.CharField(max_length=150,
-            verbose_name = _("Filesystem/Volume"),
+            verbose_name=_("Filesystem/Volume"),
             )
     task_recursive = models.BooleanField(
-            default = False,
-            verbose_name = _("Recursive"),
+            default=False,
+            verbose_name=_("Recursive"),
             )
     task_ret_count = models.PositiveIntegerField(
-            default = 2,
-            verbose_name = _("Snapshot lifetime value"),
+            default=2,
+            verbose_name=_("Snapshot lifetime value"),
             )
     task_ret_unit = models.CharField(
-            default = 'week',
-            max_length = 120,
+            default='week',
+            max_length=120,
             choices=choices.RetentionUnit_Choices,
-            verbose_name = _("Snapshot lifetime unit"),
+            verbose_name=_("Snapshot lifetime unit"),
             )
     task_begin = models.TimeField(
             default=time(hour=9),
@@ -754,5 +780,5 @@ class Task(Model):
         icon_object = u"SnapIcon"
         extra_js = u"taskrepeat_checkings();"
         composed_fields = (
-                            ('Lifetime', ('task_ret_count','task_ret_unit')),
+                            ('Lifetime', ('task_ret_count', 'task_ret_unit')),
                         )
