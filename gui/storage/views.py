@@ -251,9 +251,8 @@ def disks_datagrid(request):
 def disks_datagrid_json(request):
 
     disks = models.Disk.objects.filter(
-        disk_enabled=True
-        ).exclude(
-        disk_name__startswith='multipath'
+        disk_enabled=True,
+        disk_multipath_name=''
         )
 
     complete = []
