@@ -48,6 +48,7 @@ def _is_vdev(name):
         return True
     return False
 
+
 def _vdev_type(name):
     # raidz needs to appear after other raidz types
     supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
@@ -55,6 +56,7 @@ def _vdev_type(name):
         if name.startswith(_type):
             return _type
     return False
+
 
 class UID(object):
     """
@@ -69,6 +71,7 @@ class UID(object):
         return str(self.id)
 
 _UID = UID()
+
 
 class Pool(object):
     """
@@ -167,6 +170,7 @@ class Pool(object):
             'logs': self.logs,
         })
 
+
 class Tnode(object):
     """
     Abstract class for Root, Vdev and Dev
@@ -218,12 +222,11 @@ class Tnode(object):
         """
         print '   ' * level + node.name
         for child in node.children:
-            node.pprint(child, level+1)
+            node.pprint(child, level + 1)
 
     def __iter__(self):
         for child in list(self.children):
             yield child
-
 
     def validate(self):
         """
@@ -242,6 +245,7 @@ class Tnode(object):
         Each specialized method must dump its own instance
         """
         raise NotImplementedError
+
 
 class Root(Tnode):
     """
@@ -307,6 +311,7 @@ class Root(Tnode):
         for vdev in self:
             vdev.validate()
 
+
 class Vdev(Tnode):
     """
     A Vdev represents a ZFS Virtual Device
@@ -337,6 +342,7 @@ class Vdev(Tnode):
             'numDisks': len(disks),
             'status': self.status,
             }
+
     def treedump(self):
         disks = []
         children = []
@@ -370,6 +376,7 @@ class Vdev(Tnode):
         else:
             self.type = _vdev_type(self.name)
 
+
 class Dev(Tnode):
     """
     Dev is the leaf in the tree
@@ -378,6 +385,7 @@ class Dev(Tnode):
     disk = None
     devname = None
     path = None
+
     def __init__(self, *args, **kwargs):
         self.replacing = kwargs.pop('replacing', False)
         super(Dev, self).__init__(*args, **kwargs)
@@ -407,10 +415,10 @@ class Dev(Tnode):
         if disk:
             actions['edit_url'] = reverse('freeadmin_model_edit',
                 kwargs={
-                    'app':'storage',
+                    'app': 'storage',
                     'model': 'Disk',
                     'oid': disk.id,
-                    })+'?deletable=false'
+                    }) + '?deletable=false'
         if self.status == 'ONLINE':
             actions['offline_url'] = reverse('storage_disk_offline',
                 kwargs={
@@ -467,13 +475,21 @@ class Dev(Tnode):
             if len(search) > 0:
                 provider = search[0].content
             elif self.status == 'ONLINE':
-                raise Exception("It should be a valid device: %s" % self.name)
+                log.warn("It should be a valid device: %s", self.name)
+                self.disk = self.name
             elif self.name.isdigit():
                 # Lets check whether it is a guid
-                p1 = subprocess.Popen(["/usr/sbin/zdb", "-C", self.parent.parent.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                if p1.wait() == 0:
-                    zdb = p1.communicate()[0]
-                    reg = re.search(r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % self.name, zdb, re.M|re.S)
+                p1 = subprocess.Popen(
+                    ["/usr/sbin/zdb", "-C", self.parent.parent.name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+                zdb = p1.communicate()[0]
+                if p1.returncode == 0:
+                    reg = re.search(
+                        r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % (
+                            self.name,
+                            ),
+                        zdb, re.M | re.S)
                     if reg:
                         self.path = reg.group("path")
 
@@ -481,6 +497,7 @@ class Dev(Tnode):
             search = self._doc.xpathEval("//provider[@id = '%s']"
                                          "/../name" % provider)
             self.disk = search[0].content
+
 
 class ZFSList(SortedDict):
 
@@ -500,6 +517,7 @@ class ZFSList(SortedDict):
     def __delitem__(self, item):
         self.pools[item.pool].remove(item)
         super(ZFSList, self).__delitem__(item)
+
 
 class ZFSDataset(object):
 
@@ -525,35 +543,44 @@ class ZFSDataset(object):
             except:
                 self.__vfs = None
         return self.__vfs
+
     def _get_total_si(self):
         try:
-            totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
+            totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
             return u"%s" % (humanize_size(totalbytes))
         except:
             return _(u"Error getting total space")
+
     def _get_avail_si(self):
         try:
-            availbytes = self._vfs.f_bavail*self._vfs.f_frsize
+            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
             return u"%s" % (humanize_size(availbytes))
         except:
             return _(u"Error getting available space")
+
     def _get_used_bytes(self):
         try:
-            return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
+                self._vfs.f_frsize
         except:
             return 0
+
     def _get_used_si(self):
         try:
             usedbytes = self._get_used_bytes()
             return u"%s" % (humanize_size(usedbytes))
         except:
             return _(u"Error getting used space")
+
     def _get_used_pct(self):
         try:
-            availpct = 100*(self._vfs.f_blocks-self._vfs.f_bavail)/self._vfs.f_blocks
+            availpct = 100 * (
+                self._vfs.f_blocks - self._vfs.f_bavail
+                ) / self._vfs.f_blocks
             return u"%d%%" % (availpct)
         except:
             return _(u"Error")
+
     def _get_status(self):
         try:
             if not hasattr(self, '_status'):
@@ -567,6 +594,7 @@ class ZFSDataset(object):
     used_pct = property(_get_used_pct)
     used_si = property(_get_used_si)
     status = property(_get_status)
+
 
 def parse_status(name, doc, data):
 
