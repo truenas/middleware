@@ -28,7 +28,7 @@
 from datetime import time
 import os
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
@@ -111,7 +111,7 @@ class Volume(Model):
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
-        from services.models import iSCSITargetExtent
+        from freenasUI.services.models import iSCSITargetExtent
 
         # TODO: This is ugly.
         svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
@@ -149,29 +149,40 @@ class Volume(Model):
 
         n.detach_volume_swaps(self)
 
-        if destroy:
+        # Ghosts volumes, does not exists anymore but is in database
+        ghost = False
+        try:
+            status = n.get_volume_status(self.vol_name, self.vol_fstype)
+            ghost = status == 'UNKNOWN'
+        except:
+            ghost = True
+
+        if ghost:
+            pass
+        elif destroy:
             n.destroy("volume", self)
         else:
             n.volume_detach(self.vol_name, self.vol_fstype)
 
-        return (svcs, reloads, )
+        return (svcs, reloads)
 
     def delete(self, destroy=True, cascade=True):
 
-        try:
-            svcs, reloads = Volume._delete(self,
-                                           destroy=destroy,
-                                           cascade=cascade)
-        finally:
-            for mp in self.mountpoint_set.all():
-                if not os.path.isdir(mp.mp_path):
-                    mp.delete(do_reload=False)
+        with transaction.commit_on_success():
+            try:
+                svcs, reloads = Volume._delete(self,
+                                               destroy=destroy,
+                                               cascade=cascade)
+            finally:
+                for mp in self.mountpoint_set.all():
+                    if not os.path.isdir(mp.mp_path):
+                        mp.delete(do_reload=False)
 
-        n = notifier()
+            n = notifier()
 
-        # The framework would cascade delete all database items
-        # referencing this volume.
-        super(Volume, self).delete()
+            # The framework would cascade delete all database items
+            # referencing this volume.
+            super(Volume, self).delete()
         # Refresh the fstab
         n.reload("disk")
 
