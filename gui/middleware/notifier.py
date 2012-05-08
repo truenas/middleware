@@ -39,6 +39,7 @@ import ctypes
 import errno
 import glob
 import grp
+import libxml2
 import logging
 import os
 import platform
@@ -381,7 +382,7 @@ class notifier:
 
         cmd = "/sbin/ifconfig %s" % iface
         if newip and newnetmask:
-            cmd += " alias %s/%s" % (newip, newnetmask) 
+            cmd += " alias %s/%s" % (newip, newnetmask)
 
         elif newip:
             cmd += " alias %s" % newip
@@ -406,7 +407,7 @@ class notifier:
 
         else:
             cmd = None
-        
+
         if cmd:
             p = self.__pipeopen(cmd)
             if p.wait() != 0:
@@ -504,7 +505,8 @@ class notifier:
         self._start_ldap()
 
     def _started_activedirectory(self):
-        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled, FLAGS_DBINIT
+        from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory,
+            ActiveDirectoryEnabled, FLAGS_DBINIT)
 
         for srv in ('kinit', 'activedirectory', ):
             if (self.__system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
@@ -688,7 +690,7 @@ class notifier:
     def _restart_plugins_jail(self):
         self._stop_plugins_jail()
         self._start_plugins_jail()
-    
+
     def _started_plugins_jail(self):
         c = self.__open_db()
         c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
@@ -1159,7 +1161,7 @@ class notifier:
                 zfsproc = self.__pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
             if zfsproc.returncode == 0:
-                from storage.models import Task, Replication
+                from freenasUI.storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
         if not retval:
@@ -2795,8 +2797,7 @@ class notifier:
 
     def __geom_confxml(self):
         if self.__confxml == None:
-            from libxml2 import parseDoc
-            self.__confxml = parseDoc(self.sysctl('kern.geom.confxml'))
+            self.__confxml = libxml2.parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
 
     def serial_from_device(self, devname):
@@ -2915,7 +2916,7 @@ class notifier:
             return ''
 
     def swap_from_diskid(self, diskid):
-        from storage.models import Disk
+        from freenasUI.storage.models import Disk
         disk = Disk.objects.get(id=diskid)
         return self.part_type_from_device('swap', disk.devname)
 
@@ -2973,7 +2974,7 @@ class notifier:
         return parse
 
     def sync_disk(self, devname):
-        from storage.models import Disk
+        from freenasUI.storage.models import Disk
 
         self.__diskserial.clear()
 
@@ -3000,7 +3001,7 @@ class notifier:
         disk.save()
 
     def sync_disks(self):
-        from storage.models import Disk
+        from freenasUI.storage.models import Disk
 
         disks = self.__get_disks()
         self.__diskserial.clear()
@@ -3063,7 +3064,7 @@ class notifier:
         #FIXME: This should not be here
         from django.core.urlresolvers import reverse
         from django.utils import simplejson
-        from storage.models import Disk
+        from freenasUI.storage.models import Disk
         provider = self.get_label_consumer('ufs', volume.vol_name)
         if not provider:
             raise ValueError("UFS Volume %s not found" % (volume,))
