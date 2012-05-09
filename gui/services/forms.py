@@ -25,6 +25,7 @@
 #####################################################################
 
 import glob
+import logging
 import os
 import re
 import subprocess
@@ -45,32 +46,39 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError, \
-                   IPv6Address, IPv4Address 
+from ipaddr import (IPAddress, IPNetwork, AddressValueError,
+    NetmaskValueError, IPv6Address, IPv4Address)
 
-""" Services """
+log = logging.getLogger('services.form')
+
 
 class servicesForm(ModelForm):
     class Meta:
         model = models.services
 
+
 class CIFSForm(ModelForm):
+
     class Meta:
         model = models.CIFS
+
     def __check_octet(self, v):
         try:
             if v != "" and (int(v, 8) & ~011777):
                 raise ValueError
         except:
             raise forms.ValidationError(_("This is not a valid mask"))
+
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()
         self.__check_octet(v)
         return v
+
     def clean_cifs_srv_dirmask(self):
         v = self.cleaned_data.get("cifs_srv_dirmask").strip()
         self.__check_octet(v)
         return v
+
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
@@ -79,10 +87,15 @@ class CIFSForm(ModelForm):
         if (browse or hdir) and not home:
             self._errors['cifs_srv_homedir_enable'] = self.error_class()
             if browse:
-                self._errors['cifs_srv_homedir_enable'] += self.error_class([_("This field is required for \"Enable home directories browsing\"."),])
+                self._errors['cifs_srv_homedir_enable'] += self.error_class([
+                    _("This field is required for \"Enable home directories "
+                        "browsing\"."),
+                    ])
                 cleaned_data.pop('cifs_srv_homedir_enable', None)
             if hdir:
-                self._errors['cifs_srv_homedir_enable'] += self.error_class([_("This field is required for \"Home directories\"."),])
+                self._errors['cifs_srv_homedir_enable'] += self.error_class([
+                    _("This field is required for \"Home directories\"."),
+                    ])
                 cleaned_data.pop('cifs_srv_homedir_enable', None)
         return cleaned_data
 
@@ -92,18 +105,24 @@ class CIFSForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='cifs').srv_enable:
             raise ServiceFailed("cifs", _("The CIFS service failed to reload."))
 
+
 class AFPForm(ModelForm):
+
     class Meta:
         model = models.AFP
+
     def save(self):
         super(AFPForm, self).save()
         started = notifier().restart("afp")
         if started is False and models.services.objects.get(srv_service='afp').srv_enable:
             raise ServiceFailed("afp", _("The AFP service failed to reload."))
 
+
 class NFSForm(ModelForm):
+
     class Meta:
         model = models.NFS
+
     def save(self):
         super(NFSForm, self).save()
         started = notifier().restart("nfs")
@@ -116,8 +135,6 @@ class PluginsJailForm(ModelForm):
     class Meta:
         model = models.PluginsJail
 
-    #def clean_jail_name(self):
-
     def clean_plugins_path(self):
         ppath = self.cleaned_data.get("plugins_path")
         jpath = self.cleaned_data.get("jail_path")
@@ -127,7 +144,10 @@ class PluginsJailForm(ModelForm):
         ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
         jpathname = os.path.join(jpath, jname)
         if ppath == jpath or ppath.startswith(jpathname):
-            raise forms.ValidationError(_("The plugins archive path cannot be a subset of the plugins jail path."))
+            raise forms.ValidationError(
+                _("The plugins archive path cannot be a subset of the plugins "
+                    "jail path.")
+                )
         return ppath
 
     def clean_jail_ipv4address(self):
@@ -517,9 +537,13 @@ class iSCSITargetToExtentForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+
 class iSCSITargetGlobalConfigurationForm(ModelForm):
-    iscsi_luc_authgroup = forms.ChoiceField(label=_("Controller Auth Group"),
-            help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."))
+    iscsi_luc_authgroup = forms.ChoiceField(
+        label=_("Controller Auth Group"),
+        help_text=_("The istgtcontrol can access the targets with correct user"
+            "and secret in specific Auth Group."),
+        )
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
 
     class Meta:
@@ -649,12 +673,14 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
 
 class iSCSITargetFileExtentForm(ModelForm):
+
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
         widgets = {
             'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
         }
+
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
@@ -682,6 +708,7 @@ class iSCSITargetFileExtentForm(ModelForm):
                         return "%s%s" % (m.group(1), m.group(2))
             raise forms.ValidationError(_("This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"))
         return size
+
     def clean(self):
         cdata = self.cleaned_data
         path = cdata.get("iscsi_target_extent_path")
@@ -690,6 +717,7 @@ class iSCSITargetFileExtentForm(ModelForm):
                 self._errors['iscsi_target_extent_path'] = self.error_class([_("The file must exist if the extent size is set to auto (0)")])
                 del cdata['iscsi_target_extent_path']
         return cdata
+
     def save(self, commit=True):
         oExtent = super(iSCSITargetFileExtentForm, self).save(commit=False)
         oExtent.iscsi_target_extent_type = 'File'
@@ -707,9 +735,20 @@ class iSCSITargetFileExtentForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
         return oExtent
 
+
 class iSCSITargetDeviceExtentForm(ModelForm):
-    iscsi_extent_disk = forms.ChoiceField(choices=(),
-            widget=forms.Select(), label = _('Disk device'))
+
+    iscsi_extent_disk = forms.ChoiceField(
+        choices=(),
+        widget=forms.Select(attrs={'maxHeight': 200}),
+        label=_('Disk device'))
+
+    class Meta:
+        model = models.iSCSITargetExtent
+        exclude = ('iscsi_target_extent_type',
+            'iscsi_target_extent_path',
+            'iscsi_target_extent_filesize')
+
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
         if kwargs.has_key("instance"):
@@ -723,6 +762,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         else:
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_extent_disk'].choices.sort()
+
     # TODO: This is largely the same with disk wizard.
     def _populate_disk_choices(self, exclude=None):
 
@@ -778,9 +818,6 @@ class iSCSITargetDeviceExtentForm(ModelForm):
 
         return diskchoices.items()
 
-    class Meta:
-        model = models.iSCSITargetExtent
-        exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
@@ -811,28 +848,40 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
         return oExtent
 
+
 class iSCSITargetPortalForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_portal_tag"].initial = models.iSCSITargetPortal.objects.all().count() + 1
+
     class Meta:
         model = models.iSCSITargetPortal
         widgets = {
             'iscsi_target_portal_tag': forms.widgets.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
+        self.fields["iscsi_target_portal_tag"].initial = models.iSCSITargetPortal.objects.all().count() + 1
     def clean_iscsi_target_portal_tag(self):
         tag = self.cleaned_data["iscsi_target_portal_tag"]
         higher = models.iSCSITargetPortal.objects.all().count() + 1
         if tag > higher:
             raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
         return tag
+
     def save(self):
         super(iSCSITargetPortalForm, self).save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+
 class iSCSITargetPortalIPForm(ModelForm):
+
+    class Meta:
+        model = models.iSCSITargetPortalIP
+        widgets = {
+            'iscsi_target_portalip_port': forms.widgets.TextInput(),
+        }
+
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
@@ -850,22 +899,19 @@ class iSCSITargetPortalIPForm(ModelForm):
                 elif alias.alias_v6address:
                     ips.append( (alias.alias_v6address, alias.alias_v6address) )
         self.fields['iscsi_target_portalip_ip'].choices = ips
-    class Meta:
-        model = models.iSCSITargetPortalIP
-        widgets = {
-            'iscsi_target_portalip_port': forms.widgets.TextInput(),
-        }
+
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
 
     class Meta:
         model = models.iSCSITargetAuthorizedInitiator
         widgets = {
             'iscsi_target_initiator_tag': forms.widgets.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
+        self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
 
     def clean_iscsi_target_initiator_tag(self):
         tag = self.cleaned_data["iscsi_target_initiator_tag"]
@@ -899,11 +945,15 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
+
 class iSCSITargetForm(ModelForm):
+
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
+
     class Meta:
         model = models.iSCSITarget
         exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
+
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
         if not kwargs.has_key("instance"):
@@ -990,8 +1040,10 @@ class PluginsJailDeleteForm(Form):
 
 
 class SMARTForm(ModelForm):
+
     class Meta:
         model = models.SMART
+
     def clean_smart_email(self):
         email = self.cleaned_data.get("smart_email")
         if email:
@@ -1006,6 +1058,7 @@ class SMARTForm(ModelForm):
                     'email': ", ".join(invalids),
                     })
         return email
+
     def save(self):
         super(SMARTForm, self).save()
         started = notifier().restart("smartd")
