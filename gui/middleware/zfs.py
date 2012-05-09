@@ -525,14 +525,22 @@ class ZFSDataset(object):
     path = None
     pool = None
     mountpoint = None
+    parent = None
+    children = None
 
     def __init__(self, path, mountpoint):
         self.path = path
         self.pool, self.name = path.split('/', 1)
         self.mountpoint = mountpoint
+        self.parent = None
+        self.children = []
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
+
+    def append(self, child):
+        child.parent = self
+        self.children.append(child)
 
     #TODO copied from MountPoint
     #Move this to a common place
@@ -673,3 +681,55 @@ def parse_status(name, doc, data):
             lastident = ident
     pool.validate()
     return pool
+
+
+def list_datasets(path="", recursive=False, hierarchical=True):
+    """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
+    args = [
+        "/sbin/zfs",
+        "list",
+        "-H",
+        "-t",
+        "filesystem"
+    ]
+    if recursive:
+        args.insert(3, "-r")
+    if path:
+        args.append(path)
+
+    zfsproc = subprocess.Popen(args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    zfs_output, zfs_err = zfsproc.communicate()
+    zfs_output = zfs_output.split('\n')
+    zfslist = ZFSList()
+    last_dataset = None
+    last_depth = 2
+    for line in zfs_output:
+        if line:
+            data = line.split('\t')
+            depth = len(data[0].split('/'))
+            # root filesystem is not treated as dataset by us
+            if depth == 1:
+                continue
+            dataset = ZFSDataset(path=data[0], mountpoint=data[4])
+            if not hierarchical:
+                zfslist.append(dataset)
+                continue
+
+            if depth == last_depth + 1:
+                last_dataset.append(dataset)
+            elif depth == 2:
+                zfslist.append(dataset)
+            elif depth > 2 and last_depth >= depth:
+                tmp = last_dataset
+                for i in range(last_depth - depth + 1):
+                    tmp = tmp.parent
+                tmp.append(dataset)
+            else:
+                log.error("Failed to parse zfs list in hierarchical mode")
+            last_dataset = dataset
+            last_depth = depth
+
+    return zfslist
