@@ -136,7 +136,8 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     echo "Exporting ${volumename}!" | logger
-    zpool export ${volumename} || watchdog -t 1
+    watchdog -t 4
+    zpool export ${volumename} || sleep 5
     echo "Exported ${volumename}!" | logger
     echo "$(date), $(hostname), assume backup" | mail -s "Failover" root
 fi
