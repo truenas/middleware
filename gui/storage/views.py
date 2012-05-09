@@ -37,6 +37,7 @@ from django.db import models as dmodels
 from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
 from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
@@ -486,7 +487,7 @@ def mp_permission(request, path):
 
 def dataset_delete(request, name):
 
-    datasets = notifier().list_zfs_datasets(path=name, recursive=True)
+    datasets = zfs.list_datasets(path=name, recursive=True)
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if form.is_valid():

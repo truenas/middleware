@@ -1078,23 +1078,6 @@ class notifier:
             self.restart("collectd")
         return zfs_error, zfs_err
 
-    def list_zfs_datasets(self, path="", recursive=False):
-        """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
-        if recursive:
-            zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t filesystem %s" % (path))
-        else:
-            zfsproc = self.__pipeopen("/sbin/zfs list -H -t filesystem %s" % (path))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_output = zfs_output.split('\n')
-        zfslist = zfs.ZFSList()
-        for line in zfs_output:
-            if line:
-                data = line.split('\t')
-                # root filesystem is not treated as dataset by us
-                if data[0].find('/') != -1:
-                    zfslist.append(zfs.ZFSDataset(path=data[0], mountpoint=data[4]))
-        return zfslist
-
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
         zfsproc = self.__pipeopen("/sbin/zfs list -H -o name,volsize -t volume -r %s" % (str(volname),))

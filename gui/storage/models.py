@@ -32,6 +32,7 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
+from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
 from freeadmin.models import Model
@@ -73,10 +74,11 @@ class Volume(Model):
         except Exception, e:
             return []
 
-    def get_datasets(self):
+    def get_datasets(self, hierarchical=False):
         if self.vol_fstype == 'ZFS':
-            return notifier().list_zfs_datasets(path=self.vol_name,
-                recursive=True)
+            return zfs.list_datasets(path=self.vol_name,
+                recursive=True,
+                hierarchical=hierarchical)
 
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':

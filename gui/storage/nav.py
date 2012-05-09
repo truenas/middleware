@@ -130,6 +130,34 @@ class Volumes(TreeNode):
     name = _(u'Volumes')
     icon = u'VolumesIcon'
 
+    def _gen_dataset(self, node, dataset):
+
+        nav = TreeNode(dataset.name)
+        nav.name = dataset.mountpoint
+        nav.icon = u'VolumesIcon'
+
+        ds = TreeNode('Dataset')
+        ds.name = _(u'Create ZFS Dataset')
+        ds.view = 'storage_dataset'
+        ds.icon = u'AddDatasetIcon'
+        ds.type = 'object'
+        ds.kwargs = {'fs': dataset.path}
+        nav.append_child(ds)
+
+        subnav = TreeNode('ChangePermissions')
+        subnav.name = _(u'Change Permissions')
+        subnav.type = 'editobject'
+        subnav.view = 'storage_mp_permission'
+        subnav.kwargs = {'path': dataset.mountpoint}
+        subnav.model = 'Volumes'
+        subnav.icon = u'ChangePasswordIcon'
+        subnav.app_name = 'storage'
+
+        node.append_child(nav)
+        nav.append_child(subnav)
+        for child in dataset.children:
+            self._gen_dataset(nav, child)
+
     def __init__(self, *args, **kwargs):
 
         super(Volumes, self).__init__(*args, **kwargs)
@@ -178,33 +206,11 @@ class Volumes(TreeNode):
             subnav.icon = u'ChangePasswordIcon'
             subnav.app_name = 'storage'
 
-            datasets = i.mp_volume.get_datasets()
+            datasets = i.mp_volume.get_datasets(hierarchical=True)
             if datasets:
                 for name, d in datasets.items():
-
-                    nav2 = TreeNode(name)
-                    nav2.name = d.mountpoint
-                    nav2.icon = u'VolumesIcon'
-
-                    ds = TreeNode('Dataset')
-                    ds.name = _(u'Create ZFS Dataset')
-                    ds.view = 'storage_dataset'
-                    ds.icon = u'AddDatasetIcon'
-                    ds.type = 'object'
-                    ds.kwargs = {'fs': d.path}
-                    nav2.append_child(ds)
-
-                    subnav2 = TreeNode('ChangePermissions')
-                    subnav2.name = _(u'Change Permissions')
-                    subnav2.type = 'editobject'
-                    subnav2.view = 'storage_mp_permission'
-                    subnav2.kwargs = {'path': d.mountpoint}
-                    subnav2.model = 'Volumes'
-                    subnav2.icon = u'ChangePasswordIcon'
-                    subnav2.app_name = 'storage'
-
-                    nav.append_child(nav2)
-                    nav2.append_child(subnav2)
+                    # TODO: non-recursive algo
+                    self._gen_dataset(nav, d)
 
             nav.append_child(subnav)
             self.insert_child(0, nav)

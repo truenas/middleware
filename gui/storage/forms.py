@@ -43,12 +43,13 @@ from django.utils.translation import (ugettext_lazy as _,
 from dojango import forms
 from dojango.forms import widgets, CheckboxSelectMultiple
 from freenasUI import choices
-from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
+from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionWidget, UnixPermissionField
@@ -732,7 +733,7 @@ class ZFSDataset_CreateForm(Form):
         full_dataset_name = "%s/%s" % (
             self.fs,
             cleaned_data.get("dataset_name"))
-        if len(notifier().list_zfs_datasets(path=full_dataset_name)) > 0:
+        if len(zfs.list_datasets(path=full_dataset_name)) > 0:
             msg = _(u"You already have a dataset with the same name")
             self._errors["dataset_name"] = self.error_class([msg])
             del cleaned_data["dataset_name"]
@@ -873,7 +874,7 @@ class ZVol_CreateForm(Form):
         full_zvol_name = "%s/%s" % (
             self.vol_name,
             cleaned_data.get("zvol_name"))
-        if len(notifier().list_zfs_datasets(path=full_zvol_name)) > 0:
+        if len(zfs.list_datasets(path=full_zvol_name)) > 0:
             msg = _(u"You already have a dataset with the same name")
             self._errors["zvol_name"] = self.error_class([msg])
             del cleaned_data["zvol_name"]
