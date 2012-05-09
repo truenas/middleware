@@ -115,7 +115,7 @@ def main(argv):
 
     if avail > threshold:
         if not os.path.exists(sentinel_file):
-            email(sentinel_file, args.dataset, args.threshold, o_avail)
+            email(args.dataset, args.threshold, o_avail)
             open(sentinel_file, 'w').close()
         sys.exit(2)
     else:
