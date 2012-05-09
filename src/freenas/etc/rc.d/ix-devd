@@ -120,7 +120,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     sleep 1
     echo "pass quick on \${SUBSYSTEM} keep state" > /etc/pf.conf
     pfctl -f /etc/pf.conf
-    echo "$(date), $(hostname), assume master" | mail -s "Failover" root
+    echo "\$(date), $(hostname), assume master" | mail -s "Failover" root
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
@@ -137,9 +137,10 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/statd stop
     echo "Exporting ${volumename}!" | logger
     watchdog -t 4
-    zpool export ${volumename} || sleep 5
+    zpool export ${volumename} || (zpool status ${volumename} && sleep 5)
+    watchdog -t 0
     echo "Exported ${volumename}!" | logger
-    echo "$(date), $(hostname), assume backup" | mail -s "Failover" root
+    echo "\$(date), $(hostname), assume backup" | mail -s "Failover" root
 fi
 E*O*F
 		touch /tmp/heartbeat_state /tmp/coldboot
