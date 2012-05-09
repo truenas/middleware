@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-05-08 09:23+0200\n"
+"PO-Revision-Date: 2012-05-08 11:30+0200\n"
 "Last-Translator: Hyuni <anbh345@nate.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -109,7 +109,7 @@ msgstr "항상 켜기"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "비활성화"
+msgstr "사용 불가"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -254,19 +254,19 @@ msgstr "타임머신"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "케이스가 닫히지 않음"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "양방향 소문자 이름"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "클라이언트 소문자로 보임, 서버 대문자로 보임"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "클라이언트 대분자로 보임, 서버 소문자로 보임"
 
 #: choices.py:203
 msgid "File"
@@ -342,22 +342,19 @@ msgstr "끄기"
 
 #: choices.py:288
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (권장)"
 
 #: choices.py:289
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "기본 레벨"
+msgstr "gzip (기본 단계, 6)"
 
 #: choices.py:290
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "가장 빠르게"
+msgstr "gzip (매우 빠름)"
 
 #: choices.py:291
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "최대, 느리게"
+msgstr "gzip (최대, 느림)"
 
 #: choices.py:485
 msgid "Hour(s)"
@@ -387,19 +384,19 @@ msgstr "매일"
 
 #: choices.py:494
 msgid "Every selected weekday"
-msgstr ""
+msgstr "선택된 모든 주일"
 
 #: choices.py:500
 msgid "Read-only"
-msgstr "읽기전용"
+msgstr "읽기 전용"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr "쓰기전용"
+msgstr "쓰기 전용"
 
 #: choices.py:502
 msgid "Read and Write"
-msgstr "읽기 쓰기"
+msgstr "읽기 및 쓰기"
 
 #: choices.py:506 choices.py:507
 #, python-format
@@ -495,7 +492,7 @@ msgstr ""
 
 #: account/forms.py:120 templates/storage/volumes.html:61
 msgid "Available"
-msgstr "사용 가능함"
+msgstr "사용 가능한"
 
 #: account/forms.py:171
 msgid "Selected"
