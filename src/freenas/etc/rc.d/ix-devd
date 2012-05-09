@@ -137,7 +137,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/statd stop
     echo "Exporting ${volumename}!" | logger
     watchdog -t 4
-    zpool export ${volumename} || (zpool status ${volumename} && sleep 5)
+    zpool export -f ${volumename} || (zpool status ${volumename} && sleep 5)
     watchdog -t 0
     echo "Exported ${volumename}!" | logger
     echo "\$(date), $(hostname), assume backup" | mail -s "Failover" root
