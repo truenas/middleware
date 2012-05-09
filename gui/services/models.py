@@ -960,115 +960,127 @@ class UPS(Model):
 class FTP(Model):
     ftp_port = models.PositiveIntegerField(
             default=21,
-            verbose_name = _("Port"),
+            verbose_name=_("Port"),
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
-            help_text = _("Port to bind FTP server.")
+            help_text=_("Port to bind FTP server.")
             )
     ftp_clients = models.PositiveIntegerField(
             default=32,
-            verbose_name = _("Clients"),
+            verbose_name=_("Clients"),
             validators=[MinValueValidator(0), MaxValueValidator(10000)],
-            help_text = _("Maximum number of simultaneous clients.")
+            help_text=_("Maximum number of simultaneous clients.")
             )
     ftp_ipconnections = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Connections"),
+            verbose_name=_("Connections"),
             validators=[MinValueValidator(0), MaxValueValidator(1000)],
-            help_text = _("Maximum number of connections per IP address (0 = unlimited).")
+            help_text=_("Maximum number of connections per IP address (0 = unlimited).")
             )
     ftp_loginattempt = models.PositiveIntegerField(
             default=3,
-            verbose_name = _("Login Attempts"),
+            verbose_name=_("Login Attempts"),
             validators=[MinValueValidator(0), MaxValueValidator(1000)],
-            help_text = _("Maximum number of allowed password attempts before disconnection.")
+            help_text=_("Maximum number of allowed password attempts before disconnection.")
             )
     ftp_timeout = models.PositiveIntegerField(
             default=120,
-            verbose_name = _("Timeout"),
+            verbose_name=_("Timeout"),
             validators=[MinValueValidator(0), MaxValueValidator(10000)],
-            help_text = _("Maximum idle time in seconds.")
+            help_text=_("Maximum idle time in seconds.")
             )
     ftp_rootlogin = models.BooleanField(
-            verbose_name = _("Allow Root Login"))
+            verbose_name=_("Allow Root Login"))
     ftp_onlyanonymous = models.BooleanField(
-            verbose_name = _("Allow Anonymous Login"))
+            verbose_name=_("Allow Anonymous Login"))
     ftp_anonpath = PathField(
         blank=True,
-        verbose_name = _("Path"))
+        verbose_name=_("Path"))
     ftp_onlylocal = models.BooleanField(
-            verbose_name = _("Allow Local User Login"))
+            verbose_name=_("Allow Local User Login"))
     ftp_banner = models.TextField(
             max_length=120,
-            verbose_name = _("Banner"),
+            verbose_name=_("Banner"),
             blank=True,
-            help_text = _("Greeting banner displayed by FTP when a connection first comes in.")
+            help_text=_("Greeting banner displayed by FTP when a connection first comes in.")
             )
     ftp_filemask = models.CharField(
             max_length=3,
-            default = "077",
-            verbose_name = _("File mask"),
-            help_text = _("Use this option to override the file creation mask (077 by default).")
+            default="077",
+            verbose_name=_("File mask"),
+            help_text=_("Use this option to override the file creation mask (077 by default).")
             )
     ftp_dirmask = models.CharField(
             max_length=3,
             default="077",
-            verbose_name = _("Directory mask"),
-            help_text = _("Use this option to override the file creation mask (077 by default).")
+            verbose_name=_("Directory mask"),
+            help_text=_("Use this option to override the file creation mask (077 by default).")
             )
     ftp_fxp = models.BooleanField(
-            verbose_name = _("Enable FXP"))
+            verbose_name=_("Enable FXP"))
     ftp_resume = models.BooleanField(
-            verbose_name = _("Allow Transfer Resumption"))
+            verbose_name=_("Allow Transfer Resumption"))
     ftp_defaultroot = models.BooleanField(
-            verbose_name = _("Always Chroot")) # Is this right?
+            verbose_name=_("Always Chroot"))
     ftp_ident = models.BooleanField(
-            verbose_name = _("Require IDENT Authentication"))
+            verbose_name=_("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
-            verbose_name = _("Require Reverse DNS for IP"))
+            verbose_name=_("Require Reverse DNS for IP"))
     ftp_masqaddress = models.CharField(
-            verbose_name = _("Masquerade address"),
-            blank = True,
-            max_length = 120,
-            help_text = _("Causes the server to display the network information for the specified address to the client, on the assumption that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
+            verbose_name=_("Masquerade address"),
+            blank=True,
+            max_length=120,
+            help_text=_("Causes the server to display the network information "
+                "for the specified address to the client, on the assumption "
+                "that IP address or DNS host is acting as a NAT gateway or "
+                "port forwarder for the server.")
             )
     ftp_passiveportsmin = models.PositiveIntegerField(
-            default = 0,
-            verbose_name = _("Minimum passive port"),
+            default=0,
+            verbose_name=_("Minimum passive port"),
             validators=[MinValueValidator(0), MaxValueValidator(10000)],
-            help_text = _("The minimum port to allocate for PASV style data connections (0 = use any port).")
+            help_text=_("The minimum port to allocate for PASV style data connections (0 = use any port).")
             )
     ftp_passiveportsmax = models.PositiveIntegerField(
-            default = 0,
-            verbose_name = _("Maximum passive port"),
-            help_text = _("The maximum port to allocate for PASV style data connections (0 = use any port). Passive ports restricts the range of ports from which the server will select when sent the PASV command from a client. The server will randomly choose a number from within the specified range until an open port is found. The port range selected must be in the non-privileged range (eg. greater than or equal to 1024). It is strongly recommended that the chosen range be large enough to handle many simultaneous passive connections (for example, 49152-65534, the IANA-registered ephemeral port range).")
+            default=0,
+            verbose_name=_("Maximum passive port"),
+            help_text=_("The maximum port to allocate for PASV style data "
+                "connections (0 = use any port). Passive ports restricts the "
+                "range of ports from which the server will select when sent "
+                "the PASV command from a client. The server will randomly "
+                "choose a number from within the specified range until an open"
+                " port is found. The port range selected must be in the "
+                "non-privileged range (eg. greater than or equal to 1024). It "
+                "is strongly recommended that the chosen range be large enough"
+                " to handle many simultaneous passive connections (for example"
+                ", 49152-65534, the IANA-registered ephemeral port range).")
             )
     ftp_localuserbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Local user upload bandwidth"),
-            help_text = _("Local user upload bandwidth in KB/s. Zero means infinity.")
+            verbose_name=_("Local user upload bandwidth"),
+            help_text=_("Local user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_localuserdlbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Local user download bandwidth"),
-            help_text = _("Local user download bandwidth in KB/s. Zero means infinity.")
+            verbose_name=_("Local user download bandwidth"),
+            help_text=_("Local user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Anonymous user upload bandwidth"),
-            help_text = _("Anonymous user upload bandwidth in KB/s. Zero means infinity.")
+            verbose_name=_("Anonymous user upload bandwidth"),
+            help_text=_("Anonymous user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserdlbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Anonymous user download bandwidth"),
-            help_text = _("Anonymous user download bandwidth in KB/s. Zero means infinity.")
+            verbose_name=_("Anonymous user download bandwidth"),
+            help_text=_("Anonymous user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_ssltls = models.BooleanField(
-            verbose_name = _("Enable SSL/TLS"))
+            verbose_name=_("Enable SSL/TLS"))
     ftp_options = models.TextField(
             max_length=120,
-            verbose_name = _("Auxiliary parameters"),
+            verbose_name=_("Auxiliary parameters"),
             blank=True,
-            help_text = _("These parameters are added to proftpd.conf.")
+            help_text=_("These parameters are added to proftpd.conf.")
             )
 
     class Meta:
@@ -1078,6 +1090,19 @@ class FTP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "FTPIcon"
+        advanced_fields = (
+            'ftp_filemask',
+            'ftp_dirmask',
+            'ftp_fxp',
+            'ftp_ident',
+            'ftp_passiveportsmin',
+            'ftp_passiveportsmax',
+            'ftp_localuserbw',
+            'ftp_localuserdlbw',
+            'ftp_anonuserbw',
+            'ftp_anonuserdlbw',
+            'ftp_options',
+            )
 
 
 class TFTP(Model):
