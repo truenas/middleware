@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from django import template
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
@@ -34,10 +36,14 @@ from freenasUI.system.models import Advanced
 
 register = template.Library()
 
+log = logging.getLogger('freeadmin.templatetags')
+
 
 class FormRender(template.Node):
+
     def __init__(self, arg):
         self.arg = arg
+
     def render(self, context):
         form = context[self.arg]
 
@@ -66,9 +72,9 @@ class FormRender(template.Node):
             else:
                 prefix = "__all__"
             output.append("""<tr>
-                <td colspan="2">
-                <input type="hidden" data-dojo-type="dijit.form.TextBox" name="%s" />
-                </td></tr>""" % (prefix,))
+<td colspan="2">
+<input type="hidden" data-dojo-type="dijit.form.TextBox" name="%s" />
+</td></tr>""" % (prefix,))
 
         if model:
             for label, fields in model._admin.composed_fields:
@@ -79,21 +85,26 @@ class FormRender(template.Node):
         advanced_fields = getattr(form, 'advanced_fields', [])
         for field in new_fields:
             is_adv = field in advanced_fields
-            _hide = ' style="display: none;"' if not adv_mode and is_adv else ''
+            _hide = ' style="display:none;"' if not adv_mode and is_adv else ''
             is_adv = ' class="advancedField"' if is_adv else ''
-            if composed.has_key(field):
+            if field in composed:
                 label, fields = composed.get(field)
-                html = u"""<tr><th><label%s>%s</label></th><td>""" % (_hide, label)
+                html = u"""<tr><th><label%s>%s</label></th><td>""" % (
+                    _hide,
+                    label)
                 for field in fields:
                     bf = BoundField(form, form.fields.get(field), field)
-                    bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
+                    bf_errors = form.error_class(
+                        [conditional_escape(error) for error in bf.errors]
+                        )
                     html += unicode(bf_errors) + unicode(bf)
-                    #new_fields.remove(field)
                 html += u"</td></tr>"
                 output.append(html)
             else:
                 bf = BoundField(form, form.fields.get(field), field)
-                bf_errors = form.error_class([conditional_escape(error) for error in bf.errors])
+                bf_errors = form.error_class(
+                    [conditional_escape(error) for error in bf.errors]
+                    )
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))
                 else:
@@ -101,8 +112,9 @@ class FormRender(template.Node):
                         help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, bf.help_text, bf.auto_id)
                     else:
                         help_text = ""
-                    html = u"""<tr%s><th>%s</th><td>%s%s %s</td></tr>""" % (
+                    html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
                         is_adv,
+                        _hide,
                         bf.label_tag(),
                         bf_errors,
                         bf,
@@ -122,8 +134,8 @@ def do_admin_form(parser, token):
     try:
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
+        raise template.TemplateSyntaxError("%r tag requires arguments" % (
+            token.contents.split()[0],
+            ))
 
-    #if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
-    #    raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
     return FormRender(arg)
