@@ -67,6 +67,15 @@ Currently there is %s of available space.
 """ % (dataset, threshold, avail))
 
 
+def _size_or_perc(string):
+    last = string[-1]
+    if last.upper() not in ('T', 'G', 'M', 'K', '%'):
+        raise argparse.ArgumentTypeError(
+            "This is not a valid size, use a suffix: T, G, M, K or %"
+            )
+    return string
+
+
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -79,7 +88,7 @@ def main(argv):
         '-t',
         '--threshold',
         required=True,
-        type=str,
+        type=_size_or_perc,
         )
     args = parser.parse_args(argv)
 
