@@ -2054,7 +2054,8 @@ class notifier:
 
         return ret
 
-    def import_jail(self, jail_path, jail_ip, plugins_path):
+    def import_jail(self, jail_path, jail_ip, jail_netmask, plugins_path):
+        from freenasUI.services.models import PluginsJail
         ret = False
 
         if not jail_path:
@@ -2081,22 +2082,18 @@ class notifier:
         #
         # XXX: At some point (soon), plugins/jail need to support IPv6
         #
-        (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT alias_interface_id, alias_v4address, alias_v4netmaskbit "
-            "FROM network_alias WHERE alias_v4address = :jail_ip", { 'jail_ip': jail_ip })
-        (alias_id, alias_addr, alias_mask) = c.fetchone()
+        pj = PluginsJail()
+        pj.jail_name = jail_name
+        pj.jail_path = jail_path
+        pj.jail_ipv4address = jail_ip
+        pj.jail_ipv4netmask = jail_netmask
+        pj.plugins_path = plugins_path
 
-        sqlvars = "jail_path, jail_name, jail_ip_id, plugins_path"
-        sqlvals = "'%s', '%s', '%s', '%s'" % (jail_path, jail_name, alias_id, plugins_path)
-
-        sql = "INSERT INTO services_pluginsjail (%s) VALUES (%s)" % (sqlvars, sqlvals)
         try:
-            c.execute(sql)
-            conn.commit()
+            pj.save()
             ret = True
-
         except Exception, err:
-            syslog.syslog(syslog.LOG_DEBUG, "import_jail: failed %s" % (str(err), ))
+            log.debug("import_jail: failed %s", str(err))
             ret = False
 
         return ret

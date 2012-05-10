@@ -151,9 +151,7 @@ class PluginsJailForm(ModelForm):
         return ppath
 
     def clean_jail_ipv4address(self):
-        jip = self.cleaned_data.get("jail_ip")
-        if jip == self.instance.jail_ip:
-            return jip
+        jip = self.cleaned_data.get("jail_ipv4address")
         if Alias.objects.filter(alias_v4address=jip).exists() or \
             Interfaces.objects.filter(int_ipv4address=jip).exists():
             raise forms.ValidationError(_("This IP already exists."))
