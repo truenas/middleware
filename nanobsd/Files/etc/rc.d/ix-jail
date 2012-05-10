@@ -150,6 +150,7 @@ plugins_jail_start()
 			cat<<-__EOF__>> /etc/rc.conf
 			jail_${jail_name}_exec_poststop0="ifconfig ${bridge} destroy"
 			jail_${jail_name}_exec_poststop1="ifconfig ${epair} destroy"
+			jail_${jail_name}_exec_poststop2="arp -d ${ipv4addr}"
 __EOF__
 
 		fi
