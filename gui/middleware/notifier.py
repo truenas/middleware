@@ -859,9 +859,9 @@ class notifier:
             # Taste the disk to know whether it's 4K formatted.
             # requires > 8.1-STABLE after r213467
             ret_4kstripe = self.__system_nolog("geom disk list %s "
-                                               "| grep 'Stripesize: 4096'" % (devname))
+                                               "| grep 'Stripesize: 4096'" % (devname, ))
             ret_512bsector = self.__system_nolog("geom disk list %s "
-                                                 "| grep 'Sectorsize: 512'" % (devname))
+                                                 "| grep 'Sectorsize: 512'" % (devname, ))
             # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
             # while using 4k stripe, use an offset of 64.
             need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
@@ -875,21 +875,22 @@ class notifier:
         # so next partition starts at mutiple of 128.
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
+        self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         try:
-            p1 = self.__pipeopen("diskinfo %s" % devname)
+            p1 = self.__pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
-            pass
+            log.error("Unable to determine size of %s", devname)
         else:
-            if size*2 < swapsize:
-                raise MiddlewareError('Your disk size must be higher than %dGB' % swapgb)
+            # The GPT header takes about 34KB + alignment, round it to 100
+            if size - 100 <= swapgb * 1024 * 1024:
+                raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
             self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (devname, size*1024 - 4))
 
         commands = []
-        commands.append("gpart create -s gpt /dev/%s" % (devname))
+        commands.append("gpart create -s gpt /dev/%s" % (devname, ))
         if swapsize > 0:
             commands.append("gpart add -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
             commands.append("gpart add -t %s %s" % (type, devname))
