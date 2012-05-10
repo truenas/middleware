@@ -32,6 +32,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.jail import Jls, Jexec
+from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
@@ -80,7 +81,9 @@ def plugin_delete(request, plugin_id):
                 events=['reloadHttpd()']
                 )
         else:
-            return JsonResp(request, error=True, message=_("Unable to remove plugin."))
+            return JsonResp(request,
+                error=True,
+                message=_("Unable to remove plugin."))
     else:
         return render(request, 'plugins/plugin_confirm_delete.html', {
             'plugin': plugin,
@@ -151,20 +154,21 @@ def mountpoints(request):
         'mp_list': qs,
         })
 
-"""
-This is a view that works as a FCGI client
-It is used for development server (no nginx) for easier development
-"""
-from freenasUI.freeadmin.middleware import public
+
 @public
 def plugin_fcgi_client(request, name, path):
+    """
+    This is a view that works as a FCGI client
+    It is used for development server (no nginx) for easier development
+    """
     qs = models.Plugins.objects.filter(plugin_name=name)
     if not qs.exists():
         raise Http404
 
     plugin = qs[0]
+    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
 
-    app = FCGIApp(host=plugin.plugin_ip, port=plugin.plugin_port)
+    app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
     env = request.META.copy()
     env.pop('wsgi.file_wrapper', None)
     env.pop('wsgi.version', None)
@@ -182,21 +186,28 @@ def plugin_fcgi_client(request, name, path):
 def plugins_jail_import(request):
     if request.method == "POST":
         form = forms.JailImportForm(request.POST)
-        variables = { "form": form}
 
         if form.is_valid():
             jail_path = form.cleaned_data["jail_path"]
-            jail_ip = form.cleaned_data["jail_ip"]
+            jail_ipv4address = form.cleaned_data["jail_ipv4address"]
+            jail_ipv4netmask = form.cleaned_data["jail_ipv4netmask"]
             plugins_path = form.cleaned_data["plugins_path"]
 
-            if not notifier().import_jail(jail_path, jail_ip, plugins_path):
-                return JsonResp(request, message=_("There was a problem importing the jail."))
+            if not notifier().import_jail(jail_path,
+                jail_ipv4address,
+                jail_ipv4netmask,
+                plugins_path):
+                return JsonResp(request,
+                    message=_("There was a problem importing the jail."))
             else:
-                return JsonResp(request, message=_("Jail successfully imported."))
+                return JsonResp(request,
+                    message=_("Jail successfully imported."))
 
         else:
-            return JsonResp(request, error=True, message=_("Unable to import jail."))
+            return JsonResp(request, form=form)
 
     else:
         form = forms.JailImportForm()
-        return render(request, "plugins/jail_import.html", { "form": form })
+        return render(request, "plugins/jail_import.html", {
+            "form": form,
+            })

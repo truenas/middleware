@@ -32,19 +32,27 @@ from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _, ugettext as __
 
 from dojango import forms
+from freenasUI import choices
+from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResponse
-from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.freeadmin.forms import PathField
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import FileWizard
-from freenasUI import choices
 
 log = logging.getLogger('plugins.forms')
+
+
+def _clean_jail_ipv4address(jip):
+    if Alias.objects.filter(alias_v4address=jip).exists() or \
+        Interfaces.objects.filter(int_ipv4address=jip).exists():
+        raise forms.ValidationError(_("This IP is already in use."))
+    return jip
 
 
 class PBIFileWizard(FileWizard):
@@ -146,6 +154,11 @@ class JailInfoForm(ModelForm):
                 self.fields[field].widget.attrs['class'] = ('dijitDisabled'
                     ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
 
+    def clean_jail_ipv4address(self):
+        return _clean_jail_ipv4address(
+            self.cleaned_data.get("jail_ipv4address")
+            )
+
     def clean(self):
         cleaned_data = self.cleaned_data
         jp = cleaned_data['jail_path'] + "/"
@@ -189,27 +202,30 @@ class JailInfoForm(ModelForm):
 class JailImportForm(Form):
     jail_path = PathField(
             label=_("Plugins jail path"),
+            required=True,
             )
-    jail_ip = forms.ChoiceField(
-            label=_("Jail IP address"),
-            choices=(),
-            required=True
+    jail_ipv4address = IP4AddressFormField(
+            label=_("Jail IPv4 Address"),
+            required=True,
+            )
+    jail_ipv4netmask = forms.ChoiceField(
+            label=_("Jail IPv4 Netmask"),
+            initial="24",
+            choices=choices.v4NetmaskBitList,
+            required=True,
             )
     plugins_path = PathField(
             label=_("Plugins archive Path"),
+            required=True,
             )
 
     def __init__(self, *args, **kwargs):
         super(JailImportForm, self).__init__(*args, **kwargs)
 
-        nics = choices.NICChoices(with_alias=True, exclude_configured=False)
-        ifaces = Interfaces.objects.filter(
-            int_interface__in=[n[0] for n in nics])
-        aliases = Alias.objects.filter(
-            alias_interface__in=[i.id for i in ifaces])
-
-        self.fields['jail_ip'].choices = [
-            (a.alias_v4address, a.alias_v4address) for a in aliases]
+    def clean_jail_ipv4address(self):
+        return _clean_jail_ipv4address(
+            self.cleaned_data.get("jail_ipv4address")
+            )
 
 
 class JailPBIUploadForm(Form):
