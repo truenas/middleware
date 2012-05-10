@@ -42,5 +42,4 @@ urlpatterns = patterns('services.views',
     url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
     url(r'enable/(?P<svc>\w+)/.*$', 'enable', name="services_enable"),
     url(r'^rsyncmod/$', 'rsyncmod', name="services_rsyncmod"),
-    url(r'^plugins_info/$', 'plugins_info', name="plugins_info"),
     )

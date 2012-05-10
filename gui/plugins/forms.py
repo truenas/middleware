@@ -134,19 +134,34 @@ class PBIUpdateForm(PBIUploadForm):
 
 
 class JailInfoForm(ModelForm):
+
     class Meta:
         model = PluginsJail
+
+    def __init__(self, *args, **kwargs):
+        super(JailInfoForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            for field in ('jail_path', 'jail_name', 'plugins_path'):
+                self.fields[field].widget.attrs['readonly'] = True
+                self.fields[field].widget.attrs['class'] = ('dijitDisabled'
+                    ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
 
     def clean(self):
         cleaned_data = self.cleaned_data
         jp = cleaned_data['jail_path'] + "/"
         pp = cleaned_data['plugins_path'] + "/"
 
+        if self.instance.id and notifier()._started_plugins_jail():
+            self._errors['__all__'] = self.error_class([
+                _("You must turn off Plugins service before proceeding"),
+            ])
+            return cleaned_data
+
         full_path = os.path.join(
             cleaned_data['jail_path'],
             cleaned_data.get('jail_name', ''),
             )
-        if os.path.exists(full_path):
+        if not self.instance.id and os.path.exists(full_path):
             self._errors['__all__'] = self.error_class([
                 _("The path %s already exists") % (full_path, ),
             ])

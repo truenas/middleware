@@ -100,7 +100,7 @@
        </td>
        <td>
            {% if plugins %}
-           <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Plugins Settings"|force_escape|force_escape %}', '{% url plugins_info %}', [this, ]);" title="{% trans "Plugins Settings" %}">
+           <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Plugins Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="PluginsJail",oid=plugins.id %}', [this, ]);" title="{% trans "Plugins Settings" %}">
            {% else %}
            <img id="plugins_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Install Jail PBI"|force_escape|force_escape %}', '{% url plugins_jailpbi %}', [this, ]);" title="{% trans "Plugins Settings" %}">
            {% endif %}
