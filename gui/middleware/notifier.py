@@ -54,7 +54,6 @@ import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
-import syslog
 import tempfile
 import threading
 import time
@@ -887,7 +886,10 @@ class notifier:
                 raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
-            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (devname, size*1024 - 4))
+            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+                devname,
+                size / 1024 - 4,
+                ))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
@@ -3440,6 +3442,89 @@ class notifier:
         if proc.wait() != 0:
             return False
         return True
+
+    def __get_geoms_recursive(self, prvid):
+        """
+        Get _ALL_ geom nodes that depends on a given provider
+        """
+        doc = self.__geom_confxml()
+        geoms = []
+        for c in doc.xpathEval("//consumer/provider[@ref = '%s']" % (prvid, )):
+            geom = c.parent.parent
+            if geom.name != 'geom':
+                continue
+            geoms.append(geom)
+            for prov in geom.xpathEval('./provider'):
+                geoms.extend(self.__get_geoms_recursive(prov.prop('id')))
+
+        return geoms
+
+    def disk_get_consumers(self, devname):
+        doc = self.__geom_confxml()
+        geom = doc.xpathEval("//class[name = 'DISK']/geom[name = '%s']" % (
+            devname,
+            ))
+        if geom:
+            provid = geom[0].xpathEval("./provider/@id")[0].content
+        else:
+            raise ValueError("Unknown disk %s" % (devname, ))
+        return self.__get_geoms_recursive(provid)
+
+    def disk_wipe(self, devname, mode='quick'):
+        if mode == 'quick':
+            self.__gpt_unlabeldisk(devname)
+            pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+            err = pipe.communicate()[1]
+            if pipe.returncode != 0:
+                raise MiddlewareError(
+                    "Failed to wipe %s: %s" % (devname, err)
+                    )
+            try:
+                p1 = self.__pipeopen("diskinfo %s" % (devname, ))
+                size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            except:
+                log.error("Unable to determine size of %s", devname)
+            else:
+                pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+                    devname,
+                    size / 1024 - 4,
+                    ))
+                pipe.communicate()
+
+        elif mode in ('full', 'fullrandom'):
+            libc = ctypes.cdll.LoadLibrary("libc.so.7")
+            omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+            mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+            pmask = ctypes.pointer(mask)
+            pomask = ctypes.pointer(omask)
+            libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+
+            self.__gpt_unlabeldisk(devname)
+            stderr = open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'w+')
+            stderr.flush()
+            pipe = subprocess.Popen([
+                "dd",
+                "if=/dev/zero" if mode == 'full' else "if=/dev/random",
+                "of=/dev/%s" % (devname, ),
+                "bs=1m",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=stderr,
+                )
+            with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
+                f.write(str(pipe.pid))
+            pipe.communicate()
+            stderr.seek(0)
+            err = stderr.read()
+            print err
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            if pipe.returncode != 0 and err.find("end of device") == -1:
+                raise MiddlewareError(
+                    "Failed to wipe %s: %s" % (devname, err)
+                    )
+        else:
+            raise ValueError("Unknown mode %s" % (mode, ))
+
 
 def usage():
     usage_str = """usage: %s action command

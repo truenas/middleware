@@ -1263,3 +1263,16 @@ class ScrubForm(ModelForm):
     def save(self):
         super(ScrubForm, self).save()
         started = notifier().restart("cron")
+
+
+class DiskWipeForm(forms.Form):
+
+    method = forms.ChoiceField(
+        label=_("Method"),
+        choices=(
+            ("quick", _("Quick")),
+            ("full", _("Full with zeros")),
+            ("fullrandom", _("Full with random data")),
+        ),
+        widget=forms.widgets.RadioSelect(),
+        )

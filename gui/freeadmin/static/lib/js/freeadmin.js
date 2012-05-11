@@ -543,6 +543,15 @@
         });
         content.domNode.appendChild(b.domNode);
 
+        var b = new dijit.form.Button({
+            label: gettext("Wipe")
+        });
+
+        dojo.connect(b, 'onClick', function(){
+            editObject(gettext('Wipe Disk'), json.wipe_url, [gridhtml,]);
+        });
+        content.domNode.appendChild(b.domNode);
+
         return content;
     }
 
@@ -669,7 +678,43 @@
 
     }
 
+    checkProgressBar = function(pbar, url, uuid, iter) {
+        var progress_url;
+        if(typeof(url) == 'string') {
+             progress_url = url;
+        } else {
+             progress_url = '/progress';
+        }
+        if(!iter) iter = 0;
+        dojo.xhrGet({
+            url: progress_url,
+            headers: {"X-Progress-ID": uuid},
+            handle: function(data) {
+                var obj = eval(data);
+                if(obj.state == 'uploading') {
+                    var perc = Math.ceil((obj.received / obj.size)*100);
+                    if(perc == 100) {
+                        pbar.update({'indeterminate': true});
+                        return;
+                    } else {
+                        pbar.update({maximum: 100, progress: perc, indeterminate: false});
+                    }
+                }
+                if(obj.state == 'starting' || obj.state == 'uploading') {
+                    if(obj.state == 'starting' && iter >= 3) {
+                        return;
+                    }
+                    setTimeout(function() {
+                         checkProgressBar(pbar, url, uuid, iter + 1);
+                         }, 1000);
+                }
+            },
+        })
+    }
+
     doSubmit = function(attrs) {
+
+        var pbar, uuid, multipart, rnode, newData;
 
         if(!attrs) {
             attrs = {};
@@ -694,12 +739,12 @@
 
         // prevent the default submit
         dojo.stopEvent(attrs.event);
-        var newData = attrs.form.get("value");
+        newData = attrs.form.get("value");
         newData['__form_id'] = attrs.form.id;
 
-        var multipart = dojo.query("input[type=file]", attrs.form.domNode).length > 0;
+        multipart = dojo.query("input[type=file]", attrs.form.domNode).length > 0;
 
-        var rnode = getDialog(attrs.form);
+        rnode = getDialog(attrs.form);
         if(!rnode) rnode = dijit.getEnclosingWidget(attrs.form.domNode.parentNode);
 
         loadOk = function(data, req) {
@@ -728,6 +773,11 @@
 
         var handleReq = function(data, ioArgs) {
             var json;
+            if(pbar) {
+                pbar.destroy();
+                dojo.style(attrs.form.domNode, "display", "block");
+                rnode.layout();
+            }
             try {
                 json = dojo.fromJson(data);
                 if(json.error != true && json.error != false) throw "toJson error";
@@ -745,10 +795,26 @@
             }
         };
 
+        if (attrs.progressbar != undefined) {
+            pbar = dijit.ProgressBar({
+                style: "width:300px",
+                indeterminate: true,
+                });
+            /*
+             * We cannot destroy form node, that's why we just hide it
+             * otherwise iframe.send won't work, it expects the form domNode
+             */
+            attrs.form.domNode.parentNode.appendChild(pbar.domNode);
+            dojo.style(attrs.form.domNode, "display", "none");
+            rnode.layout();
+
+        }
+
         if( multipart ) {
 
+            uuid = dojox.uuid.generateRandomUuid();
             dojo.io.iframe.send({
-                url: attrs.url,
+                url: attrs.url + '?X-Progress-ID=' + uuid,
                 method: 'POST',
                 content: {__form_id: attrs.form.id},
                 form: attrs.form.id,
@@ -765,6 +831,10 @@
                 handle: handleReq,
             });
 
+        }
+
+        if (attrs.progressbar != undefined) {
+            checkProgressBar(pbar, attrs.progressbar, uuid);
         }
 
     }
@@ -895,27 +965,7 @@
                 load: loadOk,
                 error: errorHandle,
              });
-             fetch = function() {
-                dojo.xhrGet({
-                    url: '/progress',
-                    headers: {"X-Progress-ID": uuid},
-                    handle: function(data) {
-                        var obj = eval(data);
-                        if(obj.state == 'uploading') {
-                            var perc = Math.ceil((obj.received / obj.size)*100);
-                            if(perc == 100) {
-                                pbar.update({'indeterminate': true});
-                                return;
-                            } else {
-                                pbar.update({maximum: 100, progress: perc, indeterminate: false});
-                            }
-                        }
-                        if(obj.state == 'starting' || obj.state == 'uploading')
-                            setTimeout('fetch();', 1000);
-                    },
-                })
-             }
-             fetch();
+             checkProgressBar(pbar, true, uuid);
 
         } else {
 
