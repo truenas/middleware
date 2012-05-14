@@ -805,15 +805,6 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                 capacity = humanize_size(capacity)
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        # Exclude the root device
-        rootdev = os.popen("glabel status | grep `mount | "
-                           "awk '$3 == \"/\" {print $1}' | "
-                           "sed -e 's/\/dev\///'` | "
-                           "awk '{print $3}'").read().strip()
-        rootdev_base = re.search(r'[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            diskchoices.pop(rootdev_base.group(0), None)
-
         return diskchoices.items()
 
     def save(self, commit=True):
