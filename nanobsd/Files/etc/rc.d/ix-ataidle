@@ -18,7 +18,7 @@ ataidle_start()
 	local cmd
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT $sf FROM storage_disk" | \
+		"SELECT $sf FROM storage_disk WHERE disk_enabled = 1" | \
 	while eval read $f; do
 		case "$disk_name" in
 		ad*)
