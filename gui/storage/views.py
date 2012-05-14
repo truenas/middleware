@@ -24,24 +24,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import os
 import re
+import signal
+import subprocess
 
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.db import models as dmodels
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.db import models as dmodels
 
 from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.common.system import is_mounted
+from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
+
+log = logging.getLogger('storage.views')
 
 
 def home(request):
@@ -299,6 +305,9 @@ def disks_datagrid_json(request):
                 'model': 'Disk',
                 'oid': data.id,
                 }) + '?deletable=false',
+            'wipe_url': reverse('storage_disk_wipe', kwargs={
+                'devname': data.disk_name,
+                }),
             }
         ret['edit'] = simplejson.dumps(ret['edit'])
 
@@ -881,3 +890,72 @@ def scrubs(request):
     return render(request, 'storage/scrub.html', {
         'scrubs': scrubs,
         })
+
+
+def disk_wipe(request, devname):
+
+    form = forms.DiskWipeForm()
+    if request.method == "POST":
+        form = forms.DiskWipeForm(request.POST)
+        if form.is_valid():
+            mounted = []
+            for geom in notifier().disk_get_consumers(devname):
+                gname = geom.xpathEval("./name")[0].content
+                dev = "/dev/%s" % (gname, )
+                if dev not in mounted and is_mounted(device=dev):
+                    mounted.append(dev)
+            for vol in models.Volume.objects.filter(
+                vol_fstype='ZFS'
+                ):
+                if devname in vol.get_disks():
+                    mounted.append(vol.vol_name)
+            if mounted:
+                form._errors['__all__'] = form.error_class([
+                    "Umount the following mount points before proceeding:"
+                    "<br /> %s" % (
+                    '<br /> '.join(mounted),
+                    )
+                    ])
+            else:
+                notifier().disk_wipe(devname, form.cleaned_data['method'])
+                return JsonResp(request,
+                    message=_("Disk successfully wiped")
+                    )
+
+        return JsonResp(request, form=form)
+
+    return render(request, "storage/disk_wipe.html", {
+        'devname': devname,
+        'form': form,
+        })
+
+
+def disk_wipe_progress(request, devname):
+
+    pidfile = '/var/tmp/disk_wipe_%s.pid' % (devname, )
+    if not os.path.exists(pidfile):
+        return HttpResponse('new Object({state: "starting"});')
+
+    with open(pidfile, 'r') as f:
+        pid = f.read()
+
+    try:
+        os.kill(int(pid), signal.SIGINFO)
+        with open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'r') as f:
+            data = f.read()
+            transf = re.findall(r'^(?P<bytes>\d+) bytes transferred.*',
+                data, re.M)
+            if transf:
+                pipe = subprocess.Popen([
+                    "/usr/sbin/diskinfo",
+                    devname,
+                    ],
+                    stdout=subprocess.PIPE)
+                output = pipe.communicate()[0]
+                size = output.split()[2]
+                received = transf[-1]
+        return HttpResponse('new Object({state: "uploading", received: %s, size: %s});' % (received, size))
+
+    except Exception, e:
+        pass
+    return HttpResponse('new Object({state: "starting"});')
