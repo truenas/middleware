@@ -19,7 +19,7 @@ ataidle_start()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM storage_disk WHERE disk_enabled = 1" | \
-	while eval read $f; do
+	while eval read -r $f; do
 		case "$disk_name" in
 		ad*)
 			;;
@@ -27,11 +27,12 @@ ataidle_start()
 			continue
 			;;
 		esac
-		ataidle_args=""
-		if [ "${disk_advpowermgmt}" != "Disabled" ]; then
-			ataidle_args="-P ${disk_advpowermgmt}"
+		if [ -z "`ataidle /dev/ada1 | grep -E "APM.*yes"`" ]; then
+			ataidle_args=""
+		elif [ "${disk_advpowermgmt}" != "Disabled" ]; then
+			ataidle_args="-P ${disk_advpowermgmt} "
 		else
-			ataidle_args="-P 0"
+			ataidle_args="-P 0 "
 		fi
 		if [ "${disk_acousticlevel}" != "Disabled" ]; then
 			if [ "${disk_acousticlevel}" = "Minimum" ]; then
@@ -44,9 +45,11 @@ ataidle_start()
 		else
 			disk_acousticlevel=0
 		fi
-		ataidle_args="${ataidle_args} -A ${disk_acousticlevel}"
+		if [ -n "`ataidle /dev/ada1 | grep -E "AAM.*yes"`" ]; then
+			ataidle_args="${ataidle_args}-A ${disk_acousticlevel}"
+		fi
 		if [ -n "${ataidle_args}" ]; then
-			/usr/local/sbin/ataidle ${ataidle_args} ${disk_name}
+			echo ${ataidle_args} ${disk_name} | xargs ataidle
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
 			(sleep 60; /usr/local/sbin/ataidle -I ${disk_hddstandby} ${disk_name}) > /dev/null 2>&1 &
