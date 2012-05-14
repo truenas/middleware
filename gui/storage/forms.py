@@ -1005,6 +1005,7 @@ class CloneSnapshotForm(Form):
     cs_name = forms.CharField(label=_('Clone Name (must be on same volume)'))
 
     def __init__(self, *args, **kwargs):
+        is_volume = kwargs.pop('is_volume', False)
         super(CloneSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['cs_snapshot'].widget.attrs['readonly'] = True
         self.fields['cs_snapshot'].widget.attrs['class'] = 'dijitDisabled' \
@@ -1012,7 +1013,16 @@ class CloneSnapshotForm(Form):
         self.fields['cs_snapshot'].initial = kwargs['initial']['cs_snapshot']
         self.fields['cs_snapshot'].value = kwargs['initial']['cs_snapshot']
         dataset, snapname = kwargs['initial']['cs_snapshot'].split('@')
-        self.fields['cs_name'].initial = '%s/clone-%s' % (dataset, snapname)
+        if is_volume:
+            dataset, zvol = dataset.rsplit('/', 1)
+            self.fields['cs_name'].initial = '%s/%s-clone-%s' % (
+                dataset,
+                zvol,
+                snapname)
+        else:
+            self.fields['cs_name'].initial = '%s/clone-%s' % (
+                dataset,
+                snapname)
 
     def clean_cs_snapshot(self):
         return self.fields['cs_snapshot'].initial
