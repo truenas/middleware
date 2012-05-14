@@ -130,10 +130,13 @@ def snapshots_data(request):
     if r:
         zfsnap_list = zfsnap_list[r1:r2]
     for snap in zfsnap_list:
+        clone_url = reverse('storage_clonesnap', kwargs={
+            'snapshot': snap['fullname'],
+            })
+        if snap['parent'] == 'volume':
+            clone_url += "?volume=true"
         snap['extra'] = simplejson.dumps({
-            'clone_url': reverse('storage_clonesnap', kwargs={
-                'snapshot': snap['fullname'],
-                }) if snap['parent'] == 'filesystem' else None,
+            'clone_url': clone_url,
             'rollback_url': reverse('storage_snapshot_rollback', kwargs={
                 'dataset': snap['filesystem'],
                 'snapname': snap['name'],
@@ -653,7 +656,8 @@ def clonesnap(request, snapshot):
             else:
                 return JsonResponse(error=True, message=retval)
     else:
-        form = forms.CloneSnapshotForm(initial=initial)
+        is_volume = 'volume' in request.GET
+        form = forms.CloneSnapshotForm(initial=initial, is_volume=is_volume)
     return render(request, 'storage/clonesnap.html', {
         'form': form,
         'snapshot': snapshot,
