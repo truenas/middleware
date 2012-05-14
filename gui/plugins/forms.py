@@ -173,6 +173,12 @@ class JailInfoForm(ModelForm):
                 _("The path %s already exists") % (full_path, ),
             ])
 
+        # See #1341 and PR/161481, +12 is for additional /mnt/plugins nullfs
+        if len(full_path) + 12 > 88:
+            self._errors['jail_path'] = self.error_class([
+                _("The full jail path cannot exceed 76 characters"),
+            ])
+
         try:
             # TODO: This could be improved checking whether the paths exists
             samefs = os.stat(jp).st_dev == os.stat(pp).st_dev
