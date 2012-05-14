@@ -218,12 +218,12 @@ class AFP_Share(Model):
             )
     afp_fperm = models.CharField(
             max_length=3,
-            default="770",
+            default="755",
             verbose_name=_("Default file permission"),
             )
     afp_dperm = models.CharField(
             max_length=3,
-            default="660",
+            default="644",
             verbose_name=_("Default directory permission"),
             )
 

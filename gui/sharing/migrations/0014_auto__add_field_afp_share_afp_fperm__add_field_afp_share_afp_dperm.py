@@ -9,10 +9,10 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'AFP_Share.afp_fperm'
-        db.add_column('sharing_afp_share', 'afp_fperm', self.gf('django.db.models.fields.CharField')(default='770', max_length=3), keep_default=False)
+        db.add_column('sharing_afp_share', 'afp_fperm', self.gf('django.db.models.fields.CharField')(default='755', max_length=3), keep_default=False)
 
         # Adding field 'AFP_Share.afp_dperm'
-        db.add_column('sharing_afp_share', 'afp_dperm', self.gf('django.db.models.fields.CharField')(default='660', max_length=3), keep_default=False)
+        db.add_column('sharing_afp_share', 'afp_dperm', self.gf('django.db.models.fields.CharField')(default='644', max_length=3), keep_default=False)
 
 
     def backwards(self, orm):
@@ -36,8 +36,8 @@ class Migration(SchemaMigration):
             'afp_deny': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_discoverymode': ('django.db.models.fields.CharField', [], {'default': "'Default'", 'max_length': '120'}),
             'afp_diskdiscovery': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'afp_dperm': ('django.db.models.fields.CharField', [], {'default': "'660'", 'max_length': '3'}),
-            'afp_fperm': ('django.db.models.fields.CharField', [], {'default': "'770'", 'max_length': '3'}),
+            'afp_dperm': ('django.db.models.fields.CharField', [], {'default': "'644'", 'max_length': '3'}),
+            'afp_fperm': ('django.db.models.fields.CharField', [], {'default': "'755'", 'max_length': '3'}),
             'afp_mswindows': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'afp_nodev': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
