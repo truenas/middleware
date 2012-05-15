@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:48-0800\n"
-"PO-Revision-Date: 2012-05-08 11:30+0200\n"
+"PO-Revision-Date: 2012-05-15 04:17+0200\n"
 "Last-Translator: Hyuni <anbh345@nate.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -310,7 +310,7 @@ msgstr ""
 
 #: choices.py:247
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS 배터리 잔량이 낮음"
 
 #: choices.py:248
 msgid "UPS goes on battery"
@@ -318,11 +318,11 @@ msgstr ""
 
 #: choices.py:251
 msgid "Preferred"
-msgstr "바람직한"
+msgstr "선호"
 
 #: choices.py:252
 msgid "Tolerated"
-msgstr "허용됨"
+msgstr "허용"
 
 #: choices.py:253
 msgid "Required"
