@@ -545,6 +545,10 @@ class bsdUserPasswordForm(ModelForm):
 
 
 class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
+    bsdusr_mode = UnixPermissionField(
+        label=_('Home Directory Mode'),
+        initial='755',
+        )
     bsdusr_password_disabled = forms.BooleanField(
         label=_("Disable password logins"),
         required=False,
@@ -576,6 +580,9 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
             self.fields['bsdusr_username'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
+        if os.path.exists(self.instance.bsdusr_home):
+            mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
+            self.fields['bsdusr_mode'].initial = oct(mode)
         if self.instance.bsdusr_builtin:
             self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
             self.fields['bsdusr_uid'].widget.attrs['class'] = ('dijitDisabled'
@@ -664,6 +671,16 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_unixhash = "*"
             bsduser.bsdusr_smbhash = ""
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
+        if os.path.exists(self.cleaned_data['bsdusr_home']) and \
+            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/'):
+            try:
+                os.chmod(self.cleaned_data['bsdusr_home'],
+                    int(self.cleaned_data['bsdusr_mode'], 8))
+            except OSError, e:
+                log.info("Failed to set permission in home dir %s: %s",
+                    self.cleaned_data['bsdusr_home'],
+                    e,
+                    )
         bsduser.save()
         _notifier.reload("user")
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
