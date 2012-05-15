@@ -1467,10 +1467,7 @@ class notifier:
             raise ValueError("destroy isn't implemented for the %s filesystem"
                              % (vol_fstype, ))
 
-
         self._reload_disk()
-
-
         self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
@@ -1682,23 +1679,48 @@ class notifier:
         return (user.pw_passwd, smb_hash)
 
     def user_deleteuser(self, username):
-        self.__system('/usr/sbin/pw userdel "%s"' % (username))
+        """
+        Delete a user using pw(8) utility
+
+        Returns:
+            bool
+        """
+        pipe = self.__pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
+            log.warn("Failed to delete user %s: %s", groupname, err)
+            return False
+        return True
 
     def user_deletegroup(self, groupname):
-        self.__system('/usr/sbin/pw groupdel "%s"' % (groupname))
+        """
+        Delete a group using pw(8) utility
+
+        Returns:
+            bool
+        """
+        pipe = self.__pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
+            log.warn("Failed to delete group %s: %s", groupname, err)
+            return False
+        return True
 
     def user_getnextuid(self):
         command = "/usr/sbin/pw usernext"
         pw = self.__pipeopen(command)
-        uidgid = pw.communicate()
-        uid = uidgid[0].split(':')[0]
+        uid = pw.communicate()[0]
+        if pw.returncode != 0:
+            raise ValueError("Could not retrieve usernext")
+        uid = uid.split(':')[0]
         return uid
 
     def user_getnextgid(self):
         command = "/usr/sbin/pw groupnext"
         pw = self.__pipeopen(command)
-        uidgid = pw.communicate()
-        gid = uidgid[0]
+        gid = pw.communicate()[0]
+        if pw.returncode != 0:
+            raise ValueError("Could not retrieve groupnext")
         return gid
 
     def save_pubkey(self, homedir, pubkey, username, groupname):
