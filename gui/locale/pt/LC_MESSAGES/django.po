@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:46-0800\n"
-"PO-Revision-Date: 2011-12-30 13:40+0200\n"
-"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
+"PO-Revision-Date: 2012-05-15 01:47+0200\n"
+"Last-Translator: acf1959 <acf1959@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -467,12 +467,14 @@ msgid "Rsync over SSH"
 msgstr "Módulo Rsync"
 
 #: choices.py:563
+#, fuzzy
 msgid "Push"
-msgstr ""
+msgstr "Empurre"
 
 #: choices.py:564
+#, fuzzy
 msgid "Pull"
-msgstr ""
+msgstr "Puxar"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -731,9 +733,8 @@ msgid "Account"
 msgstr "Conta"
 
 #: account/nav.py:11 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Conta"
+msgstr "Conta administrativa"
 
 #: account/nav.py:17 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -898,8 +899,9 @@ msgid "This is not a valid nameserver address"
 msgstr "Este campo não é um endereço IP válido ou rede"
 
 #: network/forms.py:140
+#, fuzzy
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "Sub-rede 169.254/16 não é válida para nameserver"
 
 #: network/forms.py:160
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
