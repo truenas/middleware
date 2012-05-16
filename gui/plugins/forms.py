@@ -27,6 +27,7 @@
 import logging
 import os
 import re
+import shutil
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _, ugettext as __
@@ -121,9 +122,12 @@ class PBIUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
-            with open(filename, 'wb+') as sp:
-                for c in cleaned_data['pbifile'].chunks():
-                    sp.write(c)
+            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
+                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as sp:
+                    for c in cleaned_data['pbifile'].chunks():
+                        sp.write(c)
         else:
             self._errors["pbifile"] = self.error_class([
                 _("This field is required."),
@@ -239,9 +243,12 @@ class JailPBIUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
-            with open(filename, 'wb+') as sp:
-                for c in cleaned_data['pbifile'].chunks():
-                    sp.write(c)
+            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
+                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as sp:
+                    for c in cleaned_data['pbifile'].chunks():
+                        sp.write(c)
         else:
             self._errors["pbifile"] = self.error_class([
                 _("This field is required."),
