@@ -1198,7 +1198,7 @@ class Multiplex:
                     'COLUMNS': str(w),
                     'LINES': str(h),
                     'TERM': self.env_term,
-                    'PATH': '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+                    'PATH': '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin',
                     'LANG': ls[0] + '.UTF-8',
                     'HOME': '/root',
                     'SHELL': self.cmd,
