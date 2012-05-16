@@ -465,7 +465,7 @@ populate_slice ( ) (
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . | egrep -v "$NANO_IGNORE_FILES_EXPR" | cpio -R root:wheel -dumpv ${mnt}
+	find . | egrep -v "$NANO_IGNORE_FILES_EXPR" | cpio -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
