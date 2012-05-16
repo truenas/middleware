@@ -396,7 +396,7 @@ setup_nanobsd ( ) (
 		# the files in /$d will be hidden by the mount.
 		# XXX: configure /$d ramdisk size
 		mkdir -p conf/base/$d conf/default/$d
-		find $d | cpio -R root:wheel -dumpl conf/base/
+		find $d | cpio -dumpl conf/base/
 	done
 
 	echo "$NANO_RAM_ETCSIZE" > conf/base/etc/md_size
