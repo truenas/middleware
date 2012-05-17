@@ -283,15 +283,24 @@ __EOF__
 	rm "${tmpfile}"
 }
 
+__escape()
+{
+	printf "${1}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
+}
+
+__unescape()
+{
+	printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
+}
+
 __do_AD_get()
 {
 	local prefix="${1}"
 	local name="${2}"
+	local var=\$$(printf "${prefix}${name}")
+	local val=$(eval "printf ${var}")
 
-	local var=\$$(echo "${prefix}${name}")
-	local val=$(eval "echo ${var}")
-
-	echo "${val}"
+	__unescape "${val}"
 }
 
 AD_get()
@@ -308,20 +317,20 @@ AD_get()
 __do_AD_set()
 {
 	local prefix="${1}"
-	local pair="${2}"
+	local var="${2}"
+	local val=$(__escape "${3}")
+	local pair="${var}=${val}"
 
 	eval "${prefix}${pair}"
 }
 
 AD_set()
 {
-	local args="${*}"
+	local var="${1}"
+	local val="${2}"
 	local prefix="__ad_"
 
-	for pair in ${args}
-	do
-		__do_AD_set "${prefix}" "${pair}"
-	done
+	__do_AD_set "${prefix}" "${var}" "${val}"
 }
 
 AD_save()
@@ -332,7 +341,7 @@ AD_save()
 	
 	for v in ${vars}
 	do
-		__do_AD_set "${prefix}" "${v}=$(AD_get ${v})"
+		__do_AD_set "${prefix}" "${v}" "$(AD_get ${v})"
 	done
 }
 
@@ -344,7 +353,7 @@ AD_restore()
 	
 	for v in ${vars}
 	do
-		AD_set "${v}=$(__do_AD_get ${prefix} ${v})"
+		AD_set "${v}" "$(__do_AD_get ${prefix} ${v})"
 	done
 }
 
@@ -429,24 +438,24 @@ __SQL__
 		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2 -d_)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
-		AD_set "${var}=${val}"
+		AD_set "${var}" "${val}"
 	done
 	exec 0<&3
 	rm "${tmpfile}"
 
 	local adminname=$(AD_get adminname)
 	local domainname=$(AD_get domainname)
-	AD_set binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+	AD_set binddn "${adminname}@$(echo ${domainname}|tr a-z A-Z)"
 
 	local dc=$(AD_get_domain_controller "${domainname}")
-	AD_set dcname=$(echo "${dc}"|cut -f1 -d:)
-	AD_set dcport=$(echo "${dc}"|cut -f2 -d:)
+	AD_set dcname "$(echo "${dc}"|cut -f1 -d:)"
+	AD_set dcport "$(echo "${dc}"|cut -f2 -d:)"
 
-	AD_set basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+	AD_set basedn "$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
 
 	local gc=$(AD_get_global_catalog "${domainname}")
-	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
-	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
+	AD_set gchost "$(echo "${gc}"|cut -f1 -d:)"
+	AD_set gcport "$(echo "${gc}"|cut -f2 -d:)"
 }
 
 # Create a cache filesystem on ${FREENAS_CACHEDIR} .
