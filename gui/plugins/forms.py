@@ -122,8 +122,8 @@ class PBIUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
-            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
-                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
+                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
             else:
                 with open(filename, 'wb+') as sp:
                     for c in cleaned_data['pbifile'].chunks():
@@ -249,8 +249,8 @@ class JailPBIUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
-            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
-                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
+            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
+                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
             else:
                 with open(filename, 'wb+') as sp:
                     for c in cleaned_data['pbifile'].chunks():
