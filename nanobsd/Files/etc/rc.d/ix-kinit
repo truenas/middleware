@@ -28,7 +28,7 @@ kerberos_start()
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
 			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
-			echo "${adminpw}" > ${pwfile}
+			printf "${adminpw}" > ${pwfile}
 			domainname=$(echo "${domainname}" | tr a-z A-Z)
 			kinit --password-file="${pwfile}" \
 			    "${adminname}@${domainname}"
