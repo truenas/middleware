@@ -300,9 +300,11 @@ PBI_LISTREPO = os.path.join(PBI_PATH, "pbi_listrepo")
 PBI_MAKEPATCH = os.path.join(PBI_PATH, "pbi_makepatch")
 PBI_MAKEPATCH_FLAGS_OUTDIR = pbi_arg(0x00000001, "-o", True, "outdir")
 PBI_MAKEPATCH_FLAGS_SIGN   = pbi_arg(0x00000002, "--sign", True, "key")
+PBI_MAKEPATCH_FLAGS_NOCHECKSIG   = pbi_arg(0x00000004, "--no-checksig")
 PBI_MAKEPATCH_FLAGS = [
     PBI_MAKEPATCH_FLAGS_OUTDIR,
-    PBI_MAKEPATCH_FLAGS_SIGN
+    PBI_MAKEPATCH_FLAGS_SIGN,
+    PBI_MAKEPATCH_FLAGS_NOCHECKSIG
 ]
 
 
