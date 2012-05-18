@@ -111,6 +111,7 @@ DEF_KNOBS = {
     'loader': {
         'kern.ipc.nmbclusters',
         'vm.kmem_size',
+        'vm.kmem_size_max',
         'vfs.zfs.arc_max',
     },
     'sysctl': {
@@ -220,7 +221,8 @@ def guess_vfs_zfs_arc_max():
 
     - See comments for USERLAND_RESERVED_MEM.
     """
-    return int(max(HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM),
+    return int(max(min(guess_vm_kmem_size() * 9 / 10,
+                   HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
                    MIN_ZFS_RESERVED_MEM))
 
 
