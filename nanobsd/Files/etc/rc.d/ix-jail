@@ -64,7 +64,7 @@ generate_plugins_jail_config()
 			mkdir -p "${mntpath_pbi}"
 		fi
 
-		echo "${plugins} ${mntpath_plugins} nullfs ro 0 0" > "/etc/fstab.${name}"
+		echo "${plugins} ${mntpath_plugins} nullfs rw 0 0" > "/etc/fstab.${name}"
 		echo "${plugins}/pbi ${mntpath_pbi} nullfs rw 0 0" >> "/etc/fstab.${name}"
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "

@@ -76,11 +76,14 @@ from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import (pbi_add, pbi_delete, pbi_info,
+from freenasUI.common.pbi import (pbi_add, pbi_delete,
+    pbi_info, pbi_create, pbi_makepatch, pbi_patch,
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
     PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
-    PBI_ADD_FLAGS_FORCE,
-    PBI_INFO_FLAGS_VERBOSE)
+    PBI_ADD_FLAGS_FORCE, PBI_INFO_FLAGS_VERBOSE,
+    PBI_CREATE_FLAGS_OUTDIR, PBI_CREATE_FLAGS_BACKUP,
+    PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
+    PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -2016,6 +2019,162 @@ class notifier:
                         )
                     )
             raise MiddlewareError(p.error)
+
+        return ret
+
+    def _get_plugins_jail(self):
+        from freenasUI.services.models import PluginsJail
+
+        if not self._started_plugins_jail():
+            return None, None
+
+        qs = PluginsJail.objects.order_by('-id')
+        if qs.count() == 0:
+            return False
+        pjail = qs[0]
+
+        jail = None
+        for j in Jls():
+            if j.hostname == pjail.jail_name:
+                jail = j
+                break
+
+        return pjail, jail
+
+    def _get_pbi_info(self, pbifile, jid):
+        from syslog import syslog, LOG_DEBUG
+        pbi = pbiname = prefix = name = version = arch = None
+
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
+        syslog(LOG_DEBUG, "_get_pbi_info: before running pbi_add")
+        out = p.info(True, jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
+        syslog(LOG_DEBUG, "_get_pbi_info: after running pbi_add")
+
+        if not out:
+            raise MiddlewareError("This file was not identified as in PBI "
+                "format, it might as well be corrupt.")
+
+        for pair in out:
+            (var, val) = pair.split('=', 1)
+
+            var = var.lower()
+            if var == 'pbi information for':
+                pbiname = val
+                pbi = "%s.pbi" % val
+
+            elif var == 'prefix':
+                prefix = val
+
+            elif var == 'name':
+                name = val
+
+            elif var == 'version':
+                version = val
+
+            elif var == 'arch':
+                arch = val
+
+        syslog(LOG_DEBUG, "_get_pbi_info: returning")
+        return pbi, pbiname, prefix, name, version, arch
+
+    def _get_plugin_info(self, name):
+        from freenasUI.plugins.models import Plugins
+        plugin = None
+
+        qs = Plugins.objects.filter(plugin_name=name)
+        if qs.count() > 0:
+            plugin = qs[0]
+
+        return  plugin
+
+    def update_pbi(self):
+        from freenasUI.services.models import RPCToken, PluginsJail
+        from freenasUI.plugins.models import Plugins
+        ret = False
+
+        # Get the jail 
+        pjail, jail = self._get_plugins_jail()
+        if jail is None:
+            raise MiddlewareError("The plugins jail is not running, start "
+                "it before proceeding")
+
+        # Get new PBI settings
+        newpbi, newpbiname, newprefix, newname, newversion, newarch = self._get_pbi_info(
+            "/mnt/plugins/.freenas/pbifile.pbi", jail.jid)
+
+        plugin = self._get_plugin_info(newname)
+
+        pbitemp = "/var/tmp/pbi"
+        newpbifile = "%s/%s" % (pjail.plugins_path, newpbi)
+        oldpbifile = "%s/%s.pbi" % (pjail.plugins_path, plugin.plugin_pbiname)
+
+        # Rename PBI to it's actual name
+        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
+
+        # Create a temporary directory to place old, new, and PBI patch files
+        out = Jexec(jid=jail.jid, command="/bin/mkdir %s" % pbitemp).run()
+        out = Jexec(jid=jail.jid, command="/bin/rm -f %s/*" % pbitemp).run()
+        if out[0] != 0:
+            raise MiddlewareError("There was a problem cleaning up the "
+                "PBI temp dirctory")
+
+        # If the old PBI doesn't exist, create it from the installed version
+        if not os.access(oldpbifile, os.F_OK):
+            p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
+                outdir=pbitemp, pbidir=plugin.plugin_pbiname)
+            out = p.run(True, jail.jid)
+            if out[0] != 0:
+                raise MiddlewareError("There was a problem cleaning up the "
+                    "PBI temporary dirctory")
+
+        oldpbiname = "%s.pbi" % plugin.plugin_pbiname
+        newpbiname = "%s.pbi" % newpbiname
+            
+        # Copy the old PBI over to our temporary PBI workspace
+        out = Jexec(jid=jail.jid, command="/bin/cp %s/%s %s" % (
+            pbitemp, oldpbiname, "/mnt/plugins/")).run()
+        if out[0] != 0:
+            raise MiddlewareError("Unable to copy old PBI file to plugins directory")
+
+        oldpbifile = "%s/%s" % (pbitemp, oldpbiname)
+        newpbifile = "%s/%s" % (pbitemp, newpbiname)
+
+        # Copy the new PBI over to our temporary PBI workspace
+        out = Jexec(jid=jail.jid, command="/bin/cp /mnt/plugins/%s %s/" % (
+            newpbiname, pbitemp)).run()
+        if out[0] != 0:
+            raise MiddlewareError("Unable to copy new PBI file to plugins directory")
+
+        # Now we make the patch for the PBI upgrade
+        p = pbi_makepatch(flags=PBI_MAKEPATCH_FLAGS_OUTDIR|PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
+            outdir=pbitemp, oldpbi=oldpbifile, newpbi=newpbifile)
+        out = p.run(True, jail.jid)
+        if out[0] != 0:
+            raise MiddlewareError("Unable to make a PBI patch")
+
+        pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
+            plugin.plugin_version, newversion, plugin.plugin_arch)
+
+        # Apply the upgrade patch to upgrade the PBI to the new version
+        p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR|PBI_PATCH_FLAGS_NOCHECKSIG,
+            outdir=pbitemp, pbp="%s/%s" % (pbitemp, pbpfile))
+        out = p.run(True, jail.jid)
+        if out[0] != 0:
+            raise MiddlewareError("Unable to patch the PBI")
+
+        # Update the database with the new PBI version
+        plugin.plugin_path = newprefix
+        plugin.plugin_name = newname
+        plugin.plugin_arch = newarch
+        plugin.plugin_version = newversion
+        plugin.plugin_pbiname = newpbiname
+
+        try:
+            plugin.save()
+            ret = True
+
+        except Exception, err:
+            ret = False
 
         return ret
 
