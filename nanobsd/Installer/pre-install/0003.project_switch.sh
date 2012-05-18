@@ -9,7 +9,7 @@
 # Garrett Cooper, March 2012
 #
 
-if [ "$OLD_AVATAR_PROJECT" != "$NEW_AVATAR_PROJECT" ]
+if [ "$OLD_AVATAR_PROJECT" -a "$OLD_AVATAR_PROJECT" != "$NEW_AVATAR_PROJECT" ]
 then
 	error "projects do not match ($OLD_AVATAR_PROJECT != $NEW_AVATAR_PROJECT)"
 fi

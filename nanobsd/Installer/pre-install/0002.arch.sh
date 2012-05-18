@@ -9,7 +9,7 @@
 #
 # Garrett Cooper, March 2012
 
-if [ "$OLD_AVATAR_ARCH" != "$NEW_AVATAR_ARCH" ]
+if [ "$OLD_AVATAR_ARCH" -a "$OLD_AVATAR_ARCH" != "$NEW_AVATAR_ARCH" ]
 then
 	error "architectures do not match ($OLD_AVATAR_ARCH != $NEW_AVATAR_ARCH)"
 fi
