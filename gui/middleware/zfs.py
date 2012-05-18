@@ -199,9 +199,9 @@ class Tnode(object):
 
     def find_not_online(self):
         """
-        Find nodes of stauts UNAVAIL
+        Find nodes of status UNAVAIL
         """
-        if len(self.children) == 0 and self.status != 'ONLINE':
+        if len(self.children) == 0 and self.status not in ('ONLINE', 'AVAIL'):
             return [self]
         unavails = []
         for child in self.children:
