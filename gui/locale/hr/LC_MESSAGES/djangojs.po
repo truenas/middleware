@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:50-0800\n"
-"PO-Revision-Date: 2011-07-17 13:20+0200\n"
-"Last-Translator: Karlo <karlo.kuhar@zg.t-com.hr>\n"
+"PO-Revision-Date: 2012-05-21 10:03+0200\n"
+"Last-Translator: jeterovi <jozzybrac@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -37,7 +37,7 @@ msgstr "Mrežne postavke"
 
 #: freeadmin/static/lib/js/freeadmin.js:184
 msgid "Plugins"
-msgstr ""
+msgstr "Dodatci"
 
 #: freeadmin/static/lib/js/freeadmin.js:215
 msgid "Services"
@@ -62,7 +62,7 @@ msgstr "Uredi disk"
 #: freeadmin/static/lib/js/freeadmin.js:608
 #: freeadmin/static/lib/js/freeadmin.js:710
 msgid "Please wait..."
-msgstr ""
+msgstr "Molimo pričekajte..."
 
 #: freeadmin/static/lib/js/freeadmin.js:657
 #: freeadmin/static/lib/js/freeadmin.js:775
