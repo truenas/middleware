@@ -33,26 +33,25 @@ import logging
 import os
 import re
 
-from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import QueryDict
 from django.utils.safestring import mark_safe
-from django.utils.translation import (ugettext_lazy as _,
-    ugettext as __, ungettext)
+from django.utils.translation import ugettext_lazy as _, ungettext
 
 from dojango import forms
-from dojango.forms import widgets, CheckboxSelectMultiple
+from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
-from freenasUI.common import humanize_size, humanize_number_si
+from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.system import is_mounted, mount, umount
+from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
-from freenasUI.storage.widgets import UnixPermissionWidget, UnixPermissionField
+from freenasUI.storage.widgets import UnixPermissionField
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -497,7 +496,6 @@ class VolumeImportForm(forms.Form):
         # Construct and fill forms into database.
         volume_name = self.cleaned_data['volume_name']
         volume_fstype = self.cleaned_data['volume_fstype']
-        disk_list = self.cleaned_data['volume_disks']
 
         volume = models.Volume(vol_name=volume_name, vol_fstype=volume_fstype)
         volume.save()
@@ -610,14 +608,8 @@ class VolumeAutoImportForm(forms.Form):
         group_type = vol['group_type']
         if vol['type'] == 'geom':
             volume_fstype = 'UFS'
-            grouped = {}
         elif vol['type'] == 'zfs':
             volume_fstype = 'ZFS'
-            grouped = {
-                    'log': vol['log'],
-                    'cache': vol['cache'],
-                    'spare': vol['spare'],
-                    }
 
         with transaction.commit_on_success():
             volume = models.Volume(vol_name=volume_name,
@@ -1047,11 +1039,6 @@ class CloneSnapshotForm(Form):
         snapshot = self.cleaned_data['cs_snapshot'].__str__()
         retval = notifier().zfs_clonesnap(snapshot,
             str(self.cleaned_data['cs_name']))
-        if retval == '':
-            if '/' in self.fields['cs_snapshot'].initial:
-                zfs = self.fields['cs_snapshot'].initial.split('/')[0]
-            else:
-                zfs = self.fields['cs_snapshot'].initial.split('@')[0]
         return retval
 
 
@@ -1212,7 +1199,7 @@ class Dataset_Destroy(Form):
         super(Dataset_Destroy, self).__init__(*args, **kwargs)
         snaps = notifier().zfs_snapshot_list(path=self.fs)
         if len(snaps.get(self.fs, [])) > 0:
-            label = text = ungettext(
+            label = ungettext(
                 "I'm aware this will destroy snapshots within this dataset",
                 ("I'm aware this will destroy all child datasets and "
                     "snapshots within this dataset"),
@@ -1272,7 +1259,7 @@ class ScrubForm(ModelForm):
 
     def save(self):
         super(ScrubForm, self).save()
-        started = notifier().restart("cron")
+        notifier().restart("cron")
 
 
 class DiskWipeForm(forms.Form):
