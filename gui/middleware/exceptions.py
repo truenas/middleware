@@ -24,7 +24,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-import syslog
+import logging
+
+log = logging.getLogger('middleware.exceptions')
+
 
 class MiddlewareError(Exception):
     def __init__(self, value):
@@ -32,12 +35,7 @@ class MiddlewareError(Exception):
         if not value:
             raise ValueError('You deserve to be shot for not providing an '
                              'actionable error message mister developer')
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_ERR, str(self))
-        syslog.closelog()
+        log.error(str(self))
 
     def __str__(self):
         return "[%s: %s]" % (type(self).__name__, self.value.encode('utf-8'))
-
-class StorageError(MiddlewareError):
-    pass
