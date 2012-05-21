@@ -45,7 +45,6 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.forms import CronMultiple
-from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import models
@@ -120,7 +119,9 @@ class FileWizard(FormWizard):
             'retval': getattr(self, 'retval', None),
         })
         if not request.is_ajax():
-            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
+            response.content = ("<html><body><textarea>"
+            + response.content +
+            "</textarea></boby></html>")
         return response
 
     def get_template(self, step):
@@ -139,7 +140,7 @@ class FileWizard(FormWizard):
         if hasattr(form, 'done'):
             retval = form.done(request=request,
                 previous_form_list=self.previous_form_list)
-            if step == self.num_steps()-1:
+            if step == self.num_steps() - 1:
                 self.retval = retval
 
     def render(self, form, request, step, context=None):
@@ -170,7 +171,9 @@ class FileWizard(FormWizard):
         response = super(FileWizard, self).render_template(request, *args, **kwargs)
         # This is required for the workaround dojo.io.frame for file upload
         if not request.is_ajax():
-            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
+            response.content = ("<html><body><textarea>"
+            + response.content +
+            "</textarea></boby></html>")
         return response
 
     def prefix_for_step(self, step):
@@ -188,14 +191,16 @@ class SettingsForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(SettingsForm, self).__init__( *args, **kwargs)
+        super(SettingsForm, self).__init__(*args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
         self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
         self.instance._original_stg_guiport = self.instance.stg_guiport
         self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
-        self.fields['stg_language'].choices=settings.LANGUAGES
+        self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
-        self.fields['stg_guiaddress'] = forms.ChoiceField(label=self.fields['stg_guiaddress'].label)
+        self.fields['stg_guiaddress'] = forms.ChoiceField(
+            label=self.fields['stg_guiaddress'].label
+            )
         self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices())
 
     def clean_stg_guiport(self):
@@ -242,7 +247,7 @@ class NTPForm(ModelForm):
         model = models.NTPServer
 
     def __init__(self, *args, **kwargs):
-        super(NTPForm, self).__init__( *args, **kwargs)
+        super(NTPForm, self).__init__(*args, **kwargs)
         self.usable = True
 
     def clean_ntp_address(self):
@@ -321,20 +326,30 @@ class AdvancedForm(ModelForm):
 
 
 class EmailForm(ModelForm):
-    em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
-    em_pass2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
-        help_text = _("Enter the same password as above, for verification."), required=False)
+    em_pass1 = forms.CharField(
+        label=_("Password"),
+        widget=forms.PasswordInput,
+        required=False)
+    em_pass2 = forms.CharField(
+        label=_("Password confirmation"),
+        widget=forms.PasswordInput,
+        help_text=_("Enter the same password as above, for verification."),
+        required=False)
+
     class Meta:
         model = models.Email
         exclude = ('em_pass',)
+
     def __init__(self, *args, **kwargs):
-        super(EmailForm, self).__init__( *args, **kwargs)
+        super(EmailForm, self).__init__(*args, **kwargs)
         try:
             self.fields['em_pass1'].initial = self.instance.em_pass
             self.fields['em_pass2'].initial = self.instance.em_pass
         except:
             pass
-        self.fields['em_smtp'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_em_smtp", ["id_em_pass1", "id_em_pass2", "id_em_user"], true);'
+        self.fields['em_smtp'].widget.attrs['onChange'] = ('javascript:'
+            'toggleGeneric("id_em_smtp", ["id_em_pass1", "id_em_pass2", '
+            '"id_em_user"], true);')
         ro = True
 
         if len(self.data) > 0:
@@ -379,17 +394,19 @@ class EmailForm(ModelForm):
 
 
 class SSLForm(ModelForm):
+
+    class Meta:
+        model = models.SSL
+
     def save(self):
         super(SSLForm, self).save()
         notifier().start_ssl("nginx")
-    class Meta:
-        model = models.SSL
 
 
 class SMARTTestForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('instance'):
+        if 'instance' in kwargs:
             ins = kwargs.get('instance')
             ins.smarttest_month = ins.smarttest_month.replace("10", "a").replace("11", "b").replace("12", "c")
             if ins.smarttest_daymonth == "..":
@@ -444,10 +461,18 @@ class SMARTTestForm(ModelForm):
     class Meta:
         model = models.SMARTTest
         widgets = {
-            'smarttest_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
-            'smarttest_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
-            'smarttest_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
-            'smarttest_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+            'smarttest_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+                ),
+            'smarttest_daymonth': CronMultiple(
+                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
+                ),
+            'smarttest_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+                ),
+            'smarttest_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+                ),
         }
 
 
@@ -512,15 +537,25 @@ class CronJobForm(ModelForm):
         model = models.CronJob
         widgets = {
             'cron_command': forms.widgets.TextInput(),
-            'cron_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
-            'cron_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
-            'cron_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
-            'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
-            'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+            'cron_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+                ),
+            'cron_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+                ),
+            'cron_daymonth': CronMultiple(
+                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
+                ),
+            'cron_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+                ),
+            'cron_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+                ),
         }
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('instance'):
+        if 'instance' in kwargs:
             ins = kwargs.get('instance')
             if ins.cron_month == '*':
                 ins.cron_month = "1,2,3,4,5,6,7,8,9,a,b,c"
@@ -558,7 +593,7 @@ class CronJobForm(ModelForm):
 
     def save(self):
         super(CronJobForm, self).save()
-        started = notifier().restart("cron")
+        notifier().restart("cron")
 
 
 class RsyncForm(ModelForm):
@@ -566,15 +601,25 @@ class RsyncForm(ModelForm):
     class Meta:
         model = models.Rsync
         widgets = {
-            'rsync_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
-            'rsync_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
-            'rsync_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
-            'rsync_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
-            'rsync_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+            'rsync_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+                ),
+            'rsync_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+                ),
+            'rsync_daymonth': CronMultiple(
+                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
+                ),
+            'rsync_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+                ),
+            'rsync_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+                ),
         }
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('instance'):
+        if 'instance' in kwargs:
             ins = kwargs.get('instance')
             if ins.rsync_month == '*':
                 ins.rsync_month = "1,2,3,4,5,6,7,8,9,a,b,c"
@@ -652,7 +697,7 @@ class RsyncForm(ModelForm):
 
     def save(self):
         super(RsyncForm, self).save()
-        started = notifier().restart("cron")
+        notifier().restart("cron")
 
 """
 TODO: Move to a unittest .py file.
