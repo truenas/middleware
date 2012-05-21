@@ -628,8 +628,11 @@
                 var first = null;
                 for(key in data.errors) {
 
-                    field = dojo.query("input[name="+key+"],textarea[name="+key+"]", form.domNode);
-                    if(field.length == 0) continue;
+                    field = dojo.query("input[name="+key+"],textarea[name="+key+"],select[name="+key+"]", form.domNode);
+                    if(field.length == 0) {
+                        console.log("Form element not found: ", key);
+                        continue;
+                    }
                     field = dijit.getEnclosingWidget(field[0]);
                     if(!first && field.focus)
                         first = field;
