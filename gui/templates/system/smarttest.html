@@ -2,6 +2,7 @@
 <table class="grid">
         <thead class="header">
           <tr>
+            <td>{% trans "Type" %}</td>
             <td>{% trans "Description" %}</td>
             <td>{% trans "Hour" %}</td>
             <td>{% trans "Day of month" %}</td>
@@ -11,6 +12,7 @@
           </tr>
         </thead>
     {% for s in smarttests %}
+        <td>{{ s.get_smarttest_type_display }}</td>
         <td>{{ s.smarttest_desc|default:_("Unknown") }}</td>
         <td>{{ s.get_human_hour }}</td>
         <td>{{ s.get_human_daymonth }}</td>
