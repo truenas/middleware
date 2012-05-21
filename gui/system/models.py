@@ -31,12 +31,10 @@ from django.db import models
 from django.conf import settings
 
 from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IPAddressField
-from freeadmin.models import Model, UserField, GroupField
+from freeadmin.models import Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import PathField
 from storage.models import Disk
-import choices
 
 
 class Settings(Model):
@@ -44,37 +42,37 @@ class Settings(Model):
             max_length=120,
             choices=choices.PROTOCOL_CHOICES,
             default="http",
-            verbose_name = _("Protocol")
+            verbose_name=_("Protocol")
             )
     stg_guiaddress = models.CharField(
             max_length=120,
             blank=True,
             default='0.0.0.0',
-            verbose_name = _("WebGUI Address")
+            verbose_name=_("WebGUI Address")
             )
     stg_guiport = models.CharField(
             max_length=120,
             blank=True,
             default='',
-            verbose_name = _("WebGUI Port")
+            verbose_name=_("WebGUI Port")
             )
     stg_language = models.CharField(
             max_length=120,
             choices=settings.LANGUAGES,
             default="en",
-            verbose_name = _("Language")
+            verbose_name=_("Language")
             )
     stg_timezone = models.CharField(
             max_length=120,
             choices=choices.TimeZoneChoices(),
             default="America/Los_Angeles",
-            verbose_name = _("Timezone")
+            verbose_name=_("Timezone")
             )
     stg_syslogserver = models.CharField(
             default='',
             blank=True,
             max_length=120,
-            verbose_name = _("Syslog server")
+            verbose_name=_("Syslog server")
             )
 
     class Meta:
@@ -82,6 +80,7 @@ class Settings(Model):
 
     class FreeAdmin:
         deletable = False
+
 
 class NTPServer(Model):
     ntp_address = models.CharField(
@@ -91,29 +90,41 @@ class NTPServer(Model):
     ntp_burst = models.BooleanField(
             verbose_name=_("Burst"),
             default=False,
-            help_text=_("When the server is reachable, send a burst of eight packets instead of the usual one. This is designed to improve timekeeping quality with the server command and s addresses."),
+            help_text=_("When the server is reachable, send a burst of eight "
+                "packets instead of the usual one. This is designed to improve"
+                " timekeeping quality with the server command and s addresses."
+                ),
             )
     ntp_iburst = models.BooleanField(
             verbose_name=_("IBurst"),
             default=True,
-            help_text=_("When the server is unreachable, send a burst of eight packets instead of the usual one. This is designed to speed the initial synchronization acquisition with the server command and s addresses."),
+            help_text=_("When the server is unreachable, send a burst of eight"
+                " packets instead of the usual one. This is designed to speed "
+                "the initial synchronization acquisition with the server "
+                "command and s addresses."),
             )
     ntp_prefer = models.BooleanField(
             verbose_name=_("Prefer"),
             default=False,
-            help_text=_("Marks the server as preferred. All other things being equal, this host will be chosen for synchronization among a set of correctly operating hosts."),
+            help_text=_("Marks the server as preferred. All other things being"
+                " equal, this host will be chosen for synchronization among a "
+                "set of correctly operating hosts."),
             )
     ntp_minpoll = models.IntegerField(
             verbose_name=_("Min. Poll"),
             default=6,
             validators=[MinValueValidator(4)],
-            help_text=_("The minimum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"),
+            help_text=_("The minimum poll interval for NTP messages, as a "
+                "power of 2 in seconds. Defaults to 6 (64 s), but can be "
+                "decreased to a lower limit of 4 (16 s)"),
             )
     ntp_maxpoll = models.IntegerField(
             verbose_name=_("Max. Poll"),
             default=10,
             validators=[MaxValueValidator(17)],
-            help_text=_("The maximum poll interval for NTP messages, as a power of 2 in seconds. Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 h)"),
+            help_text=_("The maximum poll interval for NTP messages, as a "
+                "power of 2 in seconds. Defaults to 10 (1,024 s), but can be "
+                "increased to an upper limit of 17 (36.4 h)"),
             )
 
     def __unicode__(self):
@@ -186,112 +197,118 @@ class Advanced(Model):
     class FreeAdmin:
         deletable = False
 
-## System|Advanced|Email
+
 class Email(Model):
     em_fromemail = models.CharField(
             max_length=120,
-            verbose_name = _("From email"),
-            help_text = _("An email address that the system will use for the sending address for mail it sends, eg: freenas@example.com"),
+            verbose_name=_("From email"),
+            help_text=_("An email address that the system will use for the "
+                "sending address for mail it sends, eg: freenas@example.com"),
             default='',
             )
     em_outgoingserver = models.CharField(
             max_length=120,
-            verbose_name = _("Outgoing mail server"),
-            help_text = _("A hostname or ip that will accept our mail, for instance mail.example.org, or 192.168.1.1"),
+            verbose_name=_("Outgoing mail server"),
+            help_text=_("A hostname or ip that will accept our mail, for "
+                "instance mail.example.org, or 192.168.1.1"),
             blank=True
             )
     em_port = models.IntegerField(
             default=25,
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
-            help_text = _("An integer from 1 - 65535, generally will be 25, 465, or 587"),
-            verbose_name = _("Port to connect to")
+            help_text=_("An integer from 1 - 65535, generally will be 25, "
+                "465, or 587"),
+            verbose_name=_("Port to connect to")
             )
     em_security = models.CharField(
             max_length=120,
             choices=choices.SMTPAUTH_CHOICES,
             default="plain",
-            help_text = _("encryption of the connection"),
-            verbose_name = _("TLS/SSL")
+            help_text=_("encryption of the connection"),
+            verbose_name=_("TLS/SSL")
             )
     em_smtp = models.BooleanField(
-            verbose_name = _("Use SMTP Authentication"),
+            verbose_name=_("Use SMTP Authentication"),
             default=False
             )
     em_user = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Username"),
-            help_text = _("A username to authenticate to the remote server"),
+            verbose_name=_("Username"),
+            help_text=_("A username to authenticate to the remote server"),
             )
     em_pass = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Password"),
-            help_text = _("A password to authenticate to the remote server"),
+            verbose_name=_("Password"),
+            help_text=_("A password to authenticate to the remote server"),
             )
+
     class Meta:
         verbose_name = _("Email")
 
     class FreeAdmin:
         deletable = False
 
+
 class SSL(Model):
     ssl_org = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Organization"),
-            help_text = _("Organization Name (eg, company)"),
+            verbose_name=_("Organization"),
+            help_text=_("Organization Name (eg, company)"),
             )
     ssl_unit = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Organizational Unit"),
-            help_text = _("Organizational Unit Name (eg, section)"),
+            verbose_name=_("Organizational Unit"),
+            help_text=_("Organizational Unit Name (eg, section)"),
             )
     ssl_email = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Email Address"),
-            help_text = _("Email Address"),
+            verbose_name=_("Email Address"),
+            help_text=_("Email Address"),
             )
     ssl_city = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Locality"),
-            help_text = _("Locality Name (eg, city)"),
+            verbose_name=_("Locality"),
+            help_text=_("Locality Name (eg, city)"),
             )
     ssl_state = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("State"),
-            help_text = _("State or Province Name (full name)"),
+            verbose_name=_("State"),
+            help_text=_("State or Province Name (full name)"),
             )
     ssl_country = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Country"),
-            help_text = _("Country Name (2 letter code)"),
+            verbose_name=_("Country"),
+            help_text=_("Country Name (2 letter code)"),
             )
     ssl_common = models.CharField(
             blank=True,
             null=True,
             max_length=120,
-            verbose_name = _("Common Name"),
-            help_text = _("Common Name (eg, YOUR name)"),
+            verbose_name=_("Common Name"),
+            help_text=_("Common Name (eg, YOUR name)"),
             )
     ssl_certfile = models.TextField(
             blank=True,
             null=True,
-            verbose_name = _("SSL Certificate"),
-            help_text = _("Cut and paste the contents of your private and public certificate files here."),
+            verbose_name=_("SSL Certificate"),
+            help_text=_("Cut and paste the contents of your private and "
+                "public certificate files here."),
             )
 
     class Meta:
@@ -299,6 +316,7 @@ class SSL(Model):
 
     class FreeAdmin:
         deletable = False
+
 
 class CronJob(Model):
     cron_user = UserField(
@@ -346,6 +364,7 @@ class CronJob(Model):
             default=True,
             verbose_name=_("Enabled"),
             )
+
     class Meta:
         verbose_name = _("Cron Job")
         verbose_name_plural = _("Cron Jobs")
@@ -423,6 +442,7 @@ class CronJob(Model):
         except:
             pass
 
+
 class Rsync(Model):
     rsync_path = PathField(
         verbose_name=_("Path"),
@@ -442,7 +462,8 @@ class Rsync(Model):
             max_length=120,
             verbose_name=_("Remote Module Name"),
             blank=True,
-            help_text=_("Name of the module defined in the remote rsync daemon"),
+            help_text=_("Name of the module defined in the remote rsync "
+                "daemon"),
             )
     rsync_remotepath = models.CharField(
             max_length=120,
@@ -453,7 +474,8 @@ class Rsync(Model):
     rsync_direction = models.CharField(
             max_length=10,
             verbose_name=_("Direction"),
-            help_text=_("Push - From local to remote machine. Pull - From remote to local machine."),
+            help_text=_("Push - From local to remote machine. Pull - From "
+                "remote to local machine."),
             default='push',
             choices=choices.RSYNC_DIRECTION,
             )
@@ -517,7 +539,8 @@ class Rsync(Model):
             )
     rsync_delete = models.BooleanField(
             verbose_name=_("Delete"),
-            help_text=_("Delete files on the receiving side that don't exist on sender"),
+            help_text=_("Delete files on the receiving side that don't exist "
+                "on sender"),
             default=False,
             )
     rsync_quiet = models.BooleanField(
@@ -527,12 +550,15 @@ class Rsync(Model):
             )
     rsync_preserveperm = models.BooleanField(
             verbose_name=_("Preserve permissions"),
-            help_text=_("This option causes the receiving rsync to set the destination permissions to be the same as the source permissions"),
+            help_text=_("This option causes the receiving rsync to set the "
+                "destination permissions to be the same as the source "
+                "permissions"),
             default=False,
             )
     rsync_preserveattr = models.BooleanField(
             verbose_name=_("Preserve extended attributes"),
-            help_text=_("This option causes rsync to update the remote extended attributes to be the same as the local ones"),
+            help_text=_("This option causes rsync to update the remote "
+                "extended attributes to be the same as the local ones"),
             default=False,
             )
     rsync_extra = models.TextField(
@@ -544,6 +570,7 @@ class Rsync(Model):
             default=True,
             verbose_name=_("Enabled"),
             )
+
     class Meta:
         verbose_name = _("Rsync Task")
         verbose_name_plural = _("Rsync Tasks")
@@ -620,10 +647,11 @@ class Rsync(Model):
         except:
             pass
 
+
 class SMARTTest(Model):
     smarttest_disk = models.ForeignKey(
             Disk,
-            limit_choices_to = {'disk_enabled': True},
+            limit_choices_to={'disk_enabled': True},
             verbose_name=_("Disk"),
             )
     smarttest_type = models.CharField(
@@ -701,7 +729,10 @@ class SMARTTest(Model):
         return ', '.join(labels)
 
     def __unicode__(self):
-        return "%s (%s) " % (unicode(self.smarttest_disk), self.get_smarttest_type_display())
+        return "%s (%s) " % (
+            unicode(self.smarttest_disk),
+            self.get_smarttest_type_display()
+            )
 
     def delete(self):
         super(SMARTTest, self).delete()
@@ -723,6 +754,7 @@ class SMARTTest(Model):
         icon_object = u"SMARTIcon"
         icon_add = u"AddSMARTTestIcon"
         icon_view = u"ViewSMARTTestIcon"
+
 
 class Sysctl(Model):
     sysctl_mib = models.CharField(
@@ -761,6 +793,7 @@ class Sysctl(Model):
         icon_object = u"SysctlIcon"
         icon_add = u"AddSysctlIcon"
         icon_view = u"ViewSysctlIcon"
+
 
 class Tunable(Model):
     tun_var = models.CharField(
