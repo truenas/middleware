@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:45-0800\n"
-"PO-Revision-Date: 2011-07-17 13:20+0200\n"
-"Last-Translator: Karlo <karlo.kuhar@zg.t-com.hr>\n"
+"PO-Revision-Date: 2012-05-21 10:22+0200\n"
+"Last-Translator: jeterovi <jozzybrac@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -114,27 +114,27 @@ msgstr "Onemogućeno"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Razina 1 - Minimalna potrošnja energije u stanju mirovanja (spindown)"
+msgstr "Razina 1 - Minimalna potrošnja energije sa Standby-om (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Razina 64 - Srednja potrošnja energije u stanju mirovanja"
+msgstr "Razina 64 - Srednja potrošnja energije sa Standby-om"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Razina 127 - Srednja potrošnja energije u stanju mirovanja"
+msgstr "Razina 127 - Srednja potrošnja energije sa Standby-om"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Razina 128 - Minimalna potrošnja energije (no spindown)"
+msgstr "Razina 128 - Minimalna potrošnja energije bez Standby-a (no spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Razina 192 - Srednja potrošnja energije"
+msgstr "Razina 192 - Srednja potrošnja energije bez Standby-a"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Razina 254 - Maksimalna učinkovitost, maksimalna potrošnja energije"
+msgstr "Razina 254 - Maksimalna izvedba, maksimalna potrošnja energije"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -226,7 +226,7 @@ msgstr "Nedjelja"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr "Gost"
+msgstr "Anonimac"
 
 #: choices.py:164
 msgid "Local User"
@@ -242,7 +242,7 @@ msgstr "Sve"
 
 #: choices.py:187
 msgid "Debug"
-msgstr "Debugirajući"
+msgstr "Debug"
 
 #: choices.py:191
 msgid "Default"
@@ -253,6 +253,7 @@ msgid "Time Machine"
 msgstr "Vremenski stroj"
 
 #: choices.py:195
+#, fuzzy
 msgid "No case folding"
 msgstr "Ne mijenjaj mala slova u velika"
 
@@ -292,7 +293,7 @@ msgstr "čitanje-pisanje"
 
 #: choices.py:218
 msgid "read-only"
-msgstr "samo čitanje"
+msgstr "samo za čitanje"
 
 #: choices.py:222 choices.py:228 services/forms.py:532 services/forms.py:534
 #: services/forms.py:912 templates/storage/scrub.html:24
@@ -318,7 +319,7 @@ msgstr "UPS na baterijskom napajanju"
 
 #: choices.py:251
 msgid "Preferred"
-msgstr "Predodređen"
+msgstr "Preferiran"
 
 #: choices.py:252
 msgid "Tolerated"
@@ -366,7 +367,7 @@ msgstr "Dan(a)"
 
 #: choices.py:487
 msgid "Week(s)"
-msgstr "Tjedan(na)"
+msgstr "Tjedan(a)"
 
 #: choices.py:488
 msgid "Month(s)"
@@ -374,7 +375,7 @@ msgstr "Mjesec(i)"
 
 #: choices.py:489
 msgid "Year(s)"
-msgstr "Godina"
+msgstr "Godina(e)"
 
 #: choices.py:493 storage/models.py:262 storage/models.py:287
 #: system/models.py:383 system/models.py:408 system/models.py:585
@@ -388,11 +389,11 @@ msgstr "Svaki odabrani dan"
 
 #: choices.py:500
 msgid "Read-only"
-msgstr "Samo čitanje"
+msgstr "Samo za čitanje"
 
 #: choices.py:501
 msgid "Write-only"
-msgstr "Samo pisanje"
+msgstr "Samo za pisanje"
 
 #: choices.py:502
 msgid "Read and Write"
@@ -425,11 +426,11 @@ msgstr "%(week) tjedana"
 
 #: choices.py:519
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nikad - Provijeri uređaj neovisno o njegovom stanju napajanja"
+msgstr "Nikad - Provjeri uređaj neovisno o njegovom stanju napajanja"
 
 #: choices.py:520
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Spavanje - provjeri uređaj osim ako nije u režimu spavanja"
+msgstr "Spavanje - Provjeri uređaj osim ako nije u SLEEP režimu"
 
 #: choices.py:521
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -478,16 +479,16 @@ msgstr ""
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Ime nemože započeti sa \"-\""
 
 #: account/forms.py:54
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Znak $ može jedino biti posljednji znak"
 
 #: account/forms.py:61
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Ime sadržava nedopušteni znak (%s)"
 
 #: account/forms.py:70
 #, python-format
@@ -517,9 +518,8 @@ msgstr ""
 "znakovi."
 
 #: account/forms.py:201
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Ovo polje može sadržavati samo slova, brojeve i @/./+/-/_ znakove."
+msgstr "Ovo polje može sadržavati samo slova, brojeve i ./-/_ znakove."
 
 #: account/forms.py:228 account/forms.py:457 services/models.py:737
 #: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
@@ -529,7 +529,7 @@ msgstr "Lozinka"
 
 #: account/forms.py:232 account/forms.py:458 system/forms.py:273
 msgid "Password confirmation"
-msgstr "Potvrda zaporke"
+msgstr "Potvrda lozinke"
 
 #: account/forms.py:234 account/forms.py:459 system/forms.py:274
 msgid "Enter the same password as above, for verification."
@@ -548,7 +548,7 @@ msgstr "Onemogući prijavu"
 
 #: account/forms.py:243 account/forms.py:499
 msgid "Lock user"
-msgstr ""
+msgstr "Zaključaj korisnika"
 
 #: account/forms.py:245
 msgid "Create a new primary group for the user"
@@ -1859,10 +1859,9 @@ msgid "Max. Connections"
 msgstr "Maksimalni broj konekcija"
 
 #: services/models.py:215
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Maksimalni broj konekcija po sesiji (pretpostavljeno 8)."
+msgstr "Maksimalni broj konekcija po sesiji AFT. Pretpostavljeni limit je 50."
 
 #: services/models.py:220 services/models.py:221
 #: templates/services/index.html:7
@@ -2374,9 +2373,8 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr ""
 
 #: services/models.py:857
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Dodatni parametri"
+msgstr "Dodatni parametri (ups. conf)"
 
 #: services/models.py:859
 msgid "Additional parameters to the hardware-specific part of the driver."
@@ -3874,9 +3872,8 @@ msgstr "Tjedno"
 
 #: storage/models.py:291 system/models.py:412 system/models.py:610
 #: system/models.py:697
-#, fuzzy
 msgid "Weekends"
-msgstr "Tjedan(na)"
+msgstr "Tjedana"
 
 #: storage/models.py:323
 msgid "Multipath name"
@@ -5593,9 +5590,9 @@ msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/dataset_confirm_delete.html:5
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Da li ste sigurni da želite izvoz?"
+msgstr "Da li ste sigurni da želite uništiti \"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -5955,7 +5952,7 @@ msgstr "Debugirajući"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Nadogradnja ugrađenog softvera (firmware)"
+msgstr "Nadogradnja Firmware-a"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -6248,7 +6245,7 @@ msgid "DVD"
 msgstr "DVD"
 
 msgid "Tape"
-msgstr "Tračni uređaj"
+msgstr "Traka"
 
 msgid "Pass"
 msgstr "Prolaz"
