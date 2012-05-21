@@ -405,6 +405,23 @@ class SSLForm(ModelForm):
 
 class SMARTTestForm(ModelForm):
 
+    class Meta:
+        model = models.SMARTTest
+        widgets = {
+            'smarttest_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+                ),
+            'smarttest_daymonth': CronMultiple(
+                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
+                ),
+            'smarttest_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+                ),
+            'smarttest_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+                ),
+        }
+
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs:
             ins = kwargs.get('instance')
@@ -426,10 +443,33 @@ class SMARTTestForm(ModelForm):
                 if everyx == hours:
                     ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder.remove('smarttest_disks')
+        self.fields.keyOrder.insert(0, 'smarttest_disks')
 
     def save(self):
         super(SMARTTestForm, self).save()
         notifier().restart("smartd")
+
+    def clean_smarttest_disks(self):
+        disks = self.cleaned_data.get("smarttest_disks")
+        used_disks = []
+        for disk in disks:
+            qs = models.SMARTTest.objects.filter(
+                smarttest_disks__in=[disk]
+                )
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.count() > 0:
+                used_disks.append(disk.disk_name)
+        if used_disks:
+            raise forms.ValidationError(
+                _("The following disks already have tests for this type: "
+                    "%s" % (
+                        ', '.join(used_disks),
+                    ),
+                    )
+                )
+        return disks
 
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
@@ -457,23 +497,6 @@ class SMARTTestForm(ModelForm):
         w = eval(self.cleaned_data.get("smarttest_dayweek"))
         w = ",".join(w)
         return w
-
-    class Meta:
-        model = models.SMARTTest
-        widgets = {
-            'smarttest_hour': CronMultiple(
-                attrs={'numChoices': 24, 'label': _("hour")}
-                ),
-            'smarttest_daymonth': CronMultiple(
-                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
-                ),
-            'smarttest_dayweek': forms.CheckboxSelectMultiple(
-                choices=choices.WEEKDAYS_CHOICES
-                ),
-            'smarttest_month': forms.CheckboxSelectMultiple(
-                choices=choices.MONTHS_CHOICES
-                ),
-        }
 
 
 class FirmwareTemporaryLocationForm(Form):

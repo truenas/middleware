@@ -649,16 +649,15 @@ class Rsync(Model):
 
 
 class SMARTTest(Model):
-    smarttest_disk = models.ForeignKey(
+    smarttest_disks = models.ManyToManyField(
             Disk,
             limit_choices_to={'disk_enabled': True},
-            verbose_name=_("Disk"),
+            verbose_name=_("Disks"),
             )
     smarttest_type = models.CharField(
             choices=choices.SMART_TEST,
             max_length=2,
             verbose_name=_("Type"),
-            blank=True,
             )
     smarttest_desc = models.CharField(
             max_length=120,
@@ -729,9 +728,16 @@ class SMARTTest(Model):
         return ', '.join(labels)
 
     def __unicode__(self):
+        if self.smarttest_disks.count() > 3:
+            disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
+            disks = ', '.join(disks) + '...'
+        else:
+            disks = [d.disk_name for d in self.smarttest_disks.all()]
+            disks = ', '.join(disks)
+
         return "%s (%s) " % (
-            unicode(self.smarttest_disk),
-            self.get_smarttest_type_display()
+            self.get_smarttest_type_display(),
+            disks
             )
 
     def delete(self):
@@ -744,10 +750,7 @@ class SMARTTest(Model):
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
-        ordering = ["smarttest_disk"]
-        unique_together = (
-            ('smarttest_disk', 'smarttest_type'),
-        )
+        ordering = ["smarttest_type"]
 
     class FreeAdmin:
         icon_model = u"SMARTIcon"
