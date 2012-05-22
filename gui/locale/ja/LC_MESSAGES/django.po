@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 09:43-0800\n"
-"PO-Revision-Date: 2012-05-21 11:00+0200\n"
+"PO-Revision-Date: 2012-05-21 11:12+0200\n"
 "Last-Translator: kashiwagi <rasmus.ekman@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -476,11 +476,11 @@ msgstr "SSH上でのRsync"
 
 #: choices.py:563
 msgid "Push"
-msgstr ""
+msgstr "プッシュ"
 
 #: choices.py:564
 msgid "Pull"
-msgstr ""
+msgstr "プル"
 
 #: account/forms.py:52
 msgid "Your name cannot start with \"-\""
@@ -1202,9 +1202,8 @@ msgstr "インストールされるＰＢＩファイル"
 
 # 意訳
 #: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "イメージの SHA256 ハッシュ"
+msgstr "ＰＢＩファイルのSHA256 ハッシュ"
 
 #: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
 #: system/forms.py:447
@@ -1214,24 +1213,23 @@ msgstr "無効なファームウェアかチェックサム"
 
 #: plugins/forms.py:115
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "プラグインのJailのＰＢＩ"
 
 #: plugins/forms.py:129
 msgid "Jail path cannot contain plugins path."
-msgstr ""
+msgstr "Jailパスにはプラグインパスが含まれてはいけません。"
 
 #: plugins/forms.py:131
 msgid "Plugins path cannot contain jail path."
-msgstr ""
+msgstr "プラグインパスにはjailパスが含まれてはいけません。"
 
 #: plugins/models.py:36 templates/plugins/plugin_info.html:5
-#, fuzzy
 msgid "Plugin name"
-msgstr "ドメイン名"
+msgstr "プラグイン名"
 
 #: plugins/models.py:37
 msgid "Name of the plugin"
-msgstr ""
+msgstr "プラグイン名"
 
 #: plugins/models.py:42
 msgid "Plugin info name"
@@ -1242,27 +1240,24 @@ msgid "Info name of the plugin"
 msgstr ""
 
 #: plugins/models.py:48
-#, fuzzy
 msgid "Plugin version"
-msgstr "Windowsのバージョン"
+msgstr "プラグインバージョン"
 
 #: plugins/models.py:49
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "接続の暗号化"
+msgstr "プラグインのバージョン"
 
 #: plugins/models.py:54 plugins/models.py:55
 msgid "Plugin architecture"
-msgstr ""
+msgstr "プラグイン構造"
 
 #: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
 msgid "Plugin uname"
-msgstr "ドメイン名"
+msgstr "プラグインuname"
 
 #: plugins/models.py:61
 msgid "UName of the plugin"
-msgstr ""
+msgstr "プラグインのUName"
 
 #: plugins/models.py:66 plugins/models.py:67
 #: templates/plugins/plugin_info.html:13
@@ -1281,26 +1276,23 @@ msgstr ""
 
 #: plugins/models.py:84 plugins/models.py:85
 #: templates/plugins/plugin_info.html:25
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "コントローラのIPアドレス"
+msgstr "プラグインのIPアドレス"
 
 #: plugins/models.py:90 plugins/models.py:91
 #: templates/plugins/plugin_info.html:29
-#, fuzzy
 msgid "Plugin TCP port"
 msgstr "TCP ポート番号"
 
 #: plugins/models.py:96 plugins/models.py:97
-#, fuzzy
 msgid "Path to plugin"
-msgstr "マウントポイントのパス"
+msgstr "プラグインへのパス"
 
 #: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
 #: services/models.py:790 services/models.py:791 services/nav.py:166
 #: templates/menubar.html:33 templates/services/index.html:99
 msgid "Plugins"
-msgstr ""
+msgstr "プラグイン"
 
 #: plugins/nav.py:40
 #, fuzzy
@@ -1323,7 +1315,7 @@ msgstr "ボリュームを正しく追加しました。"
 
 #: plugins/views.py:99
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "プラグインの削除が失敗しました。"
 
 #: services/forms.py:65
 msgid "This is not a valid mask"
@@ -1342,7 +1334,6 @@ msgid "The CIFS service failed to reload."
 msgstr "NFS サービスを再開できませんでした。"
 
 #: services/forms.py:102
-#, fuzzy
 msgid "The AFP service failed to reload."
 msgstr "AFP サービスを再開できませんでした。"
 
@@ -1360,9 +1351,8 @@ msgid "This IP already exists."
 msgstr "同じグループIDのグループが既に存在します。"
 
 #: services/forms.py:146
-#, fuzzy
 msgid "The Plugins service failed to reload."
-msgstr "AFP サービスを再開できませんでした。"
+msgstr "プラグイン サービスを再開できませんでした。"
 
 #: services/forms.py:151
 msgid "File Permission"
@@ -1391,7 +1381,6 @@ msgid "The ftp service failed to start."
 msgstr "FTP サービスを開始できませんでした。"
 
 #: services/forms.py:224
-#, fuzzy
 msgid "The tftp service failed to reload."
 msgstr "tftp サービスを再開できませんでした。"
 
@@ -1408,18 +1397,16 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "名前に / または ] を含むことはできません。"
 
 #: services/forms.py:272
-#, fuzzy
 msgid "Confirm Password"
-msgstr "パスワードの変更"
+msgstr "パスワードを確認"
 
 #: services/forms.py:300
 msgid "The DynamicDNS service failed to reload."
 msgstr "DynamicDNS サービスを再開できませんでした。"
 
 #: services/forms.py:310
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "有効な IP アドレス または ネットワークではありません。"
+msgstr "有効なメールアドレスではありません。"
 
 #: services/forms.py:312
 msgid ""
@@ -1451,14 +1438,12 @@ msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "%(email)s は無効なメールアドレスです"
 
 #: services/forms.py:365
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS サービスを再開できませんでした。"
+msgstr "UPS サービスを再開できませんでした。"
 
 #: services/forms.py:369
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "管理者パスワード"
+msgstr "管理者パスワードを確認"
 
 #: services/forms.py:392
 msgid "The activedirectory service failed to reload."
@@ -1466,7 +1451,6 @@ msgstr ""
 "Active Directory（アクティブディレクトリ）サービスを再開できませんでした。"
 
 #: services/forms.py:403
-#, fuzzy
 msgid "The ldap service failed to reload."
 msgstr "LDAP サービスを再開できませんでした。"
 
@@ -1624,9 +1608,8 @@ msgid "Delete underlying file"
 msgstr "特殊ファイルを削除"
 
 #: services/forms.py:974
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SNMP サービスを再開できませんでした。"
+msgstr "S.M.A.R.T サービスを再開できませんでした。"
 
 #: services/models.py:42
 msgid "Service"
@@ -1879,9 +1862,8 @@ msgid "Allows guest access to all apple shares on this box."
 msgstr "全ての Apple 共有でゲストアクセスを有効にします。"
 
 #: services/models.py:213
-#, fuzzy
 msgid "Max. Connections"
-msgstr "コネクションの最大値"
+msgstr "接続数の最大値"
 
 #: services/models.py:215
 msgid ""
@@ -2053,9 +2035,8 @@ msgid "Controller TCP port"
 msgstr "コントローラの TCP ポート"
 
 #: services/models.py:346
-#, fuzzy
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "論理ユニットコントローラの TCP ポートを指定します(既定値は 3261 です)"
+msgstr "論理ユニットコントローラの TCP ポートを指定します。（初期値は 3261 です。）"
 
 # 表現が正確でないかも
 #: services/models.py:352
@@ -2234,7 +2215,7 @@ msgstr "オプションとして使いやすいように名前を指定できま
 
 #: services/models.py:615 storage/models.py:318 storage/views.py:226
 msgid "Serial"
-msgstr ""
+msgstr "シリアル番号"
 
 #: services/models.py:618
 msgid "Serial number for the logical unit"
@@ -2344,10 +2325,8 @@ msgid "Forced update period"
 msgstr "強制的に時刻を更新"
 
 #: services/models.py:753 services/models.py:825
-#, fuzzy
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"ここで指定したパラメータは、inadyn.conf のグローバル設定に追加されます。"
+msgstr "ここで指定したパラメータは、inadyn.conf の global settings に追加されます。"
 
 #: services/models.py:757 services/models.py:758
 #: templates/services/index.html:40
@@ -6609,7 +6588,6 @@ msgstr "テープドライブ"
 msgid "Pass"
 msgstr "パススルー"
 
-#, fuzzy
 msgid "Disable password"
 msgstr "パスワードを無効にする"
 
