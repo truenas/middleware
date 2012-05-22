@@ -90,6 +90,10 @@ def plugin_delete(request, plugin_id):
         })
 
 
+def plugin_update(request, plugin_id):
+    pass
+
+
 def plugin_install(request):
 
     if request.method == "POST":
