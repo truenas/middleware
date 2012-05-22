@@ -6,6 +6,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("storage", "0031_auto__add_scrub"),
+    )
+
     def forwards(self, orm):
         
         # Adding M2M table for field smarttest_disks on 'SMARTTest'
