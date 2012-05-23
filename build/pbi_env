@@ -45,3 +45,9 @@ export PBI_DELETE_BUILDTARGET
 #
 PBI_DELETE_BUILD=0
 export PBI_DELETE_BUILD
+
+#
+# Pretend to be FreeBSD, even if we aren't
+#
+FORCE_FBSD_ONLY=1
+export FORCE_FBSD_ONLY
