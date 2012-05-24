@@ -809,9 +809,13 @@ class PluginsJail(Model):
             verbose_name=_("Jail name"),
             help_text=_("Name of the plugins jail"),
             default='',
-            validators=[RegexValidator(regex="^[a-zA-Z][a-zA-Z0-9_]+$",
-                message=_("Jail name can only contain letters, numbers and "
-                    "underscores."))]
+            validators=[
+                RegexValidator(
+                    regex=r"^[a-zA-Z][a-zA-Z0-9\-]{1,62}(?<!-)$",
+                    message=_("Jail name can only contain letters, numbers and"
+                    " hyphens. It must not end with a hyphen.")
+                    )
+                ]
             )
     jail_ipv4address = IPAddressField(
             verbose_name=_("Jail IP address"),
