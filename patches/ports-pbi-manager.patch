@@ -1,5 +1,18 @@
---- ports-mgmt/pbi-manager/Makefile	2012-05-11 14:04:06.000000000 -0700
+--- ports-mgmt/pbi-manager/Makefile	2011-12-07 12:36:38.000000000 -0800
 +++ ports-mgmt/pbi-manager/Makefile	2012-05-23 11:36:41.044786953 -0700
+@@ -2,10 +2,10 @@
+ # Date created:				27 May 2010
+ # Whom:					Kris Moore <kmoore@FreeBSD.org>
+ #
+-# $FreeBSD: ports/ports-mgmt/pbi-manager/Makefile,v 1.7 2011/12/07 20:36:38 kmoore Exp $
++# $FreeBSD: ports/ports-mgmt/pbi-manager/Makefile,v 1.8 2012/05/11 21:04:06 kmoore Exp $
+ 
+ PORTNAME=	pbi-manager
+-PORTVERSION=	0.9.7
++PORTVERSION=	0.9.8
+ CATEGORIES=	ports-mgmt
+ MASTER_SITES=	http://www.pcbsd.org/~kris/software/ \
+ 		ftp://ftp.pcbsd.org/pub/software/
 @@ -13,7 +13,9 @@
  MAINTAINER=	kmoore@FreeBSD.org
  COMMENT=	Push Button Installer Manager
@@ -10,6 +23,13 @@
  
  USE_BZIP2=	yes
  NO_BUILD=	yes
+--- ports-mgmt/pbi-manager/distinfo	2011-12-07 12:36:38.000000000 -0800
++++ ports-mgmt/pbi-manager/distinfo	2012-05-11 14:04:06.000000000 -0700
+@@ -1,2 +1,2 @@
+-SHA256 (pbi-manager-0.9.7.tar.bz2) = 45905c40596c85f477cb16bcaa0aa2dfd4028b99c489d35ad434661a4a2a91f2
+-SIZE (pbi-manager-0.9.7.tar.bz2) = 225203
++SHA256 (pbi-manager-0.9.8.tar.bz2) = 4a48540adbf112c753662dcc3245a744c878d6fce73dc38428e2f2d004781cc6
++SIZE (pbi-manager-0.9.8.tar.bz2) = 226189
 --- /dev/null	1969-12-31 16:00:00.000000000 -0800
 +++ ports-mgmt/pbi-manager/files/patch-pbi-manager	2012-05-23 11:39:34.914788481 -0700
 @@ -0,0 +1,52 @@
