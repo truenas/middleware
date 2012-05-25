@@ -439,6 +439,39 @@ add_autotune()
 }
 customize_cmd add_autotune
 
+add_pbi_manager()
+{
+    local pm dst
+    pm=${AVATAR_ROOT}/src/pbi-manager
+    dst=${NANO_WORLDDIR}/usr/local
+
+    pprint 2 "Adding pbi-manager"
+
+    mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
+    cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
+    rm -f ${dst}/pbi-manager
+}
+customize_cmd add_pbi_manager
+
 # Move the $world/data to the /data partion
 move_data()
 {
@@ -508,27 +541,6 @@ save_build ( )
 	fi
 }
 customize_cmd save_build
-
-configure_pbi_manager()
-{
-	local sbin links l
-	sbin=${NANO_WORLDDIR}/usr/local/sbin/
-	links="pbi_add pbi_addrepo pbi_browser pbi_autobuild \
-		pbi_delete pbi_deleterepo pbi_icon pbi_info pbi_indextool \
-		pbi_listrepo pbi_makepatch pbi_makeport pbi_makerepo \
-		pbi_metatool pbi_patch pbi_update pbi_update_hashdir \
-		pbid pbi-crashhandler"
-
-	mkdir -p ${sbin}
-	cd ${sbin}
-	cp pbi-manager pbi_create
-	for l in ${links}
-	do
-		ln -f pbi_create ${l}
-	done	
-	rm pbi-manager
-}
-customize_cmd configure_pbi_manager
 
 if [ "${DEBUG}" = 1 ]; then
 

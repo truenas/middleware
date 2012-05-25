@@ -113,7 +113,6 @@ add_port dns/libidn
 add_port ftp/wget
 add_port devel/py-lockfile
 add_port devel/py-daemon
-add_port ports-mgmt/pbi-manager WITHOUT_X11=y
 
 setup_nanobsd_etc()
 {
@@ -133,6 +132,39 @@ EOF
 	)
 
 }
+
+add_pbi_manager()
+{
+    local pm dst
+    pm=${AVATAR_ROOT}/src/pbi-manager
+    dst=${NANO_WORLDDIR}/usr/local
+
+    pprint 2 "Adding pbi-manager"
+
+    mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
+    cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
+    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
+    rm -f ${dst}/pbi-manager
+}
+customize_cmd add_pbi_manager
 
 last_orders()
 {
