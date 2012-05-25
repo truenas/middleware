@@ -259,12 +259,11 @@ class Alias(Model):
         #edit_modelform = "InterfacesEditForm"
 
 
-## Network|Interface Management|VLAN
 class VLAN(Model):
     vlan_vint = models.CharField(
             max_length=120,
             verbose_name=_("Virtual Interface"),
-            help_text=_("Interface names must be vlanXX where XX is a number. Example: vlan0.")
+            help_text=_("Interface names must be vlanX where X is a number. Example: vlan0.")
             )
     vlan_pint = models.CharField(
             max_length=300,
