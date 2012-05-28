@@ -62,10 +62,13 @@ def _system_info(request=None):
     # OS, hostname, release
     __, hostname, __ = os.uname()[0:3]
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
-    physmem = str(int(int(subprocess.check_output(['sysctl', '-n', 'hw.physmem'])) / 1048576)) + 'MB'
+    physmem = str(int(int(
+        subprocess.check_output(['sysctl', '-n', 'hw.physmem'])
+        ) / 1048576)) + 'MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
     date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
+    uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' "
+        "'{ print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
@@ -122,12 +125,14 @@ def config_upload(request):
         if form.is_valid():
             if not notifier().config_upload(request.FILES['config']):
                 form._errors['__all__'] = \
-                    form.error_class([_('The uploaded file is not valid.'),])
+                    form.error_class([
+                        _('The uploaded file is not valid.'),
+                        ])
             else:
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
 
-        if request.GET.has_key('iframe'):
+        if 'iframe' in request.GET:
             return HttpResponse('<html><body><textarea>' +
                                 render_to_string('system/config_upload.html',
                                                  variables) +
@@ -166,7 +171,10 @@ def config_save(request):
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = \
-        'attachment; filename=%s-%s-%s.db' % (hostname.encode('utf-8'), freenas_build, time.strftime('%Y%m%d%H%M%S'))
+        'attachment; filename=%s-%s-%s.db' % (
+            hostname.encode('utf-8'),
+            freenas_build,
+            time.strftime('%Y%m%d%H%M%S'))
     return response
 
 
@@ -219,7 +227,7 @@ def top(request):
     finally:
         top_pipe.close()
     return render(request, 'system/status/top.xml', {
-        'focused_tab' : 'system',
+        'focused_tab': 'system',
         'top': top_output,
     }, content_type='text/xml')
 
@@ -253,8 +261,8 @@ def shutdown_dialog(request):
     if request.method == "POST":
         request.session['allow_shutdown'] = True
         return JsonResponse(error=False,
-                    message=_("Shutdown is being issued"),
-                    events=['window.location="%s"' % reverse('system_shutdown')])
+            message=_("Shutdown is being issued"),
+            events=['window.location="%s"' % reverse('system_shutdown')])
     return render(request, 'system/shutdown_dialog.html')
 
 
@@ -304,7 +312,10 @@ def clearcache(request):
     error = False
     errmsg = ''
 
-    os.system("(/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 && /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1) &")
+    os.system("(/usr/local/bin/python "
+        "/usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 &&"
+        " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
+        "fill >/dev/null 2>&1) &")
 
     return HttpResponse(simplejson.dumps({
         'error': error,
@@ -320,7 +331,7 @@ class DojoFileStore(object):
         if self.filterVolumes:
             self.mp = [os.path.abspath(mp.mp_path) \
                 for mp in MountPoint.objects.filter(
-                    mp_volume__vol_fstype__in=('ZFS','UFS'))]
+                    mp_volume__vol_fstype__in=('ZFS', 'UFS'))]
 
         self.path = os.path.join(self.root, path.replace("..", ""))
         self.path = os.path.abspath(self.path)
@@ -330,7 +341,10 @@ class DojoFileStore(object):
             self.path = self.path[1:]
 
         self.dirsonly = dirsonly
-        self._lookupurl = 'system_dirbrowser' if self.dirsonly else 'system_filebrowser'
+        if self.dirsonly:
+            self._lookupurl = 'system_dirbrowser'
+        else:
+            self._lookupurl = 'system_filebrowser'
 
     def items(self):
         if self.path == self.root:
@@ -467,7 +481,9 @@ def reload_httpd(request):
 
 def debug(request):
     """Save freenas-debug output to DEBUG_TEMP"""
-    p1 = subprocess.Popen(["/usr/local/bin/freenas-debug", "-a", "-g", "-h", "-l", "-n", "-s", "-y", "-t", "-z"], stdout=subprocess.PIPE)
+    p1 = subprocess.Popen(["/usr/local/bin/freenas-debug",
+        "-a", "-g", "-h", "-l", "-n", "-s", "-y", "-t", "-z"],
+        stdout=subprocess.PIPE)
     debug = p1.communicate()[0]
     with open(DEBUG_TEMP, 'w') as f:
         f.write(debug)
@@ -501,7 +517,7 @@ class UnixTransport(xmlrpclib.Transport):
         self.make_connection(host)
 
         try:
-            self.sock.send(request_body+"\n")
+            self.sock.send(request_body + "\n")
             p, u = self.getparser()
 
             while 1:
@@ -521,14 +537,6 @@ class UnixTransport(xmlrpclib.Transport):
             # a strange state, so we clear it.
             self.close()
             raise
-        #discard any response data and raise exception
-        if (response.getheader("content-length", 0)):
-            response.read()
-        raise ProtocolError(
-            host + handler,
-            response.status, response.reason,
-            response.msg,
-            )
 
 
 class MyServer(xmlrpclib.ServerProxy):
@@ -588,7 +596,8 @@ def terminal(request):
             if k:
                 multiplex.proc_write(sid, xmlrpclib.Binary(bytearray(str(k))))
             time.sleep(0.002)
-            content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
+            content_data = '<?xml version="1.0" encoding="UTF-8"?>' + \
+                multiplex.proc_dump(sid)
             response = HttpResponse(content_data, content_type='text/xml')
             return response
         else:
@@ -599,5 +608,3 @@ def terminal(request):
         response = HttpResponse('Invalid parameters')
         response.status_code = 400
         return response
-
-
