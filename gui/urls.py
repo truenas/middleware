@@ -68,6 +68,7 @@ urlpatterns = patterns('',
     (r'^sharing/', include('sharing.urls')),
     (r'^services/', include('services.urls')),
     (r'^plugins/', include('plugins.urls')),
+    (r'^reporting/', include('reporting.urls')),
     )
 
 urlpatterns += staticfiles_urlpatterns()
