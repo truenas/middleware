@@ -1331,14 +1331,6 @@
         p.selectChild(pane);
     }
 
-    refreshImgs = function() {
-
-        dojo.query(".chart > img").forEach(function(e) {
-            e.src = new String(e.src).split('?')[0] + '?' + new Date().getTime();
-        });
-        setTimeout(refreshImgs, 300000);
-    }
-
     require([
         "dojo",
         "dojo/ready",
@@ -1416,7 +1408,6 @@
         }
 
         ready(function() {
-            setTimeout(refreshImgs, 300000);
 
             var store = new JsonRestStore({
                 target: "/admin/menu.json",
