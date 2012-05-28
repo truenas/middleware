@@ -47,7 +47,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (IPAddress, IPNetwork, AddressValueError,
-    NetmaskValueError, IPv6Address, IPv4Address)
+    NetmaskValueError)
 
 log = logging.getLogger('services.form')
 
@@ -168,6 +168,7 @@ class FTPForm(ModelForm):
 
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
+
     class Meta:
         model = models.FTP
         widgets = {
@@ -176,7 +177,7 @@ class FTPForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
 
-        if kwargs.has_key('instance'):
+        if 'instance' in kwargs:
             instance = kwargs['instance']
             try:
                 mask = int(instance.ftp_filemask, 8)
@@ -229,61 +230,79 @@ class FTPForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='ftp').srv_enable:
             raise ServiceFailed("ftp", _("The ftp service failed to start."))
 
+
 class TFTPForm(ModelForm):
+
     class Meta:
         model = models.TFTP
         widgets = {
             'tftp_port': forms.widgets.TextInput(),
         }
+
     def save(self):
         super(TFTPForm, self).save()
         started = notifier().reload("tftp")
         if started is False and models.services.objects.get(srv_service='tftp').srv_enable:
             raise ServiceFailed("tftp", _("The tftp service failed to reload."))
 
+
 class SSHForm(ModelForm):
-    def save(self):
-        super(SSHForm, self).save()
-        started = notifier().reload("ssh")
-        if started is False and models.services.objects.get(srv_service='ssh').srv_enable:
-            raise ServiceFailed("ssh", _("The SSH service failed to reload."))
+
     class Meta:
         model = models.SSH
         widgets = {
             'ssh_tcpport': forms.widgets.TextInput(),
         }
 
+    def save(self):
+        super(SSHForm, self).save()
+        started = notifier().reload("ssh")
+        if started is False and models.services.objects.get(srv_service='ssh').srv_enable:
+            raise ServiceFailed("ssh", _("The SSH service failed to reload."))
+
+
 class RsyncdForm(ModelForm):
+
+    class Meta:
+        model = models.Rsyncd
+
     def save(self):
         super(RsyncdForm, self).save()
         started = notifier().reload("rsync")
         if started is False and models.services.objects.get(srv_service='rsync').srv_enable:
             raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
-    class Meta:
-        model = models.Rsyncd
+
 
 class RsyncModForm(ModelForm):
+
     class Meta:
         model = models.RsyncMod
+
     def clean_rsyncmod_name(self):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):
-            raise forms.ValidationError(_(u"The name cannot contain slash or a closing square backet."))
+            raise forms.ValidationError(
+                _(u"The name cannot contain slash or a closing square backet.")
+                )
         name = name.strip()
         return name
+
     def clean_rsyncmod_hostsallow(self):
         hosts = self.cleaned_data['rsyncmod_hostsallow']
         hosts = hosts.replace("\n", " ").strip()
         return hosts
+
     def clean_rsyncmod_hostsdeny(self):
         hosts = self.cleaned_data['rsyncmod_hostsdeny']
         hosts = hosts.replace("\n", " ").strip()
         return hosts
+
     def save(self):
         super(RsyncModForm, self).save()
         started = notifier().reload("rsync")
         if started is False and models.services.objects.get(srv_service='rsync').srv_enable:
             raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
+
 
 class DynamicDNSForm(ModelForm):
     pw2 = forms.CharField(max_length=50,
@@ -291,37 +310,53 @@ class DynamicDNSForm(ModelForm):
             widget=forms.widgets.PasswordInput(),
             required=False,
             )
+
+    class Meta:
+        model = models.DynamicDNS
+        widgets = {
+            'ddns_password': forms.widgets.PasswordInput(render_value=False),
+            }
+        fields = (
+            'ddns_provider',
+            'ddns_domain',
+            'ddns_username',
+            'ddns_password',
+            'pw2',
+            'ddns_updateperiod',
+            'ddns_fupdateperiod',
+            'ddns_options')
+
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
         if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
+
     def clean_pw2(self):
         password1 = self.cleaned_data.get("ddns_password")
         password2 = self.cleaned_data.get("pw2")
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ddns_password"):
             cdata['ddns_password'] = self.instance.ddns_password
         return cdata
-    class Meta:
-        model = models.DynamicDNS
-        widgets = {'ddns_password': forms.widgets.PasswordInput(render_value=False), }
-        fields = ('ddns_provider', 'ddns_domain', 'ddns_username', 'ddns_password', 'pw2',
-                    'ddns_updateperiod', 'ddns_fupdateperiod', 'ddns_options')
+
     def save(self):
         super(DynamicDNSForm, self).save()
         started = notifier().restart("dynamicdns")
         if started is False and models.services.objects.get(srv_service='dynamicdns').srv_enable:
             raise ServiceFailed("dynamicdns", _("The DynamicDNS service failed to reload."))
 
+
 class SNMPForm(ModelForm):
+
     class Meta:
         model = models.SNMP
+
     def clean_snmp_contact(self):
-        from django.core.validators import email_re
         contact = self.cleaned_data['snmp_contact']
         if '@' in contact:
             if not email_re.match(contact):
@@ -329,39 +364,46 @@ class SNMPForm(ModelForm):
         elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(_(u"The contact must contain only alphanumeric characters, _, - or a valid e-mail address"))
         return contact
+
     def clean_snmp_comunity(self):
         community = self.cleaned_data['snmp_community']
         if not re.match(r'^[-_a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(_(u"The community must contain only alphanumeric characters, _ or -"))
         return community
+
     def save(self):
         super(SNMPForm, self).save()
         started = notifier().restart("snmp")
         if started is False and models.services.objects.get(srv_service='snmp').srv_enable:
             raise ServiceFailed("snmp", _("The SNMP service failed to reload."))
 
+
 class UPSForm(ModelForm):
+
     class Meta:
         model = models.UPS
         widgets = {
             'ups_driver': forms.widgets.FilteringSelect(),
         }
+
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
         ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
         ports.extend(glob.glob('/dev/ugen*'))
         self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
         self.fields['ups_port'].widget = forms.widgets.ComboBox()
-        self.fields['ups_port'].choices = [(port,port) for port in ports]
+        self.fields['ups_port'].choices = [(port, port) for port in ports]
         if self.data and self.data.get("ups_port"):
-            self.fields['ups_port'].choices.insert(0, ( self.data.get("ups_port"), self.data.get("ups_port")))
+            self.fields['ups_port'].choices.insert(0, (self.data.get("ups_port"), self.data.get("ups_port")))
         elif self.instance.id:
-            self.fields['ups_port'].choices.insert(0, ( self.instance.ups_port, self.instance.ups_port))
+            self.fields['ups_port'].choices.insert(0, (self.instance.ups_port, self.instance.ups_port))
+
     def clean_ups_identifier(self):
         ident = self.cleaned_data.get("ups_identifier")
         if not re.search(r'^[a-z0-9\.\-_]+$', ident):
             raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \"_\"."))
         return ident
+
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
@@ -376,11 +418,13 @@ class UPSForm(ModelForm):
                     'email': ", ".join(invalids),
                     })
         return email
+
     def save(self):
         super(UPSForm, self).save()
         started = notifier().restart("ups")
         if started is False and models.services.objects.get(srv_service='ups').srv_enable:
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
+
 
 class ActiveDirectoryForm(ModelForm):
     ad_adminpw2 = forms.CharField(max_length=50,
@@ -388,40 +432,56 @@ class ActiveDirectoryForm(ModelForm):
             widget=forms.widgets.PasswordInput(),
             required=False,
             )
+
+    class Meta:
+        model = models.ActiveDirectory
+        exclude = (
+            'ad_keytab',
+            'ad_spn',
+            'ad_spnpw')
+        widgets = {
+            'ad_adminpw': forms.widgets.PasswordInput(render_value=False),
+            }
+
     def __init__(self, *args, **kwargs):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_adminpw:
             self.fields['ad_adminpw'].required = False
+
     def clean_ad_adminpw2(self):
         password1 = self.cleaned_data.get("ad_adminpw")
         password2 = self.cleaned_data.get("ad_adminpw2")
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_adminpw"):
             cdata['ad_adminpw'] = self.instance.ad_adminpw
         return cdata
+
     def save(self):
         super(ActiveDirectoryForm, self).save()
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
             raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
-    class Meta:
-        model = models.ActiveDirectory
-        exclude = ('ad_keytab','ad_spn','ad_spnpw')
-        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=False), }
+
 
 class LDAPForm(ModelForm):
+
+    class Meta:
+        model = models.LDAP
+        widgets = {
+            'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True),
+            }
+
     def save(self):
         super(LDAPForm, self).save()
         started = notifier().restart("ldap")
         if started is False and models.services.objects.get(srv_service='ldap').srv_enable:
             raise ServiceFailed("ldap", _("The ldap service failed to reload."))
-    class Meta:
-        model = models.LDAP
-        widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), }
+
 
 class iSCSITargetAuthCredentialForm(ModelForm):
     iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"),
@@ -439,6 +499,32 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             widget=forms.PasswordInput(render_value=True),
             help_text=_("Enter the same secret above for verification."),
             required=False)
+
+    class Meta:
+        model = models.iSCSITargetAuthCredential
+        exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'iscsi_target_auth_tag',
+            'iscsi_target_auth_user',
+            'iscsi_target_auth_secret1',
+            'iscsi_target_auth_secret2',
+            'iscsi_target_auth_peeruser',
+            'iscsi_target_auth_peersecret1',
+            'iscsi_target_auth_peersecret2']
+
+        ins = kwargs.get("instance", None)
+        if ins:
+            self.fields['iscsi_target_auth_secret1'].initial = (
+                self.instance.iscsi_target_auth_secret)
+            self.fields['iscsi_target_auth_secret2'].initial = (
+                self.instance.iscsi_target_auth_secret)
+            self.fields['iscsi_target_auth_peersecret1'].initial = (
+                self.instance.iscsi_target_auth_peersecret)
+            self.fields['iscsi_target_auth_peersecret2'].initial = (
+                self.instance.iscsi_target_auth_peersecret)
 
     def _clean_secret_common(self, secretprefix):
         secret1 = self.cleaned_data.get(("%s1" % secretprefix), "")
@@ -474,10 +560,6 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
         return cdata
 
-    class Meta:
-        model = models.iSCSITargetAuthCredential
-        exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
-
     def save(self, commit=True):
         oAuthCredential = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
         oAuthCredential.iscsi_target_auth_secret = self.cleaned_data["iscsi_target_auth_secret1"]
@@ -489,23 +571,6 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
         return oAuthCredential
 
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
-            'iscsi_target_auth_tag',
-            'iscsi_target_auth_user',
-            'iscsi_target_auth_secret1',
-            'iscsi_target_auth_secret2',
-            'iscsi_target_auth_peeruser',
-            'iscsi_target_auth_peersecret1',
-            'iscsi_target_auth_peersecret2']
-
-        ins = kwargs.get("instance", None)
-        if ins:
-            self.fields['iscsi_target_auth_secret1'].initial = self.instance.iscsi_target_auth_secret
-            self.fields['iscsi_target_auth_secret2'].initial = self.instance.iscsi_target_auth_secret
-            self.fields['iscsi_target_auth_peersecret1'].initial = self.instance.iscsi_target_auth_peersecret
-            self.fields['iscsi_target_auth_peersecret2'].initial = self.instance.iscsi_target_auth_peersecret
 
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
@@ -514,6 +579,7 @@ class iSCSITargetToExtentForm(ModelForm):
             'iscsi_target': forms.widgets.FilteringSelect(),
             'iscsi_extent': forms.widgets.FilteringSelect(),
         }
+
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         qs = self.fields['iscsi_extent'].queryset
@@ -521,6 +587,7 @@ class iSCSITargetToExtentForm(ModelForm):
         if self.instance:
             exc = exc.exclude(id=self.instance.id)
         self.fields['iscsi_extent'].queryset = qs.exclude(id__in=[e.iscsi_extent.id for e in exc])
+
     def clean_iscsi_target_lun(self):
         try:
             models.iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
@@ -574,7 +641,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
         if f < start or f > end:
-            raise forms.ValidationError(_("This value must be between %(start)d and %(end)d, inclusive.") % { 'start': start, 'end': end })
+            raise forms.ValidationError(
+                _("This value must be between %(start)d and %(end)d, "
+                    "inclusive.") % {
+                        'start': start,
+                        'end': end,
+                        }
+                )
         return f
 
     def clean_iscsi_discoveryauthgroup(self):
@@ -606,13 +679,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 255)
 
     def clean_iscsi_firstburst(self):
-        return self._clean_number_range("iscsi_firstburst", 1, pow(2,32))
+        return self._clean_number_range("iscsi_firstburst", 1, pow(2, 32))
 
     def clean_iscsi_maxburst(self):
-        return self._clean_number_range("iscsi_maxburst", 1, pow(2,32))
+        return self._clean_number_range("iscsi_maxburst", 1, pow(2, 32))
 
     def clean_iscsi_maxrecdata(self):
-        return self._clean_number_range("iscsi_maxrecdata", 1, pow(2,32))
+        return self._clean_number_range("iscsi_maxrecdata", 1, pow(2, 32))
 
     def clean_iscsi_defaultt2w(self):
         return self._clean_number_range("iscsi_defaultt2w", 1, 300)
@@ -622,7 +695,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def clean_iscsi_lucport(self):
         if self.cleaned_data.get('iscsi_toggleluc', False):
-            return self._clean_number_range("iscsi_lucport", 1000, pow(2,16))
+            return self._clean_number_range("iscsi_lucport", 1000, pow(2, 16))
         return None
 
     def clean_iscsi_luc_authgroup(self):
@@ -653,8 +726,10 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         if luc:
             for field in ('iscsi_lucip', 'iscsi_luc_authnetwork',
                     'iscsi_luc_authmethod', 'iscsi_luc_authgroup'):
-                if cdata.has_key(field) and cdata[field] == '':
-                    self._errors[field] = self.error_class([_("This field is required.")])
+                if field in cdata and cdata[field] == '':
+                    self._errors[field] = self.error_class([
+                        _("This field is required.")
+                        ])
                     del cdata[field]
         else:
             cdata['iscsi_lucip'] = None
@@ -686,8 +761,10 @@ class iSCSITargetFileExtentForm(ModelForm):
         valid = False
         for mp in MountPoint.objects.all():
             if path == mp.mp_path:
-                raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
-            if path.startswith(mp.mp_path+'/'):
+                raise forms.ValidationError(
+                    _("You need to specify a file inside your volume/dataset.")
+                    )
+            if path.startswith(mp.mp_path + '/'):
                 valid = True
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
@@ -727,7 +804,7 @@ class iSCSITargetFileExtentForm(ModelForm):
             try:
                 os.makedirs(dirs)
             except Exception, e:
-                pass
+                log.error("Unable to create dirs for extent file: %s", e)
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
@@ -749,7 +826,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
-        if kwargs.has_key("instance"):
+        if 'instance' in kwargs:
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
             if self.instance.iscsi_target_extent_type == 'ZVOL':
                 self.fields['iscsi_extent_disk'].initial = self.instance.iscsi_target_extent_path
@@ -783,8 +860,10 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = notifier().list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
-                if "zvol/"+zvol not in used_zvol:
-                    diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['volsize'])
+                if "zvol/" + zvol not in used_zvol:
+                    diskchoices["zvol/" + zvol] = "%s (%s)" % (
+                        zvol,
+                        attrs['volsize'])
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -848,7 +927,9 @@ class iSCSITargetPortalForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_portal_tag"].initial = models.iSCSITargetPortal.objects.all().count() + 1
+        self.fields["iscsi_target_portal_tag"].initial = (
+            models.iSCSITargetPortal.objects.all().count() + 1)
+
     def clean_iscsi_target_portal_tag(self):
         tag = self.cleaned_data["iscsi_target_portal_tag"]
         higher = models.iSCSITargetPortal.objects.all().count() + 1
@@ -879,14 +960,14 @@ class iSCSITargetPortalIPForm(ModelForm):
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
         for interface in Interfaces.objects.all():
             if interface.int_ipv4address:
-                ips.append( (interface.int_ipv4address, interface.int_ipv4address) )
+                ips.append((interface.int_ipv4address, interface.int_ipv4address))
             elif interface.int_ipv6address:
-                ips.append( (interface.int_ipv6address, interface.int_ipv6address) )
+                ips.append((interface.int_ipv6address, interface.int_ipv6address))
             for alias in interface.alias_set.all():
                 if alias.alias_v4address:
-                    ips.append( (alias.alias_v4address, alias.alias_v4address) )
+                    ips.append((alias.alias_v4address, alias.alias_v4address))
                 elif alias.alias_v6address:
-                    ips.append( (alias.alias_v6address, alias.alias_v6address) )
+                    ips.append((alias.alias_v6address, alias.alias_v6address))
         self.fields['iscsi_target_portalip_ip'].choices = ips
 
 
@@ -945,7 +1026,7 @@ class iSCSITargetForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
-        if not kwargs.has_key("instance"):
+        if 'instance' not in kwargs:
             try:
                 nic = list(choices.NICChoices(nolagg=True,
                                               novlan=True,
