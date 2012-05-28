@@ -1,19 +1,20 @@
 define([
     "dojo/_base/declare",
-    "dojo/cache",
     "dijit/_Widget",
     "dijit/_TemplatedMixin",
     "dijit/form/HorizontalSlider",
     "dijit/form/HorizontalRule",
     "dijit/form/HorizontalRuleLabels",
+    "dijit/form/ToggleButton",
     "dijit/layout/TabContainer",
     "dijit/layout/ContentPane",
-    "dojox/string/sprintf"
-    ], function(declare, cache, _Widget, _Templated, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, TabContainer, ContentPane) {
+    "dojox/string/sprintf",
+    "dojo/text!freeadmin/templates/chooser.html"
+    ], function(declare, _Widget, _Templated, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, ToggleButton, TabContainer, ContentPane, sprintf, template) {
 
     var Cron = declare("freeadmin.form.Cron", [ _Widget, _Templated ], {
-        templateString : cache("freeadmin", "templates/chooser.html"),
-        name : "",
+        templateString: template,
+        name: "",
         numChoices: "",
         label: "minute",
         typeChoice: "every",
@@ -40,7 +41,7 @@ define([
                  cron.set('value', varr.join(','));
             }
 
-            var sel = new dijit.layout.ContentPane({
+            var sel = new ContentPane({
                  title: gettext('Each selected') + ' ' + this.label,
                  onShow: function(ev) {
                  varr = [];
@@ -72,7 +73,7 @@ define([
             } else {
                 this.sliderValue.innerHTML = Math.floor((this.numChoices+this.start)/4).toString();
             }
-            var slider = new dijit.form.HorizontalSlider({
+            var slider = new HorizontalSlider({
                 name: "slider",
                 value: parseInt(this.sliderValue.innerHTML),
                 minimum: 1,
@@ -93,7 +94,7 @@ define([
             //slider.domNode.appendChild(sliderLabels);
             slider.startup();
 
-            var every = new dijit.layout.ContentPane({
+            var every = new ContentPane({
                  title: gettext('Every N')+' '+this.label,
                  onShow: function(ev) {
                     var value = slider.get('value');
@@ -110,9 +111,9 @@ define([
                 myvals = this.value.split(',');
             }
             for(var i=0;i<this.numChoices;i++) {
-                var tg = new dijit.form.ToggleButton({
+                var tg = new ToggleButton({
                     showLabel: true,
-                    checked: (dojo.indexOf(myvals, dojox.string.sprintf("%.2d", i+this.start)) != -1) ? true : false,
+                    checked: (dojo.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false,
                     baseClass: 'mytoggle',
                     onChange: function(val) {
                  varr = [];
@@ -121,12 +122,12 @@ define([
                  });
                  cron.set('value', varr.join(','));
                     },
-                    label: dojox.string.sprintf("%.2d", i+this.start),
+                    label: sprintf("%.2d", i+this.start),
                 });
                 sel.containerNode.appendChild(tg.domNode);
             }
 
-            var tc = new dijit.layout.TabContainer({
+            var tc = new TabContainer({
                 name: "tab",
                 style: "height: 100%; width: 100%;",
             }, this.tab);
@@ -137,6 +138,13 @@ define([
             } else if(this.typeChoice=='selected') {
                 tc.selectChild(sel);
             }
+
+            this._supportingWidgets.push(tc);
+            this._supportingWidgets.push(every);
+            this._supportingWidgets.push(slider);
+            this._supportingWidgets.push(sel);
+
+            this.inherited(arguments);
 
         }
     });
