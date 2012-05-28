@@ -140,9 +140,7 @@ define([
             }
 
             this._supportingWidgets.push(tc);
-            this._supportingWidgets.push(every);
             this._supportingWidgets.push(slider);
-            this._supportingWidgets.push(sel);
 
             this.inherited(arguments);
 
