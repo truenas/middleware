@@ -16,17 +16,17 @@ define([
         name : "",
         value: "",
         href: "",
+        step: 0,
         unit: "hourly",
         postCreate : function() {
 
-            var me, zoomIn;
+            var me, zoomIn, zoomOut, left, right;
 
             me = this;
-            domAttr.set(this.imageNode, "src", this.href);
             zoomIn = new Button({
                 label: 'Zoom In',
                 onClick: function(e) {
-                    newunit = me.zoomInUnit(me.unit)
+                    var newunit = me.zoomInUnit(me.unit)
                     if(newunit == me.unit || newunit == 'hourly') {
                         zoomIn.set('disabled', true);
                     } else {
@@ -41,7 +41,7 @@ define([
             zoomOut = new Button({
                 label: 'Zoom Out',
                 onClick: function(e) {
-                    newunit = me.zoomOutUnit(me.unit)
+                    var newunit = me.zoomOutUnit(me.unit)
                     if(newunit == me.unit || newunit == 'yearly') {
                         zoomOut.set('disabled', true);
                     } else {
@@ -51,6 +51,36 @@ define([
                     me.query();
                 }
             }, this.zoomOutButton);
+
+            right = new Button({
+                label: '>>',
+                onClick: function(e) {
+                    var newstep = me.step - 1;
+                    if(newstep <= 0) {
+                        right.set('disabled', true);
+                    } else {
+                        right.set('disabled', false);
+                    }
+                    me.step = newstep;
+                    me.query();
+                },
+                disabled: true
+            }, this.rightButton);
+
+            left = new Button({
+                label: '<<',
+                onClick: function(e) {
+                    var newstep = me.step + 1;
+                    if(me.step == 0) {
+                        right.set('disabled', false);
+                    } else {
+                        //zoomIn.set('disabled', false);
+                    }
+                    me.step = newstep;
+                    me.query();
+                }
+            }, this.leftButton);
+            this.query();
 
         },
         zoomInUnit: function(unit) {
@@ -86,6 +116,7 @@ define([
             var query = ioQuery.objectToQuery({
                 unit: this.unit,
                 plugin: this.plugin,
+                step: this.step,
                 cache: new Date().getTime()
                 })
             var uri = this.href + "?" + query;

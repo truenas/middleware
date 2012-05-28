@@ -47,8 +47,9 @@ def generate(request):
     try:
 
         unit = request.GET.get("unit", "hourly")
+        step = request.GET.get("step", "0")
 
-        plugin = CPUPlugin(unit=unit)
+        plugin = CPUPlugin(unit=unit, step=step)
         path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()

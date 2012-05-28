@@ -55,10 +55,13 @@ class RRDBase(object):
     vertical_label = None
     imgformat = 'PNG'
     unit = 'hourly'
+    step = 0
 
-    def __init__(self, unit=None):
-        if unit:
+    def __init__(self, unit=None, step=None):
+        if unit is not None:
             self.unit = str(unit)
+        if step is not None:
+            self.step = int(step)
 
     def __repr__(self):
         return '<RRD:%s>' % self.plugin
@@ -67,7 +70,19 @@ class RRDBase(object):
         raise NotImplementedError
 
     def generate(self):
-        time = '1%s' % (self.unit[0], )
+        """
+        Call rrdgraph to generate the graph on a temp file
+
+        Returns:
+            str - path to the image
+        """
+
+        starttime = '1%s' % (self.unit[0], )
+        if self.step == 0:
+            endtime = 'now'
+        else:
+            endtime = 'now-%d%s' % (self.step, self.unit[0], )
+
         fh, path = tempfile.mkstemp()
         args = [
             path,
@@ -75,11 +90,11 @@ class RRDBase(object):
             '--vertical-label', str(self.vertical_label),
             '--title', str(self.title),
             '--lower-limit', '0',
-            '--end', 'now',
-            '--start', 'end-%s' % time, '-b', '1024',
+            '--end', endtime,
+            '--start', 'end-%s' % starttime, '-b', '1024',
         ]
         args.extend(self.graph())
-        print rrdtool.graph(*args)
+        rrdtool.graph(*args)
         return path
 
 
