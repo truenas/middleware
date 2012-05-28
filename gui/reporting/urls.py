@@ -31,4 +31,3 @@ urlpatterns = patterns('reporting.views',
     url(r'^$', 'index', name="reporting_index"),
     url(r'^generate/$', 'generate', name="reporting_generate"),
     )
-

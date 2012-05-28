@@ -543,37 +543,51 @@ class UptimePlugin(RRDBase):
             'DEF:uptime_sec_avg=%s:value:AVERAGE' % path,
             'DEF:uptime_sec_max=%s:value:MAX' % path,
             'CDEF:uptime_no_unkn=uptime_sec_max,UN,0,uptime_sec_max,IF',
-            'CDEF:uptime_peaks=uptime_no_unkn,PREV(uptime_no_unkn),LT,PREV(uptime_no_unkn),UNKN,IF',
+            'CDEF:uptime_peaks=uptime_no_unkn,PREV(uptime_no_unkn),LT,'
+                'PREV(uptime_no_unkn),UNKN,IF',
             'VDEF:minimum_uptime_secs=uptime_peaks,MINIMUM',
-            'CDEF:minimum_uptime_graph=uptime_sec_max,minimum_uptime_secs,EQ,uptime_sec_max,86400,/,0,IF',
-            'CDEF:minimum_uptime_days=uptime_sec_max,minimum_uptime_secs,EQ,uptime_sec_max,86400,/,FLOOR,0,IF',
-            'CDEF:minimum_uptime_hours=uptime_sec_max,minimum_uptime_secs,EQ,uptime_sec_max,86400,%,3600,/,FLOOR,0,IF',
-            'CDEF:minimum_uptime_mins=uptime_sec_max,minimum_uptime_secs,EQ,uptime_sec_max,86400,%,3600,%,60,/,FLOOR,0,IF',
+            'CDEF:minimum_uptime_graph=uptime_sec_max,minimum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,/,0,IF',
+            'CDEF:minimum_uptime_days=uptime_sec_max,minimum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,/,FLOOR,0,IF',
+            'CDEF:minimum_uptime_hours=uptime_sec_max,minimum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,%,3600,/,FLOOR,0,IF',
+            'CDEF:minimum_uptime_mins=uptime_sec_max,minimum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,%,3600,%,60,/,FLOOR,0,IF',
             'VDEF:min_uptime_graph=minimum_uptime_graph,MAXIMUM',
             'VDEF:min_uptime_days=minimum_uptime_days,MAXIMUM',
             'VDEF:min_uptime_hours=minimum_uptime_hours,MAXIMUM',
             'VDEF:min_uptime_mins=minimum_uptime_mins,MAXIMUM',
             'VDEF:maximum_uptime_secs=uptime_sec_max,MAXIMUM',
-            'CDEF:maximum_uptime_graph=uptime_sec_max,maximum_uptime_secs,EQ,uptime_sec_max,86400,/,0,IF',
-            'CDEF:maximum_uptime_days=uptime_sec_max,maximum_uptime_secs,EQ,uptime_sec_max,86400,/,FLOOR,0,IF',
-            'CDEF:maximum_uptime_hours=uptime_sec_max,maximum_uptime_secs,EQ,uptime_sec_max,86400,%,3600,/,FLOOR,0,IF',
-            'CDEF:maximum_uptime_mins=uptime_sec_max,maximum_uptime_secs,EQ,uptime_sec_max,86400,%,3600,%,60,/,FLOOR,0,IF',
+            'CDEF:maximum_uptime_graph=uptime_sec_max,maximum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,/,0,IF',
+            'CDEF:maximum_uptime_days=uptime_sec_max,maximum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,/,FLOOR,0,IF',
+            'CDEF:maximum_uptime_hours=uptime_sec_max,maximum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,%,3600,/,FLOOR,0,IF',
+            'CDEF:maximum_uptime_mins=uptime_sec_max,maximum_uptime_secs,EQ,'
+                'uptime_sec_max,86400,%,3600,%,60,/,FLOOR,0,IF',
             'VDEF:max_uptime_graph=maximum_uptime_graph,MAXIMUM',
             'VDEF:max_uptime_days=maximum_uptime_days,MAXIMUM',
             'VDEF:max_uptime_hours=maximum_uptime_hours,MAXIMUM',
             'VDEF:max_uptime_mins=maximum_uptime_mins,MAXIMUM',
             'VDEF:average_uptime_secs=uptime_sec_max,AVERAGE',
-            'CDEF:average_uptime_graph=uptime_sec_max,POP,average_uptime_secs,86400,/',
-            'CDEF:average_uptime_days=uptime_sec_max,POP,average_uptime_secs,86400,/,FLOOR',
-            'CDEF:average_uptime_hours=uptime_sec_max,POP,average_uptime_secs,86400,%,3600,/,FLOOR',
-            'CDEF:average_uptime_mins=uptime_sec_max,POP,average_uptime_secs,86400,%,3600,%,60,/,FLOOR',
+            'CDEF:average_uptime_graph=uptime_sec_max,POP,average_uptime_secs,'
+                '86400,/',
+            'CDEF:average_uptime_days=uptime_sec_max,POP,average_uptime_secs,'
+                '86400,/,FLOOR',
+            'CDEF:average_uptime_hours=uptime_sec_max,POP,average_uptime_secs,'
+                '86400,%,3600,/,FLOOR',
+            'CDEF:average_uptime_mins=uptime_sec_max,POP,average_uptime_secs,'
+                '86400,%,3600,%,60,/,FLOOR',
             'VDEF:avg_uptime_days=average_uptime_days,LAST',
             'VDEF:avg_uptime_hours=average_uptime_hours,LAST',
             'VDEF:avg_uptime_mins=average_uptime_mins,LAST',
             'CDEF:current_uptime_graph=uptime_sec_max,86400,/',
             'CDEF:current_uptime_days=uptime_sec_max,86400,/,FLOOR',
             'CDEF:current_uptime_hours=uptime_sec_max,86400,%,3600,/,FLOOR',
-            'CDEF:current_uptime_mins=uptime_sec_max,86400,%,3600,%,60,/,FLOOR',
+            'CDEF:current_uptime_mins=uptime_sec_max,86400,%,3600,%,60,/,'
+                'FLOOR',
             'VDEF:curr_uptime_days=current_uptime_days,LAST',
             'VDEF:curr_uptime_hours=current_uptime_hours,LAST',
             'VDEF:curr_uptime_mins=current_uptime_mins,LAST',
@@ -586,16 +600,21 @@ class UptimePlugin(RRDBase):
             'VDEF:window_last=time_window,LAST',
             'CDEF:delta=uptime_sec_max,POP,window_last,window_start,-',
             'CDEF:system_on_un=uptime_sec_avg,UN,UNKN,1,IF',
-            'CDEF:system_on=PREV(system_on_un),1,EQ,system_on_un,POP,TIME,window_last,EQ,*,1,system_on_un,IF',
+            'CDEF:system_on=PREV(system_on_un),1,EQ,system_on_un,POP,TIME,'
+                'window_last,EQ,*,1,system_on_un,IF',
             'VDEF:new_average_on=system_on,AVERAGE',
             'VDEF:total_uptime_secs=system_on_un,TOTAL',
-            'CDEF:total_uptime_days=uptime_sec_max,POP,total_uptime_secs,86400,/,FLOOR',
-            'CDEF:total_uptime_hours=uptime_sec_max,POP,total_uptime_secs,86400,%,3600,/,FLOOR',
-            'CDEF:total_uptime_mins=uptime_sec_max,POP,total_uptime_secs,86400,%,3600,%,60,/,FLOOR',
+            'CDEF:total_uptime_days=uptime_sec_max,POP,total_uptime_secs,'
+                '86400,/,FLOOR',
+            'CDEF:total_uptime_hours=uptime_sec_max,POP,total_uptime_secs,'
+                '86400,%,3600,/,FLOOR',
+            'CDEF:total_uptime_mins=uptime_sec_max,POP,total_uptime_secs,'
+                '86400,%,3600,%,60,/,FLOOR',
             'VDEF:tot_uptime_days=total_uptime_days,LAST',
             'VDEF:tot_uptime_hours=total_uptime_hours,LAST',
             'VDEF:tot_uptime_mins=total_uptime_mins,LAST',
-            'CDEF:temp_perc_on=uptime_sec_max,POP,total_uptime_secs,delta,/,100,*',
+            'CDEF:temp_perc_on=uptime_sec_max,POP,total_uptime_secs,delta,/,'
+                '100,*',
             'VDEF:new_perc_on=temp_perc_on,LAST',
             'COMMENT:\s',
             'COMMENT:  ',
