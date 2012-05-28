@@ -80,8 +80,7 @@ def generate(request):
             log.warn("Failed to remove reporting temp file: %s", e)
 
         response = HttpResponse(data)
-        response.content_type = 'image/png'
-        response.mimetype = 'image/png'
+        response['Content-type'] = 'image/png'
         return response
     except Exception, e:
         print e
