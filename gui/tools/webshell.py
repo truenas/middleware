@@ -29,15 +29,14 @@
 from ctypes import cdll, byref, create_string_buffer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 import array
-import atexit
 import fcntl
+import logging
 import os
 import pty
 import signal
 import select
 import struct
 import sys
-import syslog
 import SocketServer
 import termios
 import threading
@@ -45,10 +44,12 @@ import time
 
 import daemon
 
+log = logging.getLogger('tools.webshell')
+
 
 def set_proc_name(newname):
     libc = cdll.LoadLibrary('libc.so.7')
-    buff = create_string_buffer(len(newname)+1)
+    buff = create_string_buffer(len(newname) + 1)
     buff.value = newname
     libc.setproctitle(byref(buff))
 
@@ -57,7 +58,9 @@ class XMLRPCHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        self.request.send(self.server.dispatcher._marshaled_dispatch(self.data))
+        self.request.send(self.server.dispatcher._marshaled_dispatch(
+            self.data
+            ))
 
 
 def main_loop():
@@ -69,7 +72,8 @@ def main_loop():
         os.unlink(SOCKFILE)
     server = SocketServer.UnixStreamServer(SOCKFILE, XMLRPCHandler)
     os.chmod(SOCKFILE, 0o700)
-    dispatcher.register_instance(Multiplex("/usr/local/bin/bash", "xterm-color"))
+    dispatcher.register_instance(
+        Multiplex("/usr/local/bin/bash", "xterm-color"))
     server.dispatcher = dispatcher
     server.serve_forever()
 
@@ -81,7 +85,8 @@ class PidFile(object):
     with no parameters instead of the None, None, None specified by PEP-343.
 
     Based on:
-    http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
+    http://code.activestate.com/recipes/
+    577911-context-manager-for-a-daemon-pid-file/
     """
 
     def __init__(self, path):
@@ -128,6 +133,9 @@ def main(argv):
 
 
 class Terminal:
+
+    version = '1.0'
+
     def __init__(self, w, h):
         self.w = w
         self.h = h
@@ -213,54 +221,54 @@ class Terminal:
             '!p':   self.csi_DECSTR,
         }
         self.vt100_keyfilter_ansikeys = {
-            '~':'~',
-            'A':'\x1b[A',
-            'B':'\x1b[B',
-            'C':'\x1b[C',
-            'D':'\x1b[D',
-            'F':'\x1b[F',
-            'H':'\x1b[H',
-            '1':'\x1b[5~',
-            '2':'\x1b[6~',
-            '3':'\x1b[2~',
-            '4':'\x1b[3~',
-            'a':'\x1bOP',
-            'b':'\x1bOQ',
-            'c':'\x1bOR',
-            'd':'\x1bOS',
-            'e':'\x1b[15~',
-            'f':'\x1b[17~',
-            'g':'\x1b[18~',
-            'h':'\x1b[19~',
-            'i':'\x1b[20~',
-            'j':'\x1b[21~',
-            'k':'\x1b[23~',
-            'l':'\x1b[24~',
+            '~': '~',
+            'A': '\x1b[A',
+            'B': '\x1b[B',
+            'C': '\x1b[C',
+            'D': '\x1b[D',
+            'F': '\x1b[F',
+            'H': '\x1b[H',
+            '1': '\x1b[5~',
+            '2': '\x1b[6~',
+            '3': '\x1b[2~',
+            '4': '\x1b[3~',
+            'a': '\x1bOP',
+            'b': '\x1bOQ',
+            'c': '\x1bOR',
+            'd': '\x1bOS',
+            'e': '\x1b[15~',
+            'f': '\x1b[17~',
+            'g': '\x1b[18~',
+            'h': '\x1b[19~',
+            'i': '\x1b[20~',
+            'j': '\x1b[21~',
+            'k': '\x1b[23~',
+            'l': '\x1b[24~',
         }
         self.vt100_keyfilter_appkeys = {
-            '~':'~',
-            'A':'\x1bOA',
-            'B':'\x1bOB',
-            'C':'\x1bOC',
-            'D':'\x1bOD',
-            'F':'\x1bOF',
-            'H':'\x1bOH',
-            '1':'\x1b[5~',
-            '2':'\x1b[6~',
-            '3':'\x1b[2~',
-            '4':'\x1b[3~',
-            'a':'\x1bOP',
-            'b':'\x1bOQ',
-            'c':'\x1bOR',
-            'd':'\x1bOS',
-            'e':'\x1b[15~',
-            'f':'\x1b[17~',
-            'g':'\x1b[18~',
-            'h':'\x1b[19~',
-            'i':'\x1b[20~',
-            'j':'\x1b[21~',
-            'k':'\x1b[23~',
-            'l':'\x1b[24~',
+            '~': '~',
+            'A': '\x1bOA',
+            'B': '\x1bOB',
+            'C': '\x1bOC',
+            'D': '\x1bOD',
+            'F': '\x1bOF',
+            'H': '\x1bOH',
+            '1': '\x1b[5~',
+            '2': '\x1b[6~',
+            '3': '\x1b[2~',
+            '4': '\x1b[3~',
+            'a': '\x1bOP',
+            'b': '\x1bOQ',
+            'c': '\x1bOR',
+            'd': '\x1bOS',
+            'e': '\x1b[15~',
+            'f': '\x1b[17~',
+            'g': '\x1b[18~',
+            'h': '\x1b[19~',
+            'i': '\x1b[20~',
+            'j': '\x1b[21~',
+            'k': '\x1b[23~',
+            'l': '\x1b[24~',
         }
         self.reset_hard()
 
@@ -293,13 +301,16 @@ class Terminal:
         # Invoke other resets
         self.reset_screen()
         self.reset_soft()
+
     def reset_soft(self):
-        # Attribute mask: 0x0XFB0000
-        #   X:  Bit 0 - Underlined
-        #       Bit 1 - Negative
-        #       Bit 2 - Concealed
-        #   F:  Foreground
-        #   B:  Background
+        """
+        Attribute mask: 0x0XFB0000
+          X:  Bit 0 - Underlined
+              Bit 1 - Negative
+              Bit 2 - Concealed
+          F:  Foreground
+          B:  Background
+        """
         self.attr = 0x00fe0000
         # Scroll parameters
         self.scroll_area_y0 = 0
@@ -324,6 +335,7 @@ class Terminal:
         self.esc_DECSC()
         self.vt100_saved2 = self.vt100_saved
         self.esc_DECSC()
+
     def reset_screen(self):
         # Screen
         self.screen = array.array('i', [self.attr | 0x20] * self.w * self.h)
@@ -347,7 +359,7 @@ class Terminal:
                 if (char & 0xc0) == 0x80:
                     self.utf8_char = (self.utf8_char << 6) | (char & 0x3f)
                     if self.utf8_units_count == self.utf8_units_received:
-                        if self.utf8_char<0x10000:
+                        if self.utf8_char < 0x10000:
                             o += unichr(self.utf8_char)
                         self.utf8_units_count = self.utf8_units_received = 0
                 else:
@@ -371,6 +383,7 @@ class Terminal:
                 else:
                     o += '?'
         return o
+
     def utf8_charwidth(self, char):
         if char >= 0x2e80:
             return 2
@@ -380,36 +393,43 @@ class Terminal:
     # Low-level terminal functions
     def peek(self, y0, x0, y1, x1):
         return self.screen[self.w * y0 + x0:self.w * (y1 - 1) + x1]
+
     def poke(self, y, x, s):
         pos = self.w * y + x
         self.screen[pos:pos + len(s)] = s
+
     def fill(self, y0, x0, y1, x1, char):
         n = self.w * (y1 - y0 - 1) + (x1 - x0)
         self.poke(y0, x0, array.array('i', [char] * n))
+
     def clear(self, y0, x0, y1, x1):
         self.fill(y0, x0, y1, x1, self.attr | 0x20)
 
     # Scrolling functions
-    def scroll_area_up(self, y0, y1, n = 1):
-        n = min(y1-y0, n)
+    def scroll_area_up(self, y0, y1, n=1):
+        n = min(y1 - y0, n)
         self.poke(y0, 0, self.peek(y0 + n, 0, y1, self.w))
-        self.clear(y1-n, 0, y1, self.w)
-    def scroll_area_down(self, y0, y1, n = 1):
-        n = min(y1-y0, n)
-        self.poke(y0 + n, 0, self.peek(y0, 0, y1-n, self.w))
+        self.clear(y1 - n, 0, y1, self.w)
+
+    def scroll_area_down(self, y0, y1, n=1):
+        n = min(y1 - y0, n)
+        self.poke(y0 + n, 0, self.peek(y0, 0, y1 - n, self.w))
         self.clear(y0, 0, y0 + n, self.w)
+
     def scroll_area_set(self, y0, y1):
-        y0 = max(0, min(self.h-1, y0))
+        y0 = max(0, min(self.h - 1, y0))
         y1 = max(1, min(self.h, y1))
         if y1 > y0:
             self.scroll_area_y0 = y0
             self.scroll_area_y1 = y1
-    def scroll_line_right(self, y, x, n = 1):
+
+    def scroll_line_right(self, y, x, n=1):
         if x < self.w:
-            n = min(self.w-self.cx, n)
+            n = min(self.w - self.cx, n)
             self.poke(y, x + n, self.peek(y, x, y + 1, self.w - n))
             self.clear(y, x, y + 1, x + n)
-    def scroll_line_left(self, y, x, n = 1):
+
+    def scroll_line_left(self, y, x, n=1):
         if x < self.w:
             n = min(self.w - self.cx, n)
             self.poke(y, x, self.peek(y, x + n, y + 1, self.w))
@@ -424,18 +444,25 @@ class Terminal:
             wx += self.utf8_charwidth(char)
             lx += 1
         return wx, lx
-    def cursor_up(self, n = 1):
+
+    def cursor_up(self, n=1):
         self.cy = max(self.scroll_area_y0, self.cy - n)
-    def cursor_down(self, n = 1):
+
+    def cursor_down(self, n=1):
         self.cy = min(self.scroll_area_y1 - 1, self.cy + n)
-    def cursor_left(self, n = 1):
+
+    def cursor_left(self, n=1):
         self.cx = max(0, self.cx - n)
-    def cursor_right(self, n = 1):
+
+    def cursor_right(self, n=1):
         self.cx = min(self.w - 1, self.cx + n)
+
     def cursor_set_x(self, x):
         self.cx = max(0, x)
+
     def cursor_set_y(self, y):
         self.cy = max(0, min(self.h - 1, y))
+
     def cursor_set(self, y, x):
         self.cursor_set_x(x)
         self.cursor_set_y(y)
@@ -445,7 +472,8 @@ class Terminal:
         delta_y, cx = divmod(self.cx - 1, self.w)
         cy = max(self.scroll_area_y0, self.cy + delta_y)
         self.cursor_set(cy, cx)
-    def ctrl_HT(self, n = 1):
+
+    def ctrl_HT(self, n=1):
         if n > 0 and self.cx >= self.w:
             return
         if n <= 0 and self.cx == 0:
@@ -459,6 +487,7 @@ class Terminal:
             self.cursor_set_x(self.tab_stops[ts])
         else:
             self.cursor_set_x(self.w - 1)
+
     def ctrl_LF(self):
         if self.vt100_mode_lfnewline:
             self.ctrl_CR()
@@ -466,8 +495,10 @@ class Terminal:
             self.scroll_area_up(self.scroll_area_y0, self.scroll_area_y1)
         else:
             self.cursor_down()
+
     def ctrl_CR(self):
         self.cursor_set_x(0)
+
     def dumb_write(self, char):
         if char < 32:
             if char == 8:
@@ -480,6 +511,7 @@ class Terminal:
                 self.ctrl_CR()
             return True
         return False
+
     def dumb_echo(self, char):
         # Check right bound
         wx, cx = self.cursor_line_width(char)
@@ -503,14 +535,17 @@ class Terminal:
     def vt100_charset_update(self):
         self.vt100_charset_is_graphical = (
             self.vt100_charset_g[self.vt100_charset_g_sel] == 2)
+
     def vt100_charset_set(self, g):
         # Invoke active character set
         self.vt100_charset_g_sel = g
         self.vt100_charset_update()
+
     def vt100_charset_select(self, g, charset):
         # Select charset
         self.vt100_charset_g[g] = charset
         self.vt100_charset_update()
+
     def vt100_setmode(self, p, state):
         # Set VT100 mode
         p = self.vt100_parse_params(p, [], False)
@@ -553,46 +588,62 @@ class Terminal:
                 self.vt100_mode_column_switch = state
             elif m == '?47':
                 # Alternate screen mode
-                if ((state and not self.vt100_mode_alt_screen) or 
+                if ((state and not self.vt100_mode_alt_screen) or
                     (not state and self.vt100_mode_alt_screen)):
                     self.screen, self.screen2 = self.screen2, self.screen
-                    self.vt100_saved, self.vt100_saved2 = self.vt100_saved2, self.vt100_saved
+                    self.vt100_saved, self.vt100_saved2 = self.vt100_saved2, \
+                        self.vt100_saved
                 self.vt100_mode_alt_screen = state
             elif m == '?67':
                 # Backspace/delete
                 self.vt100_mode_backspace = state
+
     def ctrl_SO(self):
         # Shift out
         self.vt100_charset_set(1)
+
     def ctrl_SI(self):
         # Shift in
         self.vt100_charset_set(0)
+
     def esc_CSI(self):
         # CSI start sequence
         self.vt100_parse_reset('csi')
+
     def esc_DECALN(self):
         # Screen alignment display
         self.fill(0, 0, self.h, self.w, 0x00fe0045)
+
     def esc_G0_0(self):
         self.vt100_charset_select(0, 0)
+
     def esc_G0_1(self):
         self.vt100_charset_select(0, 1)
+
     def esc_G0_2(self):
         self.vt100_charset_select(0, 2)
+
     def esc_G0_3(self):
         self.vt100_charset_select(0, 3)
+
     def esc_G0_4(self):
         self.vt100_charset_select(0, 4)
+
     def esc_G1_0(self):
         self.vt100_charset_select(1, 0)
+
     def esc_G1_1(self):
         self.vt100_charset_select(1, 1)
+
     def esc_G1_2(self):
         self.vt100_charset_select(1, 2)
+
     def esc_G1_3(self):
         self.vt100_charset_select(1, 3)
+
     def esc_G1_4(self):
         self.vt100_charset_select(1, 4)
+
     def esc_DECSC(self):
         # Store cursor
         self.vt100_saved = {}
@@ -603,6 +654,7 @@ class Terminal:
         self.vt100_saved['charset_g'] = self.vt100_charset_g[:]
         self.vt100_saved['mode_autowrap'] = self.vt100_mode_autowrap
         self.vt100_saved['mode_origin'] = self.vt100_mode_origin
+
     def esc_DECRC(self):
         # Retore cursor
         self.cx = self.vt100_saved['cx']
@@ -613,87 +665,111 @@ class Terminal:
         self.vt100_charset_update()
         self.vt100_mode_autowrap = self.vt100_saved['mode_autowrap']
         self.vt100_mode_origin = self.vt100_saved['mode_origin']
+
     def esc_DECKPAM(self):
         # Application keypad mode
         pass
+
     def esc_DECKPNM(self):
         # Numeric keypad mode
         pass
+
     def esc_IND(self):
         # Index
         self.ctrl_LF()
+
     def esc_NEL(self):
         # Next line
         self.ctrl_CR()
         self.ctrl_LF()
+
     def esc_HTS(self):
         # Character tabulation set
         self.csi_CTC('0')
+
     def esc_RI(self):
         # Reverse line feed
         if self.cy == self.scroll_area_y0:
             self.scroll_area_down(self.scroll_area_y0, self.scroll_area_y1)
         else:
             self.cursor_up()
+
     def esc_SS2(self):
         # Single-shift two
         self.vt100_charset_is_single_shift = True
+
     def esc_SS3(self):
         # Single-shift three
         self.vt100_charset_is_single_shift = True
+
     def esc_DCS(self):
         # Device control string
         self.vt100_parse_reset('str')
+
     def esc_SOS(self):
         # Start of string
         self.vt100_parse_reset('str')
+
     def esc_DECID(self):
         # Identify terminal
         self.csi_DA('0')
+
     def esc_ST(self):
         # String terminator
         pass
+
     def esc_OSC(self):
         # Operating system command
         self.vt100_parse_reset('str')
+
     def esc_PM(self):
         # Privacy message
         self.vt100_parse_reset('str')
+
     def esc_APC(self):
         # Application program command
         self.vt100_parse_reset('str')
+
     def csi_ICH(self, p):
         # Insert character
         p = self.vt100_parse_params(p, [1])
         self.scroll_line_right(self.cy, self.cx, p[0])
+
     def csi_CUU(self, p):
         # Cursor up
         p = self.vt100_parse_params(p, [1])
         self.cursor_up(max(1, p[0]))
+
     def csi_CUD(self, p):
         # Cursor down
         p = self.vt100_parse_params(p, [1])
         self.cursor_down(max(1, p[0]))
+
     def csi_CUF(self, p):
         # Cursor right
         p = self.vt100_parse_params(p, [1])
         self.cursor_right(max(1, p[0]))
+
     def csi_CUB(self, p):
         # Cursor left
         p = self.vt100_parse_params(p, [1])
         self.cursor_left(max(1, p[0]))
+
     def csi_CNL(self, p):
         # Cursor next line
         self.csi_CUD(p)
         self.ctrl_CR()
+
     def csi_CPL(self, p):
         # Cursor preceding line
         self.csi_CUU(p)
         self.ctrl_CR()
+
     def csi_CHA(self, p):
         # Cursor character absolute
         p = self.vt100_parse_params(p, [1])
         self.cursor_set_x(p[0] - 1)
+
     def csi_CUP(self, p):
         # Set cursor position
         p = self.vt100_parse_params(p, [1, 1])
@@ -701,10 +777,12 @@ class Terminal:
             self.cursor_set(self.scroll_area_y0 + p[0] - 1, p[1] - 1)
         else:
             self.cursor_set(p[0] - 1, p[1] - 1)
+
     def csi_CHT(self, p):
         # Cursor forward tabulation
         p = self.vt100_parse_params(p, [1])
         self.ctrl_HT(max(1, p[0]))
+
     def csi_ED(self, p):
         # Erase in display
         p = self.vt100_parse_params(p, ['0'], False)
@@ -714,6 +792,7 @@ class Terminal:
             self.clear(0, 0, self.cy + 1, self.cx + 1)
         elif p[0] == '2':
             self.clear(0, 0, self.h, self.w)
+
     def csi_EL(self, p):
         # Erase in line
         p = self.vt100_parse_params(p, ['0'], False)
@@ -723,35 +802,43 @@ class Terminal:
             self.clear(self.cy, 0, self.cy + 1, self.cx + 1)
         elif p[0] == '2':
             self.clear(self.cy, 0, self.cy + 1, self.w)
+
     def csi_IL(self, p):
         # Insert line
         p = self.vt100_parse_params(p, [1])
         if (self.cy >= self.scroll_area_y0 and self.cy < self.scroll_area_y1):
             self.scroll_area_down(self.cy, self.scroll_area_y1, max(1, p[0]))
+
     def csi_DL(self, p):
         # Delete line
         p = self.vt100_parse_params(p, [1])
         if (self.cy >= self.scroll_area_y0 and self.cy < self.scroll_area_y1):
             self.scroll_area_up(self.cy, self.scroll_area_y1, max(1, p[0]))
+
     def csi_DCH(self, p):
         # Delete characters
         p = self.vt100_parse_params(p, [1])
         self.scroll_line_left(self.cy, self.cx, max(1, p[0]))
+
     def csi_SU(self, p):
         # Scroll up
         p = self.vt100_parse_params(p, [1])
-        self.scroll_area_up(self.scroll_area_y0, self.scroll_area_y1, max(1, p[0]))
+        self.scroll_area_up(self.scroll_area_y0, self.scroll_area_y1,
+            max(1, p[0]))
+
     def csi_SD(self, p):
         # Scroll down
         p = self.vt100_parse_params(p, [1])
-        self.scroll_area_down(self.scroll_area_y0, self.scroll_area_y1, max(1, p[0]))
+        self.scroll_area_down(self.scroll_area_y0, self.scroll_area_y1,
+            max(1, p[0]))
+
     def csi_CTC(self, p):
         # Cursor tabulation control
         p = self.vt100_parse_params(p, ['0'], False)
         for m in p:
             if m == '0':
                 try:
-                    ts = self.tab_stops.index(self.cx)
+                    self.tab_stops.index(self.cx)
                 except ValueError:
                     tab_stops = self.tab_stops
                     tab_stops.append(self.cx)
@@ -764,22 +851,27 @@ class Terminal:
                     pass
             elif m == '5':
                 self.tab_stops = [0]
+
     def csi_ECH(self, p):
         # Erase character
         p = self.vt100_parse_params(p, [1])
         n = min(self.w - self.cx, max(1, p[0]))
-        self.clear(self.cy, self.cx, self.cy + 1, self.cx + n);
+        self.clear(self.cy, self.cx, self.cy + 1, self.cx + n)
+
     def csi_CBT(self, p):
         # Cursor backward tabulation
         p = self.vt100_parse_params(p, [1])
         self.ctrl_HT(1 - max(1, p[0]))
+
     def csi_HPA(self, p):
         # Character position absolute
         p = self.vt100_parse_params(p, [1])
         self.cursor_set_x(p[0] - 1)
+
     def csi_HPR(self, p):
         # Character position forward
         self.csi_CUF(p)
+
     def csi_REP(self, p):
         # Repeat
         p = self.vt100_parse_params(p, [1])
@@ -790,6 +882,7 @@ class Terminal:
             self.dumb_echo(self.vt100_lastchar)
             n -= 1
         self.vt100_lastchar = 0
+
     def csi_DA(self, p):
         # Device attributes
         p = self.vt100_parse_params(p, ['0'], False)
@@ -797,16 +890,20 @@ class Terminal:
             self.vt100_out = "\x1b[?1;2c"
         elif p[0] == '>0' or p[0] == '>':
             self.vt100_out = "\x1b[>0;184;0c"
+
     def csi_VPA(self, p):
         # Line position absolute
         p = self.vt100_parse_params(p, [1])
         self.cursor_set_y(p[0] - 1)
+
     def csi_VPR(self, p):
         # Line position forward
         self.csi_CUD(p)
+
     def csi_HVP(self, p):
         # Character and line position
         self.csi_CUP(p)
+
     def csi_TBC(self, p):
         # Tabulation clear
         p = self.vt100_parse_params(p, ['0'], False)
@@ -814,12 +911,15 @@ class Terminal:
             self.csi_CTC('2')
         elif p[0] == '3':
             self.csi_CTC('5')
+
     def csi_SM(self, p):
         # Set mode
         self.vt100_setmode(p, True)
+
     def csi_RM(self, p):
         # Reset mode
         self.vt100_setmode(p, False)
+
     def csi_SGR(self, p):
         # Select graphic rendition
         p = self.vt100_parse_params(p, [0])
@@ -857,6 +957,7 @@ class Terminal:
             elif m == 49:
                 # Default bg color
                 self.attr = (self.attr & 0x7ff00000) | 0x000e0000
+
     def csi_DSR(self, p):
         # Device status report
         p = self.vt100_parse_params(p, ['0'], False)
@@ -869,7 +970,7 @@ class Terminal:
         elif p[0] == '7':
             self.vt100_out = 'WebShell'
         elif p[0] == '8':
-            self.vt100_out = version
+            self.vt100_out = self.version
         elif p[0] == '?6':
             x = self.cx + 1
             y = self.cy + 1
@@ -882,6 +983,7 @@ class Terminal:
             self.vt100_out = '\x1b[?27;1n'
         elif p[0] == '?53':
             self.vt100_out = '\x1b[?53n'
+
     def csi_DECSTBM(self, p):
         # Set top and bottom margins
         p = self.vt100_parse_params(p, [1, self.h])
@@ -890,14 +992,17 @@ class Terminal:
             self.cursor_set(self.scroll_area_y0, 0)
         else:
             self.cursor_set(0, 0)
+
     def csi_SCP(self, p):
         # Save cursor position
         self.vt100_saved_cx = self.cx
         self.vt100_saved_cy = self.cy
+
     def csi_RCP(self, p):
         # Restore cursor position
         self.cx = self.vt100_saved_cx
         self.cy = self.vt100_saved_cy
+
     def csi_DECREQTPARM(self, p):
         # Request terminal parameters
         p = self.vt100_parse_params(p, [], False)
@@ -905,12 +1010,13 @@ class Terminal:
             self.vt100_out = "\x1b[2;1;1;112;112;1;0x"
         elif p[0] == '1':
             self.vt100_out = "\x1b[3;1;1;112;112;1;0x"
+
     def csi_DECSTR(self, p):
         # Soft terminal reset
         self.reset_soft()
 
     # VT100 Parser
-    def vt100_parse_params(self, p, d, to_int = True):
+    def vt100_parse_params(self, p, d, to_int=True):
         # Process parameters (params p with defaults d)
         # Add prefix to all parameters
         prefix = ''
@@ -938,11 +1044,13 @@ class Terminal:
                 value = d[i]
             o.append(value)
         return o
-    def vt100_parse_reset(self, vt100_parse_state = ""):
+
+    def vt100_parse_reset(self, vt100_parse_state=""):
         self.vt100_parse_state = vt100_parse_state
         self.vt100_parse_len = 0
         self.vt100_parse_func = ""
         self.vt100_parse_param = ""
+
     def vt100_parse_process(self):
         if self.vt100_parse_state == 'esc':
             # ESC mode
@@ -963,6 +1071,7 @@ class Terminal:
                 pass
             if self.vt100_parse_state == 'csi':
                 self.vt100_parse_reset()
+
     def vt100_write(self, char):
         if char < 32:
             if char == 27:
@@ -997,7 +1106,8 @@ class Terminal:
                         if char_msb == 0x20:
                             # Intermediate bytes (added to function)
                             self.vt100_parse_func += unichr(char)
-                        elif char_msb == 0x30 and self.vt100_parse_state == 'csi':
+                        elif (char_msb == 0x30 and
+                            self.vt100_parse_state == 'csi'):
                             # Parameter byte
                             self.vt100_parse_param += unichr(char)
                         else:
@@ -1014,12 +1124,14 @@ class Terminal:
             return False
         self.w = w
         self.h = h
-        reset()
+        self.vt100_parse_reset()
         return True
+
     def read(self):
         d = self.vt100_out
         self.vt100_out = ""
         return d
+
     def write(self, d):
         d = self.utf8_decode(d)
         for c in d:
@@ -1031,6 +1143,7 @@ class Terminal:
             if char <= 0xffff:
                 self.dumb_echo(char)
         return True
+
     def pipe(self, d):
         o = ''
         for c in d:
@@ -1056,6 +1169,7 @@ class Terminal:
                 if self.vt100_mode_lfnewline and char == 13:
                     o += chr(10)
         return o
+
     def dump(self):
         dump = u""
         attr_ = -1
@@ -1088,7 +1202,10 @@ class Terminal:
                         ul = ' ul'
                     else:
                         ul = ''
-                    dump += u'<span class="shell_f%x shell_b%x%s">' % (fg, bg, ul)
+                    dump += u'<span class="shell_f%x shell_b%x%s">' % (
+                        fg,
+                        bg,
+                        ul)
                     attr_ = attr
                 # Escape HTML characters
                 if char == 38:
@@ -1114,9 +1231,11 @@ class Terminal:
 
 
 class SynchronizedMethod:
+
     def __init__(self, lock, orig):
         self.lock = lock
         self.orig = orig
+
     def __call__(self, *l):
         self.lock.acquire()
         try:
@@ -1126,8 +1245,10 @@ class SynchronizedMethod:
             pass
         return r
 
+
 class Multiplex:
-    def __init__(self, cmd = None, env_term = None):
+
+    def __init__(self, cmd=None, env_term=None):
         # Session
         self.session = {}
         self.cmd = cmd
@@ -1140,7 +1261,7 @@ class Multiplex:
             setattr(self, name, SynchronizedMethod(self.lock, orig))
         # Supervisor thread
         self.signal_stop = 0
-        self.thread = threading.Thread(target = self.proc_thread)
+        self.thread = threading.Thread(target=self.proc_thread)
         self.thread.start()
 
     def stop(self):
@@ -1152,17 +1273,18 @@ class Multiplex:
         if not sid in self.session:
             # Start a new session
             self.session[sid] = {
-                'state':'unborn',
+                'state': 'unborn',
                 'term': Terminal(w, h),
                 'time': time.time(),
-                'w':    w,
-                'h':    h}
+                'w': w,
+                'h': h}
             return self.proc_spawn(sid)
         elif self.session[sid]['state'] == 'alive':
             self.session[sid]['time'] = time.time()
             # Update terminal size
             if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
                 try:
+                    fd = self.session[sid]['fd']
                     fcntl.ioctl(fd,
                             termios.TIOCSWINSZ,
                             struct.pack("HHHH", h, w, 0, 0))
@@ -1198,20 +1320,21 @@ class Multiplex:
                     'COLUMNS': str(w),
                     'LINES': str(h),
                     'TERM': self.env_term,
-                    'PATH': '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin',
+                    'PATH': ('/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                        '/usr/local/sbin'),
                     'LANG': ls[0] + '.UTF-8',
                     'HOME': '/root',
                     'SHELL': self.cmd,
                 }
 
                 libc = cdll.LoadLibrary('libc.so.7')
-                buff = create_string_buffer(len(self.cmd)+1)
+                buff = create_string_buffer(len(self.cmd) + 1)
                 buff.value = self.cmd
                 libc.setproctitle(byref(buff))
                 os.execve(self.cmd, ['bash'], env)
             except (IOError, OSError), e:
-                pass
-#           self.proc_finish(sid)
+                log.error("Impossible to start a subshell: %s", e)
+            #self.proc_finish(sid)
             os._exit(0)
         else:
             # Store session vars
@@ -1225,7 +1348,7 @@ class Multiplex:
                         termios.TIOCSWINSZ,
                         struct.pack("HHHH", h, w, 0, 0))
             except (IOError, OSError), e:
-                pass
+                log.error("Unable to issue ioctl for terminal size: %s", e)
             return True
 
     def proc_waitfordeath(self, sid):
