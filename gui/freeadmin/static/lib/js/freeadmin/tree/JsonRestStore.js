@@ -1,6 +1,6 @@
 define(["dojox/data/JsonRestStore", "dojo/_base/declare"], function(JsonRestStore, declare) {
 
-    var MyStore = declare("freeadmin.tree.JsonRestStore", [dojox.data.JsonRestStore], {
+    var MyStore = declare("freeadmin.tree.JsonRestStore", [JsonRestStore], {
         loadItem: function(args) {
             var item;
             var oldload = args.item._loadObject;

@@ -1,5 +1,5 @@
 define(["dijit/tree/ForestStoreModel", "dojo/_base/declare"], function(ForestStoreModel, declare) {
-    var MyForestStoreModel = declare("freeadmin.tree.ForestStoreModel", [dijit.tree.ForestStoreModel], {
+    var MyForestStoreModel = declare("freeadmin.tree.ForestStoreModel", [ForestStoreModel], {
         getChildren: function(parentItem, callback, onError){
             if(parentItem === this.root){
                 if(this.root.children){

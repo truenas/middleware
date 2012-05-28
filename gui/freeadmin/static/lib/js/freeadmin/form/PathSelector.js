@@ -1,17 +1,19 @@
 define([
     "dojo/_base/declare",
-    "dojo/cache",
     "dijit/_Widget",
     "dijit/_TemplatedMixin",
     "dijit/form/TextBox",
     "dijit/form/Button",
     "dijit/layout/TabContainer",
     "dijit/layout/ContentPane",
-    "dojox/string/sprintf"
-    ], function(declare, cache, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane) {
+    "dojo/text!freeadmin/templates/pathselector.html",
+    "freeadmin/tree/JsonRestStore",
+    "freeadmin/tree/ForestStoreModel",
+    "freeadmin/tree/TreeLazy"
+    ], function(declare, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, template, JsonRestStore, ForestStoreModel, TreeLazy) {
 
     var PathSelector = declare("freeadmin.form.PathSelector", [ _Widget, _Templated ], {
-        templateString : cache("freeadmin", "templates/pathselector.html"),
+        templateString : template,
         name : "",
         value: "",
         root: "/",
@@ -33,13 +35,13 @@ define([
                 target = '/system/lsfiles/';
             }
 
-            var store = new freeadmin.tree.JsonRestStore({
+            var store = new JsonRestStore({
                 target: target,
                 labelAttribute: 'name',
                 allowNoTrailingSlash: true,
             });
 
-            var model = new freeadmin.tree.ForestStoreModel({
+            var model = new ForestStoreModel({
                 store: store,
                 query: {root: this.root},
                 rootId: 'items',
@@ -48,7 +50,7 @@ define([
                 deferItemLoadingUntilExpand: true,
             });
 
-            var tree = new freeadmin.tree.TreeLazy({
+            var tree = new TreeLazy({
                 model: model,
                 persist: false,
                 style: "height: 250px;",
@@ -82,6 +84,14 @@ define([
                     }
                 },
             }, this.pathButton);
+
+            this._supportingWidgets.push(browse);
+            this._supportingWidgets.push(this.textfield);
+            this._supportingWidgets.push(tree);
+            this._supportingWidgets.push(model);
+            this._supportingWidgets.push(store);
+
+            this.inherited(arguments);
 
         }
     });
