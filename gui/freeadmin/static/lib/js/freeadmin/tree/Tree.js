@@ -1,4 +1,10 @@
-define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
+define([
+    "dijit/Tree",
+    "dojo/_base/declare",
+    "dojo/_base/array",
+    "dojo/_base/Deferred",
+    "dojo/_base/lang"
+    ], function(Tree, declare, array, Deferred) {
 
     var MyTree = declare("freeadmin.tree.Tree", [Tree], {
         _expandNode: function( node, recursive){
@@ -26,12 +32,12 @@ define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
             function expand(node) {
                 _this._expandNode(node);
 
-                var childBranches = dojo.filter(node.getChildren() || [], function(node) {
+                var childBranches = array.filter(node.getChildren() || [], function(node) {
                     return node.isExpandable;
                 });
 
-                var def = new dojo.Deferred();
-                defs = dojo.map(childBranches, expand);
+                var def = new Deferred();
+                defs = array.map(childBranches, expand);
             }
             return expand(this.rootNode);
         },
@@ -49,12 +55,12 @@ define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
                  _this._collapseNode(node);
                 }
 
-                var childBranches = dojo.filter(node.getChildren() || [], function(node) {
+                var childBranches = array.filter(node.getChildren() || [], function(node) {
                     return node.isExpandable;
                 });
 
-                var def = new dojo.Deferred();
-                defs = dojo.map(childBranches, collapse);
+                var def = new Deferred();
+                defs = array.map(childBranches, collapse);
             }
             return collapse(this.rootNode);
         },
@@ -82,7 +88,7 @@ define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
             this._load();
             if(path && path.length > 0) {
                 this.set('path', path).then(
-                        dojo.hitch(this, function() {
+                        lang.hitch(this, function() {
                             this.focusNode(this.get('selectedNode'));
                         }
                 ));
