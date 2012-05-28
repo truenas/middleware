@@ -31,8 +31,6 @@ import tempfile
 
 import rrdtool
 
-RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
-
 log = logging.getLogger('reporting.rrd')
 
 name2plugin = dict()
@@ -45,10 +43,11 @@ class RRDMeta(type):
         reg = re.search(r'^(?P<name>.+)Plugin$', name)
         if reg and not hasattr(klass, 'plugin'):
             klass.plugin = reg.group("name").lower()
-            klass.base_path = os.path.join(RRD_BASE_PATH, klass.plugin)
             name2plugin[klass.plugin] = klass
         elif hasattr(klass, 'plugin'):
             name2plugin[klass.plugin] = klass
+        elif name != 'RRDBase':
+            raise ValueError("Could not determine plugin name %s" % str(name))
         return klass
 
 
@@ -56,6 +55,7 @@ class RRDBase(object):
 
     __metaclass__ = RRDMeta
 
+    base_path = None
     identifier = None
     title = None
     vertical_label = None
@@ -63,13 +63,14 @@ class RRDBase(object):
     unit = 'hourly'
     step = 0
 
-    def __init__(self, identifier=None, unit=None, step=None):
+    def __init__(self, base_path, identifier=None, unit=None, step=None):
         if identifier is not None:
             self.identifier = str(identifier)
         if unit is not None:
             self.unit = str(unit)
         if step is not None:
             self.step = int(step)
+        self.base_path = os.path.join(base_path, self.plugin)
 
     def __repr__(self):
         return '<RRD:%s>' % self.plugin
@@ -122,11 +123,11 @@ class CPUPlugin(RRDBase):
     vertical_label = "%CPU"
 
     def graph(self):
-        cpu_idle = os.path.join(RRD_BASE_PATH, "cpu-0/cpu-idle.rrd")
-        cpu_nice = os.path.join(RRD_BASE_PATH, "cpu-0/cpu-nice.rrd")
-        cpu_user = os.path.join(RRD_BASE_PATH, "cpu-0/cpu-user.rrd")
-        cpu_system = os.path.join(RRD_BASE_PATH, "cpu-0/cpu-system.rrd")
-        cpu_interrupt = os.path.join(RRD_BASE_PATH, "cpu-0/cpu-interrupt.rrd")
+        cpu_idle = os.path.join(self.base_path, "cpu-0/cpu-idle.rrd")
+        cpu_nice = os.path.join(self.base_path, "cpu-0/cpu-nice.rrd")
+        cpu_user = os.path.join(self.base_path, "cpu-0/cpu-user.rrd")
+        cpu_system = os.path.join(self.base_path, "cpu-0/cpu-system.rrd")
+        cpu_interrupt = os.path.join(self.base_path, "cpu-0/cpu-interrupt.rrd")
 
         args = [
             'DEF:min0=%s:value:MIN' % cpu_idle,

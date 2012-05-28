@@ -41,7 +41,7 @@ def index(request):
 
     graphs = []
     for klass in rrd.name2plugin.values():
-        ins = klass()
+        ins = klass(RRD_BASE_PATH)
         ids = ins.get_identifiers()
         if not ids:
             graphs.append({
@@ -60,15 +60,20 @@ def index(request):
 
 
 def generate(request):
-    try:
 
+    try:
         plugin = request.GET.get("plugin")
         plugin = rrd.name2plugin.get(plugin)
         unit = request.GET.get("unit", "hourly")
         step = request.GET.get("step", "0")
         identifier = request.GET.get("identifier")
 
-        plugin = plugin(unit=unit, step=step, identifier=identifier)
+        plugin = plugin(
+            base_path=RRD_BASE_PATH,
+            unit=unit,
+            step=step,
+            identifier=identifier
+            )
         fd, path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()
@@ -83,4 +88,4 @@ def generate(request):
         response['Content-type'] = 'image/png'
         return response
     except Exception, e:
-        print e
+        log.error("Failed to generate rrd graph: %s", e)
