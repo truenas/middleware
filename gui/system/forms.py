@@ -450,27 +450,6 @@ class SMARTTestForm(ModelForm):
         super(SMARTTestForm, self).save()
         notifier().restart("smartd")
 
-    def clean_smarttest_disks(self):
-        disks = self.cleaned_data.get("smarttest_disks")
-        used_disks = []
-        for disk in disks:
-            qs = models.SMARTTest.objects.filter(
-                smarttest_disks__in=[disk]
-                )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.count() > 0:
-                used_disks.append(disk.disk_name)
-        if used_disks:
-            raise forms.ValidationError(
-                _("The following disks already have tests for this type: "
-                    "%s" % (
-                        ', '.join(used_disks),
-                    ),
-                    )
-                )
-        return disks
-
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
         if h.startswith('*/'):
@@ -497,6 +476,29 @@ class SMARTTestForm(ModelForm):
         w = eval(self.cleaned_data.get("smarttest_dayweek"))
         w = ",".join(w)
         return w
+
+    def clean(self):
+        disks = self.cleaned_data.get("smarttest_disks")
+        test = self.cleaned_data.get("smarttest_type")
+        used_disks = []
+        for disk in disks:
+            qs = models.SMARTTest.objects.filter(
+                smarttest_disks__in=[disk],
+                smarttest_type=test,
+                )
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.count() > 0:
+                used_disks.append(disk.disk_name)
+        if used_disks:
+            self._errors['smarttest_disks'] = self.error_class([
+                _("The following disks already have tests for this type: "
+                    "%s" % (
+                        ', '.join(used_disks),
+                    )),
+                ])
+            self.cleaned_data.pop("smarttest_disks", None)
+        return self.cleaned_data
 
 
 class FirmwareTemporaryLocationForm(Form):
