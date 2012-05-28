@@ -83,6 +83,9 @@ class RRDBase(object):
     def get_vertical_label(self):
         return self.vertical_label
 
+    def get_identifiers(self):
+        return []
+
     def generate(self):
         """
         Call rrdgraph to generate the graph on a temp file
@@ -187,6 +190,15 @@ class InterfacePlugin(RRDBase):
 
     def get_title(self):
         return 'Interface Traffic (%s)' % self.identifier
+
+    def get_identifiers(self):
+        ids = []
+        re_octets = re.compile(r'(?<=octets-)[a-z0-9]+')
+        for _file in os.listdir(self.base_path):
+            reg = re_octets.search(_file)
+            if reg and not _file.startswith("."):
+                ids.append(reg.group(0))
+        return ids
 
     def graph(self):
         path = os.path.join(
@@ -477,8 +489,17 @@ class DFPlugin(RRDBase):
     vertical_label = "Bytes"
 
     def get_title(self):
-        title = title.replace("mnt-", "")
+        title = self.identifier.replace("mnt-", "")
         return 'Diskspace (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        re_disk = re.compile(r'(?<=df-)(mnt-.*?)\.rrd')
+        for _file in os.listdir(self.base_path):
+            reg = re_disk.search(_file)
+            if reg and not _file.startswith("."):
+                ids.append(reg.group(1))
+        return ids
 
     def graph(self):
 

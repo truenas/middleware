@@ -38,8 +38,24 @@ log = logging.getLogger('reporting.views')
 
 
 def index(request):
-    return render(request, "reporting/index.html", {
 
+    graphs = []
+    for klass in rrd.name2plugin.values():
+        ins = klass()
+        ids = ins.get_identifiers()
+        if not ids:
+            graphs.append({
+                'plugin': klass.plugin,
+            })
+        else:
+            for ident in ids:
+                graphs.append({
+                    'plugin': klass.plugin,
+                    'identifier': ident,
+                })
+
+    return render(request, "reporting/index.html", {
+        'graphs': graphs,
     })
 
 
