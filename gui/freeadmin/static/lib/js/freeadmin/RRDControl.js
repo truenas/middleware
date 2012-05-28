@@ -8,8 +8,9 @@ define([
     "dijit/form/Button",
     "dijit/layout/TabContainer",
     "dijit/layout/ContentPane",
+    "dojox/timing",
     "dojo/text!freeadmin/templates/rrdcontrol.html"
-    ], function(declare, domAttr, ioQuery, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, template) {
+    ], function(declare, domAttr, ioQuery, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, timing, template) {
 
     var RRDControl = declare("freeadmin.RRDControl", [ _Widget, _Templated ], {
         templateString : template,
@@ -21,7 +22,7 @@ define([
         identifier: "",
         postCreate : function() {
 
-            var me, zoomIn, zoomOut, left, right;
+            var me, zoomIn, zoomOut, left, right, t;
 
             me = this;
             zoomIn = new Button({
@@ -82,6 +83,18 @@ define([
                 }
             }, this.leftButton);
             this.query();
+            this.timer = new timing.Timer(300000);
+            this.timer.onTick = function() {
+                me.query();
+            }
+            this.timer.start();
+
+            this._supportingWidgets.push(left);
+            this._supportingWidgets.push(right);
+            this._supportingWidgets.push(zoomIn);
+            this._supportingWidgets.push(zoomOut);
+
+            this.inherited(arguments);
 
         },
         zoomInUnit: function(unit) {
@@ -122,9 +135,12 @@ define([
                 cache: new Date().getTime()
                 })
             var uri = this.href + "?" + query;
-            console.log(uri);
             domAttr.set(this.imageNode, "src", uri);
 
+        },
+        destroy: function() {
+            this.timer.stop();
+            this.inherited(arguments);
         }
     });
     return RRDControl;
