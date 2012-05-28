@@ -123,11 +123,11 @@ class CPUPlugin(RRDBase):
     vertical_label = "%CPU"
 
     def graph(self):
-        cpu_idle = os.path.join(self.base_path, "cpu-0/cpu-idle.rrd")
-        cpu_nice = os.path.join(self.base_path, "cpu-0/cpu-nice.rrd")
-        cpu_user = os.path.join(self.base_path, "cpu-0/cpu-user.rrd")
-        cpu_system = os.path.join(self.base_path, "cpu-0/cpu-system.rrd")
-        cpu_interrupt = os.path.join(self.base_path, "cpu-0/cpu-interrupt.rrd")
+        cpu_idle = os.path.join(self.base_path, "cpu-idle.rrd")
+        cpu_nice = os.path.join(self.base_path, "cpu-nice.rrd")
+        cpu_user = os.path.join(self.base_path, "cpu-user.rrd")
+        cpu_system = os.path.join(self.base_path, "cpu-system.rrd")
+        cpu_interrupt = os.path.join(self.base_path, "cpu-interrupt.rrd")
 
         args = [
             'DEF:min0=%s:value:MIN' % cpu_idle,
