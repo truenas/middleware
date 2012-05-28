@@ -112,7 +112,7 @@ class RRDBase(object):
         ]
         args.extend(self.graph())
         rrdtool.graph(*args)
-        return path
+        return fh, path
 
 
 class CPUPlugin(RRDBase):

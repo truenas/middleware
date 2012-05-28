@@ -69,12 +69,13 @@ def generate(request):
         identifier = request.GET.get("identifier")
 
         plugin = plugin(unit=unit, step=step, identifier=identifier)
-        path = plugin.generate()
+        fd, path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()
 
         try:
             os.unlink(path)
+            os.close(fd)
         except OSError, e:
             log.warn("Failed to remove reporting temp file: %s", e)
 
