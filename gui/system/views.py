@@ -171,18 +171,7 @@ def config_save(request):
 
 
 def reporting(request):
-
-    graphs = {}
-    for gtype in ('hourly', 'daily', 'weekly', 'monthly', 'yearly', ):
-        graphs_dir = os.path.join(GRAPHS_DIR, gtype)
-        if os.path.isdir(graphs_dir):
-            graphs[gtype] = os.listdir(graphs_dir)
-        else:
-            graphs[gtype] = None
-
-    return render(request, 'system/reporting.html', {
-        'graphs': graphs,
-    })
+    return render(request, 'system/reporting.html')
 
 
 def settings(request):
