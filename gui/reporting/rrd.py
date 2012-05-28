@@ -54,9 +54,11 @@ class RRDBase(object):
     title = None
     vertical_label = None
     imgformat = 'PNG'
+    unit = 'hourly'
 
-    def __init__(self):
-        pass
+    def __init__(self, unit=None):
+        if unit:
+            self.unit = str(unit)
 
     def __repr__(self):
         return '<RRD:%s>' % self.plugin
@@ -65,7 +67,7 @@ class RRDBase(object):
         raise NotImplementedError
 
     def generate(self):
-        time = '1h'
+        time = '1%s' % (self.unit[0], )
         fh, path = tempfile.mkstemp()
         args = [
             path,

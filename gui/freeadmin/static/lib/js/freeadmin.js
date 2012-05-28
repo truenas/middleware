@@ -1411,7 +1411,7 @@
         var originalXHR = dojo.xhr;
         dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
           if(!xhrArgs.headers) xhrArgs.headers = {};
-          xhrArgs.headers["X-CSRFToken"] = dojo.cookie('csrftoken');
+          xhrArgs.headers["X-CSRFToken"] = cookie('csrftoken');
           return originalXHR(httpVerb, xhrArgs, hasHTTPBody);
         }
 

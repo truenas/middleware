@@ -45,7 +45,10 @@ def index(request):
 
 def generate(request):
     try:
-        plugin = CPUPlugin()
+
+        unit = request.GET.get("unit", "hourly")
+
+        plugin = CPUPlugin(unit=unit)
         path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()
@@ -57,6 +60,7 @@ def generate(request):
 
         response = HttpResponse(data)
         response.content_type = 'image/png'
+        response.mimetype = 'image/png'
         return response
     except Exception, e:
         print e
