@@ -26,7 +26,7 @@ define([
 
             me = this;
             zoomIn = new Button({
-                label: 'Zoom In',
+                label: this.zoomInButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomInUnit(me.unit)
                     if(newunit == me.unit || newunit == 'hourly') {
@@ -41,7 +41,7 @@ define([
             }, this.zoomInButton);
 
             zoomOut = new Button({
-                label: 'Zoom Out',
+                label: this.zoomOutButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomOutUnit(me.unit)
                     if(newunit == me.unit || newunit == 'yearly') {
