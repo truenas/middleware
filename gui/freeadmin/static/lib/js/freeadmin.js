@@ -1342,15 +1342,25 @@
     require([
         "dojo",
         "dojo/ready",
-        "dojo/rpc/JsonService",
         "dojo/_base/xhr",
-        "dojo/_base/html",
+        "dojox/data/JsonRestStore",
+        "dijit/tree/ForestStoreModel",
         "dojo/cookie",
+        "dojo/_base/html",
+        "dojo/parser",
+        "freeadmin/tree/Tree",
+        "freeadmin/ESCDialog",
+        "freeadmin/RRDControl",
+        "freeadmin/tree/TreeLazy",
+        "freeadmin/tree/JsonRestStore",
+        "freeadmin/tree/ForestStoreModel",
+        "freeadmin/form/Cron",
+        "freeadmin/form/PathSelector",
         "dojo/data/ItemFileReadStore",
         "dojo/io/iframe",
-        "dojo/parser",
         "dojo/NodeList-traverse",
         "dojo/NodeList-manipulate",
+        "dojo/rpc/JsonService",
         "dojo/fx",
         "dijit/_base/manager",
         "dijit/form/CheckBox",
@@ -1366,13 +1376,11 @@
         "dijit/layout/BorderContainer",
         "dijit/layout/ContentPane",
         "dijit/layout/TabContainer",
-        "dijit/tree/ForestStoreModel",
         "dijit/Dialog",
         "dijit/MenuBar",
         "dijit/MenuBarItem",
         "dijit/ProgressBar",
         "dijit/Tooltip",
-        "dojox/data/JsonRestStore",
         "dojox/form/BusyButton",
         "dojox/fx/scroll",
         "dojox/grid/EnhancedGrid",
@@ -1387,9 +1395,7 @@
         "dojox/uuid/_base",
         "dojox/uuid/generateRandomUuid",
         "dojox/validate"
-        ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
-
-        dojo.registerModulePath("freeadmin", "../../../../../static/lib/js/freeadmin");
+        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, html, parser, Tree, ESCDialog) {
 
         dojo._contentHandlers.text = (function(old){
           return function(xhr){
@@ -1412,12 +1418,12 @@
         ready(function() {
             setTimeout(refreshImgs, 300000);
 
-            var store = new dojox.data.JsonRestStore({
+            var store = new JsonRestStore({
                 target: "/admin/menu.json",
                 labelAttribute: "name",
             });
 
-            var treeModel = new dijit.tree.ForestStoreModel({
+            var treeModel = new ForestStoreModel({
                 store: store,
                 query: {},
                 rootId: "root",
@@ -1516,16 +1522,7 @@
 
             };
 
-            require([
-                "freeadmin/tree/Tree",
-                "freeadmin/ESCDialog",
-                "freeadmin/tree/TreeLazy",
-                "freeadmin/tree/JsonRestStore",
-                "freeadmin/tree/ForestStoreModel",
-                "freeadmin/form/Cron",
-                "freeadmin/form/PathSelector"
-                ], function(Tree, ESCDialog) {
-                mytree = new freeadmin.tree.Tree({
+                mytree = new Tree({
                     id: "fntree",
                     model: treeModel,
                     showRoot: false,
@@ -1595,8 +1592,6 @@
                     }
                 });
                 shell.placeAt("shell_dialog_holder");
-
-            });
 
         });
     });
