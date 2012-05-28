@@ -18,6 +18,7 @@ define([
         href: "",
         step: 0,
         unit: "hourly",
+        identifier: "",
         postCreate : function() {
 
             var me, zoomIn, zoomOut, left, right;
@@ -117,6 +118,7 @@ define([
                 unit: this.unit,
                 plugin: this.plugin,
                 step: this.step,
+                identifier: this.identifier,
                 cache: new Date().getTime()
                 })
             var uri = this.href + "?" + query;

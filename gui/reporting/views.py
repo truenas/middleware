@@ -30,7 +30,7 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from freenasUI.reporting.rrd import CPUPlugin
+from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
 
@@ -46,10 +46,13 @@ def index(request):
 def generate(request):
     try:
 
+        plugin = request.GET.get("plugin")
+        plugin = rrd.name2plugin.get(plugin)
         unit = request.GET.get("unit", "hourly")
         step = request.GET.get("step", "0")
+        identifier = request.GET.get("identifier")
 
-        plugin = CPUPlugin(unit=unit, step=step)
+        plugin = plugin(unit=unit, step=step, identifier=identifier)
         path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()
