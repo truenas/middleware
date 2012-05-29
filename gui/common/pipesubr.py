@@ -40,7 +40,7 @@ log = logging.getLogger('common.pipesubr')
 def pipeopen(command, important=True, logger=log):
     logger.log(logging.NOTICE if important else logging.DEBUG,
         "Popen()ing: " + command)
-    args = shlex_split(command)
+    args = shlex_split(str(command))
     return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
 
 
