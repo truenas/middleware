@@ -46,7 +46,6 @@ import platform
 import pwd
 import re
 import select
-import shlex
 import shutil
 import signal
 import sqlite3
@@ -121,7 +120,7 @@ class StartNotify(threading.Thread):
                 fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND|select.KQ_NOTE_DELETE),
             ]
         kq = select.kqueue()
-        ev = kq.control(evts, 1, 3)
+        kq.control(evts, 1, 3)
 
 
 class notifier:
@@ -974,10 +973,8 @@ class notifier:
 
     def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None):
         """Internal procedure to create a ZFS volume identified by volume id"""
-        z_id = volume.id
         z_name = str(volume.vol_name)
         z_vdev = ""
-        need4khack = False
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
         gnop_devs = []
@@ -1128,14 +1125,14 @@ class notifier:
         retval = None
         if '@' in path:
             try:
-                with mntlock(blocking=False) as MNTLOCK:
+                with mntlock(blocking=False):
                     if self.__snapshot_hold(path):
                         retval = 'Held by replication system.'
             except IOError:
                 retval = 'Try again later.'
         elif recursive:
             try:
-                with mntlock(blocking=False) as MNTLOCK:
+                with mntlock(blocking=False):
                     zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
                     snaps = zfsproc.communicate()[0]
                     for snap in filter(None, snaps.splitlines()):
@@ -1406,7 +1403,6 @@ class notifier:
         Returns:
             the absolute path for the volume on the system.
         """
-        mountpoint = None
         if fstype == 'ZFS':
             p1 = self.__pipeopen('zfs list -H -o mountpoint %s' % (name, ))
             stdout = p1.communicate()[0]
@@ -1691,7 +1687,7 @@ class notifier:
         pipe = self.__pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
-            log.warn("Failed to delete user %s: %s", groupname, err)
+            log.warn("Failed to delete user %s: %s", username, err)
             return False
         return True
 
@@ -1821,7 +1817,6 @@ class notifier:
         self.__system("/bin/chmod 755 %s/.freenas" % path)
         self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
-
     def validate_update(self, path):
 
         os.chdir(os.path.dirname(path))
@@ -1844,7 +1839,6 @@ class notifier:
             os.chdir('/')
         # XXX: bleh
         return True
-
 
     def apply_update(self, path):
         os.chdir(os.path.dirname(path))
@@ -2006,7 +2000,7 @@ class notifier:
             try:
                 plugin.save()
                 ret = True
-            except Exception, err:
+            except Exception:
                 ret = False
 
         elif res and res[0] != 0:
@@ -2088,8 +2082,6 @@ class notifier:
         return  plugin
 
     def update_pbi(self):
-        from freenasUI.services.models import RPCToken, PluginsJail
-        from freenasUI.plugins.models import Plugins
         ret = False
 
         # Get the jail 
@@ -2173,7 +2165,7 @@ class notifier:
             plugin.save()
             ret = True
 
-        except Exception, err:
+        except Exception:
             ret = False
 
         return ret
@@ -2898,7 +2890,7 @@ class notifier:
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
         try:
-            with mntlock(blocking=False) as MNTLOCK:
+            with mntlock(blocking=False):
                 zfsproc = self.__pipeopen(zfscmd)
                 output = zfsproc.communicate()[0]
                 if output != '':
