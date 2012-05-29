@@ -28,11 +28,8 @@ import os
 import re
 
 from django.utils.translation import ugettext_lazy as _
-from django.core.urlresolvers import reverse
-from django.http import QueryDict
 
 from dojango import forms
-from dojango.forms import widgets
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
@@ -107,7 +104,9 @@ class AFP_ShareForm(ModelForm):
         password1 = self.cleaned_data.get("afp_sharepw")
         password2 = self.cleaned_data.get("afp_sharepw2")
         if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+                )
         return password2
 
     def clean(self):
@@ -154,13 +153,17 @@ class NFS_ShareForm(ModelForm):
             except NetmaskValueError:
                 IPAddress(net.encode('utf-8'))
             except (AddressValueError, ValueError):
-                raise forms.ValidationError(_("The field is a not a valid IP address or network"))
+                raise forms.ValidationError(
+                    _("The field is a not a valid IP address or network")
+                    )
         else:
             for ip in net.split(' '):
                 try:
                     IPAddress(ip.encode('utf-8'))
                 except (AddressValueError, ValueError):
-                    raise forms.ValidationError(_("The IP '%s' is not valid.") % ip)
+                    raise forms.ValidationError(
+                        _("The IP '%s' is not valid.") % ip
+                        )
         return net
 
     def clean(self):
@@ -170,16 +173,27 @@ class NFS_ShareForm(ModelForm):
             if cdata.get(field, None) in ('', '-----'):
                 cdata[field] = None
 
-        if cdata.get('nfs_maproot_group', None) != None and cdata.get('nfs_maproot_user', None) == None:
-            self._errors['nfs_maproot_group'] = self.error_class([_("Maproot group requires Maproot user"),])
-        if cdata.get('nfs_mapall_group', None) != None and cdata.get('nfs_mapall_user', None) == None:
-            self._errors['nfs_mapall_group'] = self.error_class([_("Mapall group requires Mapall user"),])
-        if cdata.get('nfs_maproot_user', None) != None or cdata.get('nfs_maproot_group', None) != None:
+        if (cdata.get('nfs_maproot_group', None) != None and
+            cdata.get('nfs_maproot_user', None) == None):
+            self._errors['nfs_maproot_group'] = self.error_class([
+                _("Maproot group requires Maproot user"),
+                ])
+        if (cdata.get('nfs_mapall_group', None) != None and
+            cdata.get('nfs_mapall_user', None) == None):
+            self._errors['nfs_mapall_group'] = self.error_class([
+                _("Mapall group requires Mapall user"),
+                ])
+        if (cdata.get('nfs_maproot_user', None) != None or
+            cdata.get('nfs_maproot_group', None) != None):
             if cdata.get('nfs_mapall_user', None) != None:
-                self._errors['nfs_mapall_user'] = self.error_class([_("Maproot user/group disqualifies Mapall"),])
+                self._errors['nfs_mapall_user'] = self.error_class([
+                    _("Maproot user/group disqualifies Mapall"),
+                    ])
                 del cdata['nfs_mapall_user']
             if cdata.get('nfs_mapall_group', None) != None:
-                self._errors['nfs_mapall_group'] = self.error_class([_("Maproot user/group disqualifies Mapall"),])
+                self._errors['nfs_mapall_group'] = self.error_class([
+                    _("Maproot user/group disqualifies Mapall"),
+                    ])
                 del cdata['nfs_mapall_group']
 
         return cdata

@@ -31,7 +31,6 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.static import serve
 from django.conf import settings
 from django.template.loader import add_to_builtins
-from django.views.generic import TemplateView
 
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
@@ -54,10 +53,10 @@ urlpatterns = patterns('',
         {'document_root': settings.MEDIA_ROOT}),
     (r'^static/(?P<path>.*)',
         public(serve),
-        {'document_root': os.path.join(settings.HERE, "freeadmin/static") }),
+        {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
     (r'^dojango/(?P<path>.*)$',
         public(serve),
-        {'document_root': os.path.abspath(os.path.dirname(__file__)+'/dojango/')}),
+        {'document_root': os.path.abspath(os.path.dirname(__file__) + '/dojango/')}),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
     (r'^dojangogrid/', include('dojango.urls')),
     (r'^admin/', include('freeadmin.urls')),
