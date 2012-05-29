@@ -28,7 +28,6 @@
 import logging
 import os
 import re
-import subprocess
 import sys
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
@@ -143,11 +142,11 @@ with open('/var/run/autosnap.pid', 'w') as pidfile:
 
 MNTLOCK.unlock()
 
-now = datetime.now().replace(microsecond = 0)
+now = datetime.now().replace(microsecond=0)
 if now.second < 30 or now.minute == 59:
-    snaptime = now.replace(second = 0)
+    snaptime = now.replace(second=0)
 else:
-    snaptime = now.replace(minute = now.minute  + 1, second = 0)
+    snaptime = now.replace(minute=now.minute + 1, second=0)
 
 mp_to_task_map = {}
 
@@ -250,7 +249,7 @@ for snapshot in snapshots_pending_delete:
     output = zfsproc.communicate()[0]
     if output != '':
         fsname, attrname, value, source = output.split('\n')[0].split('\t')
-	if value == '-':
+        if value == '-':
             snapcmd = '/sbin/zfs destroy %s' % (snapshot)
             system(snapcmd)
 
