@@ -2106,6 +2106,7 @@ class notifier:
             raise MiddlewareError("There was a problem cleaning up the "
                 "PBI temp dirctory")
 
+        pbiname = newpbiname
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
         newpbiname = "%s.pbi" % newpbiname
 
@@ -2153,7 +2154,7 @@ class notifier:
         plugin.plugin_name = newname
         plugin.plugin_arch = newarch
         plugin.plugin_version = newversion
-        plugin.plugin_pbiname = newpbiname
+        plugin.plugin_pbiname = pbiname
 
         try:
             plugin.save()
