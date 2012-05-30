@@ -1158,6 +1158,7 @@ class ReplicationForm(ModelForm):
             r = self.instance.repl_remote
         r.ssh_remote_hostname = self.cleaned_data.get("remote_hostname")
         r.ssh_remote_hostkey = self.cleaned_data.get("remote_hostkey")
+        r.ssh_remote_port = self.cleaned_data.get("remote_port")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r
