@@ -400,7 +400,7 @@ class UPSForm(ModelForm):
 
     def clean_ups_identifier(self):
         ident = self.cleaned_data.get("ups_identifier")
-        if not re.search(r'^[a-z0-9\.\-_]+$', ident):
+        if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
             raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \"_\"."))
         return ident
 
