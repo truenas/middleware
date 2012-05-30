@@ -63,7 +63,6 @@ if os.path.exists(DATABASE_PATH):
     #0 - root
     #5 - operator
     if stat.st_uid != 0 or stat.st_gid != 5:
-        print stat.st_gid, stat.st_uid
         os.chown(DATABASE_PATH, 0, 5)
     mode = stat.st_mode & 0xfff
     if mode != 0o640:
