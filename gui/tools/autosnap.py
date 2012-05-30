@@ -40,7 +40,7 @@ setup_environ(settings)
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
-from freenasUI.common.pipesubr import setname, pipeopen, system
+from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
 
 log = logging.getLogger('tools.autosnap')
@@ -54,7 +54,6 @@ log = logging.getLogger('tools.autosnap')
 # whole lifetime of this script.
 #
 MNTLOCK=mntlock()
-setname('autosnap')
 
 # Set to True if verbose log desired
 debug = False
@@ -173,7 +172,7 @@ if len(mp_to_task_map) == 0:
 # Grab all existing snapshot and filter out the expiring ones
 snapshots = {}
 snapshots_pending_delete = set()
-zfsproc = pipeopen("/sbin/zfs list -t snapshot -H", debug)
+zfsproc = pipeopen("/sbin/zfs list -t snapshot -H", debug, logger=log)
 lines = zfsproc.communicate()[0].split('\n')
 reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)(?P<retunit>[hdwmy])$')
 for line in lines:
@@ -198,7 +197,7 @@ for line in lines:
 # Exclude snapshots that have clones associated from being deleted
 if len(snapshots_pending_delete) > 0:
     snapshots_cloned = set()
-    zfsproc = pipeopen("/sbin/zfs list -H -t filesystem,volume -o origin", debug)
+    zfsproc = pipeopen("/sbin/zfs list -H -t filesystem,volume -o origin", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
     for snapshot_name in lines:
         if snapshot_name != '-':
@@ -234,24 +233,33 @@ for mpkey in mp_to_task_map:
     snapname = '%s@auto-%s-%s' % (fs, snaptime_str, expire)
 
     # If there is associated replication task, mark the snapshots as 'NEW'.
-    if Replication.objects.filter(repl_filesystem = fs).count() > 0:
+    if Replication.objects.filter(repl_filesystem=fs).count() > 0:
         MNTLOCK.lock()
         snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s' % (rflag, snapname)
-        system(snapcmd)
+        proc = pipeopen(snapcmd, logger=log)
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.error("Failed to create snapshot '%s': %s", snapname, err)
         MNTLOCK.unlock()
     else:
         snapcmd = '/sbin/zfs snapshot%s %s' % (rflag, snapname)
-        system(snapcmd)
+        proc = pipeopen(snapcmd, logger=log)
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.error("Failed to create snapshot '%s': %s", snapname, err)
 
 MNTLOCK.lock()
 for snapshot in snapshots_pending_delete:
-    zfsproc = pipeopen('/sbin/zfs get -H freenas:state %s' % (snapshot))
+    zfsproc = pipeopen('/sbin/zfs get -H freenas:state %s' % (snapshot, ), logger=log)
     output = zfsproc.communicate()[0]
     if output != '':
         fsname, attrname, value, source = output.split('\n')[0].split('\t')
         if value == '-':
             snapcmd = '/sbin/zfs destroy %s' % (snapshot)
-            system(snapcmd)
+            proc = pipeopen(snapcmd, logger=log)
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
 
 os.unlink('/var/run/autosnap.pid')
 MNTLOCK.unlock()

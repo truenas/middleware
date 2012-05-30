@@ -25,37 +25,29 @@
 #
 #####################################################################
 
-import syslog
 from shlex import split as shlex_split
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 from os import system as __system
+import logging
 
-class info(object):
-    _instance = None
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(info, cls).__new__(cls, *args, **kwargs)
-            cls._instance.name = 'middleware'
-        return cls._instance
-    def setname(self, name):
-        self.name = name
-    def getname(self):
-        return self.name
+logging.NOTICE = 60
+logging.addLevelName(logging.NOTICE, "NOTICE")
+logging.ALERT = 70
+logging.addLevelName(logging.ALERT, "ALERT")
+log = logging.getLogger('common.pipesubr')
 
-def pipeopen(command, important=True):
-    pipeinfo = info()
-    syslog.openlog(pipeinfo.getname(), syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Popen()ing: " + command)
+
+def pipeopen(command, important=True, logger=log):
+    logger.log(logging.NOTICE if important else logging.DEBUG,
+        "Popen()ing: " + command)
     args = shlex_split(command)
-    return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
+    return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
 
-def system(command, important=True):
-    pipeinfo = info()
-    syslog.openlog(pipeinfo.getname(), syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Executing: " + command)
-    __system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (pipeinfo.name, ))
-    syslog.syslog(syslog.LOG_INFO if important else syslog.LOG_DEBUG, "Executed: " + command)
 
-def setname(name):
-    pipeinfo = info()
-    pipeinfo.setname(name)
+def system(command, important=True, logger=log):
+    logger.log(logging.NOTICE if important else logging.DEBUG,
+        "Executing: " + command)
+    __system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (
+        logger.name, ))
+    logger.log(logging.INFO if important else logging.DEBUG,
+        "Executed: " + command)
