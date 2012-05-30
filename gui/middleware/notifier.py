@@ -2139,8 +2139,14 @@ class notifier:
         if out[0] != 0:
             raise MiddlewareError("Unable to make a PBI patch")
 
+        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
+
         pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
             plugin.plugin_version, newversion, plugin.plugin_arch)
+
+        fullpbppath = "%s/%s/%s" % (jailpath, pbitemp, pbpfile)
+        if not os.access(fullpbppath, os.F_OK):
+            raise MiddlewareError("Unable to create PBP file")
 
         # Apply the upgrade patch to upgrade the PBI to the new version
         p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR|PBI_PATCH_FLAGS_NOCHECKSIG,
