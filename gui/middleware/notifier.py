@@ -2036,13 +2036,10 @@ class notifier:
         return pjail, jail
 
     def _get_pbi_info(self, pbifile, jid):
-        from syslog import syslog, LOG_DEBUG
         pbi = pbiname = prefix = name = version = arch = None
 
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
-        syslog(LOG_DEBUG, "_get_pbi_info: before running pbi_add")
         out = p.info(True, jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
-        syslog(LOG_DEBUG, "_get_pbi_info: after running pbi_add")
 
         if not out:
             raise MiddlewareError("This file was not identified as in PBI "
@@ -2068,7 +2065,6 @@ class notifier:
             elif var == 'arch':
                 arch = val
 
-        syslog(LOG_DEBUG, "_get_pbi_info: returning")
         return pbi, pbiname, prefix, name, version, arch
 
     def _get_plugin_info(self, name):
@@ -2110,18 +2106,16 @@ class notifier:
             raise MiddlewareError("There was a problem cleaning up the "
                 "PBI temp dirctory")
 
-        # If the old PBI doesn't exist, create it from the installed version
-        if not os.access(oldpbifile, os.F_OK):
-            p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
-                outdir=pbitemp, pbidir=plugin.plugin_pbiname)
-            out = p.run(True, jail.jid)
-            if out[0] != 0:
-                raise MiddlewareError("There was a problem cleaning up the "
-                    "PBI temporary dirctory")
-
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
         newpbiname = "%s.pbi" % newpbiname
-            
+
+        # Create a PBI from the installed version
+        p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
+            outdir=pbitemp, pbidir=plugin.plugin_pbiname)
+        out = p.run(True, jail.jid)
+        if out[0] != 0:
+            raise MiddlewareError("There was a problem creating the PBI")
+
         # Copy the old PBI over to our temporary PBI workspace
         out = Jexec(jid=jail.jid, command="/bin/cp %s/%s %s" % (
             pbitemp, oldpbiname, "/mnt/plugins/")).run()
