@@ -166,6 +166,25 @@ add_pbi_manager()
 }
 customize_cmd add_pbi_manager
 
+add_pbi_wrapper()
+{
+    local pm dst pwdir
+    pm=${AVATAR_ROOT}/src/pbi-manager
+    pbidir=${NANO_WORLDDIR}/usr/pbi
+
+    # This is ugly, there is probably a better way to do this
+    base=${MAKEOBJDIRPREFIX}/build/${AVATAR_ROOT}/FreeBSD/src/tmp
+    cc=${base}/usr/bin/cc
+
+    pprint 2 "Adding PBI wrapper"
+
+    ${cc} ${pm}/wrapper/main.c -o ${pm}/wrapper/pbiwrapper
+    mkdir -p ${pbidir}
+    cp ${pm}/wrapper/pbiwrapper ${pbidir}/.pbiwrapper
+    cp ${pm}/wrapper/pbiwrapper ${PBI_APPDIR}/.pbiwrapper
+}
+customize_cmd add_pbi_wrapper
+
 last_orders()
 {
 	local pj_dest_basename pj_src_basename
