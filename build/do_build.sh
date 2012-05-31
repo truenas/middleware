@@ -95,7 +95,7 @@ parse_cmdline()
 			: $(( FORCE_BUILD += 1 ))
 			;;
 		j)
-			echo ${OPTARG} | egrep -q '^[[:digit:]]+$' && [ ${OPTARG} -le 0 ]
+			echo ${OPTARG} | egrep -q '^[[:digit:]]+$' && [ ${OPTARG} -gt 0 ]
 			if [ $? -ne 0 ]; then
 				usage
 			fi
@@ -219,6 +219,7 @@ build_target()
 
 	if ! $BUILD
 	then
+		echo ${_cmd}
 		exit 0
 	fi
 
