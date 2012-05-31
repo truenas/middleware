@@ -188,6 +188,7 @@ class SettingsForm(ModelForm):
         widgets = {
             'stg_timezone': forms.widgets.FilteringSelect(),
             'stg_language': forms.widgets.FilteringSelect(),
+            'stg_kbdmap': forms.widgets.FilteringSelect(),
         }
 
     def __init__(self, *args, **kwargs):

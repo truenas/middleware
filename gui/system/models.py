@@ -25,16 +25,15 @@
 #
 #####################################################################
 
-from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freeadmin.models import Model, UserField
+from freenasUI.freeadmin.models import Model, UserField, PathField
 from freenasUI.middleware.notifier import notifier
-from freeadmin.models import PathField
-from storage.models import Disk
+from freenasUI.storage.models import Disk
 
 
 class Settings(Model):
@@ -61,6 +60,12 @@ class Settings(Model):
             choices=settings.LANGUAGES,
             default="en",
             verbose_name=_("Language")
+            )
+    stg_kbdmap = models.CharField(
+            max_length=120,
+            choices=choices.KBDMAP_CHOICES(),
+            verbose_name=_("Console Keyboard Map"),
+            blank=True,
             )
     stg_timezone = models.CharField(
             max_length=120,
