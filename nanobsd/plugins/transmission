@@ -57,8 +57,8 @@ export PLUGINPORT
 #
 # Where to put the PBI
 #
-PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}"
-mkdir -p "${PLUGINOUT}/${NANO_ARCH}"
+PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}"
+mkdir -p "${PLUGINOUT}"
 if [ "$?" != "0" ]
 then
 	echo "${PLUGIN}: unable to create ${PLUGINOUT}!"
@@ -176,7 +176,7 @@ then
 	PBI_PROGVERSION="${PBI_PROGVERSION}_${PBI_PROGREVISION}"
 fi
 
-PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-$(uname -m).pbi"
+PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-${NANO_ARCH}.pbi"
 
 NANO_NAME="${PBIFILE}"
 NANO_IMGNAME="${NANO_NAME}"
