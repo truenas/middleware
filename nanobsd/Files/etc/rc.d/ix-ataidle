@@ -27,7 +27,7 @@ ataidle_start()
 			continue
 			;;
 		esac
-		if [ -z "`ataidle /dev/ada1 | grep -E "APM.*yes"`" ]; then
+		if [ -z "`/usr/local/sbin/ataidle /dev/ada1 | grep -E "APM.*yes"`" ]; then
 			ataidle_args=""
 		elif [ "${disk_advpowermgmt}" != "Disabled" ]; then
 			ataidle_args="-P ${disk_advpowermgmt} "
@@ -45,7 +45,7 @@ ataidle_start()
 		else
 			disk_acousticlevel=0
 		fi
-		if [ -n "`ataidle /dev/ada1 | grep -E "AAM.*yes"`" ]; then
+		if [ -n "`/usr/local/sbin/ataidle /dev/ada1 | grep -E "AAM.*yes"`" ]; then
 			ataidle_args="${ataidle_args}-A ${disk_acousticlevel}"
 		fi
 		if [ -n "${ataidle_args}" ]; then
