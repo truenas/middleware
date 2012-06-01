@@ -229,6 +229,7 @@ build_target()
 	else
 		error "${NANO_LABEL} ${_target} build FAILED; please check above log for more details"
 	fi
+	
 	return $?
 }
 
@@ -242,6 +243,12 @@ build_targets()
 	cd ${NANO_SRC}
 	for _target in ${TARGETS}
 	do
+
+		#
+		# Start off with a clean slate for each target
+		#
+		unset FORCE_BUILD
+
 		build_target "${_target}"
 	done
 }
