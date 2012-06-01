@@ -330,7 +330,9 @@ _gen_conf()
 	local kbdmap
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \
 	while read -r kbdmap; do
-		echo "keymap=\"${kbdmap}\""
+		if [ -n "${kbdmap}"]; then
+			echo "keymap=\"${kbdmap}\""
+		fi
 	done
 }
 
