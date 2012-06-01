@@ -16,6 +16,18 @@ PBI_OSREL="8.0-RELEASE"
 export PBI_OSREL
 
 #
+# Tell pbi_create what architecture we are building for
+#
+PBI_OSARCH=${NANO_ARCH}
+export PBI_OSARCH
+
+#
+# Tell pbi_create where to build PBI files
+#
+PBI_BUILDDIR="${PBI_APPDIR}/${PBI_OSARCH}"
+export PBI_BUILDDIR
+
+#
 #
 # Tell pbi_create where the source code is
 # 
@@ -25,7 +37,7 @@ export PBI_BUILDSRC
 #
 # Where to install the chroot
 # 
-PBI_BUILDTARGET="${PBI_APPDIR}/target"
+PBI_BUILDTARGET="${PBI_APPDIR}/${PBI_OSARCH}/target"
 export PBI_BUILDTARGET
 
 #

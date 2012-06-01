@@ -490,9 +490,12 @@ add_pbi_wrapper()
     pprint 2 "Adding PBI wrapper"
 
     ${cc} ${pm}/wrapper/main.c -o ${pm}/wrapper/pbiwrapper
+
     mkdir -p ${pbidir}
+    mkdir -p ${PBI_BUILDDIR}
+
     cp ${pm}/wrapper/pbiwrapper ${pbidir}/.pbiwrapper
-    cp ${pm}/wrapper/pbiwrapper ${PBI_APPDIR}/.pbiwrapper
+    cp ${pm}/wrapper/pbiwrapper ${PBI_BUILDDIR}/.pbiwrapper
 }
 customize_cmd add_pbi_wrapper
 

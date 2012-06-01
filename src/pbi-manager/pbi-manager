@@ -1280,7 +1280,13 @@ init_vars() {
 		PBI_APPDIR="/usr/pbi"
         fi
 	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper"
-	PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world.txz"
+	if [ -n "${PBI_BUILDDIR}" ] ; then
+		PBI_WRAPPERFILE="${PBI_BUILDDIR}/.pbiwrapper"
+	fi
+	if [ -z "${PBI_OSARCH}" ] ; then
+		PBI_OSARCH=$(uname -m)
+	fi
+	PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world-${PBI_OSARCH}.txz"
 	if [ `id -u` = "0" ] ; then 
 		PBI_HASHDIR="${PBI_APPDIR}/.hashdir"
 	else
@@ -3527,7 +3533,8 @@ mk_path_wrappers() {
 	fi
 
 	# Copy the wrapper binary
-	cp ${PBI_WRAPPERFILE} ${dir}/${fbin}
+	#cp ${PBI_WRAPPERFILE} ${dir}/${fbin}
+	cp /usr/pbi/.pbiwrapper ${dir}/${fbin}
 	chmod 755 ${dir}/${fbin}
 
 	# Create the wrapper .pbiopt
@@ -3810,9 +3817,9 @@ mk_stage_dir() {
 		for excl in $PBI_EXCLUDELIST
 		do
 			if [ -z "$_excOpts" ] ; then
-				_excOpts = "--exclude ${excl}"
+				_excOpts="--exclude ${excl}"
 			else
-				_excOpts = "$_excOpts --exclude ${excl}"
+				_excOpts="$_excOpts --exclude ${excl}"
 			fi
 		done
 	fi
@@ -6216,8 +6223,8 @@ chroot_extract() {
 	cp /etc/resolv.conf ${PBI_CHROOTDIR}/etc/resolv.conf
 
 	# Copy our binary wrapper
-	mkdir ${PBI_CHROOTDIR}${PBI_APPDIR}
-	cp ${PBI_WRAPPERFILE} ${PBI_CHROOTDIR}${PBI_WRAPPERFILE}
+	mkdir ${PBI_CHROOTDIR}/usr/pbi
+	cp ${PBI_WRAPPERFILE} ${PBI_CHROOTDIR}/usr/pbi/
 
 	# If we have a custom PBI_MAKECONF include it
 	[ -e "${PBI_MAKECONF}" ] && cp ${PBI_MAKECONF} ${PBI_CHROOTDIR}/etc/make.conf
@@ -6308,31 +6315,31 @@ mk_chroot_file() {
 
 	# Check if on PC-BSD and we can instead fetch fbsd-release.txz
 	if [ -e "$PCBSD_ETCCONF" -a -z "$FORCE_FBSD_ONLY" ]; then
+		cd "$PBI_APPDIR"
 
-	  cd "$PBI_APPDIR"
+		# Set the mirror URL
+		MIRRORURL="`sed -n 's/PCBSD_MIRROR: //p' ${PCBSD_ETCCONF}`"
 
-	  # Set the mirror URL
-  	  MIRRORURL="`sed -n 's/PCBSD_MIRROR: //p' ${PCBSD_ETCCONF}`"
+		# Get the system version we are checking for updates to
+		SYSVER="`pbreg get /PC-BSD/Version`" ; export SYSVER
 
-  	  # Get the system version we are checking for updates to
-  	  SYSVER="`pbreg get /PC-BSD/Version`" ; export SYSVER
+		# Set the system arch type
+		ARCH=`uname -m`
+		if [ -n "${PBI_OSARCH}" ] ; then
+			ARCH="${PBI_OSARCH}"
+		fi
 
-  	  # Set the system arch type
-  	  ARCH=`uname -m`
-	  if [ -n "${PBI_OSARCH}" ] ; then
-	  	ARCH="${PBI_OSARCH}"
-	  fi
+		# To fetch the jail environment
+		echo "Fetching FreeBSD chroot environment... This may take a while..."
+		fetch -o rel.txz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz
+		fetch -o rel.md5 ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz.md5
 
-  	  # To fetch the jail environment
- 	  echo "Fetching FreeBSD chroot environment... This may take a while..."
-  	  fetch -o rel.txz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz
-    	  fetch -o rel.md5 ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz.md5
+		[ `md5 -q rel.txz` != `cat rel.md5` ] && \
+			exit_err "Error in download data, checksum mismatch.. Please try again later."
 
-    	  [ `md5 -q rel.txz` != `cat rel.md5` ] && exit_err "Error in download data, checksum mismatch.. Please try again later."
-
-	  mv rel.txz ${PBI_CHROOTFILE}
-	  rm rel.md5
-	  return
+		mv rel.txz ${PBI_CHROOTFILE}
+		rm rel.md5
+		return
  	fi
 
         local _srcdir="/usr/src"
@@ -6352,7 +6359,7 @@ mk_chroot_file() {
  
 	# Use existing sources
         if [ -e "${PBI_BUILDSRC}/COPYRIGHT" -a -z "${PBI_OSREL}" ] ; then
-		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
+		PBI_BUILDLOG="${PBI_APPDIR}/${PBI_OSARCH}/.buildWorldLog"
 		: > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDTARGET}"
 	
@@ -6367,7 +6374,7 @@ mk_chroot_file() {
                 fi
 
 		echo "Building the PBI chroot environment... This may take a while..."
-		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
+		PBI_BUILDLOG="${PBI_APPDIR}/${PBI_OSARCH}/.buildWorldLog"
 		echo "" > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDSRC}"
 		mkdir -p "${PBI_BUILDTARGET}"
@@ -6410,6 +6417,8 @@ mk_chroot_file() {
 			exit_err "Subversion checkout failed! Logfile saved: ${PBI_BUILDLOG}"
 		fi
 	fi # End of subversion checkout
+
+        PBI_BUILDFLAGS="${PBI_BUILDFLAGS} TARGET=${PBI_OSARCH} TARGET_ARCH=${PBI_OSARCH}"
 
 	echo "Running buildworld / installworld"
 	touch ${PBI_BUILDSRC}/Makefile
