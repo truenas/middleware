@@ -1041,7 +1041,6 @@ class FTP(Model):
     ftp_passiveportsmin = models.PositiveIntegerField(
             default=0,
             verbose_name=_("Minimum passive port"),
-            validators=[MinValueValidator(0), MaxValueValidator(10000)],
             help_text=_("The minimum port to allocate for PASV style data connections (0 = use any port).")
             )
     ftp_passiveportsmax = models.PositiveIntegerField(

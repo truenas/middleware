@@ -196,13 +196,24 @@ class FTPForm(ModelForm):
     def clean_ftp_passiveportsmin(self):
         ports = self.cleaned_data['ftp_passiveportsmin']
         if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(_("This value must be between 1024 and 65535, inclusive. 0 for default"))
+            raise forms.ValidationError(
+                _("This value must be between 1024 and 65535, inclusive. 0 "
+                    "for default")
+                )
         return ports
 
     def clean_ftp_passiveportsmax(self):
+        _min = self.cleaned_data['ftp_passiveportsmin']
         ports = self.cleaned_data['ftp_passiveportsmax']
         if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(_("This value must be between 1024 and 65535, inclusive. 0 for default."))
+            raise forms.ValidationError(
+                _("This value must be between 1024 and 65535, inclusive. 0 "
+                    "for default.")
+                )
+        if _min >= ports and ports != 0:
+            raise forms.ValidationError(
+                _("This must be higher than minimum passive port")
+                )
         return ports
 
     def clean_ftp_filemask(self):
