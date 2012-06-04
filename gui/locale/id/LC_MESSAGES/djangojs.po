@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-03-06 09:50-0800\n"
-"PO-Revision-Date: 2012-03-10 15:39+0200\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2012-03-10 16:45+0200\n"
 "Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -34,45 +34,54 @@ msgstr "Informasi Sistem"
 msgid "Network Settings"
 msgstr "Pengaturan Jaringan"
 
-#: freeadmin/static/lib/js/freeadmin.js:184
-msgid "Plugins"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:215
+#: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
 msgstr "Layanan"
 
-#: freeadmin/static/lib/js/freeadmin.js:256
+#: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
 msgstr "Akun"
 
-#: freeadmin/static/lib/js/freeadmin.js:295
+#: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
 msgstr "Penyimpanan"
 
-#: freeadmin/static/lib/js/freeadmin.js:465
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+#, fuzzy
+msgid "Some error occurred"
+msgstr "Terjadi beberapa kesalahan!"
+
+#: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
 msgstr "Sesuaikan"
 
-#: freeadmin/static/lib/js/freeadmin.js:469
+#: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
 msgstr "Sesuaikan Cakram"
 
-#: freeadmin/static/lib/js/freeadmin.js:608
-#: freeadmin/static/lib/js/freeadmin.js:710
+#: freeadmin/static/lib/js/freeadmin.js:547
+msgid "Wipe"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:551
+#, fuzzy
+msgid "Wipe Disk"
+msgstr "Sesuaikan Cakram"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
 msgstr "Harap tunggu..."
 
-#: freeadmin/static/lib/js/freeadmin.js:657
-#: freeadmin/static/lib/js/freeadmin.js:775
+#: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
 msgstr "Terjadi beberapa kesalahan!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Masing-masing yang dipilih"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
 msgstr "Setiap N"
 

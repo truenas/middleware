@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-03-06 09:49-0800\n"
+"POT-Creation-Date: 2012-06-04 02:09-0700\n"
 "PO-Revision-Date: 2012-05-03 20:03+0200\n"
 "Last-Translator: duri <foo.bar@centrum.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,12 +22,12 @@ msgstr ""
 msgid "Plain"
 msgstr "Obyčajný"
 
-#: choices.py:41 choices.py:553 system/models.py:298
+#: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
 msgstr "SSL"
 
-#: choices.py:42 choices.py:554
+#: choices.py:42 choices.py:558
 msgid "TLS"
 msgstr "TLS"
 
@@ -39,7 +39,7 @@ msgstr "HTTP"
 msgid "HTTPS"
 msgstr "HTTPS"
 
-#: choices.py:53 choices.py:223
+#: choices.py:53 choices.py:227
 msgid "Auto"
 msgstr "Automaticky"
 
@@ -138,7 +138,7 @@ msgstr "Úroveň 192 - Stredná spotreba energie bez pohotovostného režimu"
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr "Úroveň 254 - Maximálny výkon, maximálna spotreba energie"
 
-#: choices.py:96 choices.py:184
+#: choices.py:96 choices.py:188
 msgid "Minimum"
 msgstr "Minimálne"
 
@@ -234,443 +234,434 @@ msgstr "Anonymný"
 msgid "Local User"
 msgstr "Lokálny používateľ"
 
-#: choices.py:185
+#: choices.py:189
 msgid "Normal"
 msgstr "Normálny"
 
-#: choices.py:186
+#: choices.py:190
 msgid "Full"
 msgstr "Plný"
 
-#: choices.py:187
+#: choices.py:191
 msgid "Debug"
 msgstr "Ladenie"
 
-#: choices.py:191
+#: choices.py:195
 msgid "Default"
 msgstr "Predvolené"
 
-#: choices.py:192
+#: choices.py:196
 msgid "Time Machine"
 msgstr "Time Machine"
 
-#: choices.py:195
+#: choices.py:199
 msgid "No case folding"
 msgstr "Bez veľkých písmen"
 
-#: choices.py:196 choices.py:197
+#: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
 msgstr "Malé písmená v oboch smeroch"
 
-#: choices.py:198
+#: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
 msgstr "Klient vidí veľké písmená, server malé písmená"
 
-#: choices.py:199
+#: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
 msgstr "Klient vidí veľké písmená, server malé písmená"
 
-#: choices.py:203
+#: choices.py:207
 msgid "File"
 msgstr "Súbor"
 
-#: choices.py:204
+#: choices.py:208
 msgid "Device"
 msgstr "Zariadenie"
 
-#: choices.py:205
+#: choices.py:209
 msgid "ZFS Volume"
 msgstr "ZFS Zväzok "
 
-#: choices.py:209 storage/models.py:424 system/models.py:628
-#: templates/storage/autoimport.html:5 templates/storage/import.html:18
-#: templates/storage/wizard.html:114
+#: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
+#: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
 msgstr "Disk"
 
-#: choices.py:217
+#: choices.py:221
 msgid "read-write"
 msgstr "čítanie-zápis"
 
-#: choices.py:218
+#: choices.py:222
 msgid "read-only"
 msgstr "iba na čítanie"
 
-#: choices.py:222 choices.py:228 services/forms.py:532 services/forms.py:534
-#: services/forms.py:912 templates/storage/scrub.html:24
+#: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
+#: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
 msgstr "Žiadny"
 
-#: choices.py:224
+#: choices.py:228
 msgid "CHAP"
 msgstr "CHAP"
 
-#: choices.py:225
+#: choices.py:229
 msgid "Mutual CHAP"
 msgstr "Vzájomný CHAP (Mutual CHAP)"
 
-#: choices.py:247
+#: choices.py:251
 msgid "UPS reaches low battery"
 msgstr "Nízky stav batérie v UPS"
 
-#: choices.py:248
+#: choices.py:252
 msgid "UPS goes on battery"
 msgstr "UPS je napájaný z batérií"
 
-#: choices.py:251
+#: choices.py:255
 msgid "Preferred"
 msgstr "Preferovaný"
 
-#: choices.py:252
+#: choices.py:256
 msgid "Tolerated"
 msgstr "Tolerovaný"
 
-#: choices.py:253
+#: choices.py:257
 msgid "Required"
 msgstr "Požadovaný"
 
-#: choices.py:280 choices.py:286
+#: choices.py:284 choices.py:290
 msgid "Inherit"
 msgstr "Zdediť"
 
-#: choices.py:281
+#: choices.py:285
 msgid "On"
 msgstr "Zapnúť"
 
-#: choices.py:282 choices.py:287 choices.py:552
+#: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
 msgstr "Vypnúť"
 
-#: choices.py:288
+#: choices.py:292
 msgid "lzjb (recommended)"
 msgstr "lzjb (odporúčané)"
 
-#: choices.py:289
+#: choices.py:293
 msgid "gzip (default level, 6)"
 msgstr "gzip (predvolená úroveň, 6)"
 
-#: choices.py:290
+#: choices.py:294
 msgid "gzip (fastest)"
 msgstr "gzip (najrýchlejšia)"
 
-#: choices.py:291
+#: choices.py:295
 msgid "gzip (maximum, slow)"
 msgstr "gzip (maximálne, pomale)"
 
-#: choices.py:485
+#: choices.py:489
 msgid "Hour(s)"
 msgstr "Hodina(y)"
 
-#: choices.py:486
+#: choices.py:490
 msgid "Day(s)"
 msgstr "Deň"
 
-#: choices.py:487
+#: choices.py:491
 msgid "Week(s)"
 msgstr "Týždeň"
 
-#: choices.py:488
+#: choices.py:492
 msgid "Month(s)"
 msgstr "Mesiac(e)"
 
-#: choices.py:489
+#: choices.py:493
 msgid "Year(s)"
 msgstr "Rok(y)"
 
-#: choices.py:493 storage/models.py:262 storage/models.py:287
-#: system/models.py:383 system/models.py:408 system/models.py:585
-#: system/models.py:606 system/models.py:672 system/models.py:693
+#: choices.py:497 storage/models.py:279 storage/models.py:304
+#: system/models.py:407 system/models.py:432 system/models.py:616
+#: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
 msgstr "Každý deň"
 
-#: choices.py:494
+#: choices.py:498
 msgid "Every selected weekday"
 msgstr "Každý zvolený deň v týždni"
 
-#: choices.py:500
+#: choices.py:504
 msgid "Read-only"
 msgstr "Iba na čítanie"
 
-#: choices.py:501
+#: choices.py:505
 msgid "Write-only"
 msgstr "Iba na zápis"
 
-#: choices.py:502
+#: choices.py:506
 msgid "Read and Write"
 msgstr "Čítanie a Zápis"
 
-#: choices.py:506 choices.py:507
+#: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
 msgstr "%(minutes)s minúty"
 
-#: choices.py:508
+#: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
 msgstr "%(hour)s hodina"
 
 # tie s % su nejake premenne ? 
-#: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
+#: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
 msgstr "%(hours)s hodín"
 
-#: choices.py:514
+#: choices.py:518
 #, python-format
 msgid "%(day)s day"
 msgstr "%(day)s dni"
 
-#: choices.py:515
+#: choices.py:519
 #, python-format
 msgid "%(week)s week"
 msgstr "%(week)s týždeň"
 
-#: choices.py:519
+#: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
 msgstr "Nikdy - Kontrola zariadení bez ohľadu na režim napájania"
 
-#: choices.py:520
+#: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
 msgstr "Sleep - Skontrolujte zariadenia, ak nieje v režime Sleep"
 
-#: choices.py:521
+#: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
 "Pohotovostný režim - zariadenie je kontrolované, pokiaľ nie je v režime "
 "Sleep alebo POHOTOVOSTNOM REŽIME"
 
-#: choices.py:522
+#: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
 "Idle - Skontroluje zariadenie, pokial nie je v režime Sleep, POHOTOVOSTNOM "
 "režime alebo režime NEČINNOSTI"
 
-#: choices.py:526
+#: choices.py:530
 msgid "Long Self-Test"
 msgstr "Dlhý autotest"
 
-#: choices.py:527
+#: choices.py:531
 msgid "Short Self-Test"
 msgstr "Krátky autotest"
 
-#: choices.py:528
+#: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr "Conveyance autotest (iba pre ATA)"
 
-#: choices.py:529
+#: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
 msgstr "Offline Immediate Test (iba pre ATA)"
 
-#: choices.py:558
+#: choices.py:562
 #, fuzzy
 msgid "Rsync module"
 msgstr "Rsync modul"
 
-#: choices.py:559
+#: choices.py:563
 #, fuzzy
 msgid "Rsync over SSH"
 msgstr "Rsync modul"
 
-#: choices.py:563
+#: choices.py:567
 msgid "Push"
 msgstr ""
 
-#: choices.py:564
+#: choices.py:568
 msgid "Pull"
 msgstr ""
 
-#: account/forms.py:52
+#: account/forms.py:54
 msgid "Your name cannot start with \"-\""
 msgstr ""
 
-#: account/forms.py:54
+#: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
 msgstr ""
 
-#: account/forms.py:61
+#: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
 msgstr ""
 
-#: account/forms.py:70
+#: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
 msgstr ""
 
-#: account/forms.py:120 templates/storage/volumes.html:61
-msgid "Available"
-msgstr "Dostupný"
-
-#: account/forms.py:171
-msgid "Selected"
-msgstr "Vybraný"
-
-#: account/forms.py:199 account/forms.py:225 account/forms.py:456
-#: account/models.py:88 services/models.py:733 services/models.py:1047
-#: system/models.py:224 templates/account/bsdusers.html:5
+#: account/forms.py:220 account/forms.py:253 account/forms.py:497
+#: account/models.py:88 services/models.py:769 services/models.py:1126
+#: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
 msgstr "Užívateľské meno"
 
-#: account/forms.py:200
+#: account/forms.py:223
 #, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
 "Požadované. 30 znakov alebo viac. Písmená, číslice a nasledujúce znaky @/./"
 "+/-/_ ."
 
-#: account/forms.py:201
+#: account/forms.py:226
 #, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
 "Táto hodnota môže obsahovať len písmená, číslice a nasledujúce znaky @/./+/-/"
 "_ ."
 
-#: account/forms.py:228 account/forms.py:457 services/models.py:737
-#: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
+#: account/forms.py:256 account/forms.py:499 services/models.py:773
+#: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
 msgstr "Heslo"
 
-#: account/forms.py:232 account/forms.py:458 system/forms.py:273
+#: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
 msgstr "Overenie hesla"
 
-#: account/forms.py:234 account/forms.py:459 system/forms.py:274
+#: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
 msgstr "Pre overenie, zadajte rovnaké heslo ako predtým."
 
-#: account/forms.py:237 account/forms.py:500 account/models.py:114
-#: freeadmin/navtree.py:371 templates/account/bsdusers.html:8
+#: account/forms.py:265 account/forms.py:558 account/models.py:115
+#: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:241 account/forms.py:498
+#: account/forms.py:269 account/forms.py:553
 #, fuzzy
 msgid "Disable password logins"
 msgstr "Zakázať prihlásenie"
 
-#: account/forms.py:243 account/forms.py:499
+#: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
 msgstr ""
 
-#: account/forms.py:245
+#: account/forms.py:273
 msgid "Create a new primary group for the user"
 msgstr ""
 
-#: account/forms.py:248
+#: account/forms.py:276
 msgid "Primary Group"
 msgstr "Primárna skupina"
 
-#: account/forms.py:251 account/forms.py:504
+#: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
 msgstr ""
 
-#: account/forms.py:256
+#: account/forms.py:284 account/forms.py:549
 #, fuzzy
 msgid "Home Directory Mode"
 msgstr "Domovský adresár"
 
-#: account/forms.py:259 account/forms.py:693
+#: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
 msgstr "Pomocné skupiny"
 
-#: account/forms.py:318
+#: account/forms.py:347
 #, fuzzy
 msgid "A user with that uid already exists."
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: account/forms.py:329
+#: account/forms.py:360
 msgid "A user with that username already exists."
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: account/forms.py:337 storage/forms.py:223 system/forms.py:302
-#: system/forms.py:308 system/forms.py:313 system/forms.py:545
-#: system/forms.py:552
+#: account/forms.py:369 storage/forms.py:281 system/forms.py:370
+#: system/forms.py:376 system/forms.py:382 system/forms.py:675
+#: system/forms.py:682
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: account/forms.py:344 account/forms.py:481 account/forms.py:732
-#: services/forms.py:284 services/forms.py:381 sharing/forms.py:98
-#: system/forms.py:317
+#: account/forms.py:377 account/forms.py:529 account/forms.py:870
+#: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
+#: system/forms.py:386
 msgid "The two password fields didn't match."
 msgstr "Zadané heslá sa nezhodujú."
 
-#: account/forms.py:351
+#: account/forms.py:386
 #, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "Domovský adresár musí začínať s /mnt/"
 
-#: account/forms.py:366 account/forms.py:703
+#: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr ""
 
-#: account/forms.py:381 account/forms.py:582
+#: account/forms.py:416 account/forms.py:653
 #, fuzzy
 msgid "Home directory is not writable, leave this blank"
 msgstr "Domovský adresár musí začínať s /mnt/"
 
-#: account/forms.py:388
+#: account/forms.py:423
 msgid "Password is disabled, leave this blank"
 msgstr ""
 
-#: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
-#: services/forms.py:622 services/forms.py:925 storage/forms.py:194
-#: system/forms.py:423 system/forms.py:451
+#: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
+#: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
+#: system/forms.py:548
 msgid "This field is required."
 msgstr "Toto pole je požadované."
 
-#: account/forms.py:562
+#: account/forms.py:632
 #, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
 msgstr "Domovský adresár musí začínať s /mnt/"
 
-#: account/forms.py:634
+#: account/forms.py:725
 msgid "Allow repeated GIDs"
 msgstr ""
 
-#: account/forms.py:647
+#: account/forms.py:739
 #, fuzzy
 msgid "A group with that name already exists."
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: account/forms.py:665
+#: account/forms.py:759
 #, fuzzy
 msgid "A group with this gid already exists"
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: account/forms.py:675
+#: account/forms.py:772
 msgid "Member users"
 msgstr "Členovia skupiny"
 
-#: account/forms.py:720
+#: account/forms.py:852
 msgid "New password"
 msgstr "Nové heslo"
 
-#: account/forms.py:721
+#: account/forms.py:856
 msgid "New password confirmation"
 msgstr "Overenie nového hesla"
 
-#: account/forms.py:746
+#: account/forms.py:887
 #, fuzzy
 msgid "Change root password as well"
 msgstr "Zmeniť heslo"
 
-#: account/forms.py:753
+#: account/forms.py:896
 msgid "Old password"
 msgstr "Staré heslo"
 
-#: account/forms.py:770
+#: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr "Vaše staré heslo nie je správne. Prosim, zadajte ho znova."
 
-#: account/forms.py:778
+#: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
 msgstr ""
 
-#: account/models.py:36 services/models.py:518 services/models.py:563
+#: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
@@ -681,7 +672,7 @@ msgstr "ID Skupiny"
 msgid "Group Name"
 msgstr "Meno Skupiny"
 
-#: account/models.py:49 account/models.py:171 services/models.py:1339
+#: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
@@ -721,46 +712,46 @@ msgstr "Primárna skupina ID"
 msgid "Home Directory"
 msgstr "Domovský adresár"
 
-#: account/models.py:118
+#: account/models.py:119
 msgid "Full Name"
 msgstr "Celé meno"
 
-#: account/models.py:125 templates/account/bsdusers.html:90
+#: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
 msgstr "E-mail"
 
-#: account/models.py:130 account/models.py:175 services/models.py:567
-#: services/models.py:1332 system/models.py:306 system/models.py:495
+#: account/models.py:131 account/models.py:176 services/models.py:593
+#: services/models.py:1416 system/models.py:329 system/models.py:522
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
 msgstr "Používateľ"
 
-#: account/models.py:131 templates/account/index.html:19
+#: account/models.py:132 templates/account/index.html:19
 msgid "Users"
 msgstr "Používatelia"
 
-#: account/models.py:150
+#: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
 msgstr "Systemový používateľ %s nemôže byť odstránený!"
 
-#: account/nav.py:5 templates/menubar.html:53
+#: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
 msgstr "Konto"
 
-#: account/nav.py:11 templates/account/index.html:2
+#: account/nav.py:13 templates/account/index.html:2
 #, fuzzy
 msgid "Admin Account"
 msgstr "Konto"
 
-#: account/nav.py:17 templates/account/bsdusers.html:33
+#: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
 msgstr "Zmeniť heslo"
 
-#: account/nav.py:22 templates/account/changeform.html:2
+#: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
 msgstr "Zmeniť správcu"
@@ -781,211 +772,212 @@ msgstr "Užívatelia úspešne aktualizovaný."
 msgid "Groups successfully updated."
 msgstr "Skupiny boli úspešne aktualizované."
 
-#: freeadmin/forms.py:112
+#: freeadmin/forms.py:114
 #, python-format
 msgid "The user %s is not valid."
 msgstr "Používateľ %s neexistuje."
 
-#: freeadmin/forms.py:146
+#: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
 msgstr "Skupina %s nie je platná."
 
-#: freeadmin/forms.py:165
+#: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
 msgstr "Cesta sa musí nachádzať vnútri prípojného bodu jednotky"
 
-#: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
+#: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, fuzzy, python-format
 msgid "Error: %s"
 msgstr "Chyba"
 
-#: freeadmin/navtree.py:334
+#: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
 msgstr "Pridaj %s"
 
-#: freeadmin/navtree.py:346
+#: freeadmin/navtree.py:340
 #, fuzzy, python-format
 msgid "View %s"
 msgstr "Zobraziť všetko %s"
 
-#: freeadmin/navtree.py:366
+#: freeadmin/navtree.py:354
 msgid "Display System Processes"
 msgstr "Zobraz systémové procesy"
 
-#: freeadmin/navtree.py:375 templates/system/reboot_dialog.html:14
+#: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
 msgstr "Reštartovať"
 
-#: freeadmin/navtree.py:379 templates/system/shutdown_dialog.html:14
+#: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
 msgstr "Vypnúť"
 
-#: freeadmin/navtree.py:395
+#: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
 msgstr ""
 
-#: freeadmin/navtree.py:398
+#: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr ""
 
-#: freeadmin/navtree.py:432
+#: freeadmin/navtree.py:445
 #, fuzzy, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr "Nastala nejaká chyba pri pokuse olejblovať disk."
 
-#: freeadmin/views.py:245
+#: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
 msgstr ""
 
-#: freeadmin/views.py:428 freeadmin/views.py:648 freeadmin/views.py:650
+#: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
 msgstr "%s úspešne aktualizovaný."
 
-#: freeadmin/views.py:432 freeadmin/views.py:652
+#: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
 msgstr "Službe sa nepodarilo reštartovať."
 
-#: freeadmin/views.py:761 freeadmin/views.py:765
+#: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
 msgstr "%s úspešne vymazané."
 
-#: middleware/zfs.py:527 storage/models.py:556
+#: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
 msgstr "Chyba pri získavaní celkového miesta"
 
-#: middleware/zfs.py:533 storage/models.py:562
+#: middleware/zfs.py:567 storage/models.py:586
 msgid "Error getting available space"
 msgstr "Chyba pri získavaní voľného miesta"
 
-#: middleware/zfs.py:544 storage/models.py:573
+#: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
 msgstr "Chyba pri získavaní použitého miesta"
 
-#: middleware/zfs.py:550 middleware/zfs.py:557 storage/models.py:89
-#: storage/models.py:579 storage/models.py:586
+#: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
+#: storage/models.py:608 storage/models.py:616
 msgid "Error"
 msgstr "Chyba"
 
-#: network/forms.py:40 network/models.py:86
+#: network/forms.py:41 network/models.py:86
 msgid "NIC"
 msgstr "NIC"
 
-#: network/forms.py:77 network/forms.py:88 network/forms.py:330
-#: network/forms.py:344
+#: network/forms.py:87 network/forms.py:100 network/forms.py:394
+#: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
 
-#: network/forms.py:106
+#: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
 msgstr ""
 
-#: network/forms.py:108
+#: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
 msgstr ""
 
-#: network/forms.py:113
+#: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
 msgstr ""
 
-#: network/forms.py:115
+#: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
 msgstr ""
 
-#: network/forms.py:118
+#: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
 msgstr ""
 
-#: network/forms.py:133
+#: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
 msgstr ""
 
-#: network/forms.py:135
+#: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
 msgstr ""
 
-#: network/forms.py:138
+#: network/forms.py:167
 #, fuzzy
 msgid "This is not a valid nameserver address"
 msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
 
-#: network/forms.py:140
+#: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
 msgstr ""
 
-#: network/forms.py:160
+#: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
 msgstr "Je nutné zadať názov DNS servera 2 pred vyplnením DNS servera 3"
 
-#: network/forms.py:163 network/forms.py:170 network/forms.py:181
+#: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
 msgstr "Vyžaduje sa pri použití DNS servera 3"
 
-#: network/forms.py:167
+#: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
 msgstr "Je nutné zadať názov DNS servera 1 pred vyplnením DNS servera 3"
 
-#: network/forms.py:178
+#: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Je nutné zadať názov DNS servera 1 pred vyplnením DNS servera 2"
 
-#: network/forms.py:193
+#: network/forms.py:229
 msgid "Parent Interface"
 msgstr "Rodičovské rozhranie"
 
-#: network/forms.py:202
-msgid "The name must be vlanXX where XX is a integer"
+#: network/forms.py:245
+#, fuzzy
+msgid "The name must be vlanXX where XX is an integer"
 msgstr "Názov musí byť vlanXX kde XX je číslo"
 
-#: network/forms.py:208
+#: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
 msgstr "VLAN tagy od 1 až 4095 vrátane"
 
-#: network/forms.py:233
+#: network/forms.py:275
 msgid "Physical NICs in the LAGG"
 msgstr "Fyzické sieťové karty v LAGG"
 
-#: network/forms.py:241
+#: network/forms.py:286
 #, fuzzy
 msgid "LAGG Physical NIC"
 msgstr "Fyzická NIC"
 
-#: network/forms.py:298
+#: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
 msgstr "Sieť '%s' nie je platná, očakávané CIDR."
 
-#: network/forms.py:360
+#: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
 msgstr ""
 
-#: network/forms.py:362
+#: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
 msgstr ""
 
-#: network/forms.py:367
+#: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
 msgstr ""
 
-#: network/forms.py:369
+#: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
 msgstr ""
 
-#: network/forms.py:372
+#: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
 msgstr ""
 
-#: network/forms.py:374
+#: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
 
-#: network/models.py:42 services/models.py:1202
+#: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
 msgstr "Meno hostiteľa (Hostname)"
@@ -1014,8 +1006,8 @@ msgstr "DNS server 2"
 msgid "Nameserver 3"
 msgstr "DNS server 3"
 
-#: network/models.py:76 network/models.py:77 network/nav.py:21
-#: templates/network/index.html:3
+#: network/models.py:76 network/models.py:77 network/nav.py:22
+#: templates/network/index.html:2
 msgid "Global Configuration"
 msgstr "Hlavné nastavenia"
 
@@ -1068,17 +1060,17 @@ msgstr "IPv6 adresa"
 msgid "IPv6 Prefix Length"
 msgstr ""
 
-#: network/models.py:130 network/models.py:359
+#: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
 msgid "Options"
 msgstr "Nastavenia"
 
-#: network/models.py:156 network/models.py:212 network/models.py:311
+#: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
 msgstr "Rozhranie"
 
-#: network/models.py:157 templates/network/index.html:9
+#: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
 msgstr "Rozhrania"
 
@@ -1091,86 +1083,86 @@ msgstr "Alias"
 msgid "Aliases"
 msgstr "Alias"
 
-#: network/models.py:266 templates/network/lagg.html:5
-#: templates/network/vlan.html:5
+#: network/models.py:265 templates/network/lagg.html:5
+#: templates/network/vlan.html:4
 msgid "Virtual Interface"
 msgstr "Virtuálne rozhranie"
 
-#: network/models.py:267
+#: network/models.py:266
 #, fuzzy
-msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
+msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr "Názov rozhrania musí byť vlanXX, kde XX je číslo"
 
-#: network/models.py:272 templates/network/lagg_members.html:5
-#: templates/network/vlan.html:6
+#: network/models.py:271 templates/network/lagg_members.html:5
+#: templates/network/vlan.html:5
 msgid "Physical Interface"
 msgstr "Fyzické rozhranie"
 
-#: network/models.py:275 templates/network/vlan.html:7
+#: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
 msgstr "VLAN Tag"
 
-#: network/models.py:279 network/models.py:393 services/models.py:76
-#: services/models.py:863 storage/models.py:194 storage/models.py:335
-#: storage/views.py:226 templates/network/staticroute.html:7
-#: templates/network/vlan.html:8 templates/system/cronjob.html:4
-#: templates/system/smarttest.html:5
+#: network/models.py:278 network/models.py:392 services/models.py:86
+#: services/models.py:916 storage/models.py:211 storage/models.py:352
+#: storage/views.py:248 templates/network/staticroute.html:7
+#: templates/network/vlan.html:7 templates/system/cronjob.html:4
+#: templates/system/smarttest.html:6
 msgid "Description"
 msgstr "Popis"
 
-#: network/models.py:293 templates/network/index.html:24
+#: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
 msgstr "VLAN"
 
-#: network/models.py:294
+#: network/models.py:293
 msgid "VLANs"
 msgstr "VLANy"
 
-#: network/models.py:315
+#: network/models.py:314
 msgid "Protocol Type"
 msgstr "Typ protokolu"
 
-#: network/models.py:320 network/models.py:373 templates/network/index.html:14
+#: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
 msgstr "Agregácie spojenia"
 
-#: network/models.py:321 network/models.py:374 network/nav.py:33
+#: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
 msgstr "Linka agregácie"
 
-#: network/models.py:347
+#: network/models.py:346
 msgid "LAGG Interface group"
 msgstr "Rozhranie skupiny LAGG"
 
-#: network/models.py:350
+#: network/models.py:349
 msgid "LAGG Priority Number"
 msgstr "LAGG prioritné číslo"
 
-#: network/models.py:355
+#: network/models.py:354
 msgid "Physical NIC"
 msgstr "Fyzická NIC"
 
-#: network/models.py:385
+#: network/models.py:384
 msgid "Destination network"
 msgstr "Cieľová sieť"
 
-#: network/models.py:389 templates/network/staticroute.html:6
+#: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
 msgstr "Brána"
 
-#: network/models.py:398
+#: network/models.py:397
 msgid "Static Route"
 msgstr "Statická cesta"
 
-#: network/models.py:399 templates/network/index.html:19
+#: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
 msgstr "Statická cesta"
 
-#: network/nav.py:6 templates/menubar.html:13
+#: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
 msgstr "Sieť"
 
-#: network/nav.py:13 templates/network/index.html:29
+#: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
 msgstr "Prehľad sietí"
 
@@ -1183,16 +1175,21 @@ msgstr "Vytvoriť linku agregácie"
 msgid "View Link Aggregations"
 msgstr "Zobraziť všetky linky agregácie"
 
-#: network/views.py:188
+#: network/views.py:197
 msgid "LAGG successfully added"
 msgstr "LAGG úspešne pridaný"
 
-#: plugins/forms.py:73
+#: plugins/forms.py:55
+#, fuzzy
+msgid "This IP is already in use."
+msgstr "Používateľ s takýmto menom už existuje."
+
+#: plugins/forms.py:92
 #, fuzzy
 msgid "Place to temporarily place PBI file"
 msgstr "Miesto na dočasné uloženie firmware súboru"
 
-#: plugins/forms.py:73
+#: plugins/forms.py:93
 #, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
@@ -1201,254 +1198,311 @@ msgstr ""
 "Systém použije toto miesto ako dočasné úložisko pre firmware súbor než bude "
 "aplikovaný."
 
-#: plugins/forms.py:87
+#: plugins/forms.py:119
 #, fuzzy
 msgid "PBI file to be installed"
 msgstr "Nový obraz ktorý bude inštalovaný"
 
-#: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
-msgid "SHA256 sum for the PBI file"
-msgstr "SHA256 kontrolný súčet obrazu"
+#: plugins/forms.py:173
+msgid "You must turn off Plugins service before proceeding"
+msgstr ""
 
-#: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
-#: system/forms.py:447
-#, fuzzy
-msgid "Invalid checksum"
-msgstr "Neplatný firmware alebo kontrolný súčet"
+#: plugins/forms.py:183
+#, fuzzy, python-format
+msgid "The path %s already exists"
+msgstr "Používateľ s takýmto menom už existuje."
 
-#: plugins/forms.py:115
+#: plugins/forms.py:189
+msgid "The full jail path cannot exceed 76 characters"
+msgstr ""
+
+#: plugins/forms.py:200
+msgid "The plugins jail path cannot be a subset of the plugins archive path."
+msgstr ""
+
+#: plugins/forms.py:205 services/forms.py:148
+msgid "The plugins archive path cannot be a subset of the plugins jail path."
+msgstr ""
+
+#: plugins/forms.py:214 services/models.py:803
+msgid "Plugins jail path"
+msgstr ""
+
+#: plugins/forms.py:218
+#, fuzzy
+msgid "Jail IPv4 Address"
+msgstr "Emailová adresa"
+
+#: plugins/forms.py:222
+#, fuzzy
+msgid "Jail IPv4 Netmask"
+msgstr "IPv4 sieťová maska"
+
+#: plugins/forms.py:228
+msgid "Plugins archive Path"
+msgstr ""
+
+#: plugins/forms.py:244
 msgid "Plugins Jail PBI"
 msgstr ""
 
-#: plugins/forms.py:129
-msgid "Jail path cannot contain plugins path."
+#: plugins/forms.py:286 templates/plugins/mountpoints.html:6
+msgid "Mounted?"
 msgstr ""
 
-#: plugins/forms.py:131
-msgid "Plugins path cannot contain jail path."
+#: plugins/forms.py:314
+msgid "The full path cannot exceed 88 characters"
 msgstr ""
 
-#: plugins/models.py:36 templates/plugins/plugin_info.html:5
+#: plugins/forms.py:336
+#, fuzzy, python-format
+msgid "The path could not be mounted %s"
+msgstr "Cache nemôže byť obnovená"
+
+#: plugins/forms.py:341
+#, fuzzy, python-format
+msgid "The path could not be umounted %s"
+msgstr "Cache nemôže byť obnovená"
+
+#: plugins/models.py:38 templates/plugins/plugin_info.html:5
+#: templates/services/plugins.html:30
 #, fuzzy
 msgid "Plugin name"
 msgstr "Doména"
 
-#: plugins/models.py:37
+#: plugins/models.py:39
 msgid "Name of the plugin"
 msgstr ""
 
-#: plugins/models.py:42
+#: plugins/models.py:44
 msgid "Plugin info name"
 msgstr ""
 
-#: plugins/models.py:43
+#: plugins/models.py:45
 msgid "Info name of the plugin"
 msgstr ""
 
-#: plugins/models.py:48
+#: plugins/models.py:50
 msgid "Plugin version"
 msgstr ""
 
-#: plugins/models.py:49
+#: plugins/models.py:51
 #, fuzzy
 msgid "Version of the plugin"
 msgstr "sifrovanie spojenia"
 
-#: plugins/models.py:54 plugins/models.py:55
+#: plugins/models.py:57
+#, fuzzy
+msgid "Plugin API version"
+msgstr "IP adresa kontrolera"
+
+#: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
 msgstr ""
 
-#: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
-msgid "Plugin uname"
-msgstr "Doména"
-
-#: plugins/models.py:61
-msgid "UName of the plugin"
-msgstr ""
-
-#: plugins/models.py:66 plugins/models.py:67
-#: templates/plugins/plugin_info.html:13
-msgid "Plugin view"
-msgstr ""
-
-#: plugins/models.py:72 plugins/models.py:73
-#: templates/plugins/plugin_info.html:17
-msgid "Plugin icon"
-msgstr ""
-
-#: plugins/models.py:77 plugins/models.py:78
-#: templates/plugins/plugin_info.html:21
+#: plugins/models.py:67 plugins/models.py:68
+#: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
 msgstr ""
 
-#: plugins/models.py:84 plugins/models.py:85
-#: templates/plugins/plugin_info.html:25
+#: plugins/models.py:74 plugins/models.py:75
+#: templates/plugins/plugin_info.html:13
 #, fuzzy
 msgid "Plugin IP address"
 msgstr "IP adresa kontrolera"
 
-#: plugins/models.py:90 plugins/models.py:91
-#: templates/plugins/plugin_info.html:29
+#: plugins/models.py:80 plugins/models.py:81
+#: templates/plugins/plugin_info.html:17
 #, fuzzy
 msgid "Plugin TCP port"
 msgstr "TCP Port"
 
-#: plugins/models.py:96 plugins/models.py:97
+#: plugins/models.py:86
 #, fuzzy
-msgid "Path to plugin"
-msgstr "Cesta k prípojnému bodu"
+msgid "Plugin archive path"
+msgstr "Doména"
 
-#: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
-#: services/models.py:790 services/models.py:791 services/nav.py:166
-#: templates/menubar.html:33 templates/services/index.html:99
+#: plugins/models.py:87 services/models.py:830
+msgid "Path where the plugins are saved after installation"
+msgstr ""
+
+#: plugins/models.py:96 plugins/models.py:97 services/models.py:835
+#: services/models.py:836 services/nav.py:215 templates/services/core.html:96
+#: templates/services/index.html:16
 msgid "Plugins"
 msgstr ""
 
-#: plugins/nav.py:40
-#, fuzzy
-msgid "Control Plugins"
-msgstr "Riadiace služby"
-
-#: plugins/nav.py:48
-msgid "Configure Plugins"
+#: plugins/models.py:112 templates/plugins/mountpoints.html:4
+msgid "Source"
 msgstr ""
 
-#: plugins/views.py:69
+#: plugins/models.py:117 templates/network/staticroute.html:5
+#: templates/plugins/mountpoints.html:5
+msgid "Destination"
+msgstr "Cieľ"
+
+#: plugins/models.py:121 storage/models.py:456
+msgid "Mount Point"
+msgstr "Prípojný bod"
+
+#: plugins/models.py:122
+#, fuzzy
+msgid "Mount Points"
+msgstr "Prípojný bod"
+
+#: plugins/views.py:52
 #, fuzzy
 msgid "Plugin successfully updated."
 msgstr "%s úspešne aktualizovaný."
 
-#: plugins/views.py:95
+#: plugins/views.py:80
 #, fuzzy
 msgid "Plugin successfully removed."
 msgstr "Zväzok úspešne pridaný."
 
-#: plugins/views.py:99
+#: plugins/views.py:86
 msgid "Unable to remove plugin."
 msgstr ""
 
-#: services/forms.py:65
+#: plugins/views.py:101
+#, fuzzy
+msgid "Plugin successfully updated"
+msgstr "%s úspešne aktualizovaný."
+
+#: plugins/views.py:130
+#, fuzzy
+msgid "Plugin successfully installed"
+msgstr "%s úspešne aktualizovaný."
+
+#: plugins/views.py:201
+msgid "There was a problem importing the jail."
+msgstr ""
+
+#: plugins/views.py:204
+#, fuzzy
+msgid "Jail successfully imported."
+msgstr "%s úspešne aktualizovaný."
+
+#: services/forms.py:70
 #, fuzzy
 msgid "This is not a valid mask"
 msgstr "Používateľ %s neexistuje."
 
-#: services/forms.py:82
+#: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
 "Toto pole je vyžadované pre voľbu \"Povoliť prehliadanie domovských adresárov"
 "\"."
 
-#: services/forms.py:85
+#: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
 msgstr "Toto pole je vyžadované pre \"Domovské adresáre\"."
 
-#: services/forms.py:93
+#: services/forms.py:106
 #, fuzzy
 msgid "The CIFS service failed to reload."
 msgstr "Službu NFS sa nepodarilo načítať."
 
-#: services/forms.py:102
+#: services/forms.py:118
 msgid "The AFP service failed to reload."
 msgstr "Službu AFP sa nepodarilo načítať."
 
-#: services/forms.py:111
+#: services/forms.py:130
 msgid "The NFS service failed to reload."
 msgstr "Službu NFS sa nepodarilo načítať."
 
-#: services/forms.py:130
-msgid "The plugins path cannot be the same or reside within jail path."
-msgstr ""
-
-#: services/forms.py:139
+#: services/forms.py:157
 #, fuzzy
 msgid "This IP already exists."
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: services/forms.py:146
+#: services/forms.py:164
 #, fuzzy
-msgid "The Plugins service failed to reload."
+msgid "The Plugins Jail service failed to reload."
 msgstr "Službu AFP sa nepodarilo načítať."
 
-#: services/forms.py:151
+#: services/forms.py:169
 msgid "File Permission"
 msgstr "Prístupové práva súboru"
 
-#: services/forms.py:152
+#: services/forms.py:170
 msgid "Directory Permission"
 msgstr "Prístupové práva adresára"
 
-#: services/forms.py:180
+#: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr "Táto hodnota musí byť medzi 1024 a 65535, vrátane. 0 pre predvolené"
 
-#: services/forms.py:186
+#: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr "Táto hodnota musí byť medzi 1024 a 65535, vrátane. 0 pre predvolené."
 
-#: services/forms.py:205
+#: services/forms.py:215
+msgid "This must be higher than minimum passive port"
+msgstr ""
+
+#: services/forms.py:235
 msgid "This field is required for anonymous login"
 msgstr "Toto pole je vyžadované pre anonymné prihlásenie"
 
-#: services/forms.py:212
+#: services/forms.py:242
 msgid "The ftp service failed to start."
 msgstr "Službu ftp sa nepodarilo spustiť."
 
-#: services/forms.py:224
+#: services/forms.py:257
 msgid "The tftp service failed to reload."
 msgstr "Službu tftp sa nepodarilo načítať."
 
-#: services/forms.py:231
+#: services/forms.py:272
 msgid "The SSH service failed to reload."
 msgstr "Službu SSH sa nepodarilo načítať."
 
-#: services/forms.py:243 services/forms.py:268
+#: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
 msgstr "Službu Rsync sa nepodarilo načítať."
 
-#: services/forms.py:253
+#: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
 msgstr "Názov nesmie obsahovať lomítka alebo ukončujúce hranaté zátvorky."
 
-#: services/forms.py:272
+#: services/forms.py:320
 #, fuzzy
 msgid "Confirm Password"
 msgstr "Zmeniť heslo"
 
-#: services/forms.py:300
+#: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
 msgstr "Službu DynamicDNS sa nepodarilo načítať."
 
-#: services/forms.py:310
+#: services/forms.py:374
 #, fuzzy
 msgid "This is not a valid e-mail address"
 msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
 
-#: services/forms.py:312
+#: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
 
-#: services/forms.py:317
+#: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
 msgstr ""
 
-#: services/forms.py:323
+#: services/forms.py:389
 msgid "The SNMP service failed to reload."
 msgstr "Službu SNMP sa nepodarilo načítať."
 
-#: services/forms.py:335 services/models.py:503 services/models.py:852
-#: services/models.py:913 services/models.py:1040
+#: services/forms.py:404 services/models.py:525 services/models.py:905
+#: services/models.py:967 services/models.py:1119
 msgid "Port"
 msgstr "Port"
 
-#: services/forms.py:345
+#: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr ""
 
-#: services/forms.py:356 services/forms.py:965
+#: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
@@ -1456,221 +1510,235 @@ msgstr[0] "Email %(email)s nie je platný"
 msgstr[1] "Nasledujúce emaily nie sú platné: %(email)s"
 msgstr[2] ""
 
-#: services/forms.py:365
+#: services/forms.py:437
 #, fuzzy
 msgid "The UPS service failed to reload."
 msgstr "Službu NFS sa nepodarilo načítať."
 
-#: services/forms.py:369
+#: services/forms.py:442
 #, fuzzy
 msgid "Confirm Administrator Password"
 msgstr "Heslo administrátora"
 
-#: services/forms.py:392
+#: services/forms.py:479
 msgid "The activedirectory service failed to reload."
 msgstr "Službu activedirectory sa nepodarilo znova načítať."
 
-#: services/forms.py:403
+#: services/forms.py:494
 msgid "The ldap service failed to reload."
 msgstr "Službu ldap sa nepodarilo znovu načítať."
 
 # Heslo po cz/neviem ako to ma byt spravne
-#: services/forms.py:409 services/models.py:572
+#: services/forms.py:498 services/models.py:598
 msgid "Secret"
 msgstr "Heslo"
 
 # Neviem ci to mam brat takto, zisiel by sa nahlad zdrojaku, :)
-#: services/forms.py:411 services/models.py:573
+#: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
 msgstr "Cieľová strana neznáma."
 
-#: services/forms.py:412
+#: services/forms.py:501
 msgid "Secret (Confirm)"
 msgstr "Heslo (Potvrdenie)"
 
-#: services/forms.py:414 services/forms.py:422
+#: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
 msgstr "Zadajte rovnaké heslo pre overenie vyššie."
 
-#: services/forms.py:415
+#: services/forms.py:504
 msgid "Initiator Secret"
 msgstr "Heslo iniciátora"
 
-#: services/forms.py:417 services/models.py:579 services/models.py:584
+#: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr ""
 "Heslo na strane iniciátora. (pre overovanie vzájomného CHAP (mutual CHAP))"
 
-#: services/forms.py:420
+#: services/forms.py:509
 msgid "Initiator Secret (Confirm)"
 msgstr "Heslo iniciátora (Potvrdenie)"
 
-#: services/forms.py:429
+#: services/forms.py:544
 msgid "Secret does not match"
 msgstr "Heslo se neshoduje"
 
-#: services/forms.py:444 services/forms.py:445
+#: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
 msgstr "Peer heslo je požadovane ak je nastaveny peer použivateľ."
 
-#: services/forms.py:448
+#: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
 msgstr "Peer heslo nemože byť rovnaké ako použivateľské heslo."
 
-#: services/forms.py:451 services/forms.py:454
+#: services/forms.py:566 services/forms.py:569
 #, fuzzy
 msgid "The peer user is required if you set a peer secret."
 msgstr "Peer heslo je požadovane ak je nastaveny peer použivateľ."
 
-#: services/forms.py:471 services/forms.py:518 services/forms.py:635
-#: services/forms.py:693 services/forms.py:796 services/forms.py:818
-#: services/forms.py:885 services/forms.py:940 services/models.py:492
-#: services/models.py:709
+#: services/forms.py:582 services/forms.py:614 services/forms.py:756
+#: services/forms.py:821 services/forms.py:927 services/forms.py:955
+#: services/forms.py:1027 services/forms.py:1086 services/models.py:514
+#: services/models.py:744
 msgid "The iSCSI service failed to reload."
 msgstr "Službu iSCSI sa nepodarilo načítať."
 
-#: services/forms.py:510
+#: services/forms.py:606
 msgid "LUN already exists in the same target."
 msgstr "LUN už existuje pre rovnaký cieľ."
 
-#: services/forms.py:521 services/models.py:367
+#: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
 msgstr "Controller Auth skupina"
 
-#: services/forms.py:522 services/models.py:368
+#: services/forms.py:620
+#, fuzzy
 msgid ""
-"The istgtcontrol can access the targets with correct user and secret in "
+"The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
 "Istgcontrol môže pristupovať k cieľom so správnym používateľom a hesom v "
 "špecifickej Auth skupine."
 
-#: services/forms.py:523 services/models.py:262
+#: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
 msgstr "Discovery Auth skupina"
 
 # nie som si isty s %()d
-#: services/forms.py:553
+#: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Táto hodnota musí byť medzi %(start)d a %(end)d, vrátane."
 
-#: services/forms.py:561
+#: services/forms.py:669
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Toto pole je povinné, ak je zisťujúca metóda nastavená na CHAP alebo "
 "vzájomný CHAP (CHAP Mutual)."
 
-#: services/forms.py:609
+#: services/forms.py:717
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
 
-#: services/forms.py:647
+#: services/forms.py:730
+#, fuzzy
+msgid "This is not a valid network"
+msgstr "Používateľ %s neexistuje."
+
+#: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
 msgstr "Je potrebné zadať cestu k súboru, nie adresár."
 
-#: services/forms.py:651
+#: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
 msgstr ""
 "Je potrebné zadať súbor, vo vnútri zväzku (volume) alebo dátovej sady "
 "(dataset)."
 
-#: services/forms.py:655
+#: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
 "Cesta ka rozšíreniu musí byť vo vnútri prípojného bode zväzku (volume)/sady "
 "dát (dataset)."
 
-#: services/forms.py:669
+#: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
 "Táto hodnota môže byť veľkosť v bytoch, alebo môže byť s príponou KB, MB, "
 "GB, TB"
 
-#: services/forms.py:676
+#: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:698
+#: services/forms.py:830
 msgid "Disk device"
 msgstr "Disk zariadenie"
 
-#: services/forms.py:812
+#: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Váše ID Portal skupiny (Portal Group ID) nesmie byť vyššie ako %d"
 
-#: services/forms.py:859
+#: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
 msgstr "Vaše ID skupiny nemôže byť vyššie ako %d"
 
-#: services/forms.py:877
+#: services/forms.py:1019
 #, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
 
-#: services/forms.py:888
+#: services/forms.py:1032
 msgid "Authentication Group number"
 msgstr "Číslo autentifikačnej skupiny"
 
-#: services/forms.py:917
+#: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
-#: services/forms.py:943
+#: services/forms.py:1091
 msgid "Delete underlying file"
 msgstr "Vymazať obsiahnutý súbor"
 
-#: services/forms.py:974
+#: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
+#: templates/plugins/plugin_confirm_delete.html:10
+#: templates/storage/snapshot_confirm_delete.html:3
+#: templates/storage/snapshot_confirm_delete_bulk.html:5
+#: templates/storage/zvol_confirm_delete.html:7
+msgid "Are you sure you want to delete?"
+msgstr "Ste si istý, že chcete zmazať?"
+
+#: services/forms.py:1147
 #, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
 msgstr "Službu SNMP sa nepodarilo načítať."
 
-#: services/models.py:42
+#: services/models.py:51
 msgid "Service"
 msgstr "Služba"
 
-#: services/models.py:43
+#: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
 msgstr "Názov služby, by mal byť automaticky generovaný pri jeho zostavovaní"
 
-#: services/models.py:46
+#: services/models.py:55
 msgid "Enable Service"
 msgstr "Aktivovať Službu"
 
-#: services/models.py:49 services/models.py:50 services/nav.py:7
-#: templates/menubar.html:28 templates/services/index.html:3
+#: services/models.py:58 services/models.py:59 services/nav.py:8
+#: templates/menubar.html:27
 msgid "Services"
 msgstr "Služby"
 
-#: services/models.py:62
+#: services/models.py:72
 msgid "Authentication Model"
 msgstr "Autentifikačný Model"
 
-#: services/models.py:63
+#: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
 "Používanie Active Directory alebo LDAP autentifikácie je nadradené tejto "
 "voľbe"
 
-#: services/models.py:67
+#: services/models.py:77
 msgid "NetBIOS name"
 msgstr "NetBIOS meno"
 
-#: services/models.py:71
+#: services/models.py:81
 msgid "Workgroup"
 msgstr "Pracovná skupina (Workgroup)"
 
-#: services/models.py:72
+#: services/models.py:82
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
@@ -1678,35 +1746,35 @@ msgstr ""
 "Pracovná skupina ku ktorej sa bude server hlásiť pri požiadavkách klientov "
 "(najviac 15 znakov)."
 
-#: services/models.py:78
+#: services/models.py:88
 msgid "Server description. This can usually be left blank."
 msgstr "Popis servera. Obvykle prázdne."
 
-#: services/models.py:84
+#: services/models.py:94
 msgid "DOS charset"
 msgstr "Znaková sada DOS"
 
-#: services/models.py:90
+#: services/models.py:100
 msgid "UNIX charset"
 msgstr "Znaková sada UNIX"
 
-#: services/models.py:96
+#: services/models.py:106
 msgid "Log level"
 msgstr "Logovacia úroveň"
 
-#: services/models.py:99
+#: services/models.py:109
 msgid "Local Master"
 msgstr "Lokálny Master (Local Master)"
 
-#: services/models.py:101
+#: services/models.py:111
 msgid "Time Server for Domain"
 msgstr "Časový server pre doménu"
 
-#: services/models.py:106 services/models.py:208
+#: services/models.py:116 services/models.py:214
 msgid "Guest account"
 msgstr "Účet hosťa (Guest)"
 
-#: services/models.py:107 services/models.py:209
+#: services/models.py:117 services/models.py:215
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1721,119 +1789,111 @@ msgstr ""
 "sa musí nachádzať v súbore s heslami, ale platné prihlásenie nie je "
 "vyžadované. Používateľ root nemôže byť použitý ako hosťovský účet."
 
-#: services/models.py:110
-msgid "Allow guest access"
-msgstr "Povoliť prístup hosťa"
-
-#: services/models.py:112
-msgid "Only allow guest access"
-msgstr "Povoliť iba hosťovský (guest) pristup"
-
-#: services/models.py:115 services/models.py:959
+#: services/models.py:121 services/models.py:1013
 msgid "File mask"
 msgstr "Maska súboru"
 
-#: services/models.py:117
+#: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "Táto voľba slúži na nahradenie masky pri tvorbe súboru (0666 v predvolenom "
 "nastavení)."
 
-#: services/models.py:121 services/models.py:965
+#: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
 msgstr "Maska adresára"
 
-#: services/models.py:123
+#: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
 "Použite túto voľbu na nahradenie masky pri tvorbe adresárov (0777 v "
 "predvolenom nastavení)."
 
-#: services/models.py:126
+#: services/models.py:132
 msgid "Large RW support"
 msgstr "Large RW podpora"
 
-#: services/models.py:128
+#: services/models.py:134
 msgid "Send files with sendfile(2)"
 msgstr "Posielať súbory pomocou sendfile(2)"
 
-#: services/models.py:130
+#: services/models.py:136
 msgid "EA Support"
 msgstr "Podpora EA"
 
-#: services/models.py:132
+#: services/models.py:138
 msgid "Support DOS File Attributes"
 msgstr "Podporovať DOS atribúty pre súbory"
 
-#: services/models.py:134
+#: services/models.py:140
 msgid "Allow Empty Password"
 msgstr "Povoliť prázdne heslá"
 
-#: services/models.py:136 services/models.py:751 services/models.py:823
-#: services/models.py:1019 services/models.py:1290 services/models.py:1354
+#: services/models.py:142 services/models.py:787 services/models.py:874
+#: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
 msgstr "Pomocné parametre"
 
-#: services/models.py:138
+#: services/models.py:144
 #, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
 msgstr "Tieto parametre budú pridané do [Global] sekcie v smb.conf"
 
-#: services/models.py:141
+#: services/models.py:147
 msgid "Enable home directories"
 msgstr "Aktivovať domovské adresáre"
 
-#: services/models.py:142
+#: services/models.py:148
 msgid "Enable/disable home directories for samba user."
 msgstr "Aktivuje/deaktivuje domovské adresáre pre samba používateľa."
 
-#: services/models.py:145
+#: services/models.py:151
 msgid "Enable home directories browsing"
 msgstr "Aktivovať prehliadanie domovských adresárov"
 
-#: services/models.py:146
+#: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
 "Aktivuje/deaktivuje prehliadanie domovských adresárov pre samba používateľa."
 
-#: services/models.py:150
+#: services/models.py:156
 msgid "Home directories"
 msgstr "Domovské adresáre"
 
-#: services/models.py:154
+#: services/models.py:160
 #, fuzzy
 msgid "Homes auxiliary parameters"
 msgstr "Pomocné parametre"
 
-#: services/models.py:156
+#: services/models.py:162
 #, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
 msgstr "Tieto parametre sú pridané do [Share] sekcie v smb.conf"
 
-#: services/models.py:159
+#: services/models.py:165
 msgid "Unix Extensions"
 msgstr ""
 
-#: services/models.py:161
+#: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
-#: services/models.py:165
+#: services/models.py:171
 msgid "Enable AIO"
 msgstr "Aktivovať AIO"
 
-#: services/models.py:166
+#: services/models.py:172
 msgid "Enable/disable AIO support."
 msgstr "Aktivuje/deaktivuje AIO podporu."
 
-#: services/models.py:170
+#: services/models.py:176
 msgid "Minimum AIO read size"
 msgstr "Minimálna veľkosť AIO čítania"
 
-#: services/models.py:171
+#: services/models.py:177
 #, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
@@ -1841,11 +1901,11 @@ msgstr ""
 "Samba bude čítať nesynchrónne ak veľkosť požiadavky bude väčšia ako táto "
 "hodnota. Predvolene nastavená veľkosť čítania je 1."
 
-#: services/models.py:176
+#: services/models.py:182
 msgid "Minimum AIO write size"
 msgstr "Minimálna veľkosť AIO zápisu"
 
-#: services/models.py:177
+#: services/models.py:183
 #, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
@@ -1853,64 +1913,64 @@ msgstr ""
 "Samba bude zapisovať nesynchrónne ak veľkosť požiadavky bude väčšia ako táto "
 "hodnota. Predvolene nastavená veľkosť zápisu je 1."
 
-#: services/models.py:181
+#: services/models.py:187
 msgid "Zeroconf share discovery"
 msgstr ""
 
-#: services/models.py:183
+#: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
-#: services/models.py:187 services/models.py:188
-#: templates/services/index.html:29
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:197
+#: services/models.py:203
 msgid "Server Name"
 msgstr "Názov servera"
 
-#: services/models.py:198
+#: services/models.py:204
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr "Názov servera. Pre predvolený názov nechajte toto pole prázdne."
 
-#: services/models.py:201
+#: services/models.py:207
 msgid "Guest Access"
 msgstr "Prístup hosťa"
 
-#: services/models.py:202
+#: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
 msgstr ""
 "Povolenie hosťovského prístupu ku všetkým apple zdieľaným adresárom na tomto "
 "zariadeni."
 
-#: services/models.py:213
+#: services/models.py:219
 #, fuzzy
 msgid "Max. Connections"
 msgstr "Maximálny počet pripojení"
 
-#: services/models.py:215
+#: services/models.py:221
 #, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
 "Maximálny počet pripojení v každej relácii (8 v predvolenom nastavení)."
 
-#: services/models.py:220 services/models.py:221
-#: templates/services/index.html:7
+#: services/models.py:226 services/models.py:227
+#: templates/services/core.html:4
 msgid "AFP"
 msgstr "AFP"
 
-#: services/models.py:230
+#: services/models.py:236
 msgid "Number of servers"
 msgstr "Počet serverov"
 
-#: services/models.py:231
+#: services/models.py:237
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
@@ -1918,11 +1978,11 @@ msgstr ""
 "Určuje koľko serverov vytvoriť. Malo by ich dostatok na zvládnutie "
 "maximalnej hladiny súbežných klientov, typicky štyri až šesť."
 
-#: services/models.py:235
+#: services/models.py:241
 msgid "Asynchronous mode"
 msgstr "Asynchrónny režim"
 
-#: services/models.py:236
+#: services/models.py:242
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
@@ -1930,16 +1990,16 @@ msgstr ""
 "Aktivovať asynchrónny režim, ktorý pomože zvýšit výkon sieti rýchlostí "
 "väčších ako gigabit."
 
-#: services/models.py:241 services/models.py:242
-#: templates/services/index.html:88
+#: services/models.py:247 services/models.py:248
+#: templates/services/core.html:85
 msgid "NFS"
 msgstr "NFS"
 
-#: services/models.py:251
+#: services/models.py:257
 msgid "Base Name"
 msgstr "Základný názov"
 
-#: services/models.py:252
+#: services/models.py:258
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
@@ -1947,48 +2007,48 @@ msgstr ""
 "Základný názov (napr. iqn.2007-09.jp.ne.peach.istgt, detaily nájdete v RFC "
 "3720 a 3721) bude pridané k názvu cieľu, ktorý nazačína 'iqn.'"
 
-#: services/models.py:258
+#: services/models.py:264
 msgid "Discovery Auth Method"
 msgstr "Discovery Auth metóda"
 
-#: services/models.py:269
+#: services/models.py:275
 msgid "I/O Timeout"
 msgstr "Čas vypršania I/O požiadavky"
 
-#: services/models.py:270
+#: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
 msgstr "Čas vypršania I/O požiadavky v sekundách (30 v predvolenom nastavení)"
 
-#: services/models.py:275
+#: services/models.py:281
 msgid "NOPIN Interval"
 msgstr "NOPIN Interval"
 
-#: services/models.py:276
+#: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
 msgstr "NOPIN odosielací interval v sekundách (20 v predvolenom nastavení)."
 
-#: services/models.py:281
+#: services/models.py:287
 msgid "Max. sessions"
 msgstr "Maximálny počet relácií"
 
-#: services/models.py:282
+#: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr "Maximálny počet relácií držaných súčasne (16 v predvolenom nastavení)."
 
-#: services/models.py:287
+#: services/models.py:293
 msgid "Max. connections"
 msgstr "Maximálny počet pripojení"
 
-#: services/models.py:288
+#: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
 msgstr ""
 "Maximálny počet pripojení v každej relácii (8 v predvolenom nastavení)."
 
-#: services/models.py:293
+#: services/models.py:299
 msgid "Max. pre-send R2T"
 msgstr "Maximálny počet pre-send R2T"
 
-#: services/models.py:294
+#: services/models.py:300
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
@@ -1996,124 +2056,134 @@ msgstr ""
 "Maximálny počet pre-send R2T v každom pripojení (32 v predvolenom "
 "nastavení). Aktuálne číslo je limitované do QueueDepth cieľa."
 
-#: services/models.py:299
+#: services/models.py:305
 msgid "MaxOutstandingR2T"
 msgstr "MaxOutstandingR2T"
 
-#: services/models.py:300
+#: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
 msgstr "iSCSI počiatočný parameter (16 v predvolenom nastavení). "
 
-#: services/models.py:305
+#: services/models.py:311
 msgid "First burst length"
 msgstr "First burst length"
 
-#: services/models.py:306
+#: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
 msgstr "iSCSI počiatočný parameter (65536 v predvolenom nastavení)."
 
-#: services/models.py:311
+#: services/models.py:317
 msgid "Max burst length"
 msgstr "Max burst length"
 
-#: services/models.py:312 services/models.py:318
+#: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
 msgstr "iSCSI počiatočný parameter (262144 v predvolenom nastavení)."
 
-#: services/models.py:317
+#: services/models.py:323
 msgid "Max receive data segment length"
 msgstr "Maximálna dĺžka segmentu prijatých dát"
 
-#: services/models.py:323
+#: services/models.py:329
 msgid "DefaultTime2Wait"
 msgstr "DefaultTime2Wait"
 
-#: services/models.py:324
+#: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
 msgstr "iSCSI počiatočný parameter (2 v predvolenom nastavení)."
 
-#: services/models.py:329
+#: services/models.py:335
 msgid "DefaultTime2Retain"
 msgstr "DefaultTime2Retain"
 
-#: services/models.py:330
+#: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
 msgstr "iSCSI počiatočný parameter (60 v predvolenom nastavení)."
 
-#: services/models.py:335
+#: services/models.py:341
 msgid "Enable LUC"
 msgstr "Aktivovať LUC"
 
-#: services/models.py:339
+#: services/models.py:345
 msgid "Controller IP address"
 msgstr "IP adresa kontrolera"
 
-#: services/models.py:340
+#: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
 "Logická jednotka, kontroler IP adresa (127.0.0.1(localhost) predvolené)"
 
-#: services/models.py:345
+#: services/models.py:351
 msgid "Controller TCP port"
 msgstr "TCP port kontrolera"
 
-#: services/models.py:346
+#: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Logická jednotka, kontrolér TCP port (3261 predvolene)"
 
-#: services/models.py:352
-msgid "Controller Authorized netmask"
+#: services/models.py:358
+#, fuzzy
+msgid "Controller Authorized Network"
 msgstr "Autorizovaná sieťová maska kontrolera"
 
-#: services/models.py:354
-msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
+#: services/models.py:360
+#, fuzzy
+msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
 "Autorizovaná sieťová maska Logickej Jednotky Kontroléra ( 255.255.255.0 "
 "predefinované)"
 
-#: services/models.py:361
+#: services/models.py:368
 msgid "Controller Auth Method"
 msgstr "Autentifikačná metóda kontrolera"
 
-#: services/models.py:362
+#: services/models.py:369
 msgid "The method can be accepted in the controller."
 msgstr "Metóda môže byť akceptovaná v kontroleri."
 
-#: services/models.py:374 services/models.py:375
+#: services/models.py:375
+msgid ""
+"The istgtcontrol can access the targets with correct user and secret in "
+"specific Auth Group."
+msgstr ""
+"Istgcontrol môže pristupovať k cieľom so správnym používateľom a hesom v "
+"špecifickej Auth skupine."
+
+#: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
 msgstr "Globálna konfigurácia cieľa"
 
-#: services/models.py:387
+#: services/models.py:396
 msgid "Extent Name"
 msgstr "Meno Extent-u"
 
-#: services/models.py:388
+#: services/models.py:397
 msgid "String identifier of the extent."
 msgstr "Reťazec na indentifikovanie extent-u."
 
-#: services/models.py:392
+#: services/models.py:401
 msgid "Extent Type"
 msgstr "Typ Extent-u"
 
-#: services/models.py:393
+#: services/models.py:402
 msgid "Type used as extent."
 msgstr "Typ používaných v extent-e."
 
-#: services/models.py:398
+#: services/models.py:407
 msgid "Path to the extent"
 msgstr "Cesta k extent-u"
 
-#: services/models.py:399
+#: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
 "Cesta k súboru (napr. / mnt/sharename/extent/extent0), používaná pre extent."
 
-#: services/models.py:404
+#: services/models.py:413
 msgid "Extent size"
 msgstr "Veľkosť Extent-u"
 
-#: services/models.py:405
+#: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
@@ -2121,9 +2191,9 @@ msgstr ""
 "Veľkosť extent-u, 0 znamená automatické nastavenie, čislo bez prípony je v "
 "bytoch, alebo použite príponu KB, MB, TB pre zjednodušenie."
 
-#: services/models.py:410 services/models.py:462 services/models.py:535
-#: services/models.py:1311 sharing/models.py:43 sharing/models.py:252
-#: system/models.py:740 system/models.py:778
+#: services/models.py:419 services/models.py:480 services/models.py:557
+#: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
+#: system/models.py:779 system/models.py:818
 #: templates/services/iscsi_authini.html:8
 #: templates/services/iscsi_portals.html:6 templates/services/rsyncmod.html:6
 #: templates/sharing/apple.html:13 templates/sharing/unix.html:13
@@ -2132,39 +2202,39 @@ msgstr ""
 msgid "Comment"
 msgstr "Komentár"
 
-#: services/models.py:411 services/models.py:463 services/models.py:536
+#: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
 msgstr "Tu možes zadať popis slúžiaci na identifikáciu."
 
-#: services/models.py:414 services/models.py:698
+#: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
 msgstr "Extent"
 
-#: services/models.py:457 services/models.py:635
+#: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
 msgstr "ID Portal skupiny"
 
-#: services/models.py:466 services/models.py:497
+#: services/models.py:485 services/models.py:519
 msgid "Portal"
 msgstr "Portal"
 
-#: services/models.py:500
+#: services/models.py:522
 #, fuzzy
 msgid "IP Address"
 msgstr "Adresa IPv4"
 
-#: services/models.py:512
+#: services/models.py:534
 #, fuzzy
 msgid "Portal IP"
 msgstr "Portal"
 
-#: services/models.py:522 templates/services/iscsi_authini.html:6
+#: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
 msgstr "Inicializátori"
 
-#: services/models.py:524
+#: services/models.py:546
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
@@ -2172,11 +2242,11 @@ msgstr ""
 "Iniciátor autorizovaný pre prístup na iSCSI cieľ. Berie meno alebo 'ALL' pre "
 "všetky iniciatori."
 
-#: services/models.py:528
+#: services/models.py:550
 msgid "Authorized network"
 msgstr "Autorizovaná sieť"
 
-#: services/models.py:530
+#: services/models.py:552
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
@@ -2184,94 +2254,94 @@ msgstr ""
 "Sieť autorizovaná pre prístup k iSCSI cieľu. IP alebo CIDR adresa alebo "
 "'ALL' pre akúkoľvek IP adresu."
 
-#: services/models.py:539
+#: services/models.py:562
 msgid "Initiator"
 msgstr "Iniciátor"
 
-#: services/models.py:568
+#: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
 "Používateľské meno na cieľovej strane. Predvolene je to väčšinou meno "
 "iniciátora."
 
-#: services/models.py:578
+#: services/models.py:604
 msgid "Peer User"
 msgstr "Peer používateľ"
 
-#: services/models.py:583
+#: services/models.py:609
 msgid "Peer Secret"
 msgstr "Peer heslo"
 
-#: services/models.py:587
+#: services/models.py:614
 msgid "Authorized Access"
 msgstr "Autorizovaný prístup"
 
-#: services/models.py:588
+#: services/models.py:615
 msgid "Authorized Accesses"
 msgstr "Autorizované prístupy"
 
-#: services/models.py:603
+#: services/models.py:632
 msgid "Target Name"
 msgstr "Názov cieľa"
 
-#: services/models.py:604
+#: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr "Základný názov bude pripojený automaticky, ak začína bez 'iqn.'."
 
-#: services/models.py:611
+#: services/models.py:640
 msgid "Target Alias"
 msgstr "Alias cieľa"
 
-#: services/models.py:612
+#: services/models.py:641
 msgid "Optional user-friendly string of the target."
 msgstr "Voliteľný názov cieľa pre používateľa."
 
-#: services/models.py:615 storage/models.py:318 storage/views.py:226
+#: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
 msgstr "Sériové"
 
-#: services/models.py:618
+#: services/models.py:647
 msgid "Serial number for the logical unit"
 msgstr "Sériové číslo pre logickú jednotku"
 
-#: services/models.py:624 system/models.py:633
+#: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_extents.html:6
-#: templates/services/iscsi_targets.html:7
+#: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
 msgstr "Typ"
 
-#: services/models.py:625
+#: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
 msgstr "Logická Jednotka Typu namapovaná na LUN"
 
-#: services/models.py:631
+#: services/models.py:660
 msgid "Target Flags"
 msgstr "Cieľové značky (Flags)"
 
-#: services/models.py:639
+#: services/models.py:668
 msgid "Initiator Group ID"
 msgstr "Iniciátor Skupina ID"
 
-#: services/models.py:645 services/models.py:657
+#: services/models.py:674 services/models.py:686
 msgid "Auth Method"
 msgstr "Autentifikačná metóda"
 
-#: services/models.py:646 services/models.py:658
+#: services/models.py:675 services/models.py:687
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr "Metóda môže byť prijatá cieľom. Auto znamená bez aj s autentifikáciou."
 
-#: services/models.py:650
+#: services/models.py:679
 msgid "Authentication Group ID"
 msgstr "ID autentifikačnej skupiny"
 
-#: services/models.py:663
+#: services/models.py:692
 msgid "Queue Depth"
 msgstr "Hĺbka fronty"
 
-#: services/models.py:664
+#: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
@@ -2279,11 +2349,11 @@ msgstr ""
 "0=vypnuté, 1-255=zapnuté, príkaz radenia do fronty so špecifikovanou hĺbkou. "
 "Odporúčaná hĺbka fronty je 32."
 
-#: services/models.py:669
+#: services/models.py:698
 msgid "Logical Block Size"
 msgstr "Veľkosť logického bloku"
 
-#: services/models.py:670
+#: services/models.py:699
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
@@ -2291,33 +2361,33 @@ msgstr ""
 "Môžete určiť dĺžku logického bloku (predvolene 512). Pre zachovanie "
 "kompatibility, odporúčaná dĺžka je 512."
 
-#: services/models.py:673 services/models.py:692
+#: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
 msgstr "Cieľ"
 
-#: services/models.py:693
+#: services/models.py:725
 msgid "Target this extent belongs to"
 msgstr "Cieľ extentu patrí"
 
-#: services/models.py:701
+#: services/models.py:734
 msgid "Target / Extent"
 msgstr "Cieľ/rozsah"
 
-#: services/models.py:702
+#: services/models.py:735
 msgid "Targets / Extents"
 msgstr "Ciele/Extenty"
 
-#: services/models.py:723
+#: services/models.py:759
 msgid "Provider"
 msgstr "Poskytovateľ"
 
-#: services/models.py:727
+#: services/models.py:763
 msgid "Domain name"
 msgstr "Doména"
 
-#: services/models.py:729
+#: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
@@ -2325,63 +2395,66 @@ msgstr ""
 "Alias pre názov hostiteľa. Táto voľba sa môže zobraziť viackrát, pre každú "
 "doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých aliasov."
 
-#: services/models.py:741
+#: services/models.py:777
 msgid "Update period"
 msgstr "Čas aktualizácie"
 
-#: services/models.py:743
+#: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
 msgstr ""
 
-#: services/models.py:747
+#: services/models.py:783
 msgid "Forced update period"
 msgstr "Čas nútenej aktualizácie"
 
-#: services/models.py:753 services/models.py:825
+#: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr "Tieto parametre budú pridané do globálnych nastavení v inadyn.conf."
 
-#: services/models.py:757 services/models.py:758
-#: templates/services/index.html:40
+#: services/models.py:793 services/models.py:794
+#: templates/services/core.html:37
 msgid "Dynamic DNS"
 msgstr "Dynamické DNS"
 
-#: services/models.py:768
-msgid "Plugins jail path"
-msgstr ""
-
-#: services/models.py:769
+#: services/models.py:804
 #, fuzzy
 msgid "Path to the plugins jail"
 msgstr "Cesta k extent-u"
 
-#: services/models.py:774 templates/services/plugins_info.html:9
+#: services/models.py:809
 #, fuzzy
 msgid "Jail name"
 msgstr "Doména"
 
-#: services/models.py:775
+#: services/models.py:810
 msgid "Name of the plugins jail"
 msgstr ""
 
-#: services/models.py:781
+#: services/models.py:815
+msgid ""
+"Jail name can only contain letters, numbers and hyphens. It must not end "
+"with a hyphen."
+msgstr ""
+
+#: services/models.py:821
 #, fuzzy
 msgid "Jail IP address"
 msgstr "Emailová adresa"
 
-#: services/models.py:784
-msgid "Plugins Path"
+#: services/models.py:825
+#, fuzzy
+msgid "Jail IP Netmask"
+msgstr "IPv4 sieťová maska"
+
+#: services/models.py:829
+msgid "Plugins archive path"
 msgstr ""
 
-#: services/models.py:785
-msgid "Path to the plugins directory"
-msgstr ""
-
-#: services/models.py:805
+#: services/models.py:852
 msgid "Location"
 msgstr "Lokácia"
 
-#: services/models.py:807
+#: services/models.py:854
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
@@ -2389,11 +2462,11 @@ msgstr ""
 "Informácia o lokácii, napr. fyzická lokácie systému: 'Poschodie budovy, "
 "Miestnosť xyzzy'."
 
-#: services/models.py:811
+#: services/models.py:859
 msgid "Contact"
 msgstr "Kontakt"
 
-#: services/models.py:813
+#: services/models.py:861
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
@@ -2401,61 +2474,61 @@ msgstr ""
 "Kontaktné informácie, napr. meno alebo email človeka zodpovedného za systém: "
 "'admin@emailova.adresa'."
 
-#: services/models.py:817
+#: services/models.py:867
 msgid "Community"
 msgstr "Komunita"
 
-#: services/models.py:818
+#: services/models.py:868
 msgid "In most cases, 'public' is used here."
 msgstr "Vo väčšine prípadov je tu použité 'public'."
 
-#: services/models.py:821
+#: services/models.py:871
 msgid "Send SNMP Traps"
 msgstr "Poslať SNMP trapy"
 
-#: services/models.py:829 services/models.py:830
-#: templates/services/index.html:125
+#: services/models.py:881 services/models.py:882
+#: templates/services/core.html:122
 msgid "SNMP"
 msgstr "SNMP"
 
-#: services/models.py:840 storage/models.py:313
+#: services/models.py:893 storage/models.py:330
 msgid "Identifier"
 msgstr "Identifikátor"
 
-#: services/models.py:841
+#: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr "Názov je použitý na unikátnu identifikáciu vášho UPS v tomto systéme."
 
-#: services/models.py:845
+#: services/models.py:898
 msgid "Driver"
 msgstr "Ovládač"
 
-#: services/models.py:848
+#: services/models.py:901
 msgid "The driver used to communicate with your UPS."
 msgstr "Ovládač je použitý na komunikáciu s vašim UPS."
 
-#: services/models.py:854
+#: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
 msgstr "Sériový alebo USB port, kde je vaše UPS pripojené."
 
-#: services/models.py:857
+#: services/models.py:910
 #, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
 msgstr "Pomocné parametre"
 
-#: services/models.py:859
+#: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
 msgstr ""
 
-#: services/models.py:870
+#: services/models.py:923
 msgid "Shutdown mode"
 msgstr "Metóda vypínania"
 
-#: services/models.py:874
+#: services/models.py:927
 msgid "Shutdown timer"
 msgstr "Časovač vypnutia"
 
-#: services/models.py:875
+#: services/models.py:928
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
@@ -2463,36 +2536,36 @@ msgstr ""
 "Čas v sekundách než je vypnutie inicializované. Ak UPS nabehne kým čas "
 "vyprší, vypnutie je zrušené."
 
-#: services/models.py:880
+#: services/models.py:933
 #, fuzzy
 msgid "UPS Master User Password"
 msgstr "Heslo zdieľania"
 
-#: services/models.py:884
+#: services/models.py:937
 msgid "Extra users (upsd.users)"
 msgstr ""
 
-#: services/models.py:887
+#: services/models.py:940
 msgid "Remote Monitor"
 msgstr "Vzdialený Monitor"
 
-#: services/models.py:889
+#: services/models.py:942
 msgid "Send Email Status Updates"
 msgstr "Odosielať emailové informácie o stave"
 
-#: services/models.py:892
+#: services/models.py:945
 msgid "To email"
 msgstr "Na email"
 
-#: services/models.py:894
+#: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr "Cieľová emailová adresa. Oddelte emailové adresy bodkočiarkou."
 
-#: services/models.py:898
+#: services/models.py:951
 msgid "Email Subject"
 msgstr ""
 
-#: services/models.py:899
+#: services/models.py:952
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
@@ -2500,107 +2573,107 @@ msgstr ""
 "Predmet emailu. Môžte použiť následujúce šablóny ktoré budu nahradené:<br /"
 "><ul><li>%d - Dátum</li><li>%h - Názov hostitela (Hostname)</li></ul>"
 
-#: services/models.py:903 services/models.py:904
-#: templates/services/index.html:169
+#: services/models.py:956 services/models.py:957
+#: templates/services/core.html:166
 msgid "UPS"
 msgstr "UPS"
 
-#: services/models.py:915
+#: services/models.py:969
 msgid "Port to bind FTP server."
 msgstr "Port na ktorom má požúvať FTP server."
 
-#: services/models.py:919
+#: services/models.py:973
 msgid "Clients"
 msgstr "Klienti"
 
-#: services/models.py:921
+#: services/models.py:975
 msgid "Maximum number of simultaneous clients."
 msgstr "Maximálny počet súčasne pripojených klientov."
 
-#: services/models.py:925
+#: services/models.py:979
 msgid "Connections"
 msgstr "Pripojenia"
 
-#: services/models.py:927
+#: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
 msgstr "Maximálny počet pripojení pre jednu IP adresu (0 = bez limitu)."
 
-#: services/models.py:931
+#: services/models.py:985
 msgid "Login Attempts"
 msgstr "Pokusy o prihlásenie"
 
-#: services/models.py:933
+#: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr "Maximálny počet pokusov o zadanie hesla pred odpojením."
 
-#: services/models.py:937
+#: services/models.py:991
 msgid "Timeout"
 msgstr "Čas požiadavky vypršal"
 
-#: services/models.py:939
+#: services/models.py:993
 msgid "Maximum idle time in seconds."
 msgstr "Maximálny čas nečinnosti v sekundách."
 
-#: services/models.py:942
+#: services/models.py:996
 msgid "Allow Root Login"
 msgstr "Povoliť prihlásenie roota"
 
-#: services/models.py:944
+#: services/models.py:998
 msgid "Allow Anonymous Login"
 msgstr "Povoliť anonymné prihlásenie"
 
-#: services/models.py:947 services/models.py:1314 sharing/models.py:47
-#: sharing/models.py:122 sharing/models.py:256 storage/forms.py:117
-#: system/models.py:428 templates/services/iscsi_dextents.html:7
+#: services/models.py:1001 services/models.py:1398 sharing/models.py:47
+#: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
+#: system/models.py:453 templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:14 templates/storage/volumes.html:59
 #: templates/storage/wizard.html:145
 msgid "Path"
 msgstr "Cesta"
 
-#: services/models.py:949
+#: services/models.py:1003
 msgid "Allow Local User Login"
 msgstr "Povoliť lokálne prihlásenie používateľa"
 
-#: services/models.py:952
+#: services/models.py:1006
 msgid "Banner"
 msgstr "Banner"
 
-#: services/models.py:954
+#: services/models.py:1008
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr "Uvítací banner zobrazený FTP serverom pri prvom pripojení."
 
-#: services/models.py:960 services/models.py:966
+#: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
 "Použite túto možnosť na nastavenie masky pri vytváraní súborov ​​(077 v "
 "predvolenom nastavení)."
 
-#: services/models.py:969
+#: services/models.py:1023
 msgid "Enable FXP"
 msgstr "Aktivovať FXP"
 
-#: services/models.py:971
+#: services/models.py:1025
 msgid "Allow Transfer Resumption"
 msgstr "Povoliť opätovanie nadväzovanie prenosov"
 
-#: services/models.py:973
+#: services/models.py:1027
 msgid "Always Chroot"
 msgstr "Vždy použiť chroot"
 
-#: services/models.py:975
+#: services/models.py:1029
 msgid "Require IDENT Authentication"
 msgstr "Požadovať IDENT autentifikáciu"
 
-#: services/models.py:977
+#: services/models.py:1031
 msgid "Require Reverse DNS for IP"
 msgstr "Požadovať reverzné DNS pre IP"
 
-#: services/models.py:979
+#: services/models.py:1033
 msgid "Masquerade address"
 msgstr "Adresa Maškarády(NAT)"
 
-#: services/models.py:982
+#: services/models.py:1036
 #, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
@@ -2611,11 +2684,11 @@ msgstr ""
 "za predpokladu, že IP adresa alebo DNS názov je vo funkcii NAT brány alebo "
 "presmerovača portov pre server."
 
-#: services/models.py:986
+#: services/models.py:1043
 msgid "Minimum passive port"
 msgstr "Minimálny pasívny port"
 
-#: services/models.py:988
+#: services/models.py:1044
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
@@ -2623,11 +2696,11 @@ msgstr ""
 "Minimálny port pridelovaný pre PASV dátové pripojenia (0 = použiť akýkoľvek "
 "port)."
 
-#: services/models.py:992
+#: services/models.py:1048
 msgid "Maximum passive port"
 msgstr "Maximálny pasívny port"
 
-#: services/models.py:993
+#: services/models.py:1049
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -2647,63 +2720,63 @@ msgstr ""
 "pripojení (napríklad, 49152-65534, IANA-registrovaný rozsah krátkodobých "
 "portov)."
 
-#: services/models.py:997
+#: services/models.py:1062
 msgid "Local user upload bandwidth"
 msgstr "Šírka upload pásma pre lokálnych používateľov"
 
-#: services/models.py:998
+#: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Šírka upload pásma pre lokálnych používateľov v KB/s. Nula znamená "
 "neobmedzená."
 
-#: services/models.py:1002
+#: services/models.py:1067
 msgid "Local user download bandwidth"
 msgstr "Šírka download pásma pre lokalnych používateľov"
 
-#: services/models.py:1003
+#: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Šírka download pásma pre lokálnych používateľov v KB/s. Nula znamená "
 "neobmedzená."
 
-#: services/models.py:1007
+#: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
 msgstr "Šírka upload pásma pre anonymných používateľov"
 
-#: services/models.py:1008
+#: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Šírka upload pásma anonymných používateľov v KB/s. Nula znamena neobmedzená."
 
-#: services/models.py:1012
+#: services/models.py:1077
 msgid "Anonymous user download bandwidth"
 msgstr "Šírka download pásma pre anonymných používateľov"
 
-#: services/models.py:1013
+#: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Šírka download pásma pre anonymných používateľov v KB/s. Nula znamená "
 "neobmedzená."
 
-#: services/models.py:1016
+#: services/models.py:1081
 msgid "Enable SSL/TLS"
 msgstr "Aktivovať SSL/TLS"
 
-#: services/models.py:1021
+#: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
 msgstr "Tieto parametre budú pridané do proftpd.conf."
 
-#: services/models.py:1025 services/models.py:1026
-#: templates/services/index.html:53
+#: services/models.py:1090 services/models.py:1091
+#: templates/services/core.html:50
 msgid "FTP"
 msgstr "FTP"
 
-#: services/models.py:1034
+#: services/models.py:1113
 msgid "Directory"
 msgstr "Adresár"
 
-#: services/models.py:1035
+#: services/models.py:1114
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
@@ -2711,11 +2784,11 @@ msgstr ""
 "Adresár obsahujúci súbory, ktoré chcete publikovať. Vzdialený počítač nemusí "
 "odosielať adresár ako súčasť prenosu."
 
-#: services/models.py:1038
+#: services/models.py:1117
 msgid "Allow New Files"
 msgstr "Povoliť nové súbory"
 
-#: services/models.py:1042
+#: services/models.py:1121
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
@@ -2723,15 +2796,15 @@ msgstr ""
 "Port na ktorom má počúvať. Predvolené nastavenie je počúvať na tftp porte "
 "špecifikovanom v /etc/services."
 
-#: services/models.py:1048
+#: services/models.py:1127
 msgid "Specifies the username which the service will run as."
 msgstr "Špecifikuje používateľské meno pod ktorým bude služba bežať."
 
-#: services/models.py:1052
+#: services/models.py:1131
 msgid "umask"
 msgstr "umask"
 
-#: services/models.py:1053
+#: services/models.py:1132
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
@@ -2739,32 +2812,32 @@ msgstr ""
 "Nastaviť umask pre novo vytvorené súbory na špecifikovanú hodnotu. "
 "Prednastavená hodnota je 022 (každý môže čítať, nikto nemôže zapisovať)."
 
-#: services/models.py:1057 services/models.py:1094 system/models.py:540
+#: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
 msgstr "Dodatočné voľby"
 
-#: services/models.py:1059
+#: services/models.py:1138
 msgid "Extra command line options (usually empty)."
 msgstr "Dodatočné voľby na príkazovom riadku (väčšinou prázdne)."
 
-#: services/models.py:1063 services/models.py:1064
-#: templates/services/index.html:158
+#: services/models.py:1142 services/models.py:1143
+#: templates/services/core.html:155
 msgid "TFTP"
 msgstr "TFTP"
 
-#: services/models.py:1072 services/models.py:1285
+#: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
 msgstr "TCP Port"
 
-#: services/models.py:1074
+#: services/models.py:1154
 msgid "Alternate TCP port. Default is 22"
 msgstr "Altnernatívny TCP port. Predvolený je 22"
 
-#: services/models.py:1077
+#: services/models.py:1157
 msgid "Login as Root with password"
 msgstr "Prihlásiť sa ako root s heslom"
 
-#: services/models.py:1078
+#: services/models.py:1158
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
@@ -2772,27 +2845,27 @@ msgstr ""
 "Deaktivované: Root sa môže prihlásiť iba autentifikáciou verejným kľúčom; "
 "Aktivované: Root sa môže prihlásiť heslom"
 
-#: services/models.py:1081
+#: services/models.py:1161
 msgid "Allow Password Authentication"
 msgstr "Povoliť autentifikáciu heslom"
 
-#: services/models.py:1083
+#: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
 msgstr "Povoliť presmerovanie TCP portov"
 
-#: services/models.py:1085
+#: services/models.py:1165
 msgid "Compress Connections"
 msgstr "Komprimovať pripojenia"
 
-#: services/models.py:1088
+#: services/models.py:1168
 msgid "Host Private Key"
 msgstr "Privátny kľúč počítaču"
 
-#: services/models.py:1090
+#: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
 msgstr "Vložte RSA PRIVÁTNY KĽÚČ v PEM formáte."
 
-#: services/models.py:1096
+#: services/models.py:1176
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
@@ -2800,82 +2873,82 @@ msgstr ""
 "Dodatočné voľby do /etc/ssh/sshd_config (obvykle prázdne). Upozornenie, "
 "nesprávne zadané voľby môžu zabrániť štartu služby SSH."
 
-#: services/models.py:1148 services/models.py:1149
-#: templates/services/index.html:147
+#: services/models.py:1228 services/models.py:1229
+#: templates/services/core.html:144
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1158
+#: services/models.py:1239
 msgid "Domain Controller Name"
 msgstr "Meno doménového kontrolera"
 
-#: services/models.py:1159
+#: services/models.py:1240
 msgid "AD or PDC name."
 msgstr "AD alebo PDC názov."
 
-#: services/models.py:1163
+#: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
 msgstr "Doména (DNS/Názov-domény)"
 
-#: services/models.py:1164
+#: services/models.py:1245
 msgid "Domain Name, eg example.com"
 msgstr "Doména, napr. nieco.sk"
 
-#: services/models.py:1168
+#: services/models.py:1249
 msgid "NetBIOS Name"
 msgstr "Názov počítača (NetBIOS názov)"
 
-#: services/models.py:1169
+#: services/models.py:1250
 #, fuzzy
 msgid "System hostname"
 msgstr "Názov hostitela v starom formáte, napr. NIECO"
 
-#: services/models.py:1173
+#: services/models.py:1254
 msgid "Workgroup Name"
 msgstr "Názov pracovnej skupiny"
 
-#: services/models.py:1174
+#: services/models.py:1255
 #, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Názov pracovnej skupiny v starom formáte, napr. NIECO"
 
-#: services/models.py:1178
+#: services/models.py:1259
 #, fuzzy
 msgid "Allow Trusted Domains"
 msgstr "Povoliť prístup hosťa"
 
-#: services/models.py:1182
+#: services/models.py:1263
 msgid "Administrator Name"
 msgstr "Meno administrátora"
 
-#: services/models.py:1183
+#: services/models.py:1264
 #, fuzzy
 msgid "Domain Administrator account name"
 msgstr "Heslo konta administrátora domény."
 
-#: services/models.py:1187
+#: services/models.py:1268
 msgid "Administrator Password"
 msgstr "Heslo administrátora"
 
-#: services/models.py:1188
+#: services/models.py:1269
 #, fuzzy
 msgid "Domain Administrator account password."
 msgstr "Heslo konta administrátora domény."
 
-#: services/models.py:1192 services/models.py:1193
-#: templates/services/index.html:18
+#: services/models.py:1273 services/models.py:1274
+#: templates/services/core.html:15
 msgid "Active Directory"
 msgstr "Active Directory"
 
-#: services/models.py:1204
+#: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
 msgstr "Názov alebo IP adresa LDAP serveru"
 
-#: services/models.py:1208
+#: services/models.py:1290
 msgid "Base DN"
 msgstr "Základné DN"
 
-#: services/models.py:1210
+#: services/models.py:1292
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
@@ -2883,15 +2956,15 @@ msgstr ""
 "Predvolené základné Distinguished Name (DN) používané pri vyhľadávaní, napr. "
 "dc=test,dc=k"
 
-#: services/models.py:1213
+#: services/models.py:1295
 msgid "Allow Anonymous Binding"
 msgstr "Povolenie anonymného Bindingu"
 
-#: services/models.py:1216
+#: services/models.py:1298
 msgid "Root bind DN"
 msgstr "Zviazať DN s root-om"
 
-#: services/models.py:1218
+#: services/models.py:1300
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
@@ -2899,27 +2972,27 @@ msgstr ""
 "Charakteristické meno, ktoré bude spojené s adresárom servera, napr. "
 "cn=admin, dc=test, dc=org"
 
-#: services/models.py:1222
+#: services/models.py:1304
 msgid "Root bind password"
 msgstr "Root bind heslo"
 
-#: services/models.py:1224
+#: services/models.py:1306
 msgid "The credentials with which to bind."
 msgstr "Údaje, s ktorými prepojiť."
 
-#: services/models.py:1229
+#: services/models.py:1311
 msgid "Password Encryption"
 msgstr "Šifrovanie hesla"
 
-#: services/models.py:1230
+#: services/models.py:1312
 msgid "The password change protocol to use."
 msgstr "Voľba protokolu na zmenu hesiel."
 
-#: services/models.py:1234
+#: services/models.py:1317
 msgid "User Suffix"
 msgstr "Prípona používateľa"
 
-#: services/models.py:1236
+#: services/models.py:1318
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
@@ -2927,11 +3000,11 @@ msgstr ""
 "Parameter špecifikuje príponu, ktorá je použitá pre používateľov keď sú "
 "pridávaní do LDAP adresára, napr. ou=Pouzivatelia"
 
-#: services/models.py:1240
+#: services/models.py:1323
 msgid "Group Suffix"
 msgstr "Prípona skupiny"
 
-#: services/models.py:1242
+#: services/models.py:1324
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
@@ -2939,11 +3012,11 @@ msgstr ""
 "Parameter špecifikuje príponu, ktorá je použitá pre skupiny keď sú pridávané "
 "do LDAP adresára, napr. ou=Skupiny"
 
-#: services/models.py:1246
+#: services/models.py:1328
 msgid "Password Suffix"
 msgstr "Prípona hesla"
 
-#: services/models.py:1248
+#: services/models.py:1330
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
@@ -2951,11 +3024,11 @@ msgstr ""
 "Tento parameter špecifikuje príponu, ktorá je použitá pre heslá keď sú "
 "pridávané do LDAP adresára, napr. ou=Hesla"
 
-#: services/models.py:1252
+#: services/models.py:1334
 msgid "Machine Suffix"
 msgstr "Prípona počítača"
 
-#: services/models.py:1254
+#: services/models.py:1336
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
@@ -2963,74 +3036,74 @@ msgstr ""
 "Tento parameter špecifikuje príponu, ktorá je použitá pre počítače keď sú "
 "pridávané do LDAP adresára, napr. ou=Pocitace"
 
-#: services/models.py:1259
+#: services/models.py:1341
 #, fuzzy
 msgid "Encryption Mode"
 msgstr "Autentifikačný Model"
 
-#: services/models.py:1260
+#: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr "Tento parameter špecifikuje či použiť SSL/TLS, napr. on/off/start_tls"
 
-#: services/models.py:1263
+#: services/models.py:1345
 msgid "Self signed certificate"
 msgstr "Certifikát podpísaný samým sebou"
 
-#: services/models.py:1265
+#: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
 msgstr "Vlož obsah tebou podpísaného certifikačného súboru tu."
 
-#: services/models.py:1269 sharing/models.py:81
+#: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
 msgstr "Pomocné Parametre"
 
-#: services/models.py:1271
+#: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
 msgstr "Tieto parametre budu pridané do ldap.conf."
 
-#: services/models.py:1275 services/models.py:1276
-#: templates/services/index.html:77
+#: services/models.py:1357 services/models.py:1358
+#: templates/services/core.html:74
 msgid "LDAP"
 msgstr "LDAP"
 
-#: services/models.py:1286
+#: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
 msgstr "Alternatívny TCP port. Predvolený je 873"
 
-#: services/models.py:1291
+#: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr "Tieto parametre budú pridané do [global] nastavení v rsyncd.conf"
 
-#: services/models.py:1295 services/models.py:1296
+#: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
 msgstr ""
 
-#: services/models.py:1306
+#: services/models.py:1390
 msgid "Module name"
 msgstr "Názov modulu"
 
-#: services/models.py:1315
+#: services/models.py:1399
 msgid "Path to be shared"
 msgstr "Cesta ktorá má byť zdieľaná"
 
-#: services/models.py:1321
+#: services/models.py:1405
 msgid "Access Mode"
 msgstr "Spôsob prístupu"
 
-#: services/models.py:1322
+#: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
 msgstr "Toto kontroluje aký prístup má vzdialený host do tohto modulu"
 
-#: services/models.py:1326
+#: services/models.py:1410
 msgid "Maximum connections"
 msgstr "Maximálny počet pripojení"
 
-#: services/models.py:1327
+#: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr ""
 "Maximálny počet súčasných pripojení. Predvolené nastavenie je 0 (neobmedzené)"
 
-#: services/models.py:1333
+#: services/models.py:1417
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
@@ -3042,7 +3115,7 @@ msgstr ""
 "toto determinuje aké oprávnenia sú dostupné. Nechaj toto pole prázdne pre "
 "použitie predvoleného nastavenia"
 
-#: services/models.py:1340
+#: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
@@ -3051,11 +3124,11 @@ msgstr ""
 "modulu by sa mal uskutočniť. Nechaj toto pole prázdne pre použitie "
 "predvoleného nastavenia"
 
-#: services/models.py:1344
+#: services/models.py:1428
 msgid "Hosts allow"
 msgstr "Povoliť hostiteľov"
 
-#: services/models.py:1345
+#: services/models.py:1429
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
@@ -3066,11 +3139,11 @@ msgstr ""
 "hostiteľov názvom alebo IP adresou. Ponechajte toto pole prázdne pre "
 "uplatnenie predvolených nastavení"
 
-#: services/models.py:1349
+#: services/models.py:1433
 msgid "Hosts deny"
 msgstr "Zakázať hostiteľov"
 
-#: services/models.py:1350
+#: services/models.py:1434
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -3087,39 +3160,39 @@ msgstr ""
 "špecifikujte parametre tých hostiteľov, ktoré majú mať povolený prístup. "
 "Ponechajte toto pole prázdne pre uplatnenie predvolených nastavení"
 
-#: services/models.py:1355
+#: services/models.py:1439
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr "Tieto parametre budú pridané do konfigurácie modulov v rsyncd.conf"
 
-#: services/models.py:1360
+#: services/models.py:1444
 msgid "Rsync Module"
 msgstr "Rsync modul"
 
-#: services/models.py:1361
+#: services/models.py:1445
 msgid "Rsync Modules"
 msgstr "Rsync moduly"
 
-#: services/models.py:1374
+#: services/models.py:1459
 msgid "Check interval"
 msgstr "Interval kontroly"
 
-#: services/models.py:1375
+#: services/models.py:1460
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
 "Nastaví interval medzi kontrolami disku na N minút. Predvolené nastavenie je "
 "30 minút."
 
-#: services/models.py:1381
+#: services/models.py:1466
 msgid "Power mode"
 msgstr "Režim energie"
 
-#: services/models.py:1385
+#: services/models.py:1470
 msgid "Difference"
 msgstr "Rozdiel"
 
-#: services/models.py:1386
+#: services/models.py:1471
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
@@ -3127,90 +3200,100 @@ msgstr ""
 "Oznám ak sa teplota zmenila o minimálne N stupňov Celziových od posledného "
 "oznámenia. 0 pre vypnutie"
 
-#: services/models.py:1390
+#: services/models.py:1475
 msgid "Informal"
 msgstr "Neformálne"
 
-#: services/models.py:1391 services/models.py:1396
+#: services/models.py:1476 services/models.py:1481
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
 "Oznám ak je teplota väčšia alebo rovná N stupňov Celzia. 0 pre vypnutie"
 
-#: services/models.py:1395
+#: services/models.py:1480
 msgid "Critical"
 msgstr "Kritické"
 
-#: services/models.py:1399
+#: services/models.py:1484
 msgid "Email to report"
 msgstr "Email pre oznamy"
 
-#: services/models.py:1402
+#: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr "Cieľova emailová adresa. Oddelte emailové adresy bodkočiarkou"
 
-#: services/models.py:1405 services/models.py:1406
-#: templates/services/index.html:136
+#: services/models.py:1490 services/models.py:1491
+#: templates/services/core.html:133
 msgid "S.M.A.R.T."
 msgstr "S.M.A.R.T."
 
-#: services/nav.py:14
+#: services/nav.py:15
 msgid "Control Services"
 msgstr "Riadiace služby"
 
-#: services/nav.py:52 templates/services/iscsi.html:32
+#: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
 msgstr "Rozšírenia zariadenia"
 
-#: services/nav.py:71
+#: services/nav.py:72
 msgid "Add Device Extent"
 msgstr "Pridať Extent zariadenia"
 
-#: services/nav.py:78
+#: services/nav.py:79
 #, fuzzy
 msgid "View Device Extents"
 msgstr "Zobraziť všetky Extenty zariadenia"
 
-#: services/nav.py:91
+#: services/nav.py:92
 #, fuzzy
 msgid "File Extents"
 msgstr "Rozšírenia zariadenia"
 
-#: services/nav.py:110 templates/services/iscsi_extents.html:39
+#: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 #, fuzzy
 msgid "Add File Extent"
 msgstr "Pridať Extent zariadenia"
 
-#: services/nav.py:117
+#: services/nav.py:118
 #, fuzzy
 msgid "View File Extents"
 msgstr "Zobraziť všetky Extenty"
 
-#: services/nav.py:130 templates/services/index.html:64
+#: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
 msgstr "iSCSI"
 
-#: services/nav.py:141 templates/services/index.html:114
+#: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
 msgstr "Rsync"
 
-#: services/nav.py:148 templates/services/rsyncmod.html:40
+#: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
 msgstr "Pridať rsync modul"
 
-#: services/nav.py:158
+#: services/nav.py:159
 #, fuzzy
 msgid "View Rsync Modules"
 msgstr "Rsync moduly"
 
-#: services/views.py:244
+#: services/nav.py:168 system/models.py:84 system/nav.py:28
+#: templates/system/settings.html:2
+msgid "Settings"
+msgstr "Nastavenia"
+
+#: services/nav.py:186
+#, fuzzy
+msgid "Management"
+msgstr "iSCSI Manažment"
+
+#: services/views.py:326
 msgid "The service could not be stopped."
 msgstr "Služba nemohla byť zastavená."
 
-#: services/views.py:251
+#: services/views.py:333
 msgid "The service could not be started."
 msgstr "Služba nemohla byť spustená."
 
@@ -3219,36 +3302,36 @@ msgstr "Služba nemohla byť spustená."
 msgid "Confirm Share Password"
 msgstr "Heslo zdieľania"
 
-#: sharing/forms.py:123
+#: sharing/forms.py:139
 #, fuzzy, python-format
 msgid "The path %s does not exist"
 msgstr "Cesta k extent-u"
 
-#: sharing/forms.py:140
+#: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
 msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
 
-#: sharing/forms.py:146
+#: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
 msgstr "IP %s' nie je platná."
 
-#: sharing/forms.py:157
+#: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
 msgstr "Maproot skupina požaduje Maproot užívateľa"
 
-#: sharing/forms.py:159
+#: sharing/forms.py:184
 msgid "Mapall group requires Mapall user"
 msgstr "Mapall skupina požaduje Mapall užívateľa"
 
-#: sharing/forms.py:162 sharing/forms.py:165
+#: sharing/forms.py:190 sharing/forms.py:195
 msgid "Maproot user/group disqualifies Mapall"
 msgstr "Maproot užívateľ/skupina diskvalifikuje Mapall"
 
-#: sharing/models.py:39 sharing/models.py:113 storage/models.py:44
-#: storage/models.py:309 storage/views.py:226
+#: sharing/models.py:39 sharing/models.py:113 storage/models.py:45
+#: storage/models.py:326 storage/views.py:246
 #: templates/network/interface.html:6 templates/network/summary.html:5
-#: templates/plugins/index.html:13 templates/services/rsyncmod.html:5
+#: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
 msgstr "Názov"
@@ -3600,21 +3683,31 @@ msgstr "AFP3 Unix Privs"
 msgid "Use AFP3 unix privileges."
 msgstr "Použi AFP3 unix privilégia."
 
-#: sharing/models.py:228
+#: sharing/models.py:222
+#, fuzzy
+msgid "Default file permission"
+msgstr "Prístupové práva súboru"
+
+#: sharing/models.py:227
+#, fuzzy
+msgid "Default directory permission"
+msgstr "Prístupové práva adresára"
+
+#: sharing/models.py:238
 #, fuzzy
 msgid "Apple (AFP) Share"
 msgstr "Apple Share"
 
-#: sharing/models.py:229
+#: sharing/models.py:239
 #, fuzzy
 msgid "Apple (AFP) Shares"
 msgstr "Apple share"
 
-#: sharing/models.py:258
+#: sharing/models.py:268
 msgid "Authorized network or IP addresses"
 msgstr "Autorizovaná sieť alebo IP adresa"
 
-#: sharing/models.py:259
+#: sharing/models.py:269
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3624,11 +3717,11 @@ msgstr ""
 "adries. Určte čísla sietí vo formáte 1.2.3.4/xx, kde xx je počet bitov "
 "sieťovej masky alebo zoznam IP adries v tvare 1.2.3.4 1.2.3.5 1.2.3.6."
 
-#: sharing/models.py:263
+#: sharing/models.py:273
 msgid "All Directories"
 msgstr "Všetky Priečinky"
 
-#: sharing/models.py:264
+#: sharing/models.py:274
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -3637,105 +3730,110 @@ msgstr ""
 "prípojnom bode. V opačnom prípade bude možné mountovať iba adresár najvyššej "
 "úrovne."
 
-#: sharing/models.py:267
+#: sharing/models.py:277
 msgid "Read Only"
 msgstr "Iba na čítanie"
 
-#: sharing/models.py:268
+#: sharing/models.py:278
 msgid "Export the share read only. Writes are not permitted."
 msgstr "Exportovať zdieľaný adresár iba na čítanie. Zápis nie je povolený."
 
-#: sharing/models.py:271 system/models.py:524
+#: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
 msgstr "Ticho"
 
-#: sharing/models.py:272
+#: sharing/models.py:282
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
 "Potlačiť varovania syslogu ak sa vyskytnú problémy s exportovaním tohto "
 "zdieľaného adrsára."
 
-#: sharing/models.py:275
+#: sharing/models.py:285
 msgid "Maproot User"
 msgstr "Maproot užívateľ"
 
-#: sharing/models.py:279
+#: sharing/models.py:289
 msgid "User to map root to"
 msgstr "Užívateľ mapuje roota do"
 
-#: sharing/models.py:282
+#: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Maproot skupina"
 
-#: sharing/models.py:286
+#: sharing/models.py:296
 msgid "Group to map root to"
 msgstr "Mapovať skupinu root do"
 
-#: sharing/models.py:289
+#: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Mapall užívateľ"
 
-#: sharing/models.py:293
+#: sharing/models.py:303
 msgid "User to map all users to"
 msgstr "Užívateľ mapujúci všetkých užívateľov do"
 
-#: sharing/models.py:296
+#: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Mapall skupina"
 
-#: sharing/models.py:300
+#: sharing/models.py:310
 msgid "Group to map all users to"
 msgstr "Skupina mapujúca všetkých užívateľov do"
 
-#: sharing/models.py:311
+#: sharing/models.py:321
 #, fuzzy
 msgid "Unix (NFS) Share"
 msgstr "Upraviť NFS Zdieľaný Adresár"
 
-#: sharing/models.py:312
+#: sharing/models.py:322
 #, fuzzy
 msgid "Unix (NFS) Shares"
 msgstr "UNIX Zdieľané Adresáre"
 
-#: sharing/nav.py:4 templates/menubar.html:23
+#: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
 msgstr "Zdieľanie"
 
-#: storage/forms.py:93
+#: storage/forms.py:105
 #, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr "Vložte kladné čislo (volitelne s príponou M, G, T) alebo 0"
 
-#: storage/forms.py:106
+#: storage/forms.py:120
 #, fuzzy, python-format
 msgid "%s is not a valid number"
 msgstr "Používateľ %s neexistuje."
 
-#: storage/forms.py:111 storage/forms.py:351 templates/storage/import.html:9
+#: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
 msgstr "Meno volumu/zväzku"
 
-#: storage/forms.py:115 templates/storage/wizard.html:65
+#: storage/forms.py:134 templates/storage/import.html:32
+#: templates/storage/wizard.html:54
+msgid "Filesystem type"
+msgstr "Typ súborového systému"
+
+#: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
 msgstr "Vynútiť 4096-bytovú veľkosť sektora"
 
-#: storage/forms.py:116 templates/storage/wizard.html:138
+#: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
 msgstr ""
 
-#: storage/forms.py:123
+#: storage/forms.py:163
 #, fuzzy
 msgid "Volume add"
 msgstr "Meno volumu/zväzku"
 
-#: storage/forms.py:131
+#: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
 
-#: storage/forms.py:186
+#: storage/forms.py:233
 #, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
@@ -3744,107 +3842,127 @@ msgstr ""
 "Názov zväzku musí začínať písmenom a môže obsahovať čísla a znaky \"-\" a \"_"
 "\"."
 
-#: storage/forms.py:188
+#: storage/forms.py:236
 #, fuzzy
 msgid "A volume with that name already exists."
 msgstr "Používateľ s takýmto menom už existuje."
 
-#: storage/forms.py:202
+#: storage/forms.py:252
 #, fuzzy
 msgid "Path does not exist."
 msgstr "Cesta k extent-u"
 
-#: storage/forms.py:205
+#: storage/forms.py:255
 msgid "Path is not a directory."
 msgstr ""
 
-#: storage/forms.py:219
+#: storage/forms.py:264
+msgid "You cannot select an existing ZFS volume and specify a new volume name"
+msgstr ""
+
+#: storage/forms.py:269
+msgid ""
+"You must specify a new volume name or select an existing ZFS volume to "
+"append a virtual device"
+msgstr ""
+
+#: storage/forms.py:276
 msgid "You must select a filesystem"
 msgstr "Musíte vybrať súborový systém"
 
-#: storage/forms.py:230 storage/forms.py:389 storage/forms.py:488
+#: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Zväzok s rovnakým názvom už existuje"
 
-#: storage/forms.py:236
+#: storage/forms.py:298
 msgid "\"log\" is a reserved word and thus cannot be used"
 msgstr "\"log\" je vyhradené slovo a preto nemôže byť použité"
 
-#: storage/forms.py:241
+#: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "Názov zväzku NEmôže začínať s c[0-9], mirror, raidz alebo spare."
 
-#: storage/forms.py:246
+#: storage/forms.py:311
 #, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
 msgstr "Vaše ID skupiny nemôže byť vyššie ako %d"
 
-#: storage/forms.py:250
+#: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
 msgstr ""
 
-#: storage/forms.py:352 storage/forms.py:430 storage/forms.py:838
+#: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
 msgstr "Členský disk"
 
-#: storage/forms.py:395 storage/forms.py:504
+#: storage/forms.py:479 storage/forms.py:592
 msgid "The selected disks were not verified for this import rules."
 msgstr "Vybraný disk nebol overený pre tieto importovacie pravidlá."
 
-#: storage/forms.py:403
+#: storage/forms.py:489
 msgid "An error occurred while labeling the disk."
 msgstr "Nastala nejaká chyba pri pokuse olejblovať disk."
 
-#: storage/forms.py:483
+#: storage/forms.py:518 storage/models.py:59 storage/models.py:201
+#: templates/storage/scrub.html:5 templates/storage/volumes.html:58
+msgid "Volume"
+msgstr "Zväzok (Volume)"
+
+#: storage/forms.py:570
 msgid "You must select a volume."
 msgstr "Musíš vybrať zväzok (volume)."
 
-#: storage/forms.py:545
+#: storage/forms.py:636
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
 
-#: storage/forms.py:573
+#: storage/forms.py:673
+#, fuzzy
+msgid "The SMART service failed to restart."
+msgstr "Službe sa nepodarilo reštartovať."
+
+#: storage/forms.py:679
 msgid "Dataset Name"
 msgstr "Meno datasetu"
 
-#: storage/forms.py:574 storage/forms.py:606 storage/forms.py:635
-#: storage/forms.py:665
+#: storage/forms.py:683 storage/forms.py:744 storage/forms.py:799
+#: storage/forms.py:850
 msgid "Compression level"
 msgstr "Level kompresie"
 
-#: storage/forms.py:575 storage/forms.py:607 storage/forms.py:636
+#: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
 msgstr "Zapnúť atime"
 
-#: storage/forms.py:576 storage/forms.py:608
+#: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
 msgstr "Kvota pre tento dataset"
 
-#: storage/forms.py:576 storage/forms.py:577 storage/forms.py:608
-#: storage/forms.py:609 storage/forms.py:637
+#: storage/forms.py:692 storage/forms.py:697 storage/forms.py:753
+#: storage/forms.py:758 storage/forms.py:808
 msgid "0=Unlimited; example: 1g"
 msgstr "0= bez limitu, príklad: 1g"
 
-#: storage/forms.py:577 storage/forms.py:609
+#: storage/forms.py:696 storage/forms.py:757
 msgid "Quota for this dataset and all children"
 msgstr "Kvóta pre tento dataset a všetky datasety pod ním"
 
-#: storage/forms.py:578 storage/forms.py:610
+#: storage/forms.py:701 storage/forms.py:762
 msgid "Reserved space for this dataset"
 msgstr "Rezervované miesto pre tento dataset"
 
-#: storage/forms.py:578 storage/forms.py:579 storage/forms.py:610
-#: storage/forms.py:611 storage/forms.py:638
+#: storage/forms.py:702 storage/forms.py:707 storage/forms.py:763
+#: storage/forms.py:768 storage/forms.py:813
 msgid "0=None; example: 1g"
 msgstr "0=Žiaden, príklad: 1g"
 
-#: storage/forms.py:579 storage/forms.py:611
+#: storage/forms.py:706 storage/forms.py:767
 msgid "Reserved space for this dataset and all children"
 msgstr "Rezervované miesto pre tento dataset a všetky jeho \"deti\""
 
-#: storage/forms.py:588
+#: storage/forms.py:716
 #, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
@@ -3853,34 +3971,34 @@ msgstr ""
 "Meno dataset-u musí začínať alfanumerickým znakom a môže obsahovať iba (-), "
 "(_), (:) a (.)."
 
-#: storage/forms.py:595 storage/forms.py:678
+#: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
 msgstr "Už máš dataset s rovnakým menom"
 
-#: storage/forms.py:637
+#: storage/forms.py:807
 #, fuzzy
 msgid "Quota for this volume"
 msgstr "Kvota pre tento dataset"
 
-#: storage/forms.py:638
+#: storage/forms.py:812
 #, fuzzy
 msgid "Reserved space for this volume"
 msgstr "Rezervované miesto pre tento dataset"
 
-#: storage/forms.py:663
+#: storage/forms.py:842
 msgid "ZFS Volume Name"
 msgstr "Meno ZFS zväzku"
 
-#: storage/forms.py:664
+#: storage/forms.py:845
 msgid "Size for this ZFS Volume"
 msgstr "Veľkosť tohto ZFS zväzku"
 
-#: storage/forms.py:664
+#: storage/forms.py:846
 #, fuzzy
 msgid "Example: 1g"
 msgstr "0=Žiaden, príklad: 1g"
 
-#: storage/forms.py:672
+#: storage/forms.py:859
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
@@ -3888,403 +4006,397 @@ msgstr ""
 "Meno ZFS zväzku musí začínať alfanumerickým znakom a môže obsahovať iba (-), "
 "(_), (:) a (.)."
 
-#: storage/forms.py:693
+#: storage/forms.py:882
 msgid "Owner (user)"
 msgstr "Vlastník (používateľ)"
 
-#: storage/forms.py:694
+#: storage/forms.py:883
 msgid "Owner (group)"
 msgstr "Vlastník (skupina)"
 
-#: storage/forms.py:695 templates/system/rsync.html:7
+#: storage/forms.py:884 templates/system/rsync.html:7
 msgid "Mode"
 msgstr "Mód"
 
-#: storage/forms.py:696
+#: storage/forms.py:885
 msgid "Type of ACL"
 msgstr ""
 
-#: storage/forms.py:702
+#: storage/forms.py:891
 msgid "Set permission recursively"
 msgstr "Nastaviť práva rekurzívne"
 
-#: storage/forms.py:773
+#: storage/forms.py:964
 msgid "At least one day must be chosen"
 msgstr "Aspoň jeden deň musí byť zvolený"
 
-#: storage/forms.py:778
+#: storage/forms.py:974
 msgid "Recursive snapshot"
 msgstr "Rekurzívny snímok"
 
-#: storage/forms.py:779
+#: storage/forms.py:975
 msgid "Snapshot Name"
 msgstr "Názov snímku"
 
-#: storage/forms.py:786
+#: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
 msgstr "Iba znaky [-a-zA-Z0-9_.] sú povolené v názve snímku (snapshot)"
 
-#: storage/forms.py:798
-msgid "Invalid prefix"
-msgstr "Neplatná predpona (prefix)"
-
-#: storage/forms.py:802
+#: storage/forms.py:996
 msgid "Snapshot"
 msgstr "Snímok"
 
-#: storage/forms.py:803
+#: storage/forms.py:997
 msgid "Clone Name (must be on same volume)"
 msgstr "Klonuj meno (misí byť na rovnakom zväzku)"
 
-#: storage/forms.py:818
+#: storage/forms.py:1026
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr "Iba [-a-zA-Z0-9_./] sú dovolené ako meno klonu"
 
-#: storage/forms.py:824
+#: storage/forms.py:1034
 msgid "Clone must be within the same volume"
 msgstr "Klonovanie musí byť s rovnakým zväzkom (volume)"
 
-#: storage/forms.py:903 storage/models.py:600
+#: storage/forms.py:1125 storage/models.py:631
 msgid "Remote hostname"
 msgstr "Názov vzdialeného hostiteľa"
 
-#: storage/forms.py:904 storage/models.py:604
+#: storage/forms.py:1126 storage/models.py:635
 #, fuzzy
 msgid "Remote port"
 msgstr "Vzdialený počítač"
 
-#: storage/forms.py:905 storage/models.py:608
+#: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
 msgstr "Vzdialený hostkľúč (hostkey)"
 
-#: storage/forms.py:948
+#: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
 msgstr ""
 
-#: storage/forms.py:957
+#: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
 msgstr ""
 
-#: storage/forms.py:967
-msgid "I'm aware this will destroy snapshots within this dataset"
-msgid_plural ""
-"I'm aware this will destroy all child datasets and snapshots within this "
-"dataset"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-
-#: storage/forms.py:978 system/forms.py:465 system/forms.py:512
+#: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
 msgstr "minúta"
 
-#: storage/forms.py:979 system/forms.py:384 system/forms.py:466
-#: system/forms.py:513
+#: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
+#: system/forms.py:634
 msgid "hour"
 msgstr "hodina"
 
-#: storage/forms.py:980 system/forms.py:385 system/forms.py:467
-#: system/forms.py:514
+#: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
+#: system/forms.py:637
 msgid "day of month"
 msgstr "deň v mesiaci"
 
-#: storage/models.py:49
+#: storage/forms.py:1269
+#, fuzzy
+msgid "Method"
+msgstr "Autentifikačná metóda"
+
+#: storage/forms.py:1271
+msgid "Quick"
+msgstr ""
+
+#: storage/forms.py:1272
+msgid "Full with zeros"
+msgstr ""
+
+#: storage/forms.py:1273
+msgid "Full with random data"
+msgstr ""
+
+#: storage/models.py:50
 msgid "File System Type"
 msgstr "Typ súborového systému"
 
-#: storage/models.py:58 storage/models.py:184 templates/storage/scrub.html:5
-#: templates/storage/volumes.html:58
-msgid "Volume"
-msgstr "Zväzok (Volume)"
-
-#: storage/models.py:188 templates/storage/scrub.html:6
+#: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
 msgstr ""
 
-#: storage/models.py:190
+#: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
 msgstr ""
 
-#: storage/models.py:200 system/models.py:320 system/models.py:468
+#: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
 msgstr "Minúta"
 
-#: storage/models.py:201 system/models.py:321 system/models.py:469
+#: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
 msgstr "Povolené sú hodnoty 0-59."
 
-#: storage/models.py:206 system/models.py:326 system/models.py:474
-#: system/models.py:643 templates/storage/scrub.html:8
+#: storage/models.py:223 system/models.py:349 system/models.py:501
+#: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
-#: templates/system/smarttest.html:6
+#: templates/system/smarttest.html:7
 msgid "Hour"
 msgstr "Hodina"
 
-#: storage/models.py:207 system/models.py:327 system/models.py:475
-#: system/models.py:644
+#: storage/models.py:224 system/models.py:350 system/models.py:502
+#: system/models.py:675
 msgid "Values 0-23 allowed."
 msgstr "Povolené hodnoty 0-23."
 
-#: storage/models.py:212 system/models.py:332 system/models.py:480
-#: system/models.py:648 templates/storage/scrub.html:9
+#: storage/models.py:229 system/models.py:355 system/models.py:507
+#: system/models.py:679 templates/storage/scrub.html:9
 #: templates/system/cronjob.html:7 templates/system/rsync.html:11
-#: templates/system/smarttest.html:7
+#: templates/system/smarttest.html:8
 msgid "Day of month"
 msgstr "Deň v mesiaci"
 
-#: storage/models.py:213 system/models.py:333 system/models.py:481
-#: system/models.py:649
+#: storage/models.py:230 system/models.py:356 system/models.py:508
+#: system/models.py:680
 msgid "Values 1-31 allowed."
 msgstr "Povolené hodnoty 1-31."
 
-#: storage/models.py:218 system/models.py:338 system/models.py:486
-#: system/models.py:654 templates/storage/scrub.html:10
+#: storage/models.py:235 system/models.py:361 system/models.py:513
+#: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
-#: templates/system/smarttest.html:8
+#: templates/system/smarttest.html:9
 msgid "Month"
 msgstr "Mesiac"
 
-#: storage/models.py:223 system/models.py:343 system/models.py:491
-#: system/models.py:659 templates/storage/scrub.html:11
+#: storage/models.py:240 system/models.py:366 system/models.py:518
+#: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
-#: templates/system/smarttest.html:9
+#: templates/system/smarttest.html:10
 msgid "Day of week"
 msgstr "Deň v týždni"
 
-#: storage/models.py:227 system/models.py:347 system/models.py:546
-#: system/models.py:745 system/models.py:783 templates/plugins/index.html:14
+#: storage/models.py:244 system/models.py:370 system/models.py:576
+#: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
+#: templates/system/sysctl.html:8 templates/system/tunable.html:8
 #, fuzzy
 msgid "Enabled"
 msgstr "Aktivovať AIO"
 
-#: storage/models.py:231
+#: storage/models.py:248
 msgid "ZFS Scrub"
 msgstr ""
 
-#: storage/models.py:232
+#: storage/models.py:249
 #, fuzzy
 msgid "ZFS Scrubs"
 msgstr "UNIX Zdieľané Adresáre"
 
-#: storage/models.py:246 system/models.py:367 system/models.py:569
+#: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
 msgstr "Každú minútu"
 
-#: storage/models.py:248 system/models.py:369 system/models.py:571
+#: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
 msgstr "Každých %s minút"
 
-#: storage/models.py:254 system/models.py:375 system/models.py:577
-#: system/models.py:664
+#: storage/models.py:271 system/models.py:399 system/models.py:608
+#: system/models.py:695
 msgid "Every hour"
 msgstr "Každú hodinu"
 
-#: storage/models.py:256 system/models.py:377 system/models.py:579
-#: system/models.py:666
+#: storage/models.py:273 system/models.py:401 system/models.py:610
+#: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
 msgstr "Každých %s hodín"
 
-#: storage/models.py:264 system/models.py:385 system/models.py:587
-#: system/models.py:674
+#: storage/models.py:281 system/models.py:409 system/models.py:618
+#: system/models.py:705
 #, python-format
 msgid "Every %s days"
 msgstr "Každých %s dní"
 
-#: storage/models.py:271 system/models.py:392 system/models.py:594
-#: system/models.py:681
+#: storage/models.py:288 system/models.py:416 system/models.py:625
+#: system/models.py:712
 msgid "Every month"
 msgstr "Každý mesiac"
 
-#: storage/models.py:289 system/models.py:410 system/models.py:608
-#: system/models.py:695
+#: storage/models.py:306 system/models.py:434 system/models.py:639
+#: system/models.py:726
 #, fuzzy
 msgid "Weekdays"
 msgstr "Deň v týždni"
 
-#: storage/models.py:291 system/models.py:412 system/models.py:610
-#: system/models.py:697
+#: storage/models.py:308 system/models.py:436 system/models.py:641
+#: system/models.py:728
 #, fuzzy
 msgid "Weekends"
 msgstr "Týždeň"
 
-#: storage/models.py:323
+#: storage/models.py:340
 #, fuzzy
 msgid "Multipath name"
 msgstr "Názov modulu"
 
-#: storage/models.py:329
+#: storage/models.py:346
 msgid "Multipath member"
 msgstr ""
 
-#: storage/models.py:342 storage/views.py:226
+#: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
 msgstr "Metóda prenosu"
 
-#: storage/models.py:348 storage/views.py:226
+#: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
 msgstr "HDD standby"
 
-#: storage/models.py:354 storage/views.py:226
+#: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
 msgstr "APM (Advanced Power Management)"
 
-#: storage/models.py:360 storage/views.py:226
+#: storage/models.py:377 storage/views.py:252
 msgid "Acoustic Level"
 msgstr "Akustický stupeň"
 
-#: storage/models.py:364 storage/views.py:226
+#: storage/models.py:381 storage/views.py:253
 msgid "Enable S.M.A.R.T."
 msgstr "Zapni S.M.A.R.T."
 
-#: storage/models.py:368
+#: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
 msgstr "S.M.A.R.T. extra možnosti"
 
-#: storage/models.py:425
+#: storage/models.py:444 system/models.py:660
 #, fuzzy
 msgid "Disks"
 msgstr "Disk"
 
-#: storage/models.py:438
-msgid "Mount Point"
-msgstr "Prípojný bod"
-
-#: storage/models.py:439
+#: storage/models.py:457
 msgid "Path to mount point"
 msgstr "Cesta k prípojnému bodu"
 
-#: storage/models.py:443
+#: storage/models.py:461
 msgid "Mount options"
 msgstr "Možnosti pripojenia"
 
-#: storage/models.py:444
+#: storage/models.py:462
 msgid "Enter Mount Point options here"
 msgstr "Možnosti/nastavenia prípojného bodu sem"
 
-#: storage/models.py:612
+#: storage/models.py:643
 msgid "Remote Replication Host"
 msgstr "Host pre vzdialenú replikáciu"
 
-#: storage/models.py:613
+#: storage/models.py:644
 msgid "Remote Replication Hosts"
 msgstr "Hosty pre vzdialenú replikáciu"
 
-#: storage/models.py:625 storage/models.py:679
+#: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 #, fuzzy
 msgid "Filesystem/Volume"
 msgstr "Typ súborového systému"
 
-#: storage/models.py:630
+#: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
 "Posledný snapshot poslaný na druhú stran (nechaj prázdne pre plnú replikáciu)"
 
-#: storage/models.py:633 system/models.py:433
+#: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
 msgstr "Vzdialený počítač"
 
-#: storage/models.py:636
+#: storage/models.py:669
 #, fuzzy
 msgid "Remote ZFS filesystem name"
 msgstr "Vzdialený ZFS súborový systém"
 
-#: storage/models.py:637
+#: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
 
-#: storage/models.py:641
+#: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr "Rekurzívne replikovať a zmazať zastralý snímok na vzdialenej strane"
 
-#: storage/models.py:645
+#: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
 
-#: storage/models.py:649
+#: storage/models.py:686
 msgid "Limit (kB/s)"
 msgstr ""
 
-#: storage/models.py:650
+#: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
 
-#: storage/models.py:654
+#: storage/models.py:692
 msgid "Replication Task"
 msgstr "Replikačná úloha"
 
-#: storage/models.py:655
+#: storage/models.py:693
 msgid "Replication Tasks"
 msgstr "Replikačné úlohy"
 
-#: storage/models.py:683 system/models.py:499 templates/storage/tasks.html:22
+#: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
 msgstr "Rekurzívne"
 
-#: storage/models.py:687
+#: storage/models.py:726
 msgid "Snapshot lifetime value"
 msgstr "Doba držania snapshotu"
 
-#: storage/models.py:693
+#: storage/models.py:732
 msgid "Snapshot lifetime unit"
 msgstr "Doba životnosti snapshot dielu"
 
-#: storage/models.py:697
+#: storage/models.py:736
 msgid "Begin"
 msgstr "Začiatok"
 
-#: storage/models.py:698
+#: storage/models.py:737
 #, fuzzy
 msgid "Do not snapshot before"
 msgstr "Zachovať snímok pre"
 
-#: storage/models.py:702
+#: storage/models.py:741
 msgid "End"
 msgstr "Koniec"
 
-#: storage/models.py:703
+#: storage/models.py:742
 #, fuzzy
 msgid "Do not snapshot after"
 msgstr "Zachovať snímok pre"
 
-#: storage/models.py:709
+#: storage/models.py:748
 msgid "Interval"
 msgstr "Interval"
 
-#: storage/models.py:710
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
+#: storage/models.py:749
+msgid "How much time has been passed between two snapshot attempts."
 msgstr ""
-"Koľko minút musí ubehnúť od poslednej snímky, aby bola urobená nová snímka."
 
-#: storage/models.py:716
+#: storage/models.py:756
 msgid "Occurrence"
 msgstr "Výskyt"
 
-#: storage/models.py:717
+#: storage/models.py:757
 msgid "How the task is repeated"
 msgstr "Ako je úloha opakovaná"
 
-#: storage/models.py:722
+#: storage/models.py:762
 msgid "Weekday"
 msgstr "Deň v týždni"
 
-#: storage/models.py:741
+#: storage/models.py:785
 msgid "Periodic Snapshot Task"
 msgstr "Periodická snapshot úloha"
 
-#: storage/models.py:742 templates/storage/index.html:14
+#: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
 msgstr "Periodické snapshot úlohy"
 
-#: storage/nav.py:5 templates/menubar.html:18
+#: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
 msgstr "Úložisko"
 
@@ -4343,149 +4455,155 @@ msgstr "Pridať periodickú snímku (Snapshot)"
 msgid "Volumes"
 msgstr "Zväzky"
 
-#: storage/nav.py:160 storage/nav.py:190 templates/storage/volumes.html:120
+#: storage/nav.py:140 storage/nav.py:188 templates/storage/volumes.html:120
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
 msgstr "Vytvoriť ZFS Dataset"
 
-#: storage/nav.py:173 storage/nav.py:198 templates/storage/volumes.html:139
+#: storage/nav.py:148 storage/nav.py:201 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
 #: templates/storage/volumes.html.py:222
 msgid "Change Permissions"
 msgstr "Zmeniť práva"
 
-#: storage/views.py:159 storage/views.py:187 storage/views.py:209
+#: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
 msgstr "Zväzok úspešne pridaný."
 
-#: storage/views.py:226
+#: storage/views.py:254
 #, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "S.M.A.R.T. extra možnosti"
 
-#: storage/views.py:317
+#: storage/views.py:371
 msgid "Dataset successfully added."
 msgstr "Sada dát úspešne pridaná."
 
-#: storage/views.py:351
+#: storage/views.py:418
 msgid "Dataset successfully edited."
 msgstr "Sada dát úspešne upravená."
 
-#: storage/views.py:353 storage/views.py:428
-msgid "An error occurred when setting the options"
-msgstr "Pri nastavovaní volieb sa vyskytla chyba"
-
-#: storage/views.py:374
+#: storage/views.py:448
 msgid "ZFS Volume successfully added."
 msgstr "ZFS zväzok úspešne pridaný."
 
-#: storage/views.py:389
+#: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr "Toto používa iscsi cieľ, prosím odstránte najprv iscsi cieľ."
 
-#: storage/views.py:392
+#: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
 msgstr "ZFS zväzok úspešne zničený."
 
-#: storage/views.py:426
+#: storage/views.py:524
 msgid "Native dataset successfully edited."
 msgstr "Natívny dataset úspešne editovaný."
 
-#: storage/views.py:440
+#: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
 msgstr "Oprávnenia prípojného bodu úspešne aktualizované."
 
-#: storage/views.py:457
+#: storage/views.py:564
 msgid "Dataset successfully destroyed."
 msgstr "Dataset úspešne zničený."
 
-#: storage/views.py:474
+#: storage/views.py:583
 msgid "Snapshot successfully deleted."
 msgstr "Snímok úspešne vymazaný."
 
-#: storage/views.py:494
+#: storage/views.py:604
 #, fuzzy
 msgid "Snapshots successfully deleted."
 msgstr "Snímok úspešne vymazaný."
 
-#: storage/views.py:505
+#: storage/views.py:616
 msgid "Rollback successful."
 msgstr "Návrat úspešný."
 
-#: storage/views.py:522
+#: storage/views.py:634
 msgid "Snapshot successfully added."
 msgstr "Snímka úspešne pridaná."
 
-#: storage/views.py:535
+#: storage/views.py:648
 msgid "Snapshot successfully taken."
 msgstr "Snímka(snapshot) úspešná."
 
-#: storage/views.py:550
+#: storage/views.py:664
 msgid "Snapshot successfully cloned."
 msgstr "Snímka úspešne naklonovaná."
 
-#: storage/views.py:567 storage/views.py:696
+#: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
 msgstr "Výmena disku bola inicializovaná."
 
-#: storage/views.py:569 storage/views.py:698
+#: storage/views.py:689 storage/views.py:840
 msgid "An error occurred."
 msgstr "Vyskytla sa chyba."
 
-#: storage/views.py:584
+#: storage/views.py:706
 msgid "Disk detach has been successfully done."
 msgstr "Odpojenie disku prebehlo úspešne."
 
-#: storage/views.py:599
+#: storage/views.py:723
 #, fuzzy
 msgid "Disk offline operation has been issued."
 msgstr "Výmena disku bola inicializovaná."
 
-#: storage/views.py:614
+#: storage/views.py:740
 msgid "Disk has been removed."
 msgstr ""
 
-#: storage/views.py:633
+#: storage/views.py:766
 #, fuzzy
 msgid "The volume has been successfully detached"
 msgstr "Zväzok bol úspešne exportovaný"
 
-#: storage/views.py:653
+#: storage/views.py:788
 msgid "The scrub process has begun"
 msgstr ""
 
-#: system/forms.py:161
+#: storage/views.py:922
+#, fuzzy
+msgid "Disk successfully wiped"
+msgstr "%s úspešne aktualizovaný."
+
+#: system/forms.py:201
 msgid "Language (Require UI reload)"
 msgstr "Jazyk (vyžaduje opätovné načítanie UI)"
 
-#: system/forms.py:171
+#: system/forms.py:214
 #, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Táto hodnota musí byť medzi 0 a 65535, vrátane."
 
-#: system/forms.py:173
+#: system/forms.py:216
 #, fuzzy
 msgid "Number is required."
 msgstr "Toto pole je požadované."
 
-#: system/forms.py:198
+#: system/forms.py:245
 msgid "Force"
 msgstr ""
 
-#: system/forms.py:217
+#: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
 msgstr ""
 
-#: system/forms.py:222
+#: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
 
-#: system/forms.py:391
+#: system/forms.py:496
+#, python-format
+msgid "The following disks already have tests for this type: %s"
+msgstr ""
+
+#: system/forms.py:507
 msgid "Place to temporarily place firmware file"
 msgstr "Miesto na dočasné uloženie firmware súboru"
 
-#: system/forms.py:391
+#: system/forms.py:508
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
@@ -4493,173 +4611,169 @@ msgstr ""
 "Systém použije toto miesto ako dočasné úložisko pre firmware súbor než bude "
 "aplikovaný."
 
-#: system/forms.py:399
+#: system/forms.py:523
 msgid "New image to be installed"
 msgstr "Nový obraz ktorý bude inštalovaný"
 
-#: system/forms.py:400 system/forms.py:431
+#: system/forms.py:524
 msgid "SHA256 sum for the image"
 msgstr "SHA256 kontrolný súčet obrazu"
 
-#: system/forms.py:413
+#: system/forms.py:538
 #, fuzzy
 msgid "Invalid firmware"
 msgstr "Neplatný firmware alebo kontrolný súčet"
 
-#: system/forms.py:430
-msgid "Service Pack image to be installed"
-msgstr "Service Pack obraz ktorý bude inštalovaný"
-
-#: system/forms.py:441
+#: system/forms.py:544
 #, fuzzy
-msgid "Invalid service pack"
-msgstr "Neplatný service pack alebo kontrolný súčet"
+msgid "Invalid checksum"
+msgstr "Neplatný firmware alebo kontrolný súčet"
 
-#: system/forms.py:458
+#: system/forms.py:557
 msgid "New config to be installed"
 msgstr "Nová konfigurácia ktorá bude inštalovaná"
 
-#: system/forms.py:582
+#: system/forms.py:718
 msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
 
-#: system/forms.py:655 system/forms.py:672
+#: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
 msgstr ""
 
-#: system/models.py:47
+#: system/models.py:44
 msgid "Protocol"
 msgstr "Protokol"
 
-#: system/models.py:53
+#: system/models.py:50
 #, fuzzy
 msgid "WebGUI Address"
 msgstr "Adresa IPv4"
 
-#: system/models.py:59
+#: system/models.py:56
 msgid "WebGUI Port"
 msgstr ""
 
-#: system/models.py:65
+#: system/models.py:62
 msgid "Language"
 msgstr "Jazyk"
 
-#: system/models.py:71
+#: system/models.py:67
+msgid "Console Keyboard Map"
+msgstr ""
+
+#: system/models.py:74
 msgid "Timezone"
 msgstr "Časové pásmo"
 
-#: system/models.py:77
+#: system/models.py:80
 msgid "Syslog server"
 msgstr ""
 
-#: system/models.py:81 system/nav.py:25 templates/system/settings.html:2
-msgid "Settings"
-msgstr "Nastavenia"
-
-#: system/models.py:88 templates/system/ntpserver.html:5
+#: system/models.py:92 templates/system/ntpserver.html:5
 #, fuzzy
 msgid "Address"
 msgstr "Adresa IPv4"
 
-#: system/models.py:92 templates/system/ntpserver.html:6
+#: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
 msgstr ""
 
-#: system/models.py:94
+#: system/models.py:98
 msgid ""
 "When the server is reachable, send a burst of eight packets instead of the "
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
 
-#: system/models.py:97
+#: system/models.py:104
 msgid "IBurst"
 msgstr ""
 
-#: system/models.py:99
+#: system/models.py:106
 msgid ""
 "When the server is unreachable, send a burst of eight packets instead of the "
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
 
-#: system/models.py:102 templates/system/ntpserver.html:8
+#: system/models.py:112 templates/system/ntpserver.html:8
 #, fuzzy
 msgid "Prefer"
 msgstr "Preferovaný"
 
-#: system/models.py:104
+#: system/models.py:114
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
 
-#: system/models.py:107 templates/system/ntpserver.html:9
+#: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
 msgstr ""
 
-#: system/models.py:110
+#: system/models.py:122
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
 
-#: system/models.py:113 templates/system/ntpserver.html:10
+#: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
 msgstr ""
 
-#: system/models.py:116
+#: system/models.py:130
 msgid ""
 "The maximum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
 
-#: system/models.py:128
+#: system/models.py:144
 #, fuzzy
 msgid "NTP Server"
 msgstr "NTP server 1"
 
-#: system/models.py:129
+#: system/models.py:145
 #, fuzzy
 msgid "NTP Servers"
 msgstr "NTP server 1"
 
-#: system/models.py:141
+#: system/models.py:157
 msgid "Enable Console Menu"
 msgstr "Aktivovať konzolové menu"
 
-#: system/models.py:143
+#: system/models.py:159
 msgid "Use Serial Console"
 msgstr "Použiť sériovú konzolu"
 
-#: system/models.py:145
+#: system/models.py:161
 msgid "Enable screen saver"
 msgstr "Aktivovať šetrič obrazovky"
 
-#: system/models.py:147
+#: system/models.py:163
 msgid "Automatically Check for New Firmware"
 msgstr "Automaticky kontrolovať nový firmware"
 
-#: system/models.py:149
+#: system/models.py:165
 msgid "Beep on boot"
 msgstr "Pípnuť pri boote"
 
-#: system/models.py:151
+#: system/models.py:167
 msgid "Enable Special System Tuning"
 msgstr "Zapnúť Špecíalny Túnovací Systém"
 
-#: system/models.py:153
+#: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Aktivovať powerd (pre šetrenie energie)"
 
-#: system/models.py:155
+#: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
 msgstr "Aktivovať Zeroconf/Bonjour"
 
-#: system/models.py:158
+#: system/models.py:174
 #, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
@@ -4668,37 +4782,37 @@ msgstr ""
 "Veľkosť swapu na každom disku v GiB, má efekt iba pri nových diskoch. Nemôže "
 "byť nulová"
 
-#: system/models.py:163
+#: system/models.py:179
 #, fuzzy
 msgid "Show console messages in the footer"
 msgstr "Zobrazovať správy z konzoly v pätičke (Požaduje opätovné načítanie UI)"
 
-#: system/models.py:166
+#: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
 msgstr "Ukáž tracebacks v prípade fatálnych chýb"
 
-#: system/models.py:169
+#: system/models.py:185
 msgid "Show advanced fields by default"
 msgstr ""
 
-#: system/models.py:172
+#: system/models.py:188
 #, fuzzy
 msgid "Enable autotune"
 msgstr "Zapnúť atime"
 
-#: system/models.py:180
+#: system/models.py:196
 msgid "MOTD banner"
 msgstr "MOTD bannet"
 
-#: system/models.py:184 templates/system/settings.html:5
+#: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
 msgstr "Pokročilé"
 
-#: system/models.py:193
+#: system/models.py:209
 msgid "From email"
 msgstr "Email odosielateľa"
 
-#: system/models.py:194
+#: system/models.py:210
 #, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
@@ -4707,11 +4821,11 @@ msgstr ""
 "Emailová adresa, ktorú bude systém používať ako adresu odosielateľa pre "
 "posielané maily, napr: freenas@mojadomena.sk"
 
-#: system/models.py:199
+#: system/models.py:216
 msgid "Outgoing mail server"
 msgstr "Mailový server pre odosielanie"
 
-#: system/models.py:200
+#: system/models.py:217
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
@@ -4719,187 +4833,187 @@ msgstr ""
 "Názov alebo IP adresa ktorá bude prijímať naše maily, napríklad mail.nieco."
 "sk alebo 192.168.1.1"
 
-#: system/models.py:206
+#: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
 msgstr "Celé číslo z 1 - 65535, obvykle bude 25, 465 alebo 587"
 
-#: system/models.py:207
+#: system/models.py:226
 msgid "Port to connect to"
 msgstr "Port na pripojenie"
 
-#: system/models.py:213
+#: system/models.py:232
 msgid "encryption of the connection"
 msgstr "sifrovanie spojenia"
 
-#: system/models.py:214
+#: system/models.py:233
 msgid "TLS/SSL"
 msgstr "TLS/SSL"
 
-#: system/models.py:217
+#: system/models.py:236
 msgid "Use SMTP Authentication"
 msgstr "Použiť SMTP autentifikáciu"
 
-#: system/models.py:225
+#: system/models.py:244
 msgid "A username to authenticate to the remote server"
 msgstr "Používateľské meno pre autentifikáciu na vzdialenom serveri"
 
-#: system/models.py:232
+#: system/models.py:251
 msgid "A password to authenticate to the remote server"
 msgstr "Heslo pre autentifikáciu na vzdialenom serveri"
 
-#: system/models.py:235 templates/system/settings.html:7
+#: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
 msgstr "Email"
 
-#: system/models.py:245
+#: system/models.py:266
 msgid "Organization"
 msgstr "Organizácia"
 
-#: system/models.py:246
+#: system/models.py:267
 msgid "Organization Name (eg, company)"
 msgstr "Názov organizácie (napr. podnik)"
 
-#: system/models.py:252
+#: system/models.py:273
 msgid "Organizational Unit"
 msgstr "Organizačná jednotka"
 
-#: system/models.py:253
+#: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
 msgstr "Názov jednotky v organizácii (napr.. oddelenie)"
 
-#: system/models.py:259 system/models.py:260
+#: system/models.py:280 system/models.py:281
 msgid "Email Address"
 msgstr "Emailová adresa"
 
-#: system/models.py:266
+#: system/models.py:287
 msgid "Locality"
 msgstr "Lokalita"
 
-#: system/models.py:267
+#: system/models.py:288
 msgid "Locality Name (eg, city)"
 msgstr "Názov lokality (napr. mesto)"
 
-#: system/models.py:273
+#: system/models.py:294
 msgid "State"
 msgstr "Štát"
 
-#: system/models.py:274
+#: system/models.py:295
 msgid "State or Province Name (full name)"
 msgstr "Štát alebo provincia (celý názov)"
 
-#: system/models.py:280
+#: system/models.py:301
 msgid "Country"
 msgstr "Krajina"
 
-#: system/models.py:281
+#: system/models.py:302
 msgid "Country Name (2 letter code)"
 msgstr "Názov krajiny (2 znakový kód)"
 
-#: system/models.py:287
+#: system/models.py:308
 msgid "Common Name"
 msgstr "Bežné meno"
 
-#: system/models.py:288
+#: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
 msgstr "Bežné meno (napr. VAŠE meno)"
 
-#: system/models.py:293
+#: system/models.py:314
 msgid "SSL Certificate"
 msgstr "SSL Certifikát"
 
-#: system/models.py:294
+#: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr "Vložte obsah vášho súkromného a verejného kľúča."
 
-#: system/models.py:307 system/models.py:496
+#: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
 msgstr "Používateľ ktorý má vykonať príkaz"
 
-#: system/models.py:310 templates/system/cronjob.html:11
+#: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
 msgstr "Príkaz"
 
-#: system/models.py:314 system/models.py:462 system/models.py:638
+#: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
 msgstr "Krátky popis"
 
-#: system/models.py:350
+#: system/models.py:374
 #, fuzzy
 msgid "Cron Job"
 msgstr "Cronjob"
 
-#: system/models.py:351
+#: system/models.py:375
 #, fuzzy
 msgid "Cron Jobs"
 msgstr "Cronjobs"
 
-#: system/models.py:434
+#: system/models.py:459
 msgid "IP Address or hostname"
 msgstr "IP adresa alebo názov"
 
-#: system/models.py:443
+#: system/models.py:468
 msgid "Remote Module Name"
 msgstr "Názov vzdialeného modulu"
 
-#: system/models.py:445
+#: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
 msgstr ""
 
-#: system/models.py:449
+#: system/models.py:475
 #, fuzzy
 msgid "Remote Path"
 msgstr "Vzdialený počítač"
 
-#: system/models.py:451
+#: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr ""
 
-#: system/models.py:455 templates/system/rsync.html:8
+#: system/models.py:481 templates/system/rsync.html:8
 #, fuzzy
 msgid "Direction"
 msgstr "Adresár"
 
-#: system/models.py:456
+#: system/models.py:482
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
 
-#: system/models.py:500
+#: system/models.py:527
 msgid "Recurse into directories"
 msgstr "Rekurzívne v/do zložiek"
 
-#: system/models.py:504
+#: system/models.py:531
 msgid "Times"
 msgstr "Časy"
 
-#: system/models.py:505
+#: system/models.py:532
 msgid "Preserve modification times"
 msgstr "Zachovať čas modifikácie"
 
-#: system/models.py:509
+#: system/models.py:536
 msgid "Compress"
 msgstr "Komprimovať"
 
-#: system/models.py:510
+#: system/models.py:537
 msgid "Compress data during the transfer"
 msgstr "Komprimovať dáta počas prenosu"
 
-#: system/models.py:514
+#: system/models.py:541
 msgid "Archive"
 msgstr "Archív"
 
-#: system/models.py:515
+#: system/models.py:542
 msgid "Archive mode"
 msgstr "Archívny mód"
 
-#: system/models.py:519 templates/freeadmin/generic_model_edit.html:89
+#: system/models.py:546 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
 #: templates/network/lagg_members.html:24
 #: templates/network/lagg_members.html:26
 #: templates/network/staticroute.html:24 templates/network/vlan.html:25
-#: templates/plugins/index.html:41
+#: templates/plugins/index.html:45 templates/plugins/mountpoints.html:23
 #: templates/services/iscsi_assoctargets.html:22
 #: templates/services/iscsi_assoctargets.html:24
 #: templates/services/iscsi_auth.html:24 templates/services/iscsi_auth.html:26
@@ -4911,35 +5025,35 @@ msgstr "Archívny mód"
 #: templates/services/iscsi_extents.html:26
 #: templates/services/iscsi_portals.html:30
 #: templates/services/iscsi_targets.html:24
-#: templates/services/iscsi_targets.html:26
-#: templates/services/plugins_edit.html:10
-#: templates/services/plugins_info.html:35 templates/services/rsyncmod.html:24
-#: templates/services/rsyncmod.html:26 templates/sharing/apple.html:33
-#: templates/sharing/unix.html:33 templates/sharing/windows.html:37
-#: templates/storage/scrub.html:33 templates/storage/scrub.html.py:35
-#: templates/storage/tasks.html:138 templates/storage/tasks.html.py:140
-#: templates/system/cronjob.html:32 templates/system/cronjob.html.py:34
-#: templates/system/ntpserver.html:29 templates/system/ntpserver.html.py:31
-#: templates/system/rsync.html:39 templates/system/rsync.html.py:41
-#: templates/system/smarttest.html:27 templates/system/smarttest.html.py:29
-#: templates/system/sysctl.html:23 templates/system/sysctl.html.py:25
-#: templates/system/tunable.html:23 templates/system/tunable.html.py:25
+#: templates/services/iscsi_targets.html:26 templates/services/plugins.html:60
+#: templates/services/pluginsjail_edit.html:14
+#: templates/services/rsyncmod.html:24 templates/services/rsyncmod.html:26
+#: templates/sharing/apple.html:33 templates/sharing/unix.html:33
+#: templates/sharing/windows.html:37 templates/storage/scrub.html:33
+#: templates/storage/scrub.html.py:35 templates/storage/tasks.html:138
+#: templates/storage/tasks.html.py:140 templates/system/cronjob.html:32
+#: templates/system/cronjob.html.py:34 templates/system/ntpserver.html:29
+#: templates/system/ntpserver.html.py:31 templates/system/rsync.html:39
+#: templates/system/rsync.html.py:41 templates/system/smarttest.html:29
+#: templates/system/smarttest.html.py:31 templates/system/sysctl.html:25
+#: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
+#: templates/system/tunable.html.py:27
 msgid "Delete"
 msgstr "Vymazať"
 
-#: system/models.py:520
+#: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr "Zmazať súbory na prijímajucej strane, ktoré neexistujú u odosielateľa"
 
-#: system/models.py:525
+#: system/models.py:553
 msgid "Suppress non-error messages"
 msgstr "Potlačiť nechybové správy"
 
-#: system/models.py:529
+#: system/models.py:557
 msgid "Preserve permissions"
 msgstr "Zachovať práva"
 
-#: system/models.py:530
+#: system/models.py:558
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
@@ -4947,11 +5061,11 @@ msgstr ""
 "Táto voľba spôsobí, že prichádzajúci rsync nastaví cieľové oprávnenia na "
 "také isté, ako zdrojové oprávnenia"
 
-#: system/models.py:534
+#: system/models.py:564
 msgid "Preserve extended attributes"
 msgstr "Zachovať rozšírené atribúty"
 
-#: system/models.py:535
+#: system/models.py:565
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
@@ -4959,106 +5073,81 @@ msgstr ""
 "Táto voľba spôsobí, že rsync aktualizuje vzdialené rozšírené atribúty na "
 "také isté, ako lokálne"
 
-#: system/models.py:541
+#: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
 msgstr "Dodatoćné voľby pre rsync príkazový riadok (obvykle prázdne)"
 
-#: system/models.py:549
+#: system/models.py:580
 #, fuzzy
 msgid "Rsync Task"
 msgstr "Rsync"
 
-#: system/models.py:550
+#: system/models.py:581
 #, fuzzy
 msgid "Rsync Tasks"
 msgstr "Rsync"
 
-#: system/models.py:715
+#: system/models.py:756
 #, fuzzy
 msgid "S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
-#: system/models.py:716
+#: system/models.py:757
 #, fuzzy
 msgid "S.M.A.R.T. Tests"
 msgstr "Nastavenia S.M.A.R.T."
 
-#: system/models.py:732 system/models.py:770 templates/system/sysctl.html:5
+#: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
 #, fuzzy
 msgid "Variable"
 msgstr "Dostupný"
 
-#: system/models.py:736 system/models.py:774 templates/system/sysctl.html:6
+#: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
 msgstr ""
 
-#: system/models.py:756
+#: system/models.py:795
 msgid "Sysctl"
 msgstr ""
 
-#: system/models.py:757
+#: system/models.py:796
 msgid "Sysctls"
 msgstr ""
 
-#: system/models.py:794
+#: system/models.py:834
 #, fuzzy
 msgid "Tunable"
 msgstr "Aktivovať AIO"
 
-#: system/models.py:795
+#: system/models.py:835
 #, fuzzy
 msgid "Tunables"
 msgstr "Aktivovať AIO"
 
-#: system/nav.py:5 templates/menubar.html:8
+#: system/nav.py:5 templates/menubar.html:7
 msgid "System"
 msgstr "Systém"
 
-#: system/nav.py:11 templates/system/reporting.html:2
+#: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
 msgstr "Reportovanie"
 
-#: system/nav.py:18
+#: system/nav.py:20
 msgid "System Information"
 msgstr "Systémové informácie"
 
-#: system/nav.py:32
-#, fuzzy
-msgid "View Cron Jobs"
-msgstr "Cronjobs"
-
-#: system/nav.py:39
-#, fuzzy
-msgid "View Rsync Tasks"
-msgstr "Zobraziť disky"
-
-#: system/nav.py:47
-#, fuzzy
-msgid "View S.M.A.R.T. Tests"
-msgstr "Nastavenia S.M.A.R.T."
-
-#: system/nav.py:54
-#, fuzzy
-msgid "View Sysctls"
-msgstr "Zobraziť disky"
-
-#: system/nav.py:61
-#, fuzzy
-msgid "View Tunables"
-msgstr "Zobraziť všetkých používateľov"
-
-#: system/views.py:118
+#: system/views.py:129
 msgid "The uploaded file is not valid."
 msgstr "Uploadnutý súbor nie je platný."
 
-#: system/views.py:245
+#: system/views.py:239
 #, fuzzy
 msgid "Reboot is being issued"
 msgstr "Root bind heslo"
 
-#: system/views.py:267
+#: system/views.py:264
 #, fuzzy
 msgid "Shutdown is being issued"
 msgstr "Vypnúť systém"
@@ -5086,23 +5175,23 @@ msgstr "Váš testovací email bol odoslaný!"
 msgid "Page Not Found"
 msgstr "Stránka nebola nájdená"
 
-#: templates/base.html:50
+#: templates/base.html:51
 msgid "expand all"
 msgstr "rozbaliť všetko"
 
-#: templates/base.html:51
+#: templates/base.html:52
 msgid "collapse all"
 msgstr "zbaliť všetko"
 
-#: templates/menubar.html:42
+#: templates/menubar.html:36
 msgid "Log Out"
 msgstr "Odhlásiť sa"
 
-#: templates/menubar.html:48
+#: templates/menubar.html:42
 msgid "Help"
 msgstr "Nápoveda"
 
-#: templates/menubar.html:60 templates/registration/login.html:61
+#: templates/menubar.html:54 templates/registration/login.html:59
 msgid "Log In"
 msgstr "Prihlásiť sa"
 
@@ -5193,12 +5282,11 @@ msgid "Advanced Mode"
 msgstr "Pokročilé"
 
 #: templates/freeadmin/alert_status.html:6
-#: templates/freeadmin/generic_form.html:13
+#: templates/freeadmin/generic_form.html:15
 #: templates/freeadmin/generic_model_add.html:50
 #: templates/freeadmin/generic_model_edit.html:59
-#: templates/plugins/jailpbi.html:17 templates/plugins/pbiwizard.html:14
-#: templates/plugins/plugin_edit.html:2 templates/plugins/plugin_info.html:37
-#: templates/services/plugins_info.html:24
+#: templates/plugins/jailpbi.html:16 templates/plugins/plugin_edit.html:2
+#: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
 msgstr "OK"
@@ -5211,22 +5299,12 @@ msgstr ""
 msgid "CRITICAL"
 msgstr ""
 
-#: templates/freeadmin/directory_browser.html:3
-#: templates/freeadmin/directory_browser.html:8
-msgid "Browse"
-msgstr "Prehliadať"
-
-#: templates/freeadmin/directory_browser.html:6
-#: templates/freeadmin/directory_browser.html:11
-msgid "Close"
-msgstr "Zatvoriť"
-
-#: templates/freeadmin/generic_form.html:17
+#: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
-#: templates/freeadmin/generic_model_delete.html:23
+#: templates/freeadmin/generic_model_delete.html:33
 #: templates/freeadmin/generic_model_edit.html:64
 #: templates/plugins/plugin_confirm_delete.html:16
-#: templates/storage/disk_detach.html:16 templates/storage/disk_remove.html:16
+#: templates/storage/disk_detach.html:16
 #: templates/storage/geom_disk_replace.html:18
 #: templates/storage/import.html:46
 #: templates/storage/snapshot_confirm_rollback.html:17
@@ -5237,20 +5315,19 @@ msgstr "Zatvoriť"
 msgid "Cancel"
 msgstr "Zrušiť"
 
-#: templates/freeadmin/generic_model_delete.html:13
-#: templates/plugins/plugin_confirm_delete.html:10
-#: templates/storage/snapshot_confirm_delete.html:3
-#: templates/storage/snapshot_confirm_delete_bulk.html:5
-#: templates/storage/zvol_confirm_delete.html:7
-msgid "Are you sure you want to delete?"
-msgstr "Ste si istý, že chcete zmazať?"
+#: templates/freeadmin/generic_model_delete.html:14
+#, python-format
+msgid ""
+"There are %(related_num)s related entries that are going to be delete as "
+"well because depend on this"
+msgstr ""
 
-#: templates/freeadmin/generic_model_delete.html:19
+#: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
-#: templates/services/enable.html:7
+#: templates/services/enable.html:6
 #: templates/storage/dataset_confirm_delete.html:17
 #: templates/storage/disk_detach.html:11 templates/storage/disk_offline.html:5
-#: templates/storage/disk_remove.html:11
+#: templates/storage/disk_remove.html:5 templates/storage/disk_wipe.html:7
 #: templates/storage/snapshot_confirm_delete.html:5
 #: templates/storage/snapshot_confirm_delete_bulk.html:7
 #: templates/storage/snapshot_confirm_rollback.html:11
@@ -5268,76 +5345,76 @@ msgstr "Vaše zmeny boli úspešne obnovené!"
 msgid "Save"
 msgstr ""
 
-#: templates/freeadmin/index.html:35
+#: templates/freeadmin/index.html:33
 msgid "Running Processes"
 msgstr "Bežiace procesy"
 
-#: templates/freeadmin/index.html:40 templates/freeadmin/index.html.py:46
-#: templates/freeadmin/index.html:51
+#: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
+#: templates/freeadmin/index.html:49
 msgid "Loading..."
 msgstr "Načítava sa..."
 
-#: templates/freeadmin/index.html:55
+#: templates/freeadmin/index.html:53
 msgid "Help & Support"
 msgstr "Pomoc a podpora"
 
-#: templates/freeadmin/index.html:59
+#: templates/freeadmin/index.html:57
 msgid "Forum"
 msgstr "Fórum"
 
-#: templates/freeadmin/index.html:61
+#: templates/freeadmin/index.html:59
 msgid "Community Forum"
 msgstr "Komunitné fórum"
 
-#: templates/freeadmin/index.html:66
+#: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
 msgstr "IRC (Chat)"
 
-#: templates/freeadmin/index.html:68
+#: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
 msgstr "#freenas na freenode"
 
-#: templates/freeadmin/index.html:72
+#: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
 msgstr "Mailing list"
 
-#: templates/freeadmin/index.html:74
+#: templates/freeadmin/index.html:72
 msgid "FreeNAS Announce"
 msgstr "FreeNAS Announce"
 
-#: templates/freeadmin/index.html:75
+#: templates/freeadmin/index.html:73
 msgid "FreeNAS Commit"
 msgstr "FreeNAS Commit"
 
-#: templates/freeadmin/index.html:76
+#: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
 msgstr "FreeNAS vývoj"
 
-#: templates/freeadmin/index.html:77
+#: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
 msgstr "FreeNAS testovanie"
 
-#: templates/freeadmin/index.html:78
+#: templates/freeadmin/index.html:76
 msgid "FreeNAS Docs"
 msgstr "FreeNAS Dokumentácia"
 
-#: templates/freeadmin/index.html:79
+#: templates/freeadmin/index.html:77
 msgid "FreeNAS Translations"
 msgstr "FreeNAS Preklady"
 
-#: templates/freeadmin/index.html:84
+#: templates/freeadmin/index.html:82
 msgid "Support Issues"
 msgstr "Podporované problémy"
 
-#: templates/freeadmin/index.html:86
+#: templates/freeadmin/index.html:84
 msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
-#: templates/freeadmin/index.html:91
+#: templates/freeadmin/index.html:89
 msgid "Documentation"
 msgstr "Dokumentácia"
 
-#: templates/freeadmin/index.html:93
+#: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Dokumentácia"
 
@@ -5345,21 +5422,21 @@ msgstr "FreeNAS Dokumentácia"
 msgid "IPv6 Auto"
 msgstr "IPv6 Auto"
 
-#: templates/network/interface.html:12 templates/plugins/index.html:15
+#: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
 #: templates/sharing/windows.html:15 templates/storage/replications.html:24
 #: templates/storage/scrub.html:13 templates/storage/tasks.html:25
 #: templates/storage/volumes.html:64 templates/system/cronjob.html:12
 #: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:10 templates/system/sysctl.html:8
-#: templates/system/tunable.html:8
+#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
+#: templates/system/tunable.html:9
 msgid "Available actions"
 msgstr "Dostupné akcie"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
 #: templates/network/staticroute.html:18 templates/network/vlan.html:19
-#: templates/plugins/index.html:35
+#: templates/plugins/index.html:37 templates/plugins/mountpoints.html:17
 #: templates/services/iscsi_assoctargets.html:16
 #: templates/services/iscsi_assoctargets.html:18
 #: templates/services/iscsi_auth.html:18 templates/services/iscsi_auth.html:20
@@ -5378,10 +5455,10 @@ msgstr "Dostupné akcie"
 #: templates/storage/scrub.html.py:29 templates/system/cronjob.html:26
 #: templates/system/cronjob.html.py:28 templates/system/ntpserver.html:23
 #: templates/system/ntpserver.html.py:25 templates/system/rsync.html:33
-#: templates/system/rsync.html.py:35 templates/system/smarttest.html:21
-#: templates/system/smarttest.html.py:23 templates/system/sysctl.html:17
-#: templates/system/sysctl.html.py:19 templates/system/tunable.html:17
-#: templates/system/tunable.html.py:19
+#: templates/system/rsync.html.py:35 templates/system/smarttest.html:23
+#: templates/system/smarttest.html.py:25 templates/system/sysctl.html:19
+#: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
+#: templates/system/tunable.html.py:21
 msgid "Edit"
 msgstr "Upraviť"
 
@@ -5403,6 +5480,8 @@ msgid "Add Interface"
 msgstr "Pridať rozhranie"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
+#: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
+#: templates/services/plugins.html:34
 msgid "Actions"
 msgstr "Akcie"
 
@@ -5442,10 +5521,6 @@ msgstr "Akcia"
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
 msgstr "Pridať LAGG člena"
-
-#: templates/network/staticroute.html:5
-msgid "Destination"
-msgstr "Cieľ"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5500,46 +5575,49 @@ msgid "Installed..."
 msgstr ""
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
+#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
 msgstr ""
 
-#: templates/plugins/index.html:29
+#: templates/plugins/index.html:31
 #, fuzzy
 msgid "Info"
 msgstr "Neformálne"
 
-#: templates/plugins/index.html:31
+#: templates/plugins/index.html:33
 msgid "Plugin info"
 msgstr ""
 
-#: templates/plugins/index.html:37
+#: templates/plugins/index.html:39
 #, fuzzy
 msgid "Edit Plugin"
 msgstr "Upraviť Portál"
 
-#: templates/plugins/index.html:43
+#: templates/plugins/index.html:47 templates/services/plugins.html:62
 #, fuzzy
 msgid "Delete plugin"
 msgstr "Odstrániť replikáciu"
 
-#: templates/plugins/index.html:50
+#: templates/plugins/index.html:55
 msgid "No plugins installed"
 msgstr ""
 
-#: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
-#: templates/system/wizard.html:3
+#: templates/plugins/jail_import.html:2
+#, fuzzy
+msgid "Import"
+msgstr "Importovať zväzok"
+
+#: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
 msgstr "Krok %(step)s z %(step_count)s"
 
-#: templates/plugins/jailpbi.html:19
+#: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
 msgstr ""
 
-#: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
-#: templates/plugins/plugin_info.html:39
-#: templates/services/plugins_info.html:26
-#: templates/storage/disk_detach.html:13 templates/storage/disk_remove.html:13
+#: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
+#: templates/storage/disk_detach.html:13
 #: templates/storage/snapshot_confirm_rollback.html:13
 #: templates/storage/volume_detach.html:26
 #: templates/storage/zvol_confirm_delete.html:13
@@ -5547,26 +5625,47 @@ msgstr ""
 msgid "Please wait..."
 msgstr "Prosím počkajte..."
 
-#: templates/plugins/pbiwizard.html:16
+#: templates/plugins/mountpoints.html:19
 #, fuzzy
-msgid "Upload Plugin"
+msgid "Edit Mount Point"
+msgstr "Prípojný bod"
+
+#: templates/plugins/mountpoints.html:25
+#, fuzzy
+msgid "Delete Mount Point"
+msgstr "Prípojný bod"
+
+#: templates/plugins/mountpoints.html:32
+#, fuzzy
+msgid "No mount points defined"
+msgstr "Žiadny definovaný CronJob"
+
+#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
+#, fuzzy
+msgid "Add Mount Point"
+msgstr "Prípojný bod"
+
+#: templates/plugins/plugin_install.html:5
+#: templates/plugins/plugin_update.html:5
+#, fuzzy
+msgid "Upload"
 msgstr "Nahrať konfiguráciu"
 
-#: templates/registration/login.html:42
+#: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
 msgstr "Používateľské meno a heslo nesúhlasia. Prosím skúste znova."
 
-#: templates/registration/login.html:46
+#: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Vitajte, %(username)s. Ďakujeme za prihlásenie."
 
-#: templates/registration/login.html:48
+#: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:49
+#: templates/registration/login.html:47
 msgid "Please log in."
 msgstr "Prosím prihláste sa."
 
@@ -5582,79 +5681,83 @@ msgstr "Ste odhlásený."
 msgid "Log back in"
 msgstr "Znova sa prihlásiť"
 
-#: templates/services/enable.html:4
-msgid "Would you like to enable this service?"
-msgstr ""
-
-#: templates/services/enable.html:18 templates/storage/tasks.html:37
-msgid "No"
-msgstr "Nie"
-
-#: templates/services/index.html:13
+#: templates/services/core.html:10
 msgid "AFP Settings"
 msgstr "AFP Nastavenia"
 
-#: templates/services/index.html:24
+#: templates/services/core.html:21
 msgid "Active Directory Settings"
 msgstr "Active Directory Nastavenia"
 
-#: templates/services/index.html:35
+#: templates/services/core.html:32
 msgid "CIFS Settings"
 msgstr "CIFS Nastavenia"
 
-#: templates/services/index.html:48
+#: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
 msgstr "Dynamické DNS Nastavenia"
 
-#: templates/services/index.html:59
+#: templates/services/core.html:56
 msgid "FTP Settings"
 msgstr "FTP Nastavenia"
 
-#: templates/services/index.html:72
+#: templates/services/core.html:69
 msgid "ISCSI Settings"
 msgstr "ISCSI Nastavenia"
 
-#: templates/services/index.html:83
+#: templates/services/core.html:80
 msgid "LDAP Settings"
 msgstr "LDAP Nastavenia"
 
-#: templates/services/index.html:94
+#: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "NFS Nastavenia"
 
-#: templates/services/index.html:106 templates/services/index.html.py:108
+#: templates/services/core.html:103 templates/services/core.html.py:105
 #, fuzzy
 msgid "Plugins Settings"
 msgstr "AFP Nastavenia"
 
-#: templates/services/index.html:108
+#: templates/services/core.html:105
 msgid "Install Jail PBI"
 msgstr ""
 
-#: templates/services/index.html:120
+#: templates/services/core.html:117
 msgid "Rsync Settings"
 msgstr "Nastavenia rsync"
 
-#: templates/services/index.html:131
+#: templates/services/core.html:128
 msgid "SNMP Settings"
 msgstr "SNMP Nastavenia"
 
-#: templates/services/index.html:142
+#: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
 msgstr "Nastavenia S.M.A.R.T."
 
-#: templates/services/index.html:153
+#: templates/services/core.html:150
 msgid "SSH Settings"
 msgstr "SSH Nastavenia"
 
-#: templates/services/index.html:164
+#: templates/services/core.html:161
 msgid "TFTP Settings"
 msgstr "TFTP Nastavenia"
 
-#: templates/services/index.html:175
+#: templates/services/core.html:172
 #, fuzzy
 msgid "UPS Settings"
 msgstr "NFS Nastavenia"
+
+#: templates/services/enable.html:3
+msgid "Would you like to enable this service?"
+msgstr ""
+
+#: templates/services/enable.html:16 templates/storage/tasks.html:37
+msgid "No"
+msgstr "Nie"
+
+#: templates/services/index.html:2
+msgid "Core"
+msgstr ""
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5686,12 +5789,8 @@ msgid "Associated Targets"
 msgstr "Asociované ciele"
 
 #: templates/services/iscsi_assoctargets.html:31
-#: templates/services/iscsi_authini.html:35
-#: templates/services/iscsi_dextents.html:33
-#: templates/services/iscsi_extents.html:33
-#: templates/services/iscsi_portals.html:39
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
+#, fuzzy
+msgid "No associated targets defined"
 msgstr "Žiadne ciele nie sú definované"
 
 #: templates/services/iscsi_assoctargets.html:37
@@ -5714,10 +5813,20 @@ msgstr "Pridať iSCSI Používateľa"
 msgid "Authorized Network"
 msgstr "Autorizovaná Sieť"
 
+#: templates/services/iscsi_authini.html:35
+#, fuzzy
+msgid "No authorized initiators defined"
+msgstr "Autorizovaný Iniciátor"
+
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
 msgstr "Pridať autorizovaného iniciátora"
+
+#: templates/services/iscsi_dextents.html:33
+#, fuzzy
+msgid "No device extents defined"
+msgstr "Žiadne ciele nie sú definované"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5728,6 +5837,11 @@ msgstr "Pridať Extent"
 #, fuzzy
 msgid "File Extent"
 msgstr "Rozšírenia zariadenia"
+
+#: templates/services/iscsi_extents.html:33
+#, fuzzy
+msgid "No extents defined"
+msgstr "Žiadne ciele nie sú definované"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5745,37 +5859,71 @@ msgstr "Upraviť Portál"
 msgid "Delete Portal"
 msgstr "Zmazať Portál"
 
+#: templates/services/iscsi_portals.html:39
+#, fuzzy
+msgid "No portals defined"
+msgstr "Žiadne ciele nie sú definované"
+
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
 msgstr "Pridať Portál"
+
+#: templates/services/iscsi_targets.html:34
+msgid "No targets defined"
+msgstr "Žiadne ciele nie sú definované"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
 msgstr "Pridať Cieľ"
 
-#: templates/services/plugins_delete.html:4
+#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
+#, fuzzy
+msgid "View Mount Points"
+msgstr "Prípojný bod"
+
+#: templates/services/plugins.html:22
+msgid ""
+"ATTENTION: The plugins service is not running, several functionalities have "
+"been disabled."
+msgstr ""
+
+#: templates/services/plugins.html:31
+#, fuzzy
+msgid "Version"
+msgstr "Verzia OS"
+
+#: templates/services/plugins.html:32
+msgid "PBI"
+msgstr ""
+
+#: templates/services/plugins.html:33
+#, fuzzy
+msgid "Service status"
+msgstr "Služby"
+
+#: templates/services/plugins.html:54 templates/system/config_upload.html:2
+msgid "Update"
+msgstr "Aktualizácia"
+
+#: templates/services/plugins.html:56
+#, fuzzy
+msgid "Update plugin"
+msgstr "Odstrániť replikáciu"
+
+#: templates/services/plugins.html:71
+msgid "No available plugins services"
+msgstr ""
+
+#: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
 
-#: templates/services/plugins_edit.html:8
-#: templates/services/plugins_info.html:33
+#: templates/services/pluginsjail_edit.html:12
 #, fuzzy
 msgid "Delete Plugins Jail"
 msgstr "Vymazať obsiahnutý súbor"
-
-#: templates/services/plugins_info.html:5
-msgid "Jail path"
-msgstr ""
-
-#: templates/services/plugins_info.html:13
-msgid "Jail IP"
-msgstr ""
-
-#: templates/services/plugins_info.html:17
-msgid "Plugins path"
-msgstr ""
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5806,12 +5954,7 @@ msgstr "Zmazať Apple Zdieľaný Adresár"
 msgid "No shares defined"
 msgstr "Žiadne zdieľané adresáre nie sú definované"
 
-#: templates/sharing/apple.html:49
-#, fuzzy
-msgid "Add Apple (CIFS) Share"
-msgstr "Pridať Apple Zideľaný Adresár"
-
-#: templates/sharing/apple.html:51
+#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
 msgid "Add Apple (AFP) Share"
 msgstr "Pridať Apple Zideľaný Adresár"
@@ -5920,9 +6063,14 @@ msgstr "Určite to chcete odpojiť?"
 msgid "Are you sure you want to offline?"
 msgstr "Ste si istý, že chcete zmazať?"
 
-#: templates/storage/disk_remove.html:7
+#: templates/storage/disk_remove.html:3
 #, fuzzy
 msgid "Are you sure you want to remove?"
+msgstr "Ste si istý, že chcete zmazať?"
+
+#: templates/storage/disk_wipe.html:4
+#, fuzzy
+msgid "Are you sure you want to wipe?"
 msgstr "Ste si istý, že chcete zmazať?"
 
 #: templates/storage/geom_disk_replace.html:9
@@ -5933,10 +6081,6 @@ msgstr "Nahradzovanie disku"
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
 msgstr "Vymeniť disk"
-
-#: templates/storage/import.html:32 templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Typ súborového systému"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
@@ -5953,12 +6097,6 @@ msgstr "ZFS Replikácia"
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
 msgstr "Manuálne vytvoriť snímku"
-
-#: templates/storage/periodicsnap.html:2 templates/storage/volumes.html:149
-#: templates/storage/volumes.html.py:153 templates/storage/volumes.html:227
-#: templates/storage/volumes.html.py:231
-msgid "Create Snapshot"
-msgstr "Vytvoriť snímku"
 
 #: templates/storage/permission.html:2
 msgid "Change"
@@ -6134,6 +6272,10 @@ msgstr "Upraviť ZFS zväzok"
 msgid "Used"
 msgstr "Použité"
 
+#: templates/storage/volumes.html:61
+msgid "Available"
+msgstr "Dostupný"
+
 #: templates/storage/volumes.html:62
 msgid "Size"
 msgstr "Veľkosť"
@@ -6157,6 +6299,12 @@ msgstr "ZFS Zväzok "
 msgid "Edit ZFS Options"
 msgstr "Upraviť možnosti ZFS"
 
+#: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
+#: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
+#: templates/storage/volumes.html:257 templates/storage/volumes.html.py:261
+msgid "Create Snapshot"
+msgstr "Vytvoriť snímku"
+
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
 #, fuzzy
 msgid "Volume Status"
@@ -6170,7 +6318,7 @@ msgstr "Odstrániť sadu dát"
 msgid "Destroy ZFS Volume"
 msgstr "Odstrániť ZFS zväzok (ZFS volume)"
 
-#: templates/storage/volumes.html:259
+#: templates/storage/volumes.html:268
 msgid "No volumes defined"
 msgstr "Žiadne zväzky definované"
 
@@ -6254,8 +6402,9 @@ msgstr "Aktualizácia firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-msgid "Apply Service Pack"
-msgstr "Aplikovať Service Pack"
+#, fuzzy
+msgid "Import Plugins Jail"
+msgstr "Vymazať obsiahnutý súbor"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6264,10 +6413,6 @@ msgstr "Reštartuje sa..."
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Ste si istý, že chcete obnoviť konfiguráciu na továrenské nastavenia?"
-
-#: templates/system/config_upload.html:2
-msgid "Update"
-msgstr "Aktualizácia"
 
 #: templates/system/cronjob.html:41
 #, fuzzy
@@ -6327,45 +6472,10 @@ msgid ""
 "do?"
 msgstr "Chystáte sa <strong>REŠTARTOVAŤ</strong> systém, čo chcete spraviť?"
 
-#: templates/system/reporting.html:4
-msgid "Hourly"
-msgstr "Hodina"
-
-#: templates/system/reporting.html:5
-msgid "Hourly Graphs"
-msgstr "Hodinové grafy"
-
-#: templates/system/reporting.html:16
-msgid "Daily"
-msgstr "Deň"
-
-#: templates/system/reporting.html:17
-msgid "Daily Graphs"
-msgstr "Denné grafy"
-
-#: templates/system/reporting.html:28
-msgid "Weekly"
-msgstr "Týždeň"
-
-#: templates/system/reporting.html:29
-msgid "Weekly Graphs"
-msgstr "Týždenné grafy"
-
-#: templates/system/reporting.html:40
-msgid "Monthly"
-msgstr "Mesiac"
-
-#: templates/system/reporting.html:41
-msgid "Monthly Graphs"
-msgstr "Mesačné grafy"
-
-#: templates/system/reporting.html:52
-msgid "Yearly"
-msgstr "Rok"
-
-#: templates/system/reporting.html:53
-msgid "Yearly Graphs"
-msgstr "Ročné grafy"
+#: templates/system/reporting.html:2
+#, fuzzy
+msgid "History"
+msgstr "Adresár"
 
 #: templates/system/rsync.html:5
 #, fuzzy
@@ -6418,36 +6528,36 @@ msgid ""
 "to do?"
 msgstr "Chystáte sa <strong>VYPNÚŤ</strong> systém, čo chcete spraviť?"
 
-#: templates/system/smarttest.html:14
+#: templates/system/smarttest.html:16
 msgid "Unknown"
 msgstr "Neznáme"
 
-#: templates/system/smarttest.html:36
+#: templates/system/smarttest.html:38
 #, fuzzy
 msgid "No S.M.A.R.T. tests defined"
 msgstr "Žiadne ciele nie sú definované"
 
-#: templates/system/smarttest.html:42
+#: templates/system/smarttest.html:44
 #, fuzzy
 msgid "Add S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
-#: templates/system/smarttest.html:44
+#: templates/system/smarttest.html:46
 #, fuzzy
 msgid "Add S.M.A.R.T. test"
 msgstr "S.M.A.R.T."
 
-#: templates/system/sysctl.html:32
+#: templates/system/sysctl.html:34
 #, fuzzy
 msgid "No sysctl defined."
 msgstr "Žiadny definovaný rsync"
 
-#: templates/system/sysctl.html:38
+#: templates/system/sysctl.html:40
 #, fuzzy
 msgid "Add sysctl"
 msgstr "Pridať rsync"
 
-#: templates/system/sysctl.html:40
+#: templates/system/sysctl.html:42
 #, fuzzy
 msgid "Add Sysctl"
 msgstr "Pridať rsync"
@@ -6480,17 +6590,17 @@ msgstr "Priemerné zaťaženie"
 msgid "Connected through"
 msgstr ""
 
-#: templates/system/tunable.html:32
+#: templates/system/tunable.html:34
 #, fuzzy
 msgid "No tunable setting defined."
 msgstr "Žiadne ciele nie sú definované"
 
-#: templates/system/tunable.html:38
+#: templates/system/tunable.html:40
 #, fuzzy
 msgid "Add Tunable"
 msgstr "Pridať Cieľ"
 
-#: templates/system/tunable.html:40
+#: templates/system/tunable.html:42
 #, fuzzy
 msgid "Add Loader"
 msgstr "Pridať Portál"
@@ -6500,48 +6610,155 @@ msgstr "Pridať Portál"
 msgid "Apply Update"
 msgstr "Aktualizácia"
 
-#: tools/alert.py:100
+#: tools/alert.py:108
 #, python-format
 msgid "The volume %s status is HEALTHY"
 msgstr ""
 
-#: tools/alert.py:103
+#: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
 msgstr ""
 
-#: tools/alert.py:107
+#: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
 msgstr ""
 
-#: tools/alert.py:111
+#: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
 msgstr ""
 
-#: tools/alert.py:117
+#: tools/alert.py:125
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
 
-#: tools/alert.py:129
+#: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr ""
 
-#: tools/alert.py:139
+#: tools/alert.py:147
 #, python-format
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
 
-#: tools/alert.py:169
+#: tools/alert.py:177
 #, fuzzy
 msgid "Critical Alerts"
 msgstr "Kritické"
+
+msgid "Selected"
+msgstr "Vybraný"
+
+#, fuzzy
+msgid "SHA256 sum for the PBI file"
+msgstr "SHA256 kontrolný súčet obrazu"
+
+#, fuzzy
+msgid "Plugin uname"
+msgstr "Doména"
+
+#, fuzzy
+msgid "Path to plugin"
+msgstr "Cesta k prípojnému bodu"
+
+#, fuzzy
+msgid "Control Plugins"
+msgstr "Riadiace služby"
+
+msgid "Allow guest access"
+msgstr "Povoliť prístup hosťa"
+
+msgid "Only allow guest access"
+msgstr "Povoliť iba hosťovský (guest) pristup"
+
+msgid "Invalid prefix"
+msgstr "Neplatná predpona (prefix)"
+
+msgid ""
+"How many minutes passed before a new snapshot is made after the last one."
+msgstr ""
+"Koľko minút musí ubehnúť od poslednej snímky, aby bola urobená nová "
+"snímka."
+
+msgid "An error occurred when setting the options"
+msgstr "Pri nastavovaní volieb sa vyskytla chyba"
+
+msgid "Service Pack image to be installed"
+msgstr "Service Pack obraz ktorý bude inštalovaný"
+
+#, fuzzy
+msgid "Invalid service pack"
+msgstr "Neplatný service pack alebo kontrolný súčet"
+
+#, fuzzy
+msgid "View Cron Jobs"
+msgstr "Cronjobs"
+
+#, fuzzy
+msgid "View Rsync Tasks"
+msgstr "Zobraziť disky"
+
+#, fuzzy
+msgid "View S.M.A.R.T. Tests"
+msgstr "Nastavenia S.M.A.R.T."
+
+#, fuzzy
+msgid "View Sysctls"
+msgstr "Zobraziť disky"
+
+#, fuzzy
+msgid "View Tunables"
+msgstr "Zobraziť všetkých používateľov"
+
+msgid "Browse"
+msgstr "Prehliadať"
+
+msgid "Close"
+msgstr "Zatvoriť"
+
+#, fuzzy
+msgid "Add Apple (CIFS) Share"
+msgstr "Pridať Apple Zideľaný Adresár"
+
+msgid "Apply Service Pack"
+msgstr "Aplikovať Service Pack"
+
+msgid "Hourly"
+msgstr "Hodina"
+
+msgid "Hourly Graphs"
+msgstr "Hodinové grafy"
+
+msgid "Daily"
+msgstr "Deň"
+
+msgid "Daily Graphs"
+msgstr "Denné grafy"
+
+msgid "Weekly"
+msgstr "Týždeň"
+
+msgid "Weekly Graphs"
+msgstr "Týždenné grafy"
+
+msgid "Monthly"
+msgstr "Mesiac"
+
+msgid "Monthly Graphs"
+msgstr "Mesačné grafy"
+
+msgid "Yearly"
+msgstr "Rok"
+
+msgid "Yearly Graphs"
+msgstr "Ročné grafy"
 
 msgid "DVD"
 msgstr "DVD"
@@ -6768,6 +6985,3 @@ msgstr "Obnoviť na továrenské nastavenia"
 
 msgid "Config"
 msgstr "Konfigurácia"
-
-msgid "OS Version"
-msgstr "Verzia OS"
