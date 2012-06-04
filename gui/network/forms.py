@@ -242,7 +242,7 @@ class VLANForm(ModelForm):
         reg = re.search(r'^vlan(?P<num>\d+)$', name)
         if not reg:
             raise forms.ValidationError(
-                _("The name must be vlanXX where XX is an integer")
+                _("The name must be vlanX where X is a number. Example: vlan0.")
                 )
         return "vlan%d" % (int(reg.group("num")), )
 
