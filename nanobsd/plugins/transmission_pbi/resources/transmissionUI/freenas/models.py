@@ -63,7 +63,7 @@ class Transmission(models.Model):
         blank=True,
         )
     rpc_whitelist_enabled = models.BooleanField(
-        verbose_name="RPC Whilelist Enabled",
+        verbose_name="RPC Whitelist Enabled",
         default=False,
         )
     rpc_whitelist = models.TextField(
