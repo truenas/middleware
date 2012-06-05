@@ -185,7 +185,7 @@ export NANO_NAME NANO_IMGNAME
 
 last_orders()
 {
-	if [ "${FORCE_BUILD}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
+	if [ "${minidlna_FORCE}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
 	then
 		pprint 2 "Creating PBI"
 		pprint 3 "log: ${PLUGINLOG}"

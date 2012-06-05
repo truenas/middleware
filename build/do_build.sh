@@ -161,6 +161,7 @@ build_target()
 	local _target="${1}"
 	local _args="${NANO_ARGS}"
 	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
+	local _fb=${FORCE_BUILD}
 
 	export AVATAR_COMPONENT=${_target##*/}
 
@@ -172,11 +173,11 @@ build_target()
 	export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
 
 	#
-	# FORCE_BUILD is unset -- apply sane defaults based on what's already been built.
+	# _fb is unset -- apply sane defaults based on what's already been built.
 	#
-	if [ -z "${FORCE_BUILD}" ]
+	if [ -z "${_fb}" ]
 	then
-		FORCE_BUILD=0
+		_fb=0
 
 		local _required_logs="_.iw"
 		if [ "${AVATAR_COMPONENT}" = "os-base" ]
@@ -199,21 +200,22 @@ build_target()
 		do
 			if [ ! -s "${NANO_OBJ}/${_required_log}" ]
 			then
-				FORCE_BUILD=2
+				_fb=2
 				break
 			fi
 		done
 	fi
 
-	if [ "${FORCE_BUILD}" = "0" ]
+	if [ "${_fb}" = "0" ]
 	then
 		_args="${_args} -b"
 
-	elif [ "${FORCE_BUILD}" = "1" ]
+	elif [ "${_fb}" = "1" ]
 	then
 		_args="${_args} -n"
+
+		export "${AVATAR_COMPONENT}_FORCE=1"
 	fi
-	export FORCE_BUILD
 
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
 
@@ -243,12 +245,6 @@ build_targets()
 	cd ${NANO_SRC}
 	for _target in ${TARGETS}
 	do
-
-		#
-		# Start off with a clean slate for each target
-		#
-		unset FORCE_BUILD
-
 		build_target "${_target}"
 	done
 }
