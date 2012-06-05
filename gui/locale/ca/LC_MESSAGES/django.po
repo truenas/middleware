@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-03-06 09:46-0800\n"
+"POT-Creation-Date: 2012-06-04 02:05-0700\n"
 "PO-Revision-Date: 2011-11-22 14:47+0200\n"
 "Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,12 +22,12 @@ msgstr ""
 msgid "Plain"
 msgstr "Pla"
 
-#: choices.py:41 choices.py:553 system/models.py:298
+#: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
 msgstr "SSL"
 
-#: choices.py:42 choices.py:554
+#: choices.py:42 choices.py:558
 msgid "TLS"
 msgstr "TLS"
 
@@ -39,7 +39,7 @@ msgstr "HTTP"
 msgid "HTTPS"
 msgstr "HTTPS"
 
-#: choices.py:53 choices.py:223
+#: choices.py:53 choices.py:227
 msgid "Auto"
 msgstr "Automàtic"
 
@@ -136,7 +136,7 @@ msgstr "Nivell 192 Ús intermedi d'energia sense mode d'espera"
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr "Nivell 254 - Màxim rendiment, màxim ús d'energia"
 
-#: choices.py:96 choices.py:184
+#: choices.py:96 choices.py:188
 msgid "Minimum"
 msgstr "Mínim"
 
@@ -232,430 +232,421 @@ msgstr "Anònim"
 msgid "Local User"
 msgstr "Usuari Local"
 
-#: choices.py:185
+#: choices.py:189
 msgid "Normal"
 msgstr "Normal"
 
-#: choices.py:186
+#: choices.py:190
 msgid "Full"
 msgstr "Ple"
 
-#: choices.py:187
+#: choices.py:191
 msgid "Debug"
 msgstr "Depurar"
 
-#: choices.py:191
+#: choices.py:195
 msgid "Default"
 msgstr "Per defecte"
 
-#: choices.py:192
+#: choices.py:196
 msgid "Time Machine"
 msgstr "Time Machine"
 
-#: choices.py:195
+#: choices.py:199
 msgid "No case folding"
 msgstr "Sense conversió de majúscules/minúscules"
 
-#: choices.py:196 choices.py:197
+#: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
 msgstr "Noms en minúscules en ambdues direccions"
 
-#: choices.py:198
+#: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
 msgstr "Servidor veu majúscules, client veu minúscules"
 
-#: choices.py:199
+#: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
 msgstr "Servidor veu minúscules, client veu majúscules"
 
-#: choices.py:203
+#: choices.py:207
 msgid "File"
 msgstr "Fitxer"
 
-#: choices.py:204
+#: choices.py:208
 msgid "Device"
 msgstr "Perifèric"
 
-#: choices.py:205
+#: choices.py:209
 msgid "ZFS Volume"
 msgstr "Volum ZFS"
 
-#: choices.py:209 storage/models.py:424 system/models.py:628
-#: templates/storage/autoimport.html:5 templates/storage/import.html:18
-#: templates/storage/wizard.html:114
+#: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
+#: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
 msgstr "Disc"
 
-#: choices.py:217
+#: choices.py:221
 msgid "read-write"
 msgstr "escriptura-lectura"
 
-#: choices.py:218
+#: choices.py:222
 msgid "read-only"
 msgstr "només lectura"
 
-#: choices.py:222 choices.py:228 services/forms.py:532 services/forms.py:534
-#: services/forms.py:912 templates/storage/scrub.html:24
+#: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
+#: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
 msgstr "Cap"
 
-#: choices.py:224
+#: choices.py:228
 msgid "CHAP"
 msgstr "CHAP"
 
-#: choices.py:225
+#: choices.py:229
 msgid "Mutual CHAP"
 msgstr "CHAP mutu"
 
-#: choices.py:247
+#: choices.py:251
 msgid "UPS reaches low battery"
 msgstr "El SAI està amb bateria baixa"
 
-#: choices.py:248
+#: choices.py:252
 msgid "UPS goes on battery"
 msgstr "El SAI està funcionant amb bateria"
 
-#: choices.py:251
+#: choices.py:255
 msgid "Preferred"
 msgstr "Preferit"
 
-#: choices.py:252
+#: choices.py:256
 msgid "Tolerated"
 msgstr "Tolerat"
 
-#: choices.py:253
+#: choices.py:257
 msgid "Required"
 msgstr "Requerit"
 
-#: choices.py:280 choices.py:286
+#: choices.py:284 choices.py:290
 msgid "Inherit"
 msgstr "Heretat"
 
-#: choices.py:281
+#: choices.py:285
 msgid "On"
 msgstr "Encès"
 
-#: choices.py:282 choices.py:287 choices.py:552
+#: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
 msgstr "Apagat"
 
-#: choices.py:288
+#: choices.py:292
 msgid "lzjb (recommended)"
 msgstr "lzjb (recomenat)"
 
-#: choices.py:289
+#: choices.py:293
 msgid "gzip (default level, 6)"
 msgstr "gzip (nivell per defecte, 6)"
 
-#: choices.py:290
+#: choices.py:294
 msgid "gzip (fastest)"
 msgstr "gzip (El més ràpid)"
 
-#: choices.py:291
+#: choices.py:295
 msgid "gzip (maximum, slow)"
 msgstr "gzip (el màxim, lent)"
 
-#: choices.py:485
+#: choices.py:489
 msgid "Hour(s)"
 msgstr "Hora(es)"
 
-#: choices.py:486
+#: choices.py:490
 msgid "Day(s)"
 msgstr "Dia(es)"
 
-#: choices.py:487
+#: choices.py:491
 msgid "Week(s)"
 msgstr "Setmana(es)"
 
-#: choices.py:488
+#: choices.py:492
 msgid "Month(s)"
 msgstr "Mes(sos)"
 
-#: choices.py:489
+#: choices.py:493
 msgid "Year(s)"
 msgstr "Any(s)"
 
-#: choices.py:493 storage/models.py:262 storage/models.py:287
-#: system/models.py:383 system/models.py:408 system/models.py:585
-#: system/models.py:606 system/models.py:672 system/models.py:693
+#: choices.py:497 storage/models.py:279 storage/models.py:304
+#: system/models.py:407 system/models.py:432 system/models.py:616
+#: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
 msgstr "Cada dia"
 
-#: choices.py:494
+#: choices.py:498
 msgid "Every selected weekday"
 msgstr "Cada dia d'entre setmana seleccionat"
 
-#: choices.py:500
+#: choices.py:504
 msgid "Read-only"
 msgstr "Només lectura"
 
-#: choices.py:501
+#: choices.py:505
 msgid "Write-only"
 msgstr "Només lectura"
 
-#: choices.py:502
+#: choices.py:506
 msgid "Read and Write"
 msgstr "Escriure i Llegir"
 
-#: choices.py:506 choices.py:507
+#: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
 msgstr "%(minutes)s minuts"
 
-#: choices.py:508
+#: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
 msgstr "%(hour)s hora"
 
-#: choices.py:509 choices.py:510 choices.py:511 choices.py:512 choices.py:513
+#: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
 msgstr "%(hours)s hores"
 
-#: choices.py:514
+#: choices.py:518
 #, python-format
 msgid "%(day)s day"
 msgstr "%(day)s dia"
 
-#: choices.py:515
+#: choices.py:519
 #, python-format
 msgid "%(week)s week"
 msgstr "%(week)s setmana"
 
-#: choices.py:519
+#: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
 msgstr "Mai - Comprova el perifèric sense tenir en compte el mode d'energia"
 
-#: choices.py:520
+#: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
 msgstr "Sleep - Comproba el perifèric menys quan és en mode SLEEP"
 
-#: choices.py:521
+#: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
 "Mode d'espera - Comprova el perifèric exceptuan quan és en mode d'espera o "
 "en mode SLEEP"
 
-#: choices.py:522
+#: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
 "Inactiu - Comproba el perifèric exceptuan quan està en mode SLEEP, d'Espera "
 "o Inactiu"
 
-#: choices.py:526
+#: choices.py:530
 msgid "Long Self-Test"
 msgstr "Auto Comprovació llarga"
 
-#: choices.py:527
+#: choices.py:531
 msgid "Short Self-Test"
 msgstr "Auto comprovació curta"
 
-#: choices.py:528
+#: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr "Auto Comprovació del transport (només per ATA)"
 
-#: choices.py:529
+#: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
 msgstr "Comprovació inmediata fora de línea (només ATA)"
 
-#: choices.py:558
+#: choices.py:562
 #, fuzzy
 msgid "Rsync module"
 msgstr "Mòdul Rsync"
 
-#: choices.py:559
+#: choices.py:563
 #, fuzzy
 msgid "Rsync over SSH"
 msgstr "Mòdul Rsync"
 
-#: choices.py:563
+#: choices.py:567
 msgid "Push"
 msgstr ""
 
-#: choices.py:564
+#: choices.py:568
 msgid "Pull"
 msgstr ""
 
-#: account/forms.py:52
+#: account/forms.py:54
 msgid "Your name cannot start with \"-\""
 msgstr "El nom no pot començar amb \"-\""
 
-#: account/forms.py:54
+#: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
 msgstr "El caràcter $ només està permès com caràcter final"
 
-#: account/forms.py:61
+#: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
 msgstr "El nom conté caràcters invàlids (%s)."
 
-#: account/forms.py:70
+#: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
 msgstr "El nom complert conté caràcters invàlids (%s)."
 
-#: account/forms.py:120 templates/storage/volumes.html:61
-msgid "Available"
-msgstr "Disponible"
-
-#: account/forms.py:171
-msgid "Selected"
-msgstr "Seleccionat"
-
-#: account/forms.py:199 account/forms.py:225 account/forms.py:456
-#: account/models.py:88 services/models.py:733 services/models.py:1047
-#: system/models.py:224 templates/account/bsdusers.html:5
+#: account/forms.py:220 account/forms.py:253 account/forms.py:497
+#: account/models.py:88 services/models.py:769 services/models.py:1126
+#: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
 msgstr "Nom d'usuari"
 
-#: account/forms.py:200
+#: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr "Requeriment: 16 caràcters o menys. només lletres, dígits i ./-/_ "
 
-#: account/forms.py:201
+#: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr "Aquest valor només pot contenir lletres, números i caràcters ./-/_ "
 
-#: account/forms.py:228 account/forms.py:457 services/models.py:737
-#: system/forms.py:272 system/models.py:231 templates/account/bsdusers.html:9
+#: account/forms.py:256 account/forms.py:499 services/models.py:773
+#: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
 msgstr "Contrasenya"
 
-#: account/forms.py:232 account/forms.py:458 system/forms.py:273
+#: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
 msgstr "confirmació de la contrasenya"
 
-#: account/forms.py:234 account/forms.py:459 system/forms.py:274
+#: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
 msgstr "Introdueix la mateixa contrasenya de dalt, per verificar-la."
 
-#: account/forms.py:237 account/forms.py:500 account/models.py:114
-#: freeadmin/navtree.py:371 templates/account/bsdusers.html:8
+#: account/forms.py:265 account/forms.py:558 account/models.py:115
+#: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
 msgstr "Terminal"
 
-#: account/forms.py:241 account/forms.py:498
+#: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
 msgstr "Desactiva les contrasenyes al logins"
 
-#: account/forms.py:243 account/forms.py:499
+#: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
 msgstr ""
 
-#: account/forms.py:245
+#: account/forms.py:273
 msgid "Create a new primary group for the user"
 msgstr ""
 
-#: account/forms.py:248
+#: account/forms.py:276
 msgid "Primary Group"
 msgstr "Grup primari"
 
-#: account/forms.py:251 account/forms.py:504
+#: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
 msgstr "Clau Pública SSH"
 
-#: account/forms.py:256
+#: account/forms.py:284 account/forms.py:549
 #, fuzzy
 msgid "Home Directory Mode"
 msgstr "Directori Home"
 
-#: account/forms.py:259 account/forms.py:693
+#: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
 msgstr "Grups auxiliars"
 
-#: account/forms.py:318
+#: account/forms.py:347
 msgid "A user with that uid already exists."
 msgstr "Un usuari amb aquest nom d'usuari ja existeix."
 
-#: account/forms.py:329
+#: account/forms.py:360
 msgid "A user with that username already exists."
 msgstr "Un usuari amb aquest nom d'usuari ja existeix."
 
-#: account/forms.py:337 storage/forms.py:223 system/forms.py:302
-#: system/forms.py:308 system/forms.py:313 system/forms.py:545
-#: system/forms.py:552
+#: account/forms.py:369 storage/forms.py:281 system/forms.py:370
+#: system/forms.py:376 system/forms.py:382 system/forms.py:675
+#: system/forms.py:682
 msgid "This field is required"
 msgstr "El camp és obligatori"
 
-#: account/forms.py:344 account/forms.py:481 account/forms.py:732
-#: services/forms.py:284 services/forms.py:381 sharing/forms.py:98
-#: system/forms.py:317
+#: account/forms.py:377 account/forms.py:529 account/forms.py:870
+#: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
+#: system/forms.py:386
 msgid "The two password fields didn't match."
 msgstr "Els dos camps de contrasenya no coincideixen."
 
-#: account/forms.py:351
+#: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "El directori home ha de començar amb /mnt/ o ser /noexistent"
 
-#: account/forms.py:366 account/forms.py:703
+#: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr "Un usuari no pot pertanya a més de 64 grups auxiliars"
 
-#: account/forms.py:381 account/forms.py:582
+#: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
 msgstr "El directori home és no-escriptura, deixa-ho en blanc"
 
-#: account/forms.py:388
+#: account/forms.py:423
 msgid "Password is disabled, leave this blank"
 msgstr "Contrasenya desactivada, deixa-ho en blanc"
 
-#: account/forms.py:394 plugins/forms.py:103 plugins/forms.py:145
-#: services/forms.py:622 services/forms.py:925 storage/forms.py:194
-#: system/forms.py:423 system/forms.py:451
+#: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
+#: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
+#: system/forms.py:548
 msgid "This field is required."
 msgstr "Aquest camp és requereix."
 
-#: account/forms.py:562
+#: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
 msgstr "El directori home ha de començar amb /mnt/ o ser /nonexistent"
 
-#: account/forms.py:634
+#: account/forms.py:725
 msgid "Allow repeated GIDs"
 msgstr "Permet GIDs repetides"
 
-#: account/forms.py:647
+#: account/forms.py:739
 msgid "A group with that name already exists."
 msgstr "Un grup amb aquest nom ja existeix."
 
-#: account/forms.py:665
+#: account/forms.py:759
 msgid "A group with this gid already exists"
 msgstr "Un grup amb aquest gid ja existeix"
 
-#: account/forms.py:675
+#: account/forms.py:772
 msgid "Member users"
 msgstr "Usuaris membres"
 
-#: account/forms.py:720
+#: account/forms.py:852
 msgid "New password"
 msgstr "Nova contrasenya"
 
-#: account/forms.py:721
+#: account/forms.py:856
 msgid "New password confirmation"
 msgstr "Confirmació de la nova contrasenya"
 
-#: account/forms.py:746
+#: account/forms.py:887
 msgid "Change root password as well"
 msgstr "Canviar també la contrasenya de root"
 
-#: account/forms.py:753
+#: account/forms.py:896
 msgid "Old password"
 msgstr "Contrasenya antiga"
 
-#: account/forms.py:770
+#: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr ""
 "La contrasenya antiga ha estat introduida incorrectament. Si us plau torna-"
 "hi."
 
-#: account/forms.py:778
+#: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
 msgstr "Vols esborrar tots els usuaris amb aquest grup primari?"
 
-#: account/models.py:36 services/models.py:518 services/models.py:563
+#: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
@@ -666,7 +657,7 @@ msgstr "ID de Grup"
 msgid "Group Name"
 msgstr "Nom del Grup"
 
-#: account/models.py:49 account/models.py:171 services/models.py:1339
+#: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
@@ -705,46 +696,46 @@ msgstr "ID de grup primari"
 msgid "Home Directory"
 msgstr "Directori Home"
 
-#: account/models.py:118
+#: account/models.py:119
 msgid "Full Name"
 msgstr "Nom Complert"
 
-#: account/models.py:125 templates/account/bsdusers.html:90
+#: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
 msgstr "Correu electrònic"
 
-#: account/models.py:130 account/models.py:175 services/models.py:567
-#: services/models.py:1332 system/models.py:306 system/models.py:495
+#: account/models.py:131 account/models.py:176 services/models.py:593
+#: services/models.py:1416 system/models.py:329 system/models.py:522
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
 msgstr "Usuari"
 
-#: account/models.py:131 templates/account/index.html:19
+#: account/models.py:132 templates/account/index.html:19
 msgid "Users"
 msgstr "Usuaris"
 
-#: account/models.py:150
+#: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
 msgstr "Usuari %s ve per definició i no pot ser esborrat!"
 
-#: account/nav.py:5 templates/menubar.html:53
+#: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
 msgstr "Compte"
 
-#: account/nav.py:11 templates/account/index.html:2
+#: account/nav.py:13 templates/account/index.html:2
 #, fuzzy
 msgid "Admin Account"
 msgstr "Compte"
 
-#: account/nav.py:17 templates/account/bsdusers.html:33
+#: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
 msgstr "Canviar Contrasenya"
 
-#: account/nav.py:22 templates/account/changeform.html:2
+#: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
 msgstr "Canviar usuari Admin"
@@ -765,211 +756,212 @@ msgstr "Usuaris actualitzats amb èxit."
 msgid "Groups successfully updated."
 msgstr "Grups actualitzats amb èxit."
 
-#: freeadmin/forms.py:112
+#: freeadmin/forms.py:114
 #, python-format
 msgid "The user %s is not valid."
 msgstr "L'usuari %s no és vàlid."
 
-#: freeadmin/forms.py:146
+#: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
 msgstr "El grup %s no és vàlid"
 
-#: freeadmin/forms.py:165
+#: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
 msgstr "La ruta ha d'estar dintre un punt de muntatge d'un volum"
 
-#: freeadmin/middleware.py:116 freeadmin/views.py:430 freeadmin/views.py:654
+#: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
 msgstr "Error: %s"
 
-#: freeadmin/navtree.py:334
+#: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
 msgstr "Afegir %s"
 
-#: freeadmin/navtree.py:346
+#: freeadmin/navtree.py:340
 #, fuzzy, python-format
 msgid "View %s"
 msgstr "Veure tots %s"
 
-#: freeadmin/navtree.py:366
+#: freeadmin/navtree.py:354
 msgid "Display System Processes"
 msgstr "Veure Procesos del Sistema"
 
-#: freeadmin/navtree.py:375 templates/system/reboot_dialog.html:14
+#: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
 msgstr "Reiniciar"
 
-#: freeadmin/navtree.py:379 templates/system/shutdown_dialog.html:14
+#: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
 msgstr "Apagar sistema"
 
-#: freeadmin/navtree.py:395
+#: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
 msgstr ""
 
-#: freeadmin/navtree.py:398
+#: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr ""
 
-#: freeadmin/navtree.py:432
+#: freeadmin/navtree.py:445
 #, fuzzy, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
 
-#: freeadmin/views.py:245
+#: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
 msgstr "No ha estat possible recuperar l'estat actual"
 
-#: freeadmin/views.py:428 freeadmin/views.py:648 freeadmin/views.py:650
+#: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
 msgstr "%s actualitzat amb èxit."
 
-#: freeadmin/views.py:432 freeadmin/views.py:652
+#: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
 msgstr "El servei ha fallat el reinici."
 
-#: freeadmin/views.py:761 freeadmin/views.py:765
+#: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
 msgstr "%s esborrat amb èxit."
 
-#: middleware/zfs.py:527 storage/models.py:556
+#: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
 msgstr "Error al obtenir l'epai total"
 
-#: middleware/zfs.py:533 storage/models.py:562
+#: middleware/zfs.py:567 storage/models.py:586
 msgid "Error getting available space"
 msgstr "Error al obtenir l'espai disponible"
 
-#: middleware/zfs.py:544 storage/models.py:573
+#: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
 msgstr "Error al obtenir l'espai utilitzat"
 
-#: middleware/zfs.py:550 middleware/zfs.py:557 storage/models.py:89
-#: storage/models.py:579 storage/models.py:586
+#: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
+#: storage/models.py:608 storage/models.py:616
 msgid "Error"
 msgstr "Error"
 
-#: network/forms.py:40 network/models.py:86
+#: network/forms.py:41 network/models.py:86
 msgid "NIC"
 msgstr "Connexió de xarxa NIC"
 
-#: network/forms.py:77 network/forms.py:88 network/forms.py:330
-#: network/forms.py:344
+#: network/forms.py:87 network/forms.py:100 network/forms.py:394
+#: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
 
-#: network/forms.py:106
+#: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
 msgstr "Has d'especificar una adreça IPv4"
 
-#: network/forms.py:108
+#: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
 msgstr "Has d'escollir una màscara IPv4"
 
-#: network/forms.py:113
+#: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
 msgstr "Has d'especificar una adreça IPv6"
 
-#: network/forms.py:115
+#: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
 msgstr "Has d'escollir una màscara de xarxa IPv6"
 
-#: network/forms.py:118
+#: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
 msgstr "Has d'escollir entre Ipv4 o IPv6"
 
-#: network/forms.py:133
+#: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
 msgstr ""
 
-#: network/forms.py:135
+#: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
 msgstr ""
 
-#: network/forms.py:138
+#: network/forms.py:167
 #, fuzzy
 msgid "This is not a valid nameserver address"
 msgstr "Al camp no té una adreça IP o xarxa vàlides"
 
-#: network/forms.py:140
+#: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
 msgstr ""
 
-#: network/forms.py:160
+#: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
 msgstr "Has d'omplir el nameserver 2 abans de posar el nameserver 3"
 
-#: network/forms.py:163 network/forms.py:170 network/forms.py:181
+#: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
 msgstr "Requerit quan usis el nameserver 3"
 
-#: network/forms.py:167
+#: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
 msgstr "Has d'omplir el nameserver 1 abans de posar el nameserver 3"
 
-#: network/forms.py:178
+#: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Has d'omplir el nameserver 1 abans de posar el nameserver 2"
 
-#: network/forms.py:193
+#: network/forms.py:229
 msgid "Parent Interface"
 msgstr "Interfície Pare"
 
-#: network/forms.py:202
-msgid "The name must be vlanXX where XX is a integer"
+#: network/forms.py:245
+#, fuzzy
+msgid "The name must be vlanXX where XX is an integer"
 msgstr "El nomsde ha d'esser vlanXX on XX és un número integre"
 
-#: network/forms.py:208
+#: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
 msgstr "Etiquetes VLAN van de 1 - 4095 incloses"
 
-#: network/forms.py:233
+#: network/forms.py:275
 msgid "Physical NICs in the LAGG"
 msgstr "Tarjes de xarxa físiques NICs al LAGG"
 
-#: network/forms.py:241
+#: network/forms.py:286
 #, fuzzy
 msgid "LAGG Physical NIC"
 msgstr "NIC (connexió de xarxa) física"
 
-#: network/forms.py:298
+#: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
 msgstr "La xarxa '%s'  no és vàlida, s'esperava CIDR "
 
-#: network/forms.py:360
+#: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
 msgstr ""
 
-#: network/forms.py:362
+#: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
 msgstr ""
 
-#: network/forms.py:367
+#: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
 msgstr ""
 
-#: network/forms.py:369
+#: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
 msgstr ""
 
-#: network/forms.py:372
+#: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
 msgstr "Has d'escollir entre IPv4 o IPv6 per l'alias"
 
-#: network/forms.py:374
+#: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
 
-#: network/models.py:42 services/models.py:1202
+#: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
 msgstr "Hostname"
@@ -998,8 +990,8 @@ msgstr "Nameserver 2"
 msgid "Nameserver 3"
 msgstr "Nameserver 3"
 
-#: network/models.py:76 network/models.py:77 network/nav.py:21
-#: templates/network/index.html:3
+#: network/models.py:76 network/models.py:77 network/nav.py:22
+#: templates/network/index.html:2
 msgid "Global Configuration"
 msgstr "Configuració Global"
 
@@ -1053,17 +1045,17 @@ msgstr "Adreça IPv6 "
 msgid "IPv6 Prefix Length"
 msgstr ""
 
-#: network/models.py:130 network/models.py:359
+#: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
 msgid "Options"
 msgstr "Opcions"
 
-#: network/models.py:156 network/models.py:212 network/models.py:311
+#: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
 msgstr "Interfície"
 
-#: network/models.py:157 templates/network/index.html:9
+#: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
 msgstr "Interfícies"
 
@@ -1076,87 +1068,88 @@ msgstr "Alias"
 msgid "Aliases"
 msgstr "Alias"
 
-#: network/models.py:266 templates/network/lagg.html:5
-#: templates/network/vlan.html:5
+#: network/models.py:265 templates/network/lagg.html:5
+#: templates/network/vlan.html:4
 msgid "Virtual Interface"
 msgstr "Interfície virtual"
 
-#: network/models.py:267
-msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
+#: network/models.py:266
+#, fuzzy
+msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
 "Els noms de les interfícies han d'esser vlanXX on XX és un número. Exemple "
 "vlan0."
 
-#: network/models.py:272 templates/network/lagg_members.html:5
-#: templates/network/vlan.html:6
+#: network/models.py:271 templates/network/lagg_members.html:5
+#: templates/network/vlan.html:5
 msgid "Physical Interface"
 msgstr "Interfície física"
 
-#: network/models.py:275 templates/network/vlan.html:7
+#: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
 msgstr "Etiqueta VLAN"
 
-#: network/models.py:279 network/models.py:393 services/models.py:76
-#: services/models.py:863 storage/models.py:194 storage/models.py:335
-#: storage/views.py:226 templates/network/staticroute.html:7
-#: templates/network/vlan.html:8 templates/system/cronjob.html:4
-#: templates/system/smarttest.html:5
+#: network/models.py:278 network/models.py:392 services/models.py:86
+#: services/models.py:916 storage/models.py:211 storage/models.py:352
+#: storage/views.py:248 templates/network/staticroute.html:7
+#: templates/network/vlan.html:7 templates/system/cronjob.html:4
+#: templates/system/smarttest.html:6
 msgid "Description"
 msgstr "Descripció"
 
-#: network/models.py:293 templates/network/index.html:24
+#: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
 msgstr "VLAN"
 
-#: network/models.py:294
+#: network/models.py:293
 msgid "VLANs"
 msgstr "VLANs"
 
-#: network/models.py:315
+#: network/models.py:314
 msgid "Protocol Type"
 msgstr "Tipus de protocol"
 
-#: network/models.py:320 network/models.py:373 templates/network/index.html:14
+#: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
 msgstr "Link Aggregation"
 
-#: network/models.py:321 network/models.py:374 network/nav.py:33
+#: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
 msgstr "Link Aggregations"
 
-#: network/models.py:347
+#: network/models.py:346
 msgid "LAGG Interface group"
 msgstr "Grup d'interfícies LAGG"
 
-#: network/models.py:350
+#: network/models.py:349
 msgid "LAGG Priority Number"
 msgstr "Número de prioritat LAGG"
 
-#: network/models.py:355
+#: network/models.py:354
 msgid "Physical NIC"
 msgstr "NIC (connexió de xarxa) física"
 
-#: network/models.py:385
+#: network/models.py:384
 msgid "Destination network"
 msgstr "Xarxa de destí"
 
-#: network/models.py:389 templates/network/staticroute.html:6
+#: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
 msgstr "Pasarel.la"
 
-#: network/models.py:398
+#: network/models.py:397
 msgid "Static Route"
 msgstr "Ruta estàtica"
 
-#: network/models.py:399 templates/network/index.html:19
+#: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
 msgstr "Rutas estatiques"
 
-#: network/nav.py:6 templates/menubar.html:13
+#: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
 msgstr "Xarxa"
 
-#: network/nav.py:13 templates/network/index.html:29
+#: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
 msgstr "Sumari de xarxa"
 
@@ -1169,16 +1162,21 @@ msgstr "Crear Link Aggregation"
 msgid "View Link Aggregations"
 msgstr "Veure totes les Link Aggregations"
 
-#: network/views.py:188
+#: network/views.py:197
 msgid "LAGG successfully added"
 msgstr "LAGG afegit amb èxit"
 
-#: plugins/forms.py:73
+#: plugins/forms.py:55
+#, fuzzy
+msgid "This IP is already in use."
+msgstr "Un grup amb aquest gid ja existeix"
+
+#: plugins/forms.py:92
 #, fuzzy
 msgid "Place to temporarily place PBI file"
 msgstr "Col.loca a un lloc temporal el fitxer de firmware"
 
-#: plugins/forms.py:73
+#: plugins/forms.py:93
 #, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
@@ -1187,471 +1185,542 @@ msgstr ""
 "El sistema utilitzara aquesta localització per emmagatzemar temporalment el "
 "fitxer del firmware abans de que s'apliqui."
 
-#: plugins/forms.py:87
+#: plugins/forms.py:119
 #, fuzzy
 msgid "PBI file to be installed"
 msgstr "nova imatge per ser instal·lada"
 
-#: plugins/forms.py:88 plugins/forms.py:119
-#, fuzzy
-msgid "SHA256 sum for the PBI file"
-msgstr "Suma SHA256  per la imatge"
+#: plugins/forms.py:173
+msgid "You must turn off Plugins service before proceeding"
+msgstr ""
 
-#: plugins/forms.py:99 plugins/forms.py:141 system/forms.py:419
-#: system/forms.py:447
-#, fuzzy
-msgid "Invalid checksum"
-msgstr "Firmware o checksum incorrecte"
+#: plugins/forms.py:183
+#, fuzzy, python-format
+msgid "The path %s already exists"
+msgstr "Un grup amb aquest gid ja existeix"
 
-#: plugins/forms.py:115
+#: plugins/forms.py:189
+msgid "The full jail path cannot exceed 76 characters"
+msgstr ""
+
+#: plugins/forms.py:200
+msgid "The plugins jail path cannot be a subset of the plugins archive path."
+msgstr ""
+
+#: plugins/forms.py:205 services/forms.py:148
+msgid "The plugins archive path cannot be a subset of the plugins jail path."
+msgstr ""
+
+#: plugins/forms.py:214 services/models.py:803
+msgid "Plugins jail path"
+msgstr ""
+
+#: plugins/forms.py:218
+#, fuzzy
+msgid "Jail IPv4 Address"
+msgstr "Direcció de correu electrònic"
+
+#: plugins/forms.py:222
+#, fuzzy
+msgid "Jail IPv4 Netmask"
+msgstr "Màscara IPv4 "
+
+#: plugins/forms.py:228
+msgid "Plugins archive Path"
+msgstr ""
+
+#: plugins/forms.py:244
 msgid "Plugins Jail PBI"
 msgstr ""
 
-#: plugins/forms.py:129
-msgid "Jail path cannot contain plugins path."
+#: plugins/forms.py:286 templates/plugins/mountpoints.html:6
+msgid "Mounted?"
 msgstr ""
 
-#: plugins/forms.py:131
-msgid "Plugins path cannot contain jail path."
+#: plugins/forms.py:314
+msgid "The full path cannot exceed 88 characters"
 msgstr ""
 
-#: plugins/models.py:36 templates/plugins/plugin_info.html:5
+#: plugins/forms.py:336
+#, fuzzy, python-format
+msgid "The path could not be mounted %s"
+msgstr "La cache no es pot reconstruir"
+
+#: plugins/forms.py:341
+#, fuzzy, python-format
+msgid "The path could not be umounted %s"
+msgstr "La cache no es pot reconstruir"
+
+#: plugins/models.py:38 templates/plugins/plugin_info.html:5
+#: templates/services/plugins.html:30
 #, fuzzy
 msgid "Plugin name"
 msgstr "Nom de domini"
 
-#: plugins/models.py:37
+#: plugins/models.py:39
 msgid "Name of the plugin"
 msgstr ""
 
-#: plugins/models.py:42
+#: plugins/models.py:44
 msgid "Plugin info name"
 msgstr ""
 
-#: plugins/models.py:43
+#: plugins/models.py:45
 msgid "Info name of the plugin"
 msgstr ""
 
-#: plugins/models.py:48
+#: plugins/models.py:50
 #, fuzzy
 msgid "Plugin version"
 msgstr "Versió de Windows"
 
-#: plugins/models.py:49
+#: plugins/models.py:51
 #, fuzzy
 msgid "Version of the plugin"
 msgstr "encriptació de la connexió"
 
-#: plugins/models.py:54 plugins/models.py:55
+#: plugins/models.py:57
+#, fuzzy
+msgid "Plugin API version"
+msgstr "Versió de Windows"
+
+#: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
 msgstr ""
 
-#: plugins/models.py:60 templates/plugins/plugin_info.html:9
-#, fuzzy
-msgid "Plugin uname"
-msgstr "Nom de domini"
-
-#: plugins/models.py:61
-msgid "UName of the plugin"
-msgstr ""
-
-#: plugins/models.py:66 plugins/models.py:67
-#: templates/plugins/plugin_info.html:13
-msgid "Plugin view"
-msgstr ""
-
-#: plugins/models.py:72 plugins/models.py:73
-#: templates/plugins/plugin_info.html:17
-msgid "Plugin icon"
-msgstr ""
-
-#: plugins/models.py:77 plugins/models.py:78
-#: templates/plugins/plugin_info.html:21
+#: plugins/models.py:67 plugins/models.py:68
+#: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
 msgstr ""
 
-#: plugins/models.py:84 plugins/models.py:85
-#: templates/plugins/plugin_info.html:25
+#: plugins/models.py:74 plugins/models.py:75
+#: templates/plugins/plugin_info.html:13
 #, fuzzy
 msgid "Plugin IP address"
 msgstr "Adreça IP del Controller"
 
-#: plugins/models.py:90 plugins/models.py:91
-#: templates/plugins/plugin_info.html:29
+#: plugins/models.py:80 plugins/models.py:81
+#: templates/plugins/plugin_info.html:17
 #, fuzzy
 msgid "Plugin TCP port"
 msgstr "Port TCP"
 
-#: plugins/models.py:96 plugins/models.py:97
+#: plugins/models.py:86
 #, fuzzy
-msgid "Path to plugin"
-msgstr "Ruta al punt de muntatge"
+msgid "Plugin archive path"
+msgstr "Nom de domini"
 
-#: plugins/models.py:101 plugins/models.py:102 plugins/nav.py:33
-#: services/models.py:790 services/models.py:791 services/nav.py:166
-#: templates/menubar.html:33 templates/services/index.html:99
+#: plugins/models.py:87 services/models.py:830
+msgid "Path where the plugins are saved after installation"
+msgstr ""
+
+#: plugins/models.py:96 plugins/models.py:97 services/models.py:835
+#: services/models.py:836 services/nav.py:215 templates/services/core.html:96
+#: templates/services/index.html:16
 msgid "Plugins"
 msgstr ""
 
-#: plugins/nav.py:40
-#, fuzzy
-msgid "Control Plugins"
-msgstr "Serveis de Control"
-
-#: plugins/nav.py:48
-msgid "Configure Plugins"
+#: plugins/models.py:112 templates/plugins/mountpoints.html:4
+msgid "Source"
 msgstr ""
 
-#: plugins/views.py:69
+#: plugins/models.py:117 templates/network/staticroute.html:5
+#: templates/plugins/mountpoints.html:5
+msgid "Destination"
+msgstr "Destinació"
+
+#: plugins/models.py:121 storage/models.py:456
+msgid "Mount Point"
+msgstr "Punt de muntatge"
+
+#: plugins/models.py:122
+#, fuzzy
+msgid "Mount Points"
+msgstr "Punt de muntatge"
+
+#: plugins/views.py:52
 #, fuzzy
 msgid "Plugin successfully updated."
 msgstr "%s actualitzat amb èxit."
 
-#: plugins/views.py:95
+#: plugins/views.py:80
 #, fuzzy
 msgid "Plugin successfully removed."
 msgstr "Volum afegit amb èxit."
 
-#: plugins/views.py:99
+#: plugins/views.py:86
 msgid "Unable to remove plugin."
 msgstr ""
 
-#: services/forms.py:65
+#: plugins/views.py:101
+#, fuzzy
+msgid "Plugin successfully updated"
+msgstr "%s actualitzat amb èxit."
+
+#: plugins/views.py:130
+#, fuzzy
+msgid "Plugin successfully installed"
+msgstr "%s actualitzat amb èxit."
+
+#: plugins/views.py:201
+msgid "There was a problem importing the jail."
+msgstr ""
+
+#: plugins/views.py:204
+#, fuzzy
+msgid "Jail successfully imported."
+msgstr "%s actualitzat amb èxit."
+
+#: services/forms.py:70
 msgid "This is not a valid mask"
 msgstr "Això no és una màscara valida"
 
-#: services/forms.py:82
+#: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr "Aquest camp és requereix per \"Enable home directories browsing\"."
 
-#: services/forms.py:85
+#: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
 msgstr "Aquest camp és requereix per \"Home directories\"."
 
-#: services/forms.py:93
+#: services/forms.py:106
 msgid "The CIFS service failed to reload."
 msgstr "El servei CIFS ha fallat la recàrrega."
 
-#: services/forms.py:102
+#: services/forms.py:118
 msgid "The AFP service failed to reload."
 msgstr "El servei AFP ha fallat de recàrrega-se"
 
-#: services/forms.py:111
+#: services/forms.py:130
 msgid "The NFS service failed to reload."
 msgstr "El servei NFS ha fallat de recàrrega-se"
 
-#: services/forms.py:130
-msgid "The plugins path cannot be the same or reside within jail path."
-msgstr ""
-
-#: services/forms.py:139
+#: services/forms.py:157
 #, fuzzy
 msgid "This IP already exists."
 msgstr "Un grup amb aquest gid ja existeix"
 
-#: services/forms.py:146
+#: services/forms.py:164
 #, fuzzy
-msgid "The Plugins service failed to reload."
+msgid "The Plugins Jail service failed to reload."
 msgstr "El servei AFP ha fallat de recàrrega-se"
 
-#: services/forms.py:151
+#: services/forms.py:169
 msgid "File Permission"
 msgstr "Permís de fitxer"
 
-#: services/forms.py:152
+#: services/forms.py:170
 msgid "Directory Permission"
 msgstr "Permís de directori"
 
-#: services/forms.py:180
+#: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
 "Aquest valor ha d'estar entre 1024 i 65535, inclusivament. Poseu 0 pel valor "
 "per defecte"
 
-#: services/forms.py:186
+#: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
 "Aquest valor ha d'estar entre 1024 i 65535, inclusivament. Poseu 0 pel valor "
 "per defecte."
 
-#: services/forms.py:205
+#: services/forms.py:215
+msgid "This must be higher than minimum passive port"
+msgstr ""
+
+#: services/forms.py:235
 msgid "This field is required for anonymous login"
 msgstr "Aquest camp es requereix per fer login anònim"
 
-#: services/forms.py:212
+#: services/forms.py:242
 msgid "The ftp service failed to start."
 msgstr "El servei FTP no ha pogut iniciar-se."
 
-#: services/forms.py:224
+#: services/forms.py:257
 msgid "The tftp service failed to reload."
 msgstr "El servei TFTP ha fallat la recàrrega."
 
-#: services/forms.py:231
+#: services/forms.py:272
 msgid "The SSH service failed to reload."
 msgstr "El servei SSH ha fallat de recàrrega-se."
 
-#: services/forms.py:243 services/forms.py:268
+#: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
 msgstr "El servei Rsync ha fallat de recàrrega-se."
 
-#: services/forms.py:253
+#: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
 "El nom no pot contenir la barra inclinada (slash) o  tancament de corxets "
 "(closing square backet)."
 
-#: services/forms.py:272
+#: services/forms.py:320
 msgid "Confirm Password"
 msgstr "Confirmar contrasenya"
 
-#: services/forms.py:300
+#: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
 msgstr "El servei DynamicDNS ha fallat la recàrrega."
 
-#: services/forms.py:310
+#: services/forms.py:374
 msgid "This is not a valid e-mail address"
 msgstr "Això no és adreça de correu vàlida"
 
-#: services/forms.py:312
+#: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
 
-#: services/forms.py:317
+#: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
 msgstr ""
 
-#: services/forms.py:323
+#: services/forms.py:389
 msgid "The SNMP service failed to reload."
 msgstr "El servei SNMP ha fallat la recàrrega."
 
-#: services/forms.py:335 services/models.py:503 services/models.py:852
-#: services/models.py:913 services/models.py:1040
+#: services/forms.py:404 services/models.py:525 services/models.py:905
+#: services/models.py:967 services/models.py:1119
 msgid "Port"
 msgstr "Port"
 
-#: services/forms.py:345
+#: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr ""
 
-#: services/forms.py:356 services/forms.py:965
+#: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "El correu %(email)s no és vàlid"
 msgstr[1] "Els següents correus no son vàlids: %(email)s"
 
-#: services/forms.py:365
+#: services/forms.py:437
 msgid "The UPS service failed to reload."
 msgstr "El servei UPS ha fallat la recàrrega."
 
-#: services/forms.py:369
+#: services/forms.py:442
 #, fuzzy
 msgid "Confirm Administrator Password"
 msgstr "Contrasenya de l'Administrador"
 
-#: services/forms.py:392
+#: services/forms.py:479
 msgid "The activedirectory service failed to reload."
 msgstr "El servei d'activedirectory ha fallat la recàrrega."
 
-#: services/forms.py:403
+#: services/forms.py:494
 msgid "The ldap service failed to reload."
 msgstr "El servei d'LDAP ha fallat la recàrrega."
 
-#: services/forms.py:409 services/models.py:572
+#: services/forms.py:498 services/models.py:598
 msgid "Secret"
 msgstr "Secret"
 
-#: services/forms.py:411 services/models.py:573
+#: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
 msgstr "Target side secret."
 
-#: services/forms.py:412
+#: services/forms.py:501
 msgid "Secret (Confirm)"
 msgstr "Secret (Confirmar)"
 
-#: services/forms.py:414 services/forms.py:422
+#: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
 msgstr "Introdueix el mateix secret que a dalt per verificar-lo."
 
-#: services/forms.py:415
+#: services/forms.py:504
 msgid "Initiator Secret"
 msgstr "secret del Initiator"
 
-#: services/forms.py:417 services/models.py:579 services/models.py:584
+#: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Secret de l'Initiator side. (per autentificació CHAP mutua)"
 
-#: services/forms.py:420
+#: services/forms.py:509
 msgid "Initiator Secret (Confirm)"
 msgstr "Initiator Secret (Confirmar)"
 
-#: services/forms.py:429
+#: services/forms.py:544
 msgid "Secret does not match"
 msgstr "El secret no coincideix"
 
-#: services/forms.py:444 services/forms.py:445
+#: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
 msgstr ""
 "El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\"."
 
-#: services/forms.py:448
+#: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
 msgstr "El secret del \"pper\" no pot ser el mateix que el secret d'usuari."
 
-#: services/forms.py:451 services/forms.py:454
+#: services/forms.py:566 services/forms.py:569
 msgid "The peer user is required if you set a peer secret."
 msgstr ""
 "El secret del \"peer\" es requereix si incialitzes un usuari pel \"peer\"."
 
-#: services/forms.py:471 services/forms.py:518 services/forms.py:635
-#: services/forms.py:693 services/forms.py:796 services/forms.py:818
-#: services/forms.py:885 services/forms.py:940 services/models.py:492
-#: services/models.py:709
+#: services/forms.py:582 services/forms.py:614 services/forms.py:756
+#: services/forms.py:821 services/forms.py:927 services/forms.py:955
+#: services/forms.py:1027 services/forms.py:1086 services/models.py:514
+#: services/models.py:744
 msgid "The iSCSI service failed to reload."
 msgstr "El servei iSCSI ha fallat la recàrrega."
 
-#: services/forms.py:510
+#: services/forms.py:606
 msgid "LUN already exists in the same target."
 msgstr "El LUN ja existeix en el mateix target."
 
-#: services/forms.py:521 services/models.py:367
+#: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
 msgstr "Grup d'Autenticació del Controller"
 
-#: services/forms.py:522 services/models.py:368
+#: services/forms.py:620
+#, fuzzy
 msgid ""
-"The istgtcontrol can access the targets with correct user and secret in "
+"The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
 "El istgtcontrol pot accedir els targets amb l'usuari i secret correctes al "
 "Grup d'autenticació específic."
 
-#: services/forms.py:523 services/models.py:262
+#: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
 msgstr "Grup d'autenticació Discovery"
 
-#: services/forms.py:553
+#: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Aquest valor ha de estar entre %(start) i %(end), inclosos."
 
-#: services/forms.py:561
+#: services/forms.py:669
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Aquest camp es requerit si el mètode de descobriment està posat a  CHAP o "
 "CHAP Mutual."
 
-#: services/forms.py:609
+#: services/forms.py:717
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
 
-#: services/forms.py:647
+#: services/forms.py:730
+#, fuzzy
+msgid "This is not a valid network"
+msgstr "Això no és una màscara valida"
+
+#: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
 msgstr "Necesites especificar una ruta a fitxer, no un directori."
 
-#: services/forms.py:651
+#: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
 msgstr "Necessites especificar un fitxer dins el teu volum/dataset."
 
-#: services/forms.py:655
+#: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
 "La teva ruta al Extent ha de estar dintre un punt de muntatge d'un volum/"
 "dataset."
 
-#: services/forms.py:669
+#: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
 "Aquest valor ha de ser una mida en bytes o pot estar post fixat amb KB, MB, "
 "GB, TB"
 
-#: services/forms.py:676
+#: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:698
+#: services/forms.py:830
 msgid "Disk device"
 msgstr "Dispositiu de disc"
 
-#: services/forms.py:812
+#: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "El teu ID del portal de grup no pot ser superior de %d"
 
-#: services/forms.py:859
+#: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
 msgstr "El teu grop ID no pot set superior de %d"
 
-#: services/forms.py:877
+#: services/forms.py:1019
 #, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr "Al camp no té una adreça IP o xarxa vàlides"
 
-#: services/forms.py:888
+#: services/forms.py:1032
 msgid "Authentication Group number"
 msgstr "Numero d'autenticació de grup"
 
-#: services/forms.py:917
+#: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
-#: services/forms.py:943
+#: services/forms.py:1091
 msgid "Delete underlying file"
 msgstr "Esborrar el fitxer subjacent"
 
-#: services/forms.py:974
+#: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
+#: templates/plugins/plugin_confirm_delete.html:10
+#: templates/storage/snapshot_confirm_delete.html:3
+#: templates/storage/snapshot_confirm_delete_bulk.html:5
+#: templates/storage/zvol_confirm_delete.html:7
+msgid "Are you sure you want to delete?"
+msgstr "Estas segur que vols esborrar-ho?"
+
+#: services/forms.py:1147
 #, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
 msgstr "El servei SNMP ha fallat la recàrrega"
 
-#: services/models.py:42
+#: services/models.py:51
 msgid "Service"
 msgstr "Servei"
 
-#: services/models.py:43
+#: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
 msgstr ""
 "El nom del servei hauria de ser generat automàticament a l'hora de fer la "
 "compilació"
 
-#: services/models.py:46
+#: services/models.py:55
 msgid "Enable Service"
 msgstr "Activar servei"
 
-#: services/models.py:49 services/models.py:50 services/nav.py:7
-#: templates/menubar.html:28 templates/services/index.html:3
+#: services/models.py:58 services/models.py:59 services/nav.py:8
+#: templates/menubar.html:27
 msgid "Services"
 msgstr "Serveis"
 
-#: services/models.py:62
+#: services/models.py:72
 msgid "Authentication Model"
 msgstr "Model d'autenticació"
 
-#: services/models.py:63
+#: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
 "Fer servir Active Directory o utenticació LDAP substituirà aquesta opció"
 
-#: services/models.py:67
+#: services/models.py:77
 msgid "NetBIOS name"
 msgstr "Nom de NetBIOS"
 
-#: services/models.py:71
+#: services/models.py:81
 msgid "Workgroup"
 msgstr "Grup de treball"
 
-#: services/models.py:72
+#: services/models.py:82
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
@@ -1659,35 +1728,35 @@ msgstr ""
 "El nom del grup de treball apareixerá al ser demanat pels clients (màxim 15 "
 "caràcters)."
 
-#: services/models.py:78
+#: services/models.py:88
 msgid "Server description. This can usually be left blank."
 msgstr "Descripció del servidor. Es pot deixar en blanc."
 
-#: services/models.py:84
+#: services/models.py:94
 msgid "DOS charset"
 msgstr "joc de caràcters DOS "
 
-#: services/models.py:90
+#: services/models.py:100
 msgid "UNIX charset"
 msgstr "joc de caràcters UNIX"
 
-#: services/models.py:96
+#: services/models.py:106
 msgid "Log level"
 msgstr "Nivell de log"
 
-#: services/models.py:99
+#: services/models.py:109
 msgid "Local Master"
 msgstr "Master local"
 
-#: services/models.py:101
+#: services/models.py:111
 msgid "Time Server for Domain"
 msgstr "Servidor de temps pel domini"
 
-#: services/models.py:106 services/models.py:208
+#: services/models.py:116 services/models.py:214
 msgid "Guest account"
 msgstr "Compte de convidat"
 
-#: services/models.py:107 services/models.py:209
+#: services/models.py:117 services/models.py:215
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1702,119 +1771,111 @@ msgstr ""
 "d'existir al fitxer password, però no requereix tenir un login vàlid. "
 "L'usuari root no pot ser usat com a compte guest."
 
-#: services/models.py:110
-msgid "Allow guest access"
-msgstr "Permetre l'accés guest"
-
-#: services/models.py:112
-msgid "Only allow guest access"
-msgstr "Només permetre l'accés guest"
-
-#: services/models.py:115 services/models.py:959
+#: services/models.py:121 services/models.py:1013
 msgid "File mask"
 msgstr "màscara de l'arxiu"
 
-#: services/models.py:117
+#: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "Utilitza aquesta opció per anular la màscara de creació d'arxiu  (0666 per "
 "defecte)."
 
-#: services/models.py:121 services/models.py:965
+#: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
 msgstr "Màscara de directori"
 
-#: services/models.py:123
+#: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
 "Utilitza aquesta opció per anular la màscara de creació de directori (0777 "
 "per defecte)."
 
-#: services/models.py:126
+#: services/models.py:132
 msgid "Large RW support"
 msgstr "RW suport gran (Large RW support)"
 
-#: services/models.py:128
+#: services/models.py:134
 msgid "Send files with sendfile(2)"
 msgstr "Enviar arxius amb sendfile(2)"
 
-#: services/models.py:130
+#: services/models.py:136
 msgid "EA Support"
 msgstr "Suport EA"
 
-#: services/models.py:132
+#: services/models.py:138
 msgid "Support DOS File Attributes"
 msgstr "Suport per atributs d'arxius DOS"
 
-#: services/models.py:134
+#: services/models.py:140
 msgid "Allow Empty Password"
 msgstr "Permetre contrasenya buida"
 
-#: services/models.py:136 services/models.py:751 services/models.py:823
-#: services/models.py:1019 services/models.py:1290 services/models.py:1354
+#: services/models.py:142 services/models.py:787 services/models.py:874
+#: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
 msgstr "parametres auxiliars"
 
-#: services/models.py:138
+#: services/models.py:144
 #, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
 msgstr "Aquests paràmetres son afegits a la secció [Global] del smb.conf"
 
-#: services/models.py:141
+#: services/models.py:147
 msgid "Enable home directories"
 msgstr "Activa directoris home"
 
-#: services/models.py:142
+#: services/models.py:148
 msgid "Enable/disable home directories for samba user."
 msgstr "Això activa/desactiva els directoris home per l'usuari samba."
 
-#: services/models.py:145
+#: services/models.py:151
 msgid "Enable home directories browsing"
 msgstr "Activa explorar els directoris home"
 
-#: services/models.py:146
+#: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
 "Això activa/desactiva l'exploració dels directoris home per l'usuari samba."
 
-#: services/models.py:150
+#: services/models.py:156
 msgid "Home directories"
 msgstr "Directoris Home"
 
-#: services/models.py:154
+#: services/models.py:160
 #, fuzzy
 msgid "Homes auxiliary parameters"
 msgstr "parametres auxiliars"
 
-#: services/models.py:156
+#: services/models.py:162
 #, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
 msgstr "Aquests paràmetres s'afegiran a la secció [Share] de smb.conf"
 
-#: services/models.py:159
+#: services/models.py:165
 msgid "Unix Extensions"
 msgstr ""
 
-#: services/models.py:161
+#: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
-#: services/models.py:165
+#: services/models.py:171
 msgid "Enable AIO"
 msgstr "Activa AIO"
 
-#: services/models.py:166
+#: services/models.py:172
 msgid "Enable/disable AIO support."
 msgstr "Això activa/desactiva el suport AIO"
 
-#: services/models.py:170
+#: services/models.py:176
 msgid "Minimum AIO read size"
 msgstr "Tamnay mínim de lectura AIO"
 
-#: services/models.py:171
+#: services/models.py:177
 #, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
@@ -1822,11 +1883,11 @@ msgstr ""
 "Samba llegirà de manera asíncrona si request size és més gran que aquest "
 "valor.La lectura per defecte és 1."
 
-#: services/models.py:176
+#: services/models.py:182
 msgid "Minimum AIO write size"
 msgstr "Mida d'escriptura AIO minima"
 
-#: services/models.py:177
+#: services/models.py:183
 #, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
@@ -1834,27 +1895,27 @@ msgstr ""
 "Samba llegirà de manera asíncrona si request size és més gran que aquest "
 "valor.La lectura per defecte és 1."
 
-#: services/models.py:181
+#: services/models.py:187
 msgid "Zeroconf share discovery"
 msgstr ""
 
-#: services/models.py:183
+#: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
-#: services/models.py:187 services/models.py:188
-#: templates/services/index.html:29
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:197
+#: services/models.py:203
 msgid "Server Name"
 msgstr "Nom del servidor"
 
-#: services/models.py:198
+#: services/models.py:204
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
@@ -1862,35 +1923,35 @@ msgstr ""
 "Nom del servidor. Si el camp es deixa buit, s'especifica el servidor per "
 "defecte."
 
-#: services/models.py:201
+#: services/models.py:207
 msgid "Guest Access"
 msgstr "Accés convidat"
 
-#: services/models.py:202
+#: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
 msgstr "Permet l'accés convidat a tots els share d'Apple en aquesta caixa."
 
-#: services/models.py:213
+#: services/models.py:219
 #, fuzzy
 msgid "Max. Connections"
 msgstr "Connexions màximes"
 
-#: services/models.py:215
+#: services/models.py:221
 #, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr "Nombre màxim de connexions a cada sessió (8 per defecte)."
 
-#: services/models.py:220 services/models.py:221
-#: templates/services/index.html:7
+#: services/models.py:226 services/models.py:227
+#: templates/services/core.html:4
 msgid "AFP"
 msgstr "AFP"
 
-#: services/models.py:230
+#: services/models.py:236
 msgid "Number of servers"
 msgstr "Nombre de serveis"
 
-#: services/models.py:231
+#: services/models.py:237
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
@@ -1899,11 +1960,11 @@ msgstr ""
 "manejar el nivell màxim de concurrencies dels seus clients, normament entre "
 "4 i 6."
 
-#: services/models.py:235
+#: services/models.py:241
 msgid "Asynchronous mode"
 msgstr "Mode asíncron"
 
-#: services/models.py:236
+#: services/models.py:242
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
@@ -1911,16 +1972,16 @@ msgstr ""
 "Habilita el mode asíncron, que ajudarà en el rendiment a la xarxa de "
 "velocitat per sobre de gigabit."
 
-#: services/models.py:241 services/models.py:242
-#: templates/services/index.html:88
+#: services/models.py:247 services/models.py:248
+#: templates/services/core.html:85
 msgid "NFS"
 msgstr "NFS"
 
-#: services/models.py:251
+#: services/models.py:257
 msgid "Base Name"
 msgstr "Nom base"
 
-#: services/models.py:252
+#: services/models.py:258
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
@@ -1928,47 +1989,47 @@ msgstr ""
 "El nom base (ex. iqn.2007-09.jp.ne.peach.istgt, mirar RFC 3720 3721 per "
 "detalls) s'afegira al nom de destí que no comenci per 'iqn.'"
 
-#: services/models.py:258
+#: services/models.py:264
 msgid "Discovery Auth Method"
 msgstr "Mètode de descobriment automàtic"
 
-#: services/models.py:269
+#: services/models.py:275
 msgid "I/O Timeout"
 msgstr "I/O timeout"
 
-#: services/models.py:270
+#: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
 msgstr "I/O timeout en segons (per defecte 30 segons)."
 
-#: services/models.py:275
+#: services/models.py:281
 msgid "NOPIN Interval"
 msgstr "Interval NOPIN"
 
-#: services/models.py:276
+#: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
 msgstr "Interval d'enviament NOPIN en segons (20 per defecte)."
 
-#: services/models.py:281
+#: services/models.py:287
 msgid "Max. sessions"
 msgstr "Sessions màximes"
 
-#: services/models.py:282
+#: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr "Nombre màxim de sessions al mateix moment (16 per defecte)."
 
-#: services/models.py:287
+#: services/models.py:293
 msgid "Max. connections"
 msgstr "Connexions màximes"
 
-#: services/models.py:288
+#: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
 msgstr "Nombre màxim de connexions a cada sessió (8 per defecte)."
 
-#: services/models.py:293
+#: services/models.py:299
 msgid "Max. pre-send R2T"
 msgstr "Pre-enviamnet R2T màxim"
 
-#: services/models.py:294
+#: services/models.py:300
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
@@ -1976,125 +2037,135 @@ msgstr ""
 "Nombre màxim de pre envimaents R2T en cada conexió (32 per defecte). El "
 "nombre actual és limitat la Profunditat de la cua (QueueDepth) del target."
 
-#: services/models.py:299
+#: services/models.py:305
 msgid "MaxOutstandingR2T"
 msgstr "MaxOutstandingR2T"
 
-#: services/models.py:300
+#: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
 msgstr "Paràmetre inicial iSCSI (16 per defecte)."
 
-#: services/models.py:305
+#: services/models.py:311
 msgid "First burst length"
 msgstr "Longitud del primer buffer"
 
-#: services/models.py:306
+#: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
 msgstr "paràmetre d'inici iSCSI (65536 per defecte)."
 
-#: services/models.py:311
+#: services/models.py:317
 msgid "Max burst length"
 msgstr "Longitud màxima de salva (burst)"
 
-#: services/models.py:312 services/models.py:318
+#: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
 msgstr "Paràmetre d'inici iSCSI (262144 per defecte)."
 
-#: services/models.py:317
+#: services/models.py:323
 msgid "Max receive data segment length"
 msgstr "Longitud màxima del segment de dades rebudes"
 
-#: services/models.py:323
+#: services/models.py:329
 msgid "DefaultTime2Wait"
 msgstr "DefaultTime2Wait"
 
-#: services/models.py:324
+#: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
 msgstr "Paràmetre inicial iSCSI (2 per defecte)."
 
-#: services/models.py:329
+#: services/models.py:335
 msgid "DefaultTime2Retain"
 msgstr "DefaultTime2Retain"
 
-#: services/models.py:330
+#: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
 msgstr "Paràmetre inicial iSCSI (60 per defecte)."
 
-#: services/models.py:335
+#: services/models.py:341
 msgid "Enable LUC"
 msgstr "Activa LUC"
 
-#: services/models.py:339
+#: services/models.py:345
 msgid "Controller IP address"
 msgstr "Adreça IP del Controller"
 
-#: services/models.py:340
+#: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
 "Adreça IP de la Unitat Lògica del Controller (LUC) (per defecte 127.0.0.1 "
 "(localhost))"
 
-#: services/models.py:345
+#: services/models.py:351
 msgid "Controller TCP port"
 msgstr "Port TCP del Controller"
 
-#: services/models.py:346
+#: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Port TCP de la Unitat Lògica del Controller (LUC) (Per defecte 3261)"
 
-#: services/models.py:352
-msgid "Controller Authorized netmask"
+#: services/models.py:358
+#, fuzzy
+msgid "Controller Authorized Network"
 msgstr "Màscara autoritzada del Controller"
 
-#: services/models.py:354
-msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
+#: services/models.py:360
+#, fuzzy
+msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
 "Màscara autoritzada de la Unitat Lògica del Controller (LUC) (Per defecte "
 "255.255.255.0) "
 
-#: services/models.py:361
+#: services/models.py:368
 msgid "Controller Auth Method"
 msgstr "Mètode d'autorització del Controller"
 
-#: services/models.py:362
+#: services/models.py:369
 msgid "The method can be accepted in the controller."
 msgstr "El mètode pot ser acceptat a la controladora"
 
-#: services/models.py:374 services/models.py:375
+#: services/models.py:375
+msgid ""
+"The istgtcontrol can access the targets with correct user and secret in "
+"specific Auth Group."
+msgstr ""
+"El istgtcontrol pot accedir els targets amb l'usuari i secret correctes al "
+"Grup d'autenticació específic."
+
+#: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
 msgstr "Configuració global de Target"
 
-#: services/models.py:387
+#: services/models.py:396
 msgid "Extent Name"
 msgstr "Nom de l'Extent"
 
-#: services/models.py:388
+#: services/models.py:397
 msgid "String identifier of the extent."
 msgstr "Cadena que identifica l'Extent"
 
-#: services/models.py:392
+#: services/models.py:401
 msgid "Extent Type"
 msgstr "Tipus d'Extent"
 
-#: services/models.py:393
+#: services/models.py:402
 msgid "Type used as extent."
 msgstr "Tipus utilitzat com a Extent"
 
-#: services/models.py:398
+#: services/models.py:407
 msgid "Path to the extent"
 msgstr "Ruta a l'Extent"
 
-#: services/models.py:399
+#: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
 "Ruta al fitxer (p.e. /mnt/sharename/extent/extent0) utilitzat com a Extent."
 
-#: services/models.py:404
+#: services/models.py:413
 msgid "Extent size"
 msgstr "Tamany de l'Extent."
 
-#: services/models.py:405
+#: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
@@ -2102,9 +2173,9 @@ msgstr ""
 "Tamany de l'Extent, 0 vol dir automàtic, només un número és el tamany en "
 "bytes, o un sufix KB, MB, TB segons convingui."
 
-#: services/models.py:410 services/models.py:462 services/models.py:535
-#: services/models.py:1311 sharing/models.py:43 sharing/models.py:252
-#: system/models.py:740 system/models.py:778
+#: services/models.py:419 services/models.py:480 services/models.py:557
+#: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
+#: system/models.py:779 system/models.py:818
 #: templates/services/iscsi_authini.html:8
 #: templates/services/iscsi_portals.html:6 templates/services/rsyncmod.html:6
 #: templates/sharing/apple.html:13 templates/sharing/unix.html:13
@@ -2113,39 +2184,39 @@ msgstr ""
 msgid "Comment"
 msgstr "Comentari"
 
-#: services/models.py:411 services/models.py:463 services/models.py:536
+#: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
 msgstr "Aquí pots entrar una descripció com a referència."
 
-#: services/models.py:414 services/models.py:698
+#: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
 msgstr "Extent"
 
-#: services/models.py:457 services/models.py:635
+#: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
 msgstr "ID del Grup de Portal "
 
-#: services/models.py:466 services/models.py:497
+#: services/models.py:485 services/models.py:519
 msgid "Portal"
 msgstr "Portal"
 
-#: services/models.py:500
+#: services/models.py:522
 #, fuzzy
 msgid "IP Address"
 msgstr "Adreça IPv4"
 
-#: services/models.py:512
+#: services/models.py:534
 #, fuzzy
 msgid "Portal IP"
 msgstr "Portal"
 
-#: services/models.py:522 templates/services/iscsi_authini.html:6
+#: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
 msgstr "Iniciadors"
 
-#: services/models.py:524
+#: services/models.py:546
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
@@ -2153,11 +2224,11 @@ msgstr ""
 "Iniciador autoritzat a accedir a l target iSCSI. S'ha de posar un nom o be "
 "'ALL' per tots els iniciadors."
 
-#: services/models.py:528
+#: services/models.py:550
 msgid "Authorized network"
 msgstr "Xarxa autoritzada"
 
-#: services/models.py:530
+#: services/models.py:552
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
@@ -2165,80 +2236,80 @@ msgstr ""
 "Xarxa autoritzada a accedir al target iSCSI. S'ha de posar una IP, o adreces "
 "CIDR, o 'ALL' per qualsevol IP."
 
-#: services/models.py:539
+#: services/models.py:562
 msgid "Initiator"
 msgstr "Iniciador"
 
-#: services/models.py:568
+#: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
 "Nom d'usuari del cantó del Target. Normalment per defecte és el nom del "
 "iniciador."
 
-#: services/models.py:578
+#: services/models.py:604
 msgid "Peer User"
 msgstr "Usuari del Peer"
 
-#: services/models.py:583
+#: services/models.py:609
 msgid "Peer Secret"
 msgstr "Secret del Peer"
 
-#: services/models.py:587
+#: services/models.py:614
 msgid "Authorized Access"
 msgstr "Accés autoritzat"
 
-#: services/models.py:588
+#: services/models.py:615
 msgid "Authorized Accesses"
 msgstr "Accés autoritzat"
 
-#: services/models.py:603
+#: services/models.py:632
 msgid "Target Name"
 msgstr "Nom del Target"
 
-#: services/models.py:604
+#: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr "S'afegirà automàticament el nom de Base quan comenci sense 'iqn.'."
 
-#: services/models.py:611
+#: services/models.py:640
 msgid "Target Alias"
 msgstr "Alias del Target"
 
-#: services/models.py:612
+#: services/models.py:641
 msgid "Optional user-friendly string of the target."
 msgstr "Nom opcional i entenedor pels usuaris del Target."
 
-#: services/models.py:615 storage/models.py:318 storage/views.py:226
+#: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
 msgstr "Sèrie"
 
-#: services/models.py:618
+#: services/models.py:647
 msgid "Serial number for the logical unit"
 msgstr "Nombre de sèrie per la unitat lògica"
 
-#: services/models.py:624 system/models.py:633
+#: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_extents.html:6
-#: templates/services/iscsi_targets.html:7
+#: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
 msgstr "Tipus"
 
-#: services/models.py:625
+#: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
 msgstr "Tipus de Unitat Lògica mapejada al LUN"
 
-#: services/models.py:631
+#: services/models.py:660
 msgid "Target Flags"
 msgstr "Atributs del Target"
 
-#: services/models.py:639
+#: services/models.py:668
 msgid "Initiator Group ID"
 msgstr "ID del Grup d'Iniciadors"
 
-#: services/models.py:645 services/models.py:657
+#: services/models.py:674 services/models.py:686
 msgid "Auth Method"
 msgstr "Mètode d'autorització"
 
-#: services/models.py:646 services/models.py:658
+#: services/models.py:675 services/models.py:687
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
@@ -2246,15 +2317,15 @@ msgstr ""
 "El mètode pot ser accepta pel Target. Auto vol dir ambdòs mètodes, cap i "
 "autenticació."
 
-#: services/models.py:650
+#: services/models.py:679
 msgid "Authentication Group ID"
 msgstr "ID del Grup d'Autenticació."
 
-#: services/models.py:663
+#: services/models.py:692
 msgid "Queue Depth"
 msgstr "Profunditat de la cua (Queue)"
 
-#: services/models.py:664
+#: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
@@ -2262,11 +2333,11 @@ msgstr ""
 "0=desactivat, 1-255=Activar les cues de comandamenys amb la profunditat "
 "especificada. La profunditat recomanada de cua és de 32."
 
-#: services/models.py:669
+#: services/models.py:698
 msgid "Logical Block Size"
 msgstr "Tamany lògic de bloc (Block Size)"
 
-#: services/models.py:670
+#: services/models.py:699
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
@@ -2274,33 +2345,33 @@ msgstr ""
 "Pots especificar la longitud dels blocs lògics (512 per defecte). La "
 "longitud recomanada per compatibilitat és 512)"
 
-#: services/models.py:673 services/models.py:692
+#: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
 msgstr "Target"
 
-#: services/models.py:693
+#: services/models.py:725
 msgid "Target this extent belongs to"
 msgstr "Target al cual pertany aquest Extent"
 
-#: services/models.py:701
+#: services/models.py:734
 msgid "Target / Extent"
 msgstr "Target / Extent"
 
-#: services/models.py:702
+#: services/models.py:735
 msgid "Targets / Extents"
 msgstr "Targets / Extents"
 
-#: services/models.py:723
+#: services/models.py:759
 msgid "Provider"
 msgstr "Proveïdor"
 
-#: services/models.py:727
+#: services/models.py:763
 msgid "Domain name"
 msgstr "Nom de domini"
 
-#: services/models.py:729
+#: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
@@ -2309,64 +2380,66 @@ msgstr ""
 "domini que té la mateixa IP. Utilitza un espai per separar múltiple nom "
 "d'alias."
 
-#: services/models.py:741
+#: services/models.py:777
 msgid "Update period"
 msgstr "Període d'actualització"
 
-#: services/models.py:743
+#: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
 msgstr ""
 
-#: services/models.py:747
+#: services/models.py:783
 msgid "Forced update period"
 msgstr "Període d'actualització forçada"
 
-#: services/models.py:753 services/models.py:825
+#: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr "Aquests paràmetres s'afegiran als ajustos globals a inadyn.conf"
 
-#: services/models.py:757 services/models.py:758
-#: templates/services/index.html:40
+#: services/models.py:793 services/models.py:794
+#: templates/services/core.html:37
 msgid "Dynamic DNS"
 msgstr "DNS dinàmic"
 
-#: services/models.py:768
-msgid "Plugins jail path"
-msgstr ""
-
-#: services/models.py:769
+#: services/models.py:804
 #, fuzzy
 msgid "Path to the plugins jail"
 msgstr "Ruta a l'Extent"
 
-#: services/models.py:774 templates/services/plugins_info.html:9
+#: services/models.py:809
 #, fuzzy
 msgid "Jail name"
 msgstr "Nom de domini"
 
-#: services/models.py:775
+#: services/models.py:810
 msgid "Name of the plugins jail"
 msgstr ""
 
-#: services/models.py:781
+#: services/models.py:815
+msgid ""
+"Jail name can only contain letters, numbers and hyphens. It must not end "
+"with a hyphen."
+msgstr ""
+
+#: services/models.py:821
 #, fuzzy
 msgid "Jail IP address"
 msgstr "Direcció de correu electrònic"
 
-#: services/models.py:784
-msgid "Plugins Path"
+#: services/models.py:825
+#, fuzzy
+msgid "Jail IP Netmask"
+msgstr "Màscara IPv4 "
+
+#: services/models.py:829
+msgid "Plugins archive path"
 msgstr ""
 
-#: services/models.py:785
-#, fuzzy
-msgid "Path to the plugins directory"
-msgstr "La ruta no és un directori."
-
-#: services/models.py:805
+#: services/models.py:852
 msgid "Location"
 msgstr "Localització"
 
-#: services/models.py:807
+#: services/models.py:854
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
@@ -2374,11 +2447,11 @@ msgstr ""
 "Informació de localització, ex. localització física del sistema: 'Planta de "
 "l'edifici, Habitació xyzzy'."
 
-#: services/models.py:811
+#: services/models.py:859
 msgid "Contact"
 msgstr "Contacte"
 
-#: services/models.py:813
+#: services/models.py:861
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
@@ -2386,61 +2459,61 @@ msgstr ""
 "Informació de contacte, ex. nom o correu electrònic de al persona "
 "responsable del sistema: 'admin@email.direcció'."
 
-#: services/models.py:817
+#: services/models.py:867
 msgid "Community"
 msgstr "Comunitat"
 
-#: services/models.py:818
+#: services/models.py:868
 msgid "In most cases, 'public' is used here."
 msgstr "En la majoria de casos, 'public' s'utlitza aquí."
 
-#: services/models.py:821
+#: services/models.py:871
 msgid "Send SNMP Traps"
 msgstr "Envia SNMP Traps"
 
-#: services/models.py:829 services/models.py:830
-#: templates/services/index.html:125
+#: services/models.py:881 services/models.py:882
+#: templates/services/core.html:122
 msgid "SNMP"
 msgstr "SNMP"
 
-#: services/models.py:840 storage/models.py:313
+#: services/models.py:893 storage/models.py:330
 msgid "Identifier"
 msgstr "Identificador"
 
-#: services/models.py:841
+#: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr "Aquest nom és usat per identificar unicament el teu UPS en el sistema"
 
-#: services/models.py:845
+#: services/models.py:898
 msgid "Driver"
 msgstr "Driver"
 
-#: services/models.py:848
+#: services/models.py:901
 msgid "The driver used to communicate with your UPS."
 msgstr "Driver utilitzat per comunicar amb l'UPS"
 
-#: services/models.py:854
+#: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
 msgstr "Port serie o USB on està conenctat el UPS"
 
-#: services/models.py:857
+#: services/models.py:910
 #, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
 msgstr "parametres auxiliars"
 
-#: services/models.py:859
+#: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
 msgstr ""
 
-#: services/models.py:870
+#: services/models.py:923
 msgid "Shutdown mode"
 msgstr "mode d'apagada"
 
-#: services/models.py:874
+#: services/models.py:927
 msgid "Shutdown timer"
 msgstr "Temporitzador d'aturada"
 
-#: services/models.py:875
+#: services/models.py:928
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
@@ -2448,37 +2521,37 @@ msgstr ""
 "El temps en segons fins que s'inicia l'aturada. Si el SAI resulta que "
 "s'aixeca abans que s'acabi el temps, l'aturada es cancel.la."
 
-#: services/models.py:880
+#: services/models.py:933
 #, fuzzy
 msgid "UPS Master User Password"
 msgstr "Contrasenya de la compartició"
 
-#: services/models.py:884
+#: services/models.py:937
 msgid "Extra users (upsd.users)"
 msgstr ""
 
-#: services/models.py:887
+#: services/models.py:940
 msgid "Remote Monitor"
 msgstr "Monitor remot"
 
-#: services/models.py:889
+#: services/models.py:942
 msgid "Send Email Status Updates"
 msgstr "Envia informes d'estat per correu electrònic"
 
-#: services/models.py:892
+#: services/models.py:945
 msgid "To email"
 msgstr "Pel correu"
 
-#: services/models.py:894
+#: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
 "Adreça de correu electrònic de destí. Separa els correus amb punts i comes."
 
-#: services/models.py:898
+#: services/models.py:951
 msgid "Email Subject"
 msgstr ""
 
-#: services/models.py:899
+#: services/models.py:952
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
@@ -2486,108 +2559,108 @@ msgstr ""
 "El tema del correu electrònic. Pots utilitzar els següents paràmetres com a "
 "variables: <br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 
-#: services/models.py:903 services/models.py:904
-#: templates/services/index.html:169
+#: services/models.py:956 services/models.py:957
+#: templates/services/core.html:166
 msgid "UPS"
 msgstr "SAI (UPS)"
 
-#: services/models.py:915
+#: services/models.py:969
 msgid "Port to bind FTP server."
 msgstr "Port vinculat al servidor FTP"
 
-#: services/models.py:919
+#: services/models.py:973
 msgid "Clients"
 msgstr "Clients"
 
-#: services/models.py:921
+#: services/models.py:975
 msgid "Maximum number of simultaneous clients."
 msgstr "Màxim nombre de clients simultanis."
 
-#: services/models.py:925
+#: services/models.py:979
 msgid "Connections"
 msgstr "Connecions"
 
-#: services/models.py:927
+#: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
 msgstr "Nombre màxim de connexions per adreça IP (0=ilimitades)."
 
-#: services/models.py:931
+#: services/models.py:985
 msgid "Login Attempts"
 msgstr "Intents de Login"
 
-#: services/models.py:933
+#: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr "Màxim nombre permés d'intents de contrasenya abans de desconectar."
 
-#: services/models.py:937
+#: services/models.py:991
 msgid "Timeout"
 msgstr "Intèrval de temps fins que es finalitza el procés (Timeout) "
 
-#: services/models.py:939
+#: services/models.py:993
 msgid "Maximum idle time in seconds."
 msgstr "Temps màxim inactiu en segons"
 
-#: services/models.py:942
+#: services/models.py:996
 msgid "Allow Root Login"
 msgstr "Permetre Login de Root"
 
-#: services/models.py:944
+#: services/models.py:998
 msgid "Allow Anonymous Login"
 msgstr "Pemetre Login anònim"
 
-#: services/models.py:947 services/models.py:1314 sharing/models.py:47
-#: sharing/models.py:122 sharing/models.py:256 storage/forms.py:117
-#: system/models.py:428 templates/services/iscsi_dextents.html:7
+#: services/models.py:1001 services/models.py:1398 sharing/models.py:47
+#: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
+#: system/models.py:453 templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:14 templates/storage/volumes.html:59
 #: templates/storage/wizard.html:145
 msgid "Path"
 msgstr "Ruta"
 
-#: services/models.py:949
+#: services/models.py:1003
 msgid "Allow Local User Login"
 msgstr "Permetre Login d'Usuari Local"
 
-#: services/models.py:952
+#: services/models.py:1006
 msgid "Banner"
 msgstr "Capçalera"
 
-#: services/models.py:954
+#: services/models.py:1008
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr ""
 "Capçalera de salutació mostrada pel FTP quan hi ha una primera connexió."
 
-#: services/models.py:960 services/models.py:966
+#: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
 "Utilitza aquesta opció per reescriure la màscara de creació de fitxers (077 "
 "per defecte)."
 
-#: services/models.py:969
+#: services/models.py:1023
 msgid "Enable FXP"
 msgstr "Activa FXP"
 
-#: services/models.py:971
+#: services/models.py:1025
 msgid "Allow Transfer Resumption"
 msgstr "Permet la represa de la Transferència"
 
-#: services/models.py:973
+#: services/models.py:1027
 msgid "Always Chroot"
 msgstr "Fer sempre Chroot"
 
-#: services/models.py:975
+#: services/models.py:1029
 msgid "Require IDENT Authentication"
 msgstr "Autenticació IDENT requerida"
 
-#: services/models.py:977
+#: services/models.py:1031
 msgid "Require Reverse DNS for IP"
 msgstr "Inversió de DNS per IP requerida"
 
-#: services/models.py:979
+#: services/models.py:1033
 msgid "Masquerade address"
 msgstr "Enmascarament de direcció"
 
-#: services/models.py:982
+#: services/models.py:1036
 #, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
@@ -2598,11 +2671,11 @@ msgstr ""
 "especificada fent suposició que aquella adreça IP o el servidor DNS està "
 "actuant com a pasarel.la NAT o 'port forwarder' pel servidor."
 
-#: services/models.py:986
+#: services/models.py:1043
 msgid "Minimum passive port"
 msgstr "Port passiu mínim"
 
-#: services/models.py:988
+#: services/models.py:1044
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
@@ -2610,11 +2683,11 @@ msgstr ""
 "El port mínim per assignar connexions de dades de tipus PASV  (0=utilitza "
 "qualsevol port)"
 
-#: services/models.py:992
+#: services/models.py:1048
 msgid "Maximum passive port"
 msgstr "Port passiu màxim"
 
-#: services/models.py:993
+#: services/models.py:1049
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -2634,61 +2707,61 @@ msgstr ""
 "escollit sigui prou gran per manegar varies connexions pasives simultanies "
 "(p.e. 49152-65534, que és el rang efímer  registrat a la IANA)."
 
-#: services/models.py:997
+#: services/models.py:1062
 msgid "Local user upload bandwidth"
 msgstr "Amplada de banda de pujada d'usuari local"
 
-#: services/models.py:998
+#: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Ample de banda de pujada de l'usuari local en KB/s. Un zero vol dir infinit."
 
-#: services/models.py:1002
+#: services/models.py:1067
 msgid "Local user download bandwidth"
 msgstr "Ample de banda de baixada de l'usuari local"
 
-#: services/models.py:1003
+#: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Ample de banda de baixada de l'usuari local en KB/s. Un zero vol dir infinit."
 
-#: services/models.py:1007
+#: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
 msgstr "Amplada de banda de pujada de l'usuari anònim"
 
-#: services/models.py:1008
+#: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Ample de banda de pujada de l'usuari anònim en KB/s. Un zero vol dir infinit."
 
-#: services/models.py:1012
+#: services/models.py:1077
 msgid "Anonymous user download bandwidth"
 msgstr "Ample de banda de baixada de l'usuari anònim"
 
-#: services/models.py:1013
+#: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Ample de banda de baixada de l'usuari anònim en KB/s. Un zero vol dir "
 "infinit."
 
-#: services/models.py:1016
+#: services/models.py:1081
 msgid "Enable SSL/TLS"
 msgstr "Activar SSL/TLS"
 
-#: services/models.py:1021
+#: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
 msgstr "Aquests paràmetres son afegits a la configuració de proftpd.conf."
 
-#: services/models.py:1025 services/models.py:1026
-#: templates/services/index.html:53
+#: services/models.py:1090 services/models.py:1091
+#: templates/services/core.html:50
 msgid "FTP"
 msgstr "FTP"
 
-#: services/models.py:1034
+#: services/models.py:1113
 msgid "Directory"
 msgstr "Directori"
 
-#: services/models.py:1035
+#: services/models.py:1114
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
@@ -2696,11 +2769,11 @@ msgstr ""
 "El directori que conté els fitxers que vols publicar. Al client remot no li "
 "cal passar el directori com a part de la transferència."
 
-#: services/models.py:1038
+#: services/models.py:1117
 msgid "Allow New Files"
 msgstr "Permetre nous fitxers"
 
-#: services/models.py:1042
+#: services/models.py:1121
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
@@ -2708,15 +2781,15 @@ msgstr ""
 "El port a escoltar. Per defecte s'escolta al port TFTP especificat a /etc/"
 "services."
 
-#: services/models.py:1048
+#: services/models.py:1127
 msgid "Specifies the username which the service will run as."
 msgstr "S'especifica el nom d'usuari amb el que correrà el servei."
 
-#: services/models.py:1052
+#: services/models.py:1131
 msgid "umask"
 msgstr "umask"
 
-#: services/models.py:1053
+#: services/models.py:1132
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
@@ -2724,32 +2797,32 @@ msgstr ""
 "Especifica el valor de la umask per fitxers de nova creació. per defecte és "
 "022 (tothom pot llegir, ningú pot escriure)."
 
-#: services/models.py:1057 services/models.py:1094 system/models.py:540
+#: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
 msgstr "Opcions extra"
 
-#: services/models.py:1059
+#: services/models.py:1138
 msgid "Extra command line options (usually empty)."
 msgstr "Opcions extra de comandaments de línia (normalment buit)."
 
-#: services/models.py:1063 services/models.py:1064
-#: templates/services/index.html:158
+#: services/models.py:1142 services/models.py:1143
+#: templates/services/core.html:155
 msgid "TFTP"
 msgstr "TFTP"
 
-#: services/models.py:1072 services/models.py:1285
+#: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
 msgstr "Port TCP"
 
-#: services/models.py:1074
+#: services/models.py:1154
 msgid "Alternate TCP port. Default is 22"
 msgstr "Port TCP alternatiu. 22 per defecte"
 
-#: services/models.py:1077
+#: services/models.py:1157
 msgid "Login as Root with password"
 msgstr "Fer Login com a Root amb contrasenya"
 
-#: services/models.py:1078
+#: services/models.py:1158
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
@@ -2757,27 +2830,27 @@ msgstr ""
 "Desactivat: El Root només es pot validar via autenticació per clau pública; "
 "Activat: Es permet fer Login com a Root amb contrasenya."
 
-#: services/models.py:1081
+#: services/models.py:1161
 msgid "Allow Password Authentication"
 msgstr "Permetre autenticació amb contrasenya"
 
-#: services/models.py:1083
+#: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
 msgstr "Permetre TCP 'Port Forwarding'"
 
-#: services/models.py:1085
+#: services/models.py:1165
 msgid "Compress Connections"
 msgstr "Compresió de connexions"
 
-#: services/models.py:1088
+#: services/models.py:1168
 msgid "Host Private Key"
 msgstr "Clau Privada de Servidor"
 
-#: services/models.py:1090
+#: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
 msgstr "Enganxar aquí una clau privada RSA en format PEM"
 
-#: services/models.py:1096
+#: services/models.py:1176
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
@@ -2785,82 +2858,82 @@ msgstr ""
 "Opcions extra per a /etc/ssh/sshd_config (normalment buit). Nota: Les "
 "opcions incorrectes impedeixen l'inici del servei SSH. "
 
-#: services/models.py:1148 services/models.py:1149
-#: templates/services/index.html:147
+#: services/models.py:1228 services/models.py:1229
+#: templates/services/core.html:144
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1158
+#: services/models.py:1239
 msgid "Domain Controller Name"
 msgstr "Nom del Controlador de Domini"
 
-#: services/models.py:1159
+#: services/models.py:1240
 msgid "AD or PDC name."
 msgstr "Nom del PDC o del AD"
 
-#: services/models.py:1163
+#: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
 msgstr "Nom de Domini (DNS/Realm-Name)"
 
-#: services/models.py:1164
+#: services/models.py:1245
 msgid "Domain Name, eg example.com"
 msgstr "Nom de Domini, p.e. exemple.com"
 
-#: services/models.py:1168
+#: services/models.py:1249
 msgid "NetBIOS Name"
 msgstr "Nom del Servidor (NetBIOS-Name)"
 
-#: services/models.py:1169
+#: services/models.py:1250
 #, fuzzy
 msgid "System hostname"
 msgstr "Nom de Servidor en format antic, p.e. EXEMPLE"
 
-#: services/models.py:1173
+#: services/models.py:1254
 msgid "Workgroup Name"
 msgstr "Nom de Grup de Treball (Workgroup)"
 
-#: services/models.py:1174
+#: services/models.py:1255
 #, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Nom del Grup de Treball en format antic, p.e. EXEMPLE"
 
-#: services/models.py:1178
+#: services/models.py:1259
 #, fuzzy
 msgid "Allow Trusted Domains"
 msgstr "Permet GIDs repetides"
 
-#: services/models.py:1182
+#: services/models.py:1263
 msgid "Administrator Name"
 msgstr "Nom de l'Administrador"
 
-#: services/models.py:1183
+#: services/models.py:1264
 #, fuzzy
 msgid "Domain Administrator account name"
 msgstr "Contrasenya de l'Administrador de Domini."
 
-#: services/models.py:1187
+#: services/models.py:1268
 msgid "Administrator Password"
 msgstr "Contrasenya de l'Administrador"
 
-#: services/models.py:1188
+#: services/models.py:1269
 #, fuzzy
 msgid "Domain Administrator account password."
 msgstr "Contrasenya de l'Administrador de Domini."
 
-#: services/models.py:1192 services/models.py:1193
-#: templates/services/index.html:18
+#: services/models.py:1273 services/models.py:1274
+#: templates/services/core.html:15
 msgid "Active Directory"
 msgstr "Active Directory"
 
-#: services/models.py:1204
+#: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
 msgstr "L'adreça IP o el nom  del servidor LDAP"
 
-#: services/models.py:1208
+#: services/models.py:1290
 msgid "Base DN"
 msgstr "DN base"
 
-#: services/models.py:1210
+#: services/models.py:1292
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
@@ -2868,15 +2941,15 @@ msgstr ""
 "El Nom Distinguit (DN) base per defecte per utilitzar a les recerques, p.e. "
 "dc=test, dc=org"
 
-#: services/models.py:1213
+#: services/models.py:1295
 msgid "Allow Anonymous Binding"
 msgstr "Permetre la vinculació anònima"
 
-#: services/models.py:1216
+#: services/models.py:1298
 msgid "Root bind DN"
 msgstr "DN de vinculaió Root"
 
-#: services/models.py:1218
+#: services/models.py:1300
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
@@ -2884,27 +2957,27 @@ msgstr ""
 "El nom distingit amb el cual vincular el servidor de directory, p.e. "
 "cn=admin,dc=test,dc=org"
 
-#: services/models.py:1222
+#: services/models.py:1304
 msgid "Root bind password"
 msgstr "Contrasenya vinculada a Root"
 
-#: services/models.py:1224
+#: services/models.py:1306
 msgid "The credentials with which to bind."
 msgstr "Els credencials amb els qual es vincula."
 
-#: services/models.py:1229
+#: services/models.py:1311
 msgid "Password Encryption"
 msgstr "Encriptar la Contrasenya"
 
-#: services/models.py:1230
+#: services/models.py:1312
 msgid "The password change protocol to use."
 msgstr "La contrasenya canvia el protocal a utilitzar"
 
-#: services/models.py:1234
+#: services/models.py:1317
 msgid "User Suffix"
 msgstr "Sufix d'usuari"
 
-#: services/models.py:1236
+#: services/models.py:1318
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
@@ -2912,11 +2985,11 @@ msgstr ""
 "Aquest paràmetre especifica el sufix que s'utilitzarà pels usuaris quan "
 "siguin afegits al directori LDAP. p.e. ou=Users"
 
-#: services/models.py:1240
+#: services/models.py:1323
 msgid "Group Suffix"
 msgstr "Sufix de Grup"
 
-#: services/models.py:1242
+#: services/models.py:1324
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
@@ -2924,11 +2997,11 @@ msgstr ""
 "Aquest paràmetre especifica el sufix que s'utilitzarà pels grups quan siguin "
 "afegits al directori LDAP. p.e. ou=Groups"
 
-#: services/models.py:1246
+#: services/models.py:1328
 msgid "Password Suffix"
 msgstr "Sufix de la Contrasenya"
 
-#: services/models.py:1248
+#: services/models.py:1330
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
@@ -2936,11 +3009,11 @@ msgstr ""
 "Aquest paràmetre especifica el sufix que s'utilitzarà per les contrasenyes "
 "quan siguin afegits al directori LDAP. p.e. ou=Passwords"
 
-#: services/models.py:1252
+#: services/models.py:1334
 msgid "Machine Suffix"
 msgstr "Sufix de Màqiuna"
 
-#: services/models.py:1254
+#: services/models.py:1336
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
@@ -2948,75 +3021,75 @@ msgstr ""
 "Aquest paràmetre especifica el sufix que s'utilitzarà per les màquines quan "
 "siguin afegits al directori LDAP. p.e. ou=Computers"
 
-#: services/models.py:1259
+#: services/models.py:1341
 #, fuzzy
 msgid "Encryption Mode"
 msgstr "Model d'autenticació"
 
-#: services/models.py:1260
+#: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
 "Aquest paràmetre especifica si utilitzar SSL/TLS, p.e. on/off/start_tls"
 
-#: services/models.py:1263
+#: services/models.py:1345
 msgid "Self signed certificate"
 msgstr "Certificat auto signat"
 
-#: services/models.py:1265
+#: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
 msgstr "Col.loca aquí els continguts del teu fitxer de certificat auto signat."
 
-#: services/models.py:1269 sharing/models.py:81
+#: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
 msgstr "Paràmetres Auxiliars"
 
-#: services/models.py:1271
+#: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
 msgstr "Aquests paràmetres son afegits al ldap.conf"
 
-#: services/models.py:1275 services/models.py:1276
-#: templates/services/index.html:77
+#: services/models.py:1357 services/models.py:1358
+#: templates/services/core.html:74
 msgid "LDAP"
 msgstr "LDAP"
 
-#: services/models.py:1286
+#: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
 msgstr "Port TCP alternatiu. 873 per defecte"
 
-#: services/models.py:1291
+#: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr "Aquests paràmetres s'afegiran als ajustos globals a rsyncd.conf"
 
-#: services/models.py:1295 services/models.py:1296
+#: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
 msgstr ""
 
-#: services/models.py:1306
+#: services/models.py:1390
 msgid "Module name"
 msgstr "Nom del mòdul"
 
-#: services/models.py:1315
+#: services/models.py:1399
 msgid "Path to be shared"
 msgstr "Ruta a compartir"
 
-#: services/models.py:1321
+#: services/models.py:1405
 msgid "Access Mode"
 msgstr "Mode d'accés"
 
-#: services/models.py:1322
+#: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
 msgstr "Això controla l'accés que tindrà un servidor remot a a quest mòdul"
 
-#: services/models.py:1326
+#: services/models.py:1410
 msgid "Maximum connections"
 msgstr "Connexions màximes"
 
-#: services/models.py:1327
+#: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr ""
 "Nombre màxim de connexions simultànies . Per defecte és 0 (il.limitades)."
 
-#: services/models.py:1333
+#: services/models.py:1417
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
@@ -3028,7 +3101,7 @@ msgstr ""
 "determina quins permisos de fitxer estan disponibles. Deixa aquest camp buit "
 "per usar els ajustos per defecte."
 
-#: services/models.py:1340
+#: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
@@ -3037,11 +3110,11 @@ msgstr ""
 "de fitxers des de i cap a aquell mòdul. Deixa aquest camp buit per usar els "
 "ajustos per defecte."
 
-#: services/models.py:1344
+#: services/models.py:1428
 msgid "Hosts allow"
 msgstr "Servidors Permesos"
 
-#: services/models.py:1345
+#: services/models.py:1429
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
@@ -3052,11 +3125,11 @@ msgstr ""
 "servidors per nom, o número IP. Deixa aquest camp buit per usar els ajustos "
 "per defecte."
 
-#: services/models.py:1349
+#: services/models.py:1433
 msgid "Hosts deny"
 msgstr "Servidors Denegats"
 
-#: services/models.py:1350
+#: services/models.py:1434
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -3072,40 +3145,40 @@ msgstr ""
 "especifica a la llista de Servidors Permesos aquells servidors als que vols "
 "donar accés. Deixa aquest camp buit per usar ajustos per defecte."
 
-#: services/models.py:1355
+#: services/models.py:1439
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
 "Aquests paràmetres s'afegiran a la configuració del mòdul a rsyncd.conf"
 
-#: services/models.py:1360
+#: services/models.py:1444
 msgid "Rsync Module"
 msgstr "Mòdul Rsync"
 
-#: services/models.py:1361
+#: services/models.py:1445
 msgid "Rsync Modules"
 msgstr "Mòduls Rsync"
 
-#: services/models.py:1374
+#: services/models.py:1459
 msgid "Check interval"
 msgstr "Interval de comprovació"
 
-#: services/models.py:1375
+#: services/models.py:1460
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
 "Posa l'interval entre comprovacions al disc a N minuts. Per defecte son 30 "
 "minuts"
 
-#: services/models.py:1381
+#: services/models.py:1466
 msgid "Power mode"
 msgstr "Mode d'energia"
 
-#: services/models.py:1385
+#: services/models.py:1470
 msgid "Difference"
 msgstr "Diferència"
 
-#: services/models.py:1386
+#: services/models.py:1471
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
@@ -3113,11 +3186,11 @@ msgstr ""
 "Informa si la temperatura ha canviat almenys N graus Celsius des de lúltim "
 "informe. Posa 0 per desactivar-ho."
 
-#: services/models.py:1390
+#: services/models.py:1475
 msgid "Informal"
 msgstr "Informal"
 
-#: services/models.py:1391 services/models.py:1396
+#: services/models.py:1476 services/models.py:1481
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
@@ -3125,80 +3198,90 @@ msgstr ""
 "Informa si la temperatura és més gran o igual que N graus Celsius. Posa 0 "
 "per desactivar-ho."
 
-#: services/models.py:1395
+#: services/models.py:1480
 msgid "Critical"
 msgstr "Crític"
 
-#: services/models.py:1399
+#: services/models.py:1484
 msgid "Email to report"
 msgstr "Correu on enviar informes"
 
-#: services/models.py:1402
+#: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
 "Adreça de correu electrònic de destí. Separa els correus amb punts i comes"
 
-#: services/models.py:1405 services/models.py:1406
-#: templates/services/index.html:136
+#: services/models.py:1490 services/models.py:1491
+#: templates/services/core.html:133
 msgid "S.M.A.R.T."
 msgstr "S.M.A.R.T."
 
-#: services/nav.py:14
+#: services/nav.py:15
 msgid "Control Services"
 msgstr "Serveis de Control"
 
-#: services/nav.py:52 templates/services/iscsi.html:32
+#: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
 msgstr "Extents del perifèric"
 
-#: services/nav.py:71
+#: services/nav.py:72
 msgid "Add Device Extent"
 msgstr "Afegeix un perifèric Extent"
 
-#: services/nav.py:78
+#: services/nav.py:79
 #, fuzzy
 msgid "View Device Extents"
 msgstr "Veure tots els perifèrics Extent"
 
-#: services/nav.py:91
+#: services/nav.py:92
 #, fuzzy
 msgid "File Extents"
 msgstr "Extents del perifèric"
 
-#: services/nav.py:110 templates/services/iscsi_extents.html:39
+#: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 #, fuzzy
 msgid "Add File Extent"
 msgstr "Afegeix un perifèric Extent"
 
-#: services/nav.py:117
+#: services/nav.py:118
 #, fuzzy
 msgid "View File Extents"
 msgstr "Veure tots els Extents"
 
-#: services/nav.py:130 templates/services/index.html:64
+#: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
 msgstr "iSCSI"
 
-#: services/nav.py:141 templates/services/index.html:114
+#: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
 msgstr "Rsync"
 
-#: services/nav.py:148 templates/services/rsyncmod.html:40
+#: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
 msgstr "Afegir un mòdul rsync"
 
-#: services/nav.py:158
+#: services/nav.py:159
 #, fuzzy
 msgid "View Rsync Modules"
 msgstr "Mòduls Rsync"
 
-#: services/views.py:244
+#: services/nav.py:168 system/models.py:84 system/nav.py:28
+#: templates/system/settings.html:2
+msgid "Settings"
+msgstr "Ajustos"
+
+#: services/nav.py:186
+#, fuzzy
+msgid "Management"
+msgstr "Administració iSCSI"
+
+#: services/views.py:326
 msgid "The service could not be stopped."
 msgstr "El servei no pot ser parat."
 
-#: services/views.py:251
+#: services/views.py:333
 msgid "The service could not be started."
 msgstr "El servei no pot ser iniciat."
 
@@ -3207,36 +3290,36 @@ msgstr "El servei no pot ser iniciat."
 msgid "Confirm Share Password"
 msgstr "Contrasenya de la compartició"
 
-#: sharing/forms.py:123
+#: sharing/forms.py:139
 #, fuzzy, python-format
 msgid "The path %s does not exist"
 msgstr "La ruta no existeix."
 
-#: sharing/forms.py:140
+#: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
 msgstr "Al camp no té una adreça IP o xarxa vàlides"
 
-#: sharing/forms.py:146
+#: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
 msgstr "La IP '%s' no és vàlida."
 
-#: sharing/forms.py:157
+#: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
 msgstr "El grup Maproot requereix un usuari Maproot"
 
-#: sharing/forms.py:159
+#: sharing/forms.py:184
 msgid "Mapall group requires Mapall user"
 msgstr "El grup Mapall requereix un usuari Mapall"
 
-#: sharing/forms.py:162 sharing/forms.py:165
+#: sharing/forms.py:190 sharing/forms.py:195
 msgid "Maproot user/group disqualifies Mapall"
 msgstr "L'usuari/grup Maproot descalifica Mapall"
 
-#: sharing/models.py:39 sharing/models.py:113 storage/models.py:44
-#: storage/models.py:309 storage/views.py:226
+#: sharing/models.py:39 sharing/models.py:113 storage/models.py:45
+#: storage/models.py:326 storage/views.py:246
 #: templates/network/interface.html:6 templates/network/summary.html:5
-#: templates/plugins/index.html:13 templates/services/rsyncmod.html:5
+#: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
 msgstr "Nom"
@@ -3594,21 +3677,31 @@ msgstr "AFP3 Unix Privs"
 msgid "Use AFP3 unix privileges."
 msgstr "Utilitzar privilegis unix AFP3"
 
-#: sharing/models.py:228
+#: sharing/models.py:222
+#, fuzzy
+msgid "Default file permission"
+msgstr "Permís de fitxer"
+
+#: sharing/models.py:227
+#, fuzzy
+msgid "Default directory permission"
+msgstr "Permís de directori"
+
+#: sharing/models.py:238
 #, fuzzy
 msgid "Apple (AFP) Share"
 msgstr "Compartició AFP"
 
-#: sharing/models.py:229
+#: sharing/models.py:239
 #, fuzzy
 msgid "Apple (AFP) Shares"
 msgstr "Compartició FP"
 
-#: sharing/models.py:258
+#: sharing/models.py:268
 msgid "Authorized network or IP addresses"
 msgstr "Adreces IP o xarxa autoritzada"
 
-#: sharing/models.py:259
+#: sharing/models.py:269
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3619,11 +3712,11 @@ msgstr ""
 "número de bits de la màscara, o be una llista d'adreces 1.2.3.4 1.2.3.5 "
 "1.2.3.6."
 
-#: sharing/models.py:263
+#: sharing/models.py:273
 msgid "All Directories"
 msgstr "Tos els directoris"
 
-#: sharing/models.py:264
+#: sharing/models.py:274
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -3632,106 +3725,111 @@ msgstr ""
 "es selecciona. D'altra manera només el directori de nivell més alt pot ser "
 "muntat."
 
-#: sharing/models.py:267
+#: sharing/models.py:277
 msgid "Read Only"
 msgstr "Només de lectura"
 
-#: sharing/models.py:268
+#: sharing/models.py:278
 msgid "Export the share read only. Writes are not permitted."
 msgstr ""
 "Exporta la compartició com només de lectura. Escriptures no seran permeses."
 
-#: sharing/models.py:271 system/models.py:524
+#: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
 msgstr "Silenciós"
 
-#: sharing/models.py:272
+#: sharing/models.py:282
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
 "Anul·la els avisos de syslog si hi ha problemes exportant aquesta "
 "compartició."
 
-#: sharing/models.py:275
+#: sharing/models.py:285
 msgid "Maproot User"
 msgstr "Usuari Maproot"
 
-#: sharing/models.py:279
+#: sharing/models.py:289
 msgid "User to map root to"
 msgstr "Usuari al que se li assigna el root"
 
-#: sharing/models.py:282
+#: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Grup Maproot"
 
-#: sharing/models.py:286
+#: sharing/models.py:296
 msgid "Group to map root to"
 msgstr "Grup al que se li assigna el root"
 
-#: sharing/models.py:289
+#: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Usuari Mapall"
 
-#: sharing/models.py:293
+#: sharing/models.py:303
 msgid "User to map all users to"
 msgstr "Usuari per assignar a tots els usuaris"
 
-#: sharing/models.py:296
+#: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Grup Mapall"
 
-#: sharing/models.py:300
+#: sharing/models.py:310
 msgid "Group to map all users to"
 msgstr "Grup per assignar a tots els usuaris"
 
-#: sharing/models.py:311
+#: sharing/models.py:321
 #, fuzzy
 msgid "Unix (NFS) Share"
 msgstr "Edita la compartició (share) de NFS (sistema de fitxers)"
 
-#: sharing/models.py:312
+#: sharing/models.py:322
 #, fuzzy
 msgid "Unix (NFS) Shares"
 msgstr "Comparticions NFS"
 
-#: sharing/nav.py:4 templates/menubar.html:23
+#: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
 msgstr "Compartició"
 
-#: storage/forms.py:93
+#: storage/forms.py:105
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr "Introdueix un numero positiu (sufix opcional K, M, G, T) o, 0"
 
-#: storage/forms.py:106
+#: storage/forms.py:120
 #, python-format
 msgid "%s is not a valid number"
 msgstr "El nombre %s no és vàlid"
 
-#: storage/forms.py:111 storage/forms.py:351 templates/storage/import.html:9
+#: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
 msgstr "Nom del volum"
 
-#: storage/forms.py:115 templates/storage/wizard.html:65
+#: storage/forms.py:134 templates/storage/import.html:32
+#: templates/storage/wizard.html:54
+msgid "Filesystem type"
+msgstr "Tipo de sistema de fitxers"
+
+#: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
 msgstr "Forçar la mida del sector a 4096 bytes"
 
-#: storage/forms.py:116 templates/storage/wizard.html:138
+#: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
 msgstr "Especifíca una ruta (path) a mida"
 
-#: storage/forms.py:123
+#: storage/forms.py:163
 #, fuzzy
 msgid "Volume add"
 msgstr "Nom del volum"
 
-#: storage/forms.py:131
+#: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
 "Deixant això buit donarà al volum la ruta per defecte /mnt/${VOLUME_NAME}"
 
-#: storage/forms.py:186
+#: storage/forms.py:233
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
@@ -3739,61 +3837,76 @@ msgstr ""
 "El nom del volum ha de començar amb lletres i pot incloure nombres, \"-\", "
 "\"_\" i \".\"."
 
-#: storage/forms.py:188
+#: storage/forms.py:236
 #, fuzzy
 msgid "A volume with that name already exists."
 msgstr "Un grup amb aquest nom ja existeix."
 
-#: storage/forms.py:202
+#: storage/forms.py:252
 msgid "Path does not exist."
 msgstr "La ruta no existeix."
 
-#: storage/forms.py:205
+#: storage/forms.py:255
 msgid "Path is not a directory."
 msgstr "La ruta no és un directori."
 
-#: storage/forms.py:219
+#: storage/forms.py:264
+msgid "You cannot select an existing ZFS volume and specify a new volume name"
+msgstr ""
+
+#: storage/forms.py:269
+msgid ""
+"You must specify a new volume name or select an existing ZFS volume to "
+"append a virtual device"
+msgstr ""
+
+#: storage/forms.py:276
 msgid "You must select a filesystem"
 msgstr "Has de seleccionar un sistema de fitxers"
 
-#: storage/forms.py:230 storage/forms.py:389 storage/forms.py:488
+#: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Ja tens un volum amb el mateix nom"
 
-#: storage/forms.py:236
+#: storage/forms.py:298
 msgid "\"log\" is a reserved word and thus cannot be used"
 msgstr "\"log\" és una paraula reservada i no pot ser usada"
 
-#: storage/forms.py:241
+#: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "El nom del volum NO pot començar amb c[0-9], mirror, raidz o spare"
 
-#: storage/forms.py:246
+#: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
 msgstr "Els noms dels volums UFS no poden ser més grans de 9 caràcters"
 
-#: storage/forms.py:250
+#: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
 msgstr "Els noms de volums UFS només poden contenir caràcters alfanumérics"
 
-#: storage/forms.py:352 storage/forms.py:430 storage/forms.py:838
+#: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
 msgstr "Disc membre"
 
-#: storage/forms.py:395 storage/forms.py:504
+#: storage/forms.py:479 storage/forms.py:592
 msgid "The selected disks were not verified for this import rules."
 msgstr ""
 "Els discs seleccionats no han estat verificats per aquesta regla d'importació"
 
-#: storage/forms.py:403
+#: storage/forms.py:489
 msgid "An error occurred while labeling the disk."
 msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
 
-#: storage/forms.py:483
+#: storage/forms.py:518 storage/models.py:59 storage/models.py:201
+#: templates/storage/scrub.html:5 templates/storage/volumes.html:58
+msgid "Volume"
+msgstr "Volum"
+
+#: storage/forms.py:570
 msgid "You must select a volume."
 msgstr "Has de seleccionar un volum."
 
-#: storage/forms.py:545
+#: storage/forms.py:636
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
@@ -3801,46 +3914,51 @@ msgstr ""
 "El volum \"%s\" no ha pogut importar-se, per més detalls mira l'estat del "
 "pool"
 
-#: storage/forms.py:573
+#: storage/forms.py:673
+#, fuzzy
+msgid "The SMART service failed to restart."
+msgstr "El servei ha fallat el reinici."
+
+#: storage/forms.py:679
 msgid "Dataset Name"
 msgstr "Nom del Dataset"
 
-#: storage/forms.py:574 storage/forms.py:606 storage/forms.py:635
-#: storage/forms.py:665
+#: storage/forms.py:683 storage/forms.py:744 storage/forms.py:799
+#: storage/forms.py:850
 msgid "Compression level"
 msgstr "Nivell de compressió"
 
-#: storage/forms.py:575 storage/forms.py:607 storage/forms.py:636
+#: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
 msgstr "Habilitar atime"
 
-#: storage/forms.py:576 storage/forms.py:608
+#: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
 msgstr "Quota per aquest dataset"
 
-#: storage/forms.py:576 storage/forms.py:577 storage/forms.py:608
-#: storage/forms.py:609 storage/forms.py:637
+#: storage/forms.py:692 storage/forms.py:697 storage/forms.py:753
+#: storage/forms.py:758 storage/forms.py:808
 msgid "0=Unlimited; example: 1g"
 msgstr "0=ilimitat; exemple: 1g"
 
-#: storage/forms.py:577 storage/forms.py:609
+#: storage/forms.py:696 storage/forms.py:757
 msgid "Quota for this dataset and all children"
 msgstr "Quota per aquest dataset i tots els seus fills"
 
-#: storage/forms.py:578 storage/forms.py:610
+#: storage/forms.py:701 storage/forms.py:762
 msgid "Reserved space for this dataset"
 msgstr "Espai reservat per aquest dataset"
 
-#: storage/forms.py:578 storage/forms.py:579 storage/forms.py:610
-#: storage/forms.py:611 storage/forms.py:638
+#: storage/forms.py:702 storage/forms.py:707 storage/forms.py:763
+#: storage/forms.py:768 storage/forms.py:813
 msgid "0=None; example: 1g"
 msgstr "0=Cap; exemple: 1g"
 
-#: storage/forms.py:579 storage/forms.py:611
+#: storage/forms.py:706 storage/forms.py:767
 msgid "Reserved space for this dataset and all children"
 msgstr "Espai reservat per aquest dataset i els seus fills"
 
-#: storage/forms.py:588
+#: storage/forms.py:716
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
@@ -3848,32 +3966,32 @@ msgstr ""
 "Els noms dels datasets han de començar amb un caràcter alfanuméric i poden "
 "contenir només  \"-\", \"_\", \":\" i \".\"."
 
-#: storage/forms.py:595 storage/forms.py:678
+#: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
 msgstr "Ja tens un dataset amb el mateix nom"
 
-#: storage/forms.py:637
+#: storage/forms.py:807
 msgid "Quota for this volume"
 msgstr "Quota per aquest volum"
 
-#: storage/forms.py:638
+#: storage/forms.py:812
 #, fuzzy
 msgid "Reserved space for this volume"
 msgstr "Espai reservat per aquest dataset"
 
-#: storage/forms.py:663
+#: storage/forms.py:842
 msgid "ZFS Volume Name"
 msgstr "Nom del Volum ZFS"
 
-#: storage/forms.py:664
+#: storage/forms.py:845
 msgid "Size for this ZFS Volume"
 msgstr "Tamany per aquest volum ZFS"
 
-#: storage/forms.py:664
+#: storage/forms.py:846
 msgid "Example: 1g"
 msgstr "Exemple: 1g"
 
-#: storage/forms.py:672
+#: storage/forms.py:859
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
@@ -3881,401 +3999,397 @@ msgstr ""
 "El noms de volums ZFS han de començar amb un caràcter alfanuméric i pot "
 "contenir només (-),(_) i (.)."
 
-#: storage/forms.py:693
+#: storage/forms.py:882
 msgid "Owner (user)"
 msgstr "Propietari (usuari)"
 
-#: storage/forms.py:694
+#: storage/forms.py:883
 msgid "Owner (group)"
 msgstr "Propietari (grup)"
 
-#: storage/forms.py:695 templates/system/rsync.html:7
+#: storage/forms.py:884 templates/system/rsync.html:7
 msgid "Mode"
 msgstr "Mode"
 
-#: storage/forms.py:696
+#: storage/forms.py:885
 msgid "Type of ACL"
 msgstr ""
 
-#: storage/forms.py:702
+#: storage/forms.py:891
 msgid "Set permission recursively"
 msgstr "Possa els permissos recursivament"
 
-#: storage/forms.py:773
+#: storage/forms.py:964
 msgid "At least one day must be chosen"
 msgstr "Al menys un dia ha de ser escollit"
 
-#: storage/forms.py:778
+#: storage/forms.py:974
 msgid "Recursive snapshot"
 msgstr "Snapshot recorsiu"
 
-#: storage/forms.py:779
+#: storage/forms.py:975
 msgid "Snapshot Name"
 msgstr "Nom del Sanpshot"
 
-#: storage/forms.py:786
+#: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
 msgstr "Només [-a-zA-Z0-9_.] permessos pel nom de l'Snapshot"
 
-#: storage/forms.py:798
-msgid "Invalid prefix"
-msgstr "Prefixe invalid"
-
-#: storage/forms.py:802
+#: storage/forms.py:996
 msgid "Snapshot"
 msgstr "Snapshot"
 
-#: storage/forms.py:803
+#: storage/forms.py:997
 msgid "Clone Name (must be on same volume)"
 msgstr "Nom del clon (ha de estar al mateix volum)"
 
-#: storage/forms.py:818
+#: storage/forms.py:1026
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr "Només [-a-zA-Z0-9_./] permessos com a nom del clon"
 
-#: storage/forms.py:824
+#: storage/forms.py:1034
 msgid "Clone must be within the same volume"
 msgstr "El clon ha d'estar al mateix volum"
 
-#: storage/forms.py:903 storage/models.py:600
+#: storage/forms.py:1125 storage/models.py:631
 msgid "Remote hostname"
 msgstr "Hostname remot"
 
-#: storage/forms.py:904 storage/models.py:604
+#: storage/forms.py:1126 storage/models.py:635
 #, fuzzy
 msgid "Remote port"
 msgstr "Host remot"
 
-#: storage/forms.py:905 storage/models.py:608
+#: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
 msgstr "Hostkey remot"
 
-#: storage/forms.py:948
+#: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
 msgstr ""
 
-#: storage/forms.py:957
+#: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
 msgstr ""
 
-#: storage/forms.py:967
-msgid "I'm aware this will destroy snapshots within this dataset"
-msgid_plural ""
-"I'm aware this will destroy all child datasets and snapshots within this "
-"dataset"
-msgstr[0] ""
-msgstr[1] ""
-
-#: storage/forms.py:978 system/forms.py:465 system/forms.py:512
+#: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
 msgstr "minuts"
 
-#: storage/forms.py:979 system/forms.py:384 system/forms.py:466
-#: system/forms.py:513
+#: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
+#: system/forms.py:634
 msgid "hour"
 msgstr "Hora"
 
-#: storage/forms.py:980 system/forms.py:385 system/forms.py:467
-#: system/forms.py:514
+#: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
+#: system/forms.py:637
 msgid "day of month"
 msgstr "dia del mes"
 
-#: storage/models.py:49
+#: storage/forms.py:1269
+#, fuzzy
+msgid "Method"
+msgstr "Mètode d'autorització"
+
+#: storage/forms.py:1271
+msgid "Quick"
+msgstr ""
+
+#: storage/forms.py:1272
+msgid "Full with zeros"
+msgstr ""
+
+#: storage/forms.py:1273
+msgid "Full with random data"
+msgstr ""
+
+#: storage/models.py:50
 msgid "File System Type"
 msgstr "Tipus de sistema de fitxers"
 
-#: storage/models.py:58 storage/models.py:184 templates/storage/scrub.html:5
-#: templates/storage/volumes.html:58
-msgid "Volume"
-msgstr "Volum"
-
-#: storage/models.py:188 templates/storage/scrub.html:6
+#: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
 msgstr ""
 
-#: storage/models.py:190
+#: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
 msgstr ""
 
-#: storage/models.py:200 system/models.py:320 system/models.py:468
+#: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
 msgstr "minut"
 
-#: storage/models.py:201 system/models.py:321 system/models.py:469
+#: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
 msgstr "Valors 0-59 permesos"
 
-#: storage/models.py:206 system/models.py:326 system/models.py:474
-#: system/models.py:643 templates/storage/scrub.html:8
+#: storage/models.py:223 system/models.py:349 system/models.py:501
+#: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
-#: templates/system/smarttest.html:6
+#: templates/system/smarttest.html:7
 msgid "Hour"
 msgstr "Hora"
 
-#: storage/models.py:207 system/models.py:327 system/models.py:475
-#: system/models.py:644
+#: storage/models.py:224 system/models.py:350 system/models.py:502
+#: system/models.py:675
 msgid "Values 0-23 allowed."
 msgstr "Valors 0-23 permesos"
 
-#: storage/models.py:212 system/models.py:332 system/models.py:480
-#: system/models.py:648 templates/storage/scrub.html:9
+#: storage/models.py:229 system/models.py:355 system/models.py:507
+#: system/models.py:679 templates/storage/scrub.html:9
 #: templates/system/cronjob.html:7 templates/system/rsync.html:11
-#: templates/system/smarttest.html:7
+#: templates/system/smarttest.html:8
 msgid "Day of month"
 msgstr "Dia del mes"
 
-#: storage/models.py:213 system/models.py:333 system/models.py:481
-#: system/models.py:649
+#: storage/models.py:230 system/models.py:356 system/models.py:508
+#: system/models.py:680
 msgid "Values 1-31 allowed."
 msgstr "Valors 1-31 permesos"
 
-#: storage/models.py:218 system/models.py:338 system/models.py:486
-#: system/models.py:654 templates/storage/scrub.html:10
+#: storage/models.py:235 system/models.py:361 system/models.py:513
+#: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
-#: templates/system/smarttest.html:8
+#: templates/system/smarttest.html:9
 msgid "Month"
 msgstr "Mes"
 
-#: storage/models.py:223 system/models.py:343 system/models.py:491
-#: system/models.py:659 templates/storage/scrub.html:11
+#: storage/models.py:240 system/models.py:366 system/models.py:518
+#: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
-#: templates/system/smarttest.html:9
+#: templates/system/smarttest.html:10
 msgid "Day of week"
 msgstr "Dia de la setmana"
 
-#: storage/models.py:227 system/models.py:347 system/models.py:546
-#: system/models.py:745 system/models.py:783 templates/plugins/index.html:14
+#: storage/models.py:244 system/models.py:370 system/models.py:576
+#: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
+#: templates/system/sysctl.html:8 templates/system/tunable.html:8
 #, fuzzy
 msgid "Enabled"
 msgstr "Activa AIO"
 
-#: storage/models.py:231
+#: storage/models.py:248
 msgid "ZFS Scrub"
 msgstr ""
 
-#: storage/models.py:232
+#: storage/models.py:249
 #, fuzzy
 msgid "ZFS Scrubs"
 msgstr "Comparticions NFS"
 
-#: storage/models.py:246 system/models.py:367 system/models.py:569
+#: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
 msgstr "Cada minut"
 
-#: storage/models.py:248 system/models.py:369 system/models.py:571
+#: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
 msgstr "Cada %s minut(s)"
 
-#: storage/models.py:254 system/models.py:375 system/models.py:577
-#: system/models.py:664
+#: storage/models.py:271 system/models.py:399 system/models.py:608
+#: system/models.py:695
 msgid "Every hour"
 msgstr "Cada hora"
 
-#: storage/models.py:256 system/models.py:377 system/models.py:579
-#: system/models.py:666
+#: storage/models.py:273 system/models.py:401 system/models.py:610
+#: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
 msgstr "Cada %s hora(s)"
 
-#: storage/models.py:264 system/models.py:385 system/models.py:587
-#: system/models.py:674
+#: storage/models.py:281 system/models.py:409 system/models.py:618
+#: system/models.py:705
 #, python-format
 msgid "Every %s days"
 msgstr "Cada %s dies"
 
-#: storage/models.py:271 system/models.py:392 system/models.py:594
-#: system/models.py:681
+#: storage/models.py:288 system/models.py:416 system/models.py:625
+#: system/models.py:712
 msgid "Every month"
 msgstr "Cada mes"
 
-#: storage/models.py:289 system/models.py:410 system/models.py:608
-#: system/models.py:695
+#: storage/models.py:306 system/models.py:434 system/models.py:639
+#: system/models.py:726
 #, fuzzy
 msgid "Weekdays"
 msgstr "Dia laborable"
 
-#: storage/models.py:291 system/models.py:412 system/models.py:610
-#: system/models.py:697
+#: storage/models.py:308 system/models.py:436 system/models.py:641
+#: system/models.py:728
 #, fuzzy
 msgid "Weekends"
 msgstr "Mes(sos)"
 
-#: storage/models.py:323
+#: storage/models.py:340
 #, fuzzy
 msgid "Multipath name"
 msgstr "Nom del mòdul"
 
-#: storage/models.py:329
+#: storage/models.py:346
 msgid "Multipath member"
 msgstr ""
 
-#: storage/models.py:342 storage/views.py:226
+#: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
 msgstr "Mode de transferencia"
 
-#: storage/models.py:348 storage/views.py:226
+#: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
 msgstr "HDD Standby"
 
-#: storage/models.py:354 storage/views.py:226
+#: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
 msgstr "Control avançat d'energia"
 
-#: storage/models.py:360 storage/views.py:226
+#: storage/models.py:377 storage/views.py:252
 msgid "Acoustic Level"
 msgstr "Nivell acústic"
 
-#: storage/models.py:364 storage/views.py:226
+#: storage/models.py:381 storage/views.py:253
 msgid "Enable S.M.A.R.T."
 msgstr "Habilita S.M.A.R.T."
 
-#: storage/models.py:368
+#: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
 msgstr "Opcions extra de S.M.A.R.T."
 
-#: storage/models.py:425
+#: storage/models.py:444 system/models.py:660
 msgid "Disks"
 msgstr "Discs"
 
-#: storage/models.py:438
-msgid "Mount Point"
-msgstr "Punt de muntatge"
-
-#: storage/models.py:439
+#: storage/models.py:457
 msgid "Path to mount point"
 msgstr "Ruta al punt de muntatge"
 
-#: storage/models.py:443
+#: storage/models.py:461
 msgid "Mount options"
 msgstr "Opcions de muntatge"
 
-#: storage/models.py:444
+#: storage/models.py:462
 msgid "Enter Mount Point options here"
 msgstr "Introdueix les opcions del punt de muntatge aquí"
 
-#: storage/models.py:612
+#: storage/models.py:643
 msgid "Remote Replication Host"
 msgstr "Host de replicació remota"
 
-#: storage/models.py:613
+#: storage/models.py:644
 msgid "Remote Replication Hosts"
 msgstr "Hosts de replicació remota"
 
-#: storage/models.py:625 storage/models.py:679
+#: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 #, fuzzy
 msgid "Filesystem/Volume"
 msgstr "Tipo de sistema de fitxers"
 
-#: storage/models.py:630
+#: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
 "ÚItim snapshot enviat al costat remot (deixar en blanc per una replicació "
 "completa)"
 
-#: storage/models.py:633 system/models.py:433
+#: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
 msgstr "Host remot"
 
-#: storage/models.py:636
+#: storage/models.py:669
 #, fuzzy
 msgid "Remote ZFS filesystem name"
 msgstr "sistema de fitxers ZFS remot"
 
-#: storage/models.py:637
+#: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
 
-#: storage/models.py:641
+#: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr "Replíca recursivament i elimina snapshots caducats al remot"
 
-#: storage/models.py:645
+#: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
 
-#: storage/models.py:649
+#: storage/models.py:686
 msgid "Limit (kB/s)"
 msgstr ""
 
-#: storage/models.py:650
+#: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
 
-#: storage/models.py:654
+#: storage/models.py:692
 msgid "Replication Task"
 msgstr "Tasca de replicació"
 
-#: storage/models.py:655
+#: storage/models.py:693
 msgid "Replication Tasks"
 msgstr "Tasques de replicació"
 
-#: storage/models.py:683 system/models.py:499 templates/storage/tasks.html:22
+#: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
 msgstr "Recursiu"
 
-#: storage/models.py:687
+#: storage/models.py:726
 msgid "Snapshot lifetime value"
 msgstr "Valor del temps de vida de l'Snapshot"
 
-#: storage/models.py:693
+#: storage/models.py:732
 msgid "Snapshot lifetime unit"
 msgstr "Unitat del temps de vida de l'Snapshot"
 
-#: storage/models.py:697
+#: storage/models.py:736
 msgid "Begin"
 msgstr "Inici"
 
-#: storage/models.py:698
+#: storage/models.py:737
 #, fuzzy
 msgid "Do not snapshot before"
 msgstr "Mantenir l'snapshot per"
 
-#: storage/models.py:702
+#: storage/models.py:741
 msgid "End"
 msgstr "Final"
 
-#: storage/models.py:703
+#: storage/models.py:742
 #, fuzzy
 msgid "Do not snapshot after"
 msgstr "Mantenir l'snapshot per"
 
-#: storage/models.py:709
+#: storage/models.py:748
 msgid "Interval"
 msgstr "Interval"
 
-#: storage/models.py:710
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr "Quants minuts passan entre la creació d'Snapshots."
+#: storage/models.py:749
+msgid "How much time has been passed between two snapshot attempts."
+msgstr ""
 
-#: storage/models.py:716
+#: storage/models.py:756
 msgid "Occurrence"
 msgstr "Ocurrència"
 
-#: storage/models.py:717
+#: storage/models.py:757
 msgid "How the task is repeated"
 msgstr "Com es repeteix la tasca"
 
-#: storage/models.py:722
+#: storage/models.py:762
 msgid "Weekday"
 msgstr "Dia laborable"
 
-#: storage/models.py:741
+#: storage/models.py:785
 msgid "Periodic Snapshot Task"
 msgstr "Tasca d'Snapshot periòdica"
 
-#: storage/models.py:742 templates/storage/index.html:14
+#: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
 msgstr "Tasca d'Snapshot periòdica"
 
-#: storage/nav.py:5 templates/menubar.html:18
+#: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
 msgstr "Emmagatzematge"
 
@@ -4334,150 +4448,156 @@ msgstr "Afegir un Snapshot periòdic"
 msgid "Volumes"
 msgstr "Volums"
 
-#: storage/nav.py:160 storage/nav.py:190 templates/storage/volumes.html:120
+#: storage/nav.py:140 storage/nav.py:188 templates/storage/volumes.html:120
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
 msgstr "Crear un Dataset ZFS"
 
-#: storage/nav.py:173 storage/nav.py:198 templates/storage/volumes.html:139
+#: storage/nav.py:148 storage/nav.py:201 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
 #: templates/storage/volumes.html.py:222
 msgid "Change Permissions"
 msgstr "Canviar permisos"
 
-#: storage/views.py:159 storage/views.py:187 storage/views.py:209
+#: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
 msgstr "Volum afegit amb èxit."
 
-#: storage/views.py:226
+#: storage/views.py:254
 #, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Opcions extra de S.M.A.R.T."
 
-#: storage/views.py:317
+#: storage/views.py:371
 msgid "Dataset successfully added."
 msgstr "Dataset afegit amb èxit."
 
-#: storage/views.py:351
+#: storage/views.py:418
 msgid "Dataset successfully edited."
 msgstr "Dataset afegit amb èxit."
 
-#: storage/views.py:353 storage/views.py:428
-msgid "An error occurred when setting the options"
-msgstr "Algun error a succeït mentre s'ajustaven les opcions"
-
-#: storage/views.py:374
+#: storage/views.py:448
 msgid "ZFS Volume successfully added."
 msgstr "Volum ZFS afegit amb èxit."
 
-#: storage/views.py:389
+#: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
 "Això estar sent usat pel target iscsi, si us plau treu-lo d'allí primer."
 
-#: storage/views.py:392
+#: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
 msgstr "Volum ZFS esborrat amb èxit."
 
-#: storage/views.py:426
+#: storage/views.py:524
 msgid "Native dataset successfully edited."
 msgstr "Dataset natiu editat amb èxit."
 
-#: storage/views.py:440
+#: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
 msgstr "Permisos del punt de muntatge actualitzat amb èxit."
 
-#: storage/views.py:457
+#: storage/views.py:564
 msgid "Dataset successfully destroyed."
 msgstr "Dataset esborrat amb èxit."
 
-#: storage/views.py:474
+#: storage/views.py:583
 msgid "Snapshot successfully deleted."
 msgstr "Snapshot clonat amb èxit"
 
-#: storage/views.py:494
+#: storage/views.py:604
 #, fuzzy
 msgid "Snapshots successfully deleted."
 msgstr "Snapshot clonat amb èxit"
 
-#: storage/views.py:505
+#: storage/views.py:616
 msgid "Rollback successful."
 msgstr "Restauració satisfactòria"
 
-#: storage/views.py:522
+#: storage/views.py:634
 msgid "Snapshot successfully added."
 msgstr "Snapshot clonat amb èxit"
 
-#: storage/views.py:535
+#: storage/views.py:648
 msgid "Snapshot successfully taken."
 msgstr "Snapshot pressa amb èxit"
 
-#: storage/views.py:550
+#: storage/views.py:664
 msgid "Snapshot successfully cloned."
 msgstr "Snapshot clonat amb èxit"
 
-#: storage/views.py:567 storage/views.py:696
+#: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
 msgstr "El reemplaçament de disc s'ha iniciat"
 
-#: storage/views.py:569 storage/views.py:698
+#: storage/views.py:689 storage/views.py:840
 msgid "An error occurred."
 msgstr "Ha succeït algun error."
 
-#: storage/views.py:584
+#: storage/views.py:706
 msgid "Disk detach has been successfully done."
 msgstr "L'extracció del disc ha estat un èxit."
 
-#: storage/views.py:599
+#: storage/views.py:723
 #, fuzzy
 msgid "Disk offline operation has been issued."
 msgstr "El reemplaçament de disc s'ha iniciat"
 
-#: storage/views.py:614
+#: storage/views.py:740
 msgid "Disk has been removed."
 msgstr ""
 
-#: storage/views.py:633
+#: storage/views.py:766
 #, fuzzy
 msgid "The volume has been successfully detached"
 msgstr "El volum ha estat exportat amb èxit"
 
-#: storage/views.py:653
+#: storage/views.py:788
 msgid "The scrub process has begun"
 msgstr ""
 
-#: system/forms.py:161
+#: storage/views.py:922
+#, fuzzy
+msgid "Disk successfully wiped"
+msgstr "%s afegit amb èxit"
+
+#: system/forms.py:201
 msgid "Language (Require UI reload)"
 msgstr "Idioma (requereix recarregar la UI)"
 
-#: system/forms.py:171
+#: system/forms.py:214
 #, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Aquest valor ha d'estar entre 0 i 65535, inclusivament."
 
-#: system/forms.py:173
+#: system/forms.py:216
 #, fuzzy
 msgid "Number is required."
 msgstr "Aquest camp és requereix."
 
-#: system/forms.py:198
+#: system/forms.py:245
 msgid "Force"
 msgstr ""
 
-#: system/forms.py:217
+#: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
 msgstr ""
 
-#: system/forms.py:222
+#: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
 
-#: system/forms.py:391
+#: system/forms.py:496
+#, python-format
+msgid "The following disks already have tests for this type: %s"
+msgstr ""
+
+#: system/forms.py:507
 msgid "Place to temporarily place firmware file"
 msgstr "Col.loca a un lloc temporal el fitxer de firmware"
 
-#: system/forms.py:391
+#: system/forms.py:508
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
@@ -4485,173 +4605,169 @@ msgstr ""
 "El sistema utilitzara aquesta localització per emmagatzemar temporalment el "
 "fitxer del firmware abans de que s'apliqui."
 
-#: system/forms.py:399
+#: system/forms.py:523
 msgid "New image to be installed"
 msgstr "nova imatge per ser instal·lada"
 
-#: system/forms.py:400 system/forms.py:431
+#: system/forms.py:524
 msgid "SHA256 sum for the image"
 msgstr "Suma SHA256  per la imatge"
 
-#: system/forms.py:413
+#: system/forms.py:538
 #, fuzzy
 msgid "Invalid firmware"
 msgstr "Firmware o checksum incorrecte"
 
-#: system/forms.py:430
-msgid "Service Pack image to be installed"
-msgstr "Imatge del Service Pack a instalar"
-
-#: system/forms.py:441
+#: system/forms.py:544
 #, fuzzy
-msgid "Invalid service pack"
-msgstr "Service Pack o checksum incorrecte"
+msgid "Invalid checksum"
+msgstr "Firmware o checksum incorrecte"
 
-#: system/forms.py:458
+#: system/forms.py:557
 msgid "New config to be installed"
 msgstr "Nova configuració a instalar"
 
-#: system/forms.py:582
+#: system/forms.py:718
 msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
 
-#: system/forms.py:655 system/forms.py:672
+#: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
 msgstr ""
 
-#: system/models.py:47
+#: system/models.py:44
 msgid "Protocol"
 msgstr "Protocol"
 
-#: system/models.py:53
+#: system/models.py:50
 #, fuzzy
 msgid "WebGUI Address"
 msgstr "Adreça IPv4"
 
-#: system/models.py:59
+#: system/models.py:56
 msgid "WebGUI Port"
 msgstr ""
 
-#: system/models.py:65
+#: system/models.py:62
 msgid "Language"
 msgstr "Idioma"
 
-#: system/models.py:71
+#: system/models.py:67
+msgid "Console Keyboard Map"
+msgstr ""
+
+#: system/models.py:74
 msgid "Timezone"
 msgstr "Zona horària"
 
-#: system/models.py:77
+#: system/models.py:80
 msgid "Syslog server"
 msgstr ""
 
-#: system/models.py:81 system/nav.py:25 templates/system/settings.html:2
-msgid "Settings"
-msgstr "Ajustos"
-
-#: system/models.py:88 templates/system/ntpserver.html:5
+#: system/models.py:92 templates/system/ntpserver.html:5
 #, fuzzy
 msgid "Address"
 msgstr "Adreça IPv4"
 
-#: system/models.py:92 templates/system/ntpserver.html:6
+#: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
 msgstr ""
 
-#: system/models.py:94
+#: system/models.py:98
 msgid ""
 "When the server is reachable, send a burst of eight packets instead of the "
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
 
-#: system/models.py:97
+#: system/models.py:104
 msgid "IBurst"
 msgstr ""
 
-#: system/models.py:99
+#: system/models.py:106
 msgid ""
 "When the server is unreachable, send a burst of eight packets instead of the "
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
 
-#: system/models.py:102 templates/system/ntpserver.html:8
+#: system/models.py:112 templates/system/ntpserver.html:8
 #, fuzzy
 msgid "Prefer"
 msgstr "Preferit"
 
-#: system/models.py:104
+#: system/models.py:114
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
 
-#: system/models.py:107 templates/system/ntpserver.html:9
+#: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
 msgstr ""
 
-#: system/models.py:110
+#: system/models.py:122
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
 
-#: system/models.py:113 templates/system/ntpserver.html:10
+#: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
 msgstr ""
 
-#: system/models.py:116
+#: system/models.py:130
 msgid ""
 "The maximum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
 
-#: system/models.py:128
+#: system/models.py:144
 #, fuzzy
 msgid "NTP Server"
 msgstr "Servidor NTP 1"
 
-#: system/models.py:129
+#: system/models.py:145
 #, fuzzy
 msgid "NTP Servers"
 msgstr "Servidor NTP 1"
 
-#: system/models.py:141
+#: system/models.py:157
 msgid "Enable Console Menu"
 msgstr "Activar menu de consola"
 
-#: system/models.py:143
+#: system/models.py:159
 msgid "Use Serial Console"
 msgstr "Utilitzar consola serie"
 
-#: system/models.py:145
+#: system/models.py:161
 msgid "Enable screen saver"
 msgstr "Activar protector de pantalla"
 
-#: system/models.py:147
+#: system/models.py:163
 msgid "Automatically Check for New Firmware"
 msgstr "Comprovar automàticament si hi ha nou firmware"
 
-#: system/models.py:149
+#: system/models.py:165
 msgid "Beep on boot"
 msgstr "So al arrencar"
 
-#: system/models.py:151
+#: system/models.py:167
 msgid "Enable Special System Tuning"
 msgstr "Activar millora especial del sistema"
 
-#: system/models.py:153
+#: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Activar alimentació (Daemon d'estalvi d'energia)"
 
-#: system/models.py:155
+#: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
 msgstr "Activar Zeroconf/Bonjou"
 
-#: system/models.py:158
+#: system/models.py:174
 #, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
@@ -4660,38 +4776,38 @@ msgstr ""
 "La mida swap a cada unitat en GiB, afecta només als nous discos. No pot ser "
 "cero"
 
-#: system/models.py:163
+#: system/models.py:179
 #, fuzzy
 msgid "Show console messages in the footer"
 msgstr ""
 "Mostra missatges de al consola al peu de pàgina. (requereix recarregar la UI)"
 
-#: system/models.py:166
+#: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
 msgstr "Mostra els logs de seguiment en cas d'errors fatals"
 
-#: system/models.py:169
+#: system/models.py:185
 msgid "Show advanced fields by default"
 msgstr ""
 
-#: system/models.py:172
+#: system/models.py:188
 #, fuzzy
 msgid "Enable autotune"
 msgstr "Habilitar atime"
 
-#: system/models.py:180
+#: system/models.py:196
 msgid "MOTD banner"
 msgstr "Banner MOTD"
 
-#: system/models.py:184 templates/system/settings.html:5
+#: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
 msgstr "Avançat"
 
-#: system/models.py:193
+#: system/models.py:209
 msgid "From email"
 msgstr "Del correu electrònic"
 
-#: system/models.py:194
+#: system/models.py:210
 #, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
@@ -4700,11 +4816,11 @@ msgstr ""
 "Direcció de correu que el sistema utilitzarà com a direcció d'enviament pels "
 "correus enviats, ex. freenas@elmeudomini.com"
 
-#: system/models.py:199
+#: system/models.py:216
 msgid "Outgoing mail server"
 msgstr "Servidor de correu sortint"
 
-#: system/models.py:200
+#: system/models.py:217
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
@@ -4712,189 +4828,189 @@ msgstr ""
 "Hostname o IP que aceptarà el nostre correu, per exemple mail.exemple.org o "
 "192.168.1.1"
 
-#: system/models.py:206
+#: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
 msgstr "Un enter entre 1 i 65535, normalment serà 25, 465 o 587"
 
-#: system/models.py:207
+#: system/models.py:226
 msgid "Port to connect to"
 msgstr "Port a conectar"
 
-#: system/models.py:213
+#: system/models.py:232
 msgid "encryption of the connection"
 msgstr "encriptació de la connexió"
 
-#: system/models.py:214
+#: system/models.py:233
 msgid "TLS/SSL"
 msgstr "TLS/SSL"
 
-#: system/models.py:217
+#: system/models.py:236
 msgid "Use SMTP Authentication"
 msgstr "Utilitzar autentificació SMTP"
 
-#: system/models.py:225
+#: system/models.py:244
 msgid "A username to authenticate to the remote server"
 msgstr "Nom d'usuari per autentificar-se al servidor remot"
 
-#: system/models.py:232
+#: system/models.py:251
 msgid "A password to authenticate to the remote server"
 msgstr "Contrasenya per autentificar-se al servidor remot"
 
-#: system/models.py:235 templates/system/settings.html:7
+#: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
 msgstr "Correu electrònic"
 
-#: system/models.py:245
+#: system/models.py:266
 msgid "Organization"
 msgstr "Organització"
 
-#: system/models.py:246
+#: system/models.py:267
 msgid "Organization Name (eg, company)"
 msgstr "nom de l'orgranització (ex. companyia)"
 
-#: system/models.py:252
+#: system/models.py:273
 msgid "Organizational Unit"
 msgstr "Unitat organitzativa"
 
-#: system/models.py:253
+#: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
 msgstr "Nom de l'unitat organitzativa (ex. secció)"
 
-#: system/models.py:259 system/models.py:260
+#: system/models.py:280 system/models.py:281
 msgid "Email Address"
 msgstr "Direcció de correu electrònic"
 
-#: system/models.py:266
+#: system/models.py:287
 msgid "Locality"
 msgstr "Localitat"
 
-#: system/models.py:267
+#: system/models.py:288
 msgid "Locality Name (eg, city)"
 msgstr "Nom de la localitat (ex. ciutat)"
 
-#: system/models.py:273
+#: system/models.py:294
 msgid "State"
 msgstr "Provincia"
 
-#: system/models.py:274
+#: system/models.py:295
 msgid "State or Province Name (full name)"
 msgstr "Nom de de la provincia (nom complert)"
 
-#: system/models.py:280
+#: system/models.py:301
 msgid "Country"
 msgstr "País"
 
-#: system/models.py:281
+#: system/models.py:302
 msgid "Country Name (2 letter code)"
 msgstr "Nom del país (codi de dos lletres)"
 
-#: system/models.py:287
+#: system/models.py:308
 msgid "Common Name"
 msgstr "Nom comú"
 
-#: system/models.py:288
+#: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
 msgstr "Nom comú (ex. el teu nom)"
 
-#: system/models.py:293
+#: system/models.py:314
 msgid "SSL Certificate"
 msgstr "Certificat SSL"
 
-#: system/models.py:294
+#: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
 "Copia i enganxar el contingut dels teus fitxers de certificat public i "
 "privat aquí."
 
-#: system/models.py:307 system/models.py:496
+#: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
 msgstr "L'usuari a executar la comanda"
 
-#: system/models.py:310 templates/system/cronjob.html:11
+#: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
 msgstr "Comanda"
 
-#: system/models.py:314 system/models.py:462 system/models.py:638
+#: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
 msgstr "Descripció curta"
 
-#: system/models.py:350
+#: system/models.py:374
 #, fuzzy
 msgid "Cron Job"
 msgstr "Tasca programada"
 
-#: system/models.py:351
+#: system/models.py:375
 #, fuzzy
 msgid "Cron Jobs"
 msgstr "Tasques programades"
 
-#: system/models.py:434
+#: system/models.py:459
 msgid "IP Address or hostname"
 msgstr "Direcció IP o nom del host"
 
-#: system/models.py:443
+#: system/models.py:468
 msgid "Remote Module Name"
 msgstr "Nom del mòdul remot"
 
-#: system/models.py:445
+#: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
 msgstr ""
 
-#: system/models.py:449
+#: system/models.py:475
 #, fuzzy
 msgid "Remote Path"
 msgstr "Host remot"
 
-#: system/models.py:451
+#: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr ""
 
-#: system/models.py:455 templates/system/rsync.html:8
+#: system/models.py:481 templates/system/rsync.html:8
 #, fuzzy
 msgid "Direction"
 msgstr "Directori"
 
-#: system/models.py:456
+#: system/models.py:482
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
 
-#: system/models.py:500
+#: system/models.py:527
 msgid "Recurse into directories"
 msgstr "recurs dels directoris"
 
-#: system/models.py:504
+#: system/models.py:531
 msgid "Times"
 msgstr "Temps"
 
-#: system/models.py:505
+#: system/models.py:532
 msgid "Preserve modification times"
 msgstr "Preservar temps de modificació"
 
-#: system/models.py:509
+#: system/models.py:536
 msgid "Compress"
 msgstr "Compressió"
 
-#: system/models.py:510
+#: system/models.py:537
 msgid "Compress data during the transfer"
 msgstr "Compressió de dades durant la transferència"
 
-#: system/models.py:514
+#: system/models.py:541
 msgid "Archive"
 msgstr "Arxiu"
 
-#: system/models.py:515
+#: system/models.py:542
 msgid "Archive mode"
 msgstr "Mode d'arxiu"
 
-#: system/models.py:519 templates/freeadmin/generic_model_edit.html:89
+#: system/models.py:546 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
 #: templates/network/lagg_members.html:24
 #: templates/network/lagg_members.html:26
 #: templates/network/staticroute.html:24 templates/network/vlan.html:25
-#: templates/plugins/index.html:41
+#: templates/plugins/index.html:45 templates/plugins/mountpoints.html:23
 #: templates/services/iscsi_assoctargets.html:22
 #: templates/services/iscsi_assoctargets.html:24
 #: templates/services/iscsi_auth.html:24 templates/services/iscsi_auth.html:26
@@ -4906,37 +5022,37 @@ msgstr "Mode d'arxiu"
 #: templates/services/iscsi_extents.html:26
 #: templates/services/iscsi_portals.html:30
 #: templates/services/iscsi_targets.html:24
-#: templates/services/iscsi_targets.html:26
-#: templates/services/plugins_edit.html:10
-#: templates/services/plugins_info.html:35 templates/services/rsyncmod.html:24
-#: templates/services/rsyncmod.html:26 templates/sharing/apple.html:33
-#: templates/sharing/unix.html:33 templates/sharing/windows.html:37
-#: templates/storage/scrub.html:33 templates/storage/scrub.html.py:35
-#: templates/storage/tasks.html:138 templates/storage/tasks.html.py:140
-#: templates/system/cronjob.html:32 templates/system/cronjob.html.py:34
-#: templates/system/ntpserver.html:29 templates/system/ntpserver.html.py:31
-#: templates/system/rsync.html:39 templates/system/rsync.html.py:41
-#: templates/system/smarttest.html:27 templates/system/smarttest.html.py:29
-#: templates/system/sysctl.html:23 templates/system/sysctl.html.py:25
-#: templates/system/tunable.html:23 templates/system/tunable.html.py:25
+#: templates/services/iscsi_targets.html:26 templates/services/plugins.html:60
+#: templates/services/pluginsjail_edit.html:14
+#: templates/services/rsyncmod.html:24 templates/services/rsyncmod.html:26
+#: templates/sharing/apple.html:33 templates/sharing/unix.html:33
+#: templates/sharing/windows.html:37 templates/storage/scrub.html:33
+#: templates/storage/scrub.html.py:35 templates/storage/tasks.html:138
+#: templates/storage/tasks.html.py:140 templates/system/cronjob.html:32
+#: templates/system/cronjob.html.py:34 templates/system/ntpserver.html:29
+#: templates/system/ntpserver.html.py:31 templates/system/rsync.html:39
+#: templates/system/rsync.html.py:41 templates/system/smarttest.html:29
+#: templates/system/smarttest.html.py:31 templates/system/sysctl.html:25
+#: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
+#: templates/system/tunable.html.py:27
 msgid "Delete"
 msgstr "Esborrar"
 
-#: system/models.py:520
+#: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr ""
 "Esborra els fitxers al cantó que els reb si no existeixen al cantó que els "
 "envia"
 
-#: system/models.py:525
+#: system/models.py:553
 msgid "Suppress non-error messages"
 msgstr "Eliminar els missatges que ni siguin d'error"
 
-#: system/models.py:529
+#: system/models.py:557
 msgid "Preserve permissions"
 msgstr "Mantenir Permissos"
 
-#: system/models.py:530
+#: system/models.py:558
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
@@ -4944,11 +5060,11 @@ msgstr ""
 "Aquesta opció fa que l'rsync posi els permissos al destí iguals als de la "
 "font"
 
-#: system/models.py:534
+#: system/models.py:564
 msgid "Preserve extended attributes"
 msgstr "Mantenir els atributs estesos"
 
-#: system/models.py:535
+#: system/models.py:565
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
@@ -4956,106 +5072,81 @@ msgstr ""
 "Aquesta opció fa que l'Rsync actualitzi els atributs estesos remots com els "
 "locals"
 
-#: system/models.py:541
+#: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
 msgstr "Opcions extra de comandaments rsync (normalment buit)."
 
-#: system/models.py:549
+#: system/models.py:580
 #, fuzzy
 msgid "Rsync Task"
 msgstr "Rsyncs"
 
-#: system/models.py:550
+#: system/models.py:581
 #, fuzzy
 msgid "Rsync Tasks"
 msgstr "Rsyncs"
 
-#: system/models.py:715
+#: system/models.py:756
 #, fuzzy
 msgid "S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
-#: system/models.py:716
+#: system/models.py:757
 #, fuzzy
 msgid "S.M.A.R.T. Tests"
 msgstr "Opcions d'S.M.A.R.T."
 
-#: system/models.py:732 system/models.py:770 templates/system/sysctl.html:5
+#: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
 #, fuzzy
 msgid "Variable"
 msgstr "Disponible"
 
-#: system/models.py:736 system/models.py:774 templates/system/sysctl.html:6
+#: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
 msgstr ""
 
-#: system/models.py:756
+#: system/models.py:795
 msgid "Sysctl"
 msgstr ""
 
-#: system/models.py:757
+#: system/models.py:796
 msgid "Sysctls"
 msgstr ""
 
-#: system/models.py:794
+#: system/models.py:834
 #, fuzzy
 msgid "Tunable"
 msgstr "Activa AIO"
 
-#: system/models.py:795
+#: system/models.py:835
 #, fuzzy
 msgid "Tunables"
 msgstr "Activa AIO"
 
-#: system/nav.py:5 templates/menubar.html:8
+#: system/nav.py:5 templates/menubar.html:7
 msgid "System"
 msgstr "Sistema"
 
-#: system/nav.py:11 templates/system/reporting.html:2
+#: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
 msgstr "Reportant"
 
-#: system/nav.py:18
+#: system/nav.py:20
 msgid "System Information"
 msgstr "Informació del sistema"
 
-#: system/nav.py:32
-#, fuzzy
-msgid "View Cron Jobs"
-msgstr "Tasques programades"
-
-#: system/nav.py:39
-#, fuzzy
-msgid "View Rsync Tasks"
-msgstr "Veure totes les tasques de replicació"
-
-#: system/nav.py:47
-#, fuzzy
-msgid "View S.M.A.R.T. Tests"
-msgstr "Opcions d'S.M.A.R.T."
-
-#: system/nav.py:54
-#, fuzzy
-msgid "View Sysctls"
-msgstr "Visualitzar discos"
-
-#: system/nav.py:61
-#, fuzzy
-msgid "View Tunables"
-msgstr "Veure tots els usuaris"
-
-#: system/views.py:118
+#: system/views.py:129
 msgid "The uploaded file is not valid."
 msgstr "El fitxer pujat no es valid"
 
-#: system/views.py:245
+#: system/views.py:239
 #, fuzzy
 msgid "Reboot is being issued"
 msgstr "Contrasenya vinculada a Root"
 
-#: system/views.py:267
+#: system/views.py:264
 #, fuzzy
 msgid "Shutdown is being issued"
 msgstr "Apagar el sistema"
@@ -5083,23 +5174,23 @@ msgstr "El seu email de proba a estat enviat"
 msgid "Page Not Found"
 msgstr "Pàgina no trobada"
 
-#: templates/base.html:50
+#: templates/base.html:51
 msgid "expand all"
 msgstr "Expandir tots"
 
-#: templates/base.html:51
+#: templates/base.html:52
 msgid "collapse all"
 msgstr "Contraure tots"
 
-#: templates/menubar.html:42
+#: templates/menubar.html:36
 msgid "Log Out"
 msgstr "Tancar sessió"
 
-#: templates/menubar.html:48
+#: templates/menubar.html:42
 msgid "Help"
 msgstr "Ajuda"
 
-#: templates/menubar.html:60 templates/registration/login.html:61
+#: templates/menubar.html:54 templates/registration/login.html:59
 msgid "Log In"
 msgstr "Iniciar sessió"
 
@@ -5190,12 +5281,11 @@ msgid "Advanced Mode"
 msgstr "Avançat"
 
 #: templates/freeadmin/alert_status.html:6
-#: templates/freeadmin/generic_form.html:13
+#: templates/freeadmin/generic_form.html:15
 #: templates/freeadmin/generic_model_add.html:50
 #: templates/freeadmin/generic_model_edit.html:59
-#: templates/plugins/jailpbi.html:17 templates/plugins/pbiwizard.html:14
-#: templates/plugins/plugin_edit.html:2 templates/plugins/plugin_info.html:37
-#: templates/services/plugins_info.html:24
+#: templates/plugins/jailpbi.html:16 templates/plugins/plugin_edit.html:2
+#: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
 msgstr "Correcte"
@@ -5208,22 +5298,12 @@ msgstr ""
 msgid "CRITICAL"
 msgstr ""
 
-#: templates/freeadmin/directory_browser.html:3
-#: templates/freeadmin/directory_browser.html:8
-msgid "Browse"
-msgstr "navegar"
-
-#: templates/freeadmin/directory_browser.html:6
-#: templates/freeadmin/directory_browser.html:11
-msgid "Close"
-msgstr "Tancar"
-
-#: templates/freeadmin/generic_form.html:17
+#: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
-#: templates/freeadmin/generic_model_delete.html:23
+#: templates/freeadmin/generic_model_delete.html:33
 #: templates/freeadmin/generic_model_edit.html:64
 #: templates/plugins/plugin_confirm_delete.html:16
-#: templates/storage/disk_detach.html:16 templates/storage/disk_remove.html:16
+#: templates/storage/disk_detach.html:16
 #: templates/storage/geom_disk_replace.html:18
 #: templates/storage/import.html:46
 #: templates/storage/snapshot_confirm_rollback.html:17
@@ -5234,20 +5314,19 @@ msgstr "Tancar"
 msgid "Cancel"
 msgstr "Cancel·lar"
 
-#: templates/freeadmin/generic_model_delete.html:13
-#: templates/plugins/plugin_confirm_delete.html:10
-#: templates/storage/snapshot_confirm_delete.html:3
-#: templates/storage/snapshot_confirm_delete_bulk.html:5
-#: templates/storage/zvol_confirm_delete.html:7
-msgid "Are you sure you want to delete?"
-msgstr "Estas segur que vols esborrar-ho?"
+#: templates/freeadmin/generic_model_delete.html:14
+#, python-format
+msgid ""
+"There are %(related_num)s related entries that are going to be delete as "
+"well because depend on this"
+msgstr ""
 
-#: templates/freeadmin/generic_model_delete.html:19
+#: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
-#: templates/services/enable.html:7
+#: templates/services/enable.html:6
 #: templates/storage/dataset_confirm_delete.html:17
 #: templates/storage/disk_detach.html:11 templates/storage/disk_offline.html:5
-#: templates/storage/disk_remove.html:11
+#: templates/storage/disk_remove.html:5 templates/storage/disk_wipe.html:7
 #: templates/storage/snapshot_confirm_delete.html:5
 #: templates/storage/snapshot_confirm_delete_bulk.html:7
 #: templates/storage/snapshot_confirm_rollback.html:11
@@ -5265,76 +5344,76 @@ msgstr "Els teus canvis han estat actualitzats correctament!"
 msgid "Save"
 msgstr ""
 
-#: templates/freeadmin/index.html:35
+#: templates/freeadmin/index.html:33
 msgid "Running Processes"
 msgstr "Processos corrent"
 
-#: templates/freeadmin/index.html:40 templates/freeadmin/index.html.py:46
-#: templates/freeadmin/index.html:51
+#: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
+#: templates/freeadmin/index.html:49
 msgid "Loading..."
 msgstr "Carregant..."
 
-#: templates/freeadmin/index.html:55
+#: templates/freeadmin/index.html:53
 msgid "Help & Support"
 msgstr "Ajuda i suport"
 
-#: templates/freeadmin/index.html:59
+#: templates/freeadmin/index.html:57
 msgid "Forum"
 msgstr "Fòrum"
 
-#: templates/freeadmin/index.html:61
+#: templates/freeadmin/index.html:59
 msgid "Community Forum"
 msgstr "Fòrum comunitari"
 
-#: templates/freeadmin/index.html:66
+#: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
 msgstr "IRC (Xat)"
 
-#: templates/freeadmin/index.html:68
+#: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
 msgstr "#freenas al freenode"
 
-#: templates/freeadmin/index.html:72
+#: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
 msgstr "Llista de correu"
 
-#: templates/freeadmin/index.html:74
+#: templates/freeadmin/index.html:72
 msgid "FreeNAS Announce"
 msgstr "Anunci FreeNAS"
 
-#: templates/freeadmin/index.html:75
+#: templates/freeadmin/index.html:73
 msgid "FreeNAS Commit"
 msgstr "FreeNAS Commit"
 
-#: templates/freeadmin/index.html:76
+#: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
 msgstr "FreeNAS Devel"
 
-#: templates/freeadmin/index.html:77
+#: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
 msgstr "Prova FreeNAS"
 
-#: templates/freeadmin/index.html:78
+#: templates/freeadmin/index.html:76
 msgid "FreeNAS Docs"
 msgstr "Documentació FreeNAS"
 
-#: templates/freeadmin/index.html:79
+#: templates/freeadmin/index.html:77
 msgid "FreeNAS Translations"
 msgstr "Traduccions de FreeNAS"
 
-#: templates/freeadmin/index.html:84
+#: templates/freeadmin/index.html:82
 msgid "Support Issues"
 msgstr "Problemes de suport"
 
-#: templates/freeadmin/index.html:86
+#: templates/freeadmin/index.html:84
 msgid "Bug Tracker"
 msgstr "Seguiment d'errors"
 
-#: templates/freeadmin/index.html:91
+#: templates/freeadmin/index.html:89
 msgid "Documentation"
 msgstr "Documentació"
 
-#: templates/freeadmin/index.html:93
+#: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
 msgstr "Documentació FreeNAS"
 
@@ -5342,21 +5421,21 @@ msgstr "Documentació FreeNAS"
 msgid "IPv6 Auto"
 msgstr "IPv6 automàtic"
 
-#: templates/network/interface.html:12 templates/plugins/index.html:15
+#: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
 #: templates/sharing/windows.html:15 templates/storage/replications.html:24
 #: templates/storage/scrub.html:13 templates/storage/tasks.html:25
 #: templates/storage/volumes.html:64 templates/system/cronjob.html:12
 #: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:10 templates/system/sysctl.html:8
-#: templates/system/tunable.html:8
+#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
+#: templates/system/tunable.html:9
 msgid "Available actions"
 msgstr "Accions disponibles"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
 #: templates/network/staticroute.html:18 templates/network/vlan.html:19
-#: templates/plugins/index.html:35
+#: templates/plugins/index.html:37 templates/plugins/mountpoints.html:17
 #: templates/services/iscsi_assoctargets.html:16
 #: templates/services/iscsi_assoctargets.html:18
 #: templates/services/iscsi_auth.html:18 templates/services/iscsi_auth.html:20
@@ -5375,10 +5454,10 @@ msgstr "Accions disponibles"
 #: templates/storage/scrub.html.py:29 templates/system/cronjob.html:26
 #: templates/system/cronjob.html.py:28 templates/system/ntpserver.html:23
 #: templates/system/ntpserver.html.py:25 templates/system/rsync.html:33
-#: templates/system/rsync.html.py:35 templates/system/smarttest.html:21
-#: templates/system/smarttest.html.py:23 templates/system/sysctl.html:17
-#: templates/system/sysctl.html.py:19 templates/system/tunable.html:17
-#: templates/system/tunable.html.py:19
+#: templates/system/rsync.html.py:35 templates/system/smarttest.html:23
+#: templates/system/smarttest.html.py:25 templates/system/sysctl.html:19
+#: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
+#: templates/system/tunable.html.py:21
 msgid "Edit"
 msgstr "Editar"
 
@@ -5400,6 +5479,8 @@ msgid "Add Interface"
 msgstr "Afegir interfície"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
+#: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
+#: templates/services/plugins.html:34
 msgid "Actions"
 msgstr "Accions"
 
@@ -5439,10 +5520,6 @@ msgstr "Acció"
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
 msgstr "Afegir membres del LAGG "
-
-#: templates/network/staticroute.html:5
-msgid "Destination"
-msgstr "Destinació"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5497,46 +5574,49 @@ msgid "Installed..."
 msgstr ""
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
+#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
 msgstr ""
 
-#: templates/plugins/index.html:29
+#: templates/plugins/index.html:31
 #, fuzzy
 msgid "Info"
 msgstr "Informal"
 
-#: templates/plugins/index.html:31
+#: templates/plugins/index.html:33
 msgid "Plugin info"
 msgstr ""
 
-#: templates/plugins/index.html:37
+#: templates/plugins/index.html:39
 #, fuzzy
 msgid "Edit Plugin"
 msgstr "Editar portal"
 
-#: templates/plugins/index.html:43
+#: templates/plugins/index.html:47 templates/services/plugins.html:62
 #, fuzzy
 msgid "Delete plugin"
 msgstr "Eliminar replicació"
 
-#: templates/plugins/index.html:50
+#: templates/plugins/index.html:55
 msgid "No plugins installed"
 msgstr ""
 
-#: templates/plugins/jailpbi.html:2 templates/plugins/pbiwizard.html:2
-#: templates/system/wizard.html:3
+#: templates/plugins/jail_import.html:2
+#, fuzzy
+msgid "Import"
+msgstr "Importar un volum"
+
+#: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
 msgstr "Pas %(step)s of %(step_count)s"
 
-#: templates/plugins/jailpbi.html:19
+#: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
 msgstr ""
 
-#: templates/plugins/jailpbi.html:23 templates/plugins/pbiwizard.html:19
-#: templates/plugins/plugin_info.html:39
-#: templates/services/plugins_info.html:26
-#: templates/storage/disk_detach.html:13 templates/storage/disk_remove.html:13
+#: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
+#: templates/storage/disk_detach.html:13
 #: templates/storage/snapshot_confirm_rollback.html:13
 #: templates/storage/volume_detach.html:26
 #: templates/storage/zvol_confirm_delete.html:13
@@ -5544,27 +5624,48 @@ msgstr ""
 msgid "Please wait..."
 msgstr "Si us plau, espera...."
 
-#: templates/plugins/pbiwizard.html:16
+#: templates/plugins/mountpoints.html:19
 #, fuzzy
-msgid "Upload Plugin"
+msgid "Edit Mount Point"
+msgstr "Punt de muntatge"
+
+#: templates/plugins/mountpoints.html:25
+#, fuzzy
+msgid "Delete Mount Point"
+msgstr "Punt de muntatge"
+
+#: templates/plugins/mountpoints.html:32
+#, fuzzy
+msgid "No mount points defined"
+msgstr "No hi ha tasques programades definides"
+
+#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
+#, fuzzy
+msgid "Add Mount Point"
+msgstr "Punt de muntatge"
+
+#: templates/plugins/plugin_install.html:5
+#: templates/plugins/plugin_update.html:5
+#, fuzzy
+msgid "Upload"
 msgstr "Pujar configuració"
 
-#: templates/registration/login.html:42
+#: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
 msgstr ""
 "El teu nom d'usuari i contrasenya no coincideixen. Si us plau torneu a provar"
 
-#: templates/registration/login.html:46
+#: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Benvingut, %(username). Gracies per iniciar sessió"
 
-#: templates/registration/login.html:48
+#: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:49
+#: templates/registration/login.html:47
 msgid "Please log in."
 msgstr "Si us plau, inicia sessió"
 
@@ -5580,79 +5681,83 @@ msgstr "Ara has tancat sessió"
 msgid "Log back in"
 msgstr "Tornar a iniciar sessió"
 
-#: templates/services/enable.html:4
-msgid "Would you like to enable this service?"
-msgstr ""
-
-#: templates/services/enable.html:18 templates/storage/tasks.html:37
-msgid "No"
-msgstr "No"
-
-#: templates/services/index.html:13
+#: templates/services/core.html:10
 msgid "AFP Settings"
 msgstr "paràmetres AFP"
 
-#: templates/services/index.html:24
+#: templates/services/core.html:21
 msgid "Active Directory Settings"
 msgstr "Paràmetres del directori actiu"
 
-#: templates/services/index.html:35
+#: templates/services/core.html:32
 msgid "CIFS Settings"
 msgstr "Paràmetres CIFS"
 
-#: templates/services/index.html:48
+#: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
 msgstr "Paràmetres DNS dinàmic"
 
-#: templates/services/index.html:59
+#: templates/services/core.html:56
 msgid "FTP Settings"
 msgstr "Paràmetres FTP"
 
-#: templates/services/index.html:72
+#: templates/services/core.html:69
 msgid "ISCSI Settings"
 msgstr "Paràmetres iSCSI"
 
-#: templates/services/index.html:83
+#: templates/services/core.html:80
 msgid "LDAP Settings"
 msgstr "Paràmetres LDAP"
 
-#: templates/services/index.html:94
+#: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "Paràmetres NFS"
 
-#: templates/services/index.html:106 templates/services/index.html.py:108
+#: templates/services/core.html:103 templates/services/core.html.py:105
 #, fuzzy
 msgid "Plugins Settings"
 msgstr "paràmetres AFP"
 
-#: templates/services/index.html:108
+#: templates/services/core.html:105
 msgid "Install Jail PBI"
 msgstr ""
 
-#: templates/services/index.html:120
+#: templates/services/core.html:117
 msgid "Rsync Settings"
 msgstr "Ajustos de Rsync"
 
-#: templates/services/index.html:131
+#: templates/services/core.html:128
 msgid "SNMP Settings"
 msgstr "Paràmetres SNMP"
 
-#: templates/services/index.html:142
+#: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
 msgstr "Opcions d'S.M.A.R.T."
 
-#: templates/services/index.html:153
+#: templates/services/core.html:150
 msgid "SSH Settings"
 msgstr "Paràmetres SSH"
 
-#: templates/services/index.html:164
+#: templates/services/core.html:161
 msgid "TFTP Settings"
 msgstr "Paràmetres TFTP"
 
-#: templates/services/index.html:175
+#: templates/services/core.html:172
 #, fuzzy
 msgid "UPS Settings"
 msgstr "Paràmetres NFS"
+
+#: templates/services/enable.html:3
+msgid "Would you like to enable this service?"
+msgstr ""
+
+#: templates/services/enable.html:16 templates/storage/tasks.html:37
+msgid "No"
+msgstr "No"
+
+#: templates/services/index.html:2
+msgid "Core"
+msgstr ""
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5684,12 +5789,8 @@ msgid "Associated Targets"
 msgstr "Targets associats"
 
 #: templates/services/iscsi_assoctargets.html:31
-#: templates/services/iscsi_authini.html:35
-#: templates/services/iscsi_dextents.html:33
-#: templates/services/iscsi_extents.html:33
-#: templates/services/iscsi_portals.html:39
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
+#, fuzzy
+msgid "No associated targets defined"
 msgstr "Cap target definit"
 
 #: templates/services/iscsi_assoctargets.html:37
@@ -5712,10 +5813,20 @@ msgstr "Afegir usuari iSCSI"
 msgid "Authorized Network"
 msgstr "Xarxa autoritzada"
 
+#: templates/services/iscsi_authini.html:35
+#, fuzzy
+msgid "No authorized initiators defined"
+msgstr "Iniciador autoritzat"
+
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
 msgstr "Afegir inicador autoritzat"
+
+#: templates/services/iscsi_dextents.html:33
+#, fuzzy
+msgid "No device extents defined"
+msgstr "Cap target definit"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5726,6 +5837,11 @@ msgstr "Afegir extent"
 #, fuzzy
 msgid "File Extent"
 msgstr "Extents del perifèric"
+
+#: templates/services/iscsi_extents.html:33
+#, fuzzy
+msgid "No extents defined"
+msgstr "Cap target definit"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5743,37 +5859,71 @@ msgstr "Editar portal"
 msgid "Delete Portal"
 msgstr "Esborrar portal"
 
+#: templates/services/iscsi_portals.html:39
+#, fuzzy
+msgid "No portals defined"
+msgstr "Cap target definit"
+
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
 msgstr "Afegir portal"
+
+#: templates/services/iscsi_targets.html:34
+msgid "No targets defined"
+msgstr "Cap target definit"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
 msgstr "Afegir target"
 
-#: templates/services/plugins_delete.html:4
+#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
+#, fuzzy
+msgid "View Mount Points"
+msgstr "Punt de muntatge"
+
+#: templates/services/plugins.html:22
+msgid ""
+"ATTENTION: The plugins service is not running, several functionalities have "
+"been disabled."
+msgstr ""
+
+#: templates/services/plugins.html:31
+#, fuzzy
+msgid "Version"
+msgstr "Versió del Sistema Operatiu"
+
+#: templates/services/plugins.html:32
+msgid "PBI"
+msgstr ""
+
+#: templates/services/plugins.html:33
+#, fuzzy
+msgid "Service status"
+msgstr "Serveis"
+
+#: templates/services/plugins.html:54 templates/system/config_upload.html:2
+msgid "Update"
+msgstr "Actualitzar"
+
+#: templates/services/plugins.html:56
+#, fuzzy
+msgid "Update plugin"
+msgstr "Eliminar replicació"
+
+#: templates/services/plugins.html:71
+msgid "No available plugins services"
+msgstr ""
+
+#: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
 
-#: templates/services/plugins_edit.html:8
-#: templates/services/plugins_info.html:33
+#: templates/services/pluginsjail_edit.html:12
 #, fuzzy
 msgid "Delete Plugins Jail"
 msgstr "Esborrar el fitxer subjacent"
-
-#: templates/services/plugins_info.html:5
-msgid "Jail path"
-msgstr ""
-
-#: templates/services/plugins_info.html:13
-msgid "Jail IP"
-msgstr ""
-
-#: templates/services/plugins_info.html:17
-msgid "Plugins path"
-msgstr ""
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5804,12 +5954,7 @@ msgstr "Esborrar Apple Share"
 msgid "No shares defined"
 msgstr "No hi ha share definits"
 
-#: templates/sharing/apple.html:49
-#, fuzzy
-msgid "Add Apple (CIFS) Share"
-msgstr "Afegir Apple share"
-
-#: templates/sharing/apple.html:51
+#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
 msgid "Add Apple (AFP) Share"
 msgstr "Afegir Apple share"
@@ -5917,9 +6062,14 @@ msgstr "Estas segur que vols treure'l?"
 msgid "Are you sure you want to offline?"
 msgstr "Estas segur que vols esborrar-ho?"
 
-#: templates/storage/disk_remove.html:7
+#: templates/storage/disk_remove.html:3
 #, fuzzy
 msgid "Are you sure you want to remove?"
+msgstr "Estas segur que vols esborrar-ho?"
+
+#: templates/storage/disk_wipe.html:4
+#, fuzzy
+msgid "Are you sure you want to wipe?"
 msgstr "Estas segur que vols esborrar-ho?"
 
 #: templates/storage/geom_disk_replace.html:9
@@ -5930,10 +6080,6 @@ msgstr "Substituir disc"
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
 msgstr "Substituir disc"
-
-#: templates/storage/import.html:32 templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Tipo de sistema de fitxers"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
@@ -5950,12 +6096,6 @@ msgstr "Replicació ZFS"
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
 msgstr "Crear manualment Snapshot"
-
-#: templates/storage/periodicsnap.html:2 templates/storage/volumes.html:149
-#: templates/storage/volumes.html.py:153 templates/storage/volumes.html:227
-#: templates/storage/volumes.html.py:231
-msgid "Create Snapshot"
-msgstr "Crear Snapshot"
 
 #: templates/storage/permission.html:2
 msgid "Change"
@@ -6131,6 +6271,10 @@ msgstr "Editar volum ZFS"
 msgid "Used"
 msgstr "Utilitzat"
 
+#: templates/storage/volumes.html:61
+msgid "Available"
+msgstr "Disponible"
+
 #: templates/storage/volumes.html:62
 msgid "Size"
 msgstr "Mida"
@@ -6154,6 +6298,12 @@ msgstr "Volum ZFS"
 msgid "Edit ZFS Options"
 msgstr "Editar opcions del ZFS"
 
+#: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
+#: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
+#: templates/storage/volumes.html:257 templates/storage/volumes.html.py:261
+msgid "Create Snapshot"
+msgstr "Crear Snapshot"
+
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
 #, fuzzy
 msgid "Volume Status"
@@ -6167,7 +6317,7 @@ msgstr "Eliminar el Dataset"
 msgid "Destroy ZFS Volume"
 msgstr "Eliminar volum ZFS"
 
-#: templates/storage/volumes.html:259
+#: templates/storage/volumes.html:268
 msgid "No volumes defined"
 msgstr "No hi ha volums definits"
 
@@ -6251,8 +6401,9 @@ msgstr "Actualització del firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-msgid "Apply Service Pack"
-msgstr "Aplicar el Service Pack"
+#, fuzzy
+msgid "Import Plugins Jail"
+msgstr "Esborrar el fitxer subjacent"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6261,10 +6412,6 @@ msgstr "Reiniciant"
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Estas segur que vols retornar a la configuració de fàbrica"
-
-#: templates/system/config_upload.html:2
-msgid "Update"
-msgstr "Actualitzar"
 
 #: templates/system/cronjob.html:41
 #, fuzzy
@@ -6325,45 +6472,10 @@ msgid ""
 "do?"
 msgstr "Estas apunt de <strong>REINICIAR</strong> el sistema, que vols fer?"
 
-#: templates/system/reporting.html:4
-msgid "Hourly"
-msgstr "Cada hora"
-
-#: templates/system/reporting.html:5
-msgid "Hourly Graphs"
-msgstr "Gràfic a cada hora"
-
-#: templates/system/reporting.html:16
-msgid "Daily"
-msgstr "Diari"
-
-#: templates/system/reporting.html:17
-msgid "Daily Graphs"
-msgstr "Gràfic diari"
-
-#: templates/system/reporting.html:28
-msgid "Weekly"
-msgstr "Semanal"
-
-#: templates/system/reporting.html:29
-msgid "Weekly Graphs"
-msgstr "Gràfic semanal"
-
-#: templates/system/reporting.html:40
-msgid "Monthly"
-msgstr "Mensual"
-
-#: templates/system/reporting.html:41
-msgid "Monthly Graphs"
-msgstr "Gràfic mensual"
-
-#: templates/system/reporting.html:52
-msgid "Yearly"
-msgstr "Anual"
-
-#: templates/system/reporting.html:53
-msgid "Yearly Graphs"
-msgstr "Gràfic anual"
+#: templates/system/reporting.html:2
+#, fuzzy
+msgid "History"
+msgstr "Directori"
 
 #: templates/system/rsync.html:5
 #, fuzzy
@@ -6416,35 +6528,35 @@ msgid ""
 "to do?"
 msgstr "stas a punt de <strong>APAGAR</strong> el sistema, que vols fer?"
 
-#: templates/system/smarttest.html:14
+#: templates/system/smarttest.html:16
 msgid "Unknown"
 msgstr "Deconegut"
 
-#: templates/system/smarttest.html:36
+#: templates/system/smarttest.html:38
 #, fuzzy
 msgid "No S.M.A.R.T. tests defined"
 msgstr "Cap target definit"
 
-#: templates/system/smarttest.html:42
+#: templates/system/smarttest.html:44
 #, fuzzy
 msgid "Add S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
-#: templates/system/smarttest.html:44
+#: templates/system/smarttest.html:46
 #, fuzzy
 msgid "Add S.M.A.R.T. test"
 msgstr "S.M.A.R.T."
 
-#: templates/system/sysctl.html:32
+#: templates/system/sysctl.html:34
 #, fuzzy
 msgid "No sysctl defined."
 msgstr "No hi ha rsyncs definits"
 
-#: templates/system/sysctl.html:38
+#: templates/system/sysctl.html:40
 msgid "Add sysctl"
 msgstr "Afegir sysctl"
 
-#: templates/system/sysctl.html:40
+#: templates/system/sysctl.html:42
 msgid "Add Sysctl"
 msgstr "Afegir sysctl"
 
@@ -6476,17 +6588,17 @@ msgstr "Carrega mitja"
 msgid "Connected through"
 msgstr ""
 
-#: templates/system/tunable.html:32
+#: templates/system/tunable.html:34
 #, fuzzy
 msgid "No tunable setting defined."
 msgstr "Cap target definit"
 
-#: templates/system/tunable.html:38
+#: templates/system/tunable.html:40
 #, fuzzy
 msgid "Add Tunable"
 msgstr "Afegir target"
 
-#: templates/system/tunable.html:40
+#: templates/system/tunable.html:42
 #, fuzzy
 msgid "Add Loader"
 msgstr "Afegir portal"
@@ -6495,27 +6607,27 @@ msgstr "Afegir portal"
 msgid "Apply Update"
 msgstr "Aplicar Actualització"
 
-#: tools/alert.py:100
+#: tools/alert.py:108
 #, python-format
 msgid "The volume %s status is HEALTHY"
 msgstr "L'estat del volum %s és SALUDABLE"
 
-#: tools/alert.py:103
+#: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
 msgstr "L'estat del volum %s és DEGRADAT"
 
-#: tools/alert.py:107
+#: tools/alert.py:115
 #, fuzzy, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
 msgstr "L'estat del %(volume)s és %(status)s"
 
-#: tools/alert.py:111
+#: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "L'estat del %(volume)s és %(status)s"
 
-#: tools/alert.py:117
+#: tools/alert.py:125
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
@@ -6523,21 +6635,130 @@ msgstr ""
 "Has de canviar la contrasenya de l'usuari admin (actualment no es requereix "
 "contrasenya per validar-se)"
 
-#: tools/alert.py:129
+#: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr "L'adreça del WebGUI no es pot enllaçar a %s; utilitzant comodins"
 
-#: tools/alert.py:139
+#: tools/alert.py:147
 #, python-format
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
 
-#: tools/alert.py:169
+#: tools/alert.py:177
 msgid "Critical Alerts"
 msgstr "Alertes Crítiques"
+
+msgid "Selected"
+msgstr "Seleccionat"
+
+#, fuzzy
+msgid "SHA256 sum for the PBI file"
+msgstr "Suma SHA256  per la imatge"
+
+#, fuzzy
+msgid "Plugin uname"
+msgstr "Nom de domini"
+
+#, fuzzy
+msgid "Path to plugin"
+msgstr "Ruta al punt de muntatge"
+
+#, fuzzy
+msgid "Control Plugins"
+msgstr "Serveis de Control"
+
+msgid "Allow guest access"
+msgstr "Permetre l'accés guest"
+
+msgid "Only allow guest access"
+msgstr "Només permetre l'accés guest"
+
+#, fuzzy
+msgid "Path to the plugins directory"
+msgstr "La ruta no és un directori."
+
+msgid "Invalid prefix"
+msgstr "Prefixe invalid"
+
+msgid ""
+"How many minutes passed before a new snapshot is made after the last one."
+msgstr "Quants minuts passan entre la creació d'Snapshots."
+
+msgid "An error occurred when setting the options"
+msgstr "Algun error a succeït mentre s'ajustaven les opcions"
+
+msgid "Service Pack image to be installed"
+msgstr "Imatge del Service Pack a instalar"
+
+#, fuzzy
+msgid "Invalid service pack"
+msgstr "Service Pack o checksum incorrecte"
+
+#, fuzzy
+msgid "View Cron Jobs"
+msgstr "Tasques programades"
+
+#, fuzzy
+msgid "View Rsync Tasks"
+msgstr "Veure totes les tasques de replicació"
+
+#, fuzzy
+msgid "View S.M.A.R.T. Tests"
+msgstr "Opcions d'S.M.A.R.T."
+
+#, fuzzy
+msgid "View Sysctls"
+msgstr "Visualitzar discos"
+
+#, fuzzy
+msgid "View Tunables"
+msgstr "Veure tots els usuaris"
+
+msgid "Browse"
+msgstr "navegar"
+
+msgid "Close"
+msgstr "Tancar"
+
+#, fuzzy
+msgid "Add Apple (CIFS) Share"
+msgstr "Afegir Apple share"
+
+msgid "Apply Service Pack"
+msgstr "Aplicar el Service Pack"
+
+msgid "Hourly"
+msgstr "Cada hora"
+
+msgid "Hourly Graphs"
+msgstr "Gràfic a cada hora"
+
+msgid "Daily"
+msgstr "Diari"
+
+msgid "Daily Graphs"
+msgstr "Gràfic diari"
+
+msgid "Weekly"
+msgstr "Semanal"
+
+msgid "Weekly Graphs"
+msgstr "Gràfic semanal"
+
+msgid "Monthly"
+msgstr "Mensual"
+
+msgid "Monthly Graphs"
+msgstr "Gràfic mensual"
+
+msgid "Yearly"
+msgstr "Anual"
+
+msgid "Yearly Graphs"
+msgstr "Gràfic anual"
 
 msgid "DVD"
 msgstr "DVD"
@@ -6762,17 +6983,11 @@ msgstr "Retornar als valors de fàbrica"
 msgid "Config"
 msgstr "Configuració"
 
-msgid "OS Version"
-msgstr "Versió del Sistema Operatiu"
-
 msgid "%s successfully update."
 msgstr "%s actualitzat amb èxit."
 
 msgid "Admin user"
 msgstr "Usuari Admin"
-
-msgid "%s successfully added"
-msgstr "%s afegit amb èxit"
 
 msgid "N/A"
 msgstr "No disponible"

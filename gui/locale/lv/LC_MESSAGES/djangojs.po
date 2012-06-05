@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-03-06 09:50-0800\n"
-"PO-Revision-Date: 2012-03-28 21:05+0200\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2012-03-29 18:00+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -35,47 +35,59 @@ msgstr "Sistēmas informācija"
 msgid "Network Settings"
 msgstr "Tīkla iestatījumi"
 
-#: freeadmin/static/lib/js/freeadmin.js:184
-msgid "Plugins"
-msgstr "Spraudņi"
-
-#: freeadmin/static/lib/js/freeadmin.js:215
+#: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
 msgstr "Pakalpojumi"
 
-#: freeadmin/static/lib/js/freeadmin.js:256
+#: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
 msgstr "Konts"
 
-#: freeadmin/static/lib/js/freeadmin.js:295
+#: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
 msgstr "Glabātuve"
 
-#: freeadmin/static/lib/js/freeadmin.js:465
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+#, fuzzy
+msgid "Some error occurred"
+msgstr "Notika kļūda!"
+
+#: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
 msgstr "Labot"
 
-#: freeadmin/static/lib/js/freeadmin.js:469
+#: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
 msgstr "Rediģēt disku"
 
-#: freeadmin/static/lib/js/freeadmin.js:608
-#: freeadmin/static/lib/js/freeadmin.js:710
+#: freeadmin/static/lib/js/freeadmin.js:547
+msgid "Wipe"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:551
+#, fuzzy
+msgid "Wipe Disk"
+msgstr "Rediģēt disku"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
 msgstr "Lūdzu uzgaidiet..."
 
-#: freeadmin/static/lib/js/freeadmin.js:657
-#: freeadmin/static/lib/js/freeadmin.js:775
+#: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
 msgstr "Notika kļūda!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Katra atlasītā"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
 msgstr "Katru N"
+
+msgid "Plugins"
+msgstr "Spraudņi"
 
 msgid "CronJobs"
 msgstr "Cron darbi"

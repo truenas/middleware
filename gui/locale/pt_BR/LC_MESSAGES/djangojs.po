@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-03-06 09:50-0800\n"
-"PO-Revision-Date: 2012-04-25 19:36+0200\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2012-04-27 15:29+0200\n"
 "Last-Translator: thiagocantero <thiagocantero@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -34,47 +34,59 @@ msgstr "Informação de Sistema"
 msgid "Network Settings"
 msgstr "Configurações de Rede"
 
-#: freeadmin/static/lib/js/freeadmin.js:184
-msgid "Plugins"
-msgstr "Plugins"
-
-#: freeadmin/static/lib/js/freeadmin.js:215
+#: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
 msgstr "Serviços"
 
-#: freeadmin/static/lib/js/freeadmin.js:256
+#: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
 msgstr "Conta"
 
-#: freeadmin/static/lib/js/freeadmin.js:295
+#: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
 msgstr "Armazenamento"
 
-#: freeadmin/static/lib/js/freeadmin.js:465
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+#, fuzzy
+msgid "Some error occurred"
+msgstr "Algum erro ocorreu!"
+
+#: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
 msgstr "Editar"
 
-#: freeadmin/static/lib/js/freeadmin.js:469
+#: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
 msgstr "Editar Disco"
 
-#: freeadmin/static/lib/js/freeadmin.js:608
-#: freeadmin/static/lib/js/freeadmin.js:710
+#: freeadmin/static/lib/js/freeadmin.js:547
+msgid "Wipe"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:551
+#, fuzzy
+msgid "Wipe Disk"
+msgstr "Editar Disco"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
 msgstr "Aguarde..."
 
-#: freeadmin/static/lib/js/freeadmin.js:657
-#: freeadmin/static/lib/js/freeadmin.js:775
+#: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
 msgstr "Algum erro ocorreu!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:44
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Cada selecionado"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:96
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
 msgstr "Todos N"
+
+msgid "Plugins"
+msgstr "Plugins"
 
 msgid "CronJobs"
 msgstr "Tarefas do Cron"
