@@ -115,7 +115,6 @@ WITHOUT_SENDMAIL=true
 # preinstalled, e.g. 9.x bsdinstall images.
 #WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
-WITHOUT_SYSCONS=true
 WITHOUT_SYSINSTALL=true
 # Telnet's a useful tool to have on the remote box.
 #WITHOUT_TELNET=true
