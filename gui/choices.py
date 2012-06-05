@@ -567,3 +567,16 @@ RSYNC_DIRECTION = (
         ('push', _('Push')),
         ('pull', _('Pull')),
 )
+
+
+class KBDMAP_CHOICES(object):
+    """Populate choices from /usr/share/syscons/keymaps/INDEX.keymaps"""
+    INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+    def __iter__(self):
+        if not os.path.exists(self.INDEX):
+            return
+        with open(self.INDEX, 'r') as f:
+            d = f.read()
+        _all = re.findall(r'^(?P<name>.*?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+        for name, desc in _all:
+            yield name, desc

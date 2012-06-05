@@ -326,6 +326,12 @@ _gen_conf()
 	while read ssl_enable; do
 		echo "ixssl_list=\"nginx\""
 	done
+
+	local kbdmap
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \
+	while read -r kbdmap; do
+		echo "keymap=\"${kbdmap}\""
+	done
 }
 
 # If we're running really early, then mount /data read-only
