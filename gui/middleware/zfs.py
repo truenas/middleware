@@ -683,7 +683,7 @@ def parse_status(name, doc, data):
     return pool
 
 
-def list_datasets(path="", recursive=False, hierarchical=True):
+def list_datasets(path="", recursive=False, hierarchical=False):
     """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
     args = [
         "/sbin/zfs",
