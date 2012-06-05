@@ -27,17 +27,14 @@
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.pbi import pbi_delete
-from freenasUI.common.jail import Jls, Jexec
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
-from freenasUI.services.models import services, PluginsJail
+from freenasUI.services.models import PluginsJail
 
 import freenasUI.plugins.api_calls
 
@@ -178,9 +175,12 @@ def plugin_fcgi_client(request, name, path):
     env.pop('wsgi.run_once', None)
     env['SCRIPT_NAME'] = env['PATH_INFO']
     args = request.POST if request.method == "POST" else request.GET
-    status, header, body, raw = app(env, args=args)
+    status, headers, body, raw = app(env, args=args)
 
-    return HttpResponse(body)
+    resp = HttpResponse(body)
+    for header, value in headers:
+        resp[header] = value
+    return resp
 
 
 def plugins_jail_import(request):
