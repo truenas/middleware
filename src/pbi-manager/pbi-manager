@@ -969,8 +969,6 @@ parse_add_pbi_cmdline() {
 		# Set the installation dir
 		PBI_PROGDIRPATH="${PBI_ORIGPROGDIRPATH}"
 	fi
-echo "PBI_PROGDIRPATH=$PBI_PROGDIRPATH"
-exit
 }
 
 # Parse the command line
