@@ -861,7 +861,7 @@ parse_patch_pbi_cmdline() {
                 if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
                         PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
 		elif [ -n "${PBI_ALTEXTRACT_PATH}" ]; then
-                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/"
+                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_PATH}"
                 fi
         else
                 # Set the extraction dir
@@ -963,12 +963,14 @@ parse_add_pbi_cmdline() {
 		if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
 			PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
 		elif [ -n "${PBI_ALTEXTRACT_PATH}" ]; then
-                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/"
+                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_PATH}"
 		fi
 	else
 		# Set the installation dir
 		PBI_PROGDIRPATH="${PBI_ORIGPROGDIRPATH}"
 	fi
+echo "PBI_PROGDIRPATH=$PBI_PROGDIRPATH"
+exit
 }
 
 # Parse the command line
