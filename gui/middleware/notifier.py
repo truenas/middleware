@@ -79,10 +79,11 @@ from freenasUI.common.pbi import (pbi_add, pbi_delete,
     pbi_info, pbi_create, pbi_makepatch, pbi_patch,
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
     PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
-    PBI_ADD_FLAGS_FORCE, PBI_INFO_FLAGS_VERBOSE,
-    PBI_CREATE_FLAGS_OUTDIR, PBI_CREATE_FLAGS_BACKUP,
-    PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
-    PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG)
+    PBI_ADD_FLAGS_OUTPATH, PBI_ADD_FLAGS_FORCE,
+    PBI_INFO_FLAGS_VERBOSE, PBI_CREATE_FLAGS_OUTDIR,
+    PBI_CREATE_FLAGS_BACKUP, PBI_MAKEPATCH_FLAGS_OUTDIR,
+    PBI_MAKEPATCH_FLAGS_NOCHECKSIG, PBI_PATCH_FLAGS_OUTDIR,
+    PBI_PATCH_FLAGS_NOCHECKSIG)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -2199,27 +2200,15 @@ class notifier:
             elif var == 'pbi information for':
                 pbi = "%s.pbi" % val
 
-        parts = prefix.split('/')
-        ename = parts[-1]
-        src = os.path.join(path, ename)
         dst = os.path.join(path, name)
-
-        if os.path.exists(src):
-            self.__umount_filesystems_within(src)
-            cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % (src, )
-            log.debug("Temporary jail path already exists (%s), removing schg flags", src)
-            p = self.__pipeopen(cmd)
-            p.communicate()
-
-        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTDIR|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
-            pbi="/var/tmp/firmware/pbifile.pbi", outdir=path)
+        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTPATH|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
+            pbi="/var/tmp/firmware/pbifile.pbi", outpath=dst)
         res = p.run()
 
         if res and res[0] == 0:
-            if src != dst:
-                self.__system("/bin/mv '%s' '%s'" % (src, dst))
             self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
             ret = True
+
         else:
             # pbid seems to return 255 for any kind of error
             # lets use error str output to find out what happenned

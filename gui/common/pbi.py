@@ -153,16 +153,17 @@ PBI_ADD_FLAGS_ICONPATH      = pbi_arg(0x00000004, "-g")
 PBI_ADD_FLAGS_INFO          = pbi_arg(0x00000008, "-i")
 PBI_ADD_FLAGS_LICENSE       = pbi_arg(0x00000010, "-l")
 PBI_ADD_FLAGS_OUTDIR        = pbi_arg(0x00000020, "-o", True, "outdir")
-PBI_ADD_FLAGS_FETCH         = pbi_arg(0x00000040, "-r")
-PBI_ADD_FLAGS_VERBOSE       = pbi_arg(0x00000080, "-v")
-PBI_ADD_FLAGS_CHECKSCRIPT   = pbi_arg(0x00000100, "--checkscript")
-PBI_ADD_FLAGS_LICENSE_AGREE = pbi_arg(0x00000200, "--licagree")
-PBI_ADD_FLAGS_NOCHECKSUM    = pbi_arg(0x00000400, "--no-checksum")
-PBI_ADD_FLAGS_NOCHECKSIG    = pbi_arg(0x00000800, "--no-checksig")
-PBI_ADD_FLAGS_NOHASH        = pbi_arg(0x00001000, "--no-hash")
-PBI_ADD_FLAGS_ARCH          = pbi_arg(0x00002000, "--rArch", True, "arch")
-PBI_ADD_FLAGS_VERSION       = pbi_arg(0x00004000, "--rVer", True, "ver")
-PBI_ADD_FLAGS_REPOID        = pbi_arg(0x00008000, "--repoid", True, "repoid")
+PBI_ADD_FLAGS_OUTPATH       = pbi_arg(0x00000040, "-p", True, "outpath")
+PBI_ADD_FLAGS_FETCH         = pbi_arg(0x00000080, "-r")
+PBI_ADD_FLAGS_VERBOSE       = pbi_arg(0x00000100, "-v")
+PBI_ADD_FLAGS_CHECKSCRIPT   = pbi_arg(0x00000200, "--checkscript")
+PBI_ADD_FLAGS_LICENSE_AGREE = pbi_arg(0x00000400, "--licagree")
+PBI_ADD_FLAGS_NOCHECKSUM    = pbi_arg(0x00000800, "--no-checksum")
+PBI_ADD_FLAGS_NOCHECKSIG    = pbi_arg(0x00001000, "--no-checksig")
+PBI_ADD_FLAGS_NOHASH        = pbi_arg(0x00002000, "--no-hash")
+PBI_ADD_FLAGS_ARCH          = pbi_arg(0x00004000, "--rArch", True, "arch")
+PBI_ADD_FLAGS_VERSION       = pbi_arg(0x00008000, "--rVer", True, "ver")
+PBI_ADD_FLAGS_REPOID        = pbi_arg(0x00010000, "--repoid", True, "repoid")
 PBI_ADD_FLAGS = [
     PBI_ADD_FLAGS_EXTRACT_ONLY,
     PBI_ADD_FLAGS_FORCE,
@@ -170,6 +171,7 @@ PBI_ADD_FLAGS = [
     PBI_ADD_FLAGS_INFO,
     PBI_ADD_FLAGS_LICENSE,
     PBI_ADD_FLAGS_OUTDIR,
+    PBI_ADD_FLAGS_OUTPATH,
     PBI_ADD_FLAGS_FETCH,
     PBI_ADD_FLAGS_VERBOSE,
     PBI_ADD_FLAGS_CHECKSCRIPT,
@@ -339,14 +341,16 @@ PBI_PATCH_FLAGS_EXTRACT_ONLY = pbi_arg(0x00000001, "-e")
 PBI_PATCH_FLAGS_ICONPATH     = pbi_arg(0x00000002, "-g")
 PBI_PATCH_FLAGS_INFO         = pbi_arg(0x00000004, "-i")
 PBI_PATCH_FLAGS_OUTDIR       = pbi_arg(0x00000008, "-o", True, "outdir")
-PBI_PATCH_FLAGS_CHECKSCRIPT  = pbi_arg(0x00000010, "--checkscript")
-PBI_PATCH_FLAGS_NOCHECKSIG   = pbi_arg(0x00000020, "--no-checksig")
-PBI_PATCH_FLAGS_NOHASH       = pbi_arg(0x00000040, "--no-hash")
+PBI_PATCH_FLAGS_OUTPATH      = pbi_arg(0x00000010, "-p", True, "outpath")
+PBI_PATCH_FLAGS_CHECKSCRIPT  = pbi_arg(0x00000020, "--checkscript")
+PBI_PATCH_FLAGS_NOCHECKSIG   = pbi_arg(0x00000040, "--no-checksig")
+PBI_PATCH_FLAGS_NOHASH       = pbi_arg(0x00000080, "--no-hash")
 PBI_PATCH_FLAGS = [
     PBI_PATCH_FLAGS_EXTRACT_ONLY,
     PBI_PATCH_FLAGS_ICONPATH,
     PBI_PATCH_FLAGS_INFO,
     PBI_PATCH_FLAGS_OUTDIR,
+    PBI_PATCH_FLAGS_OUTPATH,
     PBI_PATCH_FLAGS_CHECKSCRIPT,
     PBI_PATCH_FLAGS_NOCHECKSIG,
     PBI_PATCH_FLAGS_NOHASH
