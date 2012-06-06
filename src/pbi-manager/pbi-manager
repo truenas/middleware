@@ -962,6 +962,8 @@ parse_add_pbi_cmdline() {
 
 		if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
 			PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
+		elif [ -n "${PBI_ALTEXTRACT_PATH}" ]; then
+                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/"
 		fi
 	else
 		# Set the installation dir
