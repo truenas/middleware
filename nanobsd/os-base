@@ -98,7 +98,8 @@ WITHOUT_IPFILTER=true
 WITHOUT_IPX=true
 WITHOUT_LIB32=true
 WITHOUT_LIBKSE=true
-WITHOUT_LOCALES=true
+# Required for proper terminal locale
+#WITHOUT_LOCALES=true
 WITHOUT_LPR=true
 WITHOUT_MAN=true
 WITHOUT_NDIS=true
