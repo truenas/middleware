@@ -35,6 +35,7 @@ Options:
   -i             -- Display information about this PBI
   -l             -- Display LICENSE text
   -o outdir      -- Extract to target directory 
+  -p path        -- Extract to target path
   -r 	         -- Fetch and install PBI
   -R 	         -- Fetch install file and save to disk (Do not install)
   -v             -- Enable verbose output
@@ -329,6 +330,7 @@ Options:
   -g             -- Get and show path to icon / images for gui installer
   -i             -- Display information about this PBI
   -o outdir      -- Extract to target directory
+  -p path        -- Extract to target path
   --checkscript  -- Display any custom install / removal scripts
   --no-checksig  -- Ignore signature verification and force install
   --no-hash      -- Disable using shared hash folder for PBI
@@ -815,6 +817,10 @@ parse_patch_pbi_cmdline() {
                         if [ $# -eq 1 ]; then usage_patch_pbi; fi
                         shift; PBI_ALTEXTRACT_DIR="$1"
                         ;;
+                -p)
+                        if [ $# -eq 1 ]; then usage_patch_pbi; fi
+                        shift; PBI_ALTEXTRACT_PATH="$1"
+                        ;;
      --checkscript)     PBI_CHECKSCRIPTS="YES" ;;
          --no-hash)     PBI_DISABLEHASHDIR="YES" ;;
      --no-checksum)     PBI_SKIPCHECKSUM="YES" ;;
@@ -854,7 +860,9 @@ parse_patch_pbi_cmdline() {
         
                 if [ -n "${PBI_ALTEXTRACT_DIR}" ]; then
                         PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/${PBI_PROGDIRNAME}"
-                fi      
+		elif [ -n "${PBI_ALTEXTRACT_PATH}" ]; then
+                        PBI_PROGDIRPATH="${PBI_ALTEXTRACT_DIR}/"
+                fi
         else
                 # Set the extraction dir
                 PBI_PROGDIRPATH="${PBI_ORIGPROGDIRPATH}-patch"
@@ -878,6 +886,9 @@ parse_add_pbi_cmdline() {
                 -o)     if [ $# -eq 1 ]; then usage_add_pbi; fi
                         shift; PBI_ALTEXTRACT_DIR="$1"
                         ;;
+		-p)	if [ $# -eq 1 ]; then usage_add_pbi; fi
+			shift; PBI_ALTEXTRACT_PATH="$1"
+			;;
                 -r)     PBI_REMOTEFETCH="YES" 
 			;;
                 -R)     PBI_REMOTEFETCH="YES" 
