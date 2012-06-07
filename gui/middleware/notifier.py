@@ -696,7 +696,10 @@ class notifier:
     def _started_plugins_jail(self):
         c = self.__open_db()
         c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        jail_name = c.fetchone()[0]
+        try:
+            jail_name = c.fetchone()[0]
+        except:
+            return False
 
         retval = 1
         idfile = "/var/run/jail_%s.id" % jail_name
@@ -2183,6 +2186,9 @@ class notifier:
             MiddlewareError: pbi file corrupt or invalid
         """
         ret = False
+
+        if self._started_plugins_jail():
+            raise MiddlewareError("The plugins jail must be turned off")
 
         prefix = ename = pbi = None
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
