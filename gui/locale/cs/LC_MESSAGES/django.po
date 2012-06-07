@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-03-14 14:37+0200\n"
-"Last-Translator: lubos <lubosboucek@gmail.com>\n"
+"PO-Revision-Date: 2012-06-07 10:06+0200\n"
+"Last-Translator: zavadil.pavel <zavadil@sieza.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -545,7 +545,7 @@ msgstr ""
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Vytvořit novou hlavní skupinu pro uživatele"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -732,7 +732,7 @@ msgstr "Uživatele %s nelze smazat!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
-msgstr "Účty"
+msgstr "Účet"
 
 #: account/nav.py:13 templates/account/index.html:2
 #, fuzzy
@@ -1154,7 +1154,7 @@ msgstr ""
 
 #: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
-msgstr ""
+msgstr "Síť"
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
@@ -1324,7 +1324,7 @@ msgstr ""
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Cíl"
 
 #: plugins/models.py:121 storage/models.py:456
 msgid "Mount Point"
@@ -1499,7 +1499,7 @@ msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
-msgstr ""
+msgstr "Potvrďte administrátorské heslo"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1663,7 +1663,7 @@ msgstr ""
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Jste si jisti, že chcete smazat?"
 
 #: services/forms.py:1147
 #, fuzzy
@@ -2467,7 +2467,7 @@ msgstr ""
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Předmět emailu"
 
 #: services/models.py:952
 msgid ""
@@ -2749,11 +2749,11 @@ msgstr ""
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Název doménového řadiče"
 
 #: services/models.py:1240
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Název AD nebo PDC"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -2761,7 +2761,7 @@ msgstr ""
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Název domény, např. domena.local"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
@@ -2773,7 +2773,7 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Název skupiny"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
@@ -2803,7 +2803,7 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -3091,7 +3091,7 @@ msgstr "zobrazit všechny uživatele"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
@@ -3584,9 +3584,8 @@ msgid "Specify custom path"
 msgstr ""
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Stav svazku"
+msgstr "Přidat svazek"
 
 #: storage/forms.py:175
 msgid ""
@@ -3600,13 +3599,12 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Svazek s tímto názvem již existuje."
 
 #: storage/forms.py:252
 msgid "Path does not exist."
-msgstr ""
+msgstr "Cesta neexistuje."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
@@ -3674,9 +3672,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Pokus o restart služby byl neúspěšný."
+msgstr "Pokus o restart služby SMART byl neúspěšný."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -3728,13 +3725,12 @@ msgid "You already have a dataset with the same name"
 msgstr ""
 
 #: storage/forms.py:807
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "svazek ZFS"
+msgstr "Kvóta pro tento svazek"
 
 #: storage/forms.py:812
 msgid "Reserved space for this volume"
-msgstr ""
+msgstr "Rezervované místo pro tento svazek"
 
 #: storage/forms.py:842
 #, fuzzy
@@ -3826,16 +3822,16 @@ msgstr ""
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Odstranit vškeré sdílení související s tímto svazkem"
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
-msgstr ""
+msgstr "minuta"
 
 #: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
 #: system/forms.py:634
 msgid "hour"
-msgstr ""
+msgstr "hodina"
 
 #: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
 #: system/forms.py:637
@@ -3844,7 +3840,7 @@ msgstr ""
 
 #: storage/forms.py:1269
 msgid "Method"
-msgstr ""
+msgstr "Metoda"
 
 #: storage/forms.py:1271
 msgid "Quick"
@@ -3874,7 +3870,7 @@ msgstr ""
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
-msgstr ""
+msgstr "Minuta"
 
 #: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
@@ -3884,9 +3880,8 @@ msgstr ""
 #: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
 #: templates/system/smarttest.html:7
-#, fuzzy
 msgid "Hour"
-msgstr "hodina"
+msgstr "Hodina"
 
 #: storage/models.py:224 system/models.py:350 system/models.py:502
 #: system/models.py:675
@@ -3898,7 +3893,7 @@ msgstr ""
 #: templates/system/cronjob.html:7 templates/system/rsync.html:11
 #: templates/system/smarttest.html:8
 msgid "Day of month"
-msgstr ""
+msgstr "Den v měsíci"
 
 #: storage/models.py:230 system/models.py:356 system/models.py:508
 #: system/models.py:680
@@ -3909,16 +3904,15 @@ msgstr ""
 #: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
 #: templates/system/smarttest.html:9
-#, fuzzy
 msgid "Month"
-msgstr "měsíc"
+msgstr "Měsíc"
 
 #: storage/models.py:240 system/models.py:366 system/models.py:518
 #: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:10
 msgid "Day of week"
-msgstr ""
+msgstr "Den v týdnu"
 
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
@@ -3938,46 +3932,44 @@ msgstr "Nastavení NFS"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
-msgstr ""
+msgstr "Každou minutu"
 
 #: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Každou %s minutu"
 
 #: storage/models.py:271 system/models.py:399 system/models.py:608
 #: system/models.py:695
 msgid "Every hour"
-msgstr ""
+msgstr "Každou hodinu"
 
 #: storage/models.py:273 system/models.py:401 system/models.py:610
 #: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Každou %s hodinu"
 
 #: storage/models.py:281 system/models.py:409 system/models.py:618
 #: system/models.py:705
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "každodenní"
+msgstr "Každý %s den"
 
 #: storage/models.py:288 system/models.py:416 system/models.py:625
 #: system/models.py:712
 msgid "Every month"
-msgstr ""
+msgstr "Každý měsíc"
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
-#, fuzzy
 msgid "Weekdays"
-msgstr "Týdenní"
+msgstr "Pracovní dny"
 
 #: storage/models.py:308 system/models.py:436 system/models.py:641
 #: system/models.py:728
-#, fuzzy
 msgid "Weekends"
-msgstr "týden"
+msgstr "Víkendy"
 
 #: storage/models.py:340
 msgid "Multipath name"
@@ -4012,9 +4004,8 @@ msgid "S.M.A.R.T. extra options"
 msgstr ""
 
 #: storage/models.py:444 system/models.py:660
-#, fuzzy
 msgid "Disks"
-msgstr "disk"
+msgstr "Disky"
 
 #: storage/models.py:457
 msgid "Path to mount point"
@@ -4214,9 +4205,8 @@ msgid "Change Permissions"
 msgstr ""
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s úspěšně přidáno."
+msgstr "Svazek úspěšně přidán."
 
 #: storage/views.py:254
 #, fuzzy
@@ -4309,21 +4299,19 @@ msgstr ""
 
 #: storage/views.py:740
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disk byl odstraněn."
 
 #: storage/views.py:766
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "%s úspěšně smazáno."
+msgstr "Svazek byl úspěšně odpojen."
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
 msgstr ""
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s úspěšně aktualizováno."
+msgstr "Disk úspěšně vymazán"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -4335,13 +4323,12 @@ msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Tato hodnota musí být mezi 0 a 65535 včetně"
 
 #: system/forms.py:216
-#, fuzzy
 msgid "Number is required."
-msgstr "Toto pole je vyžadováno."
+msgstr "Je vyžadováno číslo."
 
 #: system/forms.py:245
 msgid "Force"
-msgstr ""
+msgstr "Vynutit"
 
 #: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
@@ -4401,17 +4388,16 @@ msgid "Protocol"
 msgstr ""
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 addresa"
+msgstr "Adresa webového rozhraní"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Port webového rozhraní"
 
 #: system/models.py:62
 msgid "Language"
-msgstr ""
+msgstr "Jazyk"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
@@ -4419,16 +4405,15 @@ msgstr ""
 
 #: system/models.py:74
 msgid "Timezone"
-msgstr ""
+msgstr "Časová zóna"
 
 #: system/models.py:80
 msgid "Syslog server"
 msgstr ""
 
 #: system/models.py:92 templates/system/ntpserver.html:5
-#, fuzzy
 msgid "Address"
-msgstr "IPv4 addresa"
+msgstr "Adresa"
 
 #: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
@@ -4489,9 +4474,8 @@ msgid "NTP Server"
 msgstr ""
 
 #: system/models.py:145
-#, fuzzy
 msgid "NTP Servers"
-msgstr "Služby"
+msgstr "NTP servery"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
@@ -4503,7 +4487,7 @@ msgstr ""
 
 #: system/models.py:161
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Povolit spořič obrazovky"
 
 #: system/models.py:163
 msgid "Automatically Check for New Firmware"
@@ -4567,7 +4551,7 @@ msgstr ""
 
 #: system/models.py:216
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Odchozí poštovní server"
 
 #: system/models.py:217
 msgid ""
@@ -4617,7 +4601,7 @@ msgstr ""
 
 #: system/models.py:273
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organizační jednotka"
 
 #: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
@@ -4625,27 +4609,27 @@ msgstr ""
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
-msgstr ""
+msgstr "Emailová adresa"
 
 #: system/models.py:287
 msgid "Locality"
-msgstr ""
+msgstr "Lokalita"
 
 #: system/models.py:288
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Název lokality (např. město)"
 
 #: system/models.py:294
 msgid "State"
-msgstr ""
+msgstr "Stát"
 
 #: system/models.py:295
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Stát nebo provincie (celý název)"
 
 #: system/models.py:301
 msgid "Country"
-msgstr ""
+msgstr "Země"
 
 #: system/models.py:302
 msgid "Country Name (2 letter code)"
@@ -4674,13 +4658,12 @@ msgstr ""
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
-msgstr ""
+msgstr "Příkaz"
 
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
-#, fuzzy
 msgid "Short description"
-msgstr "popis"
+msgstr "Krátký popis"
 
 #: system/models.py:374
 msgid "Cron Job"
@@ -4692,7 +4675,7 @@ msgstr ""
 
 #: system/models.py:459
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP adresa nebo název"
 
 #: system/models.py:468
 msgid "Remote Module Name"
@@ -4779,7 +4762,7 @@ msgstr ""
 #: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
 #: templates/system/tunable.html.py:27
 msgid "Delete"
-msgstr ""
+msgstr "Smazat"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -4823,25 +4806,22 @@ msgid "Rsync Tasks"
 msgstr ""
 
 #: system/models.py:756
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "Nastavení S.M.A.R.T."
+msgstr "S.M.A.R.T. test"
 
 #: system/models.py:757
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "Nastavení S.M.A.R.T."
+msgstr "Testy S.M.A.R.T."
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "dostupný"
+msgstr "Proměnná"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
-msgstr ""
+msgstr "Hodnota"
 
 #: system/models.py:795
 msgid "Sysctl"
@@ -4863,7 +4843,7 @@ msgstr "Vypnuto"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
-msgstr ""
+msgstr "Systém"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
@@ -4918,15 +4898,15 @@ msgstr "Sbal vše"
 
 #: templates/menubar.html:36
 msgid "Log Out"
-msgstr ""
+msgstr "Odhlásit"
 
 #: templates/menubar.html:42
 msgid "Help"
-msgstr ""
+msgstr "Pomoc"
 
 #: templates/menubar.html:54 templates/registration/login.html:59
 msgid "Log In"
-msgstr ""
+msgstr "Přihlásit"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
@@ -4937,33 +4917,33 @@ msgstr ""
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Členové"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr ""
+msgstr "Upravit"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Odebrat"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "Upravit skupinu"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "Smazat skupinu"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Nejsou žádné uživatelem definované skupiny."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr ""
+msgstr "Přidat novou skupinu"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
@@ -4972,7 +4952,7 @@ msgstr ""
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "Upravit uživatele"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -4981,11 +4961,11 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "Odebrat uživatele"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
-msgstr ""
+msgstr "Smazat uživatele"
 
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
@@ -4997,13 +4977,12 @@ msgid "Add New User"
 msgstr ""
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-mail"
+msgstr "Změnit e-mail"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Změnit administrátorské heslo"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5021,7 +5000,7 @@ msgstr ""
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5067,19 +5046,19 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:5
 msgid "Yes"
-msgstr ""
+msgstr "Ano"
 
 #: templates/freeadmin/generic_model_edit.html:13
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "Vaše změny byly úspěšně aktualizovány!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "Uložit"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
-msgstr ""
+msgstr "Běžící procesy"
 
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
@@ -5092,7 +5071,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
-msgstr ""
+msgstr "Fórum"
 
 #: templates/freeadmin/index.html:59
 msgid "Community Forum"
@@ -5192,7 +5171,7 @@ msgstr ""
 #: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
 #: templates/system/tunable.html.py:21
 msgid "Edit"
-msgstr ""
+msgstr "Upravit"
 
 #: templates/network/interface.html:28 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
@@ -5215,11 +5194,11 @@ msgstr ""
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
 #: templates/services/plugins.html:34
 msgid "Actions"
-msgstr ""
+msgstr "Akce"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Upravit členy"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -5243,11 +5222,11 @@ msgstr ""
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Možnost spuštění"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
 msgid "Action"
-msgstr ""
+msgstr "Akce"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -5288,15 +5267,15 @@ msgstr ""
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Upravit VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Smazat VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Žádná VLAN není definována"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -5353,7 +5332,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr ""
+msgstr "Čekejte prosím ..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
@@ -5480,7 +5459,7 @@ msgstr ""
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
-msgstr ""
+msgstr "Ne"
 
 #: templates/services/index.html:2
 msgid "Core"
@@ -5933,7 +5912,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:23
 msgid "How"
-msgstr ""
+msgstr "Jak"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
@@ -5941,7 +5920,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:41
 msgid "From"
-msgstr ""
+msgstr "Od"
 
 #: templates/storage/tasks.html:43
 msgid "through"
@@ -5953,7 +5932,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr ""
+msgstr "každodenní"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
@@ -6035,7 +6014,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:73
 msgid "Group type"
-msgstr ""
+msgstr "Typ skupiny"
 
 #: templates/storage/wizard.html:105
 msgid "ZFS Extra"
@@ -6161,7 +6140,7 @@ msgstr ""
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
-msgstr ""
+msgstr "Varování!"
 
 #: templates/system/reboot_dialog.html:4
 msgid ""
@@ -6170,14 +6149,12 @@ msgid ""
 msgstr ""
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Adresář"
+msgstr "Historie"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "lokální uživatel"
+msgstr "Lokální cesta"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
@@ -6224,7 +6201,7 @@ msgstr ""
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr ""
+msgstr "Neznámý"
 
 #: templates/system/smarttest.html:38
 msgid "No S.M.A.R.T. tests defined"
@@ -6306,9 +6283,9 @@ msgid "The volume %s status is DEGRADED"
 msgstr ""
 
 #: tools/alert.py:115
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Stav svazku %(volume) je %(status)."
+msgstr "Stav svazku %(volume) je %(status): %(message)s"
 
 #: tools/alert.py:119
 #, python-format
