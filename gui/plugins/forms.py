@@ -280,6 +280,36 @@ class JailPBIUploadForm(Form):
             pj.save()
 
 
+class JailPBIUpdateForm(Form):
+
+    pbifile = FileField(
+            label=_("Plugins Jail PBI"),
+            required=True
+            )
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        filename = '/var/tmp/firmware/pbifile.pbi'
+        if cleaned_data.get('pbifile'):
+            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
+                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as sp:
+                    for c in cleaned_data['pbifile'].chunks():
+                        sp.write(c)
+        else:
+            self._errors["pbifile"] = self.error_class([
+                _("This field is required."),
+                ])
+        return cleaned_data
+
+    def done(self, *args, **kwargs):
+        pj = PluginsJail.objects.order_by("-id")[0]
+        notifier().install_jail_pbi(pj.jail_path,
+            pj.jail_name, pj.plugins_path)
+
+
+
 class NullMountPointForm(ModelForm):
 
     mounted = forms.BooleanField(
