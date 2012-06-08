@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-07 10:06+0200\n"
+"PO-Revision-Date: 2012-06-08 10:03+0200\n"
 "Last-Translator: zavadil.pavel <zavadil@sieza.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -816,7 +816,7 @@ msgstr ""
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Nelze načíst %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -856,7 +856,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "Chyba"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -3113,7 +3113,7 @@ msgstr "Nastavení"
 
 #: services/nav.py:186
 msgid "Management"
-msgstr ""
+msgstr "Správa"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3124,9 +3124,8 @@ msgid "The service could not be started."
 msgstr ""
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "změnit heslo"
+msgstr "Potvrdit sdílené heslo"
 
 #: sharing/forms.py:139
 #, python-format
@@ -3622,7 +3621,7 @@ msgstr ""
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Musíte zvolit souborový systém"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
@@ -3638,11 +3637,11 @@ msgstr ""
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr ""
+msgstr "Název UFS svazku nemůže být větší než 9 znaků"
 
 #: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "Název UFS svazku může obsahovat pouze alfanumerické znaky"
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
@@ -3659,7 +3658,7 @@ msgstr ""
 #: storage/forms.py:518 storage/models.py:59 storage/models.py:201
 #: templates/storage/scrub.html:5 templates/storage/volumes.html:58
 msgid "Volume"
-msgstr ""
+msgstr "Svazek"
 
 #: storage/forms.py:570
 msgid "You must select a volume."
@@ -3738,9 +3737,8 @@ msgid "ZFS Volume Name"
 msgstr "svazek ZFS"
 
 #: storage/forms.py:845
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "svazek ZFS"
+msgstr "Velikost tohoto ZFS svazku"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -3818,7 +3816,7 @@ msgstr ""
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Označit disky jako nové (zničení dat)"
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
@@ -3856,7 +3854,7 @@ msgstr ""
 
 #: storage/models.py:50
 msgid "File System Type"
-msgstr ""
+msgstr "Typ souborového systému"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
@@ -3874,7 +3872,7 @@ msgstr "Minuta"
 
 #: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Povoleny hodnoty 0-59."
 
 #: storage/models.py:223 system/models.py:349 system/models.py:501
 #: system/models.py:674 templates/storage/scrub.html:8
@@ -3898,7 +3896,7 @@ msgstr "Den v měsíci"
 #: storage/models.py:230 system/models.py:356 system/models.py:508
 #: system/models.py:680
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Povoleny hodnoty 1-31."
 
 #: storage/models.py:235 system/models.py:361 system/models.py:513
 #: system/models.py:685 templates/storage/scrub.html:10
@@ -3917,9 +3915,8 @@ msgstr "Den v týdnu"
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
 #: templates/system/sysctl.html:8 templates/system/tunable.html:8
-#, fuzzy
 msgid "Enabled"
-msgstr "Vypnuto"
+msgstr "Povoleno"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
@@ -4061,7 +4058,7 @@ msgstr ""
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Limit (kB/s)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
@@ -4149,9 +4146,8 @@ msgstr "zobrazit všechny skupiny"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "svazek ZFS"
+msgstr "Správce svazků"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4162,7 +4158,7 @@ msgstr ""
 #: storage/nav.py:63 templates/storage/volumes.html:28
 #: templates/storage/volumes.html.py:30
 msgid "View Disks"
-msgstr ""
+msgstr "Zobrazit disky"
 
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
@@ -4190,7 +4186,7 @@ msgstr ""
 
 #: storage/nav.py:130
 msgid "Volumes"
-msgstr ""
+msgstr "Svazky"
 
 #: storage/nav.py:140 storage/nav.py:188 templates/storage/volumes.html:120
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
@@ -4202,7 +4198,7 @@ msgstr ""
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
 #: templates/storage/volumes.html.py:222
 msgid "Change Permissions"
-msgstr ""
+msgstr "Změnit oprávnění"
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
@@ -4363,7 +4359,7 @@ msgstr ""
 
 #: system/forms.py:538
 msgid "Invalid firmware"
-msgstr ""
+msgstr "Neplatný firmware"
 
 #: system/forms.py:544
 msgid "Invalid checksum"
@@ -4381,7 +4377,7 @@ msgstr ""
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Nejsou povoleny kvóty"
 
 #: system/models.py:44
 msgid "Protocol"
@@ -4409,7 +4405,7 @@ msgstr "Časová zóna"
 
 #: system/models.py:80
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog server"
 
 #: system/models.py:92 templates/system/ntpserver.html:5
 msgid "Address"
@@ -4491,11 +4487,11 @@ msgstr "Povolit spořič obrazovky"
 
 #: system/models.py:163
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Automaticky kontrolovat nové aktualizace firmwaru"
 
 #: system/models.py:165
 msgid "Beep on boot"
-msgstr ""
+msgstr "Pípnutí při startu"
 
 #: system/models.py:167
 msgid "Enable Special System Tuning"
@@ -4517,7 +4513,7 @@ msgstr ""
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
-msgstr ""
+msgstr "Zobrazit terminálové zprávy v zápatí"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
@@ -4525,7 +4521,7 @@ msgstr ""
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Zobrazit pokročilé pole ve výchozím nastavení"
 
 #: system/models.py:188
 msgid "Enable autotune"
@@ -4548,6 +4544,8 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
+"Emailová adresa kterou bude systém používat pro odesílání zpráv, např.: "
+"freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -4558,6 +4556,8 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Název počítače nebo IP adresa, který budou akceptovat naše maily, například "
+"mail.example.org a nebo 192.168.1.1"
 
 #: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4569,31 +4569,31 @@ msgstr ""
 
 #: system/models.py:232
 msgid "encryption of the connection"
-msgstr ""
+msgstr "šifrování spojení"
 
 #: system/models.py:233
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:236
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Použít SMTP ověřování"
 
 #: system/models.py:244
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Uživatelské jméno pro ověření na vzdáleném serveru"
 
 #: system/models.py:251
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Heslo pro autentizaci na vzdáleném serveru"
 
 #: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:266
 msgid "Organization"
-msgstr ""
+msgstr "Organizace"
 
 #: system/models.py:267
 msgid "Organization Name (eg, company)"
@@ -4637,20 +4637,20 @@ msgstr ""
 
 #: system/models.py:308
 msgid "Common Name"
-msgstr ""
+msgstr "Obecný název"
 
 #: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Obecný název (např. vaše jméno)"
 
 #: system/models.py:314
 msgid "SSL Certificate"
-msgstr ""
+msgstr "Certifikát SSL"
 
 #: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
-msgstr ""
+msgstr "Vyjmout a vložit zde obsah vašich soukromých a veřejných certifikátů ."
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
@@ -4785,7 +4785,7 @@ msgstr ""
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Zachovat rozšířené atributy"
 
 #: system/models.py:565
 msgid ""
@@ -4855,7 +4855,7 @@ msgstr "Informace o Systému"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Nahraný soubor není platný."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
@@ -4868,12 +4868,12 @@ msgstr ""
 #: system/views.py:297
 #, python-format
 msgid "Test message from %s"
-msgstr ""
+msgstr "Testovací zpráva od %s"
 
 #: system/views.py:299
 #, python-format
 msgid "This is a message test from %s"
-msgstr ""
+msgstr "Toto je testovací zpráva od %s"
 
 #: system/views.py:302
 #, fuzzy, python-format
@@ -4886,7 +4886,7 @@ msgstr "Zkušební email byl odeslán."
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Stránka nenalezena"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4974,7 +4974,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
-msgstr ""
+msgstr "Přidat nového uživatele"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
@@ -5004,11 +5004,11 @@ msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "VAROVÁNÍ"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "KRITICKÉ"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -5067,7 +5067,7 @@ msgstr "Načítám..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
-msgstr ""
+msgstr "Pomoc a podpora"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
@@ -5123,11 +5123,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentace"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
-msgstr ""
+msgstr "Dokumentace FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5142,7 +5142,7 @@ msgstr ""
 #: templates/system/smarttest.html:11 templates/system/sysctl.html:9
 #: templates/system/tunable.html:9
 msgid "Available actions"
-msgstr ""
+msgstr "Dostupné akce"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5214,11 +5214,11 @@ msgstr ""
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "Přidat LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
-msgstr ""
+msgstr "Priorita řazení"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
@@ -5283,38 +5283,36 @@ msgstr ""
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Instalovaný ..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Nainstalovat plugin"
 
 #: templates/plugins/index.html:31
-#, fuzzy
 msgid "Info"
-msgstr "normální"
+msgstr "Informace"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
 msgstr ""
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "disk"
+msgstr "Upravit Plugin"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
-msgstr ""
+msgstr "Odstranit plugin"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "Nejsou instlované žádné pluginy"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
-msgstr ""
+msgstr "Import"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, fuzzy, python-format
@@ -5377,11 +5375,11 @@ msgstr "Přihlašte se."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Odhlášení"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
-msgstr ""
+msgstr "Nyní jste odhlášeni."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
@@ -5455,7 +5453,7 @@ msgstr "Nastavení NFS"
 
 #: templates/services/enable.html:3
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Chcete povolit tuto službu?"
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
@@ -5513,7 +5511,7 @@ msgstr ""
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Přidat uživatele iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -5555,7 +5553,7 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Není definována IP adresa pro tento portál"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5610,7 +5608,7 @@ msgstr "Služby"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
-msgstr ""
+msgstr "Aktualizace"
 
 #: templates/services/plugins.html:56
 #, fuzzy
@@ -5636,7 +5634,7 @@ msgstr "Nebyly definovány žádné rsync moduly"
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr ""
+msgstr "Aktivní sdílení"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
@@ -5653,7 +5651,7 @@ msgstr ""
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
 msgid "No shares defined"
-msgstr ""
+msgstr "Není nastaveno žádné sdílení"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 msgid "Add Apple (AFP) Share"
@@ -5764,7 +5762,7 @@ msgstr "Opravdu chcete přejít do režimu offline?"
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
 msgid "Replacing disk"
-msgstr ""
+msgstr "Výměna disku"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
@@ -5788,25 +5786,25 @@ msgstr ""
 
 #: templates/storage/permission.html:2
 msgid "Change"
-msgstr ""
+msgstr "Změnit"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr ""
+msgstr "Změnit oprávnění"
 
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Změnit oprávnění u %(path) na"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr ""
+msgstr "Přidat replikaci"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Zobrazit veřejný klíč"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -5827,12 +5825,12 @@ msgstr ""
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
 msgid "Delete Replication"
-msgstr ""
+msgstr "Smazat replikaci"
 
 #: templates/storage/replications.html:46
 #: templates/storage/replications.html:50
 msgid "Edit Replication"
-msgstr ""
+msgstr "Upravit replikaci"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
@@ -5968,9 +5966,8 @@ msgid "Status"
 msgstr "Stav"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Zrušit svazek ZFS"
+msgstr "Odpojit svazek"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
@@ -6001,7 +5998,7 @@ msgstr "Zrušit svazek ZFS"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
-msgstr ""
+msgstr "Nejsou definovány žádné svazky"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6038,15 +6035,15 @@ msgstr ""
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
-msgstr ""
+msgstr "Přidat svazek"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Stávající data budou vymazány"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
-msgstr ""
+msgstr "Vyměňte disk"
 
 #: templates/storage/zvols.html:3
 #, python-format
@@ -6077,7 +6074,7 @@ msgstr "Uložit lazení"
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr ""
+msgstr "Aktualizace firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
@@ -6086,11 +6083,11 @@ msgstr ""
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Restartování ..."
 
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Opravdu chcete obnovit do továrního nastavení?"
 
 #: templates/system/cronjob.html:41
 msgid "No cron jobs defined."
@@ -6131,11 +6128,11 @@ msgstr "Žádné sysctl nebyly definovány"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr ""
+msgstr "Přidat NTP server"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
-msgstr ""
+msgstr "Přidat NTP server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6174,7 +6171,7 @@ msgstr ""
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Obecné"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
@@ -6233,7 +6230,7 @@ msgstr ""
 
 #: templates/system/system_info.html:13
 msgid "Platform"
-msgstr ""
+msgstr "Platforma"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
@@ -6409,9 +6406,8 @@ msgstr "Průměrné vytížení"
 msgid "Loaders"
 msgstr "Průměrné vytížení"
 
-#, fuzzy
 msgid "Export Volume"
-msgstr "svazek ZFS"
+msgstr "Exportovat svazek"
 
 msgid "Add loader"
 msgstr "Přidat zavaděč"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-04-24 08:34+0200\n"
+"PO-Revision-Date: 2012-06-07 18:06+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -48,9 +48,8 @@ msgstr "Almacenamiento"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "¡Ocurrió algún error!"
+msgstr "Ocurrió algún error"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -62,12 +61,11 @@ msgstr "Editar Disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Borrar"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Editar Disco"
+msgstr "Borrar disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."

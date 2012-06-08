@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2011-08-08 02:20+0200\n"
-"Last-Translator: Squeazer <miha.krajnc.mb@gmail.com>\n"
+"PO-Revision-Date: 2012-06-07 23:44+0200\n"
+"Last-Translator: duffs <duffs@siol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
@@ -459,9 +459,8 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Nepovezan takojšnji Test (ATA only)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
-msgstr "Asinhron način"
+msgstr "Rsync modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -477,7 +476,7 @@ msgstr ""
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Vaše ime se ne more začeti z \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -486,12 +485,12 @@ msgstr ""
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše ime vsebuje neveljaven znak/e (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše polno ime vsebuje neveljaven znak/e (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -542,7 +541,7 @@ msgstr ""
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Ustvari novo primarno skupino za uporabnika"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -588,8 +587,9 @@ msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "Domači direktorij se mora začeti z /mnt/"
 
 #: account/forms.py:401 account/forms.py:828
+#, fuzzy
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Uporabnik ne more pripadati več kot 64 dodatnim skupinam"
 
 #: account/forms.py:416 account/forms.py:653
 #, fuzzy
@@ -613,17 +613,15 @@ msgstr "Domači direktorij se mora začeti z /mnt/"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Dovoli ponavljajoče GIDs"
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Skupina z tem imenom že obstaja"
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Skupina z tem GID že obstaja"
 
 #: account/forms.py:772
 msgid "Member users"
@@ -652,7 +650,7 @@ msgstr "Vaše staro geslo je napačno. Prosim poskusite ponovno."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Želite izbrisati vse uporabnike s to osnovno skupino ?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
@@ -678,7 +676,7 @@ msgstr "Skupine"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Skupina  je vpisana in je ni mogoče brisati!"
+msgstr "Skupina % je vpisana in je ni mogoče brisati!"
 
 #: account/models.py:82
 msgid "User ID"
@@ -781,7 +779,7 @@ msgstr "Pot mora biti znotraj priklopne točke nosilca"
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Napaka: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -808,12 +806,12 @@ msgstr "Zaustavitev"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Prazen podatek vrnjen iz %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Ni bilo mogoče pridobiti %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -822,7 +820,7 @@ msgstr ""
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Ni bilo mogoče pridobiti trenutno stanje"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -863,43 +861,43 @@ msgstr "mrežni vmesnik"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Ne moreš nastaviti isti IP naslov za več vmesnikov (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Morate navesti tudi IPv4 naslov"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Morate izbrati tudi IPv4 netmask"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Morate navesti tudi IPv6 naslov"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Morate izbrati tudi IPv6 netmask"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Morate izbrati IPv4 ali IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Zaprtozančni naslov ni veljaven domenski strežnik"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Nedoločen naslov ni veljaven domenski strežnik"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "To ni veljaven naslov domenskega strežnika"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 subnet ni veljaven za domenski strežnik"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -949,7 +947,7 @@ msgstr "Omrežje ni veljavno, pričakovan CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Navesti morate tudi IPv4 naslov za ime"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
@@ -1137,7 +1135,7 @@ msgstr "Fizični NIC"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "Ponorno omrežje"
+msgstr "Ciljno omrežje"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1174,9 +1172,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG uspešno dodan"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Ta IP je že v uporabi"
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1229,68 +1226,70 @@ msgstr "IPv4 mrežna maska"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
-msgstr ""
+msgstr "Pot arhiva vtičnikov"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
 msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
+#, fuzzy
 msgid "Mounted?"
-msgstr ""
+msgstr "Priklopljen?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Polna pot naslova ne sme presegati 88 znakov"
 
 #: plugins/forms.py:336
-#, python-format
+#, fuzzy, python-format
 msgid "The path could not be mounted %s"
-msgstr ""
+msgstr "Pot ni bila priklopljena %s"
 
 #: plugins/forms.py:341
-#, python-format
+#, fuzzy, python-format
 msgid "The path could not be umounted %s"
-msgstr ""
+msgstr "Pot ni bilo mogoče odklopiti  %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Ime vtičnika"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Ime od vtičnika"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "Info. ime vtičnika"
 
 #: plugins/models.py:45
+#, fuzzy
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Informativno ime od vtičnika"
 
 #: plugins/models.py:50
 msgid "Plugin version"
-msgstr ""
+msgstr "Verzija vtičnika"
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "Verzija od vtičnika"
 
 #: plugins/models.py:57
 #, fuzzy
 msgid "Plugin API version"
-msgstr "IP naslov kontrolerja"
+msgstr "Verzija API vtičnika"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Arhitektura vtičnika"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Vtičnik omogočen"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
@@ -1300,26 +1299,27 @@ msgstr "IP naslov kontrolerja"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
+#, fuzzy
 msgid "Plugin TCP port"
-msgstr ""
+msgstr "Vtičnik TCP port"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
-msgstr ""
+msgstr "Pot arhiva vtičnikov"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Pot, kjer so shranjeni vtičniki po namestitvi"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Vtičniki"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Vir"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1335,23 +1335,20 @@ msgid "Mount Points"
 msgstr ""
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "% uspešno posodobljen."
+msgstr "Vtičnik uspešno posodobljen."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "% uspešno izbrisan."
+msgstr "Vtičnik uspešno izbrisan."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Ne morem odstraniti vtičnika"
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "% uspešno posodobljen."
+msgstr "Vtičnik uspešno posodobljen"
 
 #: plugins/views.py:130
 #, fuzzy
@@ -1378,7 +1375,7 @@ msgstr "To je zahtevano polje za \"Omogoči brskanje domačih direktorijev\"."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr "To je zahtevano polje za \"Domači direktoriji\"."
+msgstr "To polje je potrebno za \"Domač-e direktorij-e\"."
 
 #: services/forms.py:106
 #, fuzzy
@@ -1396,12 +1393,11 @@ msgstr "NFS servis se ni ponovno zagnal."
 #: services/forms.py:157
 #, fuzzy
 msgid "This IP already exists."
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Ta IP že obstaja"
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "AFP servis se ni ponovno zagnal."
+msgstr "Napaka pri osvežitvi vtičnika Jail."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1421,7 +1417,7 @@ msgstr "Vrednost mora biti med 1024 in vključno 65535. 0 je privzeto."
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "To mora biti večje kot minimalni pasivni port."
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1448,9 +1444,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Ime ne sme vsebovati znaka za deljenje(/) ali oglatih oklepajev."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Spremeni geslo"
+msgstr "Potrdi Geslo"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1458,7 +1453,7 @@ msgstr "Dinamični DNS se ne more ponovno zagnati."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr ""
+msgstr "To ni veljaven e-mail naslov"
 
 #: services/forms.py:376
 msgid ""
@@ -1468,7 +1463,7 @@ msgstr ""
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Skupnost mora vsebovati samo alfanumerične znake, _ ali -"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1477,7 +1472,7 @@ msgstr "SNMP storitev se ne more ponovno zagnati."
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1493,13 +1488,13 @@ msgstr[2] ""
 msgstr[3] ""
 
 #: services/forms.py:437
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS servis se ni ponovno zagnal."
+msgstr "UPS servis se ni ponovno zagnal."
 
 #: services/forms.py:442
+#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr ""
+msgstr "Potrdi Geslo Skrbnika"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1599,9 +1594,8 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Uporabnik % ni veljaven."
+msgstr "To ni veljavno omrežje"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1623,8 +1617,10 @@ msgid ""
 msgstr "Vrednost mora biti v bajtih, ali zaključena z KB, MB, GB, TB"
 
 #: services/forms.py:803
+#, fuzzy
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
+"Datoteka mora obstajati, če je obseg velikosti nastavljena na avtomatsko (0)"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1645,6 +1641,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
+"V tem polju ni veljaven IP naslov ali omrežje. Beseda \"ALL\" se lahko "
+"uporabi, da dovoliš vse"
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1652,7 +1650,7 @@ msgstr "Številka avtentikacijske Skupine"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Uporabi alfanumerične znake, \".\", \"-\" in \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1667,9 +1665,8 @@ msgid "Are you sure you want to delete?"
 msgstr ""
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SNMP storitev se ne more ponovno zagnati."
+msgstr "Napaka pri osvežitvi vtičnika S.M.A.R.T "
 
 #: services/models.py:51
 msgid "Service"
@@ -1836,13 +1833,16 @@ msgstr "Parametri so dodani v globalen del smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "UNIX Končnica"
 
 #: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Te razširitve omogočajo, da Samba bolje služil UNIX CIFS strankam s podporo "
+"funkcij, kot so simbolne povezave (symbolic links), trdih povezav (hard "
+"links), itd ..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1878,7 +1878,7 @@ msgstr ""
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Odkrivanje deljenja Zeroconf"
 
 #: services/models.py:189
 msgid ""
@@ -1886,6 +1886,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Zeroconf podpora preko Avahi-a omogoča strankam (Mac OSX finder) za "
+"samodejno odkrivanje CIFS deljenje prostora na sistemu, podobno kot Computer "
+"Browse storitev v windows sistemih."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -2069,15 +2072,15 @@ msgstr "IP naslov kontrolerja"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "Logical Unit Conrtoller IP naslov (127.0.0.1(localhost) privzeto)"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Kontroler TCP port"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Logical Unit Controller TCP port (3261 privzeto)"
 
 #: services/models.py:358
 #, fuzzy
@@ -2090,11 +2093,11 @@ msgstr ""
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Metoda Autorizacije Kontrolerja"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "Metoda je sprejemljiva v kontrolerju"
 
 #: services/models.py:375
 msgid ""
@@ -2107,41 +2110,44 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Ciljna Globalna Konfiguracija"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr ""
+msgstr "Ime Področja"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "String Identifikator področja"
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr ""
+msgstr "Tip področja"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr ""
+msgstr "Tip uporabljen za področje"
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr ""
+msgstr "Pot do področja"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Pot datoteke (npr. /mnt/sharename/extent/extent0) uporabljene za področje."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr ""
+msgstr "Velikost področja"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Velikost področja, 0 pomeni automatsko, golo število je bytes, ali predpona "
+"KB (kilobajtov), MB (megabajtov), TB (terabajtov)."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2152,17 +2158,18 @@ msgstr ""
 #: templates/sharing/windows.html:13 templates/system/sysctl.html:7
 #: templates/system/tunable.html:7
 msgid "Comment"
-msgstr ""
+msgstr "Komentar"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Tukaj lahko vnesete opis za vašo referenco."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
+#, fuzzy
 msgid "Extent"
-msgstr ""
+msgstr "Področje"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
@@ -2193,13 +2200,15 @@ msgstr ""
 
 #: services/models.py:550
 msgid "Authorized network"
-msgstr ""
+msgstr "Pooblaščeno omrežje"
 
 #: services/models.py:552
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Pooblaščeno omrežje za dostop do iSCSI naprav. Lahko uporabite IP in CIDR "
+"naslov ali 'ALL' za kater koli IP"
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2219,15 +2228,15 @@ msgstr ""
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr ""
+msgstr "Pooblaščen dostop"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Pooblaščeni dostopi"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr ""
+msgstr "Ciljno ime"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -2243,18 +2252,18 @@ msgstr ""
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
-msgstr ""
+msgstr "Serijsko"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Serijska številka logične enote"
 
 #: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr ""
+msgstr "Tip"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
@@ -2270,7 +2279,7 @@ msgstr ""
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
-msgstr ""
+msgstr "Metoda Autorizacije"
 
 #: services/models.py:675 services/models.py:687
 msgid ""
@@ -2284,7 +2293,7 @@ msgstr ""
 
 #: services/models.py:692
 msgid "Queue Depth"
-msgstr ""
+msgstr "Globina Čakalne Vrste"
 
 #: services/models.py:693
 msgid ""
@@ -2317,8 +2326,9 @@ msgid "Target / Extent"
 msgstr ""
 
 #: services/models.py:735
+#, fuzzy
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Cilno Področje / Obseg"
 
 #: services/models.py:759
 msgid "Provider"
@@ -2326,7 +2336,7 @@ msgstr ""
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr ""
+msgstr "Ime domene"
 
 #: services/models.py:765
 msgid ""
@@ -2336,7 +2346,7 @@ msgstr ""
 
 #: services/models.py:777
 msgid "Update period"
-msgstr ""
+msgstr "Obdobje posodabljanja"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
@@ -2344,16 +2354,16 @@ msgstr ""
 
 #: services/models.py:783
 msgid "Forced update period"
-msgstr ""
+msgstr "Vsili obdobje posodabljanja"
 
 #: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "Ti parametri bodo dodani globalnim nastavitvam v inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Dinamični DNS"
 
 #: services/models.py:804
 msgid "Path to the plugins jail"
@@ -2389,60 +2399,66 @@ msgstr ""
 
 #: services/models.py:852
 msgid "Location"
-msgstr ""
+msgstr "Lokacija"
 
 #: services/models.py:854
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Podatki o lokaciji, na primer fizične lokacije tega sistema: \"spodnja "
+"zgradbe, soba xyzzy\"."
 
 #: services/models.py:859
 msgid "Contact"
-msgstr ""
+msgstr "Kontakti"
 
 #: services/models.py:861
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Kontaktne informacije, na primer ime ali e-mail osebe, odgovorne za ta "
+"sistem: \"admin@email.address\"."
 
 #: services/models.py:867
 msgid "Community"
-msgstr ""
+msgstr "Skupnost"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "V večini primerov 'public' je uporabljeno tukaj."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Pošlji SNMP Traps"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:893 storage/models.py:330
 msgid "Identifier"
-msgstr ""
+msgstr "Identifikator"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "To ime je uporabljeno za unikatno identifikacijo vašega UPS sistema."
 
 #: services/models.py:898
 msgid "Driver"
-msgstr ""
+msgstr "Gonilnik"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Gonilnik uporabljen za komunikacijo z vašo UPS napravo"
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
 msgstr ""
+"Za priključitev UPS naprave na vaš  računalnik uporabljate USB ali serijsko "
+"povezavo."
 
 #: services/models.py:910
 #, fuzzy
@@ -2455,17 +2471,19 @@ msgstr ""
 
 #: services/models.py:923
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Način zaustavitve"
 
 #: services/models.py:927
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Časovnik za izključitev"
 
 #: services/models.py:928
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Čas v sekundah preden se začne postopek izključitve. Če se UPS povrne se "
+"izključitev prekine."
 
 #: services/models.py:933
 msgid "UPS Master User Password"
@@ -2481,15 +2499,15 @@ msgstr ""
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Pošlji elektronsko sporočilo o statusu/posodobitvah"
 
 #: services/models.py:945
 msgid "To email"
-msgstr ""
+msgstr "Na elektronski naslov"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Elektronski naslovi. Loči emlektronske naslove z podpičjem (;)."
 
 #: services/models.py:951
 msgid "Email Subject"
@@ -2500,39 +2518,41 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Predmet e-pošte. Uporabite lahko naslednje parametre za zamenjavo: <br /> "
+"<ul> <li>% d - Datum</ li> <li>% h - Ime gostitelja </ li> </ ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port za povezavo FTP serverja."
 
 #: services/models.py:973
 msgid "Clients"
-msgstr ""
+msgstr "Stranke"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Največje število sočasnih strank."
 
 #: services/models.py:979
 msgid "Connections"
-msgstr ""
+msgstr "Povezave"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksimalno število povezav za IP naslov. (0= neomejeno)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr ""
+msgstr "Število poizkusov prijav"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Maksimalno število dovoljenih poizkusov z geslom pred izključitvijo."
 
 #: services/models.py:991
 msgid "Timeout"
@@ -2540,15 +2560,15 @@ msgstr ""
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maksimalen čas mirovanja v sekundah."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Dovoli prijavo kot root uporabnik"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Dovoli Anonimno Prijavo"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2557,19 +2577,19 @@ msgstr ""
 #: templates/sharing/windows.html:14 templates/storage/volumes.html:59
 #: templates/storage/wizard.html:145
 msgid "Path"
-msgstr ""
+msgstr "Pot"
 
 #: services/models.py:1003
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Dovoli Prijavo Lokalnemu Uporabniku"
 
 #: services/models.py:1006
 msgid "Banner"
-msgstr ""
+msgstr "Pasica"
 
 #: services/models.py:1008
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "FTP pozdravno sporočilo."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2577,27 +2597,27 @@ msgstr ""
 
 #: services/models.py:1023
 msgid "Enable FXP"
-msgstr ""
+msgstr "Omogoči FXP"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Omogoči Nadaljevanje Prenosa"
 
 #: services/models.py:1027
 msgid "Always Chroot"
-msgstr ""
+msgstr "Vedno uporabljaj chroot"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Zahtevaj preverjanje pristnosti IDENT"
 
 #: services/models.py:1031
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Zahtevaj Vzvratni DNS za IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
-msgstr ""
+msgstr "Masquerade naslov"
 
 #: services/models.py:1036
 msgid ""
@@ -2608,7 +2628,7 @@ msgstr ""
 
 #: services/models.py:1043
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimalni pasivni port"
 
 #: services/models.py:1044
 msgid ""
@@ -2618,7 +2638,7 @@ msgstr ""
 
 #: services/models.py:1048
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maksimalni pasivni port"
 
 #: services/models.py:1049
 msgid ""
@@ -2634,7 +2654,7 @@ msgstr ""
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Hitrost prenosa od uporabnika (upload) za lokalnega uporabnika"
 
 #: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
@@ -2642,7 +2662,7 @@ msgstr ""
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Hitrost prenosa do uporabnika (download) za lokalnega uporabnika"
 
 #: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
@@ -2650,7 +2670,7 @@ msgstr ""
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Hitrost prenosa od uporabnika (upload) za anonimnega uporabnika"
 
 #: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
@@ -2658,7 +2678,7 @@ msgstr ""
 
 #: services/models.py:1077
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Hitrost prenosa do uporabnika (download) za anonimnega uporabnika"
 
 #: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
@@ -2666,20 +2686,20 @@ msgstr ""
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Omogoči SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Ti parametri se dodajo v proftpd.conf."
 
 #: services/models.py:1090 services/models.py:1091
 #: templates/services/core.html:50
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:1113
 msgid "Directory"
-msgstr ""
+msgstr "Mapa"
 
 #: services/models.py:1114
 msgid ""
@@ -2689,7 +2709,7 @@ msgstr ""
 
 #: services/models.py:1117
 msgid "Allow New Files"
-msgstr ""
+msgstr "Dovoli Nove Datoteke"
 
 #: services/models.py:1121
 msgid ""
@@ -6393,7 +6413,7 @@ msgid "Enable DDP"
 msgstr "Omogoči DDP"
 
 msgid "Enables DDP support for low-level appletalk access."
-msgstr "Mogoči podporo DDP za nizko-nivojski appletalk dostop."
+msgstr "Omogoči podporo DDP za nizko-nivojski appletalk dostop."
 
 msgid "English"
 msgstr "Angleščina"
