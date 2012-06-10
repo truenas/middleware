@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2012-04-01 16:21+0200\n"
+"PO-Revision-Date: 2012-06-09 16:52+0200\n"
 "Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -918,7 +918,6 @@ msgid "Parent Interface"
 msgstr "Оригінальний інтерфейс"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr "Ім'я повинно бути vlanXX де XX це ціле число"
 
@@ -1077,7 +1076,6 @@ msgid "Virtual Interface"
 msgstr "Віртуальний інтерфейс"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
 "Імена інтерфейсів повинні мати вигляд: vlanXX, де XX- число. Як приклад: "
@@ -1169,7 +1167,6 @@ msgid "LAGG successfully added"
 msgstr "LAGG успішно доданий"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
 msgstr "Ця IP-адреса вже існує."
 
@@ -1191,16 +1188,16 @@ msgstr "PBI файл прошивки для встановлення"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Ви повинні відключити плагіни служби, перш ніж приступити"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Ця IP-адреса вже існує."
+msgstr "Шлях %s вже існує"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Повний шлях в'язниці, не може перевищувати 76 символів"
 
 #: plugins/forms.py:200
 #, fuzzy
@@ -1237,16 +1234,16 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Встановити?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Повний шлях не може перевищувати 88 символів"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Кеш не може бути відновлений"
+msgstr "Шлях не може бути встановлений %s"
 
 #: plugins/forms.py:341
 #, fuzzy, python-format
