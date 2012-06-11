@@ -162,6 +162,7 @@ build_target()
 	local _args="${NANO_ARGS}"
 	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
 	local _fb=${FORCE_BUILD}
+	local _c
 
 	export AVATAR_COMPONENT=${_target##*/}
 
@@ -213,8 +214,9 @@ build_target()
 	elif [ "${_fb}" = "1" ]
 	then
 		_args="${_args} -n"
-
-		export "${AVATAR_COMPONENT}_FORCE=1"
+		_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
+		
+		export "${_c}_FORCE=1"
 	fi
 
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
