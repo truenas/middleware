@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2012-06-08 21:41+0200\n"
+"PO-Revision-Date: 2012-06-10 23:00+0200\n"
 "Last-Translator: duffs <duffs@siol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sl\n"
@@ -500,15 +500,12 @@ msgid "Username"
 msgstr "Uporabniško ime"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Zahtevano. 30 znakov ali manj. Samo črke, številke in @/./+/-/_ ."
+msgstr "Zahtevano. 16 znakov ali manj. Samo črke, številke in ./-/_."
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Ta vnos lahko vsebuje samo črke, številke in posebne znake (@/./+/-/_ )."
+msgstr "Ta vnos lahko vsebuje samo črke, številke in ./-/_."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -531,9 +528,8 @@ msgid "Shell"
 msgstr "Lupina"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Onemogoči prijave"
+msgstr "Onemogoči geslo prijave"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -552,9 +548,8 @@ msgid "SSH Public Key"
 msgstr "SSH Javni Ključ"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Domači Imenik"
+msgstr "Možnosit Direktorija"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -581,19 +576,16 @@ msgid "The two password fields didn't match."
 msgstr "Gesli se ne ujemata."
 
 #: account/forms.py:386
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Domači direktorij se mora začeti z /mnt/"
+msgstr "Domači direktorij se mora začeti z /mnt/ ali pa /neobstoječe"
 
 #: account/forms.py:401 account/forms.py:828
-#, fuzzy
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Uporabnik ne more pripadati več kot 64 dodatnim skupinam"
+msgstr "Uporabnik ne more pripadati več kot 64 pomožnim skupinam"
 
 #: account/forms.py:416 account/forms.py:653
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Domači direktorij se mora začeti z /mnt/"
+msgstr "Domači imenik je zaklenjen za pisanje, pustite to možnost prazno"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -606,9 +598,8 @@ msgid "This field is required."
 msgstr "Obvezno polje."
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Domači direktorij se mora začeti z /mnt/"
+msgstr "Domači direktorij se mora začeti z /mnt/ ali pa /neobstoječe"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -729,9 +720,8 @@ msgid "Account"
 msgstr ""
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Moj račun"
+msgstr "Račun Skrbnika"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -766,9 +756,9 @@ msgid "The user %s is not valid."
 msgstr "Uporabnik % ni veljaven."
 
 #: freeadmin/forms.py:149
-#, python-format
+#, fuzzy, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Ta skupina %s ni veljavna."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
@@ -785,9 +775,9 @@ msgid "Add %s"
 msgstr "Dodan %"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Poglej vse %"
+msgstr "Pogled %"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -812,9 +802,9 @@ msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr "Ni bilo mogoče pridobiti %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
-#, python-format
+#, fuzzy, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "Prišlo je do napake pri rekonstrukciji od %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -921,9 +911,8 @@ msgid "Parent Interface"
 msgstr "Parent vmesnik"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Ime mora biti vlanXX, kjer je XX celo število"
+msgstr "Ime mora biti vlanXX, XX  je celo število"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -936,7 +925,7 @@ msgstr "Fizične mrežne kartice v LAGG"
 #: network/forms.py:286
 #, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fizični NIC"
+msgstr "LAGG Fizični NIC"
 
 #: network/forms.py:360
 #, python-format
@@ -1078,9 +1067,8 @@ msgid "Virtual Interface"
 msgstr "Navidezni vmesniki"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "Imena vmesnikov morajo biti vlanXX kjer je XX celo število"
+msgstr "Ime vmesnika mora biti vlanX, X je številka. Primer: vlan0"
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1140,9 +1128,8 @@ msgid "Gateway"
 msgstr "Prehod"
 
 #: network/models.py:397
-#, fuzzy
 msgid "Static Route"
-msgstr "Statična pot"
+msgstr "Statična Ruta"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
@@ -1163,7 +1150,7 @@ msgstr "Ustvari agregacijsko povezavo"
 #: network/nav.py:50
 #, fuzzy
 msgid "View Link Aggregations"
-msgstr "Poglej vse agregacijske povezave"
+msgstr "Poglej Agregacijske Povezave"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
@@ -1178,12 +1165,11 @@ msgid "Place to temporarily place PBI file"
 msgstr "Prostor za začasno shrambo PBI datoreke"
 
 #: plugins/forms.py:93
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"Sistem bo uporabil ta prostor za začasno shrambo PBI datoreke, preden bo ta "
+"Sistem bo uporabil ta prostor za začasno shrambo PBI datoteke, preden bo ta "
 "nameščena."
 
 #: plugins/forms.py:119
@@ -1195,50 +1181,44 @@ msgid "You must turn off Plugins service before proceeding"
 msgstr "Izklopiti morate Vtičnike preden lahko nadaljujete"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Pot %s že obstaja"
 
 #: plugins/forms.py:189
-#, fuzzy
 msgid "The full jail path cannot exceed 76 characters"
-msgstr "Polna pot ne sme presegati 76 znakov."
+msgstr "Polna pot jail ne sme presegati 76 znakov."
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr "Pot vtičnika jail ne more biti pod arhivsko mapo vtičnikov."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr "Pot arhiva vtičnikov ne more biti pod potjo vtičnika jail."
 
 #: plugins/forms.py:214 services/models.py:803
+#, fuzzy
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Pot vtičnika jail"
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "IP naslov kontrolerja"
+msgstr "Jail IPv4 Naslov"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "IPv4 mrežna maska"
+msgstr "Jail IPv4 mrežna maska"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
 msgstr "Pot arhiva vtičnikov"
 
 #: plugins/forms.py:244
-#, fuzzy
 msgid "Plugins Jail PBI"
 msgstr "Vtičniki Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
-#, fuzzy
 msgid "Mounted?"
 msgstr "Priklopljen?"
 
@@ -1270,9 +1250,8 @@ msgid "Plugin info name"
 msgstr "Info. ime vtičnika"
 
 #: plugins/models.py:45
-#, fuzzy
 msgid "Info name of the plugin"
-msgstr "Informativno ime od vtičnika"
+msgstr "Informativno ime vtičnika"
 
 #: plugins/models.py:50
 msgid "Plugin version"
@@ -1283,7 +1262,6 @@ msgid "Version of the plugin"
 msgstr "Verzija od vtičnika"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
 msgstr "Verzija API vtičnika"
 
@@ -1298,15 +1276,13 @@ msgstr "Vtičnik omogočen"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "IP naslov kontrolerja"
+msgstr "IP naslov vtičnika"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "Vtičnik TCP port"
+msgstr "TCP port vtičnika"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
@@ -1336,7 +1312,6 @@ msgid "Mount Point"
 msgstr ""
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
 msgstr "Pot Priklopa"
 
@@ -1357,23 +1332,22 @@ msgid "Plugin successfully updated"
 msgstr "Vtičnik uspešno posodobljen"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "% uspešno posodobljen."
+msgstr "Vtičnik uspešno nameščen"
 
 #: plugins/views.py:201
+#, fuzzy
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Pojavila se je problem pri uvozu jail-a"
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "% uspešno posodobljen."
+msgstr "Jail uspešno uvožen."
 
 #: services/forms.py:70
 #, fuzzy
 msgid "This is not a valid mask"
-msgstr "Uporabnik % ni veljaven."
+msgstr "To ni veljavna opcija"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1384,9 +1358,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "To polje je potrebno za \"Domač-e direktorij-e\"."
 
 #: services/forms.py:106
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "NFS servis se ni ponovno zagnal."
+msgstr "CIFS servis se ni ponovno zagnal."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1397,13 +1370,12 @@ msgid "The NFS service failed to reload."
 msgstr "NFS servis se ni ponovno zagnal."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
 msgstr "Ta IP že obstaja"
 
 #: services/forms.py:164
 msgid "The Plugins Jail service failed to reload."
-msgstr "Napaka pri osvežitvi vtičnika Jail."
+msgstr "Vtičniki Jail servisa se niso uspeli ponovno naložiti."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1484,7 +1456,7 @@ msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Uporabite črke in številke, \".\" \"-\" in \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -2357,8 +2329,9 @@ msgid "Update period"
 msgstr "Obdobje posodabljanja"
 
 #: services/models.py:779
+#, fuzzy
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Čas v sekundah. Privzeto je približno 1 minuta."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2374,22 +2347,27 @@ msgid "Dynamic DNS"
 msgstr "Dinamični DNS"
 
 #: services/models.py:804
+#, fuzzy
 msgid "Path to the plugins jail"
-msgstr ""
+msgstr "Pot do vtičnika jail"
 
 #: services/models.py:809
 msgid "Jail name"
 msgstr ""
 
 #: services/models.py:810
+#, fuzzy
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Ime vtičnika jail"
 
 #: services/models.py:815
+#, fuzzy
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Ime Jail-a lahko vsebuje samo črke, številke, vezaj, črtica, spojna črtica, "
+"delilec. Ne sme se končati z vezajem, črtico, spojno črtico in delilecem."
 
 #: services/models.py:821
 #, fuzzy
@@ -2971,8 +2949,9 @@ msgid "Place the contents of your self signed certificate file here."
 msgstr ""
 
 #: services/models.py:1351 sharing/models.py:81
+#, fuzzy
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Pomožen Parameter"
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
@@ -2981,15 +2960,16 @@ msgstr ""
 #: services/models.py:1357 services/models.py:1358
 #: templates/services/core.html:74
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternativen TCP port. Privzet 873"
 
 #: services/models.py:1374
+#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr ""
+msgstr "Ti parametri bodo dodani v datoteko rsyncd.conf [global] "
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
@@ -2997,27 +2977,29 @@ msgstr ""
 
 #: services/models.py:1390
 msgid "Module name"
-msgstr ""
+msgstr "Ime modula"
 
 #: services/models.py:1399
 msgid "Path to be shared"
 msgstr ""
 
 #: services/models.py:1405
+#, fuzzy
 msgid "Access Mode"
-msgstr ""
+msgstr "Metoda Dostopa"
 
 #: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
 msgstr ""
 
 #: services/models.py:1410
+#, fuzzy
 msgid "Maximum connections"
-msgstr ""
+msgstr "Največje št. povezav"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Maksimalno število sočasnih povezav. Privzeto je 0 (neomejeno)"
 
 #: services/models.py:1417
 msgid ""
@@ -3034,8 +3016,9 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1428
+#, fuzzy
 msgid "Hosts allow"
-msgstr ""
+msgstr "Dovoljeni gostitelji"
 
 #: services/models.py:1429
 msgid ""
@@ -3123,8 +3106,9 @@ msgid "S.M.A.R.T."
 msgstr ""
 
 #: services/nav.py:15
+#, fuzzy
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrola Servisov"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
@@ -3157,7 +3141,7 @@ msgstr ""
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -3196,13 +3180,14 @@ msgid "The path %s does not exist"
 msgstr ""
 
 #: sharing/forms.py:157
+#, fuzzy
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "V tem polju ni veljaven IP naslov ali omrežje"
 
 #: sharing/forms.py:165
-#, python-format
+#, fuzzy, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "Ta IP %s ni veljaven."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3222,15 +3207,16 @@ msgstr ""
 #: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
-msgstr ""
+msgstr "Ime"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
 msgstr ""
 
 #: sharing/models.py:51
+#, fuzzy
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Omogoči Brskanje za Omrežne Odjemalce"
 
 #: sharing/models.py:53
 #, fuzzy
@@ -3242,16 +3228,17 @@ msgid "Inherit Permissions"
 msgstr ""
 
 #: sharing/models.py:57
+#, fuzzy
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Izvozi Koš"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Prikaži Skrite Datoteke"
 
 #: sharing/models.py:61
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Dovoli Dostop Gostu"
 
 #: sharing/models.py:62
 msgid ""
@@ -3261,7 +3248,7 @@ msgstr ""
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Dovoli Dostop Samo Gostu"
 
 #: sharing/models.py:66
 msgid ""
@@ -3270,19 +3257,25 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:71
+#, fuzzy
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Dovoli Gostiteljem"
 
 #: sharing/models.py:72
+#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+" V tej opciji razmejite z vejico, presledkom ali tabulatorjem gostitelji, ki "
+"imajo dovoljenje za dostop do souporabe. Lahko vpišete IP naslov ali ime "
+"gostitelja. Pustite prazno za privzete nastavitve."
 
 #: sharing/models.py:76
+#, fuzzy
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Zavrnjeni Gostitelji"
 
 #: sharing/models.py:77
 msgid ""
@@ -3295,8 +3288,9 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:83
+#, fuzzy
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Ti parametri so dodani [Share] sekciji v smb.conf"
 
 #: sharing/models.py:94
 msgid "Windows (CIFS) Share"
@@ -3364,8 +3358,9 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:149
+#, fuzzy
 msgid "Read-only Access"
-msgstr ""
+msgstr "Dostop samo-Branje"
 
 #: sharing/models.py:151
 msgid ""
@@ -3375,7 +3370,7 @@ msgstr ""
 
 #: sharing/models.py:155
 msgid "Read-write Access"
-msgstr ""
+msgstr "Dostop Branje-Pisanje"
 
 #: sharing/models.py:157
 msgid ""
@@ -3384,8 +3379,9 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:160
+#, fuzzy
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Odkrivanje Diska"
 
 #: sharing/models.py:161
 msgid ""
@@ -6378,9 +6374,8 @@ msgstr "Trak"
 msgid "Pass"
 msgstr "Prehod"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Novo geslo"
+msgstr "Onemogoči geslo"
 
 msgid "View All Users"
 msgstr "Poglej vse uporabnike"
