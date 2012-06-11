@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2012-06-07 23:44+0200\n"
+"PO-Revision-Date: 2012-06-08 21:41+0200\n"
 "Last-Translator: duffs <duffs@siol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sl\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Navadno"
+msgstr "Običajno"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -391,7 +391,7 @@ msgstr "Samo branje"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "samo-pisanje"
+msgstr "Samo-pisanje"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -456,7 +456,7 @@ msgstr "Prenosni Self-Test (ATA   only)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Nepovezan takojšnji Test (ATA only)"
+msgstr "Izklopljen Takojšnji Test (ATA only)"
 
 #: choices.py:562
 msgid "Rsync module"
@@ -464,15 +464,15 @@ msgstr "Rsync modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync preko SSH-ja"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Potisni"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Potegni"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -480,7 +480,7 @@ msgstr "Vaše ime se ne more začeti z \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Znak $ je dovoljen le kot končni znak"
 
 #: account/forms.py:66
 #, python-format
@@ -537,7 +537,7 @@ msgstr "Onemogoči prijave"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Zakleni uporabnika"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
@@ -549,7 +549,7 @@ msgstr "Primarna skupina"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Javni Ključ"
 
 #: account/forms.py:284 account/forms.py:549
 #, fuzzy
@@ -561,9 +561,8 @@ msgid "Auxiliary groups"
 msgstr "Pomožne skupine"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
+msgstr "Uporabnik s tem uID-jem že obstaja."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -598,7 +597,7 @@ msgstr "Domači direktorij se mora začeti z /mnt/"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Geslo je onemogočeo, pusti prazno"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -636,9 +635,8 @@ msgid "New password confirmation"
 msgstr "Potrdi novo geslo"
 
 #: account/forms.py:887
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Spremeni geslo"
+msgstr "Spremeni tudi gelo root uporabnika"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -947,23 +945,23 @@ msgstr "Omrežje ni veljavno, pričakovan CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr "Navesti morate tudi IPv4 naslov za ime"
+msgstr "Navesti morate tudi IPv4 naslov za vsak alias(psevdonim)"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Izbrat morate tudi IPv4 omrežno masko za vsak alias(psevdonim)"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Navesti morate tudi IPv6 naslov za vsak alias(psevdonim)"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Izbrat morate tudi IPv6 omrežno masko za vsak alias(psevdonim)"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Izbrati morate med IPv4 ali IPv6 za vsak alias(psevdonim)"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -1050,7 +1048,7 @@ msgstr "IPv6 naslov"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "IPv6 Dolžina Predpone"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
@@ -1072,7 +1070,7 @@ msgstr ""
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr ""
+msgstr "Psevdonim"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1177,21 +1175,24 @@ msgstr "Ta IP je že v uporabi"
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "Prostor za začasno shrambo PBI datoreke"
 
 #: plugins/forms.py:93
+#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
+"Sistem bo uporabil ta prostor za začasno shrambo PBI datoreke, preden bo ta "
+"nameščena."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "PBI datoteka za namestitev"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Izklopiti morate Vtičnike preden lahko nadaljujete"
 
 #: plugins/forms.py:183
 #, fuzzy, python-format
@@ -1199,16 +1200,19 @@ msgid "The path %s already exists"
 msgstr "Uporabnik s tem uporabniškim imenom že obstaja."
 
 #: plugins/forms.py:189
+#, fuzzy
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Polna pot ne sme presegati 76 znakov."
 
 #: plugins/forms.py:200
+#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
+msgstr "Pot vtičnika jail ne more biti pod arhivsko mapo vtičnikov."
 
 #: plugins/forms.py:205 services/forms.py:148
+#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
+msgstr "Pot arhiva vtičnikov ne more biti pod potjo vtičnika jail."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
@@ -1229,8 +1233,9 @@ msgid "Plugins archive Path"
 msgstr "Pot arhiva vtičnikov"
 
 #: plugins/forms.py:244
+#, fuzzy
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Vtičniki Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 #, fuzzy
@@ -1247,9 +1252,9 @@ msgid "The path could not be mounted %s"
 msgstr "Pot ni bila priklopljena %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Pot ni bilo mogoče odklopiti  %s"
+msgstr "Pot ni bilo mogoče odklopiti %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1331,8 +1336,9 @@ msgid "Mount Point"
 msgstr ""
 
 #: plugins/models.py:122
+#, fuzzy
 msgid "Mount Points"
-msgstr ""
+msgstr "Pot Priklopa"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1460,6 +1466,8 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Kontak mora vsebovati le alfanumerične znake, _,- ali veljaven elektronski "
+"naslov"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -1575,7 +1583,7 @@ msgstr ""
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr "Poišči avtorizacijske skupine"
+msgstr "Odkritje avtorizacijske skupine"
 
 #: services/forms.py:656
 #, python-format
@@ -1960,7 +1968,7 @@ msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr "Ima baze"
+msgstr "Ime baze"
 
 #: services/models.py:258
 msgid ""
@@ -2461,13 +2469,12 @@ msgstr ""
 "povezavo."
 
 #: services/models.py:910
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Dodatni parametri"
+msgstr "Dodatni parametri (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Dodatni parametri za hardverski del gonilnika."
 
 #: services/models.py:923
 msgid "Shutdown mode"
@@ -2511,7 +2518,7 @@ msgstr "Elektronski naslovi. Loči emlektronske naslove z podpičjem (;)."
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Predmet E-pošte"
 
 #: services/models.py:952
 msgid ""
@@ -2659,6 +2666,8 @@ msgstr "Hitrost prenosa od uporabnika (upload) za lokalnega uporabnika"
 #: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Hitrost prenosa od uporabnika (upload) za lokalnega uporabnika v KB/s. 0 = "
+"neomejeno."
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
@@ -2718,49 +2727,58 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1127
+#, fuzzy
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Določa uporabniško ime, ki bo uporabljeno za poganjanje storitve."
 
 #: services/models.py:1131
 msgid "umask"
 msgstr ""
 
 #: services/models.py:1132
+#, fuzzy
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Določi vrednost dostopa za novo ustvarjene datoteke. Privzeto 022 (vsi lahko "
+"berejo, nihče ne more pisati)"
 
 #: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
-msgstr ""
+msgstr "Dodatne možnosti"
 
 #: services/models.py:1138
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Dodatne možnosti ukazne vrstice (ponavadi prazno)"
 
 #: services/models.py:1142 services/models.py:1143
 #: templates/services/core.html:155
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Vrata"
 
 #: services/models.py:1154
+#, fuzzy
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Drugačna TCP vrata. Privzeto 22"
 
 #: services/models.py:1157
+#, fuzzy
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Prijavi kot Root z geslom"
 
 #: services/models.py:1158
+#, fuzzy
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Onemogočeno: Root uporabnik se lahko prijavi le z javnim ključem za "
+"preverjanje pristnosi; Omogoči: Root uporabnik se lahko prijavi z geslom "
 
 #: services/models.py:1161
 msgid "Allow Password Authentication"
@@ -2791,7 +2809,7 @@ msgstr ""
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
@@ -2799,7 +2817,7 @@ msgstr ""
 
 #: services/models.py:1240
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD alo PDC ime."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -2849,15 +2867,15 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "Aktivni Direktorij"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Ime ali IP naslov LDAP serverja"
 
 #: services/models.py:1290
 msgid "Base DN"
-msgstr ""
+msgstr "Osnoven DN"
 
 #: services/models.py:1292
 msgid ""
