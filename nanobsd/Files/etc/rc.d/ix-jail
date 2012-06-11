@@ -129,15 +129,17 @@ plugins_jail_start()
 
 			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
 			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
-			bridge=$(ifconfig bridge create)
-			epair=$(ifconfig epair create)
+			defaultroute=$(netstat -rn | grep default|awk '{print $2}')
+			#FIXME: perhaps select which iface to bridge with in the GUI
+			defaultif=$(netstat -rn | grep default|awk '{print $6}')
+			mtu=$(ifconfig | grep "^${defaultif}" | sed -E 's/.*mtu ([0-9]+)/\1/g')
+			bridge=$(ifconfig bridge create mtu ${mtu})
+			epair=$(ifconfig epair create mtu ${mtu})
 			ifconfig ${epair} up
 			epairb=$(echo ${epair}|sed -E "s/([0-9])a$/\1b/g")
 			ifconfig ${bridge} addm ${epair} up
 			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
 			ifconfig ${epairb} vnet ${jail_id}
-			defaultroute=$(netstat -rn | grep default|awk '{print $2}')
-			defaultif=$(netstat -rn | grep default|awk '{print $6}')
 			jexec ${jail_id} ifconfig lo0 127.0.0.1
 			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
 			if [ -n "${defaultroute}" ]; then
