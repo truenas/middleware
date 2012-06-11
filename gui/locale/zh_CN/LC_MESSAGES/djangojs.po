@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-05-02 08:56+0200\n"
-"Last-Translator: hdcola <huangdong@gmail.com>\n"
+"PO-Revision-Date: 2012-06-07 16:47+0200\n"
+"Last-Translator: darkz <bs-s@163.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -60,9 +60,10 @@ msgstr "编辑"
 msgid "Edit Disk"
 msgstr "编辑硬盘"
 
+# 这个是哪里的单词，不是太清楚
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "清除"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 #, fuzzy

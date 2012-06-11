@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-05-02 08:56+0200\n"
-"Last-Translator: hdcola <huangdong@gmail.com>\n"
+"PO-Revision-Date: 2012-06-07 16:57+0200\n"
+"Last-Translator: darkz <bs-s@163.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1167,7 +1167,7 @@ msgstr "PBI文件已安装"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "在处理前你必须关闭插件服务"
 
 #: plugins/forms.py:183
 #, fuzzy, python-format
@@ -1214,16 +1214,16 @@ msgstr "Jail PBI插件"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "已挂载?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "完整的路径不能超过88个字符"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "无法重建缓存"
+msgstr "路径 %s 不能被挂载"
 
 #: plugins/forms.py:341
 #, fuzzy, python-format
@@ -1286,7 +1286,7 @@ msgstr "插件的内部路径"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "插件安装后保存的路径"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1294,9 +1294,11 @@ msgstr ""
 msgid "Plugins"
 msgstr "插件"
 
+# 不知道这个词具体出现在界面哪个位置
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
+#, fuzzy
 msgid "Source"
-msgstr ""
+msgstr "源"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1330,9 +1332,8 @@ msgid "Plugin successfully updated"
 msgstr "插件更新成功。"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "插件更新成功。"
+msgstr "插件安装成功。"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
@@ -1394,7 +1395,7 @@ msgstr "这个值必须在从1024 到 65535范围内。默认值为0。"
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "这个值必须比最小的被动端口高"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"

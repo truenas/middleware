@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-04-24 08:34+0200\n"
+"PO-Revision-Date: 2012-06-08 07:47+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -315,7 +315,7 @@ msgstr "El SAI tiene poca batería"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "SAI esta en funcionamiento con batería"
+msgstr "SAI esta funcionando con batería"
 
 #: choices.py:255
 msgid "Preferred"
@@ -455,7 +455,7 @@ msgstr "Prueba Corta"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Autoprueba de Trasferencia (ATA sólo)"
+msgstr "Autoprueba de Trasferencia (sólo  ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -916,9 +916,8 @@ msgid "Parent Interface"
 msgstr "Interfaz Superior"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Los nombres de interfaz deben ser vlanXX donde XX es un número"
+msgstr "Los nombres de interfaz deben ser vlanXX donde XX es un número entero"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1075,10 +1074,9 @@ msgid "Virtual Interface"
 msgstr "Interfaz Virtual"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Los nombres de interfaz deben ser vlanXX donde XX es un número. Ejemplo: "
+"Los nombres de interfaz deben ser vlanX donde X es un número. Ejemplo: "
 "vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
@@ -1167,7 +1165,6 @@ msgid "LAGG successfully added"
 msgstr "LAGG añadido satisfactoriamente"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
 msgstr "Esta IP esta en uso."
 
@@ -1189,47 +1186,44 @@ msgstr "Fichero PBI a Instalar"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Debe deshabilitar el servicio de Plugin antes de continuar"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Esta IP esta en uso."
+msgstr "La ruta %s ya existe"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "La ruta completa del jail no debe exceder los 76 caracteres"
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
-"La ruta de plugins no puede ser la misma o residr dentro de la ruta de jail"
+"La ruta del jail de los plugins no puede ser la misma o residir dentro de la "
+"ruta de los plugin"
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
-"La ruta de plugins no puede ser la misma o residr dentro de la ruta de jail"
+"La ruta de plugins no puede ser la misma o residr dentro de la ruta de jail "
+"de los plugin."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr "Ruta de acceso a los plugins del jail"
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Dirección IP del Jail"
+msgstr "Dirección IPv4 del Jail"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Máscara de Red IPv4"
+msgstr "Máscara de Red IPv4 del jail"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Ruta de acceso a los plugins del jail"
+msgstr "Ruta de acceso a los plugins"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1237,21 +1231,21 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "¿Montado?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "La ruta completa no debe exceder los 88 caracteres"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "La Cache no puede ser reconstruida"
+msgstr "La ruta no puede ser montada %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "La Cache no puede ser reconstruida"
+msgstr "La ruta no puede ser desmontada %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1279,9 +1273,8 @@ msgid "Version of the plugin"
 msgstr "Version del Plugin"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Versión del Plugin"
+msgstr "Versión del  API del Plugin"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1303,13 +1296,12 @@ msgid "Plugin TCP port"
 msgstr "Puerto TCP del Plugin"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Ruta de acceso a los plugins del jail"
+msgstr "Ruta de acceso a los plugins"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Ruta donde los plugin serán salvados despues de la instalación"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1319,7 +1311,7 @@ msgstr "Plugins"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Origen"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1331,9 +1323,8 @@ msgid "Mount Point"
 msgstr "Punto de Montaje"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "Punto de Montaje"
+msgstr "Puntos de Montaje"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1348,23 +1339,20 @@ msgid "Unable to remove plugin."
 msgstr "No puedo eliminar el Plugin."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
 msgstr "Plugin actualizado correctamente."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "Plugin actualizado correctamente."
+msgstr "Plugin instalado correctamente"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Hay un problema en la importación del jail"
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s ha sido actualizado correctamente."
+msgstr "Jail importado satisfactoriamente."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1397,7 +1385,6 @@ msgid "This IP already exists."
 msgstr "Esta IP esta en uso."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
 msgstr "Ha fallado el reinicio del servicio de Plugins."
 
@@ -1423,7 +1410,7 @@ msgstr ""
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Debe ser mayor que el puerto pasivo minimo"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1571,13 +1558,12 @@ msgid "Controller Auth Group"
 msgstr "Control de Autorizaciones Grupo"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol puede acceder al destino si se especifica un usuario y secreto "
-"correcto en el grupo autorizado"
+"Istgtcontrol puede acceder al destino si se especifica un usuario y secreto "
+"correcto en el grupo autorizado."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1604,9 +1590,8 @@ msgstr ""
 "controlador de método de autenticación."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Esta no es una máscara valida"
+msgstr "Esta no es una red válida"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1937,7 +1922,7 @@ msgstr "Acceso invitado"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr "permitir acceso de invitado a todos los compartidos AFP"
+msgstr "Permitir acceso de invitado a todos los compartidos AFP."
 
 #: services/models.py:219
 msgid "Max. Connections"
@@ -2049,7 +2034,7 @@ msgstr "Máximos R2T Pendientes"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "Parámetro inicial de iSCSI (16 por defecto)"
+msgstr "Parámetro inicial de iSCSI (16 por defecto)."
 
 #: services/models.py:311
 msgid "First burst length"
@@ -2057,7 +2042,7 @@ msgstr "Longitud de la primera transmisión"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "Parámetro inicial de iSCSI (65536 por defecto)"
+msgstr "Parámetro inicial de iSCSI (65536 por defecto)."
 
 #: services/models.py:317
 msgid "Max burst length"
@@ -2065,7 +2050,7 @@ msgstr "Longitud máxima de transmisión"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "Parámetro inicial de iSCSI (262144 por defecto)"
+msgstr "Parámetro inicial de iSCSI (262144 por defecto)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
@@ -2077,7 +2062,7 @@ msgstr "Tiempo por defecto de espera"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "Parámetro inicial de iSCSI (2 por defecto)"
+msgstr "Parámetro inicial de iSCSI (2 por defecto)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
@@ -2108,14 +2093,12 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "LUC puerto TCP (3261 por defecto)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Mascara de red del Controlador Autorizado"
+msgstr "Red del Controlador Autorizado"
 
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
-msgstr "Máscara de red autorizada para LUC (255.255.255.0 por defecto)"
+msgstr "Máscara de red autorizada para LUC (127.0.0.0/8 por defecto)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
@@ -2130,7 +2113,7 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol puede acceder al destino si se especifica un usuario y secreto "
+"Istgtcontrol puede acceder al destino si se especifica un usuario y secreto "
 "correcto en el grupo autorizado"
 
 #: services/models.py:382 services/models.py:383
@@ -2351,7 +2334,7 @@ msgstr "Destino"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr "el objetivo para esta medida es de"
+msgstr "El objetivo para esta extensión pertenece a"
 
 #: services/models.py:734
 msgid "Target / Extent"
@@ -2383,7 +2366,7 @@ msgstr "Período de actualizacion"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr "tiempo en segundos. Por defecto 1 minuto."
+msgstr "Tiempo en segundos. Por defecto 1 minuto."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2415,20 +2398,20 @@ msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"El nombre del jail solo puede contener letras, numeros y guión. Y no debe "
+"terminar en guión."
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Dirección IP del Jail"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "Máscara de Red IPv4"
+msgstr "Máscara de Red IPv4 del jail"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "Ruta de acceso a los plugins del jail"
+msgstr "Ruta de acceso a los plugins"
 
 #: services/models.py:852
 msgid "Location"
@@ -2772,8 +2755,8 @@ msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
-"umask para nuevos ficheros (022 por defecto, significa todos pueden leer , "
-"nadie puede escribir)"
+"Umask para nuevos ficheros (022 por defecto, significa todos pueden leer , "
+"nadie puede escribir)."
 
 #: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
@@ -3233,9 +3216,8 @@ msgid "Settings"
 msgstr "Configuración"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "Opciones iSCSI"
+msgstr "Administración"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3630,14 +3612,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Usar privilegios Unix AFP3"
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Permisos de Archivo"
+msgstr "Permisos de Archivo por defecto"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Permisos de Directorios"
+msgstr "Permisos de Directorio por defecto"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
@@ -3798,12 +3778,16 @@ msgstr "La ruta no es un directorio."
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"No se puede seleccionar un volumen ZFS existente y especificar un nuevo "
+"nombre de volumen"
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Debe especificar un nuevo nombre de volumen o seleccionar un volumen ZFS "
+"existente para añadirlo al dispositivo virtual"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -3863,9 +3847,8 @@ msgstr ""
 "estado"
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "El servicio falló al reiniciarse"
+msgstr "El servicio SMART falló al reiniciarse"
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -3970,7 +3953,7 @@ msgstr "Establecer los permisos recursivamente"
 
 #: storage/forms.py:964
 msgid "At least one day must be chosen"
-msgstr "Almenos debe ser elegido un dia"
+msgstr "Almenos debe ser elegido un día"
 
 #: storage/forms.py:974
 msgid "Recursive snapshot"
@@ -4032,24 +4015,23 @@ msgstr "Hora"
 #: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
 #: system/forms.py:637
 msgid "day of month"
-msgstr "Dia del mes"
+msgstr "Día del mes"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "Method"
-msgstr "Metodo de Autentificación"
+msgstr "Metodo"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Rápido"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Rellenar con ceros"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Rellenar con datos aleatorios"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4313,7 +4295,7 @@ msgstr "Intervalo"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Cuanto tiempo ha pasado entre dos snapshot."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4325,7 +4307,7 @@ msgstr "Como se repetirá la tarea"
 
 #: storage/models.py:762
 msgid "Weekday"
-msgstr "Dia de la Semana"
+msgstr "Día de la Semana"
 
 #: storage/models.py:785
 msgid "Periodic Snapshot Task"
@@ -4495,9 +4477,8 @@ msgid "The scrub process has begun"
 msgstr "El proceso de reconstrucción ha comenzado"
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s añadido correctamente"
+msgstr "Disco borrado satisfactoriamente"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -4527,7 +4508,7 @@ msgstr ""
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "Los siguientes discos aún tienen pruebas de este tipo: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -4591,7 +4572,7 @@ msgstr "Idioma"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Mapa de teclado de la consola"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4737,7 +4718,7 @@ msgstr "Habilitar configuración optimizada por defecto"
 
 #: system/models.py:196
 msgid "MOTD banner"
-msgstr "Sugerencia del dia (MOTD)"
+msgstr "Sugerencia del día (MOTD)"
 
 #: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
@@ -5244,6 +5225,8 @@ msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
 msgstr ""
+"Hay %(related_num)s todas estas entradas para ser borradas así como sus "
+"dependencias"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5523,9 +5506,8 @@ msgid "No plugins installed"
 msgstr "No hay Plugins instalados"
 
 #: templates/plugins/jail_import.html:2
-#, fuzzy
 msgid "Import"
-msgstr "Importar un Volumen"
+msgstr "Importar"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5546,28 +5528,23 @@ msgid "Please wait..."
 msgstr "Por favor espere..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "Punto de Montaje"
+msgstr "Editar punto de montaje"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "Punto de Montaje"
+msgstr "Borrar punto de montaje"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "No hay tareas programadas definidas"
+msgstr "No hay puntos de montaje definidos"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "Punto de Montaje"
+msgstr "Añadir punto de montaje"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
-#, fuzzy
 msgid "Upload"
 msgstr "Cargar Plugin"
 
@@ -5675,7 +5652,7 @@ msgstr "No"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Nucleo (Core)"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5706,9 +5683,8 @@ msgid "Associated Targets"
 msgstr "Destinos asociados"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
-msgstr "No se ha definido destino"
+msgstr "No se ha definido destino asociado"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
@@ -5731,9 +5707,8 @@ msgid "Authorized Network"
 msgstr "Red Autorizada"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "Iniciador Autorizado"
+msgstr "Iniciador Autorizado no definido"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5741,9 +5716,8 @@ msgid "Add Authorized Initiator"
 msgstr "Añadir Iniciador Autorizado"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "No se ha definido destino"
+msgstr "No se ha definido dispositivo extendido"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5755,9 +5729,8 @@ msgid "File Extent"
 msgstr "Extender dispositivo"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "No se ha definido destino"
+msgstr "No se ha definido extensión"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5776,9 +5749,8 @@ msgid "Delete Portal"
 msgstr "Borrar Portal"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
-msgstr "No se ha definido destino"
+msgstr "No se ha definido portal"
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
@@ -5795,42 +5767,40 @@ msgid "Add Target"
 msgstr "Añadir Destino"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
-msgstr "Punto de Montaje"
+msgstr "Ver puntos de montaje"
 
 #: templates/services/plugins.html:22
 msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"Atención: El servicio de plugins no esta corriendo, varias funcionalidades "
+"han sido deshabilitadas"
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Versión del Sistema Operativo"
+msgstr "Versión"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Servicios"
+msgstr "Estado de los servicios"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
 msgstr "Actualización"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Borrar Plugin"
+msgstr "Actualizar plugin"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "Servicio de plugin no disponible"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
@@ -5970,9 +5940,8 @@ msgid "Are you sure you want to remove?"
 msgstr "¿Está seguro de que quiere borrar?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "¿Está seguro de que quiere desconectar?"
+msgstr "¿Está seguro de que quiere borrar?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
@@ -6293,9 +6262,8 @@ msgstr "Actualización de Firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Borrar Plugins jail"
+msgstr "Importar Plugins jail"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6362,9 +6330,8 @@ msgstr ""
 "Está a punto de <strong>REINICIAR</strong> el sistema, ¿qué quiere hacer?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Directorio"
+msgstr "Histórico"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
@@ -6729,7 +6696,7 @@ msgid "Username of Domain Administrator Account"
 msgstr "Nombre del Administrador del dominio"
 
 msgid "ISCSI"
-msgstr "iSCSI"
+msgstr "ISCSI"
 
 msgid "Guest Account"
 msgstr "Cuenta de Invitado"
