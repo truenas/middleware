@@ -35,6 +35,7 @@
                     addObject('{% trans "Firmware Update"|force_escape|force_escape %}', '{% url system_firmwizard %}');
                 </script>
             </button>
+            <!--
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Import Plugins Jail" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
@@ -47,4 +48,5 @@
                     addObject('{% trans "Update Plugins Jail"|force_escape|force_escape %}', '{% url plugins_jail_update%}');
                 </script>
             </button>
+            -->
 {% endblock %}

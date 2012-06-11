@@ -210,21 +210,21 @@ class JailInfoForm(ModelForm):
 
 
 class JailImportForm(Form):
-    jail_path = PathField(
+    jail_import_path = PathField(
             label=_("Plugins jail path"),
             required=True,
             )
-    jail_ipv4address = IP4AddressFormField(
+    jail_import_ipv4address = IP4AddressFormField(
             label=_("Jail IPv4 Address"),
             required=True,
             )
-    jail_ipv4netmask = forms.ChoiceField(
+    jail_import_ipv4netmask = forms.ChoiceField(
             label=_("Jail IPv4 Netmask"),
             initial="24",
             choices=choices.v4NetmaskBitList,
             required=True,
             )
-    plugins_path = PathField(
+    plugins_import_path = PathField(
             label=_("Plugins archive Path"),
             required=True,
             )
@@ -233,8 +233,8 @@ class JailImportForm(Form):
         super(JailImportForm, self).__init__(*args, **kwargs)
 
     def clean_jail_ipv4address(self):
-        return _clean_jail_ipv4address(
-            self.cleaned_data.get("jail_ipv4address")
+        return _clean_jail_import_ipv4address(
+            self.cleaned_data.get("jail_import_ipv4address")
             )
 
 
