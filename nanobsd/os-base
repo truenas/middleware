@@ -474,29 +474,16 @@ customize_cmd add_pbi_manager
 
 add_pbi_wrapper()
 {
-    local pm dst pwdir
-    pm=${AVATAR_ROOT}/src/pbi-manager
-    pbidir=${NANO_WORLDDIR}/usr/pbi
-    arch=
-
-    if [ "${NANO_ARCH}" = "i386" ]
-    then
-        arch="i386"
-    fi 
-
-    # This is ugly, there is probably a better way to do this
-    base=${MAKEOBJDIRPREFIX}/${arch}/build/${AVATAR_ROOT}/FreeBSD/src/tmp
-    cc=${base}/usr/bin/cc
+    local _pm 
+    _pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper"
 
     pprint 2 "Adding PBI wrapper"
 
-    ${cc} ${pm}/wrapper/main.c -o ${pm}/wrapper/pbiwrapper
-
-    mkdir -p ${pbidir}
-    mkdir -p ${PBI_BUILDDIR}
-
-    cp ${pm}/wrapper/pbiwrapper ${pbidir}/.pbiwrapper
-    cp ${pm}/wrapper/pbiwrapper ${PBI_BUILDDIR}/.pbiwrapper
+    mkdir -p "${PBI_BUILDDIR}"
+    if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
+    then
+        cp "${_pm}" "${PBI_BUILDDIR}/.pbiwrapper"
+    fi
 }
 customize_cmd add_pbi_wrapper
 

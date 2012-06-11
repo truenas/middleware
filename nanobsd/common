@@ -390,3 +390,15 @@ if [ -n "$__a" ]; then
 fi
 
 NANO_BOOTLOADER="boot/boot0"
+
+make_conf_install ( ) (
+        pprint 2 "Construct install make.conf ($NANO_MAKE_CONF_INSTALL)"
+
+        echo "${CONF_WORLD}" > ${NANO_MAKE_CONF_INSTALL}
+        echo "${CONF_INSTALL}" >> ${NANO_MAKE_CONF_INSTALL}
+
+	# hacky hack
+	mkdir -p ${NANO_WORLDDIR}/usr/pbi
+	chown root:wheel ${NANO_WORLDDIR}/usr/pbi
+)
+

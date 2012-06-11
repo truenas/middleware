@@ -364,6 +364,21 @@ apply_patches()
 	done
 }
 
+do_pbi_wrapper_hack()
+{
+	local _src="${AVATAR_ROOT}/src/pbi-wrapper"
+	local _dst="${AVATAR_ROOT}/FreeBSD/src/pbi-wrapper"
+
+	if [ ! -d "${_dst}" ]
+	then
+		mkdir -p "${_dst}"
+	fi
+	cp ${_src}/* ${_dst}
+
+	NANO_LOCAL_DIRS="pbi-wrapper"
+	export NANO_LOCAL_DIRS
+}
+
 main()
 {
 	parse_cmdline "$@"
@@ -411,6 +426,11 @@ main()
 	then
 		chmod +x ${NANO_SRC}/include/mk-osreldate.sh
 	fi
+
+	#
+	# pbiwrapper hacks
+	#
+	do_pbi_wrapper_hack
 
 	#
 	# Now let's build the targets
