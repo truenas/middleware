@@ -55,7 +55,7 @@ esac
 # us to kleep the SVN revision number even when the version string is
 # overloaded with a name.
 : ${SVNREVISION=`svnversion ${NANO_CFG_BASE}`}
-REVISION="8.0.4-RELEASE_MULTIMEDIA-p2"
+REVISION="8.0.4-RELEASE-p3"
 NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH_HUMANIZED}"
 NANO_IMGNAME="${NANO_NAME}"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}

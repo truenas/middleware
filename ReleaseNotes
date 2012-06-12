@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.0.4-RELEASE-p2
+Release Notes for FreeNAS 8.0.4-RELEASE-p3
 
 *** IMPORTANT ***
 
@@ -30,6 +30,18 @@ Release Notes for FreeNAS 8.0.4-RELEASE-p2
   8.0.3-RELEASE or newer, turn off AIO or tune the AIO size from '1' to
   something more reasonable (the new default in 8.0.3-RELEASE-p1 is 4096
   or 4kB).
+
+Changes since 8.0.4-RELEASE-p2:
+
+Bugfixes
+========================
+
+OS/Third party
+------------------------
+
+1. The FreeBSD base system has been updated to FreeBSD 8.2-RELEASE-p9 to
+   address the following Security Advisory:
+   http://security.freebsd.org/advisories/FreeBSD-SA-12:04.sysret.asc
 
 Changes since 8.0.4-RELEASE-p1:
 
