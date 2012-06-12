@@ -25,7 +25,6 @@
 #
 #####################################################################
 
-import commands
 import os
 import shutil
 import socket
@@ -68,8 +67,8 @@ def _system_info(request=None):
         ) / 1048576)) + 'MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
     date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' "
-        "'{ print $1 }'")
+    uptime = subprocess.check_output("env -u TZ uptime | "
+        "awk -F', load averages:' '{ print $1 }'", shell=True)
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
