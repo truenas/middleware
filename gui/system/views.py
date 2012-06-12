@@ -46,6 +46,7 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
+from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware.notifier import notifier
@@ -299,6 +300,14 @@ def testmail(request):
     if not form.is_valid():
         return JsonResp(request, form=form)
 
+    email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
+    if not email:
+        return JsonResp(request,
+            error=True,
+            message=_("You must configure the root email"
+                " (Accounts->Users->root)"),
+            )
+
     sid = transaction.savepoint()
     form.save()
 
@@ -372,7 +381,11 @@ class DojoFileStore(object):
             if _entry.startswith("."):
                 continue
             full_path = os.path.join(self.path, _entry)
-            if self.filterVolumes and len([f for f in self.mp if full_path.startswith(f + '/') or full_path == f or full_path.startswith('/mnt')]) > 0:
+            if self.filterVolumes and len(
+                [f for f in self.mp \
+                    if full_path.startswith(f + '/') or full_path == f or \
+                        full_path.startswith('/mnt')]
+                ) > 0:
                 _children.append(self._item(self.path, _entry))
         if self.dirsonly:
             _children = [child for child in _children if child['directory']]
