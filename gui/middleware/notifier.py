@@ -441,10 +441,12 @@ class notifier:
 
     def _restart_smartd(self):
         self.__system("/usr/sbin/service ix-smartd quietstart")
+        self.__system("/usr/sbin/service smartd forcestop")
         self.__system("/usr/sbin/service smartd restart")
 
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
+        self.__system("/usr/sbin/service sshd forcestop")
         self.__system("/usr/sbin/service sshd restart")
 
     def _reload_rsync(self):
@@ -453,6 +455,7 @@ class notifier:
 
     def _restart_rsync(self):
         self.__system("/usr/sbin/service ix-rsyncd quietstart")
+        self.__system("/usr/sbin/service rsyncd forcestop")
         self.__system("/usr/sbin/service rsyncd restart")
 
     def _start_ldap(self):
@@ -619,6 +622,9 @@ class notifier:
 
     def _restart_ups(self):
         self.__system("/usr/sbin/service ix-ups quietstart")
+        self.__system("/usr/sbin/service nut forcestop")
+        self.__system("/usr/sbin/service nut_upsmon forcestop")
+        self.__system("/usr/sbin/service nut_upslog forcestop")
         self.__system("/usr/sbin/service nut restart")
         self.__system("/usr/sbin/service nut_upsmon restart")
         self.__system("/usr/sbin/service nut_upslog restart")
