@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-06-08 07:53+0200\n"
+"PO-Revision-Date: 2012-06-12 11:13+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1316,7 +1316,7 @@ msgstr "Bağlantı noktası"
 
 #: plugins/models.py:122
 msgid "Mount Points"
-msgstr "Bağlantı noktası"
+msgstr "Bağlantı Noktası"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -5536,7 +5536,7 @@ msgstr "Henüz bir bağlantı noktası yok"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
-msgstr "Bağlantı noktası ekle"
+msgstr "Bağlantı Noktası Ekle"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5763,7 +5763,7 @@ msgstr "Hedef Ekle"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
-msgstr "Bağlantı noktalarını göster"
+msgstr "Bağlantı Noktalarını Göster"
 
 #: templates/services/plugins.html:22
 msgid ""
