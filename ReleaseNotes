@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.2.0-BETA3
+Release Notes for FreeNAS 8.2.0-BETA4
 
 *** IMPORTANT ***
 
@@ -83,6 +83,103 @@ A more responsive service state detection mechanism was added to
 improve FreeNAS interoperability in VM software (VMware, VirtualBox,
 etc).
 
+Errata
+========================
+
+Starting and stopping the plugin jail multiple
+times repeatedly may cause the OS to panic.
+
+The plugin jail networking has been switched to VIMAGE, which
+requires bridging the plugin jail with an external interface.  On
+systems with multiple interfaces there is currently no way to
+specify which interface is used.  The current system chooses the interface
+with the default route.
+
+Changes since 8.2.0-BETA3:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Add functionality to upgrade the plugin jail.
+
+2. Add functionality to upgrade plugins.
+
+3. Shuffle around a number of plugin related items.
+
+4. Switch the widget used for rsync extra options to one that allows
+   arbitrary length input.
+
+5. Limit the path length used in mount points to what the OS will allow.
+
+6. Fix tab completion in the webshell for chrome.
+
+7. Warn that the root email address isn't configured when configuring
+   email.
+
+8. Add the ability to switch the console locale through the GUI.
+
+9. Log failed attempt to create automatic snapshots.
+
+10. Add the ability to set up SMART tests on multiple disks
+    simultaneously.
+
+11. Add a disk wipe feature.
+
+OS/Third party
+------------------------
+
+1. Add support for the qlogic 10Gbe ethernet driver.
+
+
+AFP
+------------------------
+
+1. Add the ability to set the fperm and dperm in the GUI.
+
+Samba
+------------------------
+
+1. Update to Samba 3.6.5
+
+
+Bugfixes
+========================
+
+Middleware
+------------------------
+
+1. Fix a bug that caused a traceback getting UFS volume status.
+
+2. Improve logging for LDAP or AD integration.
+
+OS/Third party
+------------------------
+
+1. Fix remote syslogging.
+
+2. Fix basic/advanced view for forms.
+
+3. Fix ataidle functionality.
+
+4. Remove the arbitrary FTP passive port minimum.
+
+5. Fix setting permissions from the GUI for UTF-8 filenames.
+
+6. Fix UPS email notification.
+
+7. Fix the defaults for the autotuner.
+
+GUI
+------------------------
+
+1. Filter out multipath units from view disks screen.
+
+2. Set the replication SSH port in the OS properly.
+
+
 Changes since 8.2.0-BETA2:
 
 Enhancements
@@ -98,7 +195,7 @@ iSCSI
 
 1. Target reload is now supported for adding and removing (but not changing)
    targets on the fly.  The Logical Unit Controller is used for this, reload
-   wil not function if the LUC is not enabled.
+   will not function if the LUC is not enabled.
 
 CIFS
 ------------------------
@@ -143,7 +240,7 @@ GUI
     of overloading a single field.
 
 4.  Create Volume is now renamed to Volume manager, and has a different
-    widgit for selecting multiple disks, as well as a better GUI for
+    widget for selecting multiple disks, as well as a better GUI for
     extending existing volumes versus adding new volumes.
 
 5.  Create dataset and create zvol are now buttons listed per pool, in
