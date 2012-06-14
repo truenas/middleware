@@ -1523,7 +1523,8 @@
                 "freeadmin/tree/JsonRestStore",
                 "freeadmin/tree/ForestStoreModel",
                 "freeadmin/form/Cron",
-                "freeadmin/form/PathSelector"
+                "freeadmin/form/PathSelector",
+                "freeadmin/form/UnixPerm"
                 ], function(Tree, ESCDialog) {
                 mytree = new freeadmin.tree.Tree({
                     id: "fntree",
