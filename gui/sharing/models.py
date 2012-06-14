@@ -214,6 +214,7 @@ class AFP_Share(Model):
             )
     afp_upriv = models.BooleanField(
             verbose_name=_("AFP3 Unix Privs"),
+            default=True,
             help_text=_("Use AFP3 unix privileges.")
             )
     afp_fperm = models.CharField(
