@@ -93,9 +93,11 @@ class AFP_ShareForm(ModelForm):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
+            initial=self.fields['afp_fperm'].initial,
             )
         self.fields['afp_dperm'] = UnixPermissionField(
             label=self.fields['afp_dperm'].label,
+            initial=self.fields['afp_dperm'].initial,
             )
         if self.instance.id:
             self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
