@@ -253,7 +253,6 @@ class AFP_Share(Model):
             'afp_nohex',
             'afp_prodos',
             'afp_nostat',
-            'afp_upriv',
         )
 
 
