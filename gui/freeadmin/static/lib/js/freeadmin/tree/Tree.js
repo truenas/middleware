@@ -4,7 +4,7 @@ define([
     "dojo/_base/array",
     "dojo/_base/Deferred",
     "dojo/_base/lang"
-    ], function(Tree, declare, array, Deferred) {
+    ], function(Tree, declare, array, Deferred, lang) {
 
     var MyTree = declare("freeadmin.tree.Tree", [Tree], {
         _expandNode: function( node, recursive){
