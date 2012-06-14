@@ -128,10 +128,14 @@ GUI
 
 11. Add a disk wipe feature.
 
+12. Show datasets in tree menu.
+
 OS/Third party
 ------------------------
 
 1. Add support for the qlogic 10Gbe ethernet driver.
+
+2. Change JSON-RPC API to support versioning.
 
 
 AFP
@@ -155,6 +159,10 @@ Middleware
 
 2. Improve logging for LDAP or AD integration.
 
+3. Fix default clone path for Zvols.
+
+4. Fix issue with jail install to keep the jail from being copied twice.
+
 OS/Third party
 ------------------------
 
@@ -172,6 +180,8 @@ OS/Third party
 
 7. Fix the defaults for the autotuner.
 
+8. Fix database permissions/ownership.
+
 GUI
 ------------------------
 
@@ -179,6 +189,11 @@ GUI
 
 2. Set the replication SSH port in the OS properly.
 
+3. Fix webshell environment and locale.
+
+4. Fix a bug that would leave ghost volumes on delete/export.
+
+5. Fix bug in firmware upgrade.
 
 Changes since 8.2.0-BETA2:
 
