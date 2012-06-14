@@ -35,8 +35,8 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.services.models import services
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import IPAddress, IPNetwork, \
-                   AddressValueError, NetmaskValueError
+from ipaddr import (IPAddress, IPNetwork, AddressValueError,
+    NetmaskValueError)
 
 
 class CIFS_ShareForm(ModelForm):
@@ -97,13 +97,21 @@ class AFP_ShareForm(ModelForm):
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
             initial=self.fields['afp_fperm'].initial,
+            required=False,
             )
         self.fields['afp_dperm'] = UnixPermissionField(
             label=self.fields['afp_dperm'].label,
             initial=self.fields['afp_dperm'].initial,
+            required=False,
             )
         if self.instance.id:
             self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
+            if not self.instance.afp_upriv:
+                self.fields['afp_fperm'].widget.attrs['disabled'] = 'true'
+                self.fields['afp_dperm'].widget.attrs['disabled'] = 'true'
+            else:
+                self.fields['afp_fperm'].widget.attrs['disabled'] = 'false'
+                self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
 
     def clean_afp_sharepw2(self):
         password1 = self.cleaned_data.get("afp_sharepw")

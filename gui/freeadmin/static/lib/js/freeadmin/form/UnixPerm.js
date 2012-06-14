@@ -15,7 +15,7 @@ define([
         name: "",
         value: "",
         boxes: "",
-        disabled: false,
+        disabled: "",
         _getValueAttr: function() {
             if(this.disabled == true) {
                 return '';
@@ -29,9 +29,8 @@ define([
             return sprintf("%o", mode);
         },
         _setDisabledAttr: function(value) {
-            console.log(value);
             for(i=0;i<this.boxes.length;i++) {
-                this.boxes[i].set('disabled', true);
+                this.boxes[i].set('disabled', value);
             }
             this.disabled = value;
         },
@@ -46,8 +45,6 @@ define([
 
             var uperm = this;
 
-            //this.numChoices = parseInt(this.numChoices);
-            //this.start = parseInt(this.start);
             this.boxes = [];
 
             new TextBox({
@@ -55,67 +52,48 @@ define([
                 name: this.name
                 }, this.input);
 
-            var or = CheckBox({
-
-            });
+            var or = CheckBox({ });
             this.boxes.push(or);
             this.or.appendChild(or.domNode);
 
-            var ow = CheckBox({
-
-            });
+            var ow = CheckBox({ });
             this.boxes.push(ow);
             this.ow.appendChild(ow.domNode);
 
-            var oe = CheckBox({
-
-            });
+            var oe = CheckBox({ });
             this.boxes.push(oe);
             this.oe.appendChild(oe.domNode);
 
 
-            var gr = CheckBox({
-
-            });
+            var gr = CheckBox({ });
             this.boxes.push(gr);
             this.gr.appendChild(gr.domNode);
 
-
-
-            var gw = CheckBox({
-
-            });
+            var gw = CheckBox({ });
             this.boxes.push(gw);
             this.gw.appendChild(gw.domNode);
 
-
-
-
-            var ge = CheckBox({
-
-            });
+            var ge = CheckBox({ });
             this.boxes.push(ge);
             this.ge.appendChild(ge.domNode);
 
-            var otr = CheckBox({
 
-            });
+            var otr = CheckBox({ });
             this.boxes.push(otr);
             this.otr.appendChild(otr.domNode);
 
-            var otw = CheckBox({
-
-            });
+            var otw = CheckBox({ });
             this.boxes.push(otw);
             this.otw.appendChild(otw.domNode);
 
-            var ote = CheckBox({
-
-            });
+            var ote = CheckBox({ });
             this.boxes.push(ote);
             this.ote.appendChild(ote.domNode);
 
             this.setPerm(this.value);
+            if(this.disabled == true || this.disabled == "true") {
+                this.set('disabled', true);
+            }
 
             //this._supportingWidgets.push(tc);
 
