@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
             ('afp_nohex', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('afp_prodos', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('afp_nostat', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('afp_upriv', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('afp_upriv', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal('sharing', ['AFP_Share'])
 
@@ -103,7 +103,7 @@ class Migration(SchemaMigration):
             'afp_rw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_sharecharset': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_sharepw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'afp_upriv': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'afp_upriv': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'sharing.cifs_share': {
