@@ -2,11 +2,17 @@ Release Notes for FreeNAS 8.2.0-BETA4
 
 *** IMPORTANT ***
 
+- The GUI upgrade format changed in 8.2.0-BETA3 from xz to txz.  What
+  this means is that if you are attempting to do a GUI upgrade to
+  8.2.0-BETA4 from 8.2.0-BETA3 use the .txz version of the GUI_Upgrade
+  file.  If you are upgrading from any previous version use the .xz file.
+
 - The image size increased in 8.0.1-BETA3.  The new size requires a 2 GB
   storage device.  The GUI upgrade can be used to upgrade a system from
   BETA3, BETA4, or RC1 but upgrades from earlier releases can only be
   done from the CD. The other option is to save the config, reinstall
   the new version, then restore the config.
+
 - FreeBSD can be really touchy with hardware. Please be sure to update
   your BIOS/BMC firmware when upgrading / installing FreeNAS if you run
   into OS hang issues. There have been cases identified where a BIOS
@@ -17,13 +23,16 @@ Release Notes for FreeNAS 8.2.0-BETA4
   experience booting / runtime issues, as some vendors don't test
   FreeBSD interoperability as much as others between major firmware
   releases.
+
 - Previous builds were branded as i386/amd64 (32-bit and 64-bit
   respectively). 8.0.3-RC1+ rebranded the architectures as x86 and x64,
   respectively.
+
 - 8.0.1 and 8.0.2 images advertised CIFS shares to Macs by default but
   8.0.3 and later images don't advertise CIFS shares by default. If you
   want to advertise CIFS shares in 8.0.3 and later, be sure to turn on
   "Zeroconf" support in the CIFS global settings.
+
 - Builds prior to 8.0.3-RELEASE with 'CIFS' didn't actually have AIO
   (asynchronous I/O) enabled. So, if you experience performance
   degradation after upgrading from prior versions of FreeNAS to
