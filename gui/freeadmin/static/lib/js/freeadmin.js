@@ -1348,6 +1348,7 @@
         "freeadmin/tree/ForestStoreModel",
         "freeadmin/form/Cron",
         "freeadmin/form/PathSelector",
+        "freeadmin/form/UnixPerm",
         "dojo/data/ItemFileReadStore",
         "dojo/io/iframe",
         "dojo/NodeList-traverse",

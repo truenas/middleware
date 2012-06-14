@@ -91,6 +91,9 @@ class AFP_ShareForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
+        self.fields['afp_upriv'].widget.attrs['onChange'] = ('javascript:'
+            'toggleGeneric("id_afp_upriv", ["id_afp_fperm", '
+            '"id_afp_dperm"], true);')
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
             initial=self.fields['afp_fperm'].initial,
