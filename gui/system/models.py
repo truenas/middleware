@@ -147,9 +147,9 @@ class NTPServer(Model):
 
     class FreeAdmin:
         icon_model = u"NTPServerIcon"
-        #icon_object = u"NTPServerIcon"
-        #icon_view = u"NTPServerIcon"
-        #icon_add = u"NTPServerIcon"
+        icon_object = u"NTPServerIcon"
+        icon_view = u"ViewNTPServerIcon"
+        icon_add = u"AddNTPServerIcon"
 
 
 class Advanced(Model):

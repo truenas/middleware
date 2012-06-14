@@ -863,8 +863,28 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.AddTunableIcon {
+    background-image:url('/static/images/ui/tree/add_tunables.png');
+    width:16px;
+    height:16px;
+}
+.ViewTunableIcon {
+    background-image:url('/static/images/ui/tree/view_tunables.png');
+    width:16px;
+    height:16px;
+}
 .NTPServerIcon {
     background-image:url('/static/images/ui/tree/NTP_Servers_16x16px.png');
+    width:16px;
+    height:16px;
+}
+.AddNTPServerIcon {
+    background-image:url('/static/images/ui/tree/add_ntp_servers.png');
+    width:16px;
+    height:16px;
+}
+.ViewNTPServerIcon {
+    background-image:url('/static/images/ui/tree/view_ntp_servers.png');
     width:16px;
     height:16px;
 }
