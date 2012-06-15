@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-06-07 16:47+0200\n"
-"Last-Translator: darkz <bs-s@163.com>\n"
+"PO-Revision-Date: 2012-06-15 04:59+0200\n"
+"Last-Translator: phome <phome@tut.by>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -48,9 +48,8 @@ msgstr "存储"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "有错误发生！"
+msgstr "有错误发生"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -66,9 +65,8 @@ msgid "Wipe"
 msgstr "清除"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "编辑硬盘"
+msgstr "擦除硬盘"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -80,7 +78,7 @@ msgstr "有错误发生！"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "每个选中的"
+msgstr "每个被选中的"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
