@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-05-15 04:17+0200\n"
-"Last-Translator: Hyuni <anbh345@nate.com>\n"
+"PO-Revision-Date: 2012-06-15 08:15+0200\n"
+"Last-Translator: rescue <mediapaper@ymail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr "알기 쉬운"
+msgstr "분명한"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -105,35 +105,35 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "항상 켜기"
+msgstr "항상 작동"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "사용 불가"
+msgstr "사용 중지"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "1단계 - 대기 시 최소 전력 사용 (회전감소)"
+msgstr "Level 1 - 대기 시 최소 전력 사용 (HDD절전)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "64단계 - 대기 시 중간의 전력 사용"
+msgstr "Level 64 - 대기 모드 시 50% 전력 사용"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "127단계 - 대기 시 중간의 전력 사용"
+msgstr "Level 127 - 대기 모드 시 50% 전력 사용"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "128단계 - 대기 없이 최소 전력 사용 (회전감소 없음) "
+msgstr "Level 128 - 대기 없이 최소 전력 사용 (HDD항상작동) "
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "192단계 - 대기 없이 중간의 전력 사용"
+msgstr "Level 192 - 대기 모드 없이, 50% 전력 사용"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "254단계 - 최대 성능, 최대 전력 사용"
+msgstr "Level 254 - 최대 성능, 최대 전력 사용"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -230,27 +230,27 @@ msgstr "익명 사용자"
 # 로컬 사용자
 #: choices.py:164
 msgid "Local User"
-msgstr "내부 사용자"
+msgstr "Local User"
 
 #: choices.py:189
 msgid "Normal"
-msgstr "보통"
+msgstr "Normal"
 
 #: choices.py:190
 msgid "Full"
-msgstr "전부"
+msgstr "Full"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "디버그"
+msgstr "Debug"
 
 #: choices.py:195
 msgid "Default"
-msgstr "기본값"
+msgstr "Default"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr "타임머신"
+msgstr "Time Machine"
 
 #: choices.py:199
 msgid "No case folding"
@@ -258,46 +258,46 @@ msgstr "케이스가 닫히지 않음"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr "양방향 소문자 이름"
+msgstr "서버와 클라이언트 모두에서 소문자로 보임."
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "클라이언트 소문자로 보임, 서버 대문자로 보임"
+msgstr "클라이언트에서는 소문자로, 서버에서는 대문자로 보임"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "클라이언트 대분자로 보임, 서버 소문자로 보임"
+msgstr "클라이언트에서는 대문자로, 서버에서는 소문자로 보임"
 
 #: choices.py:207
 msgid "File"
-msgstr "파일"
+msgstr "File"
 
 #: choices.py:208
 msgid "Device"
-msgstr "장치"
+msgstr "Device"
 
 #: choices.py:209
 msgid "ZFS Volume"
-msgstr "ZFS 볼륨"
+msgstr "ZFS Volume"
 
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr "디스크"
+msgstr "Disk"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "읽기-쓰기"
+msgstr "read-write"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "읽기만"
+msgstr "read-only"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
-msgstr "없음"
+msgstr "None"
 
 #: choices.py:228
 msgid "CHAP"
@@ -305,7 +305,7 @@ msgstr "CHAP"
 
 #: choices.py:229
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "상호 질의/응답방식 인증(CHAP)"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
@@ -313,7 +313,7 @@ msgstr "UPS 배터리 잔량이 낮음"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS 배터리 전원으로 작동중"
 
 #: choices.py:255
 msgid "Preferred"
@@ -325,7 +325,7 @@ msgstr "허용"
 
 #: choices.py:257
 msgid "Required"
-msgstr "필수"
+msgstr "Required"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
@@ -333,19 +333,19 @@ msgstr "상속"
 
 #: choices.py:285
 msgid "On"
-msgstr "켜기"
+msgstr "On"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr "끄기"
+msgstr "Off"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr "lzjb (권장)"
+msgstr "무손실데이터압축 [lzjp] (권장)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr "gzip (기본 단계, 6)"
+msgstr "gzip (default level, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
@@ -353,27 +353,27 @@ msgstr "gzip (매우 빠름)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr "gzip (최대, 느림)"
+msgstr "gzip (최대압축, 속도느림)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr "시간"
+msgstr "Hour(s)"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr "일"
+msgstr "Day(s)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr "주"
+msgstr "Week(s)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr "월"
+msgstr "Month(s)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr "년"
+msgstr "Year(s)"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
@@ -383,134 +383,131 @@ msgstr "매일"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "선택된 모든 주일"
+msgstr "평일 모두 선택됨"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "읽기 전용"
+msgstr "Read-only"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "쓰기 전용"
+msgstr "Write-only"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "읽기 및 쓰기"
+msgstr "Read and Write"
 
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(분)s 분"
+msgstr "%(minutes)s minutes"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(시간) 시간"
+msgstr "%(hour)s hour"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(시간)s 시간"
+msgstr "%(hours)s hours"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(일)s 일"
+msgstr "%(day)s day"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(주)s 주"
+msgstr "%(week)s week"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "상관없음 - 장치의 전원 상태에 상관 없이 장치 점검"
+msgstr "체크된 장치에 관계없이 현재의 전력모드 사용"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "잠자기 - 잠자기 상태가 아니라면 장치 점검"
+msgstr "슬립모드- 확인된장비가 없다면 슬립모드로 동작."
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "대기 - 장치가 잠자기 또는 대기 상태가 아니라면 장치 점검"
+msgstr "대기모드 -확인된 장치가 없다면 슬립 또는 대기모드"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Idle - IDLE mode 및 절전모드 여부를 확인"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "긴시간이 필요한 자가진단"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "간단한 자가 진단"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "자동 셀프 테스트 (ATA only)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Offline Immediate Test (ATA only)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
-msgstr "설정된 볼륨 없음"
+msgstr "Rsync module"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync over SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Push"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "이름 첫부분에 \"-\"를  입력을 할 수 없습니다."
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "$문자는 마지막 문자에서만 사용할 수 있습니다."
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "이름에 사용할수 없는 특수문자를 포함하고 있습니다(%등등)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "전체이름에 사용할 수 없는 문자를 포함하고 있습니다(%등등)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "사용자이름"
+msgstr "Username"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "필수사항. 30 자 이하. 문자, 숫자와 @/./+/-/_ 만 허용"
+msgstr "필수사항. 30 자 이하. 문자, 숫자와 @/./+/-/_ 특수문자만 허용"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "이 값은 문자, 숫자 및 @/./+/-/_ 문자만 포함될 수 있습니다."
+msgstr "이 값은 문자, 숫자 및 @/./+/-/_ 특수문자만 입력 할 수 있습니다."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr "비밀번호"
+msgstr " Password"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
@@ -518,52 +515,49 @@ msgstr "비밀번호 확인 "
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr "확인을 위해 상기와 동일한 비밀번호를 입력하시오."
+msgstr "확인을 위해 위와 동일한 비밀번호를 입력하시오."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "쉘"
+msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "로그인 불가"
+msgstr "Disable password logins"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Lock user"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Create a new primary group for the user"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr "주 그룹"
+msgstr "Primary Group"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Public Key"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "홈 디렉터리"
+msgstr "Home Directory Mode"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr "보조 그룹"
+msgstr "Auxiliary groups"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "사용자가 이미 존재합니다."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "이미 존재하는 사용자 이름입니다."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -575,23 +569,23 @@ msgstr ""
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "두 암호 입력란이 일치하지 않습니다. "
+msgstr "암호가 일치하지 않습니다. "
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr ""
+msgstr "Home directory has to start with /mnt/ or be /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "A user cannot belong to more than 64 auxiliary groups"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr ""
+msgstr "Home directory is not writable, leave this blank"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Password is disabled, leave this blank"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -601,67 +595,64 @@ msgstr "이 입력란은 필수입니다. "
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr ""
+msgstr "Home directory has to start with /mnt or be /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Allow repeated GIDs"
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "A group with that name already exists."
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "해당 그룹이 이미 존재합니다."
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr "구성원"
+msgstr "Member users"
 
 #: account/forms.py:852
 msgid "New password"
-msgstr "새 암호"
+msgstr "New password"
 
 #: account/forms.py:856
 msgid "New password confirmation"
 msgstr "새 암호 확인"
 
 #: account/forms.py:887
-#, fuzzy
 msgid "Change root password as well"
-msgstr "암호 바꾸기"
+msgstr "Change root password as well"
 
 #: account/forms.py:896
 msgid "Old password"
-msgstr "예전 암호"
+msgstr "이전 암호"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "잘못된 예전 암호를 입력하였습니다. 다시 입력하십시요."
+msgstr "이전 암호를 잘못 입력하였습니다. 다시 입력하십시요."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Do you want to delete all users with this primary group?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "그룹 ID"
+msgstr "Group ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "그룹 이름"
+msgstr "Group Name"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
-msgstr "그룹"
+msgstr "Group"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
@@ -674,51 +665,51 @@ msgstr "내장된 %s 그룹은 삭제 할 수 없습니다."
 
 #: account/models.py:82
 msgid "User ID"
-msgstr "사용자 ID"
+msgstr "User ID"
 
 #: account/models.py:87
 msgid "User &"
-msgstr "사용자 &"
+msgstr "User &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Hashed UNIX 비밀번호"
+msgstr "Hashed UNIX password"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Hashed SMB 비밀번호"
+msgstr "Hashed SMB password"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "주 그룹 ID"
+msgstr "주 Group ID"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "홈 디렉터리"
+msgstr "Home Directory"
 
 #: account/models.py:119
 msgid "Full Name"
-msgstr "전체 이름"
+msgstr "Full Name"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "전자우편"
+msgstr " E-mail"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
-msgstr "사용자"
+msgstr "User"
 
 #: account/models.py:132 templates/account/index.html:19
 msgid "Users"
-msgstr "사용자"
+msgstr "Users"
 
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "내장된 %s 사용자는 삭제 할 수 없습니다. "
+msgstr "%s 사용자는 삭제 할 수 없습니다. "
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -733,12 +724,12 @@ msgstr "계정"
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
-msgstr "암호 바꾸기"
+msgstr "Change Password"
 
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr "관리자 바꾸기"
+msgstr "Change Admin User"
 
 #: account/views.py:95
 #, fuzzy
@@ -779,7 +770,7 @@ msgstr ""
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
-msgstr "추가 %s"
+msgstr "Add %s"
 
 #: freeadmin/navtree.py:340
 #, fuzzy, python-format
@@ -788,15 +779,15 @@ msgstr "%s 모두 보기"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
-msgstr "시스템 프로세스 보기"
+msgstr "Display System Processes"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "재시작"
+msgstr "Reboot"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr "종료"
+msgstr "Shutdown"
 
 #: freeadmin/navtree.py:408
 #, python-format
@@ -820,7 +811,7 @@ msgstr ""
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "%s successfully updated."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
@@ -900,7 +891,7 @@ msgstr "3차 네임서버를 입력하기 전에 2차 네임서버를 입력하�
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "필요하다면 3차 네임서버를 사용하세요."
+msgstr " Required when using nameserver 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -6388,7 +6379,7 @@ msgid "Critical Alerts"
 msgstr ""
 
 msgid "Selected"
-msgstr "선택된"
+msgstr "Selected"
 
 msgid "Allow guest access"
 msgstr "방문자 접속 허용"
@@ -6457,20 +6448,19 @@ msgid "DVD"
 msgstr "DVD"
 
 msgid "Tape"
-msgstr "테이프"
+msgstr "Tape"
 
 msgid "Pass"
-msgstr "통과"
+msgstr "Pass"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "새 암호"
+msgstr "Disable password"
 
 msgid "My Account"
-msgstr "내 계정"
+msgstr "My Account"
 
 msgid "View All Users"
-msgstr "모든 사용자 보기"
+msgstr "View All Users"
 
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
@@ -6529,7 +6519,7 @@ msgid "successfully deleted"
 msgstr "삭제 되었습니다."
 
 msgid "%s successfully added."
-msgstr "%s가 추가 되었습니다. "
+msgstr "%s successfully added. "
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 서브넷 마스크"
@@ -6570,10 +6560,10 @@ msgid "Config"
 msgstr "구성"
 
 msgid "%s successfully update."
-msgstr "%s 가 갱신되었습니다. "
+msgstr "%s successfully update. "
 
 msgid "Admin user"
-msgstr "관리자"
+msgstr "Admin user"
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6597,7 +6587,7 @@ msgid "English"
 msgstr "영어"
 
 msgid "Level"
-msgstr "단계"
+msgstr "Level"
 
 msgid "Add Link Aggregation"
 msgstr "링크어그리게이션 추가"
