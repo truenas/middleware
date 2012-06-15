@@ -3357,7 +3357,7 @@ class notifier:
         """Synchronize multipath disks
 
         Every distinct GEOM_DISK that shares an ident (aka disk serial)
-        is considered a multpath and will be handled by GEOM_MULTIPATH
+        is considered a multipath and will be handled by GEOM_MULTIPATH
 
         If the disk is not currently in use by some Volume or iSCSI Disk Extent
         then a gmultipath is automatically created and will be available for use
