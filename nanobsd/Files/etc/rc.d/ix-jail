@@ -64,8 +64,8 @@ generate_plugins_jail_config()
 			mkdir -p "${mntpath_pbi}"
 		fi
 
-		echo "${plugins} ${mntpath_plugins} nullfs rw 0 0" > "/etc/fstab.${name}"
-		echo "${plugins}/pbi ${mntpath_pbi} nullfs rw 0 0" >> "/etc/fstab.${name}"
+		echo "${plugins}	${mntpath_plugins}	nullfs	rw	0	0" | sed 's/ /\\040/g' > "/etc/fstab.${name}"
+		echo "${plugins}/pbi	${mntpath_pbi}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
@@ -76,7 +76,7 @@ generate_plugins_jail_config()
 		" | \
 		while read -r source destination
 		do
-			echo "${source} ${path}/${name}/${destination} nullfs rw 0 0" >> "/etc/fstab.${name}"
+			echo "${source}	${path}/${name}/${destination}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
 		done
 
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf 2> /dev/null
