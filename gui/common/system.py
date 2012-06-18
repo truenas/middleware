@@ -27,16 +27,19 @@
 
 import logging
 import os
+import re
 import smtplib
 import sqlite3
 import subprocess
-import traceback
 import syslog
+import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
 
+RE_MOUNT = re.compile(r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) '
+    '\((?P<fs_vfstype>\w+)', re.S)
 VERSION_FILE = '/etc/version'
 _VERSION = None
 log = logging.getLogger("common.system")
@@ -156,9 +159,9 @@ def send_mail(subject=None,
         # NOTE: Don't do this.
         #
         # If smtplib.SMTP* tells you to run connect() first, it's because the
-        # mailserver it tried connecting to via the outgoing server argument was
-        # unreachable and it tried to connect to 'localhost' and barfed. This is
-        # because FreeNAS doesn't run a full MTA.
+        # mailserver it tried connecting to via the outgoing server argument
+        # was unreachable and it tried to connect to 'localhost' and barfed.
+        # This is because FreeNAS doesn't run a full MTA.
         #else:
         #    server.connect()
         server.sendmail(em.em_fromemail, to, msg)
@@ -200,13 +203,10 @@ def get_mounted_filesystems():
     lines = subprocess.check_output(['/sbin/mount']).splitlines()
 
     for line in lines:
-        parts = line.split()
-        mountinfo = {}
-        mountinfo['fs_spec'] = parts[0]
-        mountinfo['fs_file'] = parts[2]
-        end = min(parts[3].find(')'), parts[3].find(','))
-        mountinfo['fs_vfstype'] = parts[3][1:end]
-        mounted.append(mountinfo)
+        reg = RE_MOUNT.search(line)
+        if not reg:
+            continue
+        mounted.append(reg.groupdict())
 
     return mounted
 
