@@ -198,6 +198,13 @@ def get_fstype(path):
 
 
 def get_mounted_filesystems():
+    """Return a list of dict with info of mounted file systems
+
+    Each dict is composed of:
+        - fs_spec (src)
+        - fs_file (dest)
+        - fs_vfstype
+    """
     mounted = []
 
     lines = subprocess.check_output(['/sbin/mount']).splitlines()
