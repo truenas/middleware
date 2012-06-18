@@ -19,4 +19,5 @@ mkdir -p /var/db/minidlna
 chown -R dlna:dlna /var/db/minidlna
 chmod -R 744 /var/db/minidlna
 
-echo "www ALL=(ALL) NOPASSWD: /usr/local/etc/rc.d/minidlna, ${minidlna_pbi_path}tweak-rcconf" >> ${minidlna_pbi_path}/etc/sudoers
+echo "www ALL=(ALL) NOPASSWD: /usr/local/etc/rc.d/minidlna, ${minidlna_pbi_path}tweak-rcconf" > ${minidlna_pbi_path}/etc/sudoers
+chmod 0440 ${minidlna_pbi_path}/etc/sudoers
