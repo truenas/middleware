@@ -123,7 +123,10 @@ class NullMountPoint(Model):
 
     class FreeAdmin:
         menu_child_of = u"services.PluginsJail.management"
-        icon_model = u"PluginsIcon"
+        icon_model = u"MountPointIcon"
+        icon_object = u"MountPointIcon"
+        icon_add = u"AddMountPointIcon"
+        icon_view = u"ViewMountPointIcon"
 
     def __unicode__(self):
         return self.source
