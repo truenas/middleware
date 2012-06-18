@@ -42,12 +42,10 @@
 #
 # dc(1) & sed(1)
 
-import os
 import sys
 import time
 import getopt
 import re
-import decimal
 
 from subprocess import Popen, PIPE
 from decimal import Decimal as D
@@ -81,7 +79,7 @@ def get_Kstat():
     p.wait()
 
     kstat_pull = p.communicate()[0].split('\n')
-    if p.returncode != 0: 
+    if p.returncode != 0:
         sys.exit(1)
 
     Kstat = {}
@@ -109,14 +107,14 @@ def div2():
 
 
 def fBytes(Bytes=0, Decimal=2):
-    kbytes = (2**10)
-    mbytes = (2**20)
-    gbytes = (2**30)
-    tbytes = (2**40)
-    pbytes = (2**50)
-    ebytes = (2**60)
-    zbytes = (2**70)
-    ybytes = (2**80)
+    kbytes = (2 ** 10)
+    mbytes = (2 ** 20)
+    gbytes = (2 ** 30)
+    tbytes = (2 ** 40)
+    pbytes = (2 ** 50)
+    ebytes = (2 ** 60)
+    zbytes = (2 ** 70)
+    ybytes = (2 ** 80)
 
     if Bytes >= ybytes:
         return str("%0." + str(Decimal) + "f") % (Bytes / ybytes) + "\tYiB"
@@ -136,19 +134,19 @@ def fBytes(Bytes=0, Decimal=2):
         return str("%0." + str(Decimal) + "f") % (Bytes / kbytes) + "\tKiB"
     elif Bytes == 0:
         return str("%d" % 0) + "\tBytes"
-    else: 
+    else:
         return str("%d" % Bytes) + "\tBytes"
 
 
 def fHits(Hits=0, Decimal=2):
-    khits = (10**3)
-    mhits = (10**6)
-    bhits = (10**9)
-    thits = (10**12)
-    qhits = (10**15)
-    Qhits = (10**18)
-    shits = (10**21)
-    Shits = (10**24)
+    khits = (10 ** 3)
+    mhits = (10 ** 6)
+    bhits = (10 ** 9)
+    thits = (10 ** 12)
+    qhits = (10 ** 15)
+    Qhits = (10 ** 18)
+    shits = (10 ** 21)
+    Shits = (10 ** 24)
 
     if Hits >= Shits:
         return str("%0." + str(Decimal) + "f") % (Hits / Shits) + "S"
@@ -272,7 +270,7 @@ def _system_memory():
 def _arc_summary():
     Kstat = get_Kstat()
     if not Kstat["vfs.zfs.version.spa"]:
-        return 
+        return
 
     spa = Kstat["vfs.zfs.version.spa"]
     zpl = Kstat["vfs.zfs.version.zpl"]
@@ -291,7 +289,7 @@ def _arc_summary():
 
     ### ARC Misc. ###
     deleted = Kstat["kstat.zfs.misc.arcstats.deleted"]
-    evict_skip = Kstat["kstat.zfs.misc.arcstats.evict_skip"]
+    #evict_skip = Kstat["kstat.zfs.misc.arcstats.evict_skip"]
     mutex_miss = Kstat["kstat.zfs.misc.arcstats.mutex_miss"]
     recycle_miss = Kstat["kstat.zfs.misc.arcstats.recycle_miss"]
 
@@ -308,9 +306,9 @@ def _arc_summary():
     target_max_size = Kstat["kstat.zfs.misc.arcstats.c_max"]
     target_min_size = Kstat["kstat.zfs.misc.arcstats.c_min"]
     target_size = Kstat["kstat.zfs.misc.arcstats.c"]
-        
+
     target_size_ratio = (target_max_size / target_min_size)
-        
+
     sys.stdout.write("ARC Size:\t\t\t\t%s\t%s\n" %
         (fPerc(arc_size, target_max_size), fBytes(arc_size)))
     sys.stdout.write("\tTarget Size: (Adaptive)\t\t%s\t%s\n" %
@@ -327,7 +325,7 @@ def _arc_summary():
             (fPerc(mru_size, arc_size), fBytes(mru_size)))
         sys.stdout.write("\tFrequently Used Cache Size:\t%s\t%s\n" %
             (fPerc(mfu_size, arc_size), fBytes(mfu_size)))
-        
+
     if arc_size < target_size:
         mfu_size = (target_size - mru_size)
         sys.stdout.write("\tRecently Used Cache Size:\t%s\t%s\n" %
@@ -353,7 +351,7 @@ def _arc_summary():
 
 
 def _arc_efficiency():
-    Kstat = get_Kstat() 
+    Kstat = get_Kstat()
     if not Kstat["vfs.zfs.version.spa"]:
         return
 
@@ -371,13 +369,13 @@ def _arc_efficiency():
     prefetch_data_misses = Kstat["kstat.zfs.misc.arcstats.prefetch_data_misses"]
     prefetch_metadata_hits = Kstat["kstat.zfs.misc.arcstats.prefetch_metadata_hits"]
     prefetch_metadata_misses = Kstat["kstat.zfs.misc.arcstats.prefetch_metadata_misses"]
-                
+
     anon_hits = arc_hits - (mfu_hits + mru_hits + mfu_ghost_hits + mru_ghost_hits)
     arc_accesses_total = (arc_hits + arc_misses)
     demand_data_total = (demand_data_hits + demand_data_misses)
     prefetch_data_total = (prefetch_data_hits + prefetch_data_misses)
     real_hits = (mfu_hits + mru_hits)
-        
+
     sys.stdout.write("ARC Efficiency:\t\t\t\t\t%s\n" % fHits(arc_accesses_total))
     sys.stdout.write("\tCache Hit Ratio:\t\t%s\t%s\n" %
         (fPerc(arc_hits, arc_accesses_total), fHits(arc_hits)))
@@ -450,22 +448,22 @@ def _l2arc_summary():
     l2_write_buffer_iter = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_iter"]
     l2_write_buffer_list_iter = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_list_iter"]
     l2_write_buffer_list_null_iter = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_list_null_iter"]
-    l2_write_bytes = Kstat["kstat.zfs.misc.arcstats.l2_write_bytes"]
+    #l2_write_bytes = Kstat["kstat.zfs.misc.arcstats.l2_write_bytes"]
     l2_write_full = Kstat["kstat.zfs.misc.arcstats.l2_write_full"]
-    l2_write_in_l2 = Kstat["kstat.zfs.misc.arcstats.l2_write_in_l2"]
+    #l2_write_in_l2 = Kstat["kstat.zfs.misc.arcstats.l2_write_in_l2"]
     l2_write_io_in_progress = Kstat["kstat.zfs.misc.arcstats.l2_write_io_in_progress"]
-    l2_write_not_cacheable = Kstat["kstat.zfs.misc.arcstats.l2_write_not_cacheable"]
+    #l2_write_not_cacheable = Kstat["kstat.zfs.misc.arcstats.l2_write_not_cacheable"]
     l2_write_passed_headroom = Kstat["kstat.zfs.misc.arcstats.l2_write_passed_headroom"]
-    l2_write_pios = Kstat["kstat.zfs.misc.arcstats.l2_write_pios"]
+    #l2_write_pios = Kstat["kstat.zfs.misc.arcstats.l2_write_pios"]
     l2_write_spa_mismatch = Kstat["kstat.zfs.misc.arcstats.l2_write_spa_mismatch"]
     l2_write_trylock_fail = Kstat["kstat.zfs.misc.arcstats.l2_write_trylock_fail"]
     l2_writes_done = Kstat["kstat.zfs.misc.arcstats.l2_writes_done"]
     l2_writes_error = Kstat["kstat.zfs.misc.arcstats.l2_writes_error"]
-    l2_writes_hdr_miss = Kstat["kstat.zfs.misc.arcstats.l2_writes_hdr_miss"]
+    #l2_writes_hdr_miss = Kstat["kstat.zfs.misc.arcstats.l2_writes_hdr_miss"]
     l2_writes_sent = Kstat["kstat.zfs.misc.arcstats.l2_writes_sent"]
 
-    l2_access_total = (l2_hits + l2_misses);
-    l2_health_count = (l2_writes_error + l2_cksum_bad + l2_io_error);
+    l2_access_total = (l2_hits + l2_misses)
+    l2_health_count = (l2_writes_error + l2_cksum_bad + l2_io_error)
 
     if l2_size > 0 and l2_access_total > 0:
         sys.stdout.write("L2 ARC Summary: ")
@@ -485,7 +483,7 @@ def _l2arc_summary():
         sys.stdout.write("\tSPA Mismatch:\t\t\t\t%s\n" % fHits(l2_write_spa_mismatch))
         sys.stdout.write("\n")
 
-        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % fBytes(l2_size));
+        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % fBytes(l2_size))
         sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" %
             (fPerc(l2_hdr_size, l2_size), fBytes(l2_hdr_size)))
         sys.stdout.write("\n")
@@ -539,14 +537,14 @@ def _dmu_summary():
     zfetch_streams_resets = Kstat["kstat.zfs.misc.zfetchstats.streams_resets"]
     zfetch_stride_hits = Kstat["kstat.zfs.misc.zfetchstats.stride_hits"]
     zfetch_stride_misses = Kstat["kstat.zfs.misc.zfetchstats.stride_misses"]
-        
+
     zfetch_access_total = (zfetch_hits + zfetch_misses)
     zfetch_colinear_total = (zfetch_colinear_hits + zfetch_colinear_misses)
     zfetch_health_count = (zfetch_bogus_streams)
     zfetch_reclaim_total = (zfetch_reclaim_successes + zfetch_reclaim_failures)
     zfetch_streams_total = (zfetch_streams_resets + zfetch_streams_noresets + zfetch_bogus_streams)
     zfetch_stride_total = (zfetch_stride_hits + zfetch_stride_misses)
-                
+
     if zfetch_access_total > 0:
         sys.stdout.write("File-Level Prefetch: ")
         if zfetch_health_count > 0:
@@ -585,7 +583,7 @@ def _dmu_summary():
             (fPerc(zfetch_reclaim_successes, zfetch_reclaim_total), fHits(zfetch_reclaim_successes)))
         sys.stdout.write("\t  Failures:\t\t\t%s\t%s\n" %
             (fPerc(zfetch_reclaim_failures, zfetch_reclaim_total), fHits(zfetch_reclaim_failures)))
-        sys.stdout.write("\n\tStreams:\t\t\t\t%s\n" % fHits(zfetch_streams_total));
+        sys.stdout.write("\n\tStreams:\t\t\t\t%s\n" % fHits(zfetch_streams_total))
         sys.stdout.write("\t  +Resets:\t\t\t%s\t%s\n" %
             (fPerc(zfetch_streams_resets, zfetch_streams_total), fHits(zfetch_streams_resets)))
         sys.stdout.write("\t  -Resets:\t\t\t%s\t%s\n" %
@@ -637,7 +635,7 @@ def _sysctl_summary():
         p.wait()
 
         descriptions = p.communicate()[0].split('\n')
-        if p.returncode != 0: 
+        if p.returncode != 0:
             sys.exit(1)
 
         for tunable in descriptions:
@@ -651,14 +649,13 @@ def _sysctl_summary():
                 description = "Description unavailable"
             sysctl_descriptions[name] = description
 
-
     tunables = " ".join(str(x) for x in Tunable)
     p = Popen("/sbin/sysctl -qe %s" % tunables, stdin=PIPE,
         stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
     p.wait()
 
     zfs_tunables = p.communicate()[0].split('\n')
-    if p.returncode != 0: 
+    if p.returncode != 0:
         sys.exit(1)
 
     sys.stdout.write("ZFS Tunable (sysctl):\n")
@@ -685,6 +682,7 @@ unSub = [
     _sysctl_summary
 ]
 
+
 def _call_all():
     page = 1
     for unsub in unSub:
@@ -709,7 +707,7 @@ def main():
     opts, args = getopt.getopt(
         sys.argv[1:], "adp:"
     )
-    
+
     args = {}
     for opt, arg in opts:
         if opt == '-a':
@@ -717,11 +715,11 @@ def main():
         if opt == '-d':
             args['d'] = True
         if opt == '-p':
-            args['p'] = arg 
+            args['p'] = arg
 
     if args:
-        alternate_sysctl_layout = True if args.has_key('a') else False
-        show_sysctl_descriptions = True if args.has_key('d') else False
+        alternate_sysctl_layout = True if 'a' in args else False
+        show_sysctl_descriptions = True if 'd' in args else False
         try:
             zfs_header()
             unSub[int(args['p']) - 1]()

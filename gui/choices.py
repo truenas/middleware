@@ -48,7 +48,6 @@ PROTOCOL_CHOICES = (
         ('https', _('HTTPS')),
         )
 
-## Disks|Management
 TRANSFERMODE_CHOICES = (
         ('Auto', _('Auto')),
         ('PIO0', _('PIO0')),
@@ -83,14 +82,15 @@ HDDSTANDBY_CHOICES = (
         )
 
 ADVPOWERMGMT_CHOICES = (
-        ('Disabled', _('Disabled')),
-        ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
-        ('64',  _('Level 64 - Intermediate power usage with Standby')),
-        ('127', _('Level 127 - Intermediate power usage with Standby')),
-        ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
-        ('192', _('Level 192 - Intermediate power usage without Standby')),
-        ('254', _('Level 254 - Maximum performance, maximum power usage')),
-        )
+    ('Disabled', _('Disabled')),
+    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('64',  _('Level 64 - Intermediate power usage with Standby')),
+    ('127', _('Level 127 - Intermediate power usage with Standby')),
+    ('128',
+        _('Level 128 - Minimum power usage without Standby (no spindown)')),
+    ('192', _('Level 192 - Intermediate power usage without Standby')),
+    ('254', _('Level 254 - Maximum performance, maximum power usage')),
+    )
 ACOUSTICLVL_CHOICES = (
         ('Disabled', _('Disabled')),
         ('Minimum', _('Minimum')),
@@ -295,6 +295,7 @@ ZFS_CompressionChoices = (
         ('gzip-9',  _('gzip (maximum, slow)')),
         )
 
+
 class whoChoices:
     """Populate a list of system user choices"""
     def __init__(self):
@@ -310,11 +311,15 @@ class whoChoices:
 ## Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=True, include_vlan_parent=False, with_alias=False):
+    def __init__(self, nolagg=False, novlan=False,
+            exclude_configured=True, include_vlan_parent=False,
+            with_alias=False):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
-        self._NIClist = filter(lambda y: y not in ('lo0', 'pfsync0', 'pflog0'), self._NIClist)
+        self._NIClist = filter(
+            lambda y: y not in ('lo0', 'pfsync0', 'pflog0'),
+            self._NIClist)
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
@@ -382,9 +387,8 @@ class NICChoices(object):
                 aliased_nics = [x[0] for x in c]
                 niclist = copy.deepcopy(self._NIClist)
                 for interface in niclist:
-                    if interface not in aliased_nics: 
+                    if interface not in aliased_nics:
                         self._NIClist.remove(interface)
-                
 
         if exclude_configured:
             try:
@@ -399,8 +403,6 @@ class NICChoices(object):
                     if interface[0] in self._NIClist:
                         self._NIClist.remove(interface[0])
 
-      
-
         self.max_choices = len(self._NIClist)
 
     def remove(self, nic):
@@ -409,9 +411,13 @@ class NICChoices(object):
     def __iter__(self):
         return iter((i, i) for i in self._NIClist)
 
+
 class IPChoices(NICChoices):
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=False, include_vlan_parent=True):
-        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured, include_vlan_parent)
+
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=False,
+            include_vlan_parent=True):
+        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured,
+            include_vlan_parent)
 
         self._IPlist = []
         for iface in self._NIClist:
@@ -429,12 +435,14 @@ class IPChoices(NICChoices):
     def __iter__(self):
         return iter((i, i) for i in self._IPlist)
 
+
 class TimeZoneChoices:
     """Populate timezone from /usr/share/zoneinfo choices"""
     def __init__(self):
-        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'')
+        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name '
+            'zone.tab -not -regex \'.*/Etc/GMT.*\'')
         self._TimeZoneList = pipe.read().strip().split('\n')
-        self._TimeZoneList = [ x[20:] for x in self._TimeZoneList ]
+        self._TimeZoneList = [x[20:] for x in self._TimeZoneList]
         self._TimeZoneList.sort()
         self.max_choices = len(self._TimeZoneList)
 
@@ -520,10 +528,12 @@ TASK_INTERVAL = (
     )
 
 SMART_POWERMODE = (
-    ('never' ,_("Never - Check the device regardless of its power mode")),
-    ('sleep' ,_("Sleep - Check the device unless it is in SLEEP mode")),
-    ('standby' ,_("Standby - Check the device unless it is in SLEEP or STANDBY mode")),
-    ('idle' ,_("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode")),
+    ('never', _("Never - Check the device regardless of its power mode")),
+    ('sleep', _("Sleep - Check the device unless it is in SLEEP mode")),
+    ('standby', _("Standby - Check the device unless it is in SLEEP or STANDBY"
+        " mode")),
+    ('idle', _("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE"
+        " mode")),
     )
 
 SMART_TEST = (
@@ -533,6 +543,7 @@ SMART_TEST = (
     ('O', _('Offline Immediate Test (ATA only)')),
     )
 
+
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
     def __iter__(self):
@@ -541,14 +552,14 @@ class UPSDRIVER_CHOICES(object):
                 d = f.read()
             r = cStringIO.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
-                r.write(line.strip()+'\n')
+                r.write(line.strip() + '\n')
             r.seek(0)
             reader = csv.reader(r, delimiter=' ', quotechar='"')
             for row in reader:
                 if len(row) == 0 or row[0].startswith('#'):
                     continue
                 if row[-1].find(' (experimental)') != -1:
-                    row[-1] = row[-1].replace(' (experimental)','').strip()
+                    row[-1] = row[-1].replace(' (experimental)', '').strip()
                 yield (row[-1], "%s (%s)" % (" ".join(row[0:-1]), row[-1]))
 
 
@@ -572,6 +583,7 @@ RSYNC_DIRECTION = (
 class KBDMAP_CHOICES(object):
     """Populate choices from /usr/share/syscons/keymaps/INDEX.keymaps"""
     INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+
     def __iter__(self):
         if not os.path.exists(self.INDEX):
             return
