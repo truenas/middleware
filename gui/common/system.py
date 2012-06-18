@@ -233,7 +233,12 @@ def mount(dev, path, mntopts=None, fstype=None):
         opts = []
 
     fstype = ['-t', fstype] if fstype else []
+    print dev
+    #dev = dev.replace(" ", "\ ")
+    dev = '"' + dev + '"'
+    print dev
 
+    print ['/sbin/mount'] + opts + fstype + [dev, path]
     proc = subprocess.Popen(['/sbin/mount'] + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)

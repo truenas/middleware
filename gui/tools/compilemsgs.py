@@ -27,7 +27,6 @@
 import glob
 import os
 import re
-import sys
 
 import polib
 

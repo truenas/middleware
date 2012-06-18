@@ -38,9 +38,11 @@ setup_environ(settings)
 
 from freenasUI.middleware.notifier import notifier
 
+
 def main():
     parser = argparse.ArgumentParser(description='Sync disks.')
-    parser.add_argument('devs', metavar='N', type=str, nargs='*', help='device name(s)')
+    parser.add_argument('devs', metavar='N', type=str, nargs='*',
+        help='device name(s)')
     args = parser.parse_args()
     _notifier = notifier()
     if args.devs:

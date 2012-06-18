@@ -9,7 +9,7 @@
 #     http://blogs.sun.com/realneel/entry/zfs_arc_statistics
 #
 # This version aims to improve upon the original by adding features
-# and fixing bugs as needed.  This version is maintained by 
+# and fixing bugs as needed.  This version is maintained by
 # Mike Harsch and is hosted in a public open source repository:
 #    http://github.com/mharsch/arcstat
 #
@@ -44,13 +44,11 @@
 #
 
 
-import os
 import sys
 import time
 import getopt
 import re
 import copy
-import decimal
 
 from decimal import Decimal
 from subprocess import Popen, PIPE
@@ -98,16 +96,19 @@ cols = {
 }
 
 v = {}
-hdr = [ "time", "read", "miss", "miss%", "dmis", "dm%", "pmis", "pm%", "mmis", "mm%", "arcsz", "c" ]
-xhdr = [ "time", "mfu", "mru", "mfug", "mrug", "eskip", "mtxmis", "rmis", "dread", "pread", "read" ]
-sint = 1;               # Default interval is 1 second
-count = 1;              # Default count is 1 
-hdr_intr = 20;          # Print header every 20 lines of output
+hdr = ["time", "read", "miss", "miss%", "dmis", "dm%", "pmis", "pm%", "mmis",
+    "mm%", "arcsz", "c"]
+xhdr = ["time", "mfu", "mru", "mfug", "mrug", "eskip", "mtxmis", "rmis",
+    "dread", "pread", "read"]
+sint = 1               # Default interval is 1 second
+count = 1              # Default count is 1
+hdr_intr = 20          # Print header every 20 lines of output
 opfile = None
 sep = "  "              # Default separator is 2 spaces
 version = "0.4"
 l2exist = False
-cmd = "Usage: arcstat [-hvx] [-f fields] [-o file] [-s string] [interval [count]]\n"
+cmd = ("Usage: arcstat [-hvx] [-f fields] [-o file] [-s string] [interval "
+    "[count]]\n")
 cur = {}
 d = {}
 out = None
@@ -128,11 +129,13 @@ def detailed_usage():
 def usage():
     sys.stderr.write("%s\n" % cmd)
     sys.stderr.write("\t -h : Print this help message\n")
-    sys.stderr.write("\t -v : List all possible field headers and definitions\n")
+    sys.stderr.write("\t -v : List all possible field headers and definitions"
+        "\n")
     sys.stderr.write("\t -x : Print extended stats\n")
     sys.stderr.write("\t -f : Specify specific fields to print (see -v)\n")
     sys.stderr.write("\t -o : Redirect output to the specified file\n")
-    sys.stderr.write("\t -s : Override default field separator with custom character or string\n")
+    sys.stderr.write("\t -s : Override default field separator with custom "
+        "character or string\n")
     sys.stderr.write("\nExamples:\n")
     sys.stderr.write("\tarcstat -o /tmp/a.log 2 10\n")
     sys.stderr.write("\tarcstat -s \",\" -o /tmp/a.log 2 10\n")
@@ -154,7 +157,7 @@ def kstat_update():
     if p.returncode != 0:
         sys.exit(1)
 
-    if not k: 
+    if not k:
         sys.exit(1)
 
     kstat = {}
@@ -162,16 +165,16 @@ def kstat_update():
     for s in k:
         if not s:
             continue
-    
+
         s = s.strip()
-    
+
         name, value = s.split(':')
         name = name.strip()
         value = value.strip()
-    
+
         parts = name.split('.')
         n = parts.pop()
-    
+
         kstat[n] = Decimal(value)
 
 
@@ -186,7 +189,7 @@ def snap_stats():
     for key in cur:
         if re.match(key, "class"):
             continue
-        if prev.has_key(key):
+        if key in prev:
             d[key] = cur[key] - prev[key]
         else:
             d[key] = cur[key]
@@ -225,7 +228,10 @@ def print_values():
     global v
 
     for col in hdr:
-        sys.stdout.write("%s%s" % (prettynum(cols[col][0], cols[col][1], v[col]), sep))
+        sys.stdout.write("%s%s" % (
+            prettynum(cols[col][0], cols[col][1], v[col]),
+            sep
+            ))
     sys.stdout.write("\n")
 
 
@@ -258,15 +264,15 @@ def init():
         opts, args = getopt.getopt(
             sys.argv[1:],
             "xo:hvs:f:",
-            [ 
+            [
                 "extended",
                 "outfile",
                 "help",
                 "verbose",
                 "seperator",
                 "columns"
-            ] 
-        ) 
+            ]
+        )
 
     except getopt.error, msg:
         sys.stderr.write(msg)
@@ -323,7 +329,7 @@ def init():
         invalid = []
         incompat = []
         for ele in hdr:
-            if not cols.has_key(ele):
+            if ele not in cols:
                 invalid.append(ele)
             elif not l2exist and ele.startswith("l2"):
                 sys.stdout.write("No L2ARC Here\n%s\n" % ele)
@@ -334,7 +340,9 @@ def init():
             usage()
 
         if len(incompat) > 0:
-            sys.stderr.write("Incompatible field specified! -- %s\n" % incompat)
+            sys.stderr.write("Incompatible field specified! -- %s\n" % (
+                incompat,
+                ))
             usage()
 
     if opfile:
@@ -368,14 +376,17 @@ def calculate():
     v["dm%"] = 100 - v["dh%"] if v["dread"] > 0 else 0
 
     v["phit"] = (d["prefetch_data_hits"] + d["prefetch_metadata_hits"]) / sint
-    v["pmis"] = (d["prefetch_data_misses"] + d["prefetch_metadata_misses"]) / sint
+    v["pmis"] = (d["prefetch_data_misses"] +
+        d["prefetch_metadata_misses"]) / sint
 
     v["pread"] = v["phit"] + v["pmis"]
     v["ph%"] = 100 * v["phit"] / v["pread"] if v["pread"] > 0 else 0
     v["pm%"] = 100 - v["ph%"] if v["pread"] > 0 else 0
 
-    v["mhit"] = (d["prefetch_metadata_hits"] + d["demand_metadata_hits"]) / sint
-    v["mmis"] = (d["prefetch_metadata_misses"] + d["demand_metadata_misses"]) / sint
+    v["mhit"] = (d["prefetch_metadata_hits"] +
+        d["demand_metadata_hits"]) / sint
+    v["mmis"] = (d["prefetch_metadata_misses"] +
+        d["demand_metadata_misses"]) / sint
 
     v["mread"] = v["mhit"] + v["mmis"]
     v["mh%"] = 100 * v["mhit"] / v["mread"] if v["mread"] > 0 else 0
@@ -405,7 +416,7 @@ def calculate():
 def sighandler(*args):
     sys.exit(0)
 
- 
+
 def main():
     global sint
     global count
@@ -413,7 +424,7 @@ def main():
 
     i = 0
     count_flag = 0
- 
+
     init()
     if count > 0:
         count_flag = 1
@@ -428,16 +439,16 @@ def main():
         print_values()
 
         if count_flag == 1:
-            if count <= 1: 
+            if count <= 1:
                 break
             count -= 1
 
         i = 0 if i == hdr_intr else i + 1
         time.sleep(sint)
-    
+
     if out:
         out.close()
-    
-    
+
+
 if __name__ == '__main__':
     main()
