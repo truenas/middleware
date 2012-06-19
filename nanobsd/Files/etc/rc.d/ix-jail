@@ -92,6 +92,9 @@ generate_plugins_jail_config()
 		jail_${name}_procfs_enable="YES"
 		jail_${name}_mount_enable="YES"
 		jail_${name}_vnet_enable="YES"
+		jail_${name}_flags="-l -U root -c persist"
+		jail_${name}_exec_afterstart0="ifconfig lo0 127.0.0.1"
+		jail_${name}_exec_start="/bin/sh /dev/null"
 		jail_sysvipc_allow="YES"
 		jail_list="${name}"
 		jail_v2_enable="YES"
@@ -140,7 +143,6 @@ plugins_jail_start()
 			ifconfig ${bridge} addm ${epair} up
 			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
 			ifconfig ${epairb} vnet ${jail_id}
-			jexec ${jail_id} ifconfig lo0 127.0.0.1
 			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
 			if [ -n "${defaultroute}" ]; then
 				jexec ${jail_id} route add default ${defaultroute}
@@ -149,10 +151,13 @@ plugins_jail_start()
 				ifconfig ${bridge} addm ${defaultif}
 			fi
 
+			jexec ${jail_id} /bin/sh /etc/rc
+
 			cat<<-__EOF__>> /etc/rc.conf
 			jail_${jail_name}_exec_poststop0="ifconfig ${bridge} destroy"
 			jail_${jail_name}_exec_poststop1="ifconfig ${epair} destroy"
 			jail_${jail_name}_exec_poststop2="arp -d ${ipv4addr}"
+			jail_${jail_name}_exec_poststop3="jail -r ${jail_id}"
 __EOF__
 
 		fi
