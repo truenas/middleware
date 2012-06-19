@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-15 07:35+0200\n"
+"PO-Revision-Date: 2012-06-18 10:59+0200\n"
 "Last-Translator: phome <phome@tut.by>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1185,9 +1185,8 @@ msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr "Jail路径不能包含插件路径。"
 
 #: plugins/forms.py:214 services/models.py:803
-#, fuzzy
 msgid "Plugins jail path"
-msgstr "插件的内部路径"
+msgstr "插件的 jail 路径"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -1302,9 +1301,8 @@ msgstr "挂载点"
 
 # plural and singular can be the same format in chinese. And we can use "list of mount points" in chinese to distingush "Mount Points" from "Mount Point".
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "挂载点"
+msgstr "挂载点列表"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1445,7 +1443,7 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、“.”“-”和 “_”。"
 
-# 不合法的邮件地址: %(email)
+# 非法的邮件地址: %(email)s
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -2306,21 +2304,19 @@ msgstr "插件 Jail 名称"
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
-msgstr ""
+msgstr "Jail 名只能包含字母、数字和连接符，且不能以连接符结束。"
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Jail IP地址"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "IPv4 网络掩码"
+msgstr "Jail IP 网络掩码"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "插件的内部路径"
+msgstr "插件归档路径"
 
 #: services/models.py:852
 msgid "Location"
@@ -2533,9 +2529,8 @@ msgid "Require Reverse DNS for IP"
 msgstr "需要DNS反向解析"
 
 #: services/models.py:1033
-#, fuzzy
 msgid "Masquerade address"
-msgstr "伪装地址"
+msgstr "伪地址"
 
 #: services/models.py:1036
 #, fuzzy
@@ -2741,9 +2736,8 @@ msgid "NetBIOS Name"
 msgstr "NetBIOS 名称"
 
 #: services/models.py:1250
-#, fuzzy
 msgid "System hostname"
-msgstr "旧格式主机名，例如：EXAMPLE"
+msgstr "系统主机名"
 
 #: services/models.py:1254
 msgid "Workgroup Name"
@@ -2754,27 +2748,24 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "旧格式的工作组名，例如 WORKGROUP"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "允许重复的GID"
+msgstr "允许信任的域"
 
 #: services/models.py:1263
 msgid "Administrator Name"
 msgstr "管理员名称"
 
 #: services/models.py:1264
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "域管理员密码"
+msgstr "域管理员帐号名"
 
 #: services/models.py:1268
 msgid "Administrator Password"
 msgstr "管理员密码"
 
 #: services/models.py:1269
-#, fuzzy
 msgid "Domain Administrator account password."
-msgstr "域管理员密码"
+msgstr "域管理帐号密码"
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
@@ -2911,9 +2902,8 @@ msgid "Module name"
 msgstr "模块名称"
 
 #: services/models.py:1399
-#, fuzzy
 msgid "Path to be shared"
-msgstr "共享目录"
+msgstr "共享路径"
 
 #: services/models.py:1405
 msgid "Access Mode"
@@ -2983,7 +2973,7 @@ msgstr "Rsync 模块"
 
 #: services/models.py:1445
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync 模块列表"
 
 #: services/models.py:1459
 msgid "Check interval"
@@ -3048,24 +3038,21 @@ msgid "Add Device Extent"
 msgstr "新增设备的扩展区"
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
-msgstr "查看所有静态路由"
+msgstr "查看设备范围"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
-msgstr "查看所有用户"
+msgstr "文件范围列表"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr ""
+msgstr "添加文件范围"
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
-msgstr "查看所有用户"
+msgstr "查看文件范围列表"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3081,9 +3068,8 @@ msgid "Add Rsync Module"
 msgstr "增加Rsync备份模块"
 
 #: services/nav.py:159
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "增加Rsync备份模块"
+msgstr "查看 Rsync 模块列表"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
@@ -3091,9 +3077,8 @@ msgid "Settings"
 msgstr "设置"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "iSCSI 管理"
+msgstr "管理"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3104,14 +3089,13 @@ msgid "The service could not be started."
 msgstr "服务无法启动"
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "共享密码"
+msgstr "确认共享密码"
 
 #: sharing/forms.py:139
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "该范围的路径"
+msgstr "路径 %s 不存在"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -3151,9 +3135,8 @@ msgid "Browsable to Network Clients"
 msgstr "可浏览网络终端"
 
 #: sharing/models.py:53
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "继承"
+msgstr "继承所有者"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -3175,7 +3158,7 @@ msgstr "允许访客访问"
 msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
-msgstr ""
+msgstr "如果为真（true）将不需要连接共享的密码，并使用来宾帐号的权限。"
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3185,7 +3168,7 @@ msgstr "只允许访客访问"
 msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
-msgstr ""
+msgstr "如果为真（true）将只允许来宾连接到共享。当未在共享中设置允许来宾访问则该参数不生效。"
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3212,7 +3195,7 @@ msgid ""
 "use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify "
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
-msgstr ""
+msgstr "该选项为用逗号/空格/制表符分隔的 允许 访问该模块的主机列表。可使用主机名或 IP 地址。选项为空时使用默认设置。"
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -3378,7 +3361,7 @@ msgstr ""
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"
-msgstr ""
+msgstr "启用 .AppleDouble"
 
 #: sharing/models.py:190
 msgid ""
@@ -3439,7 +3422,7 @@ msgstr ""
 
 #: sharing/models.py:217
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "使用 UNIX AFP3 权限"
 
 #: sharing/models.py:222
 msgid "Default file permission"
