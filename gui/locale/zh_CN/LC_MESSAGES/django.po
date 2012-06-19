@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-18 10:59+0200\n"
+"PO-Revision-Date: 2012-06-18 11:17+0200\n"
 "Last-Translator: phome <phome@tut.by>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -3581,13 +3581,13 @@ msgstr "路径不是目录"
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr ""
+msgstr "不能选择已存在的 ZFS 卷并指定新卷名"
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
-msgstr ""
+msgstr "必须指定一个新卷名或选择已经存在的 ZFS 卷来添加虚拟设备"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -3615,7 +3615,7 @@ msgstr "USF 卷名只能包含字母和数字"
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
-msgstr ""
+msgstr "成员盘"
 
 #: storage/forms.py:479 storage/forms.py:592
 msgid "The selected disks were not verified for this import rules."
@@ -3668,7 +3668,7 @@ msgstr "0=无限制；例如：1g"
 
 #: storage/forms.py:696 storage/forms.py:757
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "为该数据集及其子集申请配额"
 
 #: storage/forms.py:701 storage/forms.py:762
 msgid "Reserved space for this dataset"
@@ -3938,13 +3938,12 @@ msgid "Weekends"
 msgstr "周末"
 
 #: storage/models.py:340
-#, fuzzy
 msgid "Multipath name"
-msgstr "模块名称"
+msgstr "多路径名称"
 
 #: storage/models.py:346
 msgid "Multipath member"
-msgstr ""
+msgstr "多路径成员"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
@@ -3976,7 +3975,7 @@ msgstr "磁盘列表"
 
 #: storage/models.py:457
 msgid "Path to mount point"
-msgstr ""
+msgstr "挂载点路径"
 
 #: storage/models.py:461
 msgid "Mount options"
@@ -4130,7 +4129,7 @@ msgstr "查看磁盘"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "查看多路径列表"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4138,9 +4137,8 @@ msgid "Auto Import Volume"
 msgstr "自动导入卷"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "查看所有卷"
+msgstr "查看卷列表"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4350,7 +4348,7 @@ msgstr "语言"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "控制台键盘映射"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4387,7 +4385,6 @@ msgid ""
 msgstr ""
 
 #: system/models.py:112 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "首选"
 
@@ -4452,7 +4449,7 @@ msgstr ""
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "启用powerd（省电守护）"
 
 #: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
@@ -4466,19 +4463,19 @@ msgstr ""
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
-msgstr ""
+msgstr "在页脚中显示控制台消息"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "在致命错误时显示回溯"
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "默认显示的高级域"
 
 #: system/models.py:188
 msgid "Enable autotune"
-msgstr ""
+msgstr "Enable autotune"
 
 #: system/models.py:196
 msgid "MOTD banner"
@@ -4506,7 +4503,7 @@ msgstr "外发邮件服务器"
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
-msgstr ""
+msgstr "接受邮件的主机名或 IP ，如 mail.example.org,或 192.168.1.1"
 
 #: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4550,11 +4547,11 @@ msgstr "组织名称（或公司名）"
 
 #: system/models.py:273
 msgid "Organizational Unit"
-msgstr ""
+msgstr "组织单位"
 
 #: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "组织单位名（如，节）"
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
@@ -4574,7 +4571,7 @@ msgstr "州(省)"
 
 #: system/models.py:295
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "州或省名（完整名）"
 
 #: system/models.py:301
 msgid "Country"
@@ -4599,11 +4596,11 @@ msgstr "SSL 凭证"
 #: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
-msgstr ""
+msgstr "在此剪切并粘贴您的私有和公共证书文件内容。"
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
-msgstr ""
+msgstr "执行伪命令的用户"
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-06-12 11:13+0200\n"
+"PO-Revision-Date: 2012-06-19 07:59+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -4737,7 +4737,7 @@ msgstr ""
 
 #: system/models.py:216
 msgid "Outgoing mail server"
-msgstr "Giden mail sunucusu"
+msgstr "Giden e-posta sunucusu"
 
 #: system/models.py:217
 msgid ""
