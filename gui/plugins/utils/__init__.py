@@ -28,10 +28,13 @@
 
 def get_base_url(request):
 
+    proto = 'https' if request.is_secure() else 'http'
     addr = request.META.get("SERVER_ADDR")
     if not addr:
         addr = request.get_host()
     else:
-        addr = "%s:%s" % (addr, request.META.get("SERVER_PORT", "80"))
-    proto = 'https' if request.is_secure() else 'http'
+        port = int(request.META.get("SERVER_PORT", 80))
+        if ((proto == 'http' and port != 80) or
+                (proto == 'https' and port != 443)):
+            addr = "%s:%d" % (addr, port)
     return "%s://%s" % (proto, addr)
