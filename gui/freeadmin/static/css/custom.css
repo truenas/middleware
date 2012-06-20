@@ -888,6 +888,21 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.SysctlIcon {
+    background-image:url('/static/images/ui/tree/16x16_sysctls.png');
+    width:16px;
+    height:16px;
+}
+.AddSysctlIcon {
+    background-image:url('/static/images/ui/tree/16x16_add_sysctls.png');
+    width:16px;
+    height:16px;
+}
+.ViewSysctlIcon {
+    background-image:url('/static/images/ui/tree/16x16_view_sysctls.png');
+    width:16px;
+    height:16px;
+}
 .MountPointIcon {
     background-image:url('/static/images/ui/tree/mountpoints.png');
     width:16px;
