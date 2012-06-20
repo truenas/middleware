@@ -34,8 +34,10 @@ class Tivoka_Connection {
 		
 		$parse = parse_url($this->target);
 		// preparing connection...
+		$scheme = $parse['scheme'];
+		if($scheme == 'https') $scheme = 'http';
 		$context = stream_context_create(array(
-				$parse['scheme'] => array(
+				$scheme => array(
 					'content' => (string) $request,
 					'header' => "Content-Type: application/json\r\n".
 								"Connection: Close\r\n",
