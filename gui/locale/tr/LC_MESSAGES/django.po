@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-06-19 07:59+0200\n"
+"PO-Revision-Date: 2012-06-20 07:27+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -4568,7 +4568,7 @@ msgstr "Dil"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr "Konsol Klavye Haritası"
+msgstr "Konsol klavye haritası"
 
 #: system/models.py:74
 msgid "Timezone"
