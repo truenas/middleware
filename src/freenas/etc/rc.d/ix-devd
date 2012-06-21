@@ -142,8 +142,6 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "\$(date), $(hostname), assume backup" | mail -s "Failover" root
 fi
 E*O*F
-		touch /tmp/heartbeat_state
-		chown nobody /tmp/heartbeat_state
 	else
 		/usr/bin/truncate -s 0 /etc/pf.conf
 	fi
