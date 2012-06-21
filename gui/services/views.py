@@ -70,7 +70,11 @@ def plugins(request):
             plugin.plugin_name)
         try:
             opener = urllib2.build_opener()
-            opener.addheaders = [('Cookie', 'sessionid=%s' % request.COOKIES.get("sessionid", ''))]
+            opener.addheaders = [
+                ('Cookie', 'sessionid=%s' % (
+                    request.COOKIES.get("sessionid", ''),
+                    ))
+                ]
             response = opener.open(url, None, 1).read()
             json = simplejson.loads(response)
         except Exception, e:
@@ -198,11 +202,13 @@ def core(request):
 
 
 def iscsi(request):
-    gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
+    gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by(
+        "-id")[0].id
     return render(request, 'services/iscsi.html', {
-        'focus_tab' : request.GET.get('tab',''),
+        'focus_tab': request.GET.get('tab', ''),
         'gconfid': gconfid,
         })
+
 
 def iscsi_targets(request):
     target_list = models.iSCSITarget.objects.all()
@@ -210,23 +216,29 @@ def iscsi_targets(request):
         'target_list': target_list,
     })
 
+
 def iscsi_assoctargets(request, objtype=None):
     asctarget_list = models.iSCSITargetToExtent.objects.all()
     return render(request, 'services/iscsi_assoctargets.html', {
         'asctarget_list': asctarget_list,
     })
 
+
 def iscsi_extents(request, objtype=None):
-    extent_file_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
+    extent_file_list = models.iSCSITargetExtent.objects.filter(
+        iscsi_target_extent_type='File')
     return render(request, 'services/iscsi_extents.html', {
         'extent_file_list': extent_file_list,
     })
 
+
 def iscsi_dextents(request):
-    extent_device_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL'])
+    extent_device_list = models.iSCSITargetExtent.objects.filter(
+        iscsi_target_extent_type__in=['Disk', 'ZVOL'])
     return render(request, 'services/iscsi_dextents.html', {
         'extent_device_list': extent_device_list,
     })
+
 
 def iscsi_auth(request):
     target_auth_list = models.iSCSITargetAuthCredential.objects.all()
@@ -234,11 +246,13 @@ def iscsi_auth(request):
         'target_auth_list': target_auth_list,
     })
 
+
 def iscsi_authini(request):
     auth_initiator_list = models.iSCSITargetAuthorizedInitiator.objects.all()
     return render(request, 'services/iscsi_authini.html', {
         'auth_initiator_list': auth_initiator_list,
     })
+
 
 def iscsi_portals(request):
     iscsiportal_list = models.iSCSITargetPortal.objects.all()
@@ -246,24 +260,25 @@ def iscsi_portals(request):
         'iscsiportal_list': iscsiportal_list,
     })
 
+
 def servicesToggleView(request, formname):
     form2namemap = {
-        'cifs_toggle' : 'cifs',
-        'afp_toggle' : 'afp',
-        'nfs_toggle' : 'nfs',
-        'iscsitarget_toggle' : 'iscsitarget',
-        'dynamicdns_toggle' : 'dynamicdns',
-        'snmp_toggle' : 'snmp',
-        'httpd_toggle' : 'httpd',
-        'ftp_toggle' : 'ftp',
-        'tftp_toggle' : 'tftp',
-        'ssh_toggle' : 'ssh',
-        'activedirectory_toggle' : 'activedirectory',
-        'ldap_toggle' : 'ldap',
-        'rsync_toggle' : 'rsync',
-        'smartd_toggle' : 'smartd',
-        'ups_toggle' : 'ups',
-        'plugins_toggle' : 'plugins',
+        'cifs_toggle': 'cifs',
+        'afp_toggle': 'afp',
+        'nfs_toggle': 'nfs',
+        'iscsitarget_toggle': 'iscsitarget',
+        'dynamicdns_toggle': 'dynamicdns',
+        'snmp_toggle': 'snmp',
+        'httpd_toggle': 'httpd',
+        'ftp_toggle': 'ftp',
+        'tftp_toggle': 'tftp',
+        'ssh_toggle': 'ssh',
+        'activedirectory_toggle': 'activedirectory',
+        'ldap_toggle': 'ldap',
+        'rsync_toggle': 'rsync',
+        'smartd_toggle': 'smartd',
+        'ups_toggle': 'ups',
+        'plugins_toggle': 'plugins',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
@@ -278,23 +293,26 @@ def servicesToggleView(request, formname):
         opposing_service = "ldap"
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if opposing_service:
-        opp_svc_entry = models.services.objects.get(srv_service=opposing_service)
+        opp_svc_entry = models.services.objects.get(
+            srv_service=opposing_service)
 
     # Turning things off is always ok
     if svc_entry.srv_enable:
         svc_entry.srv_enable = 0
     else:
-        if opposing_service and not opp_svc_entry.srv_enable == 1 or not opposing_service:
+        if (opposing_service and
+                not opp_svc_entry.srv_enable == 1 or
+                not opposing_service):
             svc_entry.srv_enable = 1
     svc_entry.save()
 
     #
     # forcestop then start to make sure the service is of the same status.
     #
-    # Active Directory and LDAP are special cases, they are also mutually exclusive.
-    # It would be nice if they weren't, ... another time, another place. The return
-    # status from notifier needs to be checked to make sure that we were able to join
-    # the Active Directory or LDAP domain.
+    # Active Directory and LDAP are special cases, they are also mutually
+    # exclusive. It would be nice if they weren't, ... another time,
+    # another place. The return status from notifier needs to be checked
+    # to make sure that we were able to join the AD or LDAP domain.
     #
     if changing_service == "ldap":
         if svc_entry.srv_enable == 1:
@@ -333,14 +351,14 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ldap','activedirectory', 'ups'):
+            if changing_service in ('ldap', 'activedirectory', 'ups'):
                 notifier().stop(changing_service)
             elif changing_service == 'plugins':
                 notifier().stop('plugins_jail')
 
     else:
         if svc_entry.srv_enable == 1:
-            status ='on'
+            status = 'on'
         else:
             status = 'off'
 
@@ -353,10 +371,12 @@ def servicesToggleView(request, formname):
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
+
 def rsyncmod(request):
     return render(request, "services/rsyncmod.html", {
         'rsyncmod_list': models.RsyncMod.objects.all(),
         })
+
 
 def enable(request, svc):
     return render(request, "services/enable.html", {
