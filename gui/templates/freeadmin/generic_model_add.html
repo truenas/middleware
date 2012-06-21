@@ -58,6 +58,8 @@
         {% with form.advanced_fields as advfields %}
         {% include "freeadmin/advanced_btn.html" %}
         {% endwith %}
+        {% block buttons_extra %}
+        {% endblock %}
     </td></tr>
 </table>
 </form>
