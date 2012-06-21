@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-06-20 07:27+0200\n"
+"PO-Revision-Date: 2012-06-21 07:18+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -3543,7 +3543,7 @@ msgstr ""
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"
-msgstr ".AppleDouble Etkinleştir"
+msgstr ".AppleDouble etkinleştir"
 
 #: sharing/models.py:190
 msgid ""
