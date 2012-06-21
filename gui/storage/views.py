@@ -93,6 +93,29 @@ def replications_public_key(request):
         })
 
 
+def replications_keyscan(request):
+
+    host = request.GET.get("host")
+    port = request.GET.get("port")
+
+    proc = subprocess.Popen([
+        "/usr/bin/ssh-keyscan",
+        "-p", port,
+        "-T", 2,
+        host,
+        ], stdout=subprocess.PIPE)
+    key = proc.communicate()[0]
+    if proc.returncode == 0:
+        data = {
+            'error': False,
+            'key': key,
+        }
+    else:
+        data = {'error': True}
+
+    return HttpResponse(simplejson.dumps(data))
+
+
 def snapshots(request):
     zfsnap_list = notifier().zfs_snapshot_list()
     return render(request, 'storage/snapshots.html', {
@@ -179,7 +202,8 @@ def wizard(request):
             else:
                 disks = None
             zpoolfields = re.compile(r'zpool_(.+)')
-            zfsextra = [(zpoolfields.search(i).group(1), i, request.POST.get(i)) \
+            zfsextra = [
+                (zpoolfields.search(i).group(1), i, request.POST.get(i)) \
                         for i in request.POST.keys() if zpoolfields.match(i)]
 
     else:
@@ -957,5 +981,5 @@ def disk_wipe_progress(request, devname):
         return HttpResponse('new Object({state: "uploading", received: %s, size: %s});' % (received, size))
 
     except Exception, e:
-        pass
+        log.warn("Could not check for disk wipe progress: %s", e)
     return HttpResponse('new Object({state: "starting"});')
