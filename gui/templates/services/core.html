@@ -96,7 +96,7 @@
            <strong>{% trans "Plugins" %}</strong>
        </td>
        <td>
-               <img id="plugins_toggle" name="plugins_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "plugins" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+               <img id="plugins_toggle" name="plugins_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "plugins" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this, function() { refreshTree(); })">
        </td>
        <td>
            {% if plugins %}

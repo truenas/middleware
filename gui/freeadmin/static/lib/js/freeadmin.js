@@ -428,7 +428,7 @@
     }
 
 
-    toggle_service = function(obj) {
+    toggle_service = function(obj, onSuccess) {
         var td = obj.parentNode;
         var n = dojo.create("div", {  }, td);
         dojo.addClass(n, "dijitIconLoading");
@@ -449,6 +449,7 @@
                     setMessage(data.message, "error");
                 }
                 dojo.destroy(n);
+                if(onSuccess) onSuccess();
             },
             error: function(error) {
                 //alert
