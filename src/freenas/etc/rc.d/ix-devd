@@ -42,18 +42,15 @@ if [ \${SUBSYSTEM} != "carp0" ]; then
 	exit
 fi
 
-if [ -e /tmp/force_seal ]; then
-	HAVE_FORCESEAL=1
-	rm -f /tmp/force_seal
-else
-	HAVE_FORCESEAL=0
-fi
+touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
+
+# Do we have a force seal?
+HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
 
     # Was the other peer UP in the last minute?
-    touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
     WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
 
     # If we can still ping the peer, quit immediately
