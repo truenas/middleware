@@ -655,7 +655,7 @@ def parse_status(name, doc, data):
             elif ident == 1:
                 if _is_vdev(word):
                     node = Vdev(word, doc, status=status)
-                    pnode.append(node)
+                    tree.append(node)
                     pnode = node
                 else:
                     if lastident != ident:
