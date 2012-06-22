@@ -85,7 +85,10 @@ def snap_expired(snapinfo, snaptime):
     return snapinfo_expirationtime <= snaptime
 
 def isTimeBetween(time_to_test, begin_time, end_time):
-    return ((begin_time <= time_to_test) and (time_to_test <= end_time))
+    if begin_time < end_time:
+        return ((begin_time <= time_to_test) and (time_to_test <= end_time))
+    else:
+        return ((begin_time <= time_to_test) or (time_to_test <= end_time))
 
 def isMatchingTime(task, snaptime):
     curtime = time(snaptime.hour, snaptime.minute)
