@@ -1,0 +1,24 @@
+diff --git sys/netinet6/in6.c sys/netinet6/in6.c
+index 2684f1e..1997d0b 100644
+--- sys/netinet6/in6.c
++++ sys/netinet6/in6.c
+@@ -1310,7 +1310,9 @@ in6_purgeaddr(struct ifaddr *ifa)
+ 			sa.sin6_family = AF_INET6;
+ 			memcpy(&sa.sin6_addr, &satosin6(ifa0->ifa_addr)->sin6_addr, 
+ 			       sizeof(sa.sin6_addr));
++			RT_UNLOCK(rt);
+ 			in6_setscope(&sa.sin6_addr, ifa0->ifa_ifp, NULL);
++			RT_LOCK(rt);
+ 			memcpy(rt->rt_gateway, &sa, sizeof(sa));
+ 			RTFREE_LOCKED(rt);
+ 		}
+@@ -1360,7 +1362,9 @@ in6_purgeaddr(struct ifaddr *ifa)
+ 			sa.sin6_family = AF_INET6;
+ 			memcpy(&sa.sin6_addr, &satosin6(ifa0->ifa_addr)->sin6_addr, 
+ 			       sizeof(sa.sin6_addr));
++			RT_UNLOCK(rt);
+ 			in6_setscope(&sa.sin6_addr, ifa0->ifa_ifp, NULL);
++			RT_LOCK(rt);
+ 			memcpy(rt->rt_gateway, &sa, sizeof(sa));
+ 			RTFREE_LOCKED(rt);
+ 		}
