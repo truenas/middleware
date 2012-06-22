@@ -968,6 +968,7 @@ class notifier:
                 test4k = False
                 want4khack = rv
 
+        doc = self.__geom_confxml()
         for disk in disks:
 
             devname = self.part_type_from_device('zfs', disk)
@@ -976,7 +977,14 @@ class notifier:
                 devname = '/dev/%s.nop' % devname
                 gnop_devs.append(devname)
             else:
-                devname = "/dev/%s" % devname
+                uuid = doc.xpathEval("//class[name = 'PART']"
+                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
+                    )
+                if not uuid:
+                    log.warn("Could not determine GPT uuid for %s", devname)
+                    devname = "/dev/%s" % devname
+                else:
+                    devname = "/dev/gptid/%s" % uuid[0].content
             vdevs.append(devname)
 
         return vdevs, gnop_devs, want4khack
@@ -1274,12 +1282,12 @@ class notifier:
         from_swap = self.part_type_from_device('swap', from_disk)
 
         if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (from_swap))
+            self.__system('/sbin/swapoff /dev/%s' % (from_swap, ))
 
         # to_disk _might_ have swap on, offline it before gpt label
         to_swap = self.part_type_from_device('swap', to_disk)
         if to_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (to_swap))
+            self.__system('/sbin/swapoff /dev/%s' % (to_swap, ))
 
         # Replace in-place
         if from_disk == to_disk:
@@ -1291,8 +1299,19 @@ class notifier:
         to_swap = self.part_type_from_device('swap', to_disk)
         # It has to be a freebsd-zfs partition there
         to_label = self.part_type_from_device('zfs', to_disk)
+
         if to_label == '':
             raise MiddlewareError('freebsd-zfs partition could not be found')
+
+        doc = self.__geom_confxml()
+        uuid = doc.xpathEval("//class[name = 'PART']"
+            "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
+            )
+        if not uuid:
+            log.warn("Could not determine GPT uuid for %s", to_label)
+            devname = to_label
+        else:
+            devname = "gptid/%s" % uuid[0].content
 
         if to_swap != '':
             self.__system('/sbin/swapon /dev/%s' % (to_swap))
@@ -1303,7 +1322,7 @@ class notifier:
             if ret == 256:
                 ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, to_label))
+            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
