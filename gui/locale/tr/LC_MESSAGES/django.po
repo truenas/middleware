@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-06-21 07:18+0200\n"
+"PO-Revision-Date: 2012-06-22 08:06+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1503,7 +1503,7 @@ msgstr "Doğrulama için yukarıdaki ile aynı parolayı giriniz."
 
 #: services/forms.py:504
 msgid "Initiator Secret"
-msgstr "Başlatıcı Parola"
+msgstr "Başlatıcı parolası"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
@@ -1511,7 +1511,7 @@ msgstr "Başlatıcı tarafı gizli. (Karşılıklı CHAP kimlik doğrulamaları 
 
 #: services/forms.py:509
 msgid "Initiator Secret (Confirm)"
-msgstr "Başlatıcı parola (Onayla)"
+msgstr "Başlatıcı parolası (Onayla)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -2070,7 +2070,7 @@ msgstr "Mantıksal Birim Kontrolörü TCP bağlantı noktası (varsayılan 3261)
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
-msgstr "Yetkili Ağ Denetleyicisi"
+msgstr "Yetkili ağ denetleyicisi"
 
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
@@ -4744,7 +4744,7 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"E-postanızı alacak suncunun makina adı veya ip numarası. Örn: mail.ornek.com "
+"E-postanızı alacak suncunun makine adı veya ip numarası. Örn: mail.ornek.com "
 "veya 192.168.1.1"
 
 #: system/models.py:224
@@ -5791,7 +5791,7 @@ msgstr "Güncelle"
 
 #: templates/services/plugins.html:56
 msgid "Update plugin"
-msgstr "Eklentiyi güncelle"
+msgstr "Eklentiyi Güncelle"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"

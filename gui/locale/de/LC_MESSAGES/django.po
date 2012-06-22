@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-03-27 05:40+0200\n"
-"Last-Translator: lutz.willek <lutz.willek@belug.de>\n"
+"PO-Revision-Date: 2012-06-21 17:05+0200\n"
+"Last-Translator: Aldaris <c.irro@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -943,11 +943,10 @@ msgid "Parent Interface"
 msgstr "Haupt-Netzwerkschnittstelle"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr ""
-"Der Name der Schnittstelle muss vlanXX lauten wobei es sich bei XX um einen "
-"Integer handeln muss."
+"Der Name der Schnittstelle muss vlanXX lauten- wobei es sich bei XX um einen "
+"Integer-Wert handeln muss."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1231,15 +1230,16 @@ msgstr "BPI Datei zur Installation auswählen"
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
 msgstr ""
+"Der Plugin-Dienst muss ausgeschaltet werden, bevor fortgefahren werden kann."
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Diese IP existiert bereits."
+msgstr "Der Pfad /s existiert bereits."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Der volle jail-Pfad darf nicht länger als 76 Zeichen sein."
 
 #: plugins/forms.py:200
 #, fuzzy
