@@ -161,7 +161,7 @@ class Alert(object):
         not_optimal = []
         for mp in notifier().multipath_all():
             if mp.status != 'OPTIMAL':
-                not_optimal.append(mp)
+                not_optimal.append(mp.name)
 
         if not_optimal:
             self.log(self.LOG_CRIT,
