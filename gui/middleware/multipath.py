@@ -48,7 +48,7 @@ class Multipath(object):
     def __init__(self, doc, xmlnode):
         self.name = xmlnode.xpathEval("./name")[0].content
         self.devname = "multipath/%s" % self.name
-        self.status =  xmlnode.xpathEval("./config/State")[0].content
+        self._status =  xmlnode.xpathEval("./config/State")[0].content
         self.consumers = []
         for consumer in xmlnode.xpathEval("./consumer"):
             status = consumer.xpathEval("./config/State")[0].content

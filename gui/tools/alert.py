@@ -55,6 +55,7 @@ ALERT_FILE = '/var/tmp/alert'
 LAST_ALERT_FILE = '/var/tmp/alert.last'
 PORTAL_IP_FILE = '/var/tmp/iscsi_portal_ip'
 
+
 class Alert(object):
 
     LOG_OK = "OK"
@@ -82,7 +83,7 @@ class Alert(object):
                 p1 = subprocess.Popen(["zpool", "status", "-x", vol.vol_name],
                         stdout=subprocess.PIPE)
                 stdout = p1.communicate()[0]
-                if stdout.find("pool '%s' is healthy" % (vol.vol_name, )) != -1:
+                if stdout.find("pool '%s' is healthy" % vol.vol_name) != -1:
                     status = 'HEALTHY'
                 else:
                     reg1 = re.search('^\s*state: (\w+)', stdout)
@@ -93,9 +94,9 @@ class Alert(object):
                         # but instead coredumps ;).
                         status = 'UNKNOWN'
                     reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
-                                     stdout, re.S|re.M)
+                                     stdout, re.S | re.M)
                     reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-                                     stdout, re.S|re.M)
+                                     stdout, re.S | re.M)
                     if reg1:
                         msg = reg1.group(1)
                         msg = re.sub(r'\s+', ' ', msg)
@@ -114,12 +115,18 @@ class Alert(object):
             else:
                 if message:
                     self.log(self.LOG_WARN,
-                             _('The volume %(volume)s status is %(status)s: %(message)s') % \
-                                    {'volume': vol, 'status': status, 'message': message})
+                             _('The volume %(volume)s status is %(status)s:'
+                                ' %(message)s') % {
+                                    'volume': vol,
+                                    'status': status,
+                                    'message': message,
+                                    })
                 else:
                     self.log(self.LOG_WARN,
-                             _('The volume %(volume)s status is %(status)s') % \
-                                    {'volume': vol, 'status': status})
+                        _('The volume %(volume)s status is %(status)s') % {
+                            'volume': vol,
+                            'status': status,
+                            })
 
     def admin_password(self):
         user = User.objects.filter(password=UNUSABLE_PASSWORD)
@@ -136,8 +143,8 @@ class Alert(object):
             if f.read().find('0.0.0.0') != -1 and address not in ('0.0.0.0', ''):
                 # XXX: IPv6
                 self.log(self.LOG_WARN,
-                         _('The WebGUI Address could not be bind to %s; using wildcard')
-                         % (address,))
+                    _('The WebGUI Address could not be bind to %s; using '
+                        'wildcard') % (address,))
 
     def iscsi_portal_ips(self):
         if not os.path.exists(PORTAL_IP_FILE):
@@ -148,6 +155,18 @@ class Alert(object):
             self.log(self.LOG_WARN,
                 _('The following IPs are bind to iSCSI Portal but were not '
                 'found in the system: %s') % (', '.join(ips))
+                )
+
+    def multipaths_status(self):
+        not_optimal = []
+        for mp in notifier().multipath_all():
+            if mp.status != 'OPTIMAL':
+                not_optimal.append(mp)
+
+        if not_optimal:
+            self.log(self.LOG_CRIT,
+                _('The following multipaths are not optimal: %s',
+                    ', '.join(not_optimal))
                 )
 
     def plugin_jail_reachable(self):
@@ -172,6 +191,7 @@ class Alert(object):
         self.httpd_bindaddr()
         self.iscsi_portal_ips()
         self.plugin_jail_reachable()
+        self.multipaths_status()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:
