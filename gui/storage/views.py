@@ -97,18 +97,20 @@ def replications_keyscan(request):
 
     host = request.POST.get("host")
     port = request.POST.get("port")
-
-    proc = subprocess.Popen([
-        "/usr/bin/ssh-keyscan",
-        "-p", str(port),
-        "-T", "2",
-        str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    key, errmsg = proc.communicate()
-    if proc.returncode == 0:
-        data = {'error': False, 'key': key}
+    if not host:
+        data = {'error': True, 'errmsg': _('Please enter a hostname')}
     else:
-        data = {'error': True, 'errmsg': errmsg}
+        proc = subprocess.Popen([
+            "/usr/bin/ssh-keyscan",
+            "-p", str(port),
+            "-T", "2",
+            str(host),
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        key, errmsg = proc.communicate()
+        if proc.returncode == 0:
+            data = {'error': False, 'key': key}
+        else:
+            data = {'error': True, 'errmsg': errmsg}
 
     return HttpResponse(simplejson.dumps(data))
 
