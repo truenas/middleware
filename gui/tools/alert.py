@@ -165,8 +165,9 @@ class Alert(object):
 
         if not_optimal:
             self.log(self.LOG_CRIT,
-                _('The following multipaths are not optimal: %s',
-                    ', '.join(not_optimal))
+                _('The following multipaths are not optimal: %s') % (
+                    ', '.join(not_optimal),
+                    )
                 )
 
     def plugin_jail_reachable(self):
