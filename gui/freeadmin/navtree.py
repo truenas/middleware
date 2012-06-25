@@ -358,7 +358,7 @@ class NavTree(object):
 
         nav = TreeRoot('shell',
             name=_('Shell'),
-            icon='TopIcon',
+            icon='ShellIcon',
             action='shell')
         tree_roots.register(nav)
 
