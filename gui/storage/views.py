@@ -95,23 +95,20 @@ def replications_public_key(request):
 
 def replications_keyscan(request):
 
-    host = request.GET.get("host")
-    port = request.GET.get("port")
+    host = request.POST.get("host")
+    port = request.POST.get("port")
 
     proc = subprocess.Popen([
         "/usr/bin/ssh-keyscan",
-        "-p", port,
-        "-T", 2,
-        host,
-        ], stdout=subprocess.PIPE)
-    key = proc.communicate()[0]
+        "-p", str(port),
+        "-T", "2",
+        str(host),
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    key, errmsg = proc.communicate()
     if proc.returncode == 0:
-        data = {
-            'error': False,
-            'key': key,
-        }
+        data = {'error': False, 'key': key}
     else:
-        data = {'error': True}
+        data = {'error': True, 'errmsg': errmsg}
 
     return HttpResponse(simplejson.dumps(data))
 
