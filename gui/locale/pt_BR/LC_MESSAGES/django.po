@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-04-27 15:29+0200\n"
-"Last-Translator: thiagocantero <thiagocantero@gmail.com>\n"
+"PO-Revision-Date: 2012-06-26 02:55+0200\n"
+"Last-Translator: Rodrigo <rgbialeski@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -1160,18 +1160,16 @@ msgid "Create Link Aggregation"
 msgstr "Criar Agregação de Link"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "Visualizar todos os Link Aggregations"
+msgstr "Visualizar Links Agregados. "
 
 #: network/views.py:197
 msgid "LAGG successfully added"
 msgstr "LAGG adicionado com sucesso"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Já existe um grupo com esse nome."
+msgstr "Este IP já encontra-se em uso."
 
 #: plugins/forms.py:92
 #, fuzzy
@@ -1194,7 +1192,7 @@ msgstr "Nova imagem para ser instalada"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Você deve desativar o serviço de Plugins antes de prosseguir"
 
 #: plugins/forms.py:183
 #, fuzzy, python-format
@@ -1203,7 +1201,7 @@ msgstr "Já existe um grupo com esse nome."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "O tamanho não pode exceder 76 caracteres"
 
 #: plugins/forms.py:200
 #, fuzzy
@@ -1244,11 +1242,11 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Montado?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "O caminho completo não pode exceder 88 caracteres"
 
 #: plugins/forms.py:336
 #, fuzzy, python-format
@@ -1381,9 +1379,8 @@ msgid "Jail successfully imported."
 msgstr "%s atualizado com sucesso."
 
 #: services/forms.py:70
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "O usuário %s não é válido."
+msgstr "Mascara inválida"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1469,9 +1466,8 @@ msgid "The DynamicDNS service failed to reload."
 msgstr "O serviço DynamicDNS falhou ao recarregar."
 
 #: services/forms.py:374
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "O campo não é um endereço IP válido ou rede"
+msgstr "Este endereço IP não é válido"
 
 #: services/forms.py:376
 msgid ""
