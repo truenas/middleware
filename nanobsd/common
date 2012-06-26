@@ -80,7 +80,7 @@ cust_install_machine_files()
 {
 	echo "cd ${NANO_CFG_BASE}/Files"
 	cd ${NANO_CFG_BASE}/Files
-	find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -dumpv ${NANO_WORLDDIR}
+	find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -R root:wheel -dumpv ${NANO_WORLDDIR}
 }
 customize_cmd cust_install_files
 customize_cmd cust_install_machine_files 
