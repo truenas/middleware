@@ -9,6 +9,7 @@ NAME = _('Services')
 BLACKLIST = ['services', 'iSCSITargetPortalIP', 'RPCToken']
 ICON = u'ServicesIcon'
 
+
 class EnDisServices(TreeNode):
 
     gname = 'services.ControlServices'
@@ -167,7 +168,7 @@ class PluginsSettings(TreeNode):
     gname = 'Settings'
     name = _(u'Settings')
     type = 'object'
-    icon = models.PluginsJail._admin.icon_model
+    icon = u"SettingsIcon"
     skip = True
 
     def __init__(self, *args, **kwargs):
@@ -184,7 +185,7 @@ class PluginsManagement(TreeNode):
 
     gname = 'management'
     name = _(u'Management')
-    icon = models.PluginsJail._admin.icon_model
+    icon = u"SettingsIcon"
     skip = True
     order = -1
 

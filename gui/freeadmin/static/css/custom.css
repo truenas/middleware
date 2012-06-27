@@ -923,6 +923,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.PluginIcon {
+    background-image:url('/static/images/ui/tree/16x16_plugin.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }

@@ -918,7 +918,7 @@ class PluginsJail(Model):
     class FreeAdmin:
         deletable = False
         delete_form = "PluginsJailDeleteForm"
-        icon_model = u"SettingsIcon"
+        icon_model = u"PluginIcon"
 
     def delete(self, *args, **kwargs):
         notifier().delete_plugins_jail(self.id)
