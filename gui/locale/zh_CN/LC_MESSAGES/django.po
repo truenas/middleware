@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-18 11:17+0200\n"
-"Last-Translator: phome <phome@tut.by>\n"
+"PO-Revision-Date: 2012-06-28 10:55+0200\n"
+"Last-Translator: 淡淡风轻 <hp0511@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -4324,7 +4324,7 @@ msgstr "新的配置已安装"
 msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
-msgstr ""
+msgstr "为了能通过SSH使用rsync服务，你需要在用户的Home目录放置该用户的公钥(DSA/ECDSA/RSA)"
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
@@ -5241,12 +5241,12 @@ msgstr "添加VLAN接口"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "安装..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "安装插件"
 
 #: templates/plugins/index.html:31
 #, fuzzy
@@ -5255,7 +5255,7 @@ msgstr "标准"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "插件信息"
 
 #: templates/plugins/index.html:39
 #, fuzzy
@@ -5269,7 +5269,7 @@ msgstr "删除复制"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "没有安装的插件"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -6071,7 +6071,7 @@ msgstr "发送测试邮件"
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
-msgstr ""
+msgstr "提示： 测试用电子邮件已发送至root用户。通过Users -> root -> Change E-mail修改配置。"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
