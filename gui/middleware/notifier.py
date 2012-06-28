@@ -2614,7 +2614,7 @@ class notifier:
             status = res.split('pool: %s\n' % pool)[1].split('pool:')[0]
             roots = zfs.parse_status(pool, doc, status)
 
-            if roots[pool].status != 'UNAVAIL':
+            if roots['data'].status != 'UNAVAIL':
                 volumes.append({
                     'label': pool,
                     'type': 'zfs',
