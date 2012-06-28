@@ -493,13 +493,22 @@ def reload_httpd(request):
 
 def debug(request):
     """Save freenas-debug output to DEBUG_TEMP"""
-    p1 = subprocess.Popen(["/usr/local/bin/freenas-debug",
-        "-a", "-g", "-h", "-l", "-n", "-s", "-y", "-t", "-z"],
-        stdout=subprocess.PIPE)
-    debug = p1.communicate()[0]
-    with open(DEBUG_TEMP, 'w') as f:
-        f.write(debug)
-    return render(request, 'system/debug.html')
+    if request.method == "POST":
+        form = forms.DebugForm(request.POST)
+        if form.is_valid():
+            opts = form.get_options()
+            p1 = subprocess.Popen(["/usr/local/bin/freenas-debug"] + opts,
+                stdout=subprocess.PIPE)
+            debug = p1.communicate()[0]
+            with open(DEBUG_TEMP, 'w') as f:
+                f.write(debug)
+            return render(request, 'system/debug.html')
+    else:
+        form = forms.DebugForm()
+
+    return render(request, 'system/debug_form.html', {
+        'form': form,
+    })
 
 
 def debug_save(request):
