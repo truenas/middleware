@@ -24,7 +24,7 @@ PLUGIN="transmission"
 #
 # Path to pbi_makeport 
 #
-PBIMAKEPORT=/usr/local/sbin/pbi_makeport
+PBIMAKEPORT=$(which pbi_makeport)
 if [ ! -f "${PBIMAKEPORT}" ]
 then
 	echo "${PLUGIN}: ${PBIMAKEPORT} does not exist!"
