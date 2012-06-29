@@ -4,6 +4,7 @@
 #
 
 cd "$(dirname "$0")/.."
+TOP="$(pwd)"
 
 . build/nano_env
 . build/functions.sh
@@ -154,6 +155,43 @@ is_plugin()
 	fi
 
 	return ${_res}
+}
+
+install_pbi_manager()
+{
+	local src="${TOP}/src/pbi-manager"
+	local dst="${TOP}"
+
+	if [ -f "${dst}/sbin/pbi_create" ]
+	then
+		rm -rf "${dst}/sbin"
+	fi
+
+	mkdir -p "${TOP}/sbin"
+	cp ${src}/pbi-manager ${dst}/sbin/pbi_create
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
+	rm -f ${dst}/pbi-manager
+
+	PATH="${TOP}/sbin:${PATH}"
+	export PATH
 }
 
 build_target()
@@ -399,6 +437,11 @@ main()
 	then
 		requires_root
 	fi
+
+	#
+	# Install pbi-manager to a known location
+	#
+	install_pbi_manager
 
 	#
 	# Expand targets to their full path in the file system
