@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-28 10:55+0200\n"
+"PO-Revision-Date: 2012-06-28 11:12+0200\n"
 "Last-Translator: 淡淡风轻 <hp0511@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -3367,7 +3367,7 @@ msgstr "启用 .AppleDouble"
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
-msgstr ""
+msgstr "这会自动创建 .AppleDouble目录。该选项在Mac电脑访问时生效。"
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -4453,7 +4453,7 @@ msgstr "启用powerd（省电守护）"
 
 #: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "开启 Zeroconf/Bonjour"
 
 #: system/models.py:174
 msgid ""
@@ -4639,7 +4639,7 @@ msgstr "远程路径"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "rsync远程主机路径，如/mnt/tank"
 
 #: system/models.py:481 templates/system/rsync.html:8
 #, fuzzy
