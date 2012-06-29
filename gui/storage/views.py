@@ -107,9 +107,11 @@ def replications_keyscan(request):
             str(host),
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         key, errmsg = proc.communicate()
-        if proc.returncode == 0:
+        if proc.returncode == 0 and key:
             data = {'error': False, 'key': key}
         else:
+            if not errmsg:
+                errmsg = _("Key could no be retrieved for unknown reason")
             data = {'error': True, 'errmsg': errmsg}
 
     return HttpResponse(simplejson.dumps(data))
