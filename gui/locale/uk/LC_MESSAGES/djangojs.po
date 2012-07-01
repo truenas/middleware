@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-04-01 16:21+0200\n"
+"PO-Revision-Date: 2012-06-30 20:02+0200\n"
 "Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -49,9 +49,8 @@ msgstr "Сховище"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "Сталася помилка!"
+msgstr "Деякі помилки"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -63,12 +62,11 @@ msgstr "Редагувати диск"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Витерти"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Редагувати диск"
+msgstr "Витерти диск"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
