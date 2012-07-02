@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2012-06-09 16:52+0200\n"
+"PO-Revision-Date: 2012-06-30 20:04+0200\n"
 "Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -1216,12 +1216,11 @@ msgstr "Jail шлях плагінів"
 #: plugins/forms.py:218
 #, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "IP адреса Jail"
+msgstr "IP адреси Jail"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Маска мережі IPv4"
+msgstr "Маска Jail мережі IPv4"
 
 #: plugins/forms.py:228
 #, fuzzy
@@ -1481,9 +1480,7 @@ msgstr "Використовуйте літери, цифри, \".\" \"-\" і \"
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Поштова скринька %(email)s не дійсна"
-msgstr[1] "Наступні скриньки не дійсні: %(email)s"
-msgstr[2] "Наступні скриньки не дійсні: %(email)s"
+msgstr[0] ""
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
@@ -6537,7 +6534,7 @@ msgid "Jail path cannot contain plugins path."
 msgstr "Jail шлях не може містити шляхи плагінів."
 
 msgid "Plugins path cannot contain jail path."
-msgstr "Шлях плагінів не може містити jail  шлях"
+msgstr "Шлях плагінів не може містити jail шлях"
 
 msgid "Plugin uname"
 msgstr "плагін Uname"
