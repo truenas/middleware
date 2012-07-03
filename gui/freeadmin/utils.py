@@ -47,7 +47,10 @@ def get_related_objects(obj):
             continue
         relset = getattr(obj, related.get_accessor_name())
         qs = relset.all()
-        relnum += qs.count()
+        count = qs.count()
+        if count == 0:
+            continue
+        relnum += count
 
         for o in qs:
             _reld, _reln = get_related_objects(o)
