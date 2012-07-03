@@ -886,9 +886,9 @@ class PluginsJail(Model):
             default='',
             validators=[
                 RegexValidator(
-                    regex=r"^[a-zA-Z][a-zA-Z0-9\-]{1,62}(?<!-)$",
-                    message=_("Jail name can only contain letters, numbers and"
-                    " hyphens. It must not end with a hyphen.")
+                    regex=r"^[a-zA-Z][a-zA-Z0-9]{1,62}$",
+                    message=_("Jail name can only contain alphanumeric "
+                        "characters. It must start with a letter."),
                     )
                 ]
             )
