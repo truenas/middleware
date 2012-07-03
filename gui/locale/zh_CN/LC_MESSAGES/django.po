@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-28 11:12+0200\n"
-"Last-Translator: 淡淡风轻 <hp0511@gmail.com>\n"
+"PO-Revision-Date: 2012-07-03 05:59+0200\n"
+"Last-Translator: phome <phome@tut.by>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -837,7 +837,6 @@ msgid "Error"
 msgstr "错误"
 
 #: network/forms.py:41 network/models.py:86
-#, fuzzy
 msgid "NIC"
 msgstr "网卡"
 
@@ -849,11 +848,11 @@ msgstr "你不能将相同的IP地址(%s)配置到多个网络接口上"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr "你必须同时指定IPv4地址"
+msgstr "必须同时指定IPv4地址"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr "你必须同时选择IPv4子网掩码"
+msgstr "必须同时选择IPv4子网掩码"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
@@ -1049,7 +1048,7 @@ msgstr "别名"
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr "别名"
+msgstr "别名列表"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1286,7 +1285,6 @@ msgstr "插件"
 
 # 不知道这个词具体出现在界面哪个位置
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
-#, fuzzy
 msgid "Source"
 msgstr "源"
 
@@ -1342,7 +1340,7 @@ msgstr "要“启用主目录浏览”的功能必需赶写此栏信息。"
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr "要使用“主目录”的功能必需赶写此栏信息。"
+msgstr "要使用“主目录”的功能必需填写此栏信息。"
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
@@ -1443,7 +1441,7 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、“.”“-”和 “_”。"
 
-# 非法的邮件地址: %(email)s
+# **** can not input ****
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1646,7 +1644,7 @@ msgstr "认证模式"
 #: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr "使用 Active Directory 或 LDAP 认证将取代该选项"
+msgstr "使用活动目录(Active Directory)或 LDAP 认证将取代该选项"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -2356,9 +2354,8 @@ msgid "SNMP"
 msgstr "SNMP"
 
 #: services/models.py:893 storage/models.py:330
-#, fuzzy
 msgid "Identifier"
-msgstr "标识符"
+msgstr "标识"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
@@ -2533,14 +2530,11 @@ msgid "Masquerade address"
 msgstr "伪地址"
 
 #: services/models.py:1036
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
-msgstr ""
-"使服务器显示指定客户端IP对应的网络信息，并把该IP或主机名看作一个NAT网关或者端"
-"口转发服务器。"
+msgstr "使服务器向客户端显示指定IP地址对应的网络信息，该IP或DNS主机名将作为服务器NAT网关或端口转发器。"
 
 #: services/models.py:1043
 msgid "Minimum passive port"
@@ -2927,7 +2921,7 @@ msgid ""
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
-msgstr ""
+msgstr "指定使用文件传输模块的帐号。可结合'群组'的选项，会决定授予哪些文件权限。本项空白时，则使用缺省设值。"
 
 #: services/models.py:1424
 msgid ""
@@ -3958,8 +3952,9 @@ msgid "Advanced Power Management"
 msgstr "高级电源管理"
 
 #: storage/models.py:377 storage/views.py:252
+#, fuzzy
 msgid "Acoustic Level"
-msgstr ""
+msgstr "音量"
 
 #: storage/models.py:381 storage/views.py:253
 msgid "Enable S.M.A.R.T."
@@ -4445,7 +4440,7 @@ msgstr "开机提示音"
 
 #: system/models.py:167
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "开启特别系统优化"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
@@ -4459,7 +4454,7 @@ msgstr "开启 Zeroconf/Bonjour"
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
-msgstr ""
+msgstr "在每个磁盘的交换空间大小（G），只影响新磁盘。设置此为0将完全禁用创建交换空间（强烈劝阻）。"
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
@@ -4642,27 +4637,26 @@ msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr "rsync远程主机路径，如/mnt/tank"
 
 #: system/models.py:481 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "目录"
+msgstr "方向"
 
 #: system/models.py:482
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
-msgstr ""
+msgstr "推-从本地到远程。拉-从远程到本地。"
 
 #: system/models.py:527
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "启用主目录"
+msgstr "目录递归"
 
 #: system/models.py:531
 msgid "Times"
 msgstr "耗时"
 
 #: system/models.py:532
+#, fuzzy
 msgid "Preserve modification times"
-msgstr ""
+msgstr "保留修改次数"
 
 #: system/models.py:536
 msgid "Compress"
@@ -4715,11 +4709,11 @@ msgstr "删除"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "删除接收方中在发送方已不存在的文件。"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "屏蔽无错信息"
 
 #: system/models.py:557
 #, fuzzy
@@ -4740,7 +4734,7 @@ msgstr "保留扩展属性"
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
-msgstr ""
+msgstr "该选项将同步更新远程（主机）扩展属性与本地一致。"
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
@@ -4755,14 +4749,12 @@ msgid "Rsync Tasks"
 msgstr "Rsync 任务"
 
 #: system/models.py:756
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T.测试"
 
 #: system/models.py:757
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. 设置"
+msgstr "S.M.A.R.T.测试列表"
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
@@ -4809,24 +4801,22 @@ msgid "The uploaded file is not valid."
 msgstr "上传文件无效。"
 
 #: system/views.py:239
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Root连接密码"
+msgstr "正在处理重启"
 
 #: system/views.py:264
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "关机"
+msgstr "正在处理关机"
 
 #: system/views.py:297
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "测试消息来自"
+msgstr "来自 %s 的测试消息"
 
 #: system/views.py:299
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "这是一个信息测试来自"
+msgstr "这是一个来自 %s 的消息测试"
 
 #: system/views.py:302
 #, python-format
@@ -4847,7 +4837,7 @@ msgstr "全部展开"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr ""
+msgstr "折叠全部"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -4891,9 +4881,8 @@ msgid "Delete Group"
 msgstr "删除组"
 
 #: templates/account/bsdgroups.html:51
-#, fuzzy
 msgid "There are no user defined groups."
-msgstr "组内暂无成员用户"
+msgstr "无用户定义组"
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
@@ -4939,14 +4928,12 @@ msgid "Change Admin Password"
 msgstr "改变管理员密码"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "传输模式"
+msgstr "基本模式"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "高级"
+msgstr "高级模式"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5010,7 +4997,7 @@ msgstr "变更成功!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
@@ -5018,13 +5005,12 @@ msgstr "正在运行进程"
 
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
-#, fuzzy
 msgid "Loading..."
-msgstr "正在重启系统..."
+msgstr "加载..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
-msgstr "帮助 &  支持"
+msgstr "帮助 & 支持"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
@@ -5032,7 +5018,7 @@ msgstr "论坛"
 
 #: templates/freeadmin/index.html:59
 msgid "Community Forum"
-msgstr "FreeNAS社区论坛"
+msgstr "社区论坛"
 
 #: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
@@ -5573,12 +5559,11 @@ msgstr "无可用插件服务"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "插件jail中的所有文件将被永久删除。"
 
 #: templates/services/pluginsjail_edit.html:12
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "删除对应的文件存储"
+msgstr "删除插件 Jail"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5955,9 +5940,8 @@ msgid "No volumes defined"
 msgstr "未定义任何卷"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "卷"
+msgstr "需扩展的卷"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6333,17 +6317,14 @@ msgstr "设置选项时发生错误"
 msgid "Invalid service pack"
 msgstr "无效服务包"
 
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "添加计划任务"
+msgstr "查看计划任务列表"
 
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "查看磁盘"
+msgstr "查看同步任务列表"
 
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. 设置"
+msgstr "查看 S.M.A.R.T.测试列表"
 
 #, fuzzy
 msgid "View Sysctls"
@@ -6462,17 +6443,14 @@ msgstr ""
 "这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件"
 "中必须存在，但不必拥有登录权限。"
 
-#, fuzzy
 msgid "CIFS Share"
-msgstr "Unix下的共享"
+msgstr "CIFS 共享"
 
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "UNIX共享"
+msgstr "CIFS 共享列表"
 
-#, fuzzy
 msgid "NFS Share"
-msgstr "编辑NFS共享"
+msgstr "NFS共享"
 
 msgid "NTP server 2"
 msgstr "网络授时服务器 2"
