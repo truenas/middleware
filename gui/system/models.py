@@ -458,6 +458,12 @@ class Rsync(Model):
             verbose_name=_("Remote Host"),
             help_text=_("IP Address or hostname"),
             )
+    rsync_remoteport = models.SmallIntegerField(
+            default=22,
+            verbose_name=_("Remote SSH Port"),
+            help_text=_("SSH Port"),
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            )
     rsync_mode = models.CharField(
             max_length=20,
             choices=choices.RSYNC_MODE_CHOICES,

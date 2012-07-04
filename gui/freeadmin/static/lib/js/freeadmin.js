@@ -579,14 +579,18 @@
         var select = dijit.byId("id_rsync_mode");
         var modname = dijit.byId("id_rsync_remotemodule");
         var path = dijit.byId("id_rsync_remotepath");
+        var port = dijit.byId("id_rsync_remoteport");
         var trm = modname.domNode.parentNode.parentNode;
         var trp = path.domNode.parentNode.parentNode;
+        var trpo = port.domNode.parentNode.parentNode;
         if(select.get('value') == 'ssh') {
             dojo.style(trm, "display", "none");
             dojo.style(trp, "display", "table-row");
+            dojo.style(trpo, "display", "table-row");
         } else {
             dojo.style(trm, "display", "table-row");
             dojo.style(trp, "display", "none");
+            dojo.style(trpo, "display", "none");
         }
 
     }
