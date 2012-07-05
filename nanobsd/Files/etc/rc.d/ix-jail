@@ -132,6 +132,12 @@ plugins_jail_start()
 			LIMIT 1;
 			")
 
+			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
+			if [ -z ${jail_id} ]; then
+				logger -t ix-jail "Could not determine jail id (not running?)"
+				return 1
+			fi
+
 			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
 			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
 			defaultroute=$(netstat -rn | grep default|awk '{print $2}')
@@ -143,7 +149,6 @@ plugins_jail_start()
 			ifconfig ${epair} up
 			epairb=$(echo ${epair}|sed -E "s/([0-9])a$/\1b/g")
 			ifconfig ${bridge} addm ${epair} up
-			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
 			ifconfig ${epairb} vnet ${jail_id}
 			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
 			if [ -n "${defaultroute}" ]; then
