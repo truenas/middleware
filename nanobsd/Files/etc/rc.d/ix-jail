@@ -30,7 +30,6 @@ generate_plugins_jail_config()
 {
 	local IFS="|"
 	local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
-	local path name jid
 
 	grep -v "jail_" /etc/rc.conf > "${tmpfile}"
 
@@ -38,7 +37,6 @@ generate_plugins_jail_config()
 	SELECT
 		jail_path,
 		jail_name,
-		jail_jid,
 		plugins_path
 	FROM
 		services_pluginsjail
@@ -48,7 +46,7 @@ generate_plugins_jail_config()
 
 	LIMIT 1
 	" | \
-	while read -r path name jid plugins
+	while read -r path name plugins
 	do
 		local mntpath_plugins="${path}/${name}/mnt/plugins"
 		local mntpath_pbi="${path}/${name}/usr/pbi"
@@ -94,7 +92,7 @@ generate_plugins_jail_config()
 		jail_${name}_procfs_enable="YES"
 		jail_${name}_mount_enable="YES"
 		jail_${name}_vnet_enable="YES"
-		jail_${name}_flags="-l -U root -c persist jid=${jid}"
+		jail_${name}_flags="-l -U root -c persist"
 		jail_${name}_exec_afterstart0="ifconfig lo0 127.0.0.1"
 		jail_${name}_exec_start="/bin/sh /dev/null"
 		jail_sysvipc_allow="YES"

@@ -892,11 +892,6 @@ class PluginsJail(Model):
                     )
                 ]
             )
-    jail_jid = models.PositiveSmallIntegerField(
-            verbose_name=_("Jail ID number"),
-            unique=True,
-            default=1,
-            )
     jail_ipv4address = IPAddressField(
             verbose_name=_("Jail IP address"),
             )
