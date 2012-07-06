@@ -29,7 +29,6 @@ import datetime
 import logging
 import hashlib
 import os
-import re
 import sys
 
 from django import forms as dforms
@@ -38,14 +37,12 @@ from django.shortcuts import get_object_or_404, render
 from django.views import debug
 from django.conf import settings
 from django.template import (Context, TemplateDoesNotExist,
-    TemplateSyntaxError, RequestContext)
+    TemplateSyntaxError)
 from django.template.defaultfilters import force_escape, pprint
-from django.template.loader import (get_template, template_source_loaders,
-    render_to_string)
+from django.template.loader import get_template, template_source_loaders
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode
-from django.utils.importlib import import_module
 
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
@@ -119,8 +116,9 @@ class JsonResp(HttpResponse):
         data = dict()
 
         if self.type == 'page':
-            ctx = RequestContext(request, kwargs.pop('ctx', {}))
-            content = render_to_string(self.template, ctx)
+            pass
+            #ctx = RequestContext(request, kwargs.pop('ctx', {}))
+            #content = render_to_string(self.template, ctx)
         elif self.type == 'form':
             data.update({
                 'type': 'form',
@@ -283,21 +281,16 @@ class ExceptionReporter(debug.ExceptionReporter):
             self.loader_debug_info = []
             for loader in template_source_loaders:
                 try:
-                    module = import_module(loader.__module__)
-                    if hasattr(loader, '__class__'):
-                        source_list_func = loader.get_template_sources
-                    else: # NOTE: Remember to remove this branch when we deprecate old template loaders in 1.4
-                        source_list_func = module.get_template_sources
-                    # NOTE: This assumes exc_value is the name of the template that
-                    # the loader attempted to load.
+                    source_list_func = loader.get_template_sources
+                    # NOTE: This assumes exc_value is the name of the template
+                    # that the loader attempted to load.
                     template_list = [{'name': t, 'exists': os.path.exists(t)} \
                         for t in source_list_func(str(self.exc_value))]
                 except (ImportError, AttributeError):
                     template_list = []
-                if hasattr(loader, '__class__'):
-                    loader_name = loader.__module__ + '.' + loader.__class__.__name__
-                else: # NOTE: Remember to remove this branch when we deprecate old template loaders in 1.4
-                    loader_name = loader.__module__ + '.' + loader.__name__
+                loader_name = (loader.__module__
+                    + '.' +
+                    loader.__class__.__name__)
                 self.loader_debug_info.append({
                     'loader': loader_name,
                     'templates': template_list,
@@ -309,7 +302,9 @@ class ExceptionReporter(debug.ExceptionReporter):
         frames = self.get_traceback_frames()
         for i, frame in enumerate(frames):
             if 'vars' in frame:
-                frame['vars'] = [(k, force_escape(pprint(v))) for k, v in frame['vars']]
+                frame['vars'] = [
+                    (k, force_escape(pprint(v))) for k, v in frame['vars']
+                    ]
             frames[i] = frame
 
         unicode_hint = ''
@@ -318,7 +313,11 @@ class ExceptionReporter(debug.ExceptionReporter):
             end = getattr(self.exc_value, 'end', None)
             if start is not None and end is not None:
                 unicode_str = self.exc_value.args[1]
-                unicode_hint = smart_unicode(unicode_str[max(start-5, 0):min(end+5, len(unicode_str))], 'ascii', errors='replace')
+                unicode_hint = smart_unicode(
+                    unicode_str[max(start - 5, 0):min(end + 5,
+                        len(unicode_str))],
+                    'ascii',
+                    errors='replace')
         t = get_template("500_freenas.html")
         #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
         c = Context({
@@ -340,10 +339,12 @@ class ExceptionReporter(debug.ExceptionReporter):
         if self.exc_type:
             c['exception_type'] = self.exc_type.__name__
         if self.exc_value:
-            c['exception_value'] = smart_unicode(self.exc_value, errors='replace')
+            c['exception_value'] = smart_unicode(self.exc_value,
+                errors='replace')
         if frames:
             c['lastframe'] = frames[-1]
         return t.render(c)
+
 
 def server_error(request, *args, **kwargs):
     try:
@@ -357,16 +358,17 @@ def server_error(request, *args, **kwargs):
     except:
         return debug.technical_500_response(request, *sys.exc_info())
 
-"""
-Magic happens here
 
-We dynamically import the module based on app and model names
-passed as view argument
-
-From there we retrieve the ModelForm associated (which was discovered
-previously on the auto_generate process)
-"""
 def generic_model_add(request, app, model, mf=None):
+    """
+    Magic happens here
+
+    We dynamically import the module based on app and model names
+    passed as view argument
+
+    From there we retrieve the ModelForm associated (which was discovered
+    previously on the auto_generate process)
+    """
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
@@ -412,20 +414,32 @@ def generic_model_add(request, app, model, mf=None):
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
                 prefix = inlineopts.get("prefix")
-                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                _temp = __import__('%s.forms' % app,
+                    globals(),
+                    locals(),
+                    [inline],
+                    -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
                     'can_delete': False
                     }
-                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=0, **extrakw)
+                fset = inlineformset_factory(m, inline._meta.model,
+                    form=inline,
+                    extra=0,
+                    **extrakw)
                 try:
-                    formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(request.POST, prefix=prefix, instance=instance)
+                    fsname = 'formset_%s' % (
+                        inline._meta.model._meta.module_name,
+                        )
+                    formsets[fsname] = fset(request.POST,
+                        prefix=prefix,
+                        instance=instance)
                 except dforms.ValidationError:
                     pass
 
         for name, fs in formsets.items():
             for frm in fs.forms:
-                frm.parent  = mf
+                frm.parent = mf
             valid &= fs.is_valid()
 
         if valid:
@@ -435,16 +449,28 @@ def generic_model_add(request, app, model, mf=None):
                     fs.save()
                 events = []
                 if hasattr(mf, "done") and callable(mf.done):
-                    #FIXME: temporary workaround to do not change all MF to accept this arg
+                    # FIXME: temporary workaround to do not change all MF to
+                    # accept this arg
                     try:
                         mf.done(request=request, events=events)
                     except TypeError:
                         mf.done()
-                return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                return JsonResp(request, form=mf,
+                    formsets=formsets,
+                    message=_("%s successfully updated.") % (
+                        m._meta.verbose_name,
+                        ),
+                    events=events)
             except MiddlewareError, e:
-                return JsonResp(request, error=True, message=_("Error: %s") % str(e))
+                return JsonResp(request,
+                    error=True,
+                    message=_("Error: %s") % str(e))
             except ServiceFailed, e:
-                return JsonResp(request, error=True, message=_("The service failed to restart.") % m._meta.verbose_name)
+                return JsonResp(request,
+                    error=True,
+                    message=_("The service failed to restart.") % (
+                        m._meta.verbose_name,
+                        ))
         else:
             return JsonResp(request, form=mf, formsets=formsets)
 
@@ -459,25 +485,38 @@ def generic_model_add(request, app, model, mf=None):
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
                 prefix = inlineopts.get("prefix")
-                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                _temp = __import__('%s.forms' % app,
+                    globals(),
+                    locals(),
+                    [inline],
+                    -1)
                 inline = getattr(_temp, inline)
-                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
+                fset = inlineformset_factory(m, inline._meta.model,
+                    form=inline,
+                    extra=1,
+                    **extrakw)
                 fsname = 'formset_%s' % inline._meta.model._meta.module_name
                 formsets[fsname] = fset(prefix=prefix, instance=instance)
-                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
+                formsets[fsname].verbose_name = (
+                    inline._meta.model._meta.verbose_name
+                    )
 
     context.update({
         'form': mf,
         'formsets': formsets,
     })
 
-    template = "%s/%s_add.html" % (m._meta.app_label, m._meta.object_name.lower())
+    template = "%s/%s_add.html" % (
+        m._meta.app_label,
+        m._meta.object_name.lower(),
+        )
     try:
         get_template(template)
     except:
         template = 'freeadmin/generic_model_add.html'
 
     return render(request, template, context)
+
 
 def generic_model_view(request, app, model):
 
@@ -503,6 +542,7 @@ def generic_model_view(request, app, model):
     })
 
     return render(request, 'freeadmin/generic_model_view.html', context)
+
 
 def generic_model_datagrid(request, app, model):
 
@@ -555,12 +595,17 @@ def generic_model_datagrid(request, app, model):
     })
     return render(request, 'freeadmin/generic_model_datagrid.html', context)
 
+
 def generic_model_datagrid_json(request, app, model):
 
     def mycallback(app_name, model_name, attname, request, data):
 
         try:
-            _temp = __import__('%s.models' % app_name, globals(), locals(), [model_name], -1)
+            _temp = __import__('%s.models' % app_name,
+                globals(),
+                locals(),
+                [model_name],
+                -1)
         except ImportError:
             return True
 
@@ -575,6 +620,7 @@ def generic_model_datagrid_json(request, app, model):
 
     return datagrid_list(request, app, model, access_field_callback=mycallback)
 
+
 def generic_model_edit(request, app, model, oid, mf=None):
 
     try:
@@ -583,7 +629,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         raise
     m = getattr(_temp, model)
 
-    if request.GET.has_key("inline"):
+    if 'inline' in request.GET:
         inline = True
     else:
         inline = False
@@ -601,7 +647,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
 
     if m._admin.deletable is False:
         context.update({'deletable': False})
-    if request.GET.has_key("deletable") and not context.has_key("deletable"):
+    if 'deletable' in request.GET and 'deletable' not in context:
         context.update({'deletable': False})
 
     instance = get_object_or_404(m, pk=oid)
@@ -631,20 +677,32 @@ def generic_model_edit(request, app, model, oid, mf=None):
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
                 prefix = inlineopts.get("prefix")
-                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                _temp = __import__('%s.forms' % app,
+                    globals(),
+                    locals(),
+                    [inline],
+                    -1)
                 inline = getattr(_temp, inline)
                 extrakw = {
                     'can_delete': True,
                     }
-                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=0, **extrakw)
+                fset = inlineformset_factory(m, inline._meta.model,
+                    form=inline,
+                    extra=0,
+                    **extrakw)
                 try:
-                    formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(request.POST, prefix=prefix, instance=instance)
+                    fsname = 'formset_%s' % (
+                        inline._meta.model._meta.module_name,
+                        )
+                    formsets[fsname] = fset(request.POST,
+                        prefix=prefix,
+                        instance=instance)
                 except dforms.ValidationError:
                     pass
 
         for name, fs in formsets.items():
             for frm in fs.forms:
-                frm.parent  = mf
+                frm.parent = mf
             valid &= fs.is_valid()
 
         if valid:
@@ -654,19 +712,40 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     fs.save()
                 events = []
                 if hasattr(mf, "done") and callable(mf.done):
-                    #FIXME: temporary workaround to do not change all MF to accept this arg
+                    # FIXME: temporary workaround to do not change all MF to
+                    # accept this arg
                     try:
                         mf.done(request=request, events=events)
                     except TypeError:
                         mf.done()
-                if request.GET.has_key("iframe"):
-                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name)
+                if 'iframe' in request.GET:
+                    return JsonResp(request,
+                        form=mf,
+                        formsets=formsets,
+                        message=_("%s successfully updated.") % (
+                            m._meta.verbose_name,
+                            ))
                 else:
-                    return JsonResp(request, form=mf, formsets=formsets, message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
+                    return JsonResp(request,
+                        form=mf,
+                        formsets=formsets,
+                        message=_("%s successfully updated.") % (
+                            m._meta.verbose_name,
+                            ),
+                        events=events)
             except ServiceFailed, e:
-                return JsonResp(request, form=mf, error=True, message=_("The service failed to restart.") % m._meta.verbose_name, events=["serviceFailed(\"%s\")" % e.service])
+                return JsonResp(request,
+                    form=mf,
+                    error=True,
+                    message=_("The service failed to restart.") % (
+                        m._meta.verbose_name,
+                        ),
+                    events=["serviceFailed(\"%s\")" % e.service])
             except MiddlewareError, e:
-                return JsonResp(request, form=mf, error=True, message=_("Error: %s") % str(e))
+                return JsonResp(request,
+                    form=mf,
+                    error=True,
+                    message=_("Error: %s") % str(e))
         else:
             return JsonResp(request, form=mf, formsets=formsets)
 
@@ -682,32 +761,47 @@ def generic_model_edit(request, app, model, oid, mf=None):
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
                 prefix = inlineopts.get("prefix")
-                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                _temp = __import__('%s.forms' % app,
+                    globals(),
+                    locals(),
+                    [inline],
+                    -1)
                 inline = getattr(_temp, inline)
-                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
+                fset = inlineformset_factory(m, inline._meta.model,
+                    form=inline,
+                    extra=1,
+                    **extrakw)
                 fsname = 'formset_%s' % inline._meta.model._meta.module_name
                 formsets[fsname] = fset(prefix=prefix, instance=instance)
-                formsets[fsname].verbose_name = inline._meta.model._meta.verbose_name
+                formsets[fsname].verbose_name = (
+                    inline._meta.model._meta.verbose_name
+                    )
 
     context.update({
         'form': mf,
         'formsets': formsets,
     })
 
-    template = "%s/%s_edit.html" % (m._meta.app_label, m._meta.object_name.lower())
+    template = "%s/%s_edit.html" % (
+        m._meta.app_label,
+        m._meta.object_name.lower(),
+        )
     try:
         get_template(template)
     except:
         template = 'freeadmin/generic_model_edit.html'
 
-    if request.GET.has_key("iframe"):
-        resp = render(request, template, context, \
+    if 'iframe' in request.GET:
+        resp = render(request, template, context,
                 mimetype='text/html')
-        resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
+        resp.content = ("<html><body><textarea>"
+            + resp.content +
+            "</textarea></boby></html>")
         return resp
     else:
         return render(request, template, context, \
                 content_type='text/html')
+
 
 def generic_model_empty_formset(request, app, model):
 
@@ -725,12 +819,18 @@ def generic_model_empty_formset(request, app, model):
         _inline = inlineopts.get("form")
         prefix = inlineopts.get("prefix")
         if prefix == request.GET.get("fsname"):
-            _temp = __import__('%s.forms' % app, globals(), locals(), [_inline], -1)
+            _temp = __import__('%s.forms' % app,
+                globals(),
+                locals(),
+                [_inline],
+                -1)
             inline = getattr(_temp, _inline)
             break
 
     if inline:
-        fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1)
+        fset = inlineformset_factory(m, inline._meta.model,
+            form=inline,
+            extra=1)
         fsins = fset(prefix=prefix)
 
         return HttpResponse(fsins.empty_form.as_table())
@@ -749,10 +849,15 @@ def generic_model_delete(request, app, model, oid):
 
     try:
         if m._admin.delete_form_filter:
-            find = m.objects.filter(id=instance.id, **m._admin.delete_form_filter)
+            find = m.objects.filter(id=instance.id,
+                **m._admin.delete_form_filter)
             if find.count() == 0:
                 raise
-        _temp = __import__('%s.forms' % app, globals(), locals(), [m._admin.delete_form], -1)
+        _temp = __import__('%s.forms' % app,
+            globals(),
+            locals(),
+            [m._admin.delete_form],
+            -1)
         form = getattr(_temp, m._admin.delete_form)
     except:
         form = None
@@ -778,17 +883,24 @@ def generic_model_delete(request, app, model, oid):
                     form_i.done(events=events)
                 instance.delete()
                 return JsonResponse(
-                    message=_("%s successfully deleted.") % m._meta.verbose_name,
+                    message=_("%s successfully deleted.") % (
+                        m._meta.verbose_name,
+                        ),
                     events=events)
 
         else:
             instance.delete()
-            return JsonResponse(message=_("%s successfully deleted.") % m._meta.verbose_name)
+            return JsonResponse(message=_("%s successfully deleted.") % (
+                m._meta.verbose_name,
+                ))
     if form and form_i is None:
         form_i = form(instance=instance)
     if form:
         context.update({'form': form_i})
-    template = "%s/%s_delete.html" % (m._meta.app_label, m._meta.object_name.lower())
+    template = "%s/%s_delete.html" % (
+        m._meta.app_label,
+        m._meta.object_name.lower(),
+        )
     try:
         get_template(template)
     except:
