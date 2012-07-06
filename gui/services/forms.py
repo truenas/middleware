@@ -405,14 +405,26 @@ class UPSForm(ModelForm):
         self.fields['ups_port'].widget = forms.widgets.ComboBox()
         self.fields['ups_port'].choices = [(port, port) for port in ports]
         if self.data and self.data.get("ups_port"):
-            self.fields['ups_port'].choices.insert(0, (self.data.get("ups_port"), self.data.get("ups_port")))
+            self.fields['ups_port'].choices.insert(0,
+                (self.data.get("ups_port"), self.data.get("ups_port")))
         elif self.instance.id:
-            self.fields['ups_port'].choices.insert(0, (self.instance.ups_port, self.instance.ups_port))
+            self.fields['ups_port'].choices.insert(0,
+                (self.instance.ups_port, self.instance.ups_port))
 
     def clean_ups_identifier(self):
         ident = self.cleaned_data.get("ups_identifier")
         if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
-            raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \"_\"."))
+            raise forms.ValidationError(
+                _("Use alphanumeric characters, \".\", \"-\" and \"_\".")
+                )
+        return ident
+
+    def clean_ups_masterpwd(self):
+        ident = self.cleaned_data.get("ups_masterpwd")
+        if re.search(r'[ #]', ident, re.I):
+            raise forms.ValidationError(
+                _("Spaces or number signs are not allowed.")
+                )
         return ident
 
     def clean_ups_toemail(self):
@@ -424,10 +436,12 @@ class UPSForm(ModelForm):
                     invalids.append(e.strip())
 
             if len(invalids) > 0:
-                raise forms.ValidationError(ungettext_lazy('The email %(email)s is not valid',
-                    'The following emails are not valid: %(email)s', len(invalids)) % {
-                    'email': ", ".join(invalids),
-                    })
+                raise forms.ValidationError(ungettext_lazy(
+                    'The email %(email)s is not valid',
+                    'The following emails are not valid: %(email)s',
+                    len(invalids)) % {
+                        'email': ", ".join(invalids),
+                        })
         return email
 
     def save(self):

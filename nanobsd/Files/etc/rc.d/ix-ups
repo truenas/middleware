@@ -51,7 +51,7 @@ generate_upsmon()
 
 	    cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
-MONITOR ${ups_identifier} 1 upsmon ${ups_masterpwd} master
+MONITOR ${ups_identifier} 1 upsmon $(echo ${ups_masterpwd}|sed -E 's/([#$])/\\\1/g') master
 NOTIFYCMD "/usr/local/sbin/upssched"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
@@ -67,11 +67,12 @@ EOF
 generate_upsdusers()
 {
 
+    local IFS="|"
     local passwd=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
     "SELECT ups_masterpwd FROM services_ups ORDER BY -id LIMIT 1")
 	    cat <<EOF
 [upsmon]
-    password = ${passwd}
+    password = $(echo ${passwd}|sed -E 's/(["$#=])/\\\1/g')
     upsmon master
 
 EOF
