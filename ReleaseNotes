@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.2.0-BETA4
+Release Notes for FreeNAS 8.2.0-RC1
 
 *** IMPORTANT ***
 
@@ -95,14 +95,21 @@ etc).
 Errata
 ========================
 
-Starting and stopping the plugin jail multiple
-times repeatedly may cause the OS to panic.
-
 The plugin jail networking has been switched to VIMAGE, which
 requires bridging the plugin jail with an external interface.  On
 systems with multiple interfaces there is currently no way to
 specify which interface is used.  The current system chooses the interface
 with the default route.
+
+Changes since 8.2.0-BETA4:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Add HTTP error 404 redirection page.
 
 Changes since 8.2.0-BETA3:
 

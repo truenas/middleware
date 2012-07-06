@@ -119,7 +119,7 @@ SW_FEATURES="REPORTING DEBUG"
 NANO_LABEL="FreeNAS"
 
 # Version of the software.
-VERSION="8.2.0-BETA4"
+VERSION="8.2.0-RC1"
 
 # Image name, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386, see
 # nanobsd/freenas-common:last_orders().
