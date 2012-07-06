@@ -37,7 +37,7 @@ from freenasUI.freeadmin.views import adminInterface
 from freenasUI.freeadmin.navtree import navtree
 
 handler500 = 'freeadmin.views.server_error'
-handler404 = 'django.views.defaults.page_not_found'
+handler404 = 'freeadmin.views.page_not_found'
 
 navtree.prepare_modelforms()
 

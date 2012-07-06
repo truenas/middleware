@@ -32,7 +32,7 @@ import os
 import sys
 
 from django import forms as dforms
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.views import debug
 from django.conf import settings
@@ -357,6 +357,10 @@ def server_error(request, *args, **kwargs):
             raise
     except:
         return debug.technical_500_response(request, *sys.exc_info())
+
+
+def page_not_found(request, *args, **kwargs):
+    return HttpResponseRedirect('/')
 
 
 def generic_model_add(request, app, model, mf=None):
