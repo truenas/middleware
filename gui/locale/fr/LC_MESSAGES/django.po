@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-03-18 15:17+0200\n"
-"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2012-07-07 16:43+0200\n"
+"Last-Translator: wagga <wagga40@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -818,7 +818,7 @@ msgstr "Impossible de récupérer %(url)s : %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Une erreur est survenue lors de délinéarisation de %(url)s : %(error)s"
+msgstr "Une erreur est survenue lors de dé-sérialisation de %(url)s : %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -1129,7 +1129,7 @@ msgstr "Agrégations de liens"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr "Groupe LAGG de l'interface"
+msgstr "Groupe d'interface LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
