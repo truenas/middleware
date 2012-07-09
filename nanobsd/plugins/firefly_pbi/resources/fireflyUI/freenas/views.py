@@ -147,7 +147,11 @@ class JsonResponse(HttpResponse):
             kwargs['content'] = json.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
-            kwargs['content'] = "<html><body><textarea>"+json.dumps(data)+"</textarea></boby></html>"
+            kwargs['content'] = (
+                "<html><body><textarea>"
+                + json.dumps(data) +
+                "</textarea></body></html>"
+                )
         super(JsonResponse, self).__init__(*args, **kwargs)
 
     @staticmethod
