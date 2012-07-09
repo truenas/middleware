@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-01-31 09:31+0200\n"
-"Last-Translator: sing1209 <sing1209@hotmail.com>\n"
+"PO-Revision-Date: 2012-07-06 18:21+0200\n"
+"Last-Translator: pctine <kevinling@mail2000.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -48,13 +48,12 @@ msgstr "儲存"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "發生錯誤！"
+msgstr "發生錯誤"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
-msgstr "管理"
+msgstr "編輯"
 
 #: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
@@ -62,16 +61,15 @@ msgstr "磁碟管理"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "清除"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "磁碟管理"
+msgstr "抹除磁碟"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "請稍候"
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -92,7 +90,7 @@ msgid "Replace"
 msgstr "移轉"
 
 msgid "Disk Replacement"
-msgstr "磁碟移轉"
+msgstr "更換磁碟"
 
 msgid "Detach"
 msgstr "卸載"
