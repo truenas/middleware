@@ -1,8 +1,5 @@
 from subprocess import Popen, PIPE
 import json
-import os
-import re
-import sys
 import time
 import urllib2
 
@@ -19,7 +16,8 @@ from transmissionUI.freenas import forms, models, utils
 
 
 class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
-    def __init__(self, host, verbose=None, use_datetime=0, key=None, secret=None):
+    def __init__(self, host, verbose=None, use_datetime=0, key=None,
+            secret=None):
         jsonrpclib.jsonrpc.SafeTransport.__init__(self)
         self.verbose = verbose
         self._use_datetime = use_datetime
@@ -37,7 +35,10 @@ class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
         params['oauth_consumer_key'] = consumer.key
         params.update(moreparams)
 
-        req = oauth.Request(method='POST', url=url, parameters=params, body=body)
+        req = oauth.Request(method='POST',
+            url=url,
+            parameters=params,
+            body=body)
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         req.sign_request(signature_method, consumer, None)
         return req
@@ -147,7 +148,11 @@ class JsonResponse(HttpResponse):
             kwargs['content'] = json.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
-            kwargs['content'] = "<html><body><textarea>"+json.dumps(data)+"</textarea></boby></html>"
+            kwargs['content'] = (
+                "<html><body><textarea>"
+                + json.dumps(data) +
+                "</textarea></body></html>"
+                )
         super(JsonResponse, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -160,14 +165,17 @@ class JsonResponse(HttpResponse):
 
 
 def start(request):
-    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
+    (transmission_key,
+    transmission_secret) = utils.get_transmission_oauth_creds()
 
     url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    auth = server.plugins.is_authenticated(
+        request.COOKIES.get("sessionid", "")
+        )
     jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
@@ -179,13 +187,16 @@ def start(request):
         transmission = models.Transmission.objects.create(enable=True)
 
     try:
-        form = forms.TransmissionForm(transmission.__dict__, instance=transmission, jail=jail)
+        form = forms.TransmissionForm(transmission.__dict__,
+            instance=transmission,
+            jail=jail)
         form.is_valid()
         form.save()
     except ValueError:
         return HttpResponse(simplejson.dumps({
             'error': True,
-            'message': 'Transmission data did not validate, configure it first.',
+            'message': ('Transmission data did not validate, configure '
+                'it first.'),
             }), content_type='application/json')
 
     cmd = "%s onestart" % utils.transmission_control
@@ -200,13 +211,16 @@ def start(request):
 
 
 def stop(request):
-    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
+    (transmission_key,
+    transmission_secret) = utils.get_transmission_oauth_creds()
     url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    auth = server.plugins.is_authenticated(
+        request.COOKIES.get("sessionid", "")
+        )
     jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
@@ -218,7 +232,9 @@ def stop(request):
         transmission = models.Transmission.objects.create(enable=False)
 
     try:
-        form = forms.TransmissionForm(transmission.__dict__, instance=transmission, jail=jail)
+        form = forms.TransmissionForm(transmission.__dict__,
+            instance=transmission,
+            jail=jail)
         form.is_valid()
         form.save()
     except ValueError:
@@ -236,7 +252,8 @@ def stop(request):
 
 
 def edit(request):
-    transmission_key, transmission_secret = utils.get_transmission_oauth_creds()
+    (transmission_key,
+    transmission_secret) = utils.get_transmission_oauth_creds()
     url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=transmission_key,
         secret=transmission_secret)
@@ -253,9 +270,11 @@ def edit(request):
     try:
         server = jsonrpclib.Server(url, transport=trans)
         jail = json.loads(server.plugins.jail.info())[0]
-        auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+        auth = server.plugins.is_authenticated(
+            request.COOKIES.get("sessionid", "")
+            )
         assert auth
-    except Exception, e:
+    except Exception:
         raise
 
     if request.method == "GET":
@@ -273,7 +292,8 @@ def edit(request):
         jail=jail)
     if form.is_valid():
         form.save()
-        return JsonResponse(request, error=True, message="Transmission settings successfully saved.")
+        return JsonResponse(request, error=True,
+            message="Transmission settings successfully saved.")
 
     return JsonResponse(request, form=form)
 
@@ -310,7 +330,9 @@ def status(request):
     """
     pid = None
 
-    proc = Popen(["/usr/bin/pgrep", "transmission-daemon"], stdout=PIPE, stderr=PIPE)
+    proc = Popen(["/usr/bin/pgrep", "transmission-daemon"],
+        stdout=PIPE,
+        stderr=PIPE)
 
     stdout = proc.communicate()[0]
 
