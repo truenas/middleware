@@ -365,6 +365,18 @@ class CronJob(Model):
             default="1,2,3,4,5,6,7",
             verbose_name=_("Day of week"),
             )
+    cron_stdout = models.BooleanField(
+            default=True,
+            verbose_name=_("Redirect Stdout"),
+            help_text=_("Redirect the standard output to /dev/null. In other "
+                "words, disable output."),
+            )
+    cron_stderr = models.BooleanField(
+            default=False,
+            verbose_name=_("Redirect Stderr"),
+            help_text=_("Redirect the standard error output to /dev/null. In "
+                "other words, disable error output."),
+            )
     cron_enabled = models.BooleanField(
             default=True,
             verbose_name=_("Enabled"),
