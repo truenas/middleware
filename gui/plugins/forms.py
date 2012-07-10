@@ -165,8 +165,15 @@ class JailInfoForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        jp = cleaned_data['jail_path'] + "/"
-        pp = cleaned_data['plugins_path'] + "/"
+
+        if (
+                'jail_path' not in cleaned_data or
+                'plugins_path' not in cleaned_data or
+                'jail_name' not in cleaned_data
+                ):
+            return cleaned_data
+        jp = cleaned_data.get('jail_path') + "/"
+        pp = cleaned_data.get('plugins_path') + "/"
 
         if self.instance.id and notifier()._started_plugins_jail():
             self._errors['__all__'] = self.error_class([
@@ -174,10 +181,7 @@ class JailInfoForm(ModelForm):
             ])
             return cleaned_data
 
-        full_path = os.path.join(
-            cleaned_data['jail_path'],
-            cleaned_data.get('jail_name', ''),
-            )
+        full_path = os.path.join(jp, cleaned_data.get('jail_name'))
         if not self.instance.id and os.path.exists(full_path):
             self._errors['__all__'] = self.error_class([
                 _("The path %s already exists") % (full_path, ),
