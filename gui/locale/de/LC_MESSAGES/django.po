@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-06-21 17:05+0200\n"
+"PO-Revision-Date: 2012-07-09 17:06+0200\n"
 "Last-Translator: Aldaris <c.irro@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -1105,11 +1105,10 @@ msgid "Virtual Interface"
 msgstr "Virtuelle Schnittstelle"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Schnittstellennamen müssen vlanXX sein, wobei XX für eine Nummer steht. "
-"Beispiel: vlan0"
+"Schnittstellennamen müssen vlanXX heißen, wobei XX für eine Nummer steht. "
+"Beispiel: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1201,9 +1200,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG erfolgreich hinzugefügt"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Diese IP existiert bereits."
+msgstr "Diese IP-Adresse existiert bereits."
 
 # pbi sollte nicht übersetzt werden, da weder "Firmware" noch "Image" zutreffend ist: Andere Paketverwaltungen übersetzen das auch nicht, wie .rpm (Suse/Redhat) oder .deb (Debian/Ubuntu)
 # Ich schlage einheitliche Schreibweise in Großbuchstaben vor.
@@ -1242,17 +1240,15 @@ msgid "The full jail path cannot exceed 76 characters"
 msgstr "Der volle jail-Pfad darf nicht länger als 76 Zeichen sein."
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
-"Das Verzeichnis der Plugins darf nicht innerhalb eines Jail Verzeichnisses "
+"Das Verzeichnis der Plugins darf nicht innerhalb eines Jail-Verzeichnisses "
 "liegen."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
-"Das Verzeichnis der Plugins darf nicht innerhalb eines Jail Verzeichnisses "
+"Das Verzeichnis der Plugins darf nicht innerhalb eines Jail-Verzeichnisses "
 "liegen."
 
 #: plugins/forms.py:214 services/models.py:803
@@ -1265,9 +1261,8 @@ msgid "Jail IPv4 Address"
 msgstr "Jail IP Adresse"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Netzmaske (IPv4)"
+msgstr "Jail-Netzmaske (IPv4)"
 
 #: plugins/forms.py:228
 #, fuzzy
@@ -1282,11 +1277,11 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Eingebunden?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Die vollständige Pfadangabe darf nicht länger als 88 Zeichen sein."
 
 #: plugins/forms.py:336
 #, fuzzy, python-format
@@ -1324,9 +1319,8 @@ msgid "Version of the plugin"
 msgstr "Version des Plugins"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Plugin Version"
+msgstr "Plugin API-Version"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1355,6 +1349,7 @@ msgstr "Plugins Jail Verzeichnis"
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
 msgstr ""
+"Verzeichnis, in dem die Plugins nach der Installation gespeichert werden"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1364,7 +1359,7 @@ msgstr "Plugins"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Quelle"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1393,23 +1388,20 @@ msgid "Unable to remove plugin."
 msgstr "Plugin entfernen nicht möglich."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "Plugin erfolgreich aktualisiert."
+msgstr "Plugin erfolgreich aktualisiert"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "Plugin erfolgreich aktualisiert."
+msgstr "Plugin erfolgreich installiert"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
 msgstr ""
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s erfolgreich aktualisiert."
+msgstr "Jail erfolgreich importiert."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1649,9 +1641,8 @@ msgstr ""
 "Method gesetzt sind."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Das ist keine gültige Maske"
+msgstr "Das ist kein gültiges Netzwerk"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -2486,6 +2477,8 @@ msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Jail Namen können nur aus Buchstaben, Ziffern und Bindestrichen bestehen. "
+"Der Name darf nicht mit einem Bindestrich enden."
 
 #: services/models.py:821
 msgid "Jail IP address"
@@ -3800,14 +3793,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Verwende AFP3 Unix Rechte."
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Dateiberechtigung"
+msgstr "Standardmäßige Dateiberechtigung"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Verzeichnisberechtigung"
+msgstr "standardmäßige Verzeichnisberechtigung"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
@@ -4043,9 +4034,8 @@ msgstr ""
 "für weitere Details."
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Neustart des Dienstes ist fehlgeschlagen"
+msgstr "Der Neustart des SMART-Dienstes ist fehlgeschlagen."
 
 # im deutschen Oracle ZFS Handbuch werden die Begriffe nicht übersetzt
 #: storage/forms.py:679
