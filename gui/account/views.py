@@ -35,8 +35,12 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
 from freenasUI.account import forms, models
+from freenasUI.common.freenasldap import (FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
+from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
 from freenasUI.freeadmin.views import JsonResponse
+
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
@@ -44,30 +48,37 @@ def home(request):
         'focus_form': focus_form,
     })
 
+
 def bsduser(request):
 
-    bsduser_list = models.bsdUsers.objects.order_by("bsdusr_uid").select_related().filter(bsdusr_builtin=False)
-    bsduser_list_builtin = models.bsdUsers.objects.order_by("bsdusr_uid").select_related().filter(bsdusr_builtin=True)
+    bsduser_list = models.bsdUsers.objects.order_by(
+        "bsdusr_uid").select_related().filter(bsdusr_builtin=False)
+    bsduser_list_builtin = models.bsdUsers.objects.order_by(
+        "bsdusr_uid").select_related().filter(bsdusr_builtin=True)
 
     return render(request, 'account/bsdusers.html', {
         'bsduser_list': bsduser_list,
         'bsduser_list_builtin': bsduser_list_builtin,
     })
 
+
 def bsdgroup(request):
 
-    bsdgroup_list = models.bsdGroups.objects.order_by("bsdgrp_gid").filter(bsdgrp_builtin=False)
-    bsdgroup_list_builtin = models.bsdGroups.objects.order_by("bsdgrp_gid").filter(bsdgrp_builtin=True)
+    bsdgroup_list = models.bsdGroups.objects.order_by(
+        "bsdgrp_gid").filter(bsdgrp_builtin=False)
+    bsdgroup_list_builtin = models.bsdGroups.objects.order_by(
+        "bsdgrp_gid").filter(bsdgrp_builtin=True)
 
     return render_to_response('account/bsdgroups.html', {
         'bsdgroup_list': bsdgroup_list,
         'bsdgroup_list_builtin': bsdgroup_list_builtin,
     })
 
+
 def password_change(request):
 
     extra_context = {}
-    password_change_form=forms.PasswordChangeForm
+    password_change_form = forms.PasswordChangeForm
     passform = password_change_form(user=request.user)
 
     if request.method == 'POST':
@@ -92,13 +103,15 @@ def password_change(request):
                 del alert
                 events.append("loadalert()")
 
-            return JsonResponse(message=_("Password successfully updated."), events=events)
+            return JsonResponse(message=_("Password successfully updated."),
+                events=events)
 
     extra_context.update({
-        'form' : passform,
+        'form': passform,
         'inline': True,
         })
     return render(request, 'account/passform.html', extra_context)
+
 
 def user_change(request):
 
@@ -106,16 +119,18 @@ def user_change(request):
     changeform = forms.UserChangeForm(instance=request.user)
 
     if request.method == 'POST':
-        changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
+        changeform = forms.UserChangeForm(instance=request.user,
+            data=request.POST)
         if changeform.is_valid():
             changeform.save()
             return JsonResponse(message=_("Admin user successfully updated."))
 
     extra_context.update({
-        'form' : changeform,
+        'form': changeform,
         'inline': True,
         })
     return render(request, 'account/changeform.html', extra_context)
+
 
 def group2user_update(request, object_id):
     if request.method == 'POST':
@@ -126,9 +141,11 @@ def group2user_update(request, object_id):
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse('account_bsdgroup_members', kwargs={'object_id':object_id}),
-        'form' : f,
+        'url': reverse('account_bsdgroup_members',
+            kwargs={'object_id': object_id}),
+        'form': f,
     })
+
 
 def user2group_update(request, object_id):
     if request.method == 'POST':
@@ -139,14 +156,14 @@ def user2group_update(request, object_id):
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse('account_bsduser_groups', kwargs={'object_id':object_id}),
-        'form' : f,
+        'url': reverse('account_bsduser_groups',
+            kwargs={'object_id': object_id}),
+        'form': f,
     })
+
 
 def json_users(request, exclude=None):
 
-    from common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER
-    from common.freenasusers import FreeNAS_Users
     query = request.GET.get("q", None)
 
     json = {
@@ -160,7 +177,8 @@ def json_users(request, exclude=None):
     else:
         exclude = []
     idx = 1
-    for user in FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER):
+    for user in FreeNAS_Users(flags=FLAGS_DBINIT |
+            FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER):
         if idx > 50:
             break
         if (query == None or user.pw_name.startswith(query)) and \
@@ -173,10 +191,9 @@ def json_users(request, exclude=None):
             idx += 1
     return HttpResponse(simplejson.dumps(json, indent=3))
 
+
 def json_groups(request):
 
-    from common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
-    from common.freenasusers import FreeNAS_Groups
     query = request.GET.get("q", None)
 
     json = {
@@ -186,7 +203,8 @@ def json_groups(request):
     }
 
     idx = 1
-    for grp in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP):
+    for grp in FreeNAS_Groups(flags=FLAGS_DBINIT |
+            FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP):
         if idx > 50:
             break
         if query == None or grp.gr_name.startswith(query):
@@ -198,15 +216,16 @@ def json_groups(request):
             idx += 1
     return HttpResponse(simplejson.dumps(json, indent=3))
 
-"""
-Wrapper to login to do not allow login and redirect to
-shutdown, reboot or logout pages,
-instead redirect to /
-"""
+
 def login_wrapper(request, template_name='registration/login.html',
           redirect_field_name=REDIRECT_FIELD_NAME,
           authentication_form=AuthenticationForm,
           current_app=None, extra_context={}):
+    """
+    Wrapper to login to do not allow login and redirect to
+    shutdown, reboot or logout pages,
+    instead redirect to /
+    """
     extra_context.update({
         'sw_login_version': get_sw_login_version(),
         'sw_name': get_sw_name(),
@@ -215,8 +234,9 @@ def login_wrapper(request, template_name='registration/login.html',
           redirect_field_name=redirect_field_name,
           authentication_form=authentication_form,
           current_app=current_app, extra_context=extra_context)
-    if response.status_code in (301, 302) and response._headers.get('location', ('',''))[1] in (
-            reverse('system_reboot'), reverse('system_shutdown'), reverse('account_logout'),
+    if response.status_code in (301, 302) and response._headers.get('location',
+            ('', ''))[1] in (reverse('system_reboot'),
+                reverse('system_shutdown'), reverse('account_logout'),
             ):
         response._headers['location'] = ('Location', '/')
     elif request.user.is_authenticated():
