@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-05-21 10:22+0200\n"
-"Last-Translator: jeterovi <jozzybrac@gmail.com>\n"
+"PO-Revision-Date: 2012-07-05 21:28+0200\n"
+"Last-Translator: corsair28 <corsair28@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -466,15 +466,15 @@ msgstr "Dodaj Rsync modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "RSync preko SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Pritisni"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Povuci"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -502,10 +502,9 @@ msgid "Username"
 msgstr "Korisničko ime"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Obavezno polje. 30 znakova ili manje. Samo slova, brojevi i @/./+/-/_ "
+"Obavezno polje. 16 znakova ili manje. Samo slova, brojevi i . / - / _ "
 "znakovi."
 
 #: account/forms.py:226
@@ -590,7 +589,7 @@ msgstr "Naziv početnog direktorija mora početi s /mnt/"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Kosrisnik ne može imati članstvo u više od 64 grupa.   "
 
 #: account/forms.py:416 account/forms.py:653
 #, fuzzy
@@ -608,23 +607,21 @@ msgid "This field is required."
 msgstr "Ovo polje mora biti ispunjeno."
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Naziv početnog direktorija mora početi s /mnt/"
+msgstr ""
+"Naziv početnog direktorija mora početi sa /mnt/ ili mora biti /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
 msgstr ""
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Korisničko ime već postoji."
+msgstr "Grupa sa tim imenom već postoji."
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Korisničko ime već postoji."
+msgstr "Grupa sa tom GID već postoji."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -639,9 +636,8 @@ msgid "New password confirmation"
 msgstr "Potvrda nove zaporke"
 
 #: account/forms.py:887
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Promijeni zaporku"
+msgstr "Promijeni isto zaporku od root korisnika."
 
 #: account/forms.py:896
 msgid "Old password"
@@ -734,9 +730,8 @@ msgid "Account"
 msgstr ""
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Moj korisnički račun"
+msgstr "Račun administratora"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -782,7 +777,7 @@ msgstr "Staza mora biti unutar ishodišnog mjesta volumena"
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Greška: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
