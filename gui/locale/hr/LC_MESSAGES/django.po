@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-07-05 21:28+0200\n"
-"Last-Translator: corsair28 <corsair28@gmail.com>\n"
+"PO-Revision-Date: 2012-07-10 18:45+0200\n"
+"Last-Translator: Siljo <siljo22@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -460,9 +460,8 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Neposredan nezavisan test (samo za ATA modele)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
-msgstr "Dodaj Rsync modul"
+msgstr "Rsync modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -492,7 +491,7 @@ msgstr "Ime sadržava nedopušteni znak (%s)"
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše puno ime sadrži nevažeće znakove (% s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -532,9 +531,8 @@ msgid "Shell"
 msgstr "Komandna ljuska"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Onemogući prijavu"
+msgstr "Onemogući prijave lozinkom"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -542,7 +540,7 @@ msgstr "Zaključaj korisnika"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Napravi novi primarnu skupinu za korisnika"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -562,9 +560,8 @@ msgid "Auxiliary groups"
 msgstr "Dodatne grupe"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Korisničko ime već postoji."
+msgstr "Korisničko sa tim UID-om već postoji."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -583,9 +580,8 @@ msgid "The two password fields didn't match."
 msgstr "Dva polja za zaporku se ne podudaraju."
 
 #: account/forms.py:386
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Naziv početnog direktorija mora početi s /mnt/"
+msgstr "Naziv početnog direktorija mora početi s /mnt/ ili /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
@@ -598,7 +594,7 @@ msgstr "Naziv početnog direktorija mora početi s /mnt/"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Lozinka je onemogućena, ovo polje ostavite prazno"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -649,7 +645,7 @@ msgstr "Pogrešan unos stare zaporke. Ponovite unos stare zaporke."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Želite li izbrisati sve korisnike s ovom primarnom grupom?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
@@ -785,9 +781,9 @@ msgid "Add %s"
 msgstr "Dodaj %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Pregledaj sve %s"
+msgstr "Pregledaj %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -804,12 +800,12 @@ msgstr "Ugasi"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Prazne podatke vratio iz %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Ne mogu dohvatiti %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -859,27 +855,27 @@ msgstr "Mrežni adapter"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Ne možete konfigurirati više sučelja s iste IP adrese (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Morate navesti IPv4 adresu"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Morate izabrati IPv4 netmasku"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Morate navesti IPv6 adresu"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Morate odabrati IPv6 netmasku također"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Morate izabrati između IPv4 i IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
@@ -931,9 +927,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Mrežne kartice u LAGG modu"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fizički mrežni adapter"
+msgstr "LAGG Fizički NIC"
 
 #: network/forms.py:360
 #, python-format
@@ -1046,7 +1041,7 @@ msgstr "IPv6 adresa"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "IPv6 Prefiksna Dužina"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
@@ -1158,7 +1153,6 @@ msgid "Create Link Aggregation"
 msgstr "Kreiraj agregaciju mrežnih veza"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
 msgstr "Pregled svih mrežnih agregacija"
 
@@ -1167,32 +1161,33 @@ msgid "LAGG successfully added"
 msgstr "LAGG uspješno dodan"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Korisničko ime već postoji."
+msgstr "Ovaj IP je već u uporabi."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "Mjesto na koje privremeno postaviti PBI datoteku"
 
 #: plugins/forms.py:93
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
+"Sustav će koristiti ovo mjesto da privremeno pohrani PBI datoteku prije "
+"instalacije."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "PBI datoteka koje će se instalirati"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
 msgstr ""
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Korisničko ime već postoji."
+msgstr "Putanja %s već postoji"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
@@ -1230,26 +1225,26 @@ msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Montiran?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Puna putanja ne smije prelaziti 88 znakova"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Neuspješno regeneriranje predmemorije"
+msgstr "Putanja nije mogla biti montirana %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Neuspješno regeneriranje predmemorije"
+msgstr "Putanja nije mogla biti montirana% s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Ime dodatka"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
@@ -1265,11 +1260,11 @@ msgstr ""
 
 #: plugins/models.py:50
 msgid "Plugin version"
-msgstr ""
+msgstr "Verzija dodatka"
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "Verzija dodatka"
 
 #: plugins/models.py:57
 #, fuzzy
@@ -1283,7 +1278,7 @@ msgstr ""
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Dodatak omogućen"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
@@ -1308,11 +1303,11 @@ msgstr ""
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Dodaci"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Izvor"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1328,28 +1323,24 @@ msgid "Mount Points"
 msgstr ""
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s je uspješno promijenjen."
+msgstr "Dodatak je uspješno promijenjen."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "%s je uspješno obrisan."
+msgstr "Dodatak je uspješno uklonjen."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
 msgstr ""
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "%s je uspješno promijenjen."
+msgstr "Dodatak je uspješno promijenjen."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "%s je uspješno promijenjen."
+msgstr "Dodatak je uspješno instaliran."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
@@ -1374,9 +1365,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Ovo polje je obavezno za \"Korisničke mape\"."
 
 #: services/forms.py:106
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Neuspješno pokretanje NFS servisa."
+msgstr "CIFS servis se nije uspio učitati."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1387,9 +1377,8 @@ msgid "The NFS service failed to reload."
 msgstr "Neuspješno pokretanje NFS servisa."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Korisničko ime već postoji."
+msgstr "Ova IP adresa već postoji."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1443,9 +1432,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Ime ne može sadržavati kosu crtu ili zatvorenu uglatu zagradu."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Promijeni zaporku"
+msgstr "Potvrdi lozinku"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1453,17 +1441,19 @@ msgstr "Neuspješno pokretanje DynamicDNS servisa."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr ""
+msgstr "Ovo nije valjana e-mail adresa"
 
 #: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Kontakt mora sadržavati samo alfanumeričke znakove, _, - ili valjanu e-mail "
+"adresu"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Zajednica mora sadržavati samo alfanumeričke znakove, _ ili -"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1476,7 +1466,7 @@ msgstr ""
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Koristite alfanumeričke znakove,, \".\" \"-\" I \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -1487,13 +1477,12 @@ msgstr[1] ""
 msgstr[2] ""
 
 #: services/forms.py:437
-#, fuzzy
 msgid "The UPS service failed to reload."
 msgstr "Neuspješno pokretanje NFS servisa."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
-msgstr ""
+msgstr "Potvrdi administratorsku lozinku"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1649,7 +1638,7 @@ msgstr "Broj autentifikacijske grupe"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Koristite alfanumeričke znakove, \"-\" i \".\" \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -2019,7 +2008,7 @@ msgstr ""
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI početni parametar (16 po zadanom)."
 
 #: services/models.py:311
 msgid "First burst length"
@@ -2027,7 +2016,7 @@ msgstr ""
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI početni parametar (65536 po zadanom)."
 
 #: services/models.py:317
 msgid "Max burst length"
@@ -2035,7 +2024,7 @@ msgstr ""
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI početni parametar (262144 po zadanom)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
@@ -2059,7 +2048,7 @@ msgstr ""
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr ""
+msgstr "Omogući LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
@@ -6063,9 +6052,9 @@ msgid "Replace Disk"
 msgstr "Zamijenjujem disk"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Kreiraj ZFS particiju"
+msgstr "Kreiraj ZFS particiju na %(name)s"
 
 #: templates/storage/zvols.html:6
 msgid "Add ZFS Volume"
@@ -6409,9 +6398,8 @@ msgstr "Traka"
 msgid "Pass"
 msgstr "Prolaz"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Nova zaporka"
+msgstr "Onemogući lozinku"
 
 msgid "View All Users"
 msgstr "Pregled svih korisnika"
