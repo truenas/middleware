@@ -534,7 +534,7 @@ class DFPlugin(RRDBase):
 class UptimePlugin(RRDBase):
 
     title = "Uptime"
-    vertical_label = "Bytes"
+    vertical_label = "Minutes"
 
     def graph(self):
 
