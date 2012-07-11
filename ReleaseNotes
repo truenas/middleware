@@ -111,6 +111,11 @@ GUI
 
 1. Add HTTP error 404 redirection page.
 
+OS/Third party
+------------------------
+
+1. Fix lagg to work with bridged networking.
+
 Changes since 8.2.0-BETA3:
 
 Enhancements
