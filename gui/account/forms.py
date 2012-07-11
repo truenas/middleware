@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import os
 
 from django.core.urlresolvers import reverse
@@ -37,6 +38,8 @@ from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
+
+log = logging.getLogger('account.forms')
 
 
 class bsdUserGroupMixin:
@@ -404,8 +407,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     def clean(self):
         cleaned_data = self.cleaned_data
 
-        locked = cleaned_data["bsdusr_locked"] = \
-                cleaned_data.get("bsdusr_locked", False)
+        #locked = cleaned_data["bsdusr_locked"] = \
+        #        cleaned_data.get("bsdusr_locked", False)
         password_disable = cleaned_data["bsdusr_password_disabled"] = \
                 cleaned_data.get("bsdusr_password_disabled", False)
         bsdusr_home = cleaned_data.get('bsdusr_home', '')
