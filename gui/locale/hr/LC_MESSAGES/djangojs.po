@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-05-21 10:22+0200\n"
-"Last-Translator: jeterovi <jozzybrac@gmail.com>\n"
+"PO-Revision-Date: 2012-07-10 13:02+0200\n"
+"Last-Translator: Siljo <siljo22@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Izvješća"
+msgstr "Izvještavanje"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -49,7 +49,6 @@ msgstr "Pohrana"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
 msgstr "Došlo je do pogreške!"
 
@@ -63,12 +62,11 @@ msgstr "Uredi disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Brisanje"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Uredi disk"
+msgstr "Obriši Disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
