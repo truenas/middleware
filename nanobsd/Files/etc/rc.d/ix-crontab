@@ -42,7 +42,7 @@ generate_crontab()
 	"SELECT $sf FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		rsync_command=$(
-			echo -n "lockf -s -t 0 -k /mnt rsync "
+			echo -n "lockf -s -t 0 -k ${rsync_path} rsync "
 
 			if [ ${rsync_recursive} -gt 0 ]; then
 				echo -n "-r "
