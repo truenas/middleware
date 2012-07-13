@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-07-03 05:59+0200\n"
+"PO-Revision-Date: 2012-07-13 05:03+0200\n"
 "Last-Translator: phome <phome@tut.by>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -2990,7 +2990,7 @@ msgstr "差异"
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
-msgstr ""
+msgstr "报告温度自上一次报告后最少有 N 摄氏度的变化。0 为禁用。"
 
 #: services/models.py:1475
 msgid "Informal"
@@ -3025,7 +3025,7 @@ msgstr "控制服务"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr ""
+msgstr "设备扩展"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
@@ -3272,7 +3272,7 @@ msgstr "只读操作"
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
-msgstr ""
+msgstr "允许指定的用户和组对该共享拥有只读权限。该列表包含白名单。"
 
 #: sharing/models.py:155
 msgid "Read-write Access"
@@ -3465,6 +3465,7 @@ msgstr "只读"
 msgid "Export the share read only. Writes are not permitted."
 msgstr "此共享为只读，无法写入"
 
+# where is it use for?
 #: sharing/models.py:281 system/models.py:552
 #, fuzzy
 msgid "Quiet"
@@ -4607,14 +4608,12 @@ msgid "Short description"
 msgstr "摘要"
 
 #: system/models.py:374
-#, fuzzy
 msgid "Cron Job"
-msgstr "添加计划任务"
+msgstr "计划任务"
 
 #: system/models.py:375
-#, fuzzy
 msgid "Cron Jobs"
-msgstr "添加计划任务"
+msgstr "计划任务列表"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
@@ -5235,23 +5234,20 @@ msgid "Install Plugin"
 msgstr "安装插件"
 
 #: templates/plugins/index.html:31
-#, fuzzy
 msgid "Info"
-msgstr "标准"
+msgstr "信息"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
 msgstr "插件信息"
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "编辑磁盘"
+msgstr "编辑插件"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
-#, fuzzy
 msgid "Delete plugin"
-msgstr "删除复制"
+msgstr "删除插件"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
