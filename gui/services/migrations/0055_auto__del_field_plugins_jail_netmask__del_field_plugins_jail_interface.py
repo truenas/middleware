@@ -19,15 +19,9 @@ class Migration(SchemaMigration):
         # Changing field 'Plugins.jail_ip'
         db.alter_column('services_plugins', 'jail_ip_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['network.Alias']))
 
-        # Adding index on 'Plugins', fields ['jail_ip']
-        db.create_index('services_plugins', ['jail_ip_id'])
-
 
     def backwards(self, orm):
         
-        # Removing index on 'Plugins', fields ['jail_ip']
-        db.delete_index('services_plugins', ['jail_ip_id'])
-
         # Adding field 'Plugins.jail_netmask'
         db.add_column('services_plugins', 'jail_netmask', self.gf('django.db.models.fields.IPAddressField')(default='', max_length=15, blank=True), keep_default=False)
 

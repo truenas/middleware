@@ -21,15 +21,9 @@ class Migration(SchemaMigration):
         # Changing field 'iSCSITarget.iscsi_target_initiatorgroup'
         db.alter_column('services_iscsitarget', 'iscsi_target_initiatorgroup_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['services.iSCSITargetAuthorizedInitiator']))
 
-        # Adding index on 'iSCSITarget', fields ['iscsi_target_initiatorgroup']
-        db.create_index('services_iscsitarget', ['iscsi_target_initiatorgroup_id'])
-
 
     def backwards(self, orm):
         
-        # Removing index on 'iSCSITarget', fields ['iscsi_target_initiatorgroup']
-        db.delete_index('services_iscsitarget', ['iscsi_target_initiatorgroup_id'])
-
         # Removing index on 'iSCSITarget', fields ['iscsi_target_portalgroup']
         db.delete_index('services_iscsitarget', ['iscsi_target_portalgroup_id'])
 

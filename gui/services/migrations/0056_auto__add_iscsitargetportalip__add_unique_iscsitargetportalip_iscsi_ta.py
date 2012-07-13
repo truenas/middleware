@@ -2,7 +2,7 @@
 import datetime
 import re
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 import ipaddr
 
@@ -29,7 +29,7 @@ def validate_listen(value):
             raise ValueError
     raise ValueError
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         

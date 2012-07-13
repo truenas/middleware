@@ -7,7 +7,7 @@ from django.db import models
 
 from libxml2 import parseDoc
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 
 def geom_confxml():
     sysctl_proc = Popen(['sysctl', '-b', 'kern.geom.confxml'], stdout=PIPE)
@@ -83,7 +83,7 @@ def identifier_to_device(ident):
         raise NotImplementedError
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
