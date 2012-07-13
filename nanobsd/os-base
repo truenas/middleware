@@ -158,7 +158,7 @@ add_port archivers/lzo2
 add_port security/openvpn
 add_port converters/libiconv
 #+editors/nano || converters/iconv
-add_port lang/perl5.12
+add_port lang/perl5.14
 #-editors/nano || converters/iconv
 add_port converters/iconv
 add_port devel/gettext
