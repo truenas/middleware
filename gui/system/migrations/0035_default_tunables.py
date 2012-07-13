@@ -125,7 +125,7 @@ class Migration(DataMigration):
             'cron_hour': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
             'cron_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
             'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
-            'cron_user': ('freeadmin.models.UserField', [], {'max_length': '60'}),
+            'cron_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'system.email': {
@@ -165,7 +165,7 @@ class Migration(DataMigration):
             'rsync_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
             'rsync_mode': ('django.db.models.fields.CharField', [], {'default': "'module'", 'max_length': '20'}),
             'rsync_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
-            'rsync_path': ('freeadmin.models.PathField', [], {'max_length': '255'}),
+            'rsync_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'rsync_preserveattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_preserveperm': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -174,7 +174,7 @@ class Migration(DataMigration):
             'rsync_remotemodule': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'rsync_remotepath': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_user': ('freeadmin.models.UserField', [], {'max_length': '60'})
+            'rsync_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'})
         },
         'system.settings': {
             'Meta': {'object_name': 'Settings'},

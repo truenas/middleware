@@ -27,7 +27,7 @@
 
 from django.conf.urls.defaults import patterns, url
 
-urlpatterns = patterns('network.views',
+urlpatterns = patterns('freenasUI.network.views',
     url(r'^home/$', 'network', name='network_home'),
     url(r'^lagg/$', 'lagg', name='network_lagg'),
     url(r'^summary/$', 'summary', name='network_summary'),

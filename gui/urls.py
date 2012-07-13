@@ -36,8 +36,8 @@ from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
 from freenasUI.freeadmin.navtree import navtree
 
-handler500 = 'freeadmin.views.server_error'
-handler404 = 'freeadmin.views.page_not_found'
+handler500 = 'freenasUI.freeadmin.views.server_error'
+handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
 navtree.prepare_modelforms()
 
@@ -59,15 +59,15 @@ urlpatterns = patterns('',
         {'document_root': os.path.abspath(os.path.dirname(__file__) + '/dojango/')}),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
     (r'^dojangogrid/', include('dojango.urls')),
-    (r'^admin/', include('freeadmin.urls')),
-    (r'^account/', include('account.urls')),
-    (r'^system/', include('system.urls')),
-    (r'^network/', include('network.urls')),
-    (r'^storage/', include('storage.urls')),
-    (r'^sharing/', include('sharing.urls')),
-    (r'^services/', include('services.urls')),
-    (r'^plugins/', include('plugins.urls')),
-    (r'^reporting/', include('reporting.urls')),
+    (r'^admin/', include('freenasUI.freeadmin.urls')),
+    (r'^account/', include('freenasUI.account.urls')),
+    (r'^system/', include('freenasUI.system.urls')),
+    (r'^network/', include('freenasUI.network.urls')),
+    (r'^storage/', include('freenasUI.storage.urls')),
+    (r'^sharing/', include('freenasUI.sharing.urls')),
+    (r'^services/', include('freenasUI.services.urls')),
+    (r'^plugins/', include('freenasUI.plugins.urls')),
+    (r'^reporting/', include('freenasUI.reporting.urls')),
     )
 
 urlpatterns += staticfiles_urlpatterns()

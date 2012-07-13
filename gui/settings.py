@@ -173,16 +173,16 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'freeadmin',
+    'freenasUI.freeadmin',
     'south',
     'dojango',
-    'account',
-    'system',
-    'network',
-    'storage',
-    'sharing',
-    'services',
-    'plugins',
+    'freenasUI.account',
+    'freenasUI.system',
+    'freenasUI.network',
+    'freenasUI.storage',
+    'freenasUI.sharing',
+    'freenasUI.services',
+    'freenasUI.plugins',
 )
 
 BLACKLIST_NAV = (
@@ -218,7 +218,7 @@ LOGGING = {
         },
         'syslog': {
             'level': 'DEBUG',
-            'class': 'freeadmin.handlers.SysLogHandler',
+            'class': 'freenasUI.freeadmin.handlers.SysLogHandler',
             'formatter': 'simple',
         }
     },

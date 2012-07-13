@@ -26,8 +26,12 @@
 #
 
 import argparse
+import os
 import sys
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(HERE, ".."))
+sys.path.append(os.path.join(HERE, "../.."))
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 

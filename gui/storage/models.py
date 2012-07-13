@@ -35,7 +35,7 @@ from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
-from freeadmin.models import Model
+from freenasUI.freeadmin.models import Model
 
 
 class Volume(Model):

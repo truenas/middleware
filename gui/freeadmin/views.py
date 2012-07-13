@@ -375,7 +375,7 @@ def generic_model_add(request, app, model, mf=None):
     """
 
     try:
-        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(), [model], -1)
     except ImportError:
         raise
 
@@ -525,7 +525,8 @@ def generic_model_add(request, app, model, mf=None):
 def generic_model_view(request, app, model):
 
     try:
-        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
+            [model], -1)
     except ImportError:
         raise
 
@@ -551,7 +552,8 @@ def generic_model_view(request, app, model):
 def generic_model_datagrid(request, app, model):
 
     try:
-        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
+            [model], -1)
     except ImportError:
         raise
 
@@ -605,7 +607,7 @@ def generic_model_datagrid_json(request, app, model):
     def mycallback(app_name, model_name, attname, request, data):
 
         try:
-            _temp = __import__('%s.models' % app_name,
+            _temp = __import__('freenasUI.%s.models' % app_name,
                 globals(),
                 locals(),
                 [model_name],
@@ -628,7 +630,8 @@ def generic_model_datagrid_json(request, app, model):
 def generic_model_edit(request, app, model, oid, mf=None):
 
     try:
-        _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
+        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
+            [model], -1)
     except ImportError:
         raise
     m = getattr(_temp, model)

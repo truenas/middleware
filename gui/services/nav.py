@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from . import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models as pmodels
-from freeadmin.tree import TreeNode
+from freenasUI.freeadmin.tree import TreeNode
 
 NAME = _('Services')
 BLACKLIST = ['services', 'iSCSITargetPortalIP', 'RPCToken']

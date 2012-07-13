@@ -16,8 +16,8 @@ class Migration(SchemaMigration):
             ('rsyncmod_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('rsyncmod_mode', self.gf('django.db.models.fields.CharField')(default='rw', max_length=120)),
             ('rsyncmod_maxconn', self.gf('django.db.models.fields.IntegerField')(default=0)),
-            ('rsyncmod_user', self.gf('freeadmin.models.UserField')(default='nobody', max_length=120, blank=True)),
-            ('rsyncmod_group', self.gf('freeadmin.models.GroupField')(default='nobody', max_length=120, blank=True)),
+            ('rsyncmod_user', self.gf('freenasUI.freeadmin.models.UserField')(default='nobody', max_length=120, blank=True)),
+            ('rsyncmod_group', self.gf('freenasUI.freeadmin.models.GroupField')(default='nobody', max_length=120, blank=True)),
             ('rsyncmod_hostsallow', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('rsyncmod_hostsdeny', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('rsyncmod_auxiliary', self.gf('django.db.models.fields.TextField')(blank=True)),
@@ -46,7 +46,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'AFP'},
             'afp_srv_ddp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
+            'afp_srv_guest_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
@@ -63,7 +63,7 @@ class Migration(SchemaMigration):
             'cifs_srv_doscharset': ('django.db.models.fields.CharField', [], {'default': "'CP437'", 'max_length': '120'}),
             'cifs_srv_easupport': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_filemask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'cifs_srv_guest': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'}),
+            'cifs_srv_guest': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'}),
             'cifs_srv_guestok': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_guestonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_homedir': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': "orm['storage.MountPoint']", 'null': 'True', 'blank': 'True'}),
@@ -234,14 +234,14 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsyncmod_group': ('freeadmin.models.GroupField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'}),
+            'rsyncmod_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'}),
             'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'default': "'rw'", 'max_length': '120'}),
             'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsyncmod_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'rsyncmod_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'})
+            'rsyncmod_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'})
         },
         'services.services': {
             'Meta': {'object_name': 'services'},
@@ -283,7 +283,7 @@ class Migration(SchemaMigration):
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'tftp_port': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'tftp_username': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'})
+            'tftp_username': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'})
         },
         'services.ups': {
             'Meta': {'object_name': 'UPS'},

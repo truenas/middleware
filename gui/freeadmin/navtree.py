@@ -36,7 +36,7 @@ from django.http import Http404
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-from freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
+from freenasUI.freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
     unserialize_tree)
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
@@ -196,7 +196,7 @@ class NavTree(object):
                 continue
 
             # Thats the root node for the app tree menu
-            nav = TreeRoot(app)
+            nav = TreeRoot(app.split(".")[-1])
 
             modnav = self._get_module(app, 'nav')
             if hasattr(modnav, 'BLACKLIST'):
@@ -243,12 +243,13 @@ class NavTree(object):
 
                 modname = '%s.models' % app
                 for c in dir(modmodels):
+
                     model = getattr(modmodels, c)
                     try:
-                        if not issubclass(model, models.Model) or \
-                            model._meta.app_label != app:
+                        if issubclass(model, models.Model) and \
+                            model._meta.app_label == app:
                             continue
-                    except TypeError:
+                    except TypeError, e:
                         continue
 
                     if c in BLACKLIST:

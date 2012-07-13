@@ -1,4 +1,4 @@
-from freeadmin.tree import TreeNode
+from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models
 

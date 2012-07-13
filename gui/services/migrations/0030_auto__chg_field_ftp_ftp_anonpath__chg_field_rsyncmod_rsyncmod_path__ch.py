@@ -11,7 +11,7 @@ class Migration(DataMigration):
         # Renaming column for 'FTP.ftp_anonpath' to match new field type.
         db.rename_column('services_ftp', 'ftp_anonpath_id', 'ftp_anonpath')
         # Changing field 'FTP.ftp_anonpath'
-        db.alter_column('services_ftp', 'ftp_anonpath', self.gf('freeadmin.models.PathField')(max_length=255, blank=True))
+        db.alter_column('services_ftp', 'ftp_anonpath', self.gf('freenasUI.freeadmin.models.PathField')(max_length=255, blank=True))
 
         for obj in orm.FTP.objects.all():
             mpid =obj.ftp_anonpath
@@ -21,12 +21,12 @@ class Migration(DataMigration):
                 obj.save()
 
         # Changing field 'RsyncMod.rsyncmod_path'
-        db.alter_column('services_rsyncmod', 'rsyncmod_path', self.gf('freeadmin.models.PathField')(max_length=255))
+        db.alter_column('services_rsyncmod', 'rsyncmod_path', self.gf('freenasUI.freeadmin.models.PathField')(max_length=255))
 
         # Renaming column for 'CIFS.cifs_srv_homedir' to match new field type.
         db.rename_column('services_cifs', 'cifs_srv_homedir_id', 'cifs_srv_homedir')
         # Changing field 'CIFS.cifs_srv_homedir'
-        db.alter_column('services_cifs', 'cifs_srv_homedir', self.gf('freeadmin.models.PathField')(max_length=255, blank=True))
+        db.alter_column('services_cifs', 'cifs_srv_homedir', self.gf('freenasUI.freeadmin.models.PathField')(max_length=255, blank=True))
 
         for obj in orm.CIFS.objects.all():
             mpid = obj.cifs_srv_homedir
@@ -67,7 +67,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'AFP'},
             'afp_srv_ddp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
+            'afp_srv_guest_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
@@ -84,10 +84,10 @@ class Migration(DataMigration):
             'cifs_srv_doscharset': ('django.db.models.fields.CharField', [], {'default': "'CP437'", 'max_length': '120'}),
             'cifs_srv_easupport': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_filemask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'cifs_srv_guest': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'}),
+            'cifs_srv_guest': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'}),
             'cifs_srv_guestok': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_guestonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'cifs_srv_homedir': ('freeadmin.models.PathField', [], {'max_length': '255', 'blank': 'True'}),
+            'cifs_srv_homedir': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255', 'blank': 'True'}),
             'cifs_srv_homedir_browseable_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_homedir_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_largerw': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -115,7 +115,7 @@ class Migration(DataMigration):
         },
         'services.ftp': {
             'Meta': {'object_name': 'FTP'},
-            'ftp_anonpath': ('freeadmin.models.PathField', [], {'max_length': '255', 'blank': 'True'}),
+            'ftp_anonpath': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255', 'blank': 'True'}),
             'ftp_anonuserbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_anonuserdlbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_banner': ('django.db.models.fields.TextField', [], {'max_length': '120', 'blank': 'True'}),
@@ -255,14 +255,14 @@ class Migration(DataMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsyncmod_group': ('freeadmin.models.GroupField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'}),
+            'rsyncmod_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'}),
             'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'default': "'rw'", 'max_length': '120'}),
             'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsyncmod_path': ('freeadmin.models.PathField', [], {'max_length': '255'}),
-            'rsyncmod_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'})
+            'rsyncmod_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
+            'rsyncmod_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'})
         },
         'services.services': {
             'Meta': {'object_name': 'services'},
@@ -304,7 +304,7 @@ class Migration(DataMigration):
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'tftp_port': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'tftp_username': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'})
+            'tftp_username': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'})
         },
         'services.ups': {
             'Meta': {'object_name': 'UPS'},

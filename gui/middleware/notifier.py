@@ -85,7 +85,7 @@ from freenasUI.common.pbi import (pbi_add, pbi_delete,
     PBI_MAKEPATCH_FLAGS_NOCHECKSIG, PBI_PATCH_FLAGS_OUTDIR,
     PBI_PATCH_FLAGS_NOCHECKSIG)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
-from middleware import zfs
+from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 

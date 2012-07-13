@@ -27,9 +27,7 @@
 
 from django.conf.urls.defaults import patterns, url
 
-# Active FreeNAS URLs
-
-urlpatterns = patterns('storage.views',
+urlpatterns = patterns('freenasUI.storage.views',
     url(r'^home/$', 'home', name="storage_home"),
     url(r'^tasks/$', 'tasks', name="storage_tasks"),
     url(r'^volumes/$', 'volumes', name="storage_volumes"),

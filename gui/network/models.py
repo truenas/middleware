@@ -32,7 +32,7 @@ from django.db import models
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField,\
                                              IP6AddressField, IPNetworkField
-from freeadmin.models import Model
+from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
 ## Network|Global Configuration

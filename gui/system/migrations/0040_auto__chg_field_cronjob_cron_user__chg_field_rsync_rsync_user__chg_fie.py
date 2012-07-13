@@ -24,13 +24,13 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         
         # Changing field 'CronJob.cron_user'
-        db.alter_column('system_cronjob', 'cron_user', self.gf('freeadmin.models.UserField')(max_length=60))
+        db.alter_column('system_cronjob', 'cron_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=60))
 
         # Changing field 'Rsync.rsync_user'
-        db.alter_column('system_rsync', 'rsync_user', self.gf('freeadmin.models.UserField')(max_length=60))
+        db.alter_column('system_rsync', 'rsync_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=60))
 
         # Changing field 'Rsync.rsync_path'
-        db.alter_column('system_rsync', 'rsync_path', self.gf('freeadmin.models.PathField')(max_length=255))
+        db.alter_column('system_rsync', 'rsync_path', self.gf('freenasUI.freeadmin.models.PathField')(max_length=255))
 
         # Deleting field 'Settings.stg_kbdmap'
         db.delete_column('system_settings', 'stg_kbdmap')

@@ -9,10 +9,10 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Changing field 'Rsync.rsync_user'
-        db.alter_column('system_rsync', 'rsync_user', self.gf('freeadmin.models.UserField')(max_length=60))
+        db.alter_column('system_rsync', 'rsync_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=60))
 
         # Changing field 'CronJob.cron_user'
-        db.alter_column('system_cronjob', 'cron_user', self.gf('freeadmin.models.UserField')(max_length=60))
+        db.alter_column('system_cronjob', 'cron_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=60))
 
 
     def backwards(self, orm):
@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
             'cron_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'cron_minute': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
-            'cron_user': ('freeadmin.models.UserField', [], {'max_length': '60'}),
+            'cron_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'system.email': {
@@ -84,7 +84,7 @@ class Migration(SchemaMigration):
             'rsync_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsync_remotemodule': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_user': ('freeadmin.models.UserField', [], {'max_length': '60'})
+            'rsync_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'})
         },
         'system.settings': {
             'Meta': {'object_name': 'Settings'},

@@ -10,22 +10,22 @@ class Migration(DataMigration):
         
         orm.NFS_Share.objects.filter(nfs_mapall_user__isnull=True).update(nfs_mapall_user='')
         # Changing field 'NFS_Share.nfs_mapall_user'
-        db.alter_column('sharing_nfs_share', 'nfs_mapall_user', self.gf('freeadmin.models.UserField')(max_length=120))
+        db.alter_column('sharing_nfs_share', 'nfs_mapall_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=120))
 
         orm.NFS_Share.objects.filter(nfs_maproot_group__isnull=True).update(nfs_maproot_group='')
         # Changing field 'NFS_Share.nfs_maproot_group'
-        db.alter_column('sharing_nfs_share', 'nfs_maproot_group', self.gf('freeadmin.models.GroupField')(max_length=120))
+        db.alter_column('sharing_nfs_share', 'nfs_maproot_group', self.gf('freenasUI.freeadmin.models.GroupField')(max_length=120))
 
         orm.NFS_Share.objects.filter(nfs_maproot_user__isnull=True).update(nfs_maproot_user='')
         # Changing field 'NFS_Share.nfs_maproot_user'
-        db.alter_column('sharing_nfs_share', 'nfs_maproot_user', self.gf('freeadmin.models.UserField')(max_length=120))
+        db.alter_column('sharing_nfs_share', 'nfs_maproot_user', self.gf('freenasUI.freeadmin.models.UserField')(max_length=120))
 
         orm.NFS_Share.objects.filter(nfs_mapall_group__isnull=True).update(nfs_mapall_group='')
         # Changing field 'NFS_Share.nfs_mapall_group'
-        db.alter_column('sharing_nfs_share', 'nfs_mapall_group', self.gf('freeadmin.models.GroupField')(max_length=120))
+        db.alter_column('sharing_nfs_share', 'nfs_mapall_group', self.gf('freenasUI.freeadmin.models.GroupField')(max_length=120))
 
         # Changing field 'CIFS_Share.cifs_guest'
-        db.alter_column('sharing_cifs_share', 'cifs_guest', self.gf('freeadmin.models.UserField')(max_length=120))
+        db.alter_column('sharing_cifs_share', 'cifs_guest', self.gf('freenasUI.freeadmin.models.UserField')(max_length=120))
 
 
     def backwards(self, orm):
@@ -78,7 +78,7 @@ class Migration(DataMigration):
             'cifs_auxsmbconf': ('django.db.models.fields.TextField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_browsable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cifs_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'cifs_guest': ('freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
+            'cifs_guest': ('freenasUI.freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
             'cifs_guestok': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_guestonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_hostsallow': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -96,10 +96,10 @@ class Migration(DataMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nfs_alldirs': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'nfs_mapall_group': ('freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
-            'nfs_mapall_user': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
-            'nfs_maproot_group': ('freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
-            'nfs_maproot_user': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
+            'nfs_mapall_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
+            'nfs_mapall_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
+            'nfs_maproot_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
+            'nfs_maproot_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
             'nfs_network': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'nfs_path': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.MountPoint']"}),
             'nfs_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

@@ -39,7 +39,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
-from freeadmin.forms import DirectoryBrowser
+from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed

@@ -27,7 +27,7 @@
 
 from django.conf.urls.defaults import patterns, url
 
-urlpatterns = patterns('reporting.views',
+urlpatterns = patterns('freenasUI.reporting.views',
     url(r'^$', 'index', name="reporting_index"),
     url(r'^generate/$', 'generate', name="reporting_generate"),
     )

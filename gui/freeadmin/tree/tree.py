@@ -63,6 +63,9 @@ class TreeType(object):
             else:
                 raise Exception("Attribute '%s' is not allowed" % key)
 
+        if self.app_name is not None and self.app_name.startswith('freenasUI.'):
+            self.app_name = self.app_name.split('freenasUI.')[1]
+
         if gname is not None:
             self.gname = str(gname)
         elif self.gname is None:
@@ -71,6 +74,8 @@ class TreeType(object):
     def __setattr__(self, name, value):
         if not hasattr(self, name):
             raise Exception("Attribute '%s' not allowed" % name)
+        if name == 'app_name' and value.startswith('freenasUI.'):
+            value = value.split('freenasUI.')[1]
         super(TreeType, self).__setattr__(name, value)
 
     def __lt__(self, other):
@@ -96,6 +101,9 @@ class TreeType(object):
 
     def get_absolute_url(self):
         if not self.url and self.view:
+            if 'app' in self.kwargs:
+                if self.kwargs['app'].startswith('freenasUI.'):
+                    self.kwargs['app'] = self.kwargs['app'].split('freenasUI.')[1]
             self.url = reverse(self.view, args=self.args, kwargs=self.kwargs,
                            prefix='/')
         elif not self.url and self.view:

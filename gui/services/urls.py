@@ -27,7 +27,7 @@
 
 from django.conf.urls.defaults import patterns, url
 
-urlpatterns = patterns('services.views',
+urlpatterns = patterns('freenasUI.services.views',
     url(r'^index/$', 'index', name="services_home"),
     url(r'^core/$', 'core', name="services_core"),
     url(r'^plugins/$', 'plugins', name="services_plugins"),

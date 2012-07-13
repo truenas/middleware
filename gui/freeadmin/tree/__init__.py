@@ -26,4 +26,4 @@
 #####################################################################
 __all__ = ['tree_roots', 'TreeRoot', 'TreeNode', 'TreeRoots', 'unserialize_tree']
 
-from freeadmin.tree.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree
+from freenasUI.freeadmin.tree.tree import tree_roots, TreeRoot, TreeNode, TreeRoots, unserialize_tree

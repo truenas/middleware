@@ -37,7 +37,6 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from dojango.forms import widgets
 from dojango.forms.widgets import DojoWidgetMixin
-from freenasUI.account.forms import FilteredSelectJSON
 from freenasUI.common.freenasldap import (FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
     FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
 from freenasUI.common.freenasusers import (FreeNAS_Users, FreeNAS_User,
@@ -86,6 +85,7 @@ class UserField(forms.ChoiceField):
         return rv
 
     def _reroll(self):
+        from freenasUI.account.forms import FilteredSelectJSON
         if len(FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -130,6 +130,7 @@ class GroupField(forms.ChoiceField):
         return rv
 
     def _reroll(self):
+        from freenasUI.account.forms import FilteredSelectJSON
         if len(FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)

@@ -30,7 +30,7 @@ from django.contrib.auth.views import logout
 
 # Active FreeNAS URLs
 
-urlpatterns = patterns('account.views',
+urlpatterns = patterns('freenasUI.account.views',
     url(r'^home/$', 'home', name="account_home"),
     url(r'^bsduser/$', 'bsduser', name="account_bsduser"),
     url(r'^bsduser/json/$', 'json_users', name="account_bsduser_json"),
