@@ -109,12 +109,51 @@ Enhancements
 GUI
 ------------------------
 
-1. Add HTTP error 404 redirection page.
+1. Add missing tree icons when addding/viewing ntp servers and tunables.
+2. Added icons for mountpoints, plugins, shell, sysctls.
+3. Add alert if jail ip is unreachable.
+4. Add check and alert for non-optimal multipath states.
+5. Simplify replication setup with button for target host key scan.
+6. Added options for save debug.
+7. Add HTTP error 404 redirection page.
 
 OS/Third party
 ------------------------
 
-1. Fix lagg to work with bridged networking.
+1. Create zpools using gptid instead of device names.
+2. Include sudo in system.
+3. Improvements to save debug.
+4. Allow multiple rsyncs to run in parallel.
+
+Plugins
+------------------------
+
+1. Removed need to have pbi-manger installed to build PBIs.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix for mounting filesystems with spaces in the name.
+2. Fix issue with OAuth with http(s) ports.
+3. Fix parsing of zpools with mixed striped disks and vdevs.
+
+OS/Third party
+------------------------
+
+1. Workaround for jails refusing to start when spaces are in filesystems names.
+2. Make jails persist while inactive for running init commands.
+3. Fix potential deadlock with LoR in IPv6 routing.
+4. Fix ZFS auto import crash.
+5. Fix lagg to work with bridged networking.
+
+Plugins
+------------------------
+
+1. Fix permissions for minidlna sudoers file.
+2. Fix mindlna with https.
 
 Changes since 8.2.0-BETA3:
 
