@@ -329,7 +329,7 @@ checkout_freebsd_source()
 *default delete use-rel-suffix
 *default compress
 
-ports-all date=2011.07.12.00.00.00
+ports-all date=2012.07.12.00.00.00
 EOF
 		#
 		# Nuke newly created files to avoid build errors.
