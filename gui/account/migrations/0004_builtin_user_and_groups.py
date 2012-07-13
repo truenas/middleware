@@ -18,7 +18,7 @@ class Migration(DataMigration):
             json = json_fd.read()
         users = simplejson.loads(json)
         for entry in users:
-            user = orm.bsdUsers.objects.create(pk=entry['pk'])
+            user = orm.bsdUsers(pk=entry['pk'])
             for field in entry['fields']:
                 mfield = orm.bsdUsers._meta.get_field(field)
                 if mfield.rel != None:
