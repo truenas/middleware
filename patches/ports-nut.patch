@@ -1,0 +1,256 @@
+Index: sysutils/nut/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/sysutils/nut/Makefile,v
+retrieving revision 1.62
+diff -u -r1.62 Makefile
+--- sysutils/nut/Makefile	2 Aug 2011 17:05:43 -0000	1.62
++++ sysutils/nut/Makefile	13 Jul 2012 14:39:56 -0000
+@@ -6,7 +6,7 @@
+ #
+ 
+ PORTNAME=	nut
+-PORTVERSION=	2.6.1
++PORTVERSION=	2.6.4
+ CATEGORIES=	sysutils
+ MASTER_SITES=	http://www.networkupstools.org/source/${PORTVERSION:R}/
+ DISTFILES=	${DISTNAME}${EXTRACT_SUFX} ${DISTNAME}${EXTRACT_SUFX}.sig
+@@ -25,14 +25,16 @@
+ NUT_GROUP?=	uucp
+ STATEDIR?=	/var/db/nut
+ 
+-OPTIONS=	SERIAL		"SERIAL support" on \
+-		USB		"USB support" on \
+-		SNMP		"SNMP support" on \
+-		NEON		"NEON XML/HTTP support"	on \
+-		PDU		"Powerman PDU support" off \
+-		HAL		"HAL support" off \
+-		CGI		"Web CGI interface" off \
+-		BASH		"Bash Completion support" off
++OPTIONS_DEFINE=	SERIAL USB SNMP NEON PDU HAL CGI BASH
++OPTIONS_DEFAULT=SERIAL USB SNMP NEON
++
++SERIAL_DESC=	SERIAL support
++USB_DESC=	USB support
++SNMP_DESC=	SNMP support
++NEON_DESC=	NEON XML/HTTP support
++PDU_DESC=	Powerman PDU support
++CGI_DESC=	Web CGI interface
++BASH_DESC=	Bash Completion support
+ 
+ USE_RC_SUBR=	nut.sh nut_upsmon.sh nut_upslog.sh
+ SUB_LIST+=	STATEDIR=${STATEDIR}
+@@ -67,7 +69,7 @@
+ 		--with-group=${NUT_GROUP} \
+ 		--with-dev
+ 
+-.if defined(WITH_CGI)
++.if ${PORT_OPTIONS:MCGI}
+ LIB_DEPENDS+=	gd.4:${PORTSDIR}/graphics/gd
+ MAN5+=		hosts.conf.5 upsset.conf.5 upsstats.html.5
+ MAN8+=		upsset.cgi.8 upsstats.cgi.8 upsimage.cgi.8
+@@ -85,7 +87,7 @@
+ PLIST_SUB+=	NUT_CGI="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_SERIAL)
++.if ${PORT_OPTIONS:MSERIAL}
+ CONFIGURE_ARGS+=	--with-serial
+ MAN8+=		apcsmart.8 bestfortress.8 bcmxcp.8 belkin.8 belkinunv.8 \
+ 		bestuferrups.8 bestups.8 bestfcom.8 blazer.8 clone.8 \
+@@ -100,7 +102,7 @@
+ PLIST_SUB+=	NUT_SERIAL="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_USB)
++.if ${PORT_OPTIONS:MUSB}
+ . if ${OSVERSION} < 800069
+ LIB_DEPENDS+=	usb-0.1.8:${PORTSDIR}/devel/libusb
+ . else
+@@ -114,7 +116,7 @@
+ PLIST_SUB+=	NUT_USB="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_SNMP)
++.if ${PORT_OPTIONS:MSNMP}
+ LIB_DEPENDS+=	netsnmp.30:${PORTSDIR}/net-mgmt/net-snmp
+ CONFIGURE_ARGS+=	--with-snmp
+ MAN8+=		snmp-ups.8
+@@ -124,7 +126,7 @@
+ PLIST_SUB+=	NUT_SNMP="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_NEON)
++.if ${PORT_OPTIONS:MNEON}
+ LIB_DEPENDS+=	neon.27:${PORTSDIR}/www/neon29
+ CONFIGURE_ARGS+=	--with-neonxml
+ MAN8+=		netxml-ups.8
+@@ -134,7 +136,7 @@
+ PLIST_SUB+=	NUT_NEON="@comment "
+ .endif
+ 
+-.if defined(WITH_PDU)
++.if ${PORT_OPTIONS:MPDU}
+ LIB_DEPENDS+=	powerman.0:${PORTSDIR}/sysutils/powerman
+ CONFIGURE_ARGS+=	--with-powerman
+ MAN8+=		powerman-pdu.8
+@@ -144,8 +146,8 @@
+ PLIST_SUB+=	NUT_PDU="@comment "
+ .endif
+ 
+-.if defined(WITH_HAL)
+-. if defined(WITHOUT_USB)
++.if ${PORT_OPTIONS:MHAL}
++. if empty(PORT_OPTIONS:MUSB)
+ BROKEN=		HAL is only usable with USB support enabled. Run 'make config' again!
+ . endif
+ LIB_DEPENDS+=	hal.1:${PORTSDIR}/sysutils/hal
+@@ -158,7 +160,7 @@
+ PLIST_SUB+=	NUT_HAL="@comment "
+ .endif
+ 
+-.if defined(WITH_BASH)
++.if ${PORT_OPTIONS:MBASH}
+ RUN_DEPENDS+=	${LOCALBASE}/bin/bash_completion.sh:${PORTSDIR}/shells/bash-completion
+ PLIST_SUB+=	BASH=""
+ .else
+@@ -177,7 +179,8 @@
+ 
+ .if !defined(NOPORTDOCS)
+ post-install:
+-.if defined(WITH_BASH)
++.if ${PORT_OPTIONS:MBASH}
++	@${MKDIR} ${PREFIX}/etc/bash_completion.d/
+ 	${INSTALL_DATA} ${WRKSRC}/scripts/misc/nut.bash_completion ${PREFIX}/etc/bash_completion.d/
+ .endif
+ 	@${MKDIR} ${DOCSDIR}/cables
+Index: sysutils/nut/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/sysutils/nut/distinfo,v
+retrieving revision 1.28
+diff -u -r1.28 distinfo
+--- sysutils/nut/distinfo	2 Aug 2011 17:05:43 -0000	1.28
++++ sysutils/nut/distinfo	13 Jul 2012 14:39:56 -0000
+@@ -1,4 +1,4 @@
+-SHA256 (nut-2.6.1.tar.gz) = f5c46b856c0cf5b7f0e4b22d82b670af64cc98717a90eaac8723dd402a181c00
+-SIZE (nut-2.6.1.tar.gz) = 1776645
+-SHA256 (nut-2.6.1.tar.gz.sig) = 780be2a54fcd4df1124f8dcec4e49df3c1c7a985e030856dbe63fd77d0e76ea8
+-SIZE (nut-2.6.1.tar.gz.sig) = 72
++SHA256 (nut-2.6.4.tar.gz) = 4a8455ca7ba2e18b57a39206acc5a496e855d845828e970822bd84afd1178fe5
++SIZE (nut-2.6.4.tar.gz) = 1992488
++SHA256 (nut-2.6.4.tar.gz.sig) = a364d09b9c6877c1542183dd7eac35cf189ab9d178532d6fd29a04662560754f
++SIZE (nut-2.6.4.tar.gz.sig) = 72
+Index: sysutils/nut/pkg-plist
+===================================================================
+RCS file: /home/ncvs/ports/sysutils/nut/pkg-plist,v
+retrieving revision 1.32
+diff -u -r1.32 pkg-plist
+--- sysutils/nut/pkg-plist	2 Aug 2011 17:05:43 -0000	1.32
++++ sysutils/nut/pkg-plist	13 Jul 2012 14:39:56 -0000
+@@ -1,3 +1,22 @@
++%%NUT_CGI%%%%CGIDIR%%/upsimage.cgi
++%%NUT_CGI%%%%CGIDIR%%/upsset.cgi
++%%NUT_CGI%%%%CGIDIR%%/upsstats.cgi
++%%NUT_CGI%%%%CGIETCDIR%%/hosts.conf.sample
++%%NUT_CGI%%%%CGIETCDIR%%/upsset.conf.sample
++%%NUT_CGI%%%%CGIETCDIR%%/upsstats.html.sample
++%%NUT_CGI%%%%CGIETCDIR%%/upsstats-single.html.sample
++%%NUT_CGI%%%%WWWDIR%%/bottom.html
++%%NUT_CGI%%%%WWWDIR%%/header.html
++%%NUT_CGI%%%%WWWDIR%%/index.html
++%%NUT_CGI%%%%WWWDIR%%/nut-banner.png
++%%ETCDIR%%/cmdvartab
++%%ETCDIR%%/driver.list
++%%ETCDIR%%/nut.conf.sample
++%%ETCDIR%%/ups.conf.sample
++%%ETCDIR%%/upsd.conf.sample
++%%ETCDIR%%/upsd.users.sample
++%%ETCDIR%%/upsmon.conf.sample
++%%ETCDIR%%/upssched.conf.sample
+ @stopdaemon nut_upsmon
+ @stopdaemon nut_upslog
+ @stopdaemon nut
+@@ -7,31 +26,30 @@
+ bin/upsrw
+ bin/upssched-cmd
+ %%BASH%%etc/bash_completion.d/nut.bash_completion
+-etc/nut/cmdvartab
+-etc/nut/driver.list
+-etc/nut/nut.conf.sample
+-etc/nut/ups.conf.sample
+-etc/nut/upsd.conf.sample
+-etc/nut/upsd.users.sample
+-etc/nut/upsmon.conf.sample
+-etc/nut/upssched.conf.sample
++include/nut-scan.h
++include/nutscan-device.h
++include/nutscan-init.h
++include/nutscan-ip.h
+ include/parseconf.h
+ include/upsclient.h
+ lib/libupsclient.a
+-lib/libupsclient.so.1
+-lib/libupsclient.so
+ lib/libupsclient.la
+-%%NUT_HAL%%libexec/hald-addon-blazer_usb
++lib/libupsclient.so
++lib/libupsclient.so.2
++libdata/pkgconfig/libnutscan.pc
++libdata/pkgconfig/libupsclient.pc
+ %%NUT_HAL%%libexec/hald-addon-bcmxcp_usb
++%%NUT_HAL%%libexec/hald-addon-blazer_usb
+ %%NUT_HAL%%libexec/hald-addon-tripplite_usb
+ %%NUT_HAL%%libexec/hald-addon-usbhid-ups
+ %%NUT_SERIAL%%libexec/nut/apcsmart
+-%%NUT_SERIAL%%libexec/nut/bestfortress
++%%NUT_SERIAL%%libexec/nut/apcsmart-old
+ %%NUT_SERIAL%%libexec/nut/bcmxcp
+ %%NUT_USB%%libexec/nut/bcmxcp_usb
+ %%NUT_SERIAL%%libexec/nut/belkin
+ %%NUT_SERIAL%%libexec/nut/belkinunv
+ %%NUT_SERIAL%%libexec/nut/bestfcom
++%%NUT_SERIAL%%libexec/nut/bestfortress
+ %%NUT_SERIAL%%libexec/nut/bestuferrups
+ %%NUT_SERIAL%%libexec/nut/bestups
+ %%NUT_SERIAL%%libexec/nut/blazer_ser
+@@ -62,8 +80,8 @@
+ %%NUT_SERIAL%%libexec/nut/rhino
+ %%NUT_USB%%libexec/nut/richcomm_usb
+ %%NUT_SERIAL%%libexec/nut/safenet
+-%%NUT_SNMP%%libexec/nut/snmp-ups
+ %%NUT_SERIAL%%libexec/nut/skel
++%%NUT_SNMP%%libexec/nut/snmp-ups
+ %%NUT_SERIAL%%libexec/nut/solis
+ %%NUT_SERIAL%%libexec/nut/tripplite
+ %%NUT_USB%%libexec/nut/tripplite_usb
+@@ -72,26 +90,13 @@
+ libexec/nut/upsdrvctl
+ %%NUT_USB%%libexec/nut/usbhid-ups
+ %%NUT_SERIAL%%libexec/nut/victronups
+-libdata/pkgconfig/libupsclient.pc
+ sbin/upsd
+ sbin/upsmon
+ sbin/upssched
+ %%NUT_HAL%%share/hal/fdi/information/20thirdparty/20-ups-nut-device.fdi
+-%%NUT_CGI%%%%CGIDIR%%/upsimage.cgi
+-%%NUT_CGI%%%%CGIDIR%%/upsset.cgi
+-%%NUT_CGI%%%%CGIDIR%%/upsstats.cgi
+-%%NUT_CGI%%%%CGIETCDIR%%/hosts.conf.sample
+-%%NUT_CGI%%%%CGIETCDIR%%/upsset.conf.sample
+-%%NUT_CGI%%%%CGIETCDIR%%/upsstats.html.sample
+-%%NUT_CGI%%%%CGIETCDIR%%/upsstats-single.html.sample
+-%%NUT_CGI%%%%WWWDIR%%/bottom.html
+-%%NUT_CGI%%%%WWWDIR%%/header.html
+-%%NUT_CGI%%%%WWWDIR%%/index.html
+-%%NUT_CGI%%%%WWWDIR%%/nut-banner.png
+-@dirrmtry etc/nut
+-@dirrmtry libdata/pkgconfig
++@dirrmtry share/hal/fdi/information/20thirdparty
++@dirrmtry %%CGIDIR%%
++@dirrmtry %%ETCDIR%%
++@dirrmtry %%WWWDIR%%
++@dirrmtry etc/bash_completion.d
+ @dirrmtry libexec/nut
+-@dirrmtry %%STATEDIR%%
+-%%NUT_CGI%%@dirrm %%CGIDIR%%
+-%%NUT_CGI%%@dirrmtry www/cgi-bin
+-%%NUT_CGI%%@dirrm %%WWWDIR%%
