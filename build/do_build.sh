@@ -300,7 +300,7 @@ checkout_freebsd_source()
 		mkdir -p ${AVATAR_ROOT}/FreeBSD
 
 		: ${FREEBSD_SRC_REPOSITORY_ROOT=http://svn.freebsd.org/base}
-		FREEBSD_SRC_URL_REL="releng/8.2"
+		FREEBSD_SRC_URL_REL="releng/8.3"
 		FREEBSD_SRC_URL_FULL="${FREEBSD_SRC_REPOSITORY_ROOT}/${FREEBSD_SRC_URL_REL}"
 
 		(
@@ -329,7 +329,7 @@ checkout_freebsd_source()
 *default delete use-rel-suffix
 *default compress
 
-ports-all date=2011.12.28.00.00.00
+ports-all date=2011.07.12.00.00.00
 EOF
 		#
 		# Nuke newly created files to avoid build errors.

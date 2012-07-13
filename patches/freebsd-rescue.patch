@@ -13,7 +13,7 @@ Index: rescue/rescue/Makefile
 @@ -200,6 +201,7 @@
  CRUNCH_SRCDIRS+= usr.bin
  
- CRUNCH_PROGS_usr.bin= head mt sed tail tee
+ CRUNCH_PROGS_usr.bin= head mt nc sed tail tee
 +CRUNCH_PROGS_usr.bin+= awk cmp cut dialog dirname find grep mktemp sort tr uname xargs
  
  CRUNCH_PROGS_usr.bin+= gzip
