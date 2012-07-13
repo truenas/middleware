@@ -63,7 +63,7 @@ hidden.
 Plugins are now available.  Third party modules can be added to FreeNAS
 which will persist across upgrades and can be manipulated and configured
 from the GUI.  Documentation on using and creating plugins is available
-at http://doc.freenas.org/index.php/Plugins_Configuration . BitTorrent,
+at http://doc.freenas.org/index.php/Plugins . BitTorrent,
 DLNA/uPNP, and iTunes plugins are available as of this writing.
 
 The GUI now includes a webshell, which allows you to access a root
