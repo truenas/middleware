@@ -285,6 +285,7 @@ add_port x11/xcb-util WITHOUT_X11=y
 add_port x11/libXrender
 add_port x11/renderproto
 add_port x11/xcb-proto WITHOUT_X11=y
+add_port x11/xcb-util-renderutil WITHOUT_X11=y
 add_port x11/pixman WITHOUT_X11=y
 add_port graphics/png WITHOUT_X11=y
 add_port graphics/cairo WITHOUT_X11=y
