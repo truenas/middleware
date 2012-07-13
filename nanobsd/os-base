@@ -418,9 +418,9 @@ add_gui()
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
-	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
-	CR "(cd ${dstCR}; python manage.py createadmin --email root@freenas.local)"
-	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
+	CR "(cd ${dstCR}; env DJANGO_SETTINGS_MODULE=settings python manage.py syncdb --noinput --migrate)"
+	CR "(cd ${dstCR}; env DJANGO_SETTINGS_MODULE=settings python manage.py createadmin --email root@freenas.local)"
+	CR "(cd ${dstCR}; env DJANGO_SETTINGS_MODULE=settings python tools/compilemsgs.py)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
