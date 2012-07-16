@@ -58,7 +58,11 @@ def _clean_jail_ipv4address(jip):
 
 class PBIFileWizard(FileWizard):
 
-    def done(self, request, form_list):
+    def get_template_names(self):
+        #"plugins/jailpbi_update.html"
+        return ["plugins/jailpbi.html"]
+
+    def done(self, form_list):
         retval = getattr(self, 'retval', None)
         events = []
         if not retval:
@@ -66,7 +70,7 @@ class PBIFileWizard(FileWizard):
         return JsonResponse(
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
-            enclosed=not request.is_ajax(),
+            enclosed=not self.request.is_ajax(),
             events=events,
             )
 

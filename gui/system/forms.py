@@ -34,7 +34,8 @@ import subprocess
 
 from django.forms import FileField
 from django.conf import settings
-from django.contrib.formtools.wizard import FormWizard
+from django.contrib.formtools.wizard.views import SessionWizardView
+from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -50,133 +51,54 @@ from freenasUI.storage.models import MountPoint
 from freenasUI.system import models
 
 
-class FileWizard(FormWizard):
+class DummyFileSystemStorage(FileSystemStorage):
+    def open(self, name, mode='rb'):
+        return open('/dev/null', 'rb')
 
-    def __init__(self, *args, **kwargs):
-        self.templates = kwargs.pop('templates', [])
-        self.saved_prefix = kwargs.pop("prefix", '')
-        super(FileWizard, self).__init__(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        pass
 
-    @method_decorator(csrf_protect)
-    def __call__(self, request, *args, **kwargs):
-        """
-        IMPORTANT
-        This method was stolen from FormWizard.__call__
 
-        This was necessary because the original code doesn't accept File Upload
-        The reason of this is because there is no clean way to hold the information
-        of an uploaded file across steps
+class FileWizard(SessionWizardView):
 
-        Also, an extra context is used to set the ajax post path/url
-        """
-        if 'extra_context' in kwargs:
-            self.extra_context.update(kwargs['extra_context'])
-        self.extra_context.update({'postpath': request.path})
-        self.parse_params(request, *args, **kwargs)
-        self.previous_form_list = []
-        for i in range(self.step):
-            f = self.get_form(i, request.POST, request.FILES)
-            if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
-                                             request, f):
-                return self.render_hash_failure(request, i)
+    file_storage = DummyFileSystemStorage
 
-            if not f.is_valid():
-                return self.render_revalidation_failure(request, i, f)
-            else:
-                self.process_step(request, f, i)
-                self.previous_form_list.append(f)
-        if request.method == 'POST':
-            form = self.get_form(self.step, request.POST, request.FILES)
-        else:
-            form = self.get_form(self.step)
-        if form.is_valid():
-            self.process_step(request, form, self.step)
-            next_step = self.step + 1
-
-            if next_step == self.num_steps():
-                return self.done(request, self.previous_form_list + [form])
-            else:
-                form = self.get_form(next_step)
-
-        return self.render(form, request, self.step)
-
-    def get_form(self, step, data=None, files=None):
-        """
-        This is also required to pass request.FILES to the form
-        """
-        if files is not None:
-            if step >= self.num_steps():
-                raise Http404('Step %s does not exist' % step)
-            return self.form_list[step](data, files, prefix=self.prefix_for_step(step), initial=self.initial.get(step, None))
-        else:
-            return super(FileWizard, self).get_form(step, data)
-
-    def done(self, request, form_list):
+    def done(self, form_list):
         response = render_to_response('system/done.html', {
             #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
         })
-        if not request.is_ajax():
+        if not self.request.is_ajax():
             response.content = ("<html><body><textarea>"
             + response.content +
             "</textarea></boby></html>")
         return response
 
-    def get_template(self, step):
-        if self.templates:
-            for i, tpl in enumerate(self.templates):
-                if '%s' in tpl:
-                    self.templates[i] = tpl % step
-            return self.templates
-        return ['system/wizard_%s.html' % step, 'system/wizard.html']
+    def get_template_names(self):
+        return [
+            'system/wizard_%s.html' % self.get_step_index(),
+            'system/wizard.html',
+            ]
 
-    def process_step(self, request, form, step):
-        super(FileWizard, self).process_step(request, form, step)
+    def process_step(self, form):
+        proc = super(FileWizard, self).process_step(form)
         """
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done(request=request,
-                previous_form_list=self.previous_form_list)
-            if step == self.num_steps() - 1:
+            retval = form.done(request=self.request,
+                previous_form_list=self.form_list)
+            if self.get_step_index() == self.steps.count - 1:
                 self.retval = retval
 
-    def render(self, form, request, step, context=None):
-        """
-        IMPORTANT
-        Stole from django to replace Dojango fields
-
-        Renders the given Form object, returning an HttpResponse.
-        """
-        old_data = request.POST
-        prev_fields = []
-        if old_data:
-            hidden = forms.HiddenInput()
-            # Collect all data from previous steps and render it as HTML hidden fields.
-            for i in range(step):
-                old_form = self.get_form(i, old_data)
-                hash_name = 'hash_%s' % i
-                for bf in old_form:
-                    html = bf.as_hidden()
-                    prev_fields.append(
-                        html.replace('type="hidden"',
-                            'type="hidden" data-dojo-type="dijit.form.TextBox"')
-                        )
-                prev_fields.append(hidden.render(hash_name, old_data.get(hash_name, self.security_hash(request, old_form))))
-        return self.render_template(request, form, ''.join(prev_fields), step, context)
-
-    def render_template(self, request, *args, **kwargs):
-        response = super(FileWizard, self).render_template(request, *args, **kwargs)
-        # This is required for the workaround dojo.io.frame for file upload
-        if not request.is_ajax():
-            response.content = ("<html><body><textarea>"
-            + response.content +
-            "</textarea></boby></html>")
-        return response
-
-    def prefix_for_step(self, step):
-        "Given the step, returns a Form prefix to use."
-        return '%s%s' % (self.saved_prefix, str(step))
+    #def render_to_response(self, request, *args, **kwargs):
+    #    response = super(FileWizard, self).render_template(request, *args, **kwargs)
+    #    # This is required for the workaround dojo.io.frame for file upload
+    #    if not request.is_ajax():
+    #        response.content = ("<html><body><textarea>"
+    #        + response.content +
+    #        "</textarea></boby></html>")
+    #    return response
 
 
 class SettingsForm(ModelForm):

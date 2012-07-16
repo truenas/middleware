@@ -40,15 +40,11 @@ urlpatterns = patterns('freenasUI.plugins.views',
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^_mountpoints/$', 'mountpoints', name="plugins_mountpoints"),
     url(r'^jailimport/$', 'plugins_jail_import', name="plugins_jail_import"),
-    url(r'^jailpbi/$', PBIFileWizard(
+    url(r'^jailpbi/$', PBIFileWizard.as_view(
             [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],
-            prefix="jailpbi",
-            templates=["plugins/jailpbi.html"]
         ), name='plugins_jailpbi'),
-    url(r'^jailupdate/$', PBIFileWizard(
+    url(r'^jailupdate/$', PBIFileWizard.as_view(
             [PBITemporaryLocationForm, JailPBIUpdateForm],
-            prefix="jailpbi_update",
-            templates=["plugins/jailpbi_update.html"]
         ), name='plugins_jail_update'),
     url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
     url(r'^(?P<name>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
