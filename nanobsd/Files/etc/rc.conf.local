@@ -167,7 +167,7 @@ _host_config()
 				services_pluginsjail
 			ORDER BY -id LIMIT 1")
 			if [ -n "${jail_path}" ]; then
-				cp /etc/resolv.conf "${jail_path}/etc/resolv.conf"
+				cp /etc/resolv.conf "${jail_path}/etc/resolv.conf" 2> /dev/null || :
 			fi
 		fi
 	done
