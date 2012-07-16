@@ -56,7 +56,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     # If we can still ping the peer, quit immediately
     ping -qc 1 -t 1 ${peerip} && exit
 
-    sleep 2
+    sleep 4
     STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
 
     # Test if the heartbeat cable thinks we are master
