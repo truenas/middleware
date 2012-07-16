@@ -195,10 +195,9 @@ class VolumeWizardForm(forms.Form):
             if len(disks) >= 3:
                 grouptype_choices += (('raidz', 'RAID-Z'), )
             if len(disks) >= 4:
-                grouptype_choices += (('raidz2', 'RAID-Z2'), )
-            # Not yet
-            #if len(disks) >= 5:
-            #    grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+                grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+            if len(disks) >= 5:
+                grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):

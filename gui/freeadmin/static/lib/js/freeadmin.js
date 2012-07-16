@@ -1150,6 +1150,12 @@
                 dojo.style("grpraidz2", "display", "none");
         }
 
+        if(d.length >= 5 && zfs) {
+                dojo.style("grpraidz3", "display", "block");
+        } else {
+                dojo.style("grpraidz3", "display", "none");
+        }
+
         if(ufs && d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
             if(ufs)
                 dojo.style("grpraid3", "display", "block");
