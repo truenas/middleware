@@ -111,7 +111,7 @@ def replications_keyscan(request):
             data = {'error': False, 'key': key}
         else:
             if not errmsg:
-                errmsg = _("Key could no be retrieved for unknown reason")
+                errmsg = _("Key could not be retrieved for unknown reason")
             data = {'error': True, 'errmsg': errmsg}
 
     return HttpResponse(simplejson.dumps(data))
