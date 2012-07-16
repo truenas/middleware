@@ -514,6 +514,16 @@ ACCESS_MODE = (
     ('rw', _('Read and Write')),
     )
 
+ZFS_DEDUP = (
+    ('on', _('On')),
+    ('verify', _('Verify')),
+    ('off', _('Off')),
+    )
+
+ZFS_DEDUP_INHERIT = (
+    ('inherit', _('Inherit')),
+    ) + ZFS_DEDUP
+
 TASK_INTERVAL = (
     (15, _("%(minutes)s minutes") % {'minutes': '15'}),
     (30, _("%(minutes)s minutes") % {'minutes': '30'}),
