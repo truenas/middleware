@@ -72,10 +72,9 @@ class FileWizard(FormWizard):
         if 'extra_context' in kwargs:
             self.extra_context.update(kwargs['extra_context'])
         self.extra_context.update({'postpath': request.path})
-        current_step = self.determine_step(request, *args, **kwargs)
         self.parse_params(request, *args, **kwargs)
         self.previous_form_list = []
-        for i in range(current_step):
+        for i in range(self.step):
             f = self.get_form(i, request.POST, request.FILES)
             if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
                                              request, f):
@@ -87,20 +86,19 @@ class FileWizard(FormWizard):
                 self.process_step(request, f, i)
                 self.previous_form_list.append(f)
         if request.method == 'POST':
-            form = self.get_form(current_step, request.POST, request.FILES)
+            form = self.get_form(self.step, request.POST, request.FILES)
         else:
-            form = self.get_form(current_step)
+            form = self.get_form(self.step)
         if form.is_valid():
-            self.process_step(request, form, current_step)
-            next_step = current_step + 1
+            self.process_step(request, form, self.step)
+            next_step = self.step + 1
 
             if next_step == self.num_steps():
                 return self.done(request, self.previous_form_list + [form])
             else:
                 form = self.get_form(next_step)
-                self.step = current_step = next_step
 
-        return self.render(form, request, current_step)
+        return self.render(form, request, self.step)
 
     def get_form(self, step, data=None, files=None):
         """
