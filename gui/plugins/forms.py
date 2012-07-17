@@ -65,7 +65,7 @@ class JailInstallWizard(FileWizard):
         #jailinfo = wizard.get_cleaned_data_for_step(1)
         jailinfo = self.get_all_cleaned_data()
         pbifile = jailinfo.get("pbifile")
-        pbipath = self.file_storage.path(pbifile.name)
+        pbipath = self.file_storage.path(pbifile.file.name)
 
         # Create a plugins service entry
         pj = PluginsJail()
@@ -102,7 +102,7 @@ class JailUpdateWizard(FileWizard):
     def done(self, form_list, **kwargs):
         jailinfo = self.get_all_cleaned_data()
         pbifile = jailinfo.get("pbifile")
-        pbipath = self.file_storage.path(pbifile.name)
+        pbipath = self.file_storage.path(pbifile.file.name)
 
         pj = PluginsJail.objects.order_by("-id")[0]
         notifier().install_jail_pbi(pj.jail_path,

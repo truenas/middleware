@@ -102,7 +102,7 @@ class FirmwareWizard(FileWizard):
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         firmware = cleaned_data.get('firmware')
-        path = self.file_storage.path(firmware.name)
+        path = self.file_storage.path(firmware.file.name)
 
         #form = form_list[1]
         #return self.render_revalidation_failure('1', form)
