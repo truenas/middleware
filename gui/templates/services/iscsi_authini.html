@@ -39,9 +39,9 @@
 
             <p class="btn">
             <button id="access_button" data-dojo-type="dijit.form.Button" type="button">
-                {% trans "Add Authorized Initiator" %}
+                {% trans "Add Initiator" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    addObject('{% trans "Add Authorized Initiator"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
+                    addObject('{% trans "Add Initiator"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
             </script>
             </button>
             </p>
