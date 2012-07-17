@@ -2215,7 +2215,7 @@ class notifier:
 
         prefix = ename = pbi = None
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbipath)
-        out = p.info(False, -1, 'prefix', 'pbi information for')
+        out = p.info(False, -1, 'prefix', 'pbi information for', 'arch')
 
         if not out:
             raise MiddlewareError("This file was not identified as in PBI "
@@ -2228,6 +2228,12 @@ class notifier:
                 prefix = val
             elif var == 'pbi information for':
                 pbi = "%s.pbi" % val
+            elif var == 'arch':
+                arch = val
+
+        if arch != platform.machine():
+            raise MiddlewareError("You cannot install %s jail pbi in an %s "
+                "architecture" % (arch, platform.machine()))
 
         dst = os.path.join(path, name)
         p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTPATH|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
