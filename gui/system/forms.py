@@ -107,7 +107,12 @@ class FirmwareWizard(FileWizard):
         #form = form_list[1]
         #return self.render_revalidation_failure('1', form)
 
-        retval = notifier().validate_update(path)
+        try:
+            retval = notifier().validate_update(path)
+        except:
+            self.file_storage.delete(firmware.name)
+            raise
+
         if not retval:
             #msg = _(u"Invalid firmware")
             #self._errors["firmware"] = self.error_class([msg])
@@ -118,7 +123,7 @@ class FirmwareWizard(FileWizard):
             checksum = notifier().checksum(path)
             if checksum != str(cleaned_data['sha256']).strip():
                 self.file_storage.delete(firmware.name)
-                raise MiddlewareError("Invalid firmware")
+                raise MiddlewareError("Invalid firmware, wrong checksum")
                 #msg = _(u"Invalid checksum")
                 #self._errors["firmware"] = self.error_class([msg])
                 #del cleaned_data["firmware"]
