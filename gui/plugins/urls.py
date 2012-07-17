@@ -27,8 +27,8 @@
 
 from django.conf.urls.defaults import patterns, url
 
-from freenasUI.plugins.forms import (PBIFileWizard, PBITemporaryLocationForm,
-    JailInfoForm, JailPBIUploadForm, JailPBIUpdateForm)
+from freenasUI.plugins.forms import (JailInstallWizard, JailUpdateWizard,
+    PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm)
 from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
@@ -40,11 +40,11 @@ urlpatterns = patterns('freenasUI.plugins.views',
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^_mountpoints/$', 'mountpoints', name="plugins_mountpoints"),
     url(r'^jailimport/$', 'plugins_jail_import', name="plugins_jail_import"),
-    url(r'^jailpbi/$', PBIFileWizard.as_view(
+    url(r'^jailpbi/$', JailInstallWizard.as_view(
             [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],
         ), name='plugins_jailpbi'),
-    url(r'^jailupdate/$', PBIFileWizard.as_view(
-            [PBITemporaryLocationForm, JailPBIUpdateForm],
+    url(r'^jailupdate/$', JailUpdateWizard.as_view(
+            [PBITemporaryLocationForm, JailPBIUploadForm],
         ), name='plugins_jail_update'),
     url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
     url(r'^(?P<name>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),

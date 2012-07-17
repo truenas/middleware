@@ -26,44 +26,37 @@
 #####################################################################
 
 import glob
+import logging
 import os
 import pwd
 import re
-import shutil
 import subprocess
 
-from django.forms import FileField
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
+from django.forms import FileField
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.csrf import csrf_protect
-from django.http import Http404
 
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.forms import CronMultiple
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import models
 
-
-class DummyFileSystemStorage(FileSystemStorage):
-    def open(self, name, mode='rb'):
-        return open('/dev/null', 'rb')
-
-    def save(self, *args, **kwargs):
-        pass
+log = logging.getLogger('system.forms')
 
 
 class FileWizard(SessionWizardView):
 
-    file_storage = DummyFileSystemStorage
+    file_storage = FileSystemStorage(location='/var/tmp/firmware')
 
-    def done(self, form_list):
+    def done(self, form_list, **kwargs):
         response = render_to_response('system/done.html', {
             #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
@@ -87,18 +80,61 @@ class FileWizard(SessionWizardView):
         """
         if hasattr(form, 'done'):
             retval = form.done(request=self.request,
-                previous_form_list=self.form_list)
+                form_list=self.form_list,
+                wizard=self)
             if self.get_step_index() == self.steps.count - 1:
                 self.retval = retval
+        return proc
 
-    #def render_to_response(self, request, *args, **kwargs):
-    #    response = super(FileWizard, self).render_template(request, *args, **kwargs)
-    #    # This is required for the workaround dojo.io.frame for file upload
-    #    if not request.is_ajax():
-    #        response.content = ("<html><body><textarea>"
-    #        + response.content +
-    #        "</textarea></boby></html>")
-    #    return response
+    def render_to_response(self, context, **kwargs):
+        response = super(FileWizard, self).render_to_response(context,
+            **kwargs)
+        # This is required for the workaround dojo.io.frame for file upload
+        if not self.request.is_ajax():
+            return HttpResponse("<html><body><textarea>"
+            + response.rendered_content +
+            "</textarea></boby></html>")
+        return response
+
+
+class FirmwareWizard(FileWizard):
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        firmware = cleaned_data.get('firmware')
+        path = self.file_storage.path(firmware.name)
+
+        #form = form_list[1]
+        #return self.render_revalidation_failure('1', form)
+
+        retval = notifier().validate_update(path)
+        if not retval:
+            #msg = _(u"Invalid firmware")
+            #self._errors["firmware"] = self.error_class([msg])
+            #del cleaned_data["firmware"]
+            self.file_storage.delete(firmware.name)
+            raise MiddlewareError("Invalid firmware")
+        elif 'sha256' in cleaned_data:
+            checksum = notifier().checksum(path)
+            if checksum != str(cleaned_data['sha256']).strip():
+                self.file_storage.delete(firmware.name)
+                raise MiddlewareError("Invalid firmware")
+                #msg = _(u"Invalid checksum")
+                #self._errors["firmware"] = self.error_class([msg])
+                #del cleaned_data["firmware"]
+
+        notifier().apply_update(path)
+        self.request.session['allow_reboot'] = True
+
+        response = render_to_response('system/done.html', {
+            #'form_list': form_list,
+            'retval': getattr(self, 'retval', None),
+        })
+        if not self.request.is_ajax():
+            response.content = ("<html><body><textarea>"
+            + response.content +
+            "</textarea></boby></html>")
+        return response
 
 
 class SettingsForm(ModelForm):
@@ -442,35 +478,6 @@ class FirmwareTemporaryLocationForm(Form):
 class FirmwareUploadForm(Form):
     firmware = FileField(label=_("New image to be installed"), required=True)
     sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/firmware.txz'
-        if cleaned_data.get('firmware'):
-            if hasattr(cleaned_data['firmware'], 'temporary_file_path'):
-                shutil.move(cleaned_data['firmware'].temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as fw:
-                    for c in cleaned_data['firmware'].chunks():
-                        fw.write(c)
-            retval = notifier().validate_update(filename)
-            if not retval:
-                msg = _(u"Invalid firmware")
-                self._errors["firmware"] = self.error_class([msg])
-                del cleaned_data["firmware"]
-            elif 'sha256' in cleaned_data:
-                checksum = notifier().checksum(filename)
-                if checksum != str(cleaned_data['sha256']).strip():
-                    msg = _(u"Invalid checksum")
-                    self._errors["firmware"] = self.error_class([msg])
-                    del cleaned_data["firmware"]
-        else:
-            self._errors["firmware"] = self.error_class([_("This field is required.")])
-        return cleaned_data
-
-    def done(self, request, *args, **kwargs):
-        notifier().apply_update('/var/tmp/firmware/firmware.txz')
-        request.session['allow_reboot'] = True
 
 
 class ConfigUploadForm(Form):

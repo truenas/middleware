@@ -2196,7 +2196,7 @@ class notifier:
 
         return ret
 
-    def install_jail_pbi(self, path, name, plugins_path):
+    def install_jail_pbi(self, path, name, plugins_path, pbipath=None):
         """
         Install the plugins jail PBI
 
@@ -2207,12 +2207,14 @@ class notifier:
             MiddlewareError: pbi file corrupt or invalid
         """
         ret = False
+        if pbipath is None:
+            pbipath = "/var/tmp/firmware/pbifile.pbi"
 
         if self._started_plugins_jail():
             raise MiddlewareError("The plugins jail must be turned off")
 
         prefix = ename = pbi = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbipath)
         out = p.info(False, -1, 'prefix', 'pbi information for')
 
         if not out:
@@ -2229,11 +2231,11 @@ class notifier:
 
         dst = os.path.join(path, name)
         p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTPATH|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
-            pbi="/var/tmp/firmware/pbifile.pbi", outpath=dst)
+            pbi=pbipath, outpath=dst)
         res = p.run()
 
         if res and res[0] == 0:
-            self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+            self.__system("/bin/mv %s %s/%s" % (pbipath, plugins_path, pbi))
             ret = True
 
         else:

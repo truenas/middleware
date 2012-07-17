@@ -56,13 +56,60 @@ def _clean_jail_ipv4address(jip):
     return jip
 
 
-class PBIFileWizard(FileWizard):
+class JailInstallWizard(FileWizard):
 
     def get_template_names(self):
-        #"plugins/jailpbi_update.html"
         return ["plugins/jailpbi.html"]
 
-    def done(self, form_list):
+    def done(self, form_list, **kwargs):
+        #jailinfo = wizard.get_cleaned_data_for_step(1)
+        jailinfo = self.get_all_cleaned_data()
+        pbifile = jailinfo.get("pbifile")
+        pbipath = self.file_storage.path(pbifile.name)
+
+        # Create a plugins service entry
+        pj = PluginsJail()
+        pj.jail_path = jailinfo.get('jail_path')
+        pj.jail_name = jailinfo.get('jail_name')
+        pj.jail_ipv4address = jailinfo.get('jail_ipv4address')
+        pj.jail_ipv4netmask = jailinfo.get('jail_ipv4netmask')
+        pj.plugins_path = jailinfo.get('plugins_path')
+
+        # Install the jail PBI
+        if notifier().install_jail_pbi(pj.jail_path,
+                pj.jail_name,
+                pj.plugins_path,
+                pbipath=pbipath):
+            pj.save()
+
+        retval = getattr(self, 'retval', None)
+        events = []
+        if not retval:
+            events.append('reloadHttpd()')
+        return JsonResponse(
+            error=bool(retval),
+            message=retval if retval else __("PBI successfully installed."),
+            enclosed=not self.request.is_ajax(),
+            events=events,
+            )
+
+
+class JailUpdateWizard(FileWizard):
+
+    def get_template_names(self):
+        return ["plugins/jailpbi_update.html"]
+
+    def done(self, form_list, **kwargs):
+        jailinfo = self.get_all_cleaned_data()
+        pbifile = jailinfo.get("pbifile")
+        pbipath = self.file_storage.path(pbifile.name)
+
+        pj = PluginsJail.objects.order_by("-id")[0]
+        notifier().install_jail_pbi(pj.jail_path,
+            pj.jail_name,
+            pj.plugins_path,
+            pbipath=pbipath)
+
         retval = getattr(self, 'retval', None)
         events = []
         if not retval:
@@ -252,70 +299,6 @@ class JailPBIUploadForm(Form):
             label=_("Plugins Jail PBI"),
             required=True
             )
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/pbifile.pbi'
-        if cleaned_data.get('pbifile'):
-            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
-                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as sp:
-                    for c in cleaned_data['pbifile'].chunks():
-                        sp.write(c)
-        else:
-            self._errors["pbifile"] = self.error_class([
-                _("This field is required."),
-                ])
-        return cleaned_data
-
-    def done(self, *args, **kwargs):
-
-        prev = kwargs['previous_form_list']
-        jailinfo = prev[1]
-
-        # Create a plugins service entry
-        pj = PluginsJail()
-        pj.jail_path = jailinfo.cleaned_data.get('jail_path')
-        pj.jail_name = jailinfo.cleaned_data.get('jail_name')
-        pj.jail_ipv4address = jailinfo.cleaned_data['jail_ipv4address']
-        pj.jail_ipv4netmask = jailinfo.cleaned_data['jail_ipv4netmask']
-        pj.plugins_path = jailinfo.cleaned_data.get('plugins_path')
-
-        # Install the jail PBI
-        if notifier().install_jail_pbi(pj.jail_path,
-                pj.jail_name, pj.plugins_path):
-            pj.save()
-
-
-class JailPBIUpdateForm(Form):
-
-    pbifile = FileField(
-            label=_("Plugins Jail PBI"),
-            required=True
-            )
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/pbifile.pbi'
-        if cleaned_data.get('pbifile'):
-            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
-                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as sp:
-                    for c in cleaned_data['pbifile'].chunks():
-                        sp.write(c)
-        else:
-            self._errors["pbifile"] = self.error_class([
-                _("This field is required."),
-                ])
-        return cleaned_data
-
-    def done(self, *args, **kwargs):
-        pj = PluginsJail.objects.order_by("-id")[0]
-        notifier().install_jail_pbi(pj.jail_path,
-            pj.jail_name, pj.plugins_path)
-
 
 
 class NullMountPointForm(ModelForm):

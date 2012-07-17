@@ -9,8 +9,6 @@
       {{ wizard.form }}
         <tr>
             <td colspan="2">
-                <input data-dojo-type="dijit.form.TextBox" type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
-                {{ previous_fields|safe }}
                 <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
                     {% trans "Apply Update" %}
                     <script type="dojo/method" event="onClick" args="evt">
