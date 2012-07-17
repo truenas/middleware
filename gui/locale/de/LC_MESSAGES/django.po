@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-09 17:06+0200\n"
-"Last-Translator: Aldaris <c.irro@gmx.de>\n"
+"PO-Revision-Date: 2012-07-16 14:52+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1493,7 +1493,7 @@ msgstr "Der DDNS Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr "Das ist keine gültige Email-Adrese"
+msgstr "Das ist keine gültige E-Mail-Adresse"
 
 #: services/forms.py:376
 msgid ""
@@ -1689,8 +1689,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Das Feld ist eine ungültige IP Adresse oder Netzwerk. Das Schlüsselwort \"ALL"
-"\" kann verwendet werden, um alles zu erlauben."
+"Das Feld ist eine ungültige IP-Adresse oder Netzwerk. Das Schlüsselwort "
+"\"ALL\" kann verwendet werden, um alles zu erlauben."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1937,7 +1937,7 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
-"Zeroconf mittels Avahi erlaubt Clients (speziell dem Mac OSX Finder) ein "
+"Zeroconf mittels Avahi erlaubt Clients (speziell dem (Mac) OS X Finder) ein "
 "Anzeigen der CIFS Freigaben dieses Systems ohne weitere Konfiguration, "
 "vergleichbar der Netzwerk und Freigabe-Anzeige in Windows. "
 
@@ -1954,7 +1954,9 @@ msgstr "Servername"
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr "Servername. Bei Auslassung wird der Standartname gesetzt."
+msgstr ""
+"Der Name des Servers. Wenn dieses Feld leer bleibt, dann wird der "
+"Standardserver verwendet."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -2001,7 +2003,7 @@ msgid ""
 "speed."
 msgstr ""
 "Asynchronen Modus aktivieren. Erhöht die Leistung von Netzwerken schneller "
-"als Gigabit"
+"als Gigabit."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2059,7 +2061,7 @@ msgstr "Max. Verbindungen"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Maximale Anzahl von Verbindungen pro Sitzung (Standart: 8)."
+msgstr "Maximale Anzahl von Verbindungen pro Sitzung (Standard: 8)."
 
 # Mir fehlt dazu der techn. Hintergrund - was ist damit gemeint?
 #: services/models.py:299
@@ -2083,7 +2085,7 @@ msgstr "Maximal ausstehende R2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSI Anfangsparameter (Standart: 16)."
+msgstr "iSCSI Anfangsparameter (Standard: 16)."
 
 # Gibt es eine brauchbare Übersetzung für "First burst"?
 #: services/models.py:311
@@ -2092,7 +2094,7 @@ msgstr "Größe für First Burst"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "iSCSI Anfangsparameter (Standart: 65536)."
+msgstr "iSCSI Anfangsparameter (Standard: 65536)."
 
 # Brauchbare Übersetzung für "burst length" bekannt?
 #: services/models.py:317
@@ -2113,7 +2115,7 @@ msgstr "Standardmäßige Wartezeit"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "iSCSI Anfangsparameter (Standart: 2):"
+msgstr "iSCSI Anfangsparameter (Standard: 2):"
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
@@ -2121,7 +2123,7 @@ msgstr "Standardmäßige Verzögerung"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "iSCSI Anfangsparameter (Standart: 60):"
+msgstr "iSCSI Anfangsparameter (Standard: 60):"
 
 #: services/models.py:341
 msgid "Enable LUC"
@@ -2151,10 +2153,9 @@ msgstr "Vom Controller authorisierte Netzmaske"
 
 # "authorisierte Netzmaske" korrekt/sinnvoll?
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
-"Authorisierte Netzmaske des Logical Unit Controllers (255.255.255.0 ist "
+"Authorisierte Netzmaske des Logical Unit Controllers (127.0.0.0/8 ist "
 "voreingestellt)."
 
 #: services/models.py:368
@@ -2253,7 +2254,7 @@ msgstr "Portal"
 
 #: services/models.py:522
 msgid "IP Address"
-msgstr "IP Adresse"
+msgstr "IP-Adresse"
 
 # Übersetzen oder nicht?
 #: services/models.py:534
@@ -2503,8 +2504,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Informationen zum Standort, z. B. genaue Angabe des Orts: Erdgeschoß, Zimmer "
-"123."
+"Informationen zum Standort, z. B. genaue Angabe des Orts: Erdgeschoss, "
+"Zimmer 123."
 
 #: services/models.py:859
 msgid "Contact"
@@ -2515,7 +2516,7 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"Kontaktinformationen, z. B. Name oder E-Mail Adresse der für dieses System "
+"Kontaktinformationen, z. B. Name oder E-Mail-Adresse der für dieses System "
 "zuständigen Person: 'admin@email.address'."
 
 #: services/models.py:867
@@ -2644,7 +2645,7 @@ msgstr "Verbindungen"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Maximale Anzahl von Verbindungen pro IP Adresse (0 = unbegrenzt)."
+msgstr "Maximale Anzahl von Verbindungen pro IP-Adresse (0 = unbegrenzt)."
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -3001,7 +3002,7 @@ msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
-msgstr "Der Name oder die IP Adresse des LDAP servers"
+msgstr "Der Name oder die IP-Adresse des LDAP servers"
 
 # "Basis"?
 #: services/models.py:1290
@@ -5776,9 +5777,8 @@ msgid "Edit Mount Point"
 msgstr "Einhängepunkt"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "Einhängepunkt"
+msgstr "Einhängepunkt löschen"
 
 #: templates/plugins/mountpoints.html:32
 #, fuzzy
@@ -5786,9 +5786,8 @@ msgid "No mount points defined"
 msgstr "Keine Cronjobs definiert"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "Einhängepunkt"
+msgstr "Einhängepunkt hinzufügen"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -6052,9 +6051,8 @@ msgid "Update"
 msgstr "Aktualisierung"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Plugin löschen"
+msgstr "Plugin aktualisieren"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
@@ -6570,7 +6568,7 @@ msgid ""
 "> Change E-mail"
 msgstr ""
 "HINWEIS: Testemails werden dem Root user gesendet. Um dies zu konfigurieren, "
-"benutzen Sie Benutzer -> Root -> Emailadresse ändern"
+"benutzen Sie Benutzer -> Root -> E-M-Adresse ändern"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6948,7 +6946,7 @@ msgstr ""
 "Maskbit angeben"
 
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "Der Ort darf nur alphanumerische zeichen, _ oder - beinhalten"
+msgstr "Der Ort darf nur alphanumerische Zeichen, _ oder - beinhalten"
 
 msgid "Local Access"
 msgstr "Lokaler Zugriff"
