@@ -37,9 +37,9 @@
 
            <p class="btn">
        <button id="tgt_auth_button" data-dojo-type="dijit.form.Button" type="button">
-           {% trans "Add iSCSI User" %}
+           {% trans "Add iSCSI Authorized Access" %}
            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-               addObject('{% trans "Add iSCSI User"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthCredential" %}', [this,]);
+               addObject('{% trans "Add iSCSI Authorized Access"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthCredential" %}', [this,]);
        </script>
        </button>
        </p>
