@@ -9,6 +9,8 @@ mv ${minidlna_pbi_path}/minidlna /usr/local/etc/rc.d/
 
 pw user add dlna -d ${minidlna_pbi_path}
 
+sed -i 'bak' -e "s/%ARCH%/$(uname -m)/g" ${minidlna_pbi_path}/php-fpm.conf
+
 cd ${minidlna_pbi_path}/plugins/minidlna/application
 mkdir -p ../data/db
 ${minidlna_pbi_path}/bin/php bin/doctrine.php orm:schema-tool:create
