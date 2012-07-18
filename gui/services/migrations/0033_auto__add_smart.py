@@ -21,7 +21,7 @@ class Migration(DataMigration):
         db.send_create_signal('services', ['SMART'])
         srv = orm.services.objects.create(
             srv_service='smartd',
-            srv_enable=False
+            srv_enable=True
             )
         srv.save()
 
