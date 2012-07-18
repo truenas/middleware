@@ -138,9 +138,11 @@ plugins_jail_start()
 
 			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
 			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
-			defaultroute=$(netstat -rn | grep default|awk '{print $2}')
+			#FIXME: ipv6
+			defaultroute=$(netstat -f inet -rn | grep default|awk '{print $2}')
 			#FIXME: perhaps select which iface to bridge with in the GUI
-			defaultif=$(netstat -rn | grep default|awk '{print $6}')
+			#FIXME: ipv6
+			defaultif=$(netstat -f inet -rn | grep default|awk '{print $6}')
 			mtu=$(ifconfig | grep "^${defaultif}" | sed -E 's/.*mtu ([0-9]+)/\1/g')
 			bridge=$(ifconfig bridge create mtu ${mtu})
 			epair=$(ifconfig epair create mtu ${mtu})
