@@ -107,7 +107,7 @@ class FreeNAS_Form_Edit extends Zend_Dojo_Form
              //->addElement($enabled)
              ->addElement($media_dir)
              ->addElement(
-                 'NumberTextBox',
+                 'TextBox',
                  'port',
                  array(
                      'label'      => 'Port',
