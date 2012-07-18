@@ -71,7 +71,7 @@ CONF_INSTALL="$CONF_BUILD"
 add_port devel/libtool
 add_port converters/libiconv
 #+editors/nano || converters/iconv
-add_port lang/perl5.12
+add_port lang/perl5.14
 #-editors/nano || converters/iconv
 add_port converters/iconv
 #+databases/tdb || ...
