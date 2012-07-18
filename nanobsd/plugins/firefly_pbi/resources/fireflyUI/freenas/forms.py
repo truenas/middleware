@@ -14,6 +14,7 @@ class FireflyForm(forms.ModelForm):
         model = models.Firefly
         widgets = {
             'admin_pw': forms.widgets.PasswordInput(),
+            'port': forms.widgets.TextInput(),
         }
         exclude = (
             'enable',
