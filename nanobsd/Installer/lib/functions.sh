@@ -49,6 +49,56 @@ compare_project()
 	return 1
 }
 
+# Phases in a release cycle sorted in chronological order.
+#
+# See rewrite_release_phases for more details.
+readonly RELEASE_PHASES="
+ALPHA
+BETA
+RC
+PRERELEASE
+RELEASE
+"
+
+# In order for sort(1) to do the right thing with release versions below, we
+# need to remap the "release phases" (ALPHA, BETA, RC, PRERELEASE, RELEASE) to
+# their respective numeric stages in the release cycle so the numeric sort will
+# succeed.
+#
+# This function also sanity checks that the version string matches the expected
+# release phase format.
+#
+# Parameters:
+# 1 - version string to rewrite
+rewrite_release_phases()
+{
+	local i
+	local version_string
+	local version_string_old
+
+	version_string=$1
+	version_string_old=$1
+
+	i=0
+	set -- $RELEASE_PHASES
+	while [ $# -gt 0 ]
+	do
+		version_string=$(echo "$version_string" | sed -e "s/$1/$i./")
+		shift
+		: $(( i += 1 ))
+	done
+
+	# Sanity check
+	if [ $version_string = $version_string_old ]
+	then
+		error "version string was unexpected ($version_string).
+
+It must contain one of the following strings:
+$RELEASE_PHASES"
+	fi
+	echo $version_string
+}
+
 # Compare two arbitrary versions to return whether or not one is newer than
 # the other.
 #
@@ -80,6 +130,9 @@ compare_version()
 	then
 		return 0
 	fi
+
+	version1=$(rewrite_release_phases $version1)
+	version2=$(rewrite_release_phases $version2)
 
 	unsorted="$version1 $version2"
 	# Magic sort fu required for 9.0.0 vs 10.0.0, etc.

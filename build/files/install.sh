@@ -197,7 +197,9 @@ disk_is_freenas()
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
         ls /tmp/data_old > /dev/null
-        cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
+	if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
+            cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
+	fi
         if [ -d /tmp/data_old/root/.ssh ]; then
             cp -pR /tmp/data_old/root/.ssh /tmp/
         fi
@@ -215,11 +217,6 @@ disk_is_freenas()
     fi
     rmdir /tmp/data_old
 
-    if [ -f /tmp/hostid ]; then
-        return 0
-    else
-        return 1
-    fi
 }
 
 menu_install()
@@ -301,13 +298,14 @@ menu_install()
         /etc/rc.d/dmesg start
         mkdir /tmp/data
         mount /dev/${_disk}s1a /tmp/data
+	ls /tmp/data > /dev/null
         # pre-avatar.conf build. Convert it!
-        if [ ! -e /tmp/data/etc/avatar.conf ]
+        if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]
         then
             upgrade_version_to_avatar_conf \
-		    /tmp/data/etc/version* \
+		    /tmp/data/conf/base/etc/version* \
 		    /etc/avatar.conf \
-		    /tmp/data/etc/avatar.conf
+		    /tmp/data/conf/base/etc/avatar.conf
         fi
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
@@ -338,7 +336,9 @@ menu_install()
         # Mount: /
         mount /dev/${_disk}s1a /tmp/data
         ls /tmp/data > /dev/null
-        cp -p /tmp/hostid /tmp/data/conf/base/etc
+	if [ -f /tmp/hostid ]; then
+            cp -p /tmp/hostid /tmp/data/conf/base/etc
+	fi
         if [ -d /tmp/.ssh ]; then
             cp -pR /tmp/.ssh /tmp/data/root/
         fi
