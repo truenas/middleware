@@ -129,6 +129,13 @@ syslogd_flags="-ss"
 pbid_enable="YES"
 EOF
 
+	cat > etc/pw.conf <<EOF
+minuid 40000
+maxuid 49999
+mingid 40000
+maxgid 49999
+EOF
+
 	)
 
 }
