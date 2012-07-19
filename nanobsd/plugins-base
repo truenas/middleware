@@ -136,7 +136,7 @@ mingid 40000
 maxgid 49999
 EOF
 
-	echo "PERL_VERSION=5.12.4" >> etc/make.conf
+	echo "PERL_VERSION=5.12.3" >> etc/make.conf
 
 	)
 
