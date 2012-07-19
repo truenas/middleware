@@ -285,7 +285,6 @@ menu_install()
 
     # Start critical section.
     trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
-    set -ex
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall

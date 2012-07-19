@@ -30,8 +30,6 @@
 #	ssh somewhere cat image.s1 | sh update
 #
 
-set -e
-
 . /etc/nanobsd.conf
 
 if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
