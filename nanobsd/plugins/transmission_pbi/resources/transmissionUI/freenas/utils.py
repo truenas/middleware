@@ -13,8 +13,11 @@ transmission_oauth_file = os.path.join(transmission_pbi_path, ".oauth")
 
 
 def get_rpc_url(request):
-    return 'http%s://%s/plugins/json-rpc/v1/' % ('s' if request.is_secure() \
-            else '', request.get_host(),)
+    return 'http%s://%s:%s/plugins/json-rpc/v1/' % (
+        's' if request.is_secure() else '',
+        request.META.get("SERVER_ADDR"),
+        request.META.get("SERVER_PORT"),
+        )
 
 
 def get_transmission_oauth_creds():
