@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.2.0-RC1
+Release Notes for FreeNAS 8.2.0-RELEASE
 
 *** IMPORTANT ***
 
@@ -101,6 +101,40 @@ systems with multiple interfaces there is currently no way to
 specify which interface is used.  The current system chooses the interface
 with the default route.
 
+Changes since 8.2.0-RC1:
+
+Enhancements
+========================
+
+Plugins
+------------------------
+
+1. Check jail arch against base system arch to ensure the 64 bit jail isn't
+   installed on a 32 bit system or vice-versa.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Consistently name iSCSI fields between the tabs and tree menu nodes.
+
+OS/Third party
+------------------------
+
+1. Fix bugs that prevented upgrades from working.
+
+Plugins
+------------------------
+
+1. Eliminate the commas in the port numbers of the minidnla and firefly plugins.
+
+2. Set a uid/gid range for the jail users so they don't overlap with the base system.
+
+3. Fix the minidnla plugin so it works properly on 32 bit systems.
+
+
 Changes since 8.2.0-BETA4:
 
 Enhancements
@@ -109,7 +143,7 @@ Enhancements
 GUI
 ------------------------
 
-1. Add missing tree icons when addding/viewing ntp servers and tunables.
+1. Add missing tree icons when adding/viewing ntp servers and tunables.
 2. Added icons for mountpoints, plugins, shell, sysctls.
 3. Add alert if jail ip is unreachable.
 4. Add check and alert for non-optimal multipath states.
