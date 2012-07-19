@@ -685,6 +685,17 @@ class notifier:
         self.__system("/usr/sbin/service lockd quietstart")
 
     def _start_plugins_jail(self):
+        """
+        Currently the ix-jail script relies on the default gw
+        to find out which iface to bridge with and default route
+        to add in the jail
+        """
+        proc = self.__pipeopen("/usr/bin/netstat -f inet -rn")
+        netstat = proc.communicate()[0]
+        if not re.search(r'^default\s', netstat, re.M):
+            from freenasUI.services.models import services
+            services.objects.filter(srv_service='plugins').update(srv_enable=False)
+            raise MiddlewareError("Please configure a default gateway")
         self.__system("/usr/sbin/service ix-jail quietstart")
         self.__system_nolog("/usr/sbin/service ix-plugins start")
 
