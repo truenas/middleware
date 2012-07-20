@@ -88,9 +88,9 @@ def plugin_delete(request, plugin_id):
 
 
 def plugin_update(request, plugin_id):
+    pj = PluginsJail.objects.order_by("-id")[0]
+    notifier().change_upload_location(pj.plugins_path)
     if request.method == "POST":
-        pj = PluginsJail.objects.order_by("-id")[0]
-        notifier().change_upload_location(pj.plugins_path)
         form = forms.PBIUpdateForm(request.POST, request.FILES)
         if form.is_valid():
             form.done()
@@ -117,9 +117,9 @@ def plugin_update(request, plugin_id):
 
 
 def plugin_install(request):
+    pj = PluginsJail.objects.order_by("-id")[0]
+    notifier().change_upload_location(pj.plugins_path)
     if request.method == "POST":
-        pj = PluginsJail.objects.order_by("-id")[0]
-        notifier().change_upload_location(pj.plugins_path)
         form = forms.PBIUploadForm(request.POST, request.FILES)
         if form.is_valid():
             form.done()
