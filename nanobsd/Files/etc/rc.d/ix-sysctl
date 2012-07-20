@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-sysctl
-# REQUIRE: ix-update sysctl
+# REQUIRE: ix-update
 # BEFORE: ix-zfs
 
 . /etc/rc.subr
