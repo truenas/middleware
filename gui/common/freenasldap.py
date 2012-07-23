@@ -476,6 +476,7 @@ class FreeNAS_LDAP_Directory(object):
             res = None
             self._handle.protocol_version = FREENAS_LDAP_VERSION
             self._handle.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
+            self._handle.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self._handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
