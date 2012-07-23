@@ -227,7 +227,7 @@ EOF
   TLSRSACertificateFile ${proftpd_tlsrsacertfile}
   TLSRSACertificateKeyFile ${proftpd_tlsrsakeyfile}
   TLSVerifyClient ${proftpd_tlsverifyclient}
-$(bool_on ${proftpd_tlsrequired} "  TLSRequired ${proftpd_tlsrequired}")
+  TLSRequired ${proftpd_tlsrequired}
 </IfModule>
 EOF
 	fi
