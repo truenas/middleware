@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-16 14:52+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2012-07-22 18:23+0200\n"
+"Last-Translator: rhs <rhs@rhsdat.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -323,7 +323,7 @@ msgstr "CHAP bei Client und Server"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "USV erreicht niedrigen Ladestand"
+msgstr "USV erreicht niedrigen Batterie-Ladestand"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -1256,18 +1256,16 @@ msgid "Plugins jail path"
 msgstr "Plugins Jail Verzeichnis"
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Jail IP Adresse"
+msgstr "Jail IPv4 Adresse"
 
 #: plugins/forms.py:222
 msgid "Jail IPv4 Netmask"
 msgstr "Jail-Netzmaske (IPv4)"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Plugins Jail Verzeichnis"
+msgstr "Plugins Archiv Pfad"
 
 # pbi sollte nicht übersetzt werden, da weder "Firmware" noch "Image" zutreffend ist: Andere Paketverwaltungen übersetzen das auch nicht, wie .rpm (Suse/Redhat) oder .deb (Debian/Ubuntu)
 # Ich schlage einheitliche Schreibweise in Großbuchstaben vor.
@@ -1433,9 +1431,8 @@ msgid "This IP already exists."
 msgstr "Diese IP existiert bereits."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "Der Plugin Dienst konnte nicht neu geladen werden."
+msgstr "Der Plugin Jail Dienst konnte nicht neu geladen werden."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1457,7 +1454,7 @@ msgstr ""
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Der Wert muss größer sein als der erste passive Port."
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1500,8 +1497,8 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Das Kontaktfeld darf nur alphanumerische Zeichen, _, - oder eine gültige "
-"Emailadresse beinhalten"
+"Das Kontaktfeld darf nur alphanumerische Zeichen, _, - oder eine gültige E"
+"-Mail-Adresse beinhalten"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -2483,12 +2480,11 @@ msgstr ""
 
 #: services/models.py:821
 msgid "Jail IP address"
-msgstr "Jail IP Adresse"
+msgstr "Jail IP-Adresse"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "Netzmaske (IPv4)"
+msgstr "Jail IP Netzmaske (IPv4)"
 
 #: services/models.py:829
 #, fuzzy
@@ -4495,7 +4491,7 @@ msgstr "Intervall"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Wie viel Zeit ist zwischen zwei snapshot Versuchen verstrichen."
 
 # Stark vom Kontext abhängig. Konnte es im UI nicht finden...
 #: storage/models.py:756
@@ -4718,7 +4714,7 @@ msgstr ""
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "Die folgenden Laufwerke haben bereits Tests für folgende Typen: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -4782,7 +4778,7 @@ msgstr "Sprache"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Konsolen Tastatur Abbild"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -5427,11 +5423,11 @@ msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr "Warnung"
+msgstr "WARNUNG"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr "Kritisch"
+msgstr "KRITISCH"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -5902,7 +5898,7 @@ msgstr "Nein"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Core"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -6031,20 +6027,20 @@ msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"ACHTUNG: Der Plugins Dienst wird nicht ausgeführt, mehrere Funktionen wurden "
+"deaktiviert."
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Betriebssystemversion"
+msgstr "Version"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Dienste"
+msgstr "Dienste Status"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
@@ -6056,7 +6052,7 @@ msgstr "Plugin aktualisieren"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "Keine verfügbaren Plugins Dienste"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
@@ -6529,9 +6525,8 @@ msgstr "Firmware Update"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Lösche Plugins Jail"
+msgstr "Importiere Plugins Jail"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6600,9 +6595,8 @@ msgstr ""
 "Sie sind dabei das System <strong>NEUZUSTARTEN</strong>. Sind Sie sicher?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Verzeichnis"
+msgstr "Historie"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
@@ -7118,7 +7112,7 @@ msgid "Docs"
 msgstr "Dokumentation"
 
 msgid "Welcome to"
-msgstr "Willkommen zu8"
+msgstr "Willkommen zu"
 
 msgid "LUN"
 msgstr "LUN"
