@@ -55,8 +55,14 @@ class FreeNAS_Lib_MiniDLNA {
 
         if($this->_rpc)
             return $this->_rpc;
-        $scheme = (isset($_SERVER['HTTPS'])) ? 'https' : 'http';
-        $target = sprintf('%s://%s:%s/plugins/json-rpc/v1/', $scheme, $_SERVER['SERVER_ADDR'], $_SERVER['SERVER_PORT']);
+        if(isset($_SERVER['HTTPS'])) {
+            $scheme = 'https';
+            $port = ($_SERVER['SERVER_PORT'] != 443) ? ':'.$_SERVER['SERVER_PORT'] : '';
+        } else {
+            $scheme = 'http';
+            $port = ($_SERVER['SERVER_PORT'] != 80) ? ':'.$_SERVER['SERVER_PORT'] : '';
+        }
+        $target = sprintf('%s://%s%s/plugins/json-rpc/v1/', $scheme, $_SERVER['SERVER_ADDR'], $port);
         $oauth_consumer = $this->getOAuthConsumer();
         $connection = Tivoka::connect($target);
         $connection->setOAuthConsumer($oauth_consumer);
