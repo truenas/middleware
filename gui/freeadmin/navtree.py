@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
     unserialize_tree)
+from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 
@@ -390,6 +391,10 @@ class NavTree(object):
                     opt)
 
         self.replace_navs(tree_roots)
+        if notifier()._started_plugins_jail():
+            self._get_plugins_nodes(request)
+
+    def _get_plugins_nodes(self, request):
 
         """
         Plugin nodes
