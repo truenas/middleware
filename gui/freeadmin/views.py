@@ -472,9 +472,8 @@ def generic_model_add(request, app, model, mf=None):
             except ServiceFailed, e:
                 return JsonResp(request,
                     error=True,
-                    message=_("The service failed to restart.") % (
-                        m._meta.verbose_name,
-                        ))
+                    message=_("The service failed to restart.")
+                    )
         else:
             return JsonResp(request, form=mf, formsets=formsets)
 
@@ -744,9 +743,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 return JsonResp(request,
                     form=mf,
                     error=True,
-                    message=_("The service failed to restart.") % (
-                        m._meta.verbose_name,
-                        ),
+                    message=_("The service failed to restart."),
                     events=["serviceFailed(\"%s\")" % e.service])
             except MiddlewareError, e:
                 return JsonResp(request,
