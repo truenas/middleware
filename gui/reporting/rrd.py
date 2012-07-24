@@ -85,7 +85,7 @@ class RRDBase(object):
         return self.vertical_label
 
     def get_identifiers(self):
-        return []
+        return None
 
     def generate(self):
         """

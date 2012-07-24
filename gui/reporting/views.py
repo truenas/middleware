@@ -43,6 +43,8 @@ def index(request):
     for klass in rrd.name2plugin.values():
         ins = klass(RRD_BASE_PATH)
         ids = ins.get_identifiers()
+        if ids is not None and len(ids) == 0:
+            continue
         if not ids:
             graphs.append({
                 'plugin': klass.plugin,
