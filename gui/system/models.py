@@ -187,6 +187,12 @@ class Advanced(Model):
     adv_autotune = models.BooleanField(
             verbose_name=_("Enable autotune"),
             default=False)
+    adv_anonstats = models.BooleanField(
+            verbose_name=_("Enable report anonymous statistics"),
+            default=True)
+    adv_anonstats_token = models.TextField(
+            blank=True,
+            editable=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),
