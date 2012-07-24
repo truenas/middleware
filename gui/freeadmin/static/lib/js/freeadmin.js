@@ -1126,8 +1126,10 @@
 
         if(zfs) {
             dojo.style('zfssectorsize', 'display', 'table-row');
+            dojo.style('zfsdedup', 'display', 'table-row');
         } else {
             dojo.style('zfssectorsize', 'display', 'none');
+            dojo.style('zfsdedup', 'display', 'none');
         }
 
         if(ufs) {

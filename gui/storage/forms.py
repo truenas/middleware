@@ -145,6 +145,10 @@ class VolumeWizardForm(forms.Form):
         required=False,
         initial=False,
         help_text=_('Force 4096 bytes sector size'))
+    dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP,
+        initial="off",
+        )
     ufspathen = forms.BooleanField(
         initial=False,
         label=_('Specify custom path'),
@@ -325,6 +329,7 @@ class VolumeWizardForm(forms.Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
+        dedup = self.cleaned_data.get("dedup", False)
         ufspath = self.cleaned_data['ufspath']
         mp_options = "rw"
         mp_path = None
@@ -390,6 +395,10 @@ class VolumeWizardForm(forms.Form):
             else:
                 notifier().init("volume", volume, groups=grouped,
                     force4khack=force4khack, path=ufspath)
+
+                if dedup:
+                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
+
                 if volume.vol_fstype == 'ZFS':
                     models.Scrub.objects.create(scrub_volume=volume)
                     try:
@@ -704,6 +713,10 @@ class ZFSDataset_CreateForm(Form):
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1g'))
+    dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP_INHERIT,
+        initial="inherit",
+        )
 
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
@@ -765,6 +778,10 @@ class ZFSDataset_EditForm(Form):
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1g'))
+    dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP_INHERIT,
+        initial="off",
+        )
 
     def __init__(self, *args, **kwargs):
         self._fs = kwargs.pop("fs", None)
@@ -779,6 +796,13 @@ class ZFSDataset_EditForm(Form):
                 self.fields[formfield].initial = 0
             else:
                 self.fields[formfield].initial = data[attr]
+
+        if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
+            self.fields['dataset_dedup'].initial = data['dedup']
+        elif data['dedup'] == 'sha256,verify':
+            self.fields['dataset_dedup'].initial = 'verify'
+        else:
+            self.fields['dataset_dedup'].initial = 'off'
 
     def clean(self):
         return _clean_quota_fields(self,
@@ -810,6 +834,9 @@ class ZFSVolume_EditForm(Form):
         initial=0,
         label=_('Reserved space for this volume'),
         help_text=_('0=None; example: 1g'))
+    volume_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP_INHERIT,
+        )
 
     def __init__(self, *args, **kwargs):
         self._mp = kwargs.pop("mp", None)
@@ -825,6 +852,13 @@ class ZFSVolume_EditForm(Form):
                 self.fields[formfield].initial = 0
             else:
                 self.fields[formfield].initial = data[attr]
+
+        if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
+            self.fields['volume_dedup'].initial = data['dedup']
+        elif data['dedup'] == 'sha256,verify':
+            self.fields['volume_dedup'].initial = 'verify'
+        else:
+            self.fields['volume_dedup'].initial = 'off'
 
     def clean(self):
         return _clean_quota_fields(self,

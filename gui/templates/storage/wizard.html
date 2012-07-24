@@ -68,6 +68,13 @@
                 {{ form.force4khack }}
             </td>
         </tr>
+        <tr id="zfsdedup" style="display: none">
+            <td>{% trans "Deduplication" %}</td>
+            <td>
+                {{ form.dedup.errors }}
+                {{ form.dedup }}
+            </td>
+        </tr>
         <tr id="grpopt" {% if disks and disks|length >= 2 %}{% else %}style="display:none;"{% endif %}>
             <td style="width:200px;">
                 {% trans "Group type" %}

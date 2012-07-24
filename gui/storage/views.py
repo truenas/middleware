@@ -389,6 +389,9 @@ def dataset_create(request, fs):
             refreservation = cleaned_data.get('dataset_reserv')
             if refreservation != '0':
                 props['refreservation'] = refreservation.__str__()
+            dedup = cleaned_data.get('dataset_dedup')
+            if dedup != 'off':
+                props['dedup'] = dedup.__str__()
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
@@ -418,6 +421,7 @@ def dataset_edit(request, dataset_name):
 
             for attr in ('compression',
                     'atime',
+                    'dedup',
                     'reservation',
                     'refreservation',
                     'quota',
@@ -525,6 +529,7 @@ def zfsvolume_edit(request, object_id):
             error, errors = False, {}
             for attr in ('compression',
                     'atime',
+                    'dedup',
                     'refquota',
                     'refreservation',
                     ):
