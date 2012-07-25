@@ -183,7 +183,7 @@ add_port net/openldap24-sasl-client
 add_port net/nss_ldap
 add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
 	WITH_ACL=true WITHOUT_ICONV=true WITHOUT_TIMELIMIT=true
-add_port lang/python27 WITH_HUGE_STACK_SIZE=y
+add_port lang/python27
 add_port dns/py-dnspython
 #+net/samba
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
@@ -227,19 +227,17 @@ add_port devel/py-setuptools
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-add_port www/nginx WITH_IPV6=true WITH_HTTP_MODULE=true \
-	WITH_HTTP_CACHE_MODULE=true WITH_HTTP_DAV_MODULE=true \
-	WITH_HTTP_REWRITE_MODULE=true WITH_HTTP_SSL_MODULE=true \
-	WITH_HTTP_STATUS_MODULE=true WITH_WWW=true \
-	WITH_HTTP_UPLOAD_MODULE=true WITH_DEBUGLOG=true \
-	WITH_HTTP_UPLOAD_PROGRESS=true
+add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV OPTIONS_FILE_SET+=HTTP_SSL \
+                   OPTIONS_FILE_SET+=HTTP_UPLOAD \
+                   OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
+                   OPTIONS_FILE_SET+=STATUS
 #+add_port www/py-flup
 #-add_port www/py-flup
 add_port www/py-flup
 #+add_port sysutils/nut
 #-add_port sysutils/nut
 add_port net-mgmt/net-snmp
-add_port sysutils/nut WITHOUT_NEON=y
+add_port sysutils/nut OPTION_FILE_UNSET+="NEON"
 
 add_port textproc/libxml2 WITHOUT_X11=y
 add_port textproc/py-libxml2 WITHOUT_X11=y
@@ -372,7 +370,8 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
 	add_port lang/p5-Error
-	add_port devel/git WITH_SVN=y WITHOUT_CVS=y WITHOUT_P4=y
+	add_port devel/git OPTIONS_FILE_SET+=SVN OPTIONS_FILE_UNSET+=CVS \
+                           OPTIONS_FILE_UNSET+=P4
 	add_port devel/ctags
 fi
 
