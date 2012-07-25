@@ -1,2 +1,4 @@
+Defaults syslog_goodpri = debug
+
 # Let find_alias_for_smtplib.py runs as root (it needs database access)
 ALL ALL=(ALL) NOPASSWD: /etc/find_alias_for_smtplib.py
