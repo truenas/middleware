@@ -177,11 +177,20 @@ class PathField(forms.CharField):
         return value
 
 
-class WarningSelect(forms.widgets.Select):
+class WarningWidgetMixin(object):
+    """
+    This mixin for widgets adds a warning text above the widget
+
+    The argument text is taken for that purpose
+    """
     def __init__(self, *args, **kwargs):
         self.text = kwargs.pop('text')
-        super(WarningSelect, self).__init__(*args, **kwargs)
+        super(WarningWidgetMixin, self).__init__(*args, **kwargs)
 
     def render(self, *args, **kwargs):
-        rendered = super(WarningSelect, self).render(*args, **kwargs)
+        rendered = super(WarningWidgetMixin, self).render(*args, **kwargs)
         return u"%s<br />\n%s" % (self.text, rendered)
+
+
+class WarningSelect(WarningWidgetMixin, forms.widgets.Select):
+    pass
