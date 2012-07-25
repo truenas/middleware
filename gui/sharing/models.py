@@ -285,6 +285,7 @@ class NFS_Share(Model):
             verbose_name=_("Maproot User"),
             max_length=120,
             blank=True,
+            null=True,
             default='',
             help_text=_("User to map root to")
             )
@@ -292,6 +293,7 @@ class NFS_Share(Model):
             verbose_name=_("Maproot Group"),
             max_length=120,
             blank=True,
+            null=True,
             default='',
             help_text=_("Group to map root to")
             )
@@ -299,6 +301,7 @@ class NFS_Share(Model):
             verbose_name=_("Mapall User"),
             max_length=120,
             blank=True,
+            null=True,
             default='',
             help_text=_("User to map all users to")
             )
@@ -306,6 +309,7 @@ class NFS_Share(Model):
             verbose_name=_("Mapall Group"),
             max_length=120,
             blank=True,
+            null=True,
             default='',
             help_text=_("Group to map all users to")
             )
