@@ -26,6 +26,7 @@
 #####################################################################
 
 from datetime import time
+import logging
 import os
 
 from django.db import models, transaction
@@ -36,6 +37,8 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
 from freenasUI.freeadmin.models import Model
+
+log = logging.getLogger('storage.models')
 
 
 class Volume(Model):
@@ -72,6 +75,9 @@ class Volume(Model):
                         if prov else []
             return self._disks
         except Exception, e:
+            log.debug("Exception on retrieving disks for %s: %s",
+                self.vol_name,
+                e)
             return []
 
     def get_datasets(self, hierarchical=False):
@@ -92,6 +98,9 @@ class Volume(Model):
                     self.vol_fstype)
             return self._status
         except Exception, e:
+            log.debug("Exception on retrieving status for %s: %s",
+                self.vol_name,
+                e)
             return _(u"Error")
     status = property(_get_status)
 
@@ -132,7 +141,7 @@ class Volume(Model):
                     iscsi_target_extent_type='ZVOL')
                 if qs.exists():
                     if destroy:
-                        retval = notifier().destroy_zfs_vol(zvol)
+                        notifier().destroy_zfs_vol(zvol)
                     qs.delete()
                 reloads = map(sum, zip(reloads, (False, False, False, True)))
 
