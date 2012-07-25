@@ -44,7 +44,8 @@ from freenasUI import choices
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import mount, umount
-from freenasUI.freeadmin.forms import CronMultiple, UserField, GroupField
+from freenasUI.freeadmin.forms import (CronMultiple, UserField, GroupField,
+    WarningSelect)
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -56,6 +57,10 @@ from freenasUI.storage.widgets import UnixPermissionField
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
 log = logging.getLogger('storage.forms')
+
+DEDUP_WARNING = _("Enabling dedup may have drastic performance implications,"
+    "<br /> as well as impact your ability to access your data.<br /> "
+    "Compression is recommended.")
 
 
 class Disk(object):
@@ -715,6 +720,7 @@ class ZFSDataset_CreateForm(Form):
         help_text=_('0=None; example: 1g'))
     dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
+        widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
         )
 
@@ -780,6 +786,7 @@ class ZFSDataset_EditForm(Form):
         help_text=_('0=None; example: 1g'))
     dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
+        widget=WarningSelect(text=DEDUP_WARNING),
         initial="off",
         )
 
@@ -836,6 +843,7 @@ class ZFSVolume_EditForm(Form):
         help_text=_('0=None; example: 1g'))
     volume_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
+        widget=WarningSelect(text=DEDUP_WARNING),
         )
 
     def __init__(self, *args, **kwargs):

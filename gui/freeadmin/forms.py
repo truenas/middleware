@@ -175,3 +175,13 @@ class PathField(forms.CharField):
                 raise forms.ValidationError(_("The path must reside within a volume mount point"))
             return value if not self.abspath else absv
         return value
+
+
+class WarningSelect(forms.widgets.Select):
+    def __init__(self, *args, **kwargs):
+        self.text = kwargs.pop('text')
+        super(WarningSelect, self).__init__(*args, **kwargs)
+
+    def render(self, *args, **kwargs):
+        rendered = super(WarningSelect, self).render(*args, **kwargs)
+        return u"%s<br />\n%s" % (self.text, rendered)

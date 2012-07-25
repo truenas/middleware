@@ -71,6 +71,7 @@
         <tr id="zfsdedup" style="display: none">
             <td>{% trans "Deduplication" %}</td>
             <td>
+                <p>{{ dedup_warning|striptags }}</p>
                 {{ form.dedup.errors }}
                 {{ form.dedup }}
             </td>

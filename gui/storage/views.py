@@ -216,6 +216,7 @@ def wizard(request):
         'disks': disks,
         'zfsextra': zfsextra,
         'zfsversion': notifier().zfs_get_version(),
+        'dedup_warning': forms.DEDUP_WARNING,
     })
 
 
