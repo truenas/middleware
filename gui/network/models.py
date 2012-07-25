@@ -30,12 +30,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.db import models
 
 from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField,\
-                                             IP6AddressField, IPNetworkField
+from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
+    IP6AddressField)
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
-## Network|Global Configuration
+
 class GlobalConfiguration(Model):
     gc_hostname = models.CharField(
             max_length=120,
@@ -70,15 +70,18 @@ class GlobalConfiguration(Model):
             blank=True,
             verbose_name=_("Nameserver 3")
             )
+
     def __unicode__(self):
             return u'%s' % self.id
+
     class Meta:
         verbose_name = _("Global Configuration")
         verbose_name_plural = _("Global Configuration")
+
     class FreeAdmin:
         deletable = False
 
-## Network|Interface Management
+
 class Interfaces(Model):
     int_interface = models.CharField(
             max_length=300,
@@ -93,7 +96,8 @@ class Interfaces(Model):
             )
     int_dhcp = models.BooleanField(
             verbose_name=_("DHCP"),
-            help_text=_("When enabled, use DHCP to obtain IPv4 address as well as default router, etc.")
+            help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
+                " as default router, etc.")
             )
     int_ipv4address = IPAddressField(
             verbose_name=_("IPv4 Address"),
@@ -110,7 +114,8 @@ class Interfaces(Model):
             )
     int_ipv6auto = models.BooleanField(
             verbose_name=_("Auto configure IPv6"),
-            help_text=_("When enabled, automatically configurate IPv6 address via rtsol(8).")
+            help_text=_("When enabled, automatically configurate IPv6 address "
+                "via rtsol(8).")
             )
     int_ipv6address = IPAddressField(
             verbose_name=_("IPv6 Address"),
@@ -240,9 +245,13 @@ class Alias(Model):
 
     def __unicode__(self):
         if self.alias_v4address:
-            return u'%s:%s' % (self.alias_interface.int_name, self.alias_v4address)
+            return u'%s:%s' % (
+                self.alias_interface.int_name,
+                self.alias_v4address)
         elif self.alias_v6address:
-            return u'%s:%s' % (self.alias_interface.int_name, self.alias_v6address)
+            return u'%s:%s' % (
+                self.alias_interface.int_name,
+                self.alias_v6address)
 
     def delete(self):
         super(Alias, self).delete()
@@ -263,7 +272,8 @@ class VLAN(Model):
     vlan_vint = models.CharField(
             max_length=120,
             verbose_name=_("Virtual Interface"),
-            help_text=_("Interface names must be vlanX where X is a number. Example: vlan0.")
+            help_text=_("Interface names must be vlanX where X is a number. "
+                "Example: vlan0.")
             )
     vlan_pint = models.CharField(
             max_length=300,
@@ -300,13 +310,14 @@ class VLAN(Model):
         icon_view = u"ViewAllVLANsIcon"
 
 
-# LAGG interface to protocol type map.
-# This model amends Interface to provide information regarding to a lagg interface
 class LAGGInterface(Model):
+    # LAGG interface to protocol type map.
+    # This model amends Interface to provide information regarding to a lagg
+    # interface.
     # A corresponding interface is created as "laggX"
     lagg_interface = models.ForeignKey(
             Interfaces,
-            unique = True,
+            unique=True,
             verbose_name=_("Interface")
             )
     lagg_protocol = models.CharField(
@@ -321,12 +332,18 @@ class LAGGInterface(Model):
         ordering = ["lagg_interface"]
 
     def __unicode__(self):
-        interface_list = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = self.id)
+        interface_list = LAGGInterfaceMembers.objects.filter(
+            lagg_interfacegroup=self.id)
         if interface_list != None:
-            interfaces = ', '.join([int.lagg_physnic for int in interface_list])
+            interfaces = ', '.join(
+                [int.lagg_physnic for int in interface_list]
+                )
         else:
             interfaces = 'None'
-        return "%s (%s: %s)" % (self.lagg_interface, self.lagg_protocol, interfaces)
+        return "%s (%s: %s)" % (
+            self.lagg_interface,
+            self.lagg_protocol,
+            interfaces)
 
     def delete(self):
         super(LAGGInterface, self).delete()
@@ -339,8 +356,8 @@ class LAGGInterface(Model):
         icon_view = u"ViewAllVLANsIcon"
 
 
-# Physical interfaces list inside one LAGG group
 class LAGGInterfaceMembers(Model):
+    # Physical interfaces list inside one LAGG group
     lagg_interfacegroup = models.ForeignKey(
             LAGGInterface,
             verbose_name=_("LAGG Interface group")
@@ -350,7 +367,7 @@ class LAGGInterfaceMembers(Model):
             )
     lagg_physnic = models.CharField(
             max_length=120,
-            unique = True,
+            unique=True,
             verbose_name=_("Physical NIC")
             )
     lagg_deviceoptions = models.CharField(
