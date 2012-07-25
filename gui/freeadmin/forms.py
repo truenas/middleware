@@ -29,9 +29,8 @@ import re
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
-from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.encoding import StrAndUnicode, force_unicode
+from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -86,7 +85,8 @@ class UserField(forms.ChoiceField):
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER)) > 500:
+        if len(FreeNAS_Users(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER |
+                FLAGS_CACHE_WRITE_USER)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             kwargs = {}
@@ -99,16 +99,23 @@ class UserField(forms.ChoiceField):
             ulist = []
             if not self.required:
                 ulist.append(('-----', 'N/A'))
-            ulist.extend(map(lambda x: (x.pw_name, x.pw_name, ),
-                             filter(lambda y: y is not None and y.pw_name not in self._exclude,
-                                              FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER))))
+            ulist.extend(
+                map(
+                    lambda x: (x.pw_name, x.pw_name, ),
+                    filter(
+                        lambda y:
+                            y is not None and y.pw_name not in self._exclude,
+                        FreeNAS_Users(flags=FLAGS_DBINIT |
+                            FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER)
+                    )
+                )
+            )
 
             self.widget = widgets.FilteringSelect()
             self.choices = ulist
 
-
     def clean(self, user):
-        if not self.required and user in ('-----',''):
+        if not self.required and user in ('-----', ''):
             return None
         if FreeNAS_User(user, flags=FLAGS_DBINIT) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
@@ -131,7 +138,8 @@ class GroupField(forms.ChoiceField):
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        if len(FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP)) > 500:
+        if len(FreeNAS_Groups(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP |
+                FLAGS_CACHE_WRITE_GROUP)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             self.widget = FilteredSelectJSON(url=("account_bsdgroup_json",))
@@ -139,15 +147,22 @@ class GroupField(forms.ChoiceField):
             glist = []
             if not self.required:
                 glist.append(('-----', 'N/A'))
-            glist.extend([(x.gr_name, x.gr_name) for x in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP)])
+            glist.extend(
+                [(x.gr_name, x.gr_name) for x in FreeNAS_Groups(
+                    flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP |
+                        FLAGS_CACHE_WRITE_GROUP
+                    )]
+            )
             self.widget = widgets.FilteringSelect()
             self.choices = glist
 
     def clean(self, group):
-        if not self.required and group in ('-----',''):
+        if not self.required and group in ('-----', ''):
             return None
         if FreeNAS_Group(group, flags=FLAGS_DBINIT) == None:
-            raise forms.ValidationError(_("The group %s is not valid.") % group)
+            raise forms.ValidationError(
+                _("The group %s is not valid.") % group
+                )
         return group
 
 
@@ -166,13 +181,15 @@ class PathField(forms.CharField):
             absv = os.path.abspath(value)
             valid = False
             for mp in MountPoint.objects.all().values_list('mp_path',):
-                if absv.startswith(mp[0]+'/') or absv == mp[0]:
+                if absv.startswith(mp[0] + '/') or absv == mp[0]:
                     valid = True
                     break
             if not valid and absv in self.includes:
                 valid = True
             if not valid:
-                raise forms.ValidationError(_("The path must reside within a volume mount point"))
+                raise forms.ValidationError(
+                    _("The path must reside within a volume mount point")
+                    )
             return value if not self.abspath else absv
         return value
 
