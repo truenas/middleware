@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-22 18:23+0200\n"
-"Last-Translator: rhs <rhs@rhsdat.de>\n"
+"PO-Revision-Date: 2012-07-26 00:32+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1282,14 +1282,14 @@ msgid "The full path cannot exceed 88 characters"
 msgstr "Die vollständige Pfadangabe darf nicht länger als 88 Zeichen sein."
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Der Cache konnte nicht wieder aufgebaut werden"
+msgstr "Der Pfad konnte nicht eingebunden werden %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Der Cache konnte nicht wieder aufgebaut werden"
+msgstr "Der Pfad konnte nicht ausgehängt werden %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1340,9 +1340,8 @@ msgid "Plugin TCP port"
 msgstr "Plugin TCP Port"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Plugins Jail Verzeichnis"
+msgstr "Plugins Archiv-Verzeichnis"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
@@ -1369,9 +1368,8 @@ msgid "Mount Point"
 msgstr "Einhängepunkt"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "Einhängepunkt"
+msgstr "Einhängepunkte"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1395,7 +1393,7 @@ msgstr "Plugin erfolgreich installiert"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Es ist ein Problem beim Import des Jails augetreten."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
@@ -1604,13 +1602,12 @@ msgid "Controller Auth Group"
 msgstr "Controller Auth Gruppe"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"Der \"istgtcontrol\"-Dienst kann mit dem korrekten Benutzer und Passwort "
-"einer Auth Gruppe auf Targets zugreifen."
+"Der \"istgtcontrol\"-Dienst kann mit dem korrekten Benutzer und Passwort einer "
+"spezifischen Auth Gruppe auf Targets zugreifen."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -2144,7 +2141,6 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Der TCP-Port des Logical Unit Controllers (3261 ist voreingestellt)."
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
 msgstr "Vom Controller authorisierte Netzmaske"
 
@@ -2487,9 +2483,8 @@ msgid "Jail IP Netmask"
 msgstr "Jail IP Netzmaske (IPv4)"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "Plugins Jail Verzeichnis"
+msgstr "Archivpfad der Plugins"
 
 #: services/models.py:852
 msgid "Location"
@@ -3353,9 +3348,8 @@ msgid "Settings"
 msgstr "Einstellungen"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "iSCSI Verwaltung"
+msgstr "Verwaltung"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3966,12 +3960,16 @@ msgstr "der Pfad ist kein Verzeichnis"
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Es kann kein existierendes ZFS Volume ausgewählt und ein neuer Volume Name "
+"vergeben werden."
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Es muss ein neuer Volume Name vergeben oder ein bestehendes ZFS Volume "
+"ausgewählt werden, um das virtuelle Gerät zu erweitern."
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -4210,21 +4208,20 @@ msgid "day of month"
 msgstr "Tag des Monats"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "Method"
-msgstr "Authentifizierungsmethode"
+msgstr "Methode"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Schnell"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Mit Nullen gefüllt"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Mit zufälligen Daten gefüllt"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -5451,6 +5448,8 @@ msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
 msgstr ""
+"Es gibt %(related_num)s verknüpfende Einträge die ebenfalls gelöscht werden, "
+"das sie darauf basieren."
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5777,9 +5776,8 @@ msgid "Delete Mount Point"
 msgstr "Einhängepunkt löschen"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "Keine Cronjobs definiert"
+msgstr "Keine Einhängepunkte definiert"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
@@ -5787,9 +5785,8 @@ msgstr "Einhängepunkt hinzufügen"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
-#, fuzzy
 msgid "Upload"
-msgstr "Plugin hochladen"
+msgstr "Hochladen"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
@@ -5929,7 +5926,6 @@ msgid "Associated Targets"
 msgstr "zugehörige Targets"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Keine Ziele definiert"
 
@@ -5954,9 +5950,8 @@ msgid "Authorized Network"
 msgstr "Authorisiertes Netzwerk"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "Authorisierte Initiatoren"
+msgstr "Keine authorisierte Initiatoren definiert"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -6018,9 +6013,8 @@ msgid "Add Target"
 msgstr "Target hinzufügen"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
-msgstr "Einhängepunkt"
+msgstr "Einhängepunkte anzeigen"
 
 #: templates/services/plugins.html:22
 msgid ""
@@ -6317,7 +6311,7 @@ msgstr "Snapshot löschen"
 
 #: templates/storage/snapshots.html:37
 msgid "Destroy this snapshot"
-msgstr "diesen Snapshot löschen"
+msgstr "Diesen Snapshot löschen"
 
 #: templates/storage/snapshots.html:48
 msgid "Rollback Snapshot"
@@ -6329,7 +6323,7 @@ msgstr "Zu diesem Snapshot wechseln"
 
 #: templates/storage/snapshots.html:126
 msgid "Destroy"
-msgstr "löschen"
+msgstr "Löschen"
 
 #: templates/storage/snapshots.html:136
 msgid "Delete snapshots"
@@ -6446,7 +6440,7 @@ msgstr "Keine Volumes angelegt"
 # Volume = Datenträger? Laufwerk? || Volume ist ein "Bereich" uns sollte nicht übersetzt werden, uns fehlt das genaue deutsche Wort
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
-msgstr "zu erweiterndes Volume"
+msgstr "Zu erweiterndes Volume"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
