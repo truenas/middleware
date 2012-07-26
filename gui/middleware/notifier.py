@@ -3177,6 +3177,10 @@ class notifier:
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
 
+        # Do not sync geom classes like multipath/hast/etc
+        if devname.find("/") != -1:
+            return
+
         self.__diskserial.clear()
 
         ident = self.device_to_identifier(devname)
