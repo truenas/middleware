@@ -158,7 +158,7 @@ plugins_jail_start()
 				ifconfig ${bridge} addm ${defaultif}
 			fi
 
-			jexec ${jail_id} /bin/sh /etc/rc
+			jexec ${jail_id} /bin/sh /etc/rc &
 
 			cat<<-__EOF__>> /etc/rc.conf
 			jail_${jail_name}_exec_poststop0="ifconfig ${bridge} destroy"
