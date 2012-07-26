@@ -1,4 +1,3 @@
-
 <table class="grid">
         <thead class="header">
           <tr>
@@ -13,6 +12,7 @@
             <td>{% trans "Day of week" %}</td>
             <td>{% trans "User" %}</td>
             <td>{% trans "Short description" %}</td>
+            <td>{% trans "Enabled" %}</td>
             <td>{% trans "Available actions" %}</td>
           </tr>
         </thead>
@@ -28,6 +28,7 @@
         <td>{{ c.get_human_dayweek }}</td>
         <td>{{ c.rsync_user }}</td>
         <td>{{ c.rsync_desc|default:_("None") }}</td>
+        <td>{{ c.rsync_enabled }}</td>
         <td>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
@@ -45,7 +46,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="8">{% trans "No rsync tasks defined." %}</td>
+        <td colspan="13">{% trans "No rsync tasks defined." %}</td>
     </tr>
     {% endfor %}
     </table>
