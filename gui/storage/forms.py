@@ -60,7 +60,7 @@ log = logging.getLogger('storage.forms')
 
 DEDUP_WARNING = _("Enabling dedup may have drastic performance implications,"
     "<br /> as well as impact your ability to access your data.<br /> "
-    "Compression is recommended.")
+    "Consider using compression instead.")
 
 
 class Disk(object):
