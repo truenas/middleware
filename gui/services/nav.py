@@ -89,7 +89,7 @@ class ISCSIDevice(TreeNode):
 
 class ISCSIExt(TreeNode):
 
-    gname = 'services.ISCSI.iSCSITargetExtent'
+    gname = 'iSCSITargetExtent'
     name = _(u'File Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
