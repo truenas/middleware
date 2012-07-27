@@ -24,17 +24,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import os
-import sys
 import grp
+import logging
+import os
 import pwd
 import re
 import stat
-import syslog
 
 from pipes import quote
 from subprocess import Popen, PIPE
-from syslog import syslog, LOG_DEBUG
+
+log = logging.getLogger('common.acl')
 
 GETFACL_PATH = "/bin/getfacl"
 SETFACL_PATH = "/bin/setfacl"
@@ -56,17 +56,17 @@ ACL_WINDOWS_FILE     = ".windows"
 
 
 class Base_ACL_Exception(Exception):
-    def __init__(self, msg = None):
-        syslog(LOG_DEBUG, "Base_ACL_Exception.__init__: enter")
+    def __init__(self, msg=None):
+        log.debug("Base_ACL_Exception.__init__: enter")
         if msg:
-            syslog(LOG_DEBUG, "Base_ACL_Exception.__init__: error = %s" % msg)
-        syslog(LOG_DEBUG, "Base_ACL_Exception.__init__: leave")
+            log.debug("Base_ACL_Exception.__init__: error = %s", msg)
+        log.debug("Base_ACL_Exception.__init__: leave")
 
 
 class Base_ACL_pipe:
     def __init__(self, cmd):
-        syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: enter")
-        syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: cmd = %s" % cmd)
+        log.debug("Base_ACL_pipe.__init__: enter")
+        log.debug("Base_ACL_pipe.__init__: cmd = %s", cmd)
 
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
@@ -78,12 +78,12 @@ class Base_ACL_pipe:
         self.__out = self.__stdout.read().strip()
         self.__pipe.wait()
 
-        syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: out = %s" % self.__out)
+        log.debug("Base_ACL_pipe.__init__: out = %s", self.__out)
 
         if self.__pipe.returncode != 0:
             raise Base_ACL_Exception(self.__stderr.read().strip())
 
-        syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: leave")
+        log.debug("Base_ACL_pipe.__init__: leave")
 
     def __str__(self):
         return self.__out
@@ -96,8 +96,10 @@ class Base_ACL_pipe:
 
 class Base_ACL_getfacl:
     def __init__(self, path, flags = 0):
-        syslog(LOG_DEBUG, "Base_ACL_getfacl.__init__: enter")
-        syslog(LOG_DEBUG, "Base_ACL_getfacl.__init__: path = %s, flags = 0x%08x" % (path, flags))
+        log.debug("Base_ACL_getfacl.__init__: enter")
+        log.debug("Base_ACL_getfacl.__init__: path = %s, flags = 0x%08x",
+            path,
+            flags)
 
         self.__getfacl = GETFACL_PATH
         self.__path = path
@@ -111,8 +113,8 @@ class Base_ACL_getfacl:
 
         self.__out = str(Base_ACL_pipe(cmd))
 
-        syslog(LOG_DEBUG, "Base_ACL_getfacl.__init__: out = %s" % self.__out)
-        syslog(LOG_DEBUG, "Base_ACL_getfacl.__init__: leave")
+        log.debug("Base_ACL_getfacl.__init__: out = %s", self.__out)
+        log.debug("Base_ACL_getfacl.__init__: leave")
 
     def _build_args(self, path, flags):
         return None
@@ -128,9 +130,11 @@ class Base_ACL_getfacl:
 
 class Base_ACL_setfacl:
     def __init__(self, path, entry = None, flags = 0, pos = 0):
-        syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: enter")
-        syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: path = %s, entry = %s, flags = 0x%08x" %
-            (path, (entry if entry else ""), flags))
+        log.debug("Base_ACL_setfacl.__init__: enter")
+        log.debug("Base_ACL_setfacl.__init__: path = %s, entry = %s, flags = 0x%08x",
+            path,
+            entry if entry else "",
+            flags)
 
         self.__setfacl = SETFACL_PATH
         self.__path = path
@@ -147,8 +151,8 @@ class Base_ACL_setfacl:
 
         self.__out = str(Base_ACL_pipe(cmd))
 
-        syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: out = %s" % self.__out)
-        syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: leave")
+        log.debug("Base_ACL_setfacl.__init__: out = %s", self.__out)
+        log.debug("Base_ACL_setfacl.__init__: leave")
 
     def _build_args(self, path, entry, flags, pos):
         return None
@@ -185,10 +189,11 @@ class Base_ACL(object):
 
         return ostype
 
-
     def __init__(self, path, acl = None):
-        syslog(LOG_DEBUG, "Base_ACL.__init__: enter")
-        syslog(LOG_DEBUG, "Base_ACL.__init__: path = %s, acl = %s" % (path, (acl if acl else "")))
+        log.debug("Base_ACL.__init__: enter")
+        log.debug("Base_ACL.__init__: path = %s, acl = %s",
+            path,
+            acl if acl else "")
 
         #
         # Array ACL_Entry's
@@ -202,16 +207,18 @@ class Base_ACL(object):
         self.__path = path
         self.__flags = ACL_FLAGS_NONE
 
-        st = os.stat(self.__path) 
+        st = os.stat(self.__path)
         self.__mode = st.st_mode
 
         self.__flags |= self.__acl_ostype()
         self.__flags |= self.__acl_type()
-        self._load() 
+        self._load()
 
-        syslog(LOG_DEBUG, "Base_ACL.__init__: owner = %s, group = %s, flags = 0x%08x" %
-            (self.__owner, self.__group, self.__flags))
-        syslog(LOG_DEBUG, "Base_ACL.__init__: leave")
+        log.debug("Base_ACL.__init__: owner = %s, group = %s, flags = 0x%08x",
+            self.__owner,
+            self.__group,
+            self.__flags)
+        log.debug("Base_ACL.__init__: leave")
 
     def __acl_type(self):
         type = ACL_FLAGS_TYPE_POSIX
@@ -314,7 +321,7 @@ class Base_ACL(object):
     def _refresh(self):
         self.entries = []
         self._load()
-        self_dirty = False
+        #self_dirty = False
 
     def update(self, *args, **kwargs):
         pass
@@ -330,19 +337,19 @@ class Base_ACL(object):
         pass
 
     def chmod(self, mode):
-        syslog(LOG_DEBUG, "Base_ACL.chmod: enter")
-        syslog(LOG_DEBUG, "Base_ACL.chmod: mode = %s" % mode)
+        log.debug("Base_ACL.chmod: enter")
+        log.debug("Base_ACL.chmod: mode = %s", mode)
 
         os.chmod(self.path, int(mode, 8))
 
-        syslog(LOG_DEBUG, "Base_ACL.chmod: leave")
+        log.debug("Base_ACL.chmod: leave")
 
     def chown(self, who):
-        syslog(LOG_DEBUG, "Base_ACL.chown: enter")
-        syslog(LOG_DEBUG, "Base_ACL.chown: who = %s" % who)
+        log.debug("Base_ACL.chown: enter")
+        log.debug("Base_ACL.chown: who = %s", who)
 
         if not who:
-            return False 
+            return False
 
         user = group = None
         uid = gid = -1
@@ -369,9 +376,9 @@ class Base_ACL(object):
         os.chown(self.path, uid, gid)
         self._refresh()
 
-        syslog(LOG_DEBUG, "Base_ACL.chown: leave")
+        log.debug("Base_ACL.chown: leave")
         return True
-            
+
     def save(self):
         if not self.dirty:
             return False
@@ -421,15 +428,15 @@ class Base_ACL_Hierarchy(Base_ACL):
         pass
 
     def __set_file_defaults(self, acl):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: acl = %s" % acl)
+        log.debug("Base_ACL_Hierarchy.__set_file_defaults: enter")
+        log.debug("Base_ACL_Hierarchy.__set_file_defaults: acl = %s", acl)
 
         if self.windows:
             self._set_windows_file_defaults(acl)
         else:
             self._set_unix_file_defaults(acl)
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: leave")
+        log.debug("Base_ACL_Hierarchy.__set_file_defaults: leave")
 
     def __set_directory_defaults(self, acl):
         if self.windows:
@@ -438,8 +445,8 @@ class Base_ACL_Hierarchy(Base_ACL):
             self._set_unix_directory_defaults(acl)
 
     def __set_defaults(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_defaults: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_defaults: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__set_defaults: enter")
+        log.debug("Base_ACL_Hierarchy.__set_defaults: path = %s", path)
 
         acl = self.new_ACL(path)
 
@@ -451,7 +458,7 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__set_file_defaults(acl)
 
         acl.save()
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_defaults: leave")
+        log.debug("Base_ACL_Hierarchy.__set_defaults: leave")
 
     def set_defaults(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -460,14 +467,14 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__set_defaults(self.path, *args, **kwargs)
 
     def __reset(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__reset: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__reset: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__reset: enter")
+        log.debug("Base_ACL_Hierarchy.__reset: path = %s", path)
 
         acl = self.new_ACL(path)
         acl.reset(*args, **kwargs)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__reset: leave")
+        log.debug("Base_ACL_Hierarchy.__reset: leave")
 
     def reset(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -476,14 +483,14 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__reset(self.path, *args, **kwargs)
 
     def __clear(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__clear: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__clear: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__clear: enter")
+        log.debug("Base_ACL_Hierarchy.__clear: path = %s", path)
 
         acl = self.new_ACL(path)
         acl.clear(*args, **kwargs)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__clear: leave")
+        log.debug("Base_ACL_Hierarchy.__clear: leave")
 
     def clear(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -492,14 +499,14 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__clear(self.path, *args, **kwargs)
 
     def __add(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__add: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__add: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__add: enter")
+        log.debug("Base_ACL_Hierarchy.__add: path = %s", path)
 
         acl = self.new_ACL(path)
         acl.add(*args, **kwargs)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__add: leave")
+        log.debug("Base_ACL_Hierarchy.__add: leave")
 
     def add(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -507,16 +514,15 @@ class Base_ACL_Hierarchy(Base_ACL):
         else:
             self.__add(self.path, *args, **kwargs)
 
-
     def __update(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__update: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__update: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__update: enter")
+        log.debug("Base_ACL_Hierarchy.__update: path = %s", path)
 
         acl = self.new_ACL(path)
         acl.update(*args, **kwargs)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__update: leave")
+        log.debug("Base_ACL_Hierarchy.__update: leave")
 
     def update(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -525,14 +531,14 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__update(self.path, *args, **kwargs)
 
     def __remove(self, path, *args, **kwargs):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__remove: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__remove: path = %s" % path)
+        log.debug("Base_ACL_Hierarchy.__remove: enter")
+        log.debug("Base_ACL_Hierarchy.__remove: path = %s", path)
 
         acl = self.new_ACL(path)
         acl.remove(*args, **kwargs)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__remove: leave")
+        log.debug("Base_ACL_Hierarchy.__remove: leave")
 
     def remove(self, *args, **kwargs):
         if kwargs.has_key('recursive') and kwargs['recursive'] == True:
@@ -541,46 +547,50 @@ class Base_ACL_Hierarchy(Base_ACL):
             self.__remove(self.path, *args, **kwargs)
 
     def __chmod(self, path, mode):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chmod: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chmod: path = %s, mode = %s" % (path, mode))
+        log.debug("Base_ACL_Hierarchy.__chmod: enter")
+        log.debug("Base_ACL_Hierarchy.chmod: path = %s, mode = %s",
+            path,
+            mode)
 
         acl = self.new_ACL(path)
         acl.chmod(mode)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chmod: leave")
+        log.debug("Base_ACL_Hierarchy.__chmod: leave")
 
     def chmod(self, mode, recursive = False):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chmod: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chmod: mode = %s" % mode)
+        log.debug("Base_ACL_Hierarchy.chmod: enter")
+        log.debug("Base_ACL_Hierarchy.chmod: mode = %s", mode)
 
         if recursive:
             self._recurse(self.path, self.__chmod, mode)
         else:
             self.__chmod(self.path, mode)
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chmod: leave")
+        log.debug("Base_ACL_Hierarchy.chmod: leave")
 
     def __chown(self, path, who):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chown: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chown: path = %s, who = %s" % (path, who))
+        log.debug("Base_ACL_Hierarchy.__chown: enter")
+        log.debug("Base_ACL_Hierarchy.__chown: path = %s, who = %s",
+            path,
+            who)
 
         acl = self.new_ACL(path)
         acl.chown(who)
         acl.save()
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__chown: leave")
+        log.debug("Base_ACL_Hierarchy.__chown: leave")
 
     def chown(self, who, recursive = False):
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chown: enter")
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chown: who = %s" % who)
+        log.debug("Base_ACL_Hierarchy.chown: enter")
+        log.debug("Base_ACL_Hierarchy.chown: who = %s", who)
 
         if recursive:
             self._recurse(self.path, self.__chown, who)
         else:
             self.__chown(self.path, who)
 
-        syslog(LOG_DEBUG, "Base_ACL_Hierarchy.chown: leave")
+        log.debug("Base_ACL_Hierarchy.chown: leave")
 
     def close(self):
         self.path = None
