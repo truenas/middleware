@@ -894,6 +894,8 @@ class PluginsJail(Model):
             )
     jail_ipv4address = IPAddressField(
             verbose_name=_("Jail IP address"),
+            help_text=_("Choose an IPv4 address within the same network of "
+                "this machine")
             )
     jail_ipv4netmask = models.CharField(
             max_length=3,
