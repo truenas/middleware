@@ -24,7 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from freenasUI.common.acl import *
+
+log = logging.getLogger('common.freenasnfsv4')
 
 
 #
@@ -63,9 +67,10 @@ class NFSv4_pipe(Base_ACL_pipe):
 
 class NFSv4_getfacl(Base_ACL_getfacl):
     def _build_args(self, path, flags):
-        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: enter")
-        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: path = %s, flags = 0x%08x" % 
-            (path, flags))
+        log.debug("NFSv4_getfacl._build_args: enter")
+        log.debug("NFSv4_getfacl._build_args: path = %s, flags = 0x%08x",
+            path,
+            flags)
 
         args = ""
         if flags & GETFACL_FLAGS_SYMLINK_ACL:
@@ -79,15 +84,18 @@ class NFSv4_getfacl(Base_ACL_getfacl):
         if flags & GETFACL_FLAGS_VERBOSE:
             args += "-v "
 
-        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: leave")
+        log.debug("NFSv4_getfacl._build_args: leave")
         return args
 
 
 class NFSv4_setfacl(Base_ACL_setfacl):
     def _build_args(self, path, entry, flags, pos):
-        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: enter")
-        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: path = %s, entry = %s, flags = 0x%08x, pos = %d" %
-            (path, entry, flags, pos))
+        log.debug("NFSv4_setfacl._build_args: enter")
+        log.debug("NFSv4_setfacl._build_args: path = %s, entry = %s, flags = 0x%08x, pos = %d",
+            path,
+            entry,
+            flags,
+            pos)
 
         args = ""
         if flags & SETFACL_FLAGS_MODIFY_ENTRY:
@@ -102,7 +110,7 @@ class NFSv4_setfacl(Base_ACL_setfacl):
             args += "-x %d" % pos
             self.__entry = None
 
-        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: leave")
+        log.debug("NFSv4_setfacl._build_args: leave")
         return  args
 
 
@@ -183,8 +191,9 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 
 
     def set_access_permissions(self, permissions):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: permissions = %s" % permissions)
+        log.debug("NFSv4_ACL_Entry.set_access_permissions: enter")
+        log.debug("NFSv4_ACL_Entry.set_access_permissions: permissions = %s",
+            permissions)
 
         flag = True
         for p in permissions:
@@ -197,7 +206,7 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 
             self.__set_access_permission(p, flag)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: leave")
+        log.debug("NFSv4_ACL_Entry.set_access_permissions: leave")
 
     def set_access_permission(self, permission):
         self.__set_access_permission(permission, True)
@@ -236,8 +245,9 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 
 
     def set_inheritance_flags(self, flags):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: flags = %s" % flags)
+        log.debug("NFSv4_ACL_Entry.set_inheritance_flags: enter")
+        log.debug("NFSv4_ACL_Entry.set_inheritance_flags: flags = %s",
+            flags)
 
         flag = True
         for f in flags:
@@ -250,7 +260,7 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 
             self.__set_inheritance_flag(f, flag)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: leave")
+        log.debug("NFSv4_ACL_Entry.set_inheritance_flags: leave")
 
     def set_inheritance_flag(self, flag):
         self.__set_inheritance_flag(flag, True)
@@ -366,11 +376,14 @@ class NFSv4_ACL(Base_ACL):
 
 
     def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
-        syslog(LOG_DEBUG, "NFSv4_ACL.update: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.update: tag = %s, qualifier = %s, permissions = %s,"
-            "inheritance_flags = %s, type = %s" % (tag,
-            (qualifier if qualifier else ""), (permissions if permissions else ""),
-            (inheritance_flags if inheritance_flags else ""), (type if type else "")))
+        log.debug("NFSv4_ACL.update: enter")
+        log.debug("NFSv4_ACL.update: tag = %s, qualifier = %s, permissions = %s,"
+            "inheritance_flags = %s, type = %s",
+            tag,
+            qualifier if qualifier else "",
+            permissions if permissions else "",
+            inheritance_flags if inheritance_flags else "",
+            type if type else "")
 
         for entry in self.entries:
             if entry.tag == tag and entry.qualifier == qualifier:
@@ -387,14 +400,17 @@ class NFSv4_ACL(Base_ACL):
                 NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_MODIFY)
 
         self._refresh()
-        syslog(LOG_DEBUG, "NFSv4_ACL.update: leave")
+        log.debug("NFSv4_ACL.update: leave")
 
     def add(self, tag, qualifier = None, permissions = None, inheritance_flags = None, type = None, pos = 0):
-        syslog(LOG_DEBUG, "NFSv4_ACL.add: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.add: tag = %s, qualifier = %s, permissions = %s, "
-            "inheritance_flags = %s, type = %s, pos = %s" %
-            (tag, qualifier if qualifier else "", permissions if permissions else "",
-            inheritance_flags if inheritance_flags else "", type if type else "", pos))
+        log.debug("NFSv4_ACL.add: enter")
+        log.debug("NFSv4_ACL.add: tag = %s, qualifier = %s, permissions = %s, "
+            "inheritance_flags = %s, type = %s, pos = %s",
+            tag,
+            qualifier if qualifier else "",
+            permissions if permissions else "",
+            inheritance_flags if inheritance_flags else "",
+            type if type else "", pos)
 
         entry = NFSv4_ACL_Entry()
         entry.tag = tag
@@ -413,12 +429,14 @@ class NFSv4_ACL(Base_ACL):
         NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_MODIFY_ENTRY, pos)
         self._refresh()
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.add: leave")
+        log.debug("NFSv4_ACL.add: leave")
 
     def get(self, tag = None, qualifier = None, type = None):
-        syslog(LOG_DEBUG, "NFSv4_ACL.get: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.get: tag = %s, qualifier = %s, type = %s" % (
-            (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
+        log.debug("NFSv4_ACL.get: enter")
+        log.debug("NFSv4_ACL.get: tag = %s, qualifier = %s, type = %s",
+            tag if tag else "",
+            qualifier if qualifier else "",
+            type if type else "")
 
         entries = []
         for entry in self.entries:
@@ -429,16 +447,18 @@ class NFSv4_ACL(Base_ACL):
             elif not tag:
                 entries.append(entry)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.get: leave")
+        log.debug("NFSv4_ACL.get: leave")
         return entries
 
     def remove(self, tag, qualifier = None, type = None, pos = None):
-        syslog(LOG_DEBUG, "NFSv4_ACL.remove: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s" % (
-            (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
+        log.debug("NFSv4_ACL.remove: enter")
+        log.debug("NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s",
+            tag if tag else "",
+            qualifier if qualifier else "",
+            type if type else "")
 
         n = 0
-        entries = []
+        #entries = []
         entry = None
         for entry in self.entries:
             if entry.tag == tag and entry.qualifier == qualifier and pos == None:
@@ -461,7 +481,7 @@ class NFSv4_ACL(Base_ACL):
             self.dirty = True
 
         self._refresh()
-        syslog(LOG_DEBUG, "NFSv4_ACL.remove: leave")
+        log.debug("NFSv4_ACL.remove: leave")
 
     def reset(self):
         NFSv4_setfacl(self.path, None, SETFACL_FLAGS_SET_DEFAULTS)
@@ -476,12 +496,11 @@ class NFSv4_ACL(Base_ACL):
             if not (entry.tag == 'everyone@' and entry.type == 'allow'):
                 self.remove(entry.tag, entry.qualifier, entry.type)
 
-            
     def chmod(self, mode):
-        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: mode = %s" % mode)
+        log.debug("NFSv4_ACL.chmod: enter")
+        log.debug("NFSv4_ACL.chmod: mode = %s", mode)
 
-        length = len(mode) 
+        length = len(mode)
         if length == 4:
             mode = mode[1:]
 
@@ -521,7 +540,7 @@ class NFSv4_ACL(Base_ACL):
 
             pos += 1
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: leave")
+        log.debug("NFSv4_ACL.chmod: leave")
 
     def save(self):
         if not self.dirty:
@@ -534,8 +553,9 @@ class NFSv4_ACL(Base_ACL):
 class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_windows_file_defaults(self, acl):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: acl = %s" % acl)
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_file_defaults: enter")
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_file_defaults: acl = %s",
+            acl)
 
         pos = 0
         acl.clear()
@@ -545,11 +565,12 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
         acl.remove('everyone@', None, None, -1)
         acl.chmod('755')
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: leave")
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_file_defaults: leave")
 
     def _set_windows_directory_defaults(self, acl):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: acl = %s" % acl)
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_directory_defaults: enter")
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_directory_defaults: acl = %s",
+            acl)
 
         pos = 0
         acl.clear()
@@ -557,27 +578,29 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
         acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
         acl.add('owner@', None, 'rwxpDdaARWcCos', 'fd', 'allow', pos); pos += 1
         acl.remove('everyone@', None, None, -1)
-        acl.chmod('755') 
+        acl.chmod('755')
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: leave")
+        log.debug("NFSv4_ACL_Hierarchy._set_windows_directory_defaults: leave")
 
     def _set_unix_file_defaults(self, acl):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: acl = %s" % acl)
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_file_defaults: enter")
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_file_defaults: acl = %s",
+            acl)
 
         acl.reset()
         acl.chmod('644')
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: leave")
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_file_defaults: leave")
 
     def _set_unix_directory_defaults(self, acl):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: acl = %s" % acl)
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_directory_defaults: enter")
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_directory_defaults: acl = %s",
+            acl)
 
         acl.reset()
         acl.chmod('755')
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: leave")
+        log.debug("NFSv4_ACL_Hierarchy._set_unix_directory_defaults: leave")
 
     def new_ACL(self, path):
         return NFSv4_ACL(path)
