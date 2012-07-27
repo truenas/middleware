@@ -189,7 +189,8 @@ class Advanced(Model):
             default=False)
     adv_anonstats = models.BooleanField(
             verbose_name=_("Enable report anonymous statistics"),
-            default=True)
+            default=True,
+            editable=False)
     adv_anonstats_token = models.TextField(
             blank=True,
             editable=False)
