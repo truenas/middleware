@@ -320,6 +320,8 @@ def disks_datagrid_json(request):
     disks = models.Disk.objects.filter(
         disk_enabled=True,
         disk_multipath_name=''
+        ).exclude(
+        dmodels.Q(disk_name__startswith='multipath') | dmodels.Q(disk_name='')
         )
 
     complete = []
