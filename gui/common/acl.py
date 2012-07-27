@@ -398,8 +398,9 @@ class Base_ACL_Hierarchy(Base_ACL):
         callback(path, *args, **kwargs)
 
         files = os.listdir(path)
+        decoded = path.decode('utf-8')
         for f in files:
-            file = os.path.join(path.decode('utf-8'), f.decode('utf-8')).encode('utf-8')
+            file = os.path.join(decoded), f.decode('utf-8')).encode('utf-8')
             st = os.lstat(file)
 
             # Do not follow symbolic links (default for chmod)
