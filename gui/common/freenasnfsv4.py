@@ -108,7 +108,7 @@ class NFSv4_setfacl(Base_ACL_setfacl):
             args += "-m "
         if flags & SETFACL_FLAGS_REMOVE_ENTRY:
             args += "-x %d" % pos
-            self.__entry = None
+            self._entry = None
 
         log.debug("NFSv4_setfacl._build_args: leave")
         return  args

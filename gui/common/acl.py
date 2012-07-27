@@ -57,10 +57,14 @@ ACL_WINDOWS_FILE     = ".windows"
 
 class Base_ACL_Exception(Exception):
     def __init__(self, msg=None):
+        self.value = msg
         log.debug("Base_ACL_Exception.__init__: enter")
         if msg:
             log.debug("Base_ACL_Exception.__init__: error = %s", msg)
         log.debug("Base_ACL_Exception.__init__: leave")
+
+    def __str__(self):
+        return self.value
 
 
 class Base_ACL_pipe:
@@ -68,20 +72,19 @@ class Base_ACL_pipe:
         log.debug("Base_ACL_pipe.__init__: enter")
         log.debug("Base_ACL_pipe.__init__: cmd = %s", cmd)
 
-        self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
-            stderr = PIPE, shell = True, close_fds = True)
+        self.__pipe = Popen(cmd, stdin=PIPE, stdout=PIPE,
+            stderr=PIPE, shell=True, close_fds=True)
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
         self.__stderr = self.__pipe.stderr
 
-        self.__out = self.__stdout.read().strip()
-        self.__pipe.wait()
+        self.__out, err = self.__pipe.communicate()
 
         log.debug("Base_ACL_pipe.__init__: out = %s", self.__out)
 
         if self.__pipe.returncode != 0:
-            raise Base_ACL_Exception(self.__stderr.read().strip())
+            raise Base_ACL_Exception(err)
 
         log.debug("Base_ACL_pipe.__init__: leave")
 
@@ -128,7 +131,10 @@ class Base_ACL_getfacl:
             yield line
 
 
-class Base_ACL_setfacl:
+class Base_ACL_setfacl(object):
+
+    _entry = None
+
     def __init__(self, path, entry = None, flags = 0, pos = 0):
         log.debug("Base_ACL_setfacl.__init__: enter")
         log.debug("Base_ACL_setfacl.__init__: path = %s, entry = %s, flags = 0x%08x",
@@ -138,15 +144,15 @@ class Base_ACL_setfacl:
 
         self.__setfacl = SETFACL_PATH
         self.__path = path
-        self.__entry = entry
+        self._entry = entry
 
         args = self._build_args(path, entry, flags, pos)
 
         cmd = "%s " % self.__setfacl
         if args:
             cmd += "%s " % args
-        if self.__entry:
-            cmd += "%s " % self.__entry
+        if self._entry:
+            cmd += "%s " % self._entry
         cmd += quote(self.__path)
 
         self.__out = str(Base_ACL_pipe(cmd))
