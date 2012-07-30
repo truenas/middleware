@@ -381,6 +381,7 @@ class iSCSITargetGlobalConfiguration(Model):
             help_text=_("Logical Unit Controller IP address "
                 "(127.0.0.1(localhost) by default)"),
             blank=True,
+            null=True,
             )
     iscsi_lucport = models.IntegerField(
             default=3261,
