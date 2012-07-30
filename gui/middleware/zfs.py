@@ -431,14 +431,13 @@ class Dev(Tnode):
                     'vname': self.parent.parent.parent.name,
                     'label': self.name,
                     })
-        # ZFS v15 does not allow replace of log
-        if self.parent.parent.name != "log" and not self.replacing:
+        if not self.replacing:
             actions['replace_url'] = reverse('storage_zpool_disk_replace',
                 kwargs={
                     'vname': self.parent.parent.parent.name,
                     'label': self.name,
                     })
-        if self.parent.parent.name in ('spares', 'cache'):
+        if self.parent.parent.name in ('spares', 'cache', 'logs'):
             actions['remove_url'] = reverse('storage_zpool_disk_remove',
                 kwargs={
                     'vname': self.parent.parent.parent.name,
