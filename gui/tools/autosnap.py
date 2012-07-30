@@ -224,7 +224,7 @@ for mpkey in list_mp:
 
 snaptime_str = snaptime.strftime('%Y%m%d.%H%M')
 
-for mpkey in mp_to_task_map:
+for mpkey, tasklist in mp_to_task_map.items():
     fs, expire = mpkey
     recursive = False
     for task in tasklist:
