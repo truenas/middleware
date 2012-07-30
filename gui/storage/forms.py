@@ -1163,8 +1163,13 @@ class UFSDiskReplacementForm(DiskReplacementForm):
 
 
 class ReplicationForm(ModelForm):
-    remote_hostname = forms.CharField(_("Remote hostname"),)
-    remote_port = forms.CharField(_("Remote port"), initial=22)
+    remote_hostname = forms.CharField(label=_("Remote hostname"))
+    remote_port = forms.CharField(
+        label=_("Remote port"),
+        initial=22)
+    remote_fast_cipher = forms.BooleanField(
+        label=_("Enable High Speed Ciphers"),
+        initial=False)
     remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
         widget=forms.Textarea())
@@ -1189,6 +1194,12 @@ class ReplicationForm(ModelForm):
                 repl.repl_remote.ssh_remote_hostname)
             self.fields['remote_port'].initial = (
                 repl.repl_remote.ssh_remote_port)
+            self.fields['remote_fast_cipher'].initial = (
+                repl.repl_remote.ssh_fast_cipher)
+            self.fields['remote_fast_cipher'].required = (
+                False)
+            self.fields['remote_fast_cipher'].help_text = _(
+                "Enabling this may increase transfer speed on high speed/low latency local networks.  It uses less secure encryption algorithms than the defaults, which makes it less desirable on untrusted networks.")
             self.fields['remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
 
@@ -1200,6 +1211,7 @@ class ReplicationForm(ModelForm):
         r.ssh_remote_hostname = self.cleaned_data.get("remote_hostname")
         r.ssh_remote_hostkey = self.cleaned_data.get("remote_hostkey")
         r.ssh_remote_port = self.cleaned_data.get("remote_port")
+        r.ssh_fast_cipher = self.cleaned_data.get("remote_fast_cipher")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r

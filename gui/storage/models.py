@@ -647,6 +647,11 @@ class ReplRemote(Model):
             max_length=2048,
             verbose_name=_("Remote hostkey"),
             )
+    ssh_fast_cipher = models.BooleanField(
+            default=False,
+            verbose_name=_("High Speed Encryption Ciphers"),
+            help_text=_("Enabling this may increase transfer speed on high speed/low latency local networks.  It uses less secure encryption algorithms than the defaults, which make it less desirable on untrusted networks.")
+            )
 
     class Meta:
         verbose_name = _(u"Remote Replication Host")

@@ -40,7 +40,7 @@ from django.core.management import setup_environ
 from freenasUI import settings
 setup_environ(settings)
 
-from freenasUI.storage.models import Replication
+from freenasUI.storage.models import Replication, ReplRemote
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail
@@ -70,8 +70,6 @@ def exit_if_running(pid):
         log.debug("Process %d gone" % (pid, ))
 
 MNTLOCK = mntlock()
-
-sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
 
 mypid = os.getpid()
 templog = '/tmp/repl-%d' % (mypid)
@@ -110,10 +108,21 @@ replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
+    fast_cipher = replication.repl_remote.ssh_fast_cipher
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
     resetonce = replication.repl_resetonce
+
+    if fast_cipher:
+        sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
+                  'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
+                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes -q')
+    else:
+        sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
+                  ' -o StrictHostKeyChecking=yes -q')
+
+
 
     if replication.repl_userepl:
         Rflag = '-R '
