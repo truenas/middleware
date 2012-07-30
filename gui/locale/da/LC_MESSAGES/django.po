@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-02 02:52+0200\n"
-"Last-Translator: ricemann <info@ricemann.dk>\n"
+"PO-Revision-Date: 2012-07-30 09:58+0200\n"
+"Last-Translator: Alladin <mnjams@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -938,7 +938,7 @@ msgstr "Du skal vælge en IPv4 netmaske for et hvert alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Du skal også angive en IPv6 adresse for hvert alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"

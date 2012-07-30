@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-07-13 05:03+0200\n"
-"Last-Translator: phome <phome@tut.by>\n"
+"PO-Revision-Date: 2012-07-30 03:29+0200\n"
+"Last-Translator: breakguitar <breakguitar@139.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1441,7 +1441,7 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、“.”“-”和 “_”。"
 
-# **** can not input ****
+# email地址无效！
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
