@@ -1404,7 +1404,8 @@ class notifier:
             raise MiddlewareError('Disk could not be removed: "%s"' % error)
         # TODO: This operation will cause damage to disk data which should be limited
 
-        self.__gpt_unlabeldisk(from_disk)
+        if from_disk:
+            self.__gpt_unlabeldisk(from_disk)
 
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
