@@ -586,7 +586,7 @@ def create_vlan():
     # Select parent interface
     while True:
         nics = []
-        choices = NICChoices(novlan=True)
+        choices = NICChoices(novlan=True,exclude_configured=False)
         for i, c in enumerate(choices):
             nics.append(c[0])
             print "%2d) %s" % (i + 1, nics[i])
