@@ -1774,7 +1774,7 @@ class notifier:
             pass
 
         if homedir == '/root':
-            self.__system("/sbin/mount -uw -onoatime /")
+            self.__system("/sbin/mount -uw -o noatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
