@@ -489,7 +489,7 @@ def create_lagg_interface():
 
     lagg_name = 'lagg%d' % lagg_index
     iface = Interfaces(int_interface = lagg_name, int_name = lagg_name,
-        int_dhcp = True, int_ipv6auto = False)
+        int_dhcp = False, int_ipv6auto = False)
 
     print _("Saving interface configuration:"),
     try:
