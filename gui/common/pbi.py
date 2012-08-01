@@ -25,21 +25,22 @@
 #
 # $FreeBSD$
 #####################################################################
+import logging
 import os
-import sys
-import syslog
 
 from subprocess import Popen, PIPE
-from syslog import syslog, LOG_DEBUG
+
+log = logging.getLogger('common.pbi')
 
 PBI_PATH = "/usr/local/sbin"
 JEXEC_PATH = "/usr/sbin/jexec"
+
 
 class pbi_arg(object):
     def __init__(self, int, string, arg=False, argname=None):
         self.int = int
         self.string = string
-        self.arg = arg 
+        self.arg = arg
         self.argname = argname
 
     def __str__(self):
@@ -47,98 +48,142 @@ class pbi_arg(object):
 
     def __lt__(self, other):
         return self.int < other
+
     def __le__(self, other):
         return self.int <= other
+
     def __eq__(self, other):
         return self.int == other
+
     def __ne__(self, other):
         return self.int != other
+
     def __gt__(self, other):
         return self.int > other
+
     def __ge__(self, other):
         return self.int >= other
+
     def __add__(self, other):
         return self.int + other
+
     def __sub__(self, other):
         return self.int - other
+
     def __mul__(self, other):
         return self.int * other
+
     def __floordiv__(self, other):
         return self.int // other
+
     def __mod__(self, other):
         return self.int % other
+
     def __divmod__(self, other):
         return (self.int // other, self.int % other)
+
     def __pow__(self, other):
         return self.int ** other
+
     def __lshift__(self, other):
         return self.int << other
+
     def __rshift__(self, other):
         return self.int >> other
+
     def __and__(self, other):
         return self.int & other
+
     def __xor__(self, other):
         return self.int ^ other
+
     def __or__(self, other):
         return self.int | other
+
     def __div__(self, other):
         return self.int / other
+
     def __truediv__(self, other):
         return self.int / other
 
     def __radd__(self, other):
         return self.int + other
+
     def __rsub__(self, other):
         return self.int - other
+
     def __rmul__(self, other):
         return self.int * other
+
     def __rdiv__(self, other):
         return self.int / other
+
     def __rtruediv__(self, other):
         return self.int // other
+
     def __rfloordiv__(self, other):
         return self.int // other
+
     def __rmod__(self, other):
         return self.int % other
+
     def __rdivmod__(self, other):
         return (self.int // other, self.int % other)
+
     def __rpow__(self, other):
         return self.int ** other
+
     def __rlshift__(self, other):
         return self.int << other
+
     def __rrshift__(self, other):
         return self.int << other
+
     def __rand__(self, other):
         return self.int & other
+
     def __rxor__(self, other):
         return self.int ^ other
+
     def __ror__(self, other):
         return self.int | other
 
     def __iadd__(self, other):
         return self.int + other
+
     def __isub__(self, other):
         return self.int - other
+
     def __imul__(self, other):
         return self.int * other
+
     def __idiv__(self, other):
         return self.int / other
+
     def __itruediv__(self, other):
         return self.int // other
+
     def __ifloordiv__(self, other):
         return self.int // other
+
     def __imod__(self, other):
         return self.int % other
+
     def __ipow__(self, other):
         return self.int ** other
+
     def __ilshift__(self, other):
         return self.int << other
+
     def __irshift__(self, other):
         return self.int >> other
+
     def __iand__(self, other):
         return self.int & other
+
     def __ixor__(self, other):
         return self.int ^ other
+
     def __ior__(self, other):
         return self.int | other
 
@@ -382,20 +427,20 @@ PBID = os.path.join(PBI_PATH, "pbid")
 
 class pbi_exception(Exception):
     def __init__(self, msg=None):
-        syslog(LOG_DEBUG, "pbi_exception.__init__: enter")
+        log.debug("pbi_exception.__init__: enter")
         if msg:
-            syslog(LOG_DEBUG, "pbi_exception.__init__: error = %s" % msg)
-        syslog(LOG_DEBUG, "pbi_exception.__init__: leave")
+            log.debug("pbi_exception.__init__: error = %s", msg)
+        log.debug("pbi_exception.__init__: leave")
 
 
 class pbi_pipe(object):
     def __init__(self, cmd, func=None, **kwargs):
-        syslog(LOG_DEBUG, "pbi_pipe.__init__: enter") 
-        syslog(LOG_DEBUG, "pbi_pipe.__init__: cmd = %s" % cmd) 
+        log.debug("pbi_pipe.__init__: enter")
+        log.debug("pbi_pipe.__init__: cmd = %s", cmd)
 
         self.error = None
-        self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
-            stderr = PIPE, shell = True, close_fds = True)
+        self.__pipe = Popen(cmd, stdin=PIPE, stdout=PIPE,
+            stderr=PIPE, shell=True, close_fds=True)
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
@@ -403,7 +448,7 @@ class pbi_pipe(object):
 
         self.__out = ""
         if func is not None:
-            for line in self.__stdout: 
+            for line in self.__stdout:
                 line = line.strip()
                 self.__out += line
                 func(line, **kwargs)
@@ -412,14 +457,14 @@ class pbi_pipe(object):
             self.__out = self.__stdout.read().strip()
 
         self.__pipe.wait()
-        syslog(LOG_DEBUG, "pbi_pipe.__init__: out = %s" % self.__out)
+        log.debug("pbi_pipe.__init__: out = %s", self.__out)
 
         if self.__pipe.returncode != 0:
             self.error = 'The command %s failed: "%s"' % \
                              (cmd, self.__stderr.read() or self.__out, )
 
         self.returncode = self.__pipe.returncode
-        syslog(LOG_DEBUG, "pbi_pipe.__init__: leave")
+        log.debug("pbi_pipe.__init__: leave")
 
     def __str__(self):
         return self.__out
@@ -432,13 +477,13 @@ class pbi_pipe(object):
 
 class pbi_base(object):
     def __init__(self, path, objflags, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_base.__init__: enter")
-        syslog(LOG_DEBUG, "pbi_base.__init__: path = %s" % path)
-        syslog(LOG_DEBUG, "pbi_base.__init__: flags = 0x%08x" % (flags + 0))
+        log.debug("pbi_base.__init__: enter")
+        log.debug("pbi_base.__init__: path = %s", path)
+        log.debug("pbi_base.__init__: flags = 0x%08x", flags + 0)
 
         self.path = path
-        self.flags = flags 
-        self.args = "" 
+        self.flags = flags
+        self.args = ""
         self.error = None
 
         if objflags is None:
@@ -450,19 +495,19 @@ class pbi_base(object):
                     kwargs.has_key(obj.argname) and kwargs[obj.argname] is not None:
                     self.args += " %s %s" % (obj, kwargs[obj.argname])
 
-                elif obj.arg == False: 
+                elif obj.arg == False:
                     self.args += " %s" % obj
 
-        syslog(LOG_DEBUG, "pbi_base.__init__: args = %s" % self.args)
+        log.debug("pbi_base.__init__: args = %s", self.args)
 
         self.pipe_func = None
         if kwargs.has_key("pipe_func") and kwargs["pipe_func"] is not None:
             self.pipe_func = kwargs["pipe_func"]
 
-        syslog(LOG_DEBUG, "pbi_base.__init__: leave")
+        log.debug("pbi_base.__init__: leave")
 
     def run(self, jail=False, jid=0):
-        syslog(LOG_DEBUG, "pbi_base.run: enter")
+        log.debug("pbi_base.run: enter")
 
         cmd = self.path
         if self.args is not None:
@@ -471,11 +516,11 @@ class pbi_base(object):
         if jail == True and jid > 0:
             cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
-        syslog(LOG_DEBUG, "pbi_base.cmd = %s" % cmd)
+        log.debug("pbi_base.cmd = %s", cmd)
         pobj = pbi_pipe(cmd, self.pipe_func)
         self.error = pobj.error
 
-        syslog(LOG_DEBUG, "pbi_base.run: leave")
+        log.debug("pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
 
     def __str__(self):
@@ -484,7 +529,7 @@ class pbi_base(object):
 
 class pbi_add(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_add.__init__: enter")
+        log.debug("pbi_add.__init__: enter")
 
         super(pbi_add, self).__init__(PBI_ADD, PBI_ADD_FLAGS, flags, **kwargs)
 
@@ -493,30 +538,30 @@ class pbi_add(pbi_base):
             self.pbi = kwargs["pbi"]
             self.args += " %s" % self.pbi
 
-        syslog(LOG_DEBUG, "pbi_add.__init__: pbi = %s" % self.pbi)
-        syslog(LOG_DEBUG, "pbi_add.__init__: leave")
+        log.debug("pbi_add.__init__: pbi = %s", self.pbi)
+        log.debug("pbi_add.__init__: leave")
 
     def info(self, jail=False, jid=0, *args):
-         ret = []
+        ret = []
 
-         out = super(pbi_add, self).run(jail, jid)
-         if out and out[0] == 0:
-             out = out[1]
-             for line in out.splitlines():
-                 parts = line.split(':')
-                 if not args:
-                     if len(parts) > 1:
-                         ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
-                 else: 
-                     for arg in args:
-                         if parts[0].strip().lower() == arg.strip().lower():
-                             ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
-         return ret
+        out = super(pbi_add, self).run(jail, jid)
+        if out and out[0] == 0:
+            out = out[1]
+            for line in out.splitlines():
+                parts = line.split(':')
+                if not args:
+                    if len(parts) > 1:
+                        ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+                else: 
+                    for arg in args:
+                        if parts[0].strip().lower() == arg.strip().lower():
+                            ret.append("%s=%s" % (parts[0].strip(), parts[1].strip()))
+        return ret
 
 
 class pbi_addrepo(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_addrepo.__init__: enter")
+        log.debug("pbi_addrepo.__init__: enter")
 
         super(pbi_addrepo, self).__init__(PBI_ADDREPO, None, flags, **kwargs)
 
@@ -525,31 +570,31 @@ class pbi_addrepo(pbi_base):
             self.repofile = kwargs["repofile"]
             self.args += " %s" % self.repofile
 
-        syslog(LOG_DEBUG, "pbi_addrepo.__init__: repofile = %s" % self.repofile)
-        syslog(LOG_DEBUG, "pbi_addrepo.__init__: leave")
+        log.debug("pbi_addrepo.__init__: repofile = %s", self.repofile)
+        log.debug("pbi_addrepo.__init__: leave")
 
 
 class pbi_autobuild(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_autobuild.__init__: enter")
+        log.debug("pbi_autobuild.__init__: enter")
 
         super(pbi_autobuild, self).__init__(PBI_AUTOBUILD, PBI_AUTOBUILD_FLAGS, flags, **kwargs)
 
-        syslog(LOG_DEBUG, "pbi_autobuild.__init__: leave")
+        log.debug("pbi_autobuild.__init__: leave")
 
 
 class pbi_browser(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_browser.__init__: enter")
+        log.debug("pbi_browser.__init__: enter")
 
         super(pbi_browser, self).__init__(PBI_BROWSER, None, flags, **kwargs)
 
-        syslog(LOG_DEBUG, "pbi_browser.__init__: leave")
+        log.debug("pbi_browser.__init__: leave")
 
 
 class pbi_create(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_create.__init__: enter")
+        log.debug("pbi_create.__init__: enter")
 
         super(pbi_create, self).__init__(PBI_CREATE, PBI_CREATE_FLAGS, flags, **kwargs)
 
@@ -558,73 +603,73 @@ class pbi_create(pbi_base):
             self.pbidir = kwargs["pbidir"]
             self.args += " %s" % self.pbidir
 
-        syslog(LOG_DEBUG, "pbi_create.__init__: pbidir = %s" % self.pbidir)
-        syslog(LOG_DEBUG, "pbi_create.__init__: leave")
+        log.debug("pbi_create.__init__: pbidir = %s", self.pbidir)
+        log.debug("pbi_create.__init__: leave")
 
 
 class pbi_delete(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_delete.__init__: enter")
+        log.debug("pbi_delete.__init__: enter")
 
-        super(pbi_delete, self).__init__(PBI_DELETE, PBI_DELETE_FLAGS, flags, **kwargs) 
+        super(pbi_delete, self).__init__(PBI_DELETE, PBI_DELETE_FLAGS, flags, **kwargs)
 
         self.pbi = None
         if kwargs.has_key("pbi") and kwargs["pbi"] is not None:
             self.pbi = kwargs["pbi"]
             self.args += " %s" % self.pbi
 
-        syslog(LOG_DEBUG, "pbi_delete.__init__: pbi = %s" % self.pbi)
-        syslog(LOG_DEBUG, "pbi_delete.__init__: leave")
+        log.debug("pbi_delete.__init__: pbi = %s", self.pbi)
+        log.debug("pbi_delete.__init__: leave")
 
 
 class pbi_deleterepo(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_deleterepo.__init__: enter")
+        log.debug("pbi_deleterepo.__init__: enter")
 
-        super(pbi_deleterepo, self).__init__(PBI_DELETEREPO, None, flags, **kwargs) 
+        super(pbi_deleterepo, self).__init__(PBI_DELETEREPO, None, flags, **kwargs)
 
         self.repoid = None
         if kwargs.has_key("repoid") and kwargs["repoid"] is not None:
             self.repoid = kwargs["repoid"]
             self.args += " %s" % self.repoid
 
-        syslog(LOG_DEBUG, "pbi_deleterepo.__init__: repoid = %s" % self.repoid)
-        syslog(LOG_DEBUG, "pbi_deleterepo.__init__: leave")
+        log.debug("pbi_deleterepo.__init__: repoid = %s", self.repoid)
+        log.debug("pbi_deleterepo.__init__: leave")
 
 
 class pbi_icon(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_icon.__init__: enter")
+        log.debug("pbi_icon.__init__: enter")
 
-        super(pbi_icon, self).__init__(PBI_ICON, PBI_ICON_FLAGS, flags, **kwargs) 
+        super(pbi_icon, self).__init__(PBI_ICON, PBI_ICON_FLAGS, flags, **kwargs)
 
         self.pbi = None
         if kwargs.has_key("pbi") and kwargs["pbi"] is not None:
             self.pbi = kwargs["pbi"]
             self.args += " %s" % self.pbi
 
-        syslog(LOG_DEBUG, "pbi_icon.__init__: pbi = %s" % self.pbi)
-        syslog(LOG_DEBUG, "pbi_icon.__init__: leave")
+        log.debug("pbi_icon.__init__: pbi = %s", self.pbi)
+        log.debug("pbi_icon.__init__: leave")
 
 
 class pbi_indextool(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_indextool.__init__: enter")
+        log.debug("pbi_indextool.__init__: enter")
 
-        super(pbi_indextool, self).__init__(PBI_INDEXTOOL, PBI_INDEXTOOL_FLAGS, flags, **kwargs) 
+        super(pbi_indextool, self).__init__(PBI_INDEXTOOL, PBI_INDEXTOOL_FLAGS, flags, **kwargs)
 
         self.indexfile = None
         if kwargs.has_key("indexfile") and kwargs["indexfile"] is not None:
             self.indexfile = kwargs["indexfile"]
             self.args += " %s" % self.indexfile
 
-        syslog(LOG_DEBUG, "pbi_indextool.__init__: indexfile = %s" % self.indexfile)
-        syslog(LOG_DEBUG, "pbi_indextool.__init__: leave")
+        log.debug("pbi_indextool.__init__: indexfile = %s", self.indexfile)
+        log.debug("pbi_indextool.__init__: leave")
 
 
 class pbi_info(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_info.__init__: enter")
+        log.debug("pbi_info.__init__: enter")
 
         super(pbi_info, self).__init__(PBI_INFO, PBI_INFO_FLAGS, flags, **kwargs)
 
@@ -633,30 +678,30 @@ class pbi_info(pbi_base):
             self.pbi = kwargs["pbi"]
             self.args += " %s" % self.pbi
 
-        syslog(LOG_DEBUG, "pbi_info.__init__: pbi = %s" % self.pbi)
-        syslog(LOG_DEBUG, "pbi_info.__init__: leave")
+        log.debug("pbi_info.__init__: pbi = %s", self.pbi)
+        log.debug("pbi_info.__init__: leave")
 
 
 class pbi_listrepo(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_listrepo.__init__: enter")
+        log.debug("pbi_listrepo.__init__: enter")
 
-        super(pbi_listrepo, self).__init__(PBI_LISTREPO, None, flags, **kwargs) 
+        super(pbi_listrepo, self).__init__(PBI_LISTREPO, None, flags, **kwargs)
 
         self.repoid = None
         if kwargs.has_key("repoid") and kwargs["repoid"] is not None:
             self.repoid = kwargs["repoid"]
             self.args += " %s" % self.repoid
 
-        syslog(LOG_DEBUG, "pbi_listrepo.__init__: repoid = %s" % self.repoid)
-        syslog(LOG_DEBUG, "pbi_listrepo.__init__: leave")
+        log.debug("pbi_listrepo.__init__: repoid = %s", self.repoid)
+        log.debug("pbi_listrepo.__init__: leave")
 
 
 class pbi_makepatch(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_makepatch.__init__: enter")
+        log.debug("pbi_makepatch.__init__: enter")
 
-        super(pbi_makepatch, self).__init__(PBI_MAKEPATCH, PBI_MAKEPATCH_FLAGS, flags, **kwargs) 
+        super(pbi_makepatch, self).__init__(PBI_MAKEPATCH, PBI_MAKEPATCH_FLAGS, flags, **kwargs)
 
         self.oldpbi = self.newpbi = None
         if kwargs.has_key("oldpbi") and kwargs["oldpbi"] is not None:
@@ -666,100 +711,102 @@ class pbi_makepatch(pbi_base):
             self.newpbi = kwargs["newpbi"]
             self.args += " %s" % self.newpbi
 
-        syslog(LOG_DEBUG, "pbi_makepatch.__init__: oldpbi = %s, newpbi = %s" % (self.oldpbi, self.newpbi))
-        syslog(LOG_DEBUG, "pbi_makepatch.__init__: leave")
+        log.debug("pbi_makepatch.__init__: oldpbi = %s, newpbi = %s",
+            self.oldpbi,
+            self.newpbi)
+        log.debug("pbi_makepatch.__init__: leave")
 
 
 class pbi_makeport(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_makeport.__init__: enter")
+        log.debug("pbi_makeport.__init__: enter")
 
-        super(pbi_makeport, self).__init__(PBI_MAKEPORT, None, flags, **kwargs) 
+        super(pbi_makeport, self).__init__(PBI_MAKEPORT, None, flags, **kwargs)
 
         self.port = None
         if kwargs.has_key("port") and kwargs["port"] is not None:
             self.port = kwargs["port"]
             self.args += " %s" % self.port
 
-        syslog(LOG_DEBUG, "pbi_makeport.__init__: port = %s" % self.port)
-        syslog(LOG_DEBUG, "pbi_makeport.__init__: leave")
+        log.debug("pbi_makeport.__init__: port = %s", self.port)
+        log.debug("pbi_makeport.__init__: leave")
 
 
 class pbi_makerepo(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_makerepo.__init__: enter")
+        log.debug("pbi_makerepo.__init__: enter")
 
-        super(pbi_makerepo, self).__init__(PBI_MAKEREPO, PBI_MAKEREPO_FLAGS, flags, **kwargs) 
+        super(pbi_makerepo, self).__init__(PBI_MAKEREPO, PBI_MAKEREPO_FLAGS, flags, **kwargs)
 
         if kwargs.has_key("outdir") and kwargs["outdir"] is not None:
             self.outdir = kwargs["outdir"]
             self.args += " %s" % self.outdir
 
-        syslog(LOG_DEBUG, "pbi_makerepo.__init__: outdir = %s" % self.outdir)
-        syslog(LOG_DEBUG, "pbi_makerepo.__init__: leave")
+        log.debug("pbi_makerepo.__init__: outdir = %s", self.outdir)
+        log.debug("pbi_makerepo.__init__: leave")
 
 
 class pbi_metatool(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_metatool.__init__: enter")
+        log.debug("pbi_metatool.__init__: enter")
 
-        super(pbi_metatool, self).__init__(PBI_METATOOL, PBI_METATOOL_FLAGS, flags, **kwargs) 
+        super(pbi_metatool, self).__init__(PBI_METATOOL, PBI_METATOOL_FLAGS, flags, **kwargs)
 
         self.metafile = None
         if kwargs.has_key("metafile") and kwargs["metafile"] is not None:
             self.metafile = kwargs["metafile"]
             self.args += " %s" % self.metafile
 
-        syslog(LOG_DEBUG, "pbi_metatool.__init__: metafile = %s" % self.metafile)
-        syslog(LOG_DEBUG, "pbi_metatool.__init__: leave")
+        log.debug("pbi_metatool.__init__: metafile = %s", self.metafile)
+        log.debug("pbi_metatool.__init__: leave")
 
 
 class pbi_patch(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_patch.__init__: enter")
+        log.debug("pbi_patch.__init__: enter")
 
-        super(pbi_patch, self).__init__(PBI_PATCH, PBI_PATCH_FLAGS, flags, **kwargs) 
+        super(pbi_patch, self).__init__(PBI_PATCH, PBI_PATCH_FLAGS, flags, **kwargs)
 
         self.pbp = None
         if kwargs.has_key("pbp") and kwargs["pbp"] is not None:
             self.pbp = kwargs["pbp"]
             self.args += " %s" % self.pbp
 
-        syslog(LOG_DEBUG, "pbi_patch.__init__: pbp = %s" % self.pbp)
-        syslog(LOG_DEBUG, "pbi_patch.__init__: leave")
+        log.debug("pbi_patch.__init__: pbp = %s", self.pbp)
+        log.debug("pbi_patch.__init__: leave")
 
 
 class pbi_update(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_update.__init__: enter")
+        log.debug("pbi_update.__init__: enter")
 
-        super(pbi_update, self).__init__(PBI_UPDATE, PBI_UPDATE_FLAGS, flags, **kwargs) 
+        super(pbi_update, self).__init__(PBI_UPDATE, PBI_UPDATE_FLAGS, flags, **kwargs)
 
         self.pbi = None
         if kwargs.has_key("pbi") and kwargs["pbi"] is not None:
             self.pbi = kwargs["pbi"]
             self.args += " %s" % self.pbi
 
-        syslog(LOG_DEBUG, "pbi_update.__init__: pbi = %s" % self.pbi)
-        syslog(LOG_DEBUG, "pbi_update.__init__: leave")
+        log.debug("pbi_update.__init__: pbi = %s", self.pbi)
+        log.debug("pbi_update.__init__: leave")
 
 
 class pbi_update_hashdir(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbi_update_hashdir.__init__: enter")
+        log.debug("pbi_update_hashdir.__init__: enter")
 
-        super(pbi_update_hashdir, self).__init__(PBI_UPDATE_HASHDIR, None, flags, **kwargs) 
+        super(pbi_update_hashdir, self).__init__(PBI_UPDATE_HASHDIR, None, flags, **kwargs)
 
-        syslog(LOG_DEBUG, "pbi_update_hashdir.__init__: leave")
+        log.debug("pbi_update_hashdir.__init__: leave")
 
 
 class pbid(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
-        syslog(LOG_DEBUG, "pbid.__init__: enter")
+        log.debug("pbid.__init__: enter")
 
-        super(pbid, self).__init__(PBID, None, flags, **kwargs) 
+        super(pbid, self).__init__(PBID, None, flags, **kwargs)
 
-        syslog(LOG_DEBUG, "pbid.__init__: leave")
+        log.debug("pbid.__init__: leave")
 
 
 class PBI(object):
@@ -773,13 +820,13 @@ class PBI(object):
     def __call(self, obj):
         if obj is not None:
             tmp = obj.run()
-            if tmp is not None and len(tmp) > 1: 
+            if tmp is not None and len(tmp) > 1:
                 self.obj = obj
                 self.returncode = tmp[0]
                 self.out = tmp[1]
                 return self.out
 
-        return None 
+        return None
 
     def add(self, flags=PBI_FLAGS_NONE, **kwargs):
         return self.__call(pbi_add(flags, **kwargs))
