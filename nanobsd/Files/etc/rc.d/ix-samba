@@ -55,6 +55,7 @@ generate_smbconf()
 		cifs_srv_aio_enable,
 		cifs_srv_aio_rs,
 		cifs_srv_aio_ws,
+		cifs_srv_hostlookup,
 		cifs_srv_homedir_enable,
 		cifs_srv_homedir_browseable_enable,
 		cifs_srv_homedir,
@@ -115,7 +116,7 @@ generate_smbconf()
 		unixcharset loglevel localmaster timeserver guest \
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw unixext \
-		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
+		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
 		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
 		ad_adminname ad_adminpw ldap_hostname ldap_basedn ldap_anonbind \
@@ -178,6 +179,10 @@ EOF
 
 		if [ "${dosattr}" = "1" ]; then
 			echo "    store dos attributes = yes"
+		fi
+
+		if [ "${cifs_hostlookup}" = "1" ]; then
+			echo "    hostname lookups = yes"
 		fi
 
 		#Default is yes

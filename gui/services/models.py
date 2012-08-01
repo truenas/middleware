@@ -205,6 +205,14 @@ class CIFS(Model):
                 "shares on the system similar to the Computer Browser service "
                 "in Windows."),
             )
+    cifs_srv_hostlookup = models.BooleanField(
+            verbose_name=_("Hostnames lookups"),
+            default=True,
+            help_text=_("Specifies whether samba should use (expensive) "
+                "hostname lookups or use the ip addresses instead. An example "
+                "place where hostname lookups are currently used is when "
+                "achecking the hosts deny and hosts allow."),
+            )
 
     class Meta:
         verbose_name = _(u"CIFS")
