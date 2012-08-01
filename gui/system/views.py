@@ -615,7 +615,9 @@ def terminal(request):
     try:
         if alive:
             if k:
-                multiplex.proc_write(sid, xmlrpclib.Binary(bytearray(str(k))))
+                multiplex.proc_write(sid,
+                    xmlrpclib.Binary(bytearray(k.encode('utf-8')))
+                    )
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + \
                 multiplex.proc_dump(sid)
