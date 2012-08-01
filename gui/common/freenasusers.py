@@ -40,12 +40,12 @@ def bsdUsers_objects(**kwargs):
         SELECT
             bsdgrp_group, *
 
-        FROM 
+        FROM
             account_bsdusers
 
         INNER JOIN
             account_bsdgroups
-        ON 
+        ON
             bsdusr_group_id = account_bsdgroups.id
     """
 
@@ -63,7 +63,6 @@ def bsdUsers_objects(**kwargs):
 
         sql += ")"
 
-
     results = c.execute(sql)
 
     objects = []
@@ -76,6 +75,7 @@ def bsdUsers_objects(**kwargs):
     c.close()
     h.close()
     return objects
+
 
 def bsdGroups_objects(**kwargs):
     h = sqlite3.connect(FREENAS_DATABASE)
@@ -98,7 +98,6 @@ def bsdGroups_objects(**kwargs):
 
         sql += ")"
 
-
     results = c.execute(sql)
 
     objects = []
@@ -115,19 +114,19 @@ def bsdGroups_objects(**kwargs):
 
 class FreeNAS_Local_Group(object):
     def __new__(cls, group, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__new__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__new__: group = %s" % group)
+        log.debug("FreeNAS_Local_Group.__new__: enter")
+        log.debug("FreeNAS_Local_Group.__new__: group = %s", group)
 
         obj = None
         if group is not None:
             obj = super(FreeNAS_Local_Group, cls).__new__(cls, **kwargs)
 
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__new__: leave")
+        log.debug("FreeNAS_Local_Group.__new__: leave")
         return obj
 
     def __init__(self, group, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: group = %s" % group)
+        log.debug("FreeNAS_Local_Group.__init__: enter")
+        log.debug("FreeNAS_Local_Group.__init__: group = %s", group)
 
         super(FreeNAS_Local_Group, self).__init__(**kwargs)
 
@@ -135,11 +134,11 @@ class FreeNAS_Local_Group(object):
         if group is not None:
             self.__get_group(group)
 
-        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: leave")
+        log.debug("FreeNAS_Local_Group.__init__: leave")
 
     def __get_group(self, group):
-        syslog(LOG_DEBUG, "FreeNAS_local_Group.__get_group: enter")
-        syslog(LOG_DEBUG, "FreeNAS_local_Group.__get_group: user = %s" % group)
+        log.debug("FreeNAS_local_Group.__get_group: enter")
+        log.debug("FreeNAS_local_Group.__get_group: group = %s", group)
 
         grfunc = None
         if type(group) in (types.IntType, types.LongType) or group.isdigit():
@@ -161,13 +160,13 @@ class FreeNAS_Local_Group(object):
         except:
             self._gr = None
 
-        syslog(LOG_DEBUG, "FreeNAS_local_Group.__get_group: leave")
+        log.debug("FreeNAS_local_Group.__get_group: leave")
 
 
 class FreeNAS_Group(object):
     def __new__(cls, group, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: group = %s" % group)
+        log.debug("FreeNAS_Group.__new__: enter")
+        log.debug("FreeNAS_Group.__new__: group = %s", group)
 
         obj = FreeNAS_Directory_Group(group, **kwargs)
         if obj is None:
@@ -179,13 +178,13 @@ class FreeNAS_Group(object):
         if obj:
             obj = obj._gr
 
-        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: leave")
+        log.debug("FreeNAS_Group.__new__: leave")
         return obj
 
 
 class FreeNAS_Groups(object):
     def __init__(self, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: enter")
+        log.debug("FreeNAS_Groups.__init__: enter")
 
         """
         FreeNAS_Directory_Groups call may fail for several reasons
@@ -197,7 +196,8 @@ class FreeNAS_Groups(object):
         try:
             self.__groups = FreeNAS_Directory_Groups(**kwargs)
         except Exception, e:
-            log.error("FreeNAS Directory Groups could not be retrieved: %s", str(e))
+            log.error("FreeNAS Directory Groups could not be retrieved: %s",
+                str(e))
             self.__groups = None
 
         if self.__groups is None:
@@ -208,7 +208,7 @@ class FreeNAS_Groups(object):
         for obj in objects:
             self.__bsd_groups.append(FreeNAS_Group(obj['bsdgrp_group']))
 
-        syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: leave")
+        log.debug("FreeNAS_Groups.__init__: leave")
 
     def __len__(self):
         return len(self.__bsd_groups) + len(self.__groups)
@@ -222,19 +222,19 @@ class FreeNAS_Groups(object):
 
 class FreeNAS_Local_User(object):
     def __new__(cls, user, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__new__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__new__: user = %s" % user)
+        log.debug("FreeNAS_Local_User.__new__: enter")
+        log.debug("FreeNAS_Local_User.__new__: user = %s", user)
 
         obj = None
         if user is not None:
             obj = super(FreeNAS_Local_User, cls).__new__(cls, **kwargs)
 
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__new__: leave")
+        log.debug("FreeNAS_Local_User.__new__: leave")
         return obj
 
     def __init__(self, user, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: user = %s" % user)
+        log.debug("FreeNAS_Local_User.__init__: enter")
+        log.debug("FreeNAS_Local_User.__init__: user = %s", user)
 
         super(FreeNAS_Local_User, self).__init__(**kwargs)
 
@@ -242,13 +242,13 @@ class FreeNAS_Local_User(object):
         if user is not None:
             self.__get_user(user)
 
-        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: leave")
+        log.debug("FreeNAS_Local_User.__init__: leave")
 
     def __get_user(self, user):
-        syslog(LOG_DEBUG, "FreeNAS_local_User.__get_user: enter")
-        syslog(LOG_DEBUG, "FreeNAS_local_User.__get_user: user = %s" % user)
+        log.debug("FreeNAS_local_User.__get_user: enter")
+        log.debug("FreeNAS_local_User.__get_user: user = %s", user)
 
-        pwfunc = None 
+        pwfunc = None
         if type(user) in (types.IntType, types.LongType) or user.isdigit():
             objects = bsdUsers_objects(bsdusr_uid=user)
             pwfunc = pwd.getpwuid
@@ -268,13 +268,13 @@ class FreeNAS_Local_User(object):
         except:
             self._pw = None
 
-        syslog(LOG_DEBUG, "FreeNAS_local_User.__get_user: leave")
+        log.debug("FreeNAS_local_User.__get_user: leave")
 
 
 class FreeNAS_User(object):
     def __new__(cls, user, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_User.__new__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_User.__new__: user = %s" % user)
+        log.debug("FreeNAS_User.__new__: enter")
+        log.debug("FreeNAS_User.__new__: user = %s", user)
 
         obj = FreeNAS_Directory_User(user, **kwargs)
         if not obj:
@@ -286,13 +286,13 @@ class FreeNAS_User(object):
         if obj:
             obj = obj._pw
 
-        syslog(LOG_DEBUG, "FreeNAS_User.__new__: leave")
+        log.debug("FreeNAS_User.__new__: leave")
         return obj
 
 
 class FreeNAS_Users(object):
     def __init__(self, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_Users.__init__: enter")
+        log.debug("FreeNAS_Users.__init__: enter")
 
         """
         FreeNAS_Directory_Users call may fail for several reasons
@@ -304,7 +304,8 @@ class FreeNAS_Users(object):
         try:
             self.__users = FreeNAS_Directory_Users(**kwargs)
         except Exception, e:
-            log.error("FreeNAS Directory Users could not be retrieved: %s", str(e))
+            log.error("FreeNAS Directory Users could not be retrieved: %s",
+                str(e))
             self.__users = None
 
         if self.__users is None:
@@ -315,7 +316,7 @@ class FreeNAS_Users(object):
         for obj in objects:
             self.__bsd_users.append(FreeNAS_User(obj['bsdusr_username']))
 
-        syslog(LOG_DEBUG, "FreeNAS_Users.__init__: leave")
+        log.debug("FreeNAS_Users.__init__: leave")
 
     def __len__(self):
         return len(self.__bsd_users) + len(self.__users)
