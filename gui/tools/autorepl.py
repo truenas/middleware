@@ -29,7 +29,6 @@ import datetime
 import logging
 import os
 import sys
-import syslog
 
 sys.path.extend([
     '/usr/local/www',
@@ -40,7 +39,7 @@ from django.core.management import setup_environ
 from freenasUI import settings
 setup_environ(settings)
 
-from freenasUI.storage.models import Replication, ReplRemote
+from freenasUI.storage.models import Replication
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail
@@ -57,6 +56,7 @@ log = logging.getLogger('tools.autorepl')
 
 # Set to True if verbose log desired
 debug = False
+
 
 # Detect if another instance is running
 def exit_if_running(pid):
@@ -121,8 +121,6 @@ for replication in replication_tasks:
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes -q')
-
-
 
     if replication.repl_userepl:
         Rflag = '-R '
