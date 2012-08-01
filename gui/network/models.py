@@ -70,6 +70,13 @@ class GlobalConfiguration(Model):
             blank=True,
             verbose_name=_("Nameserver 3")
             )
+    gc_hosts = models.TextField(
+            verbose_name=_("Host name data base"),
+            help_text=_("This field is appended to /etc/hosts which contains "
+                "information regarding known hosts on the network. hosts(5)"),
+            default='',
+            blank=True,
+            )
 
     def __unicode__(self):
             return u'%s' % self.id
