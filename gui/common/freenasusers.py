@@ -155,9 +155,9 @@ class FreeNAS_Local_Group(object):
             grfunc = grp.getgrnam
 
         try:
-            self._gr = grfunc(group)
-
-        except:
+            self._gr = grfunc(group.encode('utf-8'))
+        except Exception, e:
+            log.debug("Exception on grfunc: %s", e)
             self._gr = None
 
         log.debug("FreeNAS_local_Group.__get_group: leave")
@@ -263,9 +263,10 @@ class FreeNAS_Local_User(object):
             pwfunc = pwd.getpwnam
 
         try:
-            self._pw = pwfunc(user)
+            self._pw = pwfunc(user.encode('utf-8'))
 
-        except:
+        except Exception, e:
+            log.debug("Exception on pwfunc: %s", e)
             self._pw = None
 
         log.debug("FreeNAS_local_User.__get_user: leave")
