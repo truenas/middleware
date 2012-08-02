@@ -51,7 +51,7 @@ class SysLogHandler(logging.Handler):
 
     def emit(self, record):
         hand = syslog.openlog(facility=self.facility)
-        msg = self.format(record)
+        msg = self.format(record).encode('utf-8')
         syslog.syslog(
             self.priority_names.get(record.levelname.lower(), "debug"),
             msg)
