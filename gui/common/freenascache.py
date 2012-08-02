@@ -24,48 +24,49 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from freenasUI.common.system import get_freenas_var
 
 import os
 import cPickle as pickle
-import syslog
-import time
-import bsddb3
+import logging
 
 from bsddb3 import db
-from syslog import syslog, LOG_DEBUG
+from freenasUI.common.system import get_freenas_var
+
+log = logging.getLogger('common.frenascache')
 
 FREENAS_CACHEDIR = get_freenas_var("FREENAS_CACHEDIR", "/var/tmp/.cache")
 FREENAS_CACHEEXPIRE = int(get_freenas_var("FREENAS_CACHEEXPIRE", 60))
 
-class FreeNAS_BaseCache(object):
-    def __init__(self, cachedir = FREENAS_CACHEDIR):
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: enter")
 
-        self.cachedir = cachedir 
+class FreeNAS_BaseCache(object):
+    def __init__(self, cachedir=FREENAS_CACHEDIR):
+        log.debug("FreeNAS_BaseCache._init__: enter")
+
+        self.cachedir = cachedir
         self.__cachefile = os.path.join(self.cachedir, ".cache.db")
 
         if not self.__dir_exists(self.cachedir):
             os.makedirs(self.cachedir)
 
         self.__dbenv = db.DBEnv()
-        self.__dbenv.open(self.cachedir, db.DB_INIT_CDB|db.DB_INIT_MPOOL|db.DB_CREATE, 0700)
+        self.__dbenv.open(self.cachedir,
+            db.DB_INIT_CDB | db.DB_INIT_MPOOL | db.DB_CREATE, 0700)
 
         self.__cache = db.DB(self.__dbenv)
         self.__cache.open(self.__cachefile, None, db.DB_BTREE, db.DB_CREATE)
 
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.cachedir)
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachefile = %s" % self.__cachefile)
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: leave")
-
+        log.debug("FreeNAS_BaseCache._init__: cachedir = %s", self.cachedir)
+        log.debug("FreeNAS_BaseCache._init__: cachefile = %s",
+            self.__cachefile)
+        log.debug("FreeNAS_BaseCache._init__: leave")
 
     def __dir_exists(self, path):
         path_exists = False
         try:
-            st = os.stat(path)
+            os.stat(path)
             path_exists = True
 
-        except OSError, e:
+        except OSError:
             path_exists = False
 
         return path_exists
@@ -126,8 +127,8 @@ class FreeNAS_BaseCache(object):
 
         haskey = self.__cache.has_key(key)
         if (haskey and overwrite) or (not haskey):
-            self.__cache[key] = pickle.dumps(value)
-      
+            self.__cache[key] = pickle.dumps(entry)
+
         return True
 
     def delete(self, key):
@@ -138,4 +139,4 @@ class FreeNAS_BaseCache(object):
         return True
 
     def close(self):
-        self.__cache.close() 
+        self.__cache.close()
