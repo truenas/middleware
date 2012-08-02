@@ -228,16 +228,19 @@ ldap_status()
 		if [ "${ldap_anonbind}" = "0" ]
 		then
 			local temp=$(mktemp /tmp/tmp.XXXXXX)
+			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
+			local cmd
 		
 			chmod 400 "${temp}"
 			echo -n "${ldap_rootbindpw}" > "${temp}"
 
-			local out=$(${ldapwhoami} ${options} -D "${ldap_rootbasedn}" -y "${temp}")
+			echo ${ldapwhoami} ${options} -D "'${ldap_rootbasedn}'" -y "${temp}" > "${cmdfile}"
+			cmd=$(cat ${cmdfile})
+			out=$(eval ${cmd})
 			res=$?
 
-			rm -f "${temp}"
+			rm -f "${temp}" "${cmdfile}"
 			local dn=$(echo "${out}"|cut -f2 -d:)
-
 			if [ "${dn}" != "${ldap_rootbasedn}" ]
 			then
 				res=1
