@@ -24,13 +24,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django.forms.util import flatatt
+from django.forms.widgets import Widget
+from django.utils.safestring import mark_safe
+from django.utils.encoding import force_unicode
 
 from dojango import forms
-from dojango.forms import widgets
+from dojango.forms.widgets import DojoWidgetMixin
 
 
-class UnixPermissionWidget(widgets.TextInput):
+class UnixPermissionWidget(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.UnixPerm'
+
+    def render(self, name, value, attrs=None):
+        if value is None:
+            value = ''
+        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs['value'] = force_unicode(value)
+        return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
 
 
 class UnixPermissionField(forms.CharField):
