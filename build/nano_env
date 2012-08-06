@@ -20,6 +20,10 @@
 # NOTE: have to do things this way because nanobsd.sh sets this value
 # explicitly in the script.
 : ${FREENAS_ARCH=$(uname -p)}
+if ! [ "${FREENAS_ARCH}" == "amd64" -o "${FREENAS_ARCH}" == "i386" ] ; then
+    echo "Possible values for FREENAS_ARCH are amd64 or i386"
+    exit
+fi
 NANO_ARCH=$FREENAS_ARCH
 
 # Setup a humanized name for the image. Doesn't affect "os-base/*/"'s naming
