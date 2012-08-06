@@ -2,7 +2,7 @@ Index: sys/dev/hptiop/hptiop.c
 ===================================================================
 --- sys/dev/hptiop/hptiop.c	(revision 239083)
 +++ sys/dev/hptiop/hptiop.c	(working copy)
-@@ -1283,9 +1283,13 @@
+@@ -1283,24 +1283,30 @@ static int hptiop_probe(device_t dev)
  	id = pci_get_device(dev);
  
  	switch (id) {
@@ -18,8 +18,8 @@ Index: sys/dev/hptiop/hptiop.c
  			sas = 1;
  		case 0x3220:
  		case 0x3320:
-@@ -1293,14 +1297,17 @@
- 		case 0x3520:
+ 		case 0x3410:
+-		case 0x3520:
  		case 0x3510:
  		case 0x3511:
 +		case 0x3520:
