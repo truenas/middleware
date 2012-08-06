@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-07-07 16:43+0200\n"
-"Last-Translator: wagga <wagga40@yahoo.com>\n"
+"PO-Revision-Date: 2012-08-06 01:54+0200\n"
+"Last-Translator: DarkPower <caporosno@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -926,9 +926,8 @@ msgstr "Interface parente"
 
 # "où XX est un nombre" c'est en chaine 175
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Le nom doit être vlanXX, où XX est un entier"
+msgstr "Le nom doit être un vlanXX, où XX est un entier"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1084,11 +1083,10 @@ msgid "Virtual Interface"
 msgstr "Interface virtuelle"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Les noms d'interfaces doivent être vlanXX, où XX est un nombre. Exemple: "
-"vlan0."
+"Les noms d'interfaces doivent être du type vlanXX, où XX est un entier. "
+"Exemple: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1177,9 +1175,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG ajouté avec succès"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Cette adresse IP existe déjà."
+msgstr "Cette adresse IP est déjà utilisée."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1199,7 +1196,7 @@ msgstr "Fichier PBI à installer"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Vous devez arrêter le service \"Modules\" avant de continuer."
 
 #: plugins/forms.py:183
 #, fuzzy, python-format
