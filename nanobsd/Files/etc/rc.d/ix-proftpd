@@ -220,6 +220,7 @@ EOF
 
 	if [ ${ftp_ssltls} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
+LoadModule mod_tls.c
 <IfModule mod_tls.c>
   TLSEngine on
   TLSProtocol ${proftpd_tlsprotocol}
