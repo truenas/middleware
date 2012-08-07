@@ -336,6 +336,11 @@ add_port devel/py-polib
 
 add_port sysutils/bsdstats
 
+#+add_port net/py-eventlet
+add_port devel/py-greenlet
+#-add_port net/py-eventlet
+add_port net/py-eventlet
+
 # NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
 # counted against the release image's size because they aren't used in
 # production yet.
