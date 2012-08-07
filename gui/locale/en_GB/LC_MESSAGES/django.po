@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-03-07 01:59+0200\n"
-"Last-Translator: Larry <larry@ixsystems.com>\n"
+"PO-Revision-Date: 2012-08-06 18:01+0200\n"
+"Last-Translator: Robert <robert_readman@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
@@ -112,34 +112,28 @@ msgid "Disabled"
 msgstr "Disabled"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimum power usage with Standby (spindown)"
+msgstr "Level 1 - Minimum power usage with Standby (spindown)"
 
 #: choices.py:88
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Intermediate power usage with Standby"
+msgstr "Level 64 - Intermediate power usage with Standby"
 
 #: choices.py:89
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Intermediate power usage with Standby"
+msgstr "Level 127 - Intermediate power usage with Standby"
 
 #: choices.py:90
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimum power usage without Standby (no spindown)"
+msgstr "Level 128 - Minimum power usage without Standby (no spindown)"
 
 #: choices.py:91
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Intermediate power usage without Standby"
+msgstr "Level 192 - Intermediate power usage without Standby"
 
 #: choices.py:92
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximum performance, maximum power usage"
+msgstr "Level 254 - Maximum performance, maximum power usage"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -349,19 +343,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (recommended)"
 
 #: choices.py:293
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "default level"
+msgstr "gzip (default level, 6)"
 
 #: choices.py:294
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "fastest"
+msgstr "gzip (fastest)"
 
 #: choices.py:295
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maximum, slow"
+msgstr "gzip (maximum, slow)"
 
 #: choices.py:489
 msgid "Hour(s)"
@@ -394,109 +385,107 @@ msgid "Every selected weekday"
 msgstr "Every selected weekday"
 
 #: choices.py:504
-#, fuzzy
 msgid "Read-only"
-msgstr "read-only"
+msgstr "Read-only"
 
 #: choices.py:505
-#, fuzzy
 msgid "Write-only"
-msgstr "read-only"
+msgstr "Write-only"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr ""
+msgstr "Read and Write"
 
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s minutes"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s hour"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s hours"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s day"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s week"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Never - Check the device regardless of its power mode"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sleep - Check the device unless it is in SLEEP mode"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Long Self-Test"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Short Self-Test"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Conveyance Self-Test (ATA  only)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Offline Immediate Test (ATA only)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr ""
+msgstr "Rsync module"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync over SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Push"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Your name cannot start with \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "The character $ is only allowed as the final character"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Your name contains invalid characters (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Your full name contains invalid characters (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -506,14 +495,12 @@ msgid "Username"
 msgstr "Username"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "This value may contain only letters, numbers and @/./+/-/_ characters."
+msgstr "This value may contain only letters, numbers and ./-/_ characters."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -536,17 +523,16 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Disable logins"
+msgstr "Disable password logins"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Lock user"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Create a new primary group for the user"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -554,20 +540,19 @@ msgstr "Primary Group"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Public Key"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr ""
+msgstr "Home Directory Mode"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Auxiliary groups"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "A user with that username already exists."
+msgstr "A user with that uid already exists."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -586,22 +571,20 @@ msgid "The two password fields didn't match."
 msgstr "The two password fields did not match."
 
 #: account/forms.py:386
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Home directory has to start with /mnt/"
+msgstr "Home directory has to start with /mnt/ or be /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "A user cannot belong to more than 64 auxiliary groups"
 
 #: account/forms.py:416 account/forms.py:653
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Home directory has to start with /mnt/"
+msgstr "Home directory is not writable, leave this blank"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Password is disabled, leave this blank"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -610,105 +593,102 @@ msgid "This field is required."
 msgstr "This field is required."
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Home directory has to start with /mnt/"
+msgstr "Home directory has to start with /mnt or be /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Allow repeated GIDs"
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "A user with that username already exists."
+msgstr "A group with that name already exists."
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "A user with that username already exists."
+msgstr "A group with this gid already exists"
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr ""
+msgstr "Member users"
 
 #: account/forms.py:852
 msgid "New password"
-msgstr ""
+msgstr "New password"
 
 #: account/forms.py:856
 msgid "New password confirmation"
-msgstr ""
+msgstr "New password confirmation"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr ""
+msgstr "Change root password as well"
 
 #: account/forms.py:896
 msgid "Old password"
-msgstr ""
+msgstr "Old password"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Your old password was entered incorrectly. Please enter it again."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Do you want to delete all users with this primary group?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr ""
+msgstr "Group ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Group Name"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
-msgstr ""
+msgstr "Group"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
-msgstr ""
+msgstr "Groups"
 
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Group %s is built-in and can not be deleted!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr ""
+msgstr "User ID"
 
 #: account/models.py:87
 msgid "User &"
-msgstr ""
+msgstr "User &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX password"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB password"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primary Group ID"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr ""
+msgstr "Home Directory"
 
 #: account/models.py:119
 msgid "Full Name"
-msgstr ""
+msgstr "Full Name"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
@@ -719,16 +699,16 @@ msgstr "E-mail"
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
-msgstr ""
+msgstr "User"
 
 #: account/models.py:132 templates/account/index.html:19
 msgid "Users"
-msgstr ""
+msgstr "Users"
 
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "User %s is built-in and can not be deleted!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -742,28 +722,28 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
-msgstr ""
+msgstr "Change Password"
 
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr ""
+msgstr "Change Admin User"
 
 #: account/views.py:95
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Password successfully updated."
 
 #: account/views.py:112
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Admin user successfully updated."
 
 #: account/views.py:125
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Users successfully updated."
 
 #: account/views.py:138
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Groups successfully updated."
 
 #: freeadmin/forms.py:114
 #, python-format
@@ -777,7 +757,7 @@ msgstr ""
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "The path must reside within a volume mount point"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
@@ -787,7 +767,7 @@ msgstr ""
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Add %s"
 
 #: freeadmin/navtree.py:340
 #, python-format
@@ -796,15 +776,15 @@ msgstr ""
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
-msgstr ""
+msgstr "Display System Processes"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr ""
+msgstr "Reboot"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr ""
+msgstr "Shutdown"
 
 #: freeadmin/navtree.py:408
 #, python-format
@@ -819,7 +799,7 @@ msgstr ""
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "An error occurred while unserialising from %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -828,16 +808,16 @@ msgstr ""
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s successfully updated."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr ""
+msgstr "The service failed to restart."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s successfully deleted."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -858,7 +838,7 @@ msgstr ""
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
@@ -904,23 +884,23 @@ msgstr ""
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Must fill out nameserver 2 before filling out nameserver 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Required when using nameserver 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Must fill out nameserver 1 before filling out nameserver 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Must fill out nameserver 1 before filling out nameserver 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr ""
+msgstr "Parent Interface"
 
 #: network/forms.py:245
 msgid "The name must be vlanXX where XX is an integer"
@@ -928,11 +908,11 @@ msgstr ""
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tags are 1 - 4095 inclusive"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Physical NICs in the LAGG"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
@@ -941,7 +921,7 @@ msgstr ""
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "The network '%s' is not valid, CIDR expected."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
@@ -970,48 +950,48 @@ msgstr ""
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr ""
+msgstr "Domain"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 Default Gateway"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 Default Gateway"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Nameserver 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Nameserver 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Nameserver 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
 msgid "Global Configuration"
-msgstr ""
+msgstr "Global Configuration"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Pick your NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr ""
+msgstr "Interface Name"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr ""
+msgstr "Name your NIC."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -2022,11 +2002,11 @@ msgstr ""
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
-msgstr ""
+msgstr "Controller Authorised Network"
 
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
-msgstr ""
+msgstr "Logical Unit Controller Authorised netmask (127.0.0.0/8 by default)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
@@ -2127,16 +2107,20 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Initiator authorised to access to the iSCSI target. It takes a name or 'ALL' "
+"for any initiators."
 
 #: services/models.py:550
 msgid "Authorized network"
-msgstr ""
+msgstr "Authorised network"
 
 #: services/models.py:552
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Network authorised to access to the iSCSI target. It takes IP or CIDR "
+"addresses or 'ALL' for any IPs."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2156,11 +2140,11 @@ msgstr ""
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr ""
+msgstr "Authorised Access"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Authorised Accesses"
 
 #: services/models.py:632
 msgid "Target Name"
@@ -2400,6 +2384,8 @@ msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"The time in seconds until shutdown is initiated. If the UPS happens to come "
+"back before the time is up the shutdown is cancelled."
 
 #: services/models.py:933
 msgid "UPS Master User Password"
@@ -3209,6 +3195,13 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"The volume name is the name that appears in the Chooser of the 'connect to "
+"server' dialogue on Macintoshes to represent the appropriate share. If "
+"volumename is unspecified, the last component of pathname is used. No two "
+"volumes may have the same name. The volume name cannot contain the ':' "
+"character. The volume name is mangled if it is very long. Mac codepage "
+"volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
+"'Volume Name Length' parameter in Services:Apple Share"
 
 #: sharing/models.py:118
 msgid "Share Comment"
@@ -3423,7 +3416,7 @@ msgstr ""
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Authorised network or IP addresses"
 
 #: sharing/models.py:269
 msgid ""
@@ -3431,6 +3424,9 @@ msgid ""
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Network that is authorised to access the NFS share or a list of IP "
+"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -4011,7 +4007,7 @@ msgstr ""
 
 #: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
-msgstr ""
+msgstr "Initialise remote side for once. (May cause data loss on remote side!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
@@ -4374,6 +4370,9 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"When the server is unreachable, send a burst of eight packets instead of the "
+"usual one. This is designed to speed the initial synchronisation "
+"acquisition with the server command and s addresses."
 
 #: system/models.py:112 templates/system/ntpserver.html:8
 #, fuzzy
@@ -4385,6 +4384,8 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Marks the server as preferred. All other things being equal, this host will "
+"be chosen for synchronisation among a set of correctly operating hosts."
 
 #: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
@@ -4531,19 +4532,19 @@ msgstr ""
 
 #: system/models.py:266
 msgid "Organization"
-msgstr ""
+msgstr "Organisation"
 
 #: system/models.py:267
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Organisation Name (eg, company)"
 
 #: system/models.py:273
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organisational Unit"
 
 #: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Organisational Unit Name (eg, section)"
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
@@ -5409,7 +5410,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
-msgstr ""
+msgstr "Authorised Initiators"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5449,16 +5450,16 @@ msgstr ""
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Authorised Network"
 
 #: templates/services/iscsi_authini.html:35
 msgid "No authorized initiators defined"
-msgstr ""
+msgstr "No authorised initiators defined"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "Add Authorised Initiator"
 
 #: templates/services/iscsi_dextents.html:33
 msgid "No device extents defined"
@@ -6244,9 +6245,8 @@ msgstr "Tape"
 msgid "Pass"
 msgstr "Pass"
 
-#, fuzzy
 msgid "Disable password"
-msgstr "Disabled"
+msgstr "Disable password"
 
 #, fuzzy
 msgid "Export Volume"
