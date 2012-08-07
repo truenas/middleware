@@ -453,7 +453,6 @@ class pbi_pipe(object):
         if func is not None:
             for line in self.__out.splitlines():
                 line = line.strip()
-                self.__out += line
                 func(line, **kwargs)
 
 
