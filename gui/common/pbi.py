@@ -440,28 +440,31 @@ class pbi_pipe(object):
 
         self.error = None
         self.__pipe = Popen(cmd, stdin=PIPE, stdout=PIPE,
-            stderr=PIPE, shell=True, close_fds=True)
+            stderr=PIPE, shell=True, env={
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                })
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
         self.__stderr = self.__pipe.stderr
 
-        self.__out = ""
+        self.__out, err = self.__pipe.communicate()
+
         if func is not None:
-            for line in self.__stdout:
+            for line in self.__out.splitlines():
                 line = line.strip()
                 self.__out += line
                 func(line, **kwargs)
 
-        else:
-            self.__out = self.__stdout.read().strip()
 
-        self.__pipe.wait()
-        log.debug("pbi_pipe.__init__: out = %s", self.__out)
+        for line in self.__out.splitlines():
+            log.debug("pbi_pipe.__init__: out = %s", line)
+        for line in err.splitlines():
+            log.debug("pbi_pipe.__init__: err = %s", line)
 
         if self.__pipe.returncode != 0:
             self.error = 'The command %s failed: "%s"' % \
-                             (cmd, self.__stderr.read() or self.__out, )
+                             (cmd, err or self.__out, )
 
         self.returncode = self.__pipe.returncode
         log.debug("pbi_pipe.__init__: leave")
