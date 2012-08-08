@@ -419,12 +419,7 @@ class NavTree(object):
 
     def _get_plugins_nodes(self, request):
 
-        """
-        Plugin nodes
-        TODO: It is a blocking operation, we could use green threads
-        """
         host = get_base_url(request)
-
         args = map(lambda y: (y, host, request),
             Plugins.objects.filter(plugin_enabled=True))
 
