@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-03-18 15:17+0200\n"
+"PO-Revision-Date: 2012-08-07 14:07+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -49,9 +49,8 @@ msgstr "Stockage"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "Des erreurs sont survenues !"
+msgstr "Des erreurs sont survenues"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -63,12 +62,11 @@ msgstr "Modifier le disque"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Effacer"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Modifier le disque"
+msgstr "Effacer le disque"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -86,7 +84,7 @@ msgstr "Chaque sélection"
 # Utilisé dans "Every N minute", "Every N hour", "Every N day of month"
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
-msgstr "Tou(te)s les N"
+msgstr "Chaque N"
 
 msgid "Plugins"
 msgstr "Modules"
@@ -108,4 +106,4 @@ msgstr "Détacher le disque"
 
 # Utilisé dans "Every minute", "Every hour", "Every day of month"
 msgid "Every"
-msgstr "Tou(te)s les"
+msgstr "Chaque"
