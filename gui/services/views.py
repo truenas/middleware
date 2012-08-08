@@ -26,7 +26,8 @@
 #####################################################################
 from collections import namedtuple
 import logging
-import urllib2
+
+import eventlet
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -35,7 +36,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url
+from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services import models
 
 log = logging.getLogger("services.views")
@@ -48,11 +49,7 @@ def index(request):
 
 
 def plugins(request):
-    """
-    TODO: This is blocking,
-    We could do that using green threads or multithreads...
-    Or even, we could do those requests on client side
-    """
+
     Service = namedtuple('Service', [
         'name',
         'status',
@@ -62,27 +59,16 @@ def plugins(request):
         'status_url',
         ])
 
-    plugins = Plugins.objects.filter(plugin_enabled=True)
     host = get_base_url(request)
-    for plugin in plugins:
-        url = "%s/plugins/%s/_s/status" % (
-            host,
-            plugin.plugin_name)
-        try:
-            opener = urllib2.build_opener()
-            opener.addheaders = [
-                ('Cookie', 'sessionid=%s' % (
-                    request.COOKIES.get("sessionid", ''),
-                    ))
-                ]
-            response = opener.open(url, None, 1).read()
-            json = simplejson.loads(response)
-        except Exception, e:
-            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                'url': url,
-                'error': e,
-                })
+    plugins = Plugins.objects.filter(plugin_enabled=True)
+    args = map(lambda y: (y, host, request), plugins)
+
+    pool = eventlet.GreenPool(20)
+    for plugin, json in pool.imap(get_plugin_status, args):
+
+        if not json:
             continue
+
         plugin.service = Service(
             name=plugin.plugin_name,
             status=json['status'],

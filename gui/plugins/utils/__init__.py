@@ -24,6 +24,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
+from django.utils import simplejson
+from django.utils.translation import ugettext as _
+
+from eventlet.green import urllib2
+
+log = logging.getLogger('plugins.utils')
 
 
 def get_base_url(request):
@@ -38,3 +46,28 @@ def get_base_url(request):
                 (proto == 'https' and port != 443)):
             addr = "%s:%d" % (addr, port)
     return "%s://%s" % (proto, addr)
+
+
+def get_plugin_status(args):
+
+    plugin, host, request = args
+    url = "%s/plugins/%s/_s/status" % (
+        host,
+        plugin.plugin_name)
+    json = None
+
+    try:
+        opener = urllib2.build_opener()
+        opener.addheaders = [
+            ('Cookie', 'sessionid=%s' % (
+                request.COOKIES.get("sessionid", ''),
+                ))
+            ]
+        response = opener.open(url, None, 2).read()
+        json = simplejson.loads(response)
+    except Exception, e:
+        log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+            'url': url,
+            'error': e,
+            })
+    return plugin, json
