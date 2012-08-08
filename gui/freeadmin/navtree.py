@@ -450,6 +450,13 @@ class NavTree(object):
             except Exception, e:
                 log.warn(_("An error occurred while unserializing from "
                     "%(url)s: %(error)s") % {'url': url, 'error': e})
+                log.debug(_("Error unserializing %(url)s (%(error)s), data "
+                    "retrieved:") % {
+                    'url': url,
+                    'error': e,
+                    })
+                for line in data.splitlines():
+                    log.debug(line)
                 continue
 
     def _build_nav(self):
