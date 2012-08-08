@@ -323,6 +323,7 @@ install_kernel ( ) (
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
 		installkernel \
+		INSTALL_NODEBUG= \
 		DESTDIR=${NANO_WORLDDIR} \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
