@@ -1786,14 +1786,14 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
 
 class FreeNAS_Directory_Users(object):
-    def __new__(cls, **kwargs):
+    def __new__(cls, ldap_enabled=False, ad_enabled=False, **kwargs):
         log.debug("FreeNAS_Directory_Users.__new__: enter")
 
         obj = None
-        if LDAPEnabled():
+        if ldap_enabled:
             obj = FreeNAS_LDAP_Users(**kwargs)
 
-        elif ActiveDirectoryEnabled():
+        elif ad_enabled:
             obj = FreeNAS_ActiveDirectory_Users(**kwargs)
 
         log.debug("FreeNAS_Directory_Users.__new__: leave")
@@ -2041,14 +2041,14 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
 
 class FreeNAS_Directory_Groups(object):
-    def __new__(cls, **kwargs):
+    def __new__(cls, ldap_enabled=False, ad_enabled=False, **kwargs):
         log.debug("FreeNAS_Directory_Groups.__new__: enter")
 
         obj = None
-        if LDAPEnabled():
+        if ldap_enabled:
             obj = FreeNAS_LDAP_Groups(**kwargs)
 
-        elif ActiveDirectoryEnabled():
+        elif ad_enabled:
             obj = FreeNAS_ActiveDirectory_Groups(**kwargs)
 
         log.debug("FreeNAS_Directory_Groups.__new__: leave")
@@ -2207,10 +2207,10 @@ class FreeNAS_Directory_Group(object):
         log.debug("FreeNAS_Directory_Group.__new__: group = %s", group)
 
         obj = None
-        if LDAPEnabled():
+        if kwargs.get("ldap_enabled"):
             obj = FreeNAS_LDAP_Group(group, **kwargs)
 
-        elif ActiveDirectoryEnabled():
+        elif kwargs.get("ad_enabled"):
             obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
 
         if obj and obj._gr is None:
@@ -2374,10 +2374,10 @@ class FreeNAS_Directory_User(object):
         log.debug("FreeNAS_Directory_User.__new__: user = %s", user)
 
         obj = None
-        if LDAPEnabled():
+        if kwargs.get("ldap_enabled"):
             obj = FreeNAS_LDAP_User(user, **kwargs)
 
-        elif ActiveDirectoryEnabled():
+        elif kwargs.get("ad_enabled"):
             obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
 
         if obj and obj._pw is None:

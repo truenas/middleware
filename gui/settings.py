@@ -124,6 +124,7 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
+    #'freenasUI.freeadmin.middleware.ProfileMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'freenasUI.freeadmin.middleware.LocaleMiddleware',
     'freenasUI.freeadmin.middleware.CatchError',

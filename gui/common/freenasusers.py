@@ -193,8 +193,13 @@ class FreeNAS_Groups(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
+        ldap_enabled = LDAPEnabled()
+        ad_enabled = ActiveDirectoryEnabled()
         try:
-            self.__groups = FreeNAS_Directory_Groups(**kwargs)
+            self.__groups = FreeNAS_Directory_Groups(
+                ldap_enabled=ldap_enabled,
+                ad_enabled=ad_enabled,
+                **kwargs)
         except Exception, e:
             log.error("FreeNAS Directory Groups could not be retrieved: %s",
                 str(e))
@@ -206,7 +211,10 @@ class FreeNAS_Groups(object):
         self.__bsd_groups = []
         objects = bsdGroups_objects()
         for obj in objects:
-            self.__bsd_groups.append(FreeNAS_Group(obj['bsdgrp_group']))
+            self.__bsd_groups.append(
+                FreeNAS_Group(obj['bsdgrp_group'],
+                    ldap_enabled=ldap_enabled, ad_enabled=ad_enabled)
+                )
 
         log.debug("FreeNAS_Groups.__init__: leave")
 
@@ -302,8 +310,13 @@ class FreeNAS_Users(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
+        ldap_enabled = LDAPEnabled()
+        ad_enabled = ActiveDirectoryEnabled()
         try:
-            self.__users = FreeNAS_Directory_Users(**kwargs)
+            self.__users = FreeNAS_Directory_Users(
+                ldap_enabled=ldap_enabled,
+                ad_enabled=ad_enabled,
+                **kwargs)
         except Exception, e:
             log.error("FreeNAS Directory Users could not be retrieved: %s",
                 str(e))
@@ -315,7 +328,10 @@ class FreeNAS_Users(object):
         self.__bsd_users = []
         objects = bsdUsers_objects()
         for obj in objects:
-            self.__bsd_users.append(FreeNAS_User(obj['bsdusr_username']))
+            self.__bsd_users.append(
+                FreeNAS_User(obj['bsdusr_username'],
+                    ldap_enabled=ldap_enabled, ad_enabled=ad_enabled)
+                )
 
         log.debug("FreeNAS_Users.__init__: leave")
 
