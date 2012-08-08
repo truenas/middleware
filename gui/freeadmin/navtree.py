@@ -26,21 +26,23 @@
 #####################################################################
 import logging
 import re
-import urllib2
+
+import eventlet
 
 from django.conf import settings
-from django.core.urlresolvers import resolve
 from django.db import models
 from django.forms import ModelForm
-from django.http import Http404
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.freeadmin.tree import (tree_roots, TreeRoot, TreeNode, TreeRoots,
+from eventlet.green import urllib2
+
+from freenasUI.freeadmin.tree import (tree_roots, TreeRoot, TreeNode,
     unserialize_tree)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
+
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -86,7 +88,7 @@ class NavTree(object):
             mod = __import__('%s.%s' % (where, name), globals(), locals(),
                 [name], -1)
             return mod
-        except ImportError, e:
+        except ImportError:
             return None
 
     def register_option(self, opt, parent, replace=False, evaluate=True):
@@ -394,6 +396,27 @@ class NavTree(object):
         if notifier()._started_plugins_jail():
             self._get_plugins_nodes(request)
 
+    def _plugin_fetch(self, args):
+        plugin, host, request = args
+        data = None
+        url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
+        try:
+            opener = urllib2.build_opener()
+            opener.addheaders = [('Cookie', 'sessionid=%s' % (
+                request.COOKIES.get("sessionid", ''),
+                )
+                )]
+            response = opener.open(url, None, 2)
+            data = response.read()
+            if not data:
+                log.warn(_("Empty data returned from %s") % (url,))
+        except Exception, e:
+            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+                'url': url,
+                'error': e,
+                })
+        return plugin, url, data
+
     def _get_plugins_nodes(self, request):
 
         """
@@ -402,22 +425,13 @@ class NavTree(object):
         """
         host = get_base_url(request)
 
-        for plugin in Plugins.objects.filter(plugin_enabled=True):
+        args = map(lambda y: (y, host, request),
+            Plugins.objects.filter(plugin_enabled=True))
 
-            try:
-                url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
-                opener = urllib2.build_opener()
-                opener.addheaders = [('Cookie', 'sessionid=%s' % request.COOKIES.get("sessionid", ''))]
-                response = opener.open(url, None, 1)
-                data = response.read()
-                if not data:
-                    log.warn(_("Empty data returned from %s") % (url,))
-                    continue
-            except Exception, e:
-                log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                    'url': url,
-                    'error': e,
-                    })
+        pool = eventlet.GreenPool(20)
+        for plugin, url, data in pool.imap(self._plugin_fetch, args):
+
+            if not data:
                 continue
 
             try:
@@ -440,7 +454,8 @@ class NavTree(object):
                                 found = True
                                 break
                     else:
-                        log.debug("Plugin %s didn't request to be appended anywhere specific",
+                        log.debug("Plugin %s didn't request to be appended "
+                            "anywhere specific",
                             plugin.plugin_name)
 
                     if not found:
