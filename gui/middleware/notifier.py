@@ -1371,16 +1371,21 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
 
         from_disk = self.label_to_disk(label)
-        from_swap = self.part_type_from_device('swap', from_disk)
+        if not from_disk:
+            if not re.search(r'^[0-9]+$', label):
+                log.warn("Could not find disk for the ZFS label %s", label)
+        else:
+            from_swap = self.part_type_from_device('swap', from_disk)
 
-        # Remove the swap partition for another time to be sure.
-        # TODO: swap partition should be trashed instead.
-        if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
+            # Remove the swap partition for another time to be sure.
+            # TODO: swap partition should be trashed instead.
+            if from_swap != '':
+                self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
-        # TODO: This operation will cause damage to disk data which should be limited
-        self.__gpt_unlabeldisk(from_disk)
+        if from_disk:
+            # TODO: This operation will cause damage to disk data which should be limited
+            self.__gpt_unlabeldisk(from_disk)
         return ret
 
     def zfs_remove_disk(self, volume, label):
