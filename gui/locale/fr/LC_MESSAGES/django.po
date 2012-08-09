@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-08-07 14:05+0200\n"
+"PO-Revision-Date: 2012-08-08 11:16+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -1201,11 +1201,11 @@ msgstr "Vous devez arrêter le service \"Modules\" avant de continuer."
 #: plugins/forms.py:183
 #, python-format
 msgid "The path %s already exists"
-msgstr "Le chemin %s existe déjà."
+msgstr "Le chemin %s existe déjà"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr "Le chemin d'accès complet de la prison ne peut dépasser 76 caractères"
+msgstr "Le chemin absolu de la prison ne peut dépasser 76 caractères"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
@@ -1245,7 +1245,7 @@ msgstr "Monté ?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr "Le chemin d'accès complet ne peut pas dépasser 88 caractères"
+msgstr "Le chemin absolu ne peut pas dépasser 88 caractères"
 
 #: plugins/forms.py:336
 #, python-format
@@ -6590,10 +6590,10 @@ msgid "SHA256 sum for the PBI file"
 msgstr "Somme SHA256 du fichier PBI"
 
 msgid "Jail path cannot contain plugins path."
-msgstr "Le chemin de la prison ne peut contenir le chemin des modules."
+msgstr "Le chemin de la prison ne peut pas contenir le chemin des modules."
 
 msgid "Plugins path cannot contain jail path."
-msgstr "Le chemin des modules ne peut contenir le chemin de la prison."
+msgstr "Le chemin des modules ne peut pas contenir le chemin de la prison."
 
 msgid "Plugin view"
 msgstr "Vue du module"
