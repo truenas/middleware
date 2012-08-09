@@ -894,11 +894,13 @@ def multipath_status_json(request):
     for mp in multipaths:
         children = []
         for cn in mp.consumers:
+            actions = {}
             items.append({
                 'id': str(_id),
                 'name': cn.devname,
                 'status': cn.status,
                 'type': 'consumer',
+                'actions': simplejson.dumps(actions),
             })
             children.append({'_reference': str(_id)})
             _id += 1
