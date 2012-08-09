@@ -197,7 +197,7 @@ class InterfacePlugin(RRDBase):
         re_octets = re.compile(r'(?<=octets-)[a-z0-9]+')
         for _file in os.listdir(self.base_path):
             reg = re_octets.search(_file)
-            if reg and not _file.startswith("."):
+            if reg and not _file.startswith(".") and _file.find("usbus") == -1:
                 ids.append(reg.group(0))
         return ids
 
