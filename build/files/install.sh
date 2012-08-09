@@ -185,7 +185,12 @@ disk_is_freenas()
     local _rv=1
 
     mkdir -p /tmp/data_old
-    mount /dev/${_disk}s4 /tmp/data_old
+    if ! [ -c /dev/${_disk}s4 ] ; then
+        return 1
+    fi
+    if ! mount /dev/${_disk}s4 /tmp/data_old ; then
+        return 1
+    fi
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
