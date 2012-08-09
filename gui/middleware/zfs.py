@@ -626,58 +626,60 @@ def parse_status(name, doc, data):
     pool = Pool(pid=pid, name=name, scrub=scrub)
     lastident = None
     for line in status.split('\n'):
-        if line.startswith('\t'):
+        if not line.startswith('\t'):
+            continue
 
-            try:
-                spaces, word, status = re.search(
-                    r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)',
-                    line[1:]
-                    ).groups()
-            except Exception:
-                spaces, word = re.search(
-                    r'^(?P<spaces>[ ]*)(?P<word>\S+)',
-                    line[1:]
-                    ).groups()
-                status = None
-            ident = len(spaces) / 2
-            if ident < 2 and ident < lastident:
-                for x in range(lastident - ident):
-                    pnode = pnode.parent
+        try:
+            spaces, word, status = re.search(
+                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)',
+                line[1:]
+                ).groups()
+        except Exception:
+            spaces, word = re.search(
+                r'^(?P<spaces>[ ]*)(?P<word>\S+)',
+                line[1:]
+                ).groups()
+            status = None
+        ident = len(spaces) / 2
+        if ident < 2 and ident < lastident:
+            for x in range(lastident - ident):
+                pnode = pnode.parent
 
-            if ident == 0:
-                if word != 'NAME':
-                    tree = Root(word, doc)
-                    tree.status = status
-                    pnode = tree
-                    pool.add_root(tree)
+        if ident == 0:
+            if word != 'NAME':
+                tree = Root(word, doc)
+                tree.status = status
+                pnode = tree
+                pool.add_root(tree)
 
-            elif ident == 1:
-                if _is_vdev(word):
-                    node = Vdev(word, doc, status=status)
-                    tree.append(node)
-                    pnode = node
-                else:
-                    if lastident != ident:
-                        node = Vdev("stripe", doc)
-                        node.status = status
-                        pnode.append(node)
-                    else:
-                        node = pnode
-                        pnode = node.parent
-
-                    node2 = Dev(word, doc, status=status)
-                    node.append(node2)
-                    pnode = node
-            elif ident >= 2:
-                if not word.startswith('replacing'):
-                    if ident == 3:
-                        replacing = True
-                    else:
-                        replacing = False
-                    node = Dev(word, doc, status=status, replacing=replacing)
+        elif ident == 1:
+            if _is_vdev(word):
+                node = Vdev(word, doc, status=status)
+                tree.append(node)
+                pnode = node
+            else:
+                if lastident != ident:
+                    node = Vdev("stripe", doc)
+                    node.status = status
                     pnode.append(node)
+                else:
+                    node = pnode
+                    pnode = node.parent
 
-            lastident = ident
+                node2 = Dev(word, doc, status=status)
+                node.append(node2)
+                pnode = node
+        elif ident >= 2:
+            if not word.startswith('replacing'):
+                if ident == 3:
+                    replacing = True
+                else:
+                    replacing = False
+                node = Dev(word, doc, status=status, replacing=replacing)
+                pnode.append(node)
+            ident = 2
+
+        lastident = ident
     pool.validate()
     return pool
 
