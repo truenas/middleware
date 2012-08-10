@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-03-27 23:28+0200\n"
-"Last-Translator: Christian <c.helmus@gmail.com>\n"
+"PO-Revision-Date: 2012-08-10 00:26+0200\n"
+"Last-Translator: Erwin <erwindegroot@lijbrandt.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -910,9 +910,8 @@ msgid "Parent Interface"
 msgstr "Bovenliggende Poort"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Poort namen moeten vlanXX, zijn waar XX een nummer is"
+msgstr "De naam moet vlanXX, zijn waar XX een nummer is"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1066,11 +1065,9 @@ msgid "Virtual Interface"
 msgstr "Virtuele Interface"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Interface namen moeten vlanXX zijn waar XX een nummer is. Bijvoorbeeld: "
-"vlan0."
+"Interface namen moeten vlanX zijn waar X een nummer is. Bijvoorbeeld: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1158,9 +1155,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG succesvol toegevoegd"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Dit IP adres bestaat al."
+msgstr "Dit IP adres is al in gebruik."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1180,45 +1176,41 @@ msgstr "PBI voor installatie"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Je moet eerst de plugin services uitschakelen vooraleer door te gaan"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Dit IP adres bestaat al."
+msgstr "Het pad %s bestaat al."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Het volledige jail pad mag niet langer dan 76 karakters zijn"
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr "Het plugin pad kan niet hetzelfde of zich in het jail pad bevinden."
+msgstr "Het plugins jail pad mag niet onder het plugins archief pad bevinden."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Het plugin pad kan niet hetzelfde of zich in het jail pad bevinden."
+msgstr ""
+"Het plugin archief pad mag zich niet onder het plugins jail pad bevinden."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Email Adres"
+msgstr "Jail IPv4 Address"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "IPv4 Netmask"
+msgstr "Jail IPv4 Netmask"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Plugin architectuur"
+msgstr "Plugin archief pad"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1226,21 +1218,21 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Gekoppeld?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Het volledige pad mag niet langer zijn dan 88 karakters"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Het cache kon niet herbouwd worden"
+msgstr "Het pad kon niet gekoppeld worden %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Het cache kon niet herbouwd worden"
+msgstr "Het pad kon niet losgekoppeld worden %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1268,9 +1260,8 @@ msgid "Version of the plugin"
 msgstr "Versie van de plugin"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Plugin versie"
+msgstr "Plugin API versie"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1292,13 +1283,12 @@ msgid "Plugin TCP port"
 msgstr "Plugin TCP poort"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Plugin architectuur"
+msgstr "Plugin architef pad"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Pad waarin de plugins worden bewaard na installatie"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1308,7 +1298,7 @@ msgstr "Plugin's"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Bron"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1320,9 +1310,8 @@ msgid "Mount Point"
 msgstr "Mount Point"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "Mount Point"
+msgstr "Koppel Punten"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1337,23 +1326,20 @@ msgid "Unable to remove plugin."
 msgstr "Plugin kan niet worden verwijderd."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "Plugin succesvol geupdate."
+msgstr "Plugin succesvol updated."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "Plugin succesvol geupdate."
+msgstr "Plugin succesvol geinstalleerd."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Er was een probleem met het importeren van de jail"
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s werd succesvol aangepast."
+msgstr "Jail succesvol geimporteerd."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1581,6 +1567,7 @@ msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
+"Dit veld heeft CHAP of Mutual CHAP nodig voor de Controller Auth Methode."
 
 #: services/forms.py:730
 #, fuzzy
@@ -1610,6 +1597,8 @@ msgstr "Dit kunnen waardes zijn in bytes of afgekort in KB, MB, GB, TB"
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
+"Het bestand moet bestaan als de uitbreidbare grootte op automatisch staat "
+"(0)"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -3186,7 +3175,7 @@ msgstr "Controle Services"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr "Apparaat Extents"
+msgstr "Apparaat Extenties"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
@@ -4052,9 +4041,8 @@ msgid "day of month"
 msgstr "dag van de maand"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "Method"
-msgstr "Authenticatiemethode"
+msgstr "Methode"
 
 #: storage/forms.py:1271
 msgid "Quick"
@@ -4131,18 +4119,16 @@ msgstr "Dag van de week"
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
 #: templates/system/sysctl.html:8 templates/system/tunable.html:8
-#, fuzzy
 msgid "Enabled"
-msgstr "AIO Inschakelen"
+msgstr "Ingeschakeld"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
 msgstr ""
 
 #: storage/models.py:249
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "UNIX Shares"
+msgstr "ZFS Volume-controles"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
@@ -4177,15 +4163,13 @@ msgstr "Elke maand"
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
-#, fuzzy
 msgid "Weekdays"
-msgstr "Doordeweekse dag"
+msgstr "Doordeweekse dagen"
 
 #: storage/models.py:308 system/models.py:436 system/models.py:641
 #: system/models.py:728
-#, fuzzy
 msgid "Weekends"
-msgstr "Week (weken)"
+msgstr "Weekenden"
 
 #: storage/models.py:340
 #, fuzzy
@@ -4261,15 +4245,17 @@ msgid "Remote Host"
 msgstr "Remote Host"
 
 #: storage/models.py:669
-#, fuzzy
 msgid "Remote ZFS filesystem name"
-msgstr "Remote ZFS bestandssysteem"
+msgstr "Afgelegen ZFS bestandssysteem"
 
 #: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Dit zou de naam moeten zijn van het ZFS bestandssysteem van afgelegen "
+"afgelegen kant. vb: poolnaam/datasetnaam niet het deelmap of het "
+"bestandssysteem pad"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4369,9 +4355,8 @@ msgstr "Alle Groepen Bekijken"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "Volumenaam"
+msgstr "Volume manager"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4472,9 +4457,8 @@ msgid "Snapshot successfully deleted."
 msgstr "Snapshot succesvol verwijderd."
 
 #: storage/views.py:604
-#, fuzzy
 msgid "Snapshots successfully deleted."
-msgstr "Snapshot succesvol verwijderd."
+msgstr "Momentopname van het bestandssysteem succesvol verwijderd."
 
 #: storage/views.py:616
 msgid "Rollback successful."
@@ -4514,18 +4498,16 @@ msgid "Disk has been removed."
 msgstr ""
 
 #: storage/views.py:766
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "Het volume werd succesvol geexporteerd"
+msgstr "Het volume is succesvol losgekoppeld"
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
 msgstr ""
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "% succesvol toegevoegd"
+msgstr "Schijf succesvol gewist"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -4537,9 +4519,8 @@ msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Deze waarde moet tussen 0 en 65535 liggen."
 
 #: system/forms.py:216
-#, fuzzy
 msgid "Number is required."
-msgstr "Dit veld is verplicht."
+msgstr "Nummer is verplicht."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4579,14 +4560,12 @@ msgid "SHA256 sum for the image"
 msgstr "SHA256 som voor de image"
 
 #: system/forms.py:538
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Ongeldige firmware of controlesom"
+msgstr "Ongeldige firmware"
 
 #: system/forms.py:544
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Ongeldige firmware of controlesom"
+msgstr "Ongeldige controlesom"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4607,13 +4586,12 @@ msgid "Protocol"
 msgstr "Protocol"
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 Adres"
+msgstr "WebGUI IP-Adres"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr ""
+msgstr "WebGUI Poort"
 
 #: system/models.py:62
 msgid "Language"
@@ -4638,7 +4616,7 @@ msgstr "IPv4 Adres"
 
 #: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "Burst"
 
 #: system/models.py:98
 msgid ""
@@ -4646,10 +4624,13 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Zodra de server bereikbaar is, zend een burst van acht paketten inplaats van "
+"de gebruikelijke een. Dit is ontworpen om kwaliteit van het timekeeping met "
+"de server command en addressen."
 
 #: system/models.py:104
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:106
 msgid ""
@@ -4696,9 +4677,8 @@ msgid "NTP Server"
 msgstr "NTP server 1"
 
 #: system/models.py:145
-#, fuzzy
 msgid "NTP Servers"
-msgstr "NTP server 1"
+msgstr "NTP servers"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
@@ -4772,13 +4752,12 @@ msgid "From email"
 msgstr "Van e-mail"
 
 #: system/models.py:210
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Het email adres dat het systeem zal gebruiken als zend adres voor de email "
-"die het verzend, bijv. freenas@mijndomein.nl"
+"Het email adres dat het systeem zal gebruiken als verzend-adres voor de "
+"uitgaande email-berichten, bijv. freenas@mijndomein.nl"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -4900,14 +4879,12 @@ msgid "Short description"
 msgstr "Korte omschrijving"
 
 #: system/models.py:374
-#, fuzzy
 msgid "Cron Job"
-msgstr "CronJob"
+msgstr "Tijdsgebonden script"
 
 #: system/models.py:375
-#, fuzzy
 msgid "Cron Jobs"
-msgstr "CronJobs"
+msgstr "Tijdsgebonden scripts"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
@@ -4922,18 +4899,16 @@ msgid "Name of the module defined in the remote rsync daemon"
 msgstr ""
 
 #: system/models.py:475
-#, fuzzy
 msgid "Remote Path"
-msgstr "Remote Host"
+msgstr "Verafgelegen Pad"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr ""
 
 #: system/models.py:481 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "Map"
+msgstr "Richtlijn"
 
 #: system/models.py:482
 msgid ""
@@ -5040,43 +5015,38 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "Extra rsync command line opties (wordt meestal leeg gelaten)."
 
 #: system/models.py:580
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsyncs"
+msgstr "Rsync taken"
 
 #: system/models.py:581
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsyncs"
+msgstr "Rsync taken"
 
 #: system/models.py:756
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. Test"
 
 #: system/models.py:757
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. instellingen"
+msgstr "S.M.A.R.T. Tests"
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Beschikbaar"
+msgstr "Variabel"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
-msgstr ""
+msgstr "Waarde"
 
 #: system/models.py:795
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:796
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:834
 #, fuzzy
@@ -5115,14 +5085,14 @@ msgid "Shutdown is being issued"
 msgstr "Systeem Afsluiten"
 
 #: system/views.py:297
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "Test boodschap van"
+msgstr "Test boodschap van %s"
 
 #: system/views.py:299
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "Dit is een test boodschap van"
+msgstr "Dit is een test boodschap van %s"
 
 #: system/views.py:302
 #, fuzzy, python-format
@@ -5235,14 +5205,12 @@ msgid "Change Admin Password"
 msgstr "Verander Admin Wachtwoord"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Rsync Module"
+msgstr "Basis modus"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Geadvanceerd"
+msgstr "Geavanceerde modus"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5540,26 +5508,23 @@ msgstr ""
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Installeer Plugin"
 
 #: templates/plugins/index.html:31
-#, fuzzy
 msgid "Info"
-msgstr "Informeel"
+msgstr "Informatie"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "Plugin Informatie"
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Wijzig Portaal"
+msgstr "Wijzig Plugin"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Verwijder Replicatie"
+msgstr "Verwijder Plugin"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
@@ -5708,9 +5673,8 @@ msgid "TFTP Settings"
 msgstr "TFTP Instellingen"
 
 #: templates/services/core.html:172
-#, fuzzy
 msgid "UPS Settings"
-msgstr "NFS Instellingen"
+msgstr "UPS Instellingen"
 
 #: templates/services/enable.html:3
 msgid "Would you like to enable this service?"
@@ -5722,7 +5686,7 @@ msgstr "Nee"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Kern"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5747,11 +5711,11 @@ msgstr "Doelen"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr "Extents"
+msgstr "Extenties"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr "Geassocieerde Doelen "
+msgstr "Geassocieerde Doelen"
 
 #: templates/services/iscsi_assoctargets.html:31
 #, fuzzy
@@ -5764,7 +5728,7 @@ msgstr "Extent Toevoegen Aan Doel"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr "Extent Toevoegen Aan Doel"
+msgstr "Extentie Toevoegen Aan Doel"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
@@ -5799,9 +5763,8 @@ msgid "Add Extent"
 msgstr "Extent Toevoegen"
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "Apparaat Extents"
+msgstr "Bestand Extentie"
 
 #: templates/services/iscsi_extents.html:33
 #, fuzzy
@@ -5853,6 +5816,8 @@ msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"ATTENTIE: De Plugin service staat uit, verscheidene functies zijn buiten "
+"dienst."
 
 #: templates/services/plugins.html:31
 #, fuzzy
@@ -5873,9 +5838,8 @@ msgid "Update"
 msgstr "Updaten"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Verwijder Replicatie"
+msgstr "Update plugin"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
@@ -6033,9 +5997,8 @@ msgid "Are you sure you want to remove?"
 msgstr "Weet u zeker dat u wilt verwijderen?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "Weet u zeker dat u wilt verwijderen?"
+msgstr "Weet u zeker dat u wilt wissen?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
@@ -6113,18 +6076,16 @@ msgid "No ZFS replication available"
 msgstr "Geen ZFS replicatie beschikbaar"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Geen RSyncs gedefinieerd"
+msgstr "Geen Volume-controle taak gedefinieerd"
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Voeg ZFS Volume-controle taak toe"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "ZFS Volume toevoegen"
+msgstr "ZFS Volume-controle toevoegen"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6132,9 +6093,8 @@ msgid ""
 msgstr ""
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Weet u zeker dat u wilt loskoppelen?"
+msgstr "Weet u zeker dat u de de controle wilt uitvoeren?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
@@ -6147,7 +6107,7 @@ msgstr "Weet u zeker dat u het snapshot wil terugzetten naar de vorige staat?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
-msgstr "Kloon snapshot"
+msgstr "Kopieer snapshot"
 
 #: templates/storage/snapshots.html:32
 #, fuzzy
@@ -6174,9 +6134,8 @@ msgid "Destroy"
 msgstr "Verwijder Volume"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Kloon snapshot"
+msgstr "Verwijder snapshots"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6249,9 +6208,8 @@ msgid "Status"
 msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Creëer Volume"
+msgstr "Koppel volume los"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 #, fuzzy
@@ -6287,9 +6245,8 @@ msgid "No volumes defined"
 msgstr "Geen volumes gedefineerd"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Volume Pad"
+msgstr "Uit te breiden volume"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6328,14 +6285,13 @@ msgid "Existing data will be cleared"
 msgstr "Bestaande data zal worden gewist"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
-msgstr "Schijf vervangen"
+msgstr "Vervang schijf"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Creëer ZFS Volume"
+msgstr "Creëer ZFS Volume op %(name)s"
 
 #: templates/storage/zvols.html:6
 msgid "Add ZFS Volume"
@@ -6355,9 +6311,8 @@ msgstr "Het cache kon niet herbouwd worden"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "Foutopsporing"
+msgstr "Foutopsporing opslaan"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -6366,9 +6321,8 @@ msgstr "Firmware Update"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Verwijder onderliggend bestand"
+msgstr "Importeer Jail plugins"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6409,22 +6363,19 @@ msgstr ""
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Geen naamserver gedefinieerd"
+msgstr "Geen NTP server gedefinieerd"
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "NTP server 1"
+msgstr "Voeg NTP server toe"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "NTP server 1"
+msgstr "Voeg NTP server toe"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6440,19 +6391,16 @@ msgstr ""
 "doen?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Map"
+msgstr "Verleden"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Lokale Master"
+msgstr "Lokale Map"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "Verwijderen"
+msgstr "Afgelegen"
 
 #: templates/system/rsync.html:48
 #, fuzzy
@@ -6474,7 +6422,7 @@ msgstr "Algemeen"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Fabrieksinstellingen herstellen"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -6517,19 +6465,16 @@ msgid "Add S.M.A.R.T. test"
 msgstr "S.M.A.R.T."
 
 #: templates/system/sysctl.html:34
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "Geen RSyncs gedefinieerd"
+msgstr "Geen sysctl gedefinieerd"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add sysctl"
-msgstr "Rsync toevoegen"
+msgstr "Sysctl toevoegen"
 
 #: templates/system/sysctl.html:42
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "Rsync toevoegen"
+msgstr "Sysctl toevoegen"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6557,17 +6502,15 @@ msgstr "Gemiddelde belasting"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Doorverbonden via"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen in te stellen instelling gedefinieerd"
 
 #: templates/system/tunable.html:40
-#, fuzzy
 msgid "Add Tunable"
-msgstr "Doel Toevoegen"
+msgstr "Instelling toevoegen"
 
 #: templates/system/tunable.html:42
 #, fuzzy
@@ -6575,9 +6518,8 @@ msgid "Add Loader"
 msgstr "Portaal Toevoegen"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "Updaten"
+msgstr "Updaten activeren"
 
 #: tools/alert.py:108
 #, python-format
@@ -6592,7 +6534,7 @@ msgstr ""
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "Het volume %(volume)s status is %(status)s: %(message)s"
 
 #: tools/alert.py:119
 #, python-format
@@ -6616,11 +6558,12 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"De volgende IP´s zijn gebonden aan het ISCSI portaal maar zijn niet gevonden "
+"in het systeem: %s"
 
 #: tools/alert.py:177
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "Kritisch"
+msgstr "Kritieke meldingen"
 
 msgid "Selected"
 msgstr "Geselecteerd"
@@ -6676,9 +6619,8 @@ msgstr "Er is een fout opgetreden tijdens het toevoegen van de opties"
 msgid "Service Pack image to be installed"
 msgstr "Service Pack voor installeren"
 
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "Ongeldige service pack of controlesom"
+msgstr "Ongeldige service pack"
 
 #, fuzzy
 msgid "View Cron Jobs"
@@ -6692,9 +6634,8 @@ msgstr "Toon Alle Replicatie Taken"
 msgid "View S.M.A.R.T. Tests"
 msgstr "S.M.A.R.T. instellingen"
 
-#, fuzzy
 msgid "View Sysctls"
-msgstr "Bekijk Schijven"
+msgstr "Bekijk Sysctls"
 
 #, fuzzy
 msgid "View Tunables"
@@ -6929,7 +6870,7 @@ msgid "The volume failed to export"
 msgstr "Exporteren van het volume is mislukt."
 
 msgid "Cron Scheduler"
-msgstr "Cron tijdschema"
+msgstr "Script tijdschema"
 
 msgid "Devel"
 msgstr "Devel"

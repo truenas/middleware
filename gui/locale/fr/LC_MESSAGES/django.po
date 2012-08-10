@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-08-08 11:16+0200\n"
+"PO-Revision-Date: 2012-08-09 11:12+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -484,7 +484,7 @@ msgstr "Récupérer"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr "Votre nom ne peut commencer par \"-\""
+msgstr "Votre nom ne peut pas commencer par \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -593,7 +593,7 @@ msgstr "Le répertoire personnel doit commencer par /mnt/ ou être /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Un utilisateur ne peut appartenir à plus de 64 groupes secondaires"
+msgstr "Un utilisateur ne peut pas appartenir à plus de 64 groupes secondaires"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
@@ -679,7 +679,7 @@ msgstr "Groupes"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Le groupe %s est intégré par défaut et ne peut pas être supprimé !"
+msgstr "Le groupe %s existe par défaut et ne peut pas être supprimé !"
 
 #: account/models.py:82
 msgid "User ID"
@@ -727,7 +727,7 @@ msgstr "Utilisateurs"
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "L'utilisateur %s est intégré par défaut et ne peut pas être supprimé !"
+msgstr "L'utilisateur %s existe par défaut et ne peut pas être supprimé !"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -1205,7 +1205,7 @@ msgstr "Le chemin %s existe déjà"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr "Le chemin absolu de la prison ne peut dépasser 76 caractères"
+msgstr "Le chemin absolu de la prison ne peut pas dépasser 76 caractères"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
@@ -1546,7 +1546,7 @@ msgstr ""
 
 #: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Le secret du pair ne peut être le même que celui de l'utilisateur."
+msgstr "Le secret du pair ne peut pas être le même que celui de l'utilisateur."
 
 #: services/forms.py:566 services/forms.py:569
 msgid "The peer user is required if you set a peer secret."
@@ -1637,12 +1637,12 @@ msgstr "Périphérique disque"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "L'ID du groupe portail ne peut être supérieur à %d"
+msgstr "L'ID du Groupe Portail ne peut pas être supérieur à %d"
 
 #: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "L'ID du groupe ne peut être supérieur à %d"
+msgstr "L'ID du Groupe ne peut pas être supérieur à %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -2409,7 +2409,7 @@ msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
-"Le nom de la prison peut contenir uniquement des lettres, nombres et traits "
+"Le nom de la prison peut contenir que des lettres, nombres et traits "
 "d'union. Il ne doit pas se terminer par un trait d'union."
 
 #: services/models.py:821
@@ -2824,7 +2824,7 @@ msgid ""
 "login permitted with password"
 msgstr ""
 "Désactivé : root ne peut se connecter qu'avec une authentification par clé "
-"publique. Activé : root peut se connecter avec un mot de passe."
+"publique; Activé : root peut se connecter avec un mot de passe"
 
 #: services/models.py:1161
 msgid "Allow Password Authentication"
@@ -3424,8 +3424,8 @@ msgid ""
 msgstr ""
 "Le nom de volume est le nom qui apparaît dans la liste de la fenêtre "
 "\"Connexion au serveur\" pour représenter le partage. Si le nom de volume "
-"n'est pas saisie, la dernière composante du chemin est utilisée. Deux "
-"volumes ne peuvent avoir le même nom. Le nom de volume ne peut contenir le "
+"n'est pas saisi, la dernière composante du chemin est utilisée. Deux volumes "
+"ne peuvent pas avoir le même nom. Le nom de volume ne peut pas contenir le "
 "caractère ':'. Le nom de volume est tronqué s'il est trop long. L'encodage "
 "de caractères Mac limite le nom de volume à 27 caractères, avec UTF8-MAC il "
 "est limité par le paramètre \"Longueur du nom de volume\" dans Services : "
@@ -3533,7 +3533,7 @@ msgid ""
 "users."
 msgstr ""
 "Note ! Sélectionner \"Time Machine\" sur plusieurs partages peut causer un "
-"comportement aléatoire dans MacOS. Le mode par défaut exporte le volume en "
+"comportement erratique dans MacOS. Le mode par défaut exporte le volume en "
 "tant que volume de données pour les utilisateurs."
 
 #: sharing/models.py:172
@@ -4566,7 +4566,8 @@ msgstr "Interro. Max. doit être supérieur à Interro. Min."
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
-"Le serveur ne peut être joint. Cocher \"Forcer\" pour continuer malgré tout."
+"Le serveur ne peut pas être joint. Cocher \"Forcer\" pour continuer malgré "
+"tout."
 
 #: system/forms.py:496
 #, python-format
