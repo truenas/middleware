@@ -58,6 +58,7 @@ sysObjectId = 1.3.6.1.4.1.12325.1.1.2.1.\$(system)
 sysDescr = \$(description)
 
 begemotSnmpdModulePath."mibII" = "/usr/lib/snmp_mibII.so"
+begemotSnmpdModulePath."hostres" = "/usr/lib/snmp_hostres.so"
 EOF
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${bsnmp_config}
