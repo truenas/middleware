@@ -235,18 +235,17 @@ class Jail_pipe(object):
         self.__stdout = self.__pipe.stdout
         self.__stderr = self.__pipe.stderr
 
-        self.__out = ""
+        self.__out, err = self.__pipe.communicate()
+
         if func is not None:
-            for line in self.__stdout:
+            for line in self.__out.splitlines():
                 line = line.strip()
-                self.__out += line
                 func(line, **kwargs)
 
-        else:
-            self.__out = self.__stdout.read().strip()
-
-        self.__pipe.wait()
-        log.debug("Jail_pipe.__init__: out = %s", self.__out)
+        for line in self.__out.splitlines():
+            log.debug("Jail_pipe.__init__: out = %s", line)
+        for line in err.splitlines():
+            log.debug("Jail_pipe.__init__: err = %s", line)
 
         if self.__pipe.returncode != 0:
             self.error = self.__out
@@ -279,7 +278,7 @@ class Jail_bait(object):
         for obj in objflags:
             if self.flags & obj:
                 if obj.arg == True and obj.argname is not None and \
-                    kwargs.has_key(obj.argname) and kwargs[obj.argname] is not None:
+                    obj.argname in kwargs and kwargs[obj.argname] is not None:
                     self.args += " %s %s" % (obj, kwargs[obj.argname])
 
                 elif obj.arg == False:
@@ -288,7 +287,7 @@ class Jail_bait(object):
         log.debug("Jail_bait.__init__: args = %s", self.args)
 
         self.pipe_func = None
-        if kwargs.has_key("pipe_func") and kwargs["pipe_func"] is not None:
+        if "pipe_func" in kwargs and kwargs["pipe_func"] is not None:
             self.pipe_func = kwargs["pipe_func"]
 
         log.debug("Jail_bait.__init__: leave")
@@ -315,11 +314,11 @@ class Jexec(Jail_bait):
         super(Jexec, self).__init__(JEXEC_PATH, JEXEC_FLAGS, flags, **kwargs)
 
         self.jid = None
-        if kwargs.has_key("jid") and kwargs["jid"] is not None:
+        if "jid" in kwargs and kwargs["jid"] is not None:
             self.jid = int(kwargs["jid"])
             self.args += " %s" % str(self.jid)
 
-        if kwargs.has_key("command") and kwargs["command"] is not None:
+        if "command" in kwargs and kwargs["command"] is not None:
             self.args += " %s" % kwargs["command"]
 
         log.debug("Jexec.__init__: leave")
@@ -347,7 +346,7 @@ class Jls(Jail_bait):
         super(Jls, self).__init__(JLS_PATH, JLS_FLAGS, flags, **kwargs)
         self.__jails = []
 
-        if kwargs.has_key("parameter") and kwargs["parameter"] is not None:
+        if "parameter" in kwargs and kwargs["parameter"] is not None:
             self.args += " %s" % kwargs["parameter"]
         else:
             for i in range(0, 1024):
