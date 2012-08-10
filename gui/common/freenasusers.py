@@ -24,9 +24,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import grp
 import logging
+import pwd
+import sqlite3
+import types
 
-from freenasUI.common.freenasldap import *
+from freenasUI.common.freenasldap import (FREENAS_DATABASE,
+    LDAPEnabled, ActiveDirectoryEnabled,
+    FreeNAS_Directory_Group, FreeNAS_Directory_User,
+    FreeNAS_Directory_Groups, FreeNAS_Directory_Users)
 
 log = logging.getLogger("common.freenasusers")
 

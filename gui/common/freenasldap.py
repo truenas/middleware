@@ -24,20 +24,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
-from freenasUI.common.system import get_freenas_var, service_enabled
-
-import os
 import grp
-import pwd
-import types
+import hashlib
 import ldap
 import logging
-import hashlib
+import os
+import pwd
 import sqlite3
+import types
 
-from ldap.controls import SimplePagedResultsControl
 from dns import resolver
+from ldap.controls import SimplePagedResultsControl
+
+from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
+from freenasUI.common.system import get_freenas_var, service_enabled
 
 log = logging.getLogger('common.freenasldap')
 
