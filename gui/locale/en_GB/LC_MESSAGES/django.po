@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-08-06 18:01+0200\n"
+"PO-Revision-Date: 2012-08-11 14:21+0200\n"
 "Last-Translator: Robert <robert_readman@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
@@ -716,7 +716,7 @@ msgstr ""
 
 #: account/nav.py:13 templates/account/index.html:2
 msgid "Admin Account"
-msgstr ""
+msgstr "Admin Account"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -748,7 +748,7 @@ msgstr "Groups successfully updated."
 #: freeadmin/forms.py:114
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "The user %s is not valid."
 
 #: freeadmin/forms.py:149
 #, python-format
@@ -762,7 +762,7 @@ msgstr "The path must reside within a volume mount point"
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Error: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -772,7 +772,7 @@ msgstr "Add %s"
 #: freeadmin/navtree.py:340
 #, python-format
 msgid "View %s"
-msgstr ""
+msgstr "View %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -789,12 +789,12 @@ msgstr "Shutdown"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Empty data returned from %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Couldn't retrieve %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -803,7 +803,7 @@ msgstr "An error occurred while unserialising from %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "It was not possible to retrieve the current status"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -844,43 +844,43 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "You cannot configure multiple interfaces with the same IP address (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "You have to specify IPv4 address as well"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "You have to choose IPv4 netmask as well"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "You have to specify IPv6 address as well"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "You have to choose IPv6 netmask as well"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "You have to choose between IPv4 or IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback is not a valid nameserver"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Unspecified addresses are not valid as nameservers"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "This is not a valid nameserver address"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 subnet is not valid for nameserver"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -904,7 +904,7 @@ msgstr "Parent Interface"
 
 #: network/forms.py:245
 msgid "The name must be vlanXX where XX is an integer"
-msgstr ""
+msgstr "The name must be vlanXX where XX is an integer"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -916,7 +916,7 @@ msgstr "Physical NICs in the LAGG"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
-msgstr ""
+msgstr "LAGG Physical NIC"
 
 #: network/forms.py:360
 #, python-format
@@ -925,27 +925,27 @@ msgstr "The network '%s' is not valid, CIDR expected."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "You have to specify IPv4 address as well per alias"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "You have to choose IPv4 netmask as well per alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "You have to specify IPv6 address as well per alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "You have to choose IPv6 netmask as well per alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "You have to choose between IPv4 or IPv6 per alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -995,52 +995,54 @@ msgstr "Name your NIC."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:96
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"When enabled, use DHCP to obtain IPv4 address as well as default router, "
+"etc."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 Address"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 Netmask"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Auto configure IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "When enabled, automatically configurate IPv6 address via rtsol(8)."
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 Address"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "IPv6 Prefix Length"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Options"
 
 #: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Interface"
 
 #: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
-msgstr ""
+msgstr "Interfaces"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
@@ -1048,25 +1050,25 @@ msgstr ""
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr ""
+msgstr "Aliases"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtual Interface"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr ""
+msgstr "Interface names must be vlanX where X is a number. Example: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
 msgid "Physical Interface"
-msgstr ""
+msgstr "Physical Interface"
 
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Tag"
 
 #: network/models.py:278 network/models.py:392 services/models.py:86
 #: services/models.py:916 storage/models.py:211 storage/models.py:352
@@ -1074,51 +1076,51 @@ msgstr ""
 #: templates/network/vlan.html:7 templates/system/cronjob.html:4
 #: templates/system/smarttest.html:6
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:293
 msgid "VLANs"
-msgstr ""
+msgstr "VLANs"
 
 #: network/models.py:314
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protocol Type"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Link Aggregation"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link Aggregations"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG Interface group"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG Priority Number"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr ""
+msgstr "Physical NIC"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr ""
+msgstr "Destination network"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:397
 msgid "Static Route"
-msgstr ""
+msgstr "Static Route"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
@@ -1130,59 +1132,60 @@ msgstr ""
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr ""
+msgstr "Network Summary"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Create Link Aggregation"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
-msgstr ""
+msgstr "View Link Aggregations"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
-msgstr ""
+msgstr "LAGG successfully added"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "A user with that username already exists."
+msgstr "This IP is already in use."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "Place to temporarily place PBI file"
 
 #: plugins/forms.py:93
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
+"The system will use this place to temporarily store the PBI file before it's "
+"installed."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "PBI file to be installed"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "You must turn off Plugins service before proceeding"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "A user with that username already exists."
+msgstr "The path %s already exists"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "The full jail path cannot exceed 76 characters"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
+msgstr "The plugins jail path cannot be a subset of the plugins archive path."
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
+msgstr "The plugins archive path cannot be a subset of the plugins jail path."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
@@ -1190,103 +1193,103 @@ msgstr ""
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
-msgstr ""
+msgstr "Jail IPv4 Address"
 
 #: plugins/forms.py:222
 msgid "Jail IPv4 Netmask"
-msgstr ""
+msgstr "Jail IPv4 Netmask"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
-msgstr ""
+msgstr "Plugins archive Path"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Mounted?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "The full path cannot exceed 88 characters"
 
 #: plugins/forms.py:336
 #, python-format
 msgid "The path could not be mounted %s"
-msgstr ""
+msgstr "The path could not be mounted %s"
 
 #: plugins/forms.py:341
 #, python-format
 msgid "The path could not be umounted %s"
-msgstr ""
+msgstr "The path could not be umounted %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Plugin name"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Name of the plugin"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "Plugin info name"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Info name of the plugin"
 
 #: plugins/models.py:50
 msgid "Plugin version"
-msgstr ""
+msgstr "Plugin version"
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "Version of the plugin"
 
 #: plugins/models.py:57
 msgid "Plugin API version"
-msgstr ""
+msgstr "Plugin API version"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Plugin architecture"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Plugin enabled"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin IP address"
-msgstr ""
+msgstr "Plugin IP address"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin TCP port"
-msgstr ""
+msgstr "Plugin TCP port"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
-msgstr ""
+msgstr "Plugin archive path"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Path where the plugins are saved after installation"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Plugins"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Source"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1299,64 +1302,63 @@ msgstr ""
 
 #: plugins/models.py:122
 msgid "Mount Points"
-msgstr ""
+msgstr "Mount Points"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
-msgstr ""
+msgstr "Plugin successfully updated."
 
 #: plugins/views.py:80
 msgid "Plugin successfully removed."
-msgstr ""
+msgstr "Plugin successfully removed."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Unable to remove plugin."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
-msgstr ""
+msgstr "Plugin successfully updated"
 
 #: plugins/views.py:130
 msgid "Plugin successfully installed"
-msgstr ""
+msgstr "Plugin successfully installed"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "There was a problem importing the jail."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
-msgstr ""
+msgstr "Jail successfully imported."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
-msgstr ""
+msgstr "This is not a valid mask"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "This field is required for \"Enable home directories browsing\"."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "This field is required for \"Home directories\"."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
-msgstr ""
+msgstr "The CIFS service failed to reload."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "The AFP service failed to reload."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "The NFS service failed to reload."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "A user with that username already exists."
+msgstr "This IP already exists."
 
 #: services/forms.py:164
 msgid "The Plugins Jail service failed to reload."
@@ -1364,19 +1366,19 @@ msgstr ""
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr ""
+msgstr "File Permission"
 
 #: services/forms.py:170
 msgid "Directory Permission"
-msgstr ""
+msgstr "Directory Permission"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "This value must be between 1024 and 65535, inclusive. 0 for default"
 
 #: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "This value must be between 1024 and 65535, inclusive. 0 for default."
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
@@ -1384,54 +1386,55 @@ msgstr ""
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "This field is required for anonymous login"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "The ftp service failed to start."
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "The tftp service failed to reload."
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "The SSH service failed to reload."
 
 #: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "The Rsync service failed to reload."
 
 #: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "The name cannot contain slash or a closing square backet."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Password"
+msgstr "Confirm Password"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "The DynamicDNS service failed to reload."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr ""
+msgstr "This is not a valid e-mail address"
 
 #: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"The contact must contain only alphanumeric characters, _, - or a valid "
+"e-mail address"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "The community must contain only alphanumeric characters, _ or -"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "The SNMP service failed to reload."
 
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
@@ -1440,89 +1443,89 @@ msgstr ""
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "The e-mail %(email)s is not valid"
+msgstr[1] "The following e-mails are not valid: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
-msgstr ""
+msgstr "The UPS service failed to reload."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
-msgstr ""
+msgstr "Confirm Administrator Password"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "The activedirectory service failed to reload."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "The ldap service failed to reload."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
-msgstr ""
+msgstr "Secret"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr ""
+msgstr "Target side secret."
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Secret (Confirm)"
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Enter the same secret above for verification."
 
 #: services/forms.py:504
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Initiator Secret"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Initiator side secret. (for mutual CHAP authentication)"
 
 #: services/forms.py:509
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Initiator Secret (Confirm)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
-msgstr ""
+msgstr "Secret does not match"
 
 #: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "The peer secret is required if you set a peer user."
 
 #: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "The peer secret cannot be the same as user secret."
 
 #: services/forms.py:566 services/forms.py:569
 msgid "The peer user is required if you set a peer secret."
-msgstr ""
+msgstr "The peer user is required if you set a peer secret."
 
 #: services/forms.py:582 services/forms.py:614 services/forms.py:756
 #: services/forms.py:821 services/forms.py:927 services/forms.py:955
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "The iSCSI service failed to reload."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN already exists in the same target."
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Controller Auth Group"
 
 #: services/forms.py:620
 msgid ""
@@ -1532,23 +1535,26 @@ msgstr ""
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Discovery Auth Group"
 
 #: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "This value must be between %(start)d and %(end)d, inclusive."
 
 #: services/forms.py:669
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
+"This field is required if discovery method is set to CHAP or CHAP Mutual."
 
 #: services/forms.py:717
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
+"This field is required whether CHAP or Mutual CHAP are set for Controller "
+"Auth Method."
 
 #: services/forms.py:730
 msgid "This is not a valid network"
@@ -1556,39 +1562,41 @@ msgstr ""
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "You need to specify a filepath, not a directory."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "You need to specify a file inside your volume/dataset."
 
 #: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
+"Your path to the extent must reside inside a volume/dataset mount point."
 
 #: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
+"This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "The file must exist if the extent size is set to auto (0)"
 
 #: services/forms.py:830
 msgid "Disk device"
-msgstr ""
+msgstr "Disk device"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Your Portal Group ID cannot be higher than %d"
 
 #: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Your Group ID cannot be higher than %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1598,7 +1606,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Authentication Group number"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1606,7 +1614,7 @@ msgstr ""
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Delete underlying file"
 
 #: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
 #: templates/plugins/plugin_confirm_delete.html:10
@@ -1622,29 +1630,30 @@ msgstr ""
 
 #: services/models.py:51
 msgid "Service"
-msgstr ""
+msgstr "Service"
 
 #: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Name of Service, should be auto-generated at build time"
 
 #: services/models.py:55
 msgid "Enable Service"
-msgstr ""
+msgstr "Enable Service"
 
 #: services/models.py:58 services/models.py:59 services/nav.py:8
 #: templates/menubar.html:27
 msgid "Services"
-msgstr ""
+msgstr "Services"
 
 #: services/models.py:72
 msgid "Authentication Model"
-msgstr ""
+msgstr "Authentication Model"
 
 #: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Using Active Directory or LDAP authentication will supersede this option"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1652,41 +1661,43 @@ msgstr ""
 
 #: services/models.py:81
 msgid "Workgroup"
-msgstr ""
+msgstr "Workgroup"
 
 #: services/models.py:82
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Workgroup the server will appear to be in when queried by clients (maximum "
+"15 characters)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Server description. This can usually be left blank."
 
 #: services/models.py:94
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS charset"
 
 #: services/models.py:100
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX charset"
 
 #: services/models.py:106
 msgid "Log level"
-msgstr ""
+msgstr "Log level"
 
 #: services/models.py:109
 msgid "Local Master"
-msgstr ""
+msgstr "Local Master"
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Time Server for Domain"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
-msgstr ""
+msgstr "Guest account"
 
 #: services/models.py:117 services/models.py:215
 msgid ""
@@ -1696,48 +1707,54 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Use this option to override the username ('nobody' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login. The user root can not be used as guest account."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
-msgstr ""
+msgstr "File mask"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
+msgstr "Use this option to override the file creation mask (0666 by default)."
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr ""
+msgstr "Directory mask"
 
 #: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Use this option to override the directory creation mask (0777 by default)."
 
 #: services/models.py:132
 msgid "Large RW support"
-msgstr ""
+msgstr "Large RW support"
 
 #: services/models.py:134
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Send files with sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
-msgstr ""
+msgstr "EA Support"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Support DOS File Attributes"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Allow Empty Password"
 
 #: services/models.py:142 services/models.py:787 services/models.py:874
 #: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Auxiliary parameters"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
@@ -1745,23 +1762,23 @@ msgstr ""
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr ""
+msgstr "Enable home directories"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr ""
+msgstr "Enable/disable home directories for samba user."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Enable home directories browsing"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
+msgstr "Enable/disable home directories browsing for samba user."
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr ""
+msgstr "Home directories"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
@@ -1783,15 +1800,15 @@ msgstr ""
 
 #: services/models.py:171
 msgid "Enable AIO"
-msgstr ""
+msgstr "Enable AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr ""
+msgstr "Enable/disable AIO support."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
-msgstr ""
+msgstr "Minimum AIO read size"
 
 #: services/models.py:177
 msgid ""
@@ -1800,7 +1817,7 @@ msgstr ""
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
-msgstr ""
+msgstr "Minimum AIO write size"
 
 #: services/models.py:183
 msgid ""
@@ -1821,25 +1838,27 @@ msgstr ""
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:203
 msgid "Server Name"
-msgstr ""
+msgstr "Server Name"
 
 #: services/models.py:204
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Name of the server. If this field is left empty the default server is "
+"specified."
 
 #: services/models.py:207
 msgid "Guest Access"
-msgstr ""
+msgstr "Guest Access"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Allows guest access to all apple shares on this box."
 
 #: services/models.py:219
 msgid "Max. Connections"
@@ -1853,124 +1872,132 @@ msgstr ""
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:236
 msgid "Number of servers"
-msgstr ""
+msgstr "Number of servers"
 
 #: services/models.py:237
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Specifies how many servers to create. There should be enough to handle the "
+"maximum level of concurrency from its clients, typically four to six."
 
 #: services/models.py:241
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asynchronous mode"
 
 #: services/models.py:242
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Enable asynchronous mode, which will help performance beyond gigabit network "
+"speed."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr ""
+msgstr "Base Name"
 
 #: services/models.py:258
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
+"details) will append the target name that is not starting with 'iqn.'"
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Discovery Auth Method"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O Timeout"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O timeout in seconds (30 by default)."
 
 #: services/models.py:281
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Interval"
 
 #: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN sending interval in seconds (20 by default)."
 
 #: services/models.py:287
 msgid "Max. sessions"
-msgstr ""
+msgstr "Max. sessions"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Maximum number of sessions holding at same time (16 by default)."
 
 #: services/models.py:293
 msgid "Max. connections"
-msgstr ""
+msgstr "Max. connections"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maximum number of connections in each session (8 by default)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Max. pre-send R2T"
 
 #: services/models.py:300
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Maximum number of pre-send R2T in each connection (32 by default). The "
+"actual number is limited to QueueDepth of the target."
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MaxOutstandingR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI initial parameter (16 by default)."
 
 #: services/models.py:311
 msgid "First burst length"
-msgstr ""
+msgstr "First burst length"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI initial parameter (65536 by default)."
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr ""
+msgstr "Max burst length"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI initial parameter (262144 by default)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Max receive data segment length"
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "DefaultTime2Wait"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI initial parameter (2 by default)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
@@ -2021,6 +2048,8 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"The istgtcontrol can access the targets with correct user and secret in "
+"specific Auth Group."
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
@@ -2325,6 +2354,8 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Contact information, e.g. name or e-mail of the person responsible for this "
+"system: 'admin@email.address'."
 
 #: services/models.py:867
 msgid "Community"
@@ -2401,25 +2432,27 @@ msgstr ""
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Send E-mail Status Updates"
 
 #: services/models.py:945
 msgid "To email"
-msgstr ""
+msgstr "To e-mail"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Destination e-mail address. Separate e-mail addresses by semi-colon."
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "E-mail Subject"
 
 #: services/models.py:952
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"The subject of the e-mail. You can use the following parameters for "
+"substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2991,11 +3024,11 @@ msgstr ""
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr ""
+msgstr "E-mail to report"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
+msgstr "Destination e-mail address. Separate e-mail addresses by semi-colon"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -4480,13 +4513,15 @@ msgstr ""
 
 #: system/models.py:209
 msgid "From email"
-msgstr ""
+msgstr "From e-mail"
 
 #: system/models.py:210
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
+"An e-mail address that the system will use for the sending address for mail "
+"it sends, eg: freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -4528,7 +4563,7 @@ msgstr ""
 
 #: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "E-mail"
 
 #: system/models.py:266
 msgid "Organization"
@@ -4548,7 +4583,7 @@ msgstr "Organisational Unit Name (eg, section)"
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
-msgstr ""
+msgstr "E-mail Address"
 
 #: system/models.py:287
 msgid "Locality"
@@ -4816,11 +4851,11 @@ msgstr ""
 #: system/views.py:302
 #, python-format
 msgid "Your test email could not be sent: %s"
-msgstr ""
+msgstr "Your test e-mail could not be sent: %s"
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Your test e-mail has been sent!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
