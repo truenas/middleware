@@ -61,6 +61,9 @@ class ModelForm(AdvMixin, MF):
             help_text_html=u'<br />%s',
             errors_on_separate_row=False)
 
+    def delete(self, request=None, events=None):
+        self.instance.delete()
+
 
 class Form(AdvMixin, F):
     """

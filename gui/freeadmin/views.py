@@ -866,6 +866,17 @@ def generic_model_delete(request, app, model, oid):
     except:
         form = None
 
+    if not isinstance(navtree._modelforms[m], dict):
+        mf = navtree._modelforms[m]
+    else:
+        if mf == None:
+            try:
+                mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
+            except:
+                mf = navtree._modelforms[m].values()[-1]
+        else:
+            mf = navtree._modelforms[m][mf]
+
     related, related_num = get_related_objects(instance)
     context = {
         'app': app,
@@ -878,6 +889,7 @@ def generic_model_delete(request, app, model, oid):
     }
 
     form_i = None
+    mf = mf(instance=instance)
     if request.method == "POST":
         if form:
             form_i = form(request.POST, instance=instance)
@@ -885,7 +897,7 @@ def generic_model_delete(request, app, model, oid):
                 events = []
                 if hasattr(form_i, "done"):
                     form_i.done(events=events)
-                instance.delete()
+                mf.delete(events=events)
                 return JsonResponse(
                     message=_("%s successfully deleted.") % (
                         m._meta.verbose_name,
