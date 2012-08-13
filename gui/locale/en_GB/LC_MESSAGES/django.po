@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-08-11 14:21+0200\n"
+"PO-Revision-Date: 2012-08-12 15:37+0200\n"
 "Last-Translator: Robert <robert_readman@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
@@ -753,7 +753,7 @@ msgstr "The user %s is not valid."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "The group %s is not valid."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
@@ -1189,7 +1189,7 @@ msgstr "The plugins archive path cannot be a subset of the plugins jail path."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Plugins jail path"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -1362,7 +1362,7 @@ msgstr "This IP already exists."
 
 #: services/forms.py:164
 msgid "The Plugins Jail service failed to reload."
-msgstr ""
+msgstr "The Plugins Jail service failed to reload."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1382,7 +1382,7 @@ msgstr "This value must be between 1024 and 65535, inclusive. 0 for default."
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "This must be higher than minimum passive port"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1439,7 +1439,7 @@ msgstr "The SNMP service failed to reload."
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1532,6 +1532,8 @@ msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
+"The istgtcontrol can access the targets with correct userand secret in "
+"specific Auth Group."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1558,7 +1560,7 @@ msgstr ""
 
 #: services/forms.py:730
 msgid "This is not a valid network"
-msgstr ""
+msgstr "This is not a valid network"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1603,6 +1605,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
+"The field is a not a valid IP address or network. The keyword \"ALL\" can be "
+"used to allow everything."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1610,7 +1614,7 @@ msgstr "Authentication Group number"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Use alphanumeric characters, \".\", \"-\" and \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1626,7 +1630,7 @@ msgstr ""
 
 #: services/forms.py:1147
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr ""
+msgstr "The S.M.A.R.T. service failed to reload."
 
 #: services/models.py:51
 msgid "Service"
@@ -1657,7 +1661,7 @@ msgstr ""
 
 #: services/models.py:77
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS name"
 
 #: services/models.py:81
 msgid "Workgroup"
@@ -1758,7 +1762,7 @@ msgstr "Auxiliary parameters"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr ""
+msgstr "These parameters are added to [global] section of smb.conf"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1782,21 +1786,23 @@ msgstr "Home directories"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
-msgstr ""
+msgstr "Homes auxiliary parameters"
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr ""
+msgstr "These parameters are added to [homes] section of smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix Extensions"
 
 #: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1814,6 +1820,7 @@ msgstr "Minimum AIO read size"
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
+"Samba will read asynchronously if request size is larger than this value."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1823,10 +1830,11 @@ msgstr "Minimum AIO write size"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
+"Samba will write asynchronously if request size is larger than this value."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Zeroconf share discovery"
 
 #: services/models.py:189
 msgid ""
@@ -1834,6 +1842,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1862,12 +1873,13 @@ msgstr "Allows guest access to all apple shares on this box."
 
 #: services/models.py:219
 msgid "Max. Connections"
-msgstr ""
+msgstr "Max. Connections"
 
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
+"Maximum number of connections permitted via AFP. The default limit is 50."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -2001,31 +2013,31 @@ msgstr "iSCSI initial parameter (2 by default)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "DefaultTime2Retain"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSI initial parameter (60 by default)."
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr ""
+msgstr "Enable LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr ""
+msgstr "Controller IP address"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Controller TCP port"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Logical Unit Controller TCP port (3261 by default)"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
@@ -2037,11 +2049,11 @@ msgstr "Logical Unit Controller Authorised netmask (127.0.0.0/8 by default)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Controller Auth Method"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "The method can be accepted in the controller."
 
 #: services/models.py:375
 msgid ""
@@ -2054,41 +2066,43 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Target Global Configuration"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr ""
+msgstr "Extent Name"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "String identifier of the extent."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr ""
+msgstr "Extent Type"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr ""
+msgstr "Type used as extent."
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr ""
+msgstr "Path to the extent"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr ""
+msgstr "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr ""
+msgstr "Extent size"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
+"TB for convenience."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2099,37 +2113,37 @@ msgstr ""
 #: templates/sharing/windows.html:13 templates/system/sysctl.html:7
 #: templates/system/tunable.html:7
 msgid "Comment"
-msgstr ""
+msgstr "Comment"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "You may enter a description here for your reference."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr ""
+msgstr "Extent"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr ""
+msgstr "Portal Group ID"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
-msgstr ""
+msgstr "Portal"
 
 #: services/models.py:522
 msgid "IP Address"
-msgstr ""
+msgstr "IP Address"
 
 #: services/models.py:534
 msgid "Portal IP"
-msgstr ""
+msgstr "Portal IP"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Initiators"
 
 #: services/models.py:546
 msgid ""
@@ -2153,19 +2167,19 @@ msgstr ""
 
 #: services/models.py:562
 msgid "Initiator"
-msgstr ""
+msgstr "Initiator"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr ""
+msgstr "Target side user name. It is usually the initiator name by default."
 
 #: services/models.py:604
 msgid "Peer User"
-msgstr ""
+msgstr "Peer User"
 
 #: services/models.py:609
 msgid "Peer Secret"
-msgstr ""
+msgstr "Peer Secret"
 
 #: services/models.py:614
 msgid "Authorized Access"
@@ -2177,177 +2191,189 @@ msgstr "Authorised Accesses"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr ""
+msgstr "Target Name"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Base Name will be appended automatically when starting without 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr ""
+msgstr "Target Alias"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Optional user-friendly string of the target."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
-msgstr ""
+msgstr "Serial"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Serial number for the logical unit"
 
 #: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Logical Unit Type mapped to LUN."
 
 #: services/models.py:660
 msgid "Target Flags"
-msgstr ""
+msgstr "Target Flags"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Initiator Group ID"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
-msgstr ""
+msgstr "Auth Method"
 
 #: services/models.py:675 services/models.py:687
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"The method can be accepted by the target. Auto means both none and "
+"authentication."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Authentication Group ID"
 
 #: services/models.py:692
 msgid "Queue Depth"
-msgstr ""
+msgstr "Queue Depth"
 
 #: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=disabled, 1-255=enabled command queuing with specified depth. The "
+"recommended queue depth is 32."
 
 #: services/models.py:698
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Logical Block Size"
 
 #: services/models.py:699
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"You may specify logical block length (512 by default). The recommended "
+"length for compatibility is 512."
 
 #: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Target"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Target this extent belongs to"
 
 #: services/models.py:734
 msgid "Target / Extent"
-msgstr ""
+msgstr "Target / Extent"
 
 #: services/models.py:735
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Targets / Extents"
 
 #: services/models.py:759
 msgid "Provider"
-msgstr ""
+msgstr "Provider"
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr ""
+msgstr "Domain name"
 
 #: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a space to separate multiple alias names."
 
 #: services/models.py:777
 msgid "Update period"
-msgstr ""
+msgstr "Update period"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Time in seconds. Default is about 1 min."
 
 #: services/models.py:783
 msgid "Forced update period"
-msgstr ""
+msgstr "Forced update period"
 
 #: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "These parameters will be added to global settings in inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Dynamic DNS"
 
 #: services/models.py:804
 msgid "Path to the plugins jail"
-msgstr ""
+msgstr "Path to the plugins jail"
 
 #: services/models.py:809
 msgid "Jail name"
-msgstr ""
+msgstr "Jail name"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Name of the plugins jail"
 
 #: services/models.py:815
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Jail name can only contain letters, numbers and hyphens. It must not end "
+"with a hyphen."
 
 #: services/models.py:821
 msgid "Jail IP address"
-msgstr ""
+msgstr "Jail IP address"
 
 #: services/models.py:825
 msgid "Jail IP Netmask"
-msgstr ""
+msgstr "Jail IP Netmask"
 
 #: services/models.py:829
 msgid "Plugins archive path"
-msgstr ""
+msgstr "Plugins archive path"
 
 #: services/models.py:852
 msgid "Location"
-msgstr ""
+msgstr "Location"
 
 #: services/models.py:854
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Location information, e.g. physical location of this system: 'Floor of "
+"building, Room xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
-msgstr ""
+msgstr "Contact"
 
 #: services/models.py:861
 msgid ""
@@ -2359,56 +2385,56 @@ msgstr ""
 
 #: services/models.py:867
 msgid "Community"
-msgstr ""
+msgstr "Community"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "In most cases, 'public' is used here."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Send SNMP Traps"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:893 storage/models.py:330
 msgid "Identifier"
-msgstr ""
+msgstr "Identifier"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "This name is used to uniquely identify your UPS on this system."
 
 #: services/models.py:898
 msgid "Driver"
-msgstr ""
+msgstr "Driver"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "The driver used to communicate with your UPS."
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "The serial or USB port where your UPS is connected."
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
-msgstr ""
+msgstr "Auxiliary parameters (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Additional parameters to the hardware-specific part of the driver."
 
 #: services/models.py:923
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Shutdown mode"
 
 #: services/models.py:927
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Shutdown timer"
 
 #: services/models.py:928
 msgid ""
@@ -2420,15 +2446,15 @@ msgstr ""
 
 #: services/models.py:933
 msgid "UPS Master User Password"
-msgstr ""
+msgstr "UPS Master User Password"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Extra users (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Remote Monitor"
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
@@ -2457,51 +2483,51 @@ msgstr ""
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port to bind FTP server."
 
 #: services/models.py:973
 msgid "Clients"
-msgstr ""
+msgstr "Clients"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Maximum number of simultaneous clients."
 
 #: services/models.py:979
 msgid "Connections"
-msgstr ""
+msgstr "Connections"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maximum number of connections per IP address (0 = unlimited)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr ""
+msgstr "Login Attempts"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Maximum number of allowed password attempts before disconnection."
 
 #: services/models.py:991
 msgid "Timeout"
-msgstr ""
+msgstr "Timeout"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maximum idle time in seconds."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Allow Root Login"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Allow Anonymous Login"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2510,47 +2536,47 @@ msgstr ""
 #: templates/sharing/windows.html:14 templates/storage/volumes.html:59
 #: templates/storage/wizard.html:145
 msgid "Path"
-msgstr ""
+msgstr "Path"
 
 #: services/models.py:1003
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Allow Local User Login"
 
 #: services/models.py:1006
 msgid "Banner"
-msgstr ""
+msgstr "Banner"
 
 #: services/models.py:1008
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Greeting banner displayed by FTP when a connection first comes in."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr ""
+msgstr "Use this option to override the file creation mask (077 by default)."
 
 #: services/models.py:1023
 msgid "Enable FXP"
-msgstr ""
+msgstr "Enable FXP"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Allow Transfer Resumption"
 
 #: services/models.py:1027
 msgid "Always Chroot"
-msgstr ""
+msgstr "Always Chroot"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Require IDENT Authentication"
 
 #: services/models.py:1031
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Require Reverse DNS for IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
-msgstr ""
+msgstr "Masquerade address"
 
 #: services/models.py:1036
 msgid ""
@@ -2561,17 +2587,19 @@ msgstr ""
 
 #: services/models.py:1043
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimum passive port"
 
 #: services/models.py:1044
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"The minimum port to allocate for PASV style data connections (0 = use any "
+"port)."
 
 #: services/models.py:1048
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maximum passive port"
 
 #: services/models.py:1049
 msgid ""
@@ -2584,163 +2612,181 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"The maximum port to allocate for PASV style data connections (0 = use any "
+"port). Passive ports restricts the range of ports from which the server will "
+"select when sent the PASV command from a client. The server will randomly "
+"choose a number from within the specified range until an open port is found. "
+"The port range selected must be in the non-privileged range (eg. greater "
+"than or equal to 1024). It is strongly recommended that the chosen range be "
+"large enough to handle many simultaneous passive connections (for example, "
+"49152-65534, the IANA-registered ephemeral port range)."
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Local user upload bandwidth"
 
 #: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Local user upload bandwidth in KB/s. Zero means infinity."
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Local user download bandwidth"
 
 #: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Local user download bandwidth in KB/s. Zero means infinity."
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Anonymous user upload bandwidth"
 
 #: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 
 #: services/models.py:1077
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Anonymous user download bandwidth"
 
 #: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Anonymous user download bandwidth in KB/s. Zero means infinity."
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Enable SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "These parameters are added to proftpd.conf."
 
 #: services/models.py:1090 services/models.py:1091
 #: templates/services/core.html:50
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:1113
 msgid "Directory"
-msgstr ""
+msgstr "Directory"
 
 #: services/models.py:1114
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"The directory containing the files you want to publish. The remote host does "
+"not need to pass along the directory as part of the transfer."
 
 #: services/models.py:1117
 msgid "Allow New Files"
-msgstr ""
+msgstr "Allow New Files"
 
 #: services/models.py:1121
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"The port to listen to. The default is to listen to the tftp port specified "
+"in /etc/services."
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Specifies the username which the service will run as."
 
 #: services/models.py:1131
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:1132
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Set the umask for newly created files to the specified value. The default is "
+"022 (everyone can read, nobody can write)."
 
 #: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
-msgstr ""
+msgstr "Extra options"
 
 #: services/models.py:1138
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Extra command line options (usually empty)."
 
 #: services/models.py:1142 services/models.py:1143
 #: templates/services/core.html:155
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Port"
 
 #: services/models.py:1154
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternate TCP port. Default is 22"
 
 #: services/models.py:1157
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Login as Root with password"
 
 #: services/models.py:1158
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Disabled: Root can only login via public key authentication; Enabled: Root "
+"login permitted with password"
 
 #: services/models.py:1161
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Allow Password Authentication"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Allow TCP Port Forwarding"
 
 #: services/models.py:1165
 msgid "Compress Connections"
-msgstr ""
+msgstr "Compress Connections"
 
 #: services/models.py:1168
 msgid "Host Private Key"
-msgstr ""
+msgstr "Host Private Key"
 
 #: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Paste a RSA PRIVATE KEY in PEM format here."
 
 #: services/models.py:1176
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
+"entered options prevent SSH service to be started."
 
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Domain Controller Name"
 
 #: services/models.py:1240
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD or PDC name."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Domain Name (DNS/Realm-Name)"
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Domain Name, eg example.com"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
@@ -2752,7 +2798,7 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Workgroup Name"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
@@ -2764,7 +2810,7 @@ msgstr ""
 
 #: services/models.py:1263
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administrator Name"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
@@ -2772,7 +2818,7 @@ msgstr ""
 
 #: services/models.py:1268
 msgid "Administrator Password"
-msgstr ""
+msgstr "Administrator Password"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
@@ -2781,91 +2827,103 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "The name or IP address of the LDAP server"
 
 #: services/models.py:1290
 msgid "Base DN"
-msgstr ""
+msgstr "Base DN"
 
 #: services/models.py:1292
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"The default base Distinguished Name (DN) to use for searches, eg "
+"dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Allow Anonymous Binding"
 
 #: services/models.py:1298
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root bind DN"
 
 #: services/models.py:1300
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"The distinguished name with which to bind to the directory server, e.g. "
+"cn=admin,dc=test,dc=org"
 
 #: services/models.py:1304
 msgid "Root bind password"
-msgstr ""
+msgstr "Root bind password"
 
 #: services/models.py:1306
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "The credentials with which to bind."
 
 #: services/models.py:1311
 msgid "Password Encryption"
-msgstr ""
+msgstr "Password Encryption"
 
 #: services/models.py:1312
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "The password change protocol to use."
 
 #: services/models.py:1317
 msgid "User Suffix"
-msgstr ""
+msgstr "User Suffix"
 
 #: services/models.py:1318
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"This parameter specifies the suffix that is used for users when these are "
+"added to the LDAP directory, e.g. ou=Users"
 
 #: services/models.py:1323
 msgid "Group Suffix"
-msgstr ""
+msgstr "Group Suffix"
 
 #: services/models.py:1324
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"This parameter specifies the suffix that is used for groups when these are "
+"added to the LDAP directory, e.g. ou=Groups"
 
 #: services/models.py:1328
 msgid "Password Suffix"
-msgstr ""
+msgstr "Password Suffix"
 
 #: services/models.py:1330
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"This parameter specifies the suffix that is used for passwords when these "
+"are added to the LDAP directory, e.g. ou=Passwords"
 
 #: services/models.py:1334
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Machine Suffix"
 
 #: services/models.py:1336
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"This parameter specifies the suffix that is used for machines when these are "
+"added to the LDAP directory, e.g. ou=Computers"
 
 #: services/models.py:1341
 msgid "Encryption Mode"
@@ -2873,36 +2931,36 @@ msgstr ""
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Self signed certificate"
 
 #: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Place the contents of your self signed certificate file here."
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Auxiliary Parameters"
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "These parameters are added to ldap.conf."
 
 #: services/models.py:1357 services/models.py:1358
 #: templates/services/core.html:74
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternate TCP port. Default is 873"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr ""
+msgstr "These parameters will be added to [global] settings in rsyncd.conf"
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
@@ -2910,27 +2968,27 @@ msgstr ""
 
 #: services/models.py:1390
 msgid "Module name"
-msgstr ""
+msgstr "Module name"
 
 #: services/models.py:1399
 msgid "Path to be shared"
-msgstr ""
+msgstr "Path to be shared"
 
 #: services/models.py:1405
 msgid "Access Mode"
-msgstr ""
+msgstr "Access Mode"
 
 #: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "This controls the access a remote host has to this module"
 
 #: services/models.py:1410
 msgid "Maximum connections"
-msgstr ""
+msgstr "Maximum connections"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 
 #: services/models.py:1417
 msgid ""
@@ -2939,16 +2997,22 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"This option specifies the user name that file transfers to and from that "
+"module should take place. In combination with the 'Group' option this "
+"determines what file permissions are available. Leave this field empty to "
+"use default settings"
 
 #: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"This option specifies the group name that file transfers to and from that "
+"module should take place. Leave this field empty to use default settings"
 
 #: services/models.py:1428
 msgid "Hosts allow"
-msgstr ""
+msgstr "Hosts allow"
 
 #: services/models.py:1429
 msgid ""
@@ -2956,10 +3020,13 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this module. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings"
 
 #: services/models.py:1433
 msgid "Hosts deny"
-msgstr ""
+msgstr "Hosts deny"
 
 #: services/models.py:1434
 msgid ""
@@ -2970,19 +3037,26 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"This option is a comma, space, or tab delimited set of host which are NOT "
+"permitted to access this module. Where the lists conflict, the allow list "
+"takes precedence. In the event that it is necessary to deny all by default, "
+"use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify "
+"to the hosts allow parameter those hosts that should be permitted access. "
+"Leave this field empty to use default settings"
 
 #: services/models.py:1439
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
+"These parameters will be added to the module configuration in rsyncd.conf"
 
 #: services/models.py:1444
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Module"
 
 #: services/models.py:1445
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Modules"
 
 #: services/models.py:1459
 msgid "Check interval"
@@ -3037,7 +3111,7 @@ msgstr ""
 
 #: services/nav.py:15
 msgid "Control Services"
-msgstr ""
+msgstr "Control Services"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
@@ -3045,7 +3119,7 @@ msgstr ""
 
 #: services/nav.py:72
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Add Device Extent"
 
 #: services/nav.py:79
 msgid "View Device Extents"
@@ -3070,7 +3144,7 @@ msgstr ""
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -3092,11 +3166,11 @@ msgstr ""
 
 #: services/views.py:326
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "The service could not be stopped."
 
 #: services/views.py:333
 msgid "The service could not be started."
-msgstr ""
+msgstr "The service could not be started."
 
 #: sharing/forms.py:81
 msgid "Confirm Share Password"
@@ -3109,24 +3183,24 @@ msgstr ""
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "The field is a not a valid IP address or network"
 
 #: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "The IP '%s' is not valid."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot group requires Maproot user"
 
 #: sharing/forms.py:184
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall group requires Mapall user"
 
 #: sharing/forms.py:190 sharing/forms.py:195
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot user/group disqualifies Mapall"
 
 #: sharing/models.py:39 sharing/models.py:113 storage/models.py:45
 #: storage/models.py:326 storage/views.py:246
@@ -3134,15 +3208,15 @@ msgstr ""
 #: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
-msgstr ""
+msgstr "Export Read Only"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Browsable to Network Clients"
 
 #: sharing/models.py:53
 #, fuzzy
@@ -3151,19 +3225,19 @@ msgstr "Inherit"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Inherit Permissions"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Export Recycle Bin"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Show Hidden Files"
 
 #: sharing/models.py:61
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Allow Guest Access"
 
 #: sharing/models.py:62
 msgid ""
@@ -3173,7 +3247,7 @@ msgstr ""
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Only Allow Guest Access"
 
 #: sharing/models.py:66
 msgid ""
@@ -3183,7 +3257,7 @@ msgstr ""
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Hosts Allow"
 
 #: sharing/models.py:72
 msgid ""
@@ -3191,10 +3265,13 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this share. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings."
 
 #: sharing/models.py:76
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Hosts Deny"
 
 #: sharing/models.py:77
 msgid ""
@@ -3205,10 +3282,16 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"This option is a comma, space, or tab delimited set of host which are NOT "
+"permitted to access this share. Where the lists conflict, the allow list "
+"takes precedence. In the event that it is necessary to deny all by default, "
+"use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify "
+"to the hosts allow parameter those hosts that should be permitted access. "
+"Leave this field empty to use default settings."
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "These parameters are added to [Share] section of smb.conf"
 
 #: sharing/models.py:94
 msgid "Windows (CIFS) Share"
@@ -3238,11 +3321,11 @@ msgstr ""
 
 #: sharing/models.py:118
 msgid "Share Comment"
-msgstr ""
+msgstr "Share Comment"
 
 #: sharing/models.py:125
 msgid "Share password"
-msgstr ""
+msgstr "Share password"
 
 #: sharing/models.py:127
 msgid ""
@@ -3250,20 +3333,25 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"This option allows you to set a volume password, which can be a maximum of 8 "
+"characters long (using ASCII strongly recommended at the time of this "
+"writing)."
 
 #: sharing/models.py:131
 msgid "Share Character Set"
-msgstr ""
+msgstr "Share Character Set"
 
 #: sharing/models.py:133
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+"etc."
 
 #: sharing/models.py:137
 msgid "Allow List"
-msgstr ""
+msgstr "Allow List"
 
 #: sharing/models.py:139
 msgid ""
@@ -3271,20 +3359,25 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"This option allows the users and groups that access a share to be specified. "
+"Users and groups are specified, delimited by commas. Groups are designated "
+"by a @ prefix."
 
 #: sharing/models.py:143
 msgid "Deny List"
-msgstr ""
+msgstr "Deny List"
 
 #: sharing/models.py:145
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"The deny option specifies users and groups who are not allowed access to the "
+"share. It follows the same format as the allow option."
 
 #: sharing/models.py:149
 msgid "Read-only Access"
-msgstr ""
+msgstr "Read-only Access"
 
 #: sharing/models.py:151
 msgid ""
@@ -3294,7 +3387,7 @@ msgstr ""
 
 #: sharing/models.py:155
 msgid "Read-write Access"
-msgstr ""
+msgstr "Read-write Access"
 
 #: sharing/models.py:157
 msgid ""
@@ -3304,17 +3397,19 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Disk Discovery"
 
 #: sharing/models.py:161
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Allow other systems to discover this share as a disk for data, as a Time "
+"Machine backup volume or not at all."
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Disk discovery mode"
 
 #: sharing/models.py:168
 msgid ""
@@ -3325,7 +3420,7 @@ msgstr ""
 
 #: sharing/models.py:172
 msgid "Database Path"
-msgstr ""
+msgstr "Database Path"
 
 #: sharing/models.py:174
 msgid ""
@@ -3335,7 +3430,7 @@ msgstr ""
 
 #: sharing/models.py:177
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:178
 msgid ""
@@ -3343,10 +3438,13 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"If set afpd uses the ID information stored in AppleDouble V2 header files to "
+"reduce database load. Don't set this option if the volume is modified by "
+"non AFP clients (NFS/SMB/local)."
 
 #: sharing/models.py:181
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Translate CR/LF"
 
 #: sharing/models.py:182
 msgid ""
@@ -3356,6 +3454,12 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Enables crlf translation for TEXT files, automatically converting macintosh "
+"line breaks into Unix ones. Use of this option might be dangerous since some "
+"older programs store binary data files as type 'TEXT' when saving and "
+"switch the filetype in a second step. Afpd will potentially destroy such "
+"files when 'erroneously' changing bytes in order to do line break "
+"translation."
 
 #: sharing/models.py:185
 msgid "Windows File Names"
@@ -3490,7 +3594,7 @@ msgstr ""
 
 #: sharing/models.py:285
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot User"
 
 #: sharing/models.py:289
 msgid "User to map root to"
@@ -3498,7 +3602,7 @@ msgstr ""
 
 #: sharing/models.py:292
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Group"
 
 #: sharing/models.py:296
 msgid "Group to map root to"
@@ -3506,7 +3610,7 @@ msgstr ""
 
 #: sharing/models.py:299
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall User"
 
 #: sharing/models.py:303
 msgid "User to map all users to"
@@ -3514,7 +3618,7 @@ msgstr ""
 
 #: sharing/models.py:306
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Group"
 
 #: sharing/models.py:310
 msgid "Group to map all users to"
