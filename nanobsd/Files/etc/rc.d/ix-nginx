@@ -191,75 +191,116 @@ generate_nginx_conf()
 	local proto="${1}"
 	local addr="${2}"
 	local port="${3}"
-	local ssl_enable=0
+	
+	{
+	cat << __EOF__
+#
+#    FreeNAS nginx configuration file
+#
 
-	if [ "${proto}" = "https" ]
-	then
-		ssl_enable=1
+user www www;
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    # reserve 1MB under the name 'proxied' to track uploads
+    upload_progress proxied 1m;
+
+    sendfile        on;
+    #tcp_nopush     on;
+    client_max_body_size 250m;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+    #upload_store /var/tmp/firmware;
+    client_body_temp_path /var/tmp/firmware;
+
+    server {
+        server_name  localhost;
+__EOF__
+
+	if [ "${proto}" = "https" ]; then
+		cat << __EOF__
+        listen       ${addr}:${port} default_server ssl;
+
+        ssl_certificate      ${HTTPDCERT}; 
+        ssl_certificate_key  ${HTTPDKEY};
+__EOF__
+	else
+		echo "        listen       ${addr}:${port};"
 	fi
 
+	cat << __EOF__
+        #ssl_session_timeout  5m;
+        #ssl_protocols  SSLv2 SSLv3 TLSv1;
+        #ssl_ciphers  HIGH:!aNULL:!MD5;
+        #ssl_prefer_server_ciphers   on;
 
-	mv "${HTTPDCONF}" "${HTTPDCONF}.tmp"
-	awk -v ssl_enable="${ssl_enable}" \
-		-v ssl_key="${HTTPDKEY}" \
-		-v ssl_cert="${HTTPDCERT}" \
-		-v httpd_addr="${addr}" \
-		-v httpd_port="${port}" '
-		BEGIN { }
+        location / {
+            include fastcgi_params;
+            fastcgi_pass 127.0.0.1:9042;
+            fastcgi_pass_header Authorization;
+            fastcgi_intercept_errors off;
+            fastcgi_read_timeout 10m;
+            #fastcgi_temp_path /var/tmp/firmware;
 
-		function makeline(ch, len)
-		{
-			line = "";
-			for (i = 0;i < len;i++) {
-				line = line ch;
-			}
-			return line;
-		}
+            # track uploads in the 'proxied' zone
+            # remember connections for 30s after they finished
+            track_uploads proxied 30s;
+        }
 
-		{
-			if (/^(( |\t)*)?listen( |\t)+/) {
-				fill = makeline(" ", index($0, "listen") - 1);
+        location /progress {
+            # report uploads tracked in the 'proxied' zone
+            report_uploads proxied;
+        }
 
-				if (!httpd_port) {
-					httpd_port = ssl_enable ? 443 : 80;
-				}
+        location /dojango {
+            alias /usr/local/www/freenasUI/dojango;
+        }
 
-				if (ssl_enable) {
-					printf("%slisten %s:%d default_server ssl;\n",
-						fill, httpd_addr, httpd_port);
-				} else {
-					printf("%slisten %s:%d;\n", fill, httpd_addr, httpd_port);
-				}
+        location /static {
+            alias /usr/local/www/freenasUI/freeadmin/static;
+        }
 
-			} else if (/^(( |\t|#)*)?ssl_certificate( |\t)+/) {
-				if (/^(( |\t)+)?#/ && ssl_enable) {
-					fill = makeline(" ", index($0, "ssl_certificate") - 2);
-					printf("%sssl_certificate %s;\n", fill, ssl_cert);
-				} else if (ssl_enable) {
-					fill = makeline(" ", index($0, "ssl_certificate") - 1);
-					printf("%sssl_certificate %s;\n", fill, ssl_cert);
-				} else {
-					fill = makeline(" ", index($0, "ssl_certificate") - 1);
-					printf("%s#ssl_certificate %s;\n", fill, ssl_cert);
-				}
-			} else if (/^(( |\t|#)*)?ssl_certificate_key( |\t)+/) {
-				if (/^(( |\t)+)?#/ && ssl_enable) {
-					fill = makeline(" ", index($0, "ssl_certificate_key") - 2);
-					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
-				} else if (ssl_enable) {
-					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
-					printf("%sssl_certificate_key %s;\n", fill, ssl_key);
-				} else {
-					fill = makeline(" ", index($0, "ssl_certificate_key") - 1);
-					printf("%s#ssl_certificate_key %s;\n", fill, ssl_key);
-				}
-			} else {
-				print $0;
-			}
-		}
-		END { }
-	' < "${HTTPDCONF}.tmp" > "${HTTPDCONF}"
-	rm -f "${HTTPDCONF}.tmp"
+        location /reporting/graphs {
+            alias /var/db/graphs;
+        }
+
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/local/www/nginx-dist;
+        }
+
+        include plugins.conf;
+    }
+__EOF__
+
+	if [ ${proto} = "https" ]; then
+		cat << __EOF__
+    server {
+	listen ${addr}:80;
+	server_name localhost;
+	rewrite ^ https://\$server_addr:${port}\$request_uri? permanent;
+    }
+__EOF__
+	fi
+
+	echo "}";
+
+	} > ${HTTPDCONF}
+
 }
 
 
