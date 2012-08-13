@@ -27,6 +27,7 @@
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
+
 class AdvMixin(object):
 
     def __init__(self, *args, **kwargs):
@@ -36,6 +37,7 @@ class AdvMixin(object):
     def isAdvanced(self):
         return len(self.advanced_fields) > 0
 
+
 class ModelForm(AdvMixin, MF):
     """
     We need to handle dynamic choices, mainly because of the FreeNAS_User,
@@ -44,17 +46,21 @@ class ModelForm(AdvMixin, MF):
     """
     def __init__(self, *args, **kwargs):
         super(ModelForm, self).__init__(*args, **kwargs)
-        for name,field in self.fields.items():
+        for name, field in self.fields.items():
             if hasattr(field, "_reroll"):
                 field._reroll()
+
     def as_table(self):
-        "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
+        """Returns this form rendered as HTML <tr>s -- excluding the
+        <table></table>."""
         return self._html_output(
-            normal_row = u'<tr%(html_class_attr)s><th>%(label)s</th><td>%(errors)s%(field)s</td></tr>',
-            error_row = u'<tr><td colspan="2">%s</td></tr>',
-            row_ender = u'</td></tr>',
-            help_text_html = u'<br />%s',
-            errors_on_separate_row = False)
+            normal_row=(u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '%(errors)s%(field)s</td></tr>'),
+            error_row=u'<tr><td colspan="2">%s</td></tr>',
+            row_ender=u'</td></tr>',
+            help_text_html=u'<br />%s',
+            errors_on_separate_row=False)
+
 
 class Form(AdvMixin, F):
     """
@@ -64,14 +70,17 @@ class Form(AdvMixin, F):
     """
     def __init__(self, *args, **kwargs):
         super(Form, self).__init__(*args, **kwargs)
-        for name,field in self.fields.items():
+        for name, field in self.fields.items():
             if hasattr(field, "_reroll"):
                 field._reroll()
+
     def as_table(self):
-        "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
+        """Returns this form rendered as HTML <tr>s -- excluding the
+        <table></table>."""
         return self._html_output(
-            normal_row = u'<tr%(html_class_attr)s><th>%(label)s</th><td>%(errors)s%(field)s</td></tr>',
-            error_row = u'<tr><td colspan="2">%s</td></tr>',
-            row_ender = u'</td></tr>',
-            help_text_html = u'<br />%s',
-            errors_on_separate_row = False)
+            normal_row=(u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '%(errors)s%(field)s</td></tr>'),
+            error_row=u'<tr><td colspan="2">%s</td></tr>',
+            row_ender=u'</td></tr>',
+            help_text_html=u'<br />%s',
+            errors_on_separate_row=False)
