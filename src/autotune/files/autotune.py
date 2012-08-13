@@ -109,7 +109,6 @@ HW_PHYSMEM = sysctl_int('hw.physmem')
 
 DEF_KNOBS = {
     'loader': {
-        'kern.ipc.nmbclusters',
         'vm.kmem_size',
         'vm.kmem_size_max',
         'vfs.zfs.arc_max',
@@ -133,32 +132,6 @@ def guess_kern_ipc_maxsockbuf():
 
 
 # kern.ipc.maxsockets
-
-
-def guess_kern_ipc_nmbclusters():
-    """Non-jumbo frame mbuf IPC cluster pool count
-    """
-
-    default_mbufs = 5000
-
-    # TODO: need to get better approximations.
-    needed_mbufs = {
-                    'cxgb' : 40000,
-                    'cxgbe': 50000,
-                    'igb'  : 20000,
-                    'ixgb' : 30000,
-                    }
-
-    total_mbufs = 0
-    for interface in get_interfaces():
-        for driver, mbuf_value in needed_mbufs.iteritems():
-            if re.match('^%s\d+$' % (driver, ), interface):
-                total_mbufs += mbuf_value
-                break
-        else:
-            total_mbufs += default_mbufs
-    return total_mbufs
-
 
 def guess_kern_ipc_nmbjumbo9():
     """9k jumbo frame mbuf IPC cluster pool count
