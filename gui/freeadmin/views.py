@@ -905,10 +905,11 @@ def generic_model_delete(request, app, model, oid):
                     events=events)
 
         else:
-            instance.delete()
+            events = []
+            mf.delete(events=events)
             return JsonResponse(message=_("%s successfully deleted.") % (
                 m._meta.verbose_name,
-                ))
+                ), events=events)
     if form and form_i is None:
         form_i = form(instance=instance)
     if form:
