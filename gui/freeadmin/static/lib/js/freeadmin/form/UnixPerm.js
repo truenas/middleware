@@ -15,7 +15,7 @@ define([
         name: "",
         value: "",
         boxes: "",
-        disabled: "",
+        disabled: false,
         _getValueAttr: function() {
             if(this.disabled == true) {
                 return '';
