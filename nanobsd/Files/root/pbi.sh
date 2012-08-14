@@ -5,7 +5,7 @@ pbi_info=/usr/local/sbin/pbi_info
 pbi_create=/usr/local/sbin/pbi_create
 
 backupdir=/mnt/plugins/pbibackup
-logfile=/root/pbi.log
+logfile=/tmp/pbi.log
 
 usage()
 {
