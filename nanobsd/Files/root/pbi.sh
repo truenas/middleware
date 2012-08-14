@@ -246,7 +246,6 @@ pbi_restore()
 		${pbi_add} -f --no-checksig "${pbi}" >> ${logfile} 2>&1
 		if [ "$?" != "0" ]
 		then
-			echo "FAIL: $pbi"
 			ret=1
 		fi
 	done
