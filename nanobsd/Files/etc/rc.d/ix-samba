@@ -141,7 +141,7 @@ generate_smbconf()
 		    display charset = LOCALE
 		    max log size = 10
 		    syslog only = yes
-		    syslog = yes
+		    syslog = 1
 		    load printers = no
 		    printing = bsd
 		    printcap name = /dev/null
