@@ -2213,6 +2213,46 @@ class notifier:
 
         return ret
 
+    def update_jail_pbi(self, plugins_path, pbipath):
+        if pbipath is None:
+            pbipath = "/var/tmp/firmware/pbifile.pbi"
+
+        pbifile = prefix = ename = pbi = None
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbipath)
+        out = p.info(False, -1, 'prefix', 'pbi information for', 'arch')
+
+        if not out:
+            raise MiddlewareError("This file was not identified as in PBI "
+                "format, it might as well be corrupt.")
+
+        for pair in out:
+            (var, val) = pair.split('=', 1)
+            var = var.lower()
+            if var == 'prefix':
+                prefix = val
+            elif var == 'pbi information for':
+                pbi = "%s.pbi" % val
+            elif var == 'arch':
+                arch = val
+
+        if arch != platform.machine():
+            raise MiddlewareError("You cannot install %s jail pbi in an %s "
+                "architecture" % (arch, platform.machine()))
+
+        pbifile = "%s/%s" % (plugins_path, pbi)
+        self.__system("/bin/mv %s %s" % (pbipath, pbifile))
+
+        if self.__system_nolog("/root/pbi.sh pbibackup") != 0:
+            raise MiddlewareError("Unable to backup plugins")
+
+        if self.__system_nolog("/root/pbi.sh jailupdate %s" % pbifile) != 0:
+            raise MiddlewareError("Unable to upgrade jail")
+
+        if self.__system_nolog("/root/pbi.sh pbirestore") != 0:
+            raise MiddlewareError("Unable to restore plugins")
+
+        return True
+
     def install_jail_pbi(self, path, name, plugins_path, pbipath=None):
         """
         Install the plugins jail PBI
@@ -2298,6 +2338,7 @@ class notifier:
 
         #
         # XXX: At some point (soon), plugins/jail need to support IPv6
+	# XXX: I agree.
         #
         pj = PluginsJail()
         pj.jail_name = jail_name

@@ -105,10 +105,7 @@ class JailUpdateWizard(FileWizard):
         pbipath = self.file_storage.path(pbifile.file.name)
 
         pj = PluginsJail.objects.order_by("-id")[0]
-        notifier().install_jail_pbi(pj.jail_path,
-            pj.jail_name,
-            pj.plugins_path,
-            pbipath=pbipath)
+        notifier().update_jail_pbi(pj.plugins_path, pbipath)
 
         retval = getattr(self, 'retval', None)
         events = []
