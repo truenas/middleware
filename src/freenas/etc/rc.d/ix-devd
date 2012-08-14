@@ -164,7 +164,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     zpool export -f ${volumename} || (zpool status ${volumename} && sleep 5)
     watchdog -t 0
     echo "Exported ${volumename}!" | logger
-    echo "\$(date), $(hostname), assume backup" | mail -s "Failover" root
+    echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 fi
 E*O*F
 	else
