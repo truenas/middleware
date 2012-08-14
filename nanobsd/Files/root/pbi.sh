@@ -59,7 +59,7 @@ jail_stop()
 		return 1
 	fi
 
-	/etc/rc.d/jail stop ${jail} >> ${logfile} 2>&1
+	/etc/rc.d/jail stop ${jail}
 	return $?
 }
 
@@ -92,8 +92,8 @@ jail_start()
 		return 1
 	fi
 
-	/etc/rc.d/ix-jail start >> ${logfile} 2>&1
-	/etc/rc.d/jail start ${jail} >> ${logfile} 2>&1
+	/etc/rc.d/ix-jail start
+	/etc/rc.d/jail start ${jail}
 	return $?
 }
 
@@ -187,7 +187,7 @@ pbi_backup()
 	local pbis="$*"
 	local ret=0
 
-	jail_context pbibackup "${pbis}"
+	jail_context pbibackup "${pbis}" >> "${logfile}" 2>&1
 	if [ "$?" != "0" ]
 	then
 		return 1
@@ -203,12 +203,10 @@ pbi_backup()
 		pbis="$(${pbi_info})"
 	fi
 
-	: > "${logfile}"	
-
 	mkdir -p ${backupdir}
 	for pbi in ${pbis}
 	do
-		${pbi_create} -o "${backupdir}" -b "${pbi}" >> ${logfile} 2>&1
+		${pbi_create} -o "${backupdir}" -b "${pbi}"
 		if [ "$?" != "0" ]
 		then
 			ret=1
@@ -223,7 +221,7 @@ pbi_restore()
 	local pbis="$*"
 	local ret=0
 
-	jail_context pbirestore "${pbis}"
+	jail_context pbirestore "${pbis}" >> "${logfile}" 2>&1
 	if [ "$?" != "0" ]
 	then
 		return 1
@@ -239,11 +237,9 @@ pbi_restore()
 		pbis=$(ls ${backupdir}/*.pbi 2>&1)
 	fi
 
-	: > "${logfile}"	
-
 	for pbi in ${pbis}
 	do
-		${pbi_add} -f --no-checksig "${pbi}" >> ${logfile} 2>&1
+		${pbi_add} -f --no-checksig "${pbi}"
 		if [ "$?" != "0" ]
 		then
 			ret=1
@@ -266,8 +262,6 @@ jail_update()
 	then
 		return 1
 	fi
-
-	: > "${logfile}"
 
 	jail_status
 	local on="$?"
@@ -302,6 +296,8 @@ main()
 	local op="$1"
 	shift
 	local args="$*"
+
+	: > "${logfile}"
 
 	op=$(echo ${op}|tr A-Z a-z)
 	case ${op} in
