@@ -49,6 +49,53 @@ get_plugins_jail_path()
 	"
 }
 
+jail_stop()
+{
+	. /etc/rc.freenas
+
+	local jail=$(get_plugins_jail_name)
+	if [ -z "${jail}" ]
+	then
+		return 1
+	fi
+
+	/etc/rc.d/jail stop ${jail} >> ${logfile} 2>&1
+	return $?
+}
+
+jail_status()
+{
+	. /etc/rc.freenas
+
+	local jail="$(get_plugins_jail_name)"
+	if [ -z "${jail}" ]
+	then
+		return 1
+	fi
+
+	local jid="$(jls|awk "\$3 ~ /${jailname}/"|awk '{ print $1 }')"
+	if [ -z "${jid}" ]
+	then
+		return 1
+	fi
+
+	return 0
+}
+
+jail_start()
+{
+	. /etc/rc.freenas
+
+	local jail=$(get_plugins_jail_name)
+	if [ -z "${jail}" ]
+	then
+		return 1
+	fi
+
+	/etc/rc.d/jail start ${jail} >> ${logfile} 2>&1
+	return $?
+}
+
 jail_context()
 {
 	local op="$1"
@@ -193,12 +240,24 @@ jail_update()
 
 	: > "${logfile}"
 
+	jail_status
+	local on="$?"
+	if [ "${on}" = "0" ]
+	then
+		jail_stop
+	fi
+
 	#
 	# Secret voodoo to coerce pbi_add into doing exactly what we want,
 	# how we want, and WHERE we want... muahahah!
 	#
 	export PBI_ALTEXTRACT_PATH="${jailpath}"
 	${pbi_add} -e -f --no-checksig "${pbi}" >> "${logfile}" 2>&1
+
+	if [ "${on}" = "0" ]
+	then
+		jail_start
+	fi
 
 	return $?
 }
