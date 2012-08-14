@@ -4,7 +4,7 @@ pbi_add=/usr/local/sbin/pbi_add
 pbi_info=/usr/local/sbin/pbi_info
 pbi_create=/usr/local/sbin/pbi_create
 
-backupdir=/root/pbi
+backupdir=/mnt/plugins/pbibackup
 logfile=/root/pbi.log
 
 usage()
@@ -92,6 +92,7 @@ jail_start()
 		return 1
 	fi
 
+	/etc/rc.d/ix-jail start >> ${logfile} 2>&1
 	/etc/rc.d/jail start ${jail} >> ${logfile} 2>&1
 	return $?
 }
@@ -171,12 +172,31 @@ jail_context()
 	return $?
 }
 
+in_jail_context()
+{
+	if [ "${JAIL_CONTEXT}" = "1" ]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 pbi_backup()
 {
 	local pbis="$*"
 	local ret=0
 
 	jail_context pbibackup "${pbis}"
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	if ! in_jail_context
+	then
+		return 0
+	fi
 
 	if [ -z "${pbis}" ]
 	then
@@ -204,10 +224,19 @@ pbi_restore()
 	local ret=0
 
 	jail_context pbirestore "${pbis}"
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	if ! in_jail_context
+	then
+		return 0
+	fi
 
 	if [ -z "${pbis}" ]
 	then
-		pbis=$(ls ${backupdir}/*.pbi)
+		pbis=$(ls ${backupdir}/*.pbi 2>&1)
 	fi
 
 	: > "${logfile}"	
@@ -217,6 +246,7 @@ pbi_restore()
 		${pbi_add} -f --no-checksig "${pbi}" >> ${logfile} 2>&1
 		if [ "$?" != "0" ]
 		then
+			echo "FAIL: $pbi"
 			ret=1
 		fi
 	done
