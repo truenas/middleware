@@ -115,6 +115,12 @@ jail_context()
 	# Now run the command within the jail!
 	#
 	jexec "${jid}" "${script}" "${op}" "${args}"
+
+
+	#
+	# We've done our business, now clean up!
+	#
+	unset JAIL_CONTEXT
 	return $?
 }
 
