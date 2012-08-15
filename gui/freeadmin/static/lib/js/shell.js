@@ -185,7 +185,6 @@ webshell = (function() {
                         (ev.ctrlKey && (
                             ev.keyCode == 67 || ev.keyCode == 68
                         )) ||
-                        ev.keyCode == 8 ||
                         (ev.keyCode >= 33 && ev.keyCode <= 40) // arrow keys
                         )
                     )

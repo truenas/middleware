@@ -1351,7 +1351,10 @@
         "dojox/data/JsonRestStore",
         "dijit/tree/ForestStoreModel",
         "dojo/cookie",
+        "dojo/_base/array",
+        "dojo/_base/connect",
         "dojo/_base/html",
+        "dojo/_base/window",
         "dojo/parser",
         "freeadmin/tree/Tree",
         "freeadmin/ESCDialog",
@@ -1401,7 +1404,7 @@
         "dojox/uuid/_base",
         "dojox/uuid/generateRandomUuid",
         "dojox/validate"
-        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, html, parser, Tree, ESCDialog) {
+        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, dArray, dConnect, html, dWindow, parser, Tree, ESCDialog) {
 
         dojo._contentHandlers.text = (function(old){
           return function(xhr){
@@ -1560,6 +1563,7 @@
                     content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
                     style: "min-height:400px;background-color: black;",
                     region: 'center',
+                    connections: [],
                     onShow: function() {
 
                         function handler(msg,value) {
@@ -1585,15 +1589,18 @@
                         } catch(e) {
                             _webshell=new webshell("shell_output", 80, 24, handler);
                         }
-                        document.onkeypress=_webshell.keypress;
-                        document.onkeydown=_webshell.keydown;
+                        this.connections.push(
+                            dConnect.connect(dWindow.doc, 'onkeypress', _webshell.keypress)
+                            );
+                        this.connections.push(
+                            dConnect.connect(dWindow.doc, 'onkeydown', _webshell.keydown)
+                            );
 
                     },
                     onHide: function(e) {
                         if(_webshell)
                             _webshell.islocked=true;
-                        document.onkeypress=null;
-                        document.onkeydown=null;
+                        dArray.forEach(this.connections, dConnect.disconnect);
                     }
                 });
                 shell.placeAt("shell_dialog_holder");
