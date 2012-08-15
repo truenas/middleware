@@ -221,6 +221,7 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
+add_port www/dojo
 #+databases/py-south || devel/py-daemon || ...
 add_port devel/py-setuptools
 #-databases/py-south || devel/py-daemon || ...

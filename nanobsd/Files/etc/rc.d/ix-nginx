@@ -274,6 +274,10 @@ __EOF__
             alias /var/db/graphs;
         }
 
+        location /dojango/dojo-media/release/1.8.0 {
+            alias /usr/local/www/dojo;
+        }
+
         #error_page  404              /404.html;
 
         # redirect server error pages to the static page /50x.html

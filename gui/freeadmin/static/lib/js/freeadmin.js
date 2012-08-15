@@ -1268,7 +1268,8 @@
             },
             onLoad: function() {
                 processStack();
-                this.layout();
+                //this.layout(); // dojo 1.7
+                this._position(); // dojo 1.8
             }
         });
         if(attrs.onLoad) {
@@ -1347,7 +1348,7 @@
     require([
         "dojo",
         "dojo/ready",
-        "dojo/_base/xhr",
+        "dojo/request/xhr",
         "dojox/data/JsonRestStore",
         "dijit/tree/ForestStoreModel",
         "dojo/cookie",
@@ -1366,7 +1367,7 @@
         "freeadmin/form/PathSelector",
         "freeadmin/form/UnixPerm",
         "dojo/data/ItemFileReadStore",
-        "dojo/io/iframe",
+        "dojo/request/iframe",
         "dojo/NodeList-traverse",
         "dojo/NodeList-manipulate",
         "dojo/rpc/JsonService",
