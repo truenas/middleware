@@ -168,7 +168,7 @@ webshell = (function() {
                     113:1,114:1,115:1,116:1,117:1,118:1,119:1,120:1,121:1,122:1,123:1};
                 if (o[ev.keyCode] || ev.ctrlKey || ev.altKey) {
                     ev.which=0;
-                    return keypress(ev);
+                    return me.keypress(ev);
                 }
             }
 
