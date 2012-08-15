@@ -32,7 +32,7 @@ define(["dijit/tree/ForestStoreModel", "dojo/_base/declare"], function(ForestSto
                     onError: onError
                 });
             }
-        },
+        }
     });
 
     return MyForestStoreModel;

@@ -38,7 +38,7 @@ define([
             var store = new JsonRestStore({
                 target: target,
                 labelAttribute: 'name',
-                allowNoTrailingSlash: true,
+                allowNoTrailingSlash: true
             });
 
             var model = new ForestStoreModel({
@@ -47,7 +47,7 @@ define([
                 rootId: 'items',
                 rootLabel: this.root,
                 childrenAttrs: ['children'],
-                deferItemLoadingUntilExpand: true,
+                deferItemLoadingUntilExpand: true
             });
 
             var tree = new TreeLazy({
