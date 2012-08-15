@@ -841,7 +841,7 @@ def generic_model_empty_formset(request, app, model):
     return HttpResponse()
 
 
-def generic_model_delete(request, app, model, oid):
+def generic_model_delete(request, app, model, oid, mf=None):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
