@@ -27,9 +27,17 @@
  *
  */
 
-require(["dojox/timing"], function(timing) {
+require([
+    "dojox/timing",
+    "dojo/dom",
+    "dijit/registry",
+    "dojo/request/xhr"], function(
+    timing,
+    dom,
+    registry,
+    xhr) {
 
-    ttop = new dojox.timing.Timer(2500);
+    ttop = new timing.Timer(2500);
 
     ttop.onTick = function() {
         loadtop();
@@ -45,16 +53,15 @@ require(["dojox/timing"], function(timing) {
         if(_topstarted == true)
             return;
         _topstarted = true;
-        dojo.xhrGet({
-            url: '/system/top/',
+        xhr('/system/top/', {
             handleAs: "xml",
-            load: function(data) {
+            }).then(function(data) {
 
                 _topstarted = false;
                 var topOutput = data.getElementsByTagName('top')[0].childNodes[0].nodeValue;
-                var pageElement = dojo.byId('top_output');
+                var pageElement = dom.byId('top_output');
 
-                var top_dialog = dijit.byId("top_dialog");
+                var top_dialog = registry.byId("top_dialog");
                 if(!top_dialog.open) {
                     ttop.stop();
                 }
@@ -65,8 +72,7 @@ require(["dojox/timing"], function(timing) {
                     pageElement.innerHTML = topOutput;
                 }
 
-            },
-        });
+            });
     }
 
 });
