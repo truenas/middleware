@@ -1810,12 +1810,22 @@ class notifier:
             open(winacl, 'a').close()
         elif acl == 'unix' and winexists:
             os.unlink(winacl)
+       
+        if winexists:
+            script = "/usr/local/www/freenasUI/tools/winacl.sh"
+            args=" -o '%s' -g '%s' " % (user, group)
+            if recursive:
+                args += " -r "
+            args += " -d %s" % path
+            cmd = "%s %s" % (script, args)
+            self.__system(cmd)
 
-        hier = ACL_Hierarchy(path)
-        hier.set_defaults(recursive=recursive)
-        hier.chown(user + ":" + group, recursive)
-        hier.chmod(mode, recursive)
-        hier.close()
+        else:
+            flags = ""
+            if recursive:
+                flags = "-R"
+            self.__system("/usr/sbin/chown %s %s:%s %s" % (flags, user, group, path))
+            self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
