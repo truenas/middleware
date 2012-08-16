@@ -26,26 +26,32 @@
  */
 
 require([
-    "dojo/ready",
+    "dojo/dom",
+    "dojo/dom-style",
+    "dojo/request/xhr",
+    "dijit/registry",
     "dojox/timing"
-    ], function(ready, Timer) {
+    ], function(dom,
+    domStyle,
+    xhr,
+    registry,
+    timing) {
 
-    _msg_t = new dojox.timing.Timer(1000);
+    _msg_t = new timing.Timer(1000);
     var _msgstarted = false;
 
     loadlog = function(load) {
-        if(dijit.byId("stopmsgrefresh").get("value") == "on" || _msgstarted == true)
+        if(registry.byId("stopmsgrefresh").get("value") == "on" || _msgstarted == true)
             return;
         _msgstarted = true;
-        var msgfull = dijit.byId('log_dialog');
+        var msgfull = registry.byId('log_dialog');
         url = msgfull.open? '/system/varlogmessages/500/' : '/system/varlogmessages/';
-        dojo.xhrGet({
-        url: url,
-        handleAs: "xml",
-        load: function(data) {
+        xhr.get(url, {
+            handleAs: "xml"
+        }).then(function(data) {
             _msgstarted = false;
             var msgOutput = data.getElementsByTagName('msg')[0].childNodes[0].nodeValue;
-            var pageElement = dojo.byId(msgfull.open? 'msgfull_output' : 'msg_output');
+            var pageElement = dom.byId(msgfull.open? 'msgfull_output' : 'msg_output');
             var newinterval = 1000;
             var saved_delta;
 
@@ -54,7 +60,7 @@ require([
                     saved_delta = pageElement.scrollHeight - pageElement.scrollTop - 400;
                 if ('innerText' in pageElement) {
                     pageElement.innerText = msgOutput;
-                } else { 
+                } else {
                     pageElement.innerHTML = msgOutput;
                 }
                 if (_msg_t.interval > 1250) {
@@ -74,7 +80,6 @@ require([
             }
             if (load && msgfull.open)
                 pageElement.scrollTop = pageElement.scrollHeight;
-        },
         });
     }
 
@@ -86,12 +91,12 @@ require([
     }
 
     _msg_start = function() {
-        dojo.style("msg_output", "display", "block");
+        domStyle.set("msg_output", "display", "block");
         _msg_t.start();
     }
 
     _msg_stop = function() {
-        dojo.style("msg_output", "display", "none");
+        domStyle.set("msg_output", "display", "none");
         _msg_t.stop();
     }
 
