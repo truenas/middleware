@@ -947,9 +947,9 @@ table.grid tr {
     border-width:medium 1px 1px;
     padding:5px 7px 4px;
 }
-.claro .dijitDialogTitle {
-    font-size:1.091em;
-    padding:0 1px;
+.claro .dijitDialogTitleBar {
+    border-left: 1px solid #373535;
+    border-bottom: 1px solid #373535;
 }
 .claro .dijitDialogTitle {
     color:#FAFAFA;
