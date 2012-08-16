@@ -1567,6 +1567,7 @@
                     id: "shell_dialog",
                     content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
                     style: "min-height:400px;background-color: black;",
+                    title: 'Shell',
                     region: 'center',
                     connections: [],
                     onShow: function() {
@@ -1607,8 +1608,7 @@
                             _webshell.islocked=true;
                         dArray.forEach(this.connections, dConnect.disconnect);
                     }
-                });
-                shell.placeAt("shell_dialog_holder");
+                }, "shell_dialog_holder");
 
         });
     });
