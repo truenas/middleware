@@ -1813,10 +1813,10 @@ class notifier:
        
         if winexists:
             script = "/usr/local/www/freenasUI/tools/winacl.sh"
-            args=" -o '%s' -g '%s' " % (user, group)
+            args=" -o '%s' -g '%s' -d %s " % (user, group, mode)
             if recursive:
                 args += " -r "
-            args += " -d %s" % path
+            args += " -p %s" % path
             cmd = "%s %s" % (script, args)
             self.__system(cmd)
 
