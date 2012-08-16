@@ -784,7 +784,9 @@
             if(pbar) {
                 pbar.destroy();
                 dojo.style(attrs.form.domNode, "display", "block");
-                rnode.layout();
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
             }
             try {
                 json = dojo.fromJson(data);
@@ -814,21 +816,23 @@
              */
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
             dojo.style(attrs.form.domNode, "display", "none");
-            rnode.layout();
+            //rnode.layout();
+            rnode._size();
+            rnode._position();
 
         }
 
         if( multipart ) {
 
             uuid = dojox.uuid.generateRandomUuid();
-            dojo.io.iframe.send({
-                url: attrs.url + '?X-Progress-ID=' + uuid,
-                method: 'POST',
-                content: {__form_id: attrs.form.id},
+            require(["dojo/request/iframe"], function(iframe) {
+            iframe.post(attrs.url + '?X-Progress-ID=' + uuid, {
+                form: item.domNode,
+                data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
-                handleAs: 'text',
-                handle: handleReq,
-            });
+                handleAs: 'text'
+                }).then(handleReq, handleReq);
+                });
 
         } else {
 
@@ -961,19 +965,19 @@
                  */
                 item.domNode.parentNode.appendChild(pbar.domNode);
                 dojo.style(item.domNode, "display", "none")
-                rnode.layout();
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
 
             }
             uuid = dojox.uuid.generateRandomUuid();
-            dojo.io.iframe.send({
-                url: url + '?iframe=true&X-Progress-ID='+uuid,
-                method: 'POST',
+            require(["dojo/request/iframe"], function(iframe) {
+            iframe.post(url + '?iframe=true&X-Progress-ID=' + uuid, {
                 form: item.domNode,
                 handleAs: 'text',
-                load: loadOk,
-                error: errorHandle,
-             });
-             checkProgressBar(pbar, true, uuid);
+                }).then(loadOk, errorHandle);
+                });
+            checkProgressBar(pbar, true, uuid);
 
         } else {
 
