@@ -26,9 +26,6 @@
 #
 #####################################################################
 
-MAGIC="WINACL"
-VFUNC=":"
-
 usage()
 {
 	cat <<-__EOF__
@@ -37,6 +34,7 @@ usage()
 	    -o owner
 	    -g group
 	    -d directory
+	    -r
 	    -v
 __EOF__
 
@@ -46,8 +44,7 @@ __EOF__
 
 winacl_reset()
 {
-	local path="${1}"
-	local func="${2}"
+	local path="${WINACL_PATH}"
 
 	local owner_access
 	local owner_inherit
@@ -87,94 +84,155 @@ winacl_reset()
 	local group_entry="group@:${group_access}:${group_inherit}:allow"
 	local everyone_entry="everyone@:${everyone_access}:${everyone_inherit}:allow"
 
-	${func} "${path}"
-	setfacl -b "${path}"
+	${WINACL_VFUNC} "${path}"
+	eval "setfacl -b ${path}"
 
-	setfacl -a 0 "${group_entry}" "${path}"
-	setfacl -a 1 "${everyone_entry}" "${path}"
-	setfacl -a 2 "${owner_entry}" "${path}"
+	eval "setfacl -a 0 ${group_entry} ${path}"
+	eval "setfacl -a 1 ${everyone_entry} ${path}"
+	eval "setfacl -a 2 ${owner_entry} ${path}"
 
-	local count="$(getfacl "${path}"|awk '{ print $1 }'|grep -v '^#'|wc -l)"
+	local count="$(eval getfacl ${path}|awk '{ print $1 }'|grep -v '^#'|wc -l|xargs)"
 	for i in $(jot ${count} 0)
 	do
 		if [ ${i} -gt 2 ]
 		then
-			setfacl -x 3 "${path}"
+			eval "setfacl -x 3 ${path}"
 		fi
 	done
 }
 
-reset_permissions()
-{
-	local dir="${1}"
 
-	${VFUNC} find "${dir}" \( -type f -o -type d \) -exec $0 ${MAGIC} {} \;
-	find "${dir}" \( -type f -o -type d \) -exec $0 ${MAGIC} {} \;
+change_acls()
+{
+	${WINACL_VFUNC} "find ${WINACL_PATH} \( -type f -o -type d \) -exec $0 -d {} \;"
+	eval "find ${WINACL_PATH} \( -type f -o -type d \) -exec $0 -d {} \;"
 	return $?
 }
+
+
+_change_owner()
+{
+	${WINACL_VFUNC} chown ${WINACL_FLAGS} ${WINACL_OWNER} ${WINACL_PATH}
+	eval "chown ${WINACL_FLAGS} ${WINACL_OWNER} ${WINACL_PATH}"
+	return $?
+}
+
+
+_change_group()
+{
+	${WINACL_VFUNC} chgrp ${WINACL_FLAGS} ${WINACL_GROUP} ${WINACL_PATH}
+	eval "chgrp ${WINACL_FLAGS} ${WINACL_GROUP} ${WINACL_PATH}"
+	return $?
+}
+
+
+_change_owner_group()
+{
+	${WINACL_VFUNC} chown ${WINACL_FLAGS} ${WINACL_OWNER}:${WINACL_GROUP} ${WINACL_PATH}
+	eval "chown ${WINACL_FLAGS} ${WINACL_OWNER}:${WINACL_GROUP} ${WINACL_PATH}"
+	return $?
+}
+
+
+change_owner_group()
+{
+	if [ -n "${WINACL_OWNER}" -a -n "${WINACL_GROUP}" ]
+	then
+		_change_owner_group
+
+	elif [ -n "${WINACL_OWNER}" ]
+	then
+		_change_owner
+
+	elif [ -n "${WINACL_GROUP}" ]
+	then
+		_change_group
+	fi
+}
+
 
 main()
 {
 	local owner
 	local group
-	local dir
-	local verbose="0"
+	local path 
+	local verbose=0
+	local recursive=0
 
-	local magic="${1}"
-	local path="${2}"
-
-	if [ "${magic}" = "${MAGIC}" -o "${magic}" = "${MAGIC}_v" -a -e "${path}" ]
-	then
-		if [ "${magic}" = "${MAGIC}_v" ]
-		then
-			VFUNC="echo"
-		fi
-
-		winacl_reset "${path}" "${VFUNC}"
-		return 0
-
-	elif [ "$#" -lt "2" ]
+	if [ "$#" -lt "2" ]
 	then
 		usage
 	fi
 
-	while getopts "o:g:d:v" opt
+	while getopts "o:g:d:rv" opt
 	do
 		case "${opt}" in 
 			o) owner="${OPTARG}" ;;
 			g) group="${OPTARG}" ;;
-			d) dir="${OPTARG}" ;;
+			d) path="${OPTARG}" ;;
+			r) recursive=1 ;;
 			v) verbose=1 ;;
 			:|\?) usage ;;
 		esac
 	done
 
-	local flags="-R"
+	WINACL_PATH="'${path}'"
+	if [ -z "${path}" ]
+	then
+		usage
+	fi
+	export WINACL_PATH
+
+	if [ "${CHANGE_ACLS}" = "1" ]
+	then
+		winacl_reset
+	fi
+
+	WINACL_OWNER=""
+	if [ -n "${owner}" ]
+	then
+		WINACL_OWNER="'${owner}'"
+	fi
+	export WINACL_OWNER
+
+	WINACL_GROUP=""
+	if [ -n "${group}" ]
+	then
+		WINACL_GROUP="'${group}'"
+	fi
+	export WINACL_GROUP
+
+	WINACL_VFUNC=":"
+	if [ "${verbose}" = "1" ] 
+	then
+		WINACL_VFUNC="echo"
+	fi
+	export WINACL_VFUNC
+
+	WINACL_FLAGS=""		
+	if [ "${recursive}" = "1" ]
+	then
+		WINACL_FLAGS="-R"
+	fi
+
 	if [ "${verbose}" = "1" ]
 	then
-		MAGIC="${MAGIC}_v"
-		VFUNC="echo"
-		flags="-Rvv"
+		WINACL_VFUNC="echo"
+		WINACL_FLAGS="${WINACL_FLAGS} -vv"
 	fi
+	export WINACL_VFUNC WINACL_FLAGS
 
-	if [ -n "${owner}" -a -n "${group}" ]
-	then
-		${VFUNC} chown "${flags}" "${owner}:${group}" "${dir}"
-		chown "${flags}" "${owner}:${group}" "${dir}"
+	change_owner_group
 
-	elif [ -n "${owner}" ]
+	if [ "${recursive}" = "1" ]
 	then
-		${VFUNC} chown "${flags}" "${owner}" "${dir}"
-		chown "${flags}" "${owner}" "${dir}"
-
-	elif [ -n "${group}" ]
-	then
-		${VFUNC} chgrp "${flags}" "${group}" "${dir}"
-		chgrp "${flags}" "${group}" "${dir}"
+		export CHANGE_ACLS=1 
+		change_acls
+	else
+		export CHANGE_ACLS=0
+		winacl_reset
 	fi
-
-	reset_permissions "${dir}"
-	return $?
 }
+
 
 main "$@"
