@@ -107,6 +107,23 @@ webshell = (function() {
             if (!ev) var ev=window.event;
             var kc;
 
+            if (
+                    (dojo.isWebKit && (
+                        (ev.keyCode >= 33 && ev.keyCode <= 40) // arrow keys and pg down etc
+                        )
+                    )
+                    ) {
+                        /* The ugliest hack ever to make arrow keys work in chrome
+                         * Simulating an event because initKeyboardEvent does not work here
+                         */
+                        ev = new Object({
+                            which: 0,
+                            keyCode: ev.keyCode,
+                            ctrlKey: false,
+                            shiftKey: false,
+                            });
+            }
+
             if (ev.keyCode) kc=ev.keyCode;
             if (ev.which) kc=ev.which;
             if (ev.ctrlKey) {
@@ -180,26 +197,14 @@ webshell = (function() {
              * TODO: Use dojo
              */
             if (
-                    ev.keyCode == 9 ||
-                    (dojo.isWebKit && (
-                        (ev.ctrlKey && (
-                            ev.keyCode == 67 || ev.keyCode == 68
-                        )) ||
-                        (ev.keyCode >= 33 && ev.keyCode <= 40) // arrow keys
-                        )
+                ev.keyCode == 9 ||
+                (dojo.isWebKit && (
+                    (ev.ctrlKey && (
+                        ev.keyCode == 67 || ev.keyCode == 68
+                    ))
                     )
-                    ) {
-                    if(ev.keyCode >= 33 && ev.keyCode <= 40) {
-                        /* The ugliest hack ever to make arrow keys work in chrome
-                         * Simulating an event because initKeyboardEvent does not work here
-                         */
-                        ev = new Object({
-                            which: 0,
-                            keyCode: ev.keyCode,
-                            ctrlKey: false,
-                            shiftKey: false,
-                            });
-                    }
+                )
+                ) {
                 me.keypress(ev);
             }
 
