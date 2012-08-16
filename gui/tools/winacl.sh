@@ -31,9 +31,11 @@ usage()
 	cat <<-__EOF__
 	Usage: $0 [options] ...
 	Where option is:
-	    -o owner
-	    -g group
-	    -d directory
+	    -o <owner>
+	    -g <group>
+	    -p <path>
+	    -f <filemode>
+	    -d <directorymode>
 	    -r
 	    -v
 __EOF__
@@ -41,6 +43,10 @@ __EOF__
 	exit 1
 }
 
+get_version()
+{
+	uname -r | cut -f1 -d.
+}
 
 winacl_reset()
 {
@@ -105,7 +111,7 @@ winacl_reset()
 change_acls()
 {
 	${WINACL_VFUNC} "find ${WINACL_PATH} \( -type f -o -type d \) -exec $0 -d {} \;"
-	eval "find ${WINACL_PATH} \( -type f -o -type d \) -exec $0 -d {} \;"
+	eval "find ${WINACL_PATH} \( -type f -o -type d \) -exec $0 -p {} \;"
 	return $?
 }
 
@@ -150,12 +156,44 @@ change_owner_group()
 	fi
 }
 
+change_permissions()
+{
+	if [ -n "${WINACL_FMODE}" -a -n "${WINACL_DMODE}" ]
+	then
+		${WINACL_VFUNC} "find ${WINACL_PATH} \
+			\( -type f -a -exec chmod ${WINACL_FLAGS} ${WINACL_FMODE} {} \; \) -o \
+			\( -type d -a -exec chmod ${WINACL_FLAGS} ${WINACL_DMODE} {} \; \)"
+		eval "find ${WINACL_PATH} \
+			\( -type f -a -exec chmod ${WINACL_FLAGS} ${WINACL_FMODE} {} \; \) -o \
+			\( -type d -a -exec chmod ${WINACL_FLAGS} ${WINACL_DMODE} {} \; \)"
+
+	elif [ -n "${WINACL_DMODE}" ]
+	then
+		${WINACL_VFUNC} "find ${WINACL_PATH} \
+			\( -type d -a -exec chmod ${WINACL_FLAGS} ${WINACL_DMODE} {} \; \)"
+		eval "find ${WINACL_PATH} \
+			\( -type d -a -exec chmod ${WINACL_FLAGS} ${WINACL_DMODE} {} \; \)"
+
+	elif [ -n "${WINACL_FMODE}" ]
+	then	
+		${WINACL_VFUNC} "find ${WINACL_PATH} \
+			\( -type f -a -exec chmod ${WINACL_FLAGS} ${WINACL_FMODE} {} \; \)"
+		eval "find ${WINACL_PATH} \
+			\( -type f -a -exec chmod ${WINACL_FLAGS} ${WINACL_FMODE} {} \; \)"
+
+	fi
+
+	return $?
+}
 
 main()
 {
 	local owner
 	local group
 	local path 
+	local fmode
+	local dmode
+	local major
 	local verbose=0
 	local recursive=0
 
@@ -164,12 +202,14 @@ main()
 		usage
 	fi
 
-	while getopts "o:g:d:rv" opt
+	while getopts "o:g:p:f:d:rv" opt
 	do
 		case "${opt}" in 
 			o) owner="${OPTARG}" ;;
 			g) group="${OPTARG}" ;;
-			d) path="${OPTARG}" ;;
+			p) path="${OPTARG}" ;;
+			f) fmode="${OPTARG}" ;;
+			d) dmode="${OPTARG}" ;;
 			r) recursive=1 ;;
 			v) verbose=1 ;;
 			:|\?) usage ;;
@@ -182,6 +222,8 @@ main()
 		usage
 	fi
 	export WINACL_PATH
+
+	major=$(get_version)
 
 	if [ "${CHANGE_ACLS}" = "1" ]
 	then
@@ -201,6 +243,20 @@ main()
 		WINACL_GROUP="'${group}'"
 	fi
 	export WINACL_GROUP
+
+	WINACL_FMODE="0664"
+	if [ -n "${fmode}" ]
+	then
+		WINACL_FMODE="${fmode}"
+	fi
+	export WINACL_FMODE
+
+	WINACL_DMODE="0775"
+	if [ -n "${dmode}" ]
+	then
+		WINACL_DMODE="${dmode}"
+	fi
+	export WINACL_DMODE
 
 	WINACL_VFUNC=":"
 	if [ "${verbose}" = "1" ] 
@@ -223,6 +279,10 @@ main()
 	export WINACL_VFUNC WINACL_FLAGS
 
 	change_owner_group
+	if [ "${major}" -le "8" ]
+	then
+		change_permissions
+	fi
 
 	if [ "${recursive}" = "1" ]
 	then
@@ -231,6 +291,11 @@ main()
 	else
 		export CHANGE_ACLS=0
 		winacl_reset
+	fi
+
+	if [ "${major}" -gt "8" ]
+	then
+		change_permissions
 	fi
 }
 
