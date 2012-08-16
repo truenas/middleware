@@ -89,15 +89,19 @@ winacl_reset()
 
 	${func} "${path}"
 	setfacl -b "${path}"
-	for i in $(jot 5)
-	do
-		setfacl -x 0 "${path}"
-	done
 
 	setfacl -a 0 "${group_entry}" "${path}"
 	setfacl -a 1 "${everyone_entry}" "${path}"
 	setfacl -a 2 "${owner_entry}" "${path}"
-	setfacl -x 3 "${path}"
+
+	local count="$(getfacl "${path}"|awk '{ print $1 }'|grep -v '^#'|wc -l)"
+	for i in $(jot ${count} 0)
+	do
+		if [ ${i} -gt 2 ]
+		then
+			setfacl -x 3 "${path}"
+		fi
+	done
 }
 
 reset_permissions()
