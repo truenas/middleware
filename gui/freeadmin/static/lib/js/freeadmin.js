@@ -1363,6 +1363,7 @@
         "dojo/parser",
         "freeadmin/tree/Tree",
         "freeadmin/ESCDialog",
+        "freeadmin/WebShell",
         "freeadmin/RRDControl",
         "freeadmin/tree/TreeLazy",
         "freeadmin/tree/JsonRestStore",
@@ -1409,7 +1410,7 @@
         "dojox/uuid/_base",
         "dojox/uuid/generateRandomUuid",
         "dojox/validate"
-        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, dArray, dConnect, html, dWindow, parser, Tree, ESCDialog) {
+        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, dArray, dConnect, html, dWindow, parser, Tree, ESCDialog, WebShell) {
 
         dojo._contentHandlers.text = (function(old){
           return function(xhr){
@@ -1579,6 +1580,7 @@
                                 break;
                             case 'disc':
                                 //startMsgAnim('Disconnected',0,true);
+                                delete _webshell;
                                 _webshell = undefined;
                                 dijit.byId("shell_dialog").hide();
                                 break;
@@ -1590,23 +1592,19 @@
                         }
 
                         try {
-                            _webshell.islocked=false;
-                            _webshell.update();
+                            _webshell.start();
                         } catch(e) {
-                            _webshell=new webshell("shell_output", 80, 24, handler);
+                            _webshell=new WebShell({
+                                node: "shell_output",
+                                handler: handler
+                                });
+                            _webshell.start();
                         }
-                        this.connections.push(
-                            dConnect.connect(dWindow.doc, 'onkeypress', _webshell.keypress)
-                            );
-                        this.connections.push(
-                            dConnect.connect(dWindow.doc, 'onkeydown', _webshell.keydown)
-                            );
 
                     },
                     onHide: function(e) {
                         if(_webshell)
-                            _webshell.islocked=true;
-                        dArray.forEach(this.connections, dConnect.disconnect);
+                            _webshell.stop();
                     }
                 }, "shell_dialog_holder");
 
