@@ -155,14 +155,6 @@ define([
             var kc;
             if (!ev) var ev=window.event;
 
-            if (dojo.isIE) {
-                o={9:1,27:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1,45:1,46:1,112:1,
-                    113:1,114:1,115:1,116:1,117:1,118:1,119:1,120:1,121:1,122:1,123:1};
-                if (o[ev.keyCode] || ev.ctrlKey || ev.altKey) {
-                    ev.which=0;
-                }
-            }
-
             if (ev.keyCode) kc=ev.keyCode;
             if (ev.which) kc=ev.which;
             if (ev.ctrlKey) {
