@@ -86,7 +86,6 @@ require([
     "dijit/ProgressBar",
     "dijit/Tooltip",
     "dojox/form/BusyButton",
-    "dojox/fx/scroll",
     "dojox/grid/EnhancedGrid",
     "dojox/grid/enhanced/plugins/DnD",
     "dojox/grid/enhanced/plugins/Menu",
@@ -159,7 +158,6 @@ require([
     ProgressBar,
     Tooltip,
     BusyButton,
-    scroll,
     EnhancedGrid,
     enhancedDnD,
     enhancedMenu,
@@ -281,11 +279,10 @@ require([
         domStyle.set(n, "height", "25px");
         domStyle.set(n, "float", "left");
 
-        var xhrArgs = {
-            url: "/services/toggle/"+obj.name+"/",
-            postData: "Some random text",
-            handleAs: "json",
-            load: function(data) {
+        xhr.post("/services/toggle/"+obj.name+"/", {
+            data: "Some random text",
+            handleAs: "json"
+            }).then(function(data) {
                 if(data.status == 'on') {
                     obj.src = '/static/images/ui/buttons/on.png';
                 } else if(data.status == 'off') {
@@ -297,11 +294,9 @@ require([
                 domConstruct.destroy(n);
                 if(onSuccess) onSuccess();
             },
-            error: function(error) {
+            function(error) {
                 //alert
-            }
-        }
-        var deferred = dojo.xhrPost(xhrArgs);
+            });
 
     }
 
@@ -324,10 +319,9 @@ require([
 
         var checkStatus = function(name) {
 
-            var args = {
-                url: "/plugins/"+name+"/_s/status",
-                handleAs: "json",
-                load: function(data) {
+            xhr.get("/plugins/"+name+"/_s/status", {
+                handleAs: "json"
+                }).then(function(data) {
                     if(data.status == 'RUNNING') {
                         from.src = '/static/images/ui/buttons/on.png';
                         domAttr.set(from, "status", "on");
@@ -343,20 +337,16 @@ require([
                     }
                     domConstruct.destroy(n);
                 },
-                error: function(data) {
+                function(data) {
                     setMessage(gettext("Some error occurred"), "error");
                     domConstruct.destroy(n);
-                },
-            }
-            var deferred = dojo.xhrGet(args);
-            return deferred;
+                });
 
         }
 
-        var xhrArgs = {
-            url: "/plugins/" + name + "/_s/" + action,
-            handleAs: "text",
-            load: function(data) {
+        var deferred = xhr.get("/plugins/" + name + "/_s/" + action, {
+            handleAs: "text"
+            }).then(function(data) {
                 try {
                     var json = JSON.parse(data);
                     if(json && json.error == true) {
@@ -365,12 +355,10 @@ require([
                 } catch(e) {}
                 setTimeout(function() { checkStatus(name); }, 1000);
             },
-            error: function(error) {
+            function(error) {
                 domConstruct.destroy(n);
                 setMessage(gettext("Some error occurred"), "error");
-            }
-        }
-        var deferred = dojo.xhrGet(xhrArgs);
+            });
         return deferred;
 
     }
@@ -540,10 +528,9 @@ require([
              progress_url = '/progress';
         }
         if(!iter) iter = 0;
-        dojo.xhrGet({
-            url: progress_url,
-            headers: {"X-Progress-ID": uuid},
-            handle: function(data) {
+        xhr.get(progress_url, {
+            headers: {"X-Progress-ID": uuid}
+            }).then(function(data) {
                 var obj = eval(data);
                 if(obj.state == 'uploading') {
                     var perc = Math.ceil((obj.received / obj.size)*100);
@@ -562,8 +549,7 @@ require([
                          checkProgressBar(pbar, url, uuid, iter + 1);
                          }, 1000);
                 }
-            },
-        })
+            });
     }
 
     doSubmit = function(attrs) {
