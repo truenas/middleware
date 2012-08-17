@@ -40,8 +40,9 @@ require([
     "dojo/dom-class",
     "dojo/dom-construct",
     "dojo/dom-style",
-    "dojo/html",
     "dojo/fx",
+    "dojo/html",
+    "dojo/json",
     "dojo/on",
     "dojo/parser",
     "dojo/query",
@@ -112,8 +113,9 @@ require([
     domClass,
     domConstruct,
     domStyle,
-    html,
     fx,
+    html,
+    JSON,
     on,
     parser,
     query,
@@ -362,7 +364,7 @@ require([
             handleAs: "text",
             load: function(data) {
                 try {
-                    var json = dojo.fromJson(data);
+                    var json = JSON.parse(data);
                     if(json && json.error == true) {
                         setMessage(json.message, 'error');
                     }
@@ -380,7 +382,7 @@ require([
     }
 
     buttongrid = function(v) {
-        var json = dojo.fromJson(v);
+        var json = JSON.parse(v);
         parser.parse(dom.byId(this.id));
         var gridhtml = registry.getEnclosingWidget(dom.byId(this.id));
 
@@ -452,7 +454,7 @@ require([
         domConstruct.empty(footer);
         var suc = domConstruct.create("div");
         on(suc, 'click', function() {
-            fFx.fadeOut({ node: suc }).play();
+            dFx.fadeOut({ node: suc }).play();
         });
         footer.appendChild(suc);
         domClass.add(suc, css);
@@ -639,7 +641,7 @@ require([
                 rnode._position();
             }
             try {
-                json = dojo.fromJson(data);
+                json = JSON.parse(data);
                 if(json.error != true && json.error != false) throw "toJson error";
                 loadOk(json, ioArgs);
             } catch(e) {
@@ -734,7 +736,7 @@ require([
         var loadOk = function(data) {
 
             try {
-                var json = dojo.fromJson(data);
+                var json = JSON.parse(data);
                 // TODO, workaound for firefox, it does parse html as JSON!!!
                 if(json.error != true && json.error != false) {
                     throw "not json"
@@ -777,7 +779,7 @@ require([
                     if(callback) callback();
                     var qry = query('#success', rnode.domNode);
                     if(qry.length>0)
-                        dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                        dFx.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
                 } catch(err) {}
             }
         };
@@ -1056,7 +1058,7 @@ require([
            node: "fntree",
            onEnd: function() { registry.byId("fntree").reload(); }
          };
-        dojo.fadeOut(fadeArgs).play();
+        dFx.fadeOut(fadeArgs).play();
     }
 
     refreshTabs = function(nodes) {
