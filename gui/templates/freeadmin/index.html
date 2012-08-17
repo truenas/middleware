@@ -7,22 +7,22 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/msg.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript">
-require(["dojo/ready"], function(ready) {
-    ready(function(){
-        Menu.urlInfo = '{% url system_info %}';
-        Menu.urlSettings = '{% url system_settings %}';
-        Menu.urlReporting = '{% url system_reporting %}';
-        Menu.urlNetwork = '{% url network_home %}';
-        Menu.urlSharing = '{% url sharing_home %}';
-        Menu.urlServices = '{% url services_home %}';
-        Menu.urlAccount = '{% url account_home %}';
-        Menu.urlStorage = '{% url storage_home %}';
-        Menu.urlISCSI = '{% url services_iscsi %}';
+menuSetURLs = function() {
 
-        Menu.openSystem();
+    Menu.urlInfo = '{% url system_info %}';
+    Menu.urlSettings = '{% url system_settings %}';
+    Menu.urlReporting = '{% url system_reporting %}';
+    Menu.urlNetwork = '{% url network_home %}';
+    Menu.urlSharing = '{% url sharing_home %}';
+    Menu.urlServices = '{% url services_home %}';
+    Menu.urlAccount = '{% url account_home %}';
+    Menu.urlStorage = '{% url storage_home %}';
+    Menu.urlISCSI = '{% url services_iscsi %}';
 
-        {% if consolemsg %}_msg_start();{% endif %}
-    });
+}
+
+require(["dojo/domReady!"], function() {
+    {% if consolemsg %}_msg_start();{% endif %}
 });
 </script>
 {% endblock %}

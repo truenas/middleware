@@ -25,303 +25,151 @@
  *
  */
 
-    /*
-     * Menu Object
-     * Responsible for opening menu tabs
-     * URLs are loaded OnLoad from djang reverse()
-     */
-    var Menu = {
+require([
+    "dojo",
+    "dojo/_base/array",
+    "dojo/_base/connect",
+    "dojo/_base/event",
+    "dojo/_base/html",
+    "dojo/_base/lang",
+    "dojo/_base/window",
+    "dojo/cookie",
+    "dojo/data/ItemFileReadStore",
+    "dojo/dom",
+    "dojo/dom-attr",
+    "dojo/dom-class",
+    "dojo/dom-construct",
+    "dojo/dom-style",
+    "dojo/fx",
+    "dojo/on",
+    "dojo/parser",
+    "dojo/query",
+    "dojo/ready",
+    "dojo/request/iframe",
+    "dojo/request/xhr",
+    "dojo/rpc/JsonService",
+    "dojo/NodeList-traverse",
+    "dojo/NodeList-manipulate",
+    "freeadmin/tree/Tree",
+    "freeadmin/ESCDialog",
+    "freeadmin/Menu",
+    "freeadmin/WebShell",
+    "freeadmin/RRDControl",
+    "freeadmin/tree/TreeLazy",
+    "freeadmin/tree/JsonRestStore",
+    "freeadmin/tree/ForestStoreModel",
+    "freeadmin/form/Cron",
+    "freeadmin/form/PathSelector",
+    "freeadmin/form/UnixPerm",
+    "dijit/_base/manager",
+    "dijit/form/Button",
+    "dijit/form/CheckBox",
+    "dijit/form/FilteringSelect",
+    "dijit/form/Form",
+    "dijit/form/MultiSelect",
+    "dijit/form/NumberTextBox",
+    "dijit/form/Select",
+    "dijit/form/Textarea",
+    "dijit/form/RadioButton",
+    "dijit/form/TimeTextBox",
+    "dijit/form/ValidationTextBox",
+    "dijit/layout/BorderContainer",
+    "dijit/layout/ContentPane",
+    "dijit/layout/TabContainer",
+    "dijit/registry",
+    "dijit/tree/ForestStoreModel",
+    "dijit/Dialog",
+    "dijit/MenuBar",
+    "dijit/MenuBarItem",
+    "dijit/ProgressBar",
+    "dijit/Tooltip",
+    "dojox/form/BusyButton",
+    "dojox/fx/scroll",
+    "dojox/grid/EnhancedGrid",
+    "dojox/grid/enhanced/plugins/DnD",
+    "dojox/grid/enhanced/plugins/Menu",
+    "dojox/grid/enhanced/plugins/NestedSorting",
+    "dojox/grid/enhanced/plugins/IndirectSelection",
+    "dojox/grid/enhanced/plugins/Pagination",
+    "dojox/grid/enhanced/plugins/Filter",
+    "dojox/grid/TreeGrid",
+    "dojox/uuid/_base",
+    "dojox/uuid/generateRandomUuid",
+    "dojox/validate"
+    ], function(
+    dojo,
+    dArray,
+    dConnect,
+    dEvent,
+    html,
+    lang,
+    dWindow,
+    cookie,
+    ItemFileReadStore,
+    dom,
+    domAttr,
+    domClass,
+    domConstruct,
+    domStyle,
+    fx,
+    on,
+    parser,
+    query,
+    ready,
+    iframe,
+    xhr,
+    JsonService,
+    NodeListTraverse,
+    NodeListManipulate,
+    Tree,
+    ESCDialog,
+    fMenu,
+    WebShell,
+    RRDControl,
+    TreeLazy,
+    JsonRestStore,
+    ForestStoreModel,
+    Cron,
+    PathSelector,
+    UnixPerm,
+    manager,
+    Button,
+    CheckBox,
+    FilteringSelect,
+    Form,
+    MultiSelect,
+    NumberTextBox,
+    Select,
+    Textarea,
+    RadioButton,
+    TimeTextBox,
+    ValidationTextBox,
+    BorderContainer,
+    ContentPane,
+    TabContainer,
+    registry,
+    ForestStoreModel,
+    Dialog,
+    MenuBar,
+    MenuBarItem,
+    ProgressBar,
+    Tooltip,
+    BusyButton,
+    scroll,
+    EnhancedGrid,
+    enhancedDnD,
+    enhancedMenu,
+    enhancedNestedSorting,
+    enhancedIndirectSelection,
+    enhancedPagination,
+    enhancedFilter,
+    TreeGrid,
+    uuidBase,
+    generateRandomUuid,
+    dojoxvalidate
+    ) {
 
-        openSystem: function() {
-            var opened = false;
-            var opened2 = false;
-            var opened3 = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'system.Reporting'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                } else if(c[i].tab == 'system.Settings'){
-                    p.selectChild(c[i]);
-                    opened2 = true;
-                } else if(c[i].tab == 'system.SysInfo'){
-                    p.selectChild(c[i]);
-                    opened3 = true;
-                }
-            }
-            if(opened != true) {
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Reporting'),
-                    refreshOnShow: true,
-                    closable: true,
-                    href: this.urlReporting,
-                });
-                pane.tab = 'system.Reporting';
-                p.addChild(pane);
-            }
-
-            if(opened2 != true) {
-                var pane2 = new dijit.layout.ContentPane({
-                    id: 'settingstab',
-                    title: gettext('Settings'),
-                    closable: true,
-                    href: this.urlSettings,
-                });
-                pane2.tab = 'system.Settings';
-                p.addChild(pane2);
-            }
-
-            if(opened3 != true) {
-                var pane3 = new dijit.layout.ContentPane({
-                    id: 'sysinfotab',
-                    title: gettext('System Information'),
-                    refreshOnShow: true,
-                    closable: true,
-                    href: this.urlInfo,
-                });
-                pane3.tab = 'system.SysInfo';
-                p.addChild(pane3);
-                p.selectChild(pane3);
-            }
-
-        },
-        openNetwork: function(tab) {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'network'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_networksettings");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlNetwork;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Network Settings'),
-                    closable: true,
-                    //refreshOnShow: true,
-                    href: openurl,
-                });
-                pane.tab = 'network';
-                p.addChild(pane);
-                p.selectChild(pane);
-            }
-
-        },
-        openSharing: function(tab) {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'shares'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_sharing");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlSharing;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-                var pane = new dijit.layout.ContentPane({
-                    title: 'Shares',
-                    closable: true,
-                    //refreshOnShow: true,
-                    href: openurl,
-                });
-                pane.tab = 'shares';
-                p.addChild(pane);
-                p.selectChild(pane);
-            }
-
-        },
-
-        openPluginsFcgi: function(p, item) {
-            editObject(item.name, item.url);
-        },
-
-        openServices: function(onload, svc) {
-            if(!onload) onload = function() {};
-            var opened = false;
-            var p = dijit.byId("content");
-            var href = this.urlServices;
-            if(svc) href += '?toggleCore=' + svc;
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'services'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(onload) dojo.hitch(this, onload)();
-                }
-            }
-            if(opened != true) {
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Services'),
-                    closable: true,
-                    href: href,
-                    onLoad: onload,
-                });
-                pane.tab = 'services';
-                p.addChild(pane);
-                p.selectChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_services_services"]);
-            }
-
-        },
-
-        openAccount: function(tab) {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'account'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_account");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlAccount;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Account'),
-                    closable: true,
-                    href:openurl,
-                });
-                pane.tab = 'account';
-                p.addChild(pane);
-                p.selectChild(pane);
-
-            }
-
-        },
-
-        openStorage: function(tab) {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'storage'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_storage");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlStorage;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-                var pane = new dijit.layout.ContentPane({
-                    title: gettext('Storage'),
-                    closable: true,
-                    href:openurl,
-                });
-                pane.tab = 'storage';
-                p.addChild(pane);
-                p.selectChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
-
-            }
-
-        },
-        openISCSI: function(tab) {
-            var opened = false;
-            var p = dijit.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'iscsi'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_iscsi");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-
-                }
-            }
-            if(opened != true) {
-                openurl = this.urlISCSI;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-
-                var pane = new dijit.layout.ContentPane({
-                    title: 'iSCSI',
-                    closable: true,
-                    //refreshOnShow: true,
-                    href: openurl,
-                });
-                pane.tab = 'iscsi';
-                p.addChild(pane);
-                p.selectChild(pane);
-            }
-
-        },
-
-    };
-    /* end Menu */
+    Menu = new fMenu();
 
     restartHttpd = function(newurl) {
 
@@ -359,14 +207,14 @@
 
     ask_service = function(srv) {
 
-        dialog = new dijit.Dialog({
+        dialog = new Dialog({
             title: 'Enable service',
             href: '/services/enable/'+srv+'/',
             parseOnLoad: true,
             closable: true,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
             },
         });
         dialog.show();
@@ -383,13 +231,13 @@
             sync: true,
             load: function(data, ioArgs) {
 
-                var extra = dijit.byId("id_"+name+"-TOTAL_FORMS");
+                var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
                 var extran = extra.get("value");
                 data = data.replace(/__prefix__/g, extran);
-                var div = dojo.create("table");
-                dojo.query(a.parentNode.parentNode).before(div);
+                var div = domConstruct.create("table");
+                query(a.parentNode.parentNode).before(div);
                 div.innerHTML = data;
-                dojo.parser.parse(div);
+                parser.parse(div);
                 extra.set('value', parseInt(extran) + 1);
 
             },
@@ -407,13 +255,13 @@
             sync: true,
             load: function(data, ioArgs) {
 
-                var extra = dijit.byId("id_"+attrs['prefix']+"-TOTAL_FORMS");
+                var extra = registry.byId("id_"+attrs['prefix']+"-TOTAL_FORMS");
                 var extran = extra.get("value");
                 var data = data.replace(new RegExp(attrs['emptyholder'], 'g'), extran);
-                var tr = dojo.create("tr");
+                var tr = domConstruct.create("tr");
 
                 tr.innerHTML = data;
-                dojo.parser.parse(tr);
+                parser.parse(tr);
 
                 if(typeof(attrs.insertItems) != 'undefined') {
                     attrs['insertItems'](tr.childNodes);
@@ -430,10 +278,10 @@
 
     toggle_service = function(obj, onSuccess) {
         var td = obj.parentNode;
-        var n = dojo.create("div", {  }, td);
-        dojo.addClass(n, "dijitIconLoading");
-        dojo.style(n, "height", "25px");
-        dojo.style(n, "float", "left");
+        var n = domConstruct.create("div", {  }, td);
+        domClass.add(n, "dijitIconLoading");
+        domStyle.set(n, "height", "25px");
+        domStyle.set(n, "float", "left");
 
         var xhrArgs = {
             url: "/services/toggle/"+obj.name+"/",
@@ -448,7 +296,7 @@
                 if(data.error) {
                     setMessage(data.message, "error");
                 }
-                dojo.destroy(n);
+                domConstruct.destroy(n);
                 if(onSuccess) onSuccess();
             },
             error: function(error) {
@@ -463,12 +311,12 @@
     togglePluginService = function(from, name) {
 
         var td = from.parentNode;
-        var _status = dojo.attr(from, "status");
+        var _status = domAttr.get(from, "status");
         var action;
-        var n = dojo.create("div", {}, td);
-        dojo.addClass(n, "dijitIconLoading");
-        dojo.style(n, "height", "25px");
-        dojo.style(n, "float", "left");
+        var n = domConstruct.create("div", {}, td);
+        domClass.add(n, "dijitIconLoading");
+        domStyle.set(n, "height", "25px");
+        domStyle.set(n, "float", "left");
 
         if(_status == "on") {
             action = "stop";
@@ -484,10 +332,10 @@
                 load: function(data) {
                     if(data.status == 'RUNNING') {
                         from.src = '/static/images/ui/buttons/on.png';
-                        dojo.attr(from, "status", "on");
+                        domAttr.set(from, "status", "on");
                     } else if(data.status == 'STOPPED') {
                         from.src = '/static/images/ui/buttons/off.png';
-                        dojo.attr(from, "status", "off");
+                        domAttr.set(from, "status", "off");
                     } else {
                         setTimeout('checkStatus(name);', 1000);
                         return;
@@ -495,11 +343,11 @@
                     if(data.error) {
                         setMessage(data.message, "error");
                     }
-                    dojo.destroy(n);
+                    domConstruct.destroy(n);
                 },
                 error: function(data) {
                     setMessage(gettext("Some error occurred"), "error");
-                    dojo.destroy(n);
+                    domConstruct.destroy(n);
                 },
             }
             var deferred = dojo.xhrGet(args);
@@ -520,7 +368,7 @@
                 setTimeout(function() { checkStatus(name); }, 1000);
             },
             error: function(error) {
-                dojo.destroy(n);
+                domConstruct.destroy(n);
                 setMessage(gettext("Some error occurred"), "error");
             }
         }
@@ -531,24 +379,24 @@
 
     buttongrid = function(v) {
         var json = dojo.fromJson(v);
-        dojo.parser.parse(dojo.byId(this.id));
-        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
+        parser.parse(dom.byId(this.id));
+        var gridhtml = registry.getEnclosingWidget(dom.byId(this.id));
 
-        var content = new dijit.layout.ContentPane({});
-        var b = new dijit.form.Button({
+        var content = new ContentPane({});
+        var b = new Button({
             label: gettext("Edit")
         });
 
-        dojo.connect(b, 'onClick', function(){
+        on(b, 'click', function(){
             editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]);
         });
         content.domNode.appendChild(b.domNode);
 
-        var b = new dijit.form.Button({
+        var b = new Button({
             label: gettext("Wipe")
         });
 
-        dojo.connect(b, 'onClick', function(){
+        on(b, 'click', function(){
             editObject(gettext('Wipe Disk'), json.wipe_url, [gridhtml,]);
         });
         content.domNode.appendChild(b.domNode);
@@ -562,35 +410,35 @@
 
         if(inverted == undefined) inverted = false;
 
-        var box = dijit.byId(checkboxid);
+        var box = registry.byId(checkboxid);
         if(inverted == true) {
             toset = !box.get("value");
         } else{
             toset = box.get("value");
         }
         for(var i=0;i<farray.length;i++) {
-            dijit.byId(farray[i]).set('disabled', toset);
+            registry.byId(farray[i]).set('disabled', toset);
         }
 
     }
 
     rsyncModeToggle = function() {
 
-        var select = dijit.byId("id_rsync_mode");
-        var modname = dijit.byId("id_rsync_remotemodule");
-        var path = dijit.byId("id_rsync_remotepath");
-        var port = dijit.byId("id_rsync_remoteport");
+        var select = registry.byId("id_rsync_mode");
+        var modname = registry.byId("id_rsync_remotemodule");
+        var path = registry.byId("id_rsync_remotepath");
+        var port = registry.byId("id_rsync_remoteport");
         var trm = modname.domNode.parentNode.parentNode;
         var trp = path.domNode.parentNode.parentNode;
         var trpo = port.domNode.parentNode.parentNode;
         if(select.get('value') == 'ssh') {
-            dojo.style(trm, "display", "none");
-            dojo.style(trp, "display", "table-row");
-            dojo.style(trpo, "display", "table-row");
+            domStyle.set(trm, "display", "none");
+            domStyle.set(trp, "display", "table-row");
+            domStyle.set(trpo, "display", "table-row");
         } else {
-            dojo.style(trm, "display", "table-row");
-            dojo.style(trp, "display", "none");
-            dojo.style(trpo, "display", "none");
+            domStyle.set(trm, "display", "table-row");
+            domStyle.set(trp, "display", "none");
+            domStyle.set(trpo, "display", "none");
         }
 
     }
@@ -598,21 +446,21 @@
     setMessage = function(msg, css) {
 
         if(!css) css = "success";
-        var footer = dojo.byId("messages");
+        var footer = dom.byId("messages");
         dojo.empty(footer);
-        var suc = dojo.create("div");
-        dojo.connect(suc, 'onclick', function() {
+        var suc = domConstruc.create("div");
+        on(suc, 'click', function() {
             dojo.fadeOut({ node: suc }).play();
         });
         footer.appendChild(suc);
-        dojo.addClass(suc, css);
+        domClass.add(suc, css);
         dojo.html.set(suc, "<p>"+msg+"</p>");
         setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
 
     };
 
     serviceFailed = function(srv) {
-        var obj = dojo.query("img#"+srv+"_toggle");
+        var obj = query("img#"+srv+"_toggle");
         if(obj.length > 0) {
             obj = obj[0];
             toggle_service(obj);
@@ -625,28 +473,28 @@
             rnode.set('content', data.content);
         } else if(data.type == 'form') {
 
-            form = dijit.byId(data.formid);
-            dojo.query(".errorlist", form.domNode).forEach(function(item, idx) {
-                dojo.destroy(item);
+            form = registry.byId(data.formid);
+            query(".errorlist", form.domNode).forEach(function(item, idx) {
+                domConstruct.destroy(item);
             });
             if(data.error == true) {
                 var first = null;
                 for(key in data.errors) {
 
-                    field = dojo.query("input[name="+key+"],textarea[name="+key+"],select[name="+key+"]", form.domNode);
+                    field = query("input[name="+key+"],textarea[name="+key+"],select[name="+key+"]", form.domNode);
                     if(field.length == 0) {
                         console.log("Form element not found: ", key);
                         continue;
                     }
-                    field = dijit.getEnclosingWidget(field[0]);
+                    field = registry.getEnclosingWidget(field[0]);
                     if(!first && field.focus)
                         first = field;
-                    var ul = dojo.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
-                    dojo.attr(ul, "class", "errorlist");
+                    var ul = domConstruct.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
+                    domAttr.set(ul, "class", "errorlist");
                     for(var i=0; i<data.errors[key].length;i++) {
-                        var li = dojo.create('li', {innerHTML: data.errors[key][i]}, ul);
+                        var li = domConstruct.create('li', {innerHTML: data.errors[key][i]}, ul);
                     }
-                    dojo.fx.wipeIn({
+                    fx.wipeIn({
                         node: ul,
                         duration: 300
                     }).play();
@@ -728,44 +576,44 @@
             attrs = {};
         }
 
-        dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+        query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
             function(inputElem){
                 if(inputElem.type == 'submit') {
-                    var dj = dijit.getEnclosingWidget(inputElem);
+                    var dj = registry.getEnclosingWidget(inputElem);
                     if(dj) {
                         if(dj.isInstanceOf(dojox.form.BusyButton)) {
                             dj.busyLabel = 'Please wait...';
                         } else {
-                            dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                            domAttr.set(dj.domNode, "oldlabel", dj.get('label'));
                             dj.set('label', gettext('Please wait...'));
                         }
                     }
                 }
-                dijit.getEnclosingWidget(inputElem).set('disabled',true);
+                registry.getEnclosingWidget(inputElem).set('disabled',true);
             }
             );
 
         // prevent the default submit
-        dojo.stopEvent(attrs.event);
+        dEvent.stop(attrs.event);
         newData = attrs.form.get("value");
         newData['__form_id'] = attrs.form.id;
 
-        multipart = dojo.query("input[type=file]", attrs.form.domNode).length > 0;
+        multipart = query("input[type=file]", attrs.form.domNode).length > 0;
 
         rnode = getDialog(attrs.form);
-        if(!rnode) rnode = dijit.getEnclosingWidget(attrs.form.domNode.parentNode);
+        if(!rnode) rnode = registry.getEnclosingWidget(attrs.form.domNode.parentNode);
 
         loadOk = function(data, req) {
 
-            dojo.query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
+            query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
                   function(inputElem){
-                       dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                       registry.getEnclosingWidget(inputElem).set('disabled',false);
                    }
                 );
-            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', attrs.form.domNode)[0]);
+            var sbtn = registry.getEnclosingWidget(query('input[type=submit]', attrs.form.domNode)[0]);
             if(sbtn) {
-                if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                    sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                if(domAttr.has(sbtn.domNode, "oldlabel")) {
+                    sbtn.set('label', domAttr.get(sbtn.domNode, "oldlabel"));
                 } else {
                     sbtn.set('label', 'Save');
                 }
@@ -783,7 +631,7 @@
             var json;
             if(pbar) {
                 pbar.destroy();
-                dojo.style(attrs.form.domNode, "display", "block");
+                domStyle.set(attrs.form.domNode, "display", "block");
                 //rnode.layout();
                 rnode._size();
                 rnode._position();
@@ -815,7 +663,7 @@
              * otherwise iframe.send won't work, it expects the form domNode
              */
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
-            dojo.style(attrs.form.domNode, "display", "none");
+            domStyle.set(attrs.form.domNode, "display", "none");
             //rnode.layout();
             rnode._size();
             rnode._position();
@@ -824,7 +672,7 @@
 
         if( multipart ) {
 
-            uuid = dojox.uuid.generateRandomUuid();
+            uuid = generateRandomUuid();
             require(["dojo/request/iframe"], function(iframe) {
             iframe.post(attrs.url + '?X-Progress-ID=' + uuid, {
                 form: item.domNode,
@@ -853,33 +701,33 @@
 
 
     formSubmit = function(item, e, url, callback, attrs) {
-        dojo.stopEvent(e); // prevent the default submit
+        dEvent.stop(e); // prevent the default submit
         if(!attrs) {
             attrs = {};
         }
-        var qry = dojo.query('.saved', item.domNode)[0];
-        if(qry) dojo.style(qry, 'display', 'none');
+        var qry = query('.saved', item.domNode)[0];
+        if(qry) domStyle.set(qry, 'display', 'none');
 
-        dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+        query('input[type=button],input[type=submit]', item.domNode).forEach(
           function(inputElem){
                if(inputElem.type == 'submit') {
-                   var dj = dijit.getEnclosingWidget(inputElem);
+                   var dj = registry.getEnclosingWidget(inputElem);
                    if(dj) {
                        if(dj.isInstanceOf(dojox.form.BusyButton)) {
                            dj.busyLabel = 'Please wait...';
                        } else {
-                           dojo.attr(dj.domNode, "oldlabel", dj.get('label'));
+                           domAttr.set(dj.domNode, "oldlabel", dj.get('label'));
                            dj.set('label', gettext('Please wait...'));
                        }
                    }
                }
-               dijit.getEnclosingWidget(inputElem).set('disabled',true);
+               registry.getEnclosingWidget(inputElem).set('disabled',true);
            }
         );
 
         var rnode = getDialog(item);
-        if(!rnode) rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
-        if(!rnode) rnode = dijit.byId("edit_dialog");
+        if(!rnode) rnode = registry.getEnclosingWidget(item.domNode.parentNode);
+        if(!rnode) rnode = registry.byId("edit_dialog");
 
         var loadOk = function(data) {
 
@@ -893,21 +741,21 @@
                 try {
                     rnode.hide();
                 } catch(err2) {
-                    dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                    query('input[type=button],input[type=submit]', item.domNode).forEach(
                       function(inputElem){
-                           dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                           registry.getEnclosingWidget(inputElem).set('disabled',false);
                        }
                     );
-                    var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
-                    if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
-                        sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                    var sbtn = registry.getEnclosingWidget(query('input[type=submit]', item.domNode)[0]);
+                    if(domAttr.has(sbtn.domNode, "oldlabel")) {
+                        sbtn.set('label', domAttr.get(sbtn.domNode, "oldlabel"));
                     } else {
                         sbtn.set('label', 'Save');
                     }
                     if(sbtn.isInstanceOf(dojox.form.BusyButton)) sbtn.resetTimeout();
                 }
                 if(json.error == false){
-                    dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
+                    query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
                 }
 
                 setMessage(json.message);
@@ -925,7 +773,7 @@
                 rnode.set('content', data);
                 try {
                     if(callback) callback();
-                    var qry = dojo.query('#success', rnode.domNode);
+                    var qry = query('#success', rnode.domNode);
                     if(qry.length>0)
                         dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
                 } catch(err) {}
@@ -939,18 +787,18 @@
             try {
                rnode.hide();
             } catch(err2) {
-                dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                query('input[type=button],input[type=submit]', item.domNode).forEach(
                   function(inputElem){
-                       dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                       registry.getEnclosingWidget(inputElem).set('disabled',false);
                    }
                 );
 
-                dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
+                registry.getEnclosingWidget(query('input[type=submit]', item.domNode)[0]).set('label','Save');
             }
         }
 
         // are there any files to be submited?
-        var files = dojo.query("input[type=file]", item.domNode);
+        var files = query("input[type=file]", item.domNode);
         if(files.length > 0) {
 
             var uuid, pbar;
@@ -964,13 +812,13 @@
                  * otherwise iframe.send won't work, it expects the form domNode
                  */
                 item.domNode.parentNode.appendChild(pbar.domNode);
-                dojo.style(item.domNode, "display", "none")
+                domStyle.set(item.domNode, "display", "none")
                 //rnode.layout();
                 rnode._size();
                 rnode._position();
 
             }
-            uuid = dojox.uuid.generateRandomUuid();
+            uuid = generateRandomUuid();
             require(["dojo/request/iframe"], function(iframe) {
             iframe.post(url + '?iframe=true&X-Progress-ID=' + uuid, {
                 form: item.domNode,
@@ -1000,53 +848,53 @@
     checkNumLog = function(unselected) {
         var num = 0;
         for(var i=0;i<unselected.length;i++) {
-            var q = dojo.query("input[name=zpool_"+unselected[i]+"]:checked");
+            var q = query("input[name=zpool_"+unselected[i]+"]:checked");
             if(q.length > 0) {
                 if(q[0].value == 'log')
                 num += 1;
             }
         }
 
-        var lowlog = dojo.byId("lowlog");
+        var lowlog = dom.byId("lowlog");
         if(!lowlog) return;
 
         if(num == 1) {
-            dojo.style(lowlog, "display", "");
+            domStyle.set(lowlog, "display", "");
         } else {
-            dojo.style(lowlog, "display", "none");
+            domStyle.set(lowlog, "display", "none");
         }
     }
 
     taskrepeat_checkings = function() {
 
-        var repeat = dijit.byId("id_task_repeat_unit");
-        wk = dojo.query(dijit.byId('id_task_byweekday_0').domNode).parents("tr").first()[0];
+        var repeat = registry.byId("id_task_repeat_unit");
+        wk = query(registry.byId('id_task_byweekday_0').domNode).parents("tr").first()[0];
         if(repeat.get('value') != 'weekly') {
-            dojo.style(wk, "display", "none");
+            domStyle.set(wk, "display", "none");
         } else {
-            dojo.style(wk, "display", "");
+            domStyle.set(wk, "display", "");
         }
 
     }
 
     wizardcheckings = function(vol_change, first_load) {
 
-        if(!dijit.byId("wizarddisks")) return;
-        var add = dijit.byId("id_volume_add");
+        if(!registry.byId("wizarddisks")) return;
+        var add = registry.byId("id_volume_add");
         var add_mode = false;
         if(add && add.get("value") != '') {
             add_mode = true;
         }
-        var disks = dijit.byId("wizarddisks");
+        var disks = registry.byId("wizarddisks");
         var d = disks.get('value');
-        dojo.html.set(dojo.byId("wizard_num_disks"), d.length + '');
+        dojo.html.set(dom.byId("wizard_num_disks"), d.length + '');
 
-        var zfs = dojo.query("input[name=volume_fstype]")[1].checked || add_mode;
+        var zfs = query("input[name=volume_fstype]")[1].checked || add_mode;
 
-        dijit.byId("id_volume_name").set('disabled', add_mode);
-        dojo.query("input[name=volume_fstype]").forEach(function(item, idx) {
-            var wg = dijit.getEnclosingWidget(item);
-            if(wg && add_mode && dojo.attr(item, 'value') == 'ZFS') {
+        registry.byId("id_volume_name").set('disabled', add_mode);
+        query("input[name=volume_fstype]").forEach(function(item, idx) {
+            var wg = registry.getEnclosingWidget(item);
+            if(wg && add_mode && domAttr.get(item, 'value') == 'ZFS') {
                 wg.set('checked', true);
             }
         });
@@ -1062,36 +910,36 @@
 
             if(unselected.length > 0 && zfs == true && first_load != true) {
 
-                var tab = dojo.byId("disks_unselected");
-                dojo.query("#disks_unselected tbody tr").orphan();
+                var tab = dom.byId("disks_unselected");
+                query("#disks_unselected tbody tr").orphan();
                 var txt = "";
                 var toappend = [];
                 for(var i=0;i<unselected.length;i++) {
-                    var tr = dojo.create("tr");
-                    var td = dojo.create("td", {innerHTML: unselected[i]});
+                    var tr = domConstruct.create("tr");
+                    var td = domConstruct.create("td", {innerHTML: unselected[i]});
                     tr.appendChild(td);
 
-                    var td = dojo.create("td");
-                    var rad = new dijit.form.RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
-                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
-                    var td = dojo.create("td");
-                    var rad = new dijit.form.RadioButton({ value: "log", name: "zpool_"+unselected[i]});
-                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ value: "log", name: "zpool_"+unselected[i]});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
-                    var td = dojo.create("td");
-                    var rad = new dijit.form.RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
-                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
-                    var td = dojo.create("td");
-                    var rad = new dijit.form.RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
-                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
@@ -1099,74 +947,74 @@
                 }
 
                 for(var i=0;i<toappend.length;i++) {
-                    dojo.place(toappend[i], dojo.query("#disks_unselected tbody")[0]);
+                    dojo.place(toappend[i], query("#disks_unselected tbody")[0]);
                 }
 
-               dojo.style("zfsextra", "display", "");
+               domStyle.set("zfsextra", "display", "");
 
             } else {
                 if(zfs == true && first_load == true) {
-                    dojo.style("zfsextra", "display", "");
+                    domStyle.set("zfsextra", "display", "");
                 } else {
-                    dojo.query("#disks_unselected tbody tr").orphan();
-                    dojo.style("zfsextra", "display", "none");
+                    query("#disks_unselected tbody tr").orphan();
+                    domStyle.set("zfsextra", "display", "none");
                 }
             }
         } else if(zfs == false) {
-               dojo.style("zfsextra", "display", "none");
+               domStyle.set("zfsextra", "display", "none");
         }
 
-        var ufs = dojo.query("#fsopt input")[0].checked;
-        var zfs = dojo.query("#fsopt input")[1].checked;
+        var ufs = query("#fsopt input")[0].checked;
+        var zfs = query("#fsopt input")[1].checked;
         if(d.length >= 2) {
-            dojo.style("grpopt", "display", "");
+            domStyle.set("grpopt", "display", "");
         } else {
-            dojo.style("grpopt", "display", "none");
-            dojo.query("input[name=group_type]:checked").forEach(function(tag) {
-                var dtag = dijit.getEnclosingWidget(tag);
+            domStyle.set("grpopt", "display", "none");
+            query("input[name=group_type]:checked").forEach(function(tag) {
+                var dtag = registry.getEnclosingWidget(tag);
                 if(dtag) dtag.set('checked', false);
             });
         }
 
         if(zfs) {
-            dojo.style('zfssectorsize', 'display', 'table-row');
-            dojo.style('zfsdedup', 'display', 'table-row');
+            domStyle.set('zfssectorsize', 'display', 'table-row');
+            domStyle.set('zfsdedup', 'display', 'table-row');
         } else {
-            dojo.style('zfssectorsize', 'display', 'none');
-            dojo.style('zfsdedup', 'display', 'none');
+            domStyle.set('zfssectorsize', 'display', 'none');
+            domStyle.set('zfsdedup', 'display', 'none');
         }
 
         if(ufs) {
-            dojo.style("ufspath", "display", "table-row");
-            dojo.style("ufspathen", "display", "table-row");
+            domStyle.set("ufspath", "display", "table-row");
+            domStyle.set("ufspathen", "display", "table-row");
         } else {
-            dojo.style("ufspath", "display", "none");
-            dojo.style("ufspathen", "display", "none");
+            domStyle.set("ufspath", "display", "none");
+            domStyle.set("ufspathen", "display", "none");
         }
 
         if(d.length >= 3 && zfs) {
-                dojo.style("grpraidz", "display", "block");
+            domStyle.set("grpraidz", "display", "block");
         } else {
-                dojo.style("grpraidz", "display", "none");
+            domStyle.set("grpraidz", "display", "none");
         }
 
         if(d.length >= 4 && zfs) {
-                dojo.style("grpraidz2", "display", "block");
+            domStyle.set("grpraidz2", "display", "block");
         } else {
-                dojo.style("grpraidz2", "display", "none");
+            domStyle.set("grpraidz2", "display", "none");
         }
 
         if(d.length >= 5 && zfs) {
-                dojo.style("grpraidz3", "display", "block");
+            domStyle.set("grpraidz3", "display", "block");
         } else {
-                dojo.style("grpraidz3", "display", "none");
+            domStyle.set("grpraidz3", "display", "none");
         }
 
         if(ufs && d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
             if(ufs)
-                dojo.style("grpraid3", "display", "block");
+                domStyle.set("grpraid3", "display", "block");
         } else {
-            dojo.style("grpraid3", "display", "none");
+            domStyle.set("grpraid3", "display", "none");
         }
     }
 
@@ -1174,7 +1022,7 @@
 
         var turn = from;
         while(1) {
-            turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+            turn = registry.getEnclosingWidget(turn.domNode.parentNode);
             if(turn == null) return null;
             if(turn.isInstanceOf(dijit.Dialog)) break;
         }
@@ -1186,7 +1034,7 @@
 
         var turn = from;
         while(1) {
-            turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+            turn = registry.getEnclosingWidget(turn.domNode.parentNode);
             if(turn.isInstanceOf(dijit.form.Form)) break;
         }
         return turn;
@@ -1204,7 +1052,7 @@
     refreshTree = function() {
         var fadeArgs = {
            node: "fntree",
-           onEnd: function() { dijit.byId("fntree").reload(); }
+           onEnd: function() { registry.byId("fntree").reload(); }
          };
         dojo.fadeOut(fadeArgs).play();
     }
@@ -1212,18 +1060,18 @@
     refreshTabs = function(nodes) {
         if(nodes && canceled == false) {
             refreshTree();
-            dojo.forEach(nodes, function(entry, i) {
+            dArray.forEach(nodes, function(entry, i) {
                 if(entry.isInstanceOf && entry.isInstanceOf(dijit.layout.ContentPane)) {
                     entry.refresh();
-                    var par = dijit.getEnclosingWidget(entry.domNode.parentNode);
+                    var par = registry.getEnclosingWidget(entry.domNode.parentNode);
                     par.selectChild(entry);
-                    var par2 = dijit.getEnclosingWidget(par.domNode.parentNode);
+                    var par2 = registry.getEnclosingWidget(par.domNode.parentNode);
                     if(par2 && par2.isInstanceOf(dijit.layout.ContentPane))
-                        dijit.byId("content").selectChild(par2);
+                        registry.byId("content").selectChild(par2);
                 } else {
                     if(entry.domNode) entry = entry.domNode;
-                    var par = dojo.query(entry).parents(".objrefresh").first()[0];
-                    var cp = dijit.getEnclosingWidget(par);
+                    var par = query(entry).parents(".objrefresh").first()[0];
+                    var cp = registry.getEnclosingWidget(par);
                     if(cp) cp.refresh();
                 }
             });
@@ -1232,8 +1080,8 @@
     }
 
     refreshPlugins = function() {
-        var par = dojo.query("#plugins_settings").parents(".objrefresh").first()[0];
-        var cp = dijit.getEnclosingWidget(par);
+        var par = query("#plugins_settings").parents(".objrefresh").first()[0];
+        var cp = registry.getEnclosingWidget(par);
         if(cp) cp.refresh();
     }
 
@@ -1257,7 +1105,7 @@
 
     commonDialog = function(attrs) {
         canceled = false;
-        dialog = new dijit.Dialog({
+        dialog = new Dialog({
             id: attrs.id,
             title: attrs.name,
             href: attrs.url,
@@ -1265,9 +1113,9 @@
             closable: true,
             style: attrs.style,
             onHide: function() {
-                setTimeout(dojo.hitch(this, function() {
+                setTimeout(lang.hitch(this, function() {
                     this.destroyRecursive();
-                }), dijit.defaultDuration);
+                }), manager.defaultDuration);
                 refreshTabs(attrs.nodes);
             },
             onLoad: function() {
@@ -1277,7 +1125,7 @@
             }
         });
         if(attrs.onLoad) {
-            f = dojo.hitch(dialog, attrs.onLoad);
+            f = lang.hitch(dialog, attrs.onLoad);
             f();
         }
         dialog.show();
@@ -1326,7 +1174,7 @@
     }
 
     viewModel = function(name, url, tab) {
-        var p = dijit.byId("content");
+        var p = registry.byId("content");
         var c = p.getChildren();
         for(var i=0; i<c.length; i++){
             if(c[i].title == name){
@@ -1335,7 +1183,7 @@
                 return;
             }
         }
-        var pane = new dijit.layout.ContentPane({
+        var pane = new ContentPane({
             href: url,
             title: name,
             closable: true,
@@ -1344,73 +1192,11 @@
         });
         if(tab)
             pane.tab = tab;
-        dojo.addClass(pane.domNode, "objrefresh" );
+        domClass.add(pane.domNode, "objrefresh" );
         p.addChild(pane);
         p.selectChild(pane);
     }
 
-    require([
-        "dojo",
-        "dojo/ready",
-        "dojo/request/xhr",
-        "dojox/data/JsonRestStore",
-        "dijit/tree/ForestStoreModel",
-        "dojo/cookie",
-        "dojo/_base/array",
-        "dojo/_base/connect",
-        "dojo/_base/html",
-        "dojo/_base/window",
-        "dojo/parser",
-        "freeadmin/tree/Tree",
-        "freeadmin/ESCDialog",
-        "freeadmin/WebShell",
-        "freeadmin/RRDControl",
-        "freeadmin/tree/TreeLazy",
-        "freeadmin/tree/JsonRestStore",
-        "freeadmin/tree/ForestStoreModel",
-        "freeadmin/form/Cron",
-        "freeadmin/form/PathSelector",
-        "freeadmin/form/UnixPerm",
-        "dojo/data/ItemFileReadStore",
-        "dojo/request/iframe",
-        "dojo/NodeList-traverse",
-        "dojo/NodeList-manipulate",
-        "dojo/rpc/JsonService",
-        "dojo/fx",
-        "dijit/_base/manager",
-        "dijit/form/CheckBox",
-        "dijit/form/FilteringSelect",
-        "dijit/form/Form",
-        "dijit/form/MultiSelect",
-        "dijit/form/NumberTextBox",
-        "dijit/form/Select",
-        "dijit/form/Textarea",
-        "dijit/form/RadioButton",
-        "dijit/form/TimeTextBox",
-        "dijit/form/ValidationTextBox",
-        "dijit/layout/BorderContainer",
-        "dijit/layout/ContentPane",
-        "dijit/layout/TabContainer",
-        "dijit/Dialog",
-        "dijit/MenuBar",
-        "dijit/MenuBarItem",
-        "dijit/ProgressBar",
-        "dijit/Tooltip",
-        "dojox/form/BusyButton",
-        "dojox/fx/scroll",
-        "dojox/grid/EnhancedGrid",
-        "dojox/grid/enhanced/plugins/DnD",
-        "dojox/grid/enhanced/plugins/Menu",
-        "dojox/grid/enhanced/plugins/NestedSorting",
-        "dojox/grid/enhanced/plugins/IndirectSelection",
-        "dojox/grid/enhanced/plugins/Pagination",
-        "dojox/grid/enhanced/plugins/Filter",
-        "dojox/grid/TreeGrid",
-        "dojox/layout/ExpandoPane",
-        "dojox/uuid/_base",
-        "dojox/uuid/generateRandomUuid",
-        "dojox/validate"
-        ], function(dojo, ready, xhr, JsonRestStore, ForestStoreModel, cookie, dArray, dConnect, html, dWindow, parser, Tree, ESCDialog, WebShell) {
 
         dojo._contentHandlers.text = (function(old){
           return function(xhr){
@@ -1432,6 +1218,8 @@
 
         ready(function() {
 
+            menuSetURLs();
+            Menu.openSystem();
             var store = new JsonRestStore({
                 target: "/admin/menu.json",
                 labelAttribute: "name",
@@ -1446,7 +1234,7 @@
             });
 
             var treeclick = function(item) {
-                var p = dijit.byId("content");
+                var p = registry.byId("content");
 
                 if(item.type == 'object' ||
                    item.type == 'dialog' ||
@@ -1454,7 +1242,7 @@
                    item.type == 'editobject' ||
                    item.type == 'volumewizard'
                     ) {
-                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                    var data = query(".data_"+item.app_name+"_"+item.model);
                     var func;
 
                     if(item.type == 'volumewizard') func = volumeWizard;
@@ -1464,7 +1252,7 @@
                     if(data) {
                         widgets = [];
                         data.forEach(function(item, idx) {
-                            widget = dijit.getEnclosingWidget(item);
+                            widget = registry.getEnclosingWidget(item);
                             if(widget) {
                                 widgets.push(widget);
                             }
@@ -1486,9 +1274,9 @@
                 } else if(item.type == 'logout') {
                     window.location='/account/logout/';
                 } else if(item.action == 'displayprocs') {
-                    dijit.byId("top_dialog").show();
+                    registry.byId("top_dialog").show();
                 } else if(item.action == 'shell') {
-                    dijit.byId("shell_dialog").show();
+                    registry.byId("shell_dialog").show();
                 } else if(item.type == 'opensharing') {
                     Menu.openSharing(item.gname);
                 } else if(item.type == 'openstorage') {
@@ -1502,7 +1290,7 @@
                             return;
                         }
                     }
-                    var pane = new dijit.layout.ContentPane({
+                    var pane = new ContentPane({
                         id: "data_"+item.app_name+"_"+item.model,
                         href: item.url,
                         title: item.name,
@@ -1511,7 +1299,7 @@
                         parseOnLoad: true,
                     });
                     p.addChild(pane);
-                    dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
                     p.selectChild(pane);
                 } else {
                     //  get the children and make sure we haven't opened this yet.
@@ -1522,14 +1310,14 @@
                             return;
                         }
                     }
-                    var pane = new dijit.layout.ContentPane({
+                    var pane = new ContentPane({
                         href: item.url,
                         title: item.name,
                         closable: true,
                         parseOnLoad: true,
                     });
                     pane.tab = item.gname;
-                    dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
                     p.addChild(pane);
                     p.selectChild(pane);
                 }
@@ -1562,7 +1350,7 @@
                     },
                 }
                 );
-                dijit.byId("menupane").set('content', mytree);
+                registry.byId("menupane").set('content', mytree);
 
                 var shell = new ESCDialog({
                     id: "shell_dialog",
@@ -1582,7 +1370,7 @@
                                 //startMsgAnim('Disconnected',0,true);
                                 delete _webshell;
                                 _webshell = undefined;
-                                dijit.byId("shell_dialog").hide();
+                                registry.byId("shell_dialog").hide();
                                 break;
                             case 'curs':
                                 cy=value;
