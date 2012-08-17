@@ -30,7 +30,7 @@ require([
     "dojo/_base/array",
     "dojo/_base/connect",
     "dojo/_base/event",
-    "dojo/_base/html",
+    "dojo/_base/fx",
     "dojo/_base/lang",
     "dojo/_base/window",
     "dojo/cookie",
@@ -40,6 +40,7 @@ require([
     "dojo/dom-class",
     "dojo/dom-construct",
     "dojo/dom-style",
+    "dojo/html",
     "dojo/fx",
     "dojo/on",
     "dojo/parser",
@@ -101,7 +102,7 @@ require([
     dArray,
     dConnect,
     dEvent,
-    html,
+    dFx,
     lang,
     dWindow,
     cookie,
@@ -111,6 +112,7 @@ require([
     domClass,
     domConstruct,
     domStyle,
+    html,
     fx,
     on,
     parser,
@@ -447,15 +449,15 @@ require([
 
         if(!css) css = "success";
         var footer = dom.byId("messages");
-        dojo.empty(footer);
-        var suc = domConstruc.create("div");
+        domConstruct.empty(footer);
+        var suc = domConstruct.create("div");
         on(suc, 'click', function() {
-            dojo.fadeOut({ node: suc }).play();
+            fFx.fadeOut({ node: suc }).play();
         });
         footer.appendChild(suc);
         domClass.add(suc, css);
-        dojo.html.set(suc, "<p>"+msg+"</p>");
-        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+        html.set(suc, "<p>"+msg+"</p>");
+        setTimeout(function() { if(suc) dFx.fadeOut({node: suc}).play();}, 7000);
 
     };
 
@@ -752,7 +754,7 @@ require([
                     } else {
                         sbtn.set('label', 'Save');
                     }
-                    if(sbtn.isInstanceOf(dojox.form.BusyButton)) sbtn.resetTimeout();
+                    if(sbtn.isInstanceOf(BusyButton)) sbtn.resetTimeout();
                 }
                 if(json.error == false){
                     query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
@@ -887,7 +889,7 @@ require([
         }
         var disks = registry.byId("wizarddisks");
         var d = disks.get('value');
-        dojo.html.set(dom.byId("wizard_num_disks"), d.length + '');
+        html.set(dom.byId("wizard_num_disks"), d.length + '');
 
         var zfs = query("input[name=volume_fstype]")[1].checked || add_mode;
 
