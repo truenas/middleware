@@ -1,5 +1,6 @@
 define([
     "dojo/_base/declare",
+    "dojo/dom-style",
     "dijit/_Widget",
     "dijit/_TemplatedMixin",
     "dijit/form/TextBox",
@@ -10,7 +11,7 @@ define([
     "freeadmin/tree/JsonRestStore",
     "freeadmin/tree/ForestStoreModel",
     "freeadmin/tree/TreeLazy"
-    ], function(declare, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, template, JsonRestStore, ForestStoreModel, TreeLazy) {
+    ], function(declare, domStyle, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, template, JsonRestStore, ForestStoreModel, TreeLazy) {
 
     var PathSelector = declare("freeadmin.form.PathSelector", [ _Widget, _Templated ], {
         templateString : template,
@@ -73,10 +74,10 @@ define([
                 onClick: function() {
                     var dialog = getDialog(path);
                     if(this.get('label') == 'Close') {
-                        dojo.style(path.treeContainer, 'display', 'none');
+                        domStyle.set(path.treeContainer, 'display', 'none');
                         this.set('label', 'Browse');
                     } else {
-                        dojo.style(path.treeContainer, 'display', 'block');
+                        domStyle.set(path.treeContainer, 'display', 'block');
                         this.set('label', 'Close');
                     }
                     if(dialog) {

@@ -1,7 +1,10 @@
 define([
+    "dojo/_base/array",
     "dojo/_base/declare",
+    "dojo/query",
     "dijit/_Widget",
     "dijit/_TemplatedMixin",
+    "dijit/registry",
     "dijit/form/HorizontalSlider",
     "dijit/form/HorizontalRule",
     "dijit/form/HorizontalRuleLabels",
@@ -10,7 +13,7 @@ define([
     "dijit/layout/ContentPane",
     "dojox/string/sprintf",
     "dojo/text!freeadmin/templates/chooser.html"
-    ], function(declare, _Widget, _Templated, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, ToggleButton, TabContainer, ContentPane, sprintf, template) {
+    ], function(array, declare, query, _Widget, _Templated, registry, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, ToggleButton, TabContainer, ContentPane, sprintf, template) {
 
     var Cron = declare("freeadmin.form.Cron", [ _Widget, _Templated ], {
         templateString: template,
@@ -35,7 +38,7 @@ define([
 
             setSelected = function() {
                  varr = [];
-                 dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
+                 query(':checked', sel.containerNode).forEach(function(node, index, arr){
                      varr.push(dijit.getEnclosingWidget(node).get('label'));
                  });
                  cron.set('value', varr.join(','));
@@ -45,7 +48,7 @@ define([
                  title: gettext('Each selected') + ' ' + this.label,
                  onShow: function(ev) {
                  varr = [];
-                 dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
+                 query(':checked', sel.containerNode).forEach(function(node, index, arr){
                      varr.push(dijit.getEnclosingWidget(node).get('label'));
                  });
                  cron.set('value', varr.join(','));
@@ -113,12 +116,12 @@ define([
             for(var i=0;i<this.numChoices;i++) {
                 var tg = new ToggleButton({
                     showLabel: true,
-                    checked: (dojo.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false,
+                    checked: (array.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false,
                     baseClass: 'mytoggle',
                     onChange: function(val) {
                  varr = [];
-                 dojo.query(':checked', sel.containerNode).forEach(function(node, index, arr){
-                     varr.push(dijit.getEnclosingWidget(node).get('label'));
+                 query(':checked', sel.containerNode).forEach(function(node, index, arr){
+                     varr.push(registry.getEnclosingWidget(node).get('label'));
                  });
                  cron.set('value', varr.join(','));
                     },

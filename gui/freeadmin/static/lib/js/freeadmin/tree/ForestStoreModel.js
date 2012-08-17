@@ -1,4 +1,4 @@
-define(["dijit/tree/ForestStoreModel", "dojo/_base/declare"], function(ForestStoreModel, declare) {
+define(["dijit/tree/ForestStoreModel", "dojo/_base/declare", "dojo/_base/lang"], function(ForestStoreModel, declare, lang) {
     var MyForestStoreModel = declare("freeadmin.tree.ForestStoreModel", [ForestStoreModel], {
         getChildren: function(parentItem, callback, onError){
             if(parentItem === this.root){
@@ -9,7 +9,7 @@ define(["dijit/tree/ForestStoreModel", "dojo/_base/declare"], function(ForestSto
                     this.store.fetch({
                         query: this.query,
                         queryOptions: {cache:false},
-                        onComplete: dojo.hitch(this, function(items){
+                        onComplete: lang.hitch(this, function(items){
                             this.root.children = items;
                             callback(items);
                         }),
