@@ -28,6 +28,8 @@
 from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.views import logout
 
+from freenasUI.common.system import get_sw_name
+
 # Active FreeNAS URLs
 
 urlpatterns = patterns('freenasUI.account.views',
@@ -42,5 +44,5 @@ urlpatterns = patterns('freenasUI.account.views',
     url(r'^password_change/$', 'password_change', name="account_passform"),
     url(r'^user_change/$', 'user_change', name="account_changeform"),
     url(r'^login/$', 'login_wrapper', {'template_name': 'registration/login.html'}, name="account_login"),
-    url(r'^logout/$', logout, {'template_name': 'registration/logout.html'}, name="account_logout"),
+    url(r'^logout/$', logout, {'template_name': 'registration/logout.html', 'extra_context': {'sw_name': get_sw_name()}}, name="account_logout"),
     )
