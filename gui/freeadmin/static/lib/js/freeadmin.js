@@ -177,35 +177,33 @@ require([
 
     restartHttpd = function(newurl) {
 
-        dojo.xhrGet({
-            url: '/system/restart-httpd/',
-            sync: true,
-            failOk: true,
-            handle: function(a1,a2) {
-                if(newurl) {
-                    setTimeout(function () {
-                        window.location = newurl;
-                    }, 1500);
-                }
-            },
-        });
+        var handle = function(data) {
+            if(newurl) {
+                setTimeout(function () {
+                    dWindow.location = newurl;
+                }, 1500);
+            }
+        };
+
+        xhr.get('/system/restart-httpd/', {
+            sync: true
+        }).then(handle, handle);
 
     }
 
     reloadHttpd = function(newurl) {
 
-        dojo.xhrGet({
-            url: '/system/reload-httpd/',
-            sync: true,
-            failOk: true,
-            handle: function(a1,a2) {
-                if(newurl) {
-                    setTimeout(function () {
-                        window.location = newurl;
-                    }, 1500);
-                }
-            },
-        });
+        var handle = function(data) {
+            if(newurl) {
+                setTimeout(function () {
+                    dWindow.location = newurl;
+                }, 1500);
+            }
+        };
+
+        xhr.get('/system/reload-httpd/', {
+            sync: true
+        }).then(handle, handle);
 
     }
 
@@ -227,13 +225,12 @@ require([
 
     add_formset = function(a, url, name) {
 
-        dojo.xhrGet({
-            url: url,
-            content: {
+        xhr.get(url, {
+            query: {
                 fsname: name,
             },
-            sync: true,
-            load: function(data, ioArgs) {
+            sync: true
+            }).then(function(data) {
 
                 var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
                 var extran = extra.get("value");
@@ -244,20 +241,18 @@ require([
                 parser.parse(div);
                 extra.set('value', parseInt(extran) + 1);
 
-            },
-        });
+            });
 
     }
 
     formsetAddForm = function(attrs) {
 
-        dojo.xhrGet({
-            url: attrs['url'],
-            content: {
+        xhr.get(attrs['url'], {
+            query: {
                 prefix: attrs['prefix'],
             },
-            sync: true,
-            load: function(data, ioArgs) {
+            sync: true
+            }).then(function(data) {
 
                 var extra = registry.byId("id_"+attrs['prefix']+"-TOTAL_FORMS");
                 var extran = extra.get("value");
@@ -274,8 +269,7 @@ require([
                 }
                 extra.set('value', parseInt(extran) + 1);
 
-            },
-        });
+            });
 
     }
 
@@ -677,23 +671,19 @@ require([
         if( multipart ) {
 
             uuid = generateRandomUuid();
-            require(["dojo/request/iframe"], function(iframe) {
             iframe.post(attrs.url + '?X-Progress-ID=' + uuid, {
-                form: item.domNode,
+                //form: item.domNode,
                 data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
                 handleAs: 'text'
                 }).then(handleReq, handleReq);
-                });
 
         } else {
 
-            dojo.xhrPost({
-                url: attrs.url,
-                content: newData,
-                handleAs: 'text',
-                handle: handleReq,
-            });
+            xhr.post(attrs.url, {
+                data: newData,
+                handleAs: 'text'
+            }).then(handleReq, handleReq);
 
         }
 
@@ -823,12 +813,10 @@ require([
 
             }
             uuid = generateRandomUuid();
-            require(["dojo/request/iframe"], function(iframe) {
             iframe.post(url + '?iframe=true&X-Progress-ID=' + uuid, {
                 form: item.domNode,
                 handleAs: 'text',
                 }).then(loadOk, errorHandle);
-                });
             checkProgressBar(pbar, true, uuid);
 
         } else {
@@ -837,13 +825,10 @@ require([
             if (attrs.progressbar == true) {
                 rnode.set('content', '<div style="width:300px" data-dojo-props="indeterminate: true" data-dojo-type="dijit.ProgressBar"></div>');
             }
-            dojo.xhrPost({
-                url: url,
-                content: newData,
-                handleAs: 'text',
-                load: loadOk,
-                error: errorHandle,
-             });
+            xhr.post(url, {
+                data: newData,
+                handleAs: 'text'
+             }).then(loadOk, errorHandle);
 
          }
 
@@ -951,7 +936,7 @@ require([
                 }
 
                 for(var i=0;i<toappend.length;i++) {
-                    dojo.place(toappend[i], query("#disks_unselected tbody")[0]);
+                    domConstruct.place(toappend[i], query("#disks_unselected tbody")[0]);
                 }
 
                domStyle.set("zfsextra", "display", "");
@@ -1337,7 +1322,7 @@ require([
                         var fadeArgs = {
                            node: "fntree",
                          };
-                        dojo.fadeIn(fadeArgs).play();
+                        dFx.fadeIn(fadeArgs).play();
                     },
                     openOnClick: true,
                     getIconClass: function(item, opened) {
