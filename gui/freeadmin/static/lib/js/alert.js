@@ -25,45 +25,61 @@
  *
  */
 
-require(["dojox/timing", "dojo/ready"], function(timing, ready) {
+require([
+    "dojo/_base/lang",
+    "dojo/dom",
+    "dojo/dom-class",
+    "dojo/ready",
+    "dojo/request/xhr",
+    "dijit/_base/manager",
+    "dijit/Dialog",
+    "dojox/timing"
+    ], function(
+    lang,
+    dom,
+    domClass,
+    ready,
+    xhr,
+    manager,
+    Dialog,
+    timing
+    ) {
 
     var _alert_status = 'OK';
 
     loadalert = function() {
 
         var url = '/admin/alert/status/?' + new Date().getTime();
-        dojo.xhrGet({
-            url: url,
-            handleAs: "text",
-            load: function(data) {
+        xhr.get(url, {
+            handleAs: "text"
+            }).then(function(data) {
 
-                var alertdiv = dojo.byId("alert_status");
+                var alertdiv = dom.byId("alert_status");
                 if(data == _alert_status)
                     return true;
                 _alert_status = data;
                 if(data == 'OK') {
-                    dojo.removeClass(alertdiv, ["alert_crit", "alert_warn"]);
-                    dojo.addClass(alertdiv, "alert_ok");
+                    domCalss.remove(alertdiv, ["alert_crit", "alert_warn"]);
+                    domClass.add(alertdiv, "alert_ok");
                 } else if(data == 'WARN') {
-                    dojo.removeClass(alertdiv, ["alert_crit", "alert_ok"]);
-                    dojo.addClass(alertdiv, "alert_warn");
+                    domClass.remove(alertdiv, ["alert_crit", "alert_ok"]);
+                    domClass.add(alertdiv, "alert_warn");
                 } else if(data == 'CRIT') {
-                    dojo.removeClass(alertdiv, ["alert_warn", "alert_ok"]);
-                    dojo.addClass(alertdiv, "alert_crit");
+                    domClass.remove(alertdiv, ["alert_warn", "alert_ok"]);
+                    domClass.add(alertdiv, "alert_crit");
                 }
 
-            },
-        });
+            });
     }
 
     alert_open = function() {
-        var alertdlg = new dijit.Dialog({
+        var alertdlg = new Dialog({
             title: "Alert System",
             style: "width: 400px",
             id: "alert_dialog",
             href: "/admin/alert/",
             onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
             },
         });
         alertdlg.show();
@@ -71,7 +87,7 @@ require(["dojox/timing", "dojo/ready"], function(timing, ready) {
 
     ready(function(){
 
-        var talert = new dojox.timing.Timer(1000*60*5);
+        var talert = new timing.Timer(1000*60*5);
 
         talert.onTick = function() {
             loadalert();
