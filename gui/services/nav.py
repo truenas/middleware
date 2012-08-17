@@ -2,7 +2,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from . import models
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins import models as pmodels
 from freenasUI.freeadmin.tree import TreeNode
 
 NAME = _('Services')
@@ -18,11 +17,13 @@ class EnDisServices(TreeNode):
     icon = u'ServicesIcon'
     order = -1
 
+
 class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
     append_to = 'services.ISCSI.iSCSITargetAuthorizedInitiator'
+
 
 class ISCSITargetAuthCredentialView(TreeNode):
 
@@ -30,11 +31,13 @@ class ISCSITargetAuthCredentialView(TreeNode):
     type = u'iscsi'
     append_to = 'services.ISCSI.iSCSITargetAuthCredential'
 
+
 class ISCSITargetPortalView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
     append_to = 'services.ISCSI.iSCSITargetPortal'
+
 
 class ISCSITargetToExtentView(TreeNode):
 
@@ -42,11 +45,13 @@ class ISCSITargetToExtentView(TreeNode):
     type = u'iscsi'
     append_to = 'services.ISCSI.iSCSITargetToExtent'
 
+
 class ISCSITargetView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
     append_to = 'services.ISCSI.iSCSITarget'
+
 
 class ISCSIDevice(TreeNode):
 
@@ -60,25 +65,34 @@ class ISCSIDevice(TreeNode):
     def __init__(self, *args, **kwargs):
 
         super(ISCSIDevice, self).__init__(*args, **kwargs)
-        for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL']).order_by('-id'):
+        for ext in models.iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_type__in=['Disk', 'ZVOL']).order_by(
+            'iscsi_target_extent_name'):
             nav = TreeNode(ext.id)
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
-            nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
+            nav.kwargs = {'app': 'services',
+                'model': 'iSCSITargetExtent',
+                'oid': ext.id,
+                'mf': 'iSCSITargetDeviceExtentForm'}
             nav.icon = u'ExtentIcon'
             self.insert_child(0, nav)
 
         devadd = TreeNode('Add')
         devadd.name = _(u'Add Device Extent')
         devadd.type = u'object'
+        devadd.order = 100
         devadd.view = u'freeadmin_model_add'
-        devadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetDeviceExtentForm'}
+        devadd.kwargs = {'app': 'services',
+            'model': 'iSCSITargetExtent',
+            'mf': 'iSCSITargetDeviceExtentForm'}
         devadd.icon = u'AddExtentIcon'
 
         devview = TreeNode('View')
         devview.name = _(u'View Device Extents')
         devview.type = u'iscsi'
+        devview.order = 101
         devview.icon = u'ViewAllExtentsIcon'
         devview.append_app = False
         devview.app_name = 'services'
@@ -99,18 +113,23 @@ class ISCSIExt(TreeNode):
     def __init__(self, *args, **kwargs):
 
         super(ISCSIExt, self).__init__(*args, **kwargs)
-        for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='File').order_by('-id'):
+        for ext in models.iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_type__exact='File').order_by(
+            'iscsi_target_extent_name'):
             nav = TreeNode(ext.id)
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
-            nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
+            nav.kwargs = {'app': 'services',
+                'model': 'iSCSITargetExtent',
+                'oid': ext.id}
             nav.icon = u'ExtentIcon'
             self.append_child(nav)
 
         extadd = TreeNode('Add')
         extadd.name = _(u'Add File Extent')
         extadd.type = u'object'
+        extadd.order = 100
         extadd.view = u'freeadmin_model_add'
         extadd.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
         extadd.icon = u'AddExtentIcon'
@@ -118,6 +137,7 @@ class ISCSIExt(TreeNode):
         extview = TreeNode('View')
         extview.name = _(u'View File Extents')
         extview.type = u'iscsi'
+        extview.order = 101
         extview.view = u'freeadmin_model_datagrid'
         extview.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
         extview.icon = u'ViewAllExtentsIcon'
@@ -125,6 +145,7 @@ class ISCSIExt(TreeNode):
         extview.model = 'Extents'
 
         self.append_children([extadd, extview])
+
 
 class ISCSI(TreeNode):
 
@@ -137,12 +158,14 @@ class ISCSI(TreeNode):
         super(ISCSI, self).__init__(*args, **kwargs)
         self.append_children([ISCSIDevice()])
 
+
 class Rsync(TreeNode):
 
     gname = 'Rsync'
     name = _(u'Rsync')
     type = u'rsync'
     icon = u'rsyncIcon'
+
 
 class RsyncModAdd(TreeNode):
 
@@ -153,6 +176,7 @@ class RsyncModAdd(TreeNode):
     kwargs = {'app': 'services', 'model': 'RsyncMod', 'mf': 'RsyncModForm'}
     icon = u'AddrsyncModIcon'
     append_to = 'services.Rsync.RsyncMod'
+
 
 class RsyncModView(TreeNode):
 
@@ -176,7 +200,9 @@ class PluginsSettings(TreeNode):
         if notifier().plugins_jail_configured():
             oid = models.PluginsJail.objects.order_by('-id')[0].id
             self.view = 'freeadmin_model_edit'
-            self.kwargs = {'app': 'services', 'model': 'PluginsJail', 'oid': oid}
+            self.kwargs = {'app': 'services',
+                'model': 'PluginsJail',
+                'oid': oid}
         else:
             self.view = 'plugins_jailpbi'
 

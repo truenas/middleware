@@ -470,6 +470,7 @@ class iSCSITargetExtent(Model):
 
     class Meta:
         verbose_name = _("Extent")
+        ordering = ["iscsi_target_extent_name"]
 
     class FreeAdmin:
         delete_form = "ExtentDelete"
