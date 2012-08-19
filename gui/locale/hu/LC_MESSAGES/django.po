@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-04-07 23:39+0200\n"
-"Last-Translator: nem <nemethnandor67@gmail.com>\n"
+"PO-Revision-Date: 2012-08-18 14:08+0200\n"
+"Last-Translator: zaivaldi <zaivaldi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -444,11 +444,11 @@ msgstr ""
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Hosszú Ön-Teszt"
+msgstr "Hosszú önellenőrzés"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Rövid Ön-Teszt"
+msgstr "Rövid önellenőrzés"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
@@ -459,7 +459,6 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Offline azonnali teszt (Csak ATA eszköz)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
 msgstr "Rsync Modul"
 
@@ -469,7 +468,7 @@ msgstr "Rsync SSH-en keresztül"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "nyomni"
 
 #: choices.py:568
 msgid "Pull"
@@ -598,7 +597,7 @@ msgstr "A jelszó kikapcsolva, hagyd ezt üresen."
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "Kötelező."
+msgstr "A mező kitöltése kötelező."
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -880,7 +879,7 @@ msgstr "Választani kell: IPv4, vagy IPv6."
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback nem érvényes névszerver"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
@@ -1230,7 +1229,7 @@ msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Csatolva?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
@@ -1244,17 +1243,16 @@ msgstr ""
 #: plugins/forms.py:341
 #, python-format
 msgid "The path could not be umounted %s"
-msgstr ""
+msgstr "Az elérési utat nem tudta felcsatoni %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
-#, fuzzy
 msgid "Plugin name"
-msgstr "Domén név"
+msgstr "Plugin név"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Bővítmény neve"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
@@ -1270,7 +1268,7 @@ msgstr ""
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "Bővítmény verziója"
 
 #: plugins/models.py:57
 #, fuzzy
@@ -1284,13 +1282,12 @@ msgstr ""
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Bővítmény engedélyezése"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "Vezérlő IP címe"
+msgstr "Bővitmény IP címe"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
@@ -1311,7 +1308,7 @@ msgstr ""
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Bővitmények"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
@@ -1324,7 +1321,7 @@ msgstr ""
 
 #: plugins/models.py:121 storage/models.py:456
 msgid "Mount Point"
-msgstr ""
+msgstr "Csatolási pont"
 
 #: plugins/models.py:122
 msgid "Mount Points"
@@ -1342,7 +1339,7 @@ msgstr "%s sikeresen hozzáadva!"
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Nem tudta eltávolítani a bővítményt."
 
 #: plugins/views.py:101
 #, fuzzy
@@ -1389,9 +1386,8 @@ msgid "The NFS service failed to reload."
 msgstr "Az NFS szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Ilyen csoportazonosító (GID) már létezik."
+msgstr "Ilyen IP cím már létezik."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1702,7 +1698,7 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"A munkacsoport amiben megjelenik, ha keresik a kliensek. (maximum 15 "
+"A munkacsoport amiben megjelenik, ha keresik a kliensek. (legfeljebb 15 "
 "karakter)"
 
 #: services/models.py:88
@@ -2375,9 +2371,8 @@ msgid "Path to the plugins jail"
 msgstr ""
 
 #: services/models.py:809
-#, fuzzy
 msgid "Jail name"
-msgstr "Domén név"
+msgstr "Jail név"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
@@ -2515,7 +2510,7 @@ msgstr "Az e-mail címzettje. Több cím esetén pontosvesszővel (;) felsorolva
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Email tárgya"
 
 #: services/models.py:952
 msgid ""
@@ -2819,7 +2814,7 @@ msgstr "Domain név, pl. valami.hu"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
-msgstr "Host név (NetBIOS-név)"
+msgstr "NetBIOS név"
 
 #: services/models.py:1250
 #, fuzzy
@@ -3109,7 +3104,7 @@ msgstr "Kritikus"
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr ""
+msgstr "Email jelentés"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -3185,7 +3180,7 @@ msgstr ""
 
 #: services/views.py:333
 msgid "The service could not be started."
-msgstr ""
+msgstr "A szolgáltatás nem tudott elindulni."
 
 #: sharing/forms.py:81
 #, fuzzy
@@ -3204,7 +3199,7 @@ msgstr ""
 #: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "A(z) '%s' IP cím nem érvényes."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3301,9 +3296,8 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Ezek a paraméterek az smb.conf fájl [Share] részéhez adódnak."
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Windows megosztás"
+msgstr "Windows (CIFS) megosztás"
 
 #: sharing/models.py:95
 #, fuzzy
@@ -3389,7 +3383,7 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Lemez feltérképezés"
 
 #: sharing/models.py:161
 msgid ""
@@ -3399,7 +3393,7 @@ msgstr ""
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Lemez feltérképezési mód"
 
 #: sharing/models.py:168
 msgid ""
@@ -3500,7 +3494,7 @@ msgstr ""
 
 #: sharing/models.py:212
 msgid "No Stat"
-msgstr ""
+msgstr "Nincs statisztika"
 
 #: sharing/models.py:213
 msgid ""
@@ -3549,7 +3543,7 @@ msgstr ""
 
 #: sharing/models.py:273
 msgid "All Directories"
-msgstr ""
+msgstr "Minden könyvtár"
 
 #: sharing/models.py:274
 msgid ""
@@ -3688,7 +3682,7 @@ msgstr ""
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Ki kell választanod a fájlrendszer típusát"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
@@ -3729,7 +3723,7 @@ msgstr "Kötet"
 
 #: storage/forms.py:570
 msgid "You must select a volume."
-msgstr ""
+msgstr "Válaszd ki a kötetett"
 
 #: storage/forms.py:636
 #, python-format
@@ -3930,7 +3924,7 @@ msgstr ""
 
 #: storage/models.py:50
 msgid "File System Type"
-msgstr ""
+msgstr "Fájlrendszer típusa"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
@@ -4060,7 +4054,7 @@ msgstr ""
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Átviteli mód"
 
 #: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
@@ -4092,8 +4086,9 @@ msgid "Path to mount point"
 msgstr ""
 
 #: storage/models.py:461
+#, fuzzy
 msgid "Mount options"
-msgstr ""
+msgstr "Csatolási opciók"
 
 #: storage/models.py:462
 msgid "Enter Mount Point options here"
@@ -4170,7 +4165,7 @@ msgstr ""
 
 #: storage/models.py:736
 msgid "Begin"
-msgstr ""
+msgstr "kezdés"
 
 #: storage/models.py:737
 #, fuzzy
@@ -6432,9 +6427,8 @@ msgstr "Kritikus riasztások"
 msgid "Selected"
 msgstr "Kiválasztva"
 
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Domén név"
+msgstr "Bővitmény neve"
 
 msgid "Allow guest access"
 msgstr "Vendég hozzáférés engedélyezése"
