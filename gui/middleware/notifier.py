@@ -1808,8 +1808,10 @@ class notifier:
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if acl == 'windows' and not winexists:
             open(winacl, 'a').close()
+            winexists = True
         elif acl == 'unix' and winexists:
             os.unlink(winacl)
+            winexists = False
        
         if winexists:
             script = "/usr/local/www/freenasUI/tools/winacl.sh"
@@ -1824,8 +1826,8 @@ class notifier:
             flags = ""
             if recursive:
                 flags = "-R"
-            self.__system("/usr/sbin/chown %s %s:%s %s" % (flags, user, group, path))
-            self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
+            self.__system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
+            self.__system("/bin/chmod %s%s '%s'" % (flags, mode, path))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
