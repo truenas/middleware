@@ -701,6 +701,16 @@ class Replication(Model):
             help_text=_("Limit the replication speed. Unit in "
                 "kilobytes/seconds. 0 = unlimited."),
             )
+    repl_begin = models.TimeField(
+            default=time(hour=0),
+            verbose_name=_("Begin"),
+            help_text=_("Do not start replication before"),
+            )
+    repl_end = models.TimeField(
+            default=time(hour=23, minute=59),
+            verbose_name=_("End"),
+            help_text=_("Do not start replication after"),
+            )
 
     class Meta:
         verbose_name = _(u"Replication Task")

@@ -41,6 +41,7 @@ from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
 from freenasUI.common.pipesubr import pipeopen, system
+from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.locks import mntlock
 
 log = logging.getLogger('tools.autosnap')
@@ -83,14 +84,6 @@ def snap_expired(snapinfo, snaptime):
         snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = int(365.2425*snap_ttl_value))
 
     return snapinfo_expirationtime <= snaptime
-
-def isTimeBetween(time_to_test, begin_time, end_time):
-    if end_time == time(0, 0):
-        return ((begin_time <= time_to_test) or (time_to_test == end_time))
-    elif begin_time < end_time:
-        return ((begin_time <= time_to_test) and (time_to_test <= end_time))
-    else:
-        return ((begin_time <= time_to_test) or (time_to_test <= end_time))
 
 def isMatchingTime(task, snaptime):
     curtime = time(snaptime.hour, snaptime.minute)

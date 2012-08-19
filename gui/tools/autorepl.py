@@ -40,6 +40,7 @@ from freenasUI import settings
 setup_environ(settings)
 
 from freenasUI.storage.models import Replication
+from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail
@@ -57,7 +58,6 @@ log = logging.getLogger('tools.autorepl')
 # Set to True if verbose log desired
 debug = False
 
-
 # Detect if another instance is running
 def exit_if_running(pid):
     log.debug("Checking if process %d is still alive" % (pid, ))
@@ -73,6 +73,13 @@ MNTLOCK = mntlock()
 
 mypid = os.getpid()
 templog = '/tmp/repl-%d' % (mypid)
+
+now = datetime.datetime.now().replace(microsecond=0)
+if now.second < 30 or now.minute == 59:
+    now = now.replace(second=0)
+else:
+    now = now.replace(minute=now.minute + 1, second=0)
+now = datetime.time(now.hour, now.minute)
 
 # (mis)use MNTLOCK as PIDFILE lock.
 locked = True
@@ -106,6 +113,9 @@ log.debug("temp log file: %s" % (templog, ))
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
+    if not isTimeBetween(now, replication.repl_begin, replication.repl_end):
+        continue
+
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
     fast_cipher = replication.repl_remote.ssh_fast_cipher

@@ -1177,8 +1177,30 @@ class ReplicationForm(ModelForm):
     class Meta:
         model = models.Replication
         exclude = ('repl_lastsnapshot', 'repl_remote', 'repl_limit')
+        widgets = {
+            'repl_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
+            'repl_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                }),
+        }
 
     def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+            if "repl_begin" in new:
+                search = HOUR.search(new['repl_begin'])
+                new['repl_begin'] = time(hour=int(search.group("hour")),
+                                           minute=int(search.group("min")),
+                                           second=int(search.group("sec")))
+            if "repl_end" in new:
+                search = HOUR.search(new['repl_end'])
+                new['repl_end'] = time(hour=int(search.group("hour")),
+                                           minute=int(search.group("min")),
+                                           second=int(search.group("sec")))
+            args = (new,) + args[1:]
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
         self.fields['repl_filesystem'] = forms.ChoiceField(
