@@ -11,6 +11,70 @@
 
 : ${smartd_config="/usr/local/etc/smartd.conf"}
 
+print_devlist ()
+{
+	camcontrol devlist -v | while read LINE; do
+		case $LINE in
+		[^\<]*)
+			DRV=$(expr "$LINE" : '.*on \(.*\)[0-9][0-9]* bus')
+			CID=$(expr "$LINE" : '.*on .*\([0-9][0-9]*\) bus')
+			;;
+		\<[^\>]*)
+			TGT=$(expr "$LINE" : '.*target \([0-9]*\).*')
+			DEV1=$(expr "$LINE" : '.*(\([a-z]*[0-9]*\),.*)')
+			DEV2=$(expr "$LINE" : '.*(.*,\([a-z]*[0-9]*\))')
+			case $DEV2 in
+			pass[0-9]*)
+				DEV=$DEV1
+				;;
+			*)
+				DEV=$DEV2
+				;;
+			esac
+			echo "$DRV|$(($CID+1))|$(($TGT+1))|$DEV"
+			;;
+		esac
+	done
+}
+
+parse_devlist()
+{
+	disk=$1
+
+	while read DRIVER CONTROLLER_ID CHANNEL_NO DEVICE; do
+		case ${DEVICE}:${DRIVER} in
+		# Highpoint Rocket Raid 27xx controller
+		${disk}:hpt27xx)
+		${disk}:rr274x_3x)
+			if [ $CHANNEL_NO -gt 16 ]; then
+				CHANNEL_NO=$(($CHANNEL_NO-16))
+			elif [ $CHANNEL_NO -gt 8 ]; then
+				CHANNEL_NO=$(($CHANNEL_NO-8))
+			fi
+			echo -n "/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
+			break
+			;;
+		# Highpoint Rocket Raid controller
+		${disk}:hpt*)
+			echo -n "/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
+			break
+			;;
+		# Common device
+		${disk}:* )
+			echo -n /dev/$disk
+			break
+			;;
+		esac
+	done
+}
+
+get_prop_dev()
+{
+	disk=$1
+	tmpfile=$2
+	grep ${disk}\$ ${tmpfile} | parse_devlist $disk
+}
+
 generate_smartd_cfg()
 {
 	local IFS="|"
@@ -26,6 +90,9 @@ generate_smartd_cfg()
 EOF
 
 	local ndaymonth ndayweek nhour nmonth
+	
+	TMPFILE=`mktemp /tmp/camcontrol.XXXXXX` || exit 1
+	print_devlist > ${TMPFILE}
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_smart ORDER by -id LIMIT 1" |
 	while eval read $f; do
@@ -37,10 +104,11 @@ EOF
 				continue
 				;;
 			esac
-			if [ -z "$(/usr/local/sbin/smartctl -i /dev/${disk_name}|grep "SMART support is: Enabled")" ]; then
-				/usr/local/sbin/smartctl -s on /dev/${disk_name} > /dev/null 2>&1 || continue
+			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
+			if [ -z "$(/usr/local/sbin/smartctl -i ${prop_dev}|grep "SMART support is: Enabled")" ]; then
+				eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
 			fi
-			echo -n "/dev/${disk_name}"
+			echo -n "${prop_dev}"
 			echo -n " -n ${smart_powermode}"
 			echo -n " -W ${smart_difference},${smart_informal},${smart_critical}"
 			if [ -n "${smart_email}" ]; then
@@ -99,6 +167,7 @@ EOF
 			echo " $disk_smartoptions"
 		done
 	done
+	rm -f ${TMPFILE}
 }
 
 generate_smartd()
