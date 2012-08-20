@@ -114,7 +114,7 @@ __get_SRV_record()
 	local host="${1}"
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
 
-	dig -t srv +short "${host}" | egrep -v '^;;' | sort -n +0 +1 > "${tmpfile}"
+	dig -t srv +short +nocomments "${host}" | sort -n +0 +1 > "${tmpfile}"
 
 	exec 3<&0
 	exec 0<"${tmpfile}"
