@@ -67,6 +67,13 @@
 : ${HTTPDPORT:="80"}
 
 #
+#	FTPD settings
+#
+: ${FTPDSSLDIR:="${SSLDIR}/proftpd"}
+: ${FTPDKEY:="${FTPDSSLDIR}/proftpd.key"}
+: ${FTPDCERT:="${FTPDSSLDIR}/proftpd.crt"}
+
+#
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
