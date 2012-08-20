@@ -1347,11 +1347,6 @@ class SSH(Model):
 
 
 class ActiveDirectory(Model):
-    ad_dcname = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain Controller Name"),
-            help_text=_("AD or PDC name.")
-            )
     ad_domainname = models.CharField(
             max_length=120,
             verbose_name=_("Domain Name (DNS/Realm-Name)"),
