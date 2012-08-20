@@ -162,54 +162,6 @@ create_CA()
 	chmod 400 "${key}"
 }
 
-import_certificate()
-{
-	local certpath="${1}"
-	local certfile
-	local id
-
-	if [ ! -f "${certpath}" ]
-	then
-		return 1
-	fi
-
-	certfile=$(cat "${certpath}")
-	if [ -z "${certfile}" ]
-	then
-		return 1
-	fi
-
-	id=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		id
-	FROM
-		system_ssl
-	ORDER BY
-		-id
-	LIMIT 1
-	")
-
-	if [ -n "${id}" ]
-	then
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		UPDATE
-			system_ssl
-		SET
-			ssl_certfile = '${certfile}'
-		WHERE
-			id = ${id}
-		"
-	else
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		INSERT INTO 
-			system_ssl (ssl_certfile)
-		VALUES ('${certfile}')
-		"
-	fi
-
-	return $?
-}
-
 write_key()
 {
 	local infile="${1}"
@@ -359,11 +311,137 @@ verify_signature()
 	return $?
 }
 
+_configure_generic_ssl()
+{
+	local ssldir="${1}"
+	local tmpfile="${2}"
+	local keyfile="${3}"
+	local certfile="${4}"
+	local importfunc="${5}"
+	local new_cert
+	local res=0
+
+	if [ -z "${ssldir}" -o \
+		-z "${keyfile}" -o \
+		-z "${certfile}" -o \
+		-z "${importfunc}" -o \
+		-z "${tmpfile}" -o ! -f "${tmpfile}" ]
+	then
+		return 1
+	fi
+
+	mkdir -p "${ssldir}"
+	size=$(wc -c "${tmpfile}" | awk '{ print $1 }')
+	if [ ${size} -gt 1 ]
+	then
+		local tmpkey="$(mktemp /tmp/tmp.XXXXXX)"
+		local tmpcrt="$(mktemp /tmp/tmp.XXXXXX)"
+
+		write_key "${tmpfile}" "${tmpkey}"
+		write_cert "${tmpfile}" "${tmpcrt}"
+
+		diff -Nq "${tmpkey}" "${keyfile}" >/dev/null
+		local rc1=$?
+
+		diff -Nq "${tmpcrt}" "${certfile}" >/dev/null
+		local rc2=$?
+
+		if [ "${rc1}" != "0" -a "${rc2}" != "0" ]
+		then
+			mv "${tmpkey}" "${keyfile}"
+			mv "${tmpcrt}" "${certfile}"
+			new_cert=true
+		else
+			rm -f "${tmpkey}" "${tmpcrt}"
+		fi
+
+	else
+		rm -f "${keyfile}" "${certfile}"
+		new_cert=true
+	fi
+
+	if ! [ -f "${keyfile}" -a -f "${certfile}" ]
+	then
+		create_CA "${keyfile}" "${certfile}"
+		new_cert=true
+	fi
+
+	if [ -s "${keyfile}" -a -s "${certfile}" ]
+	then
+		if [ ! -z "${new_cert}" ]
+		then
+			local cert=$(mktemp /tmp/tmp.XXXXXX)
+			cat "${keyfile}" "${certfile}" > "${cert}"
+			${importfunc} "${cert}"
+			rm -f "${cert}"
+		fi
+	else
+		echo "${keyfile} and/or ${certfile} does not exist."
+		res=1
+	fi
+
+	return ${res}
+}
+
+import_nginx_certificate()
+{
+	local certpath="${1}"
+	local certfile
+	local id
+
+	if [ ! -f "${certpath}" ]
+	then
+		return 1
+	fi
+
+	certfile=$(cat "${certpath}")
+	if [ -z "${certfile}" ]
+	then
+		return 1
+	fi
+
+	id=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		id
+
+	FROM
+		system_ssl
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	")
+
+	if [ -n "${id}" ]
+	then
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			system_ssl
+
+		SET
+			ssl_certfile = '${certfile}'
+
+		WHERE
+			id = ${id}
+		"
+	else
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		INSERT INTO 
+			system_ssl (ssl_certfile)
+
+		VALUES ('${certfile}')
+		"
+	fi
+
+	return $?
+}
+
 configure_nginx_ssl()
 {
 	local new_cert tmp
 
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	tmpfile=$(mktemp /tmp/tmp.XXXXXX)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ssl_certfile
@@ -375,58 +453,96 @@ configure_nginx_ssl()
 		-id
 
 	LIMIT 1
-	" > "${tmp}"
+	" > "${tmpfile}"
 
-	mkdir -p "${HTTPDSSLDIR}"
-	size=$(wc -c "${tmp}" | awk '{ print $1 }')
-	if [ ${size} -gt 1 ]
+	_configure_generic_ssl "${HTTPDSSLDIR}" \
+		"${tmpfile}" "${HTTPDKEY}" "${HTTPDCERT}" \
+		"import_nginx_certificate"
+	res=$?
+
+	rm -f "${tmpfile}"
+	return ${res}
+}
+
+import_proftpd_certificate()
+{
+	local certpath="${1}"
+	local certfile
+	local id
+
+	if [ ! -f "${certpath}" ]
 	then
-		local tmpkey="$(mktemp /tmp/tmp.XXXXXX)"
-		local tmpcrt="$(mktemp /tmp/tmp.XXXXXX)"
+		return 1
+	fi
 
-		write_key "${tmp}" "${tmpkey}"
-		write_cert "${tmp}" "${tmpcrt}"
+	certfile=$(cat "${certpath}")
+	if [ -z "${certfile}" ]
+	then
+		return 1
+	fi
 
-		diff -Nq "${tmpkey}" "${HTTPDKEY}" >/dev/null
-		local rc1=$?
+	id=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		id
 
-		diff -Nq "${tmpcrt}" "${HTTPCVERT}" >/dev/null
-		local rc2=$?
+	FROM
+		services_ftp
 
-		if [ "${rc1}" != "0" -a "${rc2}" != "0" ]
-		then
-			mv "${tmpkey}" "${HTTPDKEY}"
-			mv "${tmpcrt}" "${HTTPDCERT}"
-			new_cert=true
-		else
-			rm -f "${tmpkey}" "${tmpcrt}"
-		fi
+	ORDER BY
+		-id
 
+	LIMIT 1
+	")
+
+	if [ -n "${id}" ]
+	then
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			services_ftp
+
+		SET
+			ftp_ssltls_certfile = '${certfile}'
+
+		WHERE
+			id = ${id}
+		"
 	else
-		rm -f "${HTTPDKEY}" "${HTTPDCERT}"
-		new_cert=true
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		INSERT INTO 
+			services_ftp (ftp_ssltls_certfile)
+
+		VALUES ('${certfile}')
+		"
 	fi
 
-	if ! [ -f "${HTTPDKEY}" -a -f "${HTTPDCERT}" ]
-	then
-		create_CA "${HTTPDKEY}" "${HTTPDCERT}"
-		new_cert=true
-	fi
+	return $?
+}
 
-	if [ -s "${HTTPDKEY}" -a -s "${HTTPDCERT}" ]
-	then
-		if [ ! -z "${new_cert}" ]
-		then
-			local cert=$(mktemp /tmp/tmp.XXXXXX)
-			cat "${HTTPDKEY}" "${HTTPDCERT}" > "${cert}"
-			import_certificate "${cert}"
-			rm -f "${cert}"
-		fi
-	else
-		echo "${HTTPDKEY} and/or ${HTTPDCERT} does not exist."
-	fi
+configure_proftpd_ssl()
+{
+	local tmpfile res
 
-	rm -f "${tmp}"
+	tmpfile=$(mktemp /tmp/tmp.XXXXXX)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ftp_ssltls_certfile
+
+	FROM
+		services_ftp
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	" > "${tmpfile}"
+
+	_configure_generic_ssl "${FTPDSSLDIR}" \
+		"${tmpfile}" "${FTPDKEY}" "${FTPDCERT}" \
+		"import_proftpd_certificate"
+	res=$?
+
+	rm -f "${tmpfile}"
+	return ${res}
 }
 
 do_openssl_config()
