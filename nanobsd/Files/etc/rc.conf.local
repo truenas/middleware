@@ -29,6 +29,49 @@
 
 . /etc/rc.freenas
 
+
+http_ssl_enabled()
+{
+	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			stg_guiprotocol
+		FROM
+			system_settings
+		WHERE
+			stg_guiprotocol = 'https'
+		ORDER BY
+			-id
+		LIMIT 1
+	")
+
+	if [ -n "${ssl}" ]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+ftp_ssl_enabled()
+{
+	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			ftp_ssltls
+		FROM
+			services_ftp
+		ORDER BY
+			-id
+		LIMIT 1
+	")
+
+	if [ "${ssl}" -gt "0" ]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 _interface_config()
 {
 	local IFS=\|
@@ -251,6 +294,24 @@ _nut_config() {
 	done
 }
 
+_ssl_config()
+{
+	local ssl_list
+
+	if http_ssl_enabled
+	then
+		ssl_list="${ssl_list} nginx"
+	fi
+
+	if ftp_ssl_enabled
+	then
+		ssl_list="${ssl_list} proftpd"
+	fi
+
+	ssl_list=$(echo ${ssl_list}|xargs)
+	echo "ixssl_list=\"${ssl_list}\""
+}
+
 _gen_conf()
 {
 	## First, import network interface configuration.
@@ -323,10 +384,7 @@ _gen_conf()
 		echo "smartd_flags=\"-i ${inter}\""
 	done
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol FROM system_settings WHERE stg_guiprotocol = 'https' ORDER BY -id LIMIT 1" | \
-	while read ssl_enable; do
-		echo "ixssl_list=\"nginx\""
-	done
+	_ssl_config
 
 	local kbdmap
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \

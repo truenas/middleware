@@ -192,6 +192,7 @@ class FTPForm(ModelForm):
                 pass
 
         super(FTPForm, self).__init__(*args, **kwargs)
+        self.instance._original_ftp_ssltls = self.instance.ftp_ssltls
 
     def clean_ftp_passiveportsmin(self):
         ports = self.cleaned_data['ftp_passiveportsmin']
@@ -240,6 +241,11 @@ class FTPForm(ModelForm):
         started = notifier().reload("ftp")
         if started is False and models.services.objects.get(srv_service='ftp').srv_enable:
             raise ServiceFailed("ftp", _("The ftp service failed to start."))
+
+    def done(self, *args, **kwargs):
+        if self.instance._original_ftp_ssltls != self.instance.ftp_ssltls and \
+            not self.instance._original_ftp_ssltls:
+            notifier().start_ssl("proftpd")
 
 
 class TFTPForm(ModelForm):
