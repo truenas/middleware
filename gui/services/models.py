@@ -1183,6 +1183,11 @@ class FTP(Model):
             )
     ftp_ssltls = models.BooleanField(
             verbose_name=_("Enable SSL/TLS"))
+    ftp_ssltls_certfile = models.TextField(
+            verbose_name=_("Certificate and private key"),
+            blank=True,
+            help_text=_("Place the contents of your certificate and private key here.")
+            )
     ftp_options = models.TextField(
             max_length=120,
             verbose_name=_("Auxiliary parameters"),
