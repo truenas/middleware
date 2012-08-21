@@ -293,7 +293,7 @@ add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
 				WITH_PYTHON_MODULE=y
 add_port net/liboping WITHOUT_X11=y
 #-add_port net-mgmt/collectd
-add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y WITHOUT_X11=y
+add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y WITHOUT_X11=y WITH_DISK=y WITH_PYTHON=y
 fi
 add_port devel/py-ipaddr
 add_port converters/base64
@@ -334,6 +334,7 @@ add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
 add_port devel/py-daemon
 add_port devel/py-polib
+add_port devel/py-simplejson
 
 add_port sysutils/bsdstats
 

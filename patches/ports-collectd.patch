@@ -1,0 +1,12 @@
+--- net-mgmt/collectd/Makefile.orig	2012-08-21 12:06:54.098136453 -0700
++++ net-mgmt/collectd/Makefile	2012-08-21 12:07:24.188138538 -0700
+@@ -130,7 +130,8 @@
+ 		--without-libcredis \
+ 		--without-libganglia \
+ 		--without-libesmtp \
+-		--disable-static
++		--disable-static \
++		--enable-network
+ 
+ .if defined(WITH_DEBUG)
+ CONFIGURE_ARGS+=--enable-debug
