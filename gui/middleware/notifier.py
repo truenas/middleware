@@ -1871,6 +1871,77 @@ class notifier:
         self.__system("/bin/chmod 755 %s/.freenas" % path)
         self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
+    def create_upload_location(self):
+        """
+        Create a temporary location for firmware upgrade
+        over a memory device (mdconfig) using UFS
+
+        Raises:
+            MiddlewareError
+        """
+
+        sw_name = get_sw_name()
+        label = "%smdu" % (sw_name, )
+        doc = self.__geom_confxml()
+
+        pref = doc.xpathEval("//class[name = 'LABEL']/geom/"
+            "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
+        #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
+        if not pref:
+            proc = self.__pipeopen("mdconfig -a -t swap -s 2g")
+            mddev, err = proc.communicate()
+            if proc.returncode != 0:
+                raise MiddlewareError("Could not create memory device: %s" % err)
+
+            proc = self.__pipeopen("newfs -L %s /dev/%s" % (label, mddev))
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Could not create temporary filesystem: %s" % err)
+
+            self.__system("/bin/mkdir -p /var/tmp/firmware")
+            proc = self.__pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
+
+        self.__system("/usr/sbin/chown www:www /var/tmp/firmware")
+        self.__system("/bin/chmod 755 /var/tmp/firmware")
+
+    def destroy_upload_location(self):
+        """
+        Destroy a temporary location for firmware upgrade
+        over a memory device (mdconfig) using UFS
+
+        Raises:
+            MiddlewareError
+
+        Returns:
+            bool
+        """
+
+        sw_name = get_sw_name()
+        label = "%smdu" % (sw_name, )
+        doc = self.__geom_confxml()
+
+        pref = doc.xpathEval("//class[name = 'LABEL']/geom/"
+            "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
+        if not pref:
+            return False
+        prov = doc.xpathEval("//class[name = 'MD']//provider[@id = '%s']/name" % pref[0].content)
+        if not prov:
+            return False
+
+        mddev = prov[0].content
+
+        self.__system("umount /dev/ufs/%s" % (label, ))
+        proc = self.__pipeopen("mdconfig -d -u %s" % (mddev, ))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
+
+        return True
+
+
     def validate_update(self, path):
 
         os.chdir(os.path.dirname(path))

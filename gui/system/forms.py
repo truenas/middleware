@@ -129,6 +129,7 @@ class FirmwareWizard(FileWizard):
                 #del cleaned_data["firmware"]
 
         notifier().apply_update(path)
+        notifier().destroy_upload_location()
         self.request.session['allow_reboot'] = True
 
         response = render_to_response('system/done.html', {
@@ -475,9 +476,16 @@ class FirmwareTemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
+        self.fields['mountpoint'].choices.append(
+            (':temp:', _('Memory device'))
+        )
 
     def done(self, *args, **kwargs):
-        notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
+        mp = str(self.cleaned_data["mountpoint"])
+        if mp == ":temp:":
+            notifier().create_upload_location()
+        else:
+            notifier().change_upload_location(mp)
 
 
 class FirmwareUploadForm(Form):
