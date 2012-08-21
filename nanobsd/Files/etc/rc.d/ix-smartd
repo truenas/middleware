@@ -41,6 +41,7 @@ parse_devlist()
 {
 	disk=$1
 
+	local IFS="|"
 	while read DRIVER CONTROLLER_ID CHANNEL_NO DEVICE; do
 		case ${DEVICE}:${DRIVER} in
 		# Highpoint Rocket Raid 27xx controller
