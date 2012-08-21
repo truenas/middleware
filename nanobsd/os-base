@@ -696,7 +696,7 @@ freenas_custom()
 	fi
 
 	# We dont need proftpd blacklist.dat.sample, takes up too much space in /etc
-	rm -f ${NANO_WORLDDIR}/usr/local/etc/proftpd/blacklist.dat.sample
+	rm -f ${NANO_WORLDDIR}/conf/base/etc/local/proftpd/blacklist.dat.sample
 
 	# Last second tweaks
 	chown -R root:wheel ${NANO_WORLDDIR}/root
