@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2012-04-07 02:43+0200\n"
-"Last-Translator: Evilupe <evilupe@gmail.com>\n"
+"PO-Revision-Date: 2012-08-21 07:05+0200\n"
+"Last-Translator: wowik <wostankov@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -113,12 +113,13 @@ msgstr "Всегда включён"
 # или Отключено
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Отключён"
+msgstr "Запрещен"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr ""
-"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остановка HDD)"
+"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остановка "
+"шпинделя)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -1176,9 +1177,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG успешно добавлен"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Этот IP уже существует."
+msgstr "Этот IP уже используется."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1198,16 +1198,16 @@ msgstr "PBI файл прошивки для установки"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Вы должны выключить службу Plugins перед продолжением"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Этот IP уже существует."
+msgstr "Путь %s уже существует."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Полная длина пути jail не может превышать 76 символов"
 
 #: plugins/forms.py:200
 #, fuzzy
@@ -1224,14 +1224,12 @@ msgid "Plugins jail path"
 msgstr "Jail путь плагинов"
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Jail IP адрес"
+msgstr "Jail IPv4 адрес"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Маска сети IPv4"
+msgstr "Маска сети IPv4 Jail"
 
 #: plugins/forms.py:228
 #, fuzzy
@@ -1244,21 +1242,21 @@ msgstr "Plugins Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Смонтировано?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Полная длинна пути не может превышать 88 символов"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Кэш не может быть восстановлен"
+msgstr "Путь не может бвть смонтирован %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Кэш не может быть восстановлен"
+msgstr "Путь не может быть размонтирован %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1286,9 +1284,8 @@ msgid "Version of the plugin"
 msgstr "Версия плагина"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Версия плагина"
+msgstr "Версия API плагина"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1326,7 +1323,7 @@ msgstr "Плагины"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Источник"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1338,9 +1335,8 @@ msgid "Mount Point"
 msgstr "Точка монтирования"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "Точка монтирования"
+msgstr "Точки монтирования"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1360,18 +1356,16 @@ msgid "Plugin successfully updated"
 msgstr "Плагин успешно обновлен."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "Плагин успешно обновлен."
+msgstr "Плагин успешно установлен."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
 msgstr ""
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s успешно обновлен."
+msgstr "Jail успешно импортирован."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1404,9 +1398,8 @@ msgid "This IP already exists."
 msgstr "Этот IP уже существует."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "Сервис плагинов перезагрузился не удачно."
+msgstr "Ошибка перезагрузки сервиса Plugins Jail."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1608,9 +1601,8 @@ msgstr ""
 "контроля метода авторизации."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Недопустимая маска"
+msgstr "Недопустимая сеть"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -2102,9 +2094,8 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "TCP порт логического контроллера (3261 по умолчанию)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Сетевая маска авторизации контроллера"
+msgstr "Авторизованная сеть контроллера"
 
 #: services/models.py:360
 #, fuzzy
@@ -2408,19 +2399,21 @@ msgid "Name of the plugins jail"
 msgstr "Имя plugins jail"
 
 #: services/models.py:815
+#, fuzzy
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Имя Jail может содержать только буквы, цифры и дефис. Оно не должно "
+"заканчиваться дефисом."
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Jail IP адрес"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "Маска сети IPv4"
+msgstr "Сетевая маска Jail"
 
 #: services/models.py:829
 #, fuzzy
@@ -3263,9 +3256,8 @@ msgid "Settings"
 msgstr "Настройки"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "управление iSCSI"
+msgstr "Управление"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3670,14 +3662,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "Использовать AFP3 привилегии UNIX."
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Разрешения на файл"
+msgstr "Разрешения на файл по умолчанию"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Разрешения на каталог"
+msgstr "Разрешения на каталог по умолчанию"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
@@ -3838,14 +3828,17 @@ msgid "Path is not a directory."
 msgstr "Путь не является каталогом."
 
 #: storage/forms.py:264
+#, fuzzy
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr ""
+msgstr "Невозможно выбрать существующий том ZFS и указать новое имя тома."
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Вы должны указать новое имя тома или выбрать существующий том ZFS для "
+"добавления виртуальных устройств"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -3902,9 +3895,8 @@ msgstr ""
 "статус пула"
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Службу не удалось перезапустить."
+msgstr "Службу SMART  не удалось перезапустить."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -4072,21 +4064,20 @@ msgid "day of month"
 msgstr "день месяца"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "Method"
-msgstr "Метод авторизации"
+msgstr "Метод"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Быстрый"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Полная с заполнением нулями"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Послная с произвольными данными"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4531,9 +4522,8 @@ msgid "The scrub process has begun"
 msgstr "Процесс scrub начался"
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s успешно добавлен"
+msgstr "Диск успешно очищен"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -5557,9 +5547,8 @@ msgid "No plugins installed"
 msgstr "Нет установленных плагинов"
 
 #: templates/plugins/jail_import.html:2
-#, fuzzy
 msgid "Import"
-msgstr "Импортировать том"
+msgstr "Импорт"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5580,14 +5569,12 @@ msgid "Please wait..."
 msgstr "Пожалуйста, подождите..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "Точка монтирования"
+msgstr "Редактировать точку монтирования"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "Точка монтирования"
+msgstr "Удалить точка монтирования"
 
 #: templates/plugins/mountpoints.html:32
 #, fuzzy
@@ -5595,15 +5582,13 @@ msgid "No mount points defined"
 msgstr "Задания Cron не определены."
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "Точка монтирования"
+msgstr "Добавить точку монтирования"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
-#, fuzzy
 msgid "Upload"
-msgstr "Загрузить плагин"
+msgstr "Выгрузить"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
@@ -5711,7 +5696,7 @@ msgstr "Нет"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Ядро"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5832,9 +5817,8 @@ msgid "Add Target"
 msgstr "Добавить Цель"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
-msgstr "Точка монтирования"
+msgstr "Просмотреть точки монтирования"
 
 #: templates/services/plugins.html:22
 msgid ""
@@ -5843,27 +5827,24 @@ msgid ""
 msgstr ""
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Версия OS"
+msgstr "Версия"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Службы"
+msgstr "Статус службы"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
 msgstr "Обновить"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Удалить плагин"
+msgstr "Обновить плагин"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
@@ -5888,7 +5869,7 @@ msgstr "Активные общие ресурсы"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
-msgstr "Нет активных общих Apple (AFP) ресурсов."
+msgstr "Нет активных общих ресурсов Apple (AFP) ."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
@@ -6012,9 +5993,8 @@ msgid "Are you sure you want to remove?"
 msgstr "Вы уверены, что хотите удалить?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "Вы уверены, что хотите отключить?"
+msgstr "Вы уверены, что хотите очистить?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
@@ -6402,9 +6382,8 @@ msgid ""
 msgstr "Вы собираетесь <strong>ПЕРЕЗАГРУЗИТЬ</strong> систему?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Каталог"
+msgstr "История"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
