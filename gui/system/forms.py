@@ -129,7 +129,10 @@ class FirmwareWizard(FileWizard):
                 #del cleaned_data["firmware"]
 
         notifier().apply_update(path)
-        notifier().destroy_upload_location()
+        try:
+            notifier().destroy_upload_location()
+        except Exception, e:
+            log.warn("Failed to destroy upload location: %s", e.value)
         self.request.session['allow_reboot'] = True
 
         response = render_to_response('system/done.html', {

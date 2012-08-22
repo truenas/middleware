@@ -1937,7 +1937,7 @@ class notifier:
         proc = self.__pipeopen("mdconfig -d -u %s" % (mddev, ))
         err = proc.communicate()[1]
         if proc.returncode != 0:
-            raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
+            raise MiddlewareError("Could not destroy memory device: %s" % err)
 
         return True
 
