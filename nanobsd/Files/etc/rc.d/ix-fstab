@@ -53,8 +53,6 @@ generate_fstab_real()
 
 			mkdir -p ${mountpoint}
 
-			
-
 			if [ "${mountpoint#/mnt}" = "${mountpoint}" ]; then
 				echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	${passno}"
 			else
