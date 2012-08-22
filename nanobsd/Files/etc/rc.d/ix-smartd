@@ -45,7 +45,7 @@ parse_devlist()
 	while read DRIVER CONTROLLER_ID CHANNEL_NO DEVICE; do
 		case ${DEVICE}:${DRIVER} in
 		# Highpoint Rocket Raid 27xx controller
-		${disk}:hpt27xx|${disk}:rr274x_3x)
+		${disk}:rr274x_3x)
 			if [ $CHANNEL_NO -gt 16 ]; then
 				CHANNEL_NO=$(($CHANNEL_NO-16))
 			elif [ $CHANNEL_NO -gt 8 ]; then
