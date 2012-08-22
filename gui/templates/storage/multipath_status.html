@@ -1,11 +1,35 @@
 <div id="multipathGrid" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="doLayout: true">
 <script type="dojo/method">
 
-    var store = new dojo.data.ItemFileReadStore({
-        url: "{% url storage_multipath_status_json %}",
+require([
+  "dojo/dom",
+  "dojo/dom-construct",
+  "dojo/json",
+  "dojo/on",
+  "dojo/data/ItemFileReadStore",
+  "dijit/registry",
+  "dijit/layout/ContentPane",
+  "dijit/tree/ForestStoreModel",
+  "dijit/form/Button",
+  "dojox/grid/TreeGrid"
+  ], function(
+  dom,
+  domConstruct,
+  JSON,
+  on,
+  ItemFileReadStore,
+  registry,
+  ContentPane,
+  ForestStoreModel,
+  Button,
+  TreeGrid
+  ) {
+
+    var store = new ItemFileReadStore({
+        url: "{% url storage_multipath_status_json %}"
         });
 
-    var treeModel = new dijit.tree.ForestStoreModel({
+    var treeModel = new ForestStoreModel({
         store: store,
         rootLabel: 'Multipaths',
         query: { 'type': 'root' },
@@ -13,15 +37,15 @@
     });
 
     actions = function(v) {
-        var content = new dijit.layout.ContentPane({});
-        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
+        var content = new ContentPane({});
+        var gridhtml = registry.getEnclosingWidget(dom.byId(this.id));
 
-        var json = dojo.fromJson(v);
+        var json = JSON.parse(v);
         if(json == undefined) return content;
 
         if(json.edit_url) {
-            var b = new dijit.form.Button({label: gettext("Edit")});
-            dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
+            var b = new Button({label: gettext("Edit")});
+            on(b, 'click', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
             content.domNode.appendChild(b.domNode);
         }
 
@@ -35,7 +59,7 @@
         ];
 
     // create a new grid:
-    var grid4 = new dojox.grid.TreeGrid({
+    var grid4 = new TreeGrid({
         treeModel: treeModel,
         rowSelector: true,
         defaultOpen: true,
@@ -43,8 +67,8 @@
         },
         document.createElement('div'));
 
-    container = dojo.byId("multipathGrid");
-    dojo.html._emptyNode(container);
+    container = dom.byId("multipathGrid");
+    domConstruct.empty(container);
     container.appendChild(grid4.domNode);
     grid4.startup();
 </script>
