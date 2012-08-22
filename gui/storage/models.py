@@ -57,6 +57,11 @@ class Volume(Model):
             blank=True,
             editable=False,
             )
+    vol_encrypt = models.IntegerField(
+            choices=choices.VolumeEncrypt_Choices,
+            default=0,
+            verbose_name=_("Encryption Type"),
+            )
 
     class Meta:
         verbose_name = _("Volume")
@@ -328,7 +333,6 @@ class Scrub(Model):
         except:
             pass
 
-
 class Disk(Model):
     disk_name = models.CharField(
             max_length=120,
@@ -456,6 +460,14 @@ class Disk(Model):
     def __unicode__(self):
         return unicode(self.disk_name)
 
+class EncryptedDisk(Model):
+    encrypted_volume = models.ForeignKey(Volume)
+    encrypted_disk = models.ForeignKey(Disk)
+    encrypted_provider = models.CharField(
+            unique=True,
+            max_length=120,
+            verbose_name=_("Underlying provider"),
+            )
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)

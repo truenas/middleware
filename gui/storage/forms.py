@@ -150,6 +150,10 @@ class VolumeWizardForm(forms.Form):
         required=False,
         initial=False,
         help_text=_('Force 4096 bytes sector size'))
+    encryption = forms.BooleanField(
+        required=False,
+        initial=False,
+        help_text=_('Whole disk encryption'))
     dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP,
         initial="off",
@@ -334,6 +338,10 @@ class VolumeWizardForm(forms.Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
+        if self.cleaned_data.get("encryption", False):
+            volume_encrypt = 1
+        else:
+            volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
         ufspath = self.cleaned_data['ufspath']
         mp_options = "rw"
@@ -357,7 +365,7 @@ class VolumeWizardForm(forms.Form):
             else:
                 add = False
                 volume = models.Volume(vol_name=volume_name,
-                    vol_fstype=volume_fstype)
+                    vol_fstype=volume_fstype, vol_encrypt=volume_encrypt)
                 volume.save()
 
                 mp_path = ufspath if ufspath else '/mnt/' + volume_name

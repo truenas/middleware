@@ -62,6 +62,7 @@ WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
+GELI_KEYFILE = "/data/geli.key"
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -955,7 +956,27 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __prepare_zfs_vdev(self, disks, swapsize, force4khack):
+    def __encrypt_device(self, devname, diskname, volume):
+        from freenasUI.storage.models import Volume, Disk, EncryptedDisk
+        
+        if not os.path.exists(GELI_KEYFILE):
+            self.__system("dd if=/dev/random of=%s bs=64 count=1" % (GELI_KEYFILE))
+        
+        self.__system("geli init -B none -K %s -P /dev/%s" % (GELI_KEYFILE, devname))
+        self.__system("geli attach -k %s -p /dev/%s" % (GELI_KEYFILE, devname))
+        # TODO: initialize the provider in background (wipe with random data)
+
+        ident = self.device_to_identifier(diskname)
+        diskobj = Disk.objects.get(disk_identifier=ident)
+        encdiskobj = EncryptedDisk()
+        encdiskobj.encrypted_volume = volume
+        encdiskobj.encrypted_disk = diskobj
+        encdiskobj.encrypted_provider = devname
+        encdiskobj.save()
+        
+        return ("/dev/%s.eli" % devname)
+
+    def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']
         gnop_devs = []
         if force4khack == None:
@@ -964,6 +985,10 @@ class notifier:
         else:
             test4k = not force4khack
             want4khack = force4khack
+        if encrypt:
+            test4k = False
+            force4khack = False
+            want4khack = False
         first = True
         for disk in disks:
             rv = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -977,12 +1002,20 @@ class notifier:
 
         doc = self.__geom_confxml()
         for disk in disks:
-
             devname = self.part_type_from_device('zfs', disk)
             if want4khack:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
                 devname = '/dev/%s.nop' % devname
                 gnop_devs.append(devname)
+            elif encrypt:
+                uuid = doc.xpathEval("//class[name = 'PART']"
+                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
+                    )
+                if not uuid:
+                    log.warn("Could not determine GPT uuid for %s", devname)
+                    raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
+                else:
+                    devname = self.__encrypt_device("gptid/%s" % uuid[0].content, disk, volume)
             else:
                 uuid = doc.xpathEval("//class[name = 'PART']"
                     "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
@@ -1000,9 +1033,11 @@ class notifier:
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_name = str(volume.vol_name)
         z_vdev = ""
+        encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
         gnop_devs = []
+        device_list = []
 
         want4khack = force4khack
 
@@ -1015,8 +1050,9 @@ class notifier:
             else:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack)
+            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack, encrypt, volume)
             z_vdev += " ".join(vdevs)
+            device_list += vdevs
             gnop_devs += gnops
 
         # Finally, create the zpool.
@@ -1053,8 +1089,11 @@ class notifier:
             self.__system("zpool import -R /mnt %s" % (z_name))
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
+        if encrypt:
+            for devname in device_list:
+                self.__system('/sbin/geli detach -l %s' % (devname))
 
-    def zfs_volume_attach_group(self, volume, group, force4khack=False):
+    def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
@@ -1063,6 +1102,7 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
         z_vdev = ""
+        encrypt = (volume.vol_encrypt >= 1)
 
         # FIXME swapoff -a is overkill
         self.__system("swapoff -a")
@@ -1071,11 +1111,14 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack)[0]
+        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack, encrypt, volume)[0]
         z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
+        if encrypt:
+            for devname in vdev:
+                self.__system('/sbin/geli detach -l %s' % (devname))
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None):
@@ -1287,6 +1330,10 @@ class notifier:
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
         from_swap = self.part_type_from_device('swap', from_disk)
+        encrypt = (volume.vol_encrypt >= 1)
+
+        # TODO: support for passphrase
+        assert (not encrypt) or volume.vol_encrypt == 1
 
         if from_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (from_swap, ))
@@ -1314,14 +1361,18 @@ class notifier:
         uuid = doc.xpathEval("//class[name = 'PART']"
             "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
             )
-        if not uuid:
-            log.warn("Could not determine GPT uuid for %s", to_label)
-            devname = to_label
+        if not encrypt:
+            if not uuid:
+                log.warn("Could not determine GPT uuid for %s", to_label)
+                devname = to_label
+            else:
+                devname = "gptid/%s" % uuid[0].content
         else:
-            devname = "gptid/%s" % uuid[0].content
-
-        if to_swap != '':
-            self.__system('/sbin/swapon /dev/%s' % (to_swap))
+            if not uuid:
+                log.warn("Could not determine GPT uuid for %s", to_label)
+                raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
+            else:
+                devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume)
 
         if from_disk == to_disk:
             self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
@@ -1334,14 +1385,20 @@ class notifier:
             ret = p1.returncode
             if ret != 0:
                 if from_swap != '':
-                    self.__system('/sbin/swapon /dev/%s' % (from_swap))
+                    self.__system('/sbin/geli onetime /dev/%s' % (from_swap))
+                    self.__system('/sbin/swapon /dev/%s.eli' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
                     self.__system('/sbin/swapoff /dev/%s' % (to_swap))
+                if encrypt:
+                    self.__system('/sbin/geli detach %s' % (devname))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
+            if encrypt:
+                self.__system('/sbin/geli detach -l %s' % (devname))
 
         if to_swap:
-            self.__system('/sbin/swapon /dev/%s' % (to_swap))
+            self.__system('/sbin/geli onetime /dev/%s' % (to_swap))
+            self.__system('/sbin/swapon /dev/%s.eli' % (to_swap))
 
         return ret
 
@@ -1513,6 +1570,7 @@ class notifier:
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-fstab quietstart")
+        self.__system("/usr/sbin/service encswap quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
         self.restart("collectd")

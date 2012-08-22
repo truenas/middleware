@@ -1,0 +1,49 @@
+Index: etc/rc.d/geli
+===================================================================
+--- etc/rc.d/geli	(revision 239481)
++++ etc/rc.d/geli	(working copy)
+@@ -43,6 +43,11 @@
+ {
+ 	devices=`geli_make_list`
+ 
++	if [ ! -e /data/freenas-v1.db ]; then
++		UMOUNTDATA=yes
++		mount -o rdonly /data
++	fi
++
+ 	if [ -z "${geli_tries}" ]; then
+ 		if [ -n "${geli_attach_attempts}" ]; then
+ 			# Compatibility with rc.d/gbde.
+@@ -53,7 +58,7 @@
+ 	fi
+ 
+ 	for provider in ${devices}; do
+-		provider_=`ltr ${provider} '/' '_'`
++		provider_=`ltr ${provider} '/-' '_'`
+ 
+ 		eval "flags=\${geli_${provider_}_flags}"
+ 		if [ -z "${flags}" ]; then
+@@ -72,6 +77,10 @@
+ 			done
+ 		fi
+ 	done
++
++	if [ "${UMOUNTDATA}" = "yes" ]; then
++		umount /data
++	fi
+ }
+ 
+ geli_stop()
+Index: etc/rc.d/geli2
+===================================================================
+--- etc/rc.d/geli2	(revision 239481)
++++ etc/rc.d/geli2	(working copy)
+@@ -42,7 +42,7 @@
+ 	devices=`geli_make_list`
+ 
+ 	for provider in ${devices}; do
+-		provider_=`ltr ${provider} '/' '_'`
++		provider_=`ltr ${provider} '/-' '_'`
+ 
+ 		eval "autodetach=\${geli_${provider_}_autodetach}"
+ 		if [ -z "${autodetach}" ]; then

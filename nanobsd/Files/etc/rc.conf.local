@@ -393,6 +393,10 @@ _gen_conf()
 			echo "keymap=\"${kbdmap}\""
 		fi
 	done
+
+	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+		tr \\\n \  `\""
+	echo "geli_default_flags=\"-p -k /data/geli.key\""
 }
 
 # If we're running really early, then mount /data read-only
