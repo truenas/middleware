@@ -3124,6 +3124,7 @@ class notifier:
 
     def __init__(self):
         self.__confxml = None
+        self.__camcontrol = None
         self.__diskserial = {}
 
     def __geom_confxml(self):
@@ -3134,7 +3135,30 @@ class notifier:
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
             return self.__diskserial.get(devname)
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+
+        args = ["/dev/%s" % devname]
+        camcontrol = self._camcontrol_list()
+        info = camcontrol.get(devname)
+        if info is not None:
+            if info.get("drv") == "rr274x_3x":
+                channel = info["channel"]
+                if channel > 16:
+                    channel -= 16
+                elif channel > 8:
+                    channel -= 8
+                args = [
+                    "/dev/%s" % info["drv"],
+                    "-d",
+                    "hpt,%d/%d" % (info["controller"], channel)
+                    ]
+            elif info.get("drv").startswith("hpt"):
+                args = [
+                    "/dev/%s" % info["drv"],
+                    "-d",
+                    "hpt,%d/%d" % (info["controller"], info["channel"])
+                    ]
+
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
         search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
         if search:
@@ -3304,6 +3328,47 @@ class notifier:
         parse = zfs.parse_status(name, doc, res)
         return parse
 
+    def _camcontrol_list(self):
+        """
+        Parse camcontrol devlist -v output to gather
+        controller id, channel no and driver from a device
+
+        Returns:
+            dict(devname) = dict(drv, controller, channel)
+        """
+        if self.__camcontrol is not None:
+            return self.__camcontrol
+
+        self.__camcontrol = {}
+
+        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
+        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
+        drv, cid, tgt, dev, devtmp = (None, ) * 5
+
+        proc = self.__pipeopen("camcontrol devlist -v")
+        for line in proc.communicate()[0].splitlines():
+            if not line.startswith('<'):
+                reg = re_drv_cid.search(line)
+                if not reg:
+                    continue
+                drv = reg.group("drv")
+                cid = reg.group("cid")
+            else:
+                reg = re_tgt.search(line)
+                if not reg:
+                    continue
+                tgt = reg.group("tgt")
+                dev = reg.group("dv1")
+                devtmp = reg.group("dv2")
+                if dev.startswith("pass"):
+                    dev = devtmp
+                self.__camcontrol[dev] = {
+                    'drv': drv,
+                    'controller': int(cid),
+                    'channel': int(tgt),
+                    }
+        return self.__camcontrol
+
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
 
@@ -3312,6 +3377,7 @@ class notifier:
             return
 
         self.__diskserial.clear()
+        self.__camcontrol = None
 
         ident = self.device_to_identifier(devname)
         qs = Disk.objects.filter(disk_identifier=ident)
@@ -3340,6 +3406,7 @@ class notifier:
 
         disks = self.__get_disks()
         self.__diskserial.clear()
+        self.__camcontrol = None
 
         in_disks = {}
         serials = []
