@@ -976,6 +976,33 @@ class notifier:
         
         return ("/dev/%s.eli" % devname)
 
+    def geli_passphrase(self, dev, passphrase):
+        """
+        Set a passphrase in a geli
+        If passpgrase is None then remove the passphrase
+
+        Raises:
+            MiddlewareError
+        """
+        if passphrase is not None:
+            proc = self.__pipeopen("geli setkey -k %s -K %s -J %s %s" % (
+                GELI_KEYFILE,
+                GELI_KEYFILE,
+                passphrase,
+                dev,
+                )
+                )
+        else:
+            proc = self.__pipeopen("geli setkey -k %s -K %s -P %s" % (
+                GELI_KEYFILE,
+                GELI_KEYFILE,
+                dev,
+                )
+                )
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']
         gnop_devs = []

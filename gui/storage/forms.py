@@ -32,7 +32,9 @@ from stat import S_ISDIR
 import logging
 import os
 import re
+import tempfile
 
+from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.db import transaction
 from django.http import QueryDict
 from django.utils.safestring import mark_safe
@@ -1357,3 +1359,117 @@ class DiskWipeForm(forms.Form):
         ),
         widget=forms.widgets.RadioSelect(),
         )
+
+
+class CreatePassphraseForm(forms.Form):
+
+    passphrase = forms.CharField(
+        label=_("Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        )
+    passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        )
+
+    def clean_passphrase2(self):
+        pass1 = self.cleaned_data.get("passphrase")
+        pass2 = self.cleaned_data.get("passphrase2")
+        if pass1 != pass2:
+            raise forms.ValidationError(
+                _("The passphrases do not match")
+                )
+        return pass2
+
+    def done(self, volume):
+        passphrase = self.cleaned_data.get("passphrase")
+        if passphrase is not None:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
+        else:
+            passfile = None
+        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
+            notifier().geli_passphrase(d.encrypted_provider, passfile)
+        if passfile is not None:
+            os.unlink(passfile)
+        volume.vol_encrypt = 2
+        volume.save()
+
+
+class ChangePassphraseForm(forms.Form):
+
+    adminpw = forms.CharField(
+        label=_("Admin password"),
+        widget=forms.widgets.PasswordInput(),
+        )
+    passphrase = forms.CharField(
+        label=_("New Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        )
+    passphrase2 = forms.CharField(
+        label=_("Confirm New Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        )
+    remove = forms.BooleanField(
+        label=_("Remove passphrase"),
+        required=False,
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(ChangePassphraseForm, self).__init__(*args, **kwargs)
+        self.fields['remove'].widget.attrs['onClick'] = (
+            'toggleGeneric("id_remove", ["id_passphrase", "id_passphrase2"], false);')
+        if self.data.get("remove", False):
+            self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
+            self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
+
+        user = User.objects.filter(is_superuser=True,
+            password=UNUSABLE_PASSWORD)
+        if user.exists():
+            del self.fields['adminpw']
+
+    def clean_adminpw(self):
+        pw = self.cleaned_data.get("adminpw")
+        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
+            raise forms.ValidationError(
+                _("Invalid password")
+                )
+        return pw
+
+    def clean_passphrase2(self):
+        pass1 = self.cleaned_data.get("passphrase")
+        pass2 = self.cleaned_data.get("passphrase2")
+        if pass1 != pass2:
+            raise forms.ValidationError(
+                _("The passphrases do not match")
+                )
+        return pass2
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if cdata.get("remove"):
+            del self._errors['passphrase']
+            del self._errors['passphrase2']
+        return cdata
+
+    def done(self, volume):
+        if self.cleaned_data.get("remove"):
+            passphrase = None
+        else:
+            passphrase = self.cleaned_data.get("passphrase")
+
+        if passphrase is not None:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
+        else:
+            passfile = None
+        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
+            notifier().geli_passphrase(d.encrypted_provider, passfile)
+        if passfile is not None:
+            os.unlink(passfile)
+            volume.vol_encrypt = 2
+        else:
+            volume.vol_encrypt = 1
+        volume.save()

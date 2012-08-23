@@ -994,3 +994,38 @@ def disk_wipe_progress(request, devname):
     except Exception, e:
         log.warn("Could not check for disk wipe progress: %s", e)
     return HttpResponse('new Object({state: "starting"});')
+
+
+def volume_create_passphrase(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.CreatePassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Passphrase created")
+                )
+    else:
+        form = forms.CreatePassphraseForm()
+    return render(request, "storage/create_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
+
+def volume_change_passphrase(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.ChangePassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Passphrase updated")
+                )
+    else:
+        form = forms.ChangePassphraseForm()
+    return render(request, "storage/change_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
