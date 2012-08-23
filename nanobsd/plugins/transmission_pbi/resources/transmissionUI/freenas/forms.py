@@ -95,40 +95,6 @@ class TransmissionForm(forms.ModelForm):
                 transmission_flags += value + " "
             f.write('transmission_flags="%s"\n' % (transmission_flags, ))
 
-        try:
-            user_ids = pwd.getpwnam("transmission")[2:4]
-        except:
-            user_ids = None
-
-        if obj.watch_dir:
-            try:
-                os.chmod(obj.watch_dir, 0o755)
-                if user_ids:
-                    os.chown(obj.watch_dir, *user_ids)
-            except:
-                pass
-
-        if not os.path.exists(obj.conf_dir):
-            try:
-                os.makedirs(obj.conf_dir)
-            except OSError:
-                pass
-
-        try:
-            os.chmod(obj.conf_dir, 0o755)
-            if user_ids:
-                os.chown(obj.conf_dir, *user_ids)
-        except:
-            pass
-
-        if obj.download_dir:
-            try:
-                os.chmod(obj.download_dir, 0o755)
-                if user_ids:
-                    os.chown(obj.download_dir, *user_ids)
-            except:
-                pass
-
         settingsfile = os.path.join(obj.conf_dir, "settings.json")
         if os.path.exists(settingsfile):
             with open(settingsfile, 'r') as f:
