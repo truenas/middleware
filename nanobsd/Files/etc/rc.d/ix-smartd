@@ -31,7 +31,7 @@ print_devlist ()
 				DEV=$DEV2
 				;;
 			esac
-			echo "$DRV|$(($CID+1))|$(($TGT+1))|$DEV"
+			echo "$DRV|$CID|$TGT|$DEV"
 			;;
 		esac
 	done
@@ -46,6 +46,8 @@ parse_devlist()
 		case ${DEVICE}:${DRIVER} in
 		# Highpoint Rocket Raid 27xx controller
 		${disk}:rr274x_3x)
+			CONTROLLER_ID=$(($CONTROLLER_ID+1))
+			CHANNEL_NO=$(($CHANNEL_NO+1))
 			if [ $CHANNEL_NO -gt 16 ]; then
 				CHANNEL_NO=$(($CHANNEL_NO-16))
 			elif [ $CHANNEL_NO -gt 8 ]; then
@@ -56,7 +58,14 @@ parse_devlist()
 			;;
 		# Highpoint Rocket Raid controller
 		${disk}:hpt*)
+			CONTROLLER_ID=$(($CONTROLLER_ID+1))
+			CHANNEL_NO=$(($CHANNEL_NO+1))
 			echo -n "/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
+			break
+			;;
+		# HP Smart Array Controller
+		${disk}:ciss*)
+			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -a -d cciss,${CHANNEL_NO}"
 			break
 			;;
 		# Common device
@@ -105,7 +114,7 @@ EOF
 				;;
 			esac
 			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
-			if [ -z "$(/usr/local/sbin/smartctl -i ${prop_dev}|grep "SMART support is: Enabled")" ]; then
+			if [ -z "$(/usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled")" ]; then
 				eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
 			fi
 			echo -n "${prop_dev}"
