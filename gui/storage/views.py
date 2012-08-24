@@ -30,6 +30,7 @@ import re
 import signal
 import subprocess
 
+from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import models as dmodels
 from django.http import HttpResponse
@@ -42,7 +43,7 @@ from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware import zfs
-from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.notifier import notifier, GELI_KEYFILE
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
@@ -1063,3 +1064,37 @@ def volume_unlock(request, object_id):
         'volume': volume,
         'form': form,
     })
+
+
+def volume_key(request, object_id):
+
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            request.session["allow_gelikey"] = True
+            return JsonResponse(
+                message=_("GELI key download starting..."),
+                events=["window.location='%s';" % (
+                    reverse("storage_volume_key_download", kwargs={'object_id': object_id}),
+                    )],
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/key.html", {
+        'form': form,
+    })
+
+
+def volume_key_download(request, object_id):
+
+    if "allow_gelikey" not in request.session:
+        return HttpResponseRedirect('/')
+
+    wrapper = FileWrapper(file(GELI_KEYFILE))
+
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(GELI_KEYFILE)
+    response['Content-Disposition'] = 'attachment; filename=geli.key'
+    del request.session["allow_gelikey"]
+    return response

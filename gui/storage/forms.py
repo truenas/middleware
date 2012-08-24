@@ -1496,3 +1496,27 @@ class UnlockPassphraseForm(forms.Form):
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
         if not zimport:
             raise MiddlewareError(_("Volume could not be imported"))
+
+
+class KeyForm(forms.Form):
+
+    adminpw = forms.CharField(
+        label=_("Admin password"),
+        widget=forms.widgets.PasswordInput(),
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(KeyForm, self).__init__(*args, **kwargs)
+
+        user = User.objects.filter(is_superuser=True,
+            password=UNUSABLE_PASSWORD)
+        if user.exists():
+            del self.fields['adminpw']
+
+    def clean_adminpw(self):
+        pw = self.cleaned_data.get("adminpw")
+        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
+            raise forms.ValidationError(
+                _("Invalid password")
+                )
+        return pw

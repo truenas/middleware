@@ -182,6 +182,17 @@
         <strong>{% trans "Change Passphrase" %}</strong>
     </div>
     {% endif %}
+    {% if m.mp_volume.vol_encrypt > 0 %}
+    <button id="keyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Download Key"|escapejs %}', '{% url storage_volume_key object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'keyBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Download Key" %}</strong>
+    </div>
+    {% endif %}
     {% else %}
     <button id="unlockBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
