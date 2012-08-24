@@ -3240,7 +3240,7 @@ class notifier:
                 args = [
                     "/dev/%s" % info["drv"],
                     "-d",
-                    "hpt,%d/%d" % (info["controller"], info["channel"])
+                    "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
                     ]
             elif info.get("drv") == "ciss":
                 args = [
