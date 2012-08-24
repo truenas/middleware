@@ -1003,6 +1003,32 @@ class notifier:
         if proc.returncode != 0:
             raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
 
+    def geli_is_decrypted(self, dev):
+        doc = self.__geom_confxml()
+        geom = doc.xpathEval("//class[name = 'ELI']/geom[name = '%s.eli']" % (
+            dev,
+            )
+            )
+        if geom:
+            return True
+        return False
+
+    def geli_attach(self, dev, passphrase=None):
+        if passphrase is None:
+            proc = self.__pipeopen("geli attach -p -k %s %s" % (
+                GELI_KEYFILE,
+                dev,
+                ))
+        else:
+            proc = self.__pipeopen("geli attach -k %s -j %s %s" % (
+                GELI_KEYFILE,
+                passphrase,
+                dev,
+                ))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError("Could not attach %s: %s" % (dev, err))
+
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']
         gnop_devs = []
@@ -2858,8 +2884,11 @@ class notifier:
 
         return volumes
 
-    def zfs_import(self, name, id):
-        imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
+    def zfs_import(self, name, id=None):
+        if id is not None:
+            imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
+        else:
+            imp = self.__pipeopen('zpool import -f -R /mnt %s' % name)
         stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool

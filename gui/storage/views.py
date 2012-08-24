@@ -1013,6 +1013,7 @@ def volume_create_passphrase(request, object_id):
         'form': form,
     })
 
+
 def volume_change_passphrase(request, object_id):
 
     volume = models.Volume.objects.get(id=object_id)
@@ -1026,6 +1027,39 @@ def volume_change_passphrase(request, object_id):
     else:
         form = forms.ChangePassphraseForm()
     return render(request, "storage/change_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
+
+
+def volume_unlock(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if volume.vol_encrypt < 2:
+        if request.method == "POST":
+            notifier().start("geli")
+            zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+            if zimport and volume.is_decrypted:
+                return JsonResponse(
+                    message=_("Volume unlocked")
+                    )
+            else:
+                return JsonResponse(
+                    message=_("Volume failed unlocked")
+                    )
+        return render(request, "storage/unlock.html", {
+        })
+
+    if request.method == "POST":
+        form = forms.UnlockPassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Volume unlocked")
+                )
+    else:
+        form = forms.UnlockPassphraseForm()
+    return render(request, "storage/unlock_passphrase.html", {
         'volume': volume,
         'form': form,
     })

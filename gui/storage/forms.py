@@ -1465,11 +1465,34 @@ class ChangePassphraseForm(forms.Form):
                 f.write(passphrase)
         else:
             passfile = None
+        _notifier = notifier()
         for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
-            notifier().geli_passphrase(d.encrypted_provider, passfile)
+            _notifier.geli_passphrase(d.encrypted_provider, passfile)
         if passfile is not None:
             os.unlink(passfile)
             volume.vol_encrypt = 2
         else:
             volume.vol_encrypt = 1
         volume.save()
+
+
+class UnlockPassphraseForm(forms.Form):
+
+    passphrase = forms.CharField(
+        label=_("Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        )
+
+    def done(self, volume):
+        passphrase = self.cleaned_data.get("passphrase")
+        passfile = tempfile.mktemp(dir='/tmp/')
+        with open(passfile, 'w') as f:
+            f.write(passphrase)
+        attached = True
+        _notifier = notifier()
+        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
+            _notifier.geli_attach(d.encrypted_provider, passfile)
+        os.unlink(passfile)
+        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+        if not zimport:
+            raise MiddlewareError(_("Volume could not be imported"))

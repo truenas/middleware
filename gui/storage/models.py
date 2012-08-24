@@ -109,6 +109,20 @@ class Volume(Model):
             return _(u"Error")
     status = property(_get_status)
 
+    def is_decrypted(self):
+        __is_decrypted = getattr(self, '__is_decrypted', None)
+        if __is_decrypted is not None:
+            return __is_decrypted
+
+        self.__is_decrypted = True
+        if self.vol_encrypt > 0:
+            _notifier = notifier()
+            for ed in self.encrypteddisk_set.all():
+                if not _notifier.geli_is_decrypted(ed.encrypted_provider):
+                    self.__is_decrypted = False
+                    break
+        return self.__is_decrypted
+
     def has_attachments(self):
         """
         This is mainly used by the VolumeDelete form.
