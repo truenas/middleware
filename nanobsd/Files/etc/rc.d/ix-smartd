@@ -68,6 +68,11 @@ parse_devlist()
 			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -a -d cciss,${CHANNEL_NO}"
 			break
 			;;
+                # 3ware controller
+                ${disk}:twa*)
+                        echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${CHANNEL_NO}"
+                        break
+                        ;;
 		# Common device
 		${disk}:* )
 			echo -n /dev/$disk

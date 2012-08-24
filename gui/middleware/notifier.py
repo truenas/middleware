@@ -3248,6 +3248,12 @@ class notifier:
                     "-d",
                     "cciss,%d" % (info["channel"], )
                     ]
+            elif info.get("drv") == "twa":
+                args = [
+                    "/dev/%s%d" % (info["drv"], info["controller"]),
+                    "-d",
+                    "3ware,%d" % (info["channel"], )
+                    ]
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
