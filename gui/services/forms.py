@@ -888,17 +888,22 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         for v in models.Volume.objects.all():
             used_disks.extend(v.get_disks())
 
+        _notifier = notifier()
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
-            zvols = notifier().list_zfs_vols(volume.vol_name)
+            zvols = _notifier.list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
                 if "zvol/" + zvol not in used_zvol:
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
                         attrs['volsize'])
+                for snap in _notifier.zfs_snapshot_list(path=zvol).values()[0]:
+                    diskchoices["zvol/" + snap['fullname']] = "%s (%s)" % (
+                        snap['fullname'],
+                        attrs['volsize'])
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
+        disks = _notifier.get_disks()
         for name, disk in disks.items():
             if name in used_disks:
                 continue
