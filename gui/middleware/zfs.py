@@ -458,9 +458,19 @@ class Dev(Tnode):
             self.parent.parent is not None:
             raise Exception("Oh noes! This damn thing should be a vdev! %s" % \
                                 self.parent)
+
+        name = self.name
+        search = self._doc.xpathEval("//class[name = 'ELI']"
+                                     "//provider[name = '%s']/../consumer"
+                                     "/provider/@ref" % name)
+        if len(search) > 0:
+            search = self._doc.xpathEval("//provider[@id = '%s']"
+                                         "/name" % search[0].content)
+            name = search[0].content
+
         search = self._doc.xpathEval("//class[name = 'LABEL']"
                                      "//provider[name = '%s']/../consumer"
-                                     "/provider/@ref" % self.name)
+                                     "/provider/@ref" % name)
 
         provider = None
         if len(search) > 0:
