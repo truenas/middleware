@@ -62,32 +62,35 @@ generate_exports()
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
 	while eval read -r $f; do
+		local line=""
 		if [ -d "${nfs_path}" ]; then
-			echo -n ${nfs_path}
+			line=${nfs_path}
 			if [ "${nfs_alldirs}" = "1" ]; then
-				echo -n " -alldirs"
+				line="${line} -alldirs"
 			fi
 			if [ "${nfs_ro}" = "1" ]; then
-				echo -n " -ro"
+				line="${line} -ro"
 			fi
 			if [ "${nfs_quiet}" = "1" ]; then
-				echo -n " -quiet"
+				line="${line} -quiet"
 			fi
-                        if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
+			if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
 				mapall_user=$(setuser "${nfs_mapall_user}")
 				mapall_group=$(setgroup "${nfs_mapall_group}")
-				echo -n " -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
-                        else
-                                if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
+				line="${line} -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
+			else
+				if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
 					maproot_user=$(setuser "${nfs_maproot_user}")
 					maproot_group=$(setgroup "${nfs_maproot_group}")
-				        echo -n " -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
-                                fi
+					line="${line} -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
+				fi
 			fi
 			if [ -n "${nfs_network}" ]; then
-                echo -n " "
-				echo -n "${nfs_network}" | \
-				    awk -F" " '{ if ($0 !~ /\//) printf $0; else printf "-network %s",$0 }'
+				IFS=" "
+				echo "${nfs_network}" | tr \  \\n | while read nfs_network_item; do
+				    echo ${line} `echo ${nfs_network_item} | awk '{ if ($0 !~ /\//) printf $0; else printf "-network %s",$0 }'`
+				done
+				IFS="|"
 			fi
 			echo
 		fi
