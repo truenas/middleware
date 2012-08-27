@@ -406,7 +406,7 @@ class NavTree(object):
                 request.COOKIES.get("sessionid", ''),
                 )
                 )]
-            response = opener.open(url, None, 2)
+            response = opener.open(url, None, 4)
             data = response.read()
             if not data:
                 log.warn(_("Empty data returned from %s") % (url,))
