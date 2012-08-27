@@ -3255,7 +3255,7 @@ class notifier:
         info = camcontrol.get(devname)
         if info is not None:
             if info.get("drv") == "rr274x_3x":
-                channel = info["channel"]
+                channel = info["channel"] + 1
                 if channel > 16:
                     channel -= 16
                 elif channel > 8:
@@ -3263,7 +3263,7 @@ class notifier:
                 args = [
                     "/dev/%s" % info["drv"],
                     "-d",
-                    "hpt,%d/%d" % (info["controller"], channel)
+                    "hpt,%d/%d" % (info["controller"] + 1, channel)
                     ]
             elif info.get("drv").startswith("hpt"):
                 args = [
