@@ -1371,6 +1371,10 @@ class ActiveDirectory(Model):
             default=False,
             verbose_name=_("Allow Trusted Domains"),
             )
+    ad_use_default_domain = models.BooleanField(
+            default=True,
+            verbose_name=_("Use default domain"),
+            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name=_("Administrator Name"),
