@@ -276,73 +276,9 @@ class ExceptionReporter(debug.ExceptionReporter):
         Return HTML code for traceback."
         """
 
-        if self.exc_type and issubclass(self.exc_type, TemplateDoesNotExist):
-            self.template_does_not_exist = True
-            self.loader_debug_info = []
-            for loader in template_source_loaders:
-                try:
-                    source_list_func = loader.get_template_sources
-                    # NOTE: This assumes exc_value is the name of the template
-                    # that the loader attempted to load.
-                    template_list = [{'name': t, 'exists': os.path.exists(t)} \
-                        for t in source_list_func(str(self.exc_value))]
-                except (ImportError, AttributeError):
-                    template_list = []
-                loader_name = (loader.__module__
-                    + '.' +
-                    loader.__class__.__name__)
-                self.loader_debug_info.append({
-                    'loader': loader_name,
-                    'templates': template_list,
-                })
-        if (settings.TEMPLATE_DEBUG and hasattr(self.exc_value, 'source') and
-            isinstance(self.exc_value, TemplateSyntaxError)):
-            self.get_template_exception_info()
-
-        frames = self.get_traceback_frames()
-        for i, frame in enumerate(frames):
-            if 'vars' in frame:
-                frame['vars'] = [
-                    (k, force_escape(pprint(v))) for k, v in frame['vars']
-                    ]
-            frames[i] = frame
-
-        unicode_hint = ''
-        if self.exc_type and issubclass(self.exc_type, UnicodeError):
-            start = getattr(self.exc_value, 'start', None)
-            end = getattr(self.exc_value, 'end', None)
-            if start is not None and end is not None:
-                unicode_str = self.exc_value.args[1]
-                unicode_hint = smart_unicode(
-                    unicode_str[max(start - 5, 0):min(end + 5,
-                        len(unicode_str))],
-                    'ascii',
-                    errors='replace')
         t = get_template("500_freenas.html")
         #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
-        c = Context({
-            'is_email': self.is_email,
-            'unicode_hint': unicode_hint,
-            'frames': frames,
-            'request': self.request,
-            'settings': debug.get_safe_settings(),
-            'sys_executable': sys.executable,
-            'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
-            'server_time': datetime.datetime.now(),
-            'sw_version': get_sw_version(),
-            'sys_path': sys.path,
-            'template_info': self.template_info,
-            'template_does_not_exist': self.template_does_not_exist,
-            'loader_debug_info': self.loader_debug_info,
-        })
-        # Check whether exception info is available
-        if self.exc_type:
-            c['exception_type'] = self.exc_type.__name__
-        if self.exc_value:
-            c['exception_value'] = smart_unicode(self.exc_value,
-                errors='replace')
-        if frames:
-            c['lastframe'] = frames[-1]
+        c = Context(self.get_traceback_data())
         return t.render(c)
 
 
