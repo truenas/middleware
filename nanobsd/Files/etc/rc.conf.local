@@ -396,7 +396,11 @@ _gen_conf()
 
 	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
 		tr \\\n \  `\""
-	echo "geli_default_flags=\"-p -k /data/geli.key\""
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+	while read -r provider key; do
+		_provider=`echo ${provider}|tr '/-' '_'`
+		echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
+	done
 }
 
 # If we're running really early, then mount /data read-only

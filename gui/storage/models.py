@@ -28,6 +28,7 @@
 from datetime import time
 import logging
 import os
+import uuid
 
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -61,6 +62,11 @@ class Volume(Model):
             choices=choices.VolumeEncrypt_Choices,
             default=0,
             verbose_name=_("Encryption Type"),
+            )
+    vol_encryptkey = models.CharField(
+            max_length=50,
+            blank=True,
+            editable=False,
             )
 
     class Meta:
@@ -108,6 +114,10 @@ class Volume(Model):
                 e)
             return _(u"Error")
     status = property(_get_status)
+
+    def get_geli_keyfile(self):
+        from freenasUI.middleware.notifier import GELI_KEYPATH
+        return "%s/%s.key" % (GELI_KEYPATH, self.vol_encryptkey, )
 
     def is_decrypted(self):
         __is_decrypted = getattr(self, '__is_decrypted', None)
@@ -216,9 +226,22 @@ class Volume(Model):
         # Refresh the fstab
         n.reload("disk")
 
+        if self.vol_encryptkey:
+            keyfile = self.get_geli_keyfile()
+            if os.path.exists(keyfile):
+                try:
+                    os.unlink(keyfile)
+                except:
+                    log.warn("Unable to delete geli key file: %s" % keyfile)
+
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
                 n.start(svc)
+
+    def save(self, *args, **kwargs):
+        if not self.vol_encryptkey and self.vol_encrypt > 0:
+            self.vol_encryptkey = str(uuid.uuid4())
+        super(Volume, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
@@ -347,6 +370,7 @@ class Scrub(Model):
         except:
             pass
 
+
 class Disk(Model):
     disk_name = models.CharField(
             max_length=120,
@@ -474,6 +498,7 @@ class Disk(Model):
     def __unicode__(self):
         return unicode(self.disk_name)
 
+
 class EncryptedDisk(Model):
     encrypted_volume = models.ForeignKey(Volume)
     encrypted_disk = models.ForeignKey(Disk)
@@ -482,6 +507,7 @@ class EncryptedDisk(Model):
             max_length=120,
             verbose_name=_("Underlying provider"),
             )
+
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
@@ -676,7 +702,10 @@ class ReplRemote(Model):
     ssh_fast_cipher = models.BooleanField(
             default=False,
             verbose_name=_("High Speed Encryption Ciphers"),
-            help_text=_("Enabling this may increase transfer speed on high speed/low latency local networks.  It uses less secure encryption algorithms than the defaults, which make it less desirable on untrusted networks.")
+            help_text=_("Enabling this may increase transfer speed on high "
+                "speed/low latency local networks.  It uses less secure "
+                "encryption algorithms than the defaults, which make it less "
+                "desirable on untrusted networks.")
             )
 
     class Meta:

@@ -62,7 +62,7 @@ WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
-GELI_KEYFILE = "/data/geli.key"
+GELI_KEYPATH = '/data/geli'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -957,13 +957,16 @@ class notifier:
         self.__gpt_unlabeldisk(devname)
 
     def __encrypt_device(self, devname, diskname, volume):
-        from freenasUI.storage.models import Volume, Disk, EncryptedDisk
-        
-        if not os.path.exists(GELI_KEYFILE):
-            self.__system("dd if=/dev/random of=%s bs=64 count=1" % (GELI_KEYFILE))
-        
-        self.__system("geli init -B none -K %s -P /dev/%s" % (GELI_KEYFILE, devname))
-        self.__system("geli attach -k %s -p /dev/%s" % (GELI_KEYFILE, devname))
+        from freenasUI.storage.models import Disk, EncryptedDisk
+
+        geli_keyfile = volume.get_geli_keyfile()
+        if not os.path.exists(geli_keyfile):
+            if not os.path.exists(GELI_KEYPATH):
+                self.__system("mkdir -p %s" % (GELI_KEYPATH, ))
+            self.__system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
+
+        self.__system("geli init -B none -K %s -P /dev/%s" % (geli_keyfile, devname))
+        self.__system("geli attach -k %s -p /dev/%s" % (geli_keyfile, devname))
         # TODO: initialize the provider in background (wipe with random data)
 
         ident = self.device_to_identifier(diskname)
@@ -973,35 +976,87 @@ class notifier:
         encdiskobj.encrypted_disk = diskobj
         encdiskobj.encrypted_provider = devname
         encdiskobj.save()
-        
+
         return ("/dev/%s.eli" % devname)
 
-    def geli_passphrase(self, dev, passphrase):
+    def geli_passphrase(self, volume, passphrase):
         """
         Set a passphrase in a geli
-        If passpgrase is None then remove the passphrase
+        If passphrase is None then remove the passphrase
 
         Raises:
             MiddlewareError
         """
-        if passphrase is not None:
-            proc = self.__pipeopen("geli setkey -k %s -K %s -J %s %s" % (
-                GELI_KEYFILE,
-                GELI_KEYFILE,
-                passphrase,
-                dev,
-                )
-                )
+        geli_keyfile = volume.get_geli_keyfile()
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            if passphrase is not None:
+                proc = self.__pipeopen("geli setkey -k %s -K %s -J %s %s" % (
+                    geli_keyfile,
+                    geli_keyfile,
+                    passphrase,
+                    dev,
+                    )
+                    )
+            else:
+                proc = self.__pipeopen("geli setkey -k %s -K %s -P %s" % (
+                    geli_keyfile,
+                    geli_keyfile,
+                    dev,
+                    )
+                    )
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+
+    def geli_rekey(self, volume, passphrase):
+        """
+        Regenerates the geli global key and set it to devs
+
+        Raises:
+            MiddlewareError
+        """
+
+        geli_keyfile = volume.get_geli_keyfile()
+
+        # Generate new key as .tmp
+        self.__system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
+        error = False
+        applied = []
+        if passphrase:
+            passphrase = "-J %s" % (passphrase, )
         else:
-            proc = self.__pipeopen("geli setkey -k %s -K %s -P %s" % (
-                GELI_KEYFILE,
-                GELI_KEYFILE,
+            passphrase = "-P"
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            proc = self.__pipeopen("geli setkey %s -k %s -K %s.tmp %s" % (
+                passphrase,
+                geli_keyfile,
+                geli_keyfile,
                 dev,
                 )
                 )
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                error = True
+                break
+            applied.append(dev)
+
+        # Try to be atomic in a certain way
+        # If rekey failed for one of the devs, revert for the ones already applied
+        if error:
+            for dev in applied:
+                proc = self.__pipeopen("geli setkey %s -k %s.tmp -K %s %s" % (
+                    passphrase,
+                    geli_keyfile,
+                    geli_keyfile,
+                    dev,
+                    )
+                    )
+                proc.communicate()
             raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+        else:
+            self.__system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
 
     def geli_is_decrypted(self, dev):
         doc = self.__geom_confxml()
@@ -1013,21 +1068,24 @@ class notifier:
             return True
         return False
 
-    def geli_attach(self, dev, passphrase=None):
-        if passphrase is None:
-            proc = self.__pipeopen("geli attach -p -k %s %s" % (
-                GELI_KEYFILE,
-                dev,
-                ))
-        else:
-            proc = self.__pipeopen("geli attach -k %s -j %s %s" % (
-                GELI_KEYFILE,
-                passphrase,
-                dev,
-                ))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError("Could not attach %s: %s" % (dev, err))
+    def geli_attach(self, volume, passphrase=None):
+        geli_keyfile = volume.get_geli_keyfile()
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            if passphrase is None:
+                proc = self.__pipeopen("geli attach -p -k %s %s" % (
+                    geli_keyfile,
+                    dev,
+                    ))
+            else:
+                proc = self.__pipeopen("geli attach -k %s -j %s %s" % (
+                    geli_keyfile,
+                    passphrase,
+                    dev,
+                    ))
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Could not attach %s: %s" % (dev, err))
 
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']

@@ -1389,8 +1389,7 @@ class CreatePassphraseForm(forms.Form):
                 f.write(passphrase)
         else:
             passfile = None
-        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
-            notifier().geli_passphrase(d.encrypted_provider, passfile)
+        notifier().geli_passphrase(volume, passfile)
         if passfile is not None:
             os.unlink(passfile)
         volume.vol_encrypt = 2
@@ -1465,9 +1464,7 @@ class ChangePassphraseForm(forms.Form):
                 f.write(passphrase)
         else:
             passfile = None
-        _notifier = notifier()
-        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
-            _notifier.geli_passphrase(d.encrypted_provider, passfile)
+        notifier().geli_passphrase(volume, passfile)
         if passfile is not None:
             os.unlink(passfile)
             volume.vol_encrypt = 2
@@ -1489,9 +1486,7 @@ class UnlockPassphraseForm(forms.Form):
         with open(passfile, 'w') as f:
             f.write(passphrase)
         attached = True
-        _notifier = notifier()
-        for d in models.EncryptedDisk.objects.filter(encrypted_volume=volume):
-            _notifier.geli_attach(d.encrypted_provider, passfile)
+        notifier().geli_attach(volume, passfile)
         os.unlink(passfile)
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
         if not zimport:
@@ -1520,3 +1515,26 @@ class KeyForm(forms.Form):
                 _("Invalid password")
                 )
         return pw
+
+
+class ReKeyForm(KeyForm):
+
+    def __init__(self, *args, **kwargs):
+        self.volume = kwargs.pop('volume')
+        super(ReKeyForm, self).__init__(*args, **kwargs)
+        if self.volume.vol_encrypt == 2:
+            self.fields['passphrase'] = forms.CharField(
+                label=_("Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+                )
+
+    def done(self):
+        passphrase = self.cleaned_data.get("passphrase")
+        if passphrase:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
+            passphrase = passfile
+        notifier().geli_rekey(self.volume, passphrase)
+        if passphrase:
+            os.unlink(passfile)

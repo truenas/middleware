@@ -43,7 +43,7 @@ from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.views import JsonResponse, JsonResp
 from freenasUI.middleware import zfs
-from freenasUI.middleware.notifier import notifier, GELI_KEYFILE
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
@@ -1088,13 +1088,33 @@ def volume_key(request, object_id):
 
 def volume_key_download(request, object_id):
 
+    volume = models.Volume.objects.get(id=object_id)
     if "allow_gelikey" not in request.session:
         return HttpResponseRedirect('/')
 
-    wrapper = FileWrapper(file(GELI_KEYFILE))
+    geli_keyfile = volume.get_geli_keyfile()
+    wrapper = FileWrapper(file(geli_keyfile))
 
     response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(GELI_KEYFILE)
+    response['Content-Length'] = os.path.getsize(geli_keyfile)
     response['Content-Disposition'] = 'attachment; filename=geli.key'
     del request.session["allow_gelikey"]
     return response
+
+
+def volume_rekey(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.ReKeyForm(request.POST, volume=volume)
+        if form.is_valid():
+            form.done()
+            return JsonResponse(
+                message=_("Encryption re-key succeeded"),
+                )
+    else:
+        form = forms.ReKeyForm(volume=volume)
+
+    return render(request, "storage/rekey.html", {
+        'form': form,
+    })
