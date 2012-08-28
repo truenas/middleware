@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-08-06 14:06+0200\n"
-"Last-Translator: wbdg060726 <948616776@qq.com>\n"
+"PO-Revision-Date: 2012-08-27 18:40+0200\n"
+"Last-Translator: TossPig <freenas@tossp.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -344,7 +344,7 @@ msgstr "lzjb算法压缩（推荐）"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr "gzip (默认 level, 6)"
+msgstr "gzip (默认压缩率, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
@@ -419,9 +419,10 @@ msgstr "%(day)s 天"
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week)s 周"
+msgstr "%(week) 周"
 
 #: choices.py:523
+#, fuzzy
 msgid "Never - Check the device regardless of its power mode"
 msgstr "从不 - 检查设备不论其电源处于何种模式"
 
@@ -2924,10 +2925,11 @@ msgid ""
 msgstr "指定使用文件传输模块的帐号。可结合'群组'的选项，会决定授予哪些文件权限。本项空白时，则使用缺省设值。"
 
 #: services/models.py:1424
+#, fuzzy
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
-msgstr ""
+msgstr "指定使用档案传输模块的群组。将此字段留空将使用默认设置"
 
 #: services/models.py:1428
 msgid "Hosts allow"
@@ -3204,6 +3206,7 @@ msgid "Windows (CIFS) Shares"
 msgstr "Windows (CIFS) 共享列表"
 
 #: sharing/models.py:114
+#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -3213,6 +3216,9 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"该卷名称出现在选配器「连接到服务器」的对话框，在Macintosh代表设定共享成功。如果没有指定卷名称，将使用最后用的路径。卷名称不能重复。卷的名称不能"
+"包含':'字符。卷名称不能太长。在Mac的编码中，卷名称长度被限制为27个字。在Apple Share服务内 UTF8-MAC "
+"的卷名称被限制在「卷名称长度」的参数"
 
 #: sharing/models.py:118
 msgid "Share Comment"
@@ -3340,6 +3346,8 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"启用CRLF的文件换行转换，将自动转换Macintosh为Unix的换行格式。因为一些旧版文件在储存或切换文件格式时会将二进制数据类型保存为字符型，Af"
+"pd在做文件换行转换时，有可能破坏这些文件。"
 
 #: sharing/models.py:185
 msgid "Windows File Names"
@@ -3389,7 +3397,7 @@ msgstr "禁用: 十六进制名称"
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
-msgstr ""
+msgstr "禁用：十六进制转换以句点(.)开头的文件，这选项会造成'/'字符错误"
 
 #: sharing/models.py:208
 msgid "ProDOS"
@@ -3775,8 +3783,9 @@ msgid "Remote port"
 msgstr "远程端口"
 
 #: storage/forms.py:1128 storage/models.py:639
+#, fuzzy
 msgid "Remote hostkey"
-msgstr ""
+msgstr "远程主机密钥"
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
@@ -3825,8 +3834,9 @@ msgid "Threshold days"
 msgstr ""
 
 #: storage/models.py:207
+#, fuzzy
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "确定清理时间间隔"
 
 #: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4398,7 +4408,7 @@ msgstr "最小 Poll"
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
-msgstr ""
+msgstr "NTP报文的最小轮询间隔，显示的是2的次幂数，单位为秒。默认值是6（64秒），但可以降低到的下限为4（16秒）"
 
 #: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
@@ -4409,7 +4419,7 @@ msgid ""
 "The maximum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
-msgstr ""
+msgstr "NTP报文的最大轮询间隔，显示的是2的次幂数，单位为秒。默认值是10（1024秒），但可以提升到的上限为17（36.4小时）"
 
 #: system/models.py:144
 msgid "NTP Server"
@@ -4579,11 +4589,11 @@ msgstr "国家名称(2字母代码)"
 
 #: system/models.py:308
 msgid "Common Name"
-msgstr ""
+msgstr "通用名"
 
 #: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "通用名（例如：你的名字）"
 
 #: system/models.py:314
 msgid "SSL Certificate"
@@ -4624,8 +4634,9 @@ msgid "Remote Module Name"
 msgstr "远程模块名"
 
 #: system/models.py:470
+#, fuzzy
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "在远程rsync守护进程中定义模块的名称"
 
 #: system/models.py:475
 msgid "Remote Path"
