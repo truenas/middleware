@@ -85,6 +85,7 @@ generate_smbconf()
 		ad_netbiosname,
 		ad_workgroup,
 		ad_allow_trusted_doms,
+		ad_use_default_domain,
 		ad_adminname,
 		ad_adminpw,
 		ldap_hostname,
@@ -119,8 +120,8 @@ generate_smbconf()
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
 		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
-		ad_adminname ad_adminpw ldap_hostname ldap_basedn ldap_anonbind \
-		ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
+		ad_use_default_domain ad_adminname ad_adminpw ldap_hostname ldap_basedn \
+		ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
 		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
 		# Default user and group is ftp:ftp
@@ -253,6 +254,7 @@ EOF
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
 			local ad_workgroup="${ad_workgroup}"
 			local trusted="no"
+			local default="no"
 
 			AD_init
 			mkdir -p ${FREENAS_CACHEDIR}/.samba
@@ -266,6 +268,10 @@ EOF
 			if [ "${ad_allow_trusted_doms}" = "1" ]
 			then
 				trusted="yes"
+			fi
+			if [ "${ad_use_default_domain}" = "1" ]
+			then
+				default="yes"
 			fi
 
 			cat<<-EOF
@@ -299,7 +305,7 @@ EOF
 			    winbind enum users = yes
 			    winbind enum groups = yes
 			    winbind nested groups = yes
-			    winbind use default domain = no
+			    winbind use default domain = ${default}
 			    winbind refresh tickets = yes
 
 			    allow trusted domains = ${trusted}
