@@ -140,6 +140,8 @@ activedirectory_start()
 	if srv_enabled activedirectory
 	then
 		AD_init
+
+		AD_log "activedirectory_start: trying to join domain"
 		if ! AD_join_domain; then
 			return 1
 		fi
@@ -157,6 +159,8 @@ activedirectory_start()
 activedirectory_status()
 {
 	AD_init
+
+	AD_log "activedirectory_status: checking status"
 	AD_status_domain >/dev/null
 }
 
@@ -165,6 +169,8 @@ activedirectory_stop()
 	AD_init
 
         /usr/local/www/freenasUI/tools/cachetool.py expire
+
+	AD_log "activedirectory_stop: leaving domain"
 	AD_leave_domain
 }
 
