@@ -217,7 +217,7 @@ ldap_status()
 	while eval read ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_ssl
 	do
 		local res=1
-		local ldapwhoami=/usr/local/bin/ldapwhoami
+		local ldapsearch=/usr/local/bin/ldapsearch
 		local options=
 
 		if [ "${ldap_ssl}" = "start_tls" ]
@@ -234,29 +234,25 @@ ldap_status()
 			chmod 400 "${temp}"
 			echo -n "${ldap_rootbindpw}" > "${temp}"
 
-			echo ${ldapwhoami} ${options} -D "'${ldap_rootbasedn}'" -y "${temp}" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -D "'${ldap_rootbasedn}'" -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
-			out=$(eval ${cmd})
+			eval "${cmd}" >/dev/null 2>&1
 			res=$?
 
 			rm -f "${temp}" "${cmdfile}"
-			local dn=$(echo "${out}"|cut -f2 -d:)
-			if [ "${dn}" != "${ldap_rootbasedn}" ]
-			then
-				res=1
-			fi
 		else		
-			local out=$(${ldapwhoami} -D '' ${options})
+			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
+			local cmd
+
+			echo "${ldapsearch} -D '' ${options}" > "${cmdfile}"
+			cmd=$(cat ${cmdfile})
+			eval "${cmd}" >/dev/null 2>&1
 			res=$?
 
-			local dn=$(echo "${out}"|cut -f2 -d:)
-			if [ "${dn}" != "anonymous" ]
-			then
-				res=1
-			fi
+			rm -f "${cmdfile}"
 		fi
 
-		if [ "${res}" = "1" ]
+		if [ "${res}" != "0" ]
 		then
 			touch "${fail}"
 		fi
