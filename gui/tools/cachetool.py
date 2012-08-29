@@ -53,11 +53,6 @@ def cache_fill(**kwargs):
     uargs = { 'flags': FLAGS_DBINIT|FLAGS_CACHE_WRITE_USER }
     gargs = { 'flags': FLAGS_DBINIT|FLAGS_CACHE_WRITE_GROUP }
 
-    objs = ActiveDirectory_objects()[0] 
-    if long(objs['ad_allow_trusted_doms']) == 0:
-        uargs['netbiosname'] = objs['ad_workgroup']
-        gargs['netbiosname'] = objs['ad_workgroup']
-
     for u in FreeNAS_Users(**uargs):
         pass
     for g in FreeNAS_Groups(**gargs):
@@ -99,17 +94,11 @@ def cache_dump(**kwargs):
 
 
 def _cache_keys_ActiveDirectory(**kwargs):
-    args = {}
-    objs = ActiveDirectory_objects()[0] 
-    if long(objs['ad_allow_trusted_doms']) == 0:
-        args['netbiosname'] = objs['ad_workgroup']
-
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains(**args)
+    domains = ad.get_domains()
     for d in domains:
         workgroup = d['nETBIOSName']
-        if workgroup != objs['ad_workgroup'] and long(objs['ad_allow_trusted_doms']) == 0:
-            continue
+
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
@@ -157,17 +146,11 @@ def cache_keys(**kwargs):
 
 
 def _cache_rawdump_ActiveDirectory(**kwargs):
-    args = {}
-    objs = ActiveDirectory_objects()[0] 
-    if long(objs['ad_allow_trusted_doms']) == 0:
-        args['netbiosname'] = objs['ad_workgroup']
-
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains(**args)
+    domains = ad.get_domains()
     for d in domains:
         workgroup = d['nETBIOSName']
-        if workgroup != objs['ad_workgroup'] and long(objs['ad_allow_trusted_doms']) == 0:
-            continue
+
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
@@ -218,18 +201,11 @@ def _cache_check_ActiveDirectory(**kwargs):
     if not kwargs.has_key('args') and kwargs['args']:
         return
 
-    args = {}
     valid = {}
-    objs = ActiveDirectory_objects()[0] 
-    if long(objs['ad_allow_trusted_doms']) == 0:
-        args['netbiosname'] = objs['ad_workgroup']
-
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains(**args)
+    domains = ad.get_domains()
     for d in domains:
         workgroup = d['nETBIOSName']
-        if workgroup != objs['ad_workgroup'] and long(objs['ad_allow_trusted_doms']) == 0:
-            continue
         valid[workgroup] = True
 
     for arg in kwargs['args']:
@@ -342,17 +318,10 @@ def cache_check(**kwargs):
 
 
 def _cache_count_ActiveDirectory(**kwargs):
-    args = {} 
-    objs = ActiveDirectory_objects()[0] 
-    if long(objs['ad_allow_trusted_doms']) == 0:
-        args['netbiosname'] = objs['ad_workgroup']
-
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains(**args)
+    domains = ad.get_domains()
     for d in domains:
         workgroup = d['nETBIOSName']
-        if workgroup != objs['ad_workgroup'] and long(objs['ad_allow_trusted_doms']) == 0:
-            continue
 
         print "w:  %s" % workgroup
         print "u:  %ld" % len(FreeNAS_UserCache(dir=workgroup))

@@ -1022,6 +1022,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.netbiosname = ad['ad_workgroup']
         self.binddn = ad['ad_adminname'] + '@' + self.domain.upper()
         self.bindpw = ad['ad_adminpw']
+        self.trusted = True if long(ad['ad_allow_trusted_doms']) != 0 else False
 
         host = port = None
         args = {'binddn': self.binddn, 'bindpw': self.bindpw}
@@ -1046,6 +1047,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         host = port = None
         self.domain = kwargs.get('domain', None)
         self.netbiosname = kwargs.get('netbiosname', None)
+        self.trusted = False
 
         tmphost = kwargs.get('host', None)
         if tmphost:
@@ -1306,6 +1308,9 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         rootDSE = self.get_rootDSE()
         basedn = rootDSE[0][1]['configurationNamingContext'][0]
         #config = rootDSE[0][1]['defaultNamingContext'][0]
+
+        if not self.trusted and self.netbiosname:
+            kwargs['netbiosname'] = self.netbiosname
 
         result = []
         haskey = False
