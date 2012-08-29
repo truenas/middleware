@@ -121,6 +121,7 @@ __get_SRV_record()
 	local host="${1}"
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
 
+	AD_log "__get_SRV_record: dig -t srv +short +nocomments ${host}"
 	dig -t srv +short +nocomments "${host}" | egrep -v '^[[:space:]]*;;' | sort -n +0 +1 > "${tmpfile}"
 
 	exec 3<&0
@@ -130,14 +131,20 @@ __get_SRV_record()
 		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
 		local port=$(echo "${line}"|awk '{ print $3 }')
 
+		AD_log "__get_SRV_record: trying ${host}:${port}"
+		
 		__do_AD_query "${host}" "${port}" "" "" "" "base" "" "" >/dev/null 2>&1
 		if [ "$?" = "0" ]
 		then
 			exec 0<&3
 			echo "${host}:${port}"
 			rm "${tmpfile}"
+
+			AD_log "__get_SRV_record: Okay"
 			return 0
 		fi
+
+		AD_log "__get_SRV_record: Fail"
 	done
 	exec 0<&3
 	rm "${tmpfile}"
@@ -147,12 +154,16 @@ __get_SRV_record()
 
 AD_get_domain_controller()
 {
+	AD_log "AD_get_domain_controller: _ldap._tcp.${1}"
+
 	__get_SRV_record "_ldap._tcp.${1}"
 	return $?
 }
 
 AD_get_global_catalog()
 {
+	AD_log "AD_get_global_catalog: _gc._tcp.${1}"
+
 	__get_SRV_record "_gc._tcp.${1}"
 	return $?
 }
@@ -208,6 +219,8 @@ AD_query()
 	: ${basedn:="$(AD_get basedn)"}
 	: ${filter:='(objectclass=*)'}
 
+	AD_log "AD_query: basedn = ${basedn}, filter = ${filter}, attributes = ${attributes}"
+
 	local dcname="$(AD_get dcname)"
 	local dcport="$(AD_get dcport)"
 	local binddn="$(AD_get binddn)"
@@ -223,6 +236,8 @@ AD_query_partitions()
 	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
 	local basedn="CN=Partitions,${config}"
 
+	AD_log "AD_query_partitions: config = ${config}, basedn = ${basedn}"
+
 	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
 }
 
@@ -235,6 +250,8 @@ AD_query_global_catalog()
 	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
     	: ${filter:='(objectclass=*)'}
+
+	AD_log "AD_query_global_catalog: filter = ${filter}, attributes = ${attributes}"
 
 	local gchost="$(AD_get gchost)"
 	local gcport="$(AD_get gcport)"
@@ -267,6 +284,8 @@ AD_query_rootDSE()
 
 	: ${filter:='(objectclass=*)'}
 
+	AD_log "AD_query_rootDSE: filter = ${filter}, attributes = ${attributes}"
+
 	local dcname="$(AD_get dcname)"
 	local dcport="$(AD_get dcport)"
 	local binddn="$(AD_get binddn)"
@@ -292,12 +311,12 @@ __EOF__
 
 __escape()
 {
-	printf "${1}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
+	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
 }
 
 __unescape()
 {
-	printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
+	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
 }
 
 __do_AD_get()
@@ -317,7 +336,7 @@ AD_get()
 
 	for v in ${vars}
 	do
-		__do_AD_get "${prefix}" "${v}"
+		__do_AD_get "${prefix}" "${v}" 2>/dev/null
 	done
 }
 
@@ -337,7 +356,7 @@ AD_set()
 	local val="${2}"
 	local prefix="__ad_"
 
-	__do_AD_set "${prefix}" "${var}" "${val}"
+	__do_AD_set "${prefix}" "${var}" "${val}" 2>/dev/null
 }
 
 AD_save()
@@ -385,36 +404,83 @@ AD_join_domain()
 {
 	local adminname="${1}"
 	local adminpw="${2}"
+	local res
 
 	: ${adminname:="$(AD_get adminname)"}
 	: ${adminpw:="$(AD_get adminpw)"}
 
+	AD_log "AD_join_domain: net ads join -U ${adminname}"
+
 	/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
-	return $?
+	res=$?
+
+	local ok="Failed"
+	if [ "${res}" = "0" ]
+	then
+		ok="Successful"
+	fi
+
+	AD_log "AD_join_domain: ${ok}"
+	return ${res}
 }
 
 AD_status_domain()
 {
 	local adminname="${1}"
 	local adminpw="${2}"
+	local res
 
 	: ${adminname:="$(AD_get adminname)"}
 	: ${adminpw:="$(AD_get adminpw)"}
 
+	AD_log "AD_status_domain: net ads status -U ${adminname}"
+
 	/usr/local/bin/net ads status -U "${adminname}%${adminpw}"
-	return $?
+	res=$?
+
+	local ok="Not okay"
+	if [ "${res}" = "0" ]
+	then
+		ok="Okay"
+	fi
+
+	AD_log "AD_status_domain: ${ok}"
+	return ${res}
 }
 
 AD_leave_domain()
 {
 	local adminname="${1}"
 	local adminpw="${2}"
+	local res
 
 	: ${adminname:="$(AD_get adminname)"}
 	: ${adminpw:="$(AD_get adminpw)"}
 
+	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
+
 	/usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
-	return $?
+	res=$?
+
+	local ok="Failed"
+	if [ "${res}" = "0" ]
+	then
+		ok="Successful"
+	fi
+
+	AD_log "AD_leave_domain: ${ok}"
+	return ${res}
+}
+
+AD_log()
+{
+	local args="$*"
+
+	local on="$(AD_get verbose_logging)"
+	if [ "${on}" = "1" ]
+	then
+		logger -t "ActiveDirectory" ${args} >/dev/null 2>&1
+	fi
 }
 
 AD_init()
@@ -427,8 +493,9 @@ AD_init()
 		ad_adminname,
 		ad_adminpw,
 		ad_workgroup,
-		ad_netbiosname
-
+		ad_netbiosname,
+		ad_verbose_logging
+ 
 	FROM
 		services_activedirectory
 
@@ -442,7 +509,7 @@ __SQL__
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2 -d_)
+		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		AD_set "${var}" "${val}"
@@ -453,16 +520,20 @@ __SQL__
 	local adminname=$(AD_get adminname)
 	local domainname=$(AD_get domainname)
 	AD_set binddn "${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+	AD_log "AD_init: binddn = $(AD_get binddn)"
 
 	local dc=$(AD_get_domain_controller "${domainname}")
 	AD_set dcname "$(echo "${dc}"|cut -f1 -d:)"
 	AD_set dcport "$(echo "${dc}"|cut -f2 -d:)"
+	AD_log "AD_init: dcname = $(AD_get dcname), dcport = $(AD_get dcport)"
 
 	AD_set basedn "$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+	AD_log "AD_init: basedn = $(AD_get basedn)"
 
 	local gc=$(AD_get_global_catalog "${domainname}")
 	AD_set gchost "$(echo "${gc}"|cut -f1 -d:)"
 	AD_set gcport "$(echo "${gc}"|cut -f2 -d:)"
+	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
 }
 
 # Create a cache filesystem on ${FREENAS_CACHEDIR} .
