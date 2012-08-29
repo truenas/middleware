@@ -21,9 +21,7 @@ menuSetURLs = function() {
 
 }
 
-require(["dojo/domReady!"], function() {
-    {% if consolemsg %}_msg_start();{% endif %}
-});
+{% if consolemsg %}msgEnabled = true;{% endif %}
 </script>
 {% endblock %}
 

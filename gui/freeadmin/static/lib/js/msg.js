@@ -28,11 +28,13 @@
 require([
     "dojo/dom",
     "dojo/dom-style",
+    "dojo/ready",
     "dojo/request/xhr",
     "dijit/registry",
     "dojox/timing"
     ], function(dom,
     domStyle,
+    ready,
     xhr,
     registry,
     timing) {
@@ -99,5 +101,9 @@ require([
         domStyle.set("msg_output", "display", "none");
         _msg_t.stop();
     }
+
+    ready(function() {
+        if(msgEnabled == true) _msg_start();
+    });
 
 });
