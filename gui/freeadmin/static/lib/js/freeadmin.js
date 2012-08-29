@@ -337,7 +337,7 @@ require([
                     }
                     domConstruct.destroy(n);
                 },
-                function(data) {
+                function(evt) {
                     setMessage(gettext("Some error occurred"), "error");
                     domConstruct.destroy(n);
                 });
@@ -355,7 +355,7 @@ require([
                 } catch(e) {}
                 setTimeout(function() { checkStatus(name); }, 1000);
             },
-            function(error) {
+            function(evt) {
                 domConstruct.destroy(n);
                 setMessage(gettext("Some error occurred"), "error");
             });
@@ -611,7 +611,7 @@ require([
 
         };
 
-        var handleReq = function(data, ioArgs) {
+        var handleReq = function(data, ioArgs, error) {
             var json;
             if(pbar) {
                 pbar.destroy();
@@ -628,7 +628,7 @@ require([
                 console.log(e);
                 setMessage(gettext('An error occurred!'), "error");
                 try {
-                    if(ioArgs.xhr.status == 200) {
+                    if(!error) {
                         rnode.set('content', data);
                     } else {
                         rnode.hide();
@@ -662,14 +662,18 @@ require([
                 data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
                 handleAs: 'text'
-                }).then(handleReq, handleReq);
+                }).then(handleReq, function(evt) {
+                    handleReq(evt.response.data, evt.response, true);
+                });
 
         } else {
 
             xhr.post(attrs.url, {
                 data: newData,
                 handleAs: 'text'
-            }).then(handleReq, handleReq);
+            }).then(handleReq, function(evt) {
+                handleReq(evt.response.data, evt.response, true);
+                });
 
         }
 
@@ -760,7 +764,8 @@ require([
             }
         };
 
-        var errorHandle = function(data) {
+        var errorHandle = function(evt) {
+            var data = evt.response.data;
 
             setMessage(gettext('An error occurred!'), "error");
 
