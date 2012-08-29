@@ -13,9 +13,8 @@
 
 kerberos_start()
 {
-	local ec pwfile
-
-	ec=1
+	local res=1
+	local pwfile
 
 	if srv_enabled activedirectory
 	then
@@ -27,25 +26,35 @@ kerberos_start()
 
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
+			domainname=$(echo "${domainname}" | tr a-z A-Z)
+
 			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
 			printf "${adminpw}" > ${pwfile}
-			domainname=$(echo "${domainname}" | tr a-z A-Z)
+
+			AD_log "kerberos_start: kinit --password-file=${pwfile} " \
+			    "${adminname}@${domainname}"
 			kinit --password-file="${pwfile}" \
 			    "${adminname}@${domainname}"
-			ec=$?
-			rm -f "${pwfile}"
+			res=$?
 
+			local ok="Failed"
+			if [ "${res}" = "0" ]
+			then
+				ok="Successful"
+			fi
+
+			AD_log "kerberos_start: ${ok}"
+			rm -f "${pwfile}"
 			sleep 10
 		fi
 	fi
-	return $ec
+
+	return ${res}
 }
 
 kerberos_status()
 {
-	local ec
-
-	ec=1
+	local res=1
 
 	if srv_enabled activedirectory
 	then
@@ -58,11 +67,22 @@ kerberos_status()
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
 			domainname=$(echo "${domainname}"|tr a-z A-Z)
+
+			AD_log "kerberos_status: klist -l | grep -q ^${adminname}@${domainname}"
 			klist -l | grep -q "^${adminname}@${domainname}"
-			ec=$?
+			res=$?
+
+			local ok="Failed"
+			if [ "${res}" = "0" ]
+			then
+				ok="Successful"
+			fi
+
+			AD_log "kerberos_status: ${ok}"
 		fi
 	fi
-	return $ec
+
+	return ${res}
 }
 
 kerberos_stop()
