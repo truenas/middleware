@@ -180,6 +180,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "block drop in quick proto udp from any to any port 3260" >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
+    /etc/rc.d/watchdogd stop
     watchdog -t 4
     for volumename in volumenames; do
 	echo "Exporting ${volumename}!" | logger
@@ -187,6 +188,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 	echo "Exported ${volumename}!" | logger
     done
     watchdog -t 0
+    /etc/rc.d/watchdogd start
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 fi
 
