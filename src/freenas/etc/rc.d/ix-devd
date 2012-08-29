@@ -29,7 +29,7 @@ notify 100 {
    action "/bin/sh -x /etc/carp-state-change-hook \$subsystem \$type | logger";
 };
 E*O*F
-		volumename=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS' AND id in (SELECT volume_id from system_failover ORDER BY -id LIMIT 1);"`
+		volumenames=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS';"`
 
 		# Failover script
 		cat > /etc/carp-state-change-hook << E*O*F
@@ -139,8 +139,10 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     ifconfig \${SUBSYSTEM} advskew 1
-    /sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
-    /sbin/zpool set cachefile=/data/zfs/zpool.cache ${volumename}
+    for volumename in volumenames; do
+	/sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
+	/sbin/zpool set cachefile=/data/zfs/zpool.cache ${volumename}
+    done
 
     #mount -uw /
     /etc/rc.d/statd restart
@@ -178,11 +180,13 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "block drop in quick proto udp from any to any port 3260" >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
-    echo "Exporting ${volumename}!" | logger
     watchdog -t 4
-    zpool export -f ${volumename} || (zpool status ${volumename} && sleep 5)
+    for volumename in volumenames; do
+	echo "Exporting ${volumename}!" | logger
+	zpool export -f ${volumename} || (zpool status ${volumename} && sleep 5)
+	echo "Exported ${volumename}!" | logger
+    done
     watchdog -t 0
-    echo "Exported ${volumename}!" | logger
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 fi
 
