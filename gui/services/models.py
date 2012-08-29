@@ -1375,6 +1375,10 @@ class ActiveDirectory(Model):
             default=True,
             verbose_name=_("Use default domain"),
             )
+    ad_verbose_logging = models.BooleanField(
+            default=False,
+            verbose_name=_("Verbose logging"),
+            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name=_("Administrator Name"),
