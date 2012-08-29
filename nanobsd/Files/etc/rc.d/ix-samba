@@ -586,6 +586,19 @@ generate_smb_config()
 	generate_smbconf > ${SMB_CONF}
 	generate_exports >> ${SMB_CONF}
 	generate_avahi_cifs_service
+
+	if srv_enabled activedirectory
+	then
+		AD_init
+		AD_log "generate_smb_config: checking testparm issues"
+
+		local IFS="
+"
+		for line in $(echo|testparm 2>/dev/stdout 1>/dev/null)
+		do
+			AD_log "generate_smb_config: testparm: ${line}"
+		done
+	fi
 }
 
 name="ix-samba"
