@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-07-11 16:02+0200\n"
-"Last-Translator: Paktas <zilvinas.bartkus@gmail.com>\n"
+"PO-Revision-Date: 2012-08-28 19:05+0200\n"
+"Last-Translator: Zydrius <a.zydrius@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Stebėsena"
+msgstr "Įvykiai"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -49,7 +49,6 @@ msgstr "Talpykla"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
 msgstr "Įvyko klaida!"
 
@@ -59,20 +58,19 @@ msgstr "Redaguoti"
 
 #: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
-msgstr "Redaguoti Diską"
+msgstr "Redaguoti diską"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Valymas"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Redaguoti Diską"
+msgstr "Valyti diską"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "Palaukite..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -99,4 +97,4 @@ msgid "Detach"
 msgstr "Atjungti"
 
 msgid "Disk Detach"
-msgstr "Disko Atjungimas"
+msgstr "Disko atjungimas"

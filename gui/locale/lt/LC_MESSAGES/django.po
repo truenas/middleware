@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2011-07-11 16:02+0200\n"
-"Last-Translator: Paktas <zilvinas.bartkus@gmail.com>\n"
+"PO-Revision-Date: 2012-08-29 05:32+0200\n"
+"Last-Translator: Zydrius <a.zydrius@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr ""
+msgstr "Paprastas"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -49,72 +49,58 @@ msgid "PIO0"
 msgstr "PIO0"
 
 #: choices.py:55
-#, fuzzy
 msgid "PIO1"
 msgstr "PIO1"
 
 #: choices.py:56
-#, fuzzy
 msgid "PIO2"
 msgstr "PIO2"
 
 #: choices.py:57
-#, fuzzy
 msgid "PIO3"
 msgstr "PIO3"
 
 #: choices.py:58
-#, fuzzy
 msgid "PIO4"
 msgstr "PIO4"
 
 #: choices.py:59
-#, fuzzy
 msgid "WDMA0"
 msgstr "WDMA0"
 
 #: choices.py:60
-#, fuzzy
 msgid "WDMA1"
 msgstr "WDMA1"
 
 #: choices.py:61
-#, fuzzy
 msgid "WDMA2"
 msgstr "WDMA2"
 
 #: choices.py:62
-#, fuzzy
 msgid "UDMA-16"
 msgstr "UDMA-16"
 
 #: choices.py:63
-#, fuzzy
 msgid "UDMA-33"
 msgstr "UDMA-33"
 
 #: choices.py:64
-#, fuzzy
 msgid "UDMA-66"
 msgstr "UDMA-66"
 
 #: choices.py:65
-#, fuzzy
 msgid "UDMA-100"
 msgstr "UDMA-100"
 
 #: choices.py:66
-#, fuzzy
 msgid "UDMA-133"
 msgstr "UDMA-133"
 
 #: choices.py:67
-#, fuzzy
 msgid "SATA 1.5Gbit/s"
 msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
-#, fuzzy
 msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
@@ -128,27 +114,28 @@ msgstr "Išjungta"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "1 lygis - minimalios energijos sanaudos laukimo režime "
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "64 lygis - vidutinės energijos sąnaudos laukimo režime"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "127 lygis - vidutinės energijos sąnaudos laukimo režime"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
+"64 lygis - minimalios energijos sąnaudos laukimo režime ( be HDD sustabdymo)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "192 lygis - vidutinės energijos sąnaudos be laukimo režimo"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "254 lygis - maksimalios energijos sąnaudos"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -244,7 +231,7 @@ msgstr "Anonimiškai"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "Vietinis Vartotojas"
+msgstr "Vietinis vartotojas"
 
 #: choices.py:189
 msgid "Normal"
@@ -264,23 +251,23 @@ msgstr "Numatytasis"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Laiko mašina"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr ""
+msgstr "Be registro apskaitos"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Apatiniame registre vardai abiem atvejais"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Klientas mato mažasias raides, serveris mato didžiasias"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Klientas mato didžiasias raides, serveris mažasias"
 
 #: choices.py:207
 msgid "File"
@@ -292,7 +279,7 @@ msgstr "Įrenginys"
 
 #: choices.py:209
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS tomas"
 
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
@@ -314,37 +301,36 @@ msgid "None"
 msgstr "Joks"
 
 #: choices.py:228
-#, fuzzy
 msgid "CHAP"
 msgstr "CHAP"
 
 #: choices.py:229
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Bendras CHAP"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS baterija beveik išsikrovusi"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS dirba nuo akumuliatoriaus"
 
 #: choices.py:255
 msgid "Preferred"
-msgstr ""
+msgstr "Pageidautina"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr ""
+msgstr "Galimas"
 
 #: choices.py:257
 msgid "Required"
-msgstr ""
+msgstr "Reikalingas"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr ""
+msgstr "Įgauna"
 
 #: choices.py:285
 msgid "On"
@@ -356,39 +342,39 @@ msgstr "Išjungta"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (rekomenduotinas)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (numatytasis lygis, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (greičiausias)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (maksimalus suspaudimas, lėtas)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr ""
+msgstr "Valanda(os)"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr ""
+msgstr "Diena(os)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr ""
+msgstr "Savaitė(ės)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr ""
+msgstr "Mėnesis(siai)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr ""
+msgstr "Metai"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
@@ -398,110 +384,110 @@ msgstr "Kasdien"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Kiekvieną pasirinkta darbo dieną"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr ""
+msgstr "Tik skaitymui"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr ""
+msgstr "Tik įrašyti"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr ""
+msgstr "Skaityti ir rašyti"
 
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s minutės"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(valandų) valandos"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s valandos"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s dienų"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s savaičių"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Never - Tikrinti įrenginius nepriklausomai nuo jo maitinimo režimo"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sleep - Tikrinti įrenginius, išskyrus SLEEP režime"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Tikrinti įrenginius, išskyrus SEEP ir STANDBY režimuose"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Idle - Tikrinti įrenginius, išskyrus SEEP, STANDBY IDLE režimuose"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Ilgasis savęs testavimas"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Greitoji diagnostika"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Diagnostikos vykdymas  (ATA only)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Offline lėtasis testas (tik ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr ""
+msgstr "Rsync modulis"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync per SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Push"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Traukti"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Jūsų vardas negali prasidėti simboliu \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Simbolis $ leidžiamas tik kaip paskutinis simbolis"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Pavadinime yra neleidžiami simboliai (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Jūsų pilname varde yra neleidžiami simboliai (%s)"
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -513,10 +499,12 @@ msgstr "Vartotojo vardas"
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
+"Būtina. Nedaugiau 16 simbolių, ir tik lotiniškos raidės, skaičiai ir ./-/_ "
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
+"Ši reikšmė gali turėti tik lotiniškas raides, skaičius ir ./-/_  simbolius"
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -530,17 +518,17 @@ msgstr "Slaptažodžio patvirtinimas"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Įveskite tokį patį slaptažodį kaip ir viršuje, dėl patikrinimo"
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr ""
+msgstr "Atjungti jungimasi su slaptažodžiu"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -552,7 +540,7 @@ msgstr ""
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr ""
+msgstr "Pagrindinė grupė"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -564,7 +552,7 @@ msgstr ""
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Papildomos grupės"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
@@ -572,7 +560,7 @@ msgstr ""
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Toks vartotojas jau egzistuoja"
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -584,7 +572,7 @@ msgstr ""
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Slaptažodžiai nesutampa"
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -606,7 +594,7 @@ msgstr ""
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr ""
+msgstr "Šis laukas būtinas"
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -626,7 +614,7 @@ msgstr ""
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr ""
+msgstr "Įsimintini vartotojai"
 
 #: account/forms.py:852
 msgid "New password"
@@ -646,7 +634,7 @@ msgstr "Senas slaptažodis"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Jūsų senas slaptažodis įvestas blogai. Bandykite dar kartą."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
@@ -657,17 +645,17 @@ msgstr ""
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr ""
+msgstr "Grupių ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Grupės pavadinimas"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
-msgstr ""
+msgstr "Grupė"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
@@ -676,15 +664,15 @@ msgstr "Grupės"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Grupė %s yra įdiegta ir ji negali būti ištrinta!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr ""
+msgstr "Vartotojo ID"
 
 #: account/models.py:87
 msgid "User &"
-msgstr ""
+msgstr "Vartotojas &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
@@ -5877,7 +5865,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:61
 msgid "Available"
-msgstr ""
+msgstr "Pasiekiamas"
 
 #: templates/storage/volumes.html:62
 msgid "Size"
@@ -6243,7 +6231,6 @@ msgstr "S.M.A.R.T."
 msgid "View Tunables"
 msgstr "Rodyti Visus Vartotojus"
 
-#, fuzzy
 msgid "DVD"
 msgstr "DVD"
 
