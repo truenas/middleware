@@ -3298,11 +3298,27 @@ class notifier:
         self.__confxml = None
         self.__camcontrol = None
         self.__diskserial = {}
+        self.__twcli = {}
 
     def __geom_confxml(self):
         if self.__confxml == None:
             self.__confxml = libxml2.parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
+
+    def __get_twcli(self, controller):
+        if controller in self.__twcli:
+            return self.__twcli[controller]
+
+        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S|re.M)
+        proc = self.__pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
+        output = proc.communicate()[0]
+
+        units = {}
+        for port, unit in re_port.findall(output):
+            units[int(unit)] = int(port)
+
+        self.__twcli[controller] = units
+        return self.__twcli[controller]
 
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
@@ -3336,10 +3352,11 @@ class notifier:
                     "cciss,%d" % (info["channel"], )
                     ]
             elif info.get("drv") == "twa":
+                twcli = self.__get_twcli(info["controller"])
                 args = [
                     "/dev/%s%d" % (info["drv"], info["controller"]),
                     "-d",
-                    "3ware,%d" % (info["channel"], )
+                    "3ware,%d" % (twcli.get(info["channel"], -1), )
                     ]
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)

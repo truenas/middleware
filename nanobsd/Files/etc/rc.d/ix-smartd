@@ -70,9 +70,10 @@ parse_devlist()
 			;;
                 # 3ware controller
                 ${disk}:twa*)
-                        echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${CHANNEL_NO}"
-                        break
-                        ;;
+			port=`/usr/local/sbin/tw_cli /c${CONTROLLER_ID}/u${CHANNEL_NO} show | egrep "^u" | sed -E 's/.*p([0-9]+).*/\1/'`
+			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${port}"
+			break
+			;;
 		# Common device
 		${disk}:* )
 			echo -n /dev/$disk
