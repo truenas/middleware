@@ -20,6 +20,9 @@ generate_krb5_conf()
 	local _adminpw="${5}"
 	local _template
 
+	AD_log "generate_krb5_conf: dcname = ${_dcname}, domainname = ${_domainname}, " \
+		"netbiosname = ${_netbiosname}, adminname = ${_adminname}"
+
 	_template="${PATH_KRB5_TEMPLATE}"
 
 	if [ ! -f "${_template}" ]
@@ -49,6 +52,13 @@ generate_krb5_conf()
 		print $0;
 	}
 	' < "${_template}" > "${PATH_KRB5_CONFIG}"
+
+	local IFS="
+"
+	for line in $(verify_krb5_conf 2>&1) 
+	do
+		AD_log "generate_krb5_conf: ${line}"
+	done
 
 	return 0
 }
