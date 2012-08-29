@@ -81,7 +81,9 @@ define([
                         this.set('label', 'Close');
                     }
                     if(dialog) {
-                        dialog.layout();
+                        //dialog.layout();
+                        dialog._size();
+                        dialog._position();
                     }
                 },
             }, this.pathButton);
