@@ -256,23 +256,23 @@ class NFS_ShareForm(ModelForm):
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
 
-        if not ismp:
-            if self.cleaned_data.get("nfs_alldirs"):
-                self._errors['nfs_alldirs'] = self.error_class([
-                    _("This option is only available while sharing mountpoints")
-                    ])
-                valid = False
-
         used_networks = []
         for share in qs:
+            try:
+                stdev = os.stat(share.paths.all()[0].path).st_dev
+            except:
+                continue
             if share.nfs_network:
-                try:
-                    stdev = os.stat(share.paths.all()[0].path).st_dev
-                except:
-                    continue
                 used_networks.extend(
                     map(lambda y: (y, stdev), share.nfs_network.split(" "))
                     )
+            if (self.cleaned_data.get("nfs_alldirs") and share.nfs_alldirs
+                    and stdev == dev):
+                self._errors['nfs_alldirs'] = self.error_class([
+                    _("This option is only available once per mountpoint")
+                    ])
+                valid = False
+                break
 
         for network in networks:
             for unetwork, ustdev in used_networks:
