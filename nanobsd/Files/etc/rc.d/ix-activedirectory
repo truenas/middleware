@@ -60,6 +60,11 @@ generate_nss_ldap_conf()
 	rootbinddn ${adminname}@${domainname}
 	scope sub
 	ssl no
+	ldap_version 3
+	timelimit 30
+	bind_timelimit 30
+	bind_policy soft
+	pam_ldap_attribute uid
 	nss_base_passwd ${base}?sub
 	nss_base_shadow ${base}?sub
 	nss_base_group ${base}?sub? &(objectCategory=group)(gidnumber=*)
