@@ -1,35 +1,23 @@
 # -*- coding: utf-8 -*-
 import datetime
-import re
-from ipaddr import IPNetwork
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-class Migration(DataMigration):
+
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        "Write your forwards methods here."
-        # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
-        for share in orm['sharing.NFS_Share'].objects.all():
-            net = share.nfs_network
-            net = re.sub(r'\s{2,}|\n', ' ', net).strip()
-            networks = []
-            hosts = []
-            for n in net.split(' '):
-                try:
-                    IPNetwork(n.encode('utf-8'))
-                    if n.find("/") == -1:
-                        raise ValueError(n)
-                    networks.append(n)
-                except:
-                    hosts.append(n)
-            share.nfs_network = ' '.join(networks)
-            share.nfs_hosts = ' '.join(hosts)
-            share.save()
+        # Deleting field 'NFS_Share.nfs_path'
+        db.delete_column('sharing_nfs_share', 'nfs_path')
+
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        # Adding field 'NFS_Share.nfs_path'
+        db.add_column('sharing_nfs_share', 'nfs_path',
+                      self.gf('freenasUI.freeadmin.models.PathField')(default=1, max_length=255),
+                      keep_default=False)
+
 
     models = {
         'sharing.afp_share': {
@@ -89,7 +77,6 @@ class Migration(DataMigration):
             'nfs_maproot_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'nfs_maproot_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'nfs_network': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'nfs_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'nfs_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
@@ -102,4 +89,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['sharing']
-    symmetrical = True
