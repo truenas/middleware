@@ -1375,6 +1375,10 @@ class ActiveDirectory(Model):
             default=True,
             verbose_name=_("Use default domain"),
             )
+    ad_unix_extensions = models.BooleanField(
+            default=False,
+            verbose_name=_("UNIX extensions"),
+            )
     ad_verbose_logging = models.BooleanField(
             default=False,
             verbose_name=_("Verbose logging"),
