@@ -1023,6 +1023,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.binddn = ad['ad_adminname'] + '@' + self.domain.upper()
         self.bindpw = ad['ad_adminpw']
         self.trusted = True if long(ad['ad_allow_trusted_doms']) != 0 else False
+        self.default = True if long(ad['ad_use_default_domain']) != 0 else False
+        self.unix = True if long(ad['ad_unix_extensions']) != 0 else False
 
         host = port = None
         args = {'binddn': self.binddn, 'bindpw': self.bindpw}
@@ -1048,6 +1050,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.domain = kwargs.get('domain', None)
         self.netbiosname = kwargs.get('netbiosname', None)
         self.trusted = False
+        self.default = False
+        self.unix = False
 
         tmphost = kwargs.get('host', None)
         if tmphost:
@@ -1767,7 +1771,10 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     self.__ducache[n][CN] = u
 
                 u = u[1]
-                sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0]))
+                if self.default or self.unix:
+                    sAMAccountName = u['sAMAccountName'][0]
+                else:
+                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0]))
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
@@ -2020,7 +2027,8 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
             for g in ad_groups:
                 sAMAccountName = g[1]['sAMAccountName'][0]
-                sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
+                if not self.trusted and not self.unix:
+                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[n][sAMAccountName.upper()] = g
@@ -2189,8 +2197,11 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
             log.debug("FreeNAS_ActiveDirectory_Group.__get_group: AD group not in cache")
             ad_group = self.get_group(group)
 
-        g = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
-            ad_group[1]['sAMAccountName'][0] if ad_group else group)
+        if not self.trusted and not self.unix:
+            g = ad_group[1]['sAMAccountName'][0] if ad_group else group
+        else:
+            g = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
+                ad_group[1]['sAMAccountName'][0] if ad_group else group)
 
         try:
             gr = grp.getgrnam(g)
@@ -2356,8 +2367,11 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
             log.debug("FreeNAS_ActiveDirectory_User.__get_user: AD user not in cache")
             ad_user = self.get_user(user)
 
-        u = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
-            ad_user[1]['sAMAccountName'][0] if ad_user else user)
+        if self.default or self.unix:
+            u = ad_user[1]['sAMAccountName'][0] if ad_user else user
+        else:
+            u = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
+                ad_user[1]['sAMAccountName'][0] if ad_user else user)
 
         try:
             pw = pwd.getpwnam(u)
