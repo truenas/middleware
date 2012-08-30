@@ -18,6 +18,7 @@ generate_pam_service_file()
 	local service="${1}"
 	local winbind="${2}"
 	local ldap="${3}"
+	local krb5="${4}"
 	local template
 	local temp
 	local file
@@ -31,14 +32,17 @@ generate_pam_service_file()
 		return 1
 	fi
 
-	awk -v ldap="${ldap}" -v winbind="${winbind}" '{
+	awk -v ldap="${ldap}" -v winbind="${winbind}" -v krb5="${krb5}" '{
 		if (/^#.*@@LDAP@@/ && ldap) {
 			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
 			print $0;
 		} else if (/^#.*@@WINBIND@@/ && winbind) {
 			gsub("^#.*@@WINBIND@@[^a-zA-Z0-9]+", "");
 			print $0;
-		} else if (/^#.*@@MKHOMEDIR@@/ && (ldap || winbind)) {
+		} else if (/^#.*@@KRB5@@/ && krb5) {
+			gsub("^#.*@@KRB5@@[^a-zA-Z0-9]+", "");
+			print $0;
+		} else if (/^#.*@@MKHOMEDIR@@/ && (ldap || winbind || krb5)) {
 			gsub("^#.*@@MKHOMEDIR@@[^a-zA-Z0-9]+", "");
 			print $0;
 		} else if (/^#.*@@.*@@/) {
@@ -64,42 +68,40 @@ generate_pam_service_file()
 generate_pam_files()
 {
 	local ldap=0
-	local winbind=0
+	local ad=0
+	local ad_unix=0
 
 	if [ ! -d "${PAM_TEMPLATE_DIR}" -o ! -d "${PAM_DIR}" ]
 	then
 		return 1
 	fi
 
-	while read line
-	do
-		local var=$(echo "${line}"|cut -s -f1 -d'|')
-		local val=$(echo "${line}"|cut -s -f2 -d'|')
+	if srv_enabled activedirectory
+	then
+		ad=1
+                ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+                        SELECT
+                                ad_unix_extensions
+                        FROM
+                                services_activedirectory
+                        ORDER BY
+                                -id
+                        LIMIT 1
+                ")
+		if [ "${ad_unix}" = "1" ]
+		then
+			ad=0
+		fi
 
-		case "${var}" in
-			activedirectory) winbind="${val}" ;;
-			ldap) ldap="${val}" ;;
-		esac
+	elif srv_enabled ldap
+	then
+		ldap=1
+	fi
 
-	done <<EOF
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_service,
-		srv_enable
-
-	FROM
-		services_services
-
-	WHERE
-		srv_service IN (
-			'ldap',
-			'activedirectory'
-	)")
-EOF
 
 	for service in $(ls "${PAM_TEMPLATE_DIR}")
 	do
-		generate_pam_service_file "${service}" "${winbind}" "${ldap}"
+		generate_pam_service_file "${service}" "${ad}" "${ldap}" "${ad_unix}"
 	done
 
 	return 0
