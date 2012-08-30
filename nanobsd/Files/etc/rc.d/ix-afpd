@@ -42,8 +42,13 @@ generate_afpd_config()
 "${afp_srv_name}" -noddp -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
 -uservol -uampath /usr/local/libexec/netatalk-uams \\
--guestname ${afp_srv_guest_user} \\
 EOF
+	if [ ${afp_srv_guest} -eq 1 ]; then
+		echo "-guestname ${afp_srv_guest_user} \\"
+	else
+		echo "-noguest \\"
+	fi
+
 	echo -n "-uamlist "
 	if [ ${afp_srv_guest} -eq 1 ]; then
 	    echo -n "uams_guest.so,"
@@ -126,7 +131,7 @@ generate_netatalk_conf()
 	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT $f FROM services_afp ORDER BY -id LIMIT 1" | \
+		"SELECT ${sf} FROM services_afp ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 		if [ -n "$afp_srv_guest_user" ]; then
 			echo "AFPD_GUEST='$afp_srv_guest_user'"
