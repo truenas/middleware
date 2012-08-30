@@ -17,6 +17,7 @@ generate_nsswitch_conf()
 	local ldap=0
 	local ad=0
 	local ad_unix=0
+	local hosts="files dns"
 	local conf="${PATH_NS_CONF}"
 
 	local p="compat"
@@ -56,6 +57,7 @@ generate_nsswitch_conf()
 				p="${p} winbind"
 				g="${g} winbind"
 			fi
+			hosts="${hosts} wins"
 
 		elif [ "${ldap}" = "1" ]
 		then
@@ -66,7 +68,7 @@ generate_nsswitch_conf()
 	
 	cat >"${conf}" <<-EOF
 	group: ${g}
-	hosts: files dns
+	hosts: ${hosts}
 	networks: files
 	passwd: ${p}
 	shells: files
