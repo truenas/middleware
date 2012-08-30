@@ -250,30 +250,40 @@ class NFS_ShareForm(ModelForm):
                     ismp = True
             except OSError:
                 pass
-        if not ismp and self.cleaned_data.get("nfs_alldirs"):
-            self._errors['nfs_alldirs'] = self.error_class([
-                _("This option is only available while sharing mountpoints")
-                ])
-            valid = False
-        elif not ismp:
-            networks = self.cleaned_data.get("nfs_network", "").split(" ")
-            qs = models.NFS_Share.objects.all()
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
+
+        networks = self.cleaned_data.get("nfs_network", "").split(" ")
+        qs = models.NFS_Share.objects.all()
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+
+        if not ismp:
+            if self.cleaned_data.get("nfs_alldirs"):
+                self._errors['nfs_alldirs'] = self.error_class([
+                    _("This option is only available while sharing mountpoints")
+                    ])
+                valid = False
+
             used_networks = []
             for share in qs:
                 if share.nfs_network:
                     used_networks.extend(share.nfs_network.split(" "))
-            for network in networks:
-                if network in used_networks:
-                    self._errors['nfs_network'] = self.error_class([
-                        _("The network %s is already being shared and cannot "
-                            "be used twice while sharing directories") % (
-                            network,
-                            )
-                        ])
-                    valid = False
-                    break
+        else:
+            used_networks = []
+            for share in qs:
+                if share.nfs_network and share.paths.all().count() > 1:
+                    used_networks.extend(share.nfs_network.split(" "))
+
+        for network in networks:
+            if network in used_networks:
+                self._errors['nfs_network'] = self.error_class([
+                    _("The network %s is already being shared and cannot "
+                        "be used twice while sharing directories") % (
+                        network,
+                        )
+                    ])
+                valid = False
+                break
+
         return valid
 
     def save(self, *args, **kwargs):
