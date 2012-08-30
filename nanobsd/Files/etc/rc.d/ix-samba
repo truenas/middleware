@@ -84,6 +84,7 @@ generate_smbconf()
 		ad_domainname,
 		ad_netbiosname,
 		ad_workgroup,
+		ad_unix_extensions,
 		ad_allow_trusted_doms,
 		ad_use_default_domain,
 		ad_adminname,
@@ -119,7 +120,7 @@ generate_smbconf()
 		largerw sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
-		ad_domainname ad_netbiosname ad_workgroup ad_allow_trusted_doms \
+		ad_domainname ad_netbiosname ad_workgroup ad_unix_extensions ad_allow_trusted_doms \
 		ad_use_default_domain ad_adminname ad_adminpw ldap_hostname ldap_basedn \
 		ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
 		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
@@ -297,8 +298,6 @@ EOF
 
 			    idmap uid = 10000-19999
 			    idmap gid = 10000-19999
-			    idmap config ${ad_workgroup}: backend = rid
-			    idmap config ${ad_workgroup}: range = 20000-20000000
 
 			    winbind cache time = 10
 			    winbind offline logon = yes
@@ -314,6 +313,13 @@ EOF
 			    template homedir = /home/%D/%U
 
 EOF
+			if [ "${ad_unix_extensions}" = "0" ]
+			then
+				cat<<-EOF
+				    idmap config ${ad_workgroup}: backend = rid
+				    idmap config ${ad_workgroup}: range = 20000-20000000
+EOF
+			fi
 		else
 			echo "    security = ${authmodel}"
 			if [ "${authmodel}" = "share" ]; then
