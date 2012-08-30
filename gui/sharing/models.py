@@ -263,10 +263,16 @@ class NFS_Share(Model):
             blank=True,
             )
     nfs_path = PathField(
-            verbose_name=_("Path"))
+            verbose_name=_("Path"),
+            editable=False)
     nfs_network = models.TextField(
-            verbose_name=_("Authorized network or IP addresses"),
-            help_text=_("Network that is authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
+            verbose_name=_("Authorized networks"),
+            help_text=_("Networks that are authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."),
+            blank=True,
+            )
+    nfs_hosts = models.TextField(
+            verbose_name=_("Authorized IP addresses or hosts"),
+            help_text=_("IP addresses or hostnames that are authorized to access the NFS share."),
             blank=True,
             )
     nfs_alldirs = models.BooleanField(
@@ -315,19 +321,41 @@ class NFS_Share(Model):
             )
 
     def __unicode__(self):
-        return unicode(self.nfs_path)
+        if self.nfs_comment:
+            return unicode(self.nfs_comment)
+        return u"[%s]" % ', '.join([p.path for p in self.paths.all()])
 
     def delete(self, *args, **kwargs):
         super(NFS_Share, self).delete(*args, **kwargs)
         notifier().reload("nfs")
 
+    @property
+    def nfs_paths(self):
+        return u"%s" % ', '.join([p.path for p in self.paths.all()])
+
     class Meta:
         verbose_name = _("Unix (NFS) Share")
         verbose_name_plural = _("Unix (NFS) Shares")
-        ordering = ["nfs_path"]
+        #ordering = ["nfs_path"]
 
     class FreeAdmin:
         icon_model = u"UNIXShareIcon"
         icon_add = u"AddUNIXShareIcon"
         icon_view = u"ViewAllUNIXSharesIcon"
         icon_object = u"UNIXShareIcon"
+        inlines = [
+            {
+                'form': 'NFS_SharePathForm',
+                'prefix': 'path_set'
+            },
+        ]
+
+
+class NFS_Share_Path(Model):
+    share = models.ForeignKey(NFS_Share, related_name="paths")
+    path = PathField(
+            verbose_name=_("Path"))
+
+    class Meta:
+        verbose_name = _("Path")
+        verbose_name_plural = _("Paths")

@@ -159,25 +159,31 @@ class NFS_ShareForm(ModelForm):
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         if not net:
             return net
-        #only one address = CIDR or IP
-        if net.find(" ") == -1:
+        for n in net.split(' '):
             try:
-                IPNetwork(net.encode('utf-8'))
-            except NetmaskValueError:
-                IPAddress(net.encode('utf-8'))
-            except (AddressValueError, ValueError):
+                IPNetwork(n.encode('utf-8'))
+                if n.find("/") == -1:
+                    raise ValueError(n)
+            except (AddressValueError, NetmaskValueError, ValueError):
                 raise forms.ValidationError(
-                    _("The field is a not a valid IP address or network")
+                    _("This is not a valid network: %s") % n
                     )
-        else:
-            for ip in net.split(' '):
-                try:
-                    IPAddress(ip.encode('utf-8'))
-                except (AddressValueError, ValueError):
-                    raise forms.ValidationError(
-                        _("The IP '%s' is not valid.") % ip
-                        )
         return net
+
+    def clean_nfs_hosts(self):
+        net = self.cleaned_data['nfs_hosts']
+        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+        return net
+        if not net:
+            return net
+        #only one address = CIDR or IP
+        #if net.find(" ") == -1:
+        #    try:
+        #    except NetmaskValueError:
+        #        IPAddress(net.encode('utf-8'))
+        #    except (AddressValueError, ValueError):
+        #        raise forms.ValidationError(
+        #            )
 
     def clean(self):
         cdata = self.cleaned_data
@@ -211,6 +217,30 @@ class NFS_ShareForm(ModelForm):
 
         return cdata
 
+    def cleanformset_nfs_share_path(self, formset, forms):
+        dev = None
+        valid = True
+        for form in forms:
+            if not hasattr(form, "cleaned_data"):
+                continue
+            path = form.cleaned_data.get("path")
+            if not path:
+                continue
+            try:
+                stat = os.stat(path)
+                if dev is None:
+                    dev = stat.st_dev
+                elif dev != stat.st_dev:
+                    self._fserrors = self.error_class([
+                    _("Paths for a NFS share must reside within the same "
+                        "filesystem")
+                    ])
+                    valid = False
+                    break
+            except OSError:
+                pass
+        return valid
+
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
         notifier().reload("nfs")
@@ -218,3 +248,9 @@ class NFS_ShareForm(ModelForm):
     def done(self, request, events):
         if not services.objects.get(srv_service='nfs').srv_enable:
             events.append('ask_service("nfs")')
+
+
+class NFS_SharePathForm(ModelForm):
+
+    class Meta:
+        model = models.NFS_Share_Path

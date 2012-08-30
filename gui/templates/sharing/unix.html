@@ -9,7 +9,7 @@
         </tr>
     </tbody>
     <thead class="ghead">
-        <td>{% trans "Mountpoint" %}</td>
+        <td>{% trans "Paths" %}</td>
         <td>{% trans "Comment" %}</td>
         <td>{% trans "Action" %}</td>
     </thead>
@@ -17,7 +17,7 @@
     {% for n in nfs_share_list %}
     <tr class="{% cycle 'odd' 'even' %}" id="{{ n.id }}">
         <td>
-            {{ n.nfs_path }}
+            {{ n.nfs_paths }}
         </td>
         <td>
             {{ n.nfs_comment }}

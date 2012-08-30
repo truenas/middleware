@@ -45,6 +45,7 @@ class ModelForm(AdvMixin, MF):
     on every form instantiation
     """
     def __init__(self, *args, **kwargs):
+        self._fserrors = {}
         super(ModelForm, self).__init__(*args, **kwargs)
         for name, field in self.fields.items():
             if hasattr(field, "_reroll"):
@@ -63,6 +64,21 @@ class ModelForm(AdvMixin, MF):
 
     def delete(self, request=None, events=None):
         self.instance.delete()
+
+    def is_valid(self, formsets=None):
+        valid = True
+        if formsets is not None:
+            for name, fs in formsets.items():
+                methodname = "clean%s" % (name, )
+                if hasattr(self, methodname):
+                    valid &= getattr(self, methodname)(fs, fs.forms)
+        retval = super(ModelForm, self).is_valid() & valid
+        if self._fserrors:
+            if '__all__' not in self._errors:
+                self._errors['__all__'] = self._fserrors
+            else:
+                self._errors['__all__'] += self._fserrors
+        return retval
 
 
 class Form(AdvMixin, F):

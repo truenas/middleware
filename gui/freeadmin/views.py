@@ -345,11 +345,7 @@ def generic_model_add(request, app, model, mf=None):
         if m._admin.advanced_fields:
             mf.advanced_fields.extend(m._admin.advanced_fields)
 
-        if mf.is_valid():
-            valid = True
-        else:
-            valid = False
-
+        valid = True
         if m._admin.inlines:
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
@@ -381,6 +377,8 @@ def generic_model_add(request, app, model, mf=None):
             for frm in fs.forms:
                 frm.parent = mf
             valid &= fs.is_valid()
+
+        valid &= mf.is_valid(formsets=formsets)
 
         if valid:
             try:
@@ -610,11 +608,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         if m._admin.advanced_fields:
             mf.advanced_fields.extend(m._admin.advanced_fields)
 
-        if mf.is_valid():
-            valid = True
-        else:
-            valid = False
-
+        valid = True
         if m._admin.inlines:
             for inlineopts in m._admin.inlines:
                 inline = inlineopts.get("form")
@@ -646,6 +640,8 @@ def generic_model_edit(request, app, model, oid, mf=None):
             for frm in fs.forms:
                 frm.parent = mf
             valid &= fs.is_valid()
+
+        valid &= mf.is_valid(formsets=formsets)
 
         if valid:
             try:

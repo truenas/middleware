@@ -57,39 +57,52 @@ set_sysctl()
 generate_exports()
 {
 	local IFS="|"
-	local f="nfs_path nfs_network nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
+	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
 	while eval read -r $f; do
-		if [ -d "${nfs_path}" ]; then
-			echo -n ${nfs_path}
-			if [ "${nfs_alldirs}" = "1" ]; then
-				echo -n " -alldirs"
+		local path paths line
+		paths=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path AS usp WHERE share_id = ${id} ORDER BY usp.id DESC" | \
+		while read -r path; do
+			if [ -d ${path} ]; then
+				echo -n "${path} "
 			fi
-			if [ "${nfs_ro}" = "1" ]; then
-				echo -n " -ro"
+		done`
+		local line=""
+		line=${paths}
+		if [ "${nfs_alldirs}" = "1" ]; then
+			line="${line} -alldirs"
+		fi
+		if [ "${nfs_ro}" = "1" ]; then
+			line="${line} -ro"
+		fi
+		if [ "${nfs_quiet}" = "1" ]; then
+			line="${line} -quiet"
+		fi
+                if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
+			mapall_user=$(setuser "${nfs_mapall_user}")
+			mapall_group=$(setgroup "${nfs_mapall_group}")
+			line="${line} -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
+                else
+                        if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
+				maproot_user=$(setuser "${nfs_maproot_user}")
+				maproot_group=$(setgroup "${nfs_maproot_group}")
+			        line="${line} -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
+                        fi
+		fi
+		local IFS="|"
+		echo ${nfs_network} | tr " " "\\n" | \
+		while read -r network; do
+			if [ -n "${network}" ]; then
+				echo "${line} -network ${network}"
 			fi
-			if [ "${nfs_quiet}" = "1" ]; then
-				echo -n " -quiet"
-			fi
-                        if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
-				mapall_user=$(setuser "${nfs_mapall_user}")
-				mapall_group=$(setgroup "${nfs_mapall_group}")
-				echo -n " -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
-                        else
-                                if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
-					maproot_user=$(setuser "${nfs_maproot_user}")
-					maproot_group=$(setgroup "${nfs_maproot_group}")
-				        echo -n " -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
-                                fi
-			fi
-			if [ -n "${nfs_network}" ]; then
-                echo -n " "
-				echo -n "${nfs_network}" | \
-				    awk -F" " '{ if ($0 !~ /\//) printf $0; else printf "-network %s",$0 }'
-			fi
-			echo
+		done
+
+		if [ -n "${nfs_hosts}" ]; then
+			echo "${line} ${nfs_hosts}"
+		elif [ -z "${nfs_network}" ]; then
+			echo "${line}"
 		fi
 	done > /etc/exports
 
