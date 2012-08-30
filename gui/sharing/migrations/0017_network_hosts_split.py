@@ -1,34 +1,35 @@
 # -*- coding: utf-8 -*-
 import datetime
+import re
+from ipaddr import IPNetwork
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Adding model 'NFS_Share_Path'
-        db.create_table('sharing_nfs_share_path', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('share', self.gf('django.db.models.fields.related.ForeignKey')(related_name='paths', to=orm['sharing.NFS_Share'])),
-            ('path', self.gf('freenasUI.freeadmin.models.PathField')(max_length=255)),
-        ))
-        db.send_create_signal('sharing', ['NFS_Share_Path'])
-
-        # Adding field 'NFS_Share.nfs_hosts'
-        db.add_column('sharing_nfs_share', 'nfs_hosts',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
-                      keep_default=False)
-
+        "Write your forwards methods here."
+        # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
+        for share in orm['sharing.NFS_Share'].objects.all():
+            net = share.nfs_network
+            net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+            networks = []
+            hosts = []
+            for n in net.split(' '):
+                try:
+                    IPNetwork(n.encode('utf-8'))
+                    if n.find("/") == -1:
+                        raise ValueError(n)
+                    networks.append(n)
+                except:
+                    hosts.append(n)
+            share.nfs_network = ' '.join(networks)
+            share.nfs_hosts = ' '.join(hosts)
+            share.save()
 
     def backwards(self, orm):
-        # Deleting model 'NFS_Share_Path'
-        db.delete_table('sharing_nfs_share_path')
-
-        # Deleting field 'NFS_Share.nfs_hosts'
-        db.delete_column('sharing_nfs_share', 'nfs_hosts')
-
+        "Write your backwards methods here."
 
     models = {
         'sharing.afp_share': {
@@ -101,3 +102,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['sharing']
+    symmetrical = True
