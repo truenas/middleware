@@ -356,6 +356,9 @@ class NFS_Share_Path(Model):
     path = PathField(
             verbose_name=_("Path"))
 
+    def __unicode__(self):
+        return self.path
+
     class Meta:
         verbose_name = _("Path")
         verbose_name_plural = _("Paths")

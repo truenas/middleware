@@ -263,26 +263,28 @@ class NFS_ShareForm(ModelForm):
                     ])
                 valid = False
 
-            used_networks = []
-            for share in qs:
-                if share.nfs_network:
-                    used_networks.extend(share.nfs_network.split(" "))
-        else:
-            used_networks = []
-            for share in qs:
-                if share.nfs_network and share.paths.all().count() > 1:
-                    used_networks.extend(share.nfs_network.split(" "))
+        used_networks = []
+        for share in qs:
+            if share.nfs_network:
+                try:
+                    stdev = os.stat(share.paths.all()[0].path).st_dev
+                except:
+                    continue
+                used_networks.extend(
+                    map(lambda y: (y, stdev), share.nfs_network.split(" "))
+                    )
 
         for network in networks:
-            if network in used_networks:
-                self._errors['nfs_network'] = self.error_class([
-                    _("The network %s is already being shared and cannot "
-                        "be used twice while sharing directories") % (
-                        network,
-                        )
-                    ])
-                valid = False
-                break
+            for unetwork, ustdev in used_networks:
+                if network == unetwork and dev == ustdev:
+                    self._errors['nfs_network'] = self.error_class([
+                        _("The network %s is already being shared and cannot "
+                            "be used twice for the same filesystem") % (
+                            network,
+                            )
+                        ])
+                    valid = False
+                    break
 
         return valid
 
