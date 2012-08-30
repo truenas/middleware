@@ -255,6 +255,25 @@ class NFS_ShareForm(ModelForm):
                 _("This option is only available while sharing mountpoints")
                 ])
             valid = False
+        elif not ismp:
+            networks = self.cleaned_data.get("nfs_network", "").split(" ")
+            qs = models.NFS_Share.objects.all()
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            used_networks = []
+            for share in qs:
+                if share.nfs_network:
+                    used_networks.extend(share.nfs_network.split(" "))
+            for network in networks:
+                if network in used_networks:
+                    self._errors['nfs_network'] = self.error_class([
+                        _("The network %s is already being shared and cannot "
+                            "be used twice while sharing directories") % (
+                            network,
+                            )
+                        ])
+                    valid = False
+                    break
         return valid
 
     def save(self, *args, **kwargs):
