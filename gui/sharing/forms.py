@@ -220,12 +220,14 @@ class NFS_ShareForm(ModelForm):
     def cleanformset_nfs_share_path(self, formset, forms):
         dev = None
         valid = True
+        ismp = False
         for form in forms:
             if not hasattr(form, "cleaned_data"):
                 continue
             path = form.cleaned_data.get("path")
             if not path:
                 continue
+            parent = os.path.join(path, "..")
             try:
                 stat = os.stat(path)
                 if dev is None:
@@ -237,8 +239,22 @@ class NFS_ShareForm(ModelForm):
                     ])
                     valid = False
                     break
+                if ismp:
+                    self._fserrors = self.error_class([
+                    _("You cannot share a mount point and subdirectories "
+                        "all at once")
+                    ])
+                    valid = False
+                    break
+                if os.stat(parent).st_dev != stat.st_dev:
+                    ismp = True
             except OSError:
                 pass
+        if not ismp and self.cleaned_data.get("nfs_alldirs"):
+            self._errors['nfs_alldirs'] = self.error_class([
+                _("This option is only available while sharing mountpoints")
+                ])
+            valid = False
         return valid
 
     def save(self, *args, **kwargs):

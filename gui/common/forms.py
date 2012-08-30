@@ -66,19 +66,19 @@ class ModelForm(AdvMixin, MF):
         self.instance.delete()
 
     def is_valid(self, formsets=None):
+        retval = super(ModelForm, self).is_valid()
         valid = True
         if formsets is not None:
             for name, fs in formsets.items():
                 methodname = "clean%s" % (name, )
                 if hasattr(self, methodname):
                     valid &= getattr(self, methodname)(fs, fs.forms)
-        retval = super(ModelForm, self).is_valid() & valid
         if self._fserrors:
             if '__all__' not in self._errors:
                 self._errors['__all__'] = self._fserrors
             else:
                 self._errors['__all__'] += self._fserrors
-        return retval
+        return retval & valid
 
 
 class Form(AdvMixin, F):
