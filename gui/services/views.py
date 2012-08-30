@@ -290,7 +290,9 @@ def servicesToggleView(request, formname):
                 not opp_svc_entry.srv_enable == 1 or
                 not opposing_service):
             svc_entry.srv_enable = 1
-    svc_entry.save()
+
+    if changing_service != 'activedirectory':
+        svc_entry.save()
 
     #
     # forcestop then start to make sure the service is of the same status.
@@ -308,12 +310,14 @@ def servicesToggleView(request, formname):
 
     elif changing_service == "activedirectory":
         if svc_entry.srv_enable == 1:
+            svc_entry.save()
             started = notifier()._start_activedirectory()
         else:
             started = notifier()._stop_activedirectory()
+            svc_entry.save()
 
     elif changing_service == "plugins":
-        if svc_entry.srv_enable == 1:
+        if ssc_entry.srv_enable == 1:
             started = notifier().start("plugins_jail")
         else:
             started = notifier().stop("plugins_jail")
