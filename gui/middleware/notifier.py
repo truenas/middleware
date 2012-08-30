@@ -460,17 +460,34 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd restart")
 
     def _start_ldap(self):
+        from freenasUI.services import models
+
+        cifs_file = "/tmp/.cifs_LDAP"
+        cifs_svc_entry = models.services.objects.get(srv_service='cifs')
+        cifs_started = cifs_svc_entry.srv_enable
+
+        if not cifs_started:
+            cifs_svc_entry.srv_enable = 1
+            cifs_svc_entry.save()
+
         self.__system("/usr/sbin/service ix-ldap quietstart")
         self.___system("(/usr/sbin/service ix-cache quietstart) &")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/bin/killall winbindd")
-        self.__system("/bin/sleep 5")
-        self.__system("/usr/sbin/service samba quietstart")
+
+        try:   
+            f = open(cifs_file, "w+")
+            f.write("%d" % "1" if cifs_started else "0")
+            f.close()
+
+        except:
+            pass
+
+        if cifs_started:
+            self.__system("/usr/sbin/service samba restart")
+        else:
+            self.__system("/usr/sbin/service samba start")
 
         if (self.__system_nolog('/usr/sbin/service ix-ldap status') != 0):
             return False
@@ -493,17 +510,55 @@ class notifier:
         return ret
 
     def _stop_ldap(self):
+        from freenasUI.services import models
+
+        cifs_file = "/tmp/.cifs_LDAP"
+        cifs_svc_entry = models.services.objects.get(srv_service='cifs')
+        cifs_started = cifs_svc_entry.srv_enable
+
+        ldap_svc_entry = models.services.objects.get(srv_service='ldap')
+        ldap_started = ldap_svc_entry.srv_enable
+
         self.__system("/usr/sbin/service ix-ldap quietstart")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
+
+        if ldap_started:
+            ldap_svc_entry.srv_enable = 0
+            ldap_svc_entry.save()
+
         self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/bin/killall nmbd")
-        self.__system("/usr/bin/killall smbd")
-        self.__system("/usr/bin/killall winbindd")
-        self.__system("/bin/sleep 5")
-        self.__system("/usr/sbin/service samba quietstart")
+
+        if ldap_started:
+            ldap_svc_entry.srv_enable = 1
+            ldap_svc_entry.save()
+
+        try:
+            f = open(cifs_file, "r")
+            prev_cifs_started = int(f.readline())
+            f.close()
+            os.unlink(cifs_file)
+
+        except:
+            prev_cifs_started = cifs_started
+
+        if cifs_started and prev_cifs_started:
+            self.__system("/usr/sbin/service samba restart")
+
+        elif cifs_started and not prev_cifs_started:
+            self.__system("/usr/sbin/service samba forcestop")
+            cifs_svc_entry.srv_enable = 0
+            cifs_svc_entry.save()
+
+        elif not cifs_started and prev_cifs_started:
+            cifs_svc_entry.srv_enable = 1
+            cifs_svc_entry.save()
+            self.__system("/usr/sbin/service samba start")
+
+        elif not cifs_started and not prev_cifs_started:
+            self.__system("/usr/sbin/service samba forcestop")
+
         return False
 
     def _restart_ldap(self):
@@ -534,7 +589,7 @@ class notifier:
     def _start_activedirectory(self):
         from freenasUI.services import models
 
-        cifs_file = "/tmp/.cifs"
+        cifs_file = "/tmp/.cifs_AD"
         cifs_svc_entry = models.services.objects.get(srv_service='cifs')
         cifs_started = cifs_svc_entry.srv_enable
 
@@ -573,7 +628,7 @@ class notifier:
     def _stop_activedirectory(self):
         from freenasUI.services import models
 
-        cifs_file = "/tmp/.cifs"
+        cifs_file = "/tmp/.cifs_AD"
         cifs_svc_entry = models.services.objects.get(srv_service='cifs')
         cifs_started = cifs_svc_entry.srv_enable
 
@@ -602,6 +657,7 @@ class notifier:
             f = open(cifs_file, "r")
             prev_cifs_started = int(f.readline())
             f.close()
+            os.unlink(cifs_file)
 
         except:
             prev_cifs_started = cifs_started
@@ -610,7 +666,7 @@ class notifier:
             self.__system("/usr/sbin/service samba restart")
 
         elif cifs_started and not prev_cifs_started:
-            self.__system("/usr/sbin/service samba stop")
+            self.__system("/usr/sbin/service samba focestop")
             cifs_svc_entry.srv_enable = 0
             cifs_svc_entry.save()
 
@@ -620,7 +676,7 @@ class notifier:
             self.__system("/usr/sbin/service samba start")
 
         elif not cifs_started and not prev_cifs_started:
-            self.__system("/usr/sbin/service samba stop")
+            self.__system("/usr/sbin/service samba forcestop")
 
         return False
 
