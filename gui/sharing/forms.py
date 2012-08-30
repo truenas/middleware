@@ -278,9 +278,9 @@ class NFS_ShareForm(ModelForm):
 
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
-        notifier().reload("nfs")
 
     def done(self, request, events):
+        notifier().reload("nfs")
         if not services.objects.get(srv_service='nfs').srv_enable:
             events.append('ask_service("nfs")')
 
