@@ -10,16 +10,11 @@
 . /etc/rc.freenas
 
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
+: ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 
-generate_nss_ldap_conf()
+get_basename()
 {
-	local IFS="|"
-	local nssconf="${NSS_LDAP_CONF}"
-
-	dcname=$(AD_get dcname)
-	domainname=$(AD_get domainname)
-	adminname=$(AD_get adminname)
-	adminpw=$(AD_get adminpw)
+	local domainname="${1}" 
 
 	base=$(echo "${domainname}" | awk '{
 		n = split($0, parts, ".");
@@ -32,14 +27,37 @@ generate_nss_ldap_conf()
 		}
 	}')
 
+	echo "${base}"
+}
+
+generate_ldap_conf()
+{
+	local ldapconf="${LDAP_CONF}"
+	local dcname="$(AD_get dcname)"
+	local domainname="$(AD_get domainname)"
+	local basedn="$(get_basename "${domainname}")"
+
+	echo "HOST ${dcname}" > "${ldapconf}"
+	echo "BASE ${basedn}" >> "${ldapconf}"
+}
+
+generate_nss_ldap_conf()
+{
+	local nssconf="${NSS_LDAP_CONF}"
+	local secret="${NSS_LDAP_SECRET}"
+	local dcname="$(AD_get dcname)"
+	local domainname="$(AD_get domainname)"
+	local adminname="$(AD_get adminname)"
+	local adminpw="$(AD_get adminpw)"
+	local base="$(get_basename "${domainname}")"
+
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 
 
-	cat > "${nssconf}" <<-EOF
+	cat <<-EOF > "${nssconf}"
 	host ${dcname}
 	base ${base}
 	uri ldap://${dcname}/
-	binddn ${adminname}@${domainname}
-	bindpw ${adminpw}
+	rootbinddn ${adminname}@${domainname}
 	scope sub
 	ssl no
 	nss_base_passwd ${base}?sub
@@ -52,7 +70,11 @@ generate_nss_ldap_conf()
 	nss_map_attribute homeDirectory unixHomeDirectory
 	nss_map_attribute uniqueMember member
 EOF
-	ln -s ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
+	printf "${adminpw}" > "${secret}"
+	chmod 600 "${secret}"
+
+	ln -sf ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
+	ln -sf ${secret} "$(dirname ${secret})/ldap.secret"
 
 	return 0
 }
@@ -106,6 +128,29 @@ get_cifs_homedir()
 	"
 }
 
+has_unix_extensions()
+{
+	local ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_unix_extensions
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-id
+
+	LIMIT 1;
+	")
+
+	if [ "${ad_unix}" = "1" ]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 
 setup_homedirs()
 {
@@ -141,12 +186,16 @@ activedirectory_start()
 	then
 		AD_init
 
+		if has_unix_extensions
+		then
+			generate_ldap_conf
+			generate_nss_ldap_conf
+		fi
+
 		AD_log "activedirectory_start: trying to join domain"
 		if ! AD_join_domain; then
 			return 1
 		fi
-
-		#generate_nss_ldap_conf
 
 		setup_homedirs
 		create_cache_filesystem
