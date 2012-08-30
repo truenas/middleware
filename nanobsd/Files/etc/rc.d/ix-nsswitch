@@ -11,40 +11,35 @@
 
 : ${PATH_NS_CONF:="/etc/nsswitch.conf"}
 
+
 generate_nsswitch_conf()
 {
 	local ldap=0
 	local ad=0
+	local ad_unix=0
 	local conf="${PATH_NS_CONF}"
-
-	while read line
-	do
-		local var=$(echo "${line}"|cut -s -f1 -d'|')
-		local val=$(echo "${line}"|cut -s -f2 -d'|')
-
-		case "${var}" in
-			activedirectory) ad="${val}" ;;
-			ldap) ldap="${val}" ;;
-		esac
-
-	done <<EOF
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_service,
-		srv_enable
-
-	FROM
-		services_services
-
-	WHERE
-		srv_service IN (
-			'ldap',
-			'activedirectory'
-	)")
-EOF
 
 	local p="compat"
 	local g="compat"
+
+	if srv_enabled activedirectory
+	then
+		ad="1"
+		ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+			SELECT
+				ad_unix_extensions
+			FROM
+				services_activedirectory
+			ORDER BY
+				-id
+			LIMIT 1
+		")
+
+	elif srv_enabled ldap
+	then
+		ldap="1"
+	fi
+
 
 	if [ "${ldap}" = "1" -o "${ad}" = "1" ]
 	then
@@ -53,8 +48,14 @@ EOF
 
 		if [ "${ad}" = "1" ]
 		then
-			p="${p} winbind"
-			g="${g} winbind"
+			if [ "${ad_unix}" = "1" ]
+			then
+				p="${p} ldap"
+				g="${g} ldap"
+			else
+				p="${p} winbind"
+				g="${g} winbind"
+			fi
 
 		elif [ "${ldap}" = "1" ]
 		then
