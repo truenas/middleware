@@ -91,6 +91,7 @@ generate_pam_files()
 		if [ "${ad_unix}" = "1" ]
 		then
 			ad=0
+			ldap=1
 		fi
 
 	elif srv_enabled ldap
