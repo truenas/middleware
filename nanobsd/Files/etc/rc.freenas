@@ -324,7 +324,7 @@ __do_AD_get()
 	local prefix="${1}"
 	local name="${2}"
 	local var=\$$(printf "${prefix}${name}")
-	local val=$(eval "printf ${var}")
+	local val=$(eval "printf ${var} 2>/dev/null")
 
 	__unescape "${val}"
 }
@@ -336,7 +336,15 @@ AD_get()
 
 	for v in ${vars}
 	do
-		__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		local var=\$$(printf "${v}")
+		local val=$(eval "printf ${var} 2>/dev/null")
+
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else
+			__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		fi
 	done
 }
 
@@ -517,20 +525,44 @@ __SQL__
 	exec 0<&3
 	rm "${tmpfile}"
 
+	if [ -f /etc/ActiveDirectory/knobs ]
+	then
+		. /etc/ActiveDirectory/knobs
+	fi
+
 	local adminname=$(AD_get adminname)
 	local domainname=$(AD_get domainname)
-	AD_set binddn "${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+
+	local binddn=$(AD_get binddn)
+	if [ -z "${binddn}" ]
+	then
+		AD_set binddn "${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+	fi	
 	AD_log "AD_init: binddn = $(AD_get binddn)"
 
-	local dc=$(AD_get_domain_controller "${domainname}")
+	local dc=$(AD_get dc)
+	if [ -z "${dc}" ]
+	then
+		dc=$(AD_get_domain_controller "${domainname}")
+	fi
+
 	AD_set dcname "$(echo "${dc}"|cut -f1 -d:)"
 	AD_set dcport "$(echo "${dc}"|cut -f2 -d:)"
 	AD_log "AD_init: dcname = $(AD_get dcname), dcport = $(AD_get dcport)"
 
-	AD_set basedn "$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+	local basedn=$(AD_get basedn)
+	if [ -z "${basedn}" ]
+	then
+		AD_set basedn "$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+	fi
 	AD_log "AD_init: basedn = $(AD_get basedn)"
 
-	local gc=$(AD_get_global_catalog "${domainname}")
+	local gc=$(AD_get gc)
+	if [ -z "${gc}" ]
+	then
+		gc=$(AD_get_global_catalog "${domainname}")
+	fi
+
 	AD_set gchost "$(echo "${gc}"|cut -f1 -d:)"
 	AD_set gcport "$(echo "${gc}"|cut -f2 -d:)"
 	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
