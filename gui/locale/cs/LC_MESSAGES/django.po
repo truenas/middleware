@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-06-08 10:03+0200\n"
-"Last-Translator: zavadil.pavel <zavadil@sieza.cz>\n"
+"PO-Revision-Date: 2012-08-30 12:29+0200\n"
+"Last-Translator: pendialek <pendialek@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -129,13 +129,12 @@ msgstr ""
 "Level 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
 
 #: choices.py:91
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Průměrná spotřeba bez pohotovostního režimu"
+msgstr "Level 192 - Průměrná spotřeba bez pohotovostního režimu"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximální výkon, vysoká spotřeba"
+msgstr "Level 254 - Maximální výkon, maximální spotřeba"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -231,7 +230,7 @@ msgstr "Anonymní"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "lokální uživatel"
+msgstr "llokální uživatel"
 
 #: choices.py:189
 msgid "Normal"
@@ -243,7 +242,7 @@ msgstr "plný"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "ladění"
+msgstr "lladění"
 
 #: choices.py:195
 msgid "Default"
@@ -334,15 +333,15 @@ msgstr "zdědit"
 
 #: choices.py:285
 msgid "On"
-msgstr "zapnout"
+msgstr "Zap"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr "vypnout"
+msgstr "Vyp"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr "lzjb (doporučeno)"
+msgstr "llzjb (doporučeno)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -362,7 +361,7 @@ msgstr "hodina"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr "den"
+msgstr "den/ny"
 
 #: choices.py:491
 msgid "Week(s)"
@@ -387,7 +386,6 @@ msgid "Every selected weekday"
 msgstr "Ve vybrané dny"
 
 #: choices.py:504
-#, fuzzy
 msgid "Read-only"
 msgstr "pouze čtení"
 
@@ -400,7 +398,7 @@ msgid "Read and Write"
 msgstr "Čtení a zápis"
 
 #: choices.py:510 choices.py:511
-#, fuzzy, python-format
+#, python-format
 msgid "%(minutes)s minutes"
 msgstr "%(minutes) minut"
 
@@ -410,27 +408,25 @@ msgid "%(hour)s hour"
 msgstr "hodin: %"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
-#, fuzzy, python-format
+#, python-format
 msgid "%(hours)s hours"
 msgstr "%(hours) hodin"
 
 #: choices.py:518
-#, fuzzy, python-format
+#, python-format
 msgid "%(day)s day"
 msgstr "%(day) dnů"
 
 #: choices.py:519
-#, fuzzy, python-format
+#, python-format
 msgid "%(week)s week"
 msgstr "%(week) týden"
 
 #: choices.py:523
-#, fuzzy
 msgid "Never - Check the device regardless of its power mode"
 msgstr "Nikdy - zařízení je kontrolováno bez ohledu na režim napájení"
 
 #: choices.py:524
-#, fuzzy
 msgid "Sleep - Check the device unless it is in SLEEP mode"
 msgstr "Režim spánku - zařízení je kontrolováno, pokud je v režimu spánku"
 
@@ -480,21 +476,21 @@ msgstr ""
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Jméno nemůže začínat \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Znak $ je povolen jen jako poslední znak"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše jméno obsahuje nepovolené znaky (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Vaše celé jméno obsahuje nepovolené znaky (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -504,12 +500,10 @@ msgid "Username"
 msgstr "uživatelské jméno"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Vyžadováno. 30 a méně znaků. Pouze písmena, číslice nebo @/./+/-/_."
+msgstr "Vyžadováno. 16 a méně znaků. Pouze písmena, číslice nebo @/./+/-/_."
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
 "Tato hodnota smí obsahovat pouze písmena, čísla nebo tyto znaky @/./+/-/_."
@@ -535,13 +529,12 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Zakázat přihlášení"
+msgstr "Vypnout přihlášení hesly"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Zamknout uživatele"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
@@ -553,10 +546,9 @@ msgstr "výchozí skupina"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Veřejný SSH klíč"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
 msgstr "domovský adresář"
 
@@ -565,9 +557,8 @@ msgid "Auxiliary groups"
 msgstr "Další skupiny"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Uživatelské jméno tímto UID již existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -586,22 +577,20 @@ msgid "The two password fields didn't match."
 msgstr "Hesla nesouhlasí."
 
 #: account/forms.py:386
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Domovský adresář musí začínat /mnt/"
+msgstr "Domovský adresář musí začínat /mnt/ nebo /nonexisten"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Uživatel nemůže patřit do více než 64 skupin"
 
 #: account/forms.py:416 account/forms.py:653
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Domovský adresář musí začínat /mnt/"
+msgstr "Do domovského adresáře nelze zapisovat, ponechte prázdné"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Heslo je zakázáno, ponechte prázdné"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -610,23 +599,20 @@ msgid "This field is required."
 msgstr "Toto pole je vyžadováno."
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Domovský adresář musí začínat /mnt/"
+msgstr "Domovský adresář musí začínat /mnt/ nebo /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Povolit opakované GIDs"
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Skupina s tímto jménem již existuje."
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Uživatelské jméno už existuje."
+msgstr "Skupina s tímto GID již existuje."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -654,18 +640,18 @@ msgstr "Původní heslo je chybné. Vložte jej znovu."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Chcete smazat všechny uživatele s touto primární skupinou?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "ID skupiny"
+msgstr "IID skupiny"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "jméno skupiny"
+msgstr "jjméno skupiny"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -684,7 +670,7 @@ msgstr "Skupina %s nemůže být smazána!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr "ID uživatele"
+msgstr "IID uživatele"
 
 #: account/models.py:87
 msgid "User &"
@@ -700,7 +686,7 @@ msgstr "Zašifrované heslo SMB"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "ID výchozí skupiny"
+msgstr "IID výchozí skupiny"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -735,9 +721,8 @@ msgid "Account"
 msgstr "Účet"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Účty"
+msgstr "Administrátorský účet"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -777,14 +762,13 @@ msgid "The group %s is not valid."
 msgstr ""
 
 #: freeadmin/forms.py:174
-#, fuzzy
 msgid "The path must reside within a volume mount point"
 msgstr "Adresář se musí nacházet v rámci připojení svazku"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Chyba: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -792,9 +776,9 @@ msgid "Add %s"
 msgstr "Přidat %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "zobrazit všechny uživatele"
+msgstr "Zobrazit %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -811,7 +795,7 @@ msgstr "Vypnout"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Nevrácena žádná data z %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
@@ -825,7 +809,7 @@ msgstr ""
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Nebylo možné zjistit stávající status"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -866,23 +850,23 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Nelze nastavit na více rozhraních stejnou IP adresu (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Musíte zadat IPv4 adresu"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Musíte zadat i IPv4 masku"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Musíte zadat IPv6 adresu"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Musíte zadat i IPv6 masku sítě"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
@@ -890,27 +874,27 @@ msgstr "Musíte zvolit mezi IPv4 nebo IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback není platným nameserverem"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Nespecifikované adresy nejsou korekní jako nameservery"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "Tohle není platná adresa nameserveru"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "Podsíť 169.254/16 není platná pro nameserver"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "je nutné zadat název druhého DNS server před zadáním třetího servru"
+msgstr "jje nutné zadat název druhého DNS serveru před zadáním třetího serveru"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "vyžaduje se při použití třetího DNS servru"
+msgstr "Vyžaduje se při použití třetího DNS serveru"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -921,14 +905,12 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "je nutné zadat název prvního DNS server před zadáním druhého servru"
 
 #: network/forms.py:229
-#, fuzzy
 msgid "Parent Interface"
-msgstr "virtuální rozhraní"
+msgstr "Hlavní rozhraní"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "připojení se musí jmenovat vlanXX kde XX je číslo"
+msgstr "Jméno musí být ve tvaru vlanXX kde XX je číslo"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -950,23 +932,23 @@ msgstr "síť '%s' není platná, je očekávano CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Musíte zadat IPv4 adresu i pro alias."
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Musíte vybrat masku sítě IPv4 i pro alias."
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Musíte zadat IPv6 adresu i pro alias."
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Musíte vybrat masku sítě IPv6 i pro alias."
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Musíte vybrat mezi IPv4 nebo IPv6 aliasem"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -1053,7 +1035,7 @@ msgstr "IPv6 Addresa"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "Délka IPv6 přípony"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
@@ -1386,9 +1368,8 @@ msgid "The CIFS service failed to reload."
 msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:118
-#, fuzzy
 msgid "The AFP service failed to reload."
-msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci"
+msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
@@ -1507,7 +1488,7 @@ msgstr "Službě activedirectory se nepodařilo znovu načíst."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Službě LDAP se nezdařilo načíst nastavení."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
@@ -1618,6 +1599,8 @@ msgstr ""
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
+"Tato hodnota se zadává jako velikost v bytech nebo pomocí jednotek KB, MB, "
+"GB, TB"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
@@ -1625,7 +1608,7 @@ msgstr ""
 
 #: services/forms.py:830
 msgid "Disk device"
-msgstr ""
+msgstr "Disk"
 
 #: services/forms.py:948
 #, python-format
@@ -6277,7 +6260,7 @@ msgstr "Stav svazku %s je ZDRAVÝ"
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Stav svazku %s je DEGRADOVÁN"
 
 #: tools/alert.py:115
 #, python-format
@@ -6294,6 +6277,8 @@ msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Musíte změnit heslo administrátora (nyní není heslo pro přihlášení "
+"požadováno)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6376,7 +6361,7 @@ msgid "Pass"
 msgstr "Úspěšně dokončeno"
 
 msgid "Disable password"
-msgstr "Zrušit heslo"
+msgstr "Zakázat heslo"
 
 msgid "My Account"
 msgstr "Můj účet"
@@ -6432,7 +6417,7 @@ msgid "Welcome to"
 msgstr "Vítejte ve8"
 
 msgid "%s successfully update."
-msgstr "%s aktualizace proběhla úspěšně"
+msgstr "%s aktualizace proběhla úspěšně."
 
 msgid "Admin user"
 msgstr "Administrátor"
