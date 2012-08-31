@@ -8,7 +8,6 @@ define(["dojox/data/JsonRestStore", "dojo/_base/declare"], function(JsonRestStor
                 args.item.__id = args.item.__id + '?preventCache=' + new Date().getTime();
             }
             //args.item.__id = args.item.__id + '&test=11';
-            console.log(args);
             var item;
             var oldload = args.item._loadObject;
             if(args.item._loadObject){
