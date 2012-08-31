@@ -62,7 +62,6 @@ WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
-GELI_KEYPATH = '/data/geli'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -984,176 +983,7 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __encrypt_device(self, devname, diskname, volume):
-        from freenasUI.storage.models import Disk, EncryptedDisk
-
-        geli_keyfile = volume.get_geli_keyfile()
-        if not os.path.exists(geli_keyfile):
-            if not os.path.exists(GELI_KEYPATH):
-                self.__system("mkdir -p %s" % (GELI_KEYPATH, ))
-            self.__system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
-
-        self.__system("geli init -B none -K %s -P /dev/%s" % (geli_keyfile, devname))
-        self.__system("geli attach -k %s -p /dev/%s" % (geli_keyfile, devname))
-        # TODO: initialize the provider in background (wipe with random data)
-
-        ident = self.device_to_identifier(diskname)
-        diskobj = Disk.objects.get(disk_identifier=ident)
-        encdiskobj = EncryptedDisk()
-        encdiskobj.encrypted_volume = volume
-        encdiskobj.encrypted_disk = diskobj
-        encdiskobj.encrypted_provider = devname
-        encdiskobj.save()
-
-        return ("/dev/%s.eli" % devname)
-
-    def geli_passphrase(self, volume, passphrase):
-        """
-        Set a passphrase in a geli
-        If passphrase is None then remove the passphrase
-
-        Raises:
-            MiddlewareError
-        """
-        geli_keyfile = volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            if passphrase is not None:
-                proc = self.__pipeopen("geli setkey -k %s -K %s -J %s %s" % (
-                    geli_keyfile,
-                    geli_keyfile,
-                    passphrase,
-                    dev,
-                    )
-                    )
-            else:
-                proc = self.__pipeopen("geli setkey -k %s -K %s -P %s" % (
-                    geli_keyfile,
-                    geli_keyfile,
-                    dev,
-                    )
-                    )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
-
-    def geli_rekey(self, volume, passphrase):
-        """
-        Regenerates the geli global key and set it to devs
-
-        Raises:
-            MiddlewareError
-        """
-
-        geli_keyfile = volume.get_geli_keyfile()
-
-        # Generate new key as .tmp
-        self.__system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
-        error = False
-        applied = []
-        if passphrase:
-            passphrase = "-J %s" % (passphrase, )
-        else:
-            passphrase = "-P"
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli setkey %s -k %s -K %s.tmp %s" % (
-                passphrase,
-                geli_keyfile,
-                geli_keyfile,
-                dev,
-                )
-                )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                error = True
-                break
-            applied.append(dev)
-
-        # Try to be atomic in a certain way
-        # If rekey failed for one of the devs, revert for the ones already applied
-        if error:
-            for dev in applied:
-                proc = self.__pipeopen("geli setkey %s -k %s.tmp -K %s %s" % (
-                    passphrase,
-                    geli_keyfile,
-                    geli_keyfile,
-                    dev,
-                    )
-                    )
-                proc.communicate()
-            raise MiddlewareError("Unable to set key: %s" % (err, ))
-        else:
-            self.__system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
-
-    def geli_recoverykey_add(self, volume, passphrase=None):
-
-        reckey_file = tempfile.mktemp(dir='/tmp/')
-        self.__system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
-
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            if passphrase is not None:
-                proc = self.__pipeopen("geli setkey -n 1 -K %s -J %s %s" % (
-                    reckey_file,
-                    passphrase,
-                    dev,
-                    )
-                    )
-            else:
-                proc = self.__pipeopen("geli setkey -n 1 -K %s -P %s" % (
-                    reckey_file,
-                    dev,
-                    )
-                    )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Unable to set recovery key: %s" % (err, ))
-        return reckey_file
-
-    def geli_delkey(self, volume, slot=1):
-
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli delkey -n %d %s" % (
-                slot,
-                dev,
-                ))
-
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Unable to remove key: %s" % (err, ))
-
-    def geli_is_decrypted(self, dev):
-        doc = self.__geom_confxml()
-        geom = doc.xpathEval("//class[name = 'ELI']/geom[name = '%s.eli']" % (
-            dev,
-            )
-            )
-        if geom:
-            return True
-        return False
-
-    def geli_attach(self, volume, passphrase=None):
-        geli_keyfile = volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            if passphrase is None:
-                proc = self.__pipeopen("geli attach -p -k %s %s" % (
-                    geli_keyfile,
-                    dev,
-                    ))
-            else:
-                proc = self.__pipeopen("geli attach -k %s -j %s %s" % (
-                    geli_keyfile,
-                    passphrase,
-                    dev,
-                    ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not attach %s: %s" % (dev, err))
-
-    def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
+    def __prepare_zfs_vdev(self, disks, swapsize, force4khack):
         vdevs = ['']
         gnop_devs = []
         if force4khack == None:
@@ -1162,10 +992,6 @@ class notifier:
         else:
             test4k = not force4khack
             want4khack = force4khack
-        if encrypt:
-            test4k = False
-            force4khack = False
-            want4khack = False
         first = True
         for disk in disks:
             rv = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -1179,20 +1005,12 @@ class notifier:
 
         doc = self.__geom_confxml()
         for disk in disks:
+
             devname = self.part_type_from_device('zfs', disk)
             if want4khack:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
                 devname = '/dev/%s.nop' % devname
                 gnop_devs.append(devname)
-            elif encrypt:
-                uuid = doc.xpathEval("//class[name = 'PART']"
-                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
-                    )
-                if not uuid:
-                    log.warn("Could not determine GPT uuid for %s", devname)
-                    raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-                else:
-                    devname = self.__encrypt_device("gptid/%s" % uuid[0].content, disk, volume)
             else:
                 uuid = doc.xpathEval("//class[name = 'PART']"
                     "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
@@ -1210,11 +1028,9 @@ class notifier:
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_name = str(volume.vol_name)
         z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
         gnop_devs = []
-        device_list = []
 
         want4khack = force4khack
 
@@ -1227,9 +1043,8 @@ class notifier:
             else:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack, encrypt, volume)
+            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack)
             z_vdev += " ".join(vdevs)
-            device_list += vdevs
             gnop_devs += gnops
 
         # Finally, create the zpool.
@@ -1266,11 +1081,8 @@ class notifier:
             self.__system("zpool import -R /mnt %s" % (z_name))
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
-        if encrypt:
-            for devname in device_list:
-                self.__system('/sbin/geli detach -l %s' % (devname))
 
-    def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
+    def zfs_volume_attach_group(self, volume, group, force4khack=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
@@ -1279,7 +1091,6 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
         z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
 
         # FIXME swapoff -a is overkill
         self.__system("swapoff -a")
@@ -1288,14 +1099,11 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack, encrypt, volume)[0]
+        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack)[0]
         z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
-        if encrypt:
-            for devname in vdev:
-                self.__system('/sbin/geli detach -l %s' % (devname))
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None):
@@ -1507,10 +1315,6 @@ class notifier:
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
         from_swap = self.part_type_from_device('swap', from_disk)
-        encrypt = (volume.vol_encrypt >= 1)
-
-        # TODO: support for passphrase
-        assert (not encrypt) or volume.vol_encrypt == 1
 
         if from_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (from_swap, ))
@@ -1538,18 +1342,14 @@ class notifier:
         uuid = doc.xpathEval("//class[name = 'PART']"
             "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
             )
-        if not encrypt:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                devname = to_label
-            else:
-                devname = "gptid/%s" % uuid[0].content
+        if not uuid:
+            log.warn("Could not determine GPT uuid for %s", to_label)
+            devname = to_label
         else:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-            else:
-                devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume)
+            devname = "gptid/%s" % uuid[0].content
+
+        if to_swap != '':
+            self.__system('/sbin/swapon /dev/%s' % (to_swap))
 
         if from_disk == to_disk:
             self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
@@ -1562,20 +1362,14 @@ class notifier:
             ret = p1.returncode
             if ret != 0:
                 if from_swap != '':
-                    self.__system('/sbin/geli onetime /dev/%s' % (from_swap))
-                    self.__system('/sbin/swapon /dev/%s.eli' % (from_swap))
+                    self.__system('/sbin/swapon /dev/%s' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
                     self.__system('/sbin/swapoff /dev/%s' % (to_swap))
-                if encrypt:
-                    self.__system('/sbin/geli detach %s' % (devname))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
-            if encrypt:
-                self.__system('/sbin/geli detach -l %s' % (devname))
 
         if to_swap:
-            self.__system('/sbin/geli onetime /dev/%s' % (to_swap))
-            self.__system('/sbin/swapon /dev/%s.eli' % (to_swap))
+            self.__system('/sbin/swapon /dev/%s' % (to_swap))
 
         return ret
 
@@ -1747,7 +1541,6 @@ class notifier:
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-fstab quietstart")
-        self.__system("/usr/sbin/service encswap quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
         self.restart("collectd")
@@ -3008,11 +2801,8 @@ class notifier:
 
         return volumes
 
-    def zfs_import(self, name, id=None):
-        if id is not None:
-            imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
-        else:
-            imp = self.__pipeopen('zpool import -f -R /mnt %s' % name)
+    def zfs_import(self, name, id):
+        imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
         stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool

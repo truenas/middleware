@@ -53,6 +53,8 @@ generate_fstab_real()
 
 			mkdir -p ${mountpoint}
 
+			
+
 			if [ "${mountpoint#/mnt}" = "${mountpoint}" ]; then
 				echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	${passno}"
 			else
@@ -74,7 +76,7 @@ generate_fstab_swap()
 	while read diskid; do
         devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py swap_from_diskid "${diskid}")
         if [ -c "/dev/${devname}" ]; then
-       	    echo "/dev/${devname}.eli	none			swap		sw		0	0"
+       	    echo "/dev/${devname}	none			swap		sw		0	0"
         fi 
 	done
 }

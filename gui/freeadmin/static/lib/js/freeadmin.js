@@ -958,11 +958,9 @@ require([
 
         if(zfs) {
             domStyle.set('zfssectorsize', 'display', 'table-row');
-            domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
             domStyle.set('zfsdedup', 'display', 'table-row');
         } else {
             domStyle.set('zfssectorsize', 'display', 'none');
-            domStyle.set('zfsfulldiskencryption', 'display', 'none');
             domStyle.set('zfsdedup', 'display', 'none');
         }
 

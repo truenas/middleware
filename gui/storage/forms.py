@@ -32,9 +32,7 @@ from stat import S_ISDIR
 import logging
 import os
 import re
-import tempfile
 
-from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.db import transaction
 from django.http import QueryDict
 from django.utils.safestring import mark_safe
@@ -152,10 +150,6 @@ class VolumeWizardForm(forms.Form):
         required=False,
         initial=False,
         help_text=_('Force 4096 bytes sector size'))
-    encryption = forms.BooleanField(
-        required=False,
-        initial=False,
-        help_text=_('Whole disk encryption'))
     dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP,
         initial="off",
@@ -340,10 +334,6 @@ class VolumeWizardForm(forms.Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
-        else:
-            volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
         ufspath = self.cleaned_data['ufspath']
         mp_options = "rw"
@@ -367,7 +357,7 @@ class VolumeWizardForm(forms.Form):
             else:
                 add = False
                 volume = models.Volume(vol_name=volume_name,
-                    vol_fstype=volume_fstype, vol_encrypt=volume_encrypt)
+                    vol_fstype=volume_fstype)
                 volume.save()
 
                 mp_path = ufspath if ufspath else '/mnt/' + volume_name
@@ -1359,182 +1349,3 @@ class DiskWipeForm(forms.Form):
         ),
         widget=forms.widgets.RadioSelect(),
         )
-
-
-class CreatePassphraseForm(forms.Form):
-
-    passphrase = forms.CharField(
-        label=_("Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        )
-    passphrase2 = forms.CharField(
-        label=_("Confirm Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        )
-
-    def clean_passphrase2(self):
-        pass1 = self.cleaned_data.get("passphrase")
-        pass2 = self.cleaned_data.get("passphrase2")
-        if pass1 != pass2:
-            raise forms.ValidationError(
-                _("The passphrases do not match")
-                )
-        return pass2
-
-    def done(self, volume):
-        passphrase = self.cleaned_data.get("passphrase")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile)
-        if passfile is not None:
-            os.unlink(passfile)
-        volume.vol_encrypt = 2
-        volume.save()
-
-
-class ChangePassphraseForm(forms.Form):
-
-    adminpw = forms.CharField(
-        label=_("Admin password"),
-        widget=forms.widgets.PasswordInput(),
-        )
-    passphrase = forms.CharField(
-        label=_("New Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        )
-    passphrase2 = forms.CharField(
-        label=_("Confirm New Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        )
-    remove = forms.BooleanField(
-        label=_("Remove passphrase"),
-        required=False,
-        )
-
-    def __init__(self, *args, **kwargs):
-        super(ChangePassphraseForm, self).__init__(*args, **kwargs)
-        self.fields['remove'].widget.attrs['onClick'] = (
-            'toggleGeneric("id_remove", ["id_passphrase", "id_passphrase2"], false);')
-        if self.data.get("remove", False):
-            self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
-            self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
-
-        user = User.objects.filter(is_superuser=True,
-            password=UNUSABLE_PASSWORD)
-        if user.exists():
-            del self.fields['adminpw']
-
-    def clean_adminpw(self):
-        pw = self.cleaned_data.get("adminpw")
-        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
-            raise forms.ValidationError(
-                _("Invalid password")
-                )
-        return pw
-
-    def clean_passphrase2(self):
-        pass1 = self.cleaned_data.get("passphrase")
-        pass2 = self.cleaned_data.get("passphrase2")
-        if pass1 != pass2:
-            raise forms.ValidationError(
-                _("The passphrases do not match")
-                )
-        return pass2
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if cdata.get("remove"):
-            del self._errors['passphrase']
-            del self._errors['passphrase2']
-        return cdata
-
-    def done(self, volume):
-        if self.cleaned_data.get("remove"):
-            passphrase = None
-        else:
-            passphrase = self.cleaned_data.get("passphrase")
-
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile)
-        if passfile is not None:
-            os.unlink(passfile)
-            volume.vol_encrypt = 2
-        else:
-            volume.vol_encrypt = 1
-        volume.save()
-
-
-class UnlockPassphraseForm(forms.Form):
-
-    passphrase = forms.CharField(
-        label=_("Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        )
-
-    def done(self, volume):
-        passphrase = self.cleaned_data.get("passphrase")
-        passfile = tempfile.mktemp(dir='/tmp/')
-        with open(passfile, 'w') as f:
-            f.write(passphrase)
-        attached = True
-        notifier().geli_attach(volume, passfile)
-        os.unlink(passfile)
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
-        if not zimport:
-            raise MiddlewareError(_("Volume could not be imported"))
-
-
-class KeyForm(forms.Form):
-
-    adminpw = forms.CharField(
-        label=_("Admin password"),
-        widget=forms.widgets.PasswordInput(),
-        )
-
-    def __init__(self, *args, **kwargs):
-        super(KeyForm, self).__init__(*args, **kwargs)
-
-        user = User.objects.filter(is_superuser=True,
-            password=UNUSABLE_PASSWORD)
-        if user.exists():
-            del self.fields['adminpw']
-
-    def clean_adminpw(self):
-        pw = self.cleaned_data.get("adminpw")
-        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
-            raise forms.ValidationError(
-                _("Invalid password")
-                )
-        return pw
-
-
-class ReKeyForm(KeyForm):
-
-    def __init__(self, *args, **kwargs):
-        self.volume = kwargs.pop('volume')
-        super(ReKeyForm, self).__init__(*args, **kwargs)
-        if self.volume.vol_encrypt == 2:
-            self.fields['passphrase'] = forms.CharField(
-                label=_("Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-                )
-
-    def done(self):
-        passphrase = self.cleaned_data.get("passphrase")
-        if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                f.write(passphrase)
-            passphrase = passfile
-        notifier().geli_rekey(self.volume, passphrase)
-        if passphrase:
-            os.unlink(passfile)
