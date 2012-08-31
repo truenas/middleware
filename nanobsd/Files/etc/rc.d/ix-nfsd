@@ -69,7 +69,9 @@ generate_exports()
 				echo -n "${path} "
 			fi
 		done`
-		local line=""
+		if [ -z "${paths}" ]; then
+			continue
+		fi
 		line=${paths}
 		if [ "${nfs_alldirs}" = "1" ]; then
 			line="${line} -alldirs"
