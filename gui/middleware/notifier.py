@@ -1086,6 +1086,31 @@ class notifier:
         else:
             self.__system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
 
+    def geli_recoverykey_add(self, volume, passphrase=None):
+
+        reckey_file = tempfile.mktemp(dir='/tmp/')
+        self.__system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
+
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            if passphrase is not None:
+                proc = self.__pipeopen("geli setkey -n 1 -K %s -J %s %s" % (
+                    reckey_file,
+                    passphrase,
+                    dev,
+                    )
+                    )
+            else:
+                proc = self.__pipeopen("geli setkey -n 1 -K %s -P %s" % (
+                    reckey_file,
+                    dev,
+                    )
+                    )
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+        return reckey_file
+
     def geli_is_decrypted(self, dev):
         doc = self.__geom_confxml()
         geom = doc.xpathEval("//class[name = 'ELI']/geom[name = '%s.eli']" % (

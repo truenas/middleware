@@ -33,7 +33,7 @@ import subprocess
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import models as dmodels
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -990,7 +990,8 @@ def disk_wipe_progress(request, devname):
                 output = pipe.communicate()[0]
                 size = output.split()[2]
                 received = transf[-1]
-        return HttpResponse('new Object({state: "uploading", received: %s, size: %s});' % (received, size))
+        return HttpResponse('new Object({state: "uploading", received: %s, '
+            'size: %s});' % (received, size))
 
     except Exception, e:
         log.warn("Could not check for disk wipe progress: %s", e)
@@ -1039,7 +1040,8 @@ def volume_unlock(request, object_id):
     if volume.vol_encrypt < 2:
         if request.method == "POST":
             notifier().start("geli")
-            zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+            zimport = notifier().zfs_import(volume.vol_name,
+                id=volume.vol_guid)
             if zimport and volume.is_decrypted:
                 return JsonResponse(
                     message=_("Volume unlocked")
@@ -1075,7 +1077,8 @@ def volume_key(request, object_id):
             return JsonResponse(
                 message=_("GELI key download starting..."),
                 events=["window.location='%s';" % (
-                    reverse("storage_volume_key_download", kwargs={'object_id': object_id}),
+                    reverse("storage_volume_key_download",
+                        kwargs={'object_id': object_id}),
                     )],
                 )
     else:
@@ -1118,3 +1121,43 @@ def volume_rekey(request, object_id):
     return render(request, "storage/rekey.html", {
         'form': form,
     })
+
+
+def volume_recoverykey_add(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            reckey = notifier().geli_recoverykey_add(volume)
+            request.session["allow_gelireckey"] = reckey
+            return JsonResponse(
+                message=_("GELI recovery key download starting..."),
+                events=["window.location='%s';" % (
+                    reverse("storage_volume_recoverykey_download",
+                        kwargs={'object_id': object_id}),
+                    )],
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/recoverykey_add.html", {
+        'form': form,
+    })
+
+
+def volume_recoverykey_download(request, object_id):
+
+    if "allow_gelireckey" not in request.session:
+        return HttpResponseRedirect('/')
+
+    rec_keyfile = request.session["allow_gelireckey"]
+    with open(rec_keyfile, 'rb') as f:
+
+        response = HttpResponse(f.read(),
+            content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(rec_keyfile)
+    response['Content-Disposition'] = 'attachment; filename=geli_recovery.key'
+    del request.session["allow_gelireckey"]
+    os.unlink(rec_keyfile)
+    return response
