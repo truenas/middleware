@@ -600,7 +600,7 @@ generate_smb_config()
 
 		local IFS="
 "
-		for line in $(echo|testparm 2>/dev/stdout 1>/dev/null)
+		for line in $(echo|/usr/local/bin/testparm 2>/dev/stdout 1>/dev/null)
 		do
 			AD_log "generate_smb_config: testparm: ${line}"
 		done

@@ -587,102 +587,13 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        from freenasUI.services import models
-
-        cifs_file = "/tmp/.cifs_AD"
-        cifs_svc_entry = models.services.objects.get(srv_service='cifs')
-        cifs_started = cifs_svc_entry.srv_enable
-
-        if not cifs_started:
-            cifs_svc_entry.srv_enable = 1
-            cifs_svc_entry.save()
-
-        self.__system("/usr/sbin/service ix-kerberos quietstart")
-        self.__system("/usr/sbin/service ix-nsswitch quietstart")
-        self.__system("/usr/sbin/service ix-pam quietstart")
-        self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service ix-kinit quietstart")
-        if self.__system_nolog('/usr/sbin/service ix-kinit status') != 0:
-            return False
-        if self.__system_nolog("/usr/sbin/service ix-activedirectory quietstart") != 0:
-            return False
-        if (self.__system_nolog('/usr/sbin/service ix-activedirectory status') != 0):
-            return False
-        self.___system("(/usr/sbin/service ix-cache quietstart) &")
-
-        try:
-            f = open(cifs_file, "w+")
-            f.write("%d" % "1" if cifs_started else "0")
-            f.close()
-
-        except:
-            pass
-
-        if cifs_started:
-            self.__system("/usr/sbin/service samba restart")
-        else:
-            self.__system("/usr/sbin/service samba start")
-
-        return True
+        self.__system("/etc/ActiveDirectory/ctl start")
 
     def _stop_activedirectory(self):
-        from freenasUI.services import models
-
-        cifs_file = "/tmp/.cifs_AD"
-        cifs_svc_entry = models.services.objects.get(srv_service='cifs')
-        cifs_started = cifs_svc_entry.srv_enable
-
-        ad_svc_entry = models.services.objects.get(srv_service='activedirectory')
-        ad_started = ad_svc_entry.srv_enable
-
-        self.__system("/usr/sbin/service ix-kerberos quietstart")
-        self.__system("/usr/sbin/service ix-nsswitch quietstart")
-        self.__system("/usr/sbin/service ix-pam quietstart")
-
-        if ad_started:
-            ad_svc_entry.srv_enable = 0
-            ad_svc_entry.save()
-
-        self.__system("/usr/sbin/service ix-samba quietstart")
-
-        if ad_started:
-            ad_svc_entry.srv_enable = 1
-            ad_svc_entry.save()
-
-        self.__system("/usr/sbin/service ix-kinit forcestop")
-        self.__system("/usr/sbin/service ix-activedirectory forcestop")
-        self.___system("(/usr/sbin/service ix-cache quietstop) &")
-
-        try:
-            f = open(cifs_file, "r")
-            prev_cifs_started = int(f.readline())
-            f.close()
-            os.unlink(cifs_file)
-
-        except:
-            prev_cifs_started = cifs_started
-
-        if cifs_started and prev_cifs_started:
-            self.__system("/usr/sbin/service samba restart")
-
-        elif cifs_started and not prev_cifs_started:
-            self.__system("/usr/sbin/service samba focestop")
-            cifs_svc_entry.srv_enable = 0
-            cifs_svc_entry.save()
-
-        elif not cifs_started and prev_cifs_started:
-            cifs_svc_entry.srv_enable = 1
-            cifs_svc_entry.save()
-            self.__system("/usr/sbin/service samba start")
-
-        elif not cifs_started and not prev_cifs_started:
-            self.__system("/usr/sbin/service samba forcestop")
-
-        return False
+        self.__system("/etc/ActiveDirectory/ctl stop")
 
     def _restart_activedirectory(self):
-        self._stop_activedirectory()
-        self._start_activedirectory()
+        self.__system("/etc/ActiveDirectory/ctl restart")
 
     def _restart_syslogd(self):
         self.__system("/usr/sbin/service ix-syslogd quietstart")

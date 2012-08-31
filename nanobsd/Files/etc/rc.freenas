@@ -617,3 +617,25 @@ srv_enabled()
 	fi
 	return 2
 }
+
+srv_set()
+{
+	local service="${1}"
+	local enable="${2}"
+
+	if [ -z "${service}" -o -z "${enable}" ]
+	then
+		return 0
+	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	UPDATE
+		services_services
+	SET
+		srv_enable = ${enable}
+	WHERE
+		srv_service = '${service}'
+	"
+
+	return $?
+}
