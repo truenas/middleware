@@ -80,6 +80,7 @@ generate_plugins_jail_config()
 		done
 
 		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf 2> /dev/null
+		cp /etc/localtime ${path}/${name}/etc/localtime 2> /dev/null
 		sysctl security.jail.allow_raw_sockets=1
 
 		# No VIM colors needed here
