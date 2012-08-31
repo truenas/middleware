@@ -7,7 +7,7 @@ Index: sysutils/tw_cli/Makefile
  PORTVERSION=	9.5.4
  CATEGORIES=	sysutils
 -MASTER_SITES=	ftp://hosting.lissyara.su/
-+MASTER_SITES=	http://www.lsi.com/downloads/Public/SATA/SATA%20Common%20Files/
++MASTER_SITES=	ftp://tsupport:tsupport@ftp0.lsil.com/private/3Ware/downloads/
  DISTNAME=	cli_freebsd_10.2.1_9.5.4
  EXTRACT_SUFX=	.zip
  
