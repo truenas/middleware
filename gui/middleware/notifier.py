@@ -1082,7 +1082,7 @@ class notifier:
                     )
                     )
                 proc.communicate()
-            raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+            raise MiddlewareError("Unable to set key: %s" % (err, ))
         else:
             self.__system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
 
@@ -1108,8 +1108,21 @@ class notifier:
                     )
             err = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+                raise MiddlewareError("Unable to set recovery key: %s" % (err, ))
         return reckey_file
+
+    def geli_delkey(self, volume, slot=1):
+
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            proc = self.__pipeopen("geli delkey -n %d %s" % (
+                slot,
+                dev,
+                ))
+
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                raise MiddlewareError("Unable to remove key: %s" % (err, ))
 
     def geli_is_decrypted(self, dev):
         doc = self.__geom_confxml()

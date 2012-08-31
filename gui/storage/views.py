@@ -1161,3 +1161,21 @@ def volume_recoverykey_download(request, object_id):
     del request.session["allow_gelireckey"]
     os.unlink(rec_keyfile)
     return response
+
+
+def volume_recoverykey_remove(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            reckey = notifier().geli_delkey(volume)
+            return JsonResponse(
+                message=_("Recovery has been removed")
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/recoverykey_remove.html", {
+        'form': form,
+    })
