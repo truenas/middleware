@@ -317,7 +317,7 @@ def servicesToggleView(request, formname):
             svc_entry.save()
 
     elif changing_service == "plugins":
-        if ssc_entry.srv_enable == 1:
+        if svc_entry.srv_enable == 1:
             started = notifier().start("plugins_jail")
         else:
             started = notifier().stop("plugins_jail")
