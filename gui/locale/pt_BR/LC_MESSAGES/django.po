@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-07-20 21:22+0200\n"
-"Last-Translator: leogariba <leonardobretones@gmail.com>\n"
+"PO-Revision-Date: 2012-08-31 23:17+0200\n"
+"Last-Translator: Mikael <mikaelm@restinga.ifrs.edu.br>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -1169,9 +1169,8 @@ msgid "This IP is already in use."
 msgstr "Este IP já encontra-se em uso."
 
 #: plugins/forms.py:92
-#, fuzzy
 msgid "Place to temporarily place PBI file"
-msgstr "Local temporário para arquivos de firmware"
+msgstr "Local temporário para arquivos PBI."
 
 #: plugins/forms.py:93
 msgid ""
@@ -1217,19 +1216,16 @@ msgid "Plugins jail path"
 msgstr "Caminho do Plugins jail"
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Endereço de e-mail"
+msgstr "Endereço IPv4 do Jail."
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Máscara de Rede IPv4"
+msgstr "Máscara de Rede IPv4 do Jail."
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Caminho do Plugins jail"
+msgstr "Caminho dos Arquivos de Plugin."
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1244,20 +1240,19 @@ msgid "The full path cannot exceed 88 characters"
 msgstr "O caminho completo não pode exceder 88 caracteres"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "O cache não pode ser reconstruída"
+msgstr "O diretório a seguir não pôde ser montado %s."
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "O cache não pode ser reconstruída"
+msgstr "O diretório a seguir não pôde ser desmontado: %s."
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
-#, fuzzy
 msgid "Plugin name"
-msgstr "Nome do domínio"
+msgstr "Nome do Plugin."
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
@@ -1272,19 +1267,16 @@ msgid "Info name of the plugin"
 msgstr "Descrição do nome do plugin"
 
 #: plugins/models.py:50
-#, fuzzy
 msgid "Plugin version"
-msgstr "Versão do Windows"
+msgstr "Versão do Plugin."
 
 #: plugins/models.py:51
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "encriptar a conexão"
+msgstr "Versão do Plugin."
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Versão do Windows"
+msgstr "Versão da API."
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1297,24 +1289,21 @@ msgstr "Plugin ativado"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "Controlador de endereço IP"
+msgstr "Plugin de Endereço IP."
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "Porta TCP"
+msgstr "Porta TCP."
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Caminho do Plugins jail"
+msgstr "Caminho do Plugin"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Caminho onde os plugins serão salvos após a instalação"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1341,14 +1330,12 @@ msgid "Mount Points"
 msgstr "Ponto de montagem"
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s atualizado com sucesso."
+msgstr "Plugin atualizado com sucesso."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "Volume adicionado com sucesso."
+msgstr "Plugin removido com sucesso."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -1398,9 +1385,8 @@ msgid "The NFS service failed to reload."
 msgstr "O serviço NFS falhou ao recarregar."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Já existe um grupo com esse nome."
+msgstr "Este IP já existe."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1452,9 +1438,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "O nome não pode conter barra ou fecha colchetes."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Alterar Senha"
+msgstr "Confirmar Senha"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1501,9 +1486,8 @@ msgid "The UPS service failed to reload."
 msgstr "O serviço UPS falhou ao recarregar."
 
 #: services/forms.py:442
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Senha do Administrador"
+msgstr "Confirme a Senha do Administrador"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1645,11 +1629,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "O ID do grupo não pode ser maior que %d"
 
 #: services/forms.py:1019
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "O campo não é um endereço IP válido ou rede"
+msgstr ""
+"O campo não é uma rede ou endereço de IP válido. Utilize a opção \"ALL\" para "
+"permitir qualquer um."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1672,9 +1657,8 @@ msgid "Are you sure you want to delete?"
 msgstr "Tem certeza de que deseja excluir?"
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "O serviço SNMP falhou ao recarregar."
+msgstr "O serviço S.M.A.R.T. falhou ao reinicializar"
 
 #: services/models.py:51
 msgid "Service"
@@ -6715,9 +6699,8 @@ msgstr "Não foi encontrado plugins Jail neste caminho."
 msgid "Plugins path cannot contain jail path."
 msgstr "O caminho dos plugins não possui o caminho do jail"
 
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Nome do domínio"
+msgstr "Informações do Plugin."
 
 msgid "Plugin view"
 msgstr "Visualizar Plugin"
@@ -6725,13 +6708,11 @@ msgstr "Visualizar Plugin"
 msgid "Plugin icon"
 msgstr "Ícone do Plugin"
 
-#, fuzzy
 msgid "Path to plugin"
-msgstr "Caminho para ponto de montagem"
+msgstr "Caminho para o plugin."
 
-#, fuzzy
 msgid "Control Plugins"
-msgstr "Controle de Serviços"
+msgstr "Controle de Plugins"
 
 msgid "Configure Plugins"
 msgstr "Configurar Plugins"
