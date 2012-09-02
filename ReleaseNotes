@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.0-BETA1
+Release Notes for FreeNAS 8.3.0-BETA2
 
 *** IMPORTANT ***
 
@@ -130,8 +130,78 @@ multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
 
-Changes since 8.2.0-RELEASE-p1:
+Changes since 8.3.0-BETA1:
 
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Redirect from HTTP to HTTPS when SSL is enabled.
+
+2. Fix bugs with the webshell and IE.
+
+3. Update to dojo 1.8
+
+4. Add the ability to specify a snapshot replication window.
+
+5. Add the cert and key fields to FTP for SSL.
+
+6. Add a memory device as a choice for a firmware upgrade.
+
+7. Add option for samba "Use Default Domain".
+
+8. Refactor NFS sharing to only allow what the backend will
+   allow.
+
+9. Add support for UNIX extensions for AD.
+
+OS/Third party
+------------------------
+
+1. Add additional SNMP MIBs
+
+2. Add support for the HighPoint 27xx cards.
+
+3. Tweak the settings for network memory such that multiple
+   intel network interfaces won't cause the system to hang at
+   boot.
+
+4. Add the ability to do a plugin jail update without blowing
+   away the installed plugins.
+
+5. Disable nagle's algorithm.  Provides better LAN network performance
+   at the expense of WAN performance.
+
+6. Add CARP modules to kernel.
+
+7. Always use encrypted swap.  Enable hardware support for encryption
+   on processors that support it.
+
+8. Update to samba 3.6.7
+
+9. Add support for SMART over various RAID controllers.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix a bug in the GUI that would cause seemingly random
+   "This field is required" errors when using the permissions
+   widgits.
+
+Installer
+------------------------
+
+1. Fix a bug where the installer always asked to upgrade,
+   even when that wasn't possible.
+
+
+Changes since 8.2.0-RELEASE-p1:
 
 Enhancements
 ========================
