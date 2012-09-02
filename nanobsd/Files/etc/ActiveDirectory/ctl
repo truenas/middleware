@@ -80,13 +80,25 @@ adctl_start()
 	adctl_cmd ${service} ix-pam quietstart
 
 	adctl_cmd ${service} ix-kinit quietstart
-	adctl_cmd ${service} ix-kinit status || return 1
+	if ! adctl_cmd ${service} ix-kinit status
+	then
+		srv_set activedirectory 0
+		return 1
+	fi
 
 	adctl_cmd ${service} ix-samba quietstart
 	cifs_start
 
-	adctl_cmd ${service} ix-activedirectory quietstart || return 1
-	adctl_cmd ${service} ix-activedirectory status || return 1
+	if ! adctl_cmd ${service} ix-activedirectory quietstart
+	then
+		srv_set activedirectory 0
+		return 1
+	fi
+	if ! adctl_cmd ${service} ix-activedirectory status
+	then
+		srv_set activedirectory 0
+		return 1
+	fi
 
 	cifs_restart
 
