@@ -1007,8 +1007,9 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     @staticmethod
     def adset(val, default=None):
         ret = default
-        if val is not None:
-            return val
+        if val:
+            ret = val
+        return ret
 
     def __new__(cls, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__new__: enter")
@@ -1093,6 +1094,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         self.domain = self.adset(self.domain, ad['ad_domainname'])
         self.netbiosname = self.adset(self.netbiosname, ad['ad_workgroup'])
+
         self.binddn = self.adset(self.binddn, ad['ad_adminname'] + '@' + self.domain.upper())
         self.bindpw = self.adset(self.bindpw, ad['ad_adminpw'])
 
@@ -1392,10 +1394,11 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         else:
             gc_args['host'] = self.gchost
-            gc_args['port'] = self.gcport
+            gc_args['port'] = long(self.gcport)
 
             gc = FreeNAS_LDAP_Directory(**gc_args)
             gc.open()
+
 
         domains = []
         if gc and gc._isopen:
