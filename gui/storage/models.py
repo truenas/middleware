@@ -540,8 +540,8 @@ class MountPoint(Model):
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         """
-        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
-        from services.models import iSCSITargetExtent
+        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share_Path
+        from freenasUI.services.models import iSCSITargetExtent
         mypath = os.path.abspath(self.mp_path)
         attachments = {
             'cifs': [],
@@ -556,9 +556,10 @@ class MountPoint(Model):
         for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
             if self.is_my_path(afp.afp_path):
                 attachments['afp'].append(afp.id)
-        for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
-            if self.is_my_path(nfs.nfs_path):
-                attachments['nfs'].append(nfs.id)
+        for nfsp in NFS_Share_Path.objects.filter(path__startswith=mypath):
+            if (self.is_my_path(nfsp.path)
+                    and nfsp.share.id not in attachments['nfs']):
+                attachments['nfs'].append(nfsp.share.id)
         # TODO: Refactor this into something not this ugly.  The problem
         #       is that iSCSI Extent is not stored in proper relationship
         #       model.
@@ -577,8 +578,8 @@ class MountPoint(Model):
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
-        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
-        from services.models import iSCSITargetExtent
+        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        from freenasUI.services.models import iSCSITargetExtent
 
         reload_cifs = False
         reload_afp = False
