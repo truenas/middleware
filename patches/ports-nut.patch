@@ -1,152 +1,303 @@
-Index: sysutils/nut/Makefile
-===================================================================
-RCS file: /home/ncvs/ports/sysutils/nut/Makefile,v
-retrieving revision 1.62
-diff -u -r1.62 Makefile
---- sysutils/nut/Makefile	2 Aug 2011 17:05:43 -0000	1.62
-+++ sysutils/nut/Makefile	13 Jul 2012 14:39:56 -0000
-@@ -6,7 +6,7 @@
- #
- 
- PORTNAME=	nut
--PORTVERSION=	2.6.1
-+PORTVERSION=	2.6.4
- CATEGORIES=	sysutils
- MASTER_SITES=	http://www.networkupstools.org/source/${PORTVERSION:R}/
- DISTFILES=	${DISTNAME}${EXTRACT_SUFX} ${DISTNAME}${EXTRACT_SUFX}.sig
-@@ -25,14 +25,16 @@
- NUT_GROUP?=	uucp
- STATEDIR?=	/var/db/nut
- 
--OPTIONS=	SERIAL		"SERIAL support" on \
--		USB		"USB support" on \
--		SNMP		"SNMP support" on \
--		NEON		"NEON XML/HTTP support"	on \
--		PDU		"Powerman PDU support" off \
--		HAL		"HAL support" off \
--		CGI		"Web CGI interface" off \
--		BASH		"Bash Completion support" off
-+OPTIONS_DEFINE=	SERIAL USB SNMP NEON PDU HAL CGI BASH
-+OPTIONS_DEFAULT=SERIAL USB SNMP NEON
-+
-+SERIAL_DESC=	SERIAL support
-+USB_DESC=	USB support
-+SNMP_DESC=	SNMP support
-+NEON_DESC=	NEON XML/HTTP support
-+PDU_DESC=	Powerman PDU support
-+CGI_DESC=	Web CGI interface
-+BASH_DESC=	Bash Completion support
- 
- USE_RC_SUBR=	nut.sh nut_upsmon.sh nut_upslog.sh
- SUB_LIST+=	STATEDIR=${STATEDIR}
-@@ -67,7 +69,7 @@
- 		--with-group=${NUT_GROUP} \
- 		--with-dev
- 
--.if defined(WITH_CGI)
-+.if ${PORT_OPTIONS:MCGI}
- LIB_DEPENDS+=	gd.4:${PORTSDIR}/graphics/gd
- MAN5+=		hosts.conf.5 upsset.conf.5 upsstats.html.5
- MAN8+=		upsset.cgi.8 upsstats.cgi.8 upsimage.cgi.8
-@@ -85,7 +87,7 @@
- PLIST_SUB+=	NUT_CGI="@comment "
- .endif
- 
--.if !defined(WITHOUT_SERIAL)
-+.if ${PORT_OPTIONS:MSERIAL}
- CONFIGURE_ARGS+=	--with-serial
- MAN8+=		apcsmart.8 bestfortress.8 bcmxcp.8 belkin.8 belkinunv.8 \
- 		bestuferrups.8 bestups.8 bestfcom.8 blazer.8 clone.8 \
-@@ -100,7 +102,7 @@
- PLIST_SUB+=	NUT_SERIAL="@comment "
- .endif
- 
--.if !defined(WITHOUT_USB)
-+.if ${PORT_OPTIONS:MUSB}
- . if ${OSVERSION} < 800069
- LIB_DEPENDS+=	usb-0.1.8:${PORTSDIR}/devel/libusb
- . else
-@@ -114,7 +116,7 @@
- PLIST_SUB+=	NUT_USB="@comment "
- .endif
- 
--.if !defined(WITHOUT_SNMP)
-+.if ${PORT_OPTIONS:MSNMP}
- LIB_DEPENDS+=	netsnmp.30:${PORTSDIR}/net-mgmt/net-snmp
- CONFIGURE_ARGS+=	--with-snmp
- MAN8+=		snmp-ups.8
-@@ -124,7 +126,7 @@
- PLIST_SUB+=	NUT_SNMP="@comment "
- .endif
- 
--.if !defined(WITHOUT_NEON)
-+.if ${PORT_OPTIONS:MNEON}
- LIB_DEPENDS+=	neon.27:${PORTSDIR}/www/neon29
- CONFIGURE_ARGS+=	--with-neonxml
- MAN8+=		netxml-ups.8
-@@ -134,7 +136,7 @@
- PLIST_SUB+=	NUT_NEON="@comment "
- .endif
- 
--.if defined(WITH_PDU)
-+.if ${PORT_OPTIONS:MPDU}
- LIB_DEPENDS+=	powerman.0:${PORTSDIR}/sysutils/powerman
- CONFIGURE_ARGS+=	--with-powerman
- MAN8+=		powerman-pdu.8
-@@ -144,8 +146,8 @@
- PLIST_SUB+=	NUT_PDU="@comment "
- .endif
- 
--.if defined(WITH_HAL)
--. if defined(WITHOUT_USB)
-+.if ${PORT_OPTIONS:MHAL}
-+. if empty(PORT_OPTIONS:MUSB)
- BROKEN=		HAL is only usable with USB support enabled. Run 'make config' again!
- . endif
- LIB_DEPENDS+=	hal.1:${PORTSDIR}/sysutils/hal
-@@ -158,7 +160,7 @@
- PLIST_SUB+=	NUT_HAL="@comment "
- .endif
- 
--.if defined(WITH_BASH)
-+.if ${PORT_OPTIONS:MBASH}
- RUN_DEPENDS+=	${LOCALBASE}/bin/bash_completion.sh:${PORTSDIR}/shells/bash-completion
- PLIST_SUB+=	BASH=""
- .else
-@@ -177,7 +179,8 @@
- 
- .if !defined(NOPORTDOCS)
- post-install:
--.if defined(WITH_BASH)
-+.if ${PORT_OPTIONS:MBASH}
-+	@${MKDIR} ${PREFIX}/etc/bash_completion.d/
- 	${INSTALL_DATA} ${WRKSRC}/scripts/misc/nut.bash_completion ${PREFIX}/etc/bash_completion.d/
- .endif
- 	@${MKDIR} ${DOCSDIR}/cables
 Index: sysutils/nut/distinfo
 ===================================================================
-RCS file: /home/ncvs/ports/sysutils/nut/distinfo,v
-retrieving revision 1.28
-diff -u -r1.28 distinfo
---- sysutils/nut/distinfo	2 Aug 2011 17:05:43 -0000	1.28
-+++ sysutils/nut/distinfo	13 Jul 2012 14:39:56 -0000
+--- sysutils/nut/distinfo	(revision 300790)
++++ sysutils/nut/distinfo	(working copy)
 @@ -1,4 +1,4 @@
 -SHA256 (nut-2.6.1.tar.gz) = f5c46b856c0cf5b7f0e4b22d82b670af64cc98717a90eaac8723dd402a181c00
 -SIZE (nut-2.6.1.tar.gz) = 1776645
 -SHA256 (nut-2.6.1.tar.gz.sig) = 780be2a54fcd4df1124f8dcec4e49df3c1c7a985e030856dbe63fd77d0e76ea8
 -SIZE (nut-2.6.1.tar.gz.sig) = 72
-+SHA256 (nut-2.6.4.tar.gz) = 4a8455ca7ba2e18b57a39206acc5a496e855d845828e970822bd84afd1178fe5
-+SIZE (nut-2.6.4.tar.gz) = 1992488
-+SHA256 (nut-2.6.4.tar.gz.sig) = a364d09b9c6877c1542183dd7eac35cf189ab9d178532d6fd29a04662560754f
-+SIZE (nut-2.6.4.tar.gz.sig) = 72
++SHA256 (nut-2.6.5.tar.gz) = 618df71cf1ca6e3700d1d3c282773a2dec85f9f20324c0d3234c824e97feb93f
++SIZE (nut-2.6.5.tar.gz) = 2038832
++SHA256 (nut-2.6.5.tar.gz.sig) = 4aa66e909d730e2ca6953e3728f783c45bce5506af283b61737e988d22e6e02a
++SIZE (nut-2.6.5.tar.gz.sig) = 72
+Index: sysutils/nut/files/nut.sh.in
+===================================================================
+--- sysutils/nut/files/nut.sh.in	(revision 300790)
++++ sysutils/nut/files/nut.sh.in	(working copy)
+@@ -1,50 +0,0 @@
+-#!/bin/sh
+-#
+-# $FreeBSD$
+-#
+-
+-# PROVIDE: nut
+-# REQUIRE: NETWORKING
+-# BEFORE: LOGIN
+-# KEYWORD: shutdown
+-
+-# Define these nut_* variables in one of these files:
+-#       /etc/rc.conf
+-#       /etc/rc.conf.local
+-#       /etc/rc.conf.d/nut
+-#
+-# DO NOT CHANGE THESE DEFAULT VALUES HERE
+-#
+-nut_enable=${nut_enable-"NO"}
+-nut_prefix=${nut_prefix-"%%PREFIX%%"}
+-
+-. /etc/rc.subr
+-
+-name="nut"
+-rcvar=nut_enable
+-
+-load_rc_config $name
+-
+-required_dirs="%%STATEDIR%%"
+-required_files="${nut_prefix}/etc/nut/ups.conf ${nut_prefix}/etc/nut/upsd.conf ${nut_prefix}/etc/nut/upsd.users"
+-command="${nut_prefix}/sbin/upsd"
+-pidfile="%%STATEDIR%%/upsd.pid"
+-
+-start_precmd="nut_prestart"
+-stop_postcmd="nut_poststop"
+-
+-nut_prestart() {
+-	${nut_prefix}/libexec/nut/upsdrvctl start
+-}
+-
+-nut_poststop() {
+-	${nut_prefix}/libexec/nut/upsdrvctl stop
+-}
+-
+-extra_commands=reload
+-reload()
+-{
+- kill -HUP `cat $pidfile`
+-}
+-
+-run_rc_command "$1"
+Index: sysutils/nut/files/nut_upslog.in
+===================================================================
+--- sysutils/nut/files/nut_upslog.in	(revision 0)
++++ sysutils/nut/files/nut_upslog.in	(working copy)
+@@ -0,0 +1,36 @@
++#!/bin/sh
++#
++# $FreeBSD: head/sysutils/nut/files/nut_upslog.in 302141 2012-08-05 23:19:36Z dougb $
++#
++
++# PROVIDE: nut_upslog
++# REQUIRE: NETWORKING nut
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++
++# Define these nut_upslog* variables in one of these files:
++#       /etc/rc.conf
++#       /etc/rc.conf.local
++#       /etc/rc.conf.d/nut_upslog
++#
++# DO NOT CHANGE THESE DEFAULT VALUES HERE
++#
++nut_upslog_enable=${nut_upslog_enable-"NO"}
++nut_upslog_prefix=${nut_upslog_prefix-"%%PREFIX%%"}
++nut_upslog_logfile=${nut_upslog_logfile-"/var/log/ups.log"}
++nut_upslog_interval=${nut_upslog_interval-"300"}
++nut_upslog_ups=${nut_upslog_ups-"myups@localhost"}
++
++. /etc/rc.subr
++
++name="nut_upslog"
++rcvar=nut_upslog_enable
++
++load_rc_config $name
++
++required_dirs="%%STATEDIR%%"
++command="${nut_upslog_prefix}/bin/upslog"
++pidfile="%%STATEDIR%%/upslog.pid"
++nut_upslog_flags=${nut_upslog_flags-"-s ${nut_upslog_ups} -l ${nut_upslog_logfile} -i ${nut_upslog_interval}"}
++
++run_rc_command "$1"
+Index: sysutils/nut/files/nut_upsmon.sh.in
+===================================================================
+--- sysutils/nut/files/nut_upsmon.sh.in	(revision 300790)
++++ sysutils/nut/files/nut_upsmon.sh.in	(working copy)
+@@ -1,40 +0,0 @@
+-#!/bin/sh
+-#
+-# $FreeBSD$
+-#
+-
+-# PROVIDE: nut_upsmon
+-# REQUIRE: NETWORKING nut
+-# BEFORE: LOGIN
+-# KEYWORD: shutdown
+-
+-# Define these nut_upsmon* variables in one of these files:
+-#       /etc/rc.conf
+-#       /etc/rc.conf.local
+-#       /etc/rc.conf.d/nut_upsmon
+-#
+-# DO NOT CHANGE THESE DEFAULT VALUES HERE
+-#
+-nut_upsmon_enable=${nut_upsmon_enable-"NO"}
+-nut_upsmon_prefix=${nut_upsmon_prefix-"%%PREFIX%%"}
+-
+-. /etc/rc.subr
+-
+-name="nut_upsmon"
+-rcvar=nut_upsmon_enable
+-
+-load_rc_config $name
+-
+-required_dirs="%%STATEDIR%%"
+-required_files="${nut_upsmon_prefix}/etc/nut/upsmon.conf"
+-command="${nut_upsmon_prefix}/sbin/upsmon"
+-pidfile="%%STATEDIR%%/upsmon.pid"
+-nut_upsmon_flags=${nut_upsmon_flags-"localhost"}
+-
+-extra_commands=reload
+-reload()
+-{
+-	${command} -c reload
+-}
+-
+-run_rc_command "$1"
+Index: sysutils/nut/files/nut.in
+===================================================================
+--- sysutils/nut/files/nut.in	(revision 0)
++++ sysutils/nut/files/nut.in	(working copy)
+@@ -0,0 +1,50 @@
++#!/bin/sh
++#
++# $FreeBSD: head/sysutils/nut/files/nut.in 302141 2012-08-05 23:19:36Z dougb $
++#
++
++# PROVIDE: nut
++# REQUIRE: NETWORKING
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++
++# Define these nut_* variables in one of these files:
++#       /etc/rc.conf
++#       /etc/rc.conf.local
++#       /etc/rc.conf.d/nut
++#
++# DO NOT CHANGE THESE DEFAULT VALUES HERE
++#
++nut_enable=${nut_enable-"NO"}
++nut_prefix=${nut_prefix-"%%PREFIX%%"}
++
++. /etc/rc.subr
++
++name="nut"
++rcvar=nut_enable
++
++load_rc_config $name
++
++required_dirs="%%STATEDIR%%"
++required_files="${nut_prefix}/etc/nut/ups.conf ${nut_prefix}/etc/nut/upsd.conf ${nut_prefix}/etc/nut/upsd.users"
++command="${nut_prefix}/sbin/upsd"
++pidfile="%%STATEDIR%%/upsd.pid"
++
++start_precmd="nut_prestart"
++stop_postcmd="nut_poststop"
++
++nut_prestart() {
++	${nut_prefix}/libexec/nut/upsdrvctl start
++}
++
++nut_poststop() {
++	${nut_prefix}/libexec/nut/upsdrvctl stop
++}
++
++extra_commands=reload
++reload()
++{
++ kill -HUP `cat $pidfile`
++}
++
++run_rc_command "$1"
+Index: sysutils/nut/files/nut_upsmon.in
+===================================================================
+--- sysutils/nut/files/nut_upsmon.in	(revision 0)
++++ sysutils/nut/files/nut_upsmon.in	(working copy)
+@@ -0,0 +1,40 @@
++#!/bin/sh
++#
++# $FreeBSD: head/sysutils/nut/files/nut_upsmon.in 302141 2012-08-05 23:19:36Z dougb $
++#
++
++# PROVIDE: nut_upsmon
++# REQUIRE: NETWORKING nut
++# BEFORE: LOGIN
++# KEYWORD: shutdown
++
++# Define these nut_upsmon* variables in one of these files:
++#       /etc/rc.conf
++#       /etc/rc.conf.local
++#       /etc/rc.conf.d/nut_upsmon
++#
++# DO NOT CHANGE THESE DEFAULT VALUES HERE
++#
++nut_upsmon_enable=${nut_upsmon_enable-"NO"}
++nut_upsmon_prefix=${nut_upsmon_prefix-"%%PREFIX%%"}
++
++. /etc/rc.subr
++
++name="nut_upsmon"
++rcvar=nut_upsmon_enable
++
++load_rc_config $name
++
++required_dirs="%%STATEDIR%%"
++required_files="${nut_upsmon_prefix}/etc/nut/upsmon.conf"
++command="${nut_upsmon_prefix}/sbin/upsmon"
++pidfile="%%STATEDIR%%/upsmon.pid"
++nut_upsmon_flags=${nut_upsmon_flags-"localhost"}
++
++extra_commands=reload
++reload()
++{
++	${command} -c reload
++}
++
++run_rc_command "$1"
+Index: sysutils/nut/files/nut_upslog.sh.in
+===================================================================
+--- sysutils/nut/files/nut_upslog.sh.in	(revision 300790)
++++ sysutils/nut/files/nut_upslog.sh.in	(working copy)
+@@ -1,36 +0,0 @@
+-#!/bin/sh
+-#
+-# $FreeBSD$
+-#
+-
+-# PROVIDE: nut_upslog
+-# REQUIRE: NETWORKING nut
+-# BEFORE: LOGIN
+-# KEYWORD: shutdown
+-
+-# Define these nut_upslog* variables in one of these files:
+-#       /etc/rc.conf
+-#       /etc/rc.conf.local
+-#       /etc/rc.conf.d/nut_upslog
+-#
+-# DO NOT CHANGE THESE DEFAULT VALUES HERE
+-#
+-nut_upslog_enable=${nut_upslog_enable-"NO"}
+-nut_upslog_prefix=${nut_upslog_prefix-"%%PREFIX%%"}
+-nut_upslog_logfile=${nut_upslog_logfile-"/var/log/ups.log"}
+-nut_upslog_interval=${nut_upslog_interval-"300"}
+-nut_upslog_ups=${nut_upslog_ups-"myups@localhost"}
+-
+-. /etc/rc.subr
+-
+-name="nut_upslog"
+-rcvar=nut_upslog_enable
+-
+-load_rc_config $name
+-
+-required_dirs="%%STATEDIR%%"
+-command="${nut_upslog_prefix}/bin/upslog"
+-pidfile="%%STATEDIR%%/upslog.pid"
+-nut_upslog_flags=${nut_upslog_flags-"-s ${nut_upslog_ups} -l ${nut_upslog_logfile} -i ${nut_upslog_interval}"}
+-
+-run_rc_command "$1"
 Index: sysutils/nut/pkg-plist
 ===================================================================
-RCS file: /home/ncvs/ports/sysutils/nut/pkg-plist,v
-retrieving revision 1.32
-diff -u -r1.32 pkg-plist
---- sysutils/nut/pkg-plist	2 Aug 2011 17:05:43 -0000	1.32
-+++ sysutils/nut/pkg-plist	13 Jul 2012 14:39:56 -0000
-@@ -1,3 +1,22 @@
+--- sysutils/nut/pkg-plist	(revision 300790)
++++ sysutils/nut/pkg-plist	(working copy)
+@@ -1,3 +1,26 @@
 +%%NUT_CGI%%%%CGIDIR%%/upsimage.cgi
 +%%NUT_CGI%%%%CGIDIR%%/upsset.cgi
 +%%NUT_CGI%%%%CGIDIR%%/upsstats.cgi
@@ -160,16 +311,20 @@ diff -u -r1.32 pkg-plist
 +%%NUT_CGI%%%%WWWDIR%%/nut-banner.png
 +%%ETCDIR%%/cmdvartab
 +%%ETCDIR%%/driver.list
++%%ETCDIR%%/hosts.conf.sample
 +%%ETCDIR%%/nut.conf.sample
 +%%ETCDIR%%/ups.conf.sample
 +%%ETCDIR%%/upsd.conf.sample
 +%%ETCDIR%%/upsd.users.sample
 +%%ETCDIR%%/upsmon.conf.sample
 +%%ETCDIR%%/upssched.conf.sample
++%%ETCDIR%%/upsset.conf.sample
++%%ETCDIR%%/upsstats-single.html.sample
++%%ETCDIR%%/upsstats.html.sample
  @stopdaemon nut_upsmon
  @stopdaemon nut_upslog
  @stopdaemon nut
-@@ -7,31 +26,30 @@
+@@ -7,31 +30,30 @@
  bin/upsrw
  bin/upssched-cmd
  %%BASH%%etc/bash_completion.d/nut.bash_completion
@@ -189,15 +344,15 @@ diff -u -r1.32 pkg-plist
  include/upsclient.h
  lib/libupsclient.a
 -lib/libupsclient.so.1
--lib/libupsclient.so
- lib/libupsclient.la
--%%NUT_HAL%%libexec/hald-addon-blazer_usb
-+lib/libupsclient.so
++lib/libupsclient.la
+ lib/libupsclient.so
+-lib/libupsclient.la
 +lib/libupsclient.so.2
 +libdata/pkgconfig/libnutscan.pc
 +libdata/pkgconfig/libupsclient.pc
- %%NUT_HAL%%libexec/hald-addon-bcmxcp_usb
-+%%NUT_HAL%%libexec/hald-addon-blazer_usb
++%%NUT_HAL%%libexec/hald-addon-bcmxcp_usb
+ %%NUT_HAL%%libexec/hald-addon-blazer_usb
+-%%NUT_HAL%%libexec/hald-addon-bcmxcp_usb
  %%NUT_HAL%%libexec/hald-addon-tripplite_usb
  %%NUT_HAL%%libexec/hald-addon-usbhid-ups
  %%NUT_SERIAL%%libexec/nut/apcsmart
@@ -212,17 +367,17 @@ diff -u -r1.32 pkg-plist
  %%NUT_SERIAL%%libexec/nut/bestuferrups
  %%NUT_SERIAL%%libexec/nut/bestups
  %%NUT_SERIAL%%libexec/nut/blazer_ser
-@@ -62,8 +80,8 @@
+@@ -62,8 +84,8 @@
  %%NUT_SERIAL%%libexec/nut/rhino
  %%NUT_USB%%libexec/nut/richcomm_usb
  %%NUT_SERIAL%%libexec/nut/safenet
--%%NUT_SNMP%%libexec/nut/snmp-ups
- %%NUT_SERIAL%%libexec/nut/skel
-+%%NUT_SNMP%%libexec/nut/snmp-ups
++%%NUT_SERIAL%%libexec/nut/skel
+ %%NUT_SNMP%%libexec/nut/snmp-ups
+-%%NUT_SERIAL%%libexec/nut/skel
  %%NUT_SERIAL%%libexec/nut/solis
  %%NUT_SERIAL%%libexec/nut/tripplite
  %%NUT_USB%%libexec/nut/tripplite_usb
-@@ -72,26 +90,13 @@
+@@ -72,26 +94,13 @@
  libexec/nut/upsdrvctl
  %%NUT_USB%%libexec/nut/usbhid-ups
  %%NUT_SERIAL%%libexec/nut/victronups
@@ -254,3 +409,150 @@ diff -u -r1.32 pkg-plist
 -%%NUT_CGI%%@dirrm %%CGIDIR%%
 -%%NUT_CGI%%@dirrmtry www/cgi-bin
 -%%NUT_CGI%%@dirrm %%WWWDIR%%
+Index: sysutils/nut/Makefile
+===================================================================
+--- sysutils/nut/Makefile	(revision 300790)
++++ sysutils/nut/Makefile	(working copy)
+@@ -6,7 +6,7 @@
+ #
+ 
+ PORTNAME=	nut
+-PORTVERSION=	2.6.1
++PORTVERSION=	2.6.5
+ CATEGORIES=	sysutils
+ MASTER_SITES=	http://www.networkupstools.org/source/${PORTVERSION:R}/
+ DISTFILES=	${DISTNAME}${EXTRACT_SUFX} ${DISTNAME}${EXTRACT_SUFX}.sig
+@@ -25,20 +25,28 @@
+ NUT_GROUP?=	uucp
+ STATEDIR?=	/var/db/nut
+ 
+-OPTIONS=	SERIAL		"SERIAL support" on \
+-		USB		"USB support" on \
+-		SNMP		"SNMP support" on \
+-		NEON		"NEON XML/HTTP support"	on \
+-		PDU		"Powerman PDU support" off \
+-		HAL		"HAL support" off \
+-		CGI		"Web CGI interface" off \
+-		BASH		"Bash Completion support" off
++OPTIONS_DEFINE=	SERIAL USB SNMP NEON PDU HAL CGI BASH
++OPTIONS_DEFAULT=SERIAL USB SNMP NEON
+ 
+-USE_RC_SUBR=	nut.sh nut_upsmon.sh nut_upslog.sh
++SERIAL_DESC=	SERIAL support
++USB_DESC=	USB support
++SNMP_DESC=	SNMP support
++NEON_DESC=	NEON XML/HTTP support
++PDU_DESC=	Powerman PDU support
++CGI_DESC=	Web CGI interface
++BASH_DESC=	Bash Completion support
++
++USE_RC_SUBR=	nut nut_upsmon nut_upslog
+ SUB_LIST+=	STATEDIR=${STATEDIR}
+ PLIST_SUB+=	STATEDIR=${STATEDIR}
+ 
+-MAN3=		upscli_connect.3 upscli_disconnect.3 upscli_fd.3 \
++MAN3=		nutscan.3 nutscan_add_device_to_device.3 \
++		nutscan_add_option_to_device.3 nutscan_cidr_to_ip.3 \
++		nutscan_display_parsable.3 nutscan_display_ups_conf.3 \
++		nutscan_free_device.3 nutscan_init.3 nutscan_new_device.3 \
++		nutscan_scan_avahi.3 nutscan_scan_ipmi.3 nutscan_scan_nut.3 \
++		nutscan_scan_snmp.3 nutscan_scan_usb.3 nutscan_scan_xml_http.3 \
++		upscli_connect.3 upscli_disconnect.3 upscli_fd.3 \
+ 		upscli_get.3 upscli_list_next.3 upscli_list_start.3 \
+ 		upscli_readline.3 upscli_sendline.3 upscli_splitaddr.3 \
+ 		upscli_splitname.3 upscli_ssl.3 upscli_strerror.3 \
+@@ -47,8 +55,8 @@
+ MAN5=		nut.conf.5 ups.conf.5 upsd.conf.5 upsd.users.5 upsmon.conf.5 \
+ 		upssched.conf.5
+ 
+-MAN8=		nutupsdrv.8 upsc.8 upscmd.8 upsd.8 upsdrvctl.8 \
+-		upslog.8 upsmon.8 upsrw.8 upssched.8
++MAN8=		apcsmart-old.8 nut-recorder.8 nut-scanner.8 nutupsdrv.8 upsc.8 \
++		upscmd.8 upsd.8 upsdrvctl.8 upslog.8 upsmon.8 upsrw.8 upssched.8
+ 
+ PORTDOCS=	*
+ 
+@@ -67,7 +75,7 @@
+ 		--with-group=${NUT_GROUP} \
+ 		--with-dev
+ 
+-.if defined(WITH_CGI)
++.if ${PORT_OPTIONS:MCGI}
+ LIB_DEPENDS+=	gd.4:${PORTSDIR}/graphics/gd
+ MAN5+=		hosts.conf.5 upsset.conf.5 upsstats.html.5
+ MAN8+=		upsset.cgi.8 upsstats.cgi.8 upsimage.cgi.8
+@@ -85,7 +93,7 @@
+ PLIST_SUB+=	NUT_CGI="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_SERIAL)
++.if ${PORT_OPTIONS:MSERIAL}
+ CONFIGURE_ARGS+=	--with-serial
+ MAN8+=		apcsmart.8 bestfortress.8 bcmxcp.8 belkin.8 belkinunv.8 \
+ 		bestuferrups.8 bestups.8 bestfcom.8 blazer.8 clone.8 \
+@@ -100,7 +108,7 @@
+ PLIST_SUB+=	NUT_SERIAL="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_USB)
++.if ${PORT_OPTIONS:MUSB}
+ . if ${OSVERSION} < 800069
+ LIB_DEPENDS+=	usb-0.1.8:${PORTSDIR}/devel/libusb
+ . else
+@@ -114,7 +122,7 @@
+ PLIST_SUB+=	NUT_USB="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_SNMP)
++.if ${PORT_OPTIONS:MSNMP}
+ LIB_DEPENDS+=	netsnmp.30:${PORTSDIR}/net-mgmt/net-snmp
+ CONFIGURE_ARGS+=	--with-snmp
+ MAN8+=		snmp-ups.8
+@@ -124,7 +132,7 @@
+ PLIST_SUB+=	NUT_SNMP="@comment "
+ .endif
+ 
+-.if !defined(WITHOUT_NEON)
++.if ${PORT_OPTIONS:MNEON}
+ LIB_DEPENDS+=	neon.27:${PORTSDIR}/www/neon29
+ CONFIGURE_ARGS+=	--with-neonxml
+ MAN8+=		netxml-ups.8
+@@ -134,7 +142,7 @@
+ PLIST_SUB+=	NUT_NEON="@comment "
+ .endif
+ 
+-.if defined(WITH_PDU)
++.if ${PORT_OPTIONS:MPDU}
+ LIB_DEPENDS+=	powerman.0:${PORTSDIR}/sysutils/powerman
+ CONFIGURE_ARGS+=	--with-powerman
+ MAN8+=		powerman-pdu.8
+@@ -144,8 +152,8 @@
+ PLIST_SUB+=	NUT_PDU="@comment "
+ .endif
+ 
+-.if defined(WITH_HAL)
+-. if defined(WITHOUT_USB)
++.if ${PORT_OPTIONS:MHAL}
++. if empty(PORT_OPTIONS:MUSB)
+ BROKEN=		HAL is only usable with USB support enabled. Run 'make config' again!
+ . endif
+ LIB_DEPENDS+=	hal.1:${PORTSDIR}/sysutils/hal
+@@ -158,7 +166,7 @@
+ PLIST_SUB+=	NUT_HAL="@comment "
+ .endif
+ 
+-.if defined(WITH_BASH)
++.if ${PORT_OPTIONS:MBASH}
+ RUN_DEPENDS+=	${LOCALBASE}/bin/bash_completion.sh:${PORTSDIR}/shells/bash-completion
+ PLIST_SUB+=	BASH=""
+ .else
+@@ -177,7 +185,8 @@
+ 
+ .if !defined(NOPORTDOCS)
+ post-install:
+-.if defined(WITH_BASH)
++.if ${PORT_OPTIONS:MBASH}
++	@${MKDIR} ${PREFIX}/etc/bash_completion.d/
+ 	${INSTALL_DATA} ${WRKSRC}/scripts/misc/nut.bash_completion ${PREFIX}/etc/bash_completion.d/
+ .endif
+ 	@${MKDIR} ${DOCSDIR}/cables
