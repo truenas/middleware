@@ -297,7 +297,7 @@ Index: sysutils/nut/pkg-plist
 ===================================================================
 --- sysutils/nut/pkg-plist	(revision 300790)
 +++ sysutils/nut/pkg-plist	(working copy)
-@@ -1,3 +1,26 @@
+@@ -1,3 +1,22 @@
 +%%NUT_CGI%%%%CGIDIR%%/upsimage.cgi
 +%%NUT_CGI%%%%CGIDIR%%/upsset.cgi
 +%%NUT_CGI%%%%CGIDIR%%/upsstats.cgi
@@ -311,20 +311,16 @@ Index: sysutils/nut/pkg-plist
 +%%NUT_CGI%%%%WWWDIR%%/nut-banner.png
 +%%ETCDIR%%/cmdvartab
 +%%ETCDIR%%/driver.list
-+%%ETCDIR%%/hosts.conf.sample
 +%%ETCDIR%%/nut.conf.sample
 +%%ETCDIR%%/ups.conf.sample
 +%%ETCDIR%%/upsd.conf.sample
 +%%ETCDIR%%/upsd.users.sample
 +%%ETCDIR%%/upsmon.conf.sample
 +%%ETCDIR%%/upssched.conf.sample
-+%%ETCDIR%%/upsset.conf.sample
-+%%ETCDIR%%/upsstats-single.html.sample
-+%%ETCDIR%%/upsstats.html.sample
  @stopdaemon nut_upsmon
  @stopdaemon nut_upslog
  @stopdaemon nut
-@@ -7,31 +30,30 @@
+@@ -7,31 +26,30 @@
  bin/upsrw
  bin/upssched-cmd
  %%BASH%%etc/bash_completion.d/nut.bash_completion
@@ -367,7 +363,7 @@ Index: sysutils/nut/pkg-plist
  %%NUT_SERIAL%%libexec/nut/bestuferrups
  %%NUT_SERIAL%%libexec/nut/bestups
  %%NUT_SERIAL%%libexec/nut/blazer_ser
-@@ -62,8 +84,8 @@
+@@ -62,8 +80,8 @@
  %%NUT_SERIAL%%libexec/nut/rhino
  %%NUT_USB%%libexec/nut/richcomm_usb
  %%NUT_SERIAL%%libexec/nut/safenet
@@ -377,7 +373,7 @@ Index: sysutils/nut/pkg-plist
  %%NUT_SERIAL%%libexec/nut/solis
  %%NUT_SERIAL%%libexec/nut/tripplite
  %%NUT_USB%%libexec/nut/tripplite_usb
-@@ -72,26 +94,13 @@
+@@ -72,26 +90,13 @@
  libexec/nut/upsdrvctl
  %%NUT_USB%%libexec/nut/usbhid-ups
  %%NUT_SERIAL%%libexec/nut/victronups
