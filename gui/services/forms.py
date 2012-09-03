@@ -896,7 +896,10 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
                         attrs['volsize'])
-                for snap in _notifier.zfs_snapshot_list(path=zvol).values()[0]:
+                zsnapshots = _notifier.zfs_snapshot_list(path=zvol).values()
+                if not zsnapshots:
+                    continue
+                for snap in zsnapshots[0]:
                     diskchoices["zvol/" + snap['fullname']] = "%s (%s)" % (
                         snap['fullname'],
                         attrs['volsize'])
