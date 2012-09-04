@@ -238,7 +238,7 @@ add_port www/py-flup
 #+add_port sysutils/nut
 #-add_port sysutils/nut
 add_port net-mgmt/net-snmp
-add_port sysutils/nut OPTION_FILE_UNSET+="NEON"
+add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 
 add_port textproc/libxml2 WITHOUT_X11=y
 add_port textproc/py-libxml2 WITHOUT_X11=y
