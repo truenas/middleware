@@ -270,6 +270,8 @@ def servicesToggleView(request, formname):
     if changing_service == "":
         raise "Unknown service - Invalid request?"
 
+    enabled_svcs = []
+
     # Do not allow LDAP and AD to be enabled simultaniously
     opposing_service = None
     opp_svc_entry = None
@@ -305,6 +307,8 @@ def servicesToggleView(request, formname):
     if changing_service == "ldap":
         if svc_entry.srv_enable == 1:
             started = notifier()._start_ldap()
+            if models.services.objects.get(srv_service='cifs').srv_enable:
+                enabled_svcs.append('cifs')
         else:
             started = notifier()._stop_ldap()
 
@@ -312,6 +316,8 @@ def servicesToggleView(request, formname):
         if svc_entry.srv_enable == 1:
             svc_entry.save()
             started = notifier()._start_activedirectory()
+            if models.services.objects.get(srv_service='cifs').srv_enable:
+                enabled_svcs.append('cifs')
         else:
             started = notifier()._stop_activedirectory()
             svc_entry.save()
@@ -357,6 +363,7 @@ def servicesToggleView(request, formname):
         'status': status,
         'error': error,
         'message': message,
+        'enabled_svcs': enabled_svcs,
     }
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
