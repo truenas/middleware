@@ -292,6 +292,10 @@ require([
                     setMessage(data.message, "error");
                 }
                 domConstruct.destroy(n);
+                for(svc in data.enabled_svcs) {
+                    var img = query("img[name=" + data.enabled_svcs[svc] + "_toggle]")[0];
+                    img.src = '/static/images/ui/buttons/on.png';
+                }
                 if(onSuccess) onSuccess();
             },
             function(error) {
