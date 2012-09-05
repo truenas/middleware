@@ -139,7 +139,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     ifconfig \${SUBSYSTEM} advskew 1
-    for volumename in ${volumenames}; do
+    for volumename in "${volumenames}"; do
 	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
@@ -182,7 +182,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
     watchdog -t 4
-    for volumename in ${volumenames}; do
+    for volumename in "${volumenames}"; do
 	echo "Exporting ${volumename}!" | logger
 	zpool export -f ${volumename} || (zpool status ${volumename} && sleep 5)
 	echo "Exported ${volumename}!" | logger
