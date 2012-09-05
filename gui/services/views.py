@@ -307,14 +307,18 @@ def servicesToggleView(request, formname):
     #
     if changing_service == "ldap":
         if svc_entry.srv_enable == 1:
-            started = notifier().start("ldap")
+            started = notifier()._start_ldap()
+            if models.services.objects.get(srv_service='cifs').srv_enable:
+                enabled_svcs.append('cifs')
         else:
-            started = notifier().stop("ldap")
+            started = notifier()._stop_ldap()
+            if not models.services.objects.get(srv_service='cifs').srv_enable:
+                disabled_svcs.append('cifs')
 
     elif changing_service == "activedirectory":
         if svc_entry.srv_enable == 1:
             svc_entry.save()
-            started = notifier().start("activedirectory")
+            started = notifier().start("activedirectory") 
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
