@@ -320,8 +320,6 @@ def servicesToggleView(request, formname):
                 enabled_svcs.append('cifs')
         else:
             started = notifier()._stop_activedirectory()
-            if started is True:
-                started = False
             svc_entry.save()
 
     elif changing_service == "plugins":

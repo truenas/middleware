@@ -587,16 +587,10 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        ret = False
-        if self.__system("/etc/ActiveDirectory/ctl start"):
-            ret = True 
-        return ret
+        self.__system("/etc/ActiveDirectory/ctl start")
 
     def _stop_activedirectory(self):
-        ret = False
-        if self.__system("/etc/ActiveDirectory/ctl stop"):
-            ret = True 
-        return ret
+        self.__system("/etc/ActiveDirectory/ctl stop")
 
     def _restart_activedirectory(self):
         self.__system("/etc/ActiveDirectory/ctl restart")
