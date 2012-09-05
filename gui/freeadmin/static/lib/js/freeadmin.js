@@ -296,6 +296,10 @@ require([
                     var img = query("img[name=" + data.enabled_svcs[svc] + "_toggle]")[0];
                     img.src = '/static/images/ui/buttons/on.png';
                 }
+                for(svc in data.disabled_svcs) {
+                    var img = query("img[name=" + data.disabled_svcs[svc] + "_toggle]")[0];
+                    img.src = '/static/images/ui/buttons/off.png';
+                }
                 if(onSuccess) onSuccess();
             },
             function(error) {
