@@ -18,7 +18,7 @@ ix_devd_gen()
 
 	local failovers=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM system_failover;"`
 	local peerip=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ipaddress FROM system_failover LIMIT 1;"`
-	local volumenames=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS';"`
+	local volumenames=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS';" | tr "\n" " "`
 
 	if [ ${failovers} -gt 0 ]; then
 		cp /conf/base/etc/devd.conf /etc/devd.conf
@@ -139,7 +139,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     ifconfig \${SUBSYSTEM} advskew 1
-    for volumename in "${volumenames}"; do
+    for volumename in ${volumenames}; do
 	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
@@ -182,7 +182,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
     watchdog -t 4
-    for volumename in "${volumenames}"; do
+    for volumename in ${volumenames}; do
 	echo "Exporting \${volumename}!" | logger
 	zpool export -f \${volumename} || (zpool status \${volumename} && sleep 5)
 	echo "Exported \${volumename}!" | logger
