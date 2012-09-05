@@ -315,11 +315,13 @@ def servicesToggleView(request, formname):
     elif changing_service == "activedirectory":
         if svc_entry.srv_enable == 1:
             svc_entry.save()
-            started = notifier()._start_activedirectory()
+            started = notifier().start("activedirectory") 
+            #started = notifier()._start_activedirectory()
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
-            started = notifier()._stop_activedirectory()
+            started = notifier().stop("activedirectory")
+            #started = notifier()._stop_activedirectory()
             svc_entry.save()
 
     elif changing_service == "plugins":
