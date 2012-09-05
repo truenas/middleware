@@ -968,6 +968,25 @@ require([
             domStyle.set('zfssectorsize', 'display', 'table-row');
             domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
             domStyle.set('zfsdedup', 'display', 'table-row');
+
+            if(d.length >= 3) {
+                domStyle.set("grpraidz", "display", "block");
+            } else {
+                domStyle.set("grpraidz", "display", "none");
+            }
+
+            if(d.length >= 4) {
+                domStyle.set("grpraidz2", "display", "block");
+            } else {
+                domStyle.set("grpraidz2", "display", "none");
+            }
+
+            if(d.length >= 5) {
+                domStyle.set("grpraidz3", "display", "block");
+            } else {
+                domStyle.set("grpraidz3", "display", "none");
+            }
+
         } else {
             domStyle.set('zfssectorsize', 'display', 'none');
             domStyle.set('zfsfulldiskencryption', 'display', 'none');
@@ -977,35 +996,18 @@ require([
         if(ufs) {
             domStyle.set("ufspath", "display", "table-row");
             domStyle.set("ufspathen", "display", "table-row");
+
+            if(d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
+                domStyle.set("grpraid3", "display", "block");
+            } else {
+                domStyle.set("grpraid3", "display", "none");
+            }
+
         } else {
             domStyle.set("ufspath", "display", "none");
             domStyle.set("ufspathen", "display", "none");
         }
 
-        if(d.length >= 3 && zfs) {
-            domStyle.set("grpraidz", "display", "block");
-        } else {
-            domStyle.set("grpraidz", "display", "none");
-        }
-
-        if(d.length >= 4 && zfs) {
-            domStyle.set("grpraidz2", "display", "block");
-        } else {
-            domStyle.set("grpraidz2", "display", "none");
-        }
-
-        if(d.length >= 5 && zfs) {
-            domStyle.set("grpraidz3", "display", "block");
-        } else {
-            domStyle.set("grpraidz3", "display", "none");
-        }
-
-        if(ufs && d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
-            if(ufs)
-                domStyle.set("grpraid3", "display", "block");
-        } else {
-            domStyle.set("grpraid3", "display", "none");
-        }
     }
 
     getDialog = function(from) {
