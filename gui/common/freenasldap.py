@@ -1139,6 +1139,9 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.default = False
         self.unix = False
 
+        self.dcname = self.adset(self.dcname, kwargs.get('host', None))
+        self.dcport = self.adset(self.dcport, kwargs.get('port', None))
+
         tmphost = kwargs.get('host', None)
         if tmphost:
             host = tmphost.split(':')[0]
