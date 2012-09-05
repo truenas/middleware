@@ -140,8 +140,8 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     ifconfig \${SUBSYSTEM} advskew 1
     for volumename in ${volumenames}; do
-	/sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
-	/sbin/zpool set cachefile=/data/zfs/zpool.cache ${volumename}
+	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
+	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
 
     #mount -uw /
