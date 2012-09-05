@@ -276,10 +276,10 @@ class notifier:
 
     def started(self, what, sn=None):
         """ Test if service specified by "what" has been started. """
-        try:
-            f = getattr(self, '_started_' + what)
+        f = getattr(self, '_started_' + what, None)
+        if callable(f):
             return f()
-        except:
+        else:
             return self._started(what, sn)
 
     def stop(self, what):
