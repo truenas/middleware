@@ -121,9 +121,34 @@
 : ${AD_KNOBS_FILE:="${AD_CONFIG_PATH}/knobs"}
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
 
+__proto()
+{
+	local proto="${1}"
+	local default="${2}"
+
+	if [ -z "${default}" ]
+	then
+		default="tcp"
+	fi
+
+	if [ -z "${proto}" ]
+	then
+		proto="${default}"
+	fi
+
+	proto="$(echo ${proto}|tr A-Z a-z)"
+	if [ "${proto}" != "tcp" -a "${proto}" != "udp" ]
+	then
+		proto="${default}"
+	fi
+
+	echo "${proto}"
+}
+
 __get_SRV_records()
 {
 	local host="${1}"
+	local proto=$(__proto "${2}" tcp)
 	
 	AD_log "__get_SRV_records: host=${host}"
 
@@ -141,6 +166,7 @@ __get_SRV_records()
 __get_SRV_host()
 {
 	local tmpfile="${1}"
+	local proto=$(__proto "${2}" tcp)
 
 	if [ -z "${tmpfile}" -o ! -s "${tmpfile}" ]
 	then
@@ -153,10 +179,25 @@ __get_SRV_host()
 	do
 		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
 		local port=$(echo "${line}"|awk '{ print $3 }')
+		local nc_timeout=5
+		local nc_args=
 
 		AD_log "__get_SRV_host: trying ${host}:${port}"
+
+		if [ "${proto}" = "tcp" ]
+		then
+			nc_args="-z -d -w ${nc_timeout}"
+
+		elif [ "${proto}" = "udp" ]
+		then
+			nc_args="-z -d -w ${nc_timeout} -u"
+		fi
 		
-		__do_AD_query "${host}" "${port}" "" "" "" "base" "" "" >/dev/null 2>&1
+		#
+		# UDP will always return that it was able to connect.
+		# Is there a better way to do this?
+		#
+		/usr/bin/nc ${nc_args} "${host}" "${port}" >/dev/null 2>&1
 		if [ "$?" = "0" ]
 		then
 			exec 0<&3
@@ -176,9 +217,16 @@ __get_SRV_host()
 __get_SRV_record()
 {
 	local host="${1}"
+	local proto=$(__proto "${2}" tcp)
 	local res
 
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	if [ -z "${proto}" ]
+	then
+		
+		proto="tcp"
+	fi
 
 	AD_log "__get_SRV_record: host=${host}"
 	__get_SRV_records "${host}" > "${tmpfile}"
@@ -927,6 +975,8 @@ AD_init()
 
 	if [ -f "${AD_CONFIG_FILE}" ]
 	then
+		AD_log "AD_init: config exists, loading values from ${AD_CONFIG_FILE}"
+
 		. "${AD_CONFIG_FILE}"
 		config_exists=1
 	fi
@@ -936,7 +986,7 @@ AD_init()
 		. "${AD_KNOBS_FILE}"
 	fi
 
-	if [ "${config_exists}" = "1" -a "${verbose}" != "1" ]
+	if [ "${config_exists}" = "1" ]
 	then
 		return 0
 	fi
