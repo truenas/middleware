@@ -2070,7 +2070,7 @@ class notifier:
             if recursive:
                 flags = "-R"
             self.__system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
-            self.__system("/bin/chmod %s%s '%s'" % (flags, mode, path))
+            self.__system("/bin/chmod %s %s '%s'" % (flags, mode, path))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
