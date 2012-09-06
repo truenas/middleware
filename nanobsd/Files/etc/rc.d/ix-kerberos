@@ -13,33 +13,32 @@
 
 generate_krb5_conf()
 {
-	local _dcname="${1}"
-	local _domainname="${2}"
-	local _netbiosname="${3}"
-	local _adminname="${4}"
-	local _adminpw="${5}"
-	local _template
+	AD_init
 
-	AD_log "generate_krb5_conf: dcname = ${_dcname}, domainname = ${_domainname}, " \
-		"netbiosname = ${_netbiosname}, adminname = ${_adminname}"
+	local krbhost=$(AD_get krbhost)
+	local kpwdhost=$(AD_get kpwdhost)
+	local domainname=$(AD_get domainname)
+	local template="${PATH_KRB5_TEMPLATE}"
 
-	_template="${PATH_KRB5_TEMPLATE}"
+	AD_log "generate_krb5_conf: krbhost=${krbhost}, kpwdhost=${kpwdhost}, " \
+		"domainname=${domainname}"
 
-	if [ ! -f "${_template}" ]
+	if [ ! -f "${template}" ]
 	then
 		return 1
 	fi
 
-	awk -v dcname="${_dcname}" \
-		-v domainname="${_domainname}" \
-		-v netbios="${_netbiosname}" \
+	awk -v realm="${domainname}" \
+		-v kdc="${krbhost}" \
+		-v kpwd="${kpwdhost}" \
 	'
 	BEGIN {
-		kdc = sprintf("%s", tolower(dcname));
-		vars["@@UPPER_REALM@@"]  = toupper(domainname);	
-		vars["@@LOWER_REALM@@"]  = tolower(domainname);	
+		kdc = sprintf("%s", tolower(kdc));
+		vars["@@UPPER_REALM@@"]  = toupper(realm);	
+		vars["@@LOWER_REALM@@"]  = tolower(realm);	
 		vars["@@ADMIN_SERVER@@"]  = kdc;	
-		vars["@@DOMAIN@@"]  = tolower(domainname);
+		vars["@@KPASSWD_SERVER@@"] = kpwd;
+		vars["@@DOMAIN@@"]  = tolower(realm);
 		vars["@@KDC@@"]  = kdc;	
 	}
 	{
@@ -51,7 +50,7 @@ generate_krb5_conf()
 
 		print $0;
 	}
-	' < "${_template}" > "${PATH_KRB5_CONFIG}"
+	' < "${template}" > "${PATH_KRB5_CONFIG}"
 
 	local IFS="
 "
@@ -67,17 +66,7 @@ generate_kerberos_files()
 {
 	if srv_enabled activedirectory
 	then
-		AD_init
-
-		dcname=$(AD_get dcname)
-		domainname=$(AD_get domainname)
-		netbiosname=$(AD_get netbiosname)
-		adminname=$(AD_get adminname)
-		adminpw=$(AD_get adminpw)
-
-		generate_krb5_conf "${dcname}" "${domainname}" \
-			"${netbiosname}" "${adminname}" "${adminpw}"
-		
+		generate_krb5_conf
 	fi
 }
 

@@ -20,9 +20,9 @@ kerberos_start()
 	then
 		AD_init
 
-		domainname=$(AD_get domainname)
-		adminname=$(AD_get adminname)
-		adminpw=$(AD_get adminpw)
+		local domainname=$(AD_get domainname)
+		local adminname=$(AD_get adminname)
+		local adminpw=$(AD_get adminpw)
 
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
@@ -60,9 +60,9 @@ kerberos_status()
 	then
 		AD_init
 
-		domainname=$(AD_get domainname)
-		adminname=$(AD_get adminname)
-		adminpw=$(AD_get adminpw)
+		local domainname=$(AD_get domainname)
+		local adminname=$(AD_get adminname)
+		local adminpw=$(AD_get adminpw)
 
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
