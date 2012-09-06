@@ -172,17 +172,14 @@ OS/Third party
 4. Add the ability to do a plugin jail update without blowing
    away the installed plugins.
 
-5. Disable nagle's algorithm.  Provides better LAN network performance
+5. Disable Nagle's algorithm.  Provides better LAN network performance
    at the expense of WAN performance.
 
 6. Add CARP modules to kernel.
 
-7. Always use encrypted swap.  Enable hardware support for encryption
-   on processors that support it.
+7. Update to samba 3.6.7
 
-8. Update to samba 3.6.7
-
-9. Add support for SMART over various RAID controllers.
+8. Add support for SMART over various RAID controllers.
 
 Bugfixes
 ========================
