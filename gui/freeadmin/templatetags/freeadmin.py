@@ -46,7 +46,7 @@ class FormRender(template.Node):
         self.arg = arg
 
     def render(self, context):
-        form = context[self.arg]
+        form = self.arg.resolve(context)
 
         #TODO: cache
         #if adv_mode is None:
@@ -133,7 +133,8 @@ class FormRender(template.Node):
 @register.tag(name="admin_form")
 def do_admin_form(parser, token):
     try:
-        tag_name, arg = token.contents.split(None, 1)
+        tag_name, arg = token.split_contents()
+        arg = parser.compile_filter(arg)
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % (
             token.contents.split()[0],

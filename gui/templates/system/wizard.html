@@ -6,7 +6,7 @@
         </script>
     <table>
       {% dojo_render wizard.management_form %}
-      {{ wizard.form }}
+      {% admin_form wizard.form %}
         <tr>
             <td colspan="2">
                 <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
