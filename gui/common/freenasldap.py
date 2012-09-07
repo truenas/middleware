@@ -69,7 +69,8 @@ FREENAS_AD_LOCAL_USERCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".users")
 FREENAS_AD_LOCAL_GROUPCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".groups")
 
 FREENAS_AD_SEPARATOR = get_freenas_var("FREENAS_AD_SEPARATOR", '\\')
-FREENAS_AD_KNOBS_FILE = "/etc/ActiveDirectory/knobs"
+FREENAS_AD_KNOBS_FILE = get_freenas_var("AD_KNOBS_FILE", "/etc/ActiveDirectory/knobs")
+FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE", "/etc/ActiveDirectory/config")
 
 FREENAS_LDAP_CACHE_EXPIRE = get_freenas_var("FREENAS_LDAP_CACHE_EXPIRE", 60)
 FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)
@@ -1021,7 +1022,93 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         log.debug("FreeNAS_ActiveDirectory_Base.__new__: leave")
         return obj
 
+    def __set_defaults(self):
+        log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: enter")
+
+        self.adminname = None
+        self.basedn = None
+        self.binddn = None
+        self.bindpw = None
+        self.domain = None
+        self.dcname = None
+        self.dcport = None
+        self.dc = None
+        self.gchost = None
+        self.gcport = None
+        self.gc = None
+        self.netbiosname = None
+        self.unix = None
+        self.default = None
+        self.trusted = None
+
+        log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
+
+    def __get_config(self):
+        log.debug("FreeNAS_ActiveDirectory_Base.__get_config: enter")
+
+        res = False
+        self.config = {
+            'adminname': None, 
+            'domainname': None,
+            'basedn': None,
+            'binddn': None,
+            'dcname': None,
+            'dcport': None,
+            'dc': None,
+            'gchost': None,
+            'gcport': None,
+            'gc': None,
+            'krbhost': None,
+            'kpwdhost': None
+        }
+
+        if os.access(FREENAS_AD_CONFIG_FILE, os.F_OK):
+            for var in self.config:
+                self.config[var] = get_freenas_var_by_file(FREENAS_AD_CONFIG_FILE, var)
+                if self.config[var]:
+                    res = True
+        else:
+            log.debug("FreeNAS_ActiveDirectory_Base.__get_config: leave")
+            return res
+
+        self.adminname = self.adset(self.config['adminname'])
+        self.basedn = self.adset(self.config['basedn'])
+        #self.binddn = self.adset(self.config['binddn'])
+        #self.bindpw = self.adset(self.config['bindpw'])
+        self.domain = self.adset(self.config['domainname'])
+
+        self.dcname = None
+        self.dcport = None
+        self.dc = self.adset(self.config['dc'])
+        if self.dc:
+            parts = self.dc.split(':')
+            self.dcname = parts[0]
+            if len(parts) > 1:
+                self.dcport = parts[1]
+
+        self.dcname = self.adset(self.dcname, self.config['dcname'])
+        self.dcport = self.adset(self.dcport, self.config['dcport'])
+        self.dcport = self.adset(self.dcport, 389)
+
+        self.gchost = None
+        self.gcport = None
+        self.gc = self.adset(self.config['gc'])
+        if self.gc:
+            parts = self.gc.split(':')
+            self.gchost = parts[0]
+            if len(parts) > 1:
+                self.gcport = parts[1]
+
+        self.gchost = self.adset(self.gchost, self.config['gchost'])
+        self.gcport = self.adset(self.gcport, self.config['gcport'])
+        self.gcport = self.adset(self.gcport, 3268)
+
+        log.debug("FreeNAS_ActiveDirectory_Base.__get_config: leave")
+        return res
+
     def __get_knobs(self):
+        log.debug("FreeNAS_ActiveDirectory_Base.__get_knobs: enter")
+
         res = False
         self.knobs = {
             'adminname': None,
@@ -1047,6 +1134,9 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 self.knobs[knob] = get_freenas_var_by_file(FREENAS_AD_KNOBS_FILE, knob)
                 if self.knobs[knob]:
                     res = True
+        else:
+            log.debug("FreeNAS_ActiveDirectory_Base.__get_knobs: leave")
+            return res
 
         self.adminname = self.adset(self.knobs['adminname'])
         self.trusted = self.adset(self.knobs['allow_trusted_doms'], False)
@@ -1085,6 +1175,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.unix = self.adset(self.knobs['unix_extensions'], False)
         self.default = self.adset(self.knobs['use_default_domain'], False)
 
+        log.debug("FreeNAS_ActiveDirectory_Base.__get_knobs: leave")
         return res
 
     def __db_init__(self, **kwargs):
@@ -1196,7 +1287,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: enter")
 
+        self.__set_defaults()
+        self.__get_config()
         self.__get_knobs()
+
         __initfunc__ = self.__no_db_init__
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
             __initfunc__ = self.__db_init__
