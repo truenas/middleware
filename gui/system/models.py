@@ -157,6 +157,13 @@ class Advanced(Model):
             verbose_name=_("Enable Console Menu"))
     adv_serialconsole = models.BooleanField(
             verbose_name=_("Use Serial Console"))
+    adv_serialspeed = models.CharField(
+            max_length=120,
+            choices=choices.SERIAL_SPEED,
+            default="9600",
+            help_text=_("Set this to match your serial port speed"),
+            verbose_name=_("Serial Port Speed")
+            )
     adv_consolescreensaver = models.BooleanField(
             verbose_name=_("Enable screen saver"))
     adv_firmwarevc = models.BooleanField(

@@ -10,7 +10,9 @@
 
 update_sercons()
 {
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	local sercons=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialconsole FROM system_advanced ORDER BY id DESC LIMIT 1")
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
 	local bc=/boot.config
 
 	case $sercons in
@@ -22,9 +24,15 @@ update_sercons()
 		fi
 		;;
 	1)
-		if [ ! -f ${bc} ] || ! grep -q -- -h ${bc} ; then
+		echo "-Dh -S${serspeed}" > ${tmp}
+		if [ -f ${bc} ] ; then
+			if ! [ $(sha256 -q ${tmp}) == $(sha256 -q ${bc}) ] ; then
+				mount -uw -onoatime /
+				mv ${tmp} ${bc}
+				mount -ur /
+		else
 			mount -uw -onoatime /
-			echo -h > ${bc}
+			mv ${tmp} ${bc}
 			mount -ur /
 		fi
 		;;

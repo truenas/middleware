@@ -559,6 +559,13 @@ SMART_TEST = (
     ('O', _('Offline Immediate Test (ATA only)')),
     )
 
+SERIAL_SPEED = (
+    ('9600', _('9600')),
+    ('19200', _('19200')),
+    ('38400', _('38400')),
+    ('57600', _('57600')),
+    ('115200', _('115200')),
+    )
 
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
