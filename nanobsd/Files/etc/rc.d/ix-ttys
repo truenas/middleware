@@ -11,14 +11,20 @@
 
 netcli_enable()
 {
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
 	local tmp
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	awk '
-	/^ttyv0/ { sub("Pc", "freenas"); print $0; } 
-	!/^ttyv0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyv0.*)Pc(.*)\$,\1freenas\2," /etc/ttys > "${tmp}"
 
+	if [ -s "${tmp}" ]; then
+		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
+	fi
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	sed -E -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
 	else
@@ -29,13 +35,19 @@ netcli_enable()
 netcli_disable()
 {
 	local tmp
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	awk '
-	/^ttyv0/ { sub("freenas", "Pc"); print $0; } 
-	!/^ttyv0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1Pc\2," /etc/ttys > "${tmp}"
 
+	if [ -s "${tmp}" ]; then
+		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
+	fi
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	sed -E -e "s,^(ttyu0.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
 	else
@@ -45,16 +57,11 @@ netcli_disable()
 
 netcli_serial_enable()
 {
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
 	local tmp
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	awk '
-	/^ttyu0/ {
-		sub("std.9600", "freenas_serial");
-		print $0;
-	} 
-	!/^ttyu0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
@@ -65,16 +72,12 @@ netcli_serial_enable()
 
 netcli_serial_disable()
 {
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
+
 	local tmp
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	awk '
-	/^ttyu0/ {
-		sub("freenas_serial", "std.9600");
-		print $0;
-	} 
-	!/^ttyu0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyu0.*)freenas_serial\.[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
@@ -85,18 +88,14 @@ netcli_serial_disable()
 
 serial_enable()
 {
+	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
 	local tmp
-
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
-	awk '
-	/^ttyu0/ {
-		sub("off", "on");
-		sub("dialup", "vt100");
-		print $0;
-	} 
-	!/^ttyu0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyu0.*)off(.*)\$,\1on\2," \
+	       -e "s,^(ttyu0.*)dialup(.*)\$,\1vt100\2," \
+	       -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1std.${serspeed}\2," \
+		  /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
@@ -111,14 +110,9 @@ serial_disable()
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
-	awk '
-	/^ttyu0/ {
-		sub("on", "off");
-		sub("vt100", "dialup");
-		print $0;
-	} 
-	!/^ttyu0/ {print $0; }
-	' /etc/ttys > "${tmp}"
+	sed -E -e "s,^(ttyu0.*)on(.*)\$,\1off\2," \
+	       -e "s,^(ttyu0.*)vt100(.*)\$,\1dialup\2," \
+		  /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
