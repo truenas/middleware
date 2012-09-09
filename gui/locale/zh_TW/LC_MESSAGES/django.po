@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2012-09-08 10:59+0200\n"
+"PO-Revision-Date: 2012-09-08 11:02+0200\n"
 "Last-Translator: neil_kuo0921 <neil_kuo0921@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -546,7 +546,7 @@ msgstr "封鎖使用者"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "新建主要群組給使用者"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -557,9 +557,8 @@ msgid "SSH Public Key"
 msgstr "SSH公開金鑰"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "家目錄"
+msgstr "家目錄模式"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -730,9 +729,8 @@ msgid "Account"
 msgstr "帳號"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "帳號"
+msgstr "管理者帳戶"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -786,9 +784,9 @@ msgid "Add %s"
 msgstr "新增 %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "檢視全部使用者 %s"
+msgstr "檢視%s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
