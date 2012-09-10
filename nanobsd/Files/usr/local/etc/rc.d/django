@@ -3,7 +3,6 @@
 #
 # PROVIDE: django
 # REQUIRE: DAEMON
-# BEFORE: nginx
 # KEYWORD: shutdown
 #
 
