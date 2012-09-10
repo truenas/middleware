@@ -226,7 +226,7 @@
     {% endif %}
     {% else %}
     <button id="unlockBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_unlock.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Unlock"|escapejs %}', '{% url storage_volume_unlock object_id=m.mp_volume.id %}', [this,]);
         </script>
