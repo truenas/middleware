@@ -61,8 +61,8 @@ define([
                 var send = "";
                 while(this.kb.length > 0)
                     send += this.kb.pop();
-                var req = xhr.get("/system/terminal/", {
-                    query: {
+                var req = xhr.post("/system/terminal/", {
+                    data: {
                         s: this.sid,
                         w: this.width,
                         h: this.height,
