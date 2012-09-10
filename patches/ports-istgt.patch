@@ -1,0 +1,19 @@
+Index: net/istgt/files/patch-istgt-rc
+===================================================================
+--- net/istgt/files/patch-istgt-rc	(revision 296071)
++++ net/istgt/files/patch-istgt-rc	(working copy)
+@@ -1,6 +1,12 @@
+ --- etc/istgt.sh.in.orig	2011-08-31 11:53:08.000000000 -0700
+-+++ etc/istgt.sh.in	2012-05-05 20:27:54.000000000 -0700
+-@@ -8,19 +8,28 @@
+++++ etc/istgt.sh.in	2012-09-10 15:50:56.549118726 -0700
++@@ -2,25 +2,33 @@
++ 
++ # PROVIDE: istgt
++ # REQUIRE: NETWORKING
++-# BEFORE: mountcritremote
++ # KEYWORD: shutdown
++ 
+  . /etc/rc.subr
+  
+  name="istgt"
