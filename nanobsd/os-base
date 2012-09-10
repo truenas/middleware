@@ -451,6 +451,12 @@ add_autotune()
 }
 customize_cmd add_autotune
 
+arch_specific_ko()
+{
+    cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
+}
+customize_cmd arch_specific_ko
+
 add_pbi_manager()
 {
     local pm dst
