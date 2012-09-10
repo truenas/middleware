@@ -195,6 +195,8 @@ class InterfacePlugin(RRDBase):
     def get_identifiers(self):
         ids = []
         re_octets = re.compile(r'(?<=octets-)[a-z0-9]+')
+        if not os.path.exists(self.base_path):
+            return ids
         for _file in os.listdir(self.base_path):
             reg = re_octets.search(_file)
             if reg and not _file.startswith(".") and _file.find("usbus") == -1:
@@ -496,6 +498,8 @@ class DFPlugin(RRDBase):
     def get_identifiers(self):
         ids = []
         re_disk = re.compile(r'(?<=df-)(mnt-.*?)\.rrd')
+        if not os.path.exists(self.base_path):
+            return ids
         for _file in os.listdir(self.base_path):
             reg = re_disk.search(_file)
             if reg and not _file.startswith("."):
