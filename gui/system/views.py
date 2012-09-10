@@ -597,10 +597,10 @@ class MyServer(xmlrpclib.ServerProxy):
 @never_cache
 def terminal(request):
 
-    sid = int(request.GET.get("s", 0))
-    k = request.GET.get("k")
-    w = int(request.GET.get("w", 80))
-    h = int(request.GET.get("h", 24))
+    sid = int(request.POST.get("s", 0))
+    k = request.POST.get("k")
+    w = int(request.POST.get("w", 80))
+    h = int(request.POST.get("h", 24))
 
     multiplex = MyServer("/var/run/webshell.sock")
     alive = False
