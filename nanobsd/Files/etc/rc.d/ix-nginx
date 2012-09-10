@@ -134,6 +134,9 @@ generate_plugins_conf()
 		-id
 	LIMIT 1")
 
+        # Workaround: config check fail if it doesnt exist
+        mkdir -p /var/tmp/nginx 2> /dev/null > /dev/null
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		plugin_name,
