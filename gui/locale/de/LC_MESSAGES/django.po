@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-26 00:32+0200\n"
+"PO-Revision-Date: 2012-09-09 01:02+0200\n"
 "Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -5767,9 +5767,8 @@ msgid "Please wait..."
 msgstr "Bitte warten..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "Einhängepunkt"
+msgstr "Einhängepunkt bearbeiten"
 
 #: templates/plugins/mountpoints.html:25
 msgid "Delete Mount Point"
@@ -5959,7 +5958,6 @@ msgid "Add Authorized Initiator"
 msgstr "Authorisierten Initiator hinzufügen"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
 msgstr "Keine Ziele definiert"
 
@@ -5973,7 +5971,6 @@ msgid "File Extent"
 msgstr "Datei Extents"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
 msgstr "Keine Ziele definiert"
 
@@ -5994,7 +5991,6 @@ msgid "Delete Portal"
 msgstr "Portal löschen"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
 msgstr "Keine Ziele definiert"
 
