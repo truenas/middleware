@@ -1,6 +1,6 @@
 Index: etc/rc.d/jail
 ===================================================================
---- etc/rc.d/jail	(revision 234968)
+--- etc/rc.d/jail	(revision 238407)
 +++ etc/rc.d/jail	(working copy)
 @@ -38,6 +38,7 @@
  	_fdescdir="${_devdir}/fd"
@@ -107,7 +107,7 @@ Index: etc/rc.d/jail
  		jail_ips "add"
  		if [ -n "${_fib}" ]; then
  			_setfib="setfib -F '${_fib}'"
-@@ -635,13 +667,38 @@
+@@ -632,13 +664,41 @@
  			i=$((i + 1))
  		done
  
@@ -120,6 +120,9 @@ Index: etc/rc.d/jail
 +				_start_cmd="${_start_cmd} vnet"
 +			else
 +				_start_cmd="${_start_cmd} ip4.addr=\"${_addrlv4}\" ip6.addr=\"${_addrlv6}\""
++			fi
++			if checkyesno jail_sysvipc_allow ; then
++				_start_cmd="${_start_cmd} allow.sysvipc"
 +			fi
 +			_start_cmd="${_start_cmd} command=${_exec_start}"
 +			eval ${_start_cmd} > /dev/null 2>&1
