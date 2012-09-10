@@ -30,6 +30,7 @@ update_sercons()
 				mount -uw -onoatime /
 				mv ${tmp} ${bc}
 				mount -ur /
+			fi
 		else
 			mount -uw -onoatime /
 			mv ${tmp} ${bc}
