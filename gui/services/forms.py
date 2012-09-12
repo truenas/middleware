@@ -123,6 +123,18 @@ class NFSForm(ModelForm):
     class Meta:
         model = models.NFS
 
+    def clean_nfs_srv_bindip(self):
+        ips = self.cleaned_data.get("nfs_srv_bindip")
+        bind = []
+        for ip in ips.split(','):
+            ip = ip.strip()
+            try:
+                IPAddress(ip.encode('utf-8'))
+            except:
+                raise forms.ValidationError("This is not a valid IP: %s" % (ip, ))
+            bind.append(ip)
+        return ','.join(bind)
+
     def save(self):
         super(NFSForm, self).save()
         started = notifier().restart("nfs")

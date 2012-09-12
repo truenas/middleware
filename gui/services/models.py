@@ -279,6 +279,25 @@ class NFS(Model):
             help_text=_("Enable asynchronous mode, which will help "
                           "performance beyond gigabit network speed.")
             )
+    nfs_srv_allow_nonroot = models.BooleanField(
+            default=False,
+            verbose_name=_("Allow non-root mount"),
+            help_text=_("Allow non-root mount requests to be served. "
+                "This should only be specified if there are clients "
+                "such as PC's, that require it.  It will automatically clear "
+                "the vfs.nfsrv.nfs_privport sysctl flag, which controls if the"
+                " kernel will accept NFS requests from reserved ports only."),
+            )
+    nfs_srv_bindip = models.CharField(
+            blank=True,
+            max_length=250,
+            verbose_name=_("Bind IP Addresses"),
+            help_text=_("Specify specific IP addresses (separated by commas) "
+                "to bind to for TCP and UDP requests. This option may be "
+                "specified multiple times. If no IP is specified it will bind "
+                "to INADDR_ANY. It will automatically add 127.0.0.1 and if "
+                "IPv6 is enabled, ::1 to the list.")
+            )
 
     class Meta:
         verbose_name = _("NFS")
@@ -1186,7 +1205,8 @@ class FTP(Model):
     ftp_ssltls_certfile = models.TextField(
             verbose_name=_("Certificate and private key"),
             blank=True,
-            help_text=_("Place the contents of your certificate and private key here.")
+            help_text=_("Place the contents of your certificate and private "
+                "key here.")
             )
     ftp_options = models.TextField(
             max_length=120,
