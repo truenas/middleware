@@ -1179,7 +1179,13 @@ class ReplicationForm(ModelForm):
         initial=22)
     remote_fast_cipher = forms.BooleanField(
         label=_("Enable High Speed Ciphers"),
-        initial=False)
+        initial=False,
+        required=False,
+        help_text=_("Enabling this may increase transfer speed on high "
+            "speed/low latency local networks.  It uses less secure encryption"
+            " algorithms than the defaults, which makes it less desirable on "
+            "untrusted networks."),
+        )
     remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
         widget=forms.Textarea())
@@ -1228,10 +1234,6 @@ class ReplicationForm(ModelForm):
                 repl.repl_remote.ssh_remote_port)
             self.fields['remote_fast_cipher'].initial = (
                 repl.repl_remote.ssh_fast_cipher)
-            self.fields['remote_fast_cipher'].required = (
-                False)
-            self.fields['remote_fast_cipher'].help_text = _(
-                "Enabling this may increase transfer speed on high speed/low latency local networks.  It uses less secure encryption algorithms than the defaults, which makes it less desirable on untrusted networks.")
             self.fields['remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
 
