@@ -549,7 +549,7 @@ generate_smb_tdb()
 {
 	local tmp
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%' AND NOT bsdusr_unixhash LIKE '*LOCKED*%'" > $tmp
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%' AND bsdusr_locked = 0 AND bsdusr_password_disabled = 0" > $tmp
 	rm -f /var/etc/private/passdb.tdb
 	/usr/local/bin/pdbedit -d 0 -i smbpasswd:$tmp \
 	    -e tdbsam:/var/etc/private/passdb.tdb >/dev/null

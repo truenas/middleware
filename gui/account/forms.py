@@ -268,10 +268,6 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         label=_("Shell"),
         initial=u'/bin/csh',
         choices=())
-    bsdusr_password_disabled = forms.BooleanField(
-        label=_("Disable password logins"),
-        required=False)
-    bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_creategroup = forms.BooleanField(
         label=_("Create a new primary group for the user"),
         required=False,
@@ -407,8 +403,6 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     def clean(self):
         cleaned_data = self.cleaned_data
 
-        #locked = cleaned_data["bsdusr_locked"] = \
-        #        cleaned_data.get("bsdusr_locked", False)
         password_disable = cleaned_data["bsdusr_password_disabled"] = \
                 cleaned_data.get("bsdusr_password_disabled", False)
         bsdusr_home = cleaned_data.get('bsdusr_home', '')
@@ -552,11 +546,6 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         label=_('Home Directory Mode'),
         initial='755',
         )
-    bsdusr_password_disabled = forms.BooleanField(
-        label=_("Disable password logins"),
-        required=False,
-        )
-    bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_shell = forms.ChoiceField(
         label=_("Shell"),
         initial=u'/bin/csh',
@@ -596,10 +585,6 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
             self.fields['bsdusr_home'].widget.attrs['readonly'] = True
             self.fields['bsdusr_home'].widget.attrs['class'] = ('dijitDisabled'
                         ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
-        if self.instance.bsdusr_unixhash == '*':
-            self.fields['bsdusr_password_disabled'].initial = True
-        if self.instance.bsdusr_unixhash.startswith('*LOCKED*'):
-            self.fields['bsdusr_locked'].initial = True
         try:
             self.fields['bsdusr_sshpubkey'].initial = open(
                 '%s/.ssh/authorized_keys' % (
@@ -659,20 +644,8 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def save(self):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
-        bsduser_locked = self.cleaned_data['bsdusr_locked']
         bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
-        instance = getattr(self, 'instance', None)
         _notifier = notifier()
-        if bsduser_locked and instance.bsdusr_unixhash.startswith('*LOCKED*'):
-            bsduser.bsdusr_unixhash, bsduser.smbhash = \
-                _notifier.user_unlock(str(bsduser.bsdusr_username))
-        elif (bsduser_locked and
-              instance.bsdusr_unixhash.startswith('*LOCKED*')):
-            bsduser.bsdusr_unixhash, bsduser.smbhash = \
-                _notifier.user_lock(str(bsduser.bsdusr_username))
-        if self.cleaned_data["bsdusr_password_disabled"]:
-            bsduser.bsdusr_unixhash = "*"
-            bsduser.bsdusr_smbhash = ""
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         if os.path.exists(self.cleaned_data['bsdusr_home']) and \
             self.cleaned_data['bsdusr_home'].startswith(u'/mnt/'):

@@ -126,6 +126,14 @@ class bsdUsers(Model):
             verbose_name=_("E-mail"),
             blank=True
             )
+    bsdusr_password_disabled = models.BooleanField(
+            verbose_name=_("Disable password login"),
+            default=False,
+            )
+    bsdusr_locked = models.BooleanField(
+            verbose_name=_("Lock user"),
+            default=False,
+            )
 
     class Meta:
         verbose_name = _("User")
