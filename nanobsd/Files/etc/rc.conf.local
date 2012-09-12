@@ -369,13 +369,32 @@ _gen_conf()
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	_count_config bsdstats_enable system_advanced adv_anonstats =1
 
+	local nonroot mountdflags="-r" ip nfsips
+
+	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
+	while read -r ip; do
+		echo -n "-h ${ip} "
+	done)
+
 	# set NFS server options
 	local IFS=\|
 	local numservers
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read numservers; do
-		echo "nfs_server_flags=\"-t -u -n ${numservers}\""
+		echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
 	done
+
+	nonroot=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot FROM services_nfs ORDER BY -id LIMIT 1")
+	if [ "${nonroot}" -eq 1 ]; then
+		mountdflags="${mountdflags}n"
+	fi
+	if [ -n "${nfsips}" ]; then
+		mountdflags="${mountdflags} ${nfsips}"
+		echo "rpc_statd_flags=\"${nfsips}\""
+		echo "rpc_lockd_flags=\"${nfsips}\""
+		echo "rpcbind_flags=\"${nfsips}\""
+	fi
+	echo "mountd_flags=\"${mountdflags}\""
 
 	local smartdint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
