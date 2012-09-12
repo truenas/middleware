@@ -1791,7 +1791,7 @@ class notifier:
     def user_create(self, username, fullname, password, uid=-1, gid=-1,
                     shell="/sbin/nologin",
                     homedir='/mnt', homedir_mode=0o755,
-                    password_disabled=False, locked=False):
+                    password_disabled=False):
         """Create a user.
 
         This goes and compiles the invocation needed to execute via pw(8),
@@ -1824,9 +1824,6 @@ class notifier:
                        defaults to 0755.
         password_disabled - should password based logins be allowed for 
                             the user? Defaults to False.
-        locked - allows the administrator to restrict the account s.t.
-                 it can't be used for logins (until some precondition is
-                 met, i.e. the user changes his or her password).
 
         XXX: the default for the home directory seems like a bad idea.
              Should this be a required parameter instead, or default
@@ -1906,18 +1903,13 @@ class notifier:
 
         try:
             self.__issue_pwdchange(username, command, password)
-            if locked:
-                self.user_lock(username)
-            if password_disabled:
-                smb_hash = ""
-            else:
-                """
-                Make sure to use -d 0 for pdbedit, otherwise it will bomb
-                if CIFS debug level is anything different than 'Minimum'
-                """
-                smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-                smb_cmd = self.__pipeopen(smb_command)
-                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+            """
+            Make sure to use -d 0 for pdbedit, otherwise it will bomb
+            if CIFS debug level is anything different than 'Minimum'
+            """
+            smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
+            smb_cmd = self.__pipeopen(smb_command)
+            smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         except:
             if new_homedir:
                 # Be as atomic as possible when creating the user if

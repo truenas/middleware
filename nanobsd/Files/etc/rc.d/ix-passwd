@@ -11,19 +11,27 @@
 
 generate_master.passwd()
 {
+
+	local IFS="|"
+	local f="bsdusr_username bsdusr_unixhash bsdusr_uid bsdgrp_gid bsdusr_full_name bsdusr_home bsdusr_shell bsdusr_password_disabled bsdusr_locked"
+	eval local $f
+	local sf=$(var_to_sf $f)
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
-		bsdusr_username,
-		bsdusr_unixhash,
-		bsdusr_uid,
-		bsdgrp_gid,
-		\"\",0,0,
-		bsdusr_full_name,
-		bsdusr_home,
-		bsdusr_shell
+		$sf
 	FROM
 		account_bsdusers AS u
-	INNER JOIN account_bsdgroups AS g
-		ON u.bsdusr_group_id=g.id;" | tr "|" ":" > /etc/master.passwd
+        INNER JOIN account_bsdgroups AS g
+                ON u.bsdusr_group_id=g.id" | \
+	while eval read $f; do
+		local passwd="${bsdusr_unixhash}"
+		if [ "${bsdusr_password_disabled}" -eq 1 ]; then
+			passwd="*"
+		elif [ "${bsdusr_locked}" -eq 1 ]; then
+			passwd="*LOCKED*"
+		fi
+		echo "${bsdusr_username}:${passwd}:${bsdusr_uid}:${bsdgrp_gid}::0:0:${bsdusr_full_name}:${bsdusr_home}:${bsdusr_shell}"
+	done > /etc/master.passwd
 }
 
 group_membership()
