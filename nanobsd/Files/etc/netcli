@@ -52,6 +52,8 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 
+_ = lambda s: s
+
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.common import i18n
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
