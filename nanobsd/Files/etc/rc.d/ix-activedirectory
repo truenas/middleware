@@ -74,7 +74,7 @@ generate_nss_ldap_conf()
 	nss_map_attribute gecos cn
 	nss_map_attribute homeDirectory unixHomeDirectory
 	nss_map_attribute uniqueMember member
-	pam_filter objectClass=user
+	pam_filter objectClass user
 	pam_member_attribute member
 	pam_password ad
 
