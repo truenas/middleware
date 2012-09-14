@@ -181,11 +181,14 @@ class Tnode(object):
     type = None
     status = None
 
-    def __init__(self, name, doc, status=None):
+    def __init__(self, name, doc, **kwargs):
         self._doc = doc
         self.name = name
         self.children = []
-        self.status = status
+        self.status = kwargs.pop('status', None)
+        self.read = kwargs.pop('read', 0)
+        self.write = kwargs.pop('write', 0)
+        self.cksum = kwargs.pop('cksum', 0)
         self._uid = _UID
 
     def find_by_name(self, name):
@@ -304,6 +307,9 @@ class Root(Tnode):
             'isroot': 'isroot',
             'numVdevs': len(vdevs),
             'status': self.status if self.status else '',
+            'read': self.read,
+            'write': self.write,
+            'cksum': self.cksum,
             })
         return vdevs
 
@@ -356,6 +362,9 @@ class Vdev(Tnode):
             'children': children,
             'type': self.type,
             'status': self.status,
+            'read': self.read,
+            'write': self.write,
+            'cksum': self.cksum,
             }, disks
 
     def validate(self):
@@ -449,6 +458,9 @@ class Dev(Tnode):
             'name': self.devname,
             'type': 'disk',
             'status': self.status,
+            'read': self.read,
+            'write': self.write,
+            'cksum': self.cksum,
             'actions': simplejson.dumps(actions),
             }
 
@@ -630,8 +642,8 @@ def parse_status(name, doc, data):
             continue
 
         try:
-            spaces, word, status = re.search(
-                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)',
+            spaces, word, status, read, write, cksum = re.search(
+                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)\s+(?P<read>\d+)\s+(?P<write>\d+)\s+(?P<cksum>\d+)',
                 line[1:]
                 ).groups()
         except Exception:
@@ -647,26 +659,44 @@ def parse_status(name, doc, data):
 
         if ident == 0:
             if word != 'NAME':
-                tree = Root(word, doc)
+                tree = Root(word, doc,
+                    read=read,
+                    write=write,
+                    cksum=cksum,
+                    )
                 tree.status = status
                 pnode = tree
                 pool.add_root(tree)
 
         elif ident == 1:
             if _is_vdev(word):
-                node = Vdev(word, doc, status=status)
+                node = Vdev(word, doc,
+                    status=status,
+                    read=read,
+                    write=write,
+                    cksum=cksum,
+                    )
                 tree.append(node)
                 pnode = node
             else:
                 if lastident != ident:
-                    node = Vdev("stripe", doc)
+                    node = Vdev("stripe", doc,
+                        read=read,
+                        write=write,
+                        cksum=cksum,
+                        )
                     node.status = status
                     pnode.append(node)
                 else:
                     node = pnode
                     pnode = node.parent
 
-                node2 = Dev(word, doc, status=status)
+                node2 = Dev(word, doc,
+                    status=status,
+                    read=read,
+                    write=write,
+                    cksum=cksum,
+                    )
                 node.append(node2)
                 pnode = node
         elif ident >= 2:
@@ -675,7 +705,13 @@ def parse_status(name, doc, data):
                     replacing = True
                 else:
                     replacing = False
-                node = Dev(word, doc, status=status, replacing=replacing)
+                node = Dev(word, doc,
+                    status=status,
+                    replacing=replacing,
+                    read=read,
+                    write=write,
+                    cksum=cksum,
+                    )
                 pnode.append(node)
             ident = 2
 
