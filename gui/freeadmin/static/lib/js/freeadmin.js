@@ -989,6 +989,9 @@ require([
         } else {
             domStyle.set('zfssectorsize', 'display', 'none');
             domStyle.set('zfsdedup', 'display', 'none');
+            domStyle.set("grpraidz", "display", "none");
+            domStyle.set("grpraidz2", "display", "none");
+            domStyle.set("grpraidz3", "display", "none");
         }
 
         if(ufs) {
@@ -1004,6 +1007,7 @@ require([
         } else {
             domStyle.set("ufspath", "display", "none");
             domStyle.set("ufspathen", "display", "none");
+            domStyle.set("grpraid3", "display", "none");
         }
 
     }
