@@ -962,6 +962,8 @@ AD_generate_config()
 		local val="$(AD_get ${var})"
 		echo "${var}=\"${val}\"" >> "${AD_CONFIG_FILE}"
 	done
+
+	/bin/chmod 600 "${AD_CONFIG_FILE}"
 }
 
 AD_init()
