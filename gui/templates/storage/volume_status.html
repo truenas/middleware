@@ -55,9 +55,11 @@
     var struc = [
         { field: "name", name: "Name", width: "auto" },
         { field: "status", name: "Status", width: "90px" },
+        {% if volume.vol_fstype == 'ZFS' %}
         { field: "read", name: "Read", width: "30px" },
         { field: "write", name: "Write", width: "35px" },
         { field: "cksum", name: "Checksum", width: "67px" },
+        {% endif %}
         { field: "actions", name: "Available Actions", width: "auto", formatter: actions },
         ];
 
