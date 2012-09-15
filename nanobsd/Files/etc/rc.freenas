@@ -736,7 +736,7 @@ __do_AD_get()
 	local prefix="${1}"
 	local name="${2}"
 	local var=\$$(printf "${prefix}${name}")
-	local val=$(eval "printf ${var} 2>/dev/null")
+	local val=$(eval "echo ${var} 2>/dev/null")
 
 	__unescape "${val}"
 }
@@ -749,7 +749,7 @@ AD_get()
 	for v in ${vars}
 	do
 		local var=\$$(printf "${v}")
-		local val=$(eval "printf ${var} 2>/dev/null")
+		local val=$(eval "echo ${var} 2>/dev/null")
 
 		if [ -n "${val}" ]
 		then
