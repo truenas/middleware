@@ -338,12 +338,16 @@ class EmailForm(ModelForm):
     def clean_em_pass1(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data['em_pass1'] == "":
+            if self.instance.em_pass:
+                return self.instance.em_pass
             raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_pass1']
 
     def clean_em_pass2(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data.get('em_pass2', "") == "":
+            if self.instance.em_pass:
+                return self.instance.em_pass
             raise forms.ValidationError(_("This field is required"))
         pass1 = self.cleaned_data.get("em_pass1", "")
         pass2 = self.cleaned_data.get("em_pass2", "")

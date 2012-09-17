@@ -284,7 +284,11 @@ def shutdown_run(request):
 
 def testmail(request):
 
-    form = forms.EmailForm(request.POST)
+    try:
+        kwargs = dict(instance=models.Email.objects.order_by('-id')[0])
+    except IndexError:
+        kwargs = {}
+    form = forms.EmailForm(request.POST, **kwargs)
     if not form.is_valid():
         return JsonResp(request, form=form)
 
