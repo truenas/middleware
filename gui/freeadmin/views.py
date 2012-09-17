@@ -25,7 +25,6 @@
 #
 #####################################################################
 
-import datetime
 import logging
 import hashlib
 import os
@@ -35,14 +34,10 @@ from django import forms as dforms
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.views import debug
-from django.conf import settings
-from django.template import (Context, TemplateDoesNotExist,
-    TemplateSyntaxError)
-from django.template.defaultfilters import force_escape, pprint
-from django.template.loader import get_template, template_source_loaders
+from django.template import Context
+from django.template.loader import get_template
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.utils.encoding import smart_unicode
 
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
@@ -315,7 +310,11 @@ def generic_model_add(request, app, model, mf=None):
     """
 
     try:
-        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(), [model], -1)
+        _temp = __import__('freenasUI.%s.models' % app,
+            globals(),
+            locals(),
+            [model],
+            -1)
     except ImportError:
         raise
 
