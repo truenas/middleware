@@ -187,9 +187,13 @@ OS/Third party
 
 2. Fix keymap rc.conf output.
 
+3. Fix a bug in netcli that generates console error messages when
+   non ASCII charsets are used.
+
+4. Refactor user lock/disable mechanism to not overwrite previous password.
+
 
 Changes since 8.3.0-BETA1:
-
 
 Enhancements
 ========================
