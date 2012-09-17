@@ -130,6 +130,64 @@ multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
 
+Changes since 8.3.0-BETA2:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Add support for setting the serial port speed in the GUI.
+
+2. Switch webshell to POST which allows using the django CSRF protection.
+
+3. Add read/write/checksum errors to volume status.
+
+OS/Third party
+------------------------
+
+1. Update the arcmsr driver to version 1.20.00.25
+
+2. Allow nonroot NFS mounts and the ability to specify a listen address
+   for NFS.
+
+3. Backport fixes to the mfi driver to add support for the LSI 9265/9285
+
+4. Additional AD/LDAP changes to complete the refactoring of these features.
+
+Plugins
+------------------------
+
+1. Update transmission to 2.61
+
+2. Allow sysvipc in jails.
+
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix a bug that was preventing a recursive permission change
+   on a volume with unix permissions from working.
+
+2. Restore missing tooltips in plugin jail setup.
+
+3. Fix a bug that was causing the graphing backend to bail out. (Ticket 1786)
+
+4. Fix this field is required error in the ZFS snapshot replication task screen
+   when unchecking high speed ciphers.
+
+OS/Third party
+------------------------
+
+1. Fix a bug generating plugins.conf with nginx_location on startup. (Ticket 1787)
+
+2. Fix keymap rc.conf output.
+
+
 Changes since 8.3.0-BETA1:
 
 
