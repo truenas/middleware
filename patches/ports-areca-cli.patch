@@ -1,0 +1,10 @@
+--- sysutils/areca-cli/Makefile.orig	2012-09-18 09:07:41.193559291 -0700
++++ sysutils/areca-cli/Makefile	2012-09-18 09:07:50.841377669 -0700
+@@ -10,7 +10,6 @@
+ CATEGORIES=	sysutils
+ MASTER_SITES=	ftp://ftp.areca.com.tw/RaidCards/AP_Drivers/FreeBSD/CLI/ \
+ 		CRITICAL
+-PKGNAMESUFFIX=	-${ARCH}
+ DISTNAME=	v${CLI_VER}_${CLI_REV}
+ 
+ MAINTAINER=	ehaupt@FreeBSD.org
