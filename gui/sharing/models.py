@@ -264,12 +264,15 @@ class NFS_Share(Model):
             )
     nfs_network = models.TextField(
             verbose_name=_("Authorized networks"),
-            help_text=_("Networks that are authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."),
+            help_text=_("Networks that are authorized to access the NFS share."
+                " Specify network numbers of the form 1.2.3.4/xx where xx is "
+                "the number of bits of netmask."),
             blank=True,
             )
     nfs_hosts = models.TextField(
             verbose_name=_("Authorized IP addresses or hosts"),
-            help_text=_("IP addresses or hostnames that are authorized to access the NFS share."),
+            help_text=_("IP addresses or hostnames that are authorized to "
+                "access the NFS share."),
             blank=True,
             )
     nfs_alldirs = models.BooleanField(
