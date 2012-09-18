@@ -339,6 +339,8 @@ add_port devel/py-simplejson
 
 add_port sysutils/bsdstats
 
+add_port www/wgetpaste
+
 #+add_port net/py-eventlet
 add_port devel/py-greenlet
 #-add_port net/py-eventlet
