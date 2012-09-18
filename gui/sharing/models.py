@@ -290,7 +290,8 @@ class NFS_Share(Model):
             blank=True,
             null=True,
             default='',
-            help_text=_("User to map root to")
+            help_text=_("If a user is selected, the root user is limited to "
+                "that user's permissions")
             )
     nfs_maproot_group = GroupField(
             verbose_name=_("Maproot Group"),
@@ -298,7 +299,8 @@ class NFS_Share(Model):
             blank=True,
             null=True,
             default='',
-            help_text=_("Group to map root to")
+            help_text=_("If a group is selected, the root user will also be "
+                "limited to that group's permissions")
             )
     nfs_mapall_user = UserField(
             verbose_name=_("Mapall User"),
@@ -306,7 +308,8 @@ class NFS_Share(Model):
             blank=True,
             null=True,
             default='',
-            help_text=_("User to map all users to")
+            help_text=_("The specified user's permissions are used by all "
+                "clients")
             )
     nfs_mapall_group = GroupField(
             verbose_name=_("Mapall Group"),
@@ -314,7 +317,8 @@ class NFS_Share(Model):
             blank=True,
             null=True,
             default='',
-            help_text=_("Group to map all users to")
+            help_text=_("The specified group's permission are used by all "
+                "clients")
             )
 
     def __unicode__(self):
