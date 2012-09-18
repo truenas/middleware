@@ -662,6 +662,7 @@ def parse_status(name, doc, data):
                 line[1:]
                 ).groups()
             status = None
+            read, write, cksum = 0, 0, 0
         ident = len(spaces) / 2
         if ident < 2 and ident < lastident:
             for x in range(lastident - ident):
