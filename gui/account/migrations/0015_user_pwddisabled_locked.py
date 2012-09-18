@@ -10,10 +10,7 @@ class Migration(DataMigration):
         "Write your forwards methods here."
         # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
         for usr in orm['account.bsdUsers'].objects.all():
-            if usr.bsdusr_unixhash == '*':
-                usr.bsdusr_password_disabled = True
-                usr.save()
-            elif usr.bsdusr_unixhash == '*LOCKED*':
+            if usr.bsdusr_unixhash == '*LOCKED*':
                 usr.bsdusr_locked = True
                 usr.save()
 
