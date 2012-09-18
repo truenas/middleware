@@ -316,8 +316,7 @@ add_port net/avahi-libdns
 add_port textproc/py-xml
 add_port sysutils/throttle
 add_port sysutils/dmidecode
-# XXX: doesn't fetch (for some odd reason)
-#add_port sysutils/graid5
+add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
 add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
