@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-05-15 01:47+0200\n"
-"Last-Translator: acf1959 <acf1959@gmail.com>\n"
+"PO-Revision-Date: 2012-09-18 00:48+0200\n"
+"Last-Translator: apocsantos <antoniopocsantos@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -113,7 +113,7 @@ msgstr "Desactivado"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nível 1 - Utilização mínima de energia com Suspensão (spindown)"
+msgstr "Nivel 1 - Utilização mínima de energia com Suspensão (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -249,7 +249,7 @@ msgstr "Pré-definido"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Maquina do tempo (Time Machine)"
 
 #: choices.py:199
 msgid "No case folding"
@@ -308,11 +308,11 @@ msgstr "CHAP mútuo"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "UPS fica com pouca bateria"
+msgstr "UPS com bateria fraca."
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "UPS passa a funcionar na bateria"
+msgstr "UPS passa a funcionar a bateria"
 
 #: choices.py:255
 msgid "Preferred"
@@ -456,22 +456,18 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Teste imediato se desligado (ATA somente)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
-msgstr "Módulo Rsync"
+msgstr "Módulo de Re-Sincronização (Rsync)"
 
 #: choices.py:563
-#, fuzzy
 msgid "Rsync over SSH"
-msgstr "Módulo Rsync"
+msgstr "Rsync sobre SSH"
 
 #: choices.py:567
-#, fuzzy
 msgid "Push"
 msgstr "Empurre"
 
 #: choices.py:568
-#, fuzzy
 msgid "Pull"
 msgstr "Puxar"
 
@@ -538,7 +534,7 @@ msgstr "Bloquear utilizador"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Criar um novo Grupo Primário para o utlizador"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -549,9 +545,8 @@ msgid "SSH Public Key"
 msgstr "SSH Chave Publica"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Directório Pessoal"
+msgstr "Directório Home"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -781,7 +776,7 @@ msgid "Add %s"
 msgstr "Adicionar %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
 msgstr "Ver todos os %s"
 
@@ -800,17 +795,17 @@ msgstr "Encerrar"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Nenhum dado retornado de %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Não pude aceder a %(url): %(error)s"
 
 #: freeadmin/navtree.py:445
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Ocorreram alguns erros ao renomear o disco."
+msgstr "Ocorreu um erro durante a des-serialização de %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -855,7 +850,7 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Não pode configurar multiplas interfaces com o mesmo endereço IP (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -879,18 +874,18 @@ msgstr "Tem que escolher entre IPv4 ou IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback não é um nome de servidor válido"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
 msgstr ""
+"Endereço não especificado não é valido como servidor de nomes (nameserver)"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
 msgstr "Este campo não é um endereço IP válido ou rede"
 
 #: network/forms.py:170
-#, fuzzy
 msgid "169.254/16 subnet is not valid for nameserver"
 msgstr "Sub-rede 169.254/16 não é válida para nameserver"
 
@@ -920,9 +915,8 @@ msgid "Parent Interface"
 msgstr "Interface de control"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Os nomes das interfaces têm de ser vlanXX onde XX é um número"
+msgstr "Os nomes das interfaces têm de ser vlanXX onde XX é um número inteiro"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -944,27 +938,29 @@ msgstr "A rede '%s' não é válida, CIDR esperado."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Tem de especificar um endereço IPv4 bem como um nome (alias)"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Tem de escolhar uma netmask IPv4, por cada \"alias\""
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Tem de especificar um endereço IPv6 bem como uma \"alias\""
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Tem de escolher uma netmask IPv6, por cada \"alias\""
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Tem de escolher entre IPv4 e IPv6 por \"alias\""
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Tem de especificar ou um IPv4 válido ou um IPv6 válido, com o maskbit por "
+"cada \"alias\""
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1077,7 +1073,6 @@ msgid "Virtual Interface"
 msgstr "Interface Virtual"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
 "Os nomes das interfaces têm de ser vlanXX onde XX é um número. Exemplo: "
@@ -1161,7 +1156,6 @@ msgid "Create Link Aggregation"
 msgstr "Criar Agregação de Rede"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
 msgstr "Ver todas as Agregações de Rede"
 
@@ -1170,37 +1164,33 @@ msgid "LAGG successfully added"
 msgstr "LAGG adicionados com sucesso"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Um grupo com este GID já existe"
+msgstr "Este IP já se encontra em uso"
 
 #: plugins/forms.py:92
-#, fuzzy
 msgid "Place to temporarily place PBI file"
-msgstr "Lugar para colocar temporariamente o arquivo firmware"
+msgstr "Lugar para colocar temporariamente o arquivo PBI"
 
 #: plugins/forms.py:93
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"O sistema usará este lugar para armazenar temporariamente o arquivo firmware "
-"antes que está sendo aplicada."
+"O sistema usará este lugar para armazenar temporariamente o arquivo PBI "
+"antes de o instalar"
 
 #: plugins/forms.py:119
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "Nova imagem para ser instalada"
+msgstr "O ficheiro PBI tem de ser instalado"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Tem de desligar o serviço de plug-ins antes de proceder"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Um grupo com este GID já existe"
+msgstr "A path %s já existe"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
@@ -6583,7 +6573,7 @@ msgstr ""
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "O Estado (%status) do volume %(volume)s  é %(message)s"
 
 #: tools/alert.py:119
 #, python-format
@@ -6607,6 +6597,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Os seguintes IP's estão por detrás de um portal iSCSI, mas não foram "
+"encontrados no sistema: %s"
 
 #: tools/alert.py:177
 #, fuzzy
@@ -6616,9 +6608,8 @@ msgstr "Critico"
 msgid "Selected"
 msgstr "Seleccionado"
 
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "SHA256 sum para a imagem"
+msgstr "SHA256 sum para o PBI"
 
 #, fuzzy
 msgid "Plugin uname"
@@ -6722,7 +6713,7 @@ msgid "DVD"
 msgstr "DVD"
 
 msgid "Tape"
-msgstr "Cassete"
+msgstr "Cartucho TAPE"
 
 msgid "Pass"
 msgstr "Palavra-passe"
