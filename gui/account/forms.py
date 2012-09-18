@@ -450,8 +450,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 shell=str(self.cleaned_data['bsdusr_shell']),
                 homedir=str(self.cleaned_data['bsdusr_home']),
                 homedir_mode=int(self.cleaned_data['bsdusr_mode'], 8),
-                password_disabled=self.cleaned_data['bsdusr_password_disabled'],
-                locked=self.cleaned_data['bsdusr_locked']
+                password_disabled=self.cleaned_data.get('bsdusr_password_disabled', False),
             )
             bsduser = super(bsdUserCreationForm, self).save(commit=False)
             try:
