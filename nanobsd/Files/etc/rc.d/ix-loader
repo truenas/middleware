@@ -68,28 +68,6 @@ loader_serial()
 	fi
 }
 
-loader_saver()
-{
-	local saver_enable=0
-
-	saver_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		adv_consolescreensaver
-
-	FROM
-		system_advanced
-	
-	ORDER BY
-		-id
-	LIMIT 1")
-
-	if [ "${saver_enable}" != "0" ]; then
-		echo 'screensave_load="YES"'
-		echo 'screensave_name="daemon_saver"'
-	fi
-
-}
-
 loader_user() {
 
 	local IFS="|"
@@ -140,7 +118,7 @@ generate_boot_loader_conf_local()
 	local settings
 	local tmp
 
-	settings="serial saver user"
+	settings="serial user"
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
