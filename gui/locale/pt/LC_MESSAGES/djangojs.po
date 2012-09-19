@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-05-15 01:47+0200\n"
-"Last-Translator: acf1959 <acf1959@gmail.com>\n"
+"PO-Revision-Date: 2012-09-17 21:35+0200\n"
+"Last-Translator: apocsantos <antoniopocsantos@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -48,7 +48,6 @@ msgstr "Disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
 msgstr "Ocorreu um erro!"
 
@@ -62,12 +61,11 @@ msgstr "Editar disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Apagar"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Editar disco"
+msgstr "Limpar disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -89,7 +87,7 @@ msgid "Plugins"
 msgstr "Plugins"
 
 msgid "CronJobs"
-msgstr "Tarefas Cron"
+msgstr "Tarefas Cron (Cronjobs)"
 
 msgid "Replace"
 msgstr "Substituir"
