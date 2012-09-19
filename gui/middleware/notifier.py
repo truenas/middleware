@@ -1824,6 +1824,18 @@ class notifier:
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False, acl='unix'):
 
+        if type(group) is types.UnicodeType:
+            group = group.encode('utf-8')
+
+        if type(user) is types.UnicodeType:
+            user = user.encode('utf-8')
+
+        if type(mode) is types.UnicodeType:
+            mode = mode.encode('utf-8')
+
+        if type(path) is types.UnicodeType:
+            path = path.encode('utf-8')
+
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if acl == 'windows' and not winexists:
@@ -1832,7 +1844,7 @@ class notifier:
         elif acl == 'unix' and winexists:
             os.unlink(winacl)
             winexists = False
-       
+
         if winexists:
             script = "/usr/local/www/freenasUI/tools/winacl.sh"
             args=" -o '%s' -g '%s' -d %s " % (user, group, mode)

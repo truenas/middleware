@@ -952,8 +952,8 @@ class MountPointAccessForm(Form):
 
         notifier().mp_change_permission(
             path=path,
-            user=self.cleaned_data['mp_user'].__str__(),
-            group=self.cleaned_data['mp_group'].__str__(),
+            user=self.cleaned_data['mp_user'],
+            group=self.cleaned_data['mp_group'],
             mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'],
             acl=self.cleaned_data['mp_acl'])
