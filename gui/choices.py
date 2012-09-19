@@ -281,11 +281,6 @@ LAGGType = (
         ('none',        'None'),
         )
 
-WindowsVersions = (
-        ('windows2000', 'Windows 2000'),
-        ('windows2003', 'Windows Server 2003'),
-        )
-
 ZFS_AtimeChoices = (
         ('inherit', _('Inherit')),
         ('on',      _('On')),
