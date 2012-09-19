@@ -26,6 +26,7 @@
 #####################################################################
 import logging
 import syslog
+import types
 
 
 class SysLogHandler(logging.Handler):
@@ -51,7 +52,9 @@ class SysLogHandler(logging.Handler):
 
     def emit(self, record):
         hand = syslog.openlog(facility=self.facility)
-        msg = self.format(record).encode('utf-8')
+        msg = self.format(record)
+        if type(msg) is types.UnicodeType:
+            msg = msg.encode('utf-8')
         syslog.syslog(
             self.priority_names.get(record.levelname.lower(), "debug"),
             msg)
