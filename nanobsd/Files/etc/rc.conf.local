@@ -373,7 +373,9 @@ _gen_conf()
 
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do
-		echo -n "-h ${ip} "
+		if [ -n "${ip}" ]; then
+			echo -n "-h ${ip} "
+		fi
 	done)
 
 	# set NFS server options
