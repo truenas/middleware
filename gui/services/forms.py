@@ -125,6 +125,8 @@ class NFSForm(ModelForm):
 
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
+        if not ips:
+            return ''
         bind = []
         for ip in ips.split(','):
             ip = ip.strip()
