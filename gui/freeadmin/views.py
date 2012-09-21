@@ -198,11 +198,11 @@ def adminInterface(request, objtype=None):
     })
 
 
-def menu(request, objtype=None):
+def menu(request):
 
     try:
         navtree.generate(request)
-        final = navtree.dijitTree()
+        final = navtree.dijitTree(request.user)
         json = simplejson.dumps(final)
     except Exception, e:
         log.debug("Fatal error while generating the tree json: %s", e)

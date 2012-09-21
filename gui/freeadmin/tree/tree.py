@@ -48,6 +48,8 @@ class TreeType(object):
     order_child = True
     order = None
     skip = False
+    perm = None
+    permission = lambda self, u: True
     append_app = True
     append_url = None
     option_list = []

@@ -30,6 +30,7 @@ import re
 import eventlet
 
 from django.conf import settings
+from django.core.urlresolvers import resolve
 from django.db import models
 from django.forms import ModelForm
 from django.utils import simplejson
@@ -469,24 +470,43 @@ class NavTree(object):
                     log.debug(line)
                 continue
 
-    def _build_nav(self):
+    def _build_nav(self, user):
         navs = []
         for nav in tree_roots['main']:
-            nav.option_list = self.build_options(nav)
+            nav.option_list = self.build_options(nav, user)
             nav.get_absolute_url()
             navs.append(nav)
         return navs
 
-    def build_options(self, nav):
+    def build_options(self, nav, user):
         options = []
         for option in nav:
             try:
                 option = option()
             except:
                 pass
-            option.get_absolute_url()
-            option.option_list = self.build_options(option)
-            options.append(option)
+
+            if not option.perm:
+                url = option.get_absolute_url()
+                try:
+                    view, args, kwargs = resolve(url)
+                    if hasattr(view, 'permission'):
+                        perm = view.permission
+                    else:
+                        raise
+                except:
+                    perm = None
+            else:
+                perm = option.perm
+
+            valid = True
+            if perm and not user.has_perm(perm):
+                valid = False
+
+            if valid and option.permission(user):
+                option.get_absolute_url()
+                option.option_list = self.build_options(option, user)
+                options.append(option)
         return options
 
     def dehydrate(self, o, uid, gname=None):
@@ -524,7 +544,7 @@ class NavTree(object):
 
         return my
 
-    def dijitTree(self):
+    def dijitTree(self, user):
 
         class ByRef(object):
             def __init__(self, val):
@@ -536,7 +556,7 @@ class NavTree(object):
                 return old
         items = []
         uid = ByRef(1)
-        for n in self._build_nav():
+        for n in self._build_nav(user):
             items.append(self.dehydrate(n, uid=uid))
         return items
 
