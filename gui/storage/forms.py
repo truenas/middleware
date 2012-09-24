@@ -429,7 +429,7 @@ class VolumeWizardForm(forms.Form):
                 mkdir(mp, 755)
 
             mount(device, mp)
-            popen("/usr/local/bin/rsync -avz '%s/*' '%s/'" % (
+            popen("/usr/local/bin/rsync -avzD '%s/*' '%s/'" % (
                 mp_path, mp)
                 ).close()
             umount(mp)
