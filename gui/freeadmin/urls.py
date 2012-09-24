@@ -25,9 +25,16 @@
 #
 #####################################################################
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import include, patterns, url
+
+from freenasUI.freeadmin.api import resources
+from tastypie.api import Api
+
+v1_api = Api(api_name='v1.0')
+v1_api.register(resources.SysctlResource())
 
 urlpatterns = patterns('freenasUI.freeadmin.views',
+    url(r'^api/', include(v1_api.urls)),
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/add/(?P<mf>.+?)?$', 'generic_model_add', name="freeadmin_model_add"),
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/edit/(?P<oid>\d+)/(?P<mf>.+?)?$', 'generic_model_edit', name="freeadmin_model_edit"),
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/delete/(?P<oid>\d+)/$', 'generic_model_delete', name="freeadmin_model_delete"),
