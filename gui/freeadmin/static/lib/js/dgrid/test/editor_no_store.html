@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test Editors in Store-less Grid</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			#grid .field-date, #grid .field-date2 {
+				width: 16em;
+			}
+			#grid .field-integer {
+				width: 6em;
+			}
+			#grid .field-bool {
+				width: 6em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/Grid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor", "dijit/form/NumberSpinner", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
+				function(Grid, Selection, Keyboard, editor, NumberSpinner, declare){
+					var columns = [
+						editor({
+							label: 'Integer',
+							field: 'integer',
+							autoSave: true,
+							editorArgs: {style: 'width: 5em;', constraints: {min:1,max:1550,places:0}}
+						}, NumberSpinner),
+						editor({label: 'Text', field: 'text', autoSave: true},
+							"text", "dblclick"),
+						{label: 'Non editable text', field: 'text', sortable: false}
+					];
+
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						columns: columns,
+						selectionMode: "single"
+					}, "grid");
+					// use data directly rather than store
+					grid.renderArray(testTypesStore.data);
+
+					grid.on(".field-integer:change", function(event){
+						if(event.value > 100){
+							event.preventDefault();
+							alert("Values above 100 not allowed");
+						}
+					});
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with editors</h2>
+		<p>(This test requires dijit to be installed)</p>
+		<p>This test uses a grid without a store, including editors with
+			<code>autoSave:true</code>, to test editor's usability in regular
+			Grid (which lacks a save method / dirty attribute).
+		<div id="grid"></div>
+	</body>
+</html>

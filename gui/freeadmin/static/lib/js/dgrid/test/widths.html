@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test List/Grid Width Scenarios</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/tundra.css";
+			h2 {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+				clear: both;
+			}
+			
+			/* set dimensions of Grids */
+			.dgrid-grid {
+				width: 700px;
+				height: 20em;
+			}
+			
+			/* specific widths for columns in content-wider-than-grid tests */
+			.wideCols .dgrid-cell {
+				width: 100px; /* force all columns to have SOME width */
+			}
+			.wideCols .field-col1 {
+				width: 500px;
+			}
+			.wideCols .field-col4 {
+				width: 300px;
+			}
+			
+			#list, #widelist, #narrowlist {
+				float: left;
+			}
+			
+			#list {
+			}
+			
+			#widelist {
+				width: 300px;
+			}
+			
+			#narrowlist {
+				width: 100px;
+			}
+			
+			.dgrid {
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			function toggleHeader(grid){
+				grid.set("showHeader", !grid.showHeader);
+			}
+			require(["dojo/on", "dgrid/List", "dgrid/OnDemandGrid", "dgrid/editor", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dojo/_base/array", "dgrid/test/data/base", "dojo/domReady!"], 
+				function(on, List, Grid, editor, Selection, Keyboard, declare, arrayUtil, testStore){
+					var countries = arrayUtil.map(testCountryStore.data, function(country){
+							return country.name;
+						}),
+						// longer version to test horizontal scrolling in List
+						longCountries = arrayUtil.map(countries, function(country){
+							return country + country + country;
+						});
+					
+					function getColumns(){
+						return { // you can declare columns as an object hash (key translates to field)
+							col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
+							col2: {label: 'Column 2', sortable: false},
+							col3: editor({label: 'Column 3'}, "text", "dblclick"),
+							col4: 'Column444444444444444444',
+							col5: editor({label: 'Column 5'}, "text", "dblclick")
+						};
+					}
+
+					var StandardGrid = declare([Grid, Selection, Keyboard]);
+					
+					window.grid = new StandardGrid({
+						store: testStore,
+						columns: getColumns()
+					}, "grid");
+					
+					window.scrollgrid = new StandardGrid({
+						store: testStore,
+						columns: getColumns()
+					}, "scrollgrid");
+					
+					window.headerlessgrid = new StandardGrid({
+						store: testStore,
+						columns: getColumns(),
+						showHeader: false
+					}, "headerlessgrid");
+
+					var StandardList = declare([List, Selection, Keyboard]);
+					
+					window.list = new StandardList({}, "list");
+					list.renderArray(countries);
+					
+					window.widelist = new StandardList({}, "widelist");
+					widelist.renderArray(countries);
+					
+					window.narrowlist = new StandardList({}, "narrowlist");
+					narrowlist.renderArray(longCountries);
+				});
+		</script>
+	</head>
+	<body class="tundra">
+		<h2>Simple lists</h2>
+		<p>Testing float + no width, width &gt; row contents, width &lt; row contents</p>
+		<div id="list"></div>
+		<div id="widelist"></div>
+		<div id="narrowlist"></div>
+		<h2>Grid with no column widths specified</h2>
+		<div id="grid"></div>
+		<h2>Grid with column widths exceeding grid width</h2>
+		<p>(for testing that nodes occupy correct widths -
+			pay attention to hover/selection style and scroll right)</p>
+		<p><button type="button" onclick="toggleHeader(scrollgrid);">Toggle header
+		</button></p>
+		<div id="scrollgrid" class="wideCols"></div>
+		<h2>Grid like previous, but with headers initially hidden</h2>
+		<p><button type="button" onclick="toggleHeader(headerlessgrid);">Toggle header
+		</button></p>
+		<div id="headerlessgrid" class="wideCols"></div>
+	</body>
+</html>

@@ -1,0 +1,16 @@
+@import "../ext.css";
+
+progress:unsupported {
+	-x-widget: {
+		type: dijit/ProgressBar;
+	};
+}
+input[type=range]:unsupported {
+	-x-widget: {
+		type: dijit/form/HorizontalSlider;
+	};
+}
+progress, .dijitProgressBar, input[type=range], .dijitSliderH {
+	width: 200px;
+	display: block;
+}

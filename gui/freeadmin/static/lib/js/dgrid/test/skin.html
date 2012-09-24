@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Skin</title>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<link rel="stylesheet" href="../../dojo/resources/dojo.css"/>
+		<style>
+			h2 {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			
+			/* add styles to size this grid appropriately */
+			#grid {
+				height: 20em;
+				margin: 10px;
+			}
+			#grid .field-col2 {
+				width: 8%;
+			}
+			#grid .field-col1, #grid .field-col3, #grid .field-col5 {
+				width: 15%;
+			}
+		</style>
+	</head>
+	<body>
+		<h2>A basic grid using the <span id="skin"></span> skin</h2>
+		<div id="grid"></div>
+		<div><button type="button" onclick="grid.save();">Save</button>
+			(for testing highlight color)</div>
+		<h2>Test more skins!</h2>
+		<p>Loading dgrid.css before skin:<span id="skinlast"></span></p>
+		<p>Loading dgrid.css after skin:<span id="skinfirst"></span></p>
+		<script src="../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			require(["dojo/io-query"], function(ioq){
+				var
+					// retrieve query parameters
+					q = location.search,
+					params = q ? ioq.queryToObject(q.substr(1)) : {},
+					// honor skin specification from query param
+					skin = params.skin || "claro",
+					xstylePrefix = "xstyle/css!dgrid/css/",
+					xstyleBase = xstylePrefix + "dgrid.css",
+					xstyleRtl = xstylePrefix + "dgrid_rtl.css",
+					xstyleSkin = xstylePrefix + "skins/" + skin + ".css",
+					// put CSS first to control loading order (don't let List load it)
+					// decide whether dgrid.css or skin CSS is loaded first via query param
+					deps = params.skinFirst ? [xstyleSkin, xstyleBase, xstyleRtl] :
+						[xstyleBase, xstyleRtl, xstyleSkin],
+					rtl = params.dir == "rtl";
+				
+				// add skin class to body
+				document.body.className = skin;
+				// add dir=rtl to body if specified in query
+				rtl && (document.body.dir = "rtl");
+				
+				// then add the rest of the dependencies for the test...
+				deps = deps.concat("dgrid/List", "dgrid/OnDemandGrid", "dgrid/tree",
+					"dgrid/Selection", "dgrid/Keyboard", "dgrid/editor",
+					"dojo/_base/declare", "dojo/dom-construct", "dgrid/test/data/base", "dojo/domReady!");
+				
+				require(deps, 
+				function(css1, css2, css3, List, Grid, tree, Selection, Keyboard, editor, declare, domConstruct, testStore){
+					var
+						columns = {
+							col1: "Column 1",
+							col2: editor({label: 'Column 2', sortable: false, editor: "checkbox"}),
+							col3: "Column 3",
+							col4: "Column 4",
+							col5: "Column 5"
+						},
+						skins = ["claro", "tundra", "nihilo", "soria",
+							"slate", "sage", "cactus", "squid"],
+						i, l = skins.length,
+						href, slhtml = [], sfhtml = [];
+					
+					function byId(id){
+						return document.getElementById(id);
+					}
+					
+					// mention (in heading) which skin is being displayed
+					byId("skin").innerHTML = skin;
+					
+					// add links to test all skins, w/ dgrid.css loaded first/last
+					for(i = 0; i < l; i++){
+						href = "skin.html?skin=" + skins[i];
+						rtl && (href += "&dir=rtl");
+						
+						slhtml.push('<a href="' + href + '">' + skins[i] + '</a>');
+						sfhtml.push('<a href="' + href + '&skinFirst=true">' + skins[i] + '</a>');
+					}
+					byId("skinlast").innerHTML = slhtml.join(" / ");
+					byId("skinfirst").innerHTML = sfhtml.join(" / ");
+					
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testStore,
+						columns: columns
+					}, "grid");
+				}); // end of inner require (dgrid, etc.)
+			}); // end of outer require (io-query)
+		</script>
+	</body>
+</html>

@@ -1,0 +1,67 @@
+.claro .dgrid {
+	border: 1px solid #aaa;
+	background: #fff;
+	color: #000;
+}
+
+.claro .ui-widget-header {
+	font-weight: bold;
+}
+.claro .ui-widget-header,
+.claro .dgrid-footer { 
+	background: #ebf0f5; /* Old browsers */
+	background: -moz-linear-gradient(top, #ebf0f5 0%, #d5e0ea 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebf0f5), color-stop(100%,#d5e0ea)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ebf0f5 0%,#d5e0ea 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ebf0f5 0%,#d5e0ea 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ebf0f5 0%,#d5e0ea 100%); /* IE10+ */
+	background: linear-gradient(top, #ebf0f5 0%,#d5e0ea 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ebf0f5', endColorstr='#d5e0ea',GradientType=0 ); /* IE6-9 */
+}
+.claro .ui-widget-header .dgrid-cell:hover {
+	background: #ebf1f6; /* Old browsers */
+	background: -moz-linear-gradient(top, #ffffff 0%, #d2e0eb 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#d2e0eb)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#d2e0eb 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ffffff 0%,#d2e0eb 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ffffff 0%,#d2e0eb 100%); /* IE10+ */
+	background: linear-gradient(top, #ffffff 0%,#d2e0eb 100%); /* W3C */
+}
+
+.claro .ui-state-default { 
+	-webkit-transition-duration: 0.2s;
+	-moz-transition-duration: 0.2s;
+	-o-transition-duration: 0.2s;
+	transition-duration: 0.2s;
+	-webkit-transition-property: background-color, border-color;
+	-moz-transition-property: background-color, border-color;
+	-o-transition-property: background-color, border-color;
+	transition-property: background-color, border-color;
+	background: url("images/row_back.png") #fff repeat-x;
+}
+.has-ie-6 .claro .ui-state-default {
+	background-image: none;
+}
+.claro .ui-state-default:hover {
+	background-color: #e9f2fe;
+}
+
+.claro .ui-state-active {
+	background-color: #cee6fa;
+}
+
+.claro .ui-state-active:hover {
+	background-color: #9bc6f2;
+}
+
+.claro .ui-state-highlight {
+	background-color: #ff6;
+}
+
+.claro .dgrid-cell {
+	border-color: #edc;
+}
+
+.claro .ui-widget-header .dgrid-cell {
+	border-color: #bbb;
+}

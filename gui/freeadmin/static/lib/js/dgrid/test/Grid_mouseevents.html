@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test delegated mouse events</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=570">
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.dgrid {
+				height: 20em;
+				margin: 10px;
+			}
+			
+			/* add styles to size this grid appropriately */
+			#grid .field-order {
+				width: 7%;
+			}
+			#grid .field-name {
+				width: 18%;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var columns = {
+				order: "step", // give column a custom name
+				name: {},
+				description: {label: "what to do", sortable: false}
+			};
+			require(["dgrid/Grid", "dgrid/OnDemandGrid", "dgrid/tree", "dgrid/util/mouse", "dojo/on",
+				"dgrid/test/data/base", "dojo/query", "dojo/domReady!"],
+			function(Grid, OnDemandGrid, tree, mouseUtil, on){
+				var data = [
+					{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
+					{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
+					{order: 3, name:"mix butter", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
+					{order: 4, name:"mix together", description:"Slowly add the dry ingredients from the medium bowl to the wet ingredients in the large bowl, mixing until the dry ingredients are totally combined"},
+					{order: 5, name:"chocolate chips", description:"Add chocolate chips"},
+					{order: 6, name:"make balls", description:"Scoop up a golf ball size amount of dough with a spoon and drop in onto a cookie sheet"},
+					{order: 7, name:"bake", description:"Put the cookies in the oven and bake for about 10-14 minutes"},
+					{order: 8, name:"remove", description:"Using a spatula, lift cookies off onto wax paper or a cooling rack"},
+					{order: 9, name:"eat", description:"Eat and enjoy!"}
+				];
+				
+				var grid = window.grid = new Grid({
+					columns: columns
+				}, "grid");
+				grid.renderArray(data);
+				
+				function makeHandler(grid, type, dir){
+					return function(evt){
+						var obj = grid[type](evt),
+							str = obj.column ? obj.row.id + " " + obj.column.id : obj.id;
+						console.log(grid.id + " " + type + " " + dir + ": " + str);
+					};
+				}
+				function makeHeaderCellHandler(grid, dir){
+					return function(evt){
+						console.log(grid.id + " header cell " + dir + ": " +
+							grid.cell(evt).column.id);
+					};
+				}
+				
+				grid.on(mouseUtil.enterRow, makeHandler(grid, "row", "entered"));
+				grid.on(mouseUtil.leaveRow, makeHandler(grid, "row", "left"));
+				grid.on(mouseUtil.enterCell, makeHandler(grid, "cell", "entered"));
+				grid.on(mouseUtil.leaveCell, makeHandler(grid, "cell", "left"));
+				grid.on(mouseUtil.enterHeaderCell, makeHeaderCellHandler(grid, "entered"));
+				grid.on(mouseUtil.leaveHeaderCell, makeHeaderCellHandler(grid, "left"));
+				
+				var treegrid = window.treegrid = new OnDemandGrid({
+					store: testCountryStore,
+					query: {type: "continent"},
+					columns: [
+						tree({label: "Name", field:"name", sortable: false}),
+						{label:"Type", field:"type", sortable: false},
+						{label:"Population", field:"population"},
+						{label:"Timezone", field:"timezone"}
+					]
+				}, "treegrid");
+				
+				treegrid.on(mouseUtil.enterRow, makeHandler(treegrid, "row", "entered"));
+				treegrid.on(mouseUtil.leaveRow, makeHandler(treegrid, "row", "left"));
+				treegrid.on(mouseUtil.enterCell, makeHandler(treegrid, "cell", "entered"));
+				treegrid.on(mouseUtil.leaveCell, makeHandler(treegrid, "cell", "left"));
+				// specifically only hooking up leaveHeaderCell, to ensure that leave events
+				// work independently (in earlier dev, this wasn't the case)
+				treegrid.on(mouseUtil.leaveHeaderCell, makeHeaderCellHandler(treegrid, "left"));
+			});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid rendered from an array, with simulated mouseover events</h2>
+		<div id="grid"></div>
+		<h2>A grid with a tree column</h2>
+		<div id="treegrid"></div>
+	</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>GridFromHtml Tests</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			body {
+				padding: 0 80px; /* side padding to make it easier to scroll doc */
+			}
+			
+			/* tests for renderCell / renderHeaderCell */
+			.renderedCell {
+				font-style: italic;
+			}
+			.renderedHeaderCell {
+				text-decoration: underline;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var store; // defined later, Memory store containing data
+			
+			function getOrdinal(num){
+				// returns a String consisting of num + the appropriate ordinal suffix
+				var ord = 'th';
+				switch (num % 10) {
+					case 1:
+						ord = 'st';
+						break;
+					case 2:
+						ord = 'nd';
+						break;
+					case 3:
+						ord = 'rd';
+						break;
+				}
+				return num + ord;
+			}
+
+			function testFormatter(item){
+				return "<h3>Step " + item.order + ": " + item.name + "</h3><p>" +
+					item.description + "</p>";
+			}
+
+			function testGet(item){
+				return getOrdinal(item.order);
+			}
+
+			function testRenderHeaderCell(th){
+				var div = document.createElement("div");
+				div.className = "renderedHeaderCell";
+				div.innerHTML = "Step";
+				return div;
+			}
+
+			function testRenderCell(object, data, td, options){
+				var div = document.createElement("div");
+				div.className = "renderedCell";
+				div.innerHTML = getOrdinal(object.order);
+				return div;
+			}
+
+	
+
+			require(["dgrid/GridFromHtml", "dojo/store/Memory", "dojo/store/Observable", "dojo/_base/declare", "dojo/parser", "dojo/query", "dgrid/test/data/base", "dojo/domReady!"],
+			function(GridFromHtml, Memory, Observable, declare, parser, query){
+
+				// GridFromHtml tests
+				
+				window.gridFromHtmlLegacyFormatter = new GridFromHtml({},
+					"gridFromHtmlLegacyFormatter");
+				gridFromHtmlLegacyFormatter.renderArray(testOrderedData);
+				
+				window.gridFromHtmlLegacyGet = new GridFromHtml({},
+					"gridFromHtmlLegacyGet");
+				gridFromHtmlLegacyGet.renderArray(testOrderedData);
+				
+				window.gridFromHtmlNew = new GridFromHtml({},
+					"gridFromHtmlNew");
+				gridFromHtmlNew.renderArray(testOrderedData);
+				
+				window.gridFromHtmlTestProps = new GridFromHtml({},
+					"gridFromHtmlTestProps");
+				gridFromHtmlTestProps.renderArray(testOrderedData);
+				
+				// need to expose GridFromHtml as a global for parser to find.
+				window.dgrid = { GridFromHtml: GridFromHtml };
+				
+				// also, need a store, since there's currently no way to effectively
+				// invoke renderArray from HTML.
+				store = Observable(Memory({data: testOrderedData}));
+				parser.parse();
+			});
+			
+		</script>
+	</head>
+	<body class="claro">
+
+		<p>Compare the outcome of the first group of tests with the first group in
+			<a href="test_legacy.html">test_legacy.html</a>.</p>
+		<!-- GridFromHtml should look for TRs with THs anywhere.
+			Testing here with one thead, one tbody, and one implicit. -->
+		<h2>1a: GridFromHtml with single column with formatter for _item field</h2>
+		<table id="gridFromHtmlLegacyFormatter">
+			<thead>
+				<tr>
+					<th data-dgrid-column="{field:'_item', sortable:false, formatter:testFormatter}">Step</th>
+				</tr>
+			</thead>
+		</table>
+		<h2>1b: GridFromHtml with single column with get for order field</h2>
+		<table id="gridFromHtmlLegacyGet">
+			<tbody>
+				<tr>
+					<th data-dgrid-column="{field:'order', get:testGet}">Step</th>
+					<th>name</th>
+					<th data-dgrid-column="{field:'description', sortable:false}">what to do</th>
+				</tr>
+			</tbody>
+		</table>
+		<h2>1c: GridFromHtml with single column with renderCell function</h2>
+		<p>(should look same as previous but with underlined first header cell
+			and italicized first column values)</p>
+		<table id="gridFromHtmlNew">
+			<tr>
+				<th data-dgrid-column="{field:'order',
+					renderCell:testRenderCell, renderHeaderCell:testRenderHeaderCell}">Step</th>
+				<th>name</th>
+				<th data-dgrid-column="{field:'description', sortable:false}">what to do</th>
+			</tr>
+		</table>
+		
+		<hr/>
+		
+		<h2>2a: same as 1a, parsed from declarative markup (using a store)</h2>
+		<table id="gridDeclarativeLegacyFormatter" data-dojo-id="gridDeclarativeLegacyFormatter"
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			<thead>
+				<tr>
+					<th data-dgrid-column="{field:'_item', sortable:false, formatter:testFormatter}">Step</th>
+				</tr>
+			</thead>
+		</table>
+		<h2>2b: same as 1b, parsed from declarative markup (using a store)</h2>
+		<table id="gridDeclarativeLegacyGet" data-dojo-id="gridDeclarativeLegacyGet"
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			<tbody>
+				<tr>
+					<th data-dgrid-column="{field:'order', get:testGet}">Step</th>
+					<th>name</th>
+					<th data-dgrid-column="{field:'description', sortable:false}">what to do</th>
+				</tr>
+			</tbody>
+		</table>
+		<h2>2c: same as 1c, parsed from declarative markup (using a store)</h2>
+		<table id="gridDeclarativeNew" data-dojo-id="gridDeclarativeNew"
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			<tr>
+				<th data-dgrid-column="{field:'order',
+					renderCell:testRenderCell, renderHeaderCell:testRenderHeaderCell}">Step</th>
+				<th>name</th>
+				<th data-dgrid-column="{field:'description', sortable:false}">what to do</th>
+			</tr>
+		</table>
+		
+		<hr/>
+		
+		<h2>3a: Testing boolean property (un)specification in GridFromHtml</h2>
+		<table id="gridFromHtmlTestProps">
+			<thead>
+				<tr>
+					<th rowspan="2" data-dgrid-column="{field:'name'}">No sortable attr (defaults to true)</th>
+					<th data-dgrid-column="{field:'name', sortable:false}">sortable="false"</th>
+				</tr>
+				<tr>
+					<th data-dgrid-column="{field:'name', sortable:true}">sortable="true"</th>
+				</tr>
+			</thead>
+		</table>
+		
+	</body>
+</html>

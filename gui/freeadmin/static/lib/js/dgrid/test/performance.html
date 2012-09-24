@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test Performance</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/tundra.css";
+			.heading {
+				font-weight: bold;
+				margin-left: 12px;
+				padding-bottom: 0.25em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+			/* this is not part of theme, but you can add odd-even coloring this way*/
+			.dgrid-row-odd {
+				background: #F2F5F9;
+			}
+
+			#grid {
+				width: 68em;
+				height: 50em;
+				padding: 1px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dgrid/test/data/perf", "dojo/domReady!"], 
+				function(List, Grid, Selection, Keyboard, declare, testPerfStore){
+					var columns = [
+						{ name: 'Column 0', field: 'id', width: '10%' },
+						{ name: 'Column 1', field: 'integer', width: '10%' },
+						{ name: 'Column 2', field: 'floatNum', width: '10%' },
+						{ name: 'Column 3', field: 'date', width: '10%' },
+						{ name: 'Column 4', field: 'date2', width: '10%' },
+						{ name: 'Column 5', field: 'text', width: '10%' },
+						{ name: 'Column 6', field: 'bool', width: '10%' },
+						{ name: 'Column 7', field: 'bool2', width: '10%' },
+						{ name: 'Column 8', field: 'price', width: '10%' },
+						{ name: 'Column 9', field: 'today', width: '10%' }
+					];
+					var start = new Date();
+					var grid = window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testPerfStore,
+						columns: columns
+					}, "grid");
+					console.log("startup time: " + (new Date() - start) + "ms");
+					
+					var processScroll = grid._processScroll;
+					grid._processScroll = function(evt){
+						var start = new Date();
+						processScroll.call(this, evt);
+						console.log("scroll time: " + (new Date() - start) + "ms");
+					};
+					
+				});
+				
+		</script>
+	</head>
+	<body class="tundra">
+		<h2 class="heading">A performance test designed to go head to head with DataGrid's test_datagrid_performance.html</h2>
+		<div id="grid"></div>
+	</body>
+</html>

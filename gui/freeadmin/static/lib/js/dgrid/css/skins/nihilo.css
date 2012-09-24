@@ -1,0 +1,38 @@
+.nihilo .dgrid {
+	border-color: #bba;
+}
+
+.nihilo .ui-widget-content {
+	background: #fff;
+	color: #000;
+}
+.nihilo .ui-widget-header {
+	background: #fff;
+	border-bottom-color: #919191;
+}
+.nihilo .dgrid-footer {
+	background: #fff;
+	border-top: 1px solid #919191;
+}
+.nihilo .dgrid-header .dgrid-cell {
+	border-right-color: #acab99;
+}
+
+.nihilo .ui-state-active {
+	background-color: #aec7e3;
+}
+.nihilo .ui-state-default:hover {
+	background-color: #ffe284;
+}
+
+.nihilo .ui-state-highlight {
+	background-color: #ff6;
+}
+
+.nihilo .dgrid-cell {
+	border-color: #ddc;
+}
+
+.nihilo .ui-widget-header .dgrid-cell {
+	border-color: #bba;
+}

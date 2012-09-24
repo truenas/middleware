@@ -1,0 +1,20 @@
+x-value { 
+	linear-gradient: default, require(xstyle/gradient);
+}
+x-property { 
+	opacity: default, require(xstyle/xstyle);
+	bottom: default, require(xstyle/shim/boxOffsets);
+	right: default, require(xstyle/shim/boxOffsets);
+	transition: default, prefix, require(xstyle/shim/transition);
+	border-radius: default, prefix;
+	box-shadow: default, prefix, require(xstyle/shim/ie-filter);
+	box-sizing: default, prefix;
+	border-image: default, prefix;
+	transform: default, prefix, require(xstyle/shim/ie-filter);
+}
+x-pseudo { 
+	hover: default, require(xstyle/shim/pseudo);
+	focus: default, require(xstyle/shim/pseudo);
+	disabled: default, require(xstyle/shim/pseudo);
+	checked: default, require(xstyle/shim/pseudo);
+}

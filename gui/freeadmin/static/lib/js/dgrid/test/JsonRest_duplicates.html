@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test JsonRest Tree with objects repeated in different places in hierarchy</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			h2 {
+				margin: 12px;
+			}
+			.dgrid {
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js"
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			function deleteSelected(){
+				for(var i in grid.selection){
+					testStore.remove(i);
+				}
+			}
+			function newPage(){
+				testStore.add({
+					name: "new",
+					comment:"New"
+				});
+			}
+			
+			require(["dgrid/List", "dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard",
+				"dgrid/editor", "dgrid/tree", "dojo/_base/declare",
+				"dojo/store/JsonRest", "dojo/store/Observable", "dojo/store/Cache", "dojo/store/Memory",
+				"dojo/store/util/SimpleQueryEngine", "dojo/domReady!"], 
+			function(List, Grid, Selection, Keyboard, editor, tree, declare, JsonRest, Observable, Cache, Memory, SimpleQueryEngine){
+				var testStore = window.testStore = Observable(Cache(JsonRest({
+					target:"./data/rest.php?", 
+					idProperty: "id",
+					queryEngine: SimpleQueryEngine,
+					query: function(query, options){
+						query = "";
+						return JsonRest.prototype.query.call(this, query, options);
+					}
+				}), Memory()));
+				testStore.getChildren = function(parent, options){
+					return testStore.query({parent: parent.id}, options);
+				};
+				var columns = [
+					tree({label:'Name', field:'name', sortable: false, allowDuplicates: true}),
+					{label:'Id', field:'id', sortable: true},
+					editor({label:'Comment', field:'comment', sortable: false, autoSave: true}, "text"),
+					editor({label:'Boolean', field:'boo', sortable: false, autoSave: true}, "checkbox")
+				];
+
+				var grid = window.grid = new (declare([Grid, Selection, Keyboard]))({
+					store: testStore,
+					getBeforePut: false,
+					columns: columns
+				}, "grid");
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Test JsonRest Tree with objects repeated in different places in hierarchy</h2>
+		<div id="grid"></div>
+		<button onclick='deleteSelected();'>Delete Page</div>
+		<button onclick='grid.save();'>Save</div>
+		<button onclick='grid.revert();'>Revert</div>
+		<button onclick='newPage();'>New Page</div>
+	</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Grid DnD</title>
+		<meta name="viewport" content="width=570">
+		<style type="text/css">
+			@import "../../../dojo/resources/dojo.css";
+			/* need a theme for some dnd styles (e.g. before/after indicators).
+			   Using tundra because claro has a silly dojoDndItemBefore/After bug
+			*/
+			@import "../../../dijit/themes/tundra/tundra.css";
+			@import "../../css/skins/tundra.css";
+			
+			.clear { clear: both; }
+			
+			.dojoDndItem { padding: 0; } /* override dijit.css */
+			
+			.dgrid {
+				margin: 10px;
+			}
+			
+			#another-target, #another-source, #invalid-source {
+				float: left;
+				width: 204px;
+				height: 200px;
+				margin-right: 5px;
+				border: 1px solid green;
+			}
+			#another-target .dojoDndItem, #another-source .dojoDndItem, #invalid-source .dojoDndItem {
+				margin: 1px; 
+				padding: 4px 8px;
+				background-color: #eee;
+				border-bottom: 2px solid #9c9;
+				border-top: 2px solid #fff;
+			}
+			
+			#grid1 {
+				height: 200px;
+			}
+			#grid2 {
+				width:400px;
+				height: 150px;
+			}
+			#grid3, #grid4 {
+				width: 40%;
+				float: left;
+			}
+		</style>
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/extensions/DnD", "dgrid/Keyboard", "dojo/dnd/Source", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/array", "dojo/_base/Deferred",  "dgrid/test/data/base", "dojo/domReady!"],
+				function(Grid, Selection, DnD, Keyboard, DnDSource, declare, lang, arrayUtil, Deferred){
+					var DnDGrid = declare([Grid, Selection, DnD, Keyboard]);
+					
+					// Create a custom data array based on testOrderedData, but looping
+					// several times to create enough items to reasonably test node removal,
+					// and also adding an extra item to test item-specific DnD types.
+					var orderedData = [],
+						len = testOrderedData.length,
+						i, j, obj;
+					
+					orderedData.push({
+						order: 1,
+						name: "grue",
+						description: "A grue! Run away!",
+						type: "grue"
+					});
+					
+					for(i = 0; i < 10; i++){
+						for(j = 0; j < len; j++){
+							obj = lang.clone(testOrderedData[j]);
+							obj.order = obj.id = i * len + j + 2;
+							orderedData.push(obj);
+						}
+					}
+					
+					function byId(id){ return document.getElementById(id); }
+					
+					// Note: testOrderedStore hard-wires sorting anyway,
+					// so leaving sort disabled on columns in this grid.
+					window.grid1 = new DnDGrid({
+						bufferRows: 5,
+						farOffRemoval: 400,
+						store: store = createOrderedStore(orderedData, { idProperty: "id" }),
+						columns: [
+							{label:"Name", field:"name", sortable: false},
+							{label:"Description", field:"description", sortable: false}
+						],
+						getObjectDndType: function(item){
+							return [item.type ? item.type : this.dndSourceType];
+						}
+					}, "grid1");
+					window.grid2 = new DnDGrid({
+						store: createOrderedStore([]),
+						columns: [
+							{label:"Name", field:"name", sortable: false}
+						]
+					}, "grid2");
+					
+					// set up other targets
+					var anotherTargetDiv = byId("another-target");
+					var target = new DnDSource(anotherTargetDiv, {accept:["dgrid-row"], isSource:false});
+					target.onDrop = function(source, nodes){
+						nodes.forEach(function(node){
+							anotherTargetDiv.innerHTML = "Dropped " + source.getItem(node.id).data.name;
+						});
+					};
+					
+					// Set up a dnd source with items that can drag into the grid.
+					// This is one way of doing it; there are likely several...
+					var source = new DnDSource(byId("another-source"), {
+						accept: ["dgrid-row"]
+					});
+					function nameObj(args){
+						lang.mixin(this, args);
+					}
+					nameObj.prototype = {
+						toString: function(){
+							return this.name;
+						}
+					};
+					source.insertNodes(false, [
+						{ type: ["dgrid-row"], data: new nameObj({
+							order: 10,
+							name: "do a dance",
+							description: "Dance like nobody's watching."
+						})},
+						{ type: ["dgrid-row"], data: new nameObj({
+							order: 11,
+							name: "genuflect",
+							description: "Take a knee."
+						})}
+					], false, null);
+					source.getObject = function(node){
+						return this.getItem(node.id).data;
+					};
+					
+					var invalidSource = new DnDSource(byId("invalid-source"), {
+						accept: ["grue"]
+					});
+					invalidSource.insertNodes(false, [
+						{ type: ["grue"], data: new nameObj({
+							order: 10,
+							name: "zork-grue",
+							description: "A sinister, lurking presence in the dark places of the earth.."
+						})},
+						{ type: ["grue"], data: new nameObj({
+							order: 11,
+							name: "ur-grue",
+							description: "Evil god of darkness."
+						})}
+					], false, null);
+					
+					
+					// Set up 2 more grids sharing the same store, to DnD between.
+					// Again, there are potentially many ways to accomplish this;
+					// here, we declare an extension to the DnD Source constructor defined
+					// and exposed by the DnD plugin module, then instruct our grid
+					// instances to use that.
+					var SharedDndGridSource = declare(DnD.GridSource, {
+						copyState: function(){
+							return false; // never copy, only swap
+						},
+						onDropExternal: function(source, nodes, copy, targetItem){
+							// Re-implement to simply swap flag on store item
+							var grid = this.grid;
+							arrayUtil.forEach(nodes, function(node){
+								Deferred.when(source.getObject(node), function(object){
+									object.added = grid.addedSide;
+									// If we wanted to support copy, we would probably want
+									// to check the copy flag and call copy instead of put here.
+									grid.store.put(object, { before: targetItem });
+								});
+							});
+						}
+					});
+					var SharedDnDGrid = declare(DnDGrid, {
+						// addedSide: undefined | true
+						//		Indicates whether this grid represents the "added" side, i.e.
+						//		items initially start on the other side then get moved here.
+						addedSide: undefined,
+						
+						dndConstructor: SharedDndGridSource, // use extension defined above
+						
+						postMixInProperties: function(){
+							this.inherited(arguments);
+							// Filter according to which "side" is represented
+							this.query.added = this.addedSide;
+						}
+					});
+					
+					// set up store to use for these grids
+					var sharedStore = createOrderedStore(lang.clone(testOrderedData));
+					
+					window.grid3 = new SharedDnDGrid({
+						dndSourceType: "dgrid-row-swap",
+						store: sharedStore,
+						columns: [
+							{label:"Name", field:"name", sortable: false},
+							{label:"Description", field:"description", sortable: false}
+						]
+					}, "grid3");
+					window.grid4 = new SharedDnDGrid({
+						dndSourceType: "dgrid-row-swap", // same as grid3
+						addedSide: true, // flag to extension above
+						store: sharedStore,
+						columns: [
+							{label:"Name", field:"name", sortable: false},
+							{label:"Description", field:"description", sortable: false}
+						]
+					}, "grid4");
+				});
+				
+		</script>
+	</head>
+	<body class="tundra">
+		<h2>Drag 'n' Drop</h2>
+		<div id="grid1"></div>
+		<div id="grid2"></div>
+		<div id="another-target">Another Target</div>
+		<div id="another-source">Another Source</div>
+		<div id="invalid-source">A source only accepting grues</div>
+		<div class="clear">
+			<h2>Example of 2 grids w/ inter-grid DnD, sharing the same store</h2>
+			<div id="grid3"></div>
+			<div id="grid4"></div>
+		</div>
+	</body>
+</html>

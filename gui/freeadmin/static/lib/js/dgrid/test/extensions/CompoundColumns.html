@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Grid Compound Columns</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../../dojo/resources/dojo.css";
+			@import "../../css/skins/claro.css";
+			.dgrid {
+				margin: 10px;
+			}
+			#grid { 
+				width: 80%;
+			}
+			#grid .field-col1 {
+				width: 20%;
+			}
+			#grid .field-col2 {
+				width: 20%;
+			}
+			#grid .field-col3 {
+				width: auto;
+			}
+			#grid .field-col4 {
+				width: 16%;
+			}
+			#grid .field-col5 {
+				width: 50px;
+			}
+		</style>
+		<script>
+			var start= new Date().getTime();
+		</script>
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/OnDemandGrid", "dgrid/extensions/CompoundColumns", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dojo/_base/lang", "dgrid/test/data/base", "dojo/domReady!"],
+				function(Grid, CompoundColumns, Selection, Keyboard, declare, lang, testStore){
+					//columns1 = lang.clone(columns);
+
+					var CompoundedGrid = declare([Grid, CompoundColumns, Selection, Keyboard]);
+					window.grid = new CompoundedGrid({
+						store: testStore,
+						columns: [
+							{field: 'col1', label: 'First Column'}, 
+							{label: "Full Name", children: [
+								{label: 'Given', children:[ 
+									{field: 'col2', label: 'First'},
+									{field: 'col5', label: 'Middle', sortable: false}]},
+								{field: 'col3', label: 'Last'}]},
+							{label: "No Sub-Headers", className: "noSub", showChildHeaders: false, children: [
+								{field: 'col4'},
+								{field: 'col5', formatter: function(data){ return Math.round(data); }}
+							]},
+							{field:'col1', label: 'Last Column'}
+						]
+					}, "grid");
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with compound columns</h2>
+		<div id="grid"></div>
+	</body>
+</html>

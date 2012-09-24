@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>DnD test dragging tree children</title>
+		<style type="text/css">
+			@import "../../../dojo/resources/dojo.css";
+			/* need a theme for some dnd styles (e.g. before/after indicators).
+			   Using tundra because claro has a silly dojoDndItemBefore/After bug
+			*/
+			@import "../../../dijit/themes/tundra/tundra.css";
+			@import "../../css/skins/tundra.css";
+			
+			.clear { clear: both; }
+			
+			.dojoDndItem { padding: 0; } /* override dijit.css */
+			
+			#treegrid, #targetlist {
+				float: left;
+				height: 20em;
+			}
+			
+			#treegrid {
+				width: 500px;
+			}
+			
+			#targetlist {
+				width: 400px;
+				margin-left: 20px;
+			}
+		</style>
+		<script src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script>
+			require(["dojo/_base/declare",
+				"dgrid/OnDemandList", "dgrid/OnDemandGrid", "dgrid/Keyboard", "dgrid/Selection", "dgrid/extensions/DnD", "dgrid/tree",
+				"put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
+			function(declare, OnDemandList, OnDemandGrid, Keyboard, Selection, DnD, tree, put){
+				var DnDList = declare([OnDemandList, Keyboard, Selection, DnD]),
+					DnDGrid = declare([OnDemandGrid, Keyboard, Selection, DnD]);
+				
+				// Create a grid with hierarchical items to be dragged to the target list.
+				window.treegrid = new DnDGrid({
+					columns: [
+						tree({label: "Name", field:"name", sortable: false}),
+						{label:"Type", field:"type", sortable: false},
+						{label:"Population", field:"population"},
+						{label:"Timezone", field:"timezone"}
+					],
+					store: testCountryStore,
+					query: {type: "continent"},
+					dndParams: {
+						allowNested: true, // also pick up indirect children w/ dojoDndItem class
+						checkAcceptance: function(source, nodes) {
+							return source !== this; // Don't self-accept.
+						}
+					}
+				}, "treegrid");
+				
+				// Create the target list.
+				window.targetgrid = new DnDList({
+					store: createOrderedStore(),
+					renderRow: function(object) {
+						return put("div", object.name);
+					},
+					dndParams: {
+						isSource: false
+					}
+				}, "targetlist");
+			});
+		</script>
+	</head>
+	<body class="tundra">
+		<p>This page includes a simple example demonstrating ability to drag both
+			tree parents and children.  Note that this requires Dojo 1.8 or higher.</p>
+		<div id="treegrid"></div>
+		<div id="targetlist"></div>
+		
+	</body>
+</html>

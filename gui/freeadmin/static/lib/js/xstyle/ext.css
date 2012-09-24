@@ -1,0 +1,10 @@
+x-function { 
+	scrollbar: require(xstyle/ext/scrollbar);
+}
+x-pseudo {
+	supported: require(xstyle/ext/supported);
+	unsupported: require(xstyle/ext/supported);
+}
+x-property {
+	-x-widget: require(xstyle/ext/widget);
+}			

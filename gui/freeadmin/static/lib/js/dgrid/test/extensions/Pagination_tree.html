@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Pagination Extension with tree plugin</title>
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../../dojo/resources/dojo.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.dgrid {
+				width: 750px;
+				margin: 10px;
+			}
+			
+			#grid2 .dgrid-row {
+				height: 22px;
+			}
+			#grid2 .dgrid-cell {
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			/* styles for establishing automatic height on the 2nd grid */
+			#grid2 {
+				height: auto;
+			}
+			#grid2 .dgrid-scroller {
+				position: relative;
+				overflow-y: hidden;
+			}
+			#grid2 .dgrid-header-scroll {
+				display: none;
+			}
+			#grid2 .dgrid-header {
+				right: 0;
+			}
+			
+		</style>
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			// allow retrieving skin from GET param
+			var skin = "claro",
+				match = /\bskin=([^&]*)/.exec(location.search),
+				skinDep, updateGrid;
+			if(match){ skin = match[1]; }
+			skinDep = "xstyle/css!dgrid/css/skins/" + skin + ".css";
+			
+			require([skinDep, "dgrid/Grid", "dgrid/extensions/Pagination", "dgrid/Selection", "dgrid/tree",
+					"dojo/_base/lang", "dojo/_base/declare", "dojo/dom-construct", "dojo/dom-form", 
+					"dojo/store/Memory", "dojo/store/JsonRest", "dojo/store/Cache", "dojo/store/Observable", "dojo/domReady!"],
+				function(skinResource, Grid, Pagination, Selection, tree,
+						lang, declare, domConstruct, domForm, 
+						Memory, JsonRest, Cache, Observable){
+					
+					var CustomGrid = declare([Grid, Selection, Pagination]);
+					
+					var testStore = window.testStore = Observable(new Cache(new JsonRest({
+						target:"../data/rest.php?", 
+						query: function(query, options){
+							// have to manually adjust the query to get rid of the double ?? that trips php up
+							if(query.parent){
+								query = "parent=" + query.parent;
+							}
+							return JsonRest.prototype.query.call(this, query, options);
+						}
+					}), new Memory()));
+					testStore.getChildren = function(parent, options){
+						return testStore.query({parent: parent.id}, options);
+					};
+					
+					function getColumns(){
+						return [
+							tree({label:'Name', field:'name', sortable: false}),
+							{label:'Id', field:'id', sortable: true},
+							{label:'Comment', field:'comment', sortable: false}
+						];
+					}
+					
+					document.body.className = skin;
+					
+					window.grid2 = new CustomGrid({
+						store: testStore,
+						columns: getColumns(),
+						pagingLinks: false,
+						pagingTextBox: true,
+						firstLastArrows: true,
+						pageSizeOptions: [10, 15, 25]
+					}, "grid2");
+					
+					function createGrid(args){
+						window.grid = new CustomGrid(
+							lang.mixin({ store: testStore, columns: getColumns() }, args),
+							"grid");
+					}
+					createGrid();
+					
+					var form = document.getElementById("configForm");
+					form.onsubmit = function() {
+						var args = domForm.toObject(form);
+						args.pagingLinks = +args.pagingLinks;
+						if (!args.previousNextArrows) { args.previousNextArrows = false; }
+						
+						// recreate grid using args from form
+						window.grid.destroy();
+						domConstruct.create("div", { id: "grid" }, form, "after");
+						createGrid(args);
+						
+						return false;
+					};
+				});
+		</script>
+	</head>
+	<body>
+		<h2>A basic grid with the Pagination extension with tree plugin</h2>
+		<h3>Configuration</h3>
+		<form id="configForm">
+			<div><label><input type="checkbox" name="firstLastArrows">
+				Show first/last page arrows</label></div>
+			<div><label><input type="checkbox" name="previousNextArrows" checked>
+				Show previous/next page arrows</label></div>
+			<div><label><input type="checkbox" name="pagingTextBox">
+				Show "jump-to" textbox</label></div>
+			<div>
+				<label><input type="text" name="pagingLinks" value="2" size="1">
+					Number of neighboring page numbers to display to each side of current
+					(0 to disable)</label>
+			</div>
+			<div><button type="submit">Update Grid</button></div>
+		</form>
+		<div id="grid"></div>
+		<h2>An autoheight grid with the Pagination extension,
+			with a rows-per-page drop-down</h2>
+		<div id="grid2"></div>
+	</body>
+</html>

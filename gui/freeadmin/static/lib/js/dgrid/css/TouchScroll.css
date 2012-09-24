@@ -1,0 +1,55 @@
+/* styles for scrollbars during touch-scroll */
+
+.touchscroll-x, .touchscroll-y {
+	display: none; /* overridden below */
+	overflow: hidden; /* cut off ends of scrollbar during rubber-banding */
+	position: absolute;
+	/* establish base style for scrollbar fade-in/out */
+	opacity: 0.7;
+}
+.touchscroll-fadeout .touchscroll-x, .touchscroll-fadeout .touchscroll-y {
+	opacity: 0;
+	-webkit-transition: opacity 0.3s ease-out 0.1s;
+	-moz-transition: opacity 0.3s ease-out 0.1s;
+	-o-transition: opacity 0.3s ease-out 0.1s;
+	transition: opacity 0.3s ease-out 0.1s;
+}
+
+.touchscroll-bar {
+	background-color: rgba(88,88,88,0.97);
+	border: 1px solid rgba(88,88,88,1);
+	border-radius: 3px;
+	
+	/* the borders aren't anti-aliased on Android, so this smooths it out a bit */
+	-webkit-box-shadow: 0 0 1px rgba(88,88,88,0.4);
+}
+
+.touchscroll-x {
+	left: 1px;
+	right: 3px;
+	bottom: 1px;
+	height: 5px;
+}
+.touchscroll-y {
+	top: 1px;
+	bottom: 3px;
+	right: 1px;
+	width: 5px;
+}
+
+.touchscroll-scrollable-x .touchscroll-x, .touchscroll-scrollable-y .touchscroll-y {
+	display: block; /* display scrollbar when appropriate */
+}
+
+.touchscroll-bar {
+	/* Establish transition property and timing function for scrollbars */
+	-webkit-transition: transform cubic-bezier(0.33, 0.66, 0.66, 1);
+	-moz-transition: transform cubic-bezier(0.33, 0.66, 0.66, 1);
+	-o-transition: transform cubic-bezier(0.33, 0.66, 0.66, 1);
+	transition: transform cubic-bezier(0.33, 0.66, 0.66, 1);
+}
+
+/* indicator of a successful load */
+#dgrid-css-TouchScroll-loaded {
+	display: none;
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Test dojox.grid.DataGrid Performance</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<style type="text/css">
+		@import "../../dojo/resources/dojo.css";
+		@import "../../dojox/grid/resources/Grid.css";
+		@import "../../dojox/grid/resources/tundraGrid.css";
+		
+		.heading {
+			font-weight: bold;
+			margin-left: 12px;
+			padding-bottom: 0.25em;
+		}
+		.dojoxGrid {
+			width: 80em;
+			height: 59em;
+			margin: 10px;
+			padding: 1px;
+			border: 1px solid #DDD;
+		}
+		.dojoxGrid * {
+			vertical-align: top;
+		}
+	</style>
+	<script type="text/javascript" src="../../dojo/dojo.js"
+		data-dojo-config="async: true"></script>
+
+	<script type="text/javascript">
+	require(["dojox/grid/DataGrid", "dojo/data/ObjectStore", "dgrid/test/data/perf", "dojo/domReady!"],
+		function(DataGrid, ObjectStore, testPerfStore){
+			var layout = [
+					{ name: 'id', field: 'id', width: '10%' },
+					{ name: 'integer', field: 'integer', width: '10%' },
+					{ name: 'floatNum', field: 'floatNum', width: '10%' },
+					{ name: 'date', field: 'date', width: '10%' },
+					{ name: 'date2', field: 'date2', width: '10%' },
+					{ name: 'text', field: 'text', width: '10%' },
+					{ name: 'bool', field: 'bool', width: '10%' },
+					{ name: 'bool2', field: 'bool2', width: '10%' },
+					{ name: 'price', field: 'price', width: '10%' },
+					{ name: 'today', field: 'today', width: '10%' }
+			];
+
+			var store = new ObjectStore({"objectStore":testPerfStore});
+			var start = new Date().getTime();
+			var grid = new DataGrid({
+				id: "perfGrid",
+				structure: layout,
+				store: store
+			},"grid");
+			grid.startup();
+			console.log("startup time", new Date().getTime() - start);
+			var fetch = grid._fetch;
+			grid._fetch = function(){
+				var start = new Date().getTime();
+				fetch.apply(this, arguments);
+				console.log("fetch time", new Date().getTime() - start);
+			};
+			var finishScrollJob = grid.finishScrollJob;
+			grid.finishScrollJob = function(){
+				var start = new Date().getTime();
+				finishScrollJob.call(this);
+				console.log("finishScrollJob time", new Date().getTime() - start);
+			};
+		});
+	</script>
+</head>
+<body class="tundra">
+		<h2 class="heading">A performance test designed to go head to head with dgrid's test_performance.html</h2>
+		<div id="grid"></div>
+	</body>
+</html>

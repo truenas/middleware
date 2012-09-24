@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Simple List</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dojo/domReady!"], function(List){
+				var data = [ "foo", "bar", "baz" ];
+				var list = window.list = new List();
+				
+				document.getElementById("list").appendChild(list.domNode);
+				list.startup();
+				list.renderArray(data);
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic list, instantiated with no constructor arguments</h2>
+		<div id="list"></div>
+	</body>
+</html>

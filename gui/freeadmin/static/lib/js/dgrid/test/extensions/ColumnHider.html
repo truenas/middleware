@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Column Hider Extension</title>
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../../dojo/resources/dojo.css";
+			@import "../../css/skins/claro.css";
+			.dgrid {
+				width: 750px;
+				margin: 10px;
+			}
+			.field-col1 {
+				width: 100px;
+			}
+			.field-col2 {
+				width: 100px;
+			}
+			.field-col3 {
+				width: auto;
+			}
+			.field-col4 {
+				width: 100px;
+			}
+			.field-col5 {
+				width: 150px;
+			}
+		</style>
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var columns1, columns2;
+			require(["dojo/_base/lang", "dojo/_base/declare",
+				"dgrid/OnDemandGrid", "dgrid/Selection",
+				"dgrid/extensions/ColumnHider", "dgrid/extensions/ColumnResizer",
+				"dgrid/test/data/base", "dojo/domReady!"],
+			function(lang, declare, Grid, Selection, ColumnHider, ColumnResizer, testStore){
+				var columns = {
+						col1: "Column 1Column1Column 1 Column 1",
+						col2: { label: "Column2 (unhidable)", sortable: false, unhidable: true },
+						col3: "Column3333333333333333333",
+						col4: "Column 4",
+						col5: "Column 5"
+					},
+					columns1 = window.columns1 = lang.clone(columns),
+					columns2 = window.columns2 = [
+						{ field: "col2", label: "Col2" },
+						// test setting unhidable *and* hidden (i.e. not in menu, not displayed)
+						{ field: "col4", label: "Col4", sortable: false, hidden: true, unhidable: true },
+						{ field: "col1", label: "Col1" },
+						{ field: "col5" } // no label, to test fallback to field
+					],
+					grid = window.grid = new (declare([Grid, Selection, ColumnHider]))({
+						store: testStore,
+						columns: columns1
+					}, "grid"),
+					gridresize = window.gridresize = new (declare([Grid, Selection, ColumnHider, ColumnResizer]))({
+						store: testStore,
+						columns: lang.clone(columns)
+					}, "gridresize");
+				
+				grid.on("dgrid-columnstatechange", function(evt){
+					console.log("Column for field " + evt.column.field + " is now " +
+						(evt.hidden ? "hidden" : "shown"));
+				});
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with the column hider plugin</h2>
+		<div id="grid"></div>
+		<div>Buttons to test changing column structure:
+			<button onclick="grid.set('columns', columns2);">New Structure</button>
+			<button onclick="grid.set('columns', columns1);">Original Structure</button>
+		</div>
+		<h2>Another grid w/ ColumnHider and ColumnResizer</h2>
+		<div id="gridresize"></div>
+	</body>
+</html>

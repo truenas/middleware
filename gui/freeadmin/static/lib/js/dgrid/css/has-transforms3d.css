@@ -1,0 +1,16 @@
+/* these media queries assist in feature detection of 3D transforms */
+
+.csstransforms3d {
+	position: absolute;
+	visibility: hidden;
+}
+@media (transform-3d) { .csstransforms3d { left: 9px;	} }
+@media (-ms-transform-3d) { .csstransforms3d { left: 10px; } }
+@media (-o-transform-3d) { .csstransforms3d { left: 11px; } }
+@media (-moz-transform-3d) { .csstransforms3d { left: 12px; } }
+@media (-webkit-transform-3d) { .csstransforms3d { left: 13px; } }
+
+/* indicator of a successful load via xstyle */
+#dgrid-css-has-transforms3d-loaded {
+	display: none;
+}

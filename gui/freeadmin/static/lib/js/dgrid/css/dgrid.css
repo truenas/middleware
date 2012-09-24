@@ -1,0 +1,202 @@
+/* This stylesheet provides the structural CSS for the dgrid */
+.dgrid {
+	position: relative;
+	overflow: hidden; /* This is needed by IE to prevent crazy scrollbar flashing */
+	border: 1px solid #ddd;
+	height: 30em;
+	display: block;
+}
+
+.dgrid-header {
+	background-color: #eee;
+	position: absolute;
+	right: 17px; /* scrollbar width; revised in List.js if necessary */
+	left: 0;
+}
+
+.dgrid-header-scroll {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.dgrid-footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+
+.dgrid-header-hidden,
+html.has-quirks .dgrid-header-hidden .dgrid-cell {
+	/*
+		Used to "hide" header, without losing size information for reference.
+		!important is used to supersede theme styles at higher specificity.
+		Left/right box styles are untouched, as they may influence width of
+		.dgrid-content as updated in Grid's resize method.
+		Note: Still not quite perfect in IE Quirks mode (1px left over).
+	*/
+	font-size: 0; /* allow shrinkage in IE Quirks mode for Lists */
+	height: 0 !important;
+	border-top: none !important;
+	border-bottom: none !important;
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.dgrid-footer-hidden {
+	/* Hiding footer is much simpler; simply set its display to none. */
+	display: none;
+}
+
+.dgrid-sortable {
+	cursor: pointer;
+}
+.dgrid-header, .dgrid-header-row, .dgrid-footer {
+	overflow: hidden;
+	background-color: #eee;
+}
+
+.dgrid-row-table {
+	border-collapse: collapse;
+	border: none;
+	table-layout: fixed;
+	empty-cells: show;
+	width: 100%; /* this becomes 'auto' for IE7 (non-quirks) */
+	height: 100%;
+}
+.dgrid-cell {
+	padding: 0px;
+	text-align: left;
+	overflow: hidden;
+	vertical-align: top;
+	border: 1px solid #ddd;
+	border-top-style: none;
+	
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+.dgrid-cell-padding {
+	padding: 3px;
+}
+
+.dgrid-content {
+	position: relative;
+	height: 99%;
+}
+
+.dgrid-scroller {
+	overflow-x: auto;
+	overflow-y: scroll;
+	position: absolute;
+	top: 0px;
+	margin-top: 25px; /* this will be adjusted programmatically to fit below the header*/
+	bottom: 0px;
+	width: 100%;
+}
+
+.dgrid-loading {
+	position: relative;
+	height: 100%;
+}
+.dgrid-above {
+	position: absolute;
+	bottom: 0;
+}
+
+.ui-icon {
+	width: 16px;
+	height: 16px;
+	background-image: url('images/ui-icons_222222_256x240.png');
+}
+
+.ui-icon-triangle-1-e {
+	background-position: -32px -16px;
+}
+.ui-icon-triangle-1-se {
+	background-position: -48px -16px;
+}
+
+.dgrid-expando-icon {
+	width: 16px;
+	height: 16px;
+}
+.dgrid-tree-container {
+	-webkit-transition-duration: 0.3s;
+	-moz-transition-duration: 0.3s;
+	-ms-transition-duration: 0.3s;
+	-o-transition-duration: 0.3s;
+	transition-duration: 0.3s;
+	overflow: hidden;
+}
+.dgrid-tree-container.dgrid-tree-resetting {
+	-webkit-transition-duration: 0;
+	-moz-transition-duration: 0;
+	-ms-transition-duration: 0;
+	-o-transition-duration: 0;
+	transition-duration: 0;
+}
+
+/* Single Sort */
+.dgrid-sort-arrow {
+	background-position: -64px -16px;
+	display: block;
+	float: right;
+	margin: 0 4px 0 5px;
+	height: 12px;
+}
+.dgrid-sort-up .dgrid-sort-arrow {
+	background-position: 0px -16px;
+}
+
+/* selection*/
+.dgrid-selected {
+	background-color: #bfd6eb;
+}
+
+.dgrid-input {
+	width: 99%;
+}
+
+/* UA-specific hacks*/
+html.has-mozilla .dgrid *:focus, html.has-opera .dgrid *:focus {
+	/* firefox's focus doesn't work by default for divs prior to actually tabbing into it. This fixes that
+	(we don't do any other browsers because we are trying to stay as close to native as possible) */ 
+	outline: 1px dotted;
+}
+html.has-ie-6-7.has-no-quirks .dgrid-row-table {
+	/* in IE7 this is needed instead of 100% to make it not create a horizontal scroll bar*/
+	width: auto;
+}
+html.has-quirks .dgrid-row-table, html.has-ie-6 .dgrid-row-table {
+	/* similar story, height looks too high */
+	height: auto; 
+}
+
+html.has-quirks .dgrid-header-scroll,
+html.has-ie-6 .dgrid-header-scroll {
+	/* ensure that header scroll node can shrink to 0 height in IE6 & quirks */
+	font-size: 0;
+}
+
+html.has-mozilla .dgrid-focus {
+	/* fix row focus outline (prevents horizontal scroll in FF 3.6) */
+	outline-offset: -1px;
+}
+
+/* will be used to calculate the width of the scrollbar */
+.dgrid-scrollbar-measure {
+	width: 100px;
+	height: 100px;
+	overflow: scroll;
+	position: absolute;
+	top: -9999px;
+}
+
+/* indicator of a successful load */
+#dgrid-css-dgrid-loaded {
+	display: none;
+}

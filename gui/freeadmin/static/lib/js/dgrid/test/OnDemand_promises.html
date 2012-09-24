@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="../../dojo/resources/dojo.css">
+		<link rel="stylesheet" href="../css/skins/claro.css">
+		<style>
+#grid, #grid2 {
+	height: 300px;
+}
+		</style>
+	</head>
+	<body class="claro">
+		<p>This test page tests two types of stores that return promises from their
+		query methods: the dojo/store/DataStore wrapper for dojo/data stores,
+		and an instance of dojo/store/Memory with a promise returned from query.</p>
+		<h2>Grid w/ ItemFileWriteStore via DataStore</h2>
+		<div id="grid"></div>
+		<h2>Grid w/ dojo/store w/ async query results</h2>
+		<div id="grid2"></div>
+		<script src="../../dojo/dojo.js" data-dojo-config="async:true"></script>
+		<script>
+require(["dgrid/OnDemandGrid", "dojo/store/Memory", "dojo/store/Observable", "dojo/store/util/QueryResults", "dojo/data/ItemFileWriteStore", "dojo/store/DataStore", "dojo/_base/Deferred", "dojo/_base/lang"],
+function(Grid, Memory, Observable, QueryResults, ItemFileWriteStore, DataStore, Deferred, lang){
+	var items = [], ifws, datastore, asyncstore, grid, grid2, i,
+		names = ["sasquatch", "foo", "bar", "zaphod", "beeblebrox"];
+	
+	// generate data
+	for(i = 1; i <= 200; i++){
+		items.push({
+			id: i,
+			name: names[i%5]
+		});
+	}
+	
+	ifws = new ItemFileWriteStore({ data: { identifier: "id", items: lang.clone(items) } });
+	datastore = window.datastore = Observable(new DataStore({store: ifws}));
+	
+	grid = new Grid({
+		columns: { id: "id", name: "name" },
+		store: datastore
+	}, "grid");
+	
+	asyncstore = window.asyncstore = Observable(new Memory({
+		data: items,
+		query: function(query, options){
+			var results, def, promisedResults;
+			results = Memory.prototype.query.apply(this, arguments);
+			def = new Deferred();
+			setTimeout(function(){
+				def.resolve(results);
+			}, 200);
+			promisedResults = QueryResults(def.promise);
+			promisedResults.total = results.total;
+			return promisedResults;
+		}
+	}));
+	
+	grid2 = new Grid({
+		columns: { id: "id", name: "name" },
+		store: asyncstore
+	}, "grid2");
+});
+		</script>
+	</body>
+</html>

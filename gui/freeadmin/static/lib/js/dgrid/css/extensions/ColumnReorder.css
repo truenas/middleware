@@ -1,0 +1,14 @@
+.dgrid-header .dgrid-cell {
+	display: table-cell; /* override any spurious dojoDndItem settings elsewhere */
+}
+
+.dgrid-header .dojoDndItemBefore {
+	border-left: 2px dotted #000 !important;
+}
+.dgrid-header .dojoDndItemAfter {
+	border-right: 2px dotted #000 !important;
+}
+
+#dgrid-css-extensions-ColumnReorder-loaded { /* load indicator for xstyle */
+	display: none;
+}

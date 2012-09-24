@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test renderRow and legacy functionality</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570"/>
+		<style type="text/css">
+			@import "../../dijit/themes/claro/document.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			html, body {
+				padding: 0;
+				width: 100%;
+				height: 100%;
+			}
+			#bc {
+				width: 99%;
+				height: 99%;
+			}
+			.bcLeft, .bcRight {
+				width: 300px;
+			}
+			.dijitDialog {
+				width: 500px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			// callbacks for button clicks
+			function showDeclDialog(){ dlgDecl.show(); }
+			
+			// function to get a unique set of column definitions for each grid
+			function getGridCols(){
+				return {
+					col1: 'Column 1',
+					col2: {name: 'Column 2', sortable: false},
+					col3: 'Column 3',
+					col4: 'Column 4'
+				};
+			}
+			
+			require(["dgrid/OnDemandGrid",
+				"dgrid/extensions/DijitRegistry",
+				"dijit/Dialog",
+				"dojo/_base/lang",
+				"dojo/_base/declare",
+				"dojo/parser",
+				// widgets only used declaratively
+				"dijit/layout/BorderContainer",
+				"dijit/layout/TabContainer",
+				"dijit/layout/ContentPane",
+				"dijit/Toolbar",
+				"dijit/form/Button",
+				// non-returns
+				"dgrid/test/data/base",
+				"dojo/domReady!"
+			], function(Grid, DijitRegistry, Dialog, lang, declare, parser){
+			
+				var CustomGrid = declare([Grid, DijitRegistry]);
+				
+				// simply passing columns via data-dojo-props, don't want GridFromHtml
+				window.dgrid = { Grid: CustomGrid };
+				
+				parser.parse();
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<div data-dojo-type="dijit.layout.BorderContainer" id="bc">
+			<div data-dojo-type="dijit.Toolbar" class="bcTop"
+				data-dojo-props="id:'tbTop', region:'top'">
+				<span data-dojo-type="dijit.form.Button"
+					data-dojo-props="onClick: showDeclDialog">
+					Show declarative dialog
+				</span>
+			</div>
+			<div data-dojo-type="dijit.layout.ContentPane"
+				data-dojo-props="id:'cpLeft', region:'left'">
+				<!-- left: dgrid inside contentpane -->
+				<div data-dojo-type="dgrid.Grid" id="gridBCCP" class="bcLeft"
+					data-dojo-props="store: testStore, columns: getGridCols()"></div>
+			</div>
+			<!-- center: tabcontainer -->
+			<div data-dojo-type="dijit.layout.TabContainer" class="bcCenter" id="tc"
+				data-dojo-props="region: 'center'">
+				<!-- initial tab: dgrid inside contentpane -->
+				<div data-dojo-type="dijit.layout.ContentPane"
+					data-dojo-props="id: 'tab1', title: 'Tab 1'">
+					<div data-dojo-type="dgrid.Grid" id="gridTab1" class="gridTab"
+						data-dojo-props="store: testStore, columns: getGridCols()"></div>
+				</div>
+				<!-- tab 2: dgrid inside contentpane again, but not initially visible -->
+				<div data-dojo-type="dijit.layout.ContentPane"
+					data-dojo-props="id: 'tab2', title: 'Tab 2'">
+					<div data-dojo-type="dgrid.Grid" id="gridTab2" class="gridTab"
+						data-dojo-props="store: testStore, columns: getGridCols()"></div>
+				</div>
+			</div>
+		</div>
+		<!-- declarative dialog w/ dgrid inside -->
+		<div data-dojo-type="dijit.Dialog" id="dlgDecl" data-dojo-id="dlgDecl">
+			<div data-dojo-type="dgrid.Grid" id="gridDlgDecl"
+				data-dojo-props="store: testStore, columns: getGridCols()"></div>
+		</div>
+	</body>
+</html>

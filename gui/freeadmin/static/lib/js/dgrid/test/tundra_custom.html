@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test Tundra Theme</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/tundra.css";
+			h2 {
+				margin: 12px;
+			}
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+			/* this is not part of theme, but you can add odd-even coloring this way*/
+			.dgrid-row-odd {
+				background: #F2F5F9;
+			}
+			
+			/* also not part of theme, but a contrived example of using dgrid-sortable. */
+			.dgrid-sortable {
+				font-weight: bold;
+			}
+			
+			/* add styles to size this grid appropriately */
+			#grid {
+				height: 20em;
+			}
+			#grid .dgrid-row {
+				height: 22px;
+			}
+			#grid .dgrid-cell {
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
+				function(List, Grid, Selection, Keyboard, declare){
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testStore,
+						columns: {
+							col1: "Column 1",
+							col2: { label: "Column 2", sortable: false },
+							col3: "Column 3",
+							col4: "Column 4",
+							col5: "Column 5"
+						}
+					}, "grid");
+				});
+				
+		</script>
+	</head>
+	<body class="tundra">
+		<h2>A basic grid customized based on the tundra theme</h2>
+		<div id="grid"></div>
+	</body>
+</html>

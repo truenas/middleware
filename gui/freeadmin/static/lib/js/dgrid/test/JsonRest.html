@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test JsonRest store</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			h2 {
+				margin: 12px;
+			}
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/editor", "dgrid/Keyboard", "dgrid/tree", "dojo/_base/declare", "dojo/store/JsonRest", "dojo/store/Observable", "dojo/store/Cache", "dojo/store/Memory", "dojo/domReady!"], 
+				function(List, Grid, Selection, editor, Keyboard, tree, declare, JsonRest, Observable, Cache, Memory){
+					var testStore = Observable(Cache(JsonRest({
+						target:"./data/rest.php?", 
+						idProperty: "id",
+						query: function(query, options){
+							// have to manually adjust the query to get rid of the double ?? that trips php up
+							if(query.parent){
+								query = "parent=" + query.parent;
+							}
+							return JsonRest.prototype.query.call(this, query, options);
+						}
+					}), Memory()));
+					testStore.getChildren = function(parent, options){
+						return testStore.query({parent: parent.id}, options);
+					};
+					var columns = [
+						tree({label:'Name', field:'name', sortable: false}),
+						{label:'Id', field:'id', sortable: false},
+						editor({label:'Comment', field:'comment', sortable: false}, "text"),
+						editor({label:'Boolean', field:'boo', sortable: false, autoSave: true}, "checkbox")
+					];
+
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testStore,
+						getBeforePut: false,
+						columns: columns
+					}, "grid");
+					deleteSelected = function(){
+						for(var i in grid.selection){
+							testStore.remove(i);
+						}
+					}
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with JsonRest store</h2>
+		<div id="grid"></div>
+		<button onclick='deleteSelected()'>Delete Page</div>
+		<button onclick='grid.save();'>Save</div>
+		<button onclick='grid.revert();'>Revert</div>
+	</body>
+</html>

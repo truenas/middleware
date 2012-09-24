@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="rtl">
+	<head>
+		<title>Test Right-To-Left</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			
+			h2 {
+				margin: 12px;
+			}
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			
+			/* also not part of theme, but a contrived example of using dgrid-sortable. */
+			.dgrid-sortable {
+				font-weight: bold;
+			}
+			
+			/* add styles to size this grid appropriately */
+			.dgrid {
+				height: 20em;
+				margin: 2em;
+			}
+			
+			#scrollgrid {
+				width: 700px;
+				zoom: 1;
+			}
+			#scrollgrid .dgrid-cell {
+				width: 100px; /* force all columns to have SOME width */
+			}
+			#scrollgrid .field-col1 {
+				width: 500px;
+			}
+			#scrollgrid .field-col4 {
+				width: 300px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+		
+			require(["dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dgrid/tree", "dgrid/editor", "dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/data/ObjectStore", "dijit/form/CheckBox", "dijit/form/TimeTextBox",  "dijit/form/Select", "dijit/form/FilteringSelect", "dgrid/test/data/base", "dojo/domReady!", "xstyle/css!../css/dgrid_rtl.css"], 
+				function(Grid, Selection, Keyboard, tree, editor, lang, declare, on, ObjectStore, CheckBox, TimeTextBox, Select, FilteringSelect, testStore){
+					var columns = [
+						{label: 'Column 1', field: 'col1'},
+						{label: 'Column 2', field: 'col2', sortable: false},
+						{label: 'Column 3', field: 'col3'},
+						{label: 'Column 4', field: 'col4'},
+						{label: 'Column 5', field: 'col5'}
+					];
+					var StandardGrid = declare([Grid, Selection, Keyboard]);
+
+					window.grid = new StandardGrid({
+						store: testStore,
+						columns: lang.clone(columns)
+					}, "grid");
+					
+					window.scrollgrid = new StandardGrid({
+						store: testStore,
+						columns: lang.clone(columns)
+					}, "scrollgrid");
+					
+					var columnsTree = [
+						editor({label: ' ', field: 'bool', sortable: false}, "checkbox"),
+						tree({label:'Name', field:'name', sortable: false}),
+						{label:'Type', field:'type', sortable: false},
+						{label:'Population', field:'population'},
+						{label:'Timezone', field:'timezone'}
+					];
+					
+					window.tree = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						columns: columnsTree
+					}, "tree");
+					
+					var columnsHeaderless = { // you can declare columns as an object hash (key translates to field)
+						col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
+						col2: {label: 'Column 2', sortable: false},
+						col3: editor({label: 'Column 3'}, "text", "dblclick"),
+						col4: 'Column444444444444444444',
+						col5: editor({label: 'Column 5'}, "text", "dblclick")
+					};
+
+					window.headerless = new StandardGrid({
+						store: testStore,
+						columns: columnsHeaderless,
+						showHeader: false
+						
+					}, "headerless");
+						
+					stateStore = new ObjectStore({
+						objectStore:testStateStore,
+						labelProperty: "name"
+					});
+
+					var columnsEditor = [
+						{field: "id", label: "id"},
+						editor({
+							label: "CheckBox",
+							field: "bool2",
+							editorArgs: {
+								value: "checked"
+							}
+						}, CheckBox),
+						editor({label: "Time", field: "date2", editorArgs: {
+							timePattern: "HH:mm:ss",
+							clickableIncrement: "T00:15:00",
+							visibleIncrement: "T00:15:00",
+							visibleRange: "T01:00:00"}}, TimeTextBox),
+						editor({
+							label: "Select Options",
+							field: "bool",
+							get: function(item){
+								// return as string to match option in list
+								return "" + item.bool;
+							},
+							set: function(item){
+								// convert back to boolean from string
+								return item.bool == "true";
+							},
+							editorArgs: {
+								style: "width:75px;",
+								options: [
+									{value: "true", label: "true"},
+									{value: "false", label: "false"}
+								]
+							}
+						}, Select, "dblclick"),
+						editor({label: "Select Store", field: "state", editorArgs: {store: stateStore, maxHeight: 150, style: "width:120px;"}}, Select, "click"),
+						editor({label: "FilteringSelect Store", field: "state2", editorArgs: {store: stateStore, maxHeight: 150, style: "width:120px;"}}, FilteringSelect)
+					];
+					
+					window.moreeditors = new StandardGrid({
+						store: testTypesStore,
+						columns: columnsEditor,
+						selectionMode: "none"
+					}, "moreeditors");
+					
+				});
+		</script>
+	</head> 
+	<body class="claro">
+		<h2>A basic grid</h2>
+		<div id="grid"></div>
+		
+		<h2>Same as basic grid, but with column widths exceeding grid width</h2>
+		<p>(for testing horizontal scrolling)</p>
+		<div id="scrollgrid"></div>
+		
+		<h2>Lazy-loading tree grid, with store functionality</h2>
+		<div id="tree"></div>
+		
+		<h2>Headerless grid</h2>
+		<div id="headerless"></div>
+		
+		<h2>Grid with editors</h2>
+		<div id="moreeditors"></div>
+		<button type="button" id="save" onclick="moreeditors.save()">Save</button>
+	</body>
+</html>

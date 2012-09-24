@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Tree Grid</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			.dgrid {
+				width: 700px;
+				margin: 10px;
+			}
+			#tree .field-bool {
+				width: 4em;
+			}
+			#tree .field-type {
+				width: 5em;
+			}
+		</style>
+		<script src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script>
+			require(["dojo/on", "dgrid/OnDemandGrid","dgrid/tree","dgrid/editor", "dgrid/Keyboard",
+					"dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
+				function(on, Grid, tree, editor, Keyboard, declare, testStore){
+					var count = 0; // for incrementing edits from button under 1st grid
+					
+					function nbspFormatter(value){
+						// returns "&nbsp;" for blank content, to prevent cell collapsing
+						return value === undefined || value === "" ? "&nbsp;" : value;
+					}
+
+					var StandardGrid = declare([Grid, Keyboard]);
+					
+					window.grid = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						columns: [
+							tree(editor({label: "Name", field:"name", sortable: false, editOn: "dblclick"})),
+							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),
+							{label:"Type", field:"type", sortable: false},
+							{label:"Population", field:"population"},
+							{label:"Timezone", field:"timezone"}
+						]
+					}, "treeGrid");
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Lazy-loading tree grid, with editable tree cells (tree&rarr;editor)</h2>
+		<div id="treeGrid"></div>
+		<button onclick="window.grid.save();">Save</button>
+		<button onclick="window.grid.revert();">Revert</button>
+	</body>
+</html>

@@ -1,0 +1,46 @@
+.dTuned .ui-widget {
+	background: #fff;
+	color: #000;
+}
+.dTuned .ui-widget-header {
+	background-image: url(images/grid-header-bg.png);
+	background-repeat: repeat-x;
+	font-weight: bold;
+}
+.dTuned .ui-widget-header .dgrid-cell:hover,
+.dTuned .ui-widget-header .dgrid-sort-up,
+.dTuned .ui-widget-header .dgrid-sort-down{
+	background-image: url(images/grid-header-sorted.png);
+	background-repeat: repeat-x;
+}
+
+.dTuned .ui-state-default {
+	-webkit-transition-duration: 0.2s;
+	-moz-transition-duration: 0.2s;
+	-o-transition-duration: 0.2s;
+	transition-duration: 0.2s;
+	-webkit-transition-property: background-color, border-color;
+	-moz-transition-property: background-color, border-color;
+	-o-transition-property: background-color, border-color;
+	transition-property: background-color, border-color;
+	background: url("../../../css/skins/images/row_back.png") #fff repeat-x;
+}
+.has-ie-6 .dTuned .ui-state-default {
+	background-image: none;
+}
+
+.dTuned .ui-state-default:hover {
+	background-color: #e9f2fe;
+}
+
+.dTuned .ui-state-active {
+	background-color: #cee6fa;
+}
+
+.dTuned .ui-state-active:hover {
+	background-color: #9bc6f2;
+}
+
+.dTuned .ui-state-highlight {
+	background-color: #ff6;
+}

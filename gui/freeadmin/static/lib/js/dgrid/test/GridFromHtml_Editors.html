@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test declarative cell editors </title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			body {
+				padding: 0 80px; /* side padding to make it easier to scroll doc */
+			}
+			
+			/* tests for renderCell / renderHeaderCell */
+			.renderedCell {
+				font-style: italic;
+			}
+			.renderedHeaderCell {
+				text-decoration: underline;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/GridFromHtml", "dojo/store/Memory", "dojo/store/Observable", "dojo/_base/declare", "dojo/parser", "dojo/query","dgrid/Keyboard","dijit/form/Select", "dgrid/editor", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner", "dojo/data/ObjectStore","dgrid/test/data/base", "dojo/domReady!"],
+			function(GridFromHtml, Memory, Observable, declare, parser, query, Keyboard, Select, editor, DateTextBox, Slider, NumberSpinner, ObjectStore){
+
+				window.dgrid = {
+					GridFromHtml: GridFromHtml,
+					editor: editor
+				};
+				window.stateStore = new ObjectStore({
+						objectStore:testStateStore,
+						labelProperty: "name"
+					});
+				// GridFromHtml tests
+				window.gridProgrammatic = new GridFromHtml({
+					store: testTypesStore
+				}, "gridProgrammatic");
+				parser.parse();
+			});
+			
+		</script>
+	</head>
+	<body class="claro">
+
+		
+		<!-- GridFromHtml should look for TRs with THs anywhere.
+			Testing here with one thead, one tbody, and one implicit. -->
+
+		<h2>1: GridFromHtml instantiated programmatically,
+			with columns using editor plugin</h2>
+		<table id="gridProgrammatic">
+			<thead>
+				<tr>
+					<th data-dgrid-column="dgrid.editor({field:'date'}, dijit.form.DateTextBox)">Date</th>
+					<th data-dgrid-column="dgrid.editor({field: 'text'}, 'text', 'dblclick')">Text editable on dblclick</th>
+					<th data-dgrid-column="dgrid.editor({
+							field: 'state',
+							editorArgs: {store: stateStore, style: 'width:120px;', maxHeight: -1}
+						}, dijit.form.Select)">State</th>
+					<th data-dgrid-column="{field:'text2', sortable:false}">Uneditable</th>
+				</tr>
+			</thead>
+		</table>
+	<h2>2: Fully declarative GridFromHtml,
+		with columns using editor plugin</h2>
+	<table id="gridDeclarative" data-dojo-id="gridDeclarative"
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: testTypesStore">
+			<tr>
+				<th data-dgrid-column="dgrid.editor({field:'date'}, dijit.form.DateTextBox)">Date</th>
+				<th data-dgrid-column="dgrid.editor({field: 'text'}, 'text', 'dblclick')">Text editable on dblclick</th>
+				<th data-dgrid-column="dgrid.editor({
+						field: 'state',
+						editorArgs: {store: stateStore, style: 'width:120px;', maxHeight: -1}
+					}, dijit.form.Select)">State</th>
+				<th data-dgrid-column="{field:'text2', sortable:false}">Uneditable</th>
+			</tr>
+		</table>
+	</body>
+</html>

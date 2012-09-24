@@ -1,0 +1,40 @@
+.dgrid-column-set {
+	overflow: hidden;
+	width: 100%;
+	position: relative; /* This is needed because we setting position: relative on cells in the grid for focus in IE7*/
+}
+
+.dgrid-column-set-cell {
+	vertical-align: top;
+}
+.dgrid-column-set-scroller {
+	position: absolute;
+	bottom: 0px;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+.dgrid-column-set-scroller-content {
+	position: relative;
+	height: 1px;
+}
+
+/* UA-specific hacks*/
+html.has-mozilla .dgrid-column-set *:focus, html.has-safari .dgrid-column-set *:focus {
+	/* firefox and opera's outline gets cropped by the overflow: hidden, so we add a border*/
+	border: 1px dotted black; 
+	outline: 1px dotted black;
+}
+html.has-ie-7 .dgrid-column-set {
+	/* in IE7 (strangely not IE6 or IE8+) this is needed instead of 100% to make it not create a horizontal scroll bar*/
+	width: auto;
+}
+
+html.has-quirks .dgrid-column-set {
+	/* at it works in quirks even in IE7*/
+	width: 100%;
+}
+
+/* indicator of a successful load */
+#dgrid-css-columnset-loaded {
+	display: none;
+}

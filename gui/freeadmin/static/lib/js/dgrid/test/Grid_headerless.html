@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Grid Common Cases</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/claro.css";
+			@import "../../dijit/themes/claro/claro.css";
+			
+			h2 {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+				clear: both;
+			}
+			
+			.dgrid {
+				width: 700px;
+			}
+			
+			#grid .field-col1 {
+				width: 100px;
+			}
+			#grid .field-col2 {
+				width: 30%;
+			}
+			#grid .field-col4 {
+				width: 180px;
+			}
+			
+			#scrollgrid .dgrid-cell {
+				width: 100px; /* force all columns to have SOME width */
+			}
+			#scrollgrid .field-col1 {
+				width: 500px;
+			}
+			#scrollgrid .field-col4 {
+				width: 300px;
+			}
+			
+			#tree {
+				height: 200px;
+			}
+			#tree .field-bool {
+				width: 20%;
+			}
+			#tree .field-type {
+				width: 80px;
+			}
+			
+			#editgrid {
+				width: 90%;
+			}
+			#editgrid .field-date, #editgrid .field-date2 {
+				width: 16em;
+			}
+			#editgrid .field-integer {
+				width: 6em;
+			}
+			#editgrid .field-bool {
+				width: 6em;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dojo/on", "dgrid/List", "dgrid/OnDemandGrid", "dgrid/tree", "dgrid/editor", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner", "dgrid/test/data/base", "dojo/domReady!"],
+				function(on, List, Grid, tree, editor, Selection, Keyboard, declare, DateTextBox, Slider, NumberSpinner, testStore){
+
+					var StandardGrid = declare([Grid, Selection, Keyboard]);
+
+					window.grid = new StandardGrid({
+						store: testStore,
+						columns: { // you can declare columns as an object hash (key translates to field)
+							col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
+							col2: {label: 'Column 2', sortable: false},
+							col3: editor({label: 'Column 3'}, "text", "dblclick"),
+							col4: 'Column444444444444444444',
+							col5: editor({label: 'Column 5'}, "text", "dblclick")
+						},
+						showHeader: false
+					}, "grid");
+					
+					window.scrollgrid = new StandardGrid({
+						store: testStore,
+						columns: { // same as previous, repeated to keep objects/plugins unique
+							col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
+							col2: {label: 'Column 2', sortable: false},
+							col3: editor({label: 'Column 3'}, "text", "dblclick"),
+							col4: 'Column444444444444444444',
+							col5: editor({label: 'Column 5'}, "text", "dblclick")
+						},
+						showHeader: false
+					}, "scrollgrid");
+					
+					window.tree = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						selectionMode: "single",
+						columns: {
+							name: tree({label:'Name', sortable: false}),
+							bool: editor({label: 'A CheckBox', sortable: false}, "checkbox"),
+							type: {label: 'Type', sortable: false},
+							population: 'Population',
+							timezone: 'Timezone'
+						},
+						showHeader: false
+					}, "tree");
+					
+					window.editGrid = new StandardGrid({
+						store: testTypesStore,
+						columns: [ // columns specified as array, with field in each item
+							editor({label: 'A Date', field: 'date'}, DateTextBox),
+							editor({label: 'Real Number', field: 'floatNum'}, Slider),
+							editor({label: 'Integer', field: 'integer', editorArgs: {style: 'width: 5em;', constraints: {min:9,max:1550,places:0}}}, NumberSpinner),
+							editor({label: 'Text editable if checkbox checked + saved', field: 'text', canEdit: function(object){
+								return object.bool;
+							}}, "text", "dblclick"),
+							{label: 'Non editable text', field: 'text', sortable: false},
+							editor({label: 'Another Date', field: 'date2'}, DateTextBox, "focus"),
+							editor({label: 'CheckBox', field: 'bool'}, "checkbox")
+						],
+						selectionMode: "single",
+						showHeader: false
+					}, "editgrid");
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h1>Headerless Grid Tests</h1>
+		<h2>A basic grid</h2>
+		<div id="grid"></div>
+		<h2>A grid with a tree column</h2>
+		<div tabIndex="2" id="tree"></div>
+		<div tabIndex="1" id="list"></div>
+		<h2>Same as basic grid, but with column widths exceeding grid width</h2>
+		<p>(for testing that nodes occupy correct widths - pay attention to hover/selection style)</p>
+		<div id="scrollgrid"></div>
+		<h2>Editor Grid</h2>
+		<div id="editgrid"></div><br>
+	</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Test Simple Grid ColumnReorder</title>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../../dojo/resources/dojo.css";
+			@import "../../../dojo/resources/dnd.css";
+			@import "../../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+
+			/* add styles to size this grid appropriately */
+			#grid {
+				height: 20em;
+			}
+			.field-order {
+				width: 3em;
+			}
+			.field-name {
+				width: 10em;
+			}
+		</style>
+
+		<script src="../../../dojo/dojo.js" data-dojo-config="async: true"></script>
+
+		<script type="text/javascript">
+			var data = [
+				{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
+				{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
+				{order: 3, name:"mix butter", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
+				{order: 4, name:"mix together", description:"Slowly add the dry ingredients from the medium bowl to the wet ingredients in the large bowl, mixing until the dry ingredients are totally combined"},
+				{order: 5, name:"chocolate chips", description:"Add chocolate chips"},
+				{order: 6, name:"make balls", description:"Scoop up a golf ball size amount of dough with a spoon and drop in onto a cookie sheet"},
+				{order: 7, name:"bake", description:"Put the cookies in the oven and bake for about 10-14 minutes"},
+				{order: 8, name:"remove", description:"Using a spatula, lift cookies off onto wax paper or a cooling rack"},
+				{order: 9, name:"eat", description:"Eat and enjoy!"}
+			];
+			var columns1 = {
+				order: "step", // give column a custom name
+				name: {},
+				description: { label: "what to do", sortable: false }
+			};
+			var columns2 = {
+				name: {},
+				description: { label: "what to do", sortable: false }
+			};
+			
+			require(["dgrid/Grid", "dgrid/extensions/ColumnReorder", "dgrid/extensions/ColumnResizer",
+					"dojo/_base/declare", "dojo/domReady!"],
+				function(Grid, ColumnReorder, ColumnResizer, declare){
+					window.grid = new (declare([Grid, ColumnReorder]))({
+						columns: columns1
+					}, "grid");
+					grid.renderArray(data);
+					
+					window.grid2 = new (declare([Grid, ColumnReorder, ColumnResizer]))({
+						columns: {
+							order: { label: "step", reorderable: false },
+							name: {},
+							description: { label: "what to do", sortable: false }
+						}
+					}, "grid2");
+					grid2.renderArray(data);
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with column re-ordering</h2>
+		<div id="grid"></div>
+		<div>Buttons to test resetting columns:
+			<button onclick="grid.set('columns', columns1);">order, name, description</button>
+			<button onclick="grid.set('columns', columns2);">name, description</button>
+		</div>
+		<h2>A grid with column re-ordering and resizing, and a non-reorderable Step field</h2>
+		<div id="grid2"></div>
+	</body>
+</html>

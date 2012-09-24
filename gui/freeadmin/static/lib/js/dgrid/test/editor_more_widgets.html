@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test Dijit Cell Editors</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			#grid .field-date, #grid .field-date2 {
+				width: 16em;
+			}
+			#grid .field-integer {
+				width: 6em;
+			}
+			#grid .field-bool {
+				width: 6em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor", "dijit/form/CheckBox", "dijit/form/TimeTextBox",  "dijit/form/Select","dojo/data/ObjectStore", "dijit/form/FilteringSelect", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
+				function(List, Grid, Selection, Keyboard, editor, CheckBox, TimeTextBox, Select, ObjectStore, FilteringSelect, declare){
+
+					stateStore = new ObjectStore({
+						objectStore:testStateStore,
+						labelProperty: "name"
+					});
+
+					var columns = [
+						{field: "id", label: "id"},
+						editor({
+							label: "CheckBox",
+							field: "bool2",
+							editorArgs: {
+								value: "checked"
+							}
+						}, CheckBox),
+						editor({label: "Time", field: "date2", editorArgs: {
+							timePattern: "HH:mm:ss",
+							clickableIncrement: "T00:15:00",
+							visibleIncrement: "T00:15:00",
+							visibleRange: "T01:00:00"}}, TimeTextBox),
+						editor({
+							label: "Select Options",
+							field: "bool",
+							get: function(item){
+								// return as string to match option in list
+								return "" + item.bool;
+							},
+							set: function(item){
+								// convert back to boolean from string
+								return item.bool == "true";
+							},
+							editorArgs: {
+								style: "width:75px;",
+								options: [
+									{value: "true", label: "true"},
+									{value: "false", label: "false"}
+								]
+							}
+						}, Select, "dblclick"),
+						editor({label: "Select Store", field: "state", editorArgs: {store: stateStore, maxHeight: 150, style: "width:120px;"}}, Select, "click"),
+						editor({label: "FilteringSelect Store", field: "state2", editorArgs: {store: stateStore, maxHeight: 150, style: "width:120px;"}}, FilteringSelect)
+						// Note that mileage may vary with editOn + widgets with multiple focusable children, e.g. dijit/Editor
+					];
+
+
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testTypesStore,
+						columns: columns,
+						selectionMode: "none"
+					}, "grid");
+					
+					grid.on("dgrid-datachange", function(evt){
+						console.log("data changed: ", evt.oldValue, " -> ", evt.value);
+						console.log("cell: ", evt.cell, evt.cell.row.id);
+					});
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Another basic grid with more editors</h2>
+		(Click fields to edit)
+		<div id="grid"></div>
+		<button type="button" id="save" onclick="grid.save()">Save</button>
+	</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Grid Store Observation</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			
+			.ui-widget {
+				margin: 10px;
+			}
+			
+			.dgrid-grid {
+				width: 700px;
+			}
+			.dgrid-list {
+				width: 200px;
+			}
+			
+			#grid2 {
+				width: 500px;
+				float: left;
+			}
+			#grid3 {
+				width: 500px;
+				float: right;
+			}
+			
+			.dgrid .field-bool {
+				width: 6em;
+			}
+			.dgrid .field-type {
+				width: 80px;
+			}
+			
+			#grid2 .field-date, #grid2 .field-date2 {
+				width: 16em;
+			}
+			#grid2 .field-integer {
+				width: 6em;
+			}
+			#grid2 .field-bool { /* checkbox */
+				width: 4em;
+			}
+			
+			#gridAddDel, #listAddDel {
+				float: left;
+			}
+		</style>
+		<script>
+			var start= new Date().getTime();
+		</script>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dojo/on", "dgrid/OnDemandList", "dgrid/OnDemandGrid","dgrid/Keyboard", "dgrid/Selection", "dgrid/editor", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner",  "dgrid/test/data/base", "dojo/_base/lang", "dojo/_base/declare", "dojo/_base/array", "dojo/_base/Deferred", "dojo/dom-construct", "dojo/store/Memory", "dojo/domReady!"],
+				function(on, List, Grid, Keyboard, Selection, editor, DateTextBox, Slider, NumberSpinner, data, lang, declare, arrayUtil, Deferred, domConstruct, Memory){
+					
+					// Create error store
+					errorStore = new Memory();
+					errorStore.query = function() {
+						throw new Error("Error on sync query");
+					};
+					
+					// Create error store with PUT
+					putErrorStore = new Memory({ data: lang.clone(testTypesStore.data) });
+					putErrorStore.put = function() {
+						throw new Error("Error on sync put");
+					};
+					
+					// Create error store that has its deferred rejected
+					defErrorStore = new Memory();
+					defErrorStore.query = function() {
+						var def = new Deferred();
+						setTimeout(function() { def.reject("Error on async query"); }, 200);
+						return def.promise;
+					};
+					
+					// Create error store that returns a promise on put, which it rejects
+					defPutErrorStore = new Memory({ data: lang.clone(testTypesStore.data) });
+					defPutErrorStore.put = function() {
+						var def = new Deferred();
+						setTimeout(function() { def.reject("Error on async put"); }, 200);
+						return def.promise;
+					};
+					
+					var columns = {
+						col1: 'Column 1',
+						col2: {label: 'Column 2'},
+						col3: 'Column 3',
+						col4: 'Column 4',
+						col5: 'Column 5',
+						col6: 'Column 6',
+						col7: 'Column 7'
+					};
+
+					var columns2 = [
+						editor({label: 'Real Number', field: 'floatNum'}, Slider),
+						editor({label: 'Integer', field: 'integer', editorArgs: {style: 'width: 5em;'}}, NumberSpinner),
+						editor({label: 'Text editable if checkbox checked', field: 'text', canEdit: function(object){
+							return object.bool;
+						}}, "text", "dblclick"),
+						editor({label: 'Another Date (autoSave)', field: 'date2', autoSave:true}, DateTextBox, "focus"),
+						editor({label: 'Check', field: 'bool'}, "checkbox")
+					];
+
+					var columns3 = {
+						floatNum: 'Real Number',
+						integer: 'Integer',
+						text: 'Text',
+						date2: 'Date',
+						bool: 'Check'
+					};
+					var columns4 = {
+						col1: 'Color',
+						col2: 'A Goat',
+						col3: 'Position',
+						col4: 'Description',
+						col5: 'R',
+						col6: 'G',
+						col7: 'B'
+					};
+					var StandardGrid = declare([Grid, Selection, Keyboard]);
+					window.grid = new StandardGrid({
+						store: testStore,
+						columns: columns,
+						sort: "col3", // initially sort by col3 ascending
+						noDataMessage: "Nobody here but us chickens!"
+					}, "grid");
+
+					window.grid2 = new StandardGrid({
+						store: testTypesStore,
+						columns: columns2,
+						selectionMode: "single"
+					},"grid2");
+
+					window.grid3 = new StandardGrid({
+						store: testTypesStore,
+						columns: columns3
+					}, "grid3");
+
+					window.gridAddDel = new StandardGrid({
+						store: smallColorStore,
+						columns: lang.clone(columns4)
+					}, "gridAddDel");
+					
+					// also throw in a List connected to the same store
+					// (so additions/deletions should show up in both)
+					window.listAddDel = new (declare([List, Keyboard, Selection]))({
+						store: smallColorStore,
+						columns: lang.clone(columns4),
+						renderRow: function(object, options){
+							// need to define renderRow to accommodate store items
+							return domConstruct.create("div", {
+								innerHTML: object.col1
+							});
+						}
+					}, "listAddDel");
+					
+					// buttons / listeners for 1st grid
+					
+					grid.on("dgrid-error", function(evt) {
+						console.warn("error on grid: ", evt.error);
+					});
+					
+					on(document.getElementById("setstore"), "click", function(){
+						console.log("setting store to colorStore: ", colorStore);
+						window.grid.set("store", colorStore);//no query
+					});
+					on(document.getElementById("restore"), "click", function(){
+						console.log("setting store to testStore");
+						grid.set("store", testStore);//no query
+					});
+					on(document.getElementById("colorQuery"), "click", function(){
+						console.log("setting store to colorStore and setting query to show only primary colors");
+						grid.set("store", colorStore, {col3: "Primary"});//query set to only show primary colors
+					});
+					on(document.getElementById("resetQuery"), "click", function(){
+						console.log("reset query to show all");
+						grid.set("query", {});
+					});
+					
+					var sortDescending = true;
+					
+					on(document.getElementById("setQueryWithOptions"), "click", function(){
+						// set sort for the col1 field
+						sortDescending = !sortDescending;
+						
+						// get existing sort order
+						var sortByCol1 = arrayUtil.filter(
+								grid.get("sort") || [], 
+								function(sortBy){
+									return sortBy.attribute == "col1";
+								}
+						).shift();
+						if(sortByCol1){
+							console.log("modifying existing sort direction for col1: ", sortByCol1);
+						} else {
+							sortByCol1 = { attribute: "col1" };
+						}
+						sortByCol1.descending = sortDescending;
+						grid.set("query", grid.query, { sort: [sortByCol1] });
+						
+						console.log("sort after setting query + queryOptions w/ sort: ",
+							grid.get("sort"), grid.queryOptions);
+					});
+					on(document.getElementById("sort"), "click", function(){
+						sortDescending = !sortDescending;
+						grid.set("sort", "col1", sortDescending);
+						
+						console.log("sort after setting sort: ", grid.get("sort"));
+					});
+
+
+					on(document.getElementById("empty"), "click", function(){
+						console.log("set store to emptyStore");
+						grid.set("store", emptyStore, {});
+					});
+					on(document.getElementById("error"), "click", function(){
+						console.log("set store to errorStore");
+						grid.set("store", errorStore,{});
+					});
+					
+					on(document.getElementById("error2"), "click", function(){
+						console.log("set store to defErrorStore");
+						grid.set("store", defErrorStore,{});
+					});
+					
+					// buttons / listeners for 2nd grid
+					
+					function updateDirty(){
+						setTimeout(function(){
+							// clear "dirty items" list after change has been processed
+							domConstruct.empty("dirty");
+							for(var rowId in grid2.dirty){
+								var node = domConstruct.create("div",
+									{ innerHTML: "rowId: "+rowId }, "dirty");
+							}
+						}, 0);
+					}
+					
+					grid2.on("dgrid-error", function(evt) {
+						console.warn("error on grid2: ", evt.error);
+					});
+					
+					on(document.getElementById("save"), "click", function(){
+						console.log("save to store");
+						grid2.save();
+						updateDirty();
+					});
+					
+					on(document.getElementById("setorigeditstore"), "click", function(){
+						grid2.set("store", testTypesStore, {});
+						updateDirty();
+					});
+					
+					on(document.getElementById("seterrorputstore"), "click", function(){
+						grid2.set("store", putErrorStore, {});
+						updateDirty();
+					});
+					
+					on(document.getElementById("setdeferrorputstore"), "click", function(){
+						grid2.set("store", defPutErrorStore, {});
+						updateDirty();
+					});
+					
+					var dirtyListener = grid2.on("dgrid-datachange", updateDirty);
+					
+					// buttons for 3rd grid
+					
+					on(document.getElementById("add"), "click", function(){
+						var id = smallColorStore.data.length+Math.floor(Math.random()*1001);
+						console.log("id: ", id);
+						smallColorStore.put({id: id, col1: "Grey", col2: false, col3: "Hue", col4:'A hue' , col5: 192, col6: 192, col7: 192 });
+					});
+					on(document.getElementById("delete"), "click", function(){
+						for(var id in gridAddDel.selection){
+							smallColorStore.remove(id);
+						}
+					});
+					
+					// hook up a listener for error events on the document to test bubbling
+					// (currently error events don't seem to bubble,
+					// but perhaps we want them to?)
+					on(document, "dgrid-error", function(evt){
+						console.log("document received error: ", evt.error);
+					});
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Simple test to show setting a new store and query to dgrid</h2>
+		<div id="grid"></div>
+		<button id="colorQuery">Set color store and query</button>
+		<button id="resetQuery">Reset query</button>
+		<button id="setQueryWithOptions">Set query with queryOptions</button>
+		<button id="sort">sort</button>
+		<br>
+		<button id="setstore">Set Color Store</button>
+		<button id="restore">Set Original Store</button>
+		<button id="empty">Set to empty store</button>
+		<button id="error">Set to error store</button>
+		<button id="error2">Set to error store (def)</button>
+
+		<br><br>
+		<h2>Simple test to show editor effect on store data</h2>
+		<div id="container" style="width:1200px;">
+		<div id="grid2"></div>
+		<div style="float:left;margin-left:20px;"><div><h3>Dirty Items</h3></div><div id="dirty"></div></div>
+		<div id="grid3"></div>
+		</div>
+		<div style="clear:both"><button id="save">Save Changes</button></div>
+		<p>The following buttons switch between stores in the left grid above,
+			to test handling of errors on put operations.</p>
+		<p>Note that clicking Save will NOT emit an error event on the grid,
+			as direct invocations of save are expected to handle the returned promise
+			as they see fit.  However, modifying an editor field with autoSave enabled
+			will cause an error event to be emitted, since in this case it is
+			the grid which initiated the operation.</p>
+		<button id="setorigeditstore">Set to original store</button>
+		<button id="seterrorputstore">Set to store which causes error on put</button>
+		<button id="setdeferrorputstore">Set to store which rejects Deferred on put</button>
+		<br>
+		<h2>Simple test to show adding/deleting items</h2>
+		<p>(With an OnDemandList alongside, also observing the changes)</p>
+		<div id="gridAddDel"></div>
+		<div id="listAddDel"></div>
+		<div style="clear:both">
+			<button id="add">Add Color</button>
+			<button id="delete">Delete Selected</button>
+		</div>
+	</body>
+</html>

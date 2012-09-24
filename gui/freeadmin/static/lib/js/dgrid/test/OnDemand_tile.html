@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Tile Layout in OnDemandList</title>
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/claro.css";
+			.dgrid {
+				margin: 10px;
+				width: 430px;
+				height: 400px;
+				float: left;
+			}
+			
+			#list .dgrid-row {
+				display: inline-block;
+				width: 100px;
+				height: 100px;
+			}
+			
+			.clear {
+				clear: both;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var logRendered; // Function defined in require factory
+			require(["dgrid/OnDemandList", "dojo/query", "dojo/store/Memory", "put-selector/put", "dojo/domReady!"],
+			function(OnDemandList, query, Memory, put){
+				// Create dummy array to make list show a number of entries.
+				var data = [], i, store;
+				for(i = 0; i < 500; i++){ data[i] = { id: i }; }
+				store = new Memory({ data: data });
+				
+				logRendered = function(){
+					console.log("list: " + query("#list .dgrid-row").length);
+					console.log("imglist: " + query("#imglist .dgrid-row").length);
+				};
+				document.getElementById("logRendered").onclick = logRendered;
+				
+				window.list = new OnDemandList({
+					store: store,
+					farOffRemoval: 500,
+					renderRow: function(object){
+						return put("span", object.id);
+					}
+				}, "list");
+				
+				window.imglist = new OnDemandList({
+					store: store,
+					farOffRemoval: 500,
+					renderRow: function(object){
+						return put("img[src=../demos/multiview/resources/dojo-64.png]");
+					}
+				}, "imglist");
+			});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>OnDemandLists with a tiled layout, for testing virtual paging</h2>
+		<div id="list"></div>
+		<div id="imglist"></div>
+		<div class="clear">
+			<button id="logRendered">Log number of rendered items</button>
+		</div>
+	</body>
+</html>

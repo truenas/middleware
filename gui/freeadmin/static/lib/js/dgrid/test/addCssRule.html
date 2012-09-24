@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>list.addCssRule tests</title>
+		<style>
+.box {
+	padding: 8px;
+	margin: 2px;
+	float: left;
+}
+		</style>
+	</head>
+	<body>
+		<p>Click a box to remove its unique style.</p>
+		<div id="container">&nbsp;</div>
+		<hr style="clear: left;">
+		<p>Simple stress test (open console / use Firebug Lite for IE):
+			<button type="button" id="btnTest">Go</button></p>
+		<script src="../../dojo/dojo.js" data-dojo-config="async:1"></script>
+		<script>
+require(["dgrid/List", "put-selector/put", "dojo/on", "dojo/query"], function(List, put, on){
+	var
+		addRule = List.prototype.addCssRule,
+		container = byId("container"),
+		rules = {}, sheet, i;
+	
+	function byId(id){ return document.getElementById(id); }
+	
+	for(i = 1; i <= 20; i++){
+		put(container, "div#box" + i + ".box");
+		rules["box" + i] = addRule("#box" + i, "background-color: rgb(" +
+			Math.floor(Math.random() * 256) + "," +
+			Math.floor(Math.random() * 256) + "," +
+			Math.floor(Math.random() * 256) +	");");
+	}
+	
+	on(container, ".box:click", function(evt){
+		rules[evt.target.id].remove();
+	});
+	
+	// stress test
+	
+	function stressTest(){
+		var i, rule, firstRule, title = "create rules";
+		
+		// Create a bunch of rules, within reason...
+		// (careful to stay under IE's silly 4096-selector limit)
+		// Note that this isn't the real test - you ordinarily shouldn't be adding
+		// thousands of rules programmatically all at once!
+		console.time(title);
+		for(i = 4000; i--;){
+			rule = addRule("#test" + i, "background-color: rgb(" +
+			Math.floor(Math.random() * 256) + "," +
+			Math.floor(Math.random() * 256) + "," +
+			Math.floor(Math.random() * 256) +	");");
+			if(!firstRule){ firstRule = rule; }
+		}
+		console.timeEnd(title);
+		
+		// Now for the real test - remove the very first rule that we added above,
+		// thus requiring all the indices in our array to be downshifted.
+		title = "remove first rule, requiring all to downshift";
+		console.time(title);
+		firstRule.remove();
+		console.timeEnd(title);
+	}
+	on(byId("btnTest"), "click", function(evt){
+		stressTest();
+		evt.target.setAttribute("disabled", "disabled");
+	});
+})
+		</script>
+	</body>
+</html>

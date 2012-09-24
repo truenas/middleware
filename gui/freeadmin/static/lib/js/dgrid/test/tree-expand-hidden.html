@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test TreeGrid</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			.dgrid {
+				width: 700px;
+				margin: 10px;
+			}
+			.field-type {
+				width: 5em;
+			}
+			.field-population {
+				width: 7em;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dojo/on", "dgrid/OnDemandGrid", "dgrid/Tree", "dgrid/Keyboard", "dgrid/Selection", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
+				function(on, Grid, tree, Keyboard, Selection, declare, testStore){
+					var columns = [
+						tree({label:'Name', field:'name', sortable: false}),
+						{label:'Type', field:'type', sortable: false},
+						{label:'Population', field:'population'},
+						{label:'Timezone', field:'timezone'}
+					];
+					
+					var grid = window.grid = new (declare([Grid, Keyboard, Selection]))({
+						store: testCountryStore,
+						query: {type: "continent"},
+						columns: columns
+					}, "grid");
+
+					on(document.getElementById("toggle"), "click", function(event){
+						var node = document.getElementById("hiddenTree"),
+							display = node.style.display;
+						
+						node.style.display = display ? "" : "none";
+					});
+					
+					on(document.getElementById("expandAF"), "click", function(event){
+						grid.expand("AF");
+					});
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Tree grid rendered in a hideable node (to test expansion while hidden)</h2>
+		<button id="toggle">Toggle hide/show</button>
+		<button id="expandAF">Toggle Africa expansion</button>
+		<div id="hiddenTree">
+			<div id="grid"></div>
+		</div>
+	</body>
+</html>

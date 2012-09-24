@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>Test Complex Grid ColumnReorder</title>
+		<meta name="viewport" content="width=570">
+		<link rel="stylesheet" href="../../../dojo/resources/dojo.css">
+		<link rel="stylesheet" href="../../../dojo/resources/dnd.css">
+		<link rel="stylesheet" href="../../../dgrid/css/dgrid.css">
+		<link rel="stylesheet" href="../../../dgrid/css/skins/claro.css">
+		<style type="text/css">
+			.dgrid {
+				margin: 10px;
+				height: 20em;
+			}
+		</style>
+	</head>
+	<body class="claro">
+		<h2>A grid with column re-ordering within simple columns or subrows</h2>
+		<div id="grid"></div>
+		<div>Buttons to test different column arrangements in the grid above:
+			<button onclick="grid.set('columns', columns);">simple columns</button>
+			<button onclick="grid.set('subRows', subRows);">subrows</button>
+		</div>
+		<h2>A grid with column re-ordering within columnsets</h2>
+		<div id="gridColumnSets"></div>
+		
+		<script src="../../../dojo/dojo.js"
+			data-dojo-config="async: true, isDebug: true"></script>
+		<script type="text/javascript">
+			// Structures are declared outside require for callbacks defined above.
+			var columns = {
+					col1: "Column 1",
+					col2: { label: "Column 2", sortable: false },
+					col3: "Column 3",
+					col4: "Column 4",
+					col5: "Column 5"
+				},
+				subRows = [
+					[
+						{label: 'Column 1', field: 'col1'},
+						{label: 'Column 2', field: 'col2', sortable: false},
+						{label: 'Column 3', field: 'col3'}
+					], [
+						{label: 'Column 4', field: 'col4', colSpan: 2},
+						{label: 'Column 5', field: 'col5'}
+					]];
+			require(["dgrid/OnDemandGrid", "dgrid/ColumnSet", "dgrid/extensions/ColumnReorder",
+				"dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
+			function(OnDemandGrid, ColumnSet, ColumnReorder, declare, testStore){
+				var grid = window.grid = new (declare([OnDemandGrid, ColumnReorder]))({
+						store: testStore,
+						columns: columns
+					}, "grid"),
+					gridColumnSets = window.gridColumnSets = new (declare([OnDemandGrid, ColumnSet, ColumnReorder]))({
+						store: testStore,
+						columnSets: [
+							[
+								[
+									{label: 'Column 1', field: 'col1'},
+									{label: 'Column 2', field: 'col2', sortable: false}
+								]
+							], [
+								[
+									{label: 'Column 3', field: 'col3'},
+									{label: 'Column 5', field: 'col5'}
+								]
+							]
+						]
+					}, "gridColumnSets");
+			});
+		</script>
+	</body>
+</html>

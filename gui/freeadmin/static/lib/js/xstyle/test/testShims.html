@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+     <title>Run shim Unit Tests</title>
+   <style>
+   @import "./shims.css";
+   </style>
+   <script src="/dojo/dojo.js" data-dojo-config="async:true"></script>
+
+<script>
+var now = new Date();
+//console.profile();
+require(['xstyle/xstyle'], function (xstyle) {
+	//console.profileEnd();
+	console.log(new Date() - now);
+});
+
+  </script>
+
+  </head>
+<body>
+
+<div class="container">
+<pre>{
+	position: absolute;
+	padding: 10px;
+	left: 50px;
+	top: 50px;
+	bottom: 50px;
+	right: 50px;
+}</pre>
+	<div class="drop-shadow-box"><pre>{
+	position: absolute;
+	left: 300px;
+	top: 50px;
+	border: 1px solid black;
+	border-radius: 15px;
+	box-shadow: 10px 10px 5px #888888;
+	background-color: #ddd;
+}</pre></div>
+	
+	<div class="opacity" test="value"><pre>{
+	opacity: 0.7;
+}</pre></div>
+	<div class="sized-box">sized box</div>
+	<div class="transition" id="trans">transition</div>
+	<div class="gradient-box"><pre>{
+	background-image: linear-gradient(top,  #cccccc,  #000000);
+	transform: rotate(-20deg);
+	position: absolute;
+	left: 300px;
+	top: 250px;
+	width: 560px;
+	height: 170px;
+}</pre></div>
+	
+</div>
+</body>
+</html>

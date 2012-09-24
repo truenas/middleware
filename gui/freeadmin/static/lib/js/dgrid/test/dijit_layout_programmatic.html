@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test dijit programmatic layout</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570"/>
+		<style type="text/css">
+			@import "../../dijit/themes/claro/document.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			html, body {
+				padding: 0;
+				margin: 0;
+				width: 100%;
+				height: 100%;
+			}
+			#bc {
+				height: 100%;
+			}
+			
+			#cpLeft .dgrid {
+				width: 300px;
+			}
+			
+			.dijitDialog {
+				width: 500px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js"
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			// callbacks for button clicks
+			function showProgContentDialog(){
+				dlgProgContent.show();
+				//dlgProgContent.content.startup(); //this is a workaround
+			}
+
+			require(["dgrid/OnDemandGrid",
+				"dgrid/Selection",
+				"dgrid/extensions/DijitRegistry",
+				"dijit/Dialog",
+				"dijit/registry",
+				"dojo/_base/lang",
+				"dojo/_base/declare",
+				"dijit/layout/BorderContainer",
+				"dijit/layout/TabContainer",
+				"dijit/layout/ContentPane",
+				"dijit/Toolbar",
+				"dijit/form/Button",
+				// non-returns
+				"dgrid/test/data/base",
+				"dojo/domReady!"
+			], function(Grid, Selection, DijitRegistry, Dialog, registry, lang, declare, BC, TC, CP, Toolbar, Button){
+				
+				var
+					gridCols = window.gridCols = {
+						col1: "Column 1",
+						col2: {name: "Column 2", sortable: false},
+						col3: "Column 3",
+						col4: "Column 4"
+					},
+					CustomGrid = declare([Grid, Selection, DijitRegistry]),
+					gridLeft = new CustomGrid({
+						id: "gridLeft",
+						store: testStore,
+						columns: lang.clone(gridCols),
+						selectionMode: "single"
+					}),
+					gridTab1 = new CustomGrid({
+						id: "gridTab1",
+						store: testStore,
+						columns: lang.clone(gridCols),
+						selectionMode: "single"
+					}),
+					gridTab2 = new CustomGrid({
+						id: "gridTab2",
+						store: testStore,
+						columns: lang.clone(gridCols),
+						selectionMode: "single"
+					});
+				
+				var bc = new BC({
+					design: "headline"
+				}, "bc");
+				
+				// Toolbar
+				var tb = new Toolbar({
+					id: "tbTop",
+					region: "top"
+				});
+				
+				tb.addChild(new Button ({
+					id: "btnDialog",
+					label: "Programmatic dialog w/ dgrid",
+					onClick: showProgContentDialog
+				}));
+				
+				// TabContainer
+				var tc = new TC({
+					id: "tab",
+					"class": "bcCenter",
+					region: "center"
+				});
+				
+				tc.addChild(new CP({
+					id: "tab1",
+					title: "Tab 1",
+					content: gridTab1
+				}));
+				tc.addChild(new CP({
+					id: "tab2",
+					title: "Tab 2",
+					content: gridTab2
+				}));
+
+				bc.addChild(tb);
+				bc.addChild(new CP({
+					id: "cpLeft",
+					region: "left",
+					content: gridLeft
+				}));
+				bc.addChild(tc);
+				
+				bc.startup();
+				
+				// test setting a dgrid as content of a dialog programmatically
+				window.dlgProgContent = new Dialog({
+					content: new CustomGrid({
+						id: "gridDlgProgContent",
+						store: testStore,
+						columns: lang.clone(gridCols),
+						selectionMode: "single"
+					})
+				});
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<div id="bc"></div>
+	</body>
+</html>

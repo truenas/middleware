@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Cell Editors</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			#grid {
+				margin: 10px;
+				height: 15em;
+				width: 500px;
+			}
+			
+			.outer {
+				border: 1px solid #333;
+				padding: 0 4px;
+			}
+			.inner {
+				background-color: #ccc;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js"
+			data-dojo-config="async: true, isDebug: true"></script>
+		<script type="text/javascript">
+			var grid, // stores global reference to grid instance
+				editFirst; // function defined within require callback
+			
+			require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor",
+					"dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/dom-construct",
+					"dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore", "dojo/domReady!"],
+				function(Grid, Selection, Keyboard, editor,
+						lang, declare, on, domConstruct, Memory, Observable, ObjectStore){
+					var today = new Date(),
+						form = document.getElementById("editorForm"),
+						typesArea = document.getElementById("editorComponentTypes"),
+						optionsData = [
+							{ id: "1", name: "one" },
+							{ id: "2", name: "two" },
+							{ id: "3", name: "three" },
+							{ id: "4", name: "four" },
+							{ id: "5", name: "five" }
+						],
+						optionsLength = optionsData.length,
+						optionsStore = new Memory({ data: optionsData }),
+						optionsDataStore = new ObjectStore({
+							objectStore: optionsStore,
+							labelProperty: "name"
+						}),
+						CustomGrid = declare([Grid, Selection, Keyboard]),
+						TestStore = declare(Memory, {
+							put: function(object, options){
+								console.log("put called for ID: ", object.id, object);
+								this.inherited(arguments);
+							}
+						}),
+						// define choices of component type which will be available in form
+						componentTypes = [
+							// native input types
+							{ label: "text", generate: generateText },
+							{ label: "checkbox", generate: generateBool },
+							{ label: "radio", generate: generateBool },
+							{
+								label: "textarea",
+								generate: generateText,
+								column: { editorArgs: { rows: 3 } }
+							},
+							// TODO: support select?
+							// Dijits
+							{ label: "dijit/form/TextBox", generate: generateText },
+							{ label: "dijit/form/SimpleTextarea", generate: generateText },
+							{
+								label: "dijit/form/CheckBox",
+								generate: generateBool,
+								// Dijit's CheckBox is a bit special, in that value reports
+								// a string value if checked, but false if unchecked.
+								column: {
+									editorArgs: { value: "enabled" },
+									get: function(item){
+										// ensure initial rendering matches up with widget behavior
+										return item.editor ? "enabled" : false;
+									},
+									set: function(item){
+										// convert to boolean for save
+										item.editor = !!item.editor;
+										return item;
+									}
+								}
+							},
+							{
+								label: "dijit/form/ValidationTextBox",
+								generate: generateText,
+								column: { editorArgs: { required: true } }
+							},
+							{
+								label: "dijit/form/NumberSpinner",
+								generate: generateNumber,
+								column: { editorArgs: { constraints: { min: 0 } } }
+							},
+							{ label: "dijit/form/DateTextBox", generate: generateDate },
+							{
+								label: "dijit/form/HorizontalSlider",
+								generate: generateNumber,
+								column: { editorArgs: { minimum: 0, maximum: 1000 } }
+							},
+							{
+								label: "dijit/form/FilteringSelect",
+								generate: generateOptionValue,
+								column: { editorArgs: { store: optionsStore } }
+							},
+							{
+								label: "dijit/form/Select",
+								generate: generateOptionValue,
+								column: { editorArgs: {
+									store: optionsDataStore,
+									// need to set width directly for Select to size correctly
+									style: { width: "99%" }
+								} }
+							},
+							{
+								label: "dijit/editor",
+								generate: generateText,
+								column: {
+									renderCell: function(object, data){
+										// this editor supports rich text; don't escape HTML in view
+										return domConstruct.create("div", { innerHTML: data });
+									},
+									editorArgs: { style: "height: 100px;" }
+								}
+							},
+							{
+								label: "text input combining first/last name",
+								editor: "text",
+								generate: generateName,
+								column: {
+									get: function(object){
+										return object.firstName + " " + object.lastName;
+									},
+									set: function(object){
+										// Recombine to single field, and remove our combined field.
+										// Admittedly, this won't treat middle names very nicely.
+										var parts = object.editor.split(/ +/, 2);
+										object.firstName = parts[0];
+										object.lastName = parts[1];
+										delete object.editor;
+									}
+								}
+							},
+							{
+								label: "dijit/form/TextBox converting to uppercase on save",
+								editor: "dijit/form/TextBox",
+								generate: generateTextUC,
+								column: {
+									set: function(object){ return object.editor.toUpperCase(); }
+								}
+							}
+						],
+						optStr = "",
+						i;
+					
+					// data generation functions used for populating store data,
+					// used by different componentTypes
+					function generateText() {
+						return { editor: "generated text " + Math.floor(Math.random() * 1000) };
+					}
+					function generateNumber() {
+						return { editor: Math.floor(Math.random() * 1000) };
+					}
+					function generateBool() {
+						return { editor: Math.random() > 0.5 ? true : false };
+					}
+					function generateDate() {
+						// return a date within the past year
+						return { editor: new Date(today - Math.random() * 31536000000) };
+					}
+					function generateOptionValue() {
+						return { editor: optionsData[Math.floor(Math.random() * optionsLength)].id };
+					}
+					function generateTextUC() {
+						return { editor: "GENERATED TEXT " + Math.floor(Math.random() * 1000) };
+					}
+					function generateName() {
+						// returns an item with firstName and lastName fields,
+						// for testing a more complex scenario with a column.set function.
+						return {
+							firstName: ["John", "Jane"][Math.floor(Math.random() * 2)],
+							lastName: ["Doe", "Smith"][Math.floor(Math.random() * 2)]
+						};
+					}
+					
+					function getSelected(select){
+						var options = select.options,
+							i;
+						for (i = options.length; i--;){
+							if(options[i].selected){ return options[i].value; }
+						}
+					}
+					
+					function customRenderCell(object, data) {
+						var container = domConstruct.create("div", { "class": "outer" });
+						domConstruct.place('<span class="inner">' +
+							("" + data).replace(/</g, "&lt;") + "</span>", container);
+						return container;
+					}
+					
+					form.onsubmit = function(){
+						var
+							choice = getSelected(form.elements.editor),
+							options = componentTypes[choice],
+							editorType = options.editor || options.label,
+							editOn = getSelected(form.elements.editOn),
+							deps = editorType.indexOf("/") > -1 ? [editorType] : [],
+							data = [],
+							i;
+						
+						for (i = 0; i < 100; i++){
+							data.push(lang.mixin(options.generate(), { id: i }));
+						}
+						
+						require(deps, function(ctor){
+							var columnArgs = {
+								autoSave: form.elements.autoSave.checked,
+								editor: ctor || editorType
+							};
+							if(editOn){ columnArgs.editOn = editOn; }
+							if(form.elements.customRenderCell.checked){
+								columnArgs.renderCell = customRenderCell;
+							}
+							
+							if(!grid){
+								grid = new CustomGrid({
+									store: Observable(new TestStore({ data: data })),
+									columns: {
+										"editor": editor(lang.mixin({}, options.column, columnArgs))
+									}
+								}, "grid");
+							}else{
+								// instead of destroying/recreating, just reset store + columns
+								grid.set("store", Observable(new TestStore({ data: data })));
+								grid.set("columns", {
+									"editor": editor(lang.mixin({}, options.column, columnArgs))
+								});
+							}
+						});
+						
+						return false;
+					};
+					
+					// generate radios in editorComponentTypes div
+					for(i in componentTypes){
+						optStr += '<option value="' + i + '">' + componentTypes[i].label + "</option>";
+					}
+					domConstruct.place('<select name="editor">' + optStr + "</select>", typesArea);
+					
+					on(document.body, "dgrid-datachange", function(evt){
+						console.log(evt.cell.row.id, " data changed: ", evt.oldValue, " -> ", evt.value);
+					});
+					
+					editFirst = function() {
+						var grid = window.grid;
+						window.grid.edit(window.grid.cell(0, "editor"));
+					};
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Testing Editors</h2>
+		(Testing editors using Dijit widgets requires the dijit package to be installed)
+		<form id="editorForm">
+			<p><label>Component type:
+				<span id="editorComponentTypes"></span>
+			</label></p>
+			<p><label>editOn:
+				<select name="editOn">
+					<option value="" selected>none (always on)</option>
+					<option value="click">click</option>
+					<option value="dblclick">double-click</option>
+					<option value="dgrid-cellfocusin">dgrid-cellfocusin</option>
+				</select>
+			</label></p>
+			<p><label><input type="checkbox" name="autoSave" value="true"> autoSave</label></p>
+			<p><label><input type="checkbox" name="customRenderCell" value="true"> use custom renderCell</label></p>
+			<div><button type="submit" id="editorFormSubmit">Recreate Grid</button></div>
+		</form>
+		<div id="grid"></div>
+		<button type="button" onclick="grid.save();">Save</button>
+		<button type="button" onclick="grid.revert();">Revert</button>
+		<button type="button" onclick="editFirst();">Edit first cell</button>
+	</body>
+</html>

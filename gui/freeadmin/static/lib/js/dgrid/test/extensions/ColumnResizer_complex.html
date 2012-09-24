@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Grid Complex Columns</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../../dojo/resources/dojo.css";
+			@import "../../css/skins/claro.css";
+			@import "../../css/dgrid.css"; /* this ensures that our rules come after dgrid.css */
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.grid { 
+				width: 700px;
+			}
+			.grid .dgrid-column-set-0 { 
+				width: 50%;
+			}
+			.grid .field-col1 {
+				width: 100px;
+			}
+			.grid .field-col2 {
+				width: 100px;
+			}
+			.grid .field-col4 {
+				width: 500px;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/OnDemandGrid", "dgrid/GridWithColumnSetsFromHtml", "dgrid/ColumnSet", "dgrid/Selection", "dgrid/Keyboard", "dgrid/extensions/ColumnResizer", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
+				function(Grid, GridFromHtml, ColumnSet, Selection, Keyboard, ColumnResizer, declare, testStore){
+					window.grid = new (declare([Grid, ColumnSet, Selection, Keyboard, ColumnResizer]))({
+						store: testStore,
+						columnSets: [
+							[
+								[{label: 'Column 1', field: 'col1'},
+										{label: 'Column 2', field: 'col2', sortable: false}],
+									[{label: 'Column 3', field: 'col3', colSpan: 2}]],
+							[
+								[{label: 'Column 1', field: 'col1', rowSpan: 2},
+									{label: 'Column 4', field: 'col4'}],
+									[{label: 'Column 5', field: 'col5'}]]]
+					}, "grid");
+					// same structure as above, without being split into ColumnSets
+					window.gridNoColumnSets = new (declare([Grid, Selection, Keyboard, ColumnResizer]))({
+						store: testStore,
+						subRows: [[
+							{label: 'Column 1', field: 'col1'},
+							{label: 'Column 2', field: 'col2', sortable: false},
+							{label: 'Column 1', field: 'col1', rowSpan: 2},
+							{label: 'Column 4', field: 'col4'}
+						], [
+							{label: 'Column 3', field: 'col3', colSpan: 2, rowSpan: 2},
+							{label: 'Column 5', field: 'col5'}
+						], [
+							{label: 'Column 2', field: 'col5'},
+							{label: 'Column 1', field: 'col1'}
+						]]
+					}, "gridNoColumnSets");
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A resize Grid with complex columns including locking columns and subrows</h2>
+		<div id="grid" class="grid"></div>
+		<h2>A resize Grid with complex columns including subrows, no ColumnSets</h2>
+		<div id="gridNoColumnSets" class="grid"></div>
+	</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Performance with Editors</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/tundra.css";
+			.heading {
+				font-weight: bold;
+				margin-left: 12px;
+				padding-bottom: 0.25em;
+			}
+			/* this is not part of theme, but you can add odd-even coloring this way*/
+			.dgrid-row-odd {
+				background: #F2F5F9;
+			}
+
+			#grid {
+				width: 68em;
+				height: 30em;
+				margin: 10px;
+			}
+		</style>
+		<script src="../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			var countWidgets; // function, defined within require callback
+			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dgrid/editor", "dijit/form/TextBox", "dijit/registry", "dojo/aspect", "dojo/_base/declare", "dgrid/test/data/perf", "dojo/domReady!"], 
+				function(List, Grid, Selection, Keyboard, editor, TextBox, registry, aspect, declare, testPerfStore){
+					var
+						columns = [
+							{ name: 'Column 0', field: 'id', width: '10%' },
+							// always-on text input editor
+							editor({ name: 'Column 1', field: 'integer', width: '10%' }, 'text'),
+							// text input editor activated on double-click
+							editor({ name: 'Column 2', field: 'floatNum', width: '10%', editOn: 'dblclick' }, 'text'),
+							{ name: 'Column 3', field: 'date', width: '10%' },
+							{ name: 'Column 4', field: 'date2', width: '10%' },
+							// always-on TextBox widget editor
+							editor({ name: 'Column 5', field: 'text', label: 'text', width: '10%' }, TextBox),
+							{ name: 'Column 6', field: 'bool', width: '10%' },
+							{ name: 'Column 7', field: 'bool2', width: '10%' },
+							// TextBox widget editor activated on double-click
+							editor({ name: 'Column 8', field: 'price', label: 'price', width: '10%', editOn: 'dblclick' }, TextBox),
+							{ name: 'Column 9', field: 'today', width: '10%' }
+						];
+					
+					countWidgets = function(){
+						var i, count = 0, hash = registry._hash;
+						for(var i in hash){ count++; }
+						alert(count);
+					}
+					
+					// add logging to TextBox destruction
+					aspect.after(TextBox.prototype, "destroy", function(){
+						console.log("destroyed TextBox: ", this.id);
+					});
+					
+					// add logging to store put
+					aspect.after(testPerfStore, "put", function(id){
+						console.log("put id: ", id);
+					});
+					
+					console.time("grid construction");
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testPerfStore,
+						columns: columns
+					}, "grid");
+					console.timeEnd("grid construction");
+					
+					window.store = testPerfStore; // for tinkering
+			});
+			
+			function logDirty(){
+				var n = 0;
+				for(var d in grid.dirty){
+					n++;
+					console.log(d, grid.dirty[d]);
+				}
+				console.log("Total dirty items: " + n);
+			}
+			
+			function toggleGBP(){
+				grid.getBeforePut = !grid.getBeforePut;
+				console.log("getBeforePut now " + grid.getBeforePut);
+			}
+		</script>
+	</head>
+	<body class="tundra">
+		<p>Note: this test requires dijit.</p>
+		<button onclick="countWidgets();">Count widgets in registry</button>
+		<h2 class="heading">A performance test designed to go head to head with DataGrid's test_datagrid_performance.html</h2>
+		<div id="grid"></div>
+		<button type="button" onclick="toggleGBP();">Toggle getBeforePut</button>
+		<button type="button" onclick="logDirty();">Log Dirty Data</button>
+		<button type="button" onclick="grid.save();">Save</button>
+	</body>
+</html>

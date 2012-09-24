@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Tree Grid</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			.dgrid {
+				width: 700px;
+			}
+			
+			.field-bool {
+				width: 4em;
+			}
+			
+			#treeGrid .field-type {
+				width: 5em;
+			}
+			
+			#treeSelector .selector {
+				width: 2em;
+			}
+			
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script>
+			require(["dojo/on", "dgrid/OnDemandGrid","dgrid/tree","dgrid/editor", "dgrid/Keyboard",
+					"dgrid/Selection", "dgrid/selector", "dgrid/ColumnSet",
+					"dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
+				function(on, Grid, tree, editor, Keyboard, Selection, selector, ColumnSet, declare, testStore){
+					var count = 0; // for incrementing edits from button under 1st grid
+					
+					function byId(id){
+						return document.getElementById(id);
+					}
+					
+					function nbspFormatter(value){
+						// returns "&nbsp;" for blank content, to prevent cell collapsing
+						return value === undefined || value === "" ? "&nbsp;" : value;
+					}
+
+					var StandardGrid = declare([Grid, Keyboard, Selection]);
+					
+					var treeGrid = window.treeGrid = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						columns: [
+							tree({label: "Name", field:"name", sortable: false}),
+							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),
+							{label:"Type", field:"type", sortable: false},
+							{label:"Population", field:"population"},
+							{label:"Timezone", field:"timezone"}
+						]
+					}, "treeGrid");
+					
+					on(byId("save"), "click", function(){
+						treeGrid.save();
+					});
+					on(byId("revert"), "click", function(){
+						treeGrid.revert();
+					});
+					on(byId("add-country"), "click", function(){
+						testCountryStore.put({ id: 'GR', name:'Greece', type:'country', parent: 'EU'});
+					});
+					on(byId("remove-country"), "click", function(){
+						testCountryStore.remove('GR');
+					});
+					on(byId("add-continent"), "click", function(){
+						testCountryStore.put({ id: 'NE', name:'My New Europe', type:'continent'});
+	        			testCountryStore.put({ id: 'NI', name:'My New Italy', type:'country', parent: 'NE'});
+					});
+					on(byId("delete"), "click", function(){
+						for(var id in treeGrid.selection){
+							console.log("id: ", id);
+							testCountryStore.remove(id);
+						}
+					});
+					on(byId("edit-continent"), "click", function(){
+						var item = testCountryStore.get("EU");
+						item.name = "Europe Edit " + (++count);
+						testCountryStore.put(item);
+					});
+					on(byId("move-rome-na"), "click", function(){
+						var item = testCountryStore.get("Rome");
+						item.parent = "NA";
+						testCountryStore.put(item);
+					});
+					
+					function getTreeSelectorColumns(){
+						return [
+							selector({className: "selector"}),
+							tree({label:"Name", field:"name", sortable: false}),
+							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),
+							{label:"Type", field:"type", sortable: false},
+							{label:"Population", field:"population"},
+							{label:"Timezone", field:"timezone"}
+						];
+					}
+					
+					window.treeSelector = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						selectionMode: "none",
+						allowSelectAll: true,
+						columns: getTreeSelectorColumns()
+					}, "treeSelector");
+					
+					// Test resetting column definition on this grid, since it exercises
+					// one of each type of OOTB column plugin.
+					on(byId("resetColumns"), "click", function(){
+						treeSelector.set("columns", getTreeSelectorColumns());
+					});
+					
+					window.treeSubRows = new StandardGrid({
+						store: testCountryStore,
+						query: {type: "continent"},
+						subRows: [[
+							tree({label:"Name", field:"name", sortable: false}),
+							{label:"Type", field:"type", sortable: false}
+						], [
+							{label:"Population", field:"population"},
+							{label:"Timezone", field:"timezone"}
+						]]
+					}, "treeSubRows");
+					
+					window.treeColumnSets = new (declare([Grid, Keyboard, Selection, ColumnSet]))({
+						store: testCountryStore,
+						query: {type: "continent"},
+						columnSets: [[
+							[ tree({label:"Name", field:"name", sortable: false}) ],
+							[ {label:"Type", field:"type", sortable: false} ]
+						], [
+							[
+								{label:"Population", field:"population", formatter:nbspFormatter},
+								{label:"Timezone", field:"timezone", formatter:nbspFormatter}
+							], [
+								{label:"Area", field:"area", colSpan:2, formatter:nbspFormatter}
+							]
+						]]
+					}, "treeColumnSets");
+				});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Lazy-loading tree grid, with store functionality</h2>
+		<div id="treeGrid"></div>
+		<button id="save">Save</button>
+		<button id="revert">Revert</button>
+		<button id="add-continent">Add Continent</button>
+		<button id="add-country">Add Greece To Europe</button>
+		<button id="remove-country">Remove Greece</button>
+		<button id="delete">Delete Selected</button>
+		<button id="edit-continent">Edit Europe</button>
+		<button id="move-rome-na">Move Rome to North America</button>
+		
+		<h2>Tree grid with checkbox selector to test select-all on children</h2>
+		<div id="treeSelector"></div>
+		<button id="resetColumns">Reset Columns</button> (to test column.init/destroy)
+		<h2>Tree grid with subRows</h2>
+		<div id="treeSubRows"></div>
+		<h2>Tree grid with columnSets</h2>
+		<div id="treeColumnSets"></div>
+	</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test sorting of sparsely-populated fields</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			body {
+				padding: 0 80px; /* side padding to make it easier to scroll doc */
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/Grid", "dgrid/OnDemandGrid", "dojo/_base/lang", "dojo/store/Memory", "dojo/store/Observable", "dojo/domReady!"],
+			function(Grid, OnDemandGrid, lang, Memory, Observable){
+				var data = [
+					{order: 1, name:"preheat"},
+					{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
+					{order: 3, name:"mix butter", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
+					{order: 4, name:"mix butter #2", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
+					{order: 5, name:"mix together", description:"Slowly add the dry ingredients from the medium bowl to the wet ingredients in the large bowl, mixing until the dry ingredients are totally combined"},
+					{order: 6, name:"chocolate chips"},
+					{order: 7, name:"make balls", description:"Scoop up a golf ball size amount of dough with a spoon and drop in onto a cookie sheet"},
+					{order: 8, name:"bake"},
+					{order: 9, name:"remove", description:"Using a spatula, lift cookies off onto wax paper or a cooling rack"},
+					{order: 10, name:"eat"}
+				];
+				
+				var store = Observable(Memory({data: data}));
+				
+				var columns = {
+					name: "Name",
+					description: "Description",
+					idontexist: "Empty Column"
+				};
+				
+				window.gridArray = new Grid({
+					columns: lang.clone(columns)
+				}, "gridArray");
+				gridArray.renderArray(lang.clone(data));
+				
+				window.gridStore = new OnDemandGrid({
+					columns: lang.clone(columns),
+					store: store
+				}, "gridStore");
+			});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<p>This page allows testing sorting of columns that are sparsely populated or
+			completely unpopulated.</p>
+		<h2>Grid from array</h2>
+		<div id="gridArray"></div>
+		<h2>Grid from store</h2>
+		<div id="gridStore"></div>
+	</body>
+</html>

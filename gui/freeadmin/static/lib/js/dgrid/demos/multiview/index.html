@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Multi-view dgrid</title>
+		<link rel="stylesheet" href="../../../dojo/resources/dojo.css">
+		<link rel="stylesheet" href="../../css/skins/slate.css">
+		<style>
+#grid {
+	width: 80%;
+	margin: auto;
+	height: 332px; /* tall enough for 2 rows in gallery view */
+}
+
+/* styles for icon node in various views */
+
+.icon {
+	font-size: 0; /*TODO: is this needed?*/
+	background-repeat: no-repeat;
+}
+
+.table .icon {
+	width: 32px;
+	height: 32px;
+}
+
+.details .icon {
+	width: 72px; /* 64px + buffer to separate icon from text */
+	height: 64px;
+}
+
+.gallery .icon {
+	width: 128px;
+	height: 128px;
+	margin: auto;
+}
+
+/* styles for "table" view (using Grid.renderRow) */
+
+.table .field-icon {
+	width: 33px;
+	padding: 0;
+}
+
+.table .field-icon .dgrid-cell-padding { /* old IE */
+	padding: 0;
+}
+
+.table .dgrid-cell {
+	vertical-align: middle;
+}
+
+/* Table view allows expanding/collapsing rows to show summary */
+
+.table .expando {
+	/* style of area containing summary, expanded on click */
+	padding-left: 40px;
+}
+
+.table .collapsed .expando {
+	display: none;
+}
+
+/* styles for details view */
+
+.details .dgrid-row {
+	clear: both;
+	min-height: 64px;
+	padding: 0.5em;
+}
+
+.details .icon {
+	float: left;
+}
+
+.details .name {
+	font-weight: bold;
+	margin-bottom: 1em;
+}
+
+/* styles for gallery view */
+
+.gallery .dgrid-row {
+	width: 25%;
+	float: left;
+	text-align: center;
+	padding: 1em 0;
+}
+		</style>
+	</head>
+	<body class="slate">
+		<p>
+			This page demonstrates presenting several different views within a single
+			Grid instance, by swapping out the <code>renderRow</code> function.
+			The details and gallery views also demonstrate switching the grid header
+			off by calling <code>setShowHeader</code>.
+			(In fact, if only the Details and Gallery views were desired,
+			the <code>List</code> module would be sufficient.)
+		</p>
+		<p>
+			In addition, the "table" view demonstrates hooking up a click callback,
+			in order to display more information when a row is clicked.
+		</p>
+		<p>Switch View:
+			<button id="btnTable">Table</button>
+			<button id="btnDetails">Details</button>
+			<button id="btnGallery">Gallery</button>
+		</p>
+		<div id="grid" class="table"></div>
+		<script src="../../../dojo/dojo.js" data-dojo-config="async:1"></script>
+		<script>
+require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/query", "dojo/store/Memory", "dojo/store/Observable", "put-selector/put"],
+function(Grid, Selection, Keyboard, declare, on, query, Memory, Observable, put){
+	var grid, store, origRenderRow, expandoListener, expandedNode,
+		renderers = {
+			gallery: function(obj, options){
+				// function used for renderRow for gallery view (large tiled thumbnails)
+				var div = put("div");
+				div.innerHTML = '<div class="icon" style="background-image:url(resources/' +
+					obj.icon + '-128.png);">&nbsp;</div><div class="name">' + obj.name + '</div>';
+				return div;
+			},
+			details: function(obj, options){
+				// function used for renderRow for details view (items w/ summary)
+				var div = put("div");
+				div.innerHTML = '<div class="icon" style="background-image:url(resources/' +
+					obj.icon + '-64.png);">&nbsp;</div><div class="name">' +
+					obj.name + '</div><div class="summary">' + obj.summary + '</div>';
+				return div;
+			},
+			table: function(obj, options){
+				var div = put("div.collapsed", Grid.prototype.renderRow.apply(this, arguments)),
+					expando = put(div, "div.expando", obj.summary);
+				return div;
+			}
+		};
+	
+	function viewClickHandler(view){
+		return function(){
+			// pause/resume click listener for expando in "table" view
+			expandoListener[view == "table" ? "resume" : "pause"]();
+			// reset expanded node for table view
+			expandedNode = null;
+			// update renderRow function
+			grid.renderRow = renderers[view];
+			// update class on grid domNode
+			put(grid.domNode, "!table!gallery!details." + view);
+			// only show headers if we're in "table" view
+			grid.set("showHeader", view == "table");
+			// force redraw of rows
+			grid.refresh();
+		}
+	}
+	
+	function byId(id) { return document.getElementById(id); }
+	
+	store = new Memory({ data: [
+		{ id: "dojo", name: "Dojo Core", icon: "dojo",
+			summary: "Dojo core is a powerful, lightweight library that makes common tasks quicker and easier. Animate elements, manipulate the DOM, and query with easy CSS syntax, all without sacrificing performance."
+		}, {
+			id: "dijit", name: "Dijit", icon: "dojo",
+			summary: "Dijit provides a complete collection of user interface controls based on Dojo, giving you the power to create web applications that are highly optimized for usability, performance, internationalization, accessibility, but above all deliver an incredible user experience."
+		}, {
+			id: "dgrid", name: "dgrid", icon: "df",
+			summary: "A lightweight, mobile-ready, data-driven, modular widget designed for lists and grids."
+		}, {
+			id: "xstyle", name: "xstyle", icon: "df",
+			summary: "CSS framework providing polyfills, extensions, dynamic loading, and selector based DOM manipulation."
+		}, {
+			id: "put-selector", name: "put-selector", icon: "df",
+			summary: "A high-performance, lightweight function for creating and manipulating DOM elements with succinct, elegant, familiar CSS selector-based syntax."
+		}
+	] });
+	
+	grid = new Grid({
+		columns: [
+			{
+				label: " ",
+				field: "icon",
+				sortable: false,
+				formatter: function(icon){
+					return '<div class="icon" style="background-image:url(resources/' +
+						icon + '-32.png);">&nbsp;</div>';
+				}
+			},
+			{ label: "Package", field: "id" },
+			{ label: "Name", field: "name" }
+		],
+		store: store,
+		renderRow: renderers.table
+	}, "grid");
+	
+	// store initially-active renderRow as renderer for table view
+	renderers.table = grid.renderRow;
+	
+	// listen for clicks to trigger expand/collapse in table view mode
+	expandoListener = on.pausable(grid.domNode, ".dgrid-row:click", function(evt){
+		var
+			node = grid.row(evt).element,
+			collapsed = node.className.indexOf("collapsed") >= 0;
+		
+		// toggle state of node which was clicked
+		put(node, (collapsed ? "!" : ".") + "collapsed");
+		
+		// if clicked row wasn't expanded, collapse any previously-expanded row
+		collapsed && expandedNode && put(expandedNode, ".collapsed");
+		
+		// if the row clicked was previously expanded, nothing is expanded now
+		expandedNode = collapsed ? node : null;
+	});
+	
+	// switch views when buttons are clicked
+	byId("btnTable").onclick = viewClickHandler("table");
+	byId("btnDetails").onclick = viewClickHandler("details");
+	byId("btnGallery").onclick = viewClickHandler("gallery");
+});
+		</script>
+	</body>
+</html>

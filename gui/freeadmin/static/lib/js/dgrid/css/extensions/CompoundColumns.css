@@ -1,0 +1,8 @@
+.dgrid-spacer-row th { /* Need to make these cells zero height/invisible, but still force the table layout */
+	padding-top: 0;
+	padding-bottom: 0;
+	border-top: none;
+	border-bottom: none;
+}
+
+#dgrid-css-extensions-CompoundColumns-loaded { display: none; }

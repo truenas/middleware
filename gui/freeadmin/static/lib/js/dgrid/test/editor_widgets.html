@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+	"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Test Dijit Cell Editors</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=570" />
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			#grid .field-date, #grid .field-date2 {
+				width: 16em;
+			}
+			#grid .field-integer {
+				width: 6em;
+			}
+			#grid .field-bool {
+				width: 6em;
+			}
+			.ui-widget{
+				margin: 10px;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true, isDebug: true"></script>
+		<script type="text/javascript">
+			require(["dgrid/List", "dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
+				function(List, Grid, Selection, Keyboard, editor, DateTextBox, Slider, NumberSpinner, declare){
+					var columns = [
+						editor({label: 'A Date', field: 'date'}, DateTextBox),
+						editor({label: 'Real Number', field: 'floatNum'}, Slider),
+						editor({label: 'Integer', field: 'integer',
+								editorArgs: {style: 'width: 5em;', constraints: {min:0, max:1550, places:0}}},
+							NumberSpinner),
+						editor({label: 'Text editable if checkbox checked + saved', field: 'text', canEdit: function(object){
+							return object.bool;
+						}}, "text", "dblclick"),
+						{label: 'Non-editable text', field: 'text2', sortable: false},
+						editor({label: 'Another Date', field: 'date2'}, DateTextBox, "dgrid-cellfocusin"),
+						editor({label: 'CheckBox', field: 'bool'}, "checkbox")
+					];
+
+					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						store: testTypesStore,
+						columns: columns,
+						selectionMode: "single"
+					}, "grid");
+					
+					grid.on("dgrid-datachange", function(evt){
+						console.log("data changed: ", evt.oldValue, " -> ", evt.value);
+						console.log("cell: ", evt.cell, evt.cell.row.id);
+					});
+					
+					grid.on(".field-integer:dgrid-datachange", function(evt){
+						if(evt.value > 1000){
+							evt.preventDefault();
+							alert("Values above 1000 will be rejected");
+							// log data on a timeout to demonstrate that value wasn't changed
+							setTimeout(function(){
+								console.log("integer after prevented event:",
+									evt.cell.row.data.integer);
+							}, 0);
+						}
+					});
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A basic grid with editors</h2>
+		(This test requires dijit to be installed)	
+		<div id="grid"></div>
+		<button type="button" id="save" onclick="grid.save()">Save</button>
+	</body>
+</html>

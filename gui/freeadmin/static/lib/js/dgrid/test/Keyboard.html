@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Keyboard Mixin</title>
+		<meta name="viewport" content="width=570">
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/skins/claro.css";
+			/* add styles to size this grid appropriately */
+			.dgrid {
+				height: 15em;
+				float: left;
+				width: 40%;
+				margin: 1em 0.5%;
+			}
+			.field-order {
+				width: 3em;
+			}
+			.field-name {
+				width: 8em;
+			}
+			#list {
+				width: 15%;
+			}
+			
+			.clear {
+				clear: both;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var getFirstCell; // function, defined within require callback
+			
+			require(["dgrid/List", "dgrid/Grid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/query", "put-selector/put", "dojo/domReady!"],
+			function(List, Grid, Keyboard, declare, query, put){
+				var data = [
+						{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
+						{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
+						{order: 3, name:"mix butter", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
+						{order: 4, name:"mix together", description:"Slowly add the dry ingredients from the medium bowl to the wet ingredients in the large bowl, mixing until the dry ingredients are totally combined"},
+						{order: 5, name:"chocolate chips", description:"Add chocolate chips"},
+						{order: 6, name:"make balls", description:"Scoop up a golf ball size amount of dough with a spoon and drop in onto a cookie sheet"},
+						{order: 7, name:"bake", description:"Put the cookies in the oven and bake for about 10-14 minutes"},
+						{order: 8, name:"remove", description:"Using a spatula, lift cookies off onto wax paper or a cooling rack"},
+						{order: 9, name:"eat", description:"Eat and enjoy!"}
+					],
+					columns = {
+						order: "step", // give column a custom name
+						name: {},
+						description: {label: "what to do", sortable: false}
+					},
+					KeyboardList = declare([List, Keyboard]),
+					KeyboardGrid = declare([Grid, Keyboard]),
+					list = window.list = new KeyboardList({
+						renderRow: function(item){ return put("div", item.name); }
+					}, "list"),
+					grid = window.grid = new KeyboardGrid({
+						columns: columns
+					}, "grid"),
+					rowGrid = window.rowGrid = new KeyboardGrid({
+						columns: columns,
+						cellNavigation: false
+					}, "rowGrid");
+				
+				getFirstTarget = function(grid){
+					return query(".dgrid-content .dgrid-cell", grid.domNode)[0] ||
+						query(".dgrid-content .dgrid-row", grid.domNode)[0];
+				};
+				
+				list.renderArray(data);
+				grid.renderArray(data);
+				rowGrid.renderArray(data);
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Keyboard/focus-enabled List and Grids</h2>
+		<div id="list"></div>
+		<div id="grid"></div>
+		<div id="rowGrid"></div>
+		<div class="clear">
+			<h3>Buttons to test programmatic focus</h3>
+			<div>Focus, no argument:
+				<button onclick="list.focus();">List</button>
+				<button onclick="grid.focus();">Cell-navigation Grid</button>
+				<button onclick="rowGrid.focus();">Row-navigation Grid</button>
+			</div>
+			<div>Focus first row/cell:
+				<button onclick="list.focus(getFirstTarget(list));">List</button>
+				<button onclick="grid.focus(getFirstTarget(grid));">Cell-navigation Grid</button>
+				<button onclick="rowGrid.focus(getFirstTarget(rowGrid));">Row-navigation Grid</button>
+			</div>
+			<div>Focus header (no argument):
+				<button onclick="grid.focusHeader();">Cell-navigation Grid</button>
+			</div>
+		</div>
+	</body>
+</html>

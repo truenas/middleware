@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Pagination Extension</title>
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../../dojo/resources/dojo.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.dgrid {
+				width: 750px;
+				margin: 10px;
+			}
+			
+			#grid2 .dgrid-row {
+				height: 22px;
+			}
+			#grid2 .dgrid-cell {
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			/* styles for establishing automatic height on the 2nd grid */
+			#grid2 {
+				height: auto;
+			}
+			#grid2 .dgrid-scroller {
+				position: relative;
+				overflow-y: hidden;
+			}
+			#grid2 .dgrid-header-scroll {
+				display: none;
+			}
+			#grid2 .dgrid-header {
+				right: 0;
+			}
+			
+		</style>
+		<script type="text/javascript" src="../../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			// allow retrieving skin from GET param
+			var skin = "claro",
+				match = /\bskin=([^&]*)/.exec(location.search),
+				skinDep, updateGrid,
+				getColumns, getColumns2;
+			if(match){ skin = match[1]; }
+			skinDep = "xstyle/css!dgrid/css/skins/" + skin + ".css";
+			
+			require([skinDep, "dgrid/Grid", "dgrid/extensions/Pagination", "dgrid/Selection", "dgrid/Keyboard",
+					"dojo/_base/lang", "dojo/_base/declare", "dojo/dom-construct", "dojo/dom-form", "dgrid/test/data/base", "dojo/domReady!"],
+				function(skinResource, Grid, Pagination, Selection, Keyboard,
+						lang, declare, domConstruct, domForm, testStore){
+					
+					var CustomGrid = declare([Grid, Keyboard, Selection, Pagination]);
+					
+					getColumns = function(){
+						return {
+							col1: 'Column 1',
+							col2: {label: 'Column2', sortable: false},
+							col3: 'Column 3',
+							col4: 'Column 4',
+							col5: 'Column 5'
+						};
+					};
+					getColumns2 = function(){
+						return {
+							col2: 'Col2',
+							col4: {label: 'Col4', sortable: false},
+							col1: 'Col1',
+							col5: 'Column 5'
+						};
+					};
+					
+					document.body.className = skin;
+					
+					window.grid2 = new CustomGrid({
+						store: testStore,
+						columns: getColumns2(),
+						pagingLinks: false,
+						pagingTextBox: true,
+						firstLastArrows: true,
+						pageSizeOptions: [10, 15, 25]
+					}, "grid2");
+					
+					function createGrid(args){
+						window.grid = new CustomGrid(
+							lang.mixin({ store: testAsyncStore, columns: getColumns() }, args),
+							"grid");
+					}
+					createGrid();
+					
+					var form = document.getElementById("configForm");
+					form.onsubmit = function() {
+						var args = domForm.toObject(form);
+						args.pagingLinks = +args.pagingLinks;
+						if (!args.previousNextArrows) { args.previousNextArrows = false; }
+						
+						// recreate grid using args from form
+						window.grid.destroy();
+						domConstruct.create("div", { id: "grid" }, form, "after");
+						createGrid(args);
+						
+						return false;
+					};
+				});
+		</script>
+	</head>
+	<body>
+		<h2>A basic grid with the Pagination extension</h2>
+		<h3>Configuration</h3>
+		<form id="configForm">
+			<div><label><input type="checkbox" name="firstLastArrows">
+				Show first/last page arrows</label></div>
+			<div><label><input type="checkbox" name="previousNextArrows" checked>
+				Show previous/next page arrows</label></div>
+			<div><label><input type="checkbox" name="pagingTextBox">
+				Show "jump-to" textbox</label></div>
+			<div>
+				<label><input type="text" name="pagingLinks" value="2" size="1">
+					Number of neighboring page numbers to display to each side of current
+					(0 to disable)</label>
+			</div>
+			<div><button type="submit">Update Grid</button></div>
+		</form>
+		<div id="grid"></div>
+		<div>Buttons to test changing column structure:
+			<button onclick="grid.set('columns', getColumns2());">New Structure</button>
+			<button onclick="grid.set('columns', getColumns());">Original</button>
+			<button onclick="grid.set('store', emptyStore);">Set to empty store</button>
+			<button onclick="grid.set('store', testStore);">Set to original store</button>
+			<button onclick="testStore.add({col1:'new', col2:true});">Add row to original store</button>
+			<button onclick="grid.set('showFooter', !grid.get('showFooter'));">Toggle footer</button>
+		</div>
+		<h2>An autoheight grid with the Pagination extension,
+			with a rows-per-page drop-down</h2>
+		<div id="grid2"></div>
+	</body>
+</html>

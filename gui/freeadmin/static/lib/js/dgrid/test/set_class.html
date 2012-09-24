@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Setting Class</title>
+		<meta name="viewport" content="width=570">
+		<style type="text/css">
+			@import "../../dojo/resources/dojo.css";
+			@import "../css/dgrid.css";
+			@import "../css/skins/claro.css";
+			/* add styles to size this grid appropriately */
+			.dgrid {
+				height: 20em;
+				float: left;
+				width: 30%;
+				margin: 1em 0.5%;
+			}
+			.dgrid-list {
+				height: 12em;
+			}
+			.field-order {
+				width: 3em;
+			}
+			.field-name {
+				width: 8em;
+			}
+			
+			.clear {
+				clear: both;
+			}
+			
+			/* classes set by test instances below */
+			.claro .c {
+				border-color: #cc0;
+			}
+			.claro .cn {
+				border-color: #00c;
+			}
+			.claro .dom {
+				border-color: #c0c;
+			}
+			.claro .toggle {
+				border-color: #0c0;
+			}
+		</style>
+		<script type="text/javascript" src="../../dojo/dojo.js" 
+			data-dojo-config="async: true"></script>
+		<script type="text/javascript">
+			var getFirstCell; // function, defined within require callback
+			
+			require(["dgrid/List", "dgrid/Grid", "dgrid/GridFromHtml", "dojo/_base/array", "dojo/parser", "put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
+			function(List, Grid, GridFromHtml, arrayUtil, parser, put){
+				var columns = {
+						order: "step", // give column a custom name
+						name: {},
+						description: {label: "what to do", sortable: false}
+					},
+					// test initializing class on List via class, className, and DOM node
+					listC = window.listC = new List({
+						"class": "c",
+						renderRow: function(item){ return put("div", item.name); }
+					}, "listC"),
+					listCN = window.listCN = new List({
+						className: "cn",
+						renderRow: function(item){ return put("div", item.name); }
+					}, "listCN"),
+					listDOM = window.listDOM = new List({
+						renderRow: function(item){ return put("div", item.name); }
+					}, "listDOM"),
+					// test initializing class on Grid via class, className, and DOM node
+					gridC = window.gridC = new Grid({
+						"class": "c",
+						columns: columns
+					}, "gridC"),
+					gridCN = window.gridCN = new Grid({
+						"class": "cn",
+						columns: columns
+					}, "gridCN"),
+					gridDOM = window.gridDOM = new Grid({
+						columns: columns
+					}, "gridDOM");
+				
+				window.dgrid = { GridFromHtml: GridFromHtml };
+				parser.parse(); // parse the declarative grid
+				
+				arrayUtil.forEach([listC, listCN, listDOM, gridC, gridCN, gridDOM, gridDecl], function(grid){
+					grid.renderArray(testOrderedData);
+					console.log(grid.id + ": " + grid.domNode.className);
+					
+					// Add click handler to each instance to test resetting class
+					grid.on("click", function(){
+						var cls = grid.get("class");
+						
+						console.log(grid.id + " - before: get('class') = '" +
+							cls + "'; domNode.className = '" + grid.domNode.className + "'");
+						
+						// switch current class between toggle and no class
+						grid.set("class", cls === "toggle" ? "" : "toggle");
+						
+						console.log(grid.id + " - after: get('class') = '" +
+							grid.get("class") + "'; domNode.className = '" +
+							grid.domNode.className + "'");
+					});
+				});
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Lists with initially-defined classes</h2>
+		<div id="listC"></div>
+		<div id="listCN"></div>
+		<div id="listDOM" class="dom"></div>
+		<h2 class="clear">Grids with initially-defined classes</h2>
+		<div id="gridC"></div>
+		<div id="gridCN"></div>
+		<div id="gridDOM" class="dom"></div>
+		<h2 class="clear">Declarative grid with initially-defined class</h2>
+		<table data-dojo-type="dgrid.GridFromHtml" data-dojo-id="gridDecl"
+			id="gridDecl" class="dom">
+			<thead>
+				<th data-dgrid-column="{field: 'order'}">step</th>
+				<th data-dgrid-column="{field: 'name'}">name</th>
+				<th data-dgrid-column="{field: 'description'}">what to do</th>
+			</thead>
+		</table>
+	</body>
+</html>

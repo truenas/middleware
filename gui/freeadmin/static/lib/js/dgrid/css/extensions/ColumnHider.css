@@ -1,0 +1,49 @@
+.dgrid-hider-toggle {
+	font-weight:normal;
+	cursor: pointer;
+}
+.dgrid-hider-toggle:hover {
+	font-weight: bold;
+}
+html.has-quirks .dgrid-header-scroll .dgrid-hider-toggle,
+html.has-ie-6 .dgrid-header-scroll .dgrid-hider-toggle {
+	font-size: 12px; /* override zeroed font-size for IE6/Quirks in dgrid.css */
+}
+
+.dgrid-hider-menu {
+	position: absolute;
+	top: 0;
+	right: 17px;
+	width: 184px;
+	background-color: #fff;
+	border: 1px solid black;
+	z-index: 99999;
+	padding: 4px;
+	overflow: hidden;
+}
+
+.dgrid-hider-menu-row {
+	position: relative;
+	padding: 2px;
+}
+.dgrid-hider-menu-check {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	padding: 0;
+}
+.dgrid-hider-menu-label {
+	display: block;
+	padding-left: 20px;
+}
+
+html.has-quirks .dgrid-hider-menu-check,
+html.has-ie-6-7 .dgrid-hider-menu-check {
+	/* IE < 8 seems to ignore padding: 0, so counteract */
+	top: 0;
+	left: 0;
+}
+
+#dgrid-css-extensions-ColumnHider-loaded {
+	display: none;
+}
