@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-07-16 14:50+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2012-09-24 04:19+0200\n"
+"Last-Translator: SirAL <hglpd@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -61,12 +61,11 @@ msgstr "Festplatte bearbeiten"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Löschen"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Festplatte bearbeiten"
+msgstr "Festplatte Löschen"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
