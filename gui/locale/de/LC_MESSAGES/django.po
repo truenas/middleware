@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-09-09 01:02+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2012-09-24 04:18+0200\n"
+"Last-Translator: SirAL <hglpd@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -4678,9 +4678,8 @@ msgid "The scrub process has begun"
 msgstr "Der Reinigungsvorgang hat angefangen"
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s erfolgreich hinzugefügt"
+msgstr "Festplatte erfolgreich gelöscht"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -5742,9 +5741,8 @@ msgid "No plugins installed"
 msgstr "Keine Plugins installiert"
 
 #: templates/plugins/jail_import.html:2
-#, fuzzy
 msgid "Import"
-msgstr "Importiere Datenträger"
+msgstr "Hinzufügen"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -6181,9 +6179,8 @@ msgid "Are you sure you want to remove?"
 msgstr "Wollen Sie wirklich löschen?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "Möchten Sie wirklich offline gehen?"
+msgstr "Sind Sie sicher, dass Sie löschen wollen?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
