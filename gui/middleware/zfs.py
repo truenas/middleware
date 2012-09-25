@@ -422,12 +422,7 @@ class Dev(Tnode):
                     break
         actions = {}
         if disk:
-            actions['edit_url'] = reverse('freeadmin_model_edit',
-                kwargs={
-                    'app': 'storage',
-                    'model': 'Disk',
-                    'oid': disk.id,
-                    }) + '?deletable=false'
+            actions['edit_url'] = disk.get_edit_url() + '?deletable=false'
         if self.status == 'ONLINE':
             actions['offline_url'] = reverse('storage_disk_offline',
                 kwargs={

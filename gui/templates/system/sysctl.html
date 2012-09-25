@@ -39,7 +39,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add sysctl" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Add Sysctl"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="Sysctl" %}', [this,]);
+                editObject('{% trans "Add Sysctl"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
         </script>
         </button>
     </p>

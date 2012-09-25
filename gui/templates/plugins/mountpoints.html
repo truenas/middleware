@@ -16,13 +16,13 @@
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    editObject('{% trans "Edit Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="plugins",model="NullMountPoint",oid=i.id %}', [this,]);
+                    editObject('{% trans "Edit Mount Point"|force_escape|force_escape %}', '{{ i.get_edit_url }}', [this,]);
                 </script>
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Delete" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    editObject('{% trans "Delete Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="plugins",model="NullMountPoint",oid=i.id %}', [this,]);
+                    editObject('{% trans "Delete Mount Point"|force_escape|force_escape %}', '{{ i.get_delete_url }}', [this,]);
                 </script>
             </button>
             </td>
@@ -37,6 +37,6 @@
 <button data-dojo-type="dijit.form.Button" type="button">
     {% trans "Add Mount Point" %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        addObject('{% trans "Add Mount Point"|force_escape|force_escape %}', '{% url freeadmin_model_add app="plugins",model="NullMountPoint" %}', [this,]);
+        addObject('{% trans "Add Mount Point"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
     </script>
 </button>

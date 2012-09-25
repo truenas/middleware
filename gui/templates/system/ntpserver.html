@@ -43,7 +43,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add NTP server" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Add NTP Server"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="NTPServer" %}', [this,]);
+                editObject('{% trans "Add NTP Server"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
         </script>
         </button>
     </p>

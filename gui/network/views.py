@@ -207,4 +207,5 @@ def lagg_members(request, object_id):
                       )
     return render(request, 'network/lagg_members.html', {
         'laggmembers': laggmembers,
+        'model': models.LAGGInterfaceMembers,
     })

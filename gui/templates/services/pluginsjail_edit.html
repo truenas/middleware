@@ -9,7 +9,7 @@
                     var query = dojo.byId("plugins_settings");
                     if(query)
                         refreshNodes.push(query);
-                    editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{% url freeadmin_model_delete app=app,model=model,oid=oid %}', refreshNodes);
+                    editScaryObject('{% trans "Delete Plugins Jail"|force_escape|force_escape %}', '{{ instance.get_delete_url }}', refreshNodes);
                 </script>
                 {% trans "Delete" %}
             </button>

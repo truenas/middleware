@@ -184,22 +184,22 @@ def reporting(request):
 
 def settings(request):
     try:
-        settings = models.Settings.objects.order_by("-id")[0].id
+        settings = models.Settings.objects.order_by("-id")[0]
     except:
         settings = None
 
     try:
-        email = models.Email.objects.order_by("-id")[0].id
+        email = models.Email.objects.order_by("-id")[0]
     except:
         email = None
 
     try:
-        ssl = models.SSL.objects.order_by("-id")[0].id
+        ssl = models.SSL.objects.order_by("-id")[0]
     except:
         ssl = None
 
     try:
-        advanced = models.Advanced.objects.order_by("-id")[0].id
+        advanced = models.Advanced.objects.order_by("-id")[0]
     except:
         advanced = None
 
@@ -445,6 +445,7 @@ def cronjobs(request):
     crons = models.CronJob.objects.all().order_by('id')
     return render(request, "system/cronjob.html", {
         'cronjobs': crons,
+        'model': models.CronJob,
         })
 
 
@@ -452,6 +453,7 @@ def smarttests(request):
     tests = models.SMARTTest.objects.all().order_by('id')
     return render(request, "system/smarttest.html", {
         'smarttests': tests,
+        'model': models.SMARTTest,
         })
 
 
@@ -459,6 +461,7 @@ def rsyncs(request):
     syncs = models.Rsync.objects.all().order_by('id')
     return render(request, 'system/rsync.html', {
         'rsyncs': syncs,
+        'model': models.Rsync,
         })
 
 
@@ -466,6 +469,7 @@ def sysctls(request):
     sysctls = models.Sysctl.objects.all().order_by('id')
     return render(request, 'system/sysctl.html', {
         'sysctls': sysctls,
+        'model': models.Sysctl,
         })
 
 
@@ -473,6 +477,7 @@ def tunables(request):
     tunables = models.Tunable.objects.all().order_by('id')
     return render(request, 'system/tunable.html', {
         'tunables': tunables,
+        'model': models.Tunable,
         })
 
 
@@ -480,6 +485,7 @@ def ntpservers(request):
     ntpservers = models.NTPServer.objects.all().order_by('id')
     return render(request, 'system/ntpserver.html', {
         'ntpservers': ntpservers,
+        'model': models.NTPServer,
         })
 
 

@@ -24,8 +24,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from functools import update_wrapper
+
+from django import forms as dforms
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.base import ModelBase
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.template.loader import get_template
+from django.utils.translation import ugettext as _
+
+from dojango.forms.models import inlineformset_factory
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.services.exceptions import ServiceFailed
 from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
@@ -107,7 +119,13 @@ class FreeAdminWrapper(object):
 
     extra_js = ''
 
-    def __init__(self, c=None):
+    def __init__(self, c=None, model=None, admin=None):
+
+        if model is not None:
+            self._model = model
+
+        if admin is not None:
+            self._admin = admin
 
         if c is None:
             return None
@@ -119,15 +137,583 @@ class FreeAdminWrapper(object):
                         "in FreeAdmin" % i)
                 self.__setattr__(i, getattr(obj, i))
 
+    def get_urls(self):
+        from django.conf.urls import patterns, url
+
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self._admin.admin_view(view)(*args, **kwargs)
+            return update_wrapper(wrapper, view)
+
+        info = self._model._meta.app_label, self._model._meta.module_name
+
+        urlpatterns = patterns('',
+            #url(r'^$',
+            #    wrap(self.changelist_view),
+            #    name='%s_%s_changelist' % info),
+            url(r'^add/(?P<mf>.+?)?$',
+                wrap(self.add),
+                name='freeadmin_%s_%s_add' % info),
+            url(r'^edit/(?P<oid>\d+)/(?P<mf>.+?)?$',
+                wrap(self.edit),
+                name='freeadmin_%s_%s_edit' % info),
+            url(r'^delete/(?P<oid>\d+)/$',
+                wrap(self.delete),
+                name='freeadmin_%s_%s_delete' % info),
+            url(r'^empty-formset/$',
+                wrap(self.empty_formset),
+                name='freeadmin_%s_%s_empty_formset' % info),
+        )
+        return urlpatterns
+
+    @property
+    def urls(self):
+        return self.get_urls()
+
+    def add(self, request, mf=None):
+        """
+        Magic happens here
+
+        We dynamically import the module based on app and model names
+        passed as view argument
+
+        From there we retrieve the ModelForm associated (which was discovered
+        previously on the auto_generate process)
+        """
+        from freenasUI.freeadmin.navtree import navtree
+        from freenasUI.freeadmin.views import JsonResp
+
+        m = self._model
+        app = self._model._meta.app_label
+        context = {
+            'app': app,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'verbose_name': m._meta.verbose_name,
+            'extra_js': m._admin.extra_js,
+        }
+
+        if not isinstance(navtree._modelforms[m], dict):
+            mf = navtree._modelforms[m]
+        else:
+            if mf == None:
+                try:
+                    mf = navtree._modelforms[m][m._admin.create_modelform]
+                except:
+                    try:
+                        mf = navtree._modelforms[m][m._admin.edit_modelform]
+                    except:
+                        mf = navtree._modelforms[m].values()[-1]
+            else:
+                mf = navtree._modelforms[m][mf]
+
+        instance = m()
+        formsets = {}
+        if request.method == "POST":
+            mf = mf(request.POST, request.FILES, instance=instance)
+            if m._admin.advanced_fields:
+                mf.advanced_fields.extend(m._admin.advanced_fields)
+
+            valid = True
+            if m._admin.inlines:
+                for inlineopts in m._admin.inlines:
+                    inline = inlineopts.get("form")
+                    prefix = inlineopts.get("prefix")
+                    _temp = __import__('%s.forms' % app,
+                        globals(),
+                        locals(),
+                        [inline],
+                        -1)
+                    inline = getattr(_temp, inline)
+                    extrakw = {
+                        'can_delete': False
+                        }
+                    fset = inlineformset_factory(m, inline._meta.model,
+                        form=inline,
+                        extra=0,
+                        **extrakw)
+                    try:
+                        fsname = 'formset_%s' % (
+                            inline._meta.model._meta.module_name,
+                            )
+                        formsets[fsname] = fset(request.POST,
+                            prefix=prefix,
+                            instance=instance)
+                    except dforms.ValidationError:
+                        pass
+
+            for name, fs in formsets.items():
+                for frm in fs.forms:
+                    frm.parent = mf
+                valid &= fs.is_valid()
+
+            valid &= mf.is_valid(formsets=formsets)
+
+            if valid:
+                try:
+                    mf.save()
+                    for name, fs in formsets.items():
+                        fs.save()
+                    events = []
+                    if hasattr(mf, "done") and callable(mf.done):
+                        # FIXME: temporary workaround to do not change all MF
+                        # to accept this arg
+                        try:
+                            mf.done(request=request, events=events)
+                        except TypeError:
+                            mf.done()
+                    return JsonResp(request, form=mf,
+                        formsets=formsets,
+                        message=_("%s successfully updated.") % (
+                            m._meta.verbose_name,
+                            ),
+                        events=events)
+                except MiddlewareError, e:
+                    return JsonResp(request,
+                        error=True,
+                        message=_("Error: %s") % str(e))
+                except ServiceFailed, e:
+                    return JsonResp(request,
+                        error=True,
+                        message=_("The service failed to restart.")
+                        )
+            else:
+                return JsonResp(request, form=mf, formsets=formsets)
+
+        else:
+            mf = mf()
+            if m._admin.advanced_fields:
+                mf.advanced_fields.extend(m._admin.advanced_fields)
+            if m._admin.inlines:
+                extrakw = {
+                    'can_delete': False
+                    }
+                for inlineopts in m._admin.inlines:
+                    inline = inlineopts.get("form")
+                    prefix = inlineopts.get("prefix")
+                    _temp = __import__('%s.forms' % app,
+                        globals(),
+                        locals(),
+                        [inline],
+                        -1)
+                    inline = getattr(_temp, inline)
+                    fset = inlineformset_factory(m, inline._meta.model,
+                        form=inline,
+                        extra=1,
+                        **extrakw)
+                    fsname = 'formset_%s' % (
+                        inline._meta.model._meta.module_name,
+                        )
+                    formsets[fsname] = fset(prefix=prefix, instance=instance)
+                    formsets[fsname].verbose_name = (
+                        inline._meta.model._meta.verbose_name
+                        )
+
+        context.update({
+            'form': mf,
+            'formsets': formsets,
+        })
+
+        template = "%s/%s_add.html" % (
+            m._meta.app_label,
+            m._meta.object_name.lower(),
+            )
+        try:
+            get_template(template)
+        except:
+            template = 'freeadmin/generic_model_add.html'
+
+        return render(request, template, context)
+
+    def edit(self, request, oid, mf=None):
+
+        from freenasUI.freeadmin.navtree import navtree
+        from freenasUI.freeadmin.views import JsonResp
+        m = self._model
+
+        if 'inline' in request.GET:
+            inline = True
+        else:
+            inline = False
+
+        context = {
+            'app': m._meta.app_label,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'oid': oid,
+            'inline': inline,
+            'extra_js': m._admin.extra_js,
+            'verbose_name': m._meta.verbose_name,
+        }
+
+        if m._admin.deletable is False:
+            context.update({'deletable': False})
+        if 'deletable' in request.GET and 'deletable' not in context:
+            context.update({'deletable': False})
+
+        instance = get_object_or_404(m, pk=oid)
+        if not isinstance(navtree._modelforms[m], dict):
+            mf = navtree._modelforms[m]
+        else:
+            if mf is None:
+                try:
+                    mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
+                except:
+                    mf = navtree._modelforms[m].values()[-1]
+            else:
+                mf = navtree._modelforms[m][mf]
+
+        formsets = {}
+        if request.method == "POST":
+            mf = mf(request.POST, request.FILES, instance=instance)
+            if m._admin.advanced_fields:
+                mf.advanced_fields.extend(m._admin.advanced_fields)
+
+            valid = True
+            if m._admin.inlines:
+                for inlineopts in m._admin.inlines:
+                    inline = inlineopts.get("form")
+                    prefix = inlineopts.get("prefix")
+                    _temp = __import__('%s.forms' % m._meta.app_label,
+                        globals(),
+                        locals(),
+                        [inline],
+                        -1)
+                    inline = getattr(_temp, inline)
+                    extrakw = {
+                        'can_delete': True,
+                        }
+                    fset = inlineformset_factory(m, inline._meta.model,
+                        form=inline,
+                        extra=0,
+                        **extrakw)
+                    try:
+                        fsname = 'formset_%s' % (
+                            inline._meta.model._meta.module_name,
+                            )
+                        formsets[fsname] = fset(request.POST,
+                            prefix=prefix,
+                            instance=instance)
+                    except dforms.ValidationError:
+                        pass
+
+            for name, fs in formsets.items():
+                for frm in fs.forms:
+                    frm.parent = mf
+                valid &= fs.is_valid()
+
+            valid &= mf.is_valid(formsets=formsets)
+
+            if valid:
+                try:
+                    mf.save()
+                    for name, fs in formsets.items():
+                        fs.save()
+                    events = []
+                    if hasattr(mf, "done") and callable(mf.done):
+                        # FIXME: temporary workaround to do not change all MF
+                        # to accept this arg
+                        try:
+                            mf.done(request=request, events=events)
+                        except TypeError:
+                            mf.done()
+                    if 'iframe' in request.GET:
+                        return JsonResp(request,
+                            form=mf,
+                            formsets=formsets,
+                            message=_("%s successfully updated.") % (
+                                m._meta.verbose_name,
+                                ))
+                    else:
+                        return JsonResp(request,
+                            form=mf,
+                            formsets=formsets,
+                            message=_("%s successfully updated.") % (
+                                m._meta.verbose_name,
+                                ),
+                            events=events)
+                except ServiceFailed, e:
+                    return JsonResp(request,
+                        form=mf,
+                        error=True,
+                        message=_("The service failed to restart."),
+                        events=["serviceFailed(\"%s\")" % e.service])
+                except MiddlewareError, e:
+                    return JsonResp(request,
+                        form=mf,
+                        error=True,
+                        message=_("Error: %s") % str(e))
+            else:
+                return JsonResp(request, form=mf, formsets=formsets)
+
+        else:
+            mf = mf(instance=instance)
+            if m._admin.advanced_fields:
+                mf.advanced_fields.extend(m._admin.advanced_fields)
+
+            if m._admin.inlines:
+                extrakw = {
+                    'can_delete': True,
+                    }
+                for inlineopts in m._admin.inlines:
+                    inline = inlineopts.get("form")
+                    prefix = inlineopts.get("prefix")
+                    _temp = __import__('%s.forms' % m._meta.app_label,
+                        globals(),
+                        locals(),
+                        [inline],
+                        -1)
+                    inline = getattr(_temp, inline)
+                    fset = inlineformset_factory(m, inline._meta.model,
+                        form=inline,
+                        extra=1,
+                        **extrakw)
+                    fsname = 'formset_%s' % (
+                        inline._meta.model._meta.module_name,
+                        )
+                    formsets[fsname] = fset(prefix=prefix, instance=instance)
+                    formsets[fsname].verbose_name = (
+                        inline._meta.model._meta.verbose_name
+                        )
+
+        context.update({
+            'form': mf,
+            'formsets': formsets,
+            'instance': instance,
+            'delete_url': reverse('freeadmin_%s_%s_delete' % (
+                m._meta.app_label,
+                m._meta.module_name,
+                ), kwargs={
+                'oid': instance.id,
+                }),
+        })
+
+        template = "%s/%s_edit.html" % (
+            m._meta.app_label,
+            m._meta.object_name.lower(),
+            )
+        try:
+            get_template(template)
+        except:
+            template = 'freeadmin/generic_model_edit.html'
+
+        if 'iframe' in request.GET:
+            resp = render(request, template, context,
+                    mimetype='text/html')
+            resp.content = ("<html><body><textarea>"
+                + resp.content +
+                "</textarea></boby></html>")
+            return resp
+        else:
+            return render(request, template, context,
+                content_type='text/html')
+
+    def delete(self, request, oid, mf=None):
+        from freenasUI.freeadmin.navtree import navtree
+        from freenasUI.freeadmin.views import JsonResponse
+        from freenasUI.freeadmin.utils import get_related_objects
+
+        m = self._model
+        instance = get_object_or_404(m, pk=oid)
+
+        try:
+            if m._admin.delete_form_filter:
+                find = m.objects.filter(id=instance.id,
+                    **m._admin.delete_form_filter)
+                if find.count() == 0:
+                    raise
+            _temp = __import__('%s.forms' % m._meta.app_label,
+                globals(),
+                locals(),
+                [m._admin.delete_form],
+                -1)
+            form = getattr(_temp, m._admin.delete_form)
+        except:
+            form = None
+
+        if not isinstance(navtree._modelforms[m], dict):
+            mf = navtree._modelforms[m]
+        else:
+            if mf == None:
+                try:
+                    mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
+                except:
+                    mf = navtree._modelforms[m].values()[-1]
+            else:
+                mf = navtree._modelforms[m][mf]
+
+        related, related_num = get_related_objects(instance)
+        context = {
+            'app': m._meta.app_label,
+            'model': m._meta.module_name,
+            'oid': oid,
+            'object': instance,
+            'verbose_name': instance._meta.verbose_name,
+            'related': related,
+            'related_num': related_num,
+        }
+
+        form_i = None
+        mf = mf(instance=instance)
+        if request.method == "POST":
+            if form:
+                form_i = form(request.POST, instance=instance)
+                if form_i.is_valid():
+                    events = []
+                    if hasattr(form_i, "done"):
+                        form_i.done(events=events)
+                    mf.delete(events=events)
+                    return JsonResponse(
+                        message=_("%s successfully deleted.") % (
+                            m._meta.verbose_name,
+                            ),
+                        events=events)
+
+            else:
+                events = []
+                mf.delete(events=events)
+                return JsonResponse(message=_("%s successfully deleted.") % (
+                    m._meta.verbose_name,
+                    ), events=events)
+        if form and form_i is None:
+            form_i = form(instance=instance)
+        if form:
+            context.update({'form': form_i})
+        template = "%s/%s_delete.html" % (
+            m._meta.app_label,
+            m._meta.object_name.lower(),
+            )
+        try:
+            get_template(template)
+        except:
+            template = 'freeadmin/generic_model_delete.html'
+
+        return render(request, template, context)
+
+    def empty_formset(self, request):
+
+        m = self._model
+
+        if not m._admin.inlines:
+            return None
+
+        inline = None
+        for inlineopts in m._admin.inlines:
+            _inline = inlineopts.get("form")
+            prefix = inlineopts.get("prefix")
+            if prefix == request.GET.get("fsname"):
+                _temp = __import__('%s.forms' % m._meta.app_label,
+                    globals(),
+                    locals(),
+                    [_inline],
+                    -1)
+                inline = getattr(_temp, _inline)
+                break
+
+        if inline:
+            fset = inlineformset_factory(m, inline._meta.model,
+                form=inline,
+                extra=1)
+            fsins = fset(prefix=prefix)
+
+            return HttpResponse(fsins.empty_form.as_table())
+        return HttpResponse()
+
+"""
+def generic_model_datagrid(request, app, model):
+
+    try:
+        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
+            [model], -1)
+    except ImportError:
+        raise
+
+    context = {
+        'app': app,
+        'model': model,
+    }
+    m = getattr(_temp, model)
+
+    exclude = m._admin.exclude_fields
+    names = []
+    for x in m._meta.fields:
+        if not x.name in exclude:
+            names.append(x.verbose_name)
+    #names = [if not x.name in exclude: x.verbose_name for x in m._meta.fields]
+
+    _n = []
+    for x in m._meta.fields:
+        if not x.name in exclude:
+            _n.append(x.name)
+    #_n = [x.name for x in m._meta.fields]
+    #width = [len(x.verbose_name)*10 for x in m._meta.fields]
+    ""
+    Nasty hack to calculate the width of the datagrid column
+    dojo DataGrid width="auto" doesnt work correctly and dont allow
+         column resize with mouse
+    ""
+    width = []
+    for x in m._meta.fields:
+        if x.name in exclude:
+            continue
+        val = 8
+        for letter in x.verbose_name:
+            if letter.isupper():
+                val += 10
+            elif letter.isdigit():
+                val += 9
+            else:
+                val += 7
+        width.append(val)
+    fields = zip(names, _n, width)
+
+    context.update({
+        'fields': fields,
+    })
+    return render(request, 'freeadmin/generic_model_datagrid.html', context)
+
+
+def generic_model_datagrid_json(request, app, model):
+
+    def mycallback(app_name, model_name, attname, request, data):
+
+        try:
+            _temp = __import__('freenasUI.%s.models' % app_name,
+                globals(),
+                locals(),
+                [model_name],
+                -1)
+        except ImportError:
+            return True
+
+        m = getattr(_temp, model)
+        if attname in ('detele', '_state'):
+            return False
+
+        if attname in m._admin.exclude_fields:
+            return False
+
+        return True
+
+    return datagrid_list(request, app, model, access_field_callback=mycallback)
+"""
+
 
 class FreeAdminBase(ModelBase):
     def __new__(cls, name, bases, attrs):
+        from freenasUI.freeadmin.site import site
+
         new_class = ModelBase.__new__(cls, name, bases, attrs)
-        if hasattr(new_class, 'FreeAdmin'):
+        if new_class._meta.abstract:
+            pass
+        elif hasattr(new_class, 'FreeAdmin'):
             new_class.add_to_class('_admin',
-                 FreeAdminWrapper(new_class.FreeAdmin))
+                site.register(new_class, freeadmin=new_class.FreeAdmin)[0])
         else:
-            new_class.add_to_class('_admin', FreeAdminWrapper())
+            new_class.add_to_class('_admin',
+                site.register(new_class)[0])
 
         return new_class
 
@@ -140,23 +726,32 @@ class Model(models.Model):
 
     @models.permalink
     def get_add_url(self):
-        return ('freeadmin_model_add', (), {
-            'app': self._meta.app_label,
-            'model': self._meta.object_name,
-            })
+        return ('freeadmin_%s_%s_add' % (
+            self._meta.app_label,
+            self._meta.module_name,
+            ), )
 
     @models.permalink
     def get_edit_url(self):
-        return ('freeadmin_model_edit', (), {
-            'app': self._meta.app_label,
-            'model': self._meta.object_name,
+        return ('freeadmin_%s_%s_edit' % (
+            self._meta.app_label,
+            self._meta.module_name,
+            ), (), {
             'oid': self.id,
             })
 
     @models.permalink
     def get_delete_url(self):
-        return ('freeadmin_model_delete', (), {
-            'app': self._meta.app_label,
-            'model': self._meta.object_name,
+        return ('freeadmin_%s_%s_delete' % (
+            self._meta.app_label,
+            self._meta.module_name,
+            ), (), {
             'oid': self.id,
             })
+
+    @models.permalink
+    def get_empty_formset_url(self):
+        return ('freeadmin_%s_%s_empty_formset' % (
+            self._meta.app_label,
+            self._meta.module_name,
+            ), )

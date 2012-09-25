@@ -16,13 +16,13 @@
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                editObject('{% trans "Edit"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetExtent",oid=e.id,mf="iSCSITargetDeviceExtentForm" %}', [this,]);
+                editObject('{% trans "Edit"|force_escape|force_escape %}', '{{ e.get_edit_url }}iSCSITargetDeviceExtentForm', [this,]);
             </script>
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Delete" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                editObject('{% trans "Delete"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetExtent",oid=e.id %}', [this,]);
+                editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ e.get_delete_url }}', [this,]);
             </script>
             </button>
         </td>
@@ -37,7 +37,7 @@
         <button id="fe_button" data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add Device Extent" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                addObject('{% trans "Add Device Extent"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent",mf="iSCSITargetDeviceExtentForm" %}', [this,]);
+                addObject('{% trans "Add Device Extent"|force_escape|force_escape %}', '{{ model.get_add_url }}iSCSITargetDeviceExtentForm', [this,]);
         </script>
         </button>
     </p>

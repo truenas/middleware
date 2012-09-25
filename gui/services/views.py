@@ -200,6 +200,7 @@ def iscsi_targets(request):
     target_list = models.iSCSITarget.objects.all()
     return render(request, 'services/iscsi_targets.html', {
         'target_list': target_list,
+        'model': models.iSCSITarget,
     })
 
 
@@ -207,6 +208,7 @@ def iscsi_assoctargets(request, objtype=None):
     asctarget_list = models.iSCSITargetToExtent.objects.all()
     return render(request, 'services/iscsi_assoctargets.html', {
         'asctarget_list': asctarget_list,
+        'model': models.iSCSITargetToExtent,
     })
 
 
@@ -215,6 +217,7 @@ def iscsi_extents(request, objtype=None):
         iscsi_target_extent_type='File')
     return render(request, 'services/iscsi_extents.html', {
         'extent_file_list': extent_file_list,
+        'model': models.iSCSITargetExtent,
     })
 
 
@@ -223,6 +226,7 @@ def iscsi_dextents(request):
         iscsi_target_extent_type__in=['Disk', 'ZVOL'])
     return render(request, 'services/iscsi_dextents.html', {
         'extent_device_list': extent_device_list,
+        'model': models.iSCSITargetExtent,
     })
 
 
@@ -230,6 +234,7 @@ def iscsi_auth(request):
     target_auth_list = models.iSCSITargetAuthCredential.objects.all()
     return render(request, 'services/iscsi_auth.html', {
         'target_auth_list': target_auth_list,
+        'model': models.iSCSITargetAuthCredential,
     })
 
 
@@ -237,6 +242,7 @@ def iscsi_authini(request):
     auth_initiator_list = models.iSCSITargetAuthorizedInitiator.objects.all()
     return render(request, 'services/iscsi_authini.html', {
         'auth_initiator_list': auth_initiator_list,
+        'model': models.iSCSITargetAuthorizedInitiator,
     })
 
 
@@ -244,6 +250,7 @@ def iscsi_portals(request):
     iscsiportal_list = models.iSCSITargetPortal.objects.all()
     return render(request, 'services/iscsi_portals.html', {
         'iscsiportal_list': iscsiportal_list,
+        'model': models.iSCSITargetPortal,
     })
 
 
@@ -378,6 +385,7 @@ def servicesToggleView(request, formname):
 def rsyncmod(request):
     return render(request, "services/rsyncmod.html", {
         'rsyncmod_list': models.RsyncMod.objects.all(),
+        'model': models.RsyncMod,
         })
 
 

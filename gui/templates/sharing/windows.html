@@ -52,7 +52,7 @@
     <button data-dojo-type="dijit.form.Button" type="button">
         {% trans "Add Windows (CIFS) Share" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        editObject('{% trans "Add Windows (CIFS) Share"|force_escape|force_escape %}', '{% url freeadmin_model_add app="sharing" model="CIFS_Share" %}', [this,]);
+        editObject('{% trans "Add Windows (CIFS) Share"|force_escape|force_escape %}', '{% url freeadmin_sharing_cifs_share_add %}', [this,]);
     </script>
     </button>
 </p>

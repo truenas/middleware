@@ -32,6 +32,8 @@ from django.views.static import serve
 from django.conf import settings
 from django.template.loader import add_to_builtins
 
+from freenasUI import freeadmin
+from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
 from freenasUI.freeadmin.navtree import navtree
@@ -40,6 +42,7 @@ handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
 navtree.prepare_modelforms()
+freeadmin.autodiscover()
 
 add_to_builtins('django.templatetags.i18n')
 
@@ -59,7 +62,7 @@ urlpatterns = patterns('',
         {'document_root': '/usr/local/www/dojo'}),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
     (r'^dojangogrid/', include('dojango.urls')),
-    (r'^admin/', include('freenasUI.freeadmin.urls')),
+    (r'^admin/', include(site.urls)),
     (r'^account/', include('freenasUI.account.urls')),
     (r'^system/', include('freenasUI.system.urls')),
     (r'^network/', include('freenasUI.network.urls')),

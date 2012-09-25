@@ -3769,12 +3769,7 @@ class notifier:
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
                 qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
                 if qs:
-                    actions = {'edit_url': reverse('freeadmin_model_edit',
-                        kwargs={
-                        'app':'storage',
-                        'model': 'Disk',
-                        'oid': qs[0].id,
-                        })+'?deletable=false'}
+                    actions = {'edit_url': qs[0].get_edit_url() + '?deletable=false'}
                 else:
                     actions = {}
                 items.append({
@@ -3802,12 +3797,7 @@ class notifier:
             name = provider.xpathEval("../name")[0].content
             qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
             if qs:
-                actions = {'edit_url': reverse('freeadmin_model_edit',
-                    kwargs={
-                    'app':'storage',
-                    'model': 'Disk',
-                    'oid': qs[0].id,
-                    })+'?deletable=false'}
+                actions = {'edit_url': qs[0].get_edit_url() + '?deletable=false'}
             else:
                 actions = {}
             items.append({

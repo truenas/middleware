@@ -131,13 +131,13 @@
                 <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Modify" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Modify"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);
+                        editObject('{% trans "Modify"|force_escape|force_escape %}', '{{ p.get_edit_url }}', [this,]);
                     </script>
                 </button>
                 <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Delete" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Delete"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);
+                        editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ p.get_delete_url }}', [this,]);
                     </script>
                 </button>
             </td>

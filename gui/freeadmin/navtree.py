@@ -275,12 +275,18 @@ class NavTree(object):
                             name=model._meta.verbose_name,
                             model=c, app_name=app, type='dialog')
                         try:
-                            navopt.kwargs = {'app': app, 'model': c, 'oid': \
-                                model.objects.order_by("-id")[0].id}
-                            navopt.view = 'freeadmin_model_edit'
+                            navopt.kwargs = {
+                                'oid': model.objects.order_by("-id")[0].id,
+                                }
+                            navopt.view = 'freeadmin_%s_%s_edit' % (
+                                model._meta.app_label,
+                                model._meta.module_name,
+                                )
                         except:
-                            navopt.view = 'freeadmin_model_add'
-                            navopt.kwargs = {'app': app, 'model': c}
+                            navopt.view = 'freeadmin_%s_%s_add' % (
+                                model._meta.app_label,
+                                model._meta.module_name,
+                                )
 
                     else:
                         navopt = TreeNode(str(model._meta.object_name))
@@ -311,14 +317,15 @@ class NavTree(object):
                             for e in qs:
                                 subopt = TreeNode('Edit')
                                 subopt.type = 'editobject'
-                                subopt.view = u'freeadmin_model_edit'
+                                subopt.view = 'freeadmin_%s_%s_edit' % (
+                                    model._meta.app_label,
+                                    model._meta.module_name,
+                                    )
                                 if model._admin.icon_object is not None:
                                     subopt.icon = model._admin.icon_object
                                 subopt.model = c
                                 subopt.app_name = app
                                 subopt.kwargs = {
-                                    'app': app,
-                                    'model': c,
                                     'oid': e.id,
                                     }
                                 try:
@@ -330,8 +337,10 @@ class NavTree(object):
                         # Node to add an instance of model
                         subopt = TreeNode('Add')
                         subopt.name = _(u'Add %s') % model._meta.verbose_name
-                        subopt.view = u'freeadmin_model_add'
-                        subopt.kwargs = {'app': app, 'model': c}
+                        subopt.view = 'freeadmin_%s_%s_add' % (
+                                model._meta.app_label,
+                                model._meta.module_name,
+                                )
                         subopt.order = 500
                         subopt.type = 'dialog'
                         if model._admin.icon_add is not None:
@@ -345,12 +354,14 @@ class NavTree(object):
                         subopt.name = _(u'View %s') % (
                             model._meta.verbose_name_plural,
                             )
-                        subopt.view = u'freeadmin_model_datagrid'
+                        subopt.view = u'freeadmin_%s_%s_edit' % (
+                            model._meta.app_label,
+                            model._meta.module_name,
+                            )
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
                         subopt.model = c
                         subopt.app_name = app
-                        subopt.kwargs = {'app': app, 'model': c}
                         subopt.order = 501
                         subopt.type = 'viewmodel'
                         self.register_option(subopt, navopt)

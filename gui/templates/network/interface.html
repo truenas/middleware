@@ -25,13 +25,13 @@
                   <button data-dojo-type="dijit.form.Button" type="button">
                       {% trans "Edit" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                      editObject('{% trans "Edit Interface"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}', [this,]);
+                      editObject('{% trans "Edit Interface"|force_escape|force_escape %}', '{{ i.get_edit_url }}', [this,]);
                   </script>
                   </button>
                   <button data-dojo-type="dijit.form.Button" type="button">
                       {% trans "Delete" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                      editObject('{% trans "Delete Interface"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}', [this,]);
+                      editObject('{% trans "Delete Interface"|force_escape|force_escape %}', '{{ i.get_delete_url }}', [this,]);
                   </script>
                   </button>
               </td>
@@ -46,7 +46,7 @@
               <button id="int_button" data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Add Interface" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                      addObject('{% trans "Add Interface"|force_escape|force_escape %}', '{% url freeadmin_model_add app="network",model="Interfaces" %}', [this,]);
+                      addObject('{% trans "Add Interface"|force_escape|force_escape %}', '{% url freeadmin_network_interfaces_add %}', [this,]);
               </script>
               </button>
               </p>

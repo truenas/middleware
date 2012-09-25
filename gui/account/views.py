@@ -59,6 +59,7 @@ def bsduser(request):
     return render(request, 'account/bsdusers.html', {
         'bsduser_list': bsduser_list,
         'bsduser_list_builtin': bsduser_list_builtin,
+        'model': models.bsdUsers,
     })
 
 
@@ -72,6 +73,7 @@ def bsdgroup(request):
     return render_to_response('account/bsdgroups.html', {
         'bsdgroup_list': bsdgroup_list,
         'bsdgroup_list_builtin': bsdgroup_list_builtin,
+        'model': models.bsdGroups,
     })
 
 

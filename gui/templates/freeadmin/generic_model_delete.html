@@ -1,7 +1,7 @@
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     {% block onsubmit %}
-    formSubmit(this, e, '{% url freeadmin_model_delete app=app,model=model,oid=oid %}');
+    formSubmit(this, e, '{{ request.path }}');
     {% endblock %}
 </script>
 <table>

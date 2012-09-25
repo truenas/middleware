@@ -17,13 +17,13 @@
            <button data-dojo-type="dijit.form.Button" type="button">
                {% trans "Edit" %}
            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-               editObject('{% trans "Edit"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetAuthCredential",oid=ta.id %}', [this,]);
+               editObject('{% trans "Edit"|force_escape|force_escape %}', '{{ ta.get_edit_url }}', [this,]);
            </script>
            </button>
            <button data-dojo-type="dijit.form.Button" type="button">
                {% trans "Delete" %}
            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-               editObject('{% trans "Delete"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetAuthCredential",oid=ta.id %}', [this,]);
+               editObject('{% trans "Delete"|force_escape|force_escape %}', '{{ ta.get_delete_url }}', [this,]);
            </script>
            </button>
        </td>
@@ -39,7 +39,7 @@
        <button id="tgt_auth_button" data-dojo-type="dijit.form.Button" type="button">
            {% trans "Add iSCSI Authorized Access" %}
            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-               addObject('{% trans "Add iSCSI Authorized Access"|force_escape|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthCredential" %}', [this,]);
+               addObject('{% trans "Add iSCSI Authorized Access"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
        </script>
        </button>
        </p>

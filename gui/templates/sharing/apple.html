@@ -48,7 +48,7 @@
     <button data-dojo-type="dijit.form.Button" type="button">
         {% trans "Add Apple (AFP) Share" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        editObject('{% trans "Add Apple (AFP) Share"|force_escape|force_escape %}', '{% url freeadmin_model_add app="sharing",model="AFP_Share" %}', [this,]);
+        editObject('{% trans "Add Apple (AFP) Share"|force_escape|force_escape %}', '{% url freeadmin_sharing_afp_share_add %}', [this,]);
     </script>
     </button>
 </p>

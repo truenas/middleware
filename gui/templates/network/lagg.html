@@ -13,7 +13,7 @@
              <button data-dojo-type="dijit.form.Button" type="button">
                  {% trans "Edit Interface" %}
              <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                 editObject('{% trans "Edit Interface"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
+                 editObject('{% trans "Edit Interface"|force_escape|force_escape %}', '{% url freeadmin_network_interfaces_edit oid=l.lagg_interface.id %}?deletable=false', [this,]);
              </script>
              </button>
              <button data-dojo-type="dijit.form.Button" type="button">
@@ -43,7 +43,7 @@
              <button data-dojo-type="dijit.form.Button" type="button">
                  {% trans "Delete" %}
              <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                 editObject('{% trans "Delete Interface"|force_escape|force_escape %}', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
+                 editObject('{% trans "Delete Interface"|force_escape|force_escape %}', '{% url freeadmin_network_interfaces_delete oid=l.lagg_interface.id %}', [this,]);
              </script>
              </button>
         </td>

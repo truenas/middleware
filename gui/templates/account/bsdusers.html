@@ -32,7 +32,7 @@
                 <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change Password" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{{ u.get_edit_url }}bsdUserPasswordForm?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>
@@ -72,7 +72,7 @@
                     <button data-dojo-type="dijit.form.Button" type="button">
                         {% trans "Add New User" %}
                         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                            editObject('{% trans "Add New User"|force_escape|force_escape %}', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);
+                            editObject('{% trans "Add New User"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
                         </script>
                     </button>
                 </div>
@@ -111,7 +111,7 @@
                 <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change Password" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                        editObject('{% trans "Change Password"|force_escape|force_escape %}', '{{ u.get_edit_url }}bsdUserPasswordForm?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>
@@ -133,7 +133,7 @@
                 <button data-dojo-type="dijit.form.Button" type="button">
                     {% trans "Change E-mail" %}
                     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                        editObject('{% trans "Change E-mail"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);
+                        editObject('{% trans "Change E-mail"|force_escape|force_escape %}', '{{ u.get_edit_url }}bsdUserEmailForm?deletable=false', [this,]);
                     </script>
                 </button>
 	    </td>

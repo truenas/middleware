@@ -149,6 +149,7 @@ def mountpoints(request):
     qs = models.NullMountPoint.objects.all()
     return render(request, "plugins/mountpoints.html", {
         'mp_list': qs,
+        'model': models.NullMountPoint,
         })
 
 

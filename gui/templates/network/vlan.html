@@ -1,13 +1,13 @@
-     <table class="grid">
-           <thead class="header">
-       	<tr>
+<table class="grid">
+    <thead class="header">
+        <tr>
             <td>{% trans "Virtual Interface" %}</td>
             <td>{% trans "Physical Interface" %}</td>
             <td>{% trans "VLAN Tag" %}</td>
             <td>{% trans "Description" %}</td>
             <td>{% trans "Actions" %}</td>
-       	</tr>
-               </thead>
+        </tr>
+    </thead>
        {% for v in vlan_list %}
        <tr class="{% cycle 'odd' 'even' %}" id="{{ v.id }}">
            <td>{{ v.vlan_vint }}</td>
@@ -18,13 +18,13 @@
                <button data-dojo-type="dijit.form.Button" type="button">
                    {% trans "Edit" %}
                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                   editObject('{% trans "Edit VLAN"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}', [this,]);
+                   editObject('{% trans "Edit VLAN"|force_escape|force_escape %}', '{{ v.get_edit_url }}', [this,]);
                </script>
                </button>
                <button data-dojo-type="dijit.form.Button" type="button">
                    {% trans "Delete" %}
                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                   editObject('{% trans "Delete VLAN"|force_escape|force_escape %}', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}', [this,]);
+                   editObject('{% trans "Delete VLAN"|force_escape|force_escape %}', '{{ v.get_delete_url }}', [this,]);
                </script>
                </button>
            </td>
@@ -39,7 +39,7 @@
            <button id="vlan_button" data-dojo-type="dijit.form.Button" type="button">
                {% trans "Add VLAN Interface" %}
                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                   addObject('{% trans "Add VLAN Interface"|force_escape|force_escape %}', '{% url freeadmin_model_add app="network",model="VLAN" %}', [this,]);
+                   addObject('{% trans "Add VLAN Interface"|force_escape|force_escape %}', '{% url freeadmin_network_vlan_add %}', [this,]);
            </script>
            </button>
            </p>

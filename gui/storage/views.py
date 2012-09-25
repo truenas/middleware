@@ -79,6 +79,7 @@ def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
     return render(request, 'storage/replications.html', {
         'zfsrepl_list': zfsrepl_list,
+        'model': models.Replication,
         })
 
 
@@ -925,6 +926,7 @@ def scrubs(request):
     scrubs = models.Scrub.objects.all().order_by('id')
     return render(request, 'storage/scrub.html', {
         'scrubs': scrubs,
+        'model': models.Scrub,
         })
 
 

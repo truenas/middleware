@@ -1215,7 +1215,7 @@ require([
             menuSetURLs();
             Menu.openSystem();
             var store = new JsonRestStore({
-                target: "/admin/menu.json",
+                target: Menu.urlTree,
                 labelAttribute: "name",
             });
 

@@ -2,11 +2,10 @@
 <form data-dojo-type="dijit.form.Form" encType="multipart/form-data">
 {% block post_form %}
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-     //formSubmit(this, e, '{% url freeadmin_model_edit app=app,model=model,oid=oid,mf=mf|default_if_none:"" %}{% if inline %}?inline=true{% endif %}');
      doSubmit({
         form: this,
         event: e,
-        url: '{% url freeadmin_model_edit app=app,model=model,oid=oid,mf=mf|default_if_none:"" %}{% if inline %}?inline=true{% endif %}'
+        url: '{{ request.path }}{% if inline %}?inline=true{% endif %}'
      });
 </script>
 {% endblock %}
@@ -38,7 +37,7 @@
                 {% endfor %}
                 <tr>
                     <td colspan="2">
-                    <a href="javascript:void(0);" onClick="add_formset(this, '{% url freeadmin_model_empty_formset app=app model=model %}', '{{ formset.prefix|escapejs }}');">Add extra {{ formset.verbose_name }}</a>
+                    <a href="javascript:void(0);" onClick="add_formset(this, '{{ model.get_empty_formset_url }}', '{{ formset.prefix|escapejs }}');">Add extra {{ formset.verbose_name }}</a>
                     </td>
                 </tr>
             </table>
@@ -70,22 +69,29 @@
             {% if deletable == False %}
             <button data-dojo-type="dijit.form.Button" >
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+		var button = this;
+		require([
+		"dojo/query",
+		"dojo/request/xhr",
+		"dijit/registry"
+		], function(query, xhr) {
                     try {
-                        var form = getForm(this);
+                        var form = getForm(button);
                         dojo.query('input[type=button],input[type=submit]', form.domNode).forEach(
                             function(inputElem){
-                                 dijit.getEnclosingWidget(inputElem).set('disabled',true);
+                                 registry.getEnclosingWidget(inputElem).set('disabled',true);
                              }
                           );
                     } catch(err) {}
 
-                    var rnode = getDialog(this);
-                    if(!rnode) rnode = dijit.byId("edit_dialog");
-                    dojo.xhrGet( {
-                        url: '{% url freeadmin_model_delete app=app,model=model,oid=oid %}',
-                        handleAs: 'text',
-                        load: function(data) { rnode.set('content', data); },
-                     });
+                    var rnode = getDialog(button);
+                    if(!rnode) rnode = registry.byId("edit_dialog");
+                    xhr.get('{{ delete_url }}', {
+                        handleAs: 'text'
+			}).then(function(data) {
+			    rnode.set('content', data);
+                        });
+                });
                 </script>{% trans "Delete" %}</button>
             {% endif %}
             {% with form.advanced_fields as advfields %}

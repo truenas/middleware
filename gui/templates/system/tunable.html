@@ -39,7 +39,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add Tunable" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                editObject('{% trans "Add Loader"|force_escape|force_escape %}', '{% url freeadmin_model_add app="system",model="Tunable" %}', [this,]);
+                editObject('{% trans "Add Loader"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
         </script>
         </button>
     </p>

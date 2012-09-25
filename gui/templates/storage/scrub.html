@@ -47,7 +47,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add ZFS Scrub Task" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                addObject('{% trans "Add ZFS Scrub"|force_escape|force_escape %}', '{% url freeadmin_model_add app="storage",model="Scrub" %}', [this,]);
+                addObject('{% trans "Add ZFS Scrub"|force_escape|force_escape %}', '{{ model.get_add_url }}', [this,]);
         </script>
         </button>
         </p>
