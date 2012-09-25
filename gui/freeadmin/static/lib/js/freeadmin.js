@@ -281,7 +281,8 @@ require([
 
         xhr.post("/services/toggle/"+obj.name+"/", {
             data: "Some random text",
-            handleAs: "json"
+            handleAs: "json",
+            headers: {"X-CSRFToken": cookie('csrftoken')}
             }).then(function(data) {
                 if(data.status == 'on') {
                     obj.src = '/static/images/ui/buttons/on.png';
@@ -669,7 +670,8 @@ require([
                 //form: item.domNode,
                 data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
-                handleAs: 'text'
+                handleAs: 'text',
+                headers: {"X-CSRFToken": cookie('csrftoken')}
                 }).then(handleReq, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
@@ -678,7 +680,8 @@ require([
 
             xhr.post(attrs.url, {
                 data: newData,
-                handleAs: 'text'
+                handleAs: 'text',
+                headers: {"X-CSRFToken": cookie('csrftoken')}
             }).then(handleReq, function(evt) {
                 handleReq(evt.response.data, evt.response, true);
                 });
@@ -815,6 +818,7 @@ require([
             iframe.post(url + '?iframe=true&X-Progress-ID=' + uuid, {
                 form: item.domNode,
                 handleAs: 'text',
+                headers: {"X-CSRFToken": cookie('csrftoken')}
                 }).then(loadOk, errorHandle);
             checkProgressBar(pbar, true, uuid);
 
@@ -826,7 +830,8 @@ require([
             }
             xhr.post(url, {
                 data: newData,
-                handleAs: 'text'
+                handleAs: 'text',
+                headers: {"X-CSRFToken": cookie('csrftoken')}
              }).then(loadOk, errorHandle);
 
          }
@@ -1202,13 +1207,6 @@ require([
             return text;
           }
         })(dojo._contentHandlers.text);
-
-        var originalXHR = dojo.xhr;
-        dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
-          if(!xhrArgs.headers) xhrArgs.headers = {};
-          xhrArgs.headers["X-CSRFToken"] = cookie('csrftoken');
-          return originalXHR(httpVerb, xhrArgs, hasHTTPBody);
-        }
 
         ready(function() {
 

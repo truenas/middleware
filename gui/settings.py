@@ -129,8 +129,8 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.LocaleMiddleware',
     'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 
 DOJANGO_DATAGRID_ACCESS = (
