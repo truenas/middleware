@@ -458,33 +458,6 @@ def generic_model_add(request, app, model, mf=None):
     return render(request, template, context)
 
 
-def generic_model_view(request, app, model):
-
-    try:
-        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
-            [model], -1)
-    except ImportError:
-        raise
-
-    context = {
-        'app': app,
-        'model': model,
-    }
-    m = getattr(_temp, model)
-
-    names = [x.verbose_name for x in m._meta.fields]
-    _n = [x.name for x in m._meta.fields]
-    object_list = m.objects.all()
-
-    context.update({
-        'object_list': object_list,
-        'field_names': names,
-        'fields': _n,
-    })
-
-    return render(request, 'freeadmin/generic_model_view.html', context)
-
-
 def generic_model_datagrid(request, app, model):
 
     try:
