@@ -98,6 +98,11 @@ winacl_reset()
 	eval "setfacl -a 2 ${owner_entry} ${path}"
 
 	local count="$(eval getfacl ${path}|awk '{ print $1 }'|grep -v '^#'|wc -l|xargs)"
+	if [ "${count}" -le "0" ]
+	then
+		return 1
+	fi
+
 	for i in $(jot ${count} 0)
 	do
 		if [ ${i} -gt 2 ]
@@ -105,6 +110,8 @@ winacl_reset()
 			eval "setfacl -x 3 ${path}"
 		fi
 	done
+
+	return 0
 }
 
 
