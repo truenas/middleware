@@ -1242,6 +1242,7 @@ class notifier:
         altroot = 'none' if path else '/mnt'
         mountpoint = path if path else ('/%s' % (z_name, ))
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
+                      "-o failmode=continue "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
         if p1.wait() != 0:
