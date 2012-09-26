@@ -4,8 +4,21 @@
     <title>{{ sw_version }}</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
-    {% include "dojango/include.html" %}
-    <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
+    <script type="text/javascript">
+        var dojoConfig = {
+            'isDebug':true,
+            'parseOnLoad':true,
+            'baseUrl':"{{ DOJANGO.DOJO_URL }}",
+            'async': true,
+            'packages': [
+            {name: "freeadmin", location: "../../../../../static/lib/js/freeadmin"},
+            {name: "dgrid", location: "../../../../../static/lib/js/dgrid"},
+            {name: "xstyle", location: "../../../../../static/lib/js/xstyle"},
+            {name: "put-selector", location: "../../../../../static/lib/js/put-selector"}
+            ]
+        };
+    </script>
+    <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/dojo.js"></script>
 <link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
 <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
 <script type="text/javascript">
@@ -13,42 +26,36 @@
 require([
     "dojo",
     "dojo/ready",
-    "dojo/_base/xhr",
+    "dojo/request/xhr",
     "dojo/_base/html",
     "dijit/MenuItem",
     "dijit/PopupMenuItem",
     "dijit/form/Button",
     "dijit/layout/ContentPane",
     "dijit/layout/BorderContainer",
-    ], function(dojo, ready) {
+    ], function(dojo, ready, xhr) {
 
     ready(function() {
 
         checkRunning = function() {
 
-            dojo.xhrGet({
-                url: '/',
-                sync: true,
-                failOk: true,
-                handle: function(a1,ioArgs) {
-                    if(ioArgs.xhr.status == 200 || ioArgs.xhr.status == 302) {
-                        window.location = '/';
-                    } else {
-                        setTimeout('checkRunning()', 3000);
-                    }
-                },
-                });
+            xhr.get('/', {
+                sync: true
+            }).then(function(data) {
+                window.location = '/';
+            }, function(err) {
+                setTimeout('checkRunning()', 3000);
+            });
 
         }
 
         setTimeout(function() {
-            dojo.xhrGet({
-                url: '/system/reboot/run/',
-                sync: true,
-                failOk: true,
-                handle: function(a1,a2) {
-                    setTimeout('checkRunning()', 10000);
-                },
+            xhr.get('/system/reboot/run/', {
+                sync: true
+            }).then(function(a1) {
+                setTimeout('checkRunning()', 10000);
+            }, function(a1) {
+                setTimeout('checkRunning()', 10000);
             });
         }, 1000);
 
