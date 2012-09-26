@@ -37,7 +37,7 @@ from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
 
@@ -695,6 +695,16 @@ class ReplRemote(Model):
     ssh_remote_port = models.IntegerField(
             default=22,
             verbose_name=_("Remote port"),
+            )
+    ssh_remote_dedicateduser_enabled = models.BooleanField(
+            default=False,
+            verbose_name=_("Remote Dedicated User Enabled"),
+            )
+    ssh_remote_dedicateduser = UserField(
+            verbose_name=_("Remote Dedicated User"),
+            blank=True,
+            null=True,
+            default='',
             )
     ssh_remote_hostkey = models.CharField(
             max_length=2048,

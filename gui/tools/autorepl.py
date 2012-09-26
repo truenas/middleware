@@ -118,6 +118,7 @@ for replication in replication_tasks:
 
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
+    dedicateduser = replication.repl_remote.ssh_remote_dedicateduser
     fast_cipher = replication.repl_remote.ssh_fast_cipher
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
@@ -131,6 +132,12 @@ for replication in replication_tasks:
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes -q')
+
+    if dedicateduser:
+        sshcmd = "%s -l %s" % (
+            sshcmd,
+            dedicateduser.encode('utf-8'),
+            )
 
     if replication.repl_userepl:
         Rflag = '-R '
