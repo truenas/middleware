@@ -43,6 +43,7 @@ require([
     "dojo/fx",
     "dojo/html",
     "dojo/json",
+    "dojo/mouse",
     "dojo/on",
     "dojo/parser",
     "dojo/query",
@@ -115,6 +116,7 @@ require([
     fx,
     html,
     JSON,
+    mouse,
     on,
     parser,
     query,
@@ -437,6 +439,49 @@ require([
         }
 
     }
+
+    rebuildAdLdapCache = function(url, sendbtn) {
+
+        sendbtn.set('disabled', true);
+        form = getForm(sendbtn);
+        data = form.get('value');
+        xhr.post(url, {
+            handleAs: 'json',
+            data: data,
+            headers: {"X-CSRFToken": cookie('csrftoken')}
+        }).then(function(data) {
+            sendbtn.set('disabled', false);
+            if(!data.error) {
+                setMessage(gettext("The cache is being rebuilt."));
+            } else {
+                setMessage(gettext("The cache could not be rebuilt: ") + data.errmsg, "error");
+            }
+        });
+
+    };
+
+    sshKeyScan = function(url, sendbtn) {
+        sendbtn.set('disabled', true);
+        form = getForm(sendbtn);
+        data = form.get('value');
+        xhr.post(url, {
+            handleAs: 'json',
+            data: {host: data['remote_hostname'], port: data['remote_port']},
+            headers: {"X-CSRFToken": cookie('csrftoken')}
+        }).then(function(data) {
+            sendbtn.set('disabled', false);
+            if(!data.error) {
+                var key = query("textarea[name=remote_hostkey]", form.domNode);
+                key = registry.getEnclosingWidget(key[0]);
+                key.set('value', data.key);
+            } else {
+                Tooltip.show(data.errmsg, sendbtn.domNode);
+                on.once(sendbtn.domNode, mouse.leave, function(){
+                    Tooltip.hide(sendbtn.domNode);
+                });
+            }
+        });
+    };
 
     setMessage = function(msg, css) {
 
