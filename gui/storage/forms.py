@@ -210,9 +210,9 @@ class VolumeWizardForm(forms.Form):
             if len(disks) >= 3:
                 grouptype_choices += (('raidz', 'RAID-Z'), )
             if len(disks) >= 4:
-                grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+                grouptype_choices += (('raidz2', 'RAID-Z2'), )
             if len(disks) >= 5:
-                grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+                grouptype_choices += (('raidz3', 'RAID-Z3'), )
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
@@ -1525,7 +1525,6 @@ class UnlockPassphraseForm(forms.Form):
         passfile = tempfile.mktemp(dir='/tmp/')
         with open(passfile, 'w') as f:
             f.write(passphrase)
-        attached = True
         notifier().geli_attach(volume, passfile)
         os.unlink(passfile)
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
