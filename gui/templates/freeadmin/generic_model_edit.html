@@ -12,6 +12,7 @@
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
 <table>
     {% block form %}
+    {% csrf_token %}
     {% admin_form form %}
     {% endblock %}
     {% block formset %}

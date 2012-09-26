@@ -61,6 +61,7 @@
         </div>
 {% endblock %}
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'bottom'" id="footerLayout">
+	     {% csrf_token %}
              {% block footer %}
              {% include "footer.html" %}
              {% endblock %}
