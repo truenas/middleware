@@ -115,7 +115,7 @@ class UserField(forms.ChoiceField):
             self.choices = ulist
 
     def clean(self, user):
-        if not self.required and user in ('-----', ''):
+        if not self.required and user in ('-----', '', None):
             return None
         if FreeNAS_User(user, flags=FLAGS_DBINIT) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
