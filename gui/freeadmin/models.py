@@ -25,6 +25,7 @@
 #
 #####################################################################
 from functools import update_wrapper
+import json
 
 from django import forms as dforms
 from django.core.urlresolvers import reverse
@@ -149,9 +150,6 @@ class FreeAdminWrapper(object):
         info = self._model._meta.app_label, self._model._meta.module_name
 
         urlpatterns = patterns('',
-            #url(r'^$',
-            #    wrap(self.changelist_view),
-            #    name='%s_%s_changelist' % info),
             url(r'^add/(?P<mf>.+?)?$',
                 wrap(self.add),
                 name='freeadmin_%s_%s_add' % info),
@@ -161,6 +159,12 @@ class FreeAdminWrapper(object):
             url(r'^delete/(?P<oid>\d+)/$',
                 wrap(self.delete),
                 name='freeadmin_%s_%s_delete' % info),
+            url(r'^datagrid/$',
+                wrap(self.datagrid),
+                name='freeadmin_%s_%s_datagrid' % info),
+            url(r'^structure/$',
+                wrap(self.structure),
+                name='freeadmin_%s_%s_structure' % info),
             url(r'^empty-formset/$',
                 wrap(self.empty_formset),
                 name='freeadmin_%s_%s_empty_formset' % info),
@@ -622,84 +626,48 @@ class FreeAdminWrapper(object):
             return HttpResponse(fsins.empty_form.as_table())
         return HttpResponse()
 
-"""
-def generic_model_datagrid(request, app, model):
+    def datagrid(self, request):
 
-    try:
-        _temp = __import__('freenasUI.%s.models' % app, globals(), locals(),
-            [model], -1)
-    except ImportError:
-        raise
+        m = self._model
 
-    context = {
-        'app': app,
-        'model': model,
-    }
-    m = getattr(_temp, model)
+        context = {
+            'model': m,
+            'structure_url': reverse('freeadmin_%s_%s_structure' % (
+                m._meta.app_label,
+                m._meta.module_name,
+                )),
+        }
 
-    exclude = m._admin.exclude_fields
-    names = []
-    for x in m._meta.fields:
-        if not x.name in exclude:
-            names.append(x.verbose_name)
-    #names = [if not x.name in exclude: x.verbose_name for x in m._meta.fields]
+        return render(request,
+            'freeadmin/generic_model_datagrid.html',
+            context)
 
-    _n = []
-    for x in m._meta.fields:
-        if not x.name in exclude:
-            _n.append(x.name)
-    #_n = [x.name for x in m._meta.fields]
-    #width = [len(x.verbose_name)*10 for x in m._meta.fields]
-    ""
-    Nasty hack to calculate the width of the datagrid column
-    dojo DataGrid width="auto" doesnt work correctly and dont allow
-         column resize with mouse
-    ""
-    width = []
-    for x in m._meta.fields:
-        if x.name in exclude:
-            continue
-        val = 8
-        for letter in x.verbose_name:
-            if letter.isupper():
-                val += 10
-            elif letter.isdigit():
-                val += 9
-            else:
-                val += 7
-        width.append(val)
-    fields = zip(names, _n, width)
+    def get_datagrid_columns(self):
 
-    context.update({
-        'fields': fields,
-    })
-    return render(request, 'freeadmin/generic_model_datagrid.html', context)
+        columns = []
+        for field in self._model._meta.fields:
+            data = {
+                'name': field.name,
+                'verbose_name': field.verbose_name.encode('utf-8'),
+            }
+            columns.append(data)
 
+        return columns
 
-def generic_model_datagrid_json(request, app, model):
+    def structure(self, request):
 
-    def mycallback(app_name, model_name, attname, request, data):
+        class MyEncoder(json.JSONEncoder):
+            def default(self, obj):
+                return super(MyEncoder, self).default(obj)
 
-        try:
-            _temp = __import__('freenasUI.%s.models' % app_name,
-                globals(),
-                locals(),
-                [model_name],
-                -1)
-        except ImportError:
-            return True
-
-        m = getattr(_temp, model)
-        if attname in ('detele', '_state'):
-            return False
-
-        if attname in m._admin.exclude_fields:
-            return False
-
-        return True
-
-    return datagrid_list(request, app, model, access_field_callback=mycallback)
-"""
+        columns = self.get_datagrid_columns()
+        data = {}
+        for column in columns:
+            data[column['name']] = {
+                'label': column['verbose_name'],
+            }
+        enc = MyEncoder().encode(data)
+        return HttpResponse(enc)
 
 
 class FreeAdminBase(ModelBase):

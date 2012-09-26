@@ -63,3 +63,8 @@ class DojoModelResource(ModelResource):
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']
+
+    def dehydrate(self, bundle):
+        bundle.data['_edit_url'] = bundle.obj.get_edit_url()
+        bundle.data['_delete_url'] = bundle.obj.get_delete_url()
+        return bundle

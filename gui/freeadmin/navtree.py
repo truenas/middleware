@@ -354,7 +354,7 @@ class NavTree(object):
                         subopt.name = _(u'View %s') % (
                             model._meta.verbose_name_plural,
                             )
-                        subopt.view = u'freeadmin_%s_%s_edit' % (
+                        subopt.view = u'freeadmin_%s_%s_datagrid' % (
                             model._meta.app_label,
                             model._meta.module_name,
                             )

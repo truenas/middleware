@@ -3,6 +3,9 @@
     <div id="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'">
     <script type="dojo/method">
 require([
+    "dojo/dom-style",
+    "dojo/query",
+    "dojo/request/xhr",
     "dojo/store/JsonRest",
     "dgrid/OnDemandGrid",
     "dgrid/Keyboard",
@@ -10,13 +13,15 @@ require([
     "dojo/_base/declare",
     "dgrid/extensions/DijitRegistry",
     "dijit/registry",
-    ], function(JsonRest, Grid, Keyboard, Selection, declare, DijitRegistry, registry) {
+    ], function(domStyle, query, xhr, JsonRest, Grid, Keyboard, Selection, declare, DijitRegistry, registry) {
 
-    var columns = {
-        {% for field in fields %}
-        "{{ field.1 }}": {label: '{{ field.0 }}'},
-        {% endfor %}
-    };
+    var columns;
+    xhr.get('{{ structure_url }}', {
+        sync: true,
+        handleAs: 'text'
+    }).then(function(data) {
+        columns = eval('(' + data + ')');
+    });
 
     var store = new JsonRest({
             target:"{% url api_dispatch_list api_name="v1.0" resource_name="sysctl" %}",
@@ -33,6 +38,31 @@ require([
         editObject('{% trans "Edit"|escapejs %}', '', [this, ]);
     });
 
+    var selectionCheck = function(numrows) {
+        if(numrows > 1 || numrows == 0) {
+            query(".gridEdit").forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+
+            query(".gridDelete").forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+        } else {
+            query(".gridEdit").forEach(function(item, idx) {
+                domStyle.set(item, "display", "block");
+            });
+
+            query(".gridDelete").forEach(function(item, idx) {
+                domStyle.set(item, "display", "block");
+            });
+        }
+    };
+    grid.on("dgrid-select, dgrid-deselect", function(evt) {
+        selectionCheck(evt.rows.length);
+    });
+    //grid.select(1);
+    selectionCheck(0);
+
 });
 </script>
     </div>
@@ -41,7 +71,25 @@ require([
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Edit"|escapejs %}', '', [this,]);
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    grid.store.get(i).then(function(data) {
+                        editObject('{% trans "Edit"|escapejs %}', data._edit_url, [mybtn,]);
+                    });
+                }
+            </script>
+            </button>
+        </div>
+        <div class="gridDelete left">
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    grid.store.get(i).then(function(data) {
+                        editObject('{% trans "Delete"|escapejs %}', data._delete_url, [mybtn,]);
+                    });
+                }
             </script>
             </button>
         </div>
