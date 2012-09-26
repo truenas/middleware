@@ -210,9 +210,9 @@ class VolumeWizardForm(forms.Form):
             if len(disks) >= 3:
                 grouptype_choices += (('raidz', 'RAID-Z'), )
             if len(disks) >= 4:
-                grouptype_choices += (('raidz2', 'RAID-Z2'), )
+                grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
             if len(disks) >= 5:
-                grouptype_choices += (('raidz3', 'RAID-Z3'), )
+                grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
@@ -1177,15 +1177,6 @@ class ReplicationForm(ModelForm):
     remote_port = forms.CharField(
         label=_("Remote port"),
         initial=22)
-    remote_dedicateduser_enabled = forms.BooleanField(
-        label=_("Dedicated User Enabled"),
-        help_text=_("If disabled then root will be used for replication."),
-        required=False,
-        )
-    remote_dedicateduser = UserField(
-        label=_("Dedicated User"),
-        required=False,
-        )
     remote_fast_cipher = forms.BooleanField(
         label=_("Enable High Speed Ciphers"),
         initial=False,
@@ -1236,39 +1227,15 @@ class ReplicationForm(ModelForm):
                 for task in models.Task.objects.all()
              ]))
         self.fields['repl_filesystem'].choices = fs
-
-        self.fields['remote_dedicateduser_enabled'].widget.attrs['onClick'] = (
-            'toggleGeneric("id_remote_dedicateduser_enabled", '
-            '["id_remote_dedicateduser"], true);')
-
         if repl and repl.id:
             self.fields['remote_hostname'].initial = (
                 repl.repl_remote.ssh_remote_hostname)
             self.fields['remote_port'].initial = (
                 repl.repl_remote.ssh_remote_port)
-            self.fields['remote_dedicateduser_enabled'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser_enabled)
-            self.fields['remote_dedicateduser'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser)
             self.fields['remote_fast_cipher'].initial = (
                 repl.repl_remote.ssh_fast_cipher)
             self.fields['remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
-            if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
-                self.fields['remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
-
-        else:
-            if not self.data.get("remote_dedicateduser_enabled", False):
-                self.fields['remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
-
-    def clean_remote_dedicateduser(self):
-        en = self.cleaned_data.get("remote_dedicateduser_enabled")
-        user = self.cleaned_data.get("remote_dedicateduser")
-        if en and user is None:
-            raise forms.ValidationError("You must select a valid user")
-        return user
 
     def save(self):
         if self.instance.id == None:
@@ -1277,10 +1244,6 @@ class ReplicationForm(ModelForm):
             r = self.instance.repl_remote
         r.ssh_remote_hostname = self.cleaned_data.get("remote_hostname")
         r.ssh_remote_hostkey = self.cleaned_data.get("remote_hostkey")
-        r.ssh_remote_dedicateduser_enabled = self.cleaned_data.get(
-            "remote_dedicateduser_enabled")
-        r.ssh_remote_dedicateduser = self.cleaned_data.get(
-            "remote_dedicateduser")
         r.ssh_remote_port = self.cleaned_data.get("remote_port")
         r.ssh_fast_cipher = self.cleaned_data.get("remote_fast_cipher")
         r.save()
@@ -1457,8 +1420,7 @@ class ChangePassphraseForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ChangePassphraseForm, self).__init__(*args, **kwargs)
         self.fields['remove'].widget.attrs['onClick'] = (
-            'toggleGeneric("id_remove", ["id_passphrase", '
-            '"id_passphrase2"], false);')
+            'toggleGeneric("id_remove", ["id_passphrase", "id_passphrase2"], false);')
         if self.data.get("remove", False):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
@@ -1525,7 +1487,7 @@ class UnlockPassphraseForm(forms.Form):
         passfile = tempfile.mktemp(dir='/tmp/')
         with open(passfile, 'w') as f:
             f.write(passphrase)
-        #attached = True
+        attached = True
         notifier().geli_attach(volume, passfile)
         os.unlink(passfile)
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
