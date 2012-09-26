@@ -6,6 +6,7 @@
 </script>
 <table>
 {% if form %}
+    {% csrf_token %}
     {{ form }}
 {% endif %}
     {% block message %}

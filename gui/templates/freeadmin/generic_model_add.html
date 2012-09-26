@@ -11,6 +11,7 @@
 </script>
 {% endblock %}
 <table>
+    {% csrf_token %}
     {% admin_form form %}
     {% block formset %}
     {% for name, formset in formsets.items %}
