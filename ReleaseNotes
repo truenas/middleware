@@ -144,6 +144,8 @@ GUI
 
 3. Add read/write/checksum errors to volume status.
 
+4. Fix CSRF protection that was being skipped in the whole GUI.
+
 OS/Third party
 ------------------------
 
