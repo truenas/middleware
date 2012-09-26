@@ -48,6 +48,7 @@ add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
 class UserField(models.CharField):
     def __init__(self, *args, **kwargs):
         self._exclude = kwargs.pop('exclude', [])
+        kwargs['max_length'] = kwargs.get('max_length', 120)
         super(UserField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
