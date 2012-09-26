@@ -3,31 +3,8 @@
 {% block buttons_extra %}
             <button data-dojo-type="dijit.form.Button">
             {% trans "SSH Key Scan" %}
-                <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-                var sendbtn = this;
-                require(["dijit/Tooltip", "dojo/dom", "dojo/on", "dojo/mouse", "dojo/domReady!"], function(Tooltip, dom, on, mouse) {
-                    sendbtn.set('disabled', true);
-                    form = getForm(sendbtn);
-                    data = form.get('value');
-                    dojo.xhrPost({
-                        url: '{% url storage_replications_keyscan %}',
-                        handleAs: 'json',
-			content: {host: data['remote_hostname'], port: data['remote_port']},
-                        load: function(data) {
-                            sendbtn.set('disabled', false);
-                            if(!data.error) {
-			        var key = dojo.query("textarea[name=remote_hostkey]", form.domNode);
-				key = dijit.getEnclosingWidget(key[0]);
-				key.set('value', data.key);
-                            } else {
-                                  Tooltip.show(data.errmsg, sendbtn.domNode);
-                                  on.once(sendbtn.domNode, mouse.leave, function(){
-                                      Tooltip.hide(sendbtn.domNode);
-                                  });
-                            }
-                        },
-                     });
-                 });
-                </script>
+            <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+	    sshKeyScan('{% url storage_replications_keyscan %}', this);
+            </script>
             </button>
 {% endblock %}
