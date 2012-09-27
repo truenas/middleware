@@ -24,7 +24,7 @@ require([
     });
 
     var store = new JsonRest({
-            target:"{% url api_dispatch_list api_name="v1.0" resource_name="sysctl" %}",
+            target:"{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
         });
 
     var StandardGrid = declare([Grid, Selection, Keyboard]);

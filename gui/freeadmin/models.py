@@ -104,6 +104,8 @@ class FreeAdminWrapper(object):
     deletable = True
     menu_child_of = None
 
+    resource_name = None
+
     advanced_fields = []
 
     inlines = []
@@ -126,6 +128,8 @@ class FreeAdminWrapper(object):
 
         if model is not None:
             self._model = model
+            if self.resource_name is None:
+                self.resource_name = model._meta.module_name
 
         if admin is not None:
             self._admin = admin
@@ -633,6 +637,7 @@ class FreeAdminWrapper(object):
 
         context = {
             'model': m,
+            'resource_name': self.resource_name,
             'structure_url': reverse('freeadmin_%s_%s_structure' % (
                 m._meta.app_label,
                 m._meta.module_name,
