@@ -94,7 +94,7 @@ class PathField(models.CharField):
         return super(PathField, self).formfield(**kwargs)
 
 
-class FreeAdminBase(ModelBase):
+class FreeModelBase(ModelBase):
     def __new__(cls, name, bases, attrs):
         from freenasUI.freeadmin.site import site
 
@@ -110,7 +110,7 @@ class FreeAdminBase(ModelBase):
 
 
 class Model(models.Model):
-    __metaclass__ = FreeAdminBase
+    __metaclass__ = FreeModelBase
 
     class Meta:
         abstract = True

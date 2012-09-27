@@ -43,7 +43,7 @@ from freenasUI.services.exceptions import ServiceFailed
 log = logging.getLogger('freeadmin.options')
 
 
-class FreeAdminWrapper(object):
+class BaseFreeAdmin(object):
 
     create_modelform = None
     edit_modelform = None

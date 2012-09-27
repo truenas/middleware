@@ -12,7 +12,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 #from django.views.decorators.csrf import csrf_protect
 
-from freenasUI.freeadmin.options import FreeAdminWrapper
+from freenasUI.freeadmin.options import BaseFreeAdmin
 
 log = logging.getLogger('freeadmin.site')
 
@@ -33,12 +33,12 @@ class FreeAdminSite(object):
 
         The model(s) should be Model classes, not instances.
 
-        If an admin class isn't given, it will use FreeAdminWrapper (default
+        If an admin class isn't given, it will use BaseFreeAdmin (default
         admin options). If keyword arguments are given they'll be applied
         as options to the admin class.
         """
         if not admin_class:
-            admin_class = FreeAdminWrapper
+            admin_class = BaseFreeAdmin
 
         if isinstance(model_or_iterable, ModelBase):
             model_or_iterable = [model_or_iterable]
