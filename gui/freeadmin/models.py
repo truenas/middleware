@@ -100,7 +100,7 @@ class FreeAdminWrapper(object):
     edit_modelform = None
     delete_form = None
     delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
-    exclude_fields = []
+    exclude_fields = ('id', )
     deletable = True
     menu_child_of = None
 
@@ -647,6 +647,10 @@ class FreeAdminWrapper(object):
 
         columns = []
         for field in self._model._meta.fields:
+
+            if field.name in self.exclude_fields:
+                continue
+
             data = {
                 'name': field.name,
                 'verbose_name': field.verbose_name.encode('utf-8'),
