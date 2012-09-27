@@ -3,7 +3,12 @@
     <h1>{% blocktrans with step=wizard.steps.step1 step_count=wizard.steps.count %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</h1>
     <form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
         <script type="dojo/event" event="onSubmit" args="e">
-            formSubmit(this, e, '{{ request.path }}', null, {progressbar: true});
+            doSubmit({
+                form: this,
+                event: e,
+                url: '{{ request.path }}',
+                progressbar: true
+                });
         </script>
     <table>
       {% dojo_render wizard.management_form %}
