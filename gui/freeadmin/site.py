@@ -17,10 +17,6 @@ from freenasUI.freeadmin.models import FreeAdminWrapper
 log = logging.getLogger('freeadmin.site')
 
 
-class AlreadyRegistered(Exception):
-    pass
-
-
 class NotRegistered(Exception):
     pass
 
@@ -37,13 +33,9 @@ class FreeAdminSite(object):
 
         The model(s) should be Model classes, not instances.
 
-        If an admin class isn't given, it will use ModelAdmin (the default
-        admin options). If keyword arguments are given -- e.g., list_display --
-        they'll be applied as options to the admin class.
-
-        If a model is already registered, this will raise AlreadyRegistered.
-
-        If a model is abstract, this will raise ImproperlyConfigured.
+        If an admin class isn't given, it will use FreeAdminWrapper (default
+        admin options). If keyword arguments are given they'll be applied
+        as options to the admin class.
         """
         if not admin_class:
             admin_class = FreeAdminWrapper
@@ -53,11 +45,11 @@ class FreeAdminSite(object):
         admins = []
         for model in model_or_iterable:
             if model._meta.abstract:
+                log.warn("Model %r is abstract and thus cannot be registered",
+                    model)
                 return None
-                #raise ImproperlyConfigured('The model %s is abstract, so it '
-                #      'cannot be registered with admin.' % model.__name__)
-            #if model in self._registry:
-            #    raise AlreadyRegistered('The model %s is already registered' % model.__name__)
+            if model in self._registry:
+                log.debug("Model %r already registered, overwriting...", model)
 
             # If we got **options then dynamically construct a subclass of
             # admin_class with those **options.
@@ -66,11 +58,17 @@ class FreeAdminSite(object):
                 # the created class appears to "live" in the wrong place,
                 # which causes issues later on.
                 options['__module__'] = __name__
-                admin_class = type("%sAdmin" % model.__name__, (admin_class,), options)
+                admin_class = type("%sAdmin" % model.__name__,
+                    (admin_class, ),
+                    options)
 
             # Instantiate the admin class to save in the registry
-            self._registry[model] = admin_class(c=freeadmin, model=model, admin=self)
-            admins.append(self._registry[model])
+            admin_obj = admin_class(c=freeadmin, model=model, admin=self)
+            self._registry[model] = admin_obj
+            model.add_to_class('_admin', admin_obj)
+
+            admins.append(admin_obj)
+
         return admins
 
     def unregister(self, model_or_iterable):

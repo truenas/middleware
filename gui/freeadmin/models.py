@@ -695,11 +695,9 @@ class FreeAdminBase(ModelBase):
         if new_class._meta.abstract:
             pass
         elif hasattr(new_class, 'FreeAdmin'):
-            new_class.add_to_class('_admin',
-                site.register(new_class, freeadmin=new_class.FreeAdmin)[0])
+            site.register(new_class, freeadmin=new_class.FreeAdmin)
         else:
-            new_class.add_to_class('_admin',
-                site.register(new_class)[0])
+            site.register(new_class)
 
         return new_class
 
