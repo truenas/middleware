@@ -1,5 +1,10 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block onSubmit %}
-formSubmit(this, e, '{{ request.path }}', null, {progressbar: true});
+doSubmit({
+    form: this,
+    event: e,
+    url: '{{ request.path }}',
+    progressbar: true
+    });
 {% endblock %}
 {% block oklabel %}{% trans "Upload" %}{% endblock %}

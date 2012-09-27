@@ -1,6 +1,11 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block onSubmit %}
-  formSubmit(this, e, '{% url storage_detach vid=volume.id %}', null, {progressbar: true});
+  doSubmit({
+      form: this,
+      event: e,
+      url: '{% url storage_detach vid=volume.id %}',
+      progressbar: true
+      });
 {%endblock %}
 {% block form %}
     <tr>
