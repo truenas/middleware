@@ -135,11 +135,12 @@
 
             editObject('{% trans "Delete snapshots"|escapejs %}', null, [this], function(data) {
                 var dialog = this;
-                dojo.rawXhrPost({
+                dojo.xhrPost({
                     url: '{% url storage_snapshot_delete_bulk %}',
                     content: {snaps: snaps.join("|")},
                     handleAs: "text",
                     sync: true,
+                    headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
                     load: function(data){
                         dialog.set('content', data);
                     },
