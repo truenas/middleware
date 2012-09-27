@@ -1,8 +1,13 @@
 
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e,  '{% url storage_wizard %}',
-        function(){wizardcheckings();}, {progressbar: true});
+        doSubmit({
+          form: this,
+          event: e,
+          url: '{% url storage_wizard %}',
+          onComplete: function(){wizardcheckings();},
+          progressbar: true
+          });
     </script>
     <table>
         {% if form.non_field_errors %}
