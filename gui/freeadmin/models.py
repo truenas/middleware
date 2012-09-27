@@ -591,6 +591,7 @@ class FreeAdminWrapper(object):
             form_i = form(instance=instance)
         if form:
             context.update({'form': form_i})
+
         template = "%s/%s_delete.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
@@ -644,9 +645,16 @@ class FreeAdminWrapper(object):
                 )),
         }
 
-        return render(request,
-            'freeadmin/generic_model_datagrid.html',
-            context)
+        template = "%s/%s_datagrid.html" % (
+            m._meta.app_label,
+            m._meta.module_name,
+            )
+        try:
+            get_template(template)
+        except:
+            template = 'freeadmin/generic_model_datagrid.html'
+
+        return render(request, template, context)
 
     def get_datagrid_columns(self):
 
