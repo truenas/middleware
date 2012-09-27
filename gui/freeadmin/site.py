@@ -10,7 +10,7 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
-#from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
@@ -126,8 +126,8 @@ class FreeAdminSite(object):
             inner = never_cache(inner)
         # We add csrf_protect here so this function can be used as a utility
         # function for any view, without having to repeat 'csrf_protect'.
-        #if not getattr(view, 'csrf_exempt', False):
-        #    inner = csrf_protect(inner)
+        if not getattr(view, 'csrf_exempt', False):
+            inner = csrf_protect(inner)
         return update_wrapper(inner, view)
 
     def get_urls(self):
