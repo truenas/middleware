@@ -1,7 +1,11 @@
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     {% block onsubmit %}
-    formSubmit(this, e, '{{ request.path }}');
+    doSubmit({
+        form: this,
+	event: e,
+	url: '{{ request.path }}'
+	});
     {% endblock %}
 </script>
 <table>
