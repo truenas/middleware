@@ -679,12 +679,11 @@ require([
                 if(json.error != true && json.error != false) throw "toJson error";
                 loadOk(json, ioArgs);
             } catch(e) {
-                console.log(e);
-                setMessage(gettext('An error occurred!'), "error");
                 try {
                     if(!error) {
                         rnode.set('content', data);
                     } else {
+                        setMessage(gettext('An error occurred!'), "error");
                         rnode.hide();
                     }
                 } catch(e) {}
