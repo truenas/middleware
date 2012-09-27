@@ -68,7 +68,7 @@ require([
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: true" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
         {% block actions_pane %}
-        <div class="gridEdit">
+        <div class="gridEdit left">
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" event="onClick" args="evt">
@@ -94,6 +94,7 @@ require([
             </script>
             </button>
         </div>
+        <span class="clear"></span>
         {% block actions_pane_extra %}{% endblock %}
         {% endblock %}
     </div>
