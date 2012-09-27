@@ -653,8 +653,20 @@ class FreeAdminWrapper(object):
 
             data = {
                 'name': field.name,
-                'verbose_name': field.verbose_name.encode('utf-8'),
+                'label': field.verbose_name.encode('utf-8'),
             }
+
+            """
+            This is a hook to get extra options for the column in dgrid
+
+            A method get_column_<field_name>_extra is looked for
+            and a dict is expected as a return that will update `data`
+            """
+            funcname = "get_column_%s_extra" % (field.name, )
+            if hasattr(self, funcname):
+                extra = getattr(self, funcname)()
+                data.update(extra)
+
             columns.append(data)
 
         return columns
@@ -668,9 +680,9 @@ class FreeAdminWrapper(object):
         columns = self.get_datagrid_columns()
         data = OrderedDict()
         for column in columns:
-            data[column['name']] = {
-                'label': column['verbose_name'],
-            }
+            name = column.pop('name')
+            data[name] = column
+
         enc = MyEncoder().encode(data)
         return HttpResponse(enc)
 
