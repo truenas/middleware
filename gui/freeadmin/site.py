@@ -12,7 +12,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 #from django.views.decorators.csrf import csrf_protect
 
-from freenasUI.freeadmin.models import FreeAdminWrapper
+from freenasUI.freeadmin.options import FreeAdminWrapper
 
 log = logging.getLogger('freeadmin.site')
 
