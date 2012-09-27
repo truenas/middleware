@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import OrderedDict
 from functools import update_wrapper
 import json
 
@@ -661,7 +662,7 @@ class FreeAdminWrapper(object):
                 return super(MyEncoder, self).default(obj)
 
         columns = self.get_datagrid_columns()
-        data = {}
+        data = OrderedDict()
         for column in columns:
             data[column['name']] = {
                 'label': column['verbose_name'],
