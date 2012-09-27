@@ -1,5 +1,6 @@
 from functools import update_wrapper
 
+import hashlib
 import logging
 import os
 
@@ -12,6 +13,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
 log = logging.getLogger('freeadmin.site')
@@ -179,8 +181,24 @@ class FreeAdminSite(object):
 
     @never_cache
     def adminInterface(self, request):
-        from freenasUI.freeadmin.views import adminInterface
-        return adminInterface(request)
+        from freenasUI.network.models import GlobalConfiguration
+        from freenasUI.system.models import Advanced
+        try:
+            console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
+        except:
+            console = False
+        try:
+            hostname = GlobalConfiguration.objects.order_by('-id')[0].gc_hostname
+        except:
+            hostname = None
+        sw_version = get_sw_version()
+        return render(request, 'freeadmin/index.html', {
+            'consolemsg': console,
+            'hostname': hostname,
+            'sw_name': get_sw_name(),
+            'sw_version': sw_version,
+            'cache_hash': hashlib.md5(sw_version).hexdigest(),
+        })
 
     @never_cache
     def menu(self, request):

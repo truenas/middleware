@@ -26,18 +26,15 @@
 #####################################################################
 
 import logging
-import hashlib
 import sys
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
 from django.views import debug
 from django.template import Context
 from django.template.loader import get_template
 from django.utils import simplejson
 
-from freenasUI.common.system import get_sw_name, get_sw_version
-from freenasUI.network.models import GlobalConfiguration
+from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
 
 log = logging.getLogger('freeadmin.views')
@@ -167,26 +164,6 @@ class JsonResp(HttpResponse):
         else:
             field = "__all__"
         return field
-
-
-def adminInterface(request, objtype=None):
-
-    try:
-        console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
-    except:
-        console = False
-    try:
-        hostname = GlobalConfiguration.objects.order_by('-id')[0].gc_hostname
-    except:
-        hostname = None
-    sw_version = get_sw_version()
-    return render(request, 'freeadmin/index.html', {
-        'consolemsg': console,
-        'hostname': hostname,
-        'sw_name': get_sw_name(),
-        'sw_version': sw_version,
-        'cache_hash': hashlib.md5(sw_version).hexdigest(),
-    })
 
 
 class ExceptionReporter(debug.ExceptionReporter):

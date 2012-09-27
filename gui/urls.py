@@ -35,7 +35,6 @@ from django.template.loader import add_to_builtins
 from freenasUI import freeadmin
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
-from freenasUI.freeadmin.views import adminInterface
 from freenasUI.freeadmin.navtree import navtree
 
 handler500 = 'freenasUI.freeadmin.views.server_error'
@@ -47,7 +46,7 @@ freeadmin.autodiscover()
 add_to_builtins('django.templatetags.i18n')
 
 urlpatterns = patterns('',
-    ('^$', adminInterface),
+    ('^$', site.adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
         public(serve),
         {'document_root': '/var/db/graphs/'}),
