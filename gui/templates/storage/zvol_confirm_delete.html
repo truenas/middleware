@@ -1,20 +1,5 @@
-
-<form data-dojo-type="dijit.form.Form">
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_zvol_delete name=name %}');
-</script>
-<table> 
-    <tr><td>{{ name }}: {% trans "Are you sure you want to delete?" %}</td></tr>
-    <tr>
-        <td>
-            <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
-                {% trans "Yes" %}
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
-                </script>
-            </button>
-            <button data-dojo-type="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
-        </td>
-    </tr>
-</table>
-</form>
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<tr><td>{{ name }}: {% trans "Are you sure you want to delete?" %}</td></tr>
+{% endblock %}
+{% block oklabel %}{% trans "Yes" %}{% endblock %}
