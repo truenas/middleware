@@ -221,7 +221,7 @@ http {
 
     sendfile        on;
     #tcp_nopush     on;
-    client_max_body_size 250m;
+    client_max_body_size 500m;
 
     #keepalive_timeout  0;
     keepalive_timeout  65;
