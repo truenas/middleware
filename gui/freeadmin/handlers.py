@@ -51,7 +51,7 @@ class SysLogHandler(logging.Handler):
         super(SysLogHandler, self).__init__()
 
     def emit(self, record):
-        hand = syslog.openlog(facility=self.facility)
+        syslog.openlog(facility=self.facility)
         msg = self.format(record)
         if type(msg) is types.UnicodeType:
             msg = msg.encode('utf-8')
