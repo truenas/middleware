@@ -26,7 +26,6 @@
 #####################################################################
 import logging
 import os
-import re
 import shutil
 
 from django.forms import FileField
@@ -169,7 +168,10 @@ class PBIUploadForm(Form):
         filename = '/var/tmp/firmware/pbifile.pbi'
         if cleaned_data.get('pbifile'):
             if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
-                shutil.move(cleaned_data['pbifile'].temporary_file_path(), filename)
+                shutil.move(
+                    cleaned_data['pbifile'].temporary_file_path(),
+                    filename
+                    )
             else:
                 with open(filename, 'wb+') as sp:
                     for c in cleaned_data['pbifile'].chunks():
