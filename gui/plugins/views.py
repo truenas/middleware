@@ -30,7 +30,7 @@ from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.middleware import public
-from freenasUI.freeadmin.views import JsonResponse, JsonResp
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
@@ -46,7 +46,7 @@ def plugin_edit(request, plugin_id):
         plugins_form = forms.PluginsForm(request.POST, instance=plugin)
         if plugins_form.is_valid():
             plugins_form.save()
-            return JsonResponse(message=_("Plugin successfully updated."))
+            return JsonResp(request, message=_("Plugin successfully updated."))
         else:
             plugin = None
 
@@ -94,10 +94,10 @@ def plugin_update(request, plugin_id):
         form = forms.PBIUpdateForm(request.POST, request.FILES)
         if form.is_valid():
             form.done()
-            return JsonResponse(
+            return JsonResp(request,
                 message=_('Plugin successfully updated'),
                 events=['reloadHttpd()'],
-                enclosed=True)
+                )
         else:
             resp = render(request, "plugins/plugin_update.html", {
                 'form': form,
@@ -123,10 +123,10 @@ def plugin_install(request):
         form = forms.PBIUploadForm(request.POST, request.FILES)
         if form.is_valid():
             form.done()
-            return JsonResponse(
+            return JsonResp(request,
                 message=_('Plugin successfully installed'),
                 events=['reloadHttpd()'],
-                enclosed=True)
+                )
         else:
             resp = render(request, "plugins/plugin_install.html", {
                 'form': form,

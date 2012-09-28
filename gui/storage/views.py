@@ -41,7 +41,7 @@ from django.utils.translation import ugettext as _
 from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
-from freenasUI.freeadmin.views import JsonResponse, JsonResp
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -198,7 +198,7 @@ def wizard(request):
         form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return JsonResponse(message=_("Volume successfully added."))
+            return JsonResp(request, message=_("Volume successfully added."))
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
@@ -229,7 +229,7 @@ def volimport(request):
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return JsonResponse(message=_("Volume successfully added."))
+            return JsonResp(request, message=_("Volume successfully added."))
         else:
 
             if 'volume_disks' in request.POST:
@@ -252,7 +252,7 @@ def volautoimport(request):
         form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return JsonResponse(message=_("Volume successfully added."))
+            return JsonResp(request, message=_("Volume successfully added."))
         else:
 
             if 'volume_disks' in request.POST:
@@ -401,7 +401,7 @@ def dataset_create(request, fs):
                 path=str(dataset_name),
                 props=props)
             if errno == 0:
-                return JsonResponse(message=_("Dataset successfully added."))
+                return JsonResp(request, message=_("Dataset successfully added."))
             else:
                 dataset_form.set_error(errmsg)
     else:
@@ -449,7 +449,7 @@ def dataset_edit(request, dataset_name):
                     errors[formfield] = err
 
             if not error:
-                return JsonResponse(message=_("Dataset successfully edited."))
+                return JsonResp(request, message=_("Dataset successfully edited."))
             else:
                 for field, err in errors.items():
                     dataset_form._errors[field] = dataset_form.error_class([
@@ -478,7 +478,7 @@ def zvol_create(request, volume_name):
                 size=str(zvol_size),
                 props=props)
             if errno == 0:
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("ZFS Volume successfully added.")
                     )
             else:
@@ -499,17 +499,17 @@ def zvol_delete(request, name):
             iscsi_target_extent_type='ZVOL',
             iscsi_target_extent_path='zvol/' + name)
         if extents.count() > 0:
-            return JsonResponse(
+            return JsonResp(request,
                 error=True,
                 message=_("This is in use by the iscsi target, please remove "
                     "it there first."))
         retval = notifier().destroy_zfs_vol(name)
         if retval == '':
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("ZFS Volume successfully destroyed.")
                 )
         else:
-            return JsonResponse(error=True, message=retval)
+            return JsonResp(request, error=True, message=retval)
     else:
         return render(request, 'storage/zvol_confirm_delete.html', {
             'name': name,
@@ -555,7 +555,7 @@ def zfsvolume_edit(request, object_id):
                     errors[formfield] = err
 
             if not error:
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Native dataset successfully edited.")
                     )
             else:
@@ -575,7 +575,7 @@ def mp_permission(request, path):
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
             form.commit(path=path)
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Mount Point permissions successfully updated.")
                 )
     else:
@@ -595,11 +595,11 @@ def dataset_delete(request, name):
             retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
             if retval == '':
                 notifier().restart("collectd")
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Dataset successfully destroyed.")
                     )
             else:
-                return JsonResponse(error=True, message=retval)
+                return JsonResp(request, error=True, message=retval)
     else:
         form = forms.Dataset_Destroy(fs=name, datasets=datasets)
     return render(request, 'storage/dataset_confirm_delete.html', {
@@ -615,9 +615,9 @@ def snapshot_delete(request, dataset, snapname):
         retval = notifier().destroy_zfs_dataset(path=str(snapshot))
         if retval == '':
             notifier().restart("collectd")
-            return JsonResponse(message=_("Snapshot successfully deleted."))
+            return JsonResp(request, message=_("Snapshot successfully deleted."))
         else:
-            return JsonResponse(error=True, message=retval)
+            return JsonResp(request, error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
             'snapname': snapname,
@@ -634,9 +634,9 @@ def snapshot_delete_bulk(request):
         for snapshot in snap_list:
             retval = notifier().destroy_zfs_dataset(path=str(snapshot))
             if retval != '':
-                return JsonResponse(error=True, message=retval)
+                return JsonResp(request, error=True, message=retval)
         notifier().restart("collectd")
-        return JsonResponse(message=_("Snapshots successfully deleted."))
+        return JsonResp(request, message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {
         'snaps': snaps,
@@ -648,9 +648,9 @@ def snapshot_rollback(request, dataset, snapname):
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot=snapshot.__str__())
         if ret == '':
-            return JsonResponse(message=_("Rollback successful."))
+            return JsonResp(request, message=_("Rollback successful."))
         else:
-            return JsonResponse(error=True, message=ret)
+            return JsonResp(request, error=True, message=ret)
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
             'snapname': snapname,
@@ -665,8 +665,7 @@ def periodicsnap(request):
         form = forms.PeriodicSnapForm(request.POST)
         if form.is_valid():
             form.save()
-
-            return JsonResponse(message=_("Snapshot successfully added."))
+            return JsonResp(request, message=_("Snapshot successfully added."))
     else:
         form = forms.PeriodicSnapForm()
     return render(request, 'storage/periodicsnap.html', {
@@ -680,7 +679,7 @@ def manualsnap(request, fs):
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
             form.commit(fs)
-            return JsonResponse(message=_("Snapshot successfully taken."))
+            return JsonResp(request, message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
@@ -696,9 +695,9 @@ def clonesnap(request, snapshot):
         if form.is_valid():
             retval = form.commit()
             if retval == '':
-                return JsonResponse(message=_("Snapshot successfully cloned."))
+                return JsonResp(request, message=_("Snapshot successfully cloned."))
             else:
-                return JsonResponse(error=True, message=retval)
+                return JsonResp(request, error=True, message=retval)
     else:
         is_volume = 'volume' in request.GET
         form = forms.CloneSnapshotForm(initial=initial, is_volume=is_volume)
@@ -715,11 +714,11 @@ def geom_disk_replace(request, vname):
         form = forms.UFSDiskReplacementForm(request.POST)
         if form.is_valid():
             if form.done(volume):
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Disk replacement has been initiated.")
                     )
             else:
-                return JsonResponse(
+                return JsonResp(request,
                     error=True,
                     message=_("An error occurred."))
 
@@ -737,7 +736,7 @@ def disk_detach(request, vname, label):
 
     if request.method == "POST":
         notifier().zfs_detach_disk(volume, label)
-        return JsonResponse(
+        return JsonResp(request,
             message=_("Disk detach has been successfully done.")
             )
 
@@ -754,7 +753,7 @@ def disk_offline(request, vname, label):
 
     if request.method == "POST":
         notifier().zfs_offline_disk(volume, label)
-        return JsonResponse(
+        return JsonResp(request,
             message=_("Disk offline operation has been issued.")
             )
 
@@ -772,7 +771,7 @@ def zpool_disk_remove(request, vname, label):
 
     if request.method == "POST":
         notifier().zfs_remove_disk(volume, label)
-        return JsonResponse(message=_("Disk has been removed."))
+        return JsonResp(request, message=_("Disk has been removed."))
 
     return render(request, 'storage/disk_remove.html', {
         'vname': vname,
@@ -797,11 +796,11 @@ def volume_detach(request, vid):
             try:
                 volume.delete(destroy=form.cleaned_data['mark_new'],
                     cascade=form.cleaned_data.get('cascade', True))
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("The volume has been successfully detached")
                     )
             except ServiceFailed, e:
-                return JsonResponse(error=True, message=unicode(e))
+                return JsonResp(request, error=True, message=unicode(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {
@@ -820,7 +819,7 @@ def zpool_scrub(request, vid):
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
         else:
             notifier().zfs_scrub(str(volume.vol_name))
-        return JsonResponse(message=_("The scrub process has begun"))
+        return JsonResp(request, message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
@@ -866,11 +865,11 @@ def zpool_disk_replace(request, vname, label):
         form = forms.ZFSDiskReplacementForm(request.POST, disk=disk)
         if form.is_valid():
             if form.done(volume, disk, label):
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Disk replacement has been initiated.")
                     )
             else:
-                return JsonResponse(
+                return JsonResp(request,
                     error=True,
                     message=_("An error occurred."))
 
@@ -1007,7 +1006,7 @@ def volume_create_passphrase(request, object_id):
         form = forms.CreatePassphraseForm(request.POST)
         if form.is_valid():
             form.done(volume=volume)
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Passphrase created")
                 )
     else:
@@ -1025,7 +1024,7 @@ def volume_change_passphrase(request, object_id):
         form = forms.ChangePassphraseForm(request.POST)
         if form.is_valid():
             form.done(volume=volume)
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Passphrase updated")
                 )
     else:
@@ -1045,11 +1044,11 @@ def volume_unlock(request, object_id):
             zimport = notifier().zfs_import(volume.vol_name,
                 id=volume.vol_guid)
             if zimport and volume.is_decrypted:
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Volume unlocked")
                     )
             else:
-                return JsonResponse(
+                return JsonResp(request,
                     message=_("Volume failed unlocked")
                     )
         return render(request, "storage/unlock.html", {
@@ -1059,7 +1058,7 @@ def volume_unlock(request, object_id):
         form = forms.UnlockPassphraseForm(request.POST)
         if form.is_valid():
             form.done(volume=volume)
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Volume unlocked")
                 )
     else:
@@ -1076,7 +1075,7 @@ def volume_key(request, object_id):
         form = forms.KeyForm(request.POST)
         if form.is_valid():
             request.session["allow_gelikey"] = True
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("GELI key download starting..."),
                 events=["window.location='%s';" % (
                     reverse("storage_volume_key_download",
@@ -1114,7 +1113,7 @@ def volume_rekey(request, object_id):
         form = forms.ReKeyForm(request.POST, volume=volume)
         if form.is_valid():
             form.done()
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Encryption re-key succeeded"),
                 )
     else:
@@ -1133,7 +1132,7 @@ def volume_recoverykey_add(request, object_id):
         if form.is_valid():
             reckey = notifier().geli_recoverykey_add(volume)
             request.session["allow_gelireckey"] = reckey
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("GELI recovery key download starting..."),
                 events=["window.location='%s';" % (
                     reverse("storage_volume_recoverykey_download",
@@ -1172,7 +1171,7 @@ def volume_recoverykey_remove(request, object_id):
         form = forms.KeyForm(request.POST)
         if form.is_valid():
             reckey = notifier().geli_delkey(volume)
-            return JsonResponse(
+            return JsonResp(request,
                 message=_("Recovery has been removed")
                 )
     else:

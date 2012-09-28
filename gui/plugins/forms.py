@@ -36,7 +36,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -86,10 +86,9 @@ class JailInstallWizard(FileWizard):
         events = []
         if not retval:
             events.append('reloadHttpd()')
-        return JsonResponse(
+        return JsonResp(request,
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
-            enclosed=not self.request.is_ajax(),
             events=events,
             )
 
@@ -111,10 +110,9 @@ class JailUpdateWizard(FileWizard):
         events = []
         if not retval:
             events.append('reloadHttpd()')
-        return JsonResponse(
+        return JsonResp(request,
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
-            enclosed=not self.request.is_ajax(),
             events=events,
             )
 

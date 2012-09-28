@@ -471,7 +471,7 @@ class BaseFreeAdmin(object):
 
     def delete(self, request, oid, mf=None):
         from freenasUI.freeadmin.navtree import navtree
-        from freenasUI.freeadmin.views import JsonResponse
+        from freenasUI.freeadmin.views import JsonResp
         from freenasUI.freeadmin.utils import get_related_objects
 
         m = self._model
@@ -524,7 +524,7 @@ class BaseFreeAdmin(object):
                     if hasattr(form_i, "done"):
                         form_i.done(events=events)
                     mf.delete(events=events)
-                    return JsonResponse(
+                    return JsonResp(request,
                         message=_("%s successfully deleted.") % (
                             m._meta.verbose_name,
                             ),
@@ -533,9 +533,11 @@ class BaseFreeAdmin(object):
             else:
                 events = []
                 mf.delete(events=events)
-                return JsonResponse(message=_("%s successfully deleted.") % (
-                    m._meta.verbose_name,
-                    ), events=events)
+                return JsonResp(request,
+                    message=_("%s successfully deleted.") % (
+                        m._meta.verbose_name,
+                    ),
+                    events=events)
         if form and form_i is None:
             form_i = form(instance=instance)
         if form:

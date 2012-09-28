@@ -47,7 +47,7 @@ from django.utils.translation import ugettext as _
 import oauth2 as oauth
 
 from freenasUI import settings as mysettings
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
@@ -197,9 +197,7 @@ class CatchError(object):
                 'error': True,
                 'message': _("Error: %s") % unicode(excp.value),
                 }
-            if not request.is_ajax():
-                kwargs['enclosed'] = True
-            return JsonResponse(**kwargs)
+            return JsonResp(request, **kwargs)
         return response
 
 

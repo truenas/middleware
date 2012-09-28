@@ -39,7 +39,7 @@ from freenasUI.common.freenasldap import (FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
     FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResp
 
 
 def home(request):
@@ -105,7 +105,8 @@ def password_change(request):
                 del alert
                 events.append("loadalert()")
 
-            return JsonResponse(message=_("Password successfully updated."),
+            return JsonResp(request,
+                message=_("Password successfully updated."),
                 events=events)
 
     extra_context.update({
@@ -125,7 +126,9 @@ def user_change(request):
             data=request.POST)
         if changeform.is_valid():
             changeform.save()
-            return JsonResponse(message=_("Admin user successfully updated."))
+            return JsonResp(request,
+                message=_("Admin user successfully updated.")
+                )
 
     extra_context.update({
         'form': changeform,
@@ -139,7 +142,7 @@ def group2user_update(request, object_id):
         f = forms.bsdGroupToUserForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return JsonResponse(message=_("Users successfully updated."))
+            return JsonResp(request, message=_("Users successfully updated."))
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
@@ -154,7 +157,7 @@ def user2group_update(request, object_id):
         f = forms.bsdUserToGroupForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return JsonResponse(message=_("Groups successfully updated."))
+            return JsonResp(request, message=_("Groups successfully updated."))
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {

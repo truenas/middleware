@@ -47,7 +47,7 @@ from django.views.decorators.cache import never_cache
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
-from freenasUI.freeadmin.views import JsonResponse, JsonResp
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
@@ -235,7 +235,7 @@ def top(request):
 def reboot_dialog(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True
-        return JsonResponse(error=False,
+        return JsonResp(request,
                     message=_("Reboot is being issued"),
                     events=['window.location="%s"' % reverse('system_reboot')])
     return render(request, 'system/reboot_dialog.html')
@@ -260,7 +260,7 @@ def reboot_run(request):
 def shutdown_dialog(request):
     if request.method == "POST":
         request.session['allow_shutdown'] = True
-        return JsonResponse(error=False,
+        return JsonResp(request,
             message=_("Shutdown is being issued"),
             events=['window.location="%s"' % reverse('system_shutdown')])
     return render(request, 'system/shutdown_dialog.html')

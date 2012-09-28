@@ -30,7 +30,7 @@ from subprocess import Popen, PIPE
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.network import forms, models
 
 
@@ -194,7 +194,7 @@ def lagg_add(request):
         lagg = forms.LAGGInterfaceForm(request.POST)
         if lagg.is_valid():
             _lagg_performadd(lagg)
-            return JsonResponse(message=_("LAGG successfully added"))
+            return JsonResp(request, message=_("LAGG successfully added"))
 
     return render(request, 'network/lagg_add.html', {
         'form': lagg,
