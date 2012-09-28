@@ -86,7 +86,7 @@ class JailInstallWizard(FileWizard):
         events = []
         if not retval:
             events.append('reloadHttpd()')
-        return JsonResp(request,
+        return JsonResp(self.request,
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
             events=events,
@@ -110,7 +110,7 @@ class JailUpdateWizard(FileWizard):
         events = []
         if not retval:
             events.append('reloadHttpd()')
-        return JsonResp(request,
+        return JsonResp(self.request,
             error=bool(retval),
             message=retval if retval else __("PBI successfully installed."),
             events=events,
