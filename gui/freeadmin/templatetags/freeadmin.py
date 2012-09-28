@@ -32,7 +32,6 @@ from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
 
-from dojango import forms
 from freenasUI.system.models import Advanced
 
 register = template.Library()
@@ -158,52 +157,6 @@ class DojoFormRender(template.Node):
                 1)
 
         return rendered
-        top_errors = form.non_field_errors()
-        advanced_fields = getattr(form, 'advanced_fields', [])
-        for field in new_fields:
-            is_adv = field in advanced_fields
-            _hide = ' style="display:none;"' if not adv_mode and is_adv else ''
-            is_adv = ' class="advancedField"' if is_adv else ''
-            if field in composed:
-                label, fields = composed.get(field)
-                html = u"""<tr><th><label%s>%s</label></th><td>""" % (
-                    _hide,
-                    label)
-                for field in fields:
-                    bf = BoundField(form, form.fields.get(field), field)
-                    bf_errors = form.error_class(
-                        [conditional_escape(error) for error in bf.errors]
-                        )
-                    html += unicode(bf_errors) + unicode(bf)
-                html += u"</td></tr>"
-                output.append(html)
-            else:
-                bf = BoundField(form, form.fields.get(field), field)
-                bf_errors = form.error_class(
-                    [conditional_escape(error) for error in bf.errors]
-                    )
-                if bf.is_hidden:
-                    hidden_fields.append(unicode(bf))
-                else:
-                    if bf.help_text:
-                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, bf.help_text, bf.auto_id)
-                    else:
-                        help_text = ""
-                    html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
-                        is_adv,
-                        _hide,
-                        bf.label_tag(),
-                        bf_errors,
-                        bf,
-                        help_text,
-                        )
-                    output.append(html)
-
-        if hidden_fields:
-            str_hidden = u''.join(hidden_fields)
-            output.append(str_hidden)
-
-        return ''.join(output)
 
 
 @register.tag(name="dojo_render")
