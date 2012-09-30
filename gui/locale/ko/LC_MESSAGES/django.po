@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-06-15 08:15+0200\n"
-"Last-Translator: rescue <mediapaper@ymail.com>\n"
+"PO-Revision-Date: 2012-09-30 01:03+0200\n"
+"Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -234,7 +234,7 @@ msgstr "Local User"
 
 #: choices.py:189
 msgid "Normal"
-msgstr "Normal"
+msgstr "일반"
 
 #: choices.py:190
 msgid "Full"
@@ -246,7 +246,7 @@ msgstr "Debug"
 
 #: choices.py:195
 msgid "Default"
-msgstr "Default"
+msgstr "초기"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -387,15 +387,15 @@ msgstr "평일 모두 선택됨"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "Read-only"
+msgstr "읽기전용"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Write-only"
+msgstr "쓰기전용"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "Read and Write"
+msgstr "읽고쓰기"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -424,7 +424,7 @@ msgstr "%(week)s week"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "체크된 장치에 관계없이 현재의 전력모드 사용"
+msgstr "절대안함 - 해당 기기의 전력모드에 관계없이 기기 검사"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -472,7 +472,7 @@ msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr "이름 첫부분에 \"-\"를  입력을 할 수 없습니다."
+msgstr "\"-\"은 이름 첫부분으로 사용할 수 없습니다."
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -481,19 +481,19 @@ msgstr "$문자는 마지막 문자에서만 사용할 수 있습니다."
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "이름에 사용할수 없는 특수문자를 포함하고 있습니다(%등등)."
+msgstr "이름에 사용할수 없는 특수문자를 포함하고 있습니다(%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "전체이름에 사용할 수 없는 문자를 포함하고 있습니다(%등등)."
+msgstr "전체 이름에 사용할 수 없는 문자를 포함하고 있습니다(%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Username"
+msgstr "사용자명"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -507,7 +507,7 @@ msgstr "이 값은 문자, 숫자 및 @/./+/-/_ 특수문자만 입력 할 수 �
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr " Password"
+msgstr "비밀번호"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
@@ -525,7 +525,7 @@ msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr "Disable password logins"
+msgstr "비밀번호 사용 접속 불능화"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -533,11 +533,11 @@ msgstr "Lock user"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr "Create a new primary group for the user"
+msgstr "해당 사용자의 새로운 주그룹 생성하기"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr "Primary Group"
+msgstr "주그룹"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -549,7 +549,7 @@ msgstr "Home Directory Mode"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr "Auxiliary groups"
+msgstr "보조그룹"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
@@ -577,37 +577,37 @@ msgstr "Home directory has to start with /mnt/ or be /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "A user cannot belong to more than 64 auxiliary groups"
+msgstr "한 사용자는 64개 이상의 다른 보조그룹에 소속될 수 없습니다."
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Home directory is not writable, leave this blank"
+msgstr "홈 디렉토리는 읽기전용이므로 공백으로 남겨두세요."
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr "Password is disabled, leave this blank"
+msgstr "비밀번호는 사용할 수 없으니 이곳은 공백으로 남겨두세요."
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "이 입력란은 필수입니다. "
+msgstr "이곳은 필수 입력란입니다."
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Home directory has to start with /mnt or be /nonexistent"
+msgstr "홈 디렉토리는 /mnt로 시작하거나 /nonexistent이어야 합니다."
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr "Allow repeated GIDs"
+msgstr "반복되는 GIDs를 허용하기"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "A group with that name already exists."
+msgstr "해당 이름을 가진 그룹이 이미 존재합니다."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "해당 그룹이 이미 존재합니다."
+msgstr "해당 gid를 가진 그룹이 이미 존재합니다."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -615,7 +615,7 @@ msgstr "Member users"
 
 #: account/forms.py:852
 msgid "New password"
-msgstr "New password"
+msgstr "새 비밀번호"
 
 #: account/forms.py:856
 msgid "New password confirmation"
@@ -623,7 +623,7 @@ msgstr "새 암호 확인"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Change root password as well"
+msgstr "root 비밀번호 또한 같이 변경하기"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -709,32 +709,30 @@ msgstr "Users"
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "%s 사용자는 삭제 할 수 없습니다. "
+msgstr "%s 계정은 시스템 내부용 고유계정이므로 삭제 할 수 없습니다."
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
 msgstr "계정"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "계정"
+msgstr "관리자 계정"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
 #: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
-msgstr "Change Password"
+msgstr "비밀번호 변경"
 
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr "Change Admin User"
+msgstr "관리자 계정 변경"
 
 #: account/views.py:95
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "비밀번호가 성공적으로 갱신 되었습니다."
 
 #: account/views.py:112
 msgid "Admin user successfully updated."
@@ -765,53 +763,53 @@ msgstr "경로는 volume mount point 내에 존재하여야 합니다."
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "오류: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
-msgstr "Add %s"
+msgstr "%s을(를) 추가하기."
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "%s 모두 보기"
+msgstr "%s 보기"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
-msgstr "Display System Processes"
+msgstr "시스템 프로세스들을 보이기"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "Reboot"
+msgstr "다시시작"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr "Shutdown"
+msgstr "종료"
 
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "%s로부터 빈 데이터를 돌려받았습니다."
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "%(url)s을 가져올 수 없습니다: %(오류)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "비직렬화를 행하는도중 %(url)s: %(error)s 로부터 오류가 발생하였습니다."
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "현재의 상태를 가져올 수가 없습니다."
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s successfully updated."
+msgstr "%s을(를) 성공적으로 갱신하였습니다."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
@@ -847,43 +845,43 @@ msgstr "네트워크 인터페이스"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "같은 IP주소(%s)로 여러 인터페이스들을 구성할 수 없습니다."
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr " IPv4 주소또한 같이 지정해 주어야 합니다."
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "IPv4 넷마스크또한 같이 선택해야 합니다."
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "IPv6 주소또한 같이 지정해 주어야 합니다."
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "IPv6 넷마스크 또한 선택해야만 합니다."
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "IPv4 또는 IPv6중 하나를 선택 해야 합니다."
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "루프백은 유효한 네임서버가 아닙니다."
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "지정되지 않은 주소들은 네임서버로서 유효하지 않습니다."
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "이것은 유효하지 않은 네임서버 주소입니다."
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 서브넷은 유효한 네임서버가 아닙니다."
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -891,7 +889,7 @@ msgstr "3차 네임서버를 입력하기 전에 2차 네임서버를 입력하�
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr " Required when using nameserver 3"
+msgstr " 네임서버 3을 사용할 경우 필요함"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -916,12 +914,11 @@ msgstr "VLAN Tags 범위(1 - 4095)"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "LAGG 구성안의 물리적 네트워크 카드들"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "물리적 네트워크 인터페이스 "
+msgstr "LAGG 물리적 네트워크 인터페이스"
 
 #: network/forms.py:360
 #, python-format
@@ -930,27 +927,27 @@ msgstr "네트워크 '%s'가 유효하지 않습니다. CIDR이 필요합니다.
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "IPv4주소를 alias 별로 지정해야 합니다."
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "IPv4 넷마스크를 alias 별로 선택해야 합니다."
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "IPv6 주소를 alias 별로 지정해야 합니다."
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "IPv6 넷마스크를 alias 별로 지정해야 합니다."
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "IPv4나 IPv6 중에서 alias별로 선택해야 합니다."
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "alias별로 유효한 IPv4나 IPv6를 maskbit과 함께 지정해야합니다."
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1005,7 +1002,7 @@ msgstr "DHCP"
 #: network/models.py:96
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr ""
+msgstr "DHCP가 활성되어 있다면 DHCP를 IPv4 주소와 default router 등의 정보를 획득하는데 사용합니다."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1022,7 +1019,7 @@ msgstr "IPv6 자동 구성"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "활성화 되어있다면 rtsol(8)을 통해서 IPv6주소를 자동으로 구성합니다."
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
@@ -1105,11 +1102,11 @@ msgstr "링크어그리게이션 목록"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG 인터페이스 그룹"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG 우선 순위 번호"
 
 #: network/models.py:354
 msgid "Physical NIC"
@@ -1150,7 +1147,7 @@ msgstr "모든 링크어그리게이션 보기"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
-msgstr "LAGG가 추가되었습니다."
+msgstr "LAGG가 성공적으로 추가되었습니다."
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1349,9 +1346,8 @@ msgid "Jail successfully imported."
 msgstr "%s가 갱신 되었습니다. "
 
 #: services/forms.py:70
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "사용자 계정 %s 는 유효하지 않습니다. "
+msgstr "이것은 유효한 마스크가 아닙니다."
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1362,9 +1358,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
 #: services/forms.py:106
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "NFS 서비스 재실행 실패."
+msgstr "CIFS 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1372,7 +1367,7 @@ msgstr "AFP 서비스 재실행 실패."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr "NFS 서비스 재실행 실패."
+msgstr "NFS 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:157
 #, fuzzy
@@ -1406,23 +1401,23 @@ msgstr ""
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr "이 란은 익명 로긴이 요구 됨."
+msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다."
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
-msgstr "FTP 서비스 시작 실패."
+msgstr "FTP 서비스를 시작하는데 실패하였습니다."
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr "TFTP 재시작 실패."
+msgstr "TFTP 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
-msgstr "SSH 서비스 재시작 실패."
+msgstr "SSH 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
-msgstr "Rsync 서비스 재시작 실패."
+msgstr "Rsync 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
@@ -1453,7 +1448,7 @@ msgstr ""
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
@@ -1481,11 +1476,11 @@ msgstr ""
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "active directory 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "ldap 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
@@ -1589,7 +1584,7 @@ msgstr ""
 #: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "extent까지의 경로는 반드시 volume/dataset 마운트 지점안에 있어야만 합니다."
 
 #: services/forms.py:795
 msgid ""
@@ -1607,12 +1602,12 @@ msgstr "디스크 장치"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "포탈 그룹 ID는 %d보다 높아서는 안됩니다."
 
 #: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "그룹ID는 %d 보다 높아서는 안됩니다."
 
 #: services/forms.py:1019
 msgid ""
@@ -1622,7 +1617,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr ""
+msgstr "인증 그룹 번호"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1652,7 +1647,7 @@ msgstr "서비스"
 
 #: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "서비스 이름은 빌드 때 자동적으로 만들어져야 합니다."
 
 #: services/models.py:55
 msgid "Enable Service"
@@ -1684,19 +1679,19 @@ msgstr "워크그룹"
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr ""
+msgstr "client에의해 검색 되어질때 서버가 보여지게 될 워크그룹 (최대 15 문자)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr "서버 설명은 공란으로 비워 둘 수 있습니다. "
+msgstr "서버 설명, 이란은 공란으로 비워 둘 수 있습니다. "
 
 #: services/models.py:94
 msgid "DOS charset"
-msgstr "DOS charset"
+msgstr "DOS 문자셋"
 
 #: services/models.py:100
 msgid "UNIX charset"
-msgstr "UNIX charset"
+msgstr "유닉스 문자셋"
 
 #: services/models.py:106
 msgid "Log level"
@@ -1729,7 +1724,7 @@ msgstr "File mask"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
+msgstr "기존 파일 마스크를 무시하고 새로운 마스크를 만들기 위해서 이 옵션을 사용합니다 (기본으로 0666)."
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
@@ -1738,7 +1733,7 @@ msgstr "Directory mask"
 #: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr ""
+msgstr "기존 디렉토리 마스크를 무시하고 새로운 마스크를 만들기 위해서 이 옵션을 사용합니다 (기본으로 0777)."
 
 #: services/models.py:132
 msgid "Large RW support"
@@ -1746,7 +1741,7 @@ msgstr ""
 
 #: services/models.py:134
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "sendfile(2)로 파일들을 보내기"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -6379,7 +6374,7 @@ msgid "Critical Alerts"
 msgstr ""
 
 msgid "Selected"
-msgstr "Selected"
+msgstr "선택되어진"
 
 msgid "Allow guest access"
 msgstr "방문자 접속 허용"
@@ -6454,13 +6449,13 @@ msgid "Pass"
 msgstr "Pass"
 
 msgid "Disable password"
-msgstr "Disable password"
+msgstr "비밀번호 불능화"
 
 msgid "My Account"
-msgstr "My Account"
+msgstr "내 계정"
 
 msgid "View All Users"
-msgstr "View All Users"
+msgstr "모든 사용자 보기"
 
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
@@ -6519,7 +6514,7 @@ msgid "successfully deleted"
 msgstr "삭제 되었습니다."
 
 msgid "%s successfully added."
-msgstr "%s successfully added. "
+msgstr "%s을(를) 성공적으로 추가하였습니다."
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 서브넷 마스크"
@@ -6560,10 +6555,10 @@ msgid "Config"
 msgstr "구성"
 
 msgid "%s successfully update."
-msgstr "%s successfully update. "
+msgstr "%s이(가) 성공적으로 갱신되었습니다."
 
 msgid "Admin user"
-msgstr "Admin user"
+msgstr "관리자 계정"
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6596,7 +6591,7 @@ msgid "View All Interfaces"
 msgstr "모든 인터페이스 목록 보기"
 
 msgid "View All VLANs"
-msgstr "모든 VLAN 목록 보기"
+msgstr "모든 VLAN들을 보기"
 
 msgid "sucessfully edited"
 msgstr "수정 되었습니다"
