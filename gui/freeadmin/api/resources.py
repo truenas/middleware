@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
@@ -55,3 +56,11 @@ class DiskResource(DojoModelResource):
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(DiskResource, self).dehydrate(bundle)
+        bundle.data['_edit_url'] += '?deletable=false'
+        bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
+            'devname': bundle.obj.disk_name,
+            })
+        return bundle
