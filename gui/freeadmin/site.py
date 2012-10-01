@@ -120,9 +120,8 @@ class FreeAdminSite(object):
         """
         def inner(request, *args, **kwargs):
             if not self.has_permission(request):
-                if request.path == reverse('admin:logout',
-                                           current_app=self.name):
-                    index_path = reverse('admin:index', current_app=self.name)
+                if request.path == reverse('account_logout'):
+                    index_path = reverse('index', current_app=self.name)
                     return HttpResponseRedirect(index_path)
                 return self.login(request)
             return view(request, *args, **kwargs)

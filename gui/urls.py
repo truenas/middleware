@@ -26,7 +26,7 @@
 #####################################################################
 import os
 
-from django.conf.urls.defaults import include, patterns
+from django.conf.urls.defaults import include, patterns, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.static import serve
 from django.conf import settings
@@ -46,7 +46,7 @@ freeadmin.autodiscover()
 add_to_builtins('django.templatetags.i18n')
 
 urlpatterns = patterns('',
-    ('^$', site.adminInterface),
+    url('^$', site.adminInterface, name="index"),
     (r'^reporting/graphs/(?P<path>.*)',
         public(serve),
         {'document_root': '/var/db/graphs/'}),
