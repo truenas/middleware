@@ -41,7 +41,6 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
-from tastypie.resources import ResourceOptions
 
 log = logging.getLogger('freeadmin.options')
 
@@ -727,7 +726,6 @@ class BaseFreeAdmin(object):
         }
 
         return actions
-
 
     def actions(self, request):
         actions = self.get_actions()
