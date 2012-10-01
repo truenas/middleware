@@ -141,6 +141,7 @@ class FreeAdminSite(object):
 
         v1_api = Api(api_name='v1.0')
         v1_api.register(resources.SysctlResource())
+        v1_api.register(resources.DiskResource())
 
         def wrap(view, cacheable=False):
             def wrapper(*args, **kwargs):

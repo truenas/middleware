@@ -24,10 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django.db.models import Q
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
 from freenasUI.system.models import Sysctl
+from freenasUI.storage.models import Disk
 
 
 class SysctlResource(DojoModelResource):
@@ -35,6 +37,21 @@ class SysctlResource(DojoModelResource):
     class Meta:
         queryset = Sysctl.objects.all()
         resource_name = 'sysctl'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+
+class DiskResource(DojoModelResource):
+
+    class Meta:
+        queryset = Disk.objects.filter(
+            disk_enabled=True,
+            disk_multipath_name=''
+            ).exclude(
+                Q(disk_name__startswith='multipath') | Q(disk_name='')
+            )
+        resource_name = 'disk'
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
