@@ -374,33 +374,6 @@ require([
 
     }
 
-    buttongrid = function(v) {
-        var json = JSON.parse(v);
-        parser.parse(dom.byId(this.id));
-        var gridhtml = registry.getEnclosingWidget(dom.byId(this.id));
-
-        var content = new ContentPane({});
-        var b = new Button({
-            label: gettext("Edit")
-        });
-
-        on(b, 'click', function(){
-            editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]);
-        });
-        content.domNode.appendChild(b.domNode);
-
-        var b = new Button({
-            label: gettext("Wipe")
-        });
-
-        on(b, 'click', function(){
-            editObject(gettext('Wipe Disk'), json.wipe_url, [gridhtml,]);
-        });
-        content.domNode.appendChild(b.domNode);
-
-        return content;
-    }
-
     var canceled = false;
 
     toggleGeneric = function(checkboxid, farray, inverted) {
