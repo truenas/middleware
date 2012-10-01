@@ -653,7 +653,7 @@ class BaseFreeAdmin(object):
         enc = json.dumps(data)
         return HttpResponse(enc)
 
-    def actions(self, request):
+    def get_actions(self):
 
         actions = {}
         actions['Edit'] = {
@@ -702,5 +702,10 @@ class BaseFreeAdmin(object):
             }""",
         }
 
+        return actions
+
+
+    def actions(self, request):
+        actions = self.get_actions()
         enc = json.dumps(actions)
         return HttpResponse(enc)
