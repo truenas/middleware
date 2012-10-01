@@ -1,0 +1,12 @@
+--- net/nss_ldap/Makefile.orig	2012-10-01 13:28:43.675966236 -0700
++++ net/nss_ldap/Makefile	2012-10-01 13:31:35.451970125 -0700
+@@ -25,6 +25,9 @@
+ USE_AUTOTOOLS=	automake aclocal autoconf autoheader
+ USE_LDCONFIG=	yes
+ USE_OPENLDAP=	yes
++WANT_OPENLDAP_SASL=	yes
++
++CONFLICTS+=	openldap2[34]-client-2.*
+ 
+ OPTIONS=	LCLASS "Enable login classes via the loginClass attribute" on
+ 

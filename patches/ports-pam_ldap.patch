@@ -1,0 +1,10 @@
+--- security/pam_ldap/Makefile.orig	2012-10-01 13:42:32.672965997 -0700
++++ security/pam_ldap/Makefile	2012-10-01 13:43:09.626966998 -0700
+@@ -19,6 +19,7 @@
+ USE_GMAKE=	yes
+ GNU_CONFIGURE=	yes
+ USE_OPENLDAP=	yes
++WANT_OPENLDAP_SASL=	yes
+ USE_PERL5_BUILD=yes
+ WRKSRC=	${WRKDIR}/${PORTNAME}-${PORTVERSION:S/.//g}
+ PAM_LDAP_CONF?=	ldap.conf

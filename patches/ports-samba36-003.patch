@@ -1,0 +1,18 @@
+--- net/samba36/Makefile.orig	2012-10-01 13:39:03.963965406 -0700
++++ net/samba36/Makefile	2012-10-01 13:41:01.720967115 -0700
+@@ -319,6 +319,7 @@
+ 
+ .if defined(WITH_ADS)
+ SAMBA_WANT_LDAP=	yes
++WANT_OPENLDAP_SASL=	yes
+ SAMBA_WANT_KRB5=	yes
+ CONFIGURE_ARGS+=	--with-ads
+ .else
+@@ -342,6 +343,7 @@
+ 
+ .if defined(SAMBA_WANT_LDAP)
+ USE_OPENLDAP=		yes
++WANT_OPENLDAP_SASL=	yes
+ CONFIGURE_ARGS+=	--with-ldap
+ .else
+ CONFIGURE_ARGS+=	--without-ldap

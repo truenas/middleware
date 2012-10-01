@@ -157,15 +157,14 @@ WITHOUT_SHAREDOCS=true
 add_port archivers/lzo2
 add_port security/openvpn
 add_port converters/libiconv
-#+editors/nano || converters/iconv
 add_port lang/perl5.14
-#-editors/nano || converters/iconv
 add_port converters/iconv
 add_port devel/gettext
 add_port devel/pkg-config
 add_port devel/libpthread-stubs WITHOUT_X11=y
 add_port devel/cdialog
-add_port dns/inadyn			# -mt?
+add_port dns/inadyn
+add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
 add_port net-mgmt/bsnmp-ucd
@@ -173,25 +172,21 @@ add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
-add_port security/libgcrypt
 add_port security/libgpg-error
+add_port security/libgcrypt
 add_port databases/db46
-#+net/nss_ldap
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
-#-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
 	WITH_ACL=true WITHOUT_ICONV=true WITHOUT_TIMELIMIT=true
 add_port lang/python27
 add_port dns/py-dnspython
-#+net/samba
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
-#-net/samba
 add_port net/samba36	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
 			WITH_ACL_SUPPORT=y WITH_PAM_SMBPASS=y \
 			WITH_AIO_SUPPORT=y WITH_EXP_MODULES=y
@@ -200,31 +195,23 @@ add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
 add_port sysutils/e2fsprogs
-#+sysutils/fusefs-ntfs
 add_port sysutils/fusefs-kmod
 add_port sysutils/fusefs-libs
 add_port devel/libublio
-#-sysutils/fusefs-ntfs
 add_port sysutils/fusefs-ntfs
 add_port sysutils/ntfsprogs
 add_port sysutils/smartmontools
-#+emulators/open-vm-tools-nox11 || www/nginx || ...
-add_port devel/pcre
-#-emulators/open-vm-tools-nox11 || www/nginx || ...
-#+emulators/open-vm-tools-nox11
 add_port devel/glib20
 add_port net/libdnet
-#-emulators/open-vm-tools-nox11
 add_port emulators/open-vm-tools-nox11 WITHOUT_ICU=y
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
+add_port devel/py-setuptools
+add_port www/py-flup
 add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
 add_port www/dojo
-#+databases/py-south || devel/py-daemon || ...
-add_port devel/py-setuptools
-#-databases/py-south || devel/py-daemon || ...
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
@@ -232,69 +219,57 @@ add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV OPTIONS_FILE_SET+=HTTP_SSL \
                    OPTIONS_FILE_SET+=HTTP_UPLOAD \
                    OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
                    OPTIONS_FILE_SET+=STATUS
-#+add_port www/py-flup
-#-add_port www/py-flup
-add_port www/py-flup
-#+add_port sysutils/nut
-#-add_port sysutils/nut
 add_port net-mgmt/net-snmp
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
-
-add_port textproc/libxml2 WITHOUT_X11=y
-add_port textproc/py-libxml2 WITHOUT_X11=y
-
-add_port textproc/expat2 WITHOUT_X11=y
-add_port devel/gamin WITHOUT_X11=y
-add_port devel/gio-fam-backend WITHOUT_X11=y
-add_port devel/m4 WITHOUT_X11=y
-add_port devel/bison WITHOUT_X11=y
-add_port devel/libffi WITHOUT_X11=y
+add_port textproc/libxml2
+add_port textproc/py-libxml2
+add_port textproc/expat2
+add_port devel/gamin
+add_port devel/gio-fam-backend
+add_port devel/m4
+add_port devel/bison
+add_port devel/libffi
 add_port devel/gobject-introspection
-
 add_port www/py-httplib2
 add_port net/py-oauth2
 
 if [ "${REPORTING}" = 1 ]; then
-add_port graphics/png WITHOUT_X11=y
+	add_port graphics/png
+	add_port devel/libstatgrab
+	add_port devel/libltdl
+	add_port print/freetype2
+	add_port x11/kbproto
+	add_port x11/xproto
+	add_port x11/libXdmcp
+	add_port x11/libXau
+	add_port x11/libxcb
+	add_port x11/libX11
+	add_port x11-fonts/fontconfig
+	add_port x11-fonts/libfontenc
+	add_port x11-fonts/mkfontscale
+	add_port x11-fonts/mkfontdir
+	add_port x11-fonts/font-bh-ttf
+	add_port x11-fonts/font-misc-meltho
+	add_port x11-fonts/font-misc-ethiopic
+	add_port x11-fonts/bitstream-vera
+	add_port x11-fonts/font-util
+	add_port x11-fonts/encodings
+	add_port x11-fonts/xorg-fonts-truetype
+	add_port x11/xcb-util
+	add_port x11/renderproto
+	add_port x11/libXrender
+	add_port x11/xcb-proto
+	add_port x11/xcb-util-renderutil
+	add_port x11/pixman
+	add_port graphics/cairo WITHOUT_X11=y
+	add_port x11-toolkits/pango WITHOUT_X11=y
+	add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
+					WITH_PYTHON_MODULE=y
+	add_port net/liboping
+	add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y \
+				   WITHOUT_X11=y WITH_DISK=y WITH_PYTHON=y
 fi
 
-if [ "${REPORTING}" = 1 ]; then
-#+add_port net-mgmt/collectd
-add_port devel/libstatgrab WITHOUT_X11=y
-add_port devel/libltdl WITHOUT_X11=y
-add_port print/freetype2 WITHOUT_X11=y
-add_port x11/kbproto
-add_port x11/xproto WITHOUT_X11=y
-add_port x11/libXdmcp WITHOUT_X11=y
-add_port x11/libXau WITHOUT_X11=y
-add_port x11/libxcb WITHOUT_X11=y
-add_port x11/libX11
-add_port x11-fonts/fontconfig WITHOUT_X11=y
-add_port x11-fonts/libfontenc WITHOUT_X11=y
-add_port x11-fonts/mkfontscale WITHOUT_X11=y
-add_port x11-fonts/mkfontdir WITHOUT_X11=y
-add_port x11-fonts/font-bh-ttf WITHOUT_X11=y
-add_port x11-fonts/font-misc-meltho WITHOUT_X11=y
-add_port x11-fonts/font-misc-ethiopic WITHOUT_X11=y
-add_port x11-fonts/bitstream-vera WITHOUT_X11=y
-add_port x11-fonts/font-util WITHOUT_X11=y
-add_port x11-fonts/encodings WITHOUT_X11=y
-add_port x11-fonts/xorg-fonts-truetype WITHOUT_X11=y
-add_port x11/xcb-util WITHOUT_X11=y
-add_port x11/libXrender
-add_port x11/renderproto
-add_port x11/xcb-proto WITHOUT_X11=y
-add_port x11/xcb-util-renderutil WITHOUT_X11=y
-add_port x11/pixman WITHOUT_X11=y
-add_port graphics/png WITHOUT_X11=y
-add_port graphics/cairo WITHOUT_X11=y
-add_port x11-toolkits/pango WITHOUT_X11=y
-add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
-				WITH_PYTHON_MODULE=y
-add_port net/liboping WITHOUT_X11=y
-#-add_port net-mgmt/collectd
-add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y WITHOUT_X11=y WITH_DISK=y WITH_PYTHON=y
-fi
 add_port devel/py-ipaddr
 add_port converters/base64
 add_port emulators/mtools WITHOUT_X11=y
@@ -304,71 +279,56 @@ add_port sysutils/megacli
 add_port sysutils/areca-cli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
-#+add_port devel/dbus*
 add_port sysutils/gnome_subr
-#-add_port devel/dbus*
 add_port devel/dbus WITHOUT_X11=y
 add_port devel/dbus-glib WITHOUT_X11=y
 add_port devel/libdaemon
 add_port databases/gdbm
-add_port net/avahi-app
-add_port net/avahi-libdns
+add_port net/avahi-app WITHOUT_X11=y
+add_port net/avahi-libdns WITHOUT_X11=y
 add_port textproc/py-xml
 add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
-add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
-#+add_port ftp/wget
+add_port x11/libICE
+add_port x11/libSM
+add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y WITHOUT_X11=y
 add_port dns/libidn
-#-add_port ftp/wget
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
 add_port benchmarks/xdd
 add_port security/sudo
-#add_port security/nmap
 add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
-#+add_port www/py-django-tastypie
 add_port devel/py-mimeparse
 add_port devel/py-dateutil
-#-add_port www/py-django-tastypie
 add_port www/py-django-tastypie
 add_port devel/py-daemon
 add_port devel/py-polib
 add_port devel/py-simplejson
-
 add_port sysutils/bsdstats
-
 add_port www/wgetpaste
-
-#+add_port net/py-eventlet
 add_port devel/py-greenlet
-#-add_port net/py-eventlet
 add_port net/py-eventlet
 
 # NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
 # counted against the release image's size because they aren't used in
 # production yet.
 if [ "${DEBUG}" = 1 ]; then
-add_port devel/py-zope.interface
-add_port devel/py-twistedCore
-add_port devel/py-ujson
-add_port devel/py-lockfile
-add_port devel/pyrex
-fi
-
-if [ "${DEBUG}" = 1 ]; then
-	#+add_port devel/git || net-p2p/transmission-daemon
-	add_port security/ca_root_nss WITH_ETCSYMLINK=y
-	add_port ftp/curl
-	#-add_port devel/git || net-p2p/transmission-daemon
+	add_port devel/py-zope.interface
+	add_port devel/py-twistedCore
+	add_port devel/py-ujson
+	add_port devel/py-lockfile
+	add_port devel/pyrex
 fi
 
 if [ "${DEBUG}" = 1 ]; then 
+	add_port security/ca_root_nss WITH_ETCSYMLINK=y
+	add_port ftp/curl
 	add_port devel/apr1
 	add_port devel/py-logilab-common
 	add_port devel/py-astng
