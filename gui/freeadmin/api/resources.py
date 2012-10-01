@@ -33,16 +33,6 @@ from freenasUI.system.models import Sysctl
 from freenasUI.storage.models import Disk
 
 
-class SysctlResource(DojoModelResource):
-
-    class Meta:
-        queryset = Sysctl.objects.all()
-        resource_name = 'sysctl'
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
-
-
 class DiskResource(DojoModelResource):
 
     class Meta:
