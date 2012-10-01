@@ -268,16 +268,6 @@ def volautoimport(request):
     })
 
 
-def volume_disks(request, volume_id):
-    volume = models.Volume.objects.get(id=volume_id)
-    disk_list = models.Disk.objects.filter(disk_group__group_volume=volume_id)
-    return render(request, 'storage/volume_detail.html', {
-        'focused_tab': 'storage',
-        'volume': volume,
-        'disk_list': disk_list,
-    })
-
-
 def dataset_create(request, fs):
     defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
