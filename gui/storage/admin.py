@@ -1,3 +1,4 @@
+from freenasUI.freeadmin.api.resources import DiskResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -12,6 +13,7 @@ class DiskFAdmin(BaseFreeAdmin):
         'disk_multipath_member',
         'disk_enabled',
         )
+    resource = DiskResource
 
     def get_actions(self):
         actions = super(DiskFAdmin, self).get_actions()

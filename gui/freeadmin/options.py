@@ -37,8 +37,11 @@ from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
+from freenasUI.freeadmin.api.utils import (DojoModelResource,
+    DjangoAuthentication)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
+from tastypie.resources import ResourceOptions
 
 log = logging.getLogger('freeadmin.options')
 
@@ -53,7 +56,7 @@ class BaseFreeAdmin(object):
     deletable = True
     menu_child_of = None
 
-    resource_name = None
+    resource = None
 
     advanced_fields = []
 
@@ -77,21 +80,42 @@ class BaseFreeAdmin(object):
 
         if model is not None:
             self._model = model
-            if self.resource_name is None:
-                self.resource_name = model._meta.module_name
 
         if admin is not None:
             self._admin = admin
 
-        if c is None:
-            return None
-        obj = c()
-        for i in dir(obj):
-            if not i.startswith("__"):
-                if not hasattr(self, i):
-                    raise Exception("The attribute '%s' is a not valid "
-                        "in FreeAdmin" % i)
-                self.__setattr__(i, getattr(obj, i))
+        if c is not None:
+            obj = c()
+            for i in dir(obj):
+                if not i.startswith("__"):
+                    if not hasattr(self, i):
+                        raise Exception("The attribute '%s' is a not valid "
+                            "in FreeAdmin" % i)
+                    self.__setattr__(i, getattr(obj, i))
+
+        if self.resource is None:
+            myMeta = type('Meta', (object, ), dict(
+                queryset=self._model.objects.all(),
+                resource_name=self._model._meta.module_name,
+                allowed_methods=['get'],
+                include_resource_uri=False,
+                authentication=DjangoAuthentication(),
+                ))
+
+            myres = type(
+                self._model._meta.object_name + 'Resource',
+                (DojoModelResource, ),
+                dict(Meta=myMeta)
+                )
+            res = myres()
+            self.resource = myres
+        elif self.resource is False:
+            res = None
+        else:
+            res = self.resource()
+
+        if res:
+            self._admin.v1_api.register(res)
 
     def get_urls(self):
         from django.conf.urls import patterns, url
@@ -592,7 +616,7 @@ class BaseFreeAdmin(object):
 
         context = {
             'model': m,
-            'resource_name': self.resource_name,
+            'resource_name': self.resource._meta.resource_name,
             'structure_url': reverse('freeadmin_%s_%s_structure' % (
                 m._meta.app_label,
                 m._meta.module_name,
