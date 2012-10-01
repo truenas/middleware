@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-09-30 01:03+0200\n"
+"PO-Revision-Date: 2012-10-01 03:03+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -325,7 +325,7 @@ msgstr "허용"
 
 #: choices.py:257
 msgid "Required"
-msgstr "Required"
+msgstr "필수"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
@@ -1050,7 +1050,7 @@ msgstr ""
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr ""
+msgstr "Aliases"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1141,71 +1141,67 @@ msgid "Create Link Aggregation"
 msgstr "링크어그리게이션 생성"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "모든 링크어그리게이션 보기"
+msgstr "링크어그리게이션 보기"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
-msgstr "LAGG가 성공적으로 추가되었습니다."
+msgstr "LAGG가 성공적으로 추가되었습니다"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "이 IP는 이미 사용중입니다."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "PBI파일을 임시로 넣을 장소"
 
 #: plugins/forms.py:93
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
-msgstr ""
+msgstr "이곳은 시스템이 PBI 파일을 설치하기전 임시로 PBI파일을 저장하는 장소입니다."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "설치될  PBI 파일"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "계속 진행하기전 반드시 Plugins 서비스를 꺼주세요."
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "경로 %s가 이미 존재합니다"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "전체 jail 경로는 76문자를 초과할 수 없습니다"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
+msgstr "Plugins Jail 경로는 Plugins가 보관되어지는 경로 안쪽으로는 사용되어질 수 없습니다."
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
+msgstr "Plugins 이 저장되어지는 경로는 Plugins Jail의 경로 안쪽으로는 사용되어질 수 없습니다."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "전자우편 주소"
+msgstr "Jail IPv4 주소"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "IPv4 서브넷 마스크"
+msgstr "Jail IPv4 넷마스크"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
-msgstr ""
+msgstr "플러그인 저장 경로"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1217,51 +1213,50 @@ msgstr ""
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "전체 경로는 88 문자를 초과할 수 없습니다"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "캐시를 재생성할 수 없습니다."
+msgstr "해당 경로가 %s에 마운트 될 수 없습니다"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "캐시를 재생성할 수 없습니다."
+msgstr "해당 경로가 %s로부터 언마운트 될 수 없습니다"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "플러그인 이름"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "플러그인 이름"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "플러그인 정보 이름"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "플러그인 정보 이름"
 
 #: plugins/models.py:50
 msgid "Plugin version"
-msgstr ""
+msgstr "플러그인 버전"
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "플러그인 버전"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "IPv4 주소"
+msgstr "플러그인 API 버전"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "플러그인 구성 기술"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
@@ -1270,33 +1265,31 @@ msgstr ""
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "IPv4 주소"
+msgstr "플러그인 IP 주소"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
-#, fuzzy
 msgid "Plugin TCP port"
-msgstr "TCP 포트"
+msgstr "플러그인 TCP 포트"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
-msgstr ""
+msgstr "플러그인 저장 경로"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "플러그인 설치후 저장되어질 경로"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "플러그인"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "소스"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1313,37 +1306,32 @@ msgid "Mount Points"
 msgstr "마운트 포인트"
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "플러그인이 성공적으로 갱신되었습니다."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "%s가 추가 되었습니다. "
+msgstr "플러그인이 성공적으로 제거 되었습니다."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "플러그인 제거 불능."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "%s가 갱신 되었습니다. "
+msgstr "플러그인이 성공적으로 갱신 되었습니다"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "%s가 갱신 되었습니다. "
+msgstr "플러그인이 성공적으로 설치 되었습니다"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "jail을 가져오는데 문제가 있었습니다."
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "Jail을 성공적으로 가져왔습니다."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1370,14 +1358,12 @@ msgid "The NFS service failed to reload."
 msgstr "NFS 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
+msgstr "이 IP는 이미 존재합니다."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "AFP 서비스 재실행 실패."
+msgstr "플러그인 Jail 서비스의 재실행이 실패하였습니다."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1397,7 +1383,7 @@ msgstr "이 값은 1024부터 65535까지만 포함되어야 합니다. 기본�
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "최소 passive 포트보다 높아야 합니다"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1421,12 +1407,11 @@ msgstr "Rsync 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "이름에는 / 또는 ] 문자를 사용할 수 없습니다."
+msgstr "이름에는 슬래시 또는 대괄호 닫음 문자를 사용할 수 없습니다."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "암호 바꾸기"
+msgstr "암호 확인"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1434,17 +1419,17 @@ msgstr "DynamicDNS 서비스 재시작 실패."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr ""
+msgstr "이것은 유효한 이메일 주소가 아닙니다"
 
 #: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
-msgstr ""
+msgstr "연락처는 반드시 알파벳 문자,_, - 만을 포함하거나 또는 유효한 이메일 주소여야 합니다."
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Community는 반드시 알파벳 문자, _ 또는 - 만을 포함해야 합니다."
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1460,19 +1445,18 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr ""
 
 #: services/forms.py:427 services/forms.py:1137
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "사용자 계정 %s 는 유효하지 않습니다. "
+msgstr[0] "사용자 이메일%(email)s 는 유효하지 않습니다"
 
 #: services/forms.py:437
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS 서비스 재실행 실패."
+msgstr "UPS 서비스 재실행 실패."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
-msgstr ""
+msgstr "관리자 계정의 비밀번호 확인"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1531,7 +1515,7 @@ msgstr ""
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
@@ -1566,7 +1550,7 @@ msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
-msgstr ""
+msgstr "이 입력란은 CHAP나 Mutual CHAP가 Controller 인증 방식으로 설정되어있다면 필요한 입력란입니다."
 
 #: services/forms.py:730
 #, fuzzy
@@ -1579,7 +1563,7 @@ msgstr "파일명을 포함한 전체 경로를 입력하세요."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "volume/dataset안에 파일을 지정해야 합니다."
 
 #: services/forms.py:781
 msgid ""
@@ -1613,7 +1597,7 @@ msgstr "그룹ID는 %d 보다 높아서는 안됩니다."
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr ""
+msgstr "이 입력란은 유효한 IP 주소나 네트웍이 아닙니다. 모든 것을 허용하기 위해서 \"ALL\" 글쇠가 사용될 수 있습니다."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1637,9 +1621,8 @@ msgid "Are you sure you want to delete?"
 msgstr "삭제 하시겠습니까?"
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SSH 서비스 재시작 실패."
+msgstr "S.M.A.R.T. 서비스의 재시작이 실패하였습니다."
 
 #: services/models.py:51
 msgid "Service"
@@ -1720,7 +1703,7 @@ msgstr ""
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
-msgstr "File mask"
+msgstr "파일 마스크"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1728,7 +1711,7 @@ msgstr "기존 파일 마스크를 무시하고 새로운 마스크를 만들기
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr "Directory mask"
+msgstr "디렉토리 마스크"
 
 #: services/models.py:129
 msgid ""
@@ -1737,7 +1720,7 @@ msgstr "기존 디렉토리 마스크를 무시하고 새로운 마스크를 만
 
 #: services/models.py:132
 msgid "Large RW support"
-msgstr ""
+msgstr "Large RW지원"
 
 #: services/models.py:134
 msgid "Send files with sendfile(2)"
@@ -1745,7 +1728,7 @@ msgstr "sendfile(2)로 파일들을 보내기"
 
 #: services/models.py:136
 msgid "EA Support"
-msgstr ""
+msgstr "EA 지원"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
@@ -1758,11 +1741,11 @@ msgstr "빈 암호 허용"
 #: services/models.py:142 services/models.py:787 services/models.py:874
 #: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "보조 지정자들"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr ""
+msgstr "이 파라매터들은 smb.conf의 [global] 섹션에 추가되었습니다"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1778,7 +1761,7 @@ msgstr "홈 디렉토리 브라우징 활성화"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr "삼바 사용자용 홈 디렉토리 브라우징 활성\\비활성"
+msgstr "삼바 사용자용 홈 디렉토리 브라우징 활성/비활성."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1808,11 +1791,11 @@ msgstr "AIO 활성화"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "AIO 지원 활성화\\비활성화"
+msgstr "AIO 지원 활성화/비활성화."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
-msgstr ""
+msgstr "최소 AIO 읽기 크기"
 
 #: services/models.py:177
 msgid ""
@@ -1821,7 +1804,7 @@ msgstr ""
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
-msgstr ""
+msgstr "최소 AIO 쓰기 크기"
 
 #: services/models.py:183
 msgid ""
@@ -1852,7 +1835,7 @@ msgstr "서버 이름"
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr ""
+msgstr "서버이름. 이란이 공백으로 남겨질 경우 기본 서버가 지정되어질 것 입니다."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1860,7 +1843,7 @@ msgstr "방문자 접근"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "이 시스템의 모든 애플 공유들을 손님계정에게 접근을 허용합니다."
 
 #: services/models.py:219
 msgid "Max. Connections"
@@ -1878,23 +1861,25 @@ msgstr "AFP"
 
 #: services/models.py:236
 msgid "Number of servers"
-msgstr ""
+msgstr "서버 개수"
 
 #: services/models.py:237
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"몇개의 서버를 생성할지 지정해 주세요. 클라이언트로부터 최대의 동시 사용성을 견딜 수 있게 충분하여야 하고, 일반적으로 4에서 6대 "
+"입니다."
 
 #: services/models.py:241
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "비동기 모드"
 
 #: services/models.py:242
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
-msgstr ""
+msgstr "비동기 모드 활성화, 기가비트 네트웍 속도 성능에 도움이 됩니다."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -1903,49 +1888,51 @@ msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr ""
+msgstr "Base 이름"
 
 #: services/models.py:258
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Base 이름은 (e.g. iqn.2007-09.jp.ne.peach.istgt, 세부사항은 RFC 3720과 3721을 참조) "
+"'iqn.' 로 시작되지 않는 Target 이름과 합쳐질 것입니다"
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "인증 방식 발견"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O 시간초과"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "초당 I/O 시간초과 (기본 30)."
 
 #: services/models.py:281
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN 간격"
 
 #: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "초단위의 NOPIN 전송 간격 (기본값 20)."
 
 #: services/models.py:287
 msgid "Max. sessions"
-msgstr ""
+msgstr "최대 세션수"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "동시 운영할 수 있는 최대 세션수 (기본값 16)."
 
 #: services/models.py:293
 msgid "Max. connections"
-msgstr ""
+msgstr "최대 접속수"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "각 세션별 최대 접속수 (기본값 8)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
@@ -1963,27 +1950,27 @@ msgstr ""
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI 초기 매개수(기본값 16)."
 
 #: services/models.py:311
 msgid "First burst length"
-msgstr ""
+msgstr "첫 burst 길이"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI 초기 매개수(기본값65536)."
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr ""
+msgstr "최대 burst 길이"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI 초기 매개수(기본값 262144)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "최대 데이터 세그먼트 수신 길이"
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
@@ -1991,7 +1978,7 @@ msgstr ""
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI 초기 매개수 (기본값 2)"
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
@@ -2003,23 +1990,23 @@ msgstr ""
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr ""
+msgstr "LUC 활성화"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr ""
+msgstr "제어기 IP 주소"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "논리 유닛 제어기 IP 주소 (기본값 127.0.0.1(localhost))"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr ""
+msgstr "제어기 TCP 포트"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "논리 유닛 제어기 TCP 포트(기본값 3261)"
 
 #: services/models.py:358
 #, fuzzy
@@ -2032,11 +2019,11 @@ msgstr ""
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "제어기 인증 방식"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "제어기가 해당 방식을 인정합니다."
 
 #: services/models.py:375
 msgid ""
@@ -2092,11 +2079,11 @@ msgstr ""
 #: templates/sharing/windows.html:13 templates/system/sysctl.html:7
 #: templates/system/tunable.html:7
 msgid "Comment"
-msgstr ""
+msgstr "주석"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "참고용으로 이곳에 설명을 입력할 수 있습니다."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
@@ -2106,11 +2093,11 @@ msgstr ""
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr ""
+msgstr "포털 그룹 ID"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
-msgstr ""
+msgstr "포털"
 
 #: services/models.py:522
 #, fuzzy
@@ -2134,7 +2121,7 @@ msgstr ""
 
 #: services/models.py:550
 msgid "Authorized network"
-msgstr ""
+msgstr "승인된 네트웍"
 
 #: services/models.py:552
 msgid ""
@@ -2184,11 +2171,11 @@ msgstr ""
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
-msgstr ""
+msgstr "직렬"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "논리 유닛의 고유 번호"
 
 #: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
@@ -2379,11 +2366,11 @@ msgstr "드라이버"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "UPS 통신용으로 사용된 드라이버."
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "UPS가 연결된 직렬또는 USB 포트."
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
@@ -6126,9 +6113,8 @@ msgstr "펌웨어 업데이트"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "인터페이스 삭제"
+msgstr "Plugins Jail 가져오기"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6170,18 +6156,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "NTP 서버가 정의되지 않았습니다."
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr ""
+msgstr "NTP 서버 추가"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "UNIX 공유 추가"
+msgstr "NTP 서버 추가"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6196,17 +6180,15 @@ msgstr "시스템을 <strong>재기동</strong> 하려고 합니다. 계속 진�
 
 #: templates/system/reporting.html:2
 msgid "History"
-msgstr ""
+msgstr "사용내역"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "로컬 마스터"
+msgstr "로컬 경로"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
-msgstr "원격 모니터"
+msgstr "원격"
 
 #: templates/system/rsync.html:48
 #, fuzzy
@@ -6309,17 +6291,15 @@ msgstr ""
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "연결되어진"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "tunable 설정이 정의되지 않았습니다."
 
 #: templates/system/tunable.html:40
-#, fuzzy
 msgid "Add Tunable"
-msgstr "타겟 더하기"
+msgstr "Tunable 추가"
 
 #: templates/system/tunable.html:42
 #, fuzzy
