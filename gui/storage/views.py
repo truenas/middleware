@@ -330,9 +330,7 @@ def disks_datagrid_json(request):
     for data in disks:
         ret = {}
         ret['edit'] = {
-            'edit_url': reverse('freeadmin_model_edit', kwargs={
-                'app': 'storage',
-                'model': 'Disk',
+            'edit_url': reverse('freeadmin_storage_disk_edit', kwargs={
                 'oid': data.id,
                 }) + '?deletable=false',
             'wipe_url': reverse('storage_disk_wipe', kwargs={

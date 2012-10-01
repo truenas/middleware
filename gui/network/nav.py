@@ -79,11 +79,10 @@ class Linkss(TreeNode):
                     subsubnav.name = member.lagg_physnic
                     subsubnav.type = 'editobject'
                     subsubnav.icon = u'LAGGIcon'
-                    subsubnav.view = 'freeadmin_model_edit'
+                    subsubnav.view = 'freeadmin_network_lagginterfacemembers_edit'
                     subsubnav.app_name = 'network'
                     subsubnav.model = 'LAGGInterfaceMembers'+lagg.lagg_interface.int_name
-                    subsubnav.kwargs = {'app': 'network', 'model': 'LAGGInterfaceMembers', \
-                            'oid': member.id}
+                    subsubnav.kwargs = {'oid': member.id}
                     subsubnav.append_url = '?deletable=false'
                     subsubnav._children = []
                     subnav.append_child(subsubnav)
