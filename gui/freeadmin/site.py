@@ -83,7 +83,9 @@ class FreeAdminSite(object):
             model_or_iterable = [model_or_iterable]
         for model in model_or_iterable:
             if model not in self._registry:
-                raise NotRegistered('The model %s is not registered' % model.__name__)
+                raise NotRegistered('The model %s is not registered' % (
+                    model.__name__,
+                    ))
             del self._registry[model]
 
     def has_permission(self, request):
@@ -188,7 +190,8 @@ class FreeAdminSite(object):
         except:
             console = False
         try:
-            hostname = GlobalConfiguration.objects.order_by('-id')[0].gc_hostname
+            hostname = GlobalConfiguration.objects.order_by(
+                '-id')[0].gc_hostname
         except:
             hostname = None
         sw_version = get_sw_version()
