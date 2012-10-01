@@ -119,6 +119,9 @@ class BaseFreeAdmin(object):
             url(r'^structure/$',
                 wrap(self.structure),
                 name='freeadmin_%s_%s_structure' % info),
+            url(r'^actions/$',
+                wrap(self.actions),
+                name='freeadmin_%s_%s_actions' % info),
             url(r'^empty-formset/$',
                 wrap(self.empty_formset),
                 name='freeadmin_%s_%s_empty_formset' % info),
@@ -594,6 +597,10 @@ class BaseFreeAdmin(object):
                 m._meta.app_label,
                 m._meta.module_name,
                 )),
+            'actions_url': reverse('freeadmin_%s_%s_actions' % (
+                m._meta.app_label,
+                m._meta.module_name,
+                )),
         }
 
         template = "%s/%s_datagrid.html" % (
@@ -637,15 +644,63 @@ class BaseFreeAdmin(object):
 
     def structure(self, request):
 
-        class MyEncoder(json.JSONEncoder):
-            def default(self, obj):
-                return super(MyEncoder, self).default(obj)
-
         columns = self.get_datagrid_columns()
         data = OrderedDict()
         for column in columns:
             name = column.pop('name')
             data[name] = column
 
-        enc = MyEncoder().encode(data)
+        enc = json.dumps(data)
+        return HttpResponse(enc)
+
+    def actions(self, request):
+
+        actions = {}
+        actions['Edit'] = {
+            'on_select': """function(numrows) {
+                if(numrows > 1 || numrows == 0) {
+                    query(".gridEdit").forEach(function(item, idx) {
+                        domStyle.set(item, "display", "none");
+                    });
+                } else {
+                    query(".gridEdit").forEach(function(item, idx) {
+                        domStyle.set(item, "display", "block");
+                    });
+                }
+            }""",
+            'button_name': 'Edit',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    grid.store.get(i).then(function(data) {
+                        editObject('Edit', data._edit_url, [mybtn,]);
+                    });
+                }
+            }""",
+        }
+
+        actions['Delete'] = {
+            'on_select': """function(numrows) {
+                if(numrows > 1 || numrows == 0) {
+                    query(".gridDelete").forEach(function(item, idx) {
+                        domStyle.set(item, "display", "none");
+                    });
+                } else {
+                    query(".gridDelete").forEach(function(item, idx) {
+                        domStyle.set(item, "display", "block");
+                    });
+                }
+            }""",
+            'button_name': 'Delete',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    grid.store.get(i).then(function(data) {
+                        editObject('Delete', data._delete_url, [mybtn,]);
+                    });
+                }
+            }""",
+        }
+
+        enc = json.dumps(actions)
         return HttpResponse(enc)

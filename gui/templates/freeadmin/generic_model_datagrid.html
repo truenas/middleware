@@ -1,73 +1,10 @@
 <div data-dojo-type="dijit.layout.BorderContainer" style="width:100%;height:100%" data-dojo-props="gutters: false, toggleSplitterOpen: true">
 
     <div id="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'">
-    <script type="dojo/method">
-require([
-    "dojo/dom-style",
-    "dojo/query",
-    "dojo/request/xhr",
-    "dojo/store/JsonRest",
-    "dgrid/OnDemandGrid",
-    "dgrid/Keyboard",
-    "dgrid/Selection",
-    "dojo/_base/declare",
-    "dgrid/extensions/DijitRegistry",
-    "dijit/registry",
-    ], function(domStyle, query, xhr, JsonRest, Grid, Keyboard, Selection, declare, DijitRegistry, registry) {
-
-    var columns;
-    xhr.get('{{ structure_url }}', {
-        sync: true,
-        handleAs: 'text'
-    }).then(function(data) {
-        columns = eval('(' + data + ')');
-    });
-
-    var store = new JsonRest({
-            target:"{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
-        });
-
-    var StandardGrid = declare([Grid, Selection, Keyboard]);
-    grid = new StandardGrid({
-        id: 'orderGrid',
-        store: store,
-        columns: columns,
-        }, "gridDiv");
-    grid.on(".dgrid-row:dblclick", function(evt) {
-        var row = grid.row(evt);
-        editObject('{% trans "Edit"|escapejs %}', '', [this, ]);
-    });
-
-    var selectionCheck = function(numrows) {
-        if(numrows > 1 || numrows == 0) {
-            query(".gridEdit").forEach(function(item, idx) {
-                domStyle.set(item, "display", "none");
-            });
-
-            query(".gridDelete").forEach(function(item, idx) {
-                domStyle.set(item, "display", "none");
-            });
-        } else {
-            query(".gridEdit").forEach(function(item, idx) {
-                domStyle.set(item, "display", "block");
-            });
-
-            query(".gridDelete").forEach(function(item, idx) {
-                domStyle.set(item, "display", "block");
-            });
-        }
-    };
-    grid.on("dgrid-select, dgrid-deselect", function(evt) {
-        selectionCheck(evt.rows.length);
-    });
-    //grid.select(1);
-    selectionCheck(0);
-
-});
-</script>
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
+    <div id="actionsPane" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
         {% block actions_pane %}
+        {% comment %}
         <div class="gridEdit left">
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
@@ -94,8 +31,115 @@ require([
             </script>
             </button>
         </div>
-        <span class="clear"></span>
+        {% endcomment %}
         {% block actions_pane_extra %}{% endblock %}
         {% endblock %}
+        <span class="clear"></span>
     </div>
+</div>
+<div data-dojo-type="dijit.layout.ContentPane">
+    <script type="dojo/method">
+require([
+    "dojo/dom",
+    "dojo/dom-class",
+    "dojo/dom-construct",
+    "dojo/dom-style",
+    "dojo/query",
+    "dojo/request/xhr",
+    "dojo/store/JsonRest",
+    "dgrid/OnDemandGrid",
+    "dgrid/Keyboard",
+    "dgrid/Selection",
+    "dojo/_base/declare",
+    "dgrid/extensions/DijitRegistry",
+    "dijit/registry",
+    "dijit/form/Button"
+    ], function(dom, domClass, domConstruct, domStyle, query, xhr, JsonRest, Grid, Keyboard, Selection, declare, DijitRegistry, registry, Button) {
+
+    var columns, actions;
+    xhr.get('{{ structure_url }}', {
+        sync: true,
+        handleAs: 'text'
+    }).then(function(data) {
+        columns = eval('(' + data + ')');
+    });
+
+
+    xhr.get('{{ actions_url }}', {
+        sync: true,
+        handleAs: 'json'
+    }).then(function(data) {
+        actions = data;
+        for(var key in actions) {
+            for(var func in {'on_select': 1, 'on_click': 1}) {
+              var funceval = eval('(' + actions[key][func] + ')');
+              actions[key][func] = funceval;
+            }
+
+            var pane = dom.byId("actionsPane");
+
+            var n = domConstruct.create("div", null, pane);
+            domClass.add(n, ["grid" + key, "left"]);
+
+            var but = new Button({
+                'label': actions[key]['button_name'],
+                'onClick': actions[key]['on_click']
+            });
+            but.placeAt(n);
+
+        }
+    });
+
+
+    var store = new JsonRest({
+            target:"{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
+        });
+
+    var StandardGrid = declare([Grid, Selection, Keyboard]);
+    grid = new StandardGrid({
+        id: 'orderGrid',
+        store: store,
+        columns: columns,
+        }, "gridDiv");
+    grid.on(".dgrid-row:dblclick", function(evt) {
+        var row = grid.row(evt);
+        editObject('{% trans "Edit"|escapejs %}', '', [this, ]);
+    });
+
+    var selectionCheck = function(numrows) {
+        for(key in actions) {
+            var func = actions[key]['on_select'];
+            try {
+              func(numrows);
+            } catch(e) {
+              console.log(e);
+            }
+        }
+        /*
+        if(numrows > 1 || numrows == 0) {
+            query(".gridEdit").forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+
+            query(".gridDelete").forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+        } else {
+            query(".gridEdit").forEach(function(item, idx) {
+                domStyle.set(item, "display", "block");
+            });
+
+            query(".gridDelete").forEach(function(item, idx) {
+                domStyle.set(item, "display", "block");
+            });
+        }*/
+    };
+    grid.on("dgrid-select, dgrid-deselect", function(evt) {
+        selectionCheck(evt.rows.length);
+    });
+    //grid.select(1);
+    selectionCheck(0);
+
+});
+</script>
 </div>
