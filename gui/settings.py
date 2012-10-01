@@ -133,16 +133,6 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 
-DOJANGO_DATAGRID_ACCESS = (
-    'account',
-    'system',
-    'network',
-    'storage',
-    'plugins',
-    'sharing',
-    'services',
-)
-
 DOJANGO_DOJO_PROFILE = 'local_release'
 DOJANGO_DOJO_VERSION = '1.8.0'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
