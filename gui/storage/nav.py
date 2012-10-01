@@ -61,7 +61,7 @@ class ViewDisks(TreeNode):
 
     gname = 'ViewDisks'
     name = _(u'View Disks')
-    view = 'storage_datagrid_disks'
+    view = 'freeadmin_storage_disk_datagrid'
     type = 'view'
     icon = u'ViewAllVolumesIcon'
     app_name = 'storage'
