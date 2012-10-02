@@ -59,7 +59,7 @@ require([
                     return true;
                 _alert_status = data;
                 if(data == 'OK') {
-                    domCalss.remove(alertdiv, ["alert_crit", "alert_warn"]);
+                    domClass.remove(alertdiv, ["alert_crit", "alert_warn"]);
                     domClass.add(alertdiv, "alert_ok");
                 } else if(data == 'WARN') {
                     domClass.remove(alertdiv, ["alert_crit", "alert_ok"]);
