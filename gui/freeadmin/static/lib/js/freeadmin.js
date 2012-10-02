@@ -245,35 +245,6 @@ require([
 
     }
 
-    formsetAddForm = function(attrs) {
-
-        xhr.get(attrs['url'], {
-            query: {
-                prefix: attrs['prefix'],
-            },
-            sync: true
-            }).then(function(data) {
-
-                var extra = registry.byId("id_"+attrs['prefix']+"-TOTAL_FORMS");
-                var extran = extra.get("value");
-                var data = data.replace(new RegExp(attrs['emptyholder'], 'g'), extran);
-                var tr = domConstruct.create("tr");
-
-                tr.innerHTML = data;
-                parser.parse(tr);
-
-                if(typeof(attrs.insertItems) != 'undefined') {
-                    attrs['insertItems'](tr.childNodes);
-                } else if(typeof(attrs.insert) != 'undefined') {
-                    attrs['insert'](tr);
-                }
-                extra.set('value', parseInt(extran) + 1);
-
-            });
-
-    }
-
-
     toggle_service = function(obj, onSuccess) {
         var td = obj.parentNode;
         var n = domConstruct.create("div", {  }, td);
