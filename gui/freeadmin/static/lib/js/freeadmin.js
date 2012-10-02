@@ -282,7 +282,6 @@ require([
 
     }
 
-
     togglePluginService = function(from, name) {
 
         var td = from.parentNode;
@@ -997,7 +996,6 @@ require([
             });
     }
 
-
     editScaryObject = function(name, url, nodes) {
         commonDialog({
             id: "editscary_dialog",
@@ -1042,197 +1040,195 @@ require([
         p.selectChild(pane);
     }
 
+    dojo._contentHandlers.text = (function(old){
+      return function(xhr){
+        if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
+          window.location='/';
+          return '';
+        }
+        var text = old(xhr);
+        return text;
+      }
+    })(dojo._contentHandlers.text);
 
-        dojo._contentHandlers.text = (function(old){
-          return function(xhr){
-            if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-              window.location='/';
-              return '';
-            }
-            var text = old(xhr);
-            return text;
-          }
-        })(dojo._contentHandlers.text);
+    ready(function() {
 
-        ready(function() {
-
-            menuSetURLs();
-            Menu.openSystem();
-            var store = new JsonRestStore({
-                target: Menu.urlTree,
-                labelAttribute: "name",
-            });
-
-            var treeModel = new ForestStoreModel({
-                store: store,
-                query: {},
-                rootId: "root",
-                rootLabel: "FreeNAS",
-                childrenAttrs: ["children"]
-            });
-
-            var treeclick = function(item) {
-                var p = registry.byId("content");
-
-                if(item.type == 'object' ||
-                   item.type == 'dialog' ||
-                   item.type == 'scary_dialog' ||
-                   item.type == 'editobject' ||
-                   item.type == 'volumewizard'
-                    ) {
-                    var data = query(".data_"+item.app_name+"_"+item.model);
-                    var func;
-
-                    if(item.type == 'volumewizard') func = volumeWizard;
-                    else if(item.type == 'scary_dialog') func = editScaryObject;
-                    else func = editObject;
-
-                    if(data) {
-                        widgets = [];
-                        data.forEach(function(item, idx) {
-                            widget = registry.getEnclosingWidget(item);
-                            if(widget) {
-                                widgets.push(widget);
-                            }
-                        });
-                        func(item.name, item.url, widgets);
-                    } else
-                        func(item.name, item.url);
-
-                } else if(item.type == 'opennetwork') {
-                    Menu.openNetwork(item.gname);
-                } else if(item.type == 'en_dis_services') {
-                    Menu.openServices();
-                } else if(item.type == 'pluginsfcgi') {
-                    Menu.openPluginsFcgi(p, item);
-                } else if(item.type == 'openaccount') {
-                    Menu.openAccount(item.gname);
-                } else if(item.type == 'iscsi') {
-                    Menu.openISCSI(item.gname);
-                } else if(item.type == 'logout') {
-                    dWindow.location='/account/logout/';
-                } else if(item.action == 'displayprocs') {
-                    registry.byId("top_dialog").show();
-                } else if(item.action == 'shell') {
-                    registry.byId("shell_dialog").show();
-                } else if(item.type == 'opensharing') {
-                    Menu.openSharing(item.gname);
-                } else if(item.type == 'openstorage') {
-                    Menu.openStorage(item.gname);
-                } else if(item.type == 'viewmodel') {
-                    //  get the children and make sure we haven't opened this yet.
-                    var c = p.getChildren();
-                    for(var i=0; i<c.length; i++){
-                        if(c[i].title == item.name){
-                            p.selectChild(c[i]);
-                            return;
-                        }
-                    }
-                    var pane = new ContentPane({
-                        id: "data_"+item.app_name+"_"+item.model,
-                        href: item.url,
-                        title: item.name,
-                        closable: true,
-                        refreshOnShow: true,
-                        parseOnLoad: true,
-                    });
-                    p.addChild(pane);
-                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                    p.selectChild(pane);
-                } else {
-                    //  get the children and make sure we haven't opened this yet.
-                    var c = p.getChildren();
-                    for(var i=0; i<c.length; i++){
-                        if(c[i].tab == item.gname){
-                            p.selectChild(c[i]);
-                            return;
-                        }
-                    }
-                    var pane = new ContentPane({
-                        href: item.url,
-                        title: item.name,
-                        closable: true,
-                        parseOnLoad: true,
-                    });
-                    pane.tab = item.gname;
-                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                    p.addChild(pane);
-                    p.selectChild(pane);
-                }
-
-            };
-
-                mytree = new Tree({
-                    id: "fntree",
-                    model: treeModel,
-                    showRoot: false,
-                    onClick: treeclick,
-                    onLoad: function() {
-                        var fadeArgs = {
-                           node: "fntree",
-                         };
-                        dFx.fadeIn(fadeArgs).play();
-                    },
-                    openOnClick: true,
-                    getIconClass: function(item, opened) {
-                        if(item.icon && item.icon.search("/") == -1)
-                            return item.icon;
-                    },
-                    getIconStyle: function(item, opened) {
-                        if(item.icon && item.icon.search("/") != -1)
-                            return {
-                                backgroundImage: "url("+item.icon+")",
-                                height: '16px',
-                                width: '16px'
-                                };
-                    },
-                }
-                );
-                registry.byId("menupane").set('content', mytree);
-
-                var shell = new ESCDialog({
-                    id: "shell_dialog",
-                    content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
-                    style: "min-height:400px;background-color: black;",
-                    title: 'Shell',
-                    region: 'center',
-                    connections: [],
-                    onShow: function() {
-
-                        function handler(msg,value) {
-                            switch(msg) {
-                            case 'conn':
-                                //startMsgAnim('Tap for keyboard',800,false);
-                                break;
-                            case 'disc':
-                                //startMsgAnim('Disconnected',0,true);
-                                delete _webshell;
-                                _webshell = undefined;
-                                registry.byId("shell_dialog").hide();
-                                break;
-                            case 'curs':
-                                cy=value;
-                                //scroll(cy);
-                                break;
-                            }
-                        }
-
-                        try {
-                            _webshell.start();
-                        } catch(e) {
-                            _webshell=new WebShell({
-                                node: "shell_output",
-                                handler: handler
-                                });
-                            _webshell.start();
-                        }
-
-                    },
-                    onHide: function(e) {
-                        if(_webshell)
-                            _webshell.stop();
-                    }
-                }, "shell_dialog_holder");
-
+        menuSetURLs();
+        Menu.openSystem();
+        var store = new JsonRestStore({
+            target: Menu.urlTree,
+            labelAttribute: "name",
         });
+
+        var treeModel = new ForestStoreModel({
+            store: store,
+            query: {},
+            rootId: "root",
+            rootLabel: "FreeNAS",
+            childrenAttrs: ["children"]
+        });
+
+        var treeclick = function(item) {
+            var p = registry.byId("content");
+
+            if(item.type == 'object' ||
+               item.type == 'dialog' ||
+               item.type == 'scary_dialog' ||
+               item.type == 'editobject' ||
+               item.type == 'volumewizard'
+                ) {
+                var data = query(".data_"+item.app_name+"_"+item.model);
+                var func;
+
+                if(item.type == 'volumewizard') func = volumeWizard;
+                else if(item.type == 'scary_dialog') func = editScaryObject;
+                else func = editObject;
+
+                if(data) {
+                    widgets = [];
+                    data.forEach(function(item, idx) {
+                        widget = registry.getEnclosingWidget(item);
+                        if(widget) {
+                            widgets.push(widget);
+                        }
+                    });
+                    func(item.name, item.url, widgets);
+                } else
+                    func(item.name, item.url);
+
+            } else if(item.type == 'opennetwork') {
+                Menu.openNetwork(item.gname);
+            } else if(item.type == 'en_dis_services') {
+                Menu.openServices();
+            } else if(item.type == 'pluginsfcgi') {
+                Menu.openPluginsFcgi(p, item);
+            } else if(item.type == 'openaccount') {
+                Menu.openAccount(item.gname);
+            } else if(item.type == 'iscsi') {
+                Menu.openISCSI(item.gname);
+            } else if(item.type == 'logout') {
+                dWindow.location='/account/logout/';
+            } else if(item.action == 'displayprocs') {
+                registry.byId("top_dialog").show();
+            } else if(item.action == 'shell') {
+                registry.byId("shell_dialog").show();
+            } else if(item.type == 'opensharing') {
+                Menu.openSharing(item.gname);
+            } else if(item.type == 'openstorage') {
+                Menu.openStorage(item.gname);
+            } else if(item.type == 'viewmodel') {
+                //  get the children and make sure we haven't opened this yet.
+                var c = p.getChildren();
+                for(var i=0; i<c.length; i++){
+                    if(c[i].title == item.name){
+                        p.selectChild(c[i]);
+                        return;
+                    }
+                }
+                var pane = new ContentPane({
+                    id: "data_"+item.app_name+"_"+item.model,
+                    href: item.url,
+                    title: item.name,
+                    closable: true,
+                    refreshOnShow: true,
+                    parseOnLoad: true,
+                });
+                p.addChild(pane);
+                domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                p.selectChild(pane);
+            } else {
+                //  get the children and make sure we haven't opened this yet.
+                var c = p.getChildren();
+                for(var i=0; i<c.length; i++){
+                    if(c[i].tab == item.gname){
+                        p.selectChild(c[i]);
+                        return;
+                    }
+                }
+                var pane = new ContentPane({
+                    href: item.url,
+                    title: item.name,
+                    closable: true,
+                    parseOnLoad: true,
+                });
+                pane.tab = item.gname;
+                domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        };
+
+        mytree = new Tree({
+            id: "fntree",
+            model: treeModel,
+            showRoot: false,
+            onClick: treeclick,
+            onLoad: function() {
+                var fadeArgs = {
+                   node: "fntree",
+                 };
+                dFx.fadeIn(fadeArgs).play();
+            },
+            openOnClick: true,
+            getIconClass: function(item, opened) {
+                if(item.icon && item.icon.search("/") == -1)
+                    return item.icon;
+            },
+            getIconStyle: function(item, opened) {
+                if(item.icon && item.icon.search("/") != -1)
+                    return {
+                        backgroundImage: "url("+item.icon+")",
+                        height: '16px',
+                        width: '16px'
+                        };
+            }
+        });
+        registry.byId("menupane").set('content', mytree);
+
+        var shell = new ESCDialog({
+            id: "shell_dialog",
+            content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
+            style: "min-height:400px;background-color: black;",
+            title: 'Shell',
+            region: 'center',
+            connections: [],
+            onShow: function() {
+
+                function handler(msg,value) {
+                    switch(msg) {
+                    case 'conn':
+                        //startMsgAnim('Tap for keyboard',800,false);
+                        break;
+                    case 'disc':
+                        //startMsgAnim('Disconnected',0,true);
+                        delete _webshell;
+                        _webshell = undefined;
+                        registry.byId("shell_dialog").hide();
+                        break;
+                    case 'curs':
+                        cy=value;
+                        //scroll(cy);
+                        break;
+                    }
+                }
+
+                try {
+                    _webshell.start();
+                } catch(e) {
+                    _webshell=new WebShell({
+                        node: "shell_output",
+                        handler: handler
+                        });
+                    _webshell.start();
+                }
+
+            },
+            onHide: function(e) {
+                if(_webshell)
+                    _webshell.stop();
+            }
+        }, "shell_dialog_holder");
+
     });
+});
