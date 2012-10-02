@@ -2669,7 +2669,7 @@ class notifier:
 
         #
         # XXX: At some point (soon), plugins/jail need to support IPv6
-	# XXX: I agree.
+        # XXX: I agree.
         #
         pj = PluginsJail()
         pj.jail_name = jail_name
