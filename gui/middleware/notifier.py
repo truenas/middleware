@@ -1990,8 +1990,8 @@ class notifier:
                                     stderr=subprocess.STDOUT,
                                     )
         except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The firmware is does not meet the '
-                                  'pre-install criteria: %s' % (str(cpe), ))
+            raise MiddlewareError('The firmware does not meet the '
+                                  'pre-install criteria: %s' % (cpe.output, ))
         finally:
             os.chdir('/')
         # XXX: bleh
