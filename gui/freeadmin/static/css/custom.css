@@ -300,7 +300,7 @@ tr.odd:hover {
     padding-left:0px;
     text-decoration:bold;
 }
-th {
+table.form th {
     color:#50575F;
     background:#f5f5f5;
     padding:6px;

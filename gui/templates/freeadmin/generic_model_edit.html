@@ -10,7 +10,7 @@
 </script>
 {% endblock %}
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
-<table>
+<table class="form">
     {% block form %}
     {% csrf_token %}
     {% admin_form form %}
