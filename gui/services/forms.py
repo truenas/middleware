@@ -669,6 +669,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         self.fields['iscsi_discoveryauthgroup'].required = False
         self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
         self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_iscsi_toggleluc", ["id_iscsi_lucip", "id_iscsi_lucport", "id_iscsi_luc_authnetwork", "id_iscsi_luc_authmethod", "id_iscsi_luc_authgroup"], true);'
+
+        self.__lucenabled = self.instance.iscsi_toggleluc
+
         ro = True
         if len(self.data) > 0:
             if self.data.get("iscsi_toggleluc", None) == "on":
@@ -784,8 +787,11 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return cdata
 
     def save(self):
-        super(iSCSITargetGlobalConfigurationForm, self).save()
-        started = notifier().reload("iscsitarget")
+        obj = super(iSCSITargetGlobalConfigurationForm, self).save()
+        if self.__lucenabled != obj.iscsi_toggleluc:
+            started = notifier().restart("iscsitarget")
+        else:
+            started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
