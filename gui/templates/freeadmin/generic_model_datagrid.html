@@ -1,52 +1,34 @@
 <div data-dojo-type="dijit.layout.BorderContainer" style="width:100%;height:100%" data-dojo-props="gutters: false, toggleSplitterOpen: true">
-
-    <div id="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'">
-    </div>
-    <div id="actionsPane" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
-        {% block actions_pane %}
+  <div class="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'"></div>
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
+    <div data-dojo-type="dijit.layout.BorderContainer" style="width:100%;height:100%" data-dojo-props="gutters: false, toggleSplitterOpen: true">
+      {% block actions_static_pane %}
+      <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'left', splitter: false" style="background-color: white;width: 150px;" doLayout="false">
+        {% block actions_static_buttons %}
         <div class="gridAdd left">
-            <button data-dojo-type="dijit.form.Button" type="button">
-                {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
-            <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
-            </script>
-            </button>
+          <button data-dojo-type="dijit.form.Button" type="button">
+              {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
+          <script type="dojo/method" event="onClick" args="evt">
+              editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
+          </script>
+          </button>
         </div>
-        {% comment %}
-        <div class="gridEdit left">
-            <button data-dojo-type="dijit.form.Button" type="button">
-                {% trans "Edit" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    grid.store.get(i).then(function(data) {
-                        editObject('{% trans "Edit"|escapejs %}', data._edit_url, [mybtn,]);
-                    });
-                }
-            </script>
-            </button>
-        </div>
-        <div class="gridDelete left">
-            <button data-dojo-type="dijit.form.Button" type="button">
-                {% trans "Delete" %}
-            <script type="dojo/method" event="onClick" args="evt">
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    grid.store.get(i).then(function(data) {
-                        editObject('{% trans "Delete"|escapejs %}', data._delete_url, [mybtn,]);
-                    });
-                }
-            </script>
-            </button>
-        </div>
-        {% endcomment %}
-        {% block actions_pane_extra %}{% endblock %}
         {% endblock %}
         <span class="clear"></span>
+      </div>
+      {% endblock %}
+
+      <div class="actionsPane" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center', splitter: false" style="background-color: white;" doLayout="false">
+        {% block actions_pane %}
+        {% endblock %}
+        <span class="clear"></span>
+      </div>
     </div>
+  </div>
 </div>
 <div data-dojo-type="dijit.layout.ContentPane">
     <script type="dojo/method">
+    var cpane = this;
 require([
     "dojo/dom",
     "dojo/dom-class",
@@ -72,7 +54,6 @@ require([
         columns = eval('(' + data + ')');
     });
 
-
     xhr.get('{{ actions_url }}', {
         sync: true,
         handleAs: 'json'
@@ -84,7 +65,7 @@ require([
               actions[key][func] = funceval;
             }
 
-            var pane = dom.byId("actionsPane");
+            var pane = query(".actionsPane", cpane.domNode.parentNode)[0];
 
             var n = domConstruct.create("div", null, pane);
             domClass.add(n, ["grid" + key, "left"]);
@@ -98,20 +79,21 @@ require([
         }
     });
 
-
     var store = new JsonRest({
             target:"{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
         });
 
     var StandardGrid = declare([Grid, Selection, Keyboard]);
+    var griddiv = query(".gridDiv:first-child", cpane.domNode.parentNode)[0];
     grid = new StandardGrid({
         id: 'orderGrid',
         store: store,
         columns: columns,
-        }, "gridDiv");
+        }, griddiv);
+
     grid.on(".dgrid-row:dblclick", function(evt) {
         var row = grid.row(evt);
-        editObject('{% trans "Edit"|escapejs %}', '', [this, ]);
+        editObject('{% trans "Edit"|escapejs %}', row.data._edit_url, [this, ]);
     });
 
     var selectionCheck = function(numrows) {
@@ -123,24 +105,6 @@ require([
               console.log(e);
             }
         }
-        /*
-        if(numrows > 1 || numrows == 0) {
-            query(".gridEdit").forEach(function(item, idx) {
-                domStyle.set(item, "display", "none");
-            });
-
-            query(".gridDelete").forEach(function(item, idx) {
-                domStyle.set(item, "display", "none");
-            });
-        } else {
-            query(".gridEdit").forEach(function(item, idx) {
-                domStyle.set(item, "display", "block");
-            });
-
-            query(".gridDelete").forEach(function(item, idx) {
-                domStyle.set(item, "display", "block");
-            });
-        }*/
     };
     grid.on("dgrid-select, dgrid-deselect", function(evt) {
         selectionCheck(evt.rows.length);
