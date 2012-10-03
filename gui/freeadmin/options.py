@@ -620,24 +620,18 @@ class BaseFreeAdmin(object):
     def datagrid(self, request):
 
         m = self._model
+        info = m._meta.app_label, m._meta.module_name
 
         context = {
             'model': m,
+            'verbose_name': m._meta.verbose_name,
             'resource_name': self.resource._meta.resource_name,
-            'structure_url': reverse('freeadmin_%s_%s_structure' % (
-                m._meta.app_label,
-                m._meta.module_name,
-                )),
-            'actions_url': reverse('freeadmin_%s_%s_actions' % (
-                m._meta.app_label,
-                m._meta.module_name,
-                )),
+            'structure_url': reverse('freeadmin_%s_%s_structure' % info),
+            'actions_url': reverse('freeadmin_%s_%s_actions' % info),
+            'add_url': reverse('freeadmin_%s_%s_add' % info),
         }
 
-        template = "%s/%s_datagrid.html" % (
-            m._meta.app_label,
-            m._meta.module_name,
-            )
+        template = "%s/%s_datagrid.html" % info
         try:
             get_template(template)
         except:

@@ -4,6 +4,14 @@
     </div>
     <div id="actionsPane" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
         {% block actions_pane %}
+        <div class="gridAdd left">
+            <button data-dojo-type="dijit.form.Button" type="button">
+                {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
+            </script>
+            </button>
+        </div>
         {% comment %}
         <div class="gridEdit left">
             <button data-dojo-type="dijit.form.Button" type="button">
