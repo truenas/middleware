@@ -24,22 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
-from functools import update_wrapper
-import json
-
-from django import forms as dforms
-from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.base import ModelBase
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
-from django.template.loader import get_template
-from django.utils.translation import ugettext as _
 
-from dojango.forms.models import inlineformset_factory
-from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.services.exceptions import ServiceFailed
 from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
