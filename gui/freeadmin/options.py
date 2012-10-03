@@ -92,6 +92,14 @@ class BaseFreeAdmin(object):
                             "in FreeAdmin" % i)
                     self.__setattr__(i, getattr(obj, i))
 
+        """
+        If no resource has been set lets automatically create a
+        REST tastypie model resource
+
+        The name defaults to the django model name (lowercase)
+
+        Set resource to False to do not create one
+        """
         if self.resource is None:
             myMeta = type('Meta', (object, ), dict(
                 queryset=self._model.objects.all(),
