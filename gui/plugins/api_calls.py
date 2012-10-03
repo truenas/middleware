@@ -25,11 +25,9 @@
 #
 #####################################################################
 
-import datetime
+from subprocess import Popen, PIPE
 import logging
 import os
-import sys
-import json
 
 from django.conf import settings
 from django.core import serializers
@@ -37,10 +35,8 @@ from django.contrib import auth
 from django.utils.importlib import import_module
 
 from freenasUI import plugins, services, storage
-from freenasUI.middleware.notifier import notifier
 
 from jsonrpc import jsonrpc_method
-from subprocess import Popen, PIPE
 
 log = logging.getLogger("plugins.api_calls")
 
@@ -103,12 +99,6 @@ def __api_call_not_implemented(request):
 #
 #    API information methods
 #
-@jsonrpc_method("api.methods")
-def __api_call_api_methods(request):
-    api_methods = __plugins_api_call_table.keys()
-    return sorted(api_methods)
-
-
 @jsonrpc_method("api.version")
 def __api_call_api_version(request):
     return PLUGINS_API_VERSION
@@ -148,7 +138,7 @@ def plugins_is_authenticated(request, sessionid):
         backend_path = session[auth.BACKEND_SESSION_KEY]
         backend = auth.load_backend(backend_path)
         user = backend.get_user(user_id)
-    except KeyError, e:
+    except KeyError:
         return False
     if user and user.is_authenticated():
         return True
