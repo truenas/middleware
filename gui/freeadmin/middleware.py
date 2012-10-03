@@ -26,11 +26,8 @@
 #####################################################################
 from cStringIO import StringIO
 
-import base64
-import datetime
 import json
 import logging
-import os
 import re
 import sys
 import cProfile
@@ -39,7 +36,6 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
-from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
@@ -81,7 +77,10 @@ def http_oauth(func):
                     json_params = json.loads(key)
 
             key = oauth_params.get("oauth_consumer_key", None)
-            host = "%s://%s" % ('https' if request.is_secure() else 'http', request.get_host(),)
+            host = "%s://%s" % (
+                'https' if request.is_secure() else 'http',
+                request.get_host(),
+                )
             uurl = host + request.path
 
             oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
@@ -252,7 +251,7 @@ class ProfileMiddleware(object):
         # Construct an HTML/XML or Javascript comment, with
         # the formatted stats, written to the StringIO object
         # and attach it to the content of the response.
-        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, out.getvalue(),
+        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, content,
             end_comment)
         response.content += comment
 
