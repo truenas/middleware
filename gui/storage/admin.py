@@ -49,6 +49,7 @@ class VolumeFAdmin(BaseFreeAdmin):
     resource = VolumeResource
     exclude_fields = (
         'id',
+        'vol_name',
         'vol_fstype',
         'vol_guid',
         'vol_encrypt',
@@ -56,28 +57,39 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
     def get_datagrid_columns(self):
-        columns = super(VolumeFAdmin, self).get_datagrid_columns()
 
-        columns[0]['tree'] = True
+        columns = []
+
+        columns.append({
+            'name': 'name',
+            'label': 'Used',
+            'tree': True,
+            'sortable': False,
+            'shouldExpand': True,
+        })
 
         columns.append({
             'name': 'used_si',
             'label': 'Used',
+            'sortable': False,
         })
 
         columns.append({
             'name': 'avail_si',
             'label': 'Available',
+            'sortable': False,
         })
 
         columns.append({
             'name': 'total_si',
             'label': 'Size',
+            'sortable': False,
         })
 
         columns.append({
             'name': 'status',
             'label': 'Status',
+            'sortable': False,
         })
         return columns
 
