@@ -72,6 +72,9 @@ require([
             if(typeof columns[key] == 'string') {
                 columns[key] = eval('(' + columns[key] + ')')
             }
+            if(columns[key].shouldExpand !== undefined){
+		columns[key].shouldExpand = function() { return true };
+	    }
         }
     });
 
