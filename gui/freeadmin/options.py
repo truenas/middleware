@@ -673,7 +673,12 @@ class BaseFreeAdmin(object):
         data = OrderedDict()
         for column in columns:
             name = column.pop('name')
-            data[name] = column
+            if column.pop("tree", False) is True:
+                data['name'] = "tree(%s)" % (
+                    json.dumps(column),
+                    )
+            else:
+                data[name] = column
 
         enc = json.dumps(data)
         return HttpResponse(enc)

@@ -40,11 +40,27 @@ require([
     "dgrid/OnDemandGrid",
     "dgrid/Keyboard",
     "dgrid/Selection",
+    "dgrid/tree",
     "dojo/_base/declare",
     "dgrid/extensions/DijitRegistry",
     "dijit/registry",
     "dijit/form/Button"
-    ], function(dom, domClass, domConstruct, domStyle, query, xhr, JsonRest, Grid, Keyboard, Selection, declare, DijitRegistry, registry, Button) {
+    ], function(
+    dom,
+    domClass,
+    domConstruct,
+    domStyle,
+    query,
+    xhr,
+    JsonRest,
+    Grid,
+    Keyboard,
+    Selection,
+    tree,
+    declare,
+    DijitRegistry,
+    registry,
+    Button) {
 
     var columns, actions;
     xhr.get('{{ structure_url }}', {
@@ -52,6 +68,11 @@ require([
         handleAs: 'text'
     }).then(function(data) {
         columns = eval('(' + data + ')');
+        for(var key in columns) {
+            if(typeof columns[key] == 'string') {
+                columns[key] = eval('(' + columns[key] + ')')
+            }
+        }
     });
 
     xhr.get('{{ actions_url }}', {
@@ -80,8 +101,14 @@ require([
     });
 
     var store = new JsonRest({
-            target:"{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
-        });
+        target: "{% url api_dispatch_list api_name="v1.0" resource_name=resource_name %}",
+        getChildren: function(parent, options){
+            return parent.children;
+        },
+        mayHaveChildren: function(parent){
+            return parent.children !== undefined && parent.children.length > 0;
+        }
+    });
 
     var StandardGrid = declare([Grid, Selection, Keyboard]);
     var griddiv = query(".gridDiv:first-child", cpane.domNode.parentNode)[0];
