@@ -55,6 +55,16 @@ class DiskResource(DojoModelResource):
         return bundle
 
 
+class Uid(object):
+    def __init__(self, start):
+        self._start = start
+        self._counter = start
+    def next(self):
+        number = self._counter
+        self._counter += 1
+        return number
+
+
 class VolumeResource(DojoModelResource):
 
     class Meta:
@@ -64,11 +74,12 @@ class VolumeResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
-    def _get_datasets(self, datasets):
+    def _get_datasets(self, datasets, uid):
         children = []
         attr_fields = ('total_si', 'avail_si', 'used_si')
         for name, dataset in datasets.items():
             data = {
+                'id': uid.next(),
                 'name': name,
                 'type': 'dataset',
                 'mountpoint': dataset.mountpoint,
@@ -80,7 +91,7 @@ class VolumeResource(DojoModelResource):
                 _datasets = {}
                 for child in dataset.children:
                     _datasets[child.name] = child
-                data['children'] = self._get_datasets(_datasets)
+                data['children'] = self._get_datasets(_datasets, uid)
 
             children.append(data)
         return children
@@ -97,26 +108,17 @@ class VolumeResource(DojoModelResource):
 
         bundle.data['mountpoint'] = mp.mp_path
 
-        #TODO: hierarchical
-        #children = self._get_datasets(
-        #    bundle.obj.get_datasets(hierarchical=True)
-        #    )
-        children = []
-        datasets = bundle.obj.get_datasets() or {}
-        for name, dataset in datasets.items():
-            data = {
-                'name': name,
-                'status': mp.status,
-                'type': 'dataset',
-                'mountpoint': dataset.mountpoint,
-            }
-            for attr in attr_fields:
-                data[attr] = getattr(dataset, attr)
-            children.append(data)
+        uid = Uid(bundle.obj.id * 100)
+
+        children = self._get_datasets(
+            bundle.obj.get_datasets(hierarchical=True),
+            uid=uid,
+            )
 
         zvols = bundle.obj.get_zvols() or {}
         for name, zvol in zvols.items():
             data = {
+                'id': uid.next(),
                 'name': name,
                 'status': mp.status,
                 'type': 'zvol',
