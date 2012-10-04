@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.0-BETA3
+Release Notes for FreeNAS 8.3.0-RC1
 
 *** IMPORTANT ***
 
@@ -129,6 +129,45 @@ bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+Changes since 8.3.0-BETA3:
+
+Enhancements
+========================
+
+GUI
+------------------------
+
+1. Add zle as a ZFS compression option.
+
+2. Bump maximum upload size for installing PBIs.
+
+3. Add a bandwidth cap to snapshot replication.
+
+4. If a GUI upgrade fails due to failing a pre-upgrade check
+   display the reason.
+
+OS/Third party
+------------------------
+
+1. Create new pools with the autoexpand property set.
+
+2. Use the LUC to reload iSCSI targets only if it's enabled.
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix a bug in the bulk deletion of snapshots.
+
+2. Fix a bug in the IPv4 address cleaning when 
+   importing a jail.
+
+3. Fix a typo that prevented the alert icon from
+   returning to green status.
+
 
 Changes since 8.3.0-BETA2:
 
