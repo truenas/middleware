@@ -98,10 +98,28 @@ class VolumeResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(VolumeResource, self).dehydrate(bundle)
+        mp = bundle.obj.mountpoint_set.all()[0]
 
         bundle.data['name'] = bundle.obj.vol_name
+        bundle.data['_detach_url'] = reverse('storage_detach', kwargs={
+            'vid': bundle.obj.id,
+            })
+        bundle.data['_scrub_url'] = reverse('storage_scrub', kwargs={
+            'vid': bundle.obj.id,
+            })
+        bundle.data['_options_url'] = reverse('storage_volume_edit', kwargs={
+            'object_id': mp.id,
+            })
+        bundle.data['_add_dataset_url'] = reverse('storage_dataset', kwargs={
+            'fs': bundle.obj.vol_name,
+            })
+        bundle.data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
+            'volume_name': bundle.obj.vol_name,
+            })
+        bundle.data['_permissions_url'] = reverse('storage_mp_permission', kwargs={
+            'path': mp.mp_path,
+            })
 
-        mp = bundle.obj.mountpoint_set.all()[0]
         attr_fields = ('total_si', 'avail_si', 'used_si')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)

@@ -687,17 +687,6 @@ class BaseFreeAdmin(object):
 
         actions = {}
         actions['Edit'] = {
-            'on_select': """function(numrows) {
-                if(numrows > 1 || numrows == 0) {
-                    query(".gridEdit").forEach(function(item, idx) {
-                        domStyle.set(item, "display", "none");
-                    });
-                } else {
-                    query(".gridEdit").forEach(function(item, idx) {
-                        domStyle.set(item, "display", "block");
-                    });
-                }
-            }""",
             'button_name': 'Edit',
             'on_click': """function() {
                 var mybtn = this;
@@ -710,17 +699,6 @@ class BaseFreeAdmin(object):
         }
 
         actions['Delete'] = {
-            'on_select': """function(numrows) {
-                if(numrows > 1 || numrows == 0) {
-                    query(".gridDelete").forEach(function(item, idx) {
-                        domStyle.set(item, "display", "none");
-                    });
-                } else {
-                    query(".gridDelete").forEach(function(item, idx) {
-                        domStyle.set(item, "display", "block");
-                    });
-                }
-            }""",
             'button_name': 'Delete',
             'on_click': """function() {
                 var mybtn = this;
