@@ -28,7 +28,7 @@ import logging
 import re
 
 from tastypie.authentication import Authentication
-from tastypie.resources import ModelResource
+from tastypie.resources import ModelResource, Resource
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
 log = logging.getLogger('freeadmin.api.resources')
@@ -68,3 +68,7 @@ class DojoModelResource(ModelResource):
         bundle.data['_edit_url'] = bundle.obj.get_edit_url()
         bundle.data['_delete_url'] = bundle.obj.get_delete_url()
         return bundle
+
+
+class DojoResource(Resource):
+    pass

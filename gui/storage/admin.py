@@ -1,4 +1,4 @@
-from freenasUI.freeadmin.api.resources import DiskResource
+from freenasUI.freeadmin.api.resources import DiskResource, VolumeResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -44,4 +44,43 @@ class DiskFAdmin(BaseFreeAdmin):
         return actions
 
 
+class VolumeFAdmin(BaseFreeAdmin):
+
+    resource = VolumeResource
+    exclude_fields = (
+        'id',
+        'vol_fstype',
+        'vol_guid',
+        'vol_encrypt',
+        'vol_encryptkey',
+        )
+
+    def get_datagrid_columns(self):
+        columns = super(VolumeFAdmin, self).get_datagrid_columns()
+
+        columns[0]['tree'] = True
+
+        columns.append({
+            'name': 'used_si',
+            'label': 'Used',
+        })
+
+        columns.append({
+            'name': 'avail_si',
+            'label': 'Available',
+        })
+
+        columns.append({
+            'name': 'total_si',
+            'label': 'Size',
+        })
+
+        columns.append({
+            'name': 'status',
+            'label': 'Status',
+        })
+        return columns
+
+
 site.register(models.Disk, DiskFAdmin)
+site.register(models.Volume, VolumeFAdmin)

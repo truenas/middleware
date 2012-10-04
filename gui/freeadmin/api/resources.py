@@ -29,8 +29,7 @@ from django.db.models import Q
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
-from freenasUI.system.models import Sysctl
-from freenasUI.storage.models import Disk
+from freenasUI.storage.models import Disk, Volume
 
 
 class DiskResource(DojoModelResource):
@@ -53,4 +52,77 @@ class DiskResource(DojoModelResource):
         bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
             'devname': bundle.obj.disk_name,
             })
+        return bundle
+
+
+class VolumeResource(DojoModelResource):
+
+    class Meta:
+        queryset = Volume.objects.all()
+        resource_name = 'volume'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def _get_datasets(self, datasets):
+        children = []
+        attr_fields = ('total_si', 'avail_si', 'used_si')
+        for name, dataset in datasets.items():
+            data = {
+                'name': name,
+                'type': 'dataset',
+                'mountpoint': dataset.mountpoint,
+            }
+            for attr in attr_fields:
+                data[attr] = getattr(dataset, attr)
+
+            if dataset.children:
+                _datasets = {}
+                for child in dataset.children:
+                    _datasets[child.name] = child
+                data['children'] = self._get_datasets(_datasets)
+
+            children.append(data)
+        return children
+
+    def dehydrate(self, bundle):
+        bundle = super(VolumeResource, self).dehydrate(bundle)
+
+        bundle.data['name'] = bundle.obj.vol_name
+
+        mp = bundle.obj.mountpoint_set.all()[0]
+        attr_fields = ('total_si', 'avail_si', 'used_si')
+        for attr in attr_fields + ('status', ):
+            bundle.data[attr] = getattr(mp, attr)
+
+        bundle.data['mountpoint'] = mp.mp_path
+
+        #TODO: hierarchical
+        #children = self._get_datasets(
+        #    bundle.obj.get_datasets(hierarchical=True)
+        #    )
+        children = []
+        datasets = bundle.obj.get_datasets() or {}
+        for name, dataset in datasets.items():
+            data = {
+                'name': name,
+                'status': mp.status,
+                'type': 'dataset',
+                'mountpoint': dataset.mountpoint,
+            }
+            for attr in attr_fields:
+                data[attr] = getattr(dataset, attr)
+            children.append(data)
+
+        zvols = bundle.obj.get_zvols() or {}
+        for name, zvol in zvols.items():
+            data = {
+                'name': name,
+                'status': mp.status,
+                'type': 'zvol',
+                'total_si': zvol['volsize'],
+            }
+            children.append(data)
+
+        bundle.data['children'] = children
         return bundle
