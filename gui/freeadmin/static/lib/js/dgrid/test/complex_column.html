@@ -39,7 +39,7 @@
 			data-dojo-config="async: true"></script>
 		<script type="text/javascript">
 			require(["dgrid/OnDemandGrid", "dgrid/GridWithColumnSetsFromHtml", "dgrid/ColumnSet", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/parser", "dgrid/test/data/base", "dgrid/test/data/DeferredWrapper", "dojo/domReady!"],
-				function(Grid, GridFromHtml, ColumnSet, Selection, Keyboard, declare, on, parser, testStore, DeferredWrapper){
+				function(OnDemandGrid, GridFromHtml, ColumnSet, Selection, Keyboard, declare, on, parser, testStore, DeferredWrapper){
 					var columnSets1 = [
 							[
 								[{label: 'Column 1', field: 'col1'},
@@ -106,9 +106,9 @@
 					
 					function byId(id){ return document.getElementById(id); }
 
-					var ComplexGrid = declare([Grid, ColumnSet, Selection, Keyboard]);
+					var ComplexGrid = declare([OnDemandGrid, ColumnSet, Selection, Keyboard]);
 
-					window.gridNoColumnSets = new (declare([Grid, Selection, Keyboard]))({
+					window.gridNoColumnSets = new (declare([OnDemandGrid, Selection, Keyboard]))({
 						store: DeferredWrapper(testStore),
 						subRows: subRows1
 					}, "gridNoColumnSets");
@@ -141,9 +141,8 @@
 						grid.set("columnSets", columnSets3);
 					});
 
-					var HtmlGrid = declare([Grid, GridFromHtml, Selection, Keyboard]);
+					var HtmlGrid = declare([OnDemandGrid, GridFromHtml, Selection, Keyboard]);
 
-					//NOTE: Grid == OnDemandGrid, GridFromHtml == ver w/ ColumnSet support
 					window.gridFromHtml = new HtmlGrid({
 						store: DeferredWrapper(testStore)
 					}, "gridFromHtml");
@@ -152,7 +151,7 @@
 					}, "gridFromHtml2");
 					
 					// test declarative instantiation (need a global for parser)
-					window.dgrid = { GridFromHtml: GridFromHtml };
+					window.dgrid = { GridFromHtml: HtmlGrid };
 					parser.parse();
 				});
 		</script>

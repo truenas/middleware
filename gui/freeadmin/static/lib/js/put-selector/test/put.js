@@ -1,5 +1,6 @@
 var div = put("div");
 console.assert(div.tagName.toLowerCase() == "div");
+console.assert(put(div) === div);
 
 var body = document.body;
 put(body, "h1 $", "Running put() tests");
@@ -67,7 +68,7 @@ console.assert(checkbox.getAttribute("checked") == "checked");
 
 var div = put("div");
 var arrayFrag = put(div, ["span.c1", "span.c2", "span.c3"]);
-console.assert(arrayFrag.nodeType == 11);
+console.assert(arrayFrag.tagName.toLowerCase() == "div");
 console.assert(div.firstChild.className == "c1");
 console.assert(div.lastChild.className == "c3");
 

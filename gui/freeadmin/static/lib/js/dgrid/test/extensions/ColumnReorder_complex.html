@@ -46,8 +46,8 @@
 						{label: 'Column 5', field: 'col5'}
 					]];
 			require(["dgrid/OnDemandGrid", "dgrid/ColumnSet", "dgrid/extensions/ColumnReorder",
-				"dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
-			function(OnDemandGrid, ColumnSet, ColumnReorder, declare, testStore){
+				"dojo/_base/declare", "dojo/on", "dgrid/test/data/base", "dojo/domReady!"],
+			function(OnDemandGrid, ColumnSet, ColumnReorder, declare, on, testStore){
 				var grid = window.grid = new (declare([OnDemandGrid, ColumnReorder]))({
 						store: testStore,
 						columns: columns
@@ -68,6 +68,11 @@
 							]
 						]
 					}, "gridColumnSets");
+				
+				on(document.body, "dgrid-columnreorder", function(evt){
+					console.log(evt.grid.id + " dgrid-columnreorder" + ": ",
+						evt);
+				});
 			});
 		</script>
 	</body>

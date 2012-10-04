@@ -108,7 +108,7 @@ function(Grid, Selection, editor, DnD, declare, json, Memory, Observable, put){
 	// persist to localStorage if the browser supports it.
 	var
 		key = "dgrid_demo_todo_list",
-		OrderedStoreMixin = declare([], {
+		OrderedStoreMixin = declare(null, {
 			put: function(object, options){
 				// honor order if present
 				options = options || {};
@@ -130,7 +130,7 @@ function(Grid, Selection, editor, DnD, declare, json, Memory, Observable, put){
 	
 	if (window.localStorage){
 		// add functionality for saving/recalling from localStorage
-		storeMixins.push(declare([], {
+		storeMixins.push(declare(null, {
 			constructor: function(){
 				var jsondata = localStorage[key];
 				jsondata && this.setData(json.parse(jsondata));

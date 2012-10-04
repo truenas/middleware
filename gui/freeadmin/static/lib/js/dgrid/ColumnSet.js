@@ -37,7 +37,7 @@ function(kernel, declare, Deferred, listen, aspect, query, has, put, hasClass, G
 		}
 	}
 	
-	return declare([Grid], {
+	return declare(null, {
 		// summary:
 		//		Provides column sets to isolate horizontal scroll of sets of 
 		//		columns from each other. This mainly serves the purpose of allowing for

@@ -2,7 +2,7 @@ define(["dojo/_base/kernel", "dojo/_base/declare", "dojo/_base/Deferred", "dojo/
 function(kernel, declare, Deferred, on, has, aspect, List, touchUtil, put){
 
 var ctrlEquiv = has("mac") ? "metaKey" : "ctrlKey";
-return declare([List], {
+return declare(null, {
 	// summary:
 	//		Add selection capabilities to a grid. The grid will have a selection property and
 	//		fire "dgrid-select" and "dgrid-deselect" events.
@@ -67,7 +67,7 @@ return declare([List], {
 			return;
 		}
 		this._waitForMouseUp = null;
-
+		this._selectionTriggerEvent = event;
 		var ctrlKey = !event.keyCode ? event[ctrlEquiv] : event.ctrlKey;
 		if(!event.keyCode || !event.ctrlKey || event.keyCode == 32){
 			var mode = this.selectionMode,
@@ -115,6 +115,7 @@ return declare([List], {
 				event.preventDefault();
 			}
 		}
+		this._selectionTriggerEvent = null;
 	},
 
 	_initSelectionEvents: function(){
@@ -182,7 +183,15 @@ return declare([List], {
 	_selectionEventQueue: function(value, type){
 		var grid = this,
 			event = "dgrid-" + (value ? "select" : "deselect"),
-			rows = this[event]; // current event queue (actually cells for CellSelection)
+			rows = this[event], // current event queue (actually cells for CellSelection)
+			trigger = this._selectionTriggerEvent;
+		
+		if (trigger) {
+			// If selection was triggered by another event, we want to know its type
+			// to report later.  Grab it ahead of the timeout to avoid
+			// "member not found" errors in IE < 9.
+			trigger = trigger.type;
+		}
 		
 		if(rows){ return rows; } // return existing queue, allowing to push more
 		
@@ -195,6 +204,7 @@ return declare([List], {
 				bubbles: true,
 				grid: grid
 			};
+			if(trigger){ eventObject.parentType = trigger; }
 			eventObject[type] = rows;
 			on.emit(grid.contentNode, event, eventObject);
 			rows = null;

@@ -198,7 +198,7 @@ define([
 		// not doing that just yet until we're sure about default impl.
 	});
 	
-	var DnD = declare([], {
+	var DnD = declare(null, {
 		// dndSourceType: String
 		//		Specifies the type which will be set for DnD items in the grid,
 		//		as well as what will be accepted by it by default.

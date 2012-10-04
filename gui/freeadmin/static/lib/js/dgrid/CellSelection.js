@@ -1,5 +1,5 @@
 define(["dojo/_base/declare", "./Selection", "dojo/on", "put-selector/put", "dojo/has"], function(declare, Selection, listen, put, has){
-return declare([Selection], {
+return declare(Selection, {
 	// summary:
 	//		Add cell level selection capabilities to a grid. The grid will have a selection property and
 	//		fire "dgrid-select" and "dgrid-deselect" events.

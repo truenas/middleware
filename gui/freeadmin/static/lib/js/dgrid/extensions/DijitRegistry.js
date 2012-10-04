@@ -1,6 +1,6 @@
 define(["dojo/_base/declare", "dijit/registry"],
 function(declare, registry){
-	return declare([], {
+	return declare(null, {
 		// summary:
 		//		A dgrid extension which will add the grid to the dijit registry,
 		//		so that startup() will be successfully called by dijit layout widgets

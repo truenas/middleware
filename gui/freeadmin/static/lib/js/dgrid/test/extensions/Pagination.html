@@ -49,9 +49,10 @@
 			if(match){ skin = match[1]; }
 			skinDep = "xstyle/css!dgrid/css/skins/" + skin + ".css";
 			
-			require([skinDep, "dgrid/Grid", "dgrid/extensions/Pagination", "dgrid/Selection", "dgrid/Keyboard",
+			require([skinDep, "dgrid/Grid", "dgrid/extensions/Pagination",
+					"dgrid/Selection", "dgrid/Keyboard", "dgrid/GridFromHtml",
 					"dojo/_base/lang", "dojo/_base/declare", "dojo/dom-construct", "dojo/dom-form", "dgrid/test/data/base", "dojo/domReady!"],
-				function(skinResource, Grid, Pagination, Selection, Keyboard,
+				function(skinResource, Grid, Pagination, Selection, Keyboard, GridFromHtml,
 						lang, declare, domConstruct, domForm, testStore){
 					
 					var CustomGrid = declare([Grid, Keyboard, Selection, Pagination]);
@@ -84,6 +85,10 @@
 						firstLastArrows: true,
 						pageSizeOptions: [10, 15, 25]
 					}, "grid2");
+					
+					window.gridfromhtml = new (declare([GridFromHtml, Keyboard, Selection, Pagination]))({
+						store: testStore
+					}, "gridfromhtml");
 					
 					function createGrid(args){
 						window.grid = new CustomGrid(
@@ -134,6 +139,18 @@
 			<button onclick="testStore.add({col1:'new', col2:true});">Add row to original store</button>
 			<button onclick="grid.set('showFooter', !grid.get('showFooter'));">Toggle footer</button>
 		</div>
+		
+		<h2>A grid with declarative structure, with the Pagination extension</h2>
+		<table id="gridfromhtml">
+			<thead><tr>
+				<th data-dgrid-column="{ field: 'col1' }">Column 1</th>
+				<th data-dgrid-column="{ field: 'col2', sortable: false }">Column 2</th>
+				<th data-dgrid-column="{ field: 'col3' }">Column 3</th>
+				<th data-dgrid-column="{ field: 'col4' }">Column 4</th>
+				<th data-dgrid-column="{ field: 'col5' }">Column 5</th>
+			</tr></thead>
+		</table>
+		
 		<h2>An autoheight grid with the Pagination extension,
 			with a rows-per-page drop-down</h2>
 		<div id="grid2"></div>

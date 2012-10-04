@@ -3,7 +3,7 @@ function(kernel, arrayUtil, on, aspect, has, put){
 	return function(column, type){
 		
 		var listeners = [],
-			grid, recentInput, recentTimeout, headerCheckbox;
+			grid, headerCheckbox;
 		
 		if(column.type){
 			column.selectorType = column.type;
@@ -61,7 +61,7 @@ function(kernel, arrayUtil, on, aspect, has, put){
 			// the shiftKey property from
 			if(event.type == "click" || event.keyCode == 32 || (!has("opera") && event.keyCode == 13) || event.keyCode === 0){
 				var row = grid.row(event), lastRow = grid._lastSelected && grid.row(grid._lastSelected);
-				
+				grid._selectionTriggerEvent = event;
 				if(type == "radio"){
 					if(!lastRow || lastRow.id != row.id){
 						grid.clearSelection();
@@ -71,20 +71,21 @@ function(kernel, arrayUtil, on, aspect, has, put){
 				}else{
 					if(row){
 						if(event.shiftKey){
-							// make sure the last input always ends up checked for shift key
+							// make sure the last input always ends up checked for shift key 
 							changeInput(true)({rows: [row]});
 						}else{
 							// no shift key, so no range selection
 							lastRow = null;
 						}
 						lastRow = event.shiftKey ? lastRow : null;
-						grid.select(lastRow|| row, row, lastRow ? undefined : null);
+						grid.select(lastRow || row, row, lastRow ? undefined : null);
 						grid._lastSelected = row.element;
 					}else{
 						put(this, (grid.allSelected ? "!" : ".") + "dgrid-select-all");
 						grid[grid.allSelected ? "clearSelection" : "selectAll"]();
 					}
 				}
+				grid._selectionTriggerEvent = null;
 			}
 		}
 		
@@ -133,14 +134,14 @@ function(kernel, arrayUtil, on, aspect, has, put){
 			return input;
 		};
 		
-		column.init = function(){
+		aspect.after(column, "init", function(){
 			grid = column.grid;
-		};
+		});
 		
-		column.destroy = function(){
+		aspect.after(column, "destroy", function(){
 			arrayUtil.forEach(listeners, function(l){ l.remove(); });
 			grid._hasSelectorInputListener = false;
-		};
+		});
 		
 		column.renderCell = function(object, value, cell, options, header){
 			var row = object && grid.row(object);

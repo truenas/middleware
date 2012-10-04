@@ -31,10 +31,10 @@
 		<script type="text/javascript" src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
 		<script type="text/javascript">
-			var getFirstCell; // function, defined within require callback
+			var getFirstTarget; // function, defined within require callback
 			
-			require(["dgrid/List", "dgrid/Grid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/query", "put-selector/put", "dojo/domReady!"],
-			function(List, Grid, Keyboard, declare, query, put){
+			require(["dgrid/List", "dgrid/Grid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/query", "put-selector/put", "dojo/domReady!"],
+			function(List, Grid, Keyboard, declare, on, query, put){
 				var data = [
 						{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
 						{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
@@ -72,6 +72,16 @@
 				list.renderArray(data);
 				grid.renderArray(data);
 				rowGrid.renderArray(data);
+				
+				on(document.body, "dgrid-cellfocusin,dgrid-cellfocusout",
+					function(event){
+						var msg = "focus " + (event.type == "dgrid-cellfocusin" ? "gained" : "lost");
+						console.log(event.grid.id + ": " + msg +
+							(event.parentType ? " (via " + event.parentType + "): " : ": "),
+							event.cell || event.row
+						);
+					}
+				);
 			});
 		</script>
 	</head>

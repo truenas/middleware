@@ -7,7 +7,7 @@ return declare([List, _StoreMixin], {
 	minRowsPerPage: 25,
 	// maxRowsPerPage: Integer
 	//		The maximum number of rows to request at one time.
-	maxRowsPerPage: 100,
+	maxRowsPerPage: 250,
 	// maxEmptySpace: Integer
 	//		Defines the maximum size (in pixels) of unrendered space below the
 	//		currently-rendered rows. Setting this to less than Infinity can be useful if you
@@ -24,7 +24,7 @@ return declare([List, _StoreMixin], {
 	//		Defines the minimum distance (in pixels) from the visible viewport area
 	//		rows must be in order to be removed.  Setting to Infinity causes rows
 	//		to never be removed.
-	farOffRemoval: 10000,
+	farOffRemoval: 2000,
 	
 	rowHeight: 22,
 	
@@ -335,6 +335,7 @@ return declare([List, _StoreMixin], {
 							// all of the nodes were removed, can position wherever we want
 							preload.next.count += preload.count - offset;
 							preload.next.node.rowIndex = offset + count;
+							adjustHeight(preload.next);
 							preload.count = offset;
 							queryRowsOverlap = 0;
 						}else{
@@ -344,7 +345,7 @@ return declare([List, _StoreMixin], {
 					}
 					options.start = preload.count;
 				}
-				options.count = count + queryRowsOverlap;
+				options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
 				if(keepScrollTo){
 					keepScrollTo = beforeNode.offsetTop;
 				}
@@ -375,20 +376,15 @@ return declare([List, _StoreMixin], {
 							// if the preload area above the nodes is approximated based on average
 							// row height, we may need to adjust the scroll once they are filled in
 							// so we don't "jump" in the scrolling position
-							if(grid.scrollTo){ // TouchScroll is enabled
-								var pos = grid.getScrollPosition();
-								grid.scrollTo({
-									// Since we already had to query the scroll
-									// position, include x to avoid TouchScroll
-									// querying it again on its end.
-									x: pos.x,
-									y: pos.y + beforeNode.offsetTop - keepScrollTo,
-									// Don't kill momentum mid-scroll.
-									preserveMomentum: true
-								});
-							}else{
-								scrollNode.scrollTop += beforeNode.offsetTop - keepScrollTo;
-							}
+							var pos = grid.getScrollPosition();
+							grid.scrollTo({
+								// Since we already had to query the scroll position,
+								// include x to avoid TouchScroll querying it again on its end.
+								x: pos.x,
+								y: pos.y + beforeNode.offsetTop - keepScrollTo,
+								// Don't kill momentum mid-scroll (for TouchScroll only).
+								preserveMomentum: true
+							});
 						}
 						if(below){
 							// if it is below, we will use the total from the results to update
@@ -401,6 +397,8 @@ return declare([List, _StoreMixin], {
 								adjustHeight(below);
 							});
 						}
+						// make sure we have covered the visible area
+						grid._processScroll();
 					});
 				}).call(this, loadingNode, scrollNode, below, keepScrollTo, results);
 				preload = preload.previous;

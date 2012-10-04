@@ -48,8 +48,9 @@
 					
 					on(document.body, "dgrid-select,dgrid-deselect",
 						function(event){
-							var msg = (event.type == "dgrid-deselect" ? "de" : "") + "selected: ";
-							console.log(msg, event.grid.id,
+							var msg = (event.type == "dgrid-deselect" ? "de" : "") + "selected";
+							console.log(event.grid.id + ": " + msg +
+								(event.parentType ? " (via " + event.parentType + "): " : ": "),
 								arrayUtil.map(event.rows, function(row){ return row.id; }).join(", "));
 							console.log("selection: ", json.stringify(event.grid.selection, null, "  "));
 						}

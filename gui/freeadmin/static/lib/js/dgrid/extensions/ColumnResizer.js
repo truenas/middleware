@@ -67,7 +67,7 @@ function subRowAssoc(subRows){
 	return associations;
 }
 
-return declare([], {
+return declare(null, {
 	resizeNode: null,
 	minWidth: 40,	//minimum column width in px
 	gridWidth: null, //place holder for the grid width property

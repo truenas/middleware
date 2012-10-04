@@ -1,6 +1,6 @@
 define(["dojo/_base/lang", "dojo/_base/declare", "dgrid/Grid", "put-selector/put", "xstyle/css!../css/extensions/CompoundColumns.css"],
 		function(lang, declare, Grid, put){
-	return declare(Grid, {
+	return declare(null, {
 		// summary:
 		//		Extension allowing for specification of columns with additional
 		//		header rows spanning multiple columns for strictly display purposes.

@@ -67,10 +67,11 @@
 
 	
 
-			require(["dgrid/GridFromHtml", "dojo/store/Memory", "dojo/store/Observable", "dojo/_base/declare", "dojo/parser", "dojo/query", "dgrid/test/data/base", "dojo/domReady!"],
-			function(GridFromHtml, Memory, Observable, declare, parser, query){
-
-				// GridFromHtml tests
+			require(["dgrid/GridFromHtml", "dgrid/OnDemandList",
+				"dojo/store/Memory", "dojo/store/Observable",
+				"dojo/_base/declare", "dojo/parser", "dojo/query",
+				"dgrid/test/data/base", "dojo/domReady!"],
+			function(GridFromHtml, OnDemandList, Memory, Observable, declare, parser, query){
 				
 				window.gridFromHtmlLegacyFormatter = new GridFromHtml({},
 					"gridFromHtmlLegacyFormatter");
@@ -88,12 +89,11 @@
 					"gridFromHtmlTestProps");
 				gridFromHtmlTestProps.renderArray(testOrderedData);
 				
-				// need to expose GridFromHtml as a global for parser to find.
-				window.dgrid = { GridFromHtml: GridFromHtml };
-				
-				// also, need a store, since there's currently no way to effectively
-				// invoke renderArray from HTML.
-				store = Observable(Memory({data: testOrderedData}));
+				// Need to expose GridFromHtml as a global for parser to find.
+				// Mix in OnDemandList and create a store, since otherwise there's not
+				// much of a way to add data.
+				window.dgrid = { GridFromHtml: declare([GridFromHtml, OnDemandList]) };
+				store = Observable(new Memory({data: testOrderedData}));
 				parser.parse();
 			});
 			

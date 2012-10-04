@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "dojo": "1.7.2",
-    "put-selector": "0.3.0",
+    "put-selector": "0.3.1",
     "xstyle": "0.0.5"
   },
   "directories": {

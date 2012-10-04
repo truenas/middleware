@@ -27,12 +27,14 @@
 				function(lang, declare, arrayUtil, json, on, Grid, editor, Selection, CellSelection, Keyboard, testStore){
 					on(document.body, "dgrid-select,dgrid-deselect",
 						function(event){
-							var msg = (event.type == "dgrid-deselect" ? "de" : "") + "selected: ";
-							console.log(event.grid.id + ": " + msg + (event.cells ?
-								arrayUtil.map(event.cells, function(cell){
-									return cell.row.id + ":" + cell.column.id;
-								}).join(", ") :
-								arrayUtil.map(event.rows, function(row){ return row.id; }).join(", "))
+							var msg = (event.type == "dgrid-deselect" ? "de" : "") + "selected";
+							console.log(event.grid.id + ": " + msg +
+								(event.parentType ? " (via " + event.parentType + "): " : ": "),
+								(event.cells ?
+									arrayUtil.map(event.cells, function(cell){
+										return cell.row.id + ":" + cell.column.id;
+									}).join(", ") :
+									arrayUtil.map(event.rows, function(row){ return row.id; }).join(", "))
 							);
 							console.log("selection: " + json.stringify(event.grid.selection, null, "  "));
 						}

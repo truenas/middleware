@@ -127,7 +127,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 		if(this._started){ this.resize(); }
 	};
 	
-	return declare(TouchScroll ? [TouchScroll] : [], {
+	return declare(TouchScroll ? TouchScroll : null, {
 		tabableHeader: false,
 		// showHeader: Boolean
 		//		Whether to render header (sub)rows.
@@ -393,8 +393,8 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			
 			// make sure all the content has been removed so it can be recreated
 			this.contentNode.innerHTML = "";
-			// If using TouchScroll, reset its scroll position as well.
-			if(this.scrollTo){ this.scrollTo({ x: 0, y: 0 }); }
+			// Ensure scroll position always resets (especially for TouchScroll).
+			this.scrollTo({ x: 0, y: 0 });
 		},
 		
 		newRow: function(object, before, to, options){
@@ -452,8 +452,8 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 								if(from != to){ // if from and to are identical, it is an in-place update and we don't want to alter the rowIndex at all
 									firstRow.rowIndex--; // adjust the rowIndex so adjustRowIndices has the right starting point
 								}
-								self.removeRow(row); // now remove
 							}
+							self.removeRow(row); // now remove
 						}
 						// the removal of rows could cause us to need to page in more items
 						if(self._processScroll){

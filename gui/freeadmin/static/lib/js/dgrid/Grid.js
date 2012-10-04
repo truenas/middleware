@@ -8,7 +8,7 @@ function(kernel, declare, listen, has, put, List){
 		}
 	}
 	
-	var Grid = declare([List], {
+	var Grid = declare(List, {
 		columns: null,
 		// cellNavigation: Boolean
 		//		This indicates that focus is at the cell level. This may be set to false to cause

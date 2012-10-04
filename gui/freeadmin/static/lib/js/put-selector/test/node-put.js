@@ -2,6 +2,7 @@ var assert = require("assert"),
 	put = require("../put");
 exports.testSimple = function() {
 	assert.equal(put('div span.test<').toString(), '\n<div>\n  <span class="test"></span>\n</div>');
+	assert.equal(put('div', ['header', 'section']).toString(), '\n<div>\n  <header></header>\n  <section></section>\n</div>');
 };
 exports.testPage = function() {
 	put.indentation = false;

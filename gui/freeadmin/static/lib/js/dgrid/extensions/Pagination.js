@@ -2,7 +2,7 @@ define(["../_StoreMixin", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/D
 	"dojo/on", "dojo/query", "dojo/string", "dojo/has", "put-selector/put", "dojo/i18n!./nls/pagination",
 	"dojo/_base/sniff", "xstyle/css!../css/extensions/Pagination.css"],
 function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n){
-	return declare([_StoreMixin], {
+	return declare(_StoreMixin, {
 		// summary:
 		//		An extension for adding discrete pagination to a List or Grid.
 		
@@ -28,22 +28,28 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 		//		This provides options for different page sizes in a drop-down.
 		//		If it is empty (default), no page size drop-down will be displayed.
 		pageSizeOptions: [],
+
+		// i18nPagination: Object
+		//		This object contains all of the internationalized strings as
+		//		key/value pairs.
+		i18nPagination: i18n,
 		
 		showFooter: true,
 		_currentPage: 1,
 		_total: 0,
 		
 		buildRendering: function(){
-			var grid = this;
-			
 			this.inherited(arguments);
 			
 			// add pagination to footer
-			var paginationNode = this.paginationNode =
+			var grid = this,
+				paginationNode = this.paginationNode =
 					put(this.footerNode, "div.dgrid-pagination"),
 				statusNode = this.paginationStatusNode =
 					put(paginationNode, "div.dgrid-status"),
-				pageSizeOptions = this.pageSizeOptions;
+				pageSizeOptions = this.pageSizeOptions,
+				i18n = this.i18nPagination,
+				navigationNode, node;
 			
 			statusNode.tabIndex = 0;
 			
@@ -64,14 +70,8 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			statusNode.innerHTML = string.substitute(i18n.status,
 				{ start: 1, end: 1, total: 0 });
 			
-			var navigationNode = this.paginationNavigationNode =
-					put(paginationNode, "div.dgrid-navigation"),
-				currentPage = this._currentPage,
-				previousNextLinks = this.previousNextLinks,
-				pagingLinks = this.pagingLinks,
-				end = this._total / this.rowsPerPage,
-				pagingTextBoxHandle = this._pagingTextBoxHandle,
-				node;
+			navigationNode = this.paginationNavigationNode =
+				put(paginationNode, "div.dgrid-navigation");
 			
 			if(this.firstLastArrows){
 				// create a first-page link
@@ -96,7 +96,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				node.setAttribute("aria-label", i18n.gotoLast);
 			}
 			
-			on(navigationNode, "a:click", function(evt){
+			on(navigationNode, "a:click", function(){
 				var cls = this.className,
 					curr, max;
 				
@@ -110,15 +110,14 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				// determine navigation target based on clicked link's class
 				if(cls == "dgrid-page-link"){
 					grid.gotoPage(+this.innerHTML, true); // the innerHTML has the page number
-				}
-				if(cls == "dgrid-first"){
+				}else if(cls == "dgrid-first"){
 					grid.gotoPage(1);
-				}else if(cls == "dgrid-previous"){
-					if(curr > 1){ grid.gotoPage(curr - 1); }
-				}else if(cls == "dgrid-next"){
-					if(curr < max){ grid.gotoPage(curr + 1); }
 				}else if(cls == "dgrid-last"){
 					grid.gotoPage(max);
+				}else if(cls == "dgrid-previous"){
+					grid.gotoPage(curr - 1);
+				}else if(cls == "dgrid-next"){
+					grid.gotoPage(curr + 1);
 				}
 			});
 			
@@ -128,6 +127,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			//		Update status and navigation controls based on total count from query
 			
 			var grid = this,
+				i18n = this.i18nPagination,
 				linksNode = this.paginationLinksNode,
 				currentPage = this._currentPage,
 				pagingLinks = this.pagingLinks,
@@ -141,7 +141,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 					// use a paging text box if enabled instead of just a number
 					link = put(linksNode, 'input.dgrid-page-input[type=text][value=$]', currentPage);
 					link.setAttribute("aria-label", i18n.jumpPage);
-					grid._pagingTextBoxHandle = on(link, "change", function(evt){
+					grid._pagingTextBoxHandle = on(link, "change", function(){
 						var value = +this.value;
 						if(!isNaN(value) && value > 0 && value <= end){
 							grid.gotoPage(+this.value, true);
@@ -236,15 +236,15 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				// Run new query and pass it into renderArray
 				results = grid.store.query(grid.query, options);
 				
-				return Deferred.when(grid.renderArray(results, loadingNode, options), function(trs){
+				return Deferred.when(grid.renderArray(results, loadingNode, options), function(){
 					put(loadingNode, "!");
 					delete grid._isLoading;
-					// reset scroll position now that new page is loaded
-					grid.bodyNode.scrollTop = 0;
+					// Reset scroll Y-position now that new page is loaded.
+					grid.scrollTo({ y: 0 });
 					
 					Deferred.when(results.total, function(total){
-						// update status text based on now-current page and total
-						grid.paginationStatusNode.innerHTML = string.substitute(i18n.status, {
+						// Update status text based on now-current page and total.
+						grid.paginationStatusNode.innerHTML = string.substitute(grid.i18nPagination.status, {
 							start: Math.min(start + 1, total),
 							end: Math.min(total, start + count),
 							total: total
@@ -253,7 +253,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 						grid._currentPage = page;
 						
 						// It's especially important that _updateNavigation is called only
-						// after renderArray is resolved as well (to prevent jumping)
+						// after renderArray is resolved as well (to prevent jumping).
 						grid._updateNavigation(focusLink);
 					});
 					

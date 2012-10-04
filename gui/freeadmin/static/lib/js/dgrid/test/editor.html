@@ -259,7 +259,9 @@
 					domConstruct.place('<select name="editor">' + optStr + "</select>", typesArea);
 					
 					on(document.body, "dgrid-datachange", function(evt){
-						console.log(evt.cell.row.id, " data changed: ", evt.oldValue, " -> ", evt.value);
+						console.log(evt.grid.id + " row " + evt.cell.row.id + " data changed" +
+						(event.parentType ? " (via " + event.parentType + "): " : ": "),
+						evt.oldValue, " -> ", evt.value);
 					});
 					
 					editFirst = function() {

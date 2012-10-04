@@ -2,12 +2,32 @@ define([
 	"dojo/_base/lang",
 	"dojo/_base/declare",
 	"dojo/_base/array",
+	"dojo/on",
 	"dojo/query",
 	"dojo/dnd/Source",
 	"put-selector/put",
 	"xstyle/css!../css/extensions/ColumnReorder.css"
-], function(lang, declare, arrayUtil, query, DndSource, put){
+], function(lang, declare, arrayUtil, on, query, DndSource, put){
 	var dndTypeRx = /-(\d+)(?:-(\d+))?$/; // used to determine subrow from dndType
+	
+	// The following 2 functions are used by onDropInternal logic for
+	// retrieving/modifying a given subRow.  The `match` variable in each is
+	// expected to be the result of executing dndTypeRx on a subRow ID.
+	
+	function getMatchingSubRow(grid, match) {
+		var hasColumnSets = match[2],
+			rowOrSet = grid[hasColumnSets ? "columnSets" : "subRows"][match[1]];
+		
+		return hasColumnSets ? rowOrSet[match[2]] : rowOrSet;
+	}
+	
+	function setMatchingSubRow(grid, match, subRow) {
+		if(match[2]){
+			grid.columnSets[match[1]][match[2]] = subRow;
+		}else{
+			grid.subRows[match[1]] = subRow;
+		}
+	}
 	
 	var ColumnDndSource = declare(DndSource, {
 		// summary:
@@ -29,10 +49,9 @@ define([
 		onDropInternal: function(nodes){
 			var grid = this.grid,
 				match = dndTypeRx.exec(nodes[0].getAttribute("dndType")),
-				hasColumnSets = !!match[2],
-				structure = hasColumnSets ? grid.columnSets : grid.subRows,
-				columns = grid.columns,
-				newSubRow;
+				structureProperty = match[2] ? "columnSets" : "subRows",
+				oldSubRow = getMatchingSubRow(grid, match),
+				columns = grid.columns;
 			
 			// First, allow original DnD logic to place node in new location.
 			this.inherited(arguments);
@@ -43,22 +62,41 @@ define([
 			// to populate a new row array to assign as a new sub-row to the grid.
 			// (Wait until the next turn to avoid errors in Opera.)
 			setTimeout(function(){
-				newSubRow = arrayUtil.map(nodes[0].parentNode.childNodes, function(col) {
-					return columns[col.columnId];
-				});
+				var newSubRow = arrayUtil.map(nodes[0].parentNode.childNodes, function(col) {
+						return columns[col.columnId];
+					}),
+					eventObject;
 				
-				if(hasColumnSets){
-					structure[match[1]][match[2]] = newSubRow;
-					grid.set("columnSets", structure);
+				setMatchingSubRow(grid, match, newSubRow);
+				
+				eventObject = {
+					grid: grid,
+					subRow: newSubRow,
+					column: columns[nodes[0].columnId],
+					bubbles: true,
+					cancelable: true,
+					// Set parentType to indicate this is the result of user interaction.
+					parentType: "dnd"
+				};
+				// Set columnSets or subRows depending on which the grid is using.
+				eventObject[structureProperty] = grid[structureProperty];
+				
+				// Emit a custom event which passes the new structure.
+				// Allow calling preventDefault() to cancel the reorder operation.
+				if(on.emit(grid.domNode, "dgrid-columnreorder", eventObject)){
+					// Event was not canceled - force processing of modified structure.
+					grid.set(structureProperty, grid[structureProperty]);
 				}else{
-					structure[match[1]] = newSubRow;
-					grid.set("subRows", structure);
+					// Event was canceled - revert the structure and re-render the header
+					// (since the inherited logic invoked above will have shifted cells).
+					setMatchingSubRow(grid, match, oldSubRow);
+					grid.renderHeader();
 				}
 			}, 0);
 		}
 	});
 	
-	var ColumnReorder = declare([], {
+	var ColumnReorder = declare(null, {
 		// summary:
 		//		Extension allowing reordering of columns in a grid via drag'n'drop.
 		//		Reordering of columns within the same subrow or columnset is also

@@ -8,7 +8,7 @@ var emptyElements = {};
 ["base", "link", "meta", "hr", "br", "wbr", "img", "embed", "param", "source", "track", "area", "col", "input", "keygen", "command"].forEach(function(tag){
 	emptyElements[tag] = true;
 });
-var prototype = Element.prototype = [];
+var prototype = Element.prototype;
 var currentIndentation = '';
 prototype.nodeType = 1;
 prototype.put = function(){
@@ -167,6 +167,13 @@ Object.defineProperties(prototype, {
 		}
 	}
 });
+function DocumentFragment(){
+}
+DocumentFragment.prototype = new Element();
+DocumentFragment.prototype.toString = function(){
+	return this.children ? this.children.join('') : '';
+};
+
 var lessThanRegex = /</g, ampersandRegex = /&/g;
 module.exports = function(putModule, putFactory){
 	put = putModule.exports = putFactory().forDocument({
@@ -176,6 +183,9 @@ module.exports = function(putModule, putFactory){
 		},
 		createTextNode: function(value){
 			return (typeof value == 'string' ? value : ('' + value)).replace(lessThanRegex, "&lt;").replace(ampersandRegex, "&amp;");
+		},
+		createDocumentFragment: function(){
+			return new DocumentFragment(); 
 		}
 	}, { // fragment heuristic, don't use this fragments here, it only slows things down
 		test: function(){

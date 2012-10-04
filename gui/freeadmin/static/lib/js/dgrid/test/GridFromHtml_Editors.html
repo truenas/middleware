@@ -24,11 +24,16 @@
 		<script type="text/javascript" src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
 		<script type="text/javascript">
-			require(["dgrid/GridFromHtml", "dojo/store/Memory", "dojo/store/Observable", "dojo/_base/declare", "dojo/parser", "dojo/query","dgrid/Keyboard","dijit/form/Select", "dgrid/editor", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner", "dojo/data/ObjectStore","dgrid/test/data/base", "dojo/domReady!"],
-			function(GridFromHtml, Memory, Observable, declare, parser, query, Keyboard, Select, editor, DateTextBox, Slider, NumberSpinner, ObjectStore){
+			require(["dgrid/GridFromHtml", "dgrid/OnDemandList", "dgrid/Keyboard",
+				"dojo/store/Memory", "dojo/store/Observable",
+				"dojo/_base/declare", "dojo/parser", "dojo/query",
+				"dijit/form/Select", "dgrid/editor", "dijit/form/DateTextBox",
+				"dijit/form/HorizontalSlider", "dijit/form/NumberSpinner",
+				"dojo/data/ObjectStore", "dgrid/test/data/base", "dojo/domReady!"],
+			function(GridFromHtml, OnDemandList, Keyboard, Memory, Observable, declare, parser, query, Select, editor, DateTextBox, Slider, NumberSpinner, ObjectStore){
 
 				window.dgrid = {
-					GridFromHtml: GridFromHtml,
+					GridFromHtml: declare([GridFromHtml, OnDemandList]),
 					editor: editor
 				};
 				window.stateStore = new ObjectStore({
@@ -36,7 +41,7 @@
 						labelProperty: "name"
 					});
 				// GridFromHtml tests
-				window.gridProgrammatic = new GridFromHtml({
+				window.gridProgrammatic = new dgrid.GridFromHtml({
 					store: testTypesStore
 				}, "gridProgrammatic");
 				parser.parse();

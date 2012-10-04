@@ -1,5 +1,5 @@
-define(["./OnDemandGrid", "dojo/_base/declare", "put-selector/put"],
-function(OnDemandGrid, declare, put){
+define(["./Grid", "dojo/_base/declare", "put-selector/put"],
+function(Grid, declare, put){
 	// summary:
 	//		This module supports parsing grid structure information from an HTML table.
 	//		This module does NOT support ColumnSets; see GridWithColumnSetsFromHtml
@@ -14,13 +14,14 @@ function(OnDemandGrid, declare, put){
 			columns = [], // to be pushed upon / returned
 			trs = domNode.getElementsByTagName("tr"),
 			trslen = trs.length,
-			getCol = GridFromHtml.utils.getColumnFromCell;
+			getCol = GridFromHtml.utils.getColumnFromCell,
+			rowColumns, tr, ths, thslen;
 		
 		for(var i = 0; i < trslen; i++){
-			var rowColumns = [];
+			rowColumns = [];
 			columns.push(rowColumns);
-			var tr = trs[i];
-			var ths = tr.getElementsByTagName("th"), thslen = ths.length;
+			tr = trs[i];
+			ths = tr.getElementsByTagName("th"), thslen = ths.length;
 			for(var j = 0; j < thslen; j++){
 				rowColumns.push(getCol(ths[j]));
 			}
@@ -34,7 +35,7 @@ function(OnDemandGrid, declare, put){
 		return columns;
 	}
 	
-	var GridFromHtml = declare([OnDemandGrid], {
+	var GridFromHtml = declare(Grid, {
 		configStructure: function(){
 			// summary:
 			//		Configure subRows based on HTML originally in srcNodeRef
@@ -121,6 +122,6 @@ function(OnDemandGrid, declare, put){
 			
 			return obj;
 		}
-	}
+	};
 	return GridFromHtml;
 });

@@ -25,8 +25,9 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 		element.appendChild(doc.createTextNode(text));
 	}
 	function put(topReferenceElement){
-		var fragment, returnValue, lastSelectorArg, nextSibling, referenceElement, current,
-			args = arguments;
+		var fragment, lastSelectorArg, nextSibling, referenceElement, current,
+			args = arguments,
+			returnValue = args[0]; // use the first argument as the default return value in case only an element is passed in
 		function insertLastElement(){
 			// we perform insertBefore actions after the element is fully created to work properly with 
 			// <input> tags in older versions of IE that require type attributes
@@ -51,11 +52,11 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 				lastSelectorArg = false;
 				if(argument instanceof Array){
 					// an array
-					returnValue = doc.createDocumentFragment();
+					current = doc.createDocumentFragment();
 					for(var key = 0; key < argument.length; key++){
-						returnValue.appendChild(put(argument[key]));
+						current.appendChild(put(argument[key]));
 					}
-					argument = returnValue;
+					argument = current;
 				}
 				if(argument.nodeType){
 					current = argument;

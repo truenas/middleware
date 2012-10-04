@@ -52,6 +52,8 @@
 				description: { label: "what to do", sortable: false }
 			};
 			
+			var prevent;
+			
 			require(["dgrid/Grid", "dgrid/extensions/ColumnReorder", "dgrid/extensions/ColumnResizer",
 					"dojo/_base/declare", "dojo/domReady!"],
 				function(Grid, ColumnReorder, ColumnResizer, declare){
@@ -68,6 +70,12 @@
 						}
 					}, "grid2");
 					grid2.renderArray(data);
+					
+					window.grid.on("dgrid-columnreorder", function(evt){
+						console.log("dgrid-columnreorder" + (prevent ? " (canceled): " : ": "),
+							evt);
+						if(prevent){ evt.preventDefault(); }
+					});
 				});
 				
 		</script>
@@ -78,6 +86,9 @@
 		<div>Buttons to test resetting columns:
 			<button onclick="grid.set('columns', columns1);">order, name, description</button>
 			<button onclick="grid.set('columns', columns2);">name, description</button>
+		</div>
+		<div>Button to test canceling dgrid-columnreorder events:
+			<button onclick="prevent = !prevent;">toggle canceling</button>
 		</div>
 		<h2>A grid with column re-ordering and resizing, and a non-reorderable Step field</h2>
 		<div id="grid2"></div>

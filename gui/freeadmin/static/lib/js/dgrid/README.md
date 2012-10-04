@@ -32,7 +32,7 @@ Alternatively, dgrid and its dependencies can be downloaded individually:
 
 * [xstyle](https://github.com/kriszyp/xstyle)
 * [put-selector](https://github.com/kriszyp/put-selector)
-* [The Dojo Toolkit](http://dojotoolkit.org) SDK version 1.7
+* [The Dojo Toolkit](http://dojotoolkit.org) SDK version 1.7 or higher
     * Out of the DTK components, Dojo core is the only hard dependency for dgrid;
       however, some of the test pages also use components from Dijit, and
       Dojox (namely grid for a comparison test, and mobile for a mobile page).
@@ -48,13 +48,17 @@ directory structure like the following:
 * `xstyle`
 * `util` (optional, e.g. if pursuing a custom build)
 
-dgrid works best with Dojo 1.7.1 or higher.  As of this writing,
-[Dojo 1.7.2](http://download.dojotoolkit.org/release-1.7.2/) is
+dgrid works best with the latest revision of Dojo 1.7 or higher.  As of this
+writing, [Dojo 1.8.0](http://download.dojotoolkit.org/release-1.8.0/) is
 recommended.
+
+Note that while dgrid supports Dojo 1.8 and may take advantage of features or
+fix issues specific to it where possible, it does not have any hard dependency
+on APIs new to 1.8, so as to maintain compatibility with 1.7.
 
 # Documentation
 
-Documentation for dgrid components has been further organized and moved to the
+Documentation for dgrid components is available in the
 [dgrid GitHub project wiki](https://github.com/SitePen/dgrid/wiki).
 The wiki's content may still be obtained for offline reading by cloning
 the wiki repository, as indicated under the "Git Access" tab.
