@@ -44,7 +44,8 @@ require([
     "dojo/_base/declare",
     "dgrid/extensions/DijitRegistry",
     "dijit/registry",
-    "dijit/form/Button"
+    "dijit/form/Button",
+    "dijit/Tooltip"
     ], function(
     dom,
     domClass,
@@ -60,7 +61,8 @@ require([
     declare,
     DijitRegistry,
     registry,
-    Button) {
+    Button,
+    Tooltip) {
 
     var columns, actions;
     xhr.get('{{ structure_url }}', {
@@ -73,20 +75,41 @@ require([
                 columns[key] = eval('(' + columns[key] + ')')
             }
             if(columns[key].shouldExpand !== undefined){
-		columns[key].shouldExpand = function() { return true };
-	    }
+                columns[key].shouldExpand = function() { return true };
+            }
         }
     });
+
+    var defaultOnSelect = function(evt, actionName, action) {
+        var numrows = evt.rows.length;
+        if(numrows > 1 || numrows == 0) {
+            query(".grid" + actionName).forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+        } else {
+            query(".grid" + actionName).forEach(function(item, idx) {
+                domStyle.set(item, "display", "block");
+            });
+        }
+        if(action.on_select_after !== undefined) {
+          action.on_select_after(evt, actionName, action);
+        }
+    };
 
     xhr.get('{{ actions_url }}', {
         sync: true,
         handleAs: 'json'
     }).then(function(data) {
         actions = data;
+	var funcs = {'on_select': 1, 'on_select_after': 0, 'on_click': 1};
         for(var key in actions) {
-            for(var func in {'on_select': 1, 'on_click': 1}) {
-              var funceval = eval('(' + actions[key][func] + ')');
-              actions[key][func] = funceval;
+            for(var func in funcs) {
+              if(actions[key][func] === undefined && funcs[func] == 1) {
+                actions[key][func] = defaultOnSelect;
+              } else {
+                var funceval = eval('(' + actions[key][func] + ')');
+                actions[key][func] = funceval;
+              }
             }
 
             var pane = query(".actionsPane", cpane.domNode.parentNode)[0];
@@ -98,6 +121,15 @@ require([
                 'label': actions[key]['button_name'],
                 'onClick': actions[key]['on_click']
             });
+
+            if(actions[key]['tooltip'] !== undefined) {
+              new Tooltip({
+                'position': ['above'],
+                'connectId': [but],
+                'label': actions[key]['tooltip']
+              });
+            }
+
             but.placeAt(n);
 
         }
@@ -126,21 +158,21 @@ require([
         editObject('{% trans "Edit"|escapejs %}', row.data._edit_url, [this, ]);
     });
 
-    var selectionCheck = function(numrows) {
+    var selectionCheck = function(evt) {
         for(key in actions) {
             var func = actions[key]['on_select'];
             try {
-              func(numrows);
+              func(evt, key, actions[key]);
             } catch(e) {
               console.log(e);
             }
         }
     };
     grid.on("dgrid-select, dgrid-deselect", function(evt) {
-        selectionCheck(evt.rows.length);
+        selectionCheck(evt);
     });
     //grid.select(1);
-    selectionCheck(0);
+    //selectionCheck();
 
 });
 </script>
