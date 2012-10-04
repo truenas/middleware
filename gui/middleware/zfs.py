@@ -605,19 +605,11 @@ class ZFSDataset(object):
         except:
             return _(u"Error")
 
-    def _get_status(self):
-        try:
-            if not hasattr(self, '_status'):
-                self._status = self.mp_volume.status
-            return self._status
-        except Exception:
-            return _(u"Error")
     _vfs = property(_get__vfs)
     total_si = property(_get_total_si)
     avail_si = property(_get_avail_si)
     used_pct = property(_get_used_pct)
     used_si = property(_get_used_si)
-    status = property(_get_status)
 
 
 def parse_status(name, doc, data):
