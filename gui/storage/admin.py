@@ -50,6 +50,13 @@ class VolumeFAdmin(BaseFreeAdmin):
         'vol_encryptkey',
         )
 
+    def get_datagrid_context(self):
+        has_multipath = models.Disk.objects.exclude(
+            disk_multipath_name='').exists()
+        return {
+            'has_multipath': has_multipath,
+            }
+
     def get_datagrid_columns(self):
 
         columns = []
