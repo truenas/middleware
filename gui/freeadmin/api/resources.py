@@ -83,9 +83,26 @@ class VolumeResource(DojoModelResource):
                 'name': name,
                 'type': 'dataset',
                 'mountpoint': dataset.mountpoint,
+                'path': dataset.path,
             }
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
+
+            data['_dataset_delete_url'] = reverse('storage_dataset_delete', kwargs={
+                'name': dataset.path,
+                })
+            data['_dataset_edit_url'] = reverse('storage_dataset_edit', kwargs={
+                'dataset_name': dataset.path,
+                })
+            data['_dataset_create_url'] = reverse('storage_dataset', kwargs={
+                'fs': dataset.path,
+                })
+            data['_permissions_url'] = reverse('storage_mp_permission', kwargs={
+                'path': dataset.mountpoint,
+                })
+            data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+                'fs': dataset.path,
+                })
 
             if dataset.children:
                 _datasets = {}
@@ -119,6 +136,12 @@ class VolumeResource(DojoModelResource):
         bundle.data['_permissions_url'] = reverse('storage_mp_permission', kwargs={
             'path': mp.mp_path,
             })
+        bundle.data['_status_url'] = reverse('storage_volume_status', kwargs={
+            'vid': bundle.obj.id,
+            })
+        bundle.data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+            'fs': bundle.obj.vol_name,
+            })
 
         attr_fields = ('total_si', 'avail_si', 'used_si')
         for attr in attr_fields + ('status', ):
@@ -142,6 +165,14 @@ class VolumeResource(DojoModelResource):
                 'type': 'zvol',
                 'total_si': zvol['volsize'],
             }
+
+            data['_zvol_delete_url'] = reverse('storage_zvol_delete', kwargs={
+                'name': name,
+                })
+            data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+                'fs': name,
+                })
+
             children.append(data)
 
         bundle.data['children'] = children

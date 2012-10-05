@@ -27,9 +27,8 @@ class DiskFAdmin(BaseFreeAdmin):
             'on_click': """function() {
                 var mybtn = this;
                 for (var i in grid.selection) {
-                    grid.store.get(i).then(function(data) {
-                        editObject('Wipe', data._wipe_url, [mybtn,]);
-                    });
+                    var data = grid.row(i).data;
+                    editObject('Wipe', data._wipe_url, [mybtn,]);
                 }
             }""",
         }
@@ -86,7 +85,8 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
         return columns
 
-    def _action_builder(self, name, label=None, url=None, func="editObject", icon=None):
+    def _action_builder(self, name, label=None, url=None, func="editObject",
+        icon=None, show=None, fstype="ZFS"):
 
         if url is None:
             url = "_%s_url" % (name, )
@@ -94,26 +94,44 @@ class VolumeFAdmin(BaseFreeAdmin):
         if icon is None:
             icon = name
 
+        if show == "ALL":
+            hide_cond = "false"
+        elif show == "+DATASET":
+            hide_cond = "row.data.type != 'dataset' && row.data.type !== undefined"
+        elif show == "DATASET":
+            hide_cond = "row.data.type != 'dataset'"
+        elif show == "ZVOL":
+            hide_cond = "row.data.type != 'zvol'"
+        else:
+            hide_cond = "row.data.type !== undefined"
+
+        if fstype == "ZFS":
+            hide_fs = "row.data.vol_fstype !== undefined && row.data.vol_fstype != 'ZFS'"
+        else:
+            hide_fs = "false"
+
         on_select_after = """function(evt, actionName, action) {
-               for(var i=0;i < evt.rows.length;i++) {
-                   var row = evt.rows[i];
-                   if(row.data.type !== undefined) {
-                       query(".grid" + actionName).forEach(function(item, idx) {
-                           domStyle.set(item, "display", "none");
-                       });
-                       break;
-                   }
-               }
-           }"""
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if((%(hide)s) || (%(hide_fs)s)) {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""" % {
+            'hide': hide_cond,
+            'hide_fs': hide_fs,
+            }
 
         on_click = """function() {
-               var mybtn = this;
-               for (var i in grid.selection) {
-                   grid.store.get(i).then(function(data) {
-                       %(func)s('%(label)s', data.%(url)s, [mybtn,]);
-                   });
-               }
-           }""" % {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
+                }
+            }""" % {
                 'func': func,
                 'label': escapejs(label),
                 'url': url,
@@ -150,6 +168,45 @@ class VolumeFAdmin(BaseFreeAdmin):
             )
         actions['ChangePerm'] = self._action_builder("permissions",
             label=_('Change Permissions'),
+            show="+DATASET",
+            fstype="ALL",
+            )
+        actions['ManualSnapshot'] = self._action_builder("manual_snapshot",
+            label=_('Create Snapshot'),
+            icon="create_snapshot",
+            show="ALL",
+            )
+        actions['VolStatus'] = self._action_builder("status",
+            label=_('Volume Status'),
+            func="viewModel",
+            icon="zpool_status",
+            fstype="ALL",
+            )
+
+        # Dataset actions
+        actions['DatasetDelete'] = self._action_builder("dataset_delete",
+            label=_('Destroy Dataset'),
+            func="editScaryObject",
+            icon="remove_dataset",
+            show="DATASET",
+            )
+        actions['DatasetEdit'] = self._action_builder("dataset_edit",
+            label=_('Edit ZFS Options'),
+            icon="settings",
+            show="DATASET",
+            )
+        actions['DatasetCreate'] = self._action_builder("dataset_create",
+            label=_('Create ZFS Dataset'),
+            icon="add_dataset",
+            show="DATASET",
+            )
+
+        # ZVol actions
+        actions['ZVolDelete'] = self._action_builder("zvol_delete",
+            label=_('Destroy ZFS Volume'),
+            func="editScaryObject",
+            icon="remove_volume",
+            show="ZVOL",
             )
 
         return actions
