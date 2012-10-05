@@ -168,6 +168,11 @@ GUI
 3. Fix a typo that prevented the alert icon from
    returning to green status.
 
+4. Properly disconnect from the webshell.
+
+5. Fix backspace causing a double input in the webshell
+   when using Firefox or IE.
+
 
 Changes since 8.3.0-BETA2:
 
