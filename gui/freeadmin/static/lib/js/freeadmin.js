@@ -1198,12 +1198,8 @@ require([
                 function handler(msg,value) {
                     switch(msg) {
                     case 'conn':
-                        //startMsgAnim('Tap for keyboard',800,false);
                         break;
                     case 'disc':
-                        //startMsgAnim('Disconnected',0,true);
-                        delete _webshell;
-                        _webshell = undefined;
                         registry.byId("shell_dialog").hide();
                         break;
                     case 'curs':
@@ -1225,8 +1221,11 @@ require([
 
             },
             onHide: function(e) {
-                if(_webshell)
+                if(_webshell) {
                     _webshell.stop();
+                    delete _webshell;
+                    _webshell = undefined;
+                }
             }
         }, "shell_dialog_holder");
 
