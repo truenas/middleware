@@ -240,8 +240,8 @@ define([
              */
             if (
                 ev.keyCode == dojo.keys.TAB ||
-                ev.keyCode == dojo.keys.BACKSPACE ||
                 (dojo.isWebKit && (
+                    ev.keyCode == dojo.keys.BACKSPACE ||
                     (ev.ctrlKey && (
                         ev.keyCode == 67 || ev.keyCode == 68
                     )) ||
