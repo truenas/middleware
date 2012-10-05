@@ -1,29 +1,27 @@
 <div data-dojo-type="dijit.layout.BorderContainer" style="width:100%;height:100%" data-dojo-props="gutters: false, toggleSplitterOpen: true">
+  {% block actions_static_pane %}
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top', splitter: false" style="background-color: white;height: 60px;" doLayout="false">
+    {% block actions_static_buttons %}
+    <div class="gridAdd left">
+      <button data-dojo-type="dijit.form.Button" type="button">
+          {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
+      <script type="dojo/method" event="onClick" args="evt">
+          editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
+      </script>
+      </button>
+    </div>
+    {% endblock %}
+    <span class="clear"></span>
+  </div>
+  {% endblock %}
   <div class="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'"></div>
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 50px;" doLayout="false">
-    <div data-dojo-type="dijit.layout.BorderContainer" style="width:100%;height:100%" data-dojo-props="gutters: false, toggleSplitterOpen: true">
-      {% block actions_static_pane %}
-      <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'left', splitter: false" style="background-color: white;width: 150px;" doLayout="false">
-        {% block actions_static_buttons %}
-        <div class="gridAdd left">
-          <button data-dojo-type="dijit.form.Button" type="button">
-              {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
-          <script type="dojo/method" event="onClick" args="evt">
-              editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
-          </script>
-          </button>
-        </div>
-        {% endblock %}
-        <span class="clear"></span>
-      </div>
-      {% endblock %}
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 40px;" doLayout="false">
 
-      <div class="actionsPane" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center', splitter: false" style="background-color: white;" doLayout="false">
+      <div class="actionsPane" data-dojo-type="dijit.layout.ContentPane" style="background-color: white;" doLayout="false">
         {% block actions_pane %}
         {% endblock %}
         <span class="clear"></span>
       </div>
-    </div>
   </div>
 </div>
 <div data-dojo-type="dijit.layout.ContentPane">
@@ -147,7 +145,7 @@ require([
     });
 
     var StandardGrid = declare([Grid, Selection, Keyboard]);
-    var griddiv = query(".gridDiv:first-child", cpane.domNode.parentNode)[0];
+    var griddiv = query(".gridDiv", cpane.domNode.parentNode)[0];
     grid = new StandardGrid({
         id: 'orderGrid',
         store: store,
