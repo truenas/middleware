@@ -2,7 +2,7 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Active Volumes"|force_escape|force_escape %}'
     {% if focused_tab == "storage.Volume.View" %}, selected:true{% endif %},
     doLayout:false,
-    href: '{% url storage_volumes %}',
+    href: '{% url freeadmin_storage_volume_datagrid %}',
     refreshOnShow: true" class="objrefresh" tab="storage.Volume.View">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Snapshots"|force_escape|force_escape %}'
