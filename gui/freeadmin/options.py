@@ -617,6 +617,9 @@ class BaseFreeAdmin(object):
             return HttpResponse(fsins.empty_form.as_table())
         return HttpResponse()
 
+    def get_datagrid_context(self):
+        return {}
+
     def datagrid(self, request):
 
         m = self._model
@@ -630,6 +633,8 @@ class BaseFreeAdmin(object):
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),
             'add_url': reverse('freeadmin_%s_%s_add' % info),
         }
+
+        context.update(self.get_datagrid_context())
 
         template = "%s/%s_datagrid.html" % info
         try:
