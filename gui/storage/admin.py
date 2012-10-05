@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
@@ -86,7 +88,8 @@ class VolumeFAdmin(BaseFreeAdmin):
         return columns
 
     def _action_builder(self, name, label=None, url=None, func="editObject",
-        icon=None, show=None, fstype="ZFS"):
+        icon=None, show=None, fstype="ZFS", decrypted=True, has_enc=False,
+        enc_level=None):
 
         if url is None:
             url = "_%s_url" % (name, )
@@ -110,10 +113,23 @@ class VolumeFAdmin(BaseFreeAdmin):
         else:
             hide_fs = "false"
 
+        if decrypted is True:
+            hide_enc = "row.data.vol_fstype !== undefined && row.data.is_decrypted == false"
+        else:
+            hide_enc = "row.data.vol_encrypt == 0 && row.data.is_decrypted == true"
+
+        if has_enc is True:
+            if enc_level is not None:
+                hide_hasenc = "row.data.vol_encrypt != %d" % (enc_level, )
+            else:
+                hide_hasenc = "row.data.vol_encrypt == 0"
+        else:
+            hide_hasenc = "false"
+
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if((%(hide)s) || (%(hide_fs)s)) {
+                    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
                         query(".grid" + actionName).forEach(function(item, idx) {
                             domStyle.set(item, "display", "none");
                         });
@@ -123,6 +139,8 @@ class VolumeFAdmin(BaseFreeAdmin):
             }""" % {
             'hide': hide_cond,
             'hide_fs': hide_fs,
+            'hide_enc': hide_enc,
+            'hide_hasenc': hide_hasenc,
             }
 
         on_click = """function() {
@@ -151,7 +169,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 
     def get_actions(self):
 
-        actions = {}
+        actions = OrderedDict()
         actions['Detach'] = self._action_builder("detach",
             label=_('Detach Volume'),
             func="editScaryObject",
@@ -181,6 +199,44 @@ class VolumeFAdmin(BaseFreeAdmin):
             func="viewModel",
             icon="zpool_status",
             fstype="ALL",
+            )
+
+        actions['VolCreatePass'] = self._action_builder("create_passphrase",
+            label=_('Create Passphrase'),
+            icon="key_change",
+            has_enc=True,
+            enc_level=1,
+            )
+        actions['VolChangePass'] = self._action_builder("change_passphrase",
+            label=_('Change Passphrase'),
+            icon="key_change",
+            has_enc=True,
+            enc_level=2,
+            )
+        actions['VolDownloadKey'] = self._action_builder("download_key",
+            label=_('Download Key'),
+            icon="key_download",
+            has_enc=True,
+            )
+        actions['VolReKey'] = self._action_builder("rekey",
+            label=_('Encryption Re-key'),
+            icon="key_rekey",
+            has_enc=True,
+            )
+        actions['VolAddRecKey'] = self._action_builder("add_reckey",
+            label=_('Add recovery key'),
+            icon="key_addrecovery",
+            has_enc=True,
+            )
+        actions['VolRemRecKey'] = self._action_builder("rem_reckey",
+            label=_('Remove recovery key'),
+            icon="key_removerecovery",
+            has_enc=True,
+            )
+        actions['VolUnlock'] = self._action_builder("unlock",
+            label=_('Unlock'),
+            icon="key_unlock",
+            decrypted=False,
             )
 
         # Dataset actions

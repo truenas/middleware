@@ -59,6 +59,7 @@ class Uid(object):
     def __init__(self, start):
         self._start = start
         self._counter = start
+
     def next(self):
         number = self._counter
         self._counter += 1
@@ -88,19 +89,23 @@ class VolumeResource(DojoModelResource):
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
 
-            data['_dataset_delete_url'] = reverse('storage_dataset_delete', kwargs={
+            data['_dataset_delete_url'] = reverse('storage_dataset_delete',
+                kwargs={
                 'name': dataset.path,
                 })
-            data['_dataset_edit_url'] = reverse('storage_dataset_edit', kwargs={
+            data['_dataset_edit_url'] = reverse('storage_dataset_edit',
+                kwargs={
                 'dataset_name': dataset.path,
                 })
             data['_dataset_create_url'] = reverse('storage_dataset', kwargs={
                 'fs': dataset.path,
                 })
-            data['_permissions_url'] = reverse('storage_mp_permission', kwargs={
+            data['_permissions_url'] = reverse('storage_mp_permission',
+                kwargs={
                 'path': dataset.mountpoint,
                 })
-            data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+            data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+                kwargs={
                 'fs': dataset.path,
                 })
 
@@ -133,15 +138,42 @@ class VolumeResource(DojoModelResource):
         bundle.data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
             'volume_name': bundle.obj.vol_name,
             })
-        bundle.data['_permissions_url'] = reverse('storage_mp_permission', kwargs={
+        bundle.data['_permissions_url'] = reverse('storage_mp_permission',
+            kwargs={
             'path': mp.mp_path,
             })
         bundle.data['_status_url'] = reverse('storage_volume_status', kwargs={
             'vid': bundle.obj.id,
             })
-        bundle.data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+        bundle.data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+            kwargs={
             'fs': bundle.obj.vol_name,
             })
+        bundle.data['_unlock_url'] = reverse('storage_volume_unlock',
+            kwargs={
+            'object_id': bundle.obj.id,
+            })
+        bundle.data['_download_key_url'] = reverse('storage_volume_key',
+            kwargs={
+            'object_id': bundle.obj.id,
+            })
+        bundle.data['_rekey_url'] = reverse('storage_volume_rekey',
+            kwargs={
+            'object_id': bundle.obj.id,
+            })
+        bundle.data['_add_reckey_url'] = reverse(
+            'storage_volume_recoverykey_add',
+            kwargs={'object_id': bundle.obj.id})
+        bundle.data['_rem_reckey_url'] = reverse(
+            'storage_volume_recoverykey_remove',
+            kwargs={'object_id': bundle.obj.id})
+        bundle.data['_create_passphrase_url'] = reverse(
+            'storage_volume_create_passphrase',
+            kwargs={'object_id': bundle.obj.id})
+        bundle.data['_change_passphrase_url'] = reverse(
+            'storage_volume_change_passphrase',
+            kwargs={'object_id': bundle.obj.id})
+        bundle.data['is_decrypted'] = bundle.obj.is_decrypted()
 
         attr_fields = ('total_si', 'avail_si', 'used_si')
         for attr in attr_fields + ('status', ):
@@ -169,7 +201,8 @@ class VolumeResource(DojoModelResource):
             data['_zvol_delete_url'] = reverse('storage_zvol_delete', kwargs={
                 'name': name,
                 })
-            data['_manual_snapshot_url'] = reverse('storage_manualsnap', kwargs={
+            data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+                kwargs={
                 'fs': name,
                 })
 
