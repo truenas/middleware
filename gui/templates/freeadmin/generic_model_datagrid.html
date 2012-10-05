@@ -116,6 +116,7 @@ require([
 
             var n = domConstruct.create("div", null, pane);
             domClass.add(n, ["grid" + key, "left"]);
+	    domStyle.set(n, "display", "none");
 
             var but = new Button({
                 'label': actions[key]['button_name'],
@@ -171,7 +172,7 @@ require([
     grid.on("dgrid-select, dgrid-deselect", function(evt) {
         selectionCheck(evt);
     });
-    //grid.select(1);
+    grid.clearSelection();
     //selectionCheck();
 
 });
