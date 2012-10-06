@@ -1,0 +1,46 @@
+{% extends "freeadmin/generic_model_datagrid.html" %}
+{% block actions_static_buttons %}
+
+    <button id="addVolumeBtn" data-dojo-type="dijit.form.Button">
+    <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
+    <p>{% trans "Volume Manager" %}</p>
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        volumeWizard('{% trans "Volume Manager"|force_escape|force_escape %}', '{% url storage_wizard %}', [this,]);
+    </script>
+    </button>
+
+    <button id="importVolBtn" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/import_volume.png">
+        <p>{% trans "Import Volume" %}</p>
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            volumeWizard('{% trans "Import Volume"|force_escape|force_escape %}', '{% url storage_import %}', [this,]);
+        </script>
+    </button>
+
+    <button id="autoImportVolBtn" data-dojo-type="dijit.form.Button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/auto_import_volume.png">
+        <p>{% trans "Auto Import Volume" %}</p>
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            volumeWizard('{% trans "Auto Import Volume"|force_escape|force_escape %}', '{% url storage_autoimport %}', [this,]);
+        </script>
+    </button>
+
+    <button id="viewDisksBtn" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png">
+        <p>{% trans "View Disks" %}</p>
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            viewModel('{% trans "View Disks"|escapejs %}', '{% url freeadmin_storage_disk_datagrid %}');
+        </script>
+    </button>
+
+    {% if has_multipath %}
+    <button id="viewMultipathBtn" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png">
+        <p>{% trans "View Multipaths" %}</p>
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            viewModel('{% trans "View Multipaths"|force_escape %}', '{% url storage_multipath_status %}');
+        </script>
+    </button>
+    {% endif %}
+
+{% endblock %}
