@@ -13,6 +13,7 @@
         'parseOnLoad':true,
         'baseUrl':"{{ DOJANGO.DOJO_URL }}",
         'async': true,
+	'cacheBust': '{{ cache_hash }}',
         'packages': [
         {name: "freeadmin", location: "../../../../../static/lib/js/freeadmin"}
         ]
