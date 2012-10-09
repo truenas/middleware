@@ -3550,7 +3550,6 @@ mk_path_wrappers() {
 	fi
 
 	# Copy the wrapper binary
-	#cp ${PBI_WRAPPERFILE} ${dir}/${fbin}
 	cp /usr/pbi/.pbiwrapper ${dir}/${fbin}
 	chmod 755 ${dir}/${fbin}
 
@@ -6240,7 +6239,7 @@ chroot_extract() {
 	cp /etc/resolv.conf ${PBI_CHROOTDIR}/etc/resolv.conf
 
 	# Copy our binary wrapper
-	mkdir ${PBI_CHROOTDIR}/usr/pbi
+	mkdir -p ${PBI_CHROOTDIR}/usr/pbi
 	cp ${PBI_WRAPPERFILE} ${PBI_CHROOTDIR}/usr/pbi/
 
 	# If we have a custom PBI_MAKECONF include it
