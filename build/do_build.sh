@@ -160,37 +160,36 @@ is_plugin()
 install_pbi_manager()
 {
 	local src="${TOP}/src/pbi-manager"
-	local dst="${TOP}"
 
-	if [ -f "${dst}/sbin/pbi_create" ]
+	if [ -f "${PBI_BINDIR}/pbi_create" ]
 	then
-		rm -rf "${dst}/sbin"
+		rm -rf "${PBI_BINDIR}"
 	fi
 
-	mkdir -p "${TOP}/sbin"
-	cp ${src}/pbi-manager ${dst}/sbin/pbi_create
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
-	rm -f ${dst}/pbi-manager
+	mkdir -p "${PBI_BINDIR}"
+	cp ${src}/pbi-manager ${PBI_BINDIR}/pbi_create
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_add
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_addrepo
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_browser
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_autobuild
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_delete
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_deleterepo
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_icon
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_info
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_indextool
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_listrepo
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makepatch
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makeport
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makerepo
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_metatool
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_patch
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_update
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_update_hashdir
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbid
+	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi-crashhandler
+	rm -f ${PBI_BINDIR}/pbi-manager
 
-	PATH="${TOP}/sbin:${PATH}"
+	PATH="${PBI_BINDIR}:${PATH}"
 	export PATH
 }
 

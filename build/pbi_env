@@ -10,6 +10,12 @@ PBI_APPDIR="${AVATAR_ROOT}/pbi"
 export PBI_APPDIR
 
 #
+# Tell the build system where pbi-manager is located
+#
+PBI_BINDIR="${AVATAR_ROOT}/sbin"
+export PBI_BINDIR
+
+#
 # Force pbi_create to checkout 8.0-RELEASE source
 #
 PBI_OSREL="8.0-RELEASE"

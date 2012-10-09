@@ -1288,6 +1288,10 @@ init_vars() {
         # Where is pbi-manager installed?
 	FBSDMAJOR=`uname -r | cut -c 1`
         PROGBASE="/usr/local" 
+	if [ -z "${PBI_BINDIR}" ]
+	then
+		PBI_BINDIR="${PROGBASE}/sbin"
+	fi
 	SYS_LOCALBASE="/usr/local"
 	if [ -z "${PBI_APPDIR}" -o "`basename $0`" = "pbi_makeport_chroot" ] ; then
 		PBI_APPDIR="/usr/pbi"
@@ -6259,10 +6263,10 @@ chroot_extract() {
 		mkdir ${PBI_CHROOTDIR}/pkgs
 		mount_nullfs ${PBI_PKGCACHEDIR} ${PBI_CHROOTDIR}/pkgs
 	fi
-	
+
 	# Now copy over the pbi_* scripts
-	mkdir ${PBI_CHROOTDIR}/usr/local/sbin
-	cp ${PROGBASE}/sbin/pbi_* ${PBI_CHROOTDIR}/usr/local/sbin
+	mkdir -p ${PBI_CHROOTDIR}/usr/local/sbin
+	cp ${PBI_BINDIR}/pbi_* ${PBI_CHROOTDIR}/usr/local/sbin
 	cp ${PBI_CHROOTDIR}/usr/local/sbin/pbi_makeport ${PBI_CHROOTDIR}/usr/local/sbin/pbi_makeport_chroot
 	chmod 755 ${PBI_CHROOTDIR}/usr/local/sbin/pbi_*
 
