@@ -75,7 +75,7 @@ class VolumeResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
-    def _get_datasets(self, datasets, uid):
+    def _get_datasets(self, vol, datasets, uid):
         children = []
         attr_fields = ('total_si', 'avail_si', 'used_si')
         for name, dataset in datasets.items():
@@ -83,6 +83,7 @@ class VolumeResource(DojoModelResource):
                 'id': uid.next(),
                 'name': name,
                 'type': 'dataset',
+                'status': vol.status,
                 'mountpoint': dataset.mountpoint,
                 'path': dataset.path,
             }
@@ -113,7 +114,7 @@ class VolumeResource(DojoModelResource):
                 _datasets = {}
                 for child in dataset.children:
                     _datasets[child.name] = child
-                data['children'] = self._get_datasets(_datasets, uid)
+                data['children'] = self._get_datasets(vol, _datasets, uid)
 
             children.append(data)
         return children
@@ -184,6 +185,7 @@ class VolumeResource(DojoModelResource):
         uid = Uid(bundle.obj.id * 100)
 
         children = self._get_datasets(
+            bundle.obj,
             bundle.obj.get_datasets(hierarchical=True),
             uid=uid,
             )
