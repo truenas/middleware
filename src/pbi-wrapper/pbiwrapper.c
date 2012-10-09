@@ -44,6 +44,11 @@ int main(int argc, char **argv)
     char mypath[1024];
     size_t cb = sizeof(mypath);
     sysctl(mib, 4, mypath, &cb, NULL, 0);
+
+    //printf( "MYPATH: %s\n", mypath);
+
+    if ( mypath[0] == 0 )
+       strcpy(mypath, argv[0]);
     
     // Figure out where we are
     if (realpath(mypath, bfile) == NULL) {
