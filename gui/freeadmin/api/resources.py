@@ -77,7 +77,7 @@ class VolumeResource(DojoModelResource):
 
     def _get_datasets(self, vol, datasets, uid):
         children = []
-        attr_fields = ('total_si', 'avail_si', 'used_si')
+        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
         for name, dataset in datasets.items():
             data = {
                 'id': uid.next(),
@@ -89,6 +89,11 @@ class VolumeResource(DojoModelResource):
             }
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
+
+            data['used'] = "%s (%s)" % (
+                data['used_si'],
+                data['used_pct'],
+                )
 
             data['_dataset_delete_url'] = reverse('storage_dataset_delete',
                 kwargs={
@@ -176,9 +181,14 @@ class VolumeResource(DojoModelResource):
             kwargs={'object_id': bundle.obj.id})
         bundle.data['is_decrypted'] = bundle.obj.is_decrypted()
 
-        attr_fields = ('total_si', 'avail_si', 'used_si')
+        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)
+
+        bundle.data['used'] = "%s (%s)" % (
+            bundle.data['used_si'],
+            bundle.data['used_pct'],
+            )
 
         bundle.data['mountpoint'] = mp.mp_path
 

@@ -70,7 +70,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
-            'name': 'used_si',
+            'name': 'used',
             'label': 'Used',
             'sortable': False,
         })
