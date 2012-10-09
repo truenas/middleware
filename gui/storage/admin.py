@@ -4,7 +4,8 @@ from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import DiskResource, VolumeResource
+from freenasUI.freeadmin.api.resources import (DiskResource, ScrubResource,
+    VolumeResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -275,5 +276,74 @@ class VolumeFAdmin(BaseFreeAdmin):
         return actions
 
 
+class ScrubFAdmin(BaseFreeAdmin):
+
+    icon_model = u"cronJobIcon"
+    icon_object = u"cronJobIcon"
+    icon_add = u"AddcronJobIcon"
+    icon_view = u"ViewcronJobIcon"
+    resource = ScrubResource
+    exclude_fields = (
+        'id',
+        )
+
+    def get_datagrid_columns(self):
+
+        columns = []
+
+        columns.append({
+            'name': 'scrub_volume',
+            'label': _('Volume'),
+        })
+
+        columns.append({
+            'name': 'scrub_threshold',
+            'label': _('Threshold days'),
+        })
+
+        columns.append({
+            'name': 'scrub_description',
+            'label': _('Description'),
+        })
+
+        columns.append({
+            'name': 'human_minute',
+            'label': _('Minute'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'human_hour',
+            'label': _('Hour'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'human_daymonth',
+            'label': _('Day of month'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'human_month',
+            'label': _('Month'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'human_dayweek',
+            'label': _('Day of week'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'scrub_enabled',
+            'label': _('Enabled'),
+            'sortable': False,
+        })
+        return columns
+
+
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
+site.register(models.Scrub, ScrubFAdmin)

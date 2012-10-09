@@ -300,12 +300,6 @@ class Scrub(Model):
         verbose_name_plural = _("ZFS Scrubs")
         ordering = ["scrub_volume__vol_name"]
 
-    class FreeAdmin:
-        icon_model = u"cronJobIcon"
-        icon_object = u"cronJobIcon"
-        icon_add = u"AddcronJobIcon"
-        icon_view = u"ViewcronJobIcon"
-
     def __unicode__(self):
         return self.scrub_volume.vol_name
 

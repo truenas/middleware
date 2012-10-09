@@ -29,7 +29,7 @@ from django.db.models import Q
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
-from freenasUI.storage.models import Disk, Volume
+from freenasUI.storage.models import Disk, Volume, Scrub
 
 
 class DiskResource(DojoModelResource):
@@ -221,4 +221,23 @@ class VolumeResource(DojoModelResource):
             children.append(data)
 
         bundle.data['children'] = children
+        return bundle
+
+
+class ScrubResource(DojoModelResource):
+
+    class Meta:
+        queryset = Scrub.objects.all()
+        resource_name = 'scrub'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(ScrubResource, self).dehydrate(bundle)
+        bundle.data['scrub_volume'] = bundle.obj.scrub_volume.vol_name
+
+        for human in ('human_minute', 'human_hour', 'human_daymonth',
+                'human_month', 'human_dayweek'):
+            bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
         return bundle
