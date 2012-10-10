@@ -30,6 +30,7 @@ import logging
 import os
 import pwd
 import re
+import stat
 import subprocess
 
 from django.conf import settings
@@ -50,6 +51,28 @@ from freenasUI.storage.models import MountPoint
 from freenasUI.system import models
 
 log = logging.getLogger('system.forms')
+
+
+def clean_path_execbit(path):
+    """
+    Make sure the hierarchy has the bit S_IXOTH set
+    """
+    current = path
+    while True:
+        try:
+            mode = os.stat(current).st_mode
+            if mode & stat.S_IXOTH == 0:
+                raise forms.ValidationError(
+                    _("The path '%s' requires execute permission bit") % (
+                        current,
+                        )
+                    )
+        except OSError:
+            break
+
+        current = os.path.realpath(os.path.join(current, os.path.pardir))
+        if current == '/':
+            break
 
 
 class FileWizard(SessionWizardView):
@@ -479,6 +502,12 @@ class FirmwareTemporaryLocationForm(Form):
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
         )
+
+    def clean_mountpoint(self):
+        mp = self.cleaned_data.get("mountpoint")
+        if mp.startswith('/'):
+            clean_path_execbit(mp)
+        return mp
 
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)

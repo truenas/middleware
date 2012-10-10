@@ -43,7 +43,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import MountPoint
-from freenasUI.system.forms import FileWizard
+from freenasUI.system.forms import clean_path_execbit, FileWizard
 
 log = logging.getLogger('plugins.forms')
 
@@ -154,6 +154,11 @@ class PBITemporaryLocationForm(Form):
                 for x in MountPoint.objects.exclude(
                     mp_volume__vol_fstype='iscsi')]
 
+    def clean_mountpoint(self):
+        mp = self.cleaned_data.get("mountpoint")
+        clean_path_execbit(mp)
+        return mp
+
     def done(self, *args, **kwargs):
         notifier().change_upload_location(
             self.cleaned_data["mountpoint"].__str__()
@@ -162,6 +167,15 @@ class PBITemporaryLocationForm(Form):
 
 class PBIUploadForm(Form):
     pbifile = FileField(label=_("PBI file to be installed"), required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(PBIUploadForm, self).__init__(*args, **kwargs)
+
+        pj = PluginsJail.objects.order_by("-id")[0]
+        try:
+            clean_path_execbit(pj.plugins_path)
+        except forms.ValidationError, e:
+            self.errors['__all__'] = self.error_class(e.messages)
 
     def clean(self):
         cleaned_data = self.cleaned_data
