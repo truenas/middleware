@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-09-18 23:01+0200\n"
-"Last-Translator: apocsantos <antoniopocsantos@gmail.com>\n"
+"PO-Revision-Date: 2012-10-10 00:20+0200\n"
+"Last-Translator: assapar <jorgevianaforte@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -1346,12 +1346,11 @@ msgstr "Plugin instalado com sucesso."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Ocorreu um problema ao importar o jail"
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s actualizado com sucesso."
+msgstr "Jail actualizado com sucesso."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1617,6 +1616,8 @@ msgstr ""
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
+"O ficheiro deve existir se o seu tamanho estiver definido como automático "
+"(0)  "
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1646,7 +1647,7 @@ msgstr "Número do Grupo de autenticação"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Use caracteres alfanuméricos, \".\", \"-\" and \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -2142,7 +2143,7 @@ msgstr ""
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr "Tamanho da extensão"
+msgstr "Tamanho do extent"
 
 #: services/models.py:414
 msgid ""
@@ -2171,11 +2172,11 @@ msgstr "Deve introduzir uma descrição para sua referência."
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr "Extensão"
+msgstr "Extent"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr "ID do Grupo do Portal"
+msgstr "IID do Portal Grup"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
@@ -6930,7 +6931,7 @@ msgid "Add ZVol"
 msgstr "Adicionar ZVol"
 
 msgid "English"
-msgstr "Inglês"
+msgstr "IInglês"
 
 msgid "Level"
 msgstr "Nível"

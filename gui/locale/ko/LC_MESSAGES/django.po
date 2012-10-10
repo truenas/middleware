@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-10-03 04:03+0200\n"
+"PO-Revision-Date: 2012-10-10 00:59+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -4075,7 +4075,7 @@ msgstr ""
 #: storage/models.py:737
 #, fuzzy
 msgid "Do not snapshot before"
-msgstr "동안 스냅샷 보관"
+msgstr "전에는 스냅샷 보관하지 않기"
 
 #: storage/models.py:741
 msgid "End"
@@ -4084,7 +4084,7 @@ msgstr ""
 #: storage/models.py:742
 #, fuzzy
 msgid "Do not snapshot after"
-msgstr "동안 스냅샷 보관"
+msgstr "후에는 스냅샷 보관하지 않기"
 
 #: storage/models.py:748
 msgid "Interval"
@@ -4119,9 +4119,8 @@ msgid "Storage"
 msgstr "스토리지"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "스냅샷 복제"
+msgstr "스냅샷 보기"
 
 #: storage/nav.py:34
 #, fuzzy
@@ -4130,9 +4129,8 @@ msgstr "모든 그룹 보기"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
-msgstr "ZFS 볼륨"
+msgstr "볼륨 관리자"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4156,9 +4154,8 @@ msgid "Auto Import Volume"
 msgstr "자동으로 볼륨 가져오기"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "볼륨"
+msgstr "볼륨 보기"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4536,7 +4533,7 @@ msgstr ""
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
-msgstr ""
+msgstr "시스템이 이메일을 보내기 위해 사용할 보내기 이메일 주소, eg: freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -4882,15 +4879,15 @@ msgstr ""
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "페이지를 찾을 수 없습니다"
 
 #: templates/base.html:51
 msgid "expand all"
-msgstr ""
+msgstr "전부 확장"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr ""
+msgstr "모두 닫기"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -5123,9 +5120,8 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-#, fuzzy
 msgid "Documentation"
-msgstr "위치"
+msgstr "문서"
 
 #: templates/freeadmin/index.html:91
 #, fuzzy
@@ -5145,7 +5141,7 @@ msgstr ""
 #: templates/system/smarttest.html:11 templates/system/sysctl.html:9
 #: templates/system/tunable.html:9
 msgid "Available actions"
-msgstr ""
+msgstr "사용할 수 있는 활동들"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5581,7 +5577,7 @@ msgstr "설정된 볼륨 없음"
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
-msgstr "포탈 더하기"
+msgstr "포탈 추가하기"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
@@ -5590,7 +5586,7 @@ msgstr ""
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr "타겟 더하기"
+msgstr "타겟 추가하기"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5647,7 +5643,7 @@ msgstr "설정된 볼륨 없음"
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr ""
+msgstr "공유 활성화하기"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5798,7 +5794,7 @@ msgstr "디스크 교체"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
-msgstr ""
+msgstr "활성 볼륨"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
@@ -6474,7 +6470,7 @@ msgid "Apple"
 msgstr "Apple"
 
 msgid "UNIX"
-msgstr "UNIX"
+msgstr "유닉스"
 
 msgid "Windows"
 msgstr "윈도우"
