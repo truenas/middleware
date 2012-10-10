@@ -30,6 +30,7 @@ def __humanize_number_common(number, maptbl):
     for suffix, factor in maptbl:
         if number > factor:
             return ('%.1f %s' % (number/factor, suffix))
+    return number
 
 # The hard drive industry is using SI (10^n) rather than 2^n
 def humanize_number_si(number):
