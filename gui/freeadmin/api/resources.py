@@ -26,6 +26,7 @@
 #####################################################################
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
@@ -185,10 +186,13 @@ class VolumeResource(DojoModelResource):
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)
 
-        bundle.data['used'] = "%s (%s)" % (
-            bundle.data['used_si'],
-            bundle.data['used_pct'],
-            )
+        if bundle.obj.is_decrypted():
+            bundle.data['used'] = "%s (%s)" % (
+                bundle.data['used_si'],
+                bundle.data['used_pct'],
+                )
+        else:
+            bundle.data['used'] = _("Locked")
 
         bundle.data['mountpoint'] = mp.mp_path
 

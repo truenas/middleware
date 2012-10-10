@@ -105,14 +105,18 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                self._status = notifier().get_volume_status(self.vol_name,
-                    self.vol_fstype)
+                if self.is_decrypted():
+                    self._status = notifier().get_volume_status(self.vol_name,
+                        self.vol_fstype)
+                else:
+                    return _("LOCKED")
             return self._status
         except Exception, e:
-            log.debug("Exception on retrieving status for %s: %s",
-                self.vol_name,
-                e)
-            return _(u"Error")
+            if self.is_decrypted():
+                log.debug("Exception on retrieving status for %s: %s",
+                    self.vol_name,
+                    e)
+                return _(u"Error")
     status = property(_get_status)
 
     def get_geli_keyfile(self):
@@ -632,14 +636,20 @@ class MountPoint(Model):
             totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
             return u"%s" % (humanize_size(totalbytes))
         except:
-            return _(u"Error getting total space")
+            if self.mp_volume.is_decrypted():
+                return _(u"Error getting total space")
+            else:
+                return _("Locked")
 
     def _get_avail_si(self):
         try:
             availbytes = self._vfs.f_bavail * self._vfs.f_frsize
             return u"%s" % (humanize_size(availbytes))
         except:
-            return _(u"Error getting available space")
+            if self.mp_volume.is_decrypted():
+                return _(u"Error getting available space")
+            else:
+                return _("Locked")
 
     def _get_used_bytes(self):
         try:
@@ -653,7 +663,10 @@ class MountPoint(Model):
             usedbytes = self._get_used_bytes()
             return u"%s" % (humanize_size(usedbytes))
         except:
-            return _(u"Error getting used space")
+            if self.mp_volume.is_decrypted():
+                return _(u"Error getting used space")
+            else:
+                return _("Locked")
 
     def _get_used_pct(self):
         try:
