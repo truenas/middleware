@@ -124,7 +124,7 @@ require([
             if(actions[key]['tooltip'] !== undefined) {
               new Tooltip({
                 'position': ['above'],
-                'connectId': [but],
+                'connectId': [but.domNode],
                 'label': actions[key]['tooltip']
               });
             }
