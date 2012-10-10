@@ -2248,7 +2248,7 @@ class notifier:
     def update_pbi(self):
         ret = False
 
-        # Get the jail 
+        # Get the jail
         pjail, jail = self._get_plugins_jail()
         if jail is None:
             raise MiddlewareError("The plugins jail is not running, start "
@@ -2278,6 +2278,10 @@ class notifier:
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
         newpbiname = "%s.pbi" % newpbiname
 
+        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
+
+        self.__umount_filesystems_within("%s%s" % (jailpath, newprefix))
+
         # Create a PBI from the installed version
         p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
             outdir=pbitemp, pbidir=plugin.plugin_pbiname)
@@ -2306,8 +2310,6 @@ class notifier:
         out = p.run(True, jail.jid)
         if out[0] != 0:
             raise MiddlewareError("Unable to make a PBI patch")
-
-        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
 
         pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
             plugin.plugin_version, newversion, plugin.plugin_arch)
