@@ -173,6 +173,20 @@ GUI
 5. Fix backspace causing a double input in the webshell
    when using Firefox or IE.
 
+6. Fix a traceback in the NFS sharing screen when the
+   first part of the form doesn't validate.
+
+7. Adjust dojo config so it handles upgrades better, by invalidating
+   the old javascript.  This should stop issues with the GUI after
+   upgrading FreeNAS.
+
+OS/Third party
+------------------------
+
+1. Unmount any null mounts in PBI directories before updating.
+
+2. Ensure upload paths have the execute bit set to avoid an error
+   uploading files.
 
 Changes since 8.3.0-BETA2:
 
