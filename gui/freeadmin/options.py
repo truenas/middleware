@@ -696,9 +696,8 @@ class BaseFreeAdmin(object):
             'on_click': """function() {
                 var mybtn = this;
                 for (var i in grid.selection) {
-                    grid.store.get(i).then(function(data) {
-                        editObject('Edit', data._edit_url, [mybtn,]);
-                    });
+                    var data = grid.row(i).data;
+                    editObject('Edit', data._edit_url, [mybtn,]);
                 }
             }""",
         }
@@ -708,9 +707,8 @@ class BaseFreeAdmin(object):
             'on_click': """function() {
                 var mybtn = this;
                 for (var i in grid.selection) {
-                    grid.store.get(i).then(function(data) {
-                        editObject('Delete', data._delete_url, [mybtn,]);
-                    });
+                    var data = grid.row(i).data;
+                    editObject('Delete', data._delete_url, [mybtn,]);
                 }
             }""",
         }
