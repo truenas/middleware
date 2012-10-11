@@ -30,6 +30,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
+from freenasUI.sharing.models import NFS_Share
 from freenasUI.storage.models import Disk, Volume, Scrub
 
 
@@ -244,4 +245,19 @@ class ScrubResource(DojoModelResource):
         for human in ('human_minute', 'human_hour', 'human_daymonth',
                 'human_month', 'human_dayweek'):
             bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+        return bundle
+
+
+class NFSShareResource(DojoModelResource):
+
+    class Meta:
+        queryset = NFS_Share.objects.all()
+        resource_name = 'nfs_share'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(NFSShareResource, self).dehydrate(bundle)
+        bundle.data['nfs_paths'] = bundle.obj.nfs_paths
         return bundle

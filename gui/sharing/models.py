@@ -342,18 +342,6 @@ class NFS_Share(Model):
         verbose_name_plural = _("Unix (NFS) Shares")
         #ordering = ["nfs_path"]
 
-    class FreeAdmin:
-        icon_model = u"UNIXShareIcon"
-        icon_add = u"AddUNIXShareIcon"
-        icon_view = u"ViewAllUNIXSharesIcon"
-        icon_object = u"UNIXShareIcon"
-        inlines = [
-            {
-                'form': 'NFS_SharePathForm',
-                'prefix': 'path_set'
-            },
-        ]
-
 
 class NFS_Share_Path(Model):
     share = models.ForeignKey(NFS_Share, related_name="paths")
