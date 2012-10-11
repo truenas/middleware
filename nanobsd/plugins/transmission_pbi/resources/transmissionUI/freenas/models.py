@@ -36,8 +36,6 @@ class Transmission(models.Model):
         max_length=500,
         default=download_dir,
         )
-    allowed = models.TextField(blank=True)
-    blocklist = models.TextField(blank=True)
     logfile = models.CharField(max_length=500, blank=True)
     rpc_auth = models.BooleanField(
         verbose_name="RPC/WebUI Enabled",
