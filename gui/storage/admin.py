@@ -64,7 +64,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 
         columns.append({
             'name': 'name',
-            'label': 'Used',
+            'label': _('Name'),
             'tree': True,
             'sortable': False,
             'shouldExpand': True,
@@ -72,25 +72,25 @@ class VolumeFAdmin(BaseFreeAdmin):
 
         columns.append({
             'name': 'used',
-            'label': 'Used',
+            'label': _('Used'),
             'sortable': False,
         })
 
         columns.append({
             'name': 'avail_si',
-            'label': 'Available',
+            'label': _('Available'),
             'sortable': False,
         })
 
         columns.append({
             'name': 'total_si',
-            'label': 'Size',
+            'label': _('Size'),
             'sortable': False,
         })
 
         columns.append({
             'name': 'status',
-            'label': 'Status',
+            'label': _('Status'),
             'sortable': False,
         })
         return columns
