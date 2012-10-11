@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import hashlib
 import os
 import platform
 
@@ -42,66 +43,84 @@ def get_transmission_oauth_creds():
     return key, secret
 
 transmission_advanced_vars = {
-    'allow': {
-        "type": "textbox",
-        "opt": "-a",
-        },
-    "blocklist": {
-        "type": "checkbox",
-        "on": "-b",
-        "off": "-B",
-        },
     "logfile": {
         "type": "textbox",
         "opt": "-e",
         },
-    "rpc_port": {
+}
+
+transmission_settings = {
+    "download_dir": {
+        "field": "download-dir",
         "type": "textbox",
-        "opt": "-p",
+        },
+    "watch_dir": {
+        "field": "watch-dir",
+        "type": "textbox",
+        },
+    "encryption": {
+        "field": "encryption",
+        "type": "textbox",
+        },
+    "rpc_port": {
+        "field": "rpc-port",
+        "type": "textbox",
         },
     "rpc_auth": {
+        "field": "rpc-enabled",
         "type": "checkbox",
-        "on": "-t",
-        "off": "-T",
+        },
+    "rpc_auth_required": {
+        "field": "rpc-authentication-required",
+        "type": "checkbox",
         },
     "rpc_username": {
+        "field": "rpc-username",
         "type": "textbox",
-        "opt": "-u",
+        },
+    "rpc_password": {
+        "field": "rpc-password",
+        "type": "textbox",
+        "filter": lambda x: '{' + hashlib.sha1(x).hexdigest()
+        },
+    "rpc_whitelist_enabled": {
+        "field": "rpc-whitelist-enabled",
+        "type": "textbox",
+        },
+    "rpc_whitelist": {
+        "field": "rpc-whitelist",
+        "type": "textbox",
         },
     "dht": {
+        "field": "dht-enabled",
         "type": "checkbox",
-        "on": "-o",
-        "off": "-O",
         },
     "lpd": {
+        "field": "lpd-enabled",
         "type": "checkbox",
-        "on": "-y",
-        "off": "-Y",
         },
     "utp": {
+        "field": "utp-enabled",
         "type": "checkbox",
-        "on": "--utp",
-        "off": "--no-utp",
         },
     "peer_port": {
+        "field": "peer-port",
         "type": "textbox",
-        "opt": "-P",
         },
     "portmap": {
-        "type": "checkbox",
-        "on": "-m",
-        "off": "-M",
+        "field": "port-forwarding-enabled",
         },
     "peerlimit_global": {
+        "field": "peer-limit-global",
         "type": "textbox",
-        "opt": "-L",
         },
     "peerlimit_torrent": {
+        "field": "peer-limit-per-torrent",
         "type": "textbox",
-        "opt": "-l",
         },
     "global_seedratio": {
+        "field": "ratio-limit",
         "type": "textbox",
-        "opt": "-gsr",
+        "filter": lambda x: str(x)
         }
 }

@@ -81,14 +81,8 @@ class TransmissionForm(forms.ModelForm):
             if obj.enable:
                 f.write('transmission_enable="YES"\n')
 
-            if obj.watch_dir:
-                f.write('transmission_watch_dir="%s"\n' % (obj.watch_dir, ))
-
             if obj.conf_dir:
                 f.write('transmission_conf_dir="%s"\n' % (obj.conf_dir, ))
-
-            if obj.download_dir:
-                f.write('transmission_download_dir="%s"\n' % (obj.download_dir, ))
 
             transmission_flags = ""
             for value in advanced_settings.values():
@@ -98,7 +92,10 @@ class TransmissionForm(forms.ModelForm):
         settingsfile = os.path.join(obj.conf_dir, "settings.json")
         if os.path.exists(settingsfile):
             with open(settingsfile, 'r') as f:
-                settings = json.loads(f.read())
+                try:
+                    settings = json.loads(f.read())
+                except:
+                    settings = {}
         else:
             try:
                 open(settingsfile, 'w').close()
@@ -107,13 +104,20 @@ class TransmissionForm(forms.ModelForm):
                 pass
             settings = {}
 
-        settings['encryption'] = obj.encryption
-        settings['rpc-whitelist'] = obj.rpc_whitelist
-        settings['rpc-enabled'] = obj.rpc_auth
-        settings['rpc-authentication-required'] = obj.rpc_auth_required
-        if obj.rpc_password:
-            settings['rpc-password'] = '{' + hashlib.sha1(obj.rpc_password).hexdigest()
-        settings['rpc-whitelist-enabled'] = obj.rpc_whitelist_enabled
+        for field in obj._meta.local_fields:
+            if field.attname not in utils.transmission_settings:
+                continue
+            info = utils.transmission_settings.get(field.attname)
+            value = getattr(obj, field.attname)
+            _filter = info.get("filter")
+            if _filter:
+                settings[info.get("field")] = _filter(value)
+            else:
+                settings[info.get("field")] = value
+
+        if obj.watch_dir:
+            settings['watch-dir-enabled'] = True
+
         with open(settingsfile, 'w') as f:
             f.write(json.dumps(settings, sort_keys=True, indent=4))
 

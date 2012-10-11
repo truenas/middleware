@@ -292,6 +292,11 @@ def edit(request):
         jail=jail)
     if form.is_valid():
         form.save()
+
+        cmd = "%s restart" % utils.transmission_control
+        pipe = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+            shell=True, close_fds=True)
+
         return JsonResponse(request, error=True,
             message="Transmission settings successfully saved.")
 
