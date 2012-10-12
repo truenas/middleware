@@ -36,6 +36,10 @@ human_colums = [
 
 class CronJobFAdmin(BaseFreeAdmin):
 
+    icon_model = u"cronJobIcon"
+    icon_object = u"cronJobIcon"
+    icon_add = u"AddcronJobIcon"
+    icon_view = u"ViewcronJobIcon"
     exclude_fields = (
         'id',
         'cron_daymonth',

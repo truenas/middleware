@@ -401,12 +401,6 @@ class CronJob(Model):
         verbose_name_plural = _("Cron Jobs")
         ordering = ["cron_description", "cron_user"]
 
-    class FreeAdmin:
-        icon_model = u"cronJobIcon"
-        icon_object = u"cronJobIcon"
-        icon_add = u"AddcronJobIcon"
-        icon_view = u"ViewcronJobIcon"
-
     def __unicode__(self):
         if self.cron_description:
             return self.cron_description
