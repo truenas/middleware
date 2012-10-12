@@ -49,25 +49,3 @@ class ViewSmarttest(TreeNode):
     gname = 'View'
     view = 'system_smarttests'
     append_to = 'system.SMARTTest'
-
-
-class ViewSysctl(TreeNode):
-
-    gname = 'View'
-    view = 'system_sysctls'
-    append_to = 'system.Sysctl'
-
-
-class ViewTunable(TreeNode):
-
-    gname = 'View'
-    view = 'system_tunables'
-    append_to = 'system.Tunable'
-
-
-class ViewNTPServer(TreeNode):
-
-    gname = 'View'
-    view = 'system_ntpservers'
-    append_to = 'system.NTPServer'
-
