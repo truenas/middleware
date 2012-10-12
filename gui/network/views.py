@@ -159,13 +159,6 @@ def summary(request):
     })
 
 
-def vlan(request):
-    vlan_list = models.VLAN.objects.order_by("-id")
-    return render(request, 'network/vlan.html', {
-        'vlan_list': vlan_list,
-    })
-
-
 def lagg(request):
     lagg_list = models.LAGGInterface.objects.order_by("-id")
     return render(request, 'network/lagg.html', {
