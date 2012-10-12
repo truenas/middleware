@@ -556,22 +556,6 @@ def snapshot_rollback(request, dataset, snapname):
         })
 
 
-def periodicsnap(request):
-
-    if request.method == "POST":
-
-        form = forms.PeriodicSnapForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return JsonResp(request, message=_("Snapshot successfully added."))
-    else:
-        form = forms.PeriodicSnapForm()
-    return render(request, 'storage/periodicsnap.html', {
-        'form': form,
-        'extra_js': models.Task._admin.extra_js,
-    })
-
-
 def manualsnap(request, fs):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)

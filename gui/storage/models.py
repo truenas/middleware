@@ -882,13 +882,3 @@ class Task(Model):
         verbose_name = _(u"Periodic Snapshot Task")
         verbose_name_plural = _(u"Periodic Snapshot Tasks")
         ordering = ["task_filesystem"]
-
-    class FreeAdmin:
-        icon_model = u"SnapIcon"
-        icon_add = u"CreatePeriodicSnapIcon"
-        icon_view = u"ViewAllPeriodicSnapIcon"
-        icon_object = u"SnapIcon"
-        extra_js = u"taskrepeat_checkings();"
-        composed_fields = (
-                            ('Lifetime', ('task_ret_count', 'task_ret_unit')),
-                        )

@@ -14,7 +14,7 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Periodic Snapshot Tasks"|force_escape|force_escape %}'
     {% if focused_tab == "storage.Task.View" %}, selected: true{% endif %},
     doLayout: false,
-    href: '{% url storage_tasks %}',
+    href: '{% url freeadmin_storage_task_datagrid %}',
     refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Task.View">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Replication"|force_escape|force_escape %}'

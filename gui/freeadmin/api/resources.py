@@ -28,13 +28,14 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 
+from freenasUI import choices
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
-from freenasUI.storage.models import Disk, Volume, Scrub
+from freenasUI.storage.models import Disk, Volume, Scrub, Task
 
 
 def _common_human_fields(bundle):
@@ -257,6 +258,44 @@ class ScrubResource(DojoModelResource):
         for human in ('human_minute', 'human_hour', 'human_daymonth',
                 'human_month', 'human_dayweek'):
             bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+        return bundle
+
+
+class TaskResource(DojoModelResource):
+
+    class Meta:
+        queryset = Task.objects.all()
+        resource_name = 'task'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(TaskResource, self).dehydrate(bundle)
+        if bundle.obj.task_repeat_unit == "daily":
+            repeat = _('everyday')
+        elif bundle.obj.task_repeat_unit == "weekly":
+            wchoices = dict(choices.WEEKDAYS_CHOICES)
+            labels = []
+            for w in eval(bundle.obj.task_byweekday):
+                labels.append(unicode(wchoices[str(w)]))
+            days = ', '.join(labels)
+            repeat = _('on every %(days)s') % {
+                'days': days,
+                }
+        else:
+            repeat = ''
+        bundle.data['how'] = _("From %(begin)s through %(end)s, every "
+            "%(interval)s %(repeat)s") % {
+                'begin': bundle.obj.task_begin,
+                'end': bundle.obj.task_end,
+                'interval': bundle.obj.get_task_interval_display(),
+                'repeat': repeat,
+            }
+        bundle.data['keepfor'] = "%s %s" % (
+            bundle.obj.task_ret_count,
+            bundle.obj.task_ret_unit,
+            )
         return bundle
 
 

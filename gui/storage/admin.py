@@ -4,8 +4,8 @@ from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import (DiskResource, ScrubResource,
-    VolumeResource)
+from freenasUI.freeadmin.api.resources import (DiskResource, TaskResource,
+    ScrubResource, VolumeResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -344,6 +344,44 @@ class ScrubFAdmin(BaseFreeAdmin):
         return columns
 
 
+class TaskFAdmin(BaseFreeAdmin):
+
+    icon_model = u"SnapIcon"
+    icon_add = u"CreatePeriodicSnapIcon"
+    icon_view = u"ViewAllPeriodicSnapIcon"
+    icon_object = u"SnapIcon"
+    extra_js = u"taskrepeat_checkings();"
+    composed_fields = (
+        ('Lifetime', ('task_ret_count', 'task_ret_unit')),
+        )
+    resource = TaskResource
+    exclude_fields = (
+        'id',
+        'task_ret_count',
+        'task_ret_unit',
+        'task_begin',
+        'task_end',
+        'task_interval',
+        'task_repeat_unit',
+        'task_byweekday',
+        )
+
+    def get_datagrid_columns(self):
+        columns = super(TaskFAdmin, self).get_datagrid_columns()
+        columns.insert(2, {
+            'name': 'how',
+            'label': _('How'),
+            'sortable': False,
+        })
+        columns.insert(3, {
+            'name': 'keepfor',
+            'label': _('Keep snapshot for'),
+            'sortable': False,
+        })
+        return columns
+
+
 site.register(models.Disk, DiskFAdmin)
-site.register(models.Volume, VolumeFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
+site.register(models.Task, TaskFAdmin)
+site.register(models.Volume, VolumeFAdmin)
