@@ -33,13 +33,16 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
-from freenasUI.system.models import CronJob, Rsync
+from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Volume, Scrub
 
 
 def _common_human_fields(bundle):
     for human in ('human_minute', 'human_hour', 'human_daymonth',
             'human_month', 'human_dayweek'):
+        method = getattr(bundle.obj, "get_%s" % human, None)
+        if not method:
+            continue
         bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
 
 
@@ -370,4 +373,20 @@ class RsyncResource(DojoModelResource):
     def dehydrate(self, bundle):
         bundle = super(RsyncResource, self).dehydrate(bundle)
         _common_human_fields(bundle)
+        return bundle
+
+
+class SMARTTestResource(DojoModelResource):
+
+    class Meta:
+        queryset = SMARTTest.objects.all()
+        resource_name = 'smarttest'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(SMARTTestResource, self).dehydrate(bundle)
+        _common_human_fields(bundle)
+        bundle.data['smarttest_type'] = bundle.obj.get_smarttest_type_display()
         return bundle

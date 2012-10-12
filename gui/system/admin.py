@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import CronJobResource, RsyncResource
+from freenasUI.freeadmin.api.resources import (CronJobResource, RsyncResource,
+    SMARTTestResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
@@ -79,5 +80,28 @@ class RsyncFAdmin(BaseFreeAdmin):
             columns.insert(6 + idx, column)
         return columns
 
+
+class SMARTTestFAdmin(BaseFreeAdmin):
+
+    icon_model = u"SMARTIcon"
+    icon_object = u"SMARTIcon"
+    icon_add = u"AddSMARTTestIcon"
+    icon_view = u"ViewSMARTTestIcon"
+    exclude_fields = (
+        'id',
+        'smarttest_daymonth',
+        'smarttest_dayweek',
+        'smarttest_hour',
+        'smarttest_month',
+        )
+    resource = SMARTTestResource
+
+    def get_datagrid_columns(self):
+        columns = super(SMARTTestFAdmin, self).get_datagrid_columns()
+        for idx, column in enumerate(human_colums[1:]):
+            columns.insert(3 + idx, column)
+        return columns
+
 site.register(models.CronJob, CronJobFAdmin)
 site.register(models.Rsync, RsyncFAdmin)
+site.register(models.SMARTTest, SMARTTestFAdmin)

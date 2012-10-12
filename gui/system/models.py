@@ -777,12 +777,6 @@ class SMARTTest(Model):
         verbose_name_plural = _("S.M.A.R.T. Tests")
         ordering = ["smarttest_type"]
 
-    class FreeAdmin:
-        icon_model = u"SMARTIcon"
-        icon_object = u"SMARTIcon"
-        icon_add = u"AddSMARTTestIcon"
-        icon_view = u"ViewSMARTTestIcon"
-
 
 class Sysctl(Model):
     sysctl_mib = models.CharField(

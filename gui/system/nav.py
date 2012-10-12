@@ -28,10 +28,3 @@ class Settings(TreeNode):
     name = _(u'Settings')
     view = 'system_settings'
     icon = u"SettingsIcon"
-
-
-class ViewSmarttest(TreeNode):
-
-    gname = 'View'
-    view = 'system_smarttests'
-    append_to = 'system.SMARTTest'
