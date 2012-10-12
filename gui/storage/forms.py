@@ -1182,7 +1182,7 @@ class ReplicationForm(ModelForm):
 
     class Meta:
         model = models.Replication
-        exclude = ('repl_lastsnapshot', 'repl_remote', 'repl_limit')
+        exclude = ('repl_lastsnapshot', 'repl_remote')
         widgets = {
             'repl_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
