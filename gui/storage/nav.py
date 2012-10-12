@@ -111,7 +111,7 @@ class CreatePeriodicSnap(TreeNode):
 
     gname = 'Add'
     name = _(u'Add Periodic Snapshot')
-    view = 'storage_periodicsnap'
+    view = 'freeadmin_storage_task_add'
     icon = u'CreatePeriodicSnapIcon'
     type = 'object'
     app_name = 'storage'
