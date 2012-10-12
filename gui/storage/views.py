@@ -819,14 +819,6 @@ def multipath_status_json(request):
     }, indent=2), content_type='application/json')
 
 
-def scrubs(request):
-    scrubs = models.Scrub.objects.all().order_by('id')
-    return render(request, 'storage/scrub.html', {
-        'scrubs': scrubs,
-        'model': models.Scrub,
-        })
-
-
 def disk_wipe(request, devname):
 
     form = forms.DiskWipeForm()
