@@ -169,20 +169,6 @@ class Interfaces(Model):
         verbose_name_plural = _("Interfaces")
         ordering = ["int_interface"]
 
-    class FreeAdmin:
-        create_modelform = "InterfacesForm"
-        edit_modelform = "InterfacesEditForm"
-        icon_object = u"InterfacesIcon"
-        icon_model = u"InterfacesIcon"
-        icon_add = u"AddInterfaceIcon"
-        icon_view = u"ViewAllInterfacesIcon"
-        inlines = [
-            {
-                'form': 'AliasForm',
-                'prefix': 'alias_set'
-            },
-        ]
-
     def get_ipv4_addresses(self):
         """
         Includes IPv4 addresses in aliases

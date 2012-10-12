@@ -159,13 +159,6 @@ def summary(request):
     })
 
 
-def interface(request):
-    int_list = models.Interfaces.objects.order_by("-id")
-    return render(request, 'network/interface.html', {
-        'int_list': int_list,
-    })
-
-
 def vlan(request):
     vlan_list = models.VLAN.objects.order_by("-id")
     return render(request, 'network/vlan.html', {

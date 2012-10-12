@@ -7,7 +7,7 @@
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Interfaces"|force_escape|force_escape %}'
         {% if focus_form == "network.Interfaces.View" %}, selected: true{% endif %},
-        href: '{% url network_interface %}',
+        href: '{% url freeadmin_network_interfaces_datagrid %}',
         refreshOnShow: true" class="objrefresh data_network_Interfaces" tab="network.Interfaces.View">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Link Aggregation"|force_escape|force_escape %}'

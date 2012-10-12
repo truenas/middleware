@@ -30,6 +30,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
+from freenasUI.network.models import Interfaces
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.storage.models import Disk, Volume, Scrub
 
@@ -260,4 +261,20 @@ class NFSShareResource(DojoModelResource):
     def dehydrate(self, bundle):
         bundle = super(NFSShareResource, self).dehydrate(bundle)
         bundle.data['nfs_paths'] = bundle.obj.nfs_paths
+        return bundle
+
+
+class InterfacesResource(DojoModelResource):
+
+    class Meta:
+        queryset = Interfaces.objects.all()
+        resource_name = 'interfaces'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(InterfacesResource, self).dehydrate(bundle)
+        bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
+        bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
         return bundle
