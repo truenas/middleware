@@ -166,13 +166,6 @@ def vlan(request):
     })
 
 
-def staticroute(request):
-    sr_list = models.StaticRoute.objects.order_by("-id")
-    return render(request, 'network/staticroute.html', {
-        'sr_list': sr_list,
-    })
-
-
 def lagg(request):
     lagg_list = models.LAGGInterface.objects.order_by("-id")
     return render(request, 'network/lagg.html', {
