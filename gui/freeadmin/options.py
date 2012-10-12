@@ -28,6 +28,7 @@ from collections import OrderedDict
 from functools import update_wrapper
 import json
 import logging
+import urllib
 
 from django import forms as dforms
 from django.core.urlresolvers import reverse
@@ -620,13 +621,23 @@ class BaseFreeAdmin(object):
     def get_datagrid_context(self):
         return {}
 
+    def get_datagrid_filters(self, request):
+        return {}
+
     def datagrid(self, request):
 
         m = self._model
         info = m._meta.app_label, m._meta.module_name
 
+        filters = self.get_datagrid_filters(request)
+        if filters:
+            filters = "?%s" % urllib.urlencode(filters)
+        else:
+            filters = ''
+
         context = {
             'model': m,
+            'datagrid_filters': filters,
             'verbose_name': m._meta.verbose_name,
             'resource_name': self.resource._meta.resource_name,
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
