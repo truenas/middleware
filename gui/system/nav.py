@@ -30,13 +30,6 @@ class Settings(TreeNode):
     icon = u"SettingsIcon"
 
 
-class ViewRsync(TreeNode):
-
-    gname = 'View'
-    view = 'system_rsyncs'
-    append_to = 'system.Rsync'
-
-
 class ViewSmarttest(TreeNode):
 
     gname = 'View'

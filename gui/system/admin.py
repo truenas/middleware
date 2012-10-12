@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import CronJobResource
+from freenasUI.freeadmin.api.resources import CronJobResource, RsyncResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
@@ -49,7 +49,31 @@ class CronJobFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(CronJobFAdmin, self).get_datagrid_columns()
         for idx, column in enumerate(human_colums):
-            columns.insert(3+idx, column)
+            columns.insert(3 + idx, column)
+        return columns
+
+
+class RsyncFAdmin(BaseFreeAdmin):
+
+    icon_model = u"rsyncIcon"
+    icon_object = u"rsyncIcon"
+    icon_add = u"AddrsyncTaskIcon"
+    icon_view = u"ViewrsyncTaskIcon"
+    exclude_fields = (
+        'id',
+        'rsync_daymonth',
+        'rsync_dayweek',
+        'rsync_hour',
+        'rsync_minute',
+        'rsync_month',
+        )
+    resource = RsyncResource
+
+    def get_datagrid_columns(self):
+        columns = super(RsyncFAdmin, self).get_datagrid_columns()
+        for idx, column in enumerate(human_colums):
+            columns.insert(6 + idx, column)
         return columns
 
 site.register(models.CronJob, CronJobFAdmin)
+site.register(models.Rsync, RsyncFAdmin)

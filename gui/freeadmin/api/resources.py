@@ -33,7 +33,7 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
-from freenasUI.system.models import CronJob
+from freenasUI.system.models import CronJob, Rsync
 from freenasUI.storage.models import Disk, Volume, Scrub
 
 
@@ -354,5 +354,20 @@ class CronJobResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(CronJobResource, self).dehydrate(bundle)
+        _common_human_fields(bundle)
+        return bundle
+
+
+class RsyncResource(DojoModelResource):
+
+    class Meta:
+        queryset = Rsync.objects.all()
+        resource_name = 'rsync'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(RsyncResource, self).dehydrate(bundle)
         _common_human_fields(bundle)
         return bundle

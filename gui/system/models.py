@@ -613,12 +613,6 @@ class Rsync(Model):
         verbose_name_plural = _("Rsync Tasks")
         ordering = ["rsync_path", "rsync_desc"]
 
-    class FreeAdmin:
-        icon_model = u"rsyncIcon"
-        icon_object = u"rsyncIcon"
-        icon_add = u"AddrsyncTaskIcon"
-        icon_view = u"ViewrsyncTaskIcon"
-
     def __unicode__(self):
         if self.rsync_desc:
             return self.rsync_desc
