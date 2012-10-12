@@ -28,6 +28,7 @@
     <script type="dojo/method">
     var cpane = this;
 require([
+    "dojo/_base/declare",
     "dojo/dom",
     "dojo/dom-class",
     "dojo/dom-construct",
@@ -39,12 +40,13 @@ require([
     "dgrid/Keyboard",
     "dgrid/Selection",
     "dgrid/tree",
-    "dojo/_base/declare",
     "dgrid/extensions/DijitRegistry",
+    "dgrid/extensions/ColumnResizer",
     "dijit/registry",
     "dijit/form/Button",
     "dijit/Tooltip"
     ], function(
+    declare,
     dom,
     domClass,
     domConstruct,
@@ -56,8 +58,8 @@ require([
     Keyboard,
     Selection,
     tree,
-    declare,
     DijitRegistry,
+    ColumnResizer,
     registry,
     Button,
     Tooltip) {
@@ -144,7 +146,7 @@ require([
         }
     });
 
-    var StandardGrid = declare([Grid, Selection, Keyboard]);
+    var StandardGrid = declare([Grid, Selection, Keyboard, ColumnResizer]);
     var griddiv = query(".gridDiv", cpane.domNode.parentNode)[0];
     grid = new StandardGrid({
         id: 'orderGrid',
