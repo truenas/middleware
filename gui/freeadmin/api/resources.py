@@ -30,7 +30,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
-from freenasUI.network.models import Interfaces
+from freenasUI.network.models import (Interfaces, LAGGInterface,
+    LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.storage.models import Disk, Volume, Scrub
 
@@ -277,4 +278,59 @@ class InterfacesResource(DojoModelResource):
         bundle = super(InterfacesResource, self).dehydrate(bundle)
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
+        return bundle
+
+
+class LAGGInterfaceResource(DojoModelResource):
+
+    class Meta:
+        queryset = LAGGInterface.objects.all()
+        resource_name = 'lagginterface'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(LAGGInterfaceResource, self).dehydrate(bundle)
+        bundle.data['lagg_interface'] = unicode(bundle.obj)
+        bundle.data['int_interface'] = bundle.obj.lagg_interface.int_interface
+        bundle.data['int_name'] = bundle.obj.lagg_interface.int_name
+        bundle.data['_edit_url'] = reverse(
+            'freeadmin_network_interfaces_edit', kwargs={
+                'oid': bundle.obj.lagg_interface.id,
+                }) + '?deletable=false'
+        bundle.data['_delete_url'] = reverse(
+            'freeadmin_network_interfaces_delete', kwargs={
+                'oid': bundle.obj.lagg_interface.id,
+                })
+        bundle.data['_members_url'] = reverse(
+            'freeadmin_network_lagginterfacemembers_datagrid'
+            ) + '?id=%d' % bundle.obj.id
+        return bundle
+
+
+class LAGGInterfaceMembersResource(DojoModelResource):
+
+    class Meta:
+        queryset = LAGGInterfaceMembers.objects.all()
+        resource_name = 'lagginterfacemembers'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+        orm_filters = super(LAGGInterfaceMembersResource,
+            self).build_filters(filters)
+        lagggrp = filters.get("lagg_interfacegroup__id")
+        if lagggrp:
+            orm_filters["lagg_interfacegroup__id"] = lagggrp
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle = super(LAGGInterfaceMembersResource, self).dehydrate(bundle)
+        bundle.data['lagg_interfacegroup'] = unicode(
+            bundle.obj.lagg_interfacegroup
+            )
         return bundle

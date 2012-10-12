@@ -29,8 +29,5 @@ from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('freenasUI.network.views',
     url(r'^home/$', 'network', name='network_home'),
-    url(r'^lagg/$', 'lagg', name='network_lagg'),
     url(r'^summary/$', 'summary', name='network_summary'),
-    url(r'^lagg/add/$', 'lagg_add', name='network_lagg_add'),
-    url(r'lagg/members/(?P<object_id>\d+)/$', 'lagg_members', name="network_lagg_members"),
     )

@@ -28,6 +28,7 @@
 import re
 import socket
 
+from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -267,19 +268,63 @@ class VLANForm(ModelForm):
         return retval
 
 
-class LAGGInterfaceForm(forms.Form):
-    lagg_protocol = forms.ChoiceField(choices=choices.LAGGType,
-                          widget=forms.RadioSelect())
+class LAGGInterfaceForm(ModelForm):
     lagg_interfaces = forms.MultipleChoiceField(
                             widget=forms.SelectMultiple(),
                             label=_('Physical NICs in the LAGG')
                             )
+
+    class Meta:
+        model = models.LAGGInterface
+        exclude = ('lagg_interface', )
+        widgets = {
+            'lagg_protocol': forms.RadioSelect(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
         self.fields['lagg_interfaces'].choices = list(
             choices.NICChoices(nolagg=True)
             )
+
+    def save(self, *args, **kwargs):
+
+        # Search for a available slot for laggX interface
+        interface_names = [v[0] for v in
+            models.Interfaces.objects.all().values_list('int_interface')]
+        candidate_index = 0
+        while ("lagg%d" % (candidate_index)) in interface_names:
+            candidate_index += 1
+        lagg_name = "lagg%d" % candidate_index
+        lagg_protocol = self.cleaned_data['lagg_protocol']
+        lagg_member_list = self.cleaned_data['lagg_interfaces']
+        with transaction.commit_on_success():
+            # Step 1: Create an entry in interface table that
+            # represents the lagg interface
+            lagg_interface = models.Interfaces(int_interface=lagg_name,
+                int_name=lagg_name,
+                int_dhcp=False,
+                int_ipv6auto=False
+                )
+            lagg_interface.save()
+            # Step 2: Write associated lagg attributes
+            lagg_interfacegroup = models.LAGGInterface(
+                lagg_interface=lagg_interface,
+                lagg_protocol=lagg_protocol
+                )
+            lagg_interfacegroup.save()
+            # Step 3: Write lagg's members in the right order
+            order = 0
+            for interface in lagg_member_list:
+                lagg_member_entry = models.LAGGInterfaceMembers(
+                    lagg_interfacegroup=lagg_interfacegroup,
+                    lagg_ordernum=order,
+                    lagg_physnic=interface,
+                    lagg_deviceoptions='up'
+                    )
+                lagg_member_entry.save()
+                order = order + 1
+        return lagg_interfacegroup
 
 
 class LAGGInterfaceMemberForm(ModelForm):

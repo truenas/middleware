@@ -353,7 +353,7 @@ class LAGGInterfaceMembers(Model):
     # Physical interfaces list inside one LAGG group
     lagg_interfacegroup = models.ForeignKey(
             LAGGInterface,
-            verbose_name=_("LAGG Interface group")
+            verbose_name=_("LAGG Interface Group")
             )
     lagg_ordernum = models.IntegerField(
             verbose_name=_("LAGG Priority Number"),

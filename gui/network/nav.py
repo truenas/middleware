@@ -39,7 +39,7 @@ class Linkss(TreeNode):
 
         laggadd = TreeNode('Add')
         laggadd.name = _(u'Create Link Aggregation')
-        laggadd.view = 'network_lagg_add'
+        laggadd.view = 'freeadmin_network_lagginterface_add'
         laggadd.type = 'object'
         laggadd.icon = u'AddLAGGIcon'
         laggadd.model = 'LAGGInterface'
