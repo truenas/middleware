@@ -1,4 +1,55 @@
+from django.utils.translation import ugettext as _
+
+from freenasUI.freeadmin.api.resources import CronJobResource
+from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
 
-#site.register(models.Sysctl)
+human_colums = [
+    {
+        'name': 'human_minute',
+        'label': _('Minute'),
+        'sortable': False,
+    },
+    {
+        'name': 'human_hour',
+        'label': _('Hour'),
+        'sortable': False,
+    },
+    {
+        'name': 'human_daymonth',
+        'label': _('Day of month'),
+        'sortable': False,
+    },
+    {
+        'name': 'human_month',
+        'label': _('Month'),
+        'sortable': False,
+    },
+    {
+        'name': 'human_dayweek',
+        'label': _('Day of week'),
+        'sortable': False,
+    },
+]
+
+
+class CronJobFAdmin(BaseFreeAdmin):
+
+    exclude_fields = (
+        'id',
+        'cron_daymonth',
+        'cron_dayweek',
+        'cron_hour',
+        'cron_minute',
+        'cron_month',
+        )
+    resource = CronJobResource
+
+    def get_datagrid_columns(self):
+        columns = super(CronJobFAdmin, self).get_datagrid_columns()
+        for idx, column in enumerate(human_colums):
+            columns.insert(3+idx, column)
+        return columns
+
+site.register(models.CronJob, CronJobFAdmin)

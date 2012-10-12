@@ -441,14 +441,6 @@ def file_browser(request, path='/'):
     return HttpResponse(content, mimetype='application/json')
 
 
-def cronjobs(request):
-    crons = models.CronJob.objects.all().order_by('id')
-    return render(request, "system/cronjob.html", {
-        'cronjobs': crons,
-        'model': models.CronJob,
-        })
-
-
 def smarttests(request):
     tests = models.SMARTTest.objects.all().order_by('id')
     return render(request, "system/smarttest.html", {

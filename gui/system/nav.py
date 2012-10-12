@@ -30,13 +30,6 @@ class Settings(TreeNode):
     icon = u"SettingsIcon"
 
 
-class ViewCron(TreeNode):
-
-    gname = 'View'
-    view = 'system_cronjobs'
-    append_to = 'system.CronJob'
-
-
 class ViewRsync(TreeNode):
 
     gname = 'View'

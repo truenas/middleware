@@ -33,7 +33,14 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
+from freenasUI.system.models import CronJob
 from freenasUI.storage.models import Disk, Volume, Scrub
+
+
+def _common_human_fields(bundle):
+    for human in ('human_minute', 'human_hour', 'human_daymonth',
+            'human_month', 'human_dayweek'):
+        bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
 
 
 class DiskResource(DojoModelResource):
@@ -333,4 +340,19 @@ class LAGGInterfaceMembersResource(DojoModelResource):
         bundle.data['lagg_interfacegroup'] = unicode(
             bundle.obj.lagg_interfacegroup
             )
+        return bundle
+
+
+class CronJobResource(DojoModelResource):
+
+    class Meta:
+        queryset = CronJob.objects.all()
+        resource_name = 'cronjob'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(CronJobResource, self).dehydrate(bundle)
+        _common_human_fields(bundle)
         return bundle
