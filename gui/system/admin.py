@@ -54,7 +54,7 @@ class CronJobFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(CronJobFAdmin, self).get_datagrid_columns()
         for idx, column in enumerate(human_colums):
-            columns.insert(3 + idx, column)
+            columns.insert(3 + idx, dict(column))
         return columns
 
 
@@ -77,7 +77,7 @@ class RsyncFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(RsyncFAdmin, self).get_datagrid_columns()
         for idx, column in enumerate(human_colums):
-            columns.insert(6 + idx, column)
+            columns.insert(6 + idx, dict(column))
         return columns
 
 
@@ -99,7 +99,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(SMARTTestFAdmin, self).get_datagrid_columns()
         for idx, column in enumerate(human_colums[1:]):
-            columns.insert(3 + idx, column)
+            columns.insert(3 + idx, dict(column))
         return columns
 
 site.register(models.CronJob, CronJobFAdmin)
