@@ -4,8 +4,8 @@ from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import (DiskResource, TaskResource,
-    ScrubResource, VolumeResource)
+from freenasUI.freeadmin.api.resources import (DiskResource,
+    ReplicationResource, ScrubResource, TaskResource, VolumeResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -381,7 +381,29 @@ class TaskFAdmin(BaseFreeAdmin):
         return columns
 
 
+class ReplicationFAdmin(BaseFreeAdmin):
+
+    resource = ReplicationResource
+    exclude_fields = (
+        'id',
+        'repl_lastsnapshot',
+        'repl_remote',
+        'repl_userepl',
+        'repl_resetonce',
+        )
+
+    def get_datagrid_columns(self):
+        columns = super(ReplicationFAdmin, self).get_datagrid_columns()
+        columns.insert(2, {
+            'name': 'ssh_remote_host',
+            'label': _('Remote Hostname'),
+            'sortable': False,
+        })
+        return columns
+
+
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
+site.register(models.Replication, ReplicationFAdmin)

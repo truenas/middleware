@@ -1,0 +1,20 @@
+{% extends "freeadmin/generic_model_datagrid.html" %}
+{% block actions_static_buttons %}
+<button data-dojo-type="dijit.form.Button" type="button" class="left">
+  <img src="{{ STATIC_URL }}images/ui/buttons/add_replication.png" />
+  <p>{% trans "Add Replication" %}</p>
+  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+      editObject('{% trans "Add Replication"|escapejs %}', '{{ model.get_add_url }}', [this,]);
+  </script>
+</button>
+<button data-dojo-type="dijit.form.Button" type="button" class="left">
+  <p>{% trans "View Public Key" %}</p>
+  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+      editObject('{% trans "View Public Key"|force_escape|force_escape %}', '{% url storage_replications_key %}', [this,]);
+  </script>
+</button>
+<div class="left">
+  <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required to create a replication task" %}</span></p>
+</div>
+<span class="clear"></span>
+{% endblock %}

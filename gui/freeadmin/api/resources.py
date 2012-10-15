@@ -35,7 +35,7 @@ from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
-from freenasUI.storage.models import Disk, Volume, Scrub, Task
+from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
 
 
 def _common_human_fields(bundle):
@@ -258,6 +258,21 @@ class ScrubResource(DojoModelResource):
         for human in ('human_minute', 'human_hour', 'human_daymonth',
                 'human_month', 'human_dayweek'):
             bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+        return bundle
+
+
+class ReplicationResource(DojoModelResource):
+
+    class Meta:
+        queryset = Replication.objects.all()
+        resource_name = 'replication'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(ReplicationResource, self).dehydrate(bundle)
+        bundle.data['ssh_remote_host'] = bundle.obj.repl_remote.ssh_remote_hostname
         return bundle
 
 
