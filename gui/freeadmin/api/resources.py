@@ -33,6 +33,7 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
+from freenasUI.services.models import iSCSITargetPortal, iSCSITargetToExtent
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -443,4 +444,39 @@ class SMARTTestResource(DojoModelResource):
         bundle = super(SMARTTestResource, self).dehydrate(bundle)
         _common_human_fields(bundle)
         bundle.data['smarttest_type'] = bundle.obj.get_smarttest_type_display()
+        return bundle
+
+
+class ISCSIPortalResource(DojoModelResource):
+
+    class Meta:
+        queryset = iSCSITargetPortal.objects.all()
+        resource_name = 'iscsitargetportal'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(ISCSIPortalResource, self).dehydrate(bundle)
+        listen = ["%s:%s" % (
+            p.iscsi_target_portalip_ip,
+            p.iscsi_target_portalip_port,
+            ) for p in bundle.obj.iscsitargetportalip_set.all()]
+        bundle.data['iscsi_target_portalip_ips'] = listen
+        return bundle
+
+
+class ISCSITargetToExtentResource(DojoModelResource):
+
+    class Meta:
+        queryset = iSCSITargetToExtent.objects.all()
+        resource_name = 'iscsitargettoextent'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(ISCSITargetToExtentResource, self).dehydrate(bundle)
+        bundle.data['iscsi_target'] = bundle.obj.iscsi_target
+        bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         return bundle

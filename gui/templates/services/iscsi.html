@@ -7,25 +7,25 @@
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Portals"|force_escape|force_escape %}',
     doLayout: false,
-    href: '{% url services_iscsi_portals %}'
+    href: '{% url freeadmin_services_iscsitargetportal_datagrid %}'
     {% if focus_tab == "services.ISCSI.iSCSITargetPortal.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetPortal.View" class="objrefresh data_services_iSCSITargetPortal">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Initiators"|force_escape|force_escape %}',
     doLayout: false,
-    href: '{% url services_iscsi_authini %}'
+    href: '{% url freeadmin_services_iscsitargetauthorizedinitiator_datagrid %}'
     {% if focus_tab == "services.ISCSI.iSCSITargetAuthorizedInitiator.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetAuthorizedInitiator.View" class="objrefresh data_services_iSCSITargetAuthorizedInitiator">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Access"|force_escape|force_escape %}',
     doLayout: false,
-    href: '{% url services_iscsi_auth %}'
+    href: '{% url freeadmin_services_iscsitargetauthcredential_datagrid %}'
     {% if focus_tab == "services.ISCSI.iSCSITargetAuthCredential.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetAuthCredential.View" class="objrefresh data_services_iSCSITargetAuthCredential">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Targets"|force_escape|force_escape %}',
     doLayout: false,
-    href: '{% url services_iscsi_targets %}'
+    href: '{% url freeadmin_services_iscsitarget_datagrid %}'
     {% if focus_tab == "services.ISCSI.iSCSITarget.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITarget.View" class="objrefresh data_services_iSCSITarget">
     </div>
@@ -43,7 +43,7 @@
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Associated Targets"|force_escape|force_escape %}',
     doLayout: false,
-    href: '{% url services_iscsi_assoctargets %}'
+    href: '{% url freeadmin_services_iscsitargettoextent_datagrid %}'
     {% if focus_tab == "services.ISCSI.iSCSITargetToExtent.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetToExtent.View" class="objrefresh data_services_iSCSITargetToExtent">
     </div>
