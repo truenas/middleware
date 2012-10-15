@@ -790,12 +790,6 @@ class Replication(Model):
         verbose_name_plural = _(u"Replication Tasks")
         ordering = ["repl_filesystem"]
 
-    class FreeAdmin:
-        icon_model = u"ReplIcon"
-        icon_add = u"AddReplIcon"
-        icon_view = u"ViewAllReplIcon"
-        icon_object = u"ReplIcon"
-
     def __unicode__(self):
         return '%s -> %s' % (self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname)

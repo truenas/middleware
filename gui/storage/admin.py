@@ -383,6 +383,10 @@ class TaskFAdmin(BaseFreeAdmin):
 
 class ReplicationFAdmin(BaseFreeAdmin):
 
+    icon_model = u"ReplIcon"
+    icon_add = u"AddReplIcon"
+    icon_view = u"ViewAllReplIcon"
+    icon_object = u"ReplIcon"
     resource = ReplicationResource
     exclude_fields = (
         'id',
