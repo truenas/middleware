@@ -33,6 +33,7 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication)
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
+from freenasUI.account.models import bsdUsers
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetToExtent
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
@@ -479,4 +480,27 @@ class ISCSITargetToExtentResource(DojoModelResource):
         bundle = super(ISCSITargetToExtentResource, self).dehydrate(bundle)
         bundle.data['iscsi_target'] = bundle.obj.iscsi_target
         bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
+        return bundle
+
+
+class BsdUserResource(DojoModelResource):
+
+    class Meta:
+        queryset = bsdUsers.objects.order_by('bsdusr_builtin', 'bsdusr_uid')
+        resource_name = 'bsdusers'
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(BsdUserResource, self).dehydrate(bundle)
+        bundle.data['_passwd_url'] = "%sbsdUserPasswordForm?deletable=false" % (
+            bundle.obj.get_edit_url(),
+            )
+        bundle.data['_email_url'] = "%sbsdUserEmailForm?deletable=false" % (
+            bundle.obj.get_edit_url(),
+            )
+        bundle.data['_auxiliary_url'] = reverse('account_bsduser_groups', kwargs={
+            'object_id': bundle.obj.id,
+            })
         return bundle

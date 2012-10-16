@@ -49,20 +49,6 @@ def home(request):
     })
 
 
-def bsduser(request):
-
-    bsduser_list = models.bsdUsers.objects.order_by(
-        "bsdusr_uid").select_related().filter(bsdusr_builtin=False)
-    bsduser_list_builtin = models.bsdUsers.objects.order_by(
-        "bsdusr_uid").select_related().filter(bsdusr_builtin=True)
-
-    return render(request, 'account/bsdusers.html', {
-        'bsduser_list': bsduser_list,
-        'bsduser_list_builtin': bsduser_list_builtin,
-        'model': models.bsdUsers,
-    })
-
-
 def bsdgroup(request):
 
     bsdgroup_list = models.bsdGroups.objects.order_by(
