@@ -49,16 +49,6 @@ class bsdGroups(Model):
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
 
-    class FreeAdmin:
-        delete_form = "DeleteGroupForm"
-        object_filters = {'bsdgrp_builtin__exact': False}
-        object_num = -1
-
-        icon_object = u"GroupIcon"
-        icon_model = u"GroupsIcon"
-        icon_add = u"AddGroupIcon"
-        icon_view = u"ViewAllGroupsIcon"
-
     def __unicode__(self):
         return self.bsdgrp_group
 

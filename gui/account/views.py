@@ -49,20 +49,6 @@ def home(request):
     })
 
 
-def bsdgroup(request):
-
-    bsdgroup_list = models.bsdGroups.objects.order_by(
-        "bsdgrp_gid").filter(bsdgrp_builtin=False)
-    bsdgroup_list_builtin = models.bsdGroups.objects.order_by(
-        "bsdgrp_gid").filter(bsdgrp_builtin=True)
-
-    return render_to_response('account/bsdgroups.html', {
-        'bsdgroup_list': bsdgroup_list,
-        'bsdgroup_list_builtin': bsdgroup_list_builtin,
-        'model': models.bsdGroups,
-    })
-
-
 def password_change(request):
 
     extra_context = {}

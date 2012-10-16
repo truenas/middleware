@@ -33,7 +33,7 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication, DojoPaginator)
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
-from freenasUI.account.models import bsdUsers
+from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetToExtent
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
@@ -516,6 +516,24 @@ class BsdUserResource(DojoModelResource):
             bundle.obj.get_edit_url(),
             )
         bundle.data['_auxiliary_url'] = reverse('account_bsduser_groups', kwargs={
+            'object_id': bundle.obj.id,
+            })
+        return bundle
+
+
+class BsdGroupResource(DojoModelResource):
+
+    class Meta:
+        queryset = bsdGroups.objects.order_by('bsdgrp_builtin', 'bsdgrp_gid')
+        resource_name = 'bsdgroups'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(BsdGroupResource, self).dehydrate(bundle)
+        bundle.data['_members_url'] = reverse('account_bsdgroup_members', kwargs={
             'object_id': bundle.obj.id,
             })
         return bundle
