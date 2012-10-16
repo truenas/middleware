@@ -234,6 +234,10 @@ http {
         server_name  localhost;
 __EOF__
 
+	if [ "${addr}" != "0.0.0.0" ] && [ -z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
+		addr="0.0.0.0"
+	fi
+
 	if [ "${proto}" = "https" ]; then
 		cat << __EOF__
         listen       ${addr}:${port} default_server ssl;
