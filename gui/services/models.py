@@ -491,15 +491,6 @@ class iSCSITargetExtent(Model):
         verbose_name = _("Extent")
         ordering = ["iscsi_target_extent_name"]
 
-    class FreeAdmin:
-        delete_form = "ExtentDelete"
-        delete_form_filter = {'iscsi_target_extent_type__exact': 'File'}
-        menu_child_of = "services.ISCSI"
-        icon_object = u"ExtentIcon"
-        icon_model = u"ExtentIcon"
-        icon_add = u"AddExtentIcon"
-        icon_view = u"ViewAllExtentsIcon"
-
     def __unicode__(self):
         return unicode(self.iscsi_target_extent_name)
 

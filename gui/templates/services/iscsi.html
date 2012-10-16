@@ -29,16 +29,10 @@
     {% if focus_tab == "services.ISCSI.iSCSITarget.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="services.ISCSI.iSCSITarget.View" class="objrefresh data_services_iSCSITarget">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Device Extents"|force_escape|force_escape %}',
-    doLayout: false,
-    href: '{% url services_iscsi_dextents %}'
-    {% if focus_tab == "services.ISCSI.iSCSITargetDeviceExtent.View" %}, selected: true{% endif %},
-    refreshOnShow: true" tab="services.ISCSI.iSCSITargetDeviceExtent.View" class="objrefresh data_services_iSCSITargetDeviceExtent">
-    </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "File Extents"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Extents"|force_escape|force_escape %}',
     doLayout: false
     {% if focus_tab == "services.ISCSI.iSCSITargetExtent.View" %}, selected: true{% endif %},
-    href: '{% url services_iscsi_extents %}',
+    href: '{% url freeadmin_services_iscsitargetextent_datagrid %}',
     refreshOnShow: true" tab="services.ISCSI.iSCSITargetExtent.View" class="objrefresh data_services_iSCSITargetExtent">
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Associated Targets"|force_escape|force_escape %}',

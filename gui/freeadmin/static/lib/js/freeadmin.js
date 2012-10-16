@@ -383,6 +383,27 @@ require([
 
     }
 
+    iscsiExtentToggle = function() {
+
+        var select = registry.byId("id_iscsi_extent_type");
+        var file = registry.byId("id_iscsi_target_extent_path");
+        var size = registry.byId("id_iscsi_target_extent_filesize");
+        var disk = registry.byId("id_iscsi_extent_disk");
+        var trf = file.domNode.parentNode.parentNode;
+        var trd = disk.domNode.parentNode.parentNode;
+        var trs = size.domNode.parentNode.parentNode;
+        if(select.get('value') == 'file') {
+            domStyle.set(trf, "display", "table-row");
+            domStyle.set(trs, "display", "table-row");
+            domStyle.set(trd, "display", "none");
+        } else {
+            domStyle.set(trf, "display", "none");
+            domStyle.set(trs, "display", "none");
+            domStyle.set(trd, "display", "table-row");
+        }
+
+    }
+
     rebuildAdLdapCache = function(url, sendbtn) {
 
         sendbtn.set('disabled', true);

@@ -196,24 +196,6 @@ def iscsi(request):
         })
 
 
-def iscsi_extents(request, objtype=None):
-    extent_file_list = models.iSCSITargetExtent.objects.filter(
-        iscsi_target_extent_type='File')
-    return render(request, 'services/iscsi_extents.html', {
-        'extent_file_list': extent_file_list,
-        'model': models.iSCSITargetExtent,
-    })
-
-
-def iscsi_dextents(request):
-    extent_device_list = models.iSCSITargetExtent.objects.filter(
-        iscsi_target_extent_type__in=['Disk', 'ZVOL'])
-    return render(request, 'services/iscsi_dextents.html', {
-        'extent_device_list': extent_device_list,
-        'model': models.iSCSITargetExtent,
-    })
-
-
 def servicesToggleView(request, formname):
     form2namemap = {
         'cifs_toggle': 'cifs',

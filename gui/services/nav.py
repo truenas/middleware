@@ -53,92 +53,11 @@ class ISCSITargetView(TreeNode):
     append_to = 'services.ISCSI.iSCSITarget'
 
 
-class ISCSIDevice(TreeNode):
+class ISCSITargetExtentView(TreeNode):
 
-    gname = 'iSCSITargetDeviceExtent'
-    name = _(u'Device Extents')
+    gname = 'View'
     type = u'iscsi'
-    icon = u'ExtentIcon'
-    order_child = False
-    skip = True
-
-    def __init__(self, *args, **kwargs):
-
-        super(ISCSIDevice, self).__init__(*args, **kwargs)
-        for ext in models.iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type__in=['Disk', 'ZVOL']).order_by(
-            'iscsi_target_extent_name'):
-            nav = TreeNode(ext.id)
-            nav.name = unicode(ext)
-            nav.view = u'freeadmin_services_iscsitargetextent_edit'
-            nav.type = 'object'
-            nav.kwargs = {
-                'oid': ext.id,
-                'mf': 'iSCSITargetDeviceExtentForm',
-                }
-            nav.icon = u'ExtentIcon'
-            self.insert_child(0, nav)
-
-        devadd = TreeNode('Add')
-        devadd.name = _(u'Add Device Extent')
-        devadd.type = u'object'
-        devadd.order = 100
-        devadd.view = u'freeadmin_services_iscsitargetextent_add'
-        devadd.kwargs = {'mf': 'iSCSITargetDeviceExtentForm'}
-        devadd.icon = u'AddExtentIcon'
-
-        devview = TreeNode('View')
-        devview.name = _(u'View Device Extents')
-        devview.type = u'iscsi'
-        devview.order = 101
-        devview.icon = u'ViewAllExtentsIcon'
-        devview.append_app = False
-        devview.app_name = 'services'
-        devview.model = 'DExtents'
-
-        self.append_children([devadd, devview])
-
-
-class ISCSIExt(TreeNode):
-
-    gname = 'iSCSITargetExtent'
-    name = _(u'File Extents')
-    type = u'iscsi'
-    icon = u'ExtentIcon'
-    order_child = False
-    append_to = 'services.ISCSI'
-
-    def __init__(self, *args, **kwargs):
-
-        super(ISCSIExt, self).__init__(*args, **kwargs)
-        for ext in models.iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type__exact='File').order_by(
-            'iscsi_target_extent_name'):
-            nav = TreeNode(ext.id)
-            nav.name = unicode(ext)
-            nav.view = u'freeadmin_services_iscsitargetextent_edit'
-            nav.type = 'object'
-            nav.kwargs = {'oid': ext.id}
-            nav.icon = u'ExtentIcon'
-            self.append_child(nav)
-
-        extadd = TreeNode('Add')
-        extadd.name = _(u'Add File Extent')
-        extadd.type = u'object'
-        extadd.order = 100
-        extadd.view = u'freeadmin_services_iscsitargetextent_add'
-        extadd.icon = u'AddExtentIcon'
-
-        extview = TreeNode('View')
-        extview.name = _(u'View File Extents')
-        extview.type = u'iscsi'
-        extview.order = 101
-        extview.view = u'services_iscsi_extents'
-        extview.icon = u'ViewAllExtentsIcon'
-        extview.app_name = 'services'
-        extview.model = 'Extents'
-
-        self.append_children([extadd, extview])
+    append_to = 'services.ISCSI.iSCSITargetExtent'
 
 
 class ISCSI(TreeNode):
@@ -147,10 +66,6 @@ class ISCSI(TreeNode):
     name = _(u'iSCSI')
     type = u'iscsi'
     icon = u'iSCSIIcon'
-
-    def __init__(self, *args, **kwargs):
-        super(ISCSI, self).__init__(*args, **kwargs)
-        self.append_children([ISCSIDevice()])
 
 
 class Rsync(TreeNode):

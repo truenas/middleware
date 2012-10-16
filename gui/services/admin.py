@@ -4,7 +4,7 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.resources import (ISCSIPortalResource,
-    ISCSITargetToExtentResource)
+    ISCSITargetExtentResource, ISCSITargetToExtentResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.services import models
@@ -62,6 +62,24 @@ class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
     resource = ISCSITargetToExtentResource
 
 
+class ISCSITargetExtentFAdmin(BaseFreeAdmin):
+
+    delete_form = "ExtentDelete"
+    delete_form_filter = {'iscsi_target_extent_type__exact': 'File'}
+    menu_child_of = "services.ISCSI"
+    icon_object = u"ExtentIcon"
+    icon_model = u"ExtentIcon"
+    icon_add = u"AddExtentIcon"
+    icon_view = u"ViewAllExtentsIcon"
+
+    resource = ISCSITargetExtentResource
+
+    exclude_fields = (
+        'id',
+        'iscsi_target_extent_filesize',
+        )
+
+
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
-site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)
+site.register(models.iSCSITargetExtent, ISCSITargetExtentFAdmin)

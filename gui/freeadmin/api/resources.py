@@ -34,7 +34,8 @@ from freenasUI.freeadmin.api.utils import (DojoModelResource,
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.account.models import bsdUsers, bsdGroups
-from freenasUI.services.models import iSCSITargetPortal, iSCSITargetToExtent
+from freenasUI.services.models import (iSCSITargetPortal, iSCSITargetExtent,
+    iSCSITargetToExtent)
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -278,7 +279,9 @@ class ReplicationResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(ReplicationResource, self).dehydrate(bundle)
-        bundle.data['ssh_remote_host'] = bundle.obj.repl_remote.ssh_remote_hostname
+        bundle.data['ssh_remote_host'] = (
+            bundle.obj.repl_remote.ssh_remote_hostname
+            )
         return bundle
 
 
@@ -497,10 +500,33 @@ class ISCSITargetToExtentResource(DojoModelResource):
         return bundle
 
 
+class ISCSITargetExtentResource(DojoModelResource):
+
+    class Meta:
+        queryset = iSCSITargetExtent.objects.all()
+        resource_name = 'iscsitargetextent'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(ISCSITargetExtentResource, self).dehydrate(bundle)
+        if bundle.obj.iscsi_target_extent_type == 'Disk':
+            disk = Disk.objects.get(id=bundle.obj.iscsi_target_extent_path)
+            bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk.devname
+        elif bundle.obj.iscsi_target_extent_type == 'ZVOL':
+            bundle.data['iscsi_target_extent_path'] = "/dev/%s" % (
+                bundle.data['iscsi_target_extent_path'],
+                )
+        return bundle
+
+
 class BsdUserResource(DojoModelResource):
 
     class Meta:
-        queryset = bsdUsers.objects.all().order_by('bsdusr_builtin', 'bsdusr_uid')
+        queryset = bsdUsers.objects.all().order_by('bsdusr_builtin',
+            'bsdusr_uid')
         resource_name = 'bsdusers'
         paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
@@ -515,9 +541,8 @@ class BsdUserResource(DojoModelResource):
         bundle.data['_email_url'] = "%sbsdUserEmailForm?deletable=false" % (
             bundle.obj.get_edit_url(),
             )
-        bundle.data['_auxiliary_url'] = reverse('account_bsduser_groups', kwargs={
-            'object_id': bundle.obj.id,
-            })
+        bundle.data['_auxiliary_url'] = reverse('account_bsduser_groups',
+            kwargs={'object_id': bundle.obj.id, })
         return bundle
 
 
@@ -533,7 +558,6 @@ class BsdGroupResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(BsdGroupResource, self).dehydrate(bundle)
-        bundle.data['_members_url'] = reverse('account_bsdgroup_members', kwargs={
-            'object_id': bundle.obj.id,
-            })
+        bundle.data['_members_url'] = reverse('account_bsdgroup_members',
+            kwargs={'object_id': bundle.obj.id, })
         return bundle
