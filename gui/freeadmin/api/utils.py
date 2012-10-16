@@ -28,6 +28,7 @@ import logging
 import re
 
 from tastypie.authentication import Authentication
+from tastypie.paginator import Paginator
 from tastypie.resources import ModelResource, Resource
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
@@ -45,6 +46,19 @@ class DjangoAuthentication(Authentication):
         return request.user.username
 
 
+class DojoPaginator(Paginator):
+
+    def __init__(self, request, *args, **kwargs):
+        super(DojoPaginator, self).__init__(request.GET, *args, **kwargs)
+        r = request.META.get("HTTP_RANGE", None)
+        if r:
+            r = r.split('=', 1)[1].split('-')
+            self.offset = int(r[0])
+            if r[1]:
+                r2 = int(r[1]) + 1
+            self.limit = r2 - self.offset
+
+
 class DojoModelResource(ModelResource):
 
     def apply_sorting(self, obj_list, options=None):
@@ -60,6 +74,28 @@ class DojoModelResource(ModelResource):
         if fields:
             obj_list = obj_list.order_by(",".join(fields))
         return obj_list
+
+    def get_list(self, request, **kwargs):
+        """
+        XXXXXX
+        This method was retrieved from django-tastypie
+        It had to be modified that way to set the Content-Range
+        response header so ranges could workd well with dojo
+        XXXXXX
+        """
+        objects = self.obj_get_list(request=request, **self.remove_api_resource_names(kwargs))
+        sorted_objects = self.apply_sorting(objects, options=request.GET)
+
+        paginator = self._meta.paginator_class(request, sorted_objects, resource_uri=self.get_resource_list_uri(), limit=self._meta.limit)
+        to_be_serialized = paginator.page()
+
+        bundles = [self.build_bundle(obj=obj, request=request) for obj in to_be_serialized['objects']]
+        to_be_serialized['objects'] = [self.full_dehydrate(bundle) for bundle in bundles]
+        length = len(to_be_serialized['objects'])
+        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(sorted_objects))
+        return response
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']

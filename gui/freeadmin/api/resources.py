@@ -30,7 +30,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
-    DjangoAuthentication)
+    DjangoAuthentication, DojoPaginator)
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.account.models import bsdUsers
@@ -59,6 +59,7 @@ class DiskResource(DojoModelResource):
                 Q(disk_name__startswith='multipath') | Q(disk_name='')
             )
         resource_name = 'disk'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -88,6 +89,7 @@ class VolumeResource(DojoModelResource):
     class Meta:
         queryset = Volume.objects.all()
         resource_name = 'volume'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -249,6 +251,7 @@ class ScrubResource(DojoModelResource):
     class Meta:
         queryset = Scrub.objects.all()
         resource_name = 'scrub'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -268,6 +271,7 @@ class ReplicationResource(DojoModelResource):
     class Meta:
         queryset = Replication.objects.all()
         resource_name = 'replication'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -283,6 +287,7 @@ class TaskResource(DojoModelResource):
     class Meta:
         queryset = Task.objects.all()
         resource_name = 'task'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -321,6 +326,7 @@ class NFSShareResource(DojoModelResource):
     class Meta:
         queryset = NFS_Share.objects.all()
         resource_name = 'nfs_share'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -336,6 +342,7 @@ class InterfacesResource(DojoModelResource):
     class Meta:
         queryset = Interfaces.objects.all()
         resource_name = 'interfaces'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -352,6 +359,7 @@ class LAGGInterfaceResource(DojoModelResource):
     class Meta:
         queryset = LAGGInterface.objects.all()
         resource_name = 'lagginterface'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -380,6 +388,7 @@ class LAGGInterfaceMembersResource(DojoModelResource):
     class Meta:
         queryset = LAGGInterfaceMembers.objects.all()
         resource_name = 'lagginterfacemembers'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -407,6 +416,7 @@ class CronJobResource(DojoModelResource):
     class Meta:
         queryset = CronJob.objects.all()
         resource_name = 'cronjob'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -422,6 +432,7 @@ class RsyncResource(DojoModelResource):
     class Meta:
         queryset = Rsync.objects.all()
         resource_name = 'rsync'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -437,6 +448,7 @@ class SMARTTestResource(DojoModelResource):
     class Meta:
         queryset = SMARTTest.objects.all()
         resource_name = 'smarttest'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -453,6 +465,7 @@ class ISCSIPortalResource(DojoModelResource):
     class Meta:
         queryset = iSCSITargetPortal.objects.all()
         resource_name = 'iscsitargetportal'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -472,6 +485,7 @@ class ISCSITargetToExtentResource(DojoModelResource):
     class Meta:
         queryset = iSCSITargetToExtent.objects.all()
         resource_name = 'iscsitargettoextent'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
@@ -486,8 +500,9 @@ class ISCSITargetToExtentResource(DojoModelResource):
 class BsdUserResource(DojoModelResource):
 
     class Meta:
-        queryset = bsdUsers.objects.order_by('bsdusr_builtin', 'bsdusr_uid')
+        queryset = bsdUsers.objects.all().order_by('bsdusr_builtin', 'bsdusr_uid')
         resource_name = 'bsdusers'
+        paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']

@@ -39,7 +39,7 @@ from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
-    DjangoAuthentication)
+    DjangoAuthentication, DojoPaginator)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -107,6 +107,7 @@ class BaseFreeAdmin(object):
                 resource_name=self._model._meta.module_name,
                 allowed_methods=['get'],
                 include_resource_uri=False,
+                paginator_class=DojoPaginator,
                 authentication=DjangoAuthentication(),
                 ))
 
