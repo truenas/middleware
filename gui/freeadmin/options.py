@@ -154,7 +154,6 @@ class BaseFreeAdmin(object):
             return update_wrapper(wrapper, view)
 
         info = self.app_label, self.module_name
-        print info
 
         if self._model:
             urlpatterns = patterns('',

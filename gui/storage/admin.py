@@ -354,7 +354,6 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
                 var mybtn = this;
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
-                    console.log(data);
                     %(func)s('%(label)s', data.%(url)s, [mybtn,]);
                 }
             }""" % {
