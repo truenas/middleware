@@ -137,6 +137,9 @@ class FreeAdminSite(object):
 
     def get_urls(self):
         from django.conf.urls import patterns, url, include
+        from freenasUI.freeadmin.api.resources import VolumeStatusResource
+
+        self.v1_api.register(VolumeStatusResource())
 
         def wrap(view, cacheable=False):
             def wrapper(*args, **kwargs):

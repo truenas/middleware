@@ -29,11 +29,13 @@ from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
+from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.freeadmin.api.utils import (DojoModelResource,
     DjangoAuthentication, DojoPaginator)
+from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware import zfs
 from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
-from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.services.models import (iSCSITargetPortal, iSCSITargetExtent,
     iSCSITargetToExtent)
 from freenasUI.sharing.models import NFS_Share
@@ -244,6 +246,132 @@ class VolumeResource(DojoModelResource):
             children.append(data)
 
         bundle.data['children'] = children
+        return bundle
+
+
+class VolumeStatusResource(DojoModelResource):
+
+    class Meta:
+        queryset = Volume.objects.all()
+        resource_name = 'volumestatus'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(VolumeStatusResource, self).dehydrate(bundle)
+        if bundle.obj.vol_fstype == 'ZFS':
+            pool = notifier().zpool_parse(bundle.obj.vol_name)
+            bundle.data['children'] = []
+            bundle.data['name'] = pool.name
+            bundle.data.update({
+                'read': pool.data.read,
+                'write': pool.data.write,
+                'cksum': pool.data.cksum,
+            })
+            for key in ('data', 'cache', 'spares', 'logs'):
+                root = getattr(pool, key, None)
+                if not root:
+                    continue
+
+                current = root
+                children = None
+                parent = bundle.data
+                uid = Uid(bundle.obj.id * 100)
+                while True:
+
+                    print current
+                    if isinstance(current, zfs.Root):
+                        data = {
+                            'id': uid.next(),
+                            'name': current.name,
+                            'type': 'root',
+                            'status': current.status,
+                            'read': current.read,
+                            'write': current.write,
+                            'cksum': current.cksum,
+                            'children': [],
+                        }
+                    elif isinstance(current, zfs.Vdev):
+                        data = {
+                            'id': uid.next(),
+                            'name': current.name,
+                            'type': 'vdev',
+                            'status': current.status,
+                            'read': current.read,
+                            'write': current.write,
+                            'cksum': current.cksum,
+                            'children': [],
+                        }
+                    elif isinstance(current, zfs.Dev):
+                        data = {
+                            'id': uid.next(),
+                            'name': current.name,
+                            'type': 'dev',
+                            'status': current.status,
+                            'read': current.read,
+                            'write': current.write,
+                            'cksum': current.cksum,
+                            'children': [],
+                        }
+                        try:
+                            disk = Disk.objects.order_by('disk_enabled'
+                                ).filter(disk_name=current.disk)[0]
+                            data['_edit_url'] = "%s?deletable=false" % (
+                                disk.get_edit_url(),
+                                )
+                        except IndexError:
+                            disk = None
+                        if current.status == 'ONLINE':
+                            data['offline_url'] = reverse(
+                                'storage_disk_offline',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                    })
+
+                        if current.replacing:
+                            data['_detach_url'] = reverse(
+                                'storage_disk_detach',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                    })
+                        else:
+                            data['_replace_url'] = reverse(
+                                'storage_zpool_disk_replace',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                    })
+                        if current.parent.parent.name in ('spares', 'cache',
+                                'logs'):
+                            data['remove_url'] = reverse(
+                                'storage_zpool_disk_remove',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                    })
+
+                    else:
+                        raise ValueError("Invalid node")
+
+                    parent['children'].append(data)
+
+                    if not children:
+                        parent = data
+                        children = list(iter(current))
+                        if children:
+                            current = children.pop()
+                        else:
+                            break
+                    else:
+                        current = children.pop()
+
+        elif bundle.obj.vol_fstype == 'UFS':
+            #items = notifier().geom_disks_dump(bundle.obj)
+            pass
         return bundle
 
 
