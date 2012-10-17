@@ -260,10 +260,7 @@ class ScrubResource(DojoModelResource):
     def dehydrate(self, bundle):
         bundle = super(ScrubResource, self).dehydrate(bundle)
         bundle.data['scrub_volume'] = bundle.obj.scrub_volume.vol_name
-
-        for human in ('human_minute', 'human_hour', 'human_daymonth',
-                'human_month', 'human_dayweek'):
-            bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+        _common_human_fields(bundle)
         return bundle
 
 
