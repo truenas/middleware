@@ -2,6 +2,7 @@
   {% block actions_static_pane %}
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top', splitter: false" style="background-color: white;height: 60px;" doLayout="false">
     {% block actions_static_buttons %}
+    {% if add_url %}
     <div class="gridAdd left">
       <button data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
@@ -10,6 +11,7 @@
       </script>
       </button>
     </div>
+    {% endif %}
     {% endblock %}
     <span class="clear"></span>
   </div>

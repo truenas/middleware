@@ -48,6 +48,10 @@ log = logging.getLogger('freeadmin.options')
 
 class BaseFreeAdmin(object):
 
+    app_label = None
+    module_name = None
+    verbose_name = None
+
     create_modelform = None
     edit_modelform = None
     delete_form = None
@@ -78,8 +82,23 @@ class BaseFreeAdmin(object):
 
     def __init__(self, c=None, model=None, admin=None):
 
-        if model is not None:
-            self._model = model
+        self._model = model
+        #FIXME: duplicated code
+        if self.module_name is None:
+            if self._model:
+                self.module_name = self._model._meta.module_name
+            else:
+                raise ValueError("module_name cannot be None")
+        if self.app_label is None:
+            if self._model:
+                self.app_label = self._model._meta.app_label
+            else:
+                raise ValueError("app_label cannot be None")
+        if self.verbose_name is None:
+            if self._model:
+                self.verbose_name = self._model._meta.verbose_name
+            else:
+                raise ValueError("verbose_name cannot be None")
 
         if admin is not None:
             self._admin = admin
@@ -101,10 +120,10 @@ class BaseFreeAdmin(object):
 
         Set resource to False to do not create one
         """
-        if self.resource is None:
+        if self.resource is None and self._model:
             myMeta = type('Meta', (object, ), dict(
                 queryset=self._model.objects.all(),
-                resource_name=self._model._meta.module_name,
+                resource_name=self.module_name,
                 allowed_methods=['get'],
                 include_resource_uri=False,
                 paginator_class=DojoPaginator,
@@ -120,7 +139,7 @@ class BaseFreeAdmin(object):
             self.resource = myres
         elif self.resource is False:
             res = None
-        else:
+        elif self.resource:
             res = self.resource()
 
         if res:
@@ -134,18 +153,27 @@ class BaseFreeAdmin(object):
                 return self._admin.admin_view(view)(*args, **kwargs)
             return update_wrapper(wrapper, view)
 
-        info = self._model._meta.app_label, self._model._meta.module_name
+        info = self.app_label, self.module_name
+        print info
 
-        urlpatterns = patterns('',
-            url(r'^add/(?P<mf>.+?)?$',
-                wrap(self.add),
-                name='freeadmin_%s_%s_add' % info),
-            url(r'^edit/(?P<oid>\d+)/(?P<mf>.+?)?$',
-                wrap(self.edit),
-                name='freeadmin_%s_%s_edit' % info),
-            url(r'^delete/(?P<oid>\d+)/$',
-                wrap(self.delete),
-                name='freeadmin_%s_%s_delete' % info),
+        if self._model:
+            urlpatterns = patterns('',
+                url(r'^add/(?P<mf>.+?)?$',
+                    wrap(self.add),
+                    name='freeadmin_%s_%s_add' % info),
+                url(r'^edit/(?P<oid>\d+)/(?P<mf>.+?)?$',
+                    wrap(self.edit),
+                    name='freeadmin_%s_%s_edit' % info),
+                url(r'^delete/(?P<oid>\d+)/$',
+                    wrap(self.delete),
+                    name='freeadmin_%s_%s_delete' % info),
+                url(r'^empty-formset/$',
+                    wrap(self.empty_formset),
+                    name='freeadmin_%s_%s_empty_formset' % info),
+            )
+        else:
+            urlpatterns = patterns('')
+        urlpatterns += patterns('',
             url(r'^datagrid/$',
                 wrap(self.datagrid),
                 name='freeadmin_%s_%s_datagrid' % info),
@@ -155,9 +183,6 @@ class BaseFreeAdmin(object):
             url(r'^actions/$',
                 wrap(self.actions),
                 name='freeadmin_%s_%s_actions' % info),
-            url(r'^empty-formset/$',
-                wrap(self.empty_formset),
-                name='freeadmin_%s_%s_empty_formset' % info),
         )
         return urlpatterns
 
@@ -628,7 +653,7 @@ class BaseFreeAdmin(object):
     def datagrid(self, request):
 
         m = self._model
-        info = m._meta.app_label, m._meta.module_name
+        info = self.app_label, self.module_name
 
         filters = self.get_datagrid_filters(request)
         if filters:
@@ -639,12 +664,16 @@ class BaseFreeAdmin(object):
         context = {
             'model': m,
             'datagrid_filters': filters,
-            'verbose_name': m._meta.verbose_name,
+            'verbose_name': self.verbose_name,
             'resource_name': self.resource._meta.resource_name,
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),
-            'add_url': reverse('freeadmin_%s_%s_add' % info),
         }
+
+        if self._model:
+            context.update({
+                'add_url': reverse('freeadmin_%s_%s_add' % info),
+            })
 
         context.update(self.get_datagrid_context())
 
@@ -657,6 +686,9 @@ class BaseFreeAdmin(object):
         return render(request, template, context)
 
     def get_datagrid_columns(self):
+
+        if not self._model:
+            raise NotImplementedError
 
         columns = []
         for field in self._model._meta.fields:
@@ -703,6 +735,10 @@ class BaseFreeAdmin(object):
     def get_actions(self):
 
         actions = {}
+
+        if not self._model:
+            return actions
+
         actions['Edit'] = {
             'button_name': 'Edit',
             'on_click': """function() {

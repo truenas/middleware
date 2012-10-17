@@ -47,29 +47,34 @@ class FreeAdminSite(object):
         if isinstance(model_or_iterable, ModelBase):
             model_or_iterable = [model_or_iterable]
         admins = []
-        for model in model_or_iterable:
-            if model._meta.abstract:
-                log.warn("Model %r is abstract and thus cannot be registered",
-                    model)
-                return None
-            if model in self._registry:
-                log.debug("Model %r already registered, overwriting...", model)
 
-            # If we got **options then dynamically construct a subclass of
-            # admin_class with those **options.
-            if options:
-                # For reasons I don't quite understand, without a __module__
-                # the created class appears to "live" in the wrong place,
-                # which causes issues later on.
-                options['__module__'] = __name__
-                admin_class = type("%sAdmin" % model.__name__,
-                    (admin_class, ),
-                    options)
+        if model_or_iterable is None:
+            admin_obj = admin_class(c=freeadmin, admin=self)
+            self._registry[admin_obj] = admin_obj
+        else:
+            for model in model_or_iterable:
+                if model._meta.abstract:
+                    log.warn("Model %r is abstract and thus cannot be registered",
+                        model)
+                    return None
+                if model in self._registry:
+                    log.debug("Model %r already registered, overwriting...", model)
 
-            # Instantiate the admin class to save in the registry
-            admin_obj = admin_class(c=freeadmin, model=model, admin=self)
-            self._registry[model] = admin_obj
-            model.add_to_class('_admin', admin_obj)
+                # If we got **options then dynamically construct a subclass of
+                # admin_class with those **options.
+                if options:
+                    # For reasons I don't quite understand, without a __module__
+                    # the created class appears to "live" in the wrong place,
+                    # which causes issues later on.
+                    options['__module__'] = __name__
+                    admin_class = type("%sAdmin" % model.__name__,
+                        (admin_class, ),
+                        options)
+
+                # Instantiate the admin class to save in the registry
+                admin_obj = admin_class(c=freeadmin, model=model, admin=self)
+                self._registry[model] = admin_obj
+                model.add_to_class('_admin', admin_obj)
 
             admins.append(admin_obj)
 
@@ -165,11 +170,11 @@ class FreeAdminSite(object):
         )
 
         # Add in each model's views.
-        for model, model_admin in self._registry.iteritems():
+        for model_admin in self._registry.itervalues():
             urlpatterns += patterns('',
                 url(r'^%s/%s/' % (
-                    model._meta.app_label,
-                    model._meta.module_name,
+                    model_admin.app_label,
+                    model_admin.module_name,
                     ),
                     include(model_admin.urls))
             )
