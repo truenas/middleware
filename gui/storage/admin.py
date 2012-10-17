@@ -5,7 +5,8 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.api.resources import (DiskResource,
-    ReplicationResource, ScrubResource, TaskResource, VolumeResource)
+    ReplicationResource, ScrubResource, TaskResource, VolumeResource,
+    VolumeStatusResource)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models
@@ -278,6 +279,125 @@ class VolumeFAdmin(BaseFreeAdmin):
         return actions
 
 
+class VolumeStatusFAdmin(BaseFreeAdmin):
+
+    app_label = "storage"
+    module_name = "volumestatus"
+    verbose_name = "Volume Status"
+    resource = VolumeStatusResource
+
+    def get_datagrid_filters(self, request):
+        return {
+            "id": request.GET.get("id"),
+            }
+
+    def get_datagrid_columns(self):
+
+        columns = []
+
+        columns.append({
+            'name': 'name',
+            'label': _('Name'),
+            'tree': True,
+            'sortable': False,
+            'shouldExpand': True,
+        })
+
+        columns.append({
+            'name': 'read',
+            'label': _('Read'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'write',
+            'label': _('Write'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'cksum',
+            'label': _('Checksum'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'status',
+            'label': _('Status'),
+            'sortable': False,
+        })
+        return columns
+
+    def _action_builder(self, name, label=None, url=None, func="editObject",
+        show=None):
+
+        if url is None:
+            url = "_%s_url" % (name, )
+
+        hide = "row.data.type != 'dev' || row.data.%s === undefined" % url
+
+        on_select_after = """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if((%(hide)s)) {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""" % {
+            'hide': hide,
+            }
+
+        on_click = """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    console.log(data);
+                    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
+                }
+            }""" % {
+                'func': func,
+                'label': escapejs(label),
+                'url': url,
+                }
+
+        data = {
+            'button_name': label,
+            'on_select_after': on_select_after,
+            'on_click': on_click,
+        }
+
+        return data
+
+    def get_actions(self):
+
+        actions = OrderedDict()
+
+        actions['Disk'] = self._action_builder("disk",
+            label=_('Edit Disk'),
+            )
+
+        actions['Offline'] = self._action_builder("offline",
+            label=_('Offline'),
+            )
+
+        actions['Detach'] = self._action_builder("detach",
+            label=_('Detach'),
+            )
+
+        actions['Replace'] = self._action_builder("replace",
+            label=_('Replace'),
+            )
+
+        actions['Remove'] = self._action_builder("remove",
+            label=_('Remove'),
+            )
+
+        return actions
+
+
 class ScrubFAdmin(BaseFreeAdmin):
 
     icon_model = u"cronJobIcon"
@@ -413,3 +533,4 @@ site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
 site.register(models.Replication, ReplicationFAdmin)
+site.register(None, VolumeStatusFAdmin)

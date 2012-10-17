@@ -173,9 +173,10 @@ class VolumeResource(DojoModelResource):
             kwargs={
             'path': mp.mp_path,
             })
-        bundle.data['_status_url'] = reverse('storage_volume_status', kwargs={
-            'vid': bundle.obj.id,
-            })
+        bundle.data['_status_url'] = "%s?id=%d" % (
+            reverse('freeadmin_storage_volumestatus_datagrid'),
+            bundle.obj.id,
+            )
 
         if bundle.obj.vol_fstype == 'ZFS':
             bundle.data['_manual_snapshot_url'] = reverse('storage_manualsnap',
@@ -264,6 +265,9 @@ class VolumeStatusResource(DojoModelResource):
         authentication = DjangoAuthentication()
         include_resource_uri = False
         allowed_methods = ['get']
+        filtering = {
+            'id': ('exact', ),
+            }
 
     def dehydrate(self, bundle):
         bundle = super(VolumeStatusResource, self).dehydrate(bundle)
@@ -276,6 +280,7 @@ class VolumeStatusResource(DojoModelResource):
                 'write': pool.data.write,
                 'cksum': pool.data.cksum,
             })
+            uid = Uid(bundle.obj.id * 100)
             for key in ('data', 'cache', 'spares', 'logs'):
                 root = getattr(pool, key, None)
                 if not root:
@@ -284,10 +289,8 @@ class VolumeStatusResource(DojoModelResource):
                 current = root
                 children = None
                 parent = bundle.data
-                uid = Uid(bundle.obj.id * 100)
                 while True:
 
-                    print current
                     if isinstance(current, zfs.Root):
                         data = {
                             'id': uid.next(),
@@ -313,7 +316,7 @@ class VolumeStatusResource(DojoModelResource):
                     elif isinstance(current, zfs.Dev):
                         data = {
                             'id': uid.next(),
-                            'name': current.name,
+                            'name': current.devname,
                             'type': 'dev',
                             'status': current.status,
                             'read': current.read,
@@ -324,13 +327,13 @@ class VolumeStatusResource(DojoModelResource):
                         try:
                             disk = Disk.objects.order_by('disk_enabled'
                                 ).filter(disk_name=current.disk)[0]
-                            data['_edit_url'] = "%s?deletable=false" % (
+                            data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                                 )
                         except IndexError:
                             disk = None
                         if current.status == 'ONLINE':
-                            data['offline_url'] = reverse(
+                            data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
                                     'vname': pool.name,
@@ -353,7 +356,7 @@ class VolumeStatusResource(DojoModelResource):
                                     })
                         if current.parent.parent.name in ('spares', 'cache',
                                 'logs'):
-                            data['remove_url'] = reverse(
+                            data['_remove_url'] = reverse(
                                 'storage_zpool_disk_remove',
                                 kwargs={
                                     'vname': pool.name,
@@ -363,7 +366,11 @@ class VolumeStatusResource(DojoModelResource):
                     else:
                         raise ValueError("Invalid node")
 
-                    parent['children'].append(data)
+                    if key == 'data' and children is None:
+                        del data['id']
+                        parent.update(data)
+                    else:
+                        parent['children'].append(data)
 
                     if not children:
                         parent = data

@@ -709,36 +709,6 @@ def zpool_scrub(request, vid):
     })
 
 
-def volume_status(request, vid):
-    volume = models.Volume.objects.get(id=vid)
-    return render(request, 'storage/volume_status.html', {
-        'name': volume.vol_name,
-        'volume': volume,
-    })
-
-
-def volume_status_json(request, vid):
-    volume = models.Volume.objects.get(id=vid)
-    if volume.vol_fstype == 'ZFS':
-        pool = notifier().zpool_parse(volume.vol_name)
-        items = pool.treedump()
-    else:
-        items = notifier().geom_disks_dump(volume)
-        children = [{'_reference': item['id']} for item in items]
-        items.append({
-            'name': volume.vol_name,
-            'id': len(items) + 1,
-            'status': '',
-            'type': 'root',
-            'children': children,
-        })
-    return HttpResponse(simplejson.dumps({
-        'identifier': 'id',
-        'label': 'name',
-        'items': items,
-    }, indent=2), content_type='application/json')
-
-
 def zpool_disk_replace(request, vname, label):
 
     disk = notifier().label_to_disk(label)
