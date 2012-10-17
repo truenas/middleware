@@ -181,7 +181,9 @@ class VolumeFAdmin(BaseFreeAdmin):
         actions['Detach'] = self._action_builder("detach",
             label=_('Detach Volume'),
             func="editScaryObject",
-            icon="remove_volume")
+            icon="remove_volume",
+            fstype="ALL",
+            )
         actions['Scrub'] = self._action_builder("scrub", label=_('Scrub Volume'))
         actions['Options'] = self._action_builder("options",
             label=_('Edit ZFS Options'),
