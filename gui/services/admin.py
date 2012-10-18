@@ -82,4 +82,5 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
 
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
+site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)
 site.register(models.iSCSITargetExtent, ISCSITargetExtentFAdmin)
