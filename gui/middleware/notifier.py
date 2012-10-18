@@ -3973,11 +3973,45 @@ class notifier:
         disks.reverse()
 
         root_dev = self.__find_root_dev()
+        if root_dev.startswith('mirror/'):
+            mirror = self.gmirror_status(root_dev.split('/')[1])
+            print mirror
+            blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
+        else:
+            blacklist_devs = []
 
-        device_blacklist_re = re.compile('(a?cd[0-9]+|%s)' % (root_dev, ))
+        device_blacklist_re = re.compile('a?cd[0-9]+')
 
-        return filter(lambda x: not device_blacklist_re.match(x), disks)
+        return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
 
+    def gmirror_status(self, name):
+        """
+        Get all available gmirror instances
+
+        Returns:
+            A dict describing the gmirror
+        """
+
+        doc = self.__geom_confxml()
+        for geom in doc.xpathEval("//class[name = 'MIRROR']/geom[name = '%s']" % name):
+            consumers = []
+            gname = geom.xpathEval("./name")[0].content
+            status = geom.xpathEval("./config/State")[0].content
+            for consumer in geom.xpathEval("./consumer"):
+                ref = consumer.xpathEval("./provider/@ref")[0]
+                prov = doc.xpathEval("//provider[@id = '%s']" % ref.content)[0]
+                name = prov.xpathEval("./name")[0].content
+                status = consumer.xpathEval("./config/State")[0].content
+                consumers.append({
+                    'name': name,
+                    'status': status,
+                    })
+            return {
+                'name': gname,
+                'status': status,
+                'consumers': consumers,
+            }
+        return None
 
     def kern_module_is_loaded(self, module):
         """Determine whether or not a kernel module (or modules) is loaded.
