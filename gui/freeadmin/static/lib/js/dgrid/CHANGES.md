@@ -31,11 +31,29 @@ This document outlines changes since 0.3.0.  For older changelogs, see the
 
 ## Other changes and fixes
 
+### General/Core
+
+* Fixed an issue with the `up` and `down` methods in `List` and the `left` and
+    `right` methods in `Grid`, which could cause them to attempt to traverse
+    outside the list/grid in question.
+* Fixed an issue in the observer code in `List` which could cause an updated
+    row to render out-of-sequence when `tree` is used. (#154)
+* The `_StoreMixin` module now shows/hides a node displaying `noDataMessage` in
+    reaction to the last row being removed or first row being added. (#229)
 * The `OnDemandList` module now adheres more strictly to the `maxRowsPerPage`
     property.  To accommodate this, the default has been increased from `100` to
     `250`. (#280)
 * The `OnDemandList` module's default value for `farOffRemoval` has been
     lowered from `10000` to `2000`.
+
+### Mixins
+
+* The `Selection` mixin in single-selection mode now properly allows reselecting
+    a row that was deselected immediately prior. (#295)
+
+### Extensions
+
+* The `Pagination` extension now supports `noDataMessage` like `OnDemandList`. (#180)
 
 # 0.3.2
 

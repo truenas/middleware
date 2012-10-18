@@ -12,7 +12,7 @@ function(declare, has, listen, put){
  *		column definition.
  *	3. This implementation does NOT support ColumnSet, and has not been tested
  *		with multi-subrow records.
- *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you 
+ *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
  *		are looking for something more fancy, you'll probably need to use this
  *		definition as a template to write your own plugin.
  *
@@ -169,14 +169,36 @@ function(declare, has, listen, put){
 		},
 		
 		_toggleColumnHiderMenu: function(){
-			var hidden = this._hiderMenuOpened; // reflects hidden state after toggle
-			// show or hide the hider menu
-			this.hiderMenuNode.style.display = (hidden ? "none" : "");
-			// pause or resume the listener for clicks outside the menu
+			var hidden = this._hiderMenuOpened, // reflects hidden state after toggle
+				hiderMenuNode = this.hiderMenuNode,
+				domNode = this.domNode;
+
+			// Show or hide the hider menu
+			hiderMenuNode.style.display = (hidden ? "none" : "");
+
+			// Adjust height of menu
+			if (hidden) {
+				// Clear the set size
+				hiderMenuNode.style.height = "";
+			} else {
+				// Adjust height of the menu if necessary
+				// Why 12? Based on menu default paddings and border, we need
+				// to adjust to be 12 pixels shorter. Given the infrequency of
+				// this style changing, we're assuming it will remain this
+				// static value of 12 for now, to avoid pulling in any sort of
+				// computed styles.
+				if (hiderMenuNode.offsetHeight > domNode.offsetHeight - 12) {
+					hiderMenuNode.style.height = (domNode.offsetHeight - 12) + "px";
+				}
+			}
+
+			// Pause or resume the listener for clicks outside the menu
 			bodyListener[hidden ? "pause" : "resume"]();
-			// update activeGrid appropriately
+
+			// Update activeGrid appropriately
 			activeGrid = hidden ? null : this;
-			// toggle the instance property
+
+			// Toggle the instance property
 			this._hiderMenuOpened = !hidden;
 		},
 

@@ -54,31 +54,6 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 		return document.getElementById(id);
 	}
 
-	function move(item, steps, targetClass, visible){
-		var nextSibling, current, element;
-		element = current = item.element;
-		steps = steps || 1;
-		do{
-			// move in the correct direction
-			if(nextSibling = current[steps < 0 ? 'previousSibling' : 'nextSibling']){
-				do{
-					current = nextSibling;
-					if(((current && current.className) + ' ').indexOf(targetClass + ' ') > -1){
-						// it's an element with the correct class name, counts as a real move
-						element = current;
-						steps += steps < 0 ? 1 : -1;
-						break;
-					}
-					// if the next sibling isn't a match, drill down to search
-				}while(nextSibling = (!visible || !current.hidden) && current[steps < 0 ? 'lastChild' : 'firstChild']);
-			}else if((current = current.parentNode) == this.domNode || (current.className + ' ').indexOf("dgrid-row ") > -1){ // intentional assignment
-				// we stepped all the way out of the grid, given up now
-				break;
-			}
-		}while(steps);
-		return element;		
-	}
-	
 	// var and function for autogenerating ID when one isn't provided
 	var autogen = 0;
 	function generateId(){
@@ -398,9 +373,9 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 		},
 		
 		newRow: function(object, before, to, options){
-			if(before.parentNode){
+			if(!before || before.parentNode){
 				var i = options.start + to;
-				var row = this.insertRow(object, before.parentNode, before, i, options);
+				var row = this.insertRow(object, before ? before.parentNode : this.contentNode, before, i, options);
 				put(row, ".ui-state-highlight");
 				setTimeout(function(){
 					put(row, "!ui-state-highlight");
@@ -440,7 +415,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			if(results.observe){
 				// observe the results for changes
 				var observerIndex = this.observers.push(results.observe(function(object, from, to){
-					var firstRow;
+					var firstRow, nextNode;
 					// a change in the data took place
 					if(from > -1 && rows[from]){
 						// remove from old slot
@@ -461,8 +436,19 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 						}
 					}
 					if(to > -1){
-						// add to new slot (either before an existing row, or at the end)
-						row = self.newRow(object, rows[to] || (rows[to-1] && rows[to-1].nextSibling) || beforeNode, to, options);
+						// Add to new slot (either before an existing row, or at the end)
+						// First determine the DOM node that this should be placed before.
+						nextNode = rows[to];
+						if(!nextNode){
+							nextNode = rows[to - 1];
+							if(nextNode){
+								// Make sure to skip connected nodes, so we don't accidentally
+								// insert a row in between a parent and its children.
+								nextNode = (nextNode.connected || nextNode).nextSibling;
+							}
+						}
+						row = self.newRow(object, nextNode, to, options);
+						
 						if(row){
 							row.observerIndex = observerIndex;
 							rows.splice(to, 0, row);
@@ -539,7 +525,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 				// get the row id for easy retrieval
 				this._rowIdToObject[row.id = id] = object;
 			}
-			parent.insertBefore(row, beforeNode);
+			parent.insertBefore(row, beforeNode || null);
 			if(previousRow){
 				// in this case, we are pulling the row from another location in the grid, and we need to readjust the rowIndices from the point it was removed
 				this.adjustRowIndices(previousRow);
@@ -610,15 +596,76 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			};
 		},
 		
-		_move: move,
-		up: function(row, steps, visible){
-			return this.row(move(row, -(steps || 1), "dgrid-row", visible));
-		},
-		down: function(row, steps, visible){
-			return this.row(move(row, steps || 1, "dgrid-row", visible));
+		_move: function(item, steps, targetClass, visible){
+			var nextSibling, current, element;
+			// Start at the element indicated by the provided row or cell object.
+			element = current = item.element;
+			steps = steps || 1;
+			
+			do{
+				// Outer loop: move in the appropriate direction.
+				if((nextSibling = current[steps < 0 ? "previousSibling" : "nextSibling"])){
+					do{
+						// Inner loop: advance, and dig into children if applicable.
+						current = nextSibling;
+						if(current && (current.className + " ").indexOf(targetClass + " ") > -1){
+							// Element with the appropriate class name; count step, stop digging.
+							element = current;
+							steps += steps < 0 ? 1 : -1;
+							break;
+						}
+						// If the next sibling isn't a match, drill down to search, unless
+						// visible is true and children are hidden.
+					}while((nextSibling = (!visible || !current.hidden) && current[steps < 0 ? "lastChild" : "firstChild"]));
+				}else{
+					current = current.parentNode;
+					if(current === this.bodyNode || current === this.headerNode){
+						// Break out if we step out of the navigation area entirely.
+						break;
+					}
+				}
+			}while(steps);
+			// Return the final element we arrived at, which might still be the
+			// starting element if we couldn't navigate further in that direction.
+			return element;
 		},
 		
-		scrollTo: TouchScroll ? function(){
+		up: function(row, steps, visible){
+			// summary:
+			//		Returns the row that is the given number of steps (1 by default)
+			//		above the row represented by the given object.
+			// row:
+			//		The row to navigate upward from.
+			// steps:
+			//		Number of steps to navigate up from the given row; default is 1.
+			// visible:
+			//		If true, rows that are currently hidden (i.e. children of
+			//		collapsed tree rows) will not be counted in the traversal.
+			// returns:
+			//		A row object representing the appropriate row.  If the top of the
+			//		list is reached before the given number of steps, the first row will
+			//		be returned.
+			return this.row(this._move(row, -(steps || 1), "dgrid-row", visible));
+		},
+		down: function(row, steps, visible){
+			// summary:
+			//		Returns the row that is the given number of steps (1 by default)
+			//		below the row represented by the given object.
+			// row:
+			//		The row to navigate downward from.
+			// steps:
+			//		Number of steps to navigate down from the given row; default is 1.
+			// visible:
+			//		If true, rows that are currently hidden (i.e. children of
+			//		collapsed tree rows) will not be counted in the traversal.
+			// returns:
+			//		A row object representing the appropriate row.  If the bottom of the
+			//		list is reached before the given number of steps, the last row will
+			//		be returned.
+			return this.row(this._move(row, steps || 1, "dgrid-row", visible));
+		},
+		
+		scrollTo: has("touch") ? function(){
 			// If TouchScroll is the superclass, defer to its implementation.
 			return this.inherited(arguments);
 		} : function(options){
@@ -631,7 +678,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			}
 		},
 		
-		getScrollPosition: TouchScroll ? function(){
+		getScrollPosition: has("touch") ? function(){
 			// If TouchScroll is the superclass, defer to its implementation.
 			return this.inherited(arguments);
 		} : function(){

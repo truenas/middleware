@@ -19,7 +19,8 @@ html.has-ie-6 .dgrid-header-scroll .dgrid-hider-toggle {
 	border: 1px solid black;
 	z-index: 99999;
 	padding: 4px;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .dgrid-hider-menu-row {

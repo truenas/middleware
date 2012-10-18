@@ -243,6 +243,12 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 					grid.scrollTo({ y: 0 });
 					
 					Deferred.when(results.total, function(total){
+						if(!total){
+							// If there are no results, display the no data message.
+							grid.noDataNode = put(grid.contentNode, "div.dgrid-no-data");
+							grid.noDataNode.innerHTML = grid.noDataMessage;
+						}
+						
 						// Update status text based on now-current page and total.
 						grid.paginationStatusNode.innerHTML = string.substitute(grid.i18nPagination.status, {
 							start: Math.min(start + 1, total),

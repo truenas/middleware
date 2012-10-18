@@ -1,5 +1,5 @@
-define(["dojo/_base/declare", "dojo/_base/array", "dojo/_base/Deferred", "dojo/query", "dojo/on", "dojo/aspect", "./Grid", "dojo/has!touch?./util/touch", "put-selector/put"],
-function(declare, arrayUtil, Deferred, querySelector, on, aspect, Grid, touchUtil, put){
+define(["dojo/_base/declare", "dojo/_base/array", "dojo/_base/Deferred", "dojo/has", "dojo/query", "dojo/on", "dojo/aspect", "./Grid", "dojo/has!touch?./util/touch", "put-selector/put"],
+function(declare, arrayUtil, Deferred, has, querySelector, on, aspect, Grid, touchUtil, put){
 
 return function(column){
 	// summary:
@@ -74,7 +74,7 @@ return function(column){
 			})
 		);
 		
-		if(touchUtil){
+		if(has("touch")){
 			// Also listen on double-taps of the cell.
 			listeners.push(grid.on(touchUtil.selector(colSelector, touchUtil.dbltap),
 				function(){ grid.expand(this); }));

@@ -49,7 +49,6 @@ return declare(null, {
 		
 		// Start selection fresh when switching mode.
 		this.clearSelection();
-		this._lastSelected = null;
 		
 		this.selectionMode = mode;
 	},
@@ -76,16 +75,14 @@ return declare(null, {
 				lastRow = this._lastSelected;
 			
 			if(mode == "single"){
-				if(lastRow == row){
-					if(ctrlKey){
-						// allow deselection even within single select mode
-						this.select(row, null, null);
-					}
+				if(lastRow === row){
+					// Allow ctrl to toggle selection, even within single select mode.
+					this.select(row, null, !ctrlKey || !this.isSelected(row));
 				}else{
 					this.clearSelection();
 					this.select(row);
+					this._lastSelected = row;
 				}
-				this._lastSelected = row;
 			}else if(this.selection[rowObj.id] && !event.shiftKey && event.type == "mousedown"){
 				// we wait for the mouse up if we are clicking a selected item so that drag n' drop
 				// is possible without losing our selection
@@ -141,7 +138,7 @@ return declare(null, {
 			grid._handleSelect(event, this);
 		}
 		
-		if(touchUtil){
+		if(has("touch")){
 			// listen for touch taps if available
 			on(this.contentNode, touchUtil.selector(selector, touchUtil.tap), function(evt){
 				grid._handleSelect(evt, this);
