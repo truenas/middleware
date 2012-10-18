@@ -58,21 +58,6 @@ def _vdev_type(name):
     return False
 
 
-class UID(object):
-    """
-    Keep track of a unique id between calls
-    """
-    def __init__(self):
-        self.id = 1
-
-    def next_id(self):
-        """Increase the counter and retruns the next id"""
-        self.id += 1
-        return str(self.id)
-
-_UID = UID()
-
-
 class Pool(object):
     """
     Class representing a Zpool
@@ -90,7 +75,6 @@ class Pool(object):
         self.id = pid
         self.name = name
         self.scrub = scrub
-        self._uid = _UID
 
     def __getitem__(self, name):
         if hasattr(self, name):
@@ -150,18 +134,6 @@ class Pool(object):
                 )
         return data
 
-    def treedump(self):
-        """
-        Dump the zpool tree in a way to be json serialized
-        to a dojo store
-        """
-        data = []
-        for key in ('data', 'cache', 'spares', 'logs'):
-            if getattr(self, key):
-                vdevs = getattr(self, key).treedump()
-                data.extend(vdevs)
-        return data
-
     def __repr__(self):
         return repr({
             'data': self.data,
@@ -189,7 +161,6 @@ class Tnode(object):
         self.read = kwargs.pop('read', 0)
         self.write = kwargs.pop('write', 0)
         self.cksum = kwargs.pop('cksum', 0)
-        self._uid = _UID
 
     def find_by_name(self, name):
         """
@@ -243,12 +214,6 @@ class Tnode(object):
         """
         raise NotImplementedError
 
-    def treedump(self):
-        """
-        Each specialized method must dump its own instance
-        """
-        raise NotImplementedError
-
 
 class Root(Tnode):
     """
@@ -273,7 +238,6 @@ class Root(Tnode):
         for vdev in self:
             vdevs.append(vdev.dump())
         return {
-            'id': self._uid.next_id(),
             'name': self.name,
             'vdevs': vdevs,
             'numVdevs': len(vdevs),
@@ -290,28 +254,6 @@ class Root(Tnode):
                 if disk.disk:
                     disks.append(disk.disk)
         return disks
-
-    def treedump(self):
-        vdevs = []
-        children = []
-        for vdev in self:
-            _vdev, disks = vdev.treedump()
-            vdevs.append(_vdev)
-            vdevs.extend(disks)
-            children.append({'_reference': _vdev['id']})
-        vdevs.append({
-            'id': self._uid.next_id(),
-            'name': self.name,
-            'type': 'root',
-            'children': children,
-            'isroot': 'isroot',
-            'numVdevs': len(vdevs),
-            'status': self.status if self.status else '',
-            'read': self.read,
-            'write': self.write,
-            'cksum': self.cksum,
-            })
-        return vdevs
 
     def validate(self):
         for vdev in self:
@@ -341,31 +283,12 @@ class Vdev(Tnode):
         for dev in self:
             disks.append(dev.dump())
         return {
-            'id': self._uid.next_id(),
             'name': self.name,
             'disks': disks,
             'type': self.type,
             'numDisks': len(disks),
             'status': self.status,
             }
-
-    def treedump(self):
-        disks = []
-        children = []
-        for dev in self:
-            dsk = dev.treedump()
-            disks.append(dsk)
-            children.append({'_reference': dsk['id']})
-        return {
-            'id': self._uid.next_id(),
-            'name': self.name,
-            'children': children,
-            'type': self.type,
-            'status': self.status,
-            'read': self.read,
-            'write': self.write,
-            'cksum': self.cksum,
-            }, disks
 
     def validate(self):
         """
@@ -404,59 +327,8 @@ class Dev(Tnode):
 
     def dump(self):
         return {
-            'id': self._uid.next_id(),
             'name': self.devname,
             'status': self.status,
-            }
-
-    def treedump(self):
-        from django.utils import simplejson
-        #TODO Move django stuff to outside (view) - hydrate mode
-        from freenasUI.storage.models import Disk
-        from django.core.urlresolvers import reverse
-        disk = None
-        if self.disk:
-            for d in Disk.objects.all():
-                if d.disk_name == self.disk:
-                    disk = d
-                    break
-        actions = {}
-        if disk:
-            actions['edit_url'] = disk.get_edit_url() + '?deletable=false'
-        if self.status == 'ONLINE':
-            actions['offline_url'] = reverse('storage_disk_offline',
-                kwargs={
-                    'vname': self.parent.parent.parent.name,
-                    'label': self.name,
-                    })
-        if self.replacing:
-            actions['detach_url'] = reverse('storage_disk_detach',
-                kwargs={
-                    'vname': self.parent.parent.parent.name,
-                    'label': self.name,
-                    })
-        if not self.replacing:
-            actions['replace_url'] = reverse('storage_zpool_disk_replace',
-                kwargs={
-                    'vname': self.parent.parent.parent.name,
-                    'label': self.name,
-                    })
-        if self.parent.parent.name in ('spares', 'cache', 'logs'):
-            actions['remove_url'] = reverse('storage_zpool_disk_remove',
-                kwargs={
-                    'vname': self.parent.parent.parent.name,
-                    'label': self.name,
-                    })
-
-        return {
-            'id': self._uid.next_id(),
-            'name': self.devname,
-            'type': 'disk',
-            'status': self.status,
-            'read': self.read,
-            'write': self.write,
-            'cksum': self.cksum,
-            'actions': simplejson.dumps(actions),
             }
 
     def validate(self):
