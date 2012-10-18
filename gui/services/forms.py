@@ -1146,8 +1146,9 @@ class ExtentDelete(Form):
         super(ExtentDelete, self).__init__(*args, **kwargs)
 
     def done(self, *args, **kwargs):
-        if self.cleaned_data['delete'] and \
-            self.instance.iscsi_target_extent_type == 'File':
+        if (self.cleaned_data['delete'] and
+            self.instance.iscsi_target_extent_type == 'File' and
+            os.path.exists(self.instance.iscsi_target_extent_path)):
             os.unlink(self.instance.iscsi_target_extent_path)
 
 
