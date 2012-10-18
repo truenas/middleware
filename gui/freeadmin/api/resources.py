@@ -38,6 +38,7 @@ from freenasUI.network.models import (Interfaces, LAGGInterface,
     LAGGInterfaceMembers)
 from freenasUI.services.models import (iSCSITargetPortal, iSCSITargetExtent,
     iSCSITargetToExtent)
+from freenasUI.plugins.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -722,4 +723,20 @@ class BsdGroupResource(DojoModelResource):
         bundle = super(BsdGroupResource, self).dehydrate(bundle)
         bundle.data['_members_url'] = reverse('account_bsdgroup_members',
             kwargs={'object_id': bundle.obj.id, })
+        return bundle
+
+
+class NullMountPointResource(DojoModelResource):
+
+    class Meta:
+        queryset = NullMountPoint.objects.all()
+        resource_name = 'nullmountpoint'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(NullMountPointResource, self).dehydrate(bundle)
+        bundle.data['mounted'] = bundle.obj.mounted
         return bundle

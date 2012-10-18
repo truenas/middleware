@@ -38,7 +38,6 @@ urlpatterns = patterns('freenasUI.plugins.views',
     url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
     url(r'^plugin/update/(?P<plugin_id>\d+)/$', 'plugin_update', name="plugin_update"),
     url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
-    url(r'^_mountpoints/$', 'mountpoints', name="plugins_mountpoints"),
     url(r'^jailimport/$', 'plugins_jail_import', name="plugins_jail_import"),
     url(r'^jailpbi/$', JailInstallWizard.as_view(
             [PBITemporaryLocationForm, JailInfoForm, JailPBIUploadForm],

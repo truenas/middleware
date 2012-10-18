@@ -12,7 +12,7 @@
 <button data-dojo-type="dijit.form.Button">
     <p>{% trans "View Mount Points" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        viewModel('{% trans "View Mount Points"|force_escape|force_escape %}', '{% url plugins_mountpoints %}', 'services.Plugins.management.NullMountPoint.View');
+        viewModel('{% trans "View Mount Points"|force_escape|force_escape %}', '{% url freeadmin_plugins_nullmountpoint_datagrid %}', 'services.Plugins.management.NullMountPoint.View');
     </script>
 </button>
 

@@ -145,14 +145,6 @@ def plugin_install(request):
         })
 
 
-def mountpoints(request):
-    qs = models.NullMountPoint.objects.all()
-    return render(request, "plugins/mountpoints.html", {
-        'mp_list': qs,
-        'model': models.NullMountPoint,
-        })
-
-
 @public
 def plugin_fcgi_client(request, name, path):
     """
