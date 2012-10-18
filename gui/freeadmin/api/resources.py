@@ -271,10 +271,10 @@ class VolumeStatusResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(VolumeStatusResource, self).dehydrate(bundle)
+        bundle.data['name'] = bundle.obj.vol_name
         if bundle.obj.vol_fstype == 'ZFS':
             pool = notifier().zpool_parse(bundle.obj.vol_name)
             bundle.data['children'] = []
-            bundle.data['name'] = pool.name
             bundle.data.update({
                 'read': pool.data.read,
                 'write': pool.data.write,
@@ -383,8 +383,32 @@ class VolumeStatusResource(DojoModelResource):
                         current = children.pop()
 
         elif bundle.obj.vol_fstype == 'UFS':
-            #items = notifier().geom_disks_dump(bundle.obj)
-            pass
+            items = notifier().geom_disks_dump(bundle.obj)
+            bundle.data['children'] = []
+            bundle.data.update({
+                'read': 0,
+                'write': 0,
+                'cksum': 0,
+                'status': bundle.obj.status,
+            })
+            uid = Uid(bundle.obj.id * 100)
+            for i in items:
+                qs = Disk.objects.filter(disk_name=i['diskname']).order_by(
+                    'disk_enabled')
+                if qs:
+                    i['_disk_url'] = "%s?deletable=false" % (
+                        qs[0].get_edit_url(),
+                        )
+                if i['status'] == 'UNAVAIL':
+                    i['_replace_url'] = reverse('storage_geom_disk_replace',
+                        kwargs={'vname': bundle.obj.vol_name})
+                i.update({
+                    'id': uid.next(),
+                    'read': 0,
+                    'write': 0,
+                    'cksum': 0,
+                })
+                bundle.data['children'].append(i)
         return bundle
 
 

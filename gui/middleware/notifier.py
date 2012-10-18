@@ -3756,10 +3756,6 @@ class notifier:
         Raises:
             ValueError: UFS volume not found
         """
-        #FIXME: This should not be here
-        from django.core.urlresolvers import reverse
-        from django.utils import simplejson
-        from freenasUI.storage.models import Disk
         provider = self.get_label_consumer('ufs', volume.vol_name)
         if not provider:
             raise ValueError("UFS Volume %s not found" % (volume,))
@@ -3781,45 +3777,25 @@ class notifier:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
                 status = consumer.xpathEval(statepath)[0].content
                 name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
-                qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
-                if qs:
-                    actions = {'edit_url': qs[0].get_edit_url() + '?deletable=false'}
-                else:
-                    actions = {}
                 items.append({
-                    'type': 'disk',
+                    'type': 'dev',
+                    'diskname': name,
                     'name': name,
-                    'id': uid,
                     'status': status,
-                    'actions': simplejson.dumps(actions),
                 })
-                uid += 1
             for i in xrange(len(consumers), ncomponents):
-                #FIXME: This should not be here
-                actions = {
-                    'replace_url': reverse('storage_geom_disk_replace', kwargs={'vname': volume.vol_name})
-                }
                 items.append({
-                    'type': 'disk',
+                    'type': 'dev',
                     'name': 'UNAVAIL',
-                    'id': uid,
                     'status': 'UNAVAIL',
-                    'actions': simplejson.dumps(actions),
                 })
-                uid += 1
         elif class_name == 'PART':
             name = provider.xpathEval("../name")[0].content
-            qs = Disk.objects.filter(disk_name=name).order_by('disk_enabled')
-            if qs:
-                actions = {'edit_url': qs[0].get_edit_url() + '?deletable=false'}
-            else:
-                actions = {}
             items.append({
-                'type': 'disk',
+                'type': 'dev',
+                'diskname': name,
                 'name': name,
-                'id': uid,
                 'status': 'ONLINE',
-                'actions': simplejson.dumps(actions),
             })
         return items
 
