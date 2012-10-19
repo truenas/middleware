@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2011-12-21 11:44+0200\n"
-"Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
+"PO-Revision-Date: 2012-10-18 12:01+0200\n"
+"Last-Translator: ikroumov <ikroumov@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -540,7 +540,7 @@ msgstr "Заключване потребител"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Създай нова основна група на потребилетя"
 
 #: account/forms.py:276
 msgid "Primary Group"
