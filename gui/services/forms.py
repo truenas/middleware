@@ -257,8 +257,10 @@ class FTPForm(ModelForm):
             raise ServiceFailed("ftp", _("The ftp service failed to start."))
 
     def done(self, *args, **kwargs):
-        if self.instance._original_ftp_ssltls != self.instance.ftp_ssltls and \
-            not self.instance._original_ftp_ssltls:
+        if (self.instance._original_ftp_ssltls != self.instance.ftp_ssltls and
+            not self.instance._original_ftp_ssltls) or (
+            self.instance.ftp_ssltls and
+            not self.instance.ftp_ssltls_certfile):
             notifier().start_ssl("proftpd")
 
 
