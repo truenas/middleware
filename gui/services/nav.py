@@ -139,7 +139,7 @@ class PluginsManagement(TreeNode):
 class MountPoints(TreeNode):
 
     gname = 'View'
-    view = 'plugins_mountpoints'
+    view = 'freeadmin_plugins_nullmountpoint_datagrid'
     append_to = 'services.PluginsJail.management.NullMountPoint'
 
 
