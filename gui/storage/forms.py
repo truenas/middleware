@@ -272,7 +272,7 @@ class VolumeWizardForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
-        disks = cleaned_data.get("volume_disks")
+        disks = cleaned_data.get("volume_disks", [])
         if volume_name and cleaned_data.get("volume_add"):
             self._errors['__all__'] = self.error_class([
                 _("You cannot select an existing ZFS volume and specify a new "
