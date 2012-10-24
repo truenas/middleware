@@ -559,7 +559,7 @@ class VolumeAutoImportForm(forms.Form):
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
                     if filter(lambda x: x is not None and \
-                                disk['name'].startswith(x),
+                                re.search(r'^%s([ps]|$)' % disk['name'], x),
                             used_disks):
                         vols.remove(vol)
                         break
