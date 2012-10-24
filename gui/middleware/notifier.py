@@ -840,6 +840,7 @@ class notifier:
         self.__system("/usr/sbin/service samba forcereload")
 
     def _restart_cifs(self):
+        self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service dbus forcestop")
         self.__system("/usr/sbin/service dbus restart")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
@@ -848,6 +849,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietrestart")
 
     def _start_cifs(self):
+        self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service dbus quietstart")
         self.__system("/usr/sbin/service avahi-daemon quietstart")
         self.__system("/usr/sbin/service samba quietstart")
