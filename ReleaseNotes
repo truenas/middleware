@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.0-RC1
+Release Notes for FreeNAS 8.3.0-RELEASE
 
 *** IMPORTANT ***
 
@@ -35,7 +35,7 @@ Release Notes for FreeNAS 8.3.0-RC1
 
 - The GUI upgrade format changed in 8.2.0-BETA3 from xz to txz.  What
   this means is that if you are attempting to do a GUI upgrade to
-  8.3.0-BETA1 from 8.2.0-BETA3 or later use the .txz version of the
+  8.3.0-RELEASE from 8.2.0-BETA3 or later use the .txz version of the
   GUI_Upgrade file.  If you are upgrading from any previous version use
   the .xz file.
 
@@ -129,6 +129,27 @@ bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+Changes since 8.3.0-RC1:
+
+Bugfixes
+========================
+
+GUI
+------------------------
+
+1. Fix IP address binding feature of the GUI.
+   It was broken by the change of webserver from lighttpd to nginx.
+
+OS/Third party
+------------------------
+
+1. Ensure iSCSI file extents exist before trying to delete them.
+
+2. Regenerate ProFTPD SSL certs if needed.
+
+3. /dev/ada1 was hardcoded in the ataidle script.  Pass in the
+   disk name instead.
 
 Changes since 8.3.0-BETA3:
 
