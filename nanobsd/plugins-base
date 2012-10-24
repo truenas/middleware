@@ -30,7 +30,6 @@
 . "$AVATAR_ROOT/build/functions.sh"
 
 CONF_BUILD="
-WITHOUT_ACPI=       true    # do not build acpiconf(8) and related programs
 WITHOUT_ATM=        true    # do not build ATM related programs and libraries
 WITHOUT_AUTHPF=     true    # do not build and install authpf (setuid/gid)
 WITHOUT_BOOT=       true    # do not build boot blocks and loader
