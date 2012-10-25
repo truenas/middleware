@@ -256,6 +256,7 @@ EOF
 			local ad_workgroup="${ad_workgroup}"
 			local trusted="no"
 			local default="no"
+			local homedir="/home/%D/%U"
 
 			AD_init
 			mkdir -p ${FREENAS_CACHEDIR}/.samba
@@ -273,6 +274,7 @@ EOF
 			if [ "${ad_use_default_domain}" = "1" ]
 			then
 				default="yes"
+				homedir="/home/%U"
 			fi
 
 			cat<<-EOF
@@ -310,7 +312,7 @@ EOF
 			    allow trusted domains = ${trusted}
 
 			    template shell = /bin/sh
-			    template homedir = /home/%D/%U
+			    template homedir = ${homedir}
 
 EOF
 			if [ "${ad_unix_extensions}" = "0" ]
@@ -372,12 +374,21 @@ EOF
 
 		if [ "${cifs_homedir}" = "1" ]; then
 
-			if [ "${ad_enable}" = "1" ]; then
-				valid_users="%D/%U"
+			if [ "${ad_enable}" = "1" -a "${ad_use_default_domain}" = "1" ]
+			then
+				valid_users_path="%U"
+				valid_users="%U"
+
+			elif [ "${ad_enable}" = "1" ]
+			then
+				valid_users_path="%D/%U"
+				valid_users="%D\%U"
+
 			else
+				valid_users_path="%U"
 				valid_users="%U"
 			fi
-			cifs_homedir_path="$cifs_homedir_mp/$valid_users"
+			cifs_homedir_path="$cifs_homedir_mp/$valid_users_path"
 
 			cat<<-EOF
 			[homes]
