@@ -245,6 +245,26 @@ require([
 
     }
 
+    alertDismiss = function() {
+        var input = this;
+        var msgid = input.value;
+        var dismiss;
+        if(input.checked) {
+            dismiss = 0;
+        } else {
+            dismiss = 1;
+        }
+        xhr.post("/admin/alert/dismiss/", {
+            headers: {"X-CSRFToken": cookie('csrftoken')},
+            data: {
+                msgid: msgid,
+                dismiss: dismiss
+            }
+        }).then(function(data) {
+            loadalert();
+        });
+    }
+
     toggle_service = function(obj, onSuccess) {
         var td = obj.parentNode;
         var n = domConstruct.create("div", {  }, td);

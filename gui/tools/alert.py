@@ -49,11 +49,27 @@ from freenasUI.common.system import send_mail
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import Volume
-from freenasUI.system.models import Settings
+from freenasUI.system.models import Alert as mAlert, Settings
 
 ALERT_FILE = '/var/tmp/alert'
 LAST_ALERT_FILE = '/var/tmp/alert.last'
 PORTAL_IP_FILE = '/var/tmp/iscsi_portal_ip'
+
+
+class Message(object):
+
+    def __init__(self, message, msgid=None):
+        self._message = message
+        self._msgid = msgid
+
+    def __repr__(self):
+        return repr(self._message)
+
+    def __str__(self):
+        return str(self._message)
+
+    def __unicode__(self):
+        return unicode(self._message)
 
 
 class Alert(object):
@@ -70,10 +86,13 @@ class Alert(object):
             self.LOG_WARN: [],
         }
 
-    def log(self, level, msg):
-        msg = unicode(msg)
+    def log(self, level, msg, msgid=None):
+        msg = msg.encode('utf-8')
+        if msgid is None:
+            msgid = hashlib.md5(msg).hexdigest()
+        msg = Message(msg, msgid)
         self.__logs[level].append(msg)
-        self.__s.write('%s: %s\n' % (level, msg, ))
+        self.__s.write('%s[%s]: %s\n' % (level, msgid, msg, ))
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS', 'UFS']):
@@ -203,7 +222,14 @@ class Alert(object):
         Use alert.last to hold a sha256 hash of the last sent alerts
         If the hash is the same do not resend the email
         """
-        if len(self.__logs[self.LOG_CRIT]) == 0:
+        dismisseds = [a.message_id
+            for a in mAlert.objects.filter(dismiss=True)
+            ]
+        msgs = []
+        for msg in self.__logs[self.LOG_CRIT]:
+            if msg._msgid not in dismisseds:
+                msgs.append(unicode(msg))
+        if len(msgs) == 0:
             if os.path.exists(LAST_ALERT_FILE):
                 os.unlink(LAST_ALERT_FILE)
             return
@@ -212,10 +238,10 @@ class Alert(object):
                 sha256 = f.read()
         except:
             sha256 = ''
-        newsha = hashlib.sha256(repr(self.__logs[self.LOG_CRIT])).hexdigest()
+        newsha = hashlib.sha256(repr(msgs)).hexdigest()
         if newsha != sha256:
             send_mail(subject=_("Critical Alerts"),
-                      text='\n'.join(self.__logs[self.LOG_CRIT]))
+                      text='\n'.join(msgs))
             with open(LAST_ALERT_FILE, 'w') as f:
                 f.write(newsha)
 

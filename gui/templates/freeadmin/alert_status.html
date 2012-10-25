@@ -1,6 +1,7 @@
 <ul>
 {% for alert in alerts %}
 <li>
+    <input data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.msgid }}" onClick="alertDismiss" {% if not alert.dismissed %} checked{% endif %} />
     {% if alert.status == 'OK'%}
         <span style="color:green;font-weight:bold;">
         {% trans "OK" %}:

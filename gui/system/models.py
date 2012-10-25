@@ -36,6 +36,16 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
 
+class Alert(Model):
+    message_id = models.CharField(
+        unique=True,
+        max_length=100,
+        )
+    dismiss = models.BooleanField(
+        default=True,
+        )
+
+
 class Settings(Model):
     stg_guiprotocol = models.CharField(
             max_length=120,

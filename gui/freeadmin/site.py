@@ -3,6 +3,7 @@ from functools import update_wrapper
 import hashlib
 import logging
 import os
+import re
 
 from django.core.urlresolvers import reverse
 from django.db.models.base import ModelBase
@@ -17,6 +18,7 @@ from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from tastypie.api import Api
 
+RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
 
 
@@ -164,6 +166,9 @@ class FreeAdminSite(object):
             url(r'^alert/status/$',
                 wrap(self.alert_status),
                 name="freeadmin_alert_status"),
+            url(r'^alert/dismiss/$',
+                wrap(self.alert_dismiss),
+                name="freeadmin_alert_dismiss"),
             url(r'^alert/$',
                 wrap(self.alert_detail),
                 name="freeadmin_alert_detail"),
@@ -221,6 +226,8 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_status(self, request):
+        from freenasUI.system.models import Alert
+        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
         if os.path.exists('/var/tmp/alert'):
             current = 'OK'
             with open('/var/tmp/alert') as f:
@@ -228,7 +235,10 @@ class FreeAdminSite(object):
             for entry in entries:
                 if not entry:
                     continue
-                status, message = entry.split(': ', 1)
+                status, msgid, message = RE_ALERT.match(entry).groups()
+                # Skip dismissed alerts
+                if msgid in dismisseds:
+                    continue
                 if (status == 'WARN' and current == 'OK') or \
                   status == 'CRIT' and current in ('OK', 'WARN'):
                     current = status
@@ -238,6 +248,8 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_detail(self, request):
+        from freenasUI.system.models import Alert
+        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
         if os.path.exists('/var/tmp/alert'):
             with open('/var/tmp/alert') as f:
                 entries = f.read().split('\n')
@@ -245,9 +257,11 @@ class FreeAdminSite(object):
             for entry in entries:
                 if not entry:
                     continue
-                status, message = entry.split(': ', 1)
+                status, msgid, message = RE_ALERT.match(entry).groups()
                 alerts.append({
                     'status': status,
+                    'msgid': msgid,
+                    'dismissed': msgid in dismisseds,
                     'message': message,
                 })
 
@@ -258,5 +272,24 @@ class FreeAdminSite(object):
             return HttpResponse(
                 _("It was not possible to retrieve the current status")
                 )
+
+    @never_cache
+    def alert_dismiss(self, request):
+        from freenasUI.freeadmin.views import JsonResp
+        from freenasUI.system.models import Alert
+        msgid = request.POST.get("msgid", None)
+        dismiss = request.POST.get("dismiss", None)
+        assert msgid is not None  # FIX ME
+        try:
+            alert = Alert.objects.get(message_id=msgid)
+            if dismiss == "0":
+                alert.delete()
+        except Alert.DoesNotExist:
+            if dismiss == "1":
+                alert = Alert.objects.create(
+                    message_id=msgid,
+                    dismiss=True,
+                    )
+        return JsonResp(request, message="OK")
 
 site = FreeAdminSite()
