@@ -42,6 +42,8 @@ from freenasUI.common.freenasusers import (FreeNAS_Users, FreeNAS_User,
     FreeNAS_Groups, FreeNAS_Group)
 from freenasUI.storage.models import MountPoint
 
+MAC_RE = re.compile(r'^[0-9A-F]{12}$')
+
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
@@ -189,6 +191,22 @@ class PathField(forms.CharField):
                     _("The path must reside within a volume mount point")
                     )
             return value if not self.abspath else absv
+        return value
+
+
+class MACField(forms.CharField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 17
+        super(MACField, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = value.upper().replace(':', '')
+        if value and not MAC_RE.search(value):
+            raise forms.ValidationError("%s is not a valid MAC Address" % (
+                value,
+                ))
+        value = super(MACField, self).clean(value)
         return value
 
 

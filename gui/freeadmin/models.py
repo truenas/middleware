@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import re
+
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -32,6 +34,7 @@ from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.MACField"])
 
 
 class UserField(models.CharField):
@@ -79,6 +82,34 @@ class PathField(models.CharField):
             }
         kwargs.update(defaults)
         return super(PathField, self).formfield(**kwargs)
+
+
+class MACField(models.Field):
+    empty_strings_allowed = False
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 17
+        super(MACField, self).__init__(*args, **kwargs)
+
+    def get_internal_type(self):
+        return "CharField"
+
+    def formfield(self, **kwargs):
+        from freenasUI.freeadmin.forms import MACField as MF
+        defaults = {'form_class': MF}
+        defaults.update(kwargs)
+        return super(MACField, self).formfield(**defaults)
+
+    def to_python(self, value):
+        if value:
+            return value.replace(':', '')
+        return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if value:
+            return re.sub(r'(?P<du>[0-9A-F]{2})(?!$)', '\g<du>:', value)
+        return value
 
 
 class FreeModelBase(ModelBase):
