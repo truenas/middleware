@@ -575,6 +575,9 @@ class notifier:
         self._stop_ldap()
         self._start_ldap()
 
+    def _clear_activedirectory_config(self):
+        self.__system("/bin/rm -f /etc/ActiveDirectory/config")
+
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory,
             ActiveDirectoryEnabled, FLAGS_DBINIT)
@@ -3455,7 +3458,7 @@ class notifier:
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
-        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
         if search:
             serial = search.group("serial")
             self.__diskserial[devname] = serial

@@ -490,10 +490,43 @@ class ActiveDirectoryForm(ModelForm):
             'ad_adminpw': forms.widgets.PasswordInput(render_value=False),
             }
 
+    def __original_save(self):
+        self.instance._original_ad_domainname = self.instance.ad_domainname
+        self.instance._original_ad_netbiosname = self.instance.ad_netbiosname
+        self.instance._original_ad_workgroup = self.instance.ad_workgroup
+        self.instance._original_ad_allow_trusted_doms = self.instance.ad_allow_trusted_doms
+        self.instance._original_ad_use_default_domain = self.instance.ad_use_default_domain
+        self.instance._original_ad_unix_extensions = self.instance.ad_unix_extensions
+        self.instance._original_ad_verbose_logging = self.instance.ad_verbose_logging
+        self.instance._original_ad_adminname = self.instance.ad_adminname
+        self.instance._original_ad_adminpw = self.instance.ad_adminpw
+
+    def __original_changed(self):
+        if self.instance._original_ad_domainname != self.instance.ad_domainname:
+            return True
+        if self.instance._original_ad_netbiosname != self.instance.ad_netbiosname:
+            return True
+        if self.instance._original_ad_workgroup != self.instance.ad_workgroup:
+            return True
+        if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
+            return True
+        if self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain:
+            return True
+        if self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions:
+            return True
+        if self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging:
+            return True
+        if self.instance._original_ad_adminname != self.instance.ad_adminname:
+            return True
+        if self.instance._original_ad_adminpw != self.instance.ad_adminpw:
+            return True
+        return False
+
     def __init__(self, *args, **kwargs):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_adminpw:
             self.fields['ad_adminpw'].required = False
+        self.__original_save()
 
     def clean_ad_adminpw2(self):
         password1 = self.cleaned_data.get("ad_adminpw")
@@ -510,6 +543,8 @@ class ActiveDirectoryForm(ModelForm):
 
     def save(self):
         super(ActiveDirectoryForm, self).save()
+        if self.__original_changed():
+            notifier()._clear_activedirectory_config()
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
             raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
