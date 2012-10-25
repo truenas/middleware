@@ -3458,7 +3458,7 @@ class notifier:
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
+        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
             serial = search.group("serial")
             self.__diskserial[devname] = serial
