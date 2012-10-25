@@ -1,0 +1,154 @@
+Index: www/py-django/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/Makefile,v
+retrieving revision 1.44
+diff -u -r1.44 Makefile
+--- www/py-django/Makefile	18 Apr 2012 17:36:25 -0000	1.44
++++ www/py-django/Makefile	25 Oct 2012 21:23:26 -0000
+@@ -1,14 +1,10 @@
+-# New ports collection makefile for:	django
+-# Date created:				2005-11-19
+-# Whom:					Jose Alonso Cardenas Marquez <acardenas@bsd.org.pe>
+-#
+-# $FreeBSD: ports/www/py-django/Makefile,v 1.44 2012/04/18 17:36:25 lwhsu Exp $
+-#
++# Created by: Jose Alonso Cardenas Marquez <acardenas@bsd.org.pe>
++# $FreeBSD: ports/www/py-django/Makefile,v 1.47 2012/10/25 10:12:42 rm Exp $
+ 
+ PORTNAME=	django
+-PORTVERSION=	1.4
++PORTVERSION=	1.4.2
+ CATEGORIES=	www python
+-MASTER_SITES=	https://www.djangoproject.com/m/releases/${PORTVERSION}/ \
++MASTER_SITES=	https://www.djangoproject.com/m/releases/${PORTVERSION:R}/ \
+ 		CHEESESHOP
+ PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
+ DISTNAME=	Django-${PORTVERSION}
+@@ -20,7 +16,7 @@
+ LICENSE=	BSD
+ 
+ USE_GETTEXT=	yes
+-USE_PYTHON=	yes
++USE_PYTHON=	-2.7
+ USE_PYDISTUTILS=	yes
+ PYDISTUTILS_PKGNAME=	Django
+ 
+@@ -28,45 +24,44 @@
+ 
+ DOCSDIR=	${PREFIX}/share/doc/py-django
+ 
+-OPTIONS=	POSTGRESQL	"PostgreSQL support"	off \
+-		MYSQL	"MySQL support"	off \
+-		SQLITE	"SQLite support"	off \
+-		FASTCGI	"FastCGI support"	off \
+-		DOCS	"Install HTML documentation (requires Sphinx)"	off
+-
+-MAN1=		daily_cleanup.1 django-admin.1 gather_profile_stats.1
+-
+ # bypass infrastructure bug
+ OPTIONSFILE=	${PORT_DBDIR}/py-${PORTNAME}/options
++OPTIONS_DEFINE=	FASTCGI HTMLDOCS
++OPTIONS_DEFAULT=SQLITE
++OPTIONS_MULTI=	DATABASE
++OPTIONS_MULTI_DATABASE=	PGSQL MYSQL SQLITE
++HTMLDOCS_DESC=	Install the HTML documentation (requires Sphinx)
++
++MAN1=		daily_cleanup.1 django-admin.1 gather_profile_stats.1
+ 
+-.include <bsd.port.pre.mk>
++.include <bsd.port.options.mk>
+ 
+-.if defined(WITH_POSTGRESQL)
+-RUN_DEPENDS+=	${PYTHON_SITELIBDIR}/psycopg2/_psycopg.so:${PORTSDIR}/databases/py-psycopg2
++.if ${PORT_OPTIONS:MPGSQL}
++RUN_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}psycopg2>0:${PORTSDIR}/databases/py-psycopg2
+ .endif
+ 
+-.if defined(WITH_MYSQL)
++.if ${PORT_OPTIONS:MMYSQL}
+ RUN_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}MySQLdb>=1.2.2:${PORTSDIR}/databases/py-MySQLdb
+ .endif
+ 
+-.if defined(WITH_SQLITE)
+-RUN_DEPENDS+=	${PYTHON_SITELIBDIR}/_sqlite3.so:${PORTSDIR}/databases/py-sqlite3
++.if ${PORT_OPTIONS:MSQLITE}
++RUN_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}sqlite3>0:${PORTSDIR}/databases/py-sqlite3
+ .endif
+ 
+-.if defined(WITH_FASTCGI)
++.if ${PORT_OPTIONS:MFASTCGI}
+ RUN_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}flup>0:${PORTSDIR}/www/py-flup
+ .endif
+ 
+-.if defined(WITH_DOCS)
++.if ${PORT_OPTIONS:MHTMLDOCS}
++.	if empty(PORT_OPTIONS:MDOCS)
++IGNORE=	you cannot build documentation while setting NOPORTDOCS
++.	endif
+ BUILD_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}sphinx>0:${PORTSDIR}/textproc/py-sphinx
+ PORTDOCS=	*
+ .endif
+ 
+ post-build:
+-.if defined(WITH_DOCS)
+-.	if defined(NOPORTDOCS)
+-IGNORE=	you cannot build documentation while setting NOPORTDOCS
+-.	endif
++.if ${PORT_OPTIONS:MHTMLDOCS}
+ 	cd ${WRKSRC}/docs && ${MAKE} html
+ .endif
+ 
+@@ -75,9 +70,9 @@
+ 	@${ECHO_MSG}	""
+ 	@${ECHO_MSG}	"			* See http://docs.djangoproject.com/ for complete documentation"
+ 	@${ECHO_MSG}	""
+-.if defined(WITH_DOCS)
++.if ${PORT_OPTIONS:MHTMLDOCS}
+ 	${MKDIR} ${DOCSDIR}
+ 	${CP} -R ${WRKSRC}/docs/_build/html ${DOCSDIR}
+ .endif
+ 
+-.include <bsd.port.post.mk>
++.include <bsd.port.mk>
+Index: www/py-django/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/distinfo,v
+retrieving revision 1.21
+diff -u -r1.21 distinfo
+--- www/py-django/distinfo	18 Apr 2012 17:11:28 -0000	1.21
++++ www/py-django/distinfo	25 Oct 2012 21:23:26 -0000
+@@ -1,2 +1,2 @@
+-SHA256 (python/Django-1.4.tar.gz) = c096bafbea10e7d359bc15eb00a9bf11dbf5201a16d62acfa2de61d5a35488e9
+-SIZE (python/Django-1.4.tar.gz) = 7632772
++SHA256 (python/Django-1.4.2.tar.gz) = edfd8733f45bbaa524cee25bcac3080ce28c21242c27227464eae3fa6b3d80e7
++SIZE (python/Django-1.4.2.tar.gz) = 7722026
+Index: www/py-django/pkg-descr
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/pkg-descr,v
+retrieving revision 1.1
+diff -u -r1.1 pkg-descr
+--- www/py-django/pkg-descr	25 Nov 2005 20:16:12 -0000	1.1
++++ www/py-django/pkg-descr	25 Oct 2012 21:23:26 -0000
+@@ -7,4 +7,4 @@
+ Web developers. It has convenient niceties for developing content-management
+ systems, but it's an excellent tool for building any Web site.
+ 
+-WWW:	http://www.djangoproject.com/
++WWW: http://www.djangoproject.com/
+Index: www/py-django/pkg-plist
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/pkg-plist,v
+retrieving revision 1.20
+diff -u -r1.20 pkg-plist
+--- www/py-django/pkg-plist	18 Apr 2012 17:11:28 -0000	1.20
++++ www/py-django/pkg-plist	25 Oct 2012 21:23:26 -0000
+@@ -5294,6 +5294,9 @@
+ %%PYTHON_SITELIBDIR%%/django/utils/simplejson/tool.py
+ %%PYTHON_SITELIBDIR%%/django/utils/simplejson/tool.pyc
+ %%PYTHON_SITELIBDIR%%/django/utils/simplejson/tool.pyo
++%%PYTHON_SITELIBDIR%%/django/utils/six.py
++%%PYTHON_SITELIBDIR%%/django/utils/six.pyc
++%%PYTHON_SITELIBDIR%%/django/utils/six.pyo
+ %%PYTHON_SITELIBDIR%%/django/utils/synch.py
+ %%PYTHON_SITELIBDIR%%/django/utils/synch.pyc
+ %%PYTHON_SITELIBDIR%%/django/utils/synch.pyo
