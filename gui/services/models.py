@@ -35,7 +35,8 @@ from django.core.validators import (MinValueValidator, MaxValueValidator,
 
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import IPAddressField
-from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
+from freenasUI.freeadmin.models import (Model, UserField, GroupField,
+    PathField, MACField)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
@@ -894,6 +895,14 @@ class PluginsJail(Model):
             max_length=3,
             verbose_name=_("Jail IP Netmask"),
             choices=choices.v4NetmaskBitList,
+            )
+    jail_mac = MACField(
+            verbose_name=_("MAC"),
+            blank=True,
+            default='',
+            help_text=_("Ethernet MAC address used for the virtual ethernet "
+                "interface in the jail. Leave blank for random MAC on every "
+                "jail start"),
             )
     plugins_path = PathField(
             verbose_name=_("Plugins archive path"),
