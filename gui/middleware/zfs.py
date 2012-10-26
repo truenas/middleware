@@ -512,7 +512,7 @@ def parse_status(name, doc, data):
 
         try:
             spaces, word, status, read, write, cksum = re.search(
-                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)\s+(?P<read>\d+)\s+(?P<write>\d+)\s+(?P<cksum>\d+)',
+                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)\s+(?P<read>\S+)\s+(?P<write>\S+)\s+(?P<cksum>\S+)',
                 line[1:]
                 ).groups()
         except Exception:
