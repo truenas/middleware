@@ -180,7 +180,7 @@ require([
         var handle = function(data) {
             if(newurl) {
                 setTimeout(function () {
-                    window.location = newurl;
+                    dWindow.location = newurl;
                 }, 1500);
             }
         };
@@ -196,7 +196,7 @@ require([
         var handle = function(data) {
             if(newurl) {
                 setTimeout(function () {
-                    window.location = newurl;
+                    dWindow.location = newurl;
                 }, 1500);
             }
         };
