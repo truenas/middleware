@@ -3980,7 +3980,6 @@ class notifier:
         root_dev = self.__find_root_dev()
         if root_dev.startswith('mirror/'):
             mirror = self.gmirror_status(root_dev.split('/')[1])
-            print mirror
             blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
         else:
             blacklist_devs = []
