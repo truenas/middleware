@@ -32,6 +32,7 @@ import pwd
 import re
 import stat
 import subprocess
+import tempfile
 
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
@@ -390,6 +391,85 @@ class SSLForm(ModelForm):
 
     class Meta:
         model = models.SSL
+
+    def clean_ssl_certfile(self):
+        certfile = self.cleaned_data.get("ssl_certfile")
+        priv = certfile.split('-----BEGIN RSA PRIVATE KEY-----')
+        if len(priv) < 2:
+            raise forms.ValidationError(
+                _("RSA private key not found")
+                )
+        priv = priv[1].split('-----END RSA PRIVATE KEY-----')
+        if len(priv) < 2:
+            raise forms.ValidationError(
+                _("RSA private key not found")
+                )
+        priv = priv[0]
+
+        rsa_file = tempfile.mktemp(dir='/tmp/')
+        with open(rsa_file, 'w') as f:
+            f.write('-----BEGIN RSA PRIVATE KEY-----')
+            f.write(priv)
+            f.write('-----END RSA PRIVATE KEY-----')
+
+        proc = subprocess.Popen([
+            "/usr/bin/openssl",
+            "rsa",
+            "-noout",
+            "-modulus",
+            "-in", rsa_file,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            )
+        modulus1, err = proc.communicate()
+        os.unlink(rsa_file)
+        if proc.returncode != 0:
+            raise forms.ValidationError(
+                _("RSA private key is not valid: %s") % err
+                )
+
+        cert = certfile.split('-----BEGIN CERTIFICATE-----')
+        if len(priv) < 2:
+            raise forms.ValidationError(
+                _("Certificate begin tag not found")
+                )
+        cert = cert[1].split('-----END CERTIFICATE-----')
+        if len(priv) < 2:
+            raise forms.ValidationError(
+                _("RSA private key not found")
+                )
+        cert = cert[0]
+
+        x509_file = tempfile.mktemp(dir='/tmp/')
+        with open(x509_file, 'w') as f:
+            f.write('-----BEGIN CERTIFICATE-----')
+            f.write(cert)
+            f.write('-----END CERTIFICATE-----')
+
+        proc = subprocess.Popen([
+            "/usr/bin/openssl",
+            "x509",
+            "-noout",
+            "-modulus",
+            "-in", x509_file,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            )
+        modulus2, err = proc.communicate()
+        os.unlink(x509_file)
+        if proc.returncode != 0:
+            raise forms.ValidationError(
+                _("Certificate is not valid: %s") % err
+                )
+
+        if modulus1 != modulus2:
+            raise forms.ValidationError(
+                _("The modulus of certificate and key must match")
+                )
+
+        return certfile
 
     def save(self):
         super(SSLForm, self).save()
