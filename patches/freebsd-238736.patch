@@ -1,0 +1,42 @@
+Index: sys/cddl/compat/opensolaris/sys/sid.h
+===================================================================
+--- sys/cddl/compat/opensolaris/sys/sid.h	(revision 238735)
++++ sys/cddl/compat/opensolaris/sys/sid.h	(revision 238736)
+@@ -30,7 +30,7 @@
+ #define	_OPENSOLARIS_SYS_SID_H_
+ 
+ typedef struct ksiddomain {
+-	char	kd_name[16];	/* Domain part of SID */
++	char	kd_name[1];	/* Domain part of SID */
+ } ksiddomain_t;
+ typedef void	ksid_t;
+ 
+@@ -39,8 +39,8 @@ ksid_lookupdomain(const char *domain)
+ {
+ 	ksiddomain_t *kd;
+ 
+-	kd = kmem_alloc(sizeof(*kd), KM_SLEEP);
+-	strlcpy(kd->kd_name, "FreeBSD", sizeof(kd->kd_name));
++	kd = kmem_alloc(sizeof(*kd) + strlen(domain), KM_SLEEP);
++	strcpy(kd->kd_name, domain);
+ 	return (kd);
+ }
+ 
+Index: sys/cddl
+===================================================================
+--- sys/cddl	(revision 238735)
++++ sys/cddl	(revision 238736)
+
+Property changes on: sys/cddl
+___________________________________________________________________
+Modified: svn:mergeinfo
+   Merged /head/sys/cddl:r230454
+Index: sys
+===================================================================
+--- sys	(revision 238735)
++++ sys	(revision 238736)
+
+Property changes on: sys
+___________________________________________________________________
+Modified: svn:mergeinfo
+   Merged /head/sys:r230454
