@@ -324,13 +324,6 @@ def servicesToggleView(request, formname):
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
 
-def rsyncmod(request):
-    return render(request, "services/rsyncmod.html", {
-        'rsyncmod_list': models.RsyncMod.objects.all(),
-        'model': models.RsyncMod,
-        })
-
-
 def enable(request, svc):
     return render(request, "services/enable.html", {
         'svc': svc,

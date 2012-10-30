@@ -91,7 +91,7 @@ class RsyncModView(TreeNode):
 
     gname = 'View'
     name = _(u'View Rsync Modules')
-    view = u'services_rsyncmod'
+    view = u'freeadmin_services_rsyncmod_datagrid'
     icon = u'ViewAllrsyncModIcon'
     append_to = 'services.Rsync.RsyncMod'
 
