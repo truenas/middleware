@@ -104,7 +104,7 @@ def main(argv):
         print "Dataset not found"
         sys.exit(1)
 
-    reg = re.search(r'^%s\b.*' % (args.dataset, ), output)
+    reg = re.search(r'^%s\b.*' % (args.dataset, ), output, re.M)
     if not reg:
         print "Dataset not found"
         sys.exit(1)
@@ -120,7 +120,9 @@ def main(argv):
     else:
         threshold = to_mbytes(args.threshold)
 
-    sentinel_file = "/var/tmp/check_space.%s" % (args.dataset, )
+    sentinel_file = "/var/tmp/check_space.%s" % (
+        args.dataset.replace('/', '_'),
+        )
 
     if avail > threshold:
         if not os.path.exists(sentinel_file):
