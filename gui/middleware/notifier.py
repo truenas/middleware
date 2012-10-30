@@ -3291,7 +3291,7 @@ class notifier:
         if len(search) > 0:
             return "{devicename}%s" % name
 
-        return None
+        return ''
 
     def identifier_to_device(self, ident):
 
@@ -3460,7 +3460,7 @@ class notifier:
 
         ident = self.device_to_identifier(devname)
         qs = Disk.objects.filter(disk_identifier=ident)
-        if qs.exists():
+        if ident and qs.exists():
             disk = qs[0]
             disk.disk_name = devname
             disk.disk_enabled = True
