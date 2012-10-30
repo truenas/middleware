@@ -608,6 +608,6 @@ class KBDMAP_CHOICES(object):
             return
         with open(self.INDEX, 'r') as f:
             d = f.read()
-        _all = re.findall(r'^(?P<name>.*?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+        _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
         for name, desc in _all:
             yield name, desc
