@@ -11,103 +11,6 @@
 
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
-NGINX_BACKUP_CONF="${HTTPDCONF}.working"
-
-
-backup_nginx_conf()
-{
-	if [ -f "${HTTPDCONF}" ]
-	then
-		cp "${HTTPDCONF}" "${NGINX_BACKUP_CONF}"
-		return $?
-	fi
-
-	return 1
-}
-
-
-restore_nginx_conf()
-{
-	if [ -f "${NGINX_BACKUP_CONF}" ]
-	then
-		mv "${NGINX_BACKUP_CONF}" "${HTTPDCONF}"
-		return $?
-	fi
-
-	return 1
-}
-
-
-nginx_cmd()
-{
-	local cmd="${1}" 
-
-	${HTTPDSCRIPT} "${cmd}" >/dev/null 2>&1
-	if [ "$?" = "0" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
-
-nginx_start()
-{
-	local st="${1}"
-
-	nginx_cmd "start"
-	if [ "$?" = "0" ]
-	then
-		nginx_cmd "status"
-		if [ "$?" = "0" ]
-		then
-			if [ -n "${st}" ]
-			then
-				sleep "${st}" >/dev/null 2>&1
-			fi
-			return 0
-		fi
-	fi
-
-	return 1
-}
-
-
-nginx_reload()
-{
-	local st="${1}"
-
-	nginx_cmd "reload"
-	if [ "$?" = "0" ]
-	then
-		nginx_cmd "status"
-		if [ "$?" = "0" ]
-		then
-			if [ -n "${st}" ]
-			then
-				sleep "${st}" >/dev/null 2>&1
-			fi
-			return 0
-		fi
-	fi
-
-	return 1
-}
-
-
-nginx_stop()
-{
-	nginx_cmd "stop"
-	return $?
-}
-
-
-nginx_status()
-{
-	nginx_cmd "status"
-	return $?
-}
 
 
 generate_plugins_conf()
@@ -230,10 +133,6 @@ http {
         server_name  localhost;
 __EOF__
 
-	if [ "${addr}" != "0.0.0.0" ] && [ -z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
-		addr="0.0.0.0"
-	fi
-
 	if [ "${proto}" = "https" ]; then
 		cat << __EOF__
         listen       ${addr}:${port} default_server ssl;
@@ -312,62 +211,6 @@ __EOF__
 
 	} > ${HTTPDCONF}
 
-}
-
-
-get_host_ip()
-{
-	local addr="${1}"
-
-	if [ -n "${addr}" -a "${addr}" != "0.0.0.0" ]
-	then
-		ifconfig -a inet| grep broadcast|cut -f2 -d' '|grep "${addr}"
-	else
-		ifconfig -a inet| grep broadcast|cut -f2 -d' '|head -n1
-	fi
-}
-
-
-test_nginx_conf()
-{
-	local proto="${1}"
-	local addr="${2}"
-	local port="${3}"
-	local ntries=5
-	local res=1
-	local try=0
-	local rc=1
-	
-	local host=$(get_host_ip "${addr}")
-	if [ -n "${port}" ]
-	then
-		host="${host}:${port}"
-	fi
-
-	export HTTP_TIMEOUT=1
-	export FTP_TIMEOUT=1
-
-	echo -n "Waiting for ${proto}... "
-	while [ "${try}" -lt "${ntries}" ]
-	do
-		fetch -q -o /dev/null "${proto}://${host}" >/dev/null 2>&1
-		if [ "$?" = "0" ]
-		then
-			rc=0
-			break		
-		fi
-
-		: $(( try += 1 ))
-		sleep 1
-	done
-	if [ "${rc}" = "0" ]
-	then
-		echo "Done."
-	else
-		echo "Failed."
-	fi
-
-	return $rc
 }
 
 
@@ -489,65 +332,12 @@ get_nginx_settings()
 	fi
 
 	# XXX: IPv6
-	if [ "${addr}" != "0.0.0.0" -a -n "${addr}" -a \
+	if [ "${addr}" != "0.0.0.0" -a \
 		-z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
 		addr="0.0.0.0"
 	fi
 
 	echo "${proto}:${addr}:${port}"
-}
-
-
-verify_nginx_conf()
-{
-	${HTTPD} -t -q -c "${HTTPDCONF}" >/dev/null 2>&1
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
-	return 0
-}
-
-
-ix_nginx_reload()
-{
-	local settings=$(get_nginx_settings)
-
-	local proto=$(echo "${settings}"|cut -f1 -d:)
-	local addr=$(echo "${settings}"|cut -f2 -d:)
-	local port=$(echo "${settings}"|cut -f3 -d:)
-
-	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
-	then
-		port="80"
-		proto="http"
-
-		set_stg_guiprotocol "${proto}"
-		set_stg_guiport "${port}"
-	fi
-
-	generate_plugins_conf
-	generate_fastcgi_params
-
-	backup_nginx_conf
-	generate_nginx_conf "${proto}" "${addr}" "${port}"
-
-	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
-	then
-		restore_nginx_conf
-		nginx_reload
-		return 1
-	fi
-
-	if ! nginx_reload
-	then
-		restore_nginx_conf
-		nginx_reload
-		return 1
-	fi
-
-	return 0
 }
 
 
@@ -571,40 +361,14 @@ ix_nginx_start()
 	generate_plugins_conf
 	generate_fastcgi_params
 
-	backup_nginx_conf
 	generate_nginx_conf "${proto}" "${addr}" "${port}"
 
-	if nginx_status
-	then
-		nginx_reload 5
-	else
-		nginx_start 5
-	fi
-	
-	if [ "$?" != "0" ]
-	then
-		restore_nginx_conf
-		nginx_stop
-		return 1
-	fi
-
-	if ! test_nginx_conf "${proto}" "${addr}" "${port}"
-	then
-		restore_nginx_conf
-		nginx_stop
-		return 1
-	fi
-
-	nginx_stop
-	return 0
 }
 
 
 name="ix-nginx"
 start_cmd='ix_nginx_start'
-reload_cmd='ix_nginx_reload'
 stop_cmd=':'
             
-extra_commands="reload"
 load_rc_config $name
 run_rc_command "$1"

@@ -874,7 +874,8 @@ class notifier:
         self.__system("/usr/sbin/service nginx restart")
 
     def _reload_http(self):
-        self.__system("/usr/sbin/service ix-nginx reload")
+        self.__system("/usr/sbin/service ix-nginx quietstart")
+        self.__system("/usr/sbin/service nginx reload")
 
     def _reload_loader(self):
         self.__system("/usr/sbin/service ix-loader reload")
