@@ -30,7 +30,7 @@ import re
 import eventlet
 
 from django.conf import settings
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import NoReverseMatch, resolve
 from django.db import models
 from django.forms import ModelForm
 from django.utils import simplejson
@@ -498,7 +498,14 @@ class NavTree(object):
                 pass
 
             if not option.perm:
-                url = option.get_absolute_url()
+                try:
+                    url = option.get_absolute_url()
+                except NoReverseMatch, e:
+                    log.warn(_("Could not reverse url, skipping node %s: %s") % (
+                        option,
+                        e,
+                        ))
+                    continue
                 try:
                     view, args, kwargs = resolve(url)
                     if hasattr(view, 'permission'):
