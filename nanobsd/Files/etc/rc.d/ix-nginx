@@ -338,7 +338,7 @@ get_nginx_settings()
 
 	# XXX: IPv6
 	if [ "${addr}" != "0.0.0.0" -a \
-		-z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
+		-z "$(/sbin/ifconfig -a|grep -q ${addr})" ]; then
 		addr="0.0.0.0"
 	fi
 
