@@ -124,7 +124,7 @@ def main(argv):
         args.dataset.replace('/', '_'),
         )
 
-    if avail > threshold:
+    if avail < threshold:
         if not os.path.exists(sentinel_file):
             email(args.dataset, args.threshold, o_avail)
             open(sentinel_file, 'w').close()
