@@ -30,7 +30,6 @@ from django.conf.urls.defaults import patterns, url
 urlpatterns = patterns('freenasUI.storage.views',
     url(r'^home/$', 'home', name="storage_home"),
     url(r'^tasks/$', 'tasks', name="storage_tasks"),
-    url(r'^volumes/$', 'volumes', name="storage_volumes"),
     url(r'^replications/$', 'replications', name="storage_replications"),
     url(r'^replications/public-key/$', 'replications_public_key', name="storage_replications_key"),
     url(r'^replications/keyscan/$', 'replications_keyscan', name="storage_replications_keyscan"),
