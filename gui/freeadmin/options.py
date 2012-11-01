@@ -733,7 +733,7 @@ class BaseFreeAdmin(object):
 
     def get_actions(self):
 
-        actions = {}
+        actions = OrderedDict()
 
         if not self._model:
             return actions
