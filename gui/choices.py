@@ -171,6 +171,7 @@ DOSCHARSET_CHOICES = (
         ('CP866', 'CP866'),
         ('CP932', 'CP932'),
         ('CP949', 'CP949'),
+        ('CP950', 'CP950'),
         ('CP1026', 'CP1026'),
         ('CP1251', 'CP1251'),
         ('ASCII', 'ASCII'),
