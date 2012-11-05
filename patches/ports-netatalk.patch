@@ -1,0 +1,344 @@
+Index: net/netatalk/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/Makefile,v
+retrieving revision 1.109
+diff -u -r1.109 Makefile
+--- net/netatalk/Makefile	9 Jul 2012 01:24:02 -0000	1.109
++++ net/netatalk/Makefile	5 Nov 2012 13:17:24 -0000
+@@ -2,12 +2,11 @@
+ # Date created:         23 Jul 1997
+ # Whom:                 stb
+ #
+-# $FreeBSD: ports/net/netatalk/Makefile,v 1.109 2012/07/09 01:24:02 marcus Exp $
++# $FreeBSD: ports/net/netatalk/Makefile,v 1.110 2012/10/21 14:12:26 marcus Exp $
+ #
+ 
+ PORTNAME=	netatalk
+-PORTVERSION=	2.2.3
+-PORTREVISION=	2
++PORTVERSION=	2.2.4
+ PORTEPOCH=	1
+ CATEGORIES=	net print
+ MASTER_SITES=	SF
+@@ -31,7 +30,7 @@
+ 			--with-pkgconfdir=${PREFIX}/etc \
+ 			--with-libiconv=${LOCALBASE} \
+ 			--with-libgcrypt-dir=${LOCALBASE} \
+-			--with-uams-path=${LOCALBASE}/libexec/netatalk-uams \
++			--with-uams-path=${PREFIX}/libexec/netatalk-uams \
+ 			--with-bdb=${LOCALBASE}
+ 
+ OPTIONS=	APPLETALK	"Enable AppleTalk protocol support" on \
+Index: net/netatalk/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/distinfo,v
+retrieving revision 1.34
+diff -u -r1.34 distinfo
+--- net/netatalk/distinfo	27 May 2012 21:20:20 -0000	1.34
++++ net/netatalk/distinfo	5 Nov 2012 13:17:24 -0000
+@@ -1,2 +1,2 @@
+-SHA256 (netatalk-2.2.3.tar.bz2) = b088e6cc6237f7ad98af65812a74bcc830a2d4aebeea71cfd932ace8ef93132c
+-SIZE (netatalk-2.2.3.tar.bz2) = 1288642
++SHA256 (netatalk-2.2.4.tar.bz2) = 9a01b94d9b873a928c6cf0b7a07da0963b6f14aff41013fef455077ec55e22e7
++SIZE (netatalk-2.2.4.tar.bz2) = 1289663
+--- net/netatalk/files/patch-etc_uams_Makefile.in	2012-05-30 03:20:36.000000000 -0300
++++ /dev/null	2012-11-05 11:11:00.000000000 -0200
+@@ -1,298 +0,0 @@
+---- etc/uams/Makefile.in.orig	2012-05-30 02:09:51.000000000 -0400
+-+++ etc/uams/Makefile.in	2012-05-30 02:18:21.000000000 -0400
+-@@ -63,33 +63,10 @@ target_triplet = @target@
+- @HAVE_LIBGCRYPT_TRUE@@USE_DHX2_TRUE@@USE_PAM_SO_TRUE@am__append_5 = && $(LN_S) uams_dhx2_pam.so uams_dhx2.so
+- @HAVE_LIBGCRYPT_TRUE@@USE_DHX2_TRUE@@USE_PAM_SO_FALSE@am__append_6 = && $(LN_S) uams_dhx2_passwd.so uams_dhx2.so
+- subdir = etc/uams
+--DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+-+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+-+	$(top_srcdir)/depcomp
+- ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+--am__aclocal_m4_deps = $(top_srcdir)/macros/afs-check.m4 \
+--	$(top_srcdir)/macros/cnid-backend.m4 \
+--	$(top_srcdir)/macros/config-checks.m4 \
+--	$(top_srcdir)/macros/cups.m4 $(top_srcdir)/macros/db3-check.m4 \
+--	$(top_srcdir)/macros/grep-check.m4 \
+--	$(top_srcdir)/macros/gssapi-check.m4 \
+--	$(top_srcdir)/macros/iconv.m4 \
+--	$(top_srcdir)/macros/largefile-check.m4 \
+--	$(top_srcdir)/macros/libgcrypt.m4 \
+--	$(top_srcdir)/macros/libtool.m4 \
+--	$(top_srcdir)/macros/ltoptions.m4 \
+--	$(top_srcdir)/macros/ltsugar.m4 \
+--	$(top_srcdir)/macros/ltversion.m4 \
+--	$(top_srcdir)/macros/lt~obsolete.m4 \
+--	$(top_srcdir)/macros/pam-check.m4 \
+--	$(top_srcdir)/macros/perl-check.m4 \
+--	$(top_srcdir)/macros/ps-check.m4 \
+--	$(top_srcdir)/macros/quota-check.m4 \
+--	$(top_srcdir)/macros/snprintf-check.m4 \
+--	$(top_srcdir)/macros/srvloc.m4 \
+--	$(top_srcdir)/macros/ssl-check.m4 \
+--	$(top_srcdir)/macros/summary.m4 \
+--	$(top_srcdir)/macros/tcp-wrappers.m4 \
+--	$(top_srcdir)/macros/util.m4 $(top_srcdir)/macros/webmin.m4 \
+--	$(top_srcdir)/macros/zeroconf.m4 $(top_srcdir)/configure.ac
+-+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+- am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
+- 	$(ACLOCAL_M4)
+- mkinstalldirs = $(install_sh) -d
+-@@ -271,22 +248,12 @@ am__relativize = \
+-   reldir="$$dir2"
+- ACLOCAL = @ACLOCAL@
+- ACL_LIBS = @ACL_LIBS@
+--AFS_CFLAGS = @AFS_CFLAGS@
+--AFS_LIBS = @AFS_LIBS@
+- AMTAR = @AMTAR@
+- AR = @AR@
+- AUTOCONF = @AUTOCONF@
+- AUTOHEADER = @AUTOHEADER@
+- AUTOMAKE = @AUTOMAKE@
+--AVAHI_CFLAGS = @AVAHI_CFLAGS@
+--AVAHI_LIBS = @AVAHI_LIBS@
+--AVAHI_TPOLL_CFLAGS = @AVAHI_TPOLL_CFLAGS@
+--AVAHI_TPOLL_LIBS = @AVAHI_TPOLL_LIBS@
+- AWK = @AWK@
+--BDB_BIN = @BDB_BIN@
+--BDB_CFLAGS = @BDB_CFLAGS@
+--BDB_LIBS = @BDB_LIBS@
+--BDB_PATH = @BDB_PATH@
+- CC = @CC@
+- CCDEPMODE = @CCDEPMODE@
+- CFLAGS = @CFLAGS@
+-@@ -294,13 +261,7 @@ COMPILE_64BIT_KMODULE = @COMPILE_64BIT_K
+- COMPILE_KERNEL_GCC = @COMPILE_KERNEL_GCC@
+- CPP = @CPP@
+- CPPFLAGS = @CPPFLAGS@
+--CRYPT_LIBS = @CRYPT_LIBS@
+--CUPS_CFLAGS = @CUPS_CFLAGS@
+--CUPS_CONFIG = @CUPS_CONFIG@
+--CUPS_LDFLAGS = @CUPS_LDFLAGS@
+--CUPS_LIBS = @CUPS_LIBS@
+- CYGPATH_W = @CYGPATH_W@
+--DEFAULT_CNID_SCHEME = @DEFAULT_CNID_SCHEME@
+- DEFS = @DEFS@
+- DEPDIR = @DEPDIR@
+- DLLTOOL = @DLLTOOL@
+-@@ -313,11 +274,6 @@ EGREP = @EGREP@
+- EXEEXT = @EXEEXT@
+- FGREP = @FGREP@
+- GREP = @GREP@
+--GSSAPI_CFLAGS = @GSSAPI_CFLAGS@
+--GSSAPI_LDFLAGS = @GSSAPI_LDFLAGS@
+--GSSAPI_LIBS = @GSSAPI_LIBS@
+--ICONV_CFLAGS = @ICONV_CFLAGS@
+--ICONV_LIBS = @ICONV_LIBS@
+- INSTALL = @INSTALL@
+- INSTALL_DATA = @INSTALL_DATA@
+- INSTALL_PROGRAM = @INSTALL_PROGRAM@
+-@@ -325,7 +281,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
+- INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+- KCFLAGS = @KCFLAGS@
+- KLDFLAGS = @KLDFLAGS@
+--KRB5_CONFIG = @KRB5_CONFIG@
+- LD = @LD@
+- LDFLAGS = @LDFLAGS@
+- LIBADD_DL = @LIBADD_DL@
+-@@ -362,42 +317,15 @@ PACKAGE_STRING = @PACKAGE_STRING@
+- PACKAGE_TARNAME = @PACKAGE_TARNAME@
+- PACKAGE_URL = @PACKAGE_URL@
+- PACKAGE_VERSION = @PACKAGE_VERSION@
+--PAMDIR = @PAMDIR@
+--PAM_ACCOUNT = @PAM_ACCOUNT@
+--PAM_AUTH = @PAM_AUTH@
+--PAM_CFLAGS = @PAM_CFLAGS@
+--PAM_DIRECTIVE = @PAM_DIRECTIVE@
+--PAM_LIBS = @PAM_LIBS@
+--PAM_PASSWORD = @PAM_PASSWORD@
+--PAM_SESSION = @PAM_SESSION@
+- PATH_SEPARATOR = @PATH_SEPARATOR@
+--PERL = @PERL@
+--PKGCONFDIR = @PKGCONFDIR@
+--PKG_CONFIG = @PKG_CONFIG@
+--PS = @PS@
+- PTHREAD_LIBS = @PTHREAD_LIBS@
+--QUOTA_LIBS = @QUOTA_LIBS@
+- RANLIB = @RANLIB@
+- SED = @SED@
+--SERVERTEXT = @SERVERTEXT@
+- SET_MAKE = @SET_MAKE@
+- SHELL = @SHELL@
+--SLP_CFLAGS = @SLP_CFLAGS@
+--SLP_LIBS = @SLP_LIBS@
+--SPOOLDIR = @SPOOLDIR@
+--SSL_CFLAGS = @SSL_CFLAGS@
+--SSL_LIBS = @SSL_LIBS@
+- STRIP = @STRIP@
+- UAMS_PATH = @UAMS_PATH@
+- VERSION = @VERSION@
+--WEBMIN_PASS = @WEBMIN_PASS@
+--WEBMIN_PATH = @WEBMIN_PATH@
+--WEBMIN_PORT = @WEBMIN_PORT@
+--WEBMIN_USER = @WEBMIN_USER@
+--WEBMIN_VERSION = @WEBMIN_VERSION@
+--WRAP_LIBS = @WRAP_LIBS@
+--ZEROCONF_CFLAGS = @ZEROCONF_CFLAGS@
+--ZEROCONF_LIBS = @ZEROCONF_LIBS@
+- abs_builddir = @abs_builddir@
+- abs_srcdir = @abs_srcdir@
+- abs_top_builddir = @abs_top_builddir@
+-@@ -417,7 +345,6 @@ build_cpu = @build_cpu@
+- build_os = @build_os@
+- build_vendor = @build_vendor@
+- builddir = @builddir@
+--compiled_backends = @compiled_backends@
+- datadir = @datadir@
+- datarootdir = @datarootdir@
+- docdir = @docdir@
+-@@ -543,9 +470,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_
+- 	      exit 1;; \
+- 	  esac; \
+- 	done; \
+--	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign etc/uams/Makefile'; \
+-+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu etc/uams/Makefile'; \
+- 	$(am__cd) $(top_srcdir) && \
+--	  $(AUTOMAKE) --foreign etc/uams/Makefile
+-+	  $(AUTOMAKE) --gnu etc/uams/Makefile
+- .PRECIOUS: Makefile
+- Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+- 	@case '$?' in \
+-@@ -590,12 +517,14 @@ uninstall-uamsLTLIBRARIES:
+- 
+- clean-uamsLTLIBRARIES:
+- 	-test -z "$(uams_LTLIBRARIES)" || rm -f $(uams_LTLIBRARIES)
+--	@list='$(uams_LTLIBRARIES)'; for p in $$list; do \
+--	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+--	  test "$$dir" != "$$p" || dir=.; \
+--	  echo "rm -f \"$${dir}/so_locations\""; \
+--	  rm -f "$${dir}/so_locations"; \
+--	done
+-+	@list='$(uams_LTLIBRARIES)'; \
+-+	locs=`for p in $$list; do echo $$p; done | \
+-+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+-+	      sort -u`; \
+-+	test -z "$$locs" || { \
+-+	  echo rm -f $${locs}; \
+-+	  rm -f $${locs}; \
+-+	}
+- uams_dhx2_pam.la: $(uams_dhx2_pam_la_OBJECTS) $(uams_dhx2_pam_la_DEPENDENCIES) $(EXTRA_uams_dhx2_pam_la_DEPENDENCIES) 
+- 	$(uams_dhx2_pam_la_LINK) $(am_uams_dhx2_pam_la_rpath) $(uams_dhx2_pam_la_OBJECTS) $(uams_dhx2_pam_la_LIBADD) $(LIBS)
+- uams_dhx2_passwd.la: $(uams_dhx2_passwd_la_OBJECTS) $(uams_dhx2_passwd_la_DEPENDENCIES) $(EXTRA_uams_dhx2_passwd_la_DEPENDENCIES) 
+-@@ -690,11 +619,11 @@ clean-libtool:
+- 	-rm -rf .libs _libs
+- 
+- # This directory's subdirectories are mostly independent; you can cd
+--# into them and run `make' without going through this Makefile.
+--# To change the values of `make' variables: instead of editing Makefiles,
+--# (1) if the variable is set in `config.status', edit `config.status'
+--#     (which will cause the Makefiles to be regenerated when you run `make');
+--# (2) otherwise, pass the desired values on the `make' command line.
+-+# into them and run 'make' without going through this Makefile.
+-+# To change the values of 'make' variables: instead of editing Makefiles,
+-+# (1) if the variable is set in 'config.status', edit 'config.status'
+-+#     (which will cause the Makefiles to be regenerated when you run 'make');
+-+# (2) otherwise, pass the desired values on the 'make' command line.
+- $(RECURSIVE_TARGETS):
+- 	@fail= failcom='exit 1'; \
+- 	for f in x $$MAKEFLAGS; do \
+-@@ -758,6 +687,10 @@ ctags-recursive:
+- 	list='$(SUBDIRS)'; for subdir in $$list; do \
+- 	  test "$$subdir" = . || ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
+- 	done
+-+cscopelist-recursive:
+-+	list='$(SUBDIRS)'; for subdir in $$list; do \
+-+	  test "$$subdir" = . || ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) cscopelist); \
+-+	done
+- 
+- ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+- 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
+-@@ -821,6 +754,20 @@ GTAGS:
+- 	  && $(am__cd) $(top_srcdir) \
+- 	  && gtags -i $(GTAGS_ARGS) "$$here"
+- 
+-+cscopelist: cscopelist-recursive $(HEADERS) $(SOURCES) $(LISP)
+-+	list='$(SOURCES) $(HEADERS) $(LISP)'; \
+-+	case "$(srcdir)" in \
+-+	  [\\/]* | ?:[\\/]*) sdir="$(srcdir)" ;; \
+-+	  *) sdir=$(subdir)/$(srcdir) ;; \
+-+	esac; \
+-+	for i in $$list; do \
+-+	  if test -f "$$i"; then \
+-+	    echo "$(subdir)/$$i"; \
+-+	  else \
+-+	    echo "$$sdir/$$i"; \
+-+	  fi; \
+-+	done >> $(top_builddir)/cscope.files
+-+
+- distclean-tags:
+- 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+- 
+-@@ -941,14 +888,14 @@ info: info-recursive
+- info-am:
+- 
+- install-data-am: install-uamsLTLIBRARIES
+--
+-+	@$(NORMAL_INSTALL)
+-+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
+- install-dvi: install-dvi-recursive
+- 
+- install-dvi-am:
+- 
+- install-exec-am:
+--	@$(NORMAL_INSTALL)
+--	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
+-+
+- install-html: install-html-recursive
+- 
+- install-html-am:
+-@@ -990,32 +937,33 @@ ps-am:
+- uninstall-am: uninstall-uamsLTLIBRARIES
+- 	@$(NORMAL_INSTALL)
+- 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
+--.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) ctags-recursive \
+--	install-am install-exec-am install-strip tags-recursive \
+--	uninstall-am
+-+.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) \
+-+	cscopelist-recursive ctags-recursive install-am \
+-+	install-data-am install-strip tags-recursive uninstall-am
+- 
+- .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
+- 	all all-am check check-am clean clean-generic clean-libtool \
+--	clean-uamsLTLIBRARIES ctags ctags-recursive distclean \
+--	distclean-compile distclean-generic distclean-libtool \
+--	distclean-tags distdir dvi dvi-am html html-am info info-am \
+--	install install-am install-data install-data-am install-dvi \
+--	install-dvi-am install-exec install-exec-am install-exec-hook \
+--	install-html install-html-am install-info install-info-am \
+--	install-man install-pdf install-pdf-am install-ps \
+--	install-ps-am install-strip install-uamsLTLIBRARIES \
+--	installcheck installcheck-am installdirs installdirs-am \
+--	maintainer-clean maintainer-clean-generic mostlyclean \
+--	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+--	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
+--	uninstall-hook uninstall-uamsLTLIBRARIES
+-+	clean-uamsLTLIBRARIES cscopelist cscopelist-recursive ctags \
+-+	ctags-recursive distclean distclean-compile distclean-generic \
+-+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+-+	html-am info info-am install install-am install-data \
+-+	install-data-am install-data-hook install-dvi install-dvi-am \
+-+	install-exec install-exec-am install-html install-html-am \
+-+	install-info install-info-am install-man install-pdf \
+-+	install-pdf-am install-ps install-ps-am install-strip \
+-+	install-uamsLTLIBRARIES installcheck installcheck-am \
+-+	installdirs installdirs-am maintainer-clean \
+-+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+-+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+-+	tags tags-recursive uninstall uninstall-am uninstall-hook \
+-+	uninstall-uamsLTLIBRARIES
+- 
+- 
+- #
+- # link creation
+- #
+- 
+--install-exec-hook:
+-+install-data-hook:
+- 	(if [ -d $(DESTDIR)$(uamsdir) ] ; then \
+- 		cd $(DESTDIR)$(uamsdir)					&& \
+- 		rm -f $(uams_LINKS)  					&& \
