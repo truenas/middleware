@@ -412,13 +412,19 @@ class ZFSDataset(object):
     name = None
     path = None
     pool = None
+    used = None
+    avail = None
+    refer = None
     mountpoint = None
     parent = None
     children = None
 
-    def __init__(self, path, mountpoint):
+    def __init__(self, path, used, avail, refer, mountpoint):
         self.path = path
         self.pool, self.name = path.split('/', 1)
+        self.used = used
+        self.avail = avail
+        self.refer = refer
         self.mountpoint = mountpoint
         self.parent = None
         self.children = []
@@ -620,7 +626,13 @@ def list_datasets(path="", recursive=False, hierarchical=False):
             # root filesystem is not treated as dataset by us
             if depth == 1:
                 continue
-            dataset = ZFSDataset(path=data[0], mountpoint=data[4])
+            dataset = ZFSDataset(
+                path=data[0],
+                used=data[1],
+                avail=data[2],
+                refer=data[3],
+                mountpoint=data[4],
+                )
             if not hierarchical:
                 zfslist.append(dataset)
                 continue
