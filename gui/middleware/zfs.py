@@ -421,7 +421,11 @@ class ZFSDataset(object):
 
     def __init__(self, path, used, avail, refer, mountpoint):
         self.path = path
-        self.pool, self.name = path.split('/', 1)
+        if '/' in path:
+            self.pool, self.name = path.split('/', 1)
+        else:
+            self.pool = ''
+            self.name = path
         self.used = used
         self.avail = avail
         self.refer = refer
@@ -431,6 +435,12 @@ class ZFSDataset(object):
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
+
+    @property
+    def full_name(self):
+        if self.pool:
+            return "%s/%s" % (self.pool, self.name)
+        return self.name
 
     def append(self, child):
         child.parent = self
@@ -596,8 +606,12 @@ def parse_status(name, doc, data):
     return pool
 
 
-def list_datasets(path="", recursive=False, hierarchical=False):
-    """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
+def list_datasets(path="", recursive=False, hierarchical=False,
+        include_root=False):
+    """
+    Return a dictionary that contains all ZFS dataset list and their
+    mountpoints
+    """
     args = [
         "/sbin/zfs",
         "list",
@@ -625,7 +639,7 @@ def list_datasets(path="", recursive=False, hierarchical=False):
         data = line.split('\t')
         depth = len(data[0].split('/'))
         # root filesystem is not treated as dataset by us
-        if depth == 1:
+        if depth == 1 and not include_root:
             continue
         dataset = ZFSDataset(
             path=data[0],
