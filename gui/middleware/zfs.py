@@ -620,35 +620,36 @@ def list_datasets(path="", recursive=False, hierarchical=False):
     last_dataset = None
     last_depth = 2
     for line in zfs_output:
-        if line:
-            data = line.split('\t')
-            depth = len(data[0].split('/'))
-            # root filesystem is not treated as dataset by us
-            if depth == 1:
-                continue
-            dataset = ZFSDataset(
-                path=data[0],
-                used=data[1],
-                avail=data[2],
-                refer=data[3],
-                mountpoint=data[4],
-                )
-            if not hierarchical:
-                zfslist.append(dataset)
-                continue
+        if not line:
+            continue
+        data = line.split('\t')
+        depth = len(data[0].split('/'))
+        # root filesystem is not treated as dataset by us
+        if depth == 1:
+            continue
+        dataset = ZFSDataset(
+            path=data[0],
+            used=data[1],
+            avail=data[2],
+            refer=data[3],
+            mountpoint=data[4],
+            )
+        if not hierarchical:
+            zfslist.append(dataset)
+            continue
 
-            if depth == last_depth + 1:
-                last_dataset.append(dataset)
-            elif depth == 2:
-                zfslist.append(dataset)
-            elif depth > 2 and last_depth >= depth:
-                tmp = last_dataset
-                for i in range(last_depth - depth + 1):
-                    tmp = tmp.parent
-                tmp.append(dataset)
-            else:
-                log.error("Failed to parse zfs list in hierarchical mode")
-            last_dataset = dataset
-            last_depth = depth
+        if depth == last_depth + 1:
+            last_dataset.append(dataset)
+        elif depth == 2:
+            zfslist.append(dataset)
+        elif depth > 2 and last_depth >= depth:
+            tmp = last_dataset
+            for i in range(last_depth - depth + 1):
+                tmp = tmp.parent
+            tmp.append(dataset)
+        else:
+            log.error("Failed to parse zfs list in hierarchical mode")
+        last_dataset = dataset
+        last_depth = depth
 
     return zfslist
