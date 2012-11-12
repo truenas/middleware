@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-08-30 11:47+0200\n"
-"Last-Translator: pendialek <pendialek@gmail.com>\n"
+"PO-Revision-Date: 2012-11-11 18:03+0200\n"
+"Last-Translator: Radim <kolar.radim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -48,7 +48,6 @@ msgstr "Úložiště"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
 msgstr "Stala se chyba!"
 
@@ -88,7 +87,7 @@ msgid "Plugins"
 msgstr "Moduly"
 
 msgid "CronJobs"
-msgstr "Cron úlohy"
+msgstr "Naplánované úlohy"
 
 msgid "Replace"
 msgstr "Nahradit"
