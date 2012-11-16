@@ -350,15 +350,15 @@ def dataset_edit(request, dataset_name):
     })
 
 
-def zvol_create(request, volume_name):
+def zvol_create(request, parent):
     defaults = {'zvol_compression': 'inherit', }
     if request.method == 'POST':
-        zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=volume_name)
+        zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=parent)
         if zvol_form.is_valid():
             props = {}
             cleaned_data = zvol_form.cleaned_data
             zvol_size = cleaned_data.get('zvol_size')
-            zvol_name = "%s/%s" % (volume_name, cleaned_data.get('zvol_name'))
+            zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
             props['compression'] = str(zvol_compression)
             errno, errmsg = notifier().create_zfs_vol(
@@ -374,10 +374,10 @@ def zvol_create(request, volume_name):
                 zvol_form.set_error(errmsg)
     else:
         zvol_form = forms.ZVol_CreateForm(initial=defaults,
-            vol_name=volume_name)
+            vol_name=parent)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,
-        'volume_name': volume_name,
+        'volume_name': parent,
     })
 
 

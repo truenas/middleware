@@ -267,6 +267,10 @@ class VolumeFAdmin(BaseFreeAdmin):
             icon="add_dataset",
             show="DATASET",
             )
+        actions['NewDsVolume'] = self._action_builder("add_zfs_volume",
+            label=_('Create ZFS Volume'),
+            show="DATASET",
+            )
 
         # ZVol actions
         actions['ZVolDelete'] = self._action_builder("zvol_delete",

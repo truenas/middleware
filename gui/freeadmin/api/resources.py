@@ -133,6 +133,9 @@ class VolumeResource(DojoModelResource):
                 kwargs={
                 'path': dataset.mountpoint,
                 })
+            data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
+                'parent': dataset.path,
+                })
             data['_manual_snapshot_url'] = reverse('storage_manualsnap',
                 kwargs={
                 'fs': dataset.path,
@@ -167,7 +170,7 @@ class VolumeResource(DojoModelResource):
                 'fs': bundle.obj.vol_name,
                 })
             bundle.data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
-                'volume_name': bundle.obj.vol_name,
+                'parent': bundle.obj.vol_name,
                 })
 
         bundle.data['_permissions_url'] = reverse('storage_mp_permission',
