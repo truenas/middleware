@@ -208,7 +208,7 @@ class VolumeWizardForm(forms.Form):
                     )
         elif fstype == "ZFS":
             if len(disks) >= 3:
-                grouptype_choices += (('raidz', 'RAID-Z'), )
+                grouptype_choices += (('raidz1', 'RAID-Z'), )
             if len(disks) >= 4:
                 grouptype_choices += (('raidz2', 'RAID-Z2'), )
             if len(disks) >= 5:
@@ -252,10 +252,17 @@ class VolumeWizardForm(forms.Form):
         return vname
 
     def clean_group_type(self):
+        len_disks = len(self.cleaned_data['volume_disks'])
         if 'volume_disks' not in self.cleaned_data or \
-                len(self.cleaned_data['volume_disks']) > 1 and \
+                len_disks > 1 and \
                 self.cleaned_data['group_type'] in (None, ''):
             raise forms.ValidationError(_("This field is required."))
+        if len_disks < 2:
+            if self.cleaned_data.get("volume_fstype") == 'ZFS':
+                return 'stripe'
+            else:
+                # UFS middleware expects no group_type for single disk volume
+                return ''
         return self.cleaned_data['group_type']
 
     def clean_ufspath(self):
@@ -285,6 +292,50 @@ class VolumeWizardForm(forms.Form):
                 ])
         elif not volume_name:
             volume_name = cleaned_data.get("volume_add")
+
+        if cleaned_data.get("volume_add"):
+            zpool = notifier().zpool_parse(cleaned_data.get("volume_add"))
+            force_vdev = True if self.data.get("force_vdev") == 'on' else False
+
+            for vdev in zpool.data:
+                errors = []
+                if vdev.type != self.cleaned_data.get('group_type'):
+                    #and not force_vdev:
+                    self.fields['force_vdev'] = forms.BooleanField(
+                        required=True,
+                        label=_("Force Volume Add"),
+                        initial=False,
+                        )
+                    if not force_vdev:
+                        errors.append(
+                            _("You're trying to add a virtual device of type "
+                            "'%(addtype)s' in a pool that has a virtual "
+                            "device of type '%(vdevtype)s'") % {
+                                'addtype': self.cleaned_data.get('group_type'),
+                                'vdevtype': vdev.type,
+                                }
+                            )
+
+                if len(disks) != len(list(iter(vdev))):
+                    self.fields['force_vdev'] = forms.BooleanField(
+                        required=True,
+                        label=_("Force Volume Add"),
+                        initial=False,
+                        )
+                    if not force_vdev:
+                        errors.append(
+                            _("You're trying to add a virtual device consisted"
+                            " of %(addnum)s devices in a pool that has a "
+                            "virtual device consisted of %(vdevnum)s devices"
+                            ) % {
+                                'addnum': len(disks),
+                                'vdevnum': len(list(iter(vdev))),
+                                }
+                            )
+
+                if errors:
+                    self._errors['force_vdev'] = self.error_class(errors)
+                    break
 
         if cleaned_data.get("volume_fstype") not in ('ZFS', 'UFS'):
             msg = _(u"You must select a filesystem")
@@ -339,6 +390,7 @@ class VolumeWizardForm(forms.Form):
                             self.cleaned_data.get("volume_add")
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
+        group_type = self.cleaned_data.get('group_type')
         force4khack = self.cleaned_data.get("force4khack", False)
         if self.cleaned_data.get("encryption", False):
             volume_encrypt = 1
@@ -348,15 +400,6 @@ class VolumeWizardForm(forms.Form):
         ufspath = self.cleaned_data['ufspath']
         mp_options = "rw"
         mp_path = None
-
-        if (len(disk_list) < 2):
-            if volume_fstype == 'ZFS':
-                group_type = 'stripe'
-            else:
-                # UFS middleware expects no group_type for single disk volume
-                group_type = ''
-        else:
-            group_type = self.cleaned_data['group_type']
 
         with transaction.commit_on_success():
             vols = models.Volume.objects.filter(vol_name=volume_name,

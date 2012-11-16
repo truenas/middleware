@@ -37,6 +37,17 @@
             </td>
         </tr>
         {% endif %}
+        {% if form.force_vdev %}
+        <tr>
+            <td style="width:150px;">
+                {% trans "Force Volume Add" %}
+            </td>
+            <td>
+                {{ form.force_vdev.errors }}
+                {{ form.force_vdev }}
+            </td>
+        </tr>
+        {% endif %}
         <tr>
             <td>
                 {% trans "Member disks" %} (<span id="wizard_num_disks">0</span>)
