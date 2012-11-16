@@ -32,6 +32,7 @@ import re
 import signal
 import sys
 import subprocess
+import time
 
 import ipaddr
 
@@ -840,6 +841,8 @@ def reboot():
         ret = raw_input(_("Confirm reboot (y/n): "))
         if ret.lower().startswith("y"):
             os.system("/sbin/shutdown -r now")
+            time.sleep(60)
+            return False
         if ret.lower().startswith("n"):
             return False
 
@@ -848,6 +851,8 @@ def shutdown():
         ret = raw_input(_("Confirm Shutdown (y/n): "))
         if ret.lower().startswith("y"):
             os.system("/sbin/shutdown -p now")
+            time.sleep(60)
+            return False
         if ret.lower().startswith("n"):
             return False
 
