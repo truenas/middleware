@@ -361,8 +361,10 @@ def zvol_create(request, volume_name):
             zvol_name = "%s/%s" % (volume_name, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
             props['compression'] = str(zvol_compression)
-            errno, errmsg = notifier().create_zfs_vol(name=str(zvol_name),
+            errno, errmsg = notifier().create_zfs_vol(
+                name=str(zvol_name),
                 size=str(zvol_size),
+                sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
             if errno == 0:
                 return JsonResp(request,

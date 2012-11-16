@@ -1317,9 +1317,12 @@ class notifier:
                 self.__system('/sbin/geli detach -l %s' % (devname, ))
         self._reload_disk()
 
-    def create_zfs_vol(self, name, size, props=None):
+    def create_zfs_vol(self, name, size, props=None, sparse=False):
         """Internal procedure to create ZFS volume"""
-        options = " "
+        if sparse is True:
+            options = "-s "
+        else:
+            options = " "
         if props:
             assert type(props) is types.DictType
             for k in props.keys():

@@ -899,6 +899,16 @@ class ZVol_CreateForm(Form):
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
+    zvol_sparse = forms.BooleanField(
+        label=_('Sparse volume'),
+        help_text=_('Creates a sparse volume with no reservation, also kown '
+            'as "thin provisioning". A "sparse volume" is a volume where the '
+            'reservation is less then the volume size. Consequently, writes '
+            'to a sparse volume can fail with ENOSPC when the pool is low on '
+            'space. (NOT RECOMMENDED)'),
+        required=False,
+        initial=False,
+        )
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
