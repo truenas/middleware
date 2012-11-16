@@ -147,8 +147,12 @@ class Volumes(TreeNode):
         subnav.icon = u'ChangePasswordIcon'
         subnav.app_name = 'storage'
 
+        zv = AddZVol()
+        zv.kwargs = {'parent': dataset.path}
+
         node.append_child(nav)
         nav.append_child(subnav)
+        nav.append_child(zv)
         for child in dataset.children:
             self._gen_dataset(nav, child)
 
@@ -188,7 +192,7 @@ class Volumes(TreeNode):
                 nav.append_child(ds)
 
                 zv = AddZVol()
-                zv.kwargs = {'volume_name': i.mp_volume.vol_name}
+                zv.kwargs = {'parent': i.mp_volume.vol_name}
                 nav.append_child(zv)
 
             subnav = TreeNode('ChangePermissions')
