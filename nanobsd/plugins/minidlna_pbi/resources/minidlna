@@ -36,11 +36,11 @@ minidlna_stop()
 	echo -n 'Stopping minidlna.'
 	if [ -f "${pidfile}" ]
 	then
-		kill -QUIT $(cat "${pidfile}")
+		kill $(cat "${pidfile}")
 		rm -f ${pidfile}
 		res=$?
 	else
-		killall -QUIT minidlna
+		killall minidlna
 		res=$?
 	fi
 
