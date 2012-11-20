@@ -291,13 +291,12 @@ class VolumeStatusResource(DojoModelResource):
                     continue
 
                 current = root
-                children = None
                 parent = bundle.data
+                tocheck = []
                 while True:
 
                     if isinstance(current, zfs.Root):
                         data = {
-                            'id': uid.next(),
                             'name': current.name,
                             'type': 'root',
                             'status': current.status,
@@ -308,7 +307,6 @@ class VolumeStatusResource(DojoModelResource):
                         }
                     elif isinstance(current, zfs.Vdev):
                         data = {
-                            'id': uid.next(),
                             'name': current.name,
                             'type': 'vdev',
                             'status': current.status,
@@ -319,7 +317,6 @@ class VolumeStatusResource(DojoModelResource):
                         }
                     elif isinstance(current, zfs.Dev):
                         data = {
-                            'id': uid.next(),
                             'name': current.devname,
                             'type': 'dev',
                             'status': current.status,
@@ -370,21 +367,18 @@ class VolumeStatusResource(DojoModelResource):
                     else:
                         raise ValueError("Invalid node")
 
-                    if key == 'data' and children is None:
-                        del data['id']
+                    if key == 'data' and isinstance(current, zfs.Root):
                         parent.update(data)
                     else:
                         parent['children'].append(data)
 
-                    if not children:
-                        parent = data
-                        children = list(iter(current))
-                        if children:
-                            current = children.pop()
-                        else:
-                            break
+                    for child in current:
+                        tocheck.append((data, child))
+
+                    if tocheck:
+                        parent, current = tocheck.pop()
                     else:
-                        current = children.pop()
+                        break
 
         elif bundle.obj.vol_fstype == 'UFS':
             items = notifier().geom_disks_dump(bundle.obj)
