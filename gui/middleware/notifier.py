@@ -1350,16 +1350,20 @@ class notifier:
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self.__pipeopen("/sbin/zfs list -H -o name,volsize -t volume -r %s" % (str(volname),))
+        zfsproc = self.__pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r %s" % (str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
         for line in zfs_output:
-            if line != "":
-                data = line.split('\t')
-                retval[data[0]] = {
-                    'volsize': data[1],
-                }
+            if line == "":
+                continue
+            data = line.split('\t')
+            retval[data[0]] = {
+                'volsize': data[1],
+                'used': data[2],
+                'avail': data[3],
+                'refer': data[4],
+            }
         return retval
 
     def list_zfs_fsvols(self):
