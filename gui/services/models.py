@@ -864,7 +864,7 @@ class DynamicDNS(Model):
             verbose_name=_("Domain name"),
             blank=True,
             help_text=_("A host name alias. This option can appear multiple "
-                "times, for each domain that has the same IP. Use a space to "
+                "times, for each domain that has the same IP. Use a comma to "
                 "separate multiple alias names.")
             )
     ddns_username = models.CharField(
