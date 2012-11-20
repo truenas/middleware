@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-11-19 11:59+0200\n"
+"PO-Revision-Date: 2012-11-19 22:40+0200\n"
 "Last-Translator: CyberSoft <cybersoft@cybersoft.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -20,9 +20,8 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
-#, fuzzy
 msgid "Plain"
-msgstr "Zwykły"
+msgstr "Bez szyfrowania"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -549,18 +548,16 @@ msgid "SSH Public Key"
 msgstr "Klucz publiczny SSH"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Katalog domowy"
+msgstr "Tryb katalogu domowego"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
 msgstr "Dodatkowe grupy"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Użytkownik o tej nazwie już istnieje."
+msgstr "Użytkownik o podanym identyfikatorze uid już istnieje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -579,19 +576,17 @@ msgid "The two password fields didn't match."
 msgstr "Hasła nie są identyczne."
 
 #: account/forms.py:386
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Katalog domowy zaczyna się od /mnt/"
+msgstr "Katalog domowy musi zaczynać się od /mnt/ lub /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
-#, fuzzy
 msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr "Użytkownik nie może należeć do więcej niż 64 grup podrzędnych"
 
 #: account/forms.py:416 account/forms.py:653
 #, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Katalog domowy zaczyna się od /mnt/"
+msgstr "Katalog domowy nie posiada uprawnień do zapisu, pozostaw to pole puste"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -799,19 +794,19 @@ msgid "Shutdown"
 msgstr "Wyłącz"
 
 #: freeadmin/navtree.py:408
-#, fuzzy, python-format
+#, python-format
 msgid "Empty data returned from %s"
 msgstr "Puste dane zwrócone z %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Nie mogę pobrać %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Wystąpił nieokreślony błąd podczas nadawania nazwy dysku."
+msgstr "Wystąpił nieokreślony błąd podczas rozsegregowania %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 #, fuzzy
@@ -861,23 +856,23 @@ msgstr ""
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Musisz podać również adres IPv4"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Musisz wybrać również maskę sieci IPv4"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Musisz podać również adres IPv6"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Musisz wybrać również maskę sieci IPv6"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Musisz wybrać pomiędzy IPv4 a IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
@@ -893,7 +888,6 @@ msgid "This is not a valid nameserver address"
 msgstr "W polu nie znajduje się prawidłowy adres IP lub sieć"
 
 #: network/forms.py:170
-#, fuzzy
 msgid "169.254/16 subnet is not valid for nameserver"
 msgstr "Podsieć 169.254/16 nie jest właściwa dla serwera nazw"
 
@@ -918,7 +912,6 @@ msgid "Parent Interface"
 msgstr "Interfejs nadrzędny"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr "Nazwa musi być w formacie vlanXX gdzie XX jest liczbą"
 
@@ -941,26 +934,24 @@ msgid "The network '%s' is not valid, CIDR expected."
 msgstr "Sieć '%s' nie jest prawidłowa, oczekiwano CIDR."
 
 #: network/forms.py:428
-#, fuzzy
 msgid "You have to specify IPv4 address as well per alias"
-msgstr "Musisz podać adres IPv4 na każdy alias"
+msgstr "Musisz podać adres IPv4 dla każdego z aliasów"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Musisz wybrać maskę sieci IPv4 dla każdego z aliasów"
 
 #: network/forms.py:439
-#, fuzzy
 msgid "You have to specify IPv6 address as well per alias"
-msgstr "Musisz podać adres IPv6 na każdy alias"
+msgstr "Musisz podać adres IPv6 dla każdego z aliasów"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Musisz wybrać maskę sieci IPv6 dla każdego z aliasów"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Musisz dokonać wyboru pomiędzy IPv4/IPv6 dla każdego z aliasów"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -1166,9 +1157,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG dodany pomyślnie"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Użytkownik o tej nazwie już istnieje."
+msgstr "To IP jest już używane."
 
 #: plugins/forms.py:92
 #, fuzzy
@@ -1407,7 +1397,9 @@ msgstr "Uprawnienia do katalogu"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "Ta wartość musi być pomiędzy 1024 i 65535 włącznie."
+msgstr ""
+"Ta wartość musi być pomiędzy 1024 i 65535 włącznie. 0 dla ustawień "
+"domyślnych."
 
 #: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1501,7 +1493,7 @@ msgstr "Nieudane przeładowanie usługi activedirectory."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr "Nieudane przeładowanie  usługi ldap."
+msgstr "Nieudane przeładowanie usługi ldap."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
@@ -3903,14 +3895,12 @@ msgid "You already have a dataset with the same name"
 msgstr "Zbiór danych o tej nazwie już istnieje"
 
 #: storage/forms.py:807
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Przydział dla tego zbioru danych"
+msgstr "Przydział  przestrzeni dla tego wolumenu"
 
 #: storage/forms.py:812
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Zarezerwowana przestrzeń dla tego zbioru danych"
+msgstr "Zarezerwowana przestrzeń dla tego wolumenu"
 
 #: storage/forms.py:842
 #, fuzzy
@@ -3947,7 +3937,6 @@ msgid "Mode"
 msgstr "Tryb"
 
 #: storage/forms.py:885
-#, fuzzy
 msgid "Type of ACL"
 msgstr "Typ ACL"
 
@@ -3992,9 +3981,8 @@ msgid "Remote hostname"
 msgstr "Nazwa komputera zdalnego"
 
 #: storage/forms.py:1126 storage/models.py:635
-#, fuzzy
 msgid "Remote port"
-msgstr "Komputer zdalny"
+msgstr "Port zdalny"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
@@ -4553,14 +4541,12 @@ msgid "SHA256 sum for the image"
 msgstr "Suma SHA256 obrazu systemu"
 
 #: system/forms.py:538
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Nieprawidłowe oprogramowanie lub suma kontrolna"
+msgstr "Nieprawidłowe oprogramowanie"
 
 #: system/forms.py:544
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Nieprawidłowe oprogramowanie lub suma kontrolna"
+msgstr "Nieprawidłowa suma kontrolna"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4632,7 +4618,6 @@ msgid ""
 msgstr ""
 
 #: system/models.py:112 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
 msgstr "Preferowany"
 
@@ -4872,11 +4857,11 @@ msgstr "Krótki opis"
 
 #: system/models.py:374
 msgid "Cron Job"
-msgstr "Zadanie Cron"
+msgstr "Zadanie"
 
 #: system/models.py:375
 msgid "Cron Jobs"
-msgstr "Zadanie Cron"
+msgstr "Zadanie"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
@@ -4892,9 +4877,8 @@ msgid "Name of the module defined in the remote rsync daemon"
 msgstr ""
 
 #: system/models.py:475
-#, fuzzy
 msgid "Remote Path"
-msgstr "Komputer zdalny"
+msgstr "Ścieżka zdalna"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
@@ -5095,9 +5079,9 @@ msgid "This is a message test from %s"
 msgstr "To jest testowa wiadomość od"
 
 #: system/views.py:302
-#, fuzzy, python-format
+#, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Twój testowy email nie może być wysłany:"
+msgstr "Twój testowy email nie może być wysłany: $s"
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
@@ -5505,12 +5489,12 @@ msgstr "Dodaj interfejs VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Zainstalowane..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Instaluj Plugin"
 
 #: templates/plugins/index.html:31
 msgid "Info"
@@ -5518,7 +5502,7 @@ msgstr "Informacja"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "Informacje o Pluginie"
 
 #: templates/plugins/index.html:39
 msgid "Edit Plugin"
@@ -5526,16 +5510,15 @@ msgstr "Edytuj plugin"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
-msgstr "Usuń plugin"
+msgstr "Usuń Plugin"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "Żaden plugin nie został zainstalowany"
 
 #: templates/plugins/jail_import.html:2
-#, fuzzy
 msgid "Import"
-msgstr "Importuj wolumen"
+msgstr "Importuj"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5556,24 +5539,20 @@ msgid "Please wait..."
 msgstr "Proszę czekać..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "Punkt montowania"
+msgstr "Edytuj punkt montowania"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "Punkt montowania"
+msgstr "Usuń punkt montowania"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "Brak zdefiniowanych CronJobs"
+msgstr "Brak zdefiniowanych punktów montowania"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "Punkt montowania"
+msgstr "Dodaj punkt montowania"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5644,9 +5623,8 @@ msgid "NFS Settings"
 msgstr "Ustawienia NFS"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "Ustawienia AFP"
+msgstr "Ustawienia Pluginów"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
@@ -5686,7 +5664,7 @@ msgstr "Nie"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Rdzeń"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5768,9 +5746,8 @@ msgid "File Extent"
 msgstr "Grupy urządzeń"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "Brak zdefiniowanych celów"
+msgstr "Brak zdefiniowanych rozszerzeń"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5819,27 +5796,24 @@ msgid ""
 msgstr ""
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Wersja systemu"
+msgstr "Wersja"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Usługi"
+msgstr "Status usługi"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
 msgstr "Aktualizacja"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Usuń replikację"
+msgstr "Aktualizuj Plugin"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
@@ -5889,19 +5863,16 @@ msgid "Add Apple (AFP) Share"
 msgstr "Dodaj udział Apple"
 
 #: templates/sharing/index.html:2
-#, fuzzy
 msgid "Apple (AFP)"
-msgstr "Dodaj udział Apple (AFP)"
+msgstr "Apple (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "Dodaj udział UNIX (NFS)"
+msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "Dodaj udział Windows (CIFS)"
+msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
 #, fuzzy
@@ -5913,48 +5884,41 @@ msgid "Mountpoint"
 msgstr "Punkt montowania"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
-msgstr "Edytuj udział NFS"
+msgstr "Edytuj udział UNIX (NFS)"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
-msgstr "Usuń udział NFS"
+msgstr "Usuń udział UNIX (NFS)"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
-msgstr "Dodaj udział UNIX"
+msgstr "Dodaj udział UNIX (NFS)"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Brak aktywnych udziałów Windows."
+msgstr "Brak aktywnych udziałów Windows (CIFS)."
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
-msgstr "Edytuj udział Windows"
+msgstr "Edytuj udział Windows (CIFS)"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
-msgstr "Usuń udział Windows"
+msgstr "Usuń udział Windows (CIFS)"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
-msgstr "Dodaj udział Windows"
+msgstr "Dodaj udział Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
 msgstr "Klonuj kopię migawkową"
 
 #: templates/storage/dataset_confirm_delete.html:5
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Jesteś pewien że chcesz usunąć?"
+msgstr "Jesteś pewien że chcesz usunąć  \"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -5974,9 +5938,9 @@ msgid "Edit Dataset"
 msgstr "Edytuj zbiór danych"
 
 #: templates/storage/datasets.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Utwórz zbiór danych ZFS"
+msgstr "Utwórz zbiór danych ZFS w %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -5990,10 +5954,9 @@ msgstr "Jesteś pewien że chcesz odłączyć?"
 #: templates/storage/disk_offline.html:3
 #, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Jesteś pewien że chcesz usunąć?"
+msgstr "Jesteś pewien że chcesz przejść w tryb offline?"
 
 #: templates/storage/disk_remove.html:3
-#, fuzzy
 msgid "Are you sure you want to remove?"
 msgstr "Jesteś pewien że chcesz usunąć?"
 
@@ -6047,7 +6010,7 @@ msgstr "Dodaj replikację"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Podgląd Klucza Publicznego"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -6116,17 +6079,14 @@ msgid "Clone snapshot"
 msgstr "Klonuj kopię migawkową"
 
 #: templates/storage/snapshots.html:32
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "Usuń kopię migawkową"
 
 #: templates/storage/snapshots.html:37
-#, fuzzy
 msgid "Destroy this snapshot"
 msgstr "Usuń kopię migawkową"
 
 #: templates/storage/snapshots.html:48
-#, fuzzy
 msgid "Rollback Snapshot"
 msgstr "Przywróć do tej kopii migawkowej"
 
@@ -6135,14 +6095,12 @@ msgid "Rollback to this snapshot"
 msgstr "Przywróć do tej kopii migawkowej"
 
 #: templates/storage/snapshots.html:126
-#, fuzzy
 msgid "Destroy"
-msgstr "Zniszcz wolumen"
+msgstr "Zniszcz"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Klonuj kopię migawkową"
+msgstr "Usuń kopię migawkową"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6185,7 +6143,6 @@ msgid "on every"
 msgstr "w każdy"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
 msgstr "Brak zaplanowanych cyklicznych kopii migawkowych"
 
@@ -6236,9 +6193,8 @@ msgid "Create Snapshot"
 msgstr "Utwórz kopię migawkową"
 
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
-#, fuzzy
 msgid "Volume Status"
-msgstr "Ścieżka wolumenu"
+msgstr "Status wolumenu"
 
 #: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
 msgid "Destroy Dataset"
@@ -6294,9 +6250,8 @@ msgid "Existing data will be cleared"
 msgstr "Istniejące dane zostaną usunięte"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
-msgstr "Zmień dysk"
+msgstr "Zamień dysk"
 
 #: templates/storage/zvols.html:3
 #, fuzzy, python-format
@@ -6345,19 +6300,16 @@ msgid "Are you sure you want to restore to factory config?"
 msgstr "Jesteś pewien że chcesz przywrócić do ustawień fabrycznych?"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "Brak zdefiniowanych CronJobs"
+msgstr "Brak zdefiniowanych zadań"
 
 #: templates/system/cronjob.html:47
-#, fuzzy
 msgid "Add a cron job"
-msgstr "Dodaj CronJob"
+msgstr "Dodaj zadanie"
 
 #: templates/system/cronjob.html:49
-#, fuzzy
 msgid "Add cron job"
-msgstr "Dodaj CronJob"
+msgstr "Dodaj zadanie"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6378,19 +6330,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Brak zdefiniowanego serwera nazw"
+msgstr "Brak zdefiniowanych serwerów NTP"
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "Pierwszy serwer czasu"
+msgstr "Dodaj serwer NTP"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "Pierwszy serwer czasu"
+msgstr "Dodaj serwer NTP"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6408,9 +6357,8 @@ msgid "History"
 msgstr "Historia"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Local Master"
+msgstr "Ścieżka lokalna"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
@@ -6462,22 +6410,18 @@ msgid "Unknown"
 msgstr "Nieznany"
 
 #: templates/system/smarttest.html:38
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Brak zdefiniowanych celów"
+msgstr "Brak zdefiniowanych testów S.M.A.R.T."
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "Dodaj test S.M.A.R.T."
 
 #: templates/system/smarttest.html:46
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "Dodaj test S.M.A.R.T."
 
 #: templates/system/sysctl.html:34
-#, fuzzy
 msgid "No sysctl defined."
 msgstr "Brak zdefiniowanych rsync'ów"
 
@@ -6517,7 +6461,7 @@ msgstr "Średnie obciążenie"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Połączony poprzez"
 
 #: templates/system/tunable.html:34
 #, fuzzy
@@ -6527,7 +6471,7 @@ msgstr "Brak zdefiniowanych celów"
 #: templates/system/tunable.html:40
 #, fuzzy
 msgid "Add Tunable"
-msgstr "Dodaj cel"
+msgstr "Połączone poprzez"
 
 #: templates/system/tunable.html:42
 #, fuzzy
@@ -6552,7 +6496,7 @@ msgstr ""
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "Wolumen %(volume)s ma status %(status)s: %(message)s"
 
 #: tools/alert.py:119
 #, python-format
@@ -6627,7 +6571,7 @@ msgid "Invalid service pack"
 msgstr "Nieprawidłowy pakiet poprawek lub suma kontrolna"
 
 msgid "View Cron Jobs"
-msgstr "Zadania Cron"
+msgstr "Lista Harmonogramu Zadań"
 
 #, fuzzy
 msgid "View Rsync Tasks"
@@ -6868,7 +6812,7 @@ msgid "The volume failed to export"
 msgstr "Eksport wolumenu nie powiódł się"
 
 msgid "Cron Scheduler"
-msgstr "Zadania cykliczne"
+msgstr "Harmonogram Zadań"
 
 msgid "Docs"
 msgstr "Dokumenty"
@@ -6965,7 +6909,7 @@ msgid "Password (again)"
 msgstr "Hasło (ponownie)"
 
 msgid "minutes,"
-msgstr "minut, "
+msgstr "minut,"
 
 msgid "Create ZFS zvol"
 msgstr "Utwórz ZFS ZVol"
