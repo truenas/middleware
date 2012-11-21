@@ -101,6 +101,7 @@ generate_nginx_conf()
 	local proto="${1}"
 	local addr="${2}"
 	local port="${3}"
+	local working_ssl=false
 	
 	{
 	cat << __EOF__
@@ -138,13 +139,28 @@ http {
 __EOF__
 
 	if [ "${proto}" = "https" ]; then
-		cat << __EOF__
+
+		local validcert=0
+		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null
+		let "validcert |= $?" > /dev/null
+		${OPENSSL} req -in "${HTTPDKEY}" -text -verify -noout > /dev/null
+		let "validcert |= $?" > /dev/null
+
+		if [ ${validcert} -eq 0 ]; then
+			working_ssl=true
+			cat << __EOF__
         listen       ${addr}:${port} default_server ssl;
 
-        ssl_certificate      ${HTTPDCERT}; 
+        ssl_certificate      ${HTTPDCERT};
         ssl_certificate_key  ${HTTPDKEY};
 __EOF__
-	else
+		else
+			port=80
+			touch /tmp/alert_invalid_ssl_nginx
+		fi
+	fi
+
+	if ! ${working_ssl}; then
 		echo "        listen       ${addr}:${port};"
 	fi
 
@@ -202,7 +218,7 @@ __EOF__
     }
 __EOF__
 
-	if [ ${proto} = "https" ]; then
+	if [ ${proto} = "https" -a ${working_ssl} = true ]; then
 		cat << __EOF__
     server {
 	listen ${addr}:80;
