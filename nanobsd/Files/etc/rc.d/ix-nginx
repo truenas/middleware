@@ -9,6 +9,7 @@
 
 . /etc/rc.freenas
 
+
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
@@ -139,7 +140,7 @@ __EOF__
 		local validcert=0
 		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null
 		let "validcert |= $?" > /dev/null
-		${OPENSSL} req -in "${HTTPDKEY}" -text -verify -noout > /dev/null
+		${OPENSSL} rsa -in "${HTTPDKEY}" -check -noout > /dev/null
 		let "validcert |= $?" > /dev/null
 
 		if [ ${validcert} -eq 0 ]; then
