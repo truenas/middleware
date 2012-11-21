@@ -340,6 +340,10 @@ class LAGGInterface(Model):
 
     def delete(self):
         super(LAGGInterface, self).delete()
+        VLAN.objects.filter(
+            vlan_pint=self.lagg_interface.int_interface
+            ).delete()
+        self.lagg_interface.delete()
         notifier().iface_destroy(self.lagg_interface.int_interface)
 
     class FreeAdmin:
