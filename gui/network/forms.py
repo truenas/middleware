@@ -105,8 +105,6 @@ class InterfacesForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
-        dhcp = cdata.get("int_dhcp")
-        ipv6auto = cdata.get("int_ipv6auto")
         ipv4addr = cdata.get("int_ipv4address")
         ipv4net = cdata.get("int_v4netmaskbit")
         ipv6addr = cdata.get("int_ipv6address")
@@ -119,27 +117,27 @@ class InterfacesForm(ModelForm):
             if not ipv4addr and not self._errors.get('int_ipv4address'):
                 self._errors['int_ipv4address'] = self.error_class([
                     _("You have to specify IPv4 address as well"),
-                    ])
+                ])
             if not ipv4net:
                 self._errors['int_v4netmaskbit'] = self.error_class([
                     _("You have to choose IPv4 netmask as well"),
-                    ])
+                ])
 
         # IF one field of ipv6 is entered, require the another
         if (ipv6addr or ipv6net) and not ipv6:
             if not ipv6addr and not self._errors.get('int_ipv6address'):
                 self._errors['int_ipv6address'] = self.error_class([
                     _("You have to specify IPv6 address as well"),
-                    ])
+                ])
             if not ipv6net:
                 self._errors['int_v6netmaskbit'] = self.error_class([
                     _("You have to choose IPv6 netmask as well"),
-                    ])
+                ])
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([
                 _("You have to choose between IPv4 or IPv6"),
-                ])
+            ])
 
         return cdata
 
@@ -193,14 +191,14 @@ class GlobalConfigurationForm(ModelForm):
         if nameserver3:
             if nameserver2 == "":
                 msg = _(u"Must fill out nameserver 2 before "
-                         "filling out nameserver 3")
+                        "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
                 msg = _(u"Must fill out nameserver 1 before "
-                         "filling out nameserver 3")
+                        "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
@@ -211,7 +209,7 @@ class GlobalConfigurationForm(ModelForm):
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
                 msg = _(u"Must fill out nameserver 1 before "
-                         "filling out nameserver 2")
+                        "filling out nameserver 2")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
@@ -236,15 +234,15 @@ class VLANForm(ModelForm):
         super(VLANForm, self).__init__(*args, **kwargs)
         self.fields['vlan_pint'].choices = list(
             choices.NICChoices(novlan=True, exclude_configured=False)
-            )
+        )
 
     def clean_vlan_vint(self):
         name = self.cleaned_data['vlan_vint']
         reg = re.search(r'^vlan(?P<num>\d+)$', name)
         if not reg:
             raise forms.ValidationError(
-                _("The name must be vlanX where X is a number. Example: vlan0.")
-                )
+                _("The name must be vlanX where X is a number. Example: vlan0")
+            )
         return "vlan%d" % (int(reg.group("num")), )
 
     def clean_vlan_tag(self):
@@ -256,12 +254,13 @@ class VLANForm(ModelForm):
     def save(self):
         vlan_pint = self.cleaned_data['vlan_pint']
         if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
-            vlan_interface = models.Interfaces(int_interface=vlan_pint,
-                                int_name=vlan_pint,
-                                int_dhcp=False,
-                                int_ipv6auto=False,
-                                int_options='up',
-                                )
+            vlan_interface = models.Interfaces(
+                int_interface=vlan_pint,
+                int_name=vlan_pint,
+                int_dhcp=False,
+                int_ipv6auto=False,
+                int_options='up',
+            )
             vlan_interface.save()
         retval = super(VLANForm, self).save()
         notifier().start("network")
@@ -270,9 +269,9 @@ class VLANForm(ModelForm):
 
 class LAGGInterfaceForm(ModelForm):
     lagg_interfaces = forms.MultipleChoiceField(
-                            widget=forms.SelectMultiple(),
-                            label=_('Physical NICs in the LAGG')
-                            )
+        widget=forms.SelectMultiple(),
+        label=_('Physical NICs in the LAGG'),
+    )
 
     class Meta:
         model = models.LAGGInterface
@@ -285,13 +284,16 @@ class LAGGInterfaceForm(ModelForm):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
         self.fields['lagg_interfaces'].choices = list(
             choices.NICChoices(nolagg=True)
-            )
+        )
 
     def save(self, *args, **kwargs):
 
         # Search for a available slot for laggX interface
-        interface_names = [v[0] for v in
-            models.Interfaces.objects.all().values_list('int_interface')]
+        interface_names = [
+            v[0]
+            for v in models.Interfaces.objects.all()
+            .values_list('int_interface')
+        ]
         candidate_index = 0
         while ("lagg%d" % (candidate_index)) in interface_names:
             candidate_index += 1
@@ -301,17 +303,18 @@ class LAGGInterfaceForm(ModelForm):
         with transaction.commit_on_success():
             # Step 1: Create an entry in interface table that
             # represents the lagg interface
-            lagg_interface = models.Interfaces(int_interface=lagg_name,
+            lagg_interface = models.Interfaces(
+                int_interface=lagg_name,
                 int_name=lagg_name,
                 int_dhcp=False,
                 int_ipv6auto=False
-                )
+            )
             lagg_interface.save()
             # Step 2: Write associated lagg attributes
             lagg_interfacegroup = models.LAGGInterface(
                 lagg_interface=lagg_interface,
                 lagg_protocol=lagg_protocol
-                )
+            )
             lagg_interfacegroup.save()
             # Step 3: Write lagg's members in the right order
             order = 0
@@ -321,7 +324,7 @@ class LAGGInterfaceForm(ModelForm):
                     lagg_ordernum=order,
                     lagg_physnic=interface,
                     lagg_deviceoptions='up'
-                    )
+                )
                 lagg_member_entry.save()
                 order = order + 1
         return lagg_interfacegroup
@@ -344,11 +347,11 @@ class LAGGInterfaceMemberForm(ModelForm):
                 'dijitDisabled dijitSelectDisabled')
             self.fields['lagg_physnic'].choices = (
                 (self.instance.lagg_physnic, self.instance.lagg_physnic),
-                )
+            )
         else:
             self.fields['lagg_physnic'].choices = list(
                 choices.NICChoices(nolagg=True, novlan=True)
-                )
+            )
 
 
 class InterfaceEditForm(InterfacesForm):
@@ -358,13 +361,16 @@ class InterfaceEditForm(InterfacesForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['int_interface'] = \
-                forms.CharField(label=self.fields['int_interface'].label,
+                forms.CharField(
+                    label=self.fields['int_interface'].label,
                     initial=instance.int_interface,
                     widget=forms.TextInput(
                         attrs={
-                        'readonly': True,
-                        'class': 'dijitDisabled dijitTextBoxDisabled' \
-                                 ' dijitValidationTextBoxDisabled',
+                            'readonly': True,
+                            'class': (
+                                'dijitDisabled dijitTextBoxDisabled'
+                                ' dijitValidationTextBoxDisabled'
+                            ),
                         },
                     )
                 )
@@ -409,11 +415,12 @@ class StaticRouteForm(ModelForm):
 class AliasForm(ModelForm):
     class Meta:
         model = models.Alias
-        fields = ('alias_v4address',
+        fields = (
+            'alias_v4address',
             'alias_v4netmaskbit',
             'alias_v6address',
             'alias_v6netmaskbit',
-            )
+        )
 
     def __init__(self, *args, **kwargs):
         super(AliasForm, self).__init__(*args, **kwargs)
@@ -471,33 +478,33 @@ class AliasForm(ModelForm):
             if not ipv4addr and not self._errors.get('alias_v4address'):
                 self._errors['alias_v4address'] = self.error_class([
                     _("You have to specify IPv4 address as well per alias"),
-                    ])
+                ])
             if not ipv4net:
                 self._errors['alias_v4netmaskbit'] = self.error_class([
                     _("You have to choose IPv4 netmask as well per alias"),
-                    ])
+                ])
 
         # IF one field of ipv6 is entered, require the another
         if (ipv6addr or ipv6net) and not ipv6:
             if not ipv6addr and not self._errors.get('alias_v6address'):
                 self._errors['alias_v6address'] = self.error_class([
                     _("You have to specify IPv6 address as well per alias"),
-                    ])
+                ])
             if not ipv6net:
                 self._errors['alias_v6netmaskbit'] = self.error_class([
                     _("You have to choose IPv6 netmask as well per alias"),
-                    ])
+                ])
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([
                 _("You have to choose between IPv4 or IPv6 per alias"),
-                ])
+            ])
         if not ipv6 and not (ipv6addr or ipv6net) and not ipv4 and \
                 not (ipv4addr or ipv4net):
             self._errors['__all__'] = self.error_class([
                 _("You must specify either an valid IPv4 or IPv6 with maskbit "
                     "per alias"),
-                ])
+            ])
 
         return cdata
 
@@ -506,7 +513,7 @@ class AliasForm(ModelForm):
 
         iface = models.Interfaces.objects.filter(
             id=self.instance.alias_interface_id
-            )
+        )
         if not iface:
             return m
 
@@ -523,7 +530,7 @@ class AliasForm(ModelForm):
                 self.instance.alias_v4netmaskbit:
             kwargs['oldnetmask'] = str(
                 self.instance._original_alias_v4netmaskbit
-                )
+            )
             kwargs['newnetmask'] = str(self.instance.alias_v4netmaskbit)
             change = True
 
@@ -543,7 +550,7 @@ class AliasForm(ModelForm):
                 self.instance.alias_v6netmaskbit:
             kwargs['oldnetmask'] = str(
                 self.instance._original_alias_v6netmaskbit
-                )
+            )
             kwargs['newnetmask'] = str(self.instance.alias_v6netmaskbit)
             change = True
 
