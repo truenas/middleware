@@ -1,7 +1,7 @@
-FreeNAS 8.x is relatively stable, but is still being polished. There isn't
-complete feature parity between 0.7 (legacy) and 8.x, yet, and there are still
-some rough edges, but there are also some features in 8.x that aren't
-available in 0.7. There isn't an upgrade path from 0.7 to 8.x, yet.
+FreeNAS 8.x is a complete different software compared to 0.7. There is a
+complete feature parity between 0.7 (legacy) and 8.x with plugins, there
+are also some features in 8.x that aren't available in 0.7.
+There isn't an upgrade path from 0.7 to 8.x.
 
 To build the system (experts only):
 
@@ -21,6 +21,9 @@ Requirements:
 - You need the following additional ports/packages to build the plugins jail:
   - ports-mgmt/pbi-manager
 
+- The port security/sudo is recommended but not required, if you do not have
+  the port installed you can run the commands listed in this doc as root.
+
 Building the System Quickstart Flow:
 
 - Checking out the code from svn:
@@ -34,6 +37,7 @@ can be found here: http://p.sf.net/sourceforge/svn .
 - Use the build script (substituting your favorite cvsup mirror)
 
 % sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh
+
 
 That's it.
 
