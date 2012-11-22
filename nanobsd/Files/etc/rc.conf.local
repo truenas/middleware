@@ -182,9 +182,9 @@ _interface_config()
 _host_config()
 {
 	local IFS=\|
-	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway jail_path
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
-	while read -r hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
+	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway netwait_enabled netwait_ip jail_path
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway, gc_netwait_enabled, gc_netwait_ip FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
+	while read -r hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway netwait_enabled netwait_ip; do
 		echo hostname=\"${hostname}.${domainname}\"
 		if [ -n "${ipv4gateway}" ]; then
 			echo defaultrouter=\"${ipv4gateway}\"
@@ -212,6 +212,18 @@ _host_config()
 			if [ -n "${jail_path}" ]; then
 				cp /etc/resolv.conf "${jail_path}/etc/resolv.conf" 2> /dev/null || :
 			fi
+		fi
+
+		if [ ${netwait_enabled} -eq 1 ]; then
+			echo netwait_enable=\"YES\"
+			if [ -z "${netwait_ip}" ]; then
+				if [ -n "${ipv4gateway}" ]; then
+					netwait_ip=${ipv4gateway}
+				elif [ -n "${ipv6gateway}" ]; then
+					netwait_ip=${ipv6gateway}
+				fi
+			fi
+			echo netwait_ip=\"${netwait_ip}\"
 		fi
 	done
 }

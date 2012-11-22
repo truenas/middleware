@@ -36,6 +36,9 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+from ipaddr import (
+    IPAddress, AddressValueError,
+)
 
 
 class InterfacesForm(ModelForm):
@@ -182,6 +185,19 @@ class GlobalConfigurationForm(ModelForm):
         val = self.cleaned_data.get("gc_nameserver3")
         self._clean_nameserver(val)
         return val
+
+    def clean_gc_netwait_ip(self):
+        iplist = self.cleaned_data.get("gc_netwait_ip").strip()
+        if not iplist:
+            return ''
+        for ip in iplist.split(' '):
+            try:
+                IPAddress(ip)
+            except (AddressValueError, ValueError):
+                raise forms.ValidationError(
+                    _("The IP \"%s\" is not valid") % ip
+                )
+        return iplist
 
     def clean(self):
         cleaned_data = self.cleaned_data

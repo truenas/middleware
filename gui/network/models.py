@@ -38,48 +38,68 @@ from freenasUI.middleware.notifier import notifier
 
 class GlobalConfiguration(Model):
     gc_hostname = models.CharField(
-            max_length=120,
-            verbose_name=_("Hostname")
-            )
+        max_length=120,
+        verbose_name=_("Hostname")
+        )
     gc_domain = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain")
-            )
+        max_length=120,
+        verbose_name=_("Domain")
+        )
     gc_ipv4gateway = IP4AddressField(
-            blank=True,
-            default='',
-            verbose_name=_("IPv4 Default Gateway"),
-            )
+        blank=True,
+        default='',
+        verbose_name=_("IPv4 Default Gateway"),
+        )
     gc_ipv6gateway = IP6AddressField(
-            blank=True,
-            default='',
-            verbose_name=_("IPv6 Default Gateway"),
-            )
+        blank=True,
+        default='',
+        verbose_name=_("IPv6 Default Gateway"),
+        )
     gc_nameserver1 = IPAddressField(
-            blank=True,
-            default='',
-            verbose_name=_("Nameserver 1")
-            )
+        blank=True,
+        default='',
+        verbose_name=_("Nameserver 1")
+        )
     gc_nameserver2 = IPAddressField(
-            default='',
-            blank=True,
-            verbose_name=_("Nameserver 2")
-            )
+        default='',
+        blank=True,
+        verbose_name=_("Nameserver 2")
+        )
     gc_nameserver3 = IPAddressField(
-            default='',
-            blank=True,
-            verbose_name=_("Nameserver 3")
-            )
+        default='',
+        blank=True,
+        verbose_name=_("Nameserver 3")
+        )
+    gc_netwait_enabled = models.BooleanField(
+        verbose_name=_("Enable netwait feature"),
+        help_text=_("If enabled, delays the start of network-reliant services "
+            "until interface is up and ICMP packets to a destination defined "
+            "in netwait ip list are flowing.  Link state is examined first, "
+            "followed by \"pinging\" an IP address to verify network "
+            "usability.  If no destination can be reached or timeouts are "
+            "exceeded, network services are started anyway with no guarantee "
+            "that the network is usable."),
+        default=False,
+        )
+    gc_netwait_ip = models.CharField(
+        verbose_name=_("Netwait IP list"),
+        help_text=_("Space-delimited list of IP addresses to ping(8). If "
+            "multiple IP addresses are specified, each will be tried until "
+            "one is successful or the list is exhausted. If it is empty the "
+            "default gateway will be used."),
+        blank=True,
+        max_length=300,
+        )
     gc_hosts = models.TextField(
-            verbose_name=_("Host name data base"),
-            help_text=_("This field is appended to /etc/hosts which contains "
-                "information regarding known hosts on the network. hosts(5)"),
-            default='',
-            blank=True,
-            )
+        verbose_name=_("Host name data base"),
+        help_text=_("This field is appended to /etc/hosts which contains "
+            "information regarding known hosts on the network. hosts(5)"),
+        default='',
+        blank=True,
+        )
 
     def __unicode__(self):
-            return u'%s' % self.id
+        return u'%s' % self.id
 
     class Meta:
         verbose_name = _("Global Configuration")
