@@ -91,11 +91,12 @@ class Volume(Model):
                 e)
             return []
 
-    def get_datasets(self, hierarchical=False):
+    def get_datasets(self, hierarchical=False, include_root=False):
         if self.vol_fstype == 'ZFS':
             return zfs.list_datasets(path=self.vol_name,
                 recursive=True,
-                hierarchical=hierarchical)
+                hierarchical=hierarchical,
+                include_root=include_root)
 
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
