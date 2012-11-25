@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-11-19 22:40+0200\n"
+"PO-Revision-Date: 2012-11-24 21:48+0200\n"
 "Last-Translator: CyberSoft <cybersoft@cybersoft.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -42,7 +42,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "Auto"
+msgstr "Automatyczny"
 
 #: choices.py:54
 msgid "PIO0"
@@ -106,7 +106,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Zawsze Włączony"
+msgstr "Zawsze włączony"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
