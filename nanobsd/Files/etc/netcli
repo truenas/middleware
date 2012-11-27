@@ -172,8 +172,7 @@ def get_lagg_nics(nics=None):
 
 def configure_interface_stub():
     retval = configure_interface()
-    notifier().start("ix-nginx")
-    notifier().restart("nginx")
+    notifier().restart("http")
     return retval
 
 
