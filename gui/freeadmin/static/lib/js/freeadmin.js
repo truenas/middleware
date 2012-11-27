@@ -1269,6 +1269,26 @@ require([
                 }
             }
         }, "shell_dialog_holder");
+        var paste = new Button({
+            label: gettext('Paste'),
+            onClick: function() {
+
+                var pasteDialog = new Dialog({
+                    title: gettext("Paste"),
+                    href: '/system/terminal/paste/',
+                    onShow: function() {
+                        _webshell._stopConnections();
+                    },
+                    onHide: function() {
+                        _webshell._startConnections();
+                        dom.byId("shell_output").focus();
+                    }
+                });
+                pasteDialog.show();
+
+            }
+        });
+        shell.domNode.appendChild(paste.domNode);
 
     });
 });

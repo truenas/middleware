@@ -42,6 +42,9 @@ define([
         start: function() {
             this.qtimer.start();
             this.islocked = false;
+            this._startConnections();
+        },
+        _startConnections: function() {
             this.connections.push(
                 on(dWindow.doc, 'keypress', lang.hitch(this, this.keypress))
                 );
@@ -49,11 +52,19 @@ define([
                 on(dWindow.doc, 'keydown', lang.hitch(this, this.keydown))
                 );
         },
+        _stopConnections: function() {
+            dArray.forEach(this.connections, function(item) { item.remove(); });
+            this.connections = [];
+        },
         stop: function() {
             this.qtimer.start();
             this.islocked = true;
-            dArray.forEach(this.connections, function(item) { item.remove(); });
-            this.connections = [];
+            this._stopConnections();
+        },
+        paste: function(string) {
+            for(chr in string) {
+                this.queue(string[chr]);
+            }
         },
         update: function() {
 

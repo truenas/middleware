@@ -633,3 +633,7 @@ def terminal(request):
         response = HttpResponse('Invalid parameters')
         response.status_code = 400
         return response
+
+
+def terminal_paste(request):
+    return render(request, "system/terminal_paste.html")
