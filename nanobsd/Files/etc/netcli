@@ -170,6 +170,13 @@ def get_lagg_nics(nics=None):
     return group
 
 
+def configure_interface_stub():
+    retval = configure_interface()
+    notifier().start("ix-nginx")
+    notifier().restart("nginx")
+    return retval
+
+
 def configure_interface():
     while True:
         nics = []
@@ -970,7 +977,7 @@ def show_ip():
 
 def main_menu():
     menu = [
-        [ _("Configure Network Interfaces"), configure_interface ],
+        [ _("Configure Network Interfaces"), configure_interface_stub ],
         [ _("Configure Link Aggregation"), configure_lagg_interface ],
         [ _("Configure VLAN Interface"), configure_vlan ],
         [ _("Configure Default Route"), configure_default_route ],
