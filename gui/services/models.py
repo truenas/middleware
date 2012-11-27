@@ -1278,6 +1278,25 @@ class SSH(Model):
             blank=True,
             help_text=_("Paste a RSA PRIVATE KEY in PEM format here.")
             )
+    ssh_sftp_log_level = models.CharField(
+            verbose_name=_("SFTP Log Level"),
+            choices=choices.SFTP_LOG_LEVEL,
+            blank=True,
+            max_length=20,
+            help_text=_("Specifies which messages will be logged by "
+                "sftp-server. INFO and VERBOSE log transactions that "
+                "sftp-server performs on behalf of the client. DEBUG2 and "
+                "DEBUG3 each specify higher levels of debugging output. The "
+                "default is ERROR."),
+            )
+    ssh_sftp_log_facility = models.CharField(
+            verbose_name=_("SFTP Log Facility"),
+            choices=choices.SFTP_LOG_FACILITY,
+            blank=True,
+            max_length=20,
+            help_text=_("Specifies the facility code that is used when "
+                "logging messages from sftp-server."),
+            )
     ssh_options = models.TextField(
             max_length=120,
             verbose_name=_("Extra options"),
@@ -1342,6 +1361,10 @@ class SSH(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "OpenSSHIcon"
+        advanced_fields = (
+            'ssh_sftp_log_level',
+            'ssh_sftp_log_facility',
+            )
 
 
 class ActiveDirectory(Model):

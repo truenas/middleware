@@ -19,7 +19,7 @@ AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services/
 generate_sshd()
 {
     local IFS="|"
-    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression"
+    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression ssh_sftp_log_level ssh_sftp_log_facility"
     eval local $f
     local sf=$(var_to_sf $f)
     local cmd cfg
@@ -45,11 +45,13 @@ EOF
 
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
-	while eval read $f; do
+	while eval read -r $f; do
+	    ssh_sftp_log_level=${ssh_sftp_log_level:-"ERROR"}
+	    ssh_sftp_log_facility=${ssh_sftp_log_facility:-"AUTH"}
 	    cat > $cfg <<EOF
 Protocol 2
 UseDNS no
-Subsystem       sftp    /usr/libexec/sftp-server
+Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${ssh_sftp_log_facility}
 ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
