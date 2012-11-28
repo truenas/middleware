@@ -598,6 +598,9 @@ require([
             attrs = {};
         }
 
+        // prevent the default submit
+        dEvent.stop(attrs.event);
+
         query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
             function(inputElem){
                 if(inputElem.type == 'submit') {
@@ -615,8 +618,15 @@ require([
             }
             );
 
-        // prevent the default submit
-        dEvent.stop(attrs.event);
+        /* Remove errors from the form */
+        query('ul[class=errorlist]', attrs.form.domNode).forEach(function(ul) {
+            console.log(ul);
+            fx.wipeOut({
+                node: ul,
+                duration: 300
+            }).play();
+        });
+
         newData = attrs.form.get("value");
         newData['__form_id'] = attrs.form.id;
 
