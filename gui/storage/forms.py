@@ -952,6 +952,17 @@ class ZVol_CreateForm(Form):
         required=False,
         initial=False,
         )
+    zvol_blocksize = forms.CharField(
+        label=_('Block size'),
+        help_text=_('The default blocksize for volumes is 8 Kbytes. Any power '
+            'of 2 from 512 bytes to 128 Kbytes is valid.'),
+        required=False,
+        max_length=8,
+        )
+
+    advanced_fields = (
+        'zvol_blocksize',
+        )
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')

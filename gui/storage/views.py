@@ -358,9 +358,12 @@ def zvol_create(request, parent):
             props = {}
             cleaned_data = zvol_form.cleaned_data
             zvol_size = cleaned_data.get('zvol_size')
+            zvol_blocksize = cleaned_data.get("zvol_blocksize")
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
             props['compression'] = str(zvol_compression)
+            if zvol_blocksize:
+                props['volblocksize'] = zvol_blocksize
             errno, errmsg = notifier().create_zfs_vol(
                 name=str(zvol_name),
                 size=str(zvol_size),
