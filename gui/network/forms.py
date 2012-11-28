@@ -93,6 +93,19 @@ class InterfacesForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_int_dhcp(self):
+        dhcp = self.cleaned_data.get("int_dhcp")
+        if not dhcp:
+            return dhcp
+        qs = models.Interfaces.objects.filter(int_dhcp=True)
+        if self.instance.id:
+            qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(
+                _("Only one interface can be used for DHCP")
+            )
+        return dhcp
+
     def clean_int_v4netmaskbit(self):
         ip = self.cleaned_data.get("int_ipv4address")
         nw = self.cleaned_data.get("int_v4netmaskbit")
