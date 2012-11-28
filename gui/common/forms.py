@@ -31,7 +31,8 @@ from dojango.forms import Form as F
 class AdvMixin(object):
 
     def __init__(self, *args, **kwargs):
-        self.advanced_fields = []
+        if not hasattr(self, 'advanced_fields'):
+            self.advanced_fields = []
         super(AdvMixin, self).__init__(*args, **kwargs)
 
     def isAdvanced(self):

@@ -27,6 +27,9 @@
         </script>
     </button>
     {% endif %}
+    {% with form.advanced_fields as advfields %}
+    {% include "freeadmin/advanced_btn.html" %}
+    {% endwith %}
     {% block extra_buttons %}{% endblock %}
     {% endblock %}
 </form>
