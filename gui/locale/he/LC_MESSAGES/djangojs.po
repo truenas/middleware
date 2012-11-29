@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-04-04 16:57+0200\n"
-"Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
+"PO-Revision-Date: 2012-11-29 08:48+0200\n"
+"Last-Translator: shaharhd <shaharhd@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
 "MIME-Version: 1.0\n"
@@ -48,9 +48,8 @@ msgstr "אחסון"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "התרחשה תקלה!"
+msgstr "קרתה תקלה כלשהיא"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
