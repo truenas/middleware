@@ -1243,7 +1243,6 @@ require([
             style: "min-height:400px;background-color: black;",
             title: 'Shell',
             region: 'center',
-            connections: [],
             onShow: function() {
 
                 function handler(msg,value) {
@@ -1263,10 +1262,21 @@ require([
                 try {
                     _webshell.start();
                 } catch(e) {
+                    var size = registry.byId("webshellSize").get("value").split('x');
                     _webshell=new WebShell({
                         node: "shell_output",
-                        handler: handler
-                        });
+                        handler: handler,
+                        width: size[0],
+                        height: size[1],
+                        onUpdate: function() {
+                            if(this.sizeChange) {
+                            console.log("here");
+                                shell._size();
+                                shell._position();
+                                this.sizeChange = false;
+                            }
+                        }
+                    });
                     _webshell.start();
                 }
 
@@ -1299,6 +1309,26 @@ require([
             }
         });
         shell.domNode.appendChild(paste.domNode);
+        var size = new Select({
+            id: "webshellSize",
+            name: "size",
+            options: [
+                { label: "80x25", value: "80x25", selected: true },
+                { label: "80x30", value: "80x30" },
+                { label: "80x50", value: "80x50" },
+                { label: "132x25", value: "132x25" },
+                { label: "132x43", value: "132x43" },
+                { label: "132x50", value: "132x50" }
+            ],
+            onChange: function(val) {
+                var xy = val.split('x');
+                _webshell.width = xy[0];
+                _webshell.height = xy[1];
+                _webshell.sizeChange = true;
+                dom.byId("shell_output").focus();
+            }
+        });
+        shell.domNode.appendChild(size.domNode);
 
     });
 });

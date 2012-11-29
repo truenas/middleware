@@ -26,6 +26,8 @@ define([
         cy: 0,
         kb: [],
         connections: [],
+        onUpdate: undefined,
+        sizeChange: true,
         node: "",
         sid: "",
         islocked: false,
@@ -108,6 +110,9 @@ define([
                                 qtime = 2000;
                         }
                         me.qtimer.setInterval(qtime);
+                        if(me.onUpdate) {
+                            lang.hitch(me, me.onUpdate)();
+                        }
 
                     }, function(req) {
 

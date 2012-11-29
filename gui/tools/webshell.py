@@ -31,6 +31,7 @@ from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 import array
 import fcntl
 import logging
+import logging.config
 import os
 import pty
 import signal
@@ -44,7 +45,16 @@ import time
 
 import daemon
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(HERE, ".."))
+sys.path.append(os.path.join(HERE, "../.."))
+sys.path.append('/usr/local/www')
+sys.path.append('/usr/local/www/freenasUI')
+
+from freenasUI.settings import LOGGING
+
 log = logging.getLogger('tools.webshell')
+logging.config.dictConfig(LOGGING)
 
 
 def set_proc_name(newname):
@@ -60,7 +70,7 @@ class XMLRPCHandler(SocketServer.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         self.request.send(self.server.dispatcher._marshaled_dispatch(
             self.data
-            ))
+        ))
 
 
 def main_loop():
@@ -589,7 +599,7 @@ class Terminal:
             elif m == '?47':
                 # Alternate screen mode
                 if ((state and not self.vt100_mode_alt_screen) or
-                    (not state and self.vt100_mode_alt_screen)):
+                        (not state and self.vt100_mode_alt_screen)):
                     self.screen, self.screen2 = self.screen2, self.screen
                     self.vt100_saved, self.vt100_saved2 = self.vt100_saved2, \
                         self.vt100_saved
@@ -823,13 +833,17 @@ class Terminal:
     def csi_SU(self, p):
         # Scroll up
         p = self.vt100_parse_params(p, [1])
-        self.scroll_area_up(self.scroll_area_y0, self.scroll_area_y1,
+        self.scroll_area_up(
+            self.scroll_area_y0,
+            self.scroll_area_y1,
             max(1, p[0]))
 
     def csi_SD(self, p):
         # Scroll down
         p = self.vt100_parse_params(p, [1])
-        self.scroll_area_down(self.scroll_area_y0, self.scroll_area_y1,
+        self.scroll_area_down(
+            self.scroll_area_y0,
+            self.scroll_area_y1,
             max(1, p[0]))
 
     def csi_CTC(self, p):
@@ -1107,7 +1121,7 @@ class Terminal:
                             # Intermediate bytes (added to function)
                             self.vt100_parse_func += unichr(char)
                         elif (char_msb == 0x30 and
-                            self.vt100_parse_state == 'csi'):
+                                self.vt100_parse_state == 'csi'):
                             # Parameter byte
                             self.vt100_parse_param += unichr(char)
                         else:
@@ -1125,6 +1139,7 @@ class Terminal:
         self.w = w
         self.h = h
         self.vt100_parse_reset()
+        self.reset_screen()
         return True
 
     def read(self):
@@ -1255,8 +1270,14 @@ class Multiplex:
         self.env_term = env_term
         # Synchronize methods
         self.lock = threading.RLock()
-        for name in ['proc_keepalive', 'proc_buryall',
-            'proc_read', 'proc_write', 'proc_dump', 'proc_getalive']:
+        for name in [
+            'proc_keepalive',
+            'proc_buryall',
+            'proc_read',
+            'proc_write',
+            'proc_dump',
+            'proc_getalive'
+        ]:
             orig = getattr(self, name)
             setattr(self, name, SynchronizedMethod(self.lock, orig))
         # Supervisor thread
@@ -1285,11 +1306,12 @@ class Multiplex:
             if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
                 try:
                     fd = self.session[sid]['fd']
-                    fcntl.ioctl(fd,
-                            termios.TIOCSWINSZ,
-                            struct.pack("HHHH", h, w, 0, 0))
-                except (IOError, OSError):
-                    pass
+                    fcntl.ioctl(
+                        fd,
+                        termios.TIOCSWINSZ,
+                        struct.pack("HHHH", h, w, 0, 0))
+                except (IOError, OSError), e:
+                    log.error(e)
                 self.session[sid]['term'].set_size(w, h)
                 self.session[sid]['w'] = w
                 self.session[sid]['h'] = h
@@ -1320,7 +1342,8 @@ class Multiplex:
                     'COLUMNS': str(w),
                     'LINES': str(h),
                     'TERM': self.env_term,
-                    'PATH': ('/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                    'PATH': (
+                        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
                         '/usr/local/sbin'),
                     'LANG': ls[0] + '.UTF-8',
                     'HOME': '/root',
@@ -1344,9 +1367,10 @@ class Multiplex:
             fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
             # Set terminal size
             try:
-                fcntl.ioctl(fd,
-                        termios.TIOCSWINSZ,
-                        struct.pack("HHHH", h, w, 0, 0))
+                fcntl.ioctl(
+                    fd,
+                    termios.TIOCSWINSZ,
+                    struct.pack("HHHH", h, w, 0, 0))
             except (IOError, OSError), e:
                 log.error("Unable to issue ioctl for terminal size: %s", e)
             return True
