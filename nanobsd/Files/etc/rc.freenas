@@ -120,6 +120,7 @@
 : ${AD_CONFIG_FILE:="${AD_CONFIG_PATH}/config"}
 : ${AD_KNOBS_FILE:="${AD_CONFIG_PATH}/knobs"}
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
+: ${AD_NET_ADS_TIMEOUT:="10"}
 
 __proto()
 {
@@ -212,6 +213,54 @@ __get_SRV_host()
 	exec 0<&3
 
 	return 1
+}
+
+__tc()
+{
+	local timeout=$1
+	shift
+	local args="$*"
+
+	local i=0
+	local ret=1
+	local lf="$(mktemp /tmp/tmp.XXXXXX)"
+
+	lockf -k -s -t 0 ${lf} ${args} &
+	if [ "$?" != "0" ]
+	then
+		return ${ret}
+	fi
+
+	ret=2
+	while [ ${i} -lt ${timeout} ]
+	do
+		sleep 1
+
+		if lockf -k -s -t 0 ${lf} /usr/bin/true
+		then
+			rm -f ${lf}
+			ret=0
+			break
+		fi
+
+		: $((i += 1))
+	done
+
+	kill $! >/dev/null 2>&1
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill ${pid} >/dev/null 2>&1
+	fi
+
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill -9 ${pid} >/dev/null 2>&1
+	fi
+
+	rm -f ${lf}
+	return ${ret}
 }
 
 __get_SRV_record()
@@ -831,7 +880,7 @@ AD_join_domain()
 
 	AD_log "AD_join_domain: net ads join -U ${adminname}"
 
-	/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -855,7 +904,7 @@ AD_status_domain()
 
 	AD_log "AD_status_domain: net ads status -U ${adminname}"
 
-	/usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Not okay"
@@ -879,7 +928,7 @@ AD_leave_domain()
 
 	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
 
-	/usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"

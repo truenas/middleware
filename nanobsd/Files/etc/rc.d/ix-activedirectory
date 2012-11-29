@@ -202,7 +202,9 @@ activedirectory_start()
 		fi
 
 		AD_log "activedirectory_start: trying to join domain"
-		if ! AD_join_domain; then
+		if ! AD_join_domain
+		then
+			/etc/ActiveDirectory/ctl stop
 			return 1
 		fi
 
