@@ -370,6 +370,7 @@ class VolumeStatusResource(DojoModelResource):
                     if key == 'data' and isinstance(current, zfs.Root):
                         parent.update(data)
                     else:
+                        data['id'] = uid.next()
                         parent['children'].append(data)
 
                     for child in current:
