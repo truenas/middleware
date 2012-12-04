@@ -356,10 +356,15 @@ class Dev(Tnode):
             self.devname = search[0].xpathEval("../../../name")[0].content
             provider = search[0].content
         else:
+
+            # Treat .nop as a regular dev (w/o .nop)
+            if self.name.endswith(".nop"):
+                self.devname = self.name[:-4]
+            else:
+                self.devname = self.name
             search = self._doc.xpathEval("//class[name = 'DEV']"
                                          "/geom[name = '%s']"
-                                         "//provider/@ref" % self.name)
-            self.devname = self.name
+                                         "//provider/@ref" % self.devname)
             if len(search) > 0:
                 provider = search[0].content
             elif self.status == 'ONLINE':
