@@ -3980,7 +3980,7 @@ class notifier:
             mirror = self.gmirror_status(root_dev.split('/')[1])
             blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
         else:
-            blacklist_devs = []
+            blacklist_devs = [root_dev]
 
         device_blacklist_re = re.compile('a?cd[0-9]+')
 
