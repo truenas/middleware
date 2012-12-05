@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.0-RELEASE
+Release Notes for FreeNAS 8.3.0-RELEASE-p1
 
 *** IMPORTANT ***
 
@@ -129,6 +129,41 @@ bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+Changes since 8.3.0-RELEASE:
+
+Bugfixes
+========================
+
+1. Improve the config generator for nginx.  This resolves a bug
+   that caused a welcome to nginx screen to be displayed instead
+   of the GUI.
+
+2. Fix several bugs with the check-space.py script, including one that
+   kept it from working with datasets and a case of inverted logic.
+
+3. Fix a kernel panic that could result from importing ZFS pools created
+   on Solaris systems.
+
+4. Fix the help text for the dynamic dns domain field.
+
+5. The colon is not a valid character for a user's home directory.  Validate
+   this in the GUI.
+
+6. Ensure that the SSL certificate provided by the user for the web interface
+   is valid.  If it isn't fall back to HTTP to allow access to the GUI.
+
+7. Add a timeout for Active Directory.  This prevents a broken AD setup from
+   hanging a FreeNAS box indefinitely at boot.
+
+8. Exclude the virtual devices used when creating a 4K ZFS pool so they don't
+   appear in the GUI as options for new pools.
+
+Enhancements
+========================
+
+1. Add traditional chinese character set as a choice for the console.
+
 
 Changes since 8.3.0-RC1:
 
