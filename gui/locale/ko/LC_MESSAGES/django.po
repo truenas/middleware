@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-11-29 05:13+0200\n"
+"PO-Revision-Date: 2012-12-05 04:30+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -2171,7 +2171,7 @@ msgstr "타겟 별명"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "타겟의 선택적인 사용자 친화적인 문자열"
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2186,15 +2186,15 @@ msgstr "논리 유닛의 고유 번호"
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr ""
+msgstr "타입"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "LUN에 맵핑되어진 논리 유닛 타입"
 
 #: services/models.py:660
 msgid "Target Flags"
-msgstr ""
+msgstr "타겟 플래그"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
