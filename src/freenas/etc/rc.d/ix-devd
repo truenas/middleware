@@ -69,76 +69,42 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	WASCONNECTED=1
     fi
 
-    # Continously pool carp1 and carp2 until we have 5 seconds worth of
-    # approval signal.
+    # Start fenced.
+    # If not forced, start a normal one, otherwise, mark as such.
+    RETVAL=Undefined
     if [ \${USER_OVERRIDE} -eq 0 ] ; then
-        TIMER1=0
-        TIMER2=0
-
-        while [ \${TIMER2} -lt 60 ]; do
-	    TIMER2=\$((TIMER2 + 1))
-
-	    STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
-	    STATUS1=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep MASTER | wc -l\`
-	    STATUS2=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep BACKUP | wc -l\`
-
-	    echo \${STATUS0}:\${STATUS1}:\${STATUS2} t1=\${TIMER1} t2=\${TIMER2} | logger
-
-	    if [ \$STATUS0 != "MASTER" ]; then
-	        echo "Promoted then demoted, quitting." | logger
-	        # Just in case.  Demote ourselves.
-	        ifconfig \${SUBSYSTEM} advskew 202
-	        exit
-	    fi
-
-	    # This catches the case where one head is powered off but the
-	    # ethernet link shows as active due to the motherboard receiving
-	    # power.  The link speed in this case will be 10baseT and the status
-	    # will be active.  This test is not perfect because the physical
-	    # failover interface is not explicitely defined, so it would be possible
-	    # for another interface in the box to be in this state and "fake out"
-	    # the script.
-	    if [ \${STATUS1} -eq 2 -a \${STATUS2} -eq 0 ] ; then
-	        if [ \$WASCONNECTED -ne 1 ]; then
-		    for i in \`ifconfig -lu\`
-		    do
-		        ifconfig \$i | grep 10baseT/UTP
-		        if [ \$? -eq 0 ] ; then
-			    LINKSTATUS=\`ifconfig \$i | grep status | awk '{print \$2}'\`
-			    if [ \${LINKSTATUS} == "active" ] ; then
-			        WASCONNECTED=1
-			    fi
-		        fi
-	            done
-	        fi
-	        TIMER1=\$((TIMER1 + 1))
-	    else
-	        TIMER1=0
-	    fi
-	    if [ \${TIMER1} -ge 7 ]; then
-	        echo "Received 7 positive approvals, proceeding" | logger
-	        break
-	    fi
-	    sleep 1
-        done
-
-        if [ \${TIMER1} -lt 7 ]; then
-	    echo "PANIC! Retry exhausted" | logger
-	    # Just in case.  Demote ourselves.
-	    ifconfig \${SUBSYSTEM} advskew 200
-	    exit
-        fi
+        /usr/local/bin/python /usr/local/sbin/fenced
+        RETVAL=\$?
+    else
+        /usr/local/bin/python /usr/local/sbin/fenced force
+        RETVAL=\$?
     fi
 
-    # Bail out if this is not a warm takeover, and the heartbeat cable
-    # did not give us an approval.
-    if [ \${USER_OVERRIDE} -eq 0 ] ; then
-        if [ \$WASCONNECTED -ne 1 ]; then
-	    exit
-        fi
+    if [ \${RETVAL} -ne 0 ]; then
+	case \${RETVAL} in
+	1)
+		echo "Can not register keys on disks!" | logger
+		ifconfig \${SUBSYSTEM} advskew 201
+		;;
+	2)
+		echo "Remote fenced is running!" | logger
+		ifconfig \${SUBSYSTEM} advskew 202
+		;;
+	3)
+		echo "Can not reserve all disks!" | logger
+		ifconfig \${SUBSYSTEM} advskew 203
+		;;
+        *)
+		echo "This should never happen: \${RETVAL}" | logger
+		ifconfig \${SUBSYSTEM} advskew 204
+		;;
+	esac
+	exit 1
     fi
 
+    # If we reached here, fenced is daemonized and have all drives reserved.
     ifconfig \${SUBSYSTEM} advskew 1
+
     for volumename in ${volumenames}; do
 	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
@@ -181,6 +147,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
+    pkill -f fenced
     watchdog -t 4
     for volumename in ${volumenames}; do
 	echo "Exporting \${volumename}!" | logger
