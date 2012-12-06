@@ -98,13 +98,16 @@ class Byte(object):
     Used in sysctl hack to return a byte array
     """
 
-    def __init__(self, array):
+    def __init__(self, array, as_string=True):
         self.array = array
+        self.as_string = as_string
 
     @property
     def value(self):
         array = ""
         for byte in self.array:
+            if byte == 0 and self.as_string:
+                break
             array += chr(byte)
         return array
 
@@ -4110,7 +4113,7 @@ class notifier:
         libc = ctypes.CDLL('libc.so.7')
         size = ctypes.c_size_t()
 
-        if _type == 'CHAR':
+        if _type in ('CHAR', 'VOID'):
             if osize is None:
                 #We need find out the size
                 rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
@@ -4121,6 +4124,9 @@ class notifier:
 
             arg = (ctypes.c_ubyte * size.value)()
             buf = Byte(arg)
+
+            if _type == 'VOID':
+                buf.as_string = False
 
         else:
             buf = ctypes.c_int()
