@@ -93,6 +93,22 @@ from freenasUI.middleware.multipath import Multipath
 log = logging.getLogger('middleware.notifier')
 
 
+class Byte(object):
+    """
+    Used in sysctl hack to return a byte array
+    """
+
+    def __init__(self, array):
+        self.array = array
+
+    @property
+    def value(self):
+        array = ""
+        for byte in self.array:
+            array += chr(byte)
+        return array
+
+
 class StartNotify(threading.Thread):
     """
     Use kqueue to watch for an event before actually calling start/stop
@@ -4070,7 +4086,7 @@ class notifier:
             msg = "Unknown error (%d)" % (error, )
         raise AssertionError("Sysctl by name (%s) failed: %s" % (name, msg))
 
-    def sysctl(self, name, value=None, _type='CHAR'):
+    def sysctl(self, name, value=None, osize=None, _type='CHAR'):
         """Get any sysctl value using libc call
 
         This cut down the overhead of launching subprocesses
@@ -4095,13 +4111,16 @@ class notifier:
         size = ctypes.c_size_t()
 
         if _type == 'CHAR':
-            #We need find out the size
-            rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
-            if rv != 0:
-                self.__sysctl_error(libc, name)
+            if osize is None:
+                #We need find out the size
+                rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
+                if rv != 0:
+                    self.__sysctl_error(libc, name)
+            else:
+                size.value = osize
 
-            buf = ctypes.create_string_buffer(size.value)
-            arg = buf
+            arg = (ctypes.c_ubyte * size.value)()
+            buf = Byte(arg)
 
         else:
             buf = ctypes.c_int()
