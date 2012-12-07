@@ -112,8 +112,8 @@ $RELEASE_PHASES"
 # 2 - version1 > version2
 compare_version()
 {
-	version1=$1
-	version2=$2
+	version1=$(echo "$1"|sed -E s/-p[0-9]+-/-/)
+	version2=$(echo "$2"|sed -E s/-p[0-9]+-/-/)
 
 	if [ -z "$version2" ]
 	then
