@@ -60,11 +60,6 @@ if [ \${EVENT} = "LINK_UP" ]; then
     # Was the other peer UP in the last minute?
     WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
 
-    # If we can still ping the peer, quit immediately
-    if [ \${USER_OVERRIDE} -eq 0 ] ; then
-        ping -qc 1 -t 1 ${peerip} && exit
-    fi
-
     if [ \${HAVE_FORCESEAL} -eq 1 ]; then
 	WASCONNECTED=1
     fi
