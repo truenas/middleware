@@ -72,7 +72,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     # Start fenced.
     # If not forced, start a normal one, otherwise, mark as such.
     RETVAL=Undefined
-    if [ \${USER_OVERRIDE} -eq 0 ] ; then
+    if [ \${USER_OVERRIDE} -eq 0 -a \${WASCONNECTED} -eq 0 ] ; then
         /usr/local/bin/python /usr/local/sbin/fenced
         RETVAL=\$?
     else
