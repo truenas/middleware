@@ -1,0 +1,37 @@
+#!/bin/sh
+# Script to install debian 6 "squeeze" release into a jail
+# Author: Kris Moore <kris@pcbsd.org>
+
+# Jail / chroot dir
+jDIR="$1"
+
+# Target jail IP address
+jIP="$2"
+
+# Jail meta-directory
+jMETA="$3"
+
+if [ ! -e "${jDIR}" ] ; then
+  mkdir -p "${jDIR}"
+fi
+
+debootstrap squeeze ${jDIR}
+err=$?
+
+umount -f ${jDIR}/dev/fd >/dev/null 2>/dev/null
+umount -f ${jDIR}/dev >/dev/null 2>/dev/null
+umount -f ${jDIR}/sys >/dev/null 2>/dev/null
+umount -f ${jDIR}/proc >/dev/null 2>/dev/null
+
+# Fix log file
+sed -i '' 's|/dev/xconsole|/var/log/xconsole|g' ${jDIR}/etc/rsyslog.conf
+
+# Get rid of umount
+mv ${jDIR}/sbin/umount ${jDIR}/sbin/umount.prev
+ln -s /bin/true ${jDIR}/sbin/umount
+
+# Setup some custom start / stop stuff
+echo "/etc/init.d/rc 3" > ${jMETA}/jail-start
+echo "/etc/init.d/rc 0" > ${jMETA}/jail-stop
+
+exit $err

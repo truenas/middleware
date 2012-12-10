@@ -1,0 +1,125 @@
+#!/bin/sh
+# Script to install gentoo i386 release into a jail
+# Author: Kris Moore <kris@pcbsd.org>
+
+# Jail / chroot dir
+jDIR="$1"
+
+# Target jail IP address
+jIP="$2"
+
+# Jail meta-directory
+jMETA="$3"
+
+
+if [ ! -e "${jDIR}" ] ; then
+  mkdir -p "${jDIR}"
+fi
+
+INDEXFILE="latest-stage3-i486.txt"
+SUBDIR="releases/x86/autobuilds"
+MASTER_SITE="http://ftp.roedu.net/pub/mirrors/gentoo.org/$SUBDIR/\n
+http://distro.ibiblio.org/pub/linux/distributions/gentoo/$SUBDIR/\n
+http://gentoo.mirrors.pair.com/$SUBDIR/\n
+http://gentoo.chem.wisc.edu/gentoo/$SUBDIR/\n
+http://adelie.polymtl.ca/$SUBDIR/\n
+http://mirrors.tds.net/gentoo/$SUBDIR/\n
+ftp://ftp.mirrorservice.org/sites/www.ibiblio.org/gentoo/$SUBDIR/\n
+http://ftp.belnet.be/mirror/rsync.gentoo.org/gentoo/$SUBDIR/\n
+http://ftp.easynet.nl/mirror/gentoo/$SUBDIR/\n
+http://ftp.snt.utwente.nl/pub/os/linux/gentoo/$SUBDIR/\n
+http://trumpetti.atm.tut.fi/gentoo/$SUBDIR/\n
+http://sunsite.cnlab-switch.ch/ftp/mirror/gentoo/$SUBDIR/\n
+http://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/$SUBDIR/\n
+http://ftp.uni-erlangen.de/pub/mirrors/gentoo/$SUBDIR/\n
+http://darkstar.ist.utl.pt/gentoo/$SUBDIR/\n
+http://gentoo.inode.at/$SUBDIR/\n
+http://ftp.rhnet.is/pub/gentoo/$SUBDIR/\n
+http://gentoo.mirror.sdv.fr/$SUBDIR/\n
+http://gentoo.gg3.net/$SUBDIR/\n
+http://gentoo.kems.net/$SUBDIR/\n
+ftp://ftp.gtlib.gatech.edu/pub/gentoo/$SUBDIR/\n
+ftp://mirror.iawnet.sandia.gov/pub/gentoo/$SUBDIR/\n
+ftp://ftp.ussg.iu.edu/pub/linux/gentoo/$SUBDIR/\n
+ftp://ftp.ucsb.edu/pub/mirrors/linux/gentoo/$SUBDIR/\n
+ftp://gentoo.mirrors.pair.com/$SUBDIR/\n
+ftp://mirrors.tds.net/gentoo/$SUBDIR/\n
+ftp://ftp.belnet.be/mirror/rsync.gentoo.org/gentoo/$SUBDIR/\n
+ftp://ftp.easynet.nl/mirror/gentoo/$SUBDIR/\n
+ftp://ftp.snt.utwente.nl/pub/os/linux/gentoo/$SUBDIR/\n
+ftp://trumpetti.atm.tut.fi/gentoo/$SUBDIR/\n
+ftp://sunsite.cnlab-switch.ch/mirror/gentoo/$SUBDIR/\n
+ftp://ftp.join.uni-muenster.de/pub/linux/distributions/gentoo/$SUBDIR/\n
+ftp://ftp6.uni-muenster.de/pub/linux/distributions/gentoo/$SUBDIR/\n
+ftp://ftp.tu-clausthal.de/pub/linux/gentoo/$SUBDIR/\n
+ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/gentoo/$SUBDIR/\n
+ftp://linux.rz.ruhr-uni-bochum.de/gentoo-mirror/$SUBDIR/\n
+ftp://ftp.uni-erlangen.de/pub/mirrors/gentoo/$SUBDIR/\n
+ftp://darkstar.ist.utl.pt/pub/gentoo/$SUBDIR/\n
+ftp://gentoo.inode.at/source/$SUBDIR/\n
+ftp://ftp.rhnet.is/pub/gentoo/$SUBDIR/\n
+ftp://files.gentoo.gr/$SUBDIR/\n
+ftp://ftp.ecc.u-tokyo.ac.jp/GENTOO/$SUBDIR/\n
+ftp://gentoo.kems.net/pub/mirrors/gentoo/$SUBDIR/"
+
+echo -e $MASTER_SITE | while read url
+do
+  echo "Trying to fetch index: ${url}${INDEXFILE}"
+  fetch -o ${INDEXFILE} ${url}${INDEXFILE}
+  if [ $? -eq 0 ] ; then
+     break
+  fi
+done
+
+ARCHIVEFILE="`cat ${INDEXFILE} | grep 'stage3'`"
+DLFILE="`basename $ARCHIVEFILE`"
+rm ${INDEXFILE}
+if [ -z "$ARCHIVEFILE" ] ; then
+   echo "Failed to locate current archive"
+   exit 1
+fi
+
+echo -e $MASTER_SITE | while read url
+do
+  echo "Fetching archive: ${url}${ARCHIVEFILE}"
+  fetch -o ${DLFILE} ${url}${ARCHIVEFILE}
+  if [ $? -eq 0 ] ; then
+     break
+  fi
+done
+
+
+if [ ! -e "${DLFILE}" ] ; then
+   echo "Failed to download.."
+   exit 1
+fi
+
+echo "Extracting Gentoo base...Please wait..."
+tar --exclude=./dev -xpy --exclude=./proc --exclude=./lib/udev --exclude=./lib/udev-state -C ${jDIR} -f ${DLFILE}
+err=$?
+rm ${DLFILE}
+mkdir ${jDIR}/dev >/dev/null 2>/dev/null
+mkdir ${jDIR}/dev/fd >/dev/null 2>/dev/null
+mkdir ${jDIR}/proc >/dev/null 2>/dev/null
+mkdir ${jDIR}/sys >/dev/null 2>/dev/null
+
+#@${FIND} ${PREFIX}/${PREFIX_SUBDIR}bin ${PREFIX}/${PREFIX_SUBDIR}sbin/ \
+#	${PREFIX}/${PREFIX_SUBDIR}usr/bin ${PREFIX}/${PREFIX_SUBDIR}/usr/sbin \
+#	-type f -print0 | ${XARGS} -0 ${FILE} \
+#	| ${GREP} ELF | ${CUT} -d : -f 1 | ${XARGS} ${BRANDELF} -t Linux
+#@${BRANDELF} -t Linux ${PREFIX}/${PREFIX_SUBDIR}/lib/ld-*.so
+
+umount -f ${jDIR}/dev/fd >/dev/null 2>/dev/null
+umount -f ${jDIR}/dev >/dev/null 2>/dev/null
+umount -f ${jDIR}/sys >/dev/null 2>/dev/null
+umount -f ${jDIR}/proc >/dev/null 2>/dev/null
+
+# Get rid of umount
+mv ${jDIR}/bin/umount ${jDIR}/bin/umount.prev
+ln -s /bin/true ${jDIR}/bin/umount
+
+# Setup some custom start / stop stuff
+echo "/sbin/rc default" > ${jMETA}/jail-start
+echo "/sbin/rc shutdown" > ${jMETA}/jail-stop
+
+exit $err
