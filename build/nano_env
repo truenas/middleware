@@ -123,7 +123,7 @@ NANO_LABEL="FreeNAS"
 
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
-VERSION="8.3.0-RELEASE"
+VERSION="8.3.0-RELEASE-p1"
 
 # Image name, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386, see
 # nanobsd/freenas-common:last_orders().
