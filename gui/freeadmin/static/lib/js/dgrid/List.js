@@ -357,7 +357,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			
 			this.cleanup();
 			// destroy DOM
-			put("!", this.domNode);
+			put(this.domNode, "!");
 		},
 		refresh: function(){
 			// summary:
@@ -388,15 +388,17 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 				// this traverses through rows to maintain odd/even classes on the rows when indexes shift;
 				var next = firstRow;
 				var rowIndex = next.rowIndex;
-				do{
-					if(next.rowIndex > -1){
-						// skip non-numeric, non-rows
-						if((next.className + ' ').indexOf("dgrid-row ") > -1){
-							put(next, '.' + (rowIndex % 2 == 1 ? oddClass : evenClass) + '!' + (rowIndex % 2 == 0 ? oddClass : evenClass));
+				if(rowIndex > -1){ // make sure we have a real number in case this is called on a non-row
+					do{
+						if(next.rowIndex > -1){
+							// skip non-numeric, non-rows
+							if((next.className + ' ').indexOf("dgrid-row ") > -1){
+								put(next, '.' + (rowIndex % 2 == 1 ? oddClass : evenClass) + '!' + (rowIndex % 2 == 0 ? oddClass : evenClass));
+							}
+							next.rowIndex = rowIndex++;
 						}
-						next.rowIndex = rowIndex++;
-					}
-				}while((next = next.nextSibling) && next.rowIndex != rowIndex);
+					}while((next = next.nextSibling) && next.rowIndex != rowIndex && !next.blockRowIndex);
+				}
 			}
 		},
 		renderArray: function(results, beforeNode, options){
@@ -645,6 +647,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			//		A row object representing the appropriate row.  If the top of the
 			//		list is reached before the given number of steps, the first row will
 			//		be returned.
+			if(!row.element){ row = this.row(row); }
 			return this.row(this._move(row, -(steps || 1), "dgrid-row", visible));
 		},
 		down: function(row, steps, visible){
@@ -662,6 +665,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			//		A row object representing the appropriate row.  If the bottom of the
 			//		list is reached before the given number of steps, the last row will
 			//		be returned.
+			if(!row.element){ row = this.row(row); }
 			return this.row(this._move(row, steps || 1, "dgrid-row", visible));
 		},
 		

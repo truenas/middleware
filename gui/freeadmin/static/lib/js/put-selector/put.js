@@ -12,15 +12,10 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 	//		To create a simple div with a class name of "foo":
 	//		|	put("div.foo");
 	fragmentFasterHeuristic = newFragmentFasterHeuristic || fragmentFasterHeuristic;
-	try{
-		var selectorParse = /(?:\s*([-+ ,<>]))?\s*(\.|!\.?|#)?([-\w%$]+)?(?:\[([^\]=]+)=?['"]?([^\]'"]*)['"]?\])?/g,
-			undefined, 
-			doc = doc || document,
-			ieCreateElement = 1;
-		put('i', {name:'a'});
-	}catch(e){
-		ieCreateElement = 0;
-	}
+	var selectorParse = /(?:\s*([-+ ,<>]))?\s*(\.|!\.?|#)?([-\w%$]+)?(?:\[([^\]=]+)=?['"]?([^\]'"]*)['"]?\])?/g,
+		undefined,
+		doc = doc || document,
+		ieCreateElement = typeof doc.createElement == "object"; // telltale sign of the old IE behavior with createElement that does not support later addition of name 
 	function insertTextNode(element, text){
 		element.appendChild(doc.createTextNode(text));
 	}

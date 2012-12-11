@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Test Grid Column Resize</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=800">
+		<style>
 			@import "../../../dojo/resources/dojo.css";
 			@import "../../css/skins/claro.css";
 			.heading {
 				font-weight: bold;
 				padding-bottom: 0.25em;
 			}
-			#grid, #gridWide { 
+			.dgrid {
 				width: 750px;
+				margin: 10px;
 			}
 			#grid .field-col1 {
 				width: 100px;
@@ -37,23 +38,58 @@
 			#gridWide .field-col5 {
 				width: 200px;
 			}
+
+			#gridPrevent .field-col1 {
+				width: 100px;
+			}
+			#gridPrevent .field-col2 {
+				width: 100px;
+			}
+			#gridPrevent .field-col3 {
+				width: auto;
+			}
+			#gridPrevent .field-col4 {
+				width: 100px;
+			}
+			#gridPrevent .field-col5 {
+				width: 150px;
+			}
+
+			#gridPersist .field-col1 {
+				width: 100px;
+			}
+			#gridPersist .field-col2 {
+				width: 100px;
+			}
+			#gridPersist .field-col3 {
+				width: 100px;
+			}
+			#gridPersist .field-col4 {
+				width: 100px;
+			}
+			#gridPersist .field-col5 {
+				width: 150px;
+			}
 			
-			.ui-widget{
-				margin: 10px;
+			.testrelative {
+				position: relative;
+				left: 25px;
+				top: 25px;
+				width: 750px;
 			}
 		</style>
 		<script>
 			var start= new Date().getTime();
 		</script>
-		<script type="text/javascript" src="../../../dojo/dojo.js" 
+		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
-			require(["dgrid/OnDemandGrid", "dgrid/extensions/ColumnResizer", "dgrid/Selection", "dojo/_base/declare", "dojo/_base/lang", "dgrid/test/data/base", "dojo/domReady!"],
-				function(Grid, ColumnResizer, Selection, declare, lang, testStore){
+		<script>
+			require(["dgrid/OnDemandGrid", "dgrid/extensions/ColumnResizer", "dgrid/Selection", "dojo/_base/declare", "dojo/_base/lang", "dojo/on", "dojo/cookie", "dojo/json", "dgrid/test/data/base", "dojo/domReady!"],
+				function(Grid, ColumnResizer, Selection, declare, lang, on, cookie, json, testStore){
 					var columns = { // you can declare columns as an object hash (key translates to field)
 						col1: 'Column 1Column1Column 1 Column 1',
 						col2: {label: 'Column2222222222222222222222222', sortable: false},
-						col3: 'Column3333333333333333333',
+						col3: { label: 'Column3333333333333333333', resizable: false },
 						col4: 'Column 4',
 						col5: 'Column 5'
 					};
@@ -65,6 +101,7 @@
 						col1: 'Col1',
 						col5: 'Column 5'
 					};
+
 					var ResizeGrid = declare([Grid, Selection, ColumnResizer]);
 					window.grid = new ResizeGrid({
 						store: testStore,
@@ -74,6 +111,41 @@
 						store: testStore,
 						columns: lang.clone(columns)
 					}, "gridWide");
+					window.gridPrevent = new ResizeGrid({
+						store: testStore,
+						columns: lang.clone(columns)
+					}, "gridPrevent");
+
+					var columnWidths = cookie('dgrid-columnWidths');
+					columnWidths = columnWidths ? json.parse(columnWidths) : {};
+
+					var persistentColumns = lang.clone(columns);
+					for(var name in persistentColumns){
+						if(name in columnWidths){
+							if(typeof persistentColumns[name] === 'string'){
+								persistentColumns[name] = { label: persistentColumns[name] };
+							}
+							persistentColumns[name].width = columnWidths[name];
+						}
+					}
+					window.gridPersist = new ResizeGrid({
+						store: testStore,
+						columns: persistentColumns
+					}, "gridPersist");
+
+					on(document.body, 'dgrid-columnresize', function(event){
+						var grid = event.grid;
+						console.log('grid ' + grid.id + ' Column "' + event.columnId + '" size changed: ' + event.width +
+							(event.parentType ? " (triggered by " + event.parentType + ")" : ""));
+						if(grid === window.gridPrevent && event.width > 200){
+							event.preventDefault();
+						}
+						if(grid === window.gridPersist && event.parentType){
+							// Persist new width to cookie
+							columnWidths[event.columnId] = event.width;
+							cookie('dgrid-columnWidths', json.stringify(columnWidths));
+						}
+					});
 				});
 		</script>
 	</head>
@@ -84,7 +156,14 @@
 			<button onclick="grid.set('columns', columns2);">New Structure</button>
 			<button onclick="grid.set('columns', columns1);">Original</button>
 		</div>
-		<h2>Another grid w/ columns whose width initially exceed the table's width</h2>
-		<div id="gridWide"></div>
+		<h2>Another grid w/ columns whose width initially exceed the table's width,
+			placed within a relatively-positioned element</h2>
+		<div class="testrelative">
+			<div id="gridWide"></div>
+		</div>
+		<h2>Grid w/ columns whose resize will be prevented if the column will end up larger than 200px</h2>
+		<div id="gridPrevent"></div>
+		<h2>Grid w/ columns whose sizes will persist across page refreshes</h2>
+		<div id="gridPersist"></div>
 	</body>
 </html>

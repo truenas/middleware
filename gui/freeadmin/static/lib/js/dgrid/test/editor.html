@@ -124,7 +124,7 @@
 								} }
 							},
 							{
-								label: "dijit/editor",
+								label: "dijit/Editor",
 								generate: generateText,
 								column: {
 									renderCell: function(object, data){
@@ -209,6 +209,7 @@
 						return container;
 					}
 					
+					var cancelDataChange = false;
 					form.onsubmit = function(){
 						var
 							choice = getSelected(form.elements.editor),
@@ -232,6 +233,7 @@
 							if(form.elements.customRenderCell.checked){
 								columnArgs.renderCell = customRenderCell;
 							}
+							cancelDataChange = form.elements.cancelDataChange.checked;
 							
 							if(!grid){
 								grid = new CustomGrid({
@@ -262,6 +264,10 @@
 						console.log(evt.grid.id + " row " + evt.cell.row.id + " data changed" +
 						(event.parentType ? " (via " + event.parentType + "): " : ": "),
 						evt.oldValue, " -> ", evt.value);
+
+						if(cancelDataChange){
+							evt.preventDefault();
+						}
 					});
 					
 					editFirst = function() {
@@ -287,6 +293,7 @@
 				</select>
 			</label></p>
 			<p><label><input type="checkbox" name="autoSave" value="true"> autoSave</label></p>
+			<p><label><input type="checkbox" name="cancelDataChange" value="false"> cancel dgrid-datachange</label></p>
 			<p><label><input type="checkbox" name="customRenderCell" value="true"> use custom renderCell</label></p>
 			<div><button type="submit" id="editorFormSubmit">Recreate Grid</button></div>
 		</form>

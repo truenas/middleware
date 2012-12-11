@@ -143,12 +143,16 @@ function(kernel, declare, listen, has, put, List){
 			}
 			return row;
 		},
+		
 		left: function(cell, steps){
+			if(!cell.element){ cell = this.cell(cell); }
 			return this.cell(this._move(cell, -(steps || 1), "dgrid-cell"));
 		},
 		right: function(cell, steps){
+			if(!cell.element){ cell = this.cell(cell); }
 			return this.cell(this._move(cell, steps || 1, "dgrid-cell"));
 		},
+		
 		renderRow: function(object, options){
 			var row = this.createRowCells("td", function(td, column){
 				var data = object;

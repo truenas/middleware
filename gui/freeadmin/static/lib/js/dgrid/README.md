@@ -49,7 +49,7 @@ directory structure like the following:
 * `util` (optional, e.g. if pursuing a custom build)
 
 dgrid works best with the latest revision of Dojo 1.7 or higher.  As of this
-writing, [Dojo 1.8.0](http://download.dojotoolkit.org/release-1.8.0/) is
+writing, [Dojo 1.8.1](http://download.dojotoolkit.org/release-1.8.1/) is
 recommended.
 
 Note that while dgrid supports Dojo 1.8 and may take advantage of features or

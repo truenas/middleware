@@ -9,6 +9,8 @@ return function(column){
 	
 	var currentLevel, // tracks last rendered item level (for aspected insertRow)
 		clicked; // tracks row that was clicked (for expand dblclick event handling)
+		
+	if(!column){ column = {}; }
 	
 	column.shouldExpand = column.shouldExpand || function(row, level, previouslyExpanded){
 		// summary:

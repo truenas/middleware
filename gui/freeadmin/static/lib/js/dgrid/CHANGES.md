@@ -1,7 +1,69 @@
 This document outlines changes since 0.3.0.  For older changelogs, see the
 [dgrid wiki](https://github.com/SitePen/dgrid/wiki).
 
-# master (0.3.3-pre)
+# master (0.3.5-dev)
+
+## Significant changes
+
+* The `up` and `down` methods of `List` will now call `grid.row` internally to
+    resolve whatever argument is passed; the `left` and `right` methods of
+    `Grid` will call `grid.cell`.  (Formerly these methods only accepted a
+    row or cell object directly.)
+
+## Other changes and fixes
+
+### General/Core
+
+* Resolved an issue where OnDemandList could end up firing requests where
+    start exceeds total and count is negative. (#323)
+
+# 0.3.4
+
+## Significant changes
+
+### Extensions
+
+* The `ColumnResizer` extension now emits a `dgrid-columnresize` event when a resize
+    occurs; if initiated by the user, the event will include a `parentType` property
+    indicating the type of event that triggered it.  If this event is canceled,
+    the column will not be resized. (#320)
+* The `ColumnResizer` extension now honors a `width` property included on column
+    definition objects for the purpose of initializing the width of a column; this
+    can be useful if it is desired to persist and restore custom column widths
+    from a cookie or other local storage. (#321)
+* The `ColumnResizer` extension now honors a `resizable` property included on
+    column definition objects for the purpose of disallowing resize of specific
+    columns. (#325)
+
+## Other changes and fixes
+
+### General/Core
+
+* Resolved an issue in `List` relating to scrolling and preload nodes. (#318, #323)
+
+### Mixins
+
+* The `ColumnSet` mixin now supports horizontal mousewheel events. (#239)
+
+### Column Plugins
+
+* The column plugins (`editor`, `selector`, and `tree`) can now be invoked without
+    a column definition object at all, if no properties need to be set.  This
+    is mostly useful for `selector`. (#324)
+* Fixed an issue with the `selector` plugin when a column definition lacks a
+    `label` property. (#324)
+* Always-on `editor` columns now honor the `canEdit` function on column definitions
+    at the time each cell is rendered.
+* Always-on `editor` columns now properly revert values if the `dgrid-datachange`
+    event is canceled. (#252)
+
+### Extensions
+
+* The `ColumnResizer` extension's resize indicator now follows the cursor
+    even when dragging beyond the grid's boundaries, and reacts if the mouse
+    button is released even outside the boundaries of the browser window. (#310)
+    
+# 0.3.3
 
 ## Breaking changes
 
@@ -38,6 +100,8 @@ This document outlines changes since 0.3.0.  For older changelogs, see the
     outside the list/grid in question.
 * Fixed an issue in the observer code in `List` which could cause an updated
     row to render out-of-sequence when `tree` is used. (#154)
+* Fixed an issue that could cause old IE to throw errors due to an undefined
+    parameter to `insertBefore`. (#308)
 * The `_StoreMixin` module now shows/hides a node displaying `noDataMessage` in
     reaction to the last row being removed or first row being added. (#229)
 * The `OnDemandList` module now adheres more strictly to the `maxRowsPerPage`
@@ -45,6 +109,10 @@ This document outlines changes since 0.3.0.  For older changelogs, see the
     `250`. (#280)
 * The `OnDemandList` module's default value for `farOffRemoval` has been
     lowered from `10000` to `2000`.
+* The `loadingMessage` property (referenced by `OnDemandList` and the `Pagination`
+    extension) now supports HTML strings, like `noDataMessage` (#312)
+* The CSS for one of the `util/has-css3` module's tests has had its class renamed
+    to prevent conflicting with users of Modernizr. (#313)
 
 ### Mixins
 
@@ -53,6 +121,9 @@ This document outlines changes since 0.3.0.  For older changelogs, see the
 
 ### Extensions
 
+* The `ColumnHider` extension will now resize its popup element and enable
+    scrolling within it, in cases where its height would otherwise exceed the
+    that of the parent grid. (#311)
 * The `Pagination` extension now supports `noDataMessage` like `OnDemandList`. (#180)
 
 # 0.3.2

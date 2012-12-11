@@ -3,16 +3,14 @@ function(has){
 	// This module defines feature tests for CSS3 features such as transitions.
 	// The css-transitions, css-transforms, and css-transforms3d has-features
 	// can report either boolean or string:
-	// * false indicates no transition support
-	// * true indicates prefix-less transition support
-	// * string indicates the vendor prefix under which transitions are
-	//   supported on the platform
+	// * false indicates no support
+	// * true indicates prefix-less support
+	// * string indicates the vendor prefix under which the feature is supported
 
-	var cssPrefixes = ["ms", "O", "Moz", "Webkit"],
-		testDiv = document.createElement("div");
+	var cssPrefixes = ["ms", "O", "Moz", "Webkit"];
 	
-	has.add("css-transitions", function(){
-		var style = testDiv.style,
+	has.add("css-transitions", function(global, doc, element){
+		var style = element.style,
 			i;
 		
 		if(style.transitionProperty !== undefined){ // standard, no vendor prefix
@@ -28,7 +26,7 @@ function(has){
 	});
 	
 	has.add("transitionend", function(){
-		// infers transitionend event name based on CSS transitions has-feature
+		// Infer transitionend event name based on CSS transitions has-feature.
 		var tpfx = has("css-transitions");
 		if(!tpfx){ return false; }
 		if(tpfx === true){ return "transitionend"; }
@@ -40,8 +38,8 @@ function(has){
 		}[tpfx];
 	});
 	
-	has.add("css-transforms", function(){
-		var style = testDiv.style, i;
+	has.add("css-transforms", function(global, doc, element){
+		var style = element.style, i;
 		if (style.transformProperty !== undefined) {
 			return true; // standard, no vendor prefix
 		}
@@ -54,23 +52,24 @@ function(has){
 		return false; // otherwise, not supported
 	});
 	
-	has.add("css-transforms3d", function(){
-		var style = testDiv.style, left, prefix;
+	has.add("css-transforms3d", function(global, doc, element){
+		var left, prefix;
 		
-		// apply csstransforms3d class to test transform-3d media queries
-		testDiv.className = "csstransforms3d";
-		// add to body to allow measurement
-		document.body.appendChild(testDiv);
-		left = testDiv.offsetLeft;
+		// Apply csstransforms3d class to test transform-3d media queries.
+		element.className = "has-csstransforms3d";
+		// Add to body to allow measurement.
+		document.body.appendChild(element);
+		left = element.offsetLeft;
 		
 		if (left === 9) {
 			return true; // standard, no prefix
 		} else if (left > 9){
-			// Matched one of the vendor prefixes; offset indicates which
+			// Matched one of the vendor prefixes; offset indicates which.
 			prefix = cssPrefixes[left - 10];
 			return prefix || false;
 		}
-		document.body.removeChild(testDiv);
+		document.body.removeChild(element);
+		element.className = "";
 		
 		return false; // otherwise, not supported
 	});

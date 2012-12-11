@@ -213,13 +213,15 @@ function(declare, has, listen, put){
 			}else{
 				this._columnHiderRules[id] = this.styleColumn(id, "display: none;");
 			}
-			// emit event to notify of column state change
+			// Emit event to notify of column state change.
 			listen.emit(this.domNode, "dgrid-columnstatechange", {
+				grid: this,
 				column: this.columns[id],
-				hidden: hidden
+				hidden: hidden,
+				bubbles: true
 			});
 
-			//	adjust the size of the header
+			// Adjust the size of the header.
 			this.resize();
 		},
 		

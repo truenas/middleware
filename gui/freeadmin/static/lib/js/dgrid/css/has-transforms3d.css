@@ -1,6 +1,6 @@
 /* these media queries assist in feature detection of 3D transforms */
 
-.csstransforms3d {
+.has-csstransforms3d {
 	position: absolute;
 	visibility: hidden;
 }

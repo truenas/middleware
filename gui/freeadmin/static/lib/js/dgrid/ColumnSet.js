@@ -1,5 +1,20 @@
 define(["dojo/_base/kernel", "dojo/_base/declare", "dojo/_base/Deferred", "dojo/on", "dojo/aspect", "dojo/query", "dojo/has", "put-selector/put", "xstyle/has-class", "./Grid", "dojo/_base/sniff", "xstyle/css!./css/columnset.css"],
 function(kernel, declare, Deferred, listen, aspect, query, has, put, hasClass, Grid){
+	has.add("event-mousewheel", function(global, document, element){
+		return typeof element.onmousewheel !== "undefined";
+	});
+	has.add("event-wheel", function(global, document, element){
+		var supported = false;
+		// From https://developer.mozilla.org/en-US/docs/Mozilla_event_reference/wheel
+		try{
+			WheelEvent("wheel");
+			supported = true;
+		}catch(e){ // empty catch block; prevent debuggers from snagging
+		}finally{
+			return supported;
+		}
+	});
+
 	var colsetidAttr = "data-dgrid-column-set-id";
 	
 	hasClass("safari", "ie-7");
@@ -37,12 +52,73 @@ function(kernel, declare, Deferred, listen, aspect, query, has, put, hasClass, G
 		}
 	}
 	
+	function scrollColumnSet(grid, columnSetNode, amount){
+		var id = columnSetNode.getAttribute(colsetidAttr),
+			scroller = grid._columnSetScrollers[id],
+			scrollLeft = scroller.scrollLeft + amount;
+
+		scroller.scrollLeft = scrollLeft < 0 ? 0 : scrollLeft;
+	}
+	
+	var horizMouseWheel;
+	if(!has("touch")){
+		horizMouseWheel = has("event-mousewheel") || has("event-wheel") ? function(grid){
+			return function(target, listener){
+				return listen(target, has("event-wheel") ? "wheel" : "mousewheel", function(event){
+					var node = event.target, deltaX;
+					// WebKit will invoke mousewheel handlers with an event target of a text
+					// node; check target and if it's not an element node, start one node higher
+					// in the tree
+					if(node.nodeType !== 1){
+						node = node.parentNode;
+					}
+					while(!query.matches(node, ".dgrid-column-set[" + colsetidAttr + "]", target)){
+						if(node === target || !(node = node.parentNode)){
+							return;
+						}
+					}
+					
+					// Normalize reported delta value:
+					// wheelDeltaX (webkit, mousewheel) needs to be negated and divided by 3
+					// deltaX (FF17+, wheel) can be used exactly as-is
+					deltaX = event.deltaX || -event.wheelDeltaX / 3;
+					if(deltaX){
+						// only respond to horizontal movement
+						listener.call(null, grid, node, deltaX);
+					}
+				});
+			};
+		} : function(grid){
+			return function(target, listener){
+				return listen(target, ".dgrid-column-set[" + colsetidAttr + "]:MozMousePixelScroll", function(event){
+					if(event.axis === 1){
+						// only respond to horizontal movement
+						listener.call(null, grid, this, event.detail);
+					}
+				});
+			};
+		};
+	}
+	
 	return declare(null, {
 		// summary:
 		//		Provides column sets to isolate horizontal scroll of sets of 
 		//		columns from each other. This mainly serves the purpose of allowing for
 		//		column locking.
 		
+		postCreate: function(){
+			this.inherited(arguments);
+			
+			if(!has("touch")){
+				this.on(horizMouseWheel(this), function(grid, colsetNode, amount){
+					var id = colsetNode.getAttribute(colsetidAttr),
+						scroller = grid._columnSetScrollers[id],
+						scrollLeft = scroller.scrollLeft + amount;
+					
+					scroller.scrollLeft = scrollLeft < 0 ? 0 : scrollLeft;
+				});
+			}
+		},
 		columnSets: [],
 		createRowCells: function(tag, each){
 			var row = put("table.dgrid-row-table");
@@ -108,7 +184,7 @@ function(kernel, declare, Deferred, listen, aspect, query, has, put, hasClass, G
 			if (scrollers) {
 				// this isn't the first time; destroy existing scroller nodes first
 				for(i in scrollers){
-					put("!", scrollers[i]);
+					put(scrollers[i], "!");
 				}
 			} else {
 				// first-time-only operations: hook up event/aspected handlers
@@ -156,7 +232,7 @@ function(kernel, declare, Deferred, listen, aspect, query, has, put, hasClass, G
 				// iterate through the columnSets
 				var columnSet = this.columnSets[i];
 				for(var j = 0; j < columnSet.length; j++){
-					columnSet[j] = this._configColumns(i + '-' + j + '-', columnSet[j]);
+					columnSet[j] = this._configColumns(i + "-" + j + "-", columnSet[j]);
 				}
 			}
 		},

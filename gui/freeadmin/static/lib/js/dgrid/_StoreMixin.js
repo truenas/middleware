@@ -9,9 +9,14 @@ function(kernel, declare, lang, Deferred, listen, put){
 			// Ensure we actually have an error object, so we can attach a reference.
 			err = new Error(err);
 		}
+		// TODO: remove this @ 1.0 (prefer grid property directly on event object)
 		err.grid = this;
 		
-		if(listen.emit(this.domNode, "dgrid-error", {error: err, cancelable: true, bubbles: true})){
+		if(listen.emit(this.domNode, "dgrid-error", {
+				grid: this,
+				error: err,
+				cancelable: true,
+				bubbles: true })){
 			console.error(err);
 		}
 	}

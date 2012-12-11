@@ -5,6 +5,8 @@ function(kernel, arrayUtil, on, aspect, has, put){
 		var listeners = [],
 			grid, headerCheckbox;
 		
+		if(!column){ column = {}; }
+		
 		if(column.type){
 			column.selectorType = column.type;
 			kernel.deprecated("columndef.type", "use columndef.selectorType instead", "dgrid 1.0");
@@ -60,8 +62,10 @@ function(kernel, arrayUtil, on, aspect, has, put){
 			// listen for keydown's as well to get an event in firefox that we can properly retrieve
 			// the shiftKey property from
 			if(event.type == "click" || event.keyCode == 32 || (!has("opera") && event.keyCode == 13) || event.keyCode === 0){
-				var row = grid.row(event), lastRow = grid._lastSelected && grid.row(grid._lastSelected);
+				var row = grid.row(event),
+					lastRow = grid._lastSelected && grid.row(grid._lastSelected);
 				grid._selectionTriggerEvent = event;
+				
 				if(type == "radio"){
 					if(!lastRow || lastRow.id != row.id){
 						grid.clearSelection();
@@ -81,6 +85,7 @@ function(kernel, arrayUtil, on, aspect, has, put){
 						grid.select(lastRow || row, row, lastRow ? undefined : null);
 						grid._lastSelected = row.element;
 					}else{
+						// No row resolved; must be the select-all checkbox.
 						put(this, (grid.allSelected ? "!" : ".") + "dgrid-select-all");
 						grid[grid.allSelected ? "clearSelection" : "selectAll"]();
 					}
@@ -146,18 +151,19 @@ function(kernel, arrayUtil, on, aspect, has, put){
 		column.renderCell = function(object, value, cell, options, header){
 			var row = object && grid.row(object);
 			value = row && grid.selection[row.id];
+			renderInput(value, cell, object);
+		};
+		column.renderHeaderCell = function(th){
+			var label = column.label || column.field || "";
 			
-			if(header && (type == "radio" || typeof object == "string" || !grid.allowSelectAll)){
-				cell.appendChild(document.createTextNode(object||""));
+			if(type == "radio" || !grid.allowSelectAll){
+				th.appendChild(document.createTextNode(label));
 				if(!grid._hasSelectorInputListener){
 					setupSelectionEvents();
 				}
 			}else{
-				renderInput(value, cell, object);
+				renderInput(false, th, {});
 			}
-		};
-		column.renderHeaderCell = function(th){
-			column.renderCell(column.label || {}, null, th, null, true);
 			headerCheckbox = th.lastChild;
 		};
 		

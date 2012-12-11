@@ -79,7 +79,20 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 					column.autoSave && setTimeout(function(){ grid._trackError("save"); }, 0);
 				}
 			}else{
-				// else keep the value the same
+				// Otherwise keep the value the same
+				// For the sake of always-on editors, need to manually reset the value
+				var cmp;
+				if(cmp = cellElement.widget){
+					// set _dgridIgnoreChange to prevent an infinite loop in the
+					// onChange handler and prevent dgrid-datachange from firing
+					// a second time
+					cmp._dgridIgnoreChange = true;
+					cmp.set("value", oldValue);
+					setTimeout(function(){ cmp._dgridIgnoreChange = false; }, 0);
+				}else if(cmp = cellElement.input){
+					updateInputValue(cmp, oldValue);
+				}
+				
 				return oldValue;
 			}
 		}
@@ -331,6 +344,8 @@ return function(column, editor, editOn){
 		listeners = [],
 		isWidget;
 	
+	if(!column){ column = {}; }
+	
 	// accept arguments as parameters to editor function, or from column def,
 	// but normalize to column def.
 	column.editor = editor = editor || column.editor || "text";
@@ -391,12 +406,14 @@ return function(column, editor, editOn){
 		
 	} : function(object, value, cell, options){
 		// always-on: create editor immediately upon rendering each cell
-		var cmp = createEditor(column);
-		
-		showEditor(cmp, column, cell, value);
-		
-		// Maintain reference for later use.
-		cell[isWidget ? "widget" : "input"] = cmp;
+		if(!column.canEdit || column.canEdit(object, value)){
+			var cmp = createEditor(column);
+			showEditor(cmp, column, cell, value);
+			// Maintain reference for later use.
+			cell[isWidget ? "widget" : "input"] = cmp;
+		}else{
+			return originalRenderCell.call(column, object, value, cell, options);
+		}
 	};
 	
 	return column;

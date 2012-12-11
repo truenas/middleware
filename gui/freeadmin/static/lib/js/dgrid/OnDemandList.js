@@ -98,8 +98,11 @@ return declare([List, _StoreMixin], {
 		}else{
 			this.preload = preload;
 		}
-		var loadingNode = put(preloadNode, "-div.dgrid-loading");
-		put(loadingNode, "div.dgrid-below", this.loadingMessage);
+		
+		var loadingNode = put(preloadNode, "-div.dgrid-loading"),
+			innerNode = put(loadingNode, "div.dgrid-below");
+		innerNode.innerHTML = this.loadingMessage;
+		
 		// Establish query options, mixing in our own.
 		// (The getter returns a delegated object, so simply using mixin is safe.)
 		options = lang.mixin(this.get("queryOptions"), options, 
@@ -317,12 +320,12 @@ return declare([List, _StoreMixin], {
 							offset = Math.min(preload.count, offset);
 							preload.previous.count += offset;
 							adjustHeight(preload.previous, true);
-							preload.count -= offset;
 							preloadNode.rowIndex += offset;
 							queryRowsOverlap = 0;
 						}else{
 							count += offset;
 						}
+						preload.count -= offset;
 					}
 					options.start = preloadNode.rowIndex - queryRowsOverlap;
 					preloadNode.rowIndex += count;
@@ -347,15 +350,17 @@ return declare([List, _StoreMixin], {
 					options.start = preload.count;
 				}
 				options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
-				if(keepScrollTo){
+				if(keepScrollTo && beforeNode && beforeNode.offsetWidth){
 					keepScrollTo = beforeNode.offsetTop;
 				}
 
 				adjustHeight(preload);
 				// create a loading node as a placeholder while the data is loaded
-				var loadingNode = put(beforeNode, "-div.dgrid-loading[style=height:" + count * grid.rowHeight + "px]");
-				put(loadingNode, "div.dgrid-" + (below ? "below" : "above"), grid.loadingMessage);
+				var loadingNode = put(beforeNode, "-div.dgrid-loading[style=height:" + count * grid.rowHeight + "px]"),
+					innerNode = put(loadingNode, "div.dgrid-" + (below ? "below" : "above"));
+				innerNode.innerHTML = grid.loadingMessage;
 				loadingNode.count = count;
+				loadingNode.blockRowIndex = true;
 				// use the query associated with the preload node to get the next "page"
 				options.query = preload.query;
 				// Query now to fill in these rows.
@@ -373,7 +378,7 @@ return declare([List, _StoreMixin], {
 						// can remove the loading node now
 						beforeNode = loadingNode.nextSibling;
 						put(loadingNode, "!");
-						if(keepScrollTo && beforeNode){ // beforeNode may have been removed if the query results loading node was a removed as a distant node before rendering 
+						if(keepScrollTo && beforeNode && beforeNode.offsetWidth){ // beforeNode may have been removed if the query results loading node was a removed as a distant node before rendering 
 							// if the preload area above the nodes is approximated based on average
 							// row height, we may need to adjust the scroll once they are filled in
 							// so we don't "jump" in the scrolling position
