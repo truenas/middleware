@@ -1010,7 +1010,7 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __encrypt_device(self, devname, diskname, volume):
+    def __encrypt_device(self, devname, diskname, volume, passphrase=None):
         from freenasUI.storage.models import Disk, EncryptedDisk
 
         geli_keyfile = volume.get_geli_keyfile()
@@ -1019,8 +1019,15 @@ class notifier:
                 self.__system("mkdir -p %s" % (GELI_KEYPATH, ))
             self.__system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
 
-        self.__system("geli init -B none -K %s -P /dev/%s" % (geli_keyfile, devname))
-        self.__system("geli attach -k %s -p /dev/%s" % (geli_keyfile, devname))
+        if passphrase is not None:
+            _passphrase = " -J %s" % passphrase
+            _passphrase2 = "-j %s" % passphrase
+        else:
+            _passphrase = "-P"
+            _passphrase2 = "-p"
+
+        self.__system("geli init -B none %s -K %s /dev/%s" % (_passphrase, geli_keyfile, devname))
+        self.__system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
         # TODO: initialize the provider in background (wipe with random data)
 
         ident = self.device_to_identifier(diskname)
@@ -1531,8 +1538,9 @@ class notifier:
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
 
-    def zfs_replace_disk(self, volume, from_label, to_disk):
+    def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
+        from freenasUI.storage.models import Disk, EncryptedDisk
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize = c.fetchone()[0]
@@ -1543,9 +1551,6 @@ class notifier:
         from_disk = self.label_to_disk(from_label)
         from_swap = self.part_type_from_device('swap', from_disk)
         encrypt = (volume.vol_encrypt >= 1)
-
-        # TODO: support for passphrase
-        assert (not encrypt) or volume.vol_encrypt == 1
 
         if from_swap != '':
             self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
@@ -1586,7 +1591,10 @@ class notifier:
                 log.warn("Could not determine GPT uuid for %s", to_label)
                 raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
             else:
-                devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume)
+                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
+                if from_diskobj.exists():
+                    ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
+                devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
 
         if from_disk == to_disk:
             self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
@@ -3502,6 +3510,8 @@ class notifier:
                 return None
         search = doc.xpathEval("//provider[@id = '%s']/../name" % provider)
         disk = search[0].content
+        if search[0].parent.parent.xpathEval("./name")[0].content in ('ELI', ):
+            return self.label_to_disk(disk.replace(".eli", ""))
         return disk
 
     def device_to_identifier(self, name):

@@ -720,9 +720,13 @@ def zpool_disk_replace(request, vname, label):
     disk = notifier().label_to_disk(label)
     volume = models.Volume.objects.get(vol_name=vname)
     if request.method == "POST":
-        form = forms.ZFSDiskReplacementForm(request.POST, disk=disk)
+        form = forms.ZFSDiskReplacementForm(
+            request.POST,
+            volume=volume,
+            disk=disk
+        )
         if form.is_valid():
-            if form.done(volume, disk, label):
+            if form.done(disk, label):
                 return JsonResp(
                     request,
                     message=_("Disk replacement has been initiated."))
@@ -733,7 +737,7 @@ def zpool_disk_replace(request, vname, label):
                     message=_("An error occurred."))
 
     else:
-        form = forms.ZFSDiskReplacementForm(disk=disk)
+        form = forms.ZFSDiskReplacementForm(volume=volume, disk=disk)
     return render(request, 'storage/zpool_disk_replace.html', {
         'form': form,
         'vname': vname,
