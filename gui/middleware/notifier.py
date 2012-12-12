@@ -3979,7 +3979,7 @@ class notifier:
         doc = self.__geom_confxml()
 
         for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
-                "starts-with(name, 'ufs/%s')]/../consumer/provider/@ref" \
+                "starts-with(name, 'ufs/%ss')]/../consumer/provider/@ref" \
                 % (sw_name, )):
             prov = doc.xpathEval("//provider[@id = '%s']" % pref.content)[0]
             pid = prov.xpathEval("../consumer/provider/@ref")[0].content
