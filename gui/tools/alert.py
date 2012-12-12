@@ -77,6 +77,8 @@ class Alert(object):
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS', 'UFS']):
+            if not vol.is_decrypted():
+                continue
             status = vol.status
             message = ""
             if  vol.vol_fstype == 'ZFS':
