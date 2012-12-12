@@ -534,6 +534,8 @@ ZFS_DEDUP_INHERIT = (
     ) + ZFS_DEDUP
 
 TASK_INTERVAL = (
+    (5, _("%(minutes)s minutes") % {'minutes': '5'}),
+    (10, _("%(minutes)s minutes") % {'minutes': '10'}),
     (15, _("%(minutes)s minutes") % {'minutes': '15'}),
     (30, _("%(minutes)s minutes") % {'minutes': '30'}),
     (60, _("%(hour)s hour") % {'hour': '1'}),
