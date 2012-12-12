@@ -20,6 +20,20 @@ ataidle_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM storage_disk WHERE disk_enabled = 1" | \
 	while eval read -r $f; do
+
+		# Run ataidle only in ${disks}
+		if [ -n "${disks}" ]; then
+			local ok_to_run
+			ok_to_run=$(echo "${disks}"| tr " " \\n | while read -r disk_en; do
+				if [ "${disk_en}" = "${disk_name}" ]; then
+					echo "OK"
+					break
+				fi
+			done)
+			if [ -z "${ok_to_run}" ]; then
+				continue
+			fi
+		fi
 		case "$disk_name" in
 		ad*)
 			;;
@@ -61,6 +75,15 @@ name="ix-ataidle"
 rcvar="ataidle_enable"
 start_cmd="ataidle_start"
 stop_cmd=':'
+cmd="${1}"
+
+if [ $# -gt 0 ]; then
+	shift
+fi
+disks=""
+if [ -n "$*" ]; then
+	disks="$*"
+fi
 
 load_rc_config $name
-run_rc_command "$1"
+run_rc_command "${cmd}"

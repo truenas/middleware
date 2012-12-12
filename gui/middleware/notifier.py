@@ -831,6 +831,12 @@ class notifier:
                     break
         return res
 
+    def start_ataidle(self, what=None):
+        if what is not None:
+            self.__system("/usr/sbin/service ix-ataidle quietstart %s" % what)
+        else:
+            self.__system("/usr/sbin/service ix-ataidle quietstart")
+
     def start_ssl(self, what=None):
         if what is not None:
             self.__system("/usr/sbin/service ix-ssl quietstart %s" % what)
