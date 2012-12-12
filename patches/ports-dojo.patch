@@ -1,3 +1,16 @@
+Index: www/dojo/Makefile
+===================================================================
+--- www/dojo/Makefile	(revision 302583)
++++ www/dojo/Makefile	(working copy)
+@@ -6,7 +6,7 @@
+ #
+ 
+ PORTNAME=		dojo
+-PORTVERSION=		1.5.0
++PORTVERSION=		1.8.1
+ CATEGORIES=		www
+ MASTER_SITES=		http://download.dojotoolkit.org/release-${PORTVERSION}/ \
+ 			LOCAL/glarkin
 Index: www/dojo/distinfo
 ===================================================================
 --- www/dojo/distinfo	(revision 302583)
@@ -5,8 +18,8 @@ Index: www/dojo/distinfo
 @@ -1,2 +1,2 @@
 -SHA256 (dojo-release-1.5.0.tar.gz) = da6c357d31c38b4eb27cf1d2860d0f504cf32a2fb2f423542b2c7dc11193a616
 -SIZE (dojo-release-1.5.0.tar.gz) = 3422622
-+SHA256 (dojo-release-1.8.0.tar.gz) = 5efb1c2780242cd1fd3dae101d3a2e79e4385d7b4f0a76aa895d413ee0305b6e
-+SIZE (dojo-release-1.8.0.tar.gz) = 7708862
++SHA256 (dojo-release-1.8.1.tar.gz) = 913f8d0976fa09b29f3767fee26bbaa25b1928c73240a97abb93d1eeb9d8b927
++SIZE (dojo-release-1.8.1.tar.gz) = 7720257
 Index: www/dojo/pkg-plist
 ===================================================================
 --- www/dojo/pkg-plist	(revision 302583)
@@ -11326,16 +11339,3 @@ Index: www/dojo/pkg-plist
  @dirrm %%WWWDIR%%/dijit/_editor/nls/ar
  @dirrm %%WWWDIR%%/dijit/_editor/nls
  @dirrm %%WWWDIR%%/dijit/_editor
-Index: www/dojo/Makefile
-===================================================================
---- www/dojo/Makefile	(revision 302583)
-+++ www/dojo/Makefile	(working copy)
-@@ -6,7 +6,7 @@
- #
- 
- PORTNAME=		dojo
--PORTVERSION=		1.5.0
-+PORTVERSION=		1.8.0
- CATEGORIES=		www
- MASTER_SITES=		http://download.dojotoolkit.org/release-${PORTVERSION}/ \
- 			LOCAL/glarkin

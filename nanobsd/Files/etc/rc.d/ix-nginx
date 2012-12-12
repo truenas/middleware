@@ -197,7 +197,8 @@ __EOF__
             alias /var/db/graphs;
         }
 
-        location /dojango/dojo-media/release/1.8.0 {
+        #FIXME: get version from freenasUI.settings
+        location /dojango/dojo-media/release/1.8.1 {
             alias /usr/local/www/dojo;
         }
 
