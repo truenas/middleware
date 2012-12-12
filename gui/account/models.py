@@ -43,6 +43,7 @@ class bsdGroups(Model):
     bsdgrp_builtin = models.BooleanField(
             default=False,
             editable=False,
+            verbose_name=_("Built-in Group"),
             )
 
     class Meta:
@@ -121,6 +122,7 @@ class bsdUsers(Model):
     bsdusr_builtin = models.BooleanField(
             default=False,
             editable=False,
+            verbose_name=_("Built-in User"),
             )
     bsdusr_email = models.EmailField(
             verbose_name=_("E-mail"),
