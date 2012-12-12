@@ -72,19 +72,18 @@
 		{{ m.mp_path }}
 	    </td>
 	    <td>
-		{{ m.used_si }} ({{ m.used_pct }})
+		{% if m.mp_volume.is_decrypted %}{{ m.used_si }} ({{ m.used_pct }}){% else %}LOCKED{% endif %}
 	    </td>
 	    <td>
-		{{ m.avail_si }}
+		{% if m.mp_volume.is_decrypted %}{{ m.avail_si }}{% else %}LOCKED{% endif %}
 	    </td>
 	    <td>
-		{{ m.total_si }}
+		{% if m.mp_volume.is_decrypted %}{{ m.total_si }}{% else %}LOCKED{% endif %}
 	    </td>
 	    <td>
-		{{ m.status }}
+		{% if m.mp_volume.is_decrypted %}{{ m.status }}{% else %}LOCKED{% endif %}
 	    </td>
 	    <td>
-
     <button id="delVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
@@ -94,6 +93,7 @@
     <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'delVolBtn{{ m.id }}', position: ['above']">
         <strong>{% trans "Detach Volume" %}</strong>
     </div>
+    {% if m.mp_volume.is_decrypted %}
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="scrubVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button">
         <img src="{{ STATIC_URL }}images/ui/buttons/scrub.png" />
@@ -161,6 +161,80 @@
     <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'statusVolBtn{{ m.id }}', position: ['above']">
         <strong>{% trans "Volume Status" %}</strong>
     </div>
+    {% if m.mp_volume.vol_encrypt == 1 %}
+    <button id="addPassBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Create Passphrase"|escapejs %}', '{% url storage_volume_create_passphrase object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'addPassBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Create Passphrase" %}</strong>
+    </div>
+    {% elif m.mp_volume.vol_encrypt == 2 %}
+    <button id="changePassBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Change Passphrase"|escapejs %}', '{% url storage_volume_change_passphrase object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'changePassBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Change Passphrase" %}</strong>
+    </div>
+    {% endif %}
+    {% if m.mp_volume.vol_encrypt > 0 %}
+    <button id="keyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Download Key"|escapejs %}', '{% url storage_volume_key object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'keyBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Download Key" %}</strong>
+    </div>
+
+    <button id="rekeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Encryption Re-key"|escapejs %}', '{% url storage_volume_rekey object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'rekeyBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Encryption Re-key" %}</strong>
+    </div>
+
+    <button id="reckeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Add recovery key"|escapejs %}', '{% url storage_volume_recoverykey_add object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'reckeyBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Add recovery key" %}</strong>
+    </div>
+
+    <button id="rmreckeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Remove recovery key"|escapejs %}', '{% url storage_volume_recoverykey_remove object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'rmreckeyBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Remove recovery key" %}</strong>
+    </div>
+
+    {% endif %}
+    {% else %}
+    <button id="unlockBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            editObject('{% trans "Unlock"|escapejs %}', '{% url storage_volume_unlock object_id=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: 'unlockBtn{{ m.id }}', position: ['above']">
+        <strong>{% trans "Unlock" %}</strong>
+    </div>
+    {% endif %}
 	    </td>
 	</tr>
     {% for name, dataset in m.mp_volume.get_datasets.items %}

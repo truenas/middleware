@@ -30,9 +30,10 @@ import re
 import signal
 import subprocess
 
+from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import models as dmodels
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -989,8 +990,192 @@ def disk_wipe_progress(request, devname):
                 output = pipe.communicate()[0]
                 size = output.split()[2]
                 received = transf[-1]
-        return HttpResponse('new Object({state: "uploading", received: %s, size: %s});' % (received, size))
+        return HttpResponse('new Object({state: "uploading", received: %s, '
+            'size: %s});' % (received, size))
 
     except Exception, e:
         log.warn("Could not check for disk wipe progress: %s", e)
     return HttpResponse('new Object({state: "starting"});')
+
+
+def volume_create_passphrase(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.CreatePassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Passphrase created")
+                )
+    else:
+        form = forms.CreatePassphraseForm()
+    return render(request, "storage/create_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
+
+
+def volume_change_passphrase(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.ChangePassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Passphrase updated")
+                )
+    else:
+        form = forms.ChangePassphraseForm()
+    return render(request, "storage/change_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
+
+
+def volume_unlock(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if volume.vol_encrypt < 2:
+        if request.method == "POST":
+            notifier().start("geli")
+            zimport = notifier().zfs_import(volume.vol_name,
+                id=volume.vol_guid)
+            if zimport and volume.is_decrypted:
+                return JsonResponse(
+                    message=_("Volume unlocked")
+                    )
+            else:
+                return JsonResponse(
+                    message=_("Volume failed unlocked")
+                    )
+        return render(request, "storage/unlock.html", {
+        })
+
+    if request.method == "POST":
+        form = forms.UnlockPassphraseForm(request.POST)
+        if form.is_valid():
+            form.done(volume=volume)
+            return JsonResponse(
+                message=_("Volume unlocked")
+                )
+    else:
+        form = forms.UnlockPassphraseForm()
+    return render(request, "storage/unlock_passphrase.html", {
+        'volume': volume,
+        'form': form,
+    })
+
+
+def volume_key(request, object_id):
+
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            request.session["allow_gelikey"] = True
+            return JsonResponse(
+                message=_("GELI key download starting..."),
+                events=["window.location='%s';" % (
+                    reverse("storage_volume_key_download",
+                        kwargs={'object_id': object_id}),
+                    )],
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/key.html", {
+        'form': form,
+    })
+
+
+def volume_key_download(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if "allow_gelikey" not in request.session:
+        return HttpResponseRedirect('/')
+
+    geli_keyfile = volume.get_geli_keyfile()
+    wrapper = FileWrapper(file(geli_keyfile))
+
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(geli_keyfile)
+    response['Content-Disposition'] = 'attachment; filename=geli.key'
+    del request.session["allow_gelikey"]
+    return response
+
+
+def volume_rekey(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.ReKeyForm(request.POST, volume=volume)
+        if form.is_valid():
+            form.done()
+            return JsonResponse(
+                message=_("Encryption re-key succeeded"),
+                )
+    else:
+        form = forms.ReKeyForm(volume=volume)
+
+    return render(request, "storage/rekey.html", {
+        'form': form,
+    })
+
+
+def volume_recoverykey_add(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            reckey = notifier().geli_recoverykey_add(volume)
+            request.session["allow_gelireckey"] = reckey
+            return JsonResponse(
+                message=_("GELI recovery key download starting..."),
+                events=["window.location='%s';" % (
+                    reverse("storage_volume_recoverykey_download",
+                        kwargs={'object_id': object_id}),
+                    )],
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/recoverykey_add.html", {
+        'form': form,
+    })
+
+
+def volume_recoverykey_download(request, object_id):
+
+    if "allow_gelireckey" not in request.session:
+        return HttpResponseRedirect('/')
+
+    rec_keyfile = request.session["allow_gelireckey"]
+    with open(rec_keyfile, 'rb') as f:
+
+        response = HttpResponse(f.read(),
+            content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(rec_keyfile)
+    response['Content-Disposition'] = 'attachment; filename=geli_recovery.key'
+    del request.session["allow_gelireckey"]
+    os.unlink(rec_keyfile)
+    return response
+
+
+def volume_recoverykey_remove(request, object_id):
+
+    volume = models.Volume.objects.get(id=object_id)
+    if request.method == "POST":
+        form = forms.KeyForm(request.POST)
+        if form.is_valid():
+            reckey = notifier().geli_delkey(volume)
+            return JsonResponse(
+                message=_("Recovery has been removed")
+                )
+    else:
+        form = forms.KeyForm()
+
+    return render(request, "storage/recoverykey_remove.html", {
+        'form': form,
+    })

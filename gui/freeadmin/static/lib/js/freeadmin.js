@@ -1016,6 +1016,7 @@ require([
 
         if(zfs) {
             domStyle.set('zfssectorsize', 'display', 'table-row');
+            domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
             domStyle.set('zfsdedup', 'display', 'table-row');
 
             if(d.length >= 3) {
@@ -1038,6 +1039,7 @@ require([
 
         } else {
             domStyle.set('zfssectorsize', 'display', 'none');
+            domStyle.set('zfsfulldiskencryption', 'display', 'none');
             domStyle.set('zfsdedup', 'display', 'none');
             domStyle.set("grpraidz", "display", "none");
             domStyle.set("grpraidz2", "display", "none");

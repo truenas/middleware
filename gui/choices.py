@@ -157,6 +157,12 @@ VolumeType_Choices = (
         ('ZFS', 'ZFS'),
         )
 
+VolumeEncrypt_Choices = (
+        (0, _('Unencrypted')),
+        (1, _('Encrypted, no passphrase')),
+        (2, _('Encrypted, with passphrase')),
+        )
+
 ## Services|CIFS/SMB|Settings
 ## This will be overrided if LDAP or ActiveDirectory is enabled.
 CIFSAUTH_CHOICES = (
