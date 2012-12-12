@@ -123,7 +123,8 @@ plugins_jail_start()
 			jail=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 			SELECT
 				jail_ipv4address,
-				jail_ipv4netmask
+				jail_ipv4netmask,
+				jail_mac
 			FROM
 				services_pluginsjail
 			ORDER BY
@@ -139,6 +140,7 @@ plugins_jail_start()
 
 			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
 			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
+			macaddr=$(echo ${jail}|cut -d "|" -f 3)
 			#FIXME: ipv6
 			defaultroute=$(netstat -f inet -rn | grep default|awk '{print $2}')
 			#FIXME: perhaps select which iface to bridge with in the GUI
@@ -150,6 +152,9 @@ plugins_jail_start()
 			ifconfig ${epair} up
 			epairb=$(echo ${epair}|sed -E "s/([0-9])a$/\1b/g")
 			ifconfig ${bridge} addm ${epair} up
+			if [ -n "${macaddr}" ]; then
+				ifconfig ${epairb} ether ${macaddr}
+			fi
 			ifconfig ${epairb} vnet ${jail_id}
 			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
 			if [ -n "${defaultroute}" ]; then
