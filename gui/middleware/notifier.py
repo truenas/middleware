@@ -974,7 +974,8 @@ class notifier:
         """Unlabel the disk"""
         swapdev = self.part_type_from_device('swap', devname)
         if swapdev != '':
-            self.__system("swapoff /dev/%s" % self.part_type_from_device('swap', devname))
+            self.__system("swapoff /dev/%s.eli" % swapdev)
+            self.__system("geli detach /dev/%s" % swapdev)
         self.__system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
@@ -1584,6 +1585,7 @@ class notifier:
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
                     self.__system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
+                    self.__system('/sbin/geli detach /dev/%s' % (to_swap, ))
                 if encrypt:
                     self.__system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
