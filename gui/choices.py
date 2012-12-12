@@ -618,3 +618,30 @@ class KBDMAP_CHOICES(object):
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
         for name, desc in _all:
             yield name, desc
+
+
+SFTP_LOG_LEVEL = (
+    ('QUIET', _('Quiet')),
+    ('FATAL', _('Fatal')),
+    ('ERROR', _('Error')),
+    ('INFO', _('Info')),
+    ('VERBOSE', _('Verbose')),
+    ('DEBUG', _('Debug')),
+    ('DEBUG2', _('Debug2')),
+    ('DEBUG3', _('Debug3')),
+    )
+
+
+SFTP_LOG_FACILITY = (
+    ('DAEMON', _('Daemon')),
+    ('USER', _('User')),
+    ('AUTH', _('Auth')),
+    ('LOCAL0', _('Local 0')),
+    ('LOCAL1', _('Local 1')),
+    ('LOCAL2', _('Local 2')),
+    ('LOCAL3', _('Local 3')),
+    ('LOCAL4', _('Local 4')),
+    ('LOCAL5', _('Local 5')),
+    ('LOCAL6', _('Local 6')),
+    ('LOCAL7', _('Local 7')),
+    )
