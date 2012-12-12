@@ -25,7 +25,7 @@ Building the System Quickstart Flow:
 
 - Checking out the code from svn:
 
-% svn co https://freenas.svn.sourceforge.net/svnroot/freenas/trunk
+% svn co https://svn.code.sf.net/p/freenas/code/trunk
 % cd trunk
 
 More information about checking out sources from svn via SourceForge
