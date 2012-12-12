@@ -1525,12 +1525,14 @@ class notifier:
         encrypt = (volume.vol_encrypt >= 1)
 
         if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (from_swap, ))
+            self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
+            self.__system('/sbin/geli detach /dev/%s' % (from_swap, ))
 
         # to_disk _might_ have swap on, offline it before gpt label
         to_swap = self.part_type_from_device('swap', to_disk)
         if to_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (to_swap, ))
+            self.__system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
+            self.__system('/sbin/geli detach /dev/%s' % (to_swap, ))
 
         # Replace in-place
         if from_disk == to_disk:
@@ -1581,9 +1583,9 @@ class notifier:
                     self.__system('/sbin/swapon /dev/%s.eli' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
-                    self.__system('/sbin/swapoff /dev/%s' % (to_swap))
+                    self.__system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
                 if encrypt:
-                    self.__system('/sbin/geli detach %s' % (devname))
+                    self.__system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
             if encrypt:
                 self.__system('/sbin/geli detach -l %s' % (devname))
@@ -1603,7 +1605,8 @@ class notifier:
         swap = self.part_type_from_device('swap', disk)
 
         if swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (swap))
+            self.__system('/sbin/swapoff /dev/%s.eli' % (swap, ))
+            self.__system('/sbin/geli detach /dev/%s' % (swap, ))
 
         # Replace in-place
         p1 = self.__pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
@@ -1629,7 +1632,8 @@ class notifier:
             # Remove the swap partition for another time to be sure.
             # TODO: swap partition should be trashed instead.
             if from_swap != '':
-                self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
+                self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
+                self.__system('/sbin/geli detach /dev/%s' % (from_swap,))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
         if from_disk:
@@ -1649,7 +1653,8 @@ class notifier:
         from_swap = self.part_type_from_device('swap', from_disk)
 
         if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
+            self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
+            self.__system('/sbin/geli detach /dev/%s' % (from_swap,))
 
         p1 = self.__pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1667,7 +1672,8 @@ class notifier:
         for disk in disks:
             swapdev = self.part_type_from_device('swap', disk)
             if swapdev != '':
-                self.__system("swapoff /dev/%s" % swapdev)
+                self.__system("swapoff /dev/%s.eli" % swapdev)
+                self.__system("geli detach /dev/%s" % swapdev)
 
     def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
         """Determine the mountpoint for a volume or ZFS dataset
