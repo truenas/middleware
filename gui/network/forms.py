@@ -35,6 +35,10 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+from ipaddr import (
+    IPAddress, AddressValueError,
+    IPNetwork,
+)
 
 
 class InterfacesForm(ModelForm):
@@ -88,6 +92,42 @@ class InterfacesForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_int_v4netmaskbit(self):
+        ip = self.cleaned_data.get("int_ipv4address")
+        nw = self.cleaned_data.get("int_v4netmaskbit")
+        if not nw or not ip:
+            return nw
+        network = IPNetwork('%s/%s' % (ip, nw))
+        used_networks = []
+        qs = models.Interfaces.objects.all()
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        for iface in qs:
+            if iface.int_v4netmaskbit:
+                used_networks.append(
+                    IPNetwork('%s/%s' % (
+                        iface.int_ipv4address,
+                        iface.int_v4netmaskbit,
+                    ))
+                )
+            for alias in iface.alias_set.all():
+                if alias.alias_v4netmaskbit:
+                    used_networks.append(
+                        IPNetwork('%s/%s' % (
+                            alias.alias_v4address,
+                            alias.alias_v4netmaskbit,
+                        ))
+                    )
+
+        for unet in used_networks:
+            if unet.overlaps(network):
+                raise forms.ValidationError(
+                    _("The network %s is already in use by another NIC.") % (
+                        network.masked(),
+                    )
+                )
+        return nw
+
     def clean_int_ipv6address(self):
         ip = self.cleaned_data.get("int_ipv6address")
         if ip:
@@ -118,8 +158,8 @@ class InterfacesForm(ModelForm):
             if not ipv4addr and not self._errors.get('int_ipv4address'):
                 self._errors['int_ipv4address'] = self.error_class([
                     _("You have to specify IPv4 address as well"),
-                    ])
-            if not ipv4net:
+                ])
+            if not ipv4net and 'int_v4netmaskbit' not in self._errors:
                 self._errors['int_v4netmaskbit'] = self.error_class([
                     _("You have to choose IPv4 netmask as well"),
                     ])
@@ -395,6 +435,42 @@ class AliasForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_alias_v4netmaskbit(self):
+        ip = self.cleaned_data.get("alias_v4address")
+        nw = self.cleaned_data.get("alias_v4netmaskbit")
+        if not nw or not ip:
+            return nw
+        network = IPNetwork('%s/%s' % (ip, nw))
+        used_networks = []
+        qs = models.Interfaces.objects.all()
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.alias_interface.id)
+        for iface in qs:
+            if iface.int_v4netmaskbit:
+                used_networks.append(
+                    IPNetwork('%s/%s' % (
+                        iface.int_ipv4address,
+                        iface.int_v4netmaskbit,
+                    ))
+                )
+            for alias in iface.alias_set.all():
+                if alias.alias_v4netmaskbit:
+                    used_networks.append(
+                        IPNetwork('%s/%s' % (
+                            alias.alias_v4address,
+                            alias.alias_v4netmaskbit,
+                        ))
+                    )
+
+        for unet in used_networks:
+            if unet.overlaps(network):
+                raise forms.ValidationError(
+                    _("The network %s is already in use by another NIC.") % (
+                        network.masked(),
+                    )
+                )
+        return nw
+
     def clean_alias_v6address(self):
         ip = self.cleaned_data.get("alias_v6address")
         par_ip = self.parent.cleaned_data.get("int_ipv6address") \
@@ -426,8 +502,8 @@ class AliasForm(ModelForm):
             if not ipv4addr and not self._errors.get('alias_v4address'):
                 self._errors['alias_v4address'] = self.error_class([
                     _("You have to specify IPv4 address as well per alias"),
-                    ])
-            if not ipv4net:
+                ])
+            if not ipv4net and 'alias_v4netmaskbit' not in self._errors:
                 self._errors['alias_v4netmaskbit'] = self.error_class([
                     _("You have to choose IPv4 netmask as well per alias"),
                     ])
