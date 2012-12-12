@@ -572,7 +572,6 @@ def delete_lagg_interface():
 
     print _("Deleting lagg interface:"),
     try:
-        lagg.lagg_interface.delete()
         lagg.delete()
     except:
         print _("Failed")
