@@ -1309,8 +1309,8 @@ class notifier:
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
         if encrypt:
-            for devname in vdev:
-                self.__system('/sbin/geli detach -l %s' % (devname))
+            for devname in vdevs:
+                self.__system('/sbin/geli detach -l %s' % (devname, ))
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None):
