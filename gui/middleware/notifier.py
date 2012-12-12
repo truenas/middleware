@@ -353,18 +353,8 @@ class notifier:
         self.__system("/usr/sbin/service istgt forcestop")
 
     def _reload_iscsitarget(self):
-        """
-        We are using istgtcontrol to reload istgt
-        This utility requires LUC to be enabled for localhost,
-        otherwise just do a restart instead
-        """
-        from freenasUI.services.models import iSCSITargetGlobalConfiguration
-        gc = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
-        if gc.iscsi_toggleluc:
-            self.__system("/usr/sbin/service ix-istgt quietstart")
-            self.__system("/usr/sbin/service istgt reload")
-        else:
-            self._restart_iscsitarget()
+        self.__system("/usr/sbin/service ix-istgt quietstart")
+        self.__system("/usr/sbin/service istgt reload")
 
     def _start_sysctl(self):
         self.__system("/usr/sbin/service sysctl start")
