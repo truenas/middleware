@@ -1187,14 +1187,52 @@ class DiskReplacementForm(forms.Form):
 class ZFSDiskReplacementForm(DiskReplacementForm):
 
     def __init__(self, *args, **kwargs):
+        self.volume = kwargs.pop('volume')
         super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
+        if self.volume.vol_encrypt == 2:
+            self.fields['pass'] = forms.CharField(
+                label=_("Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
+            self.fields['pass2'] = forms.CharField(
+                label=_("Confirm Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
 
-    def done(self, volume, fromdisk, label):
+    def clean_pass2(self):
+        passphrase = self.cleaned_data.get("pass")
+        passphrase2 = self.cleaned_data.get("pass2")
+        if passphrase != passphrase2:
+            raise forms.ValidationError(
+                _("Confirmation does not match passphrase")
+            )
+        return passphrase
+
+    def done(self, fromdisk, label):
         devname = self.cleaned_data['volume_disks']
-        if devname != fromdisk:
-            rv = notifier().zfs_replace_disk(volume, label, devname)
+        passphrase = self.cleaned_data.get("pass")
+        if passphrase is not None:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
         else:
-            rv = notifier().zfs_replace_disk(volume, label, fromdisk)
+            passfile = None
+
+        with transaction.commit_on_success():
+            if devname != fromdisk:
+                rv = notifier().zfs_replace_disk(
+                    self.volume,
+                    label,
+                    devname,
+                    passphrase=passfile
+                )
+            else:
+                rv = notifier().zfs_replace_disk(
+                    self.volume,
+                    label,
+                    fromdisk,
+                    passphrase=passfile
+                )
         if rv == 0:
             return True
         else:
