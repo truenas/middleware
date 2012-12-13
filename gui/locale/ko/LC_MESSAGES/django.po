@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-10-01 03:03+0200\n"
+"PO-Revision-Date: 2012-10-03 04:03+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -904,9 +904,8 @@ msgid "Parent Interface"
 msgstr "상위 인터페이스"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 숫자입니다. "
+msgstr "이름은 vlanXX의 형식이어야 하며 XX는 정수여야 합니다. "
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1058,9 +1057,8 @@ msgid "Virtual Interface"
 msgstr "가상 인터페이스"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 숫자입니다. "
+msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 정수여야 합니다. 예: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1164,7 +1162,7 @@ msgstr "이곳은 시스템이 PBI 파일을 설치하기전 임시로 PBI파일
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr "설치될  PBI 파일"
+msgstr "설치될 PBI 파일"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
@@ -1209,7 +1207,7 @@ msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "마운트 여부?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
@@ -1261,7 +1259,7 @@ msgstr "플러그인 구성 기술"
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "플러그인이 활성화되었습니다."
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
@@ -1387,7 +1385,7 @@ msgstr "최소 passive 포트보다 높아야 합니다"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다."
+msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
@@ -1442,7 +1440,7 @@ msgstr "포트"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "알파벳 문자, \".\", \"-\" 와 \"_\"를 사용해 주십시요."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -1541,10 +1539,9 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "이 값의 입력범위는 %(start)d 부터 %(end)d 사이 입니다."
 
 #: services/forms.py:669
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
+msgstr "이 입력란은 디스커버리 방식이 CHAP나 CHAP Mutual로 되어있다면 필요한 입력란입니다."
 
 #: services/forms.py:717
 msgid ""
@@ -1630,7 +1627,7 @@ msgstr "서비스"
 
 #: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "서비스 이름은 빌드 때 자동적으로 만들어져야 합니다."
+msgstr "서비스 이름은 빌드 때 자동적으로 만들어져야 합니다"
 
 #: services/models.py:55
 msgid "Enable Service"
@@ -1700,6 +1697,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"손님계정에 특화된 서비스들을 이용하기 위한 계정(기본값 'nobody')를 무시하기 위해서 이 옵션을 사용하십시요. 해당 계정에게 부여된 "
+"특권이 손님계정 서비스에 연결되어지는 어떤 클라이언트에게도 부여되게 됩니다. 이 사용자 계정은 반드시 비밀번호 파일에 존재하여야 "
+"하지만, 유효한 로그인 계정일 필요는 없습니다. 루트 유저는 손님 계정으로 사용될 수 없습니다."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
@@ -1773,17 +1773,18 @@ msgstr ""
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr ""
+msgstr "이 파라메터들은 smb.conf의 [homes] 섹션에 추가되어집니다."
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "유닉스 확장자들"
 
 #: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"이 확장들은 삼바가 UNIX CIFS 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1800,7 +1801,7 @@ msgstr "최소 AIO 읽기 크기"
 #: services/models.py:177
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
-msgstr ""
+msgstr "삼바는 요구되어지는 크기가 이 값보다 크면 비동기적으로 읽을 것입니다."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1809,7 +1810,7 @@ msgstr "최소 AIO 쓰기 크기"
 #: services/models.py:183
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
-msgstr ""
+msgstr "삼바는 요구되어지는 크기가 이 값보다 크면 비동기적으로 쓸 것입니다."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
@@ -1852,7 +1853,7 @@ msgstr ""
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr ""
+msgstr "AFP를 통해서 허용되는 최대 접속수. 기본 제한 접속수는 50."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -1861,7 +1862,7 @@ msgstr "AFP"
 
 #: services/models.py:236
 msgid "Number of servers"
-msgstr "서버 개수"
+msgstr "서버 갯수"
 
 #: services/models.py:237
 msgid ""
@@ -2254,17 +2255,19 @@ msgstr ""
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr ""
+msgstr "도메인 이름"
 
 #: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"호스트 이름 alias. 이 옵션은 같은 IP를 가지는 각각의 도메인에 여러번 나타날 수 있습니다. 다수의 alias 이름들을 구별하기 "
+"위해선 스페이스를 사용해 주십시요."
 
 #: services/models.py:777
 msgid "Update period"
-msgstr ""
+msgstr "갱신 기간"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
@@ -2272,11 +2275,11 @@ msgstr ""
 
 #: services/models.py:783
 msgid "Forced update period"
-msgstr ""
+msgstr "강제 갱신 기간"
 
 #: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "이 파라메터들은 inadyn.conf 파일 안의 global settings에 추가 될 것입니다."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2323,25 +2326,25 @@ msgstr "위치"
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
-msgstr ""
+msgstr "위치 정보, e.g. 이 시스템의 물리적 위치: '빌딩의 층넘버, 방번호 xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
-msgstr ""
+msgstr "연락처"
 
 #: services/models.py:861
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
-msgstr ""
+msgstr "연락처 정보, e.g. 이 시스템을 책임지는 사람의 이름 또는 이메일 주소:'admin@email.address'."
 
 #: services/models.py:867
 msgid "Community"
-msgstr ""
+msgstr "공동체"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "대부분의 경우,  'public'이 사용 됨."
+msgstr "대부분의 경우, 'public' 이 사용 됨."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
@@ -2408,7 +2411,7 @@ msgstr "원격 모니터"
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "상태 업데이트 이메일 보내기"
 
 #: services/models.py:945
 msgid "To email"
@@ -2416,7 +2419,7 @@ msgstr ""
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "목적지 이메일 주소. 세미콜론으로 구분지어 주세요."
 
 #: services/models.py:951
 msgid "Email Subject"
@@ -2427,6 +2430,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"이메일의 제목. 대체용으로 다음의 파라메터를 사용 할 수 있습니다:<br /><ul><li>%d - 날짜</li><li>%h - 호스트 "
+"이름</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2435,23 +2440,23 @@ msgstr ""
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "FTP 서비스와 바인드될 포트"
 
 #: services/models.py:973
 msgid "Clients"
-msgstr ""
+msgstr "클라이언트"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "클라이언트의 최대 동시 접속수."
 
 #: services/models.py:979
 msgid "Connections"
-msgstr ""
+msgstr "접속"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "IP 주소별 최대 접속수 (0=무한대)."
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -2459,11 +2464,11 @@ msgstr "로그인 시도"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "접속이 차단 되기전 최대로 허용되어지는 비밀번호 시도 수"
 
 #: services/models.py:991
 msgid "Timeout"
-msgstr ""
+msgstr "시간초과"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
