@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-10-12 01:52+0200\n"
+"PO-Revision-Date: 2012-10-14 08:52+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -2472,11 +2472,11 @@ msgstr "시간초과"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "최대 대기 시간"
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr ""
+msgstr "루트 로그인 허용하기"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
