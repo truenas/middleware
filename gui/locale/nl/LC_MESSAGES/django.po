@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-08-10 00:26+0200\n"
-"Last-Translator: Erwin <erwindegroot@lijbrandt.nl>\n"
+"PO-Revision-Date: 2012-11-10 22:15+0200\n"
+"Last-Translator: owevers <owevers@wbse.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -427,7 +427,7 @@ msgstr "Nooit - Controleer het apparaat ongeacht de power mode"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Slaap - Controleer het apparaat tenzij het in SLAAP stand staat"
+msgstr "Standby - Controleer het apparaat tenzij het in Standby stand staat"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -1370,9 +1370,8 @@ msgid "This IP already exists."
 msgstr "Dit IP adres bestaat al."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "De AFP service herstarten is mislukt."
+msgstr "De Plugins Jail service faalde bij het herstarten."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1392,7 +1391,7 @@ msgstr "Deze waarde moet tussen 1024 en 65535 liggen. 0 als standaard"
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Dit moet hoger zijn dan de minimum passieve poort"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1570,9 +1569,8 @@ msgstr ""
 "Dit veld heeft CHAP of Mutual CHAP nodig voor de Controller Auth Methode."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Dit is geen geldig masker"
+msgstr "Dit is geen geldig netwerk"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1615,11 +1613,12 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "Uw Groep ID kan niet hoger zijn dan %d"
 
 #: services/forms.py:1019
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "Het veld bevat geen geldig IP adres of netwerk"
+msgstr ""
+"Het veld bevat geen geldig IP adres of netwerk. Het trefwoord \"ALL\" mag "
+"gebruikt worden om alles toe te staan."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1627,7 +1626,7 @@ msgstr "Authenticatie Groep nummer"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Gebruik alfanumerieke karakters, \".\", \"-\" en \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1642,9 +1641,8 @@ msgid "Are you sure you want to delete?"
 msgstr "Weet u zeker dat u wilt verwijderen?"
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "De SNMP service herladen is mislukt."
+msgstr "De S.M.A.R.T.  service herladen is mislukt."
 
 #: services/models.py:51
 msgid "Service"
@@ -1788,7 +1786,7 @@ msgstr "Thuismappen activeren"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr "Dit in\\uitschakelen thuismappen voor samba gebruiker."
+msgstr "In/uitschakelen thuismappen voor samba gebruiker."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
@@ -1796,7 +1794,7 @@ msgstr "Thuismapverkenning inschakelen"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr "In\\uitschakelen thuismappenverkenning voor samba gebruiker."
+msgstr "In/uitschakelen thuismappen verkenning voor samba gebruiker."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1808,13 +1806,12 @@ msgid "Homes auxiliary parameters"
 msgstr "Hulp Parameters"
 
 #: services/models.py:162
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Deze parameters zijn toegevoegd aan de [Share] sectie van smb.conf"
+msgstr "Deze parameters zijn toegevoegd aan de [Homes] sectie van smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix uitbreidingen"
 
 #: services/models.py:167
 msgid ""
@@ -1828,31 +1825,29 @@ msgstr "AIO Inschakelen"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "AIO ondersteuning in\\uitsschakelen."
+msgstr "AIO ondersteuning in/uitschakelen."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
 msgstr "Minimale AIO lees grootte"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
-"Samba zal a-synchroon lezen als de verzochte grootte groter is dan deze "
-"waarde. De standaard read size is 1."
+"Samba zal a-synchroon lezen als de verlangde grootte groter is dan deze "
+"waarde."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
 msgstr "Minimale AIO schijf grootte"
 
 #: services/models.py:183
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
 "Samba zal a-synchroom schrijven als de verzochte grootte groter is dan deze "
-"waarde. De standaard read size is 1."
+"waarde."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
@@ -1896,10 +1891,9 @@ msgid "Max. Connections"
 msgstr "Max. connecties"
 
 #: services/models.py:221
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Maximaal aantal connecties per sessie (8 is standaard)."
+msgstr "Maximaal aantal connecties toegestaan via AFP (50 is standaard)."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -1959,7 +1953,7 @@ msgstr "I/O wachttijd verlopen"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O wachttijd verlopen verlopen (30 is standaard)"
+msgstr "I/O wachttijd in seconden (30 is standaard)"
 
 #: services/models.py:281
 msgid "NOPIN Interval"
@@ -2165,9 +2159,8 @@ msgid "IP Address"
 msgstr "IPv4 Adres"
 
 #: services/models.py:534
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portal"
+msgstr "Portal IP"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2380,9 +2373,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:821
-#, fuzzy
 msgid "Jail IP address"
-msgstr "Email Adres"
+msgstr "Jail IP Adres"
 
 #: services/models.py:825
 #, fuzzy
@@ -2481,9 +2473,8 @@ msgstr ""
 "komt voordat de tijd is afgelopen zal het uitschakelen worden geannuleerd."
 
 #: services/models.py:933
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "Wachtwoord delen"
+msgstr "UPS hoofdgebruiker wachtwoord"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -4253,9 +4244,8 @@ msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
-"Dit zou de naam moeten zijn van het ZFS bestandssysteem van afgelegen "
-"afgelegen kant. vb: poolnaam/datasetnaam niet het deelmap of het "
-"bestandssysteem pad"
+"Dit zou de naam moeten zijn van het ZFS bestandssysteem op de remote zijde. "
+"vb: poolnaam/datasetnaam niet het koppelpunt of het bestandssysteem pad"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4756,8 +4746,8 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Het email adres dat het systeem zal gebruiken als verzend-adres voor de "
-"uitgaande email-berichten, bijv. freenas@mijndomein.nl"
+"Het email adres dat het systeem zal gebruiken alsafzender adres voor de "
+"uitgaande email-berichten, bv. freenas@mijndomein.nl"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -6094,7 +6084,7 @@ msgstr ""
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
-msgstr "Weet u zeker dat u de de controle wilt uitvoeren?"
+msgstr "Weet u zeker dat u deze controle wilt uitvoeren?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
