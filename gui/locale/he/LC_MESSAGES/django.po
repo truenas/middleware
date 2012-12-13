@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2012-04-04 16:57+0200\n"
-"Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
+"PO-Revision-Date: 2012-11-29 08:46+0200\n"
+"Last-Translator: shaharhd <shaharhd@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
 "MIME-Version: 1.0\n"
@@ -89,7 +89,7 @@ msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr "UDMA-66"
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
@@ -308,11 +308,11 @@ msgstr "CHAP הדדי"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "סוללת אל-פסק מתקרבת לטעינה נמוכה"
+msgstr "סוללת אל-פסק (UPS) מתקרבת לטעינה נמוכה"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "אל-פסק פועל על סוללה"
+msgstr "אל-פסק (UPS) עובר למצב סוללה"
 
 #: choices.py:255
 msgid "Preferred"
@@ -427,15 +427,18 @@ msgstr "לעולם לא - בודק את ההתקן בכל מצב צריכת חש
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "שינה - בודק את ההתקן חוץ מבמצב שינה"
+msgstr "שינה - בודק את ההתקן חוץ מבמצב שינה (SLEEP)"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "כוננות - בדוק אם ההתקן אלא אם כן הוא בכוננות במצב שינה"
+msgstr ""
+"כוננות - בדוק את ההתקן אלא אם הוא במצב בכוננות (STANDBY) או שינה (SLEEP)"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr "לא פעיל - בדוק את ההתקן אלא אם הוא במצב שינה,כוננות או לא פעיל"
+msgstr ""
+"סרק - בדוק את ההתקן אלא אם הוא במצב שינה (SLEEP) ,כוננות (STANDBY) או סרק "
+"(IDLE)"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -447,7 +450,7 @@ msgstr "בדיקה עצמית קצרה"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "בדיקה עצמית בהעברה (ATA בלבד)"
+msgstr "בדיקה עצמית בהעברה (ATA  בלבד)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -532,7 +535,7 @@ msgstr "נעל משתמש"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "צור קבוצה עיקרית חדשה עבור המשתמש"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -681,7 +684,7 @@ msgstr "סיסמת SMB מרוסקת"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "מזהה המשתמש של הקבוצה הראשית"
+msgstr "מזהה משתמש קבוצה ראשית"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -716,9 +719,8 @@ msgid "Account"
 msgstr "חשבון"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "חשבון"
+msgstr "חשבון מנהל מערכת"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -846,7 +848,7 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "אינך יכול להגדיר כמה ממשקים עם אותה כתובת רשת (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
