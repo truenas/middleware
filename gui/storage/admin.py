@@ -125,7 +125,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         if decrypted is True:
             hide_enc = "row.data.vol_fstype !== undefined && row.data.is_decrypted == false"
         else:
-            hide_enc = "row.data.vol_encrypt == 0 && row.data.is_decrypted == true"
+            hide_enc = "row.data.is_decrypted == true"
 
         if has_enc is True:
             if enc_level is not None:
