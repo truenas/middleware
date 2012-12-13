@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-10-27 23:34+0200\n"
+"PO-Revision-Date: 2012-11-11 21:45+0200\n"
 "Last-Translator: Radim <kolar.radim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -952,7 +952,7 @@ msgstr "Musíte vybrat mezi IPv4 nebo IPv6 aliasem"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "Musíte zadat buď platnou IPv4 nebo IPv6 s maskou na alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1065,9 +1065,8 @@ msgid "Virtual Interface"
 msgstr "virtuální rozhraní"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "připojení se musí jmenovat vlanXX kde XX je jméno"
+msgstr "Rozhraní se musí jmenovat vlanXX kde XX je jméno. Příklad: vlan0"
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1100,11 +1099,11 @@ msgstr "druh protokolu"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "agregace spojení"
+msgstr "Agregace spojení"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "linka agregace"
+msgstr "Agregace linek"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
@@ -1116,11 +1115,11 @@ msgstr "LAGG prioritní číslo"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr "fyzická NIC"
+msgstr "Fyzická NIC"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "cílová síť"
+msgstr "Cílová síť"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1132,7 +1131,7 @@ msgstr "statické routování"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
-msgstr ""
+msgstr "Statický routing"
 
 #: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
@@ -1147,143 +1146,137 @@ msgid "Create Link Aggregation"
 msgstr "vytvořit linku agregace"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "zobrazit všechny linky agregace"
+msgstr "Zobrazit všechny agregace linek"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
 msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Tato IP je již používaná."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "Místo pro dočasné uložení PBI souboru"
 
 #: plugins/forms.py:93
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
-msgstr ""
+msgstr "Toto umístění bude použito pro uložení PBI souboru před jeho instalací."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
+msgstr "PBI soubor k instalaci"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Pro pokračování musíte vypnout službu Pluginy"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Uživatelské jméno už existuje."
+msgstr "Cesta %s už existuje."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Plná cesta k jail nemůže překročit 76 znaků"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
+msgstr "Cesta jailu pluginů nemůže být podmnožinou cesty archívu pluginů."
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
+msgstr "Cesta archívu pluginů nemůže být podmožinou cesty jailu pluginů."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "IPv4 addresa"
+msgstr "IPv4 adresa jailu"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "IPv4 síťová maska"
+msgstr "IPv4 síťová maska jailu"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
-msgstr ""
+msgstr "Cesta k archívu pluginů"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "PBI jailu pluginů"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Připojený?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Celá cesta nemůže překročit 88 znaků"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Mezipaměť nemohla být znovu vytvořena."
+msgstr "Cesta %s nemohla být připojena"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Mezipaměť nemohla být znovu vytvořena."
+msgstr "Cesta %s nemohla být odpojena"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Jméno pluginu"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Jméno pluginu"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "Info jméno pluginu"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Info jméno pluginu"
 
 #: plugins/models.py:50
 msgid "Plugin version"
-msgstr ""
+msgstr "Verze pluginu"
 
 #: plugins/models.py:51
 msgid "Version of the plugin"
-msgstr ""
+msgstr "Verze pluginu"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "IPv4 addresa"
+msgstr "Verze plugin API"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Architektura pluginu"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr ""
+msgstr "Plugin povolen"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "IPv4 addresa"
+msgstr "IPv4 adresa pluginu"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin TCP port"
-msgstr ""
+msgstr "TCP port pluginu"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
@@ -1297,7 +1290,7 @@ msgstr ""
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Pluginy"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
@@ -1363,9 +1356,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Toto pole je vyžadováno pro \"domovské adresáře.\""
 
 #: services/forms.py:106
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
+msgstr "Službě CIFS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1430,9 +1422,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Jméno nemůže obsahovat lomítko nebo hranatou závorku"
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "změnit heslo"
+msgstr "Potvrdit heslo"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1440,17 +1431,20 @@ msgstr "Službě DynamicDNS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
-msgstr ""
+msgstr "Toto není platná emailová adresa"
 
 #: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Kontakt musí být složen pouze z alfanumerických znaků, podtržítka a pomlčku "
+"a nebo být zadán email adresou"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
 msgstr ""
+"Komunita musí obsahovat pouze alfanumerické znaky a podtržítko či pomlčku"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1463,20 +1457,19 @@ msgstr ""
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Použil alfanumerické znaky , \".\", \"-\" a \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "uživatel %s neexistuje"
-msgstr[1] "uživatel %s neexistuje"
-msgstr[2] "uživatel %s neexistuje"
+msgstr[0] "Email %(email) není platný"
+msgstr[1] "Email %(email) není platný"
+msgstr[2] "Tyto emaily nejsou platné: %(email)"
 
 #: services/forms.py:437
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
+msgstr "Službě UPS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
@@ -1566,10 +1559,9 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Tato hodnota musí být mezi %(start) a % (end), včetně."
 
 #: services/forms.py:669
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "Toto pole je vyžadováno pro \"domovské adresáře.\""
+msgstr "Toto pole je vyžadováno jestliže je nastavena metoda CHAP."
 
 #: services/forms.py:717
 msgid ""
@@ -1613,7 +1605,7 @@ msgstr "Disk"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "ID skupiny portálu nemůže být vyšší než %d"
 
 #: services/forms.py:1001
 #, python-format
@@ -1695,7 +1687,7 @@ msgstr ""
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Popis serveru. Toto pole se nechává často prázdné."
 
 #: services/models.py:94
 msgid "DOS charset"
@@ -1707,15 +1699,15 @@ msgstr "UNIX znaková sada"
 
 #: services/models.py:106
 msgid "Log level"
-msgstr ""
+msgstr "Úroveň protokolování"
 
 #: services/models.py:109
 msgid "Local Master"
-msgstr ""
+msgstr "Místní hlavní prohlížeč"
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Časový server pro doménu"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
@@ -1741,7 +1733,7 @@ msgstr "Maska souboru"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
+msgstr "Použij tuto volbu pro vynucení masky nových souborů (implicitně 0666)."
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
@@ -1754,19 +1746,19 @@ msgstr "Použijte tuto možnost k přepsání masky (výchozí hodnota 0777)."
 
 #: services/models.py:132
 msgid "Large RW support"
-msgstr ""
+msgstr "Podporovat dlouhé čtení/zápis"
 
 #: services/models.py:134
 msgid "Send files with sendfile(2)"
-msgstr "Pošlete soubory pomocí sendfile(2)"
+msgstr "Posílat soubory pomocí sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
-msgstr ""
+msgstr "Podporovat rozšířené atributy"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Podporovat DOS atributy"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
@@ -1775,7 +1767,7 @@ msgstr "Povolit prázdné heslo"
 #: services/models.py:142 services/models.py:787 services/models.py:874
 #: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Dodatečné parametry"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
@@ -1783,7 +1775,7 @@ msgstr ""
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr ""
+msgstr "Povolit domovské adresáře"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
@@ -1791,7 +1783,7 @@ msgstr "Povolit/zakázat domovské adresáře pro uživatele protokolu samba."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Povolit procházení domovských adresářů"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
@@ -1821,7 +1813,7 @@ msgstr ""
 
 #: services/models.py:171
 msgid "Enable AIO"
-msgstr ""
+msgstr "Povolit AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
@@ -1859,7 +1851,7 @@ msgstr ""
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:203
 msgid "Server Name"
@@ -1870,14 +1862,16 @@ msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Jméno serveru. Jestliže je tato položka prázdná tak je použit výchozí "
+"server."
 
 #: services/models.py:207
 msgid "Guest Access"
-msgstr ""
+msgstr "Přístup hosta"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Povolit přístup hosta ke všem sdílení Apple na tomto zařízení."
 
 #: services/models.py:219
 #, fuzzy
@@ -1903,6 +1897,8 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Specifikuje kolik serverů se vytvoří. Serverů by měl být dostatek k tomu aby "
+"se obsloužily všechny současné požadaky, obvykle 4 - 6."
 
 #: services/models.py:241
 msgid "Asynchronous mode"
@@ -1913,6 +1909,8 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Povol asynchronní režim, který pomůže s výkonem až za gigabitovou rychlost "
+"sítě."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -1921,7 +1919,7 @@ msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr ""
+msgstr "Základní jméno"
 
 #: services/models.py:258
 msgid ""
@@ -2997,6 +2995,7 @@ msgstr ""
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Nastaví interval diskových kontrol na N minut. Výchozí hodnota je 30 minut."
 
 #: services/models.py:1466
 msgid "Power mode"
@@ -3224,9 +3223,8 @@ msgid "Windows (CIFS) Share"
 msgstr "Nastavení CIFS"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Nastavení CIFS"
+msgstr "Sdílení CIFS"
 
 #: sharing/models.py:114
 msgid ""
@@ -3450,9 +3448,8 @@ msgid "Apple (AFP) Share"
 msgstr "Nastavení AFP"
 
 #: sharing/models.py:239
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Nastavení AFP"
+msgstr "Sdílení AFP"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
@@ -3530,9 +3527,8 @@ msgid "Unix (NFS) Share"
 msgstr "Nastavení NFS"
 
 #: sharing/models.py:322
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "Nastavení NFS"
+msgstr "Sdílení NFS"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
@@ -3803,7 +3799,7 @@ msgstr "Označit disky jako nové (zničení dat)"
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
-msgstr "Odstranit vškeré sdílení související s tímto svazkem"
+msgstr "Odstranit veškeré sdílení související s tímto svazkem"
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
@@ -3903,7 +3899,7 @@ msgstr "Povoleno"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "Kontrola ZFS"
 
 #: storage/models.py:249
 msgid "ZFS Scrubs"
@@ -4783,11 +4779,11 @@ msgstr ""
 
 #: system/models.py:580
 msgid "Rsync Task"
-msgstr ""
+msgstr "Úloha rsync"
 
 #: system/models.py:581
 msgid "Rsync Tasks"
-msgstr ""
+msgstr "Úlohy rsync"
 
 #: system/models.py:756
 msgid "S.M.A.R.T. Test"
@@ -4809,11 +4805,11 @@ msgstr "Hodnota"
 
 #: system/models.py:795
 msgid "Sysctl"
-msgstr ""
+msgstr "Proměnné sysctl"
 
 #: system/models.py:796
 msgid "Sysctls"
-msgstr ""
+msgstr "Proměnné sysctl"
 
 #: system/models.py:834
 #, fuzzy
@@ -4821,9 +4817,8 @@ msgid "Tunable"
 msgstr "Vypnuto"
 
 #: system/models.py:835
-#, fuzzy
 msgid "Tunables"
-msgstr "Vypnuto"
+msgstr "Vyladění"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -5527,9 +5522,8 @@ msgid "File Extent"
 msgstr "zobrazit všechny uživatele"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "Žádné sysctl nebyly definovány"
+msgstr "Žádné extenty nebyly definovány"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5622,7 +5616,7 @@ msgstr "Aktivní sdílení"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
-msgstr ""
+msgstr "Žádné sdílení Apple (AFP) není aktivní."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
@@ -5655,7 +5649,7 @@ msgstr ""
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
-msgstr ""
+msgstr "Žádné sdílení UNIX (NFS) není aktivní."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
@@ -5676,7 +5670,7 @@ msgstr "Nastavení CIFS"
 
 #: templates/sharing/windows.html:7
 msgid "There are no active Windows (CIFS) shares."
-msgstr ""
+msgstr "Žádná sdílení Windows (CIFS) nejsou aktivní."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -6104,9 +6098,8 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Žádné sysctl nebyly definovány"
+msgstr "Žádné NTP servery nebyly definovány"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
@@ -6308,13 +6301,11 @@ msgstr "Povolit pouze účet hosta"
 msgid "View S.M.A.R.T. Tests"
 msgstr "Nastavení S.M.A.R.T."
 
-#, fuzzy
 msgid "View Sysctls"
-msgstr "zobrazit všechny uživatele"
+msgstr "Zobrazit proměnné sysctl"
 
-#, fuzzy
 msgid "View Tunables"
-msgstr "zobrazit všechny uživatele"
+msgstr "Zobrazit vyladění"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
@@ -6432,10 +6423,10 @@ msgid "Level"
 msgstr "Úroveň"
 
 msgid "Add Link Aggregation"
-msgstr "přidat linku agregace"
+msgstr "Přidat linku agregace"
 
 msgid "View All Interfaces"
 msgstr "zobrazit všechna rozhraní"
 
 msgid "View All VLANs"
-msgstr "zobrazit všechny VLANs"
+msgstr "Zobrazit všechny VLANy"
