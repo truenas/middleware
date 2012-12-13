@@ -59,15 +59,38 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     # Was the other peer UP in the last minute?
     WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
+    FASTTRACK=0
+
+    # If the other peer was up, test if it's down and we can go with fast route
+    if [ \${WASCONNECTED} -eq 1 ] ; then
+	sleep 1
+	STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
+	STATUS1=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep -E '(MASTER|INIT)' | wc -l\`
+	STATUS2=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep BACKUP | wc -l\`
+
+	echo "Status: \${STATUS0}:\${STATUS1}:\${STATUS2}" | logger
+
+	if [ \$STATUS0 != "MASTER" ]; then
+	    echo "Promoted then demoted, quitting." | logger
+	    # Just in case.  Demote ourselves.
+	    ifconfig \${SUBSYSTEM} advskew 202
+	    exit
+	fi
+
+	# If the other side was down
+	if [ \${STATUS1} -eq 2 -a \${STATUS2} -eq 0 ] ; then
+	    FASTTRACK=1
+	fi
+    fi
 
     if [ \${HAVE_FORCESEAL} -eq 1 ]; then
-	WASCONNECTED=1
+	FASTTRACK=1
     fi
 
     # Start fenced.
     # If not forced, start a normal one, otherwise, mark as such.
     RETVAL=Undefined
-    if [ \${USER_OVERRIDE} -eq 0 -a \${WASCONNECTED} -eq 0 ] ; then
+    if [ \${USER_OVERRIDE} -eq 0 -a \${FASTTRACK} -eq 0 ] ; then
         /usr/local/bin/python /usr/local/sbin/fenced
         RETVAL=\$?
     else
