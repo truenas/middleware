@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-10-11 06:44+0200\n"
+"PO-Revision-Date: 2012-10-12 01:52+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -3064,7 +3064,7 @@ msgstr ""
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Rsync 모듈 추가하기"
 
 #: services/nav.py:159
 msgid "View Rsync Modules"
@@ -4459,9 +4459,8 @@ msgid "NTP Server"
 msgstr ""
 
 #: system/models.py:145
-#, fuzzy
 msgid "NTP Servers"
-msgstr "서비스"
+msgstr "NTP 서비스"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
@@ -4856,12 +4855,12 @@ msgstr "시스템 종료가 발효되었습니다"
 #: system/views.py:297
 #, python-format
 msgid "Test message from %s"
-msgstr ""
+msgstr "%s로 부터의 테스트 메세지"
 
 #: system/views.py:299
 #, python-format
 msgid "This is a message test from %s"
-msgstr ""
+msgstr "%s로 부터 테스트 메세지입니다"
 
 #: system/views.py:302
 #, python-format
@@ -5606,9 +5605,8 @@ msgid "Delete Plugins Jail"
 msgstr "플러그인 Jail 삭제하기"
 
 #: templates/services/rsyncmod.html:34
-#, fuzzy
 msgid "No rsync modules defined"
-msgstr "설정된 볼륨 없음"
+msgstr "rsync 모듈이 지정되어있지 않습니다"
 
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
@@ -6295,9 +6293,8 @@ msgstr "서비스팩 적용"
 msgid "View Rsync Tasks"
 msgstr "디스크 보기"
 
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "SNMP 설정"
+msgstr "S.M.A.R.T. 테스트 보기"
 
 msgid "View Sysctls"
 msgstr "Sysctls 보기"
