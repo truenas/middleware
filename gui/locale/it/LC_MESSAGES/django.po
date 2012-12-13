@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2012-03-18 18:54+0200\n"
-"Last-Translator: Alessandro <alessandro.pellegrini@tin.it>\n"
+"PO-Revision-Date: 2012-09-27 18:28+0200\n"
+"Last-Translator: bersanri <bersan.riccardo@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -928,9 +928,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Scheda di rete fisica nel LAGG"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "NIC fisico"
+msgstr "LAGG NIC fisico"
 
 #: network/forms.py:360
 #, python-format
@@ -1077,11 +1076,10 @@ msgid "Virtual Interface"
 msgstr "Interfaccia virtuale"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Il nome dell'interfaccia deve essere vlanXX in cui XX sono dei numeri. "
-"Esempio: vlan0."
+"Il nome dell'interfaccia deve essere vlanX dove X e' un numero. Esempio: "
+"vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1170,9 +1168,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG aggiunto con successo"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Questo IP esiste già"
+msgstr "Questo IP é già in uso."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1192,12 +1189,12 @@ msgstr "File PBI da installare"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Devi arrestare il servizio Plugins prima di procedere"
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Questo IP esiste già"
+msgstr "Il percorsto %s già esistente"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
@@ -1242,21 +1239,21 @@ msgstr "PBI per le Jail dei Plugin"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Montato?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Il percorso non può superare 88 caratteri"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "La cache non ha potuto essere ricostruita"
+msgstr "Il percorso non può essere montato %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "La cache non ha potuto essere ricostruita"
+msgstr "Il percorso non può essere smontato %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1308,13 +1305,12 @@ msgid "Plugin TCP port"
 msgstr "Porta TCP del plugin"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Percorso alla jail dei plugin"
+msgstr "Percorso dell'archivio Plugin"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Percorso dove i plugins sono salvati dopo l'installazione"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1324,7 +1320,7 @@ msgstr "Plugin"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Sorgente"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
