@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-10-10 00:59+0200\n"
+"PO-Revision-Date: 2012-10-11 06:44+0200\n"
 "Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -4511,11 +4511,11 @@ msgstr ""
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "기본으로 고급필드 보이기"
 
 #: system/models.py:188
 msgid "Enable autotune"
-msgstr ""
+msgstr "autotune 활성화하기"
 
 #: system/models.py:196
 msgid "MOTD banner"
@@ -4670,26 +4670,24 @@ msgstr ""
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "원격 rsync daemon에 정의된 모듈의 이름"
 
 #: system/models.py:475
-#, fuzzy
 msgid "Remote Path"
-msgstr "원격 모니터"
+msgstr "원격지 경로"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
 msgstr ""
 
 #: system/models.py:481 templates/system/rsync.html:8
-#, fuzzy
 msgid "Direction"
-msgstr "설명"
+msgstr "방향"
 
 #: system/models.py:482
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
-msgstr ""
+msgstr "Push - 지역에서 원격지 기기로. Pull - 원격지에서 지역 기기로."
 
 #: system/models.py:527
 #, fuzzy
@@ -4824,14 +4822,12 @@ msgid "Sysctls"
 msgstr ""
 
 #: system/models.py:834
-#, fuzzy
 msgid "Tunable"
-msgstr "AIO 활성화"
+msgstr "Tunable"
 
 #: system/models.py:835
-#, fuzzy
 msgid "Tunables"
-msgstr "AIO 활성화"
+msgstr "Tunables"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -4851,12 +4847,11 @@ msgstr "업로드 파일이 유효하지 않습니다."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
-msgstr ""
+msgstr "시스템 재기동이 발효되었습니다"
 
 #: system/views.py:264
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "시스템을 종료합니다."
+msgstr "시스템 종료가 발효되었습니다"
 
 #: system/views.py:297
 #, python-format
@@ -4871,11 +4866,11 @@ msgstr ""
 #: system/views.py:302
 #, python-format
 msgid "Your test email could not be sent: %s"
-msgstr ""
+msgstr "테스트 이메일을 보낼수 없었습니다: %s"
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "테스트 메일을 보냈습니다!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4979,14 +4974,12 @@ msgid "Change Admin Password"
 msgstr ""
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "전송 모드"
+msgstr "기본 모드"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "전송 모드"
+msgstr "고급 모드"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5000,11 +4993,11 @@ msgstr "확인"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "경고"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "위급"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -5050,7 +5043,7 @@ msgstr "변경 사항이 반영되었습니다. "
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "저장"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
@@ -5092,24 +5085,23 @@ msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:73
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "FreeNAS 운영회"
 
 #: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS 개발"
 
 #: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "FreeNAS 테스트하기"
 
 #: templates/freeadmin/index.html:76
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS 문서들"
 
 #: templates/freeadmin/index.html:77
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "공지사항"
+msgstr "FreeNAS 번역"
 
 #: templates/freeadmin/index.html:82
 msgid "Support Issues"
@@ -5124,9 +5116,8 @@ msgid "Documentation"
 msgstr "문서"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "위치"
+msgstr "FreeNASA 문서"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5282,38 +5273,36 @@ msgstr ""
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "설치되었습니다..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "플러그인 설치하기"
 
 #: templates/plugins/index.html:31
 msgid "Info"
-msgstr ""
+msgstr "정보"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "플러그인 정보"
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "데이터셋 바꾸기"
+msgstr "플러그인 고치기"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
-#, fuzzy
 msgid "Delete plugin"
-msgstr "복제 삭제"
+msgstr "플러그인 삭제하기"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "플러그인이 설치되어있지 않습니다"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
-msgstr ""
+msgstr "불러오기"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5322,7 +5311,7 @@ msgstr ""
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Jail PBI 업로드하기"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5334,30 +5323,25 @@ msgid "Please wait..."
 msgstr "잠시 기다리세요..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "마운트 포인트"
+msgstr "마운트 포인트 고치기"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "마운트 포인트"
+msgstr "마운트 포인트 삭제하기"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "설정된 공유목록이 없음"
+msgstr "마운트 포인트가 지정되어있지 않습니다"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "마운트 포인트"
+msgstr "마운트 포인트 추가하기"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
-#, fuzzy
 msgid "Upload"
-msgstr "구성 올려놓기"
+msgstr "Upload"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
@@ -5423,13 +5407,12 @@ msgid "NFS Settings"
 msgstr ""
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
-#, fuzzy
 msgid "Plugins Settings"
-msgstr "FTP 설정"
+msgstr "플러그인 설정들"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Jail PBI 설치하기"
 
 #: templates/services/core.html:117
 #, fuzzy
@@ -5441,9 +5424,8 @@ msgid "SNMP Settings"
 msgstr "SNMP 설정"
 
 #: templates/services/core.html:139
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "SNMP 설정"
+msgstr "S.M.A.R.T. 설정"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5454,13 +5436,12 @@ msgid "TFTP Settings"
 msgstr "TFTP 설정"
 
 #: templates/services/core.html:172
-#, fuzzy
 msgid "UPS Settings"
-msgstr "FTP 설정"
+msgstr "UPS 설정들"
 
 #: templates/services/enable.html:3
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "이 서비스를 활성화 하시겠습니까?"
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
@@ -5468,7 +5449,7 @@ msgstr "아니오"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Core"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5480,7 +5461,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
-msgstr ""
+msgstr "허가되어진 Initiators"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5499,9 +5480,8 @@ msgid "Associated Targets"
 msgstr ""
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
-msgstr "설정된 공유목록이 없음"
+msgstr "연관되어진 targets이 지정되어있지 않습니다"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
@@ -5524,9 +5504,8 @@ msgid "Authorized Network"
 msgstr ""
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "설정된 공유목록이 없음"
+msgstr "허가되어진 initiators가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5534,9 +5513,8 @@ msgid "Add Authorized Initiator"
 msgstr ""
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "설정된 볼륨 없음"
+msgstr "기기 extents가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5544,14 +5522,12 @@ msgid "Add Extent"
 msgstr ""
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "모든 사용자 보기"
+msgstr "File Extent"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "설정된 공유목록이 없음"
+msgstr "extents가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5559,7 +5535,7 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "이 포탈에 IP가 지정되어있지 않습니다"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5570,9 +5546,8 @@ msgid "Delete Portal"
 msgstr ""
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
-msgstr "설정된 볼륨 없음"
+msgstr "포탈이 설정되어있지 않습니다."
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
@@ -5589,51 +5564,46 @@ msgid "Add Target"
 msgstr "타겟 추가하기"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
-msgstr "마운트 포인트"
+msgstr "마운트 포인트 보기"
 
 #: templates/services/plugins.html:22
 msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
-msgstr ""
+msgstr "주의: 플러그인 서비스가 작동중이 아닙니다. 여러 기능들이 비활성화 되었습니다."
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "운영체제 버전"
+msgstr "버전"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "서비스"
+msgstr "서비스 상태"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
 msgstr "업데이트"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "복제 삭제"
+msgstr "플러그인 갱신하기"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "사용 가능한 플러그인 서비스가 없습니다"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "플러그인 jail안의 모든 파일들은 영구적으로 삭제될것 입니다."
 
 #: templates/services/pluginsjail_edit.html:12
-#, fuzzy
 msgid "Delete Plugins Jail"
-msgstr "인터페이스 삭제"
+msgstr "플러그인 Jail 삭제하기"
 
 #: templates/services/rsyncmod.html:34
 #, fuzzy
@@ -5646,19 +5616,16 @@ msgid "Active Shares"
 msgstr "공유 활성화하기"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
-msgstr "활성중인 UNIX 공유가 없습니다. "
+msgstr "활성중인 애플 공유 (AFP)가  없습니다."
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
-msgstr "NFS 공유 수정"
+msgstr "애플 공유 (AFS) 수정하기"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
-msgstr "Apple Share 삭제"
+msgstr "애플고유 (AFP) 삭제하기"
 
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
@@ -5666,77 +5633,65 @@ msgid "No shares defined"
 msgstr "설정된 공유목록이 없음"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Apple Share (AFP) 추가"
+msgstr "애플 공유 (AFP) 추가하기"
 
 #: templates/sharing/index.html:2
-#, fuzzy
 msgid "Apple (AFP)"
-msgstr "Apple Share (AFP) 추가"
+msgstr "Apple (AFP)"
 
 #: templates/sharing/index.html:7
-#, fuzzy
 msgid "UNIX (NFS)"
-msgstr "유닉스 공유(NFS) 추가 "
+msgstr "유닉스 (NFS)"
 
 #: templates/sharing/index.html:12
-#, fuzzy
 msgid "Windows (CIFS)"
-msgstr "윈도우 공유(CIFS) 추가"
+msgstr "윈도우 (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
-msgstr "활성중인 UNIX 공유가 없습니다. "
+msgstr "현재 활성중인 UNIX 공유(NFS)가 없습니다."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
 msgstr "마운트포인트"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
-msgstr "NFS 공유 수정"
+msgstr "유닉스 공유 (NFS) 수정하기"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
-msgstr "NFS 공유 삭제"
+msgstr "유닉스 공유 (NFS) 삭제하기"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
-msgstr "UNIX 공유 추가"
+msgstr "UNIX 공유 (NFS) 추가하기"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
-msgstr "활성된 윈도우 공유가 없습니다. "
+msgstr "활성화된 윈도우 공유 (CIFS) 가 없습니다. "
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
-msgstr "윈도우 공유 수정"
+msgstr "윈도우 공유 (CIFS) 수정하기"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
-msgstr "윈도우 공유 삭제"
+msgstr "윈도우 공유 (CIFS) 삭제하기"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
-msgstr "윈도우 공유 추가"
+msgstr "윈도우 공유(CIFS) 추가하기"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
 msgstr "스냅샷 복제"
 
 #: templates/storage/dataset_confirm_delete.html:5
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "삭제 하시겠습니까?"
+msgstr "정말로 \"%(name)s\"를 삭제 하시겠습니까?"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -5756,7 +5711,7 @@ msgstr "데이터셋 바꾸기"
 #: templates/storage/datasets.html:3
 #, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr ""
+msgstr "ZFS 데이터셋을 %(fs)s에 만들기"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -5768,25 +5723,21 @@ msgid "Are you sure you want to detach?"
 msgstr "제거 하시겠습니까?"
 
 #: templates/storage/disk_offline.html:3
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "삭제 하시겠습니까?"
+msgstr "정말 offline 하시겠습니까?"
 
 #: templates/storage/disk_remove.html:3
-#, fuzzy
 msgid "Are you sure you want to remove?"
-msgstr "삭제 하시겠습니까?"
+msgstr "정말 제거 하시겠습니까?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "삭제 하시겠습니까?"
+msgstr "정말로 제거 하시겠습니까?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
-#, fuzzy
 msgid "Replacing disk"
-msgstr "디스크 교체"
+msgstr "디스크 교체하기"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
@@ -5828,7 +5779,7 @@ msgstr "복제 추가"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "공개 키 보기"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -5859,70 +5810,61 @@ msgid "No ZFS replication available"
 msgstr "사용가능한 ZFS 복제 없음"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "스크럽 작업들이 설정되어 있지 않습니다."
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "ZFS Scrub 작업 추가하기"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "ZFS 볼륨"
+msgstr "ZFS Scrub 추가하기"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr ""
+msgstr "현재 Scrub이 작동중입니다! scrub process를 정말 멈추겠습니까?"
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "제거 하시겠습니까?"
+msgstr "정말 scrub을 하시겠습니까?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "이 작업은 진행 중 시스템 부하가 증가할 것입니다"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "이전 상태의 스냅샷으로 복원 하시겠습니까?"
+msgstr "정말 이상태의 스냅샷으로 복원 하시겠습니까?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
 msgstr "스냅샷 복제"
 
 #: templates/storage/snapshots.html:32
-#, fuzzy
 msgid "Destroy Snapshot"
-msgstr "스냅샷 파괴"
+msgstr "스냅샷 파괴하기"
 
 #: templates/storage/snapshots.html:37
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "스냅샷 파괴"
+msgstr "스냅샷 파괴하기"
 
 #: templates/storage/snapshots.html:48
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "이 스냅샷으로 복원"
+msgstr "스냅샷 복원하기"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
 msgstr "이 스냅샷으로 복원"
 
 #: templates/storage/snapshots.html:126
-#, fuzzy
 msgid "Destroy"
-msgstr "볼륨 삭제"
+msgstr "제거하기"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "스냅샷 복제"
+msgstr "스냅샷 삭제하기"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5965,14 +5907,13 @@ msgid "on every"
 msgstr "항상 "
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "예약된 스냅샷 일정 없음"
+msgstr "정기적으로 예약된 스냅샷 일정이 없습니다."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "이 볼륨안에는 %(used)s 공간이 사용되었습니다"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
@@ -5995,14 +5936,12 @@ msgid "Status"
 msgstr "상태"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "볼륨 삭제"
+msgstr "볼륨 탈착"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS 볼륨"
+msgstr "Scrub 볼륨"
 
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
@@ -6016,27 +5955,24 @@ msgid "Create Snapshot"
 msgstr "스냅샷 생성"
 
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
-#, fuzzy
 msgid "Volume Status"
-msgstr "볼륨"
+msgstr "볼륨상태"
 
 #: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
 msgid "Destroy Dataset"
 msgstr "데이타셋 삭제"
 
 #: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "볼륨 삭제"
+msgstr "ZFS 볼륨 삭제하기"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
 msgstr "설정된 볼륨 없음"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "볼륨"
+msgstr "확장할 볼륨"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6075,19 +6011,17 @@ msgid "Existing data will be cleared"
 msgstr "기존 데이타는 초기화 됩니다. "
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
-msgstr "디스크 교체"
+msgstr "디스크 교체하기"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "ZFS 볼륨 수정"
+msgstr "%(name)s에 ZFS 볼륨 만들기"
 
 #: templates/storage/zvols.html:6
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS 볼륨"
+msgstr "ZFS 볼륨 추가하기"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
@@ -6103,9 +6037,8 @@ msgstr "캐시를 재생성할 수 없습니다."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "디버그"
+msgstr "디버그 저장하기"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -6126,17 +6059,16 @@ msgid "Are you sure you want to restore to factory config?"
 msgstr "공장초기값으로 복원 하시겠습니까?"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "cron 작업이 설정되어있지 않습니다."
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
-msgstr ""
+msgstr "cron 작업 추가하기"
 
 #: templates/system/cronjob.html:49
 msgid "Add cron job"
-msgstr ""
+msgstr "cron 작업 추가하기"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6151,6 +6083,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"힌트: 테스트 이메일이 루트유저에게 보내졌습니다. 이것을 설정하기 위해서는 Users -> root -> Change E-mail 을 "
+"사용해주십시요"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6192,17 +6126,16 @@ msgid "Remote"
 msgstr "원격"
 
 #: templates/system/rsync.html:48
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "rsync 작업이 설정되어있지 않습니다."
 
 #: templates/system/rsync.html:54
 msgid "Add rsync task"
-msgstr ""
+msgstr "rsync 작업 추가하기"
 
 #: templates/system/rsync.html:56
 msgid "Add Rsync"
-msgstr ""
+msgstr "Rsync 추가하기"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6210,12 +6143,11 @@ msgstr "일반"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "공장 초기화 복구"
 
 #: templates/system/settings_edit.html:7
-#, fuzzy
 msgid "Restore Config"
-msgstr "구성 저장하기"
+msgstr "설정 복구하기"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
@@ -6237,34 +6169,28 @@ msgid "Unknown"
 msgstr ""
 
 #: templates/system/smarttest.html:38
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "SNMP 설정"
+msgstr "S.M.A.R.T. 테스트가 설정되어있지 않습니다"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "SNMP 설정"
+msgstr "S.M.A.R.T. 테스트 추가하기"
 
 #: templates/system/smarttest.html:46
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "SNMP 설정"
+msgstr "S.M.A.R.T. 테스트 추가하기"
 
 #: templates/system/sysctl.html:34
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "설정된 공유목록이 없음"
+msgstr "sysctl이 설정되어 있지 않습니다."
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add sysctl"
-msgstr "추가 %s"
+msgstr "Sysctl 추가하기"
 
 #: templates/system/sysctl.html:42
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "추가 %s"
+msgstr "Sysctl 추가하기"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6276,7 +6202,7 @@ msgstr "플랫폼"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
-msgstr ""
+msgstr "메모리"
 
 #: templates/system/system_info.html:21
 msgid "System Time"
@@ -6288,7 +6214,7 @@ msgstr "업타임"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
-msgstr ""
+msgstr "평균 부하량"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
@@ -6303,24 +6229,22 @@ msgid "Add Tunable"
 msgstr "Tunable 추가"
 
 #: templates/system/tunable.html:42
-#, fuzzy
 msgid "Add Loader"
-msgstr "포탈 더하기"
+msgstr "Loader 추가하기"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "업데이트"
+msgstr "업데이트 적용하기"
 
 #: tools/alert.py:108
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "%s 볼륨 상태에 문제가 없습니다"
 
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "%s 볼륨 상태가 DEGRADED 되어 있습니다"
 
 #: tools/alert.py:115
 #, python-format
@@ -6330,18 +6254,18 @@ msgstr ""
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "%s 볼륨 상태가 %(status)s 입니다"
 
 #: tools/alert.py:125
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
-msgstr ""
+msgstr "관리자 계정의 비밀번호를 바꿔야만 합니다 (현재 로그인 비밀번호가 설정되어있지 않습니다)"
 
 #: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
 
 #: tools/alert.py:147
 #, python-format
@@ -6352,7 +6276,7 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr ""
+msgstr "중요 알람"
 
 msgid "Selected"
 msgstr "선택되어진"
@@ -6375,17 +6299,14 @@ msgstr "디스크 보기"
 msgid "View S.M.A.R.T. Tests"
 msgstr "SNMP 설정"
 
-#, fuzzy
 msgid "View Sysctls"
-msgstr "디스크 보기"
+msgstr "Sysctls 보기"
 
-#, fuzzy
 msgid "View Tunables"
-msgstr "모든 사용자 보기"
+msgstr "Tunables 보기"
 
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Apple Share (AFP) 추가"
+msgstr "애플 공유 (CIFS) 추가하기"
 
 msgid "Apply Service Pack"
 msgstr "서비스팩 적용"
@@ -6475,17 +6396,14 @@ msgstr "유닉스"
 msgid "Windows"
 msgstr "윈도우"
 
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "삭제 하시겠습니까?"
+msgstr "정말 내보내시겠습니까?"
 
-#, fuzzy
 msgid "Export Volume"
-msgstr "자동으로 볼륨 가져오기"
+msgstr "볼륨 내보내기"
 
-#, fuzzy
 msgid "Add loader"
-msgstr "포탈 더하기"
+msgstr "loader 추가하기"
 
 msgid "Volume this group belongs to"
 msgstr "이 그룹이 속해 있는 볼륨 "
@@ -6551,13 +6469,11 @@ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
 msgid "minutes,"
 msgstr "분"
 
-#, fuzzy
 msgid "Create ZFS zvol"
-msgstr "스냅샷 생성"
+msgstr "ZFS zvol 생성하기"
 
-#, fuzzy
 msgid "Add ZVol"
-msgstr "볼륨 더하기"
+msgstr "ZVol 추가하기"
 
 msgid "English"
 msgstr "영어"
