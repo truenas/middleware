@@ -20,7 +20,6 @@ int main(int argc, char **argv)
     char newpath[MAX_SIZE];
     char newlibdir[MAX_SIZE];
     char newtarget[MAX_SIZE];
-    char newargs[ARG_MAX];
 
     // Setup working variables
     char bfile[PATH_MAX];
@@ -45,10 +44,8 @@ int main(int argc, char **argv)
     size_t cb = sizeof(mypath);
     sysctl(mib, 4, mypath, &cb, NULL, 0);
 
-    //printf( "MYPATH: %s\n", mypath);
-
     if ( mypath[0] == 0 )
-       strcpy(mypath, argv[0]);
+      strcpy(mypath, argv[0]);
     
     // Figure out where we are
     if (realpath(mypath, bfile) == NULL) {
@@ -138,41 +135,15 @@ int main(int argc, char **argv)
     setenv("LD_LIBRARY_PATH", newlibdir, 1);
     setenv("LD_32_LIBRARY_PATH", newlibdir, 1);
 
-    // Get the arguments
-    if (argc > 1)
-    {
-      int count;
-      for (count = 1; count < argc; count++)
-      {
-           if ( ARG_MAX < (strlen(newargs) + strlen(argv[count]) + 4 ) ) {
-              printf("Max args exceeded!");
-              exit(2);
-           }
-           if ( MAX_SIZE < (strlen(newargs) + strlen(argv[count]) + 4 ) ) {
-              printf("MAX_SIZE exceeded!");
-              exit(2);
-           }
-           strcat(newargs, "'");
-           strcat(newargs, argv[count]);
-           strcat(newargs, "' ");
-      }
-    } 
-
-    if ( MAX_SIZE < (strlen(newtarget) + strlen(progdir) + strlen(progtarget) + strlen(newargs) + 3  ) ) {
-       printf("MAX_SIZE exceeded!");
-       exit(2);
-    }
-
     // Set the target
     strncpy(newtarget, progdir, strlen(progdir) -1 );
     strcat(newtarget, "/");
     strncat(newtarget, progtarget, strlen(progtarget) -1 );
-    strcat(newtarget, " ");
-    strcat(newtarget, newargs);
 
     // Enable for debug
     //printf( "PATH: %s\n", newpath);
     //printf( "LDPATH: %s\n", newlibdir);
     //printf( "Running: %s \n", newtarget);
-    return system(newtarget);
+    //return system(newtarget);
+    return execv(newtarget, argv);
 }
