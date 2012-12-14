@@ -860,6 +860,8 @@ def volume_status_json(request, vid):
 def zpool_disk_replace(request, vname, label):
 
     disk = notifier().label_to_disk(label)
+    if disk is None:
+        disk = label
     volume = models.Volume.objects.get(vol_name=vname)
     if request.method == "POST":
         form = forms.ZFSDiskReplacementForm(
