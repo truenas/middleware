@@ -1174,6 +1174,12 @@ class notifier:
         return False
 
     def geli_attach(self, volume, passphrase=None):
+        """
+        Attach geli providers of a given volume
+
+        Returns the number of providers that failed to attach
+        """
+        failed = 0
         geli_keyfile = volume.get_geli_keyfile()
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
@@ -1190,7 +1196,8 @@ class notifier:
                     ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError("Could not attach %s: %s" % (dev, err))
+                failed += 1
+        return failed
 
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']

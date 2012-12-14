@@ -106,11 +106,13 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                if self.is_decrypted():
-                    self._status = notifier().get_volume_status(self.vol_name,
-                        self.vol_fstype)
-                else:
+                status = notifier().get_volume_status(
+                    self.vol_name,
+                    self.vol_fstype)
+                if status == 'UNKNOWN' and self.vol_encrypt > 0:
                     return _("LOCKED")
+                else:
+                    self._status = status
             return self._status
         except Exception, e:
             if self.is_decrypted():
@@ -130,6 +132,10 @@ class Volume(Model):
             return __is_decrypted
 
         self.__is_decrypted = True
+        # If the status is not UNKNOWN means the pool is already imported
+        status = notifier().get_volume_status(self.vol_name, self.vol_fstype)
+        if status != 'UNKNOWN':
+            return self.__is_decrypted
         if self.vol_encrypt > 0:
             _notifier = notifier()
             for ed in self.encrypteddisk_set.all():
