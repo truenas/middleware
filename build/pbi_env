@@ -7,12 +7,22 @@
 # Tell pbi_create what directory to use
 #
 PBI_APPDIR="${AVATAR_ROOT}/pbi"
+mkdir -p "${PBI_APPDIR}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_APPDIR}!"
+fi
 export PBI_APPDIR
 
 #
 # Tell the build system where pbi-manager is located
 #
 PBI_BINDIR="${AVATAR_ROOT}/sbin"
+mkdir -p "${PBI_BINDIR}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_BINDIR}!"
+fi
 export PBI_BINDIR
 
 #
@@ -31,19 +41,45 @@ export PBI_OSARCH
 # Tell pbi_create where to build PBI files
 #
 PBI_BUILDDIR="${PBI_APPDIR}/${PBI_OSARCH}"
+mkdir -p "${PBI_BUILDDIR}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_BUILDDIR}!"
+fi
 export PBI_BUILDDIR
+
+#
+# Where to put packages for PBI's
+#
+PBI_PKGDIR="${PBI_BUILDDIR}/pkgs"
+mkdir -p "${PBI_PKGDIR}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_PKGDIR}!"
+fi
+export PBI_PKGDIR
 
 #
 #
 # Tell pbi_create where the source code is
 # 
 PBI_BUILDSRC="${PBI_APPDIR}/src"
+mkdir -p "${PBI_BUILDSRC}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_BUILDSRC}!"
+fi
 export PBI_BUILDSRC
 
 #
 # Where to install the chroot
 # 
 PBI_BUILDTARGET="${PBI_APPDIR}/${PBI_OSARCH}/target"
+mkdir -p "${PBI_BUILDTARGET}"
+if [ "$?" != "0" ]
+then
+	error "unable to create ${PBI_BUILDTARGET}!"
+fi
 export PBI_BUILDTARGET
 
 #

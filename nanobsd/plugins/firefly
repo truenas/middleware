@@ -190,7 +190,17 @@ last_orders()
 		pprint 2 "Creating PBI"
 		pprint 3 "log: ${PLUGINLOG}"
 
-		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs > "${PLUGINLOG}" 2>&1
+		PBI_ARCH_FLAGS=""
+		if [ "${NANO_ARCH}" = "i386" ]
+		then
+			PBI_ARCH_FLAGS="-32"
+		fi
+
+		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" \
+			-c "${PLUGINCONFDIR}" \
+			-o "${PLUGINOUT}" \
+			--pkgdir "${PBI_PKGDIR}" \
+			--tmpfs "${PBI_ARCH_FLAGS}" > "${PLUGINLOG}" 2>&1
 		if [ "$?" != "0" ]
 		then
 			echo "${PLUGIN}: failed to build PBI!"
