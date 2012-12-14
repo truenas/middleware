@@ -3541,6 +3541,7 @@ do_pbi_create() {
 	clean_icons_dir
 	mk_xdg_scripts
 
+	run_pbi_prepkgscript
 
 	mk_install_script
 	mk_deinstall_script
@@ -4881,6 +4882,21 @@ run_pbi_postportmake()
 	export_script_vars
 
 	sh "${PBI_CONFDIR}/${PBI_CONF_SCRIPTSDIR}/post-portmake.sh"
+	if [ "$?" != "0" ] ; then
+		echo "Warning: post-portmake.sh returned non-0 status!"
+	fi
+}
+
+# Checks if we have a custom script to run prior to pbi create
+run_pbi_prepkgscript()
+{
+  	if [ ! -d "${PBI_CONFDIR}" ] ; then return 0 ; fi
+  	if [ ! -d "${PBI_CONFDIR}/${PBI_CONF_SCRIPTSDIR}" ] ; then return 0 ; fi
+  	if [ ! -e "${PBI_CONFDIR}/${PBI_CONF_SCRIPTSDIR}/pre-pbicreate.sh" ] ; then return 0 ; fi
+
+	export_script_vars
+
+	sh "${PBI_CONFDIR}/${PBI_CONF_SCRIPTSDIR}/pre-pbicreate.sh"
 	if [ "$?" != "0" ] ; then
 		echo "Warning: post-portmake.sh returned non-0 status!"
 	fi
@@ -7181,52 +7197,19 @@ mk_auto_ext_linksfile() {
 		# See if this is executable and set it as binary
 		dirname ${f} | grep -e "bin" -e "sbin" >/dev/null 2>/dev/null
 		if [ -x "${PBI_PROGDIRPATH}/${f}" -a $? -eq 0 ] ; then
-			echo "${f}	${f}	binary,nocrash" >> "$_ef"
+
+		   # Check this executable, if Linux binary, flag it
+		   file "${PBI_PROGDIRPATH}/${f}" | grep -iq "Linux"
+		   if [ $? -ne 0 ] ; then
+	  	      echo "${f}	${f}	binary,nocrash" >> "$_ef"
+		   else
+	  	      echo "${f}	${f}	linux,nocrash" >> "$_ef"
+ 		   fi
 		else
 			echo "${f}	${f}	replace" >> "$_ef"
 		fi
 	done < ${PBI_TMPDIR}/.pkg_flist.$$
 	rm "${PBI_TMPDIR}/.pkg_flist.$$"
-
-	# Skip the dbus stuff for now causes weird issues with various apps
-	return 0
-
-	# Now figure out any dbus services we need to make links / wrappers for
- 	for _dsd in $DBUS_SEARCH_DIRS
-	do
-		# Check if we have a valid dbus directory
-		[ -d "${PBI_PROGDIRPATH}/${_dsd}" ] || continue
-
-		# Make a list of files to include
-		find ${PBI_PROGDIRPATH}/${_dsd} -type f | sed "s|${PBI_PROGDIRPATH}/${_dsd}/||g" > ${PBI_TMPDIR}/.dbus.$$
-		
-		# Add these files to the external links file
-		while read _dbfile
-		do
-			# Get the file extension, only .xml and .service are valid
-			case "${_dsd}/${_dbfile}" in
-				*.xml) dbext=".xml" ;;
-				*.service)
-					dbext=".service"
-
-					# We have a service file, find the target binary and make sure its added as a wrapper only
-					_dbbin="`grep 'Exec' ${PBI_PROGDIRPATH}/${_dsd}/${_dbfile} | cut -d '=' -f 2 | cut -d ' ' -f 1`"
-					_dbbin=`echo "$_dbbin" | sed "s|${PBI_PROGDIRPATH}/||g"`
-					[ -n "$_dbbin" ] && echo "${_dbbin}		${_dbbin}	binwrapper" >> "$_ef"
-
-					# Massage the service file to point to the fakebin wrapper
-					rmBaseDir="`dirname ${_dbbin}`"
-					sed -i '' "s|${PBI_PROGDIRPATH}/${rmBaseDir}/|${PBI_PROGDIRPATH}/${PBI_FAKEBIN_DIR}/|g" "${PBI_PROGDIRPATH}/${_dsd}/${_dbfile}"
-					;;
-				*) continue ;;
-			esac
-
-			echo "${_dsd}/${_dbfile}	${_dsd}/${_dbfile}.${_pname}.${dbext}	replace" >> "$_ef"
-		done < ${PBI_TMPDIR}/.dbus.$$
-		rm ${PBI_TMPDIR}/.dbus.$$
-
-	done	
-
 }
 
 # Init the crash handler routine
