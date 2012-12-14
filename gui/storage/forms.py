@@ -1568,12 +1568,18 @@ class UnlockPassphraseForm(forms.Form):
         passfile = tempfile.mktemp(dir='/tmp/')
         with open(passfile, 'w') as f:
             f.write(passphrase)
-        attached = True
-        notifier().geli_attach(volume, passfile)
+        failed = notifier().geli_attach(volume, passfile)
         os.unlink(passfile)
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
         if not zimport:
-            raise MiddlewareError(_("Volume could not be imported"))
+            if failed > 0:
+                msg = _(
+                    "Volume could not be imported: %d devices failed to "
+                    "decrypt"
+                ) % failed
+            else:
+                msg = _("Volume could not be imported")
+            raise MiddlewareError(msg)
 
 
 class KeyForm(forms.Form):
