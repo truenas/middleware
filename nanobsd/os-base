@@ -456,6 +456,41 @@ add_pbi_manager()
 }
 customize_cmd add_pbi_manager
 
+add_warden()
+{
+	local src dst share
+	src="${AVATAR_ROOT}/src/warden"
+	dst="${NANO_WORLDDIR}/usr/local"
+	share="${dst}/share/warden"
+
+	pprint 2 "Adding warden"
+
+	mkdir -p ${dst}/etc >/dev/null 2>/dev/null
+	mkdir -p ${dst}/bin >/dev/null 2>/dev/null
+	mkdir -p ${share} >/dev/null 2>/dev/null
+	mkdir -p ${share}/tmp >/dev/null 2>/dev/null
+	mkdir -p ${share}/export >/dev/null 2>/dev/null
+
+	cp ${src}/bin/warden ${dst}/bin/warden
+	chmod 755 ${dst}/bin/warden
+
+	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
+	chmod 644 ${dst}/etc/warden.conf
+
+	cp -r ${src}/linux-installs ${share}
+	cp -r ${src}/scripts ${share}
+	chmod 755 ${share}/scripts/backend/*
+
+	cp ${src}/scripts/rc.d/wardenrc ${dst}/etc/rc.d/wardenrc
+	chmod 755 ${dst}/etc/rc.d/wardenrc
+
+	cp ${src}/agent.png ${share}/
+	cp ${src}/agent.png ${share}/warden.png
+
+	mkdir -p ${share}/bin >/dev/null 2>/dev/null
+}
+customize_cmd add_warden
+
 add_pbi_wrapper()
 {
     local _pm 
