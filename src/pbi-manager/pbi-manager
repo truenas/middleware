@@ -7069,7 +7069,7 @@ mk_chroot_file() {
 	echo "Running buildworld / installworld (into a chroot)"
 	touch ${PBI_BUILDSRC}/Makefile
 	cd ${PBI_BUILDSRC}
-        #make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
+        make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
                 cd
                 if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
