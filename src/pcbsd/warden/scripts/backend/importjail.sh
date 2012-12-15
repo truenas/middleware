@@ -144,7 +144,8 @@ isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
   # Create ZFS mount
   tank=`getZFSTank "$JDIR"`
-  zfs create -p ${tank}${JAILDIR}
+  rp=`getZFSRelativePath "${JAILDIR}"`
+  zfs create -p ${tank}${rp}
 else
   mkdir -p "${JAILDIR}"
 fi
