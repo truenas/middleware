@@ -159,7 +159,7 @@ is_plugin()
 
 install_pbi_manager()
 {
-	local src="${TOP}/src/pbi-manager"
+	local src="${TOP}/src/pcbsd/pbi-manager"
 
 	if [ -f "${PBI_BINDIR}/pbi_create" ]
 	then
@@ -403,7 +403,7 @@ apply_patches()
 
 do_pbi_wrapper_hack()
 {
-	local _src="${AVATAR_ROOT}/src/pbi-wrapper"
+	local _src="${AVATAR_ROOT}/src/pcbsd/pbi-wrapper"
 	local _dst="${AVATAR_ROOT}/FreeBSD/src/pbi-wrapper"
 
 	if [ ! -d "${_dst}" ]

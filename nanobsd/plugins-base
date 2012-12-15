@@ -142,7 +142,7 @@ EOF
 add_pbi_manager()
 {
     local pm dst
-    pm=${AVATAR_ROOT}/src/pbi-manager
+    pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
     dst=${NANO_WORLDDIR}/usr/local
 
     pprint 2 "Adding pbi-manager"

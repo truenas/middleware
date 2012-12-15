@@ -426,7 +426,7 @@ customize_cmd arch_specific_ko
 add_pbi_manager()
 {
     local pm dst
-    pm=${AVATAR_ROOT}/src/pbi-manager
+    pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
     dst=${NANO_WORLDDIR}/usr/local
 
     pprint 2 "Adding pbi-manager"
@@ -459,7 +459,7 @@ customize_cmd add_pbi_manager
 add_warden()
 {
 	local src dst share
-	src="${AVATAR_ROOT}/src/warden"
+	src="${AVATAR_ROOT}/src/pcbsd/warden"
 	dst="${NANO_WORLDDIR}/usr/local"
 	share="${dst}/share/warden"
 
