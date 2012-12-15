@@ -58,7 +58,7 @@ echo "
           set - Sets options for a jail
         start - Start a jail
          stop - Stops a jail
-         type - Set the jail type (portjail/normal)
+         type - Set the jail type (portjail|pluginjail|standard)
     zfsmksnap - Create a ZFS snapshot of a jail 
  zfslistclone - List clones of jail snapshots
   zfslistsnap - List snapshots of a jail
@@ -312,6 +312,7 @@ help_type()
 Lets you set the type of jail to these options:
 
 portjail: Jail with access to your home directories and Xorg
+pluginjail: Jail that can be used to install FreeNAS plugins
 standard: Normal FreeBSD secure jail environment
 
 The flag status can be checked with 'warden list'. 
@@ -627,6 +628,7 @@ details) IP="${2}"
 
 	 case $TYPE in
 	   portjail) mkportjail "${JDIR}/${IP}" ;;
+	   pluginjail) mkportjail "${JDIR}/${IP}" ;;
 	   standard) rm ${JMETADIR}/jail-portjail >/dev/null 2>/dev/null ;;
 	   *) exit_err "Invalid TYPE" ;;
          esac
