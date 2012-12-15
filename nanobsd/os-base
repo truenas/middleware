@@ -491,6 +491,21 @@ add_warden()
 }
 customize_cmd add_warden
 
+add_pcbsd_libsh()
+{
+	local src dst
+	src="${AVATAR_ROOT}/src/pcbsd/libsh"
+	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/scripts"
+
+	pprint 2 "Adding pcbsd libsh"
+
+	mkdir -p ${dst} >/dev/null 2>/dev/null
+
+	cp ${src}/functions.sh ${dst}/functions.sh
+	chmod 755 ${dst}/functions.sh
+}
+customize_cmd add_pcbsd_libsh
+
 add_pbi_wrapper()
 {
     local _pm 
