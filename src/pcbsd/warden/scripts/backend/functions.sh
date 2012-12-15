@@ -49,8 +49,9 @@ CDIR="${JDIR}/clones"
 ### Download the chroot
 downloadchroot() {
 
-  SYSVER="$(pbreg get /PC-BSD/Version)"
-  FBSD_TARBALL="fbsd-release.txz"
+  #SYSVER="$(pbreg get /PC-BSD/Version)"
+  SYSVER=8.2
+  FBSD_TARBALL="fbsd-release.tbz"
   FBSD_TARBALL_CKSUM="${FBSD_TARBALL}.md5"
 
   # Set the mirror URL, may be overridden by setting MIRRORURL environment variable
@@ -65,11 +66,15 @@ downloadchroot() {
   echo "Fetching jail environment. This may take a while..."
   echo "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
 
-  get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
-  [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+  if [ ! -e "$FBSD_TARBALL" ] ; then
+     get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
+     [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+  fi
 
-  get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
-  [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+  if [ ! -e "$FBSD_TARBALL_CKSUM" ] ; then
+     get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
+     [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+  fi
 
   [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
     printerror "Error in download data, checksum mismatch. Please try again later."
@@ -77,19 +82,21 @@ downloadchroot() {
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
+    local zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
+
     # Use ZFS base for cloning
     echo "Creating ZFS ${WORLDCHROOT} dataset..."
-    tank=`getZFSTank "$JDIR"`
+    tank=`getZFSTank "${JDIR}"`
     isDirZFS "${WORLDCHROOT}" "1"
     if [ $? -ne 0 ] ; then
-       zfs create -o mountpoint=${WORLDCHROOT} -p ${tank}${WORLDCHROOT}
+       zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
        if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
     fi
 
-    tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} 2>/dev/null
+    tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} #2>/dev/null
     if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
 
-    zfs snapshot ${tank}${WORLDCHROOT}@clean
+    zfs snapshot ${tank}${zfsp}@clean
     if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
     rm ${FBSD_TARBALL}
   else

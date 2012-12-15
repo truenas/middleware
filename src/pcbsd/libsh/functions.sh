@@ -147,7 +147,7 @@ printerror() {
 # Arg1 = The dir to check
 # Arg2 = If set to 1, don't dig down to lower level directory
 isDirZFS() {
-  local _chkDir="$1"
+  local _chkDir="${1}"
   while :
   do
      # Is this dir a ZFS mount
@@ -166,11 +166,11 @@ isDirZFS() {
 # Get the ZFS tank name for a directory
 # Arg1 = Directory to check
 getZFSTank() {
-  local _chkDir="$1"
+  local _chkDir="${1}"
   while :
   do
-     line=`mount | grep -w -e $_chkDir -e "(zfs,"`
-     mount | grep -qw -e $_chkDir -e "(zfs,"
+     line=`mount | grep -w "(zfs," | grep -w "on $_chkDir"`
+     mount | grep -w "(zfs," | grep -w "on $_chkDir" >/dev/null 2>/dev/null
      if [ $? -eq 0 ] ; then
         echo $line | cut -d '/' -f -1 | awk '{print $1}'
         return 0
@@ -181,6 +181,29 @@ getZFSTank() {
   done
 
   return 1
+}
+
+# Get the mountpoint for a ZFS name
+# Arg1 = name
+getZFSMountpoint() {
+   local _chkName="${1}"
+   if [ -z "${_chkName}" ]; then return 1 ; fi
+
+   zfs list "${_chkName}" | tail -1 | awk '{ print $5 }'
+}
+
+# Get the ZFS relative path for a path
+# Arg1 = Path
+getZFSRelativePath() {
+   local _chkDir="${1}"
+   local _tank=`getZFSTank "$_chkDir"`
+   local _mp=`getZFSMountpoint "${_tank}"`
+
+   if [ -z "${_tank}" ] ; then return 1 ; fi
+
+   local _name="${_chkDir#${_mp}}"
+   echo "${_name}"
+   return 0
 }
 
 # Check if an address is IPv6

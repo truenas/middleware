@@ -52,7 +52,8 @@ isDirZFS "${JDIR}/${IP}" "1"
 if [ $? -eq 0 ] ; then
   # Create ZFS mount
   tank=`getZFSTank "$JDIR"`
-  zfs destroy -r ${tank}${JDIR}/${IP}
+  jailp=`getZFSRelativePath "${JDIR}/${IP}"`
+  zfs destroy -r ${tank}${jailp}
   rmdir ${JDIR}/${IP} 2>/dev/null
 else
   chflags -R noschg "${JDIR}/${IP}"

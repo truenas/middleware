@@ -14,7 +14,7 @@ if [ $? -eq 0 ] ; then
   WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}"
   export WORLDCHROOT
 else
-  WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.txz"
+  WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.tbz"
   export WORLDCHROOT
 fi
 
@@ -140,7 +140,9 @@ isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
    # Create ZFS CLONE
    tank=`getZFSTank "$JDIR"`
-   zfs clone ${tank}${WORLDCHROOT}@clean ${tank}${JAILDIR}
+   zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
+   jailp=`getZFSRelativePath "${JAILDIR}"`
+   zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base clone"; fi
 else
    # Running on UFS
