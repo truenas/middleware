@@ -203,48 +203,54 @@ mkZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
+  rp=`getZFSRelativePath "$1"`
   zdate=`date +%Y-%m-%d-%H-%M-%S`
-  zfs snapshot $tank${1}@$zdate
+  zfs snapshot $tank${rp}@$zdate
 }
 
 listZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
-  zfs list -t snapshot | grep -w "^${tank}${1}" | cut -d '@' -f 2 | awk '{print $1}'
+  rp=`getZFSRelativePath "$1"`
+  zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}'
 }
 
 listZFSClone() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
+  cdir=`getZFSRelativePath "${CDIR}"` 
   echo "Clone Directory: ${CDIR}"
   echo "-----------------------------------"
-  zfs list | grep -w "^${tank}${CDIR}/${2}" | awk '{print $5}' | sed "s|${CDIR}/${2}-||g"
+  zfs list | grep -w "^${tank}${cdir}/${2}" | awk '{print $5}' | sed "s|${CDIR}/${2}-||g"
 }
 
 rmZFSClone() {
   CLONEDIR="${CDIR}/${3}-${2}"
   isDirZFS "${CLONEDIR}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${CLONEDIR}" ; fi
-  tank=`getZFSTank "$2"`
-  zfs destroy ${tank}${CLONEDIR}
+  tank=`getZFSTank "${CLONEDIR}"`
+  rp=`getZFSRelativePath "${CLONEDIR}"`
+  zfs destroy ${tank}${rp}
 }
 
 rmZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
-  zfs destroy $tank${1}@$2
+  rp=`getZFSRelativePath "$1"`
+  zfs destroy $tank${rp}@$2
 }
 
 revertZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
+  rp=`getZFSRelativePath "$1"`
 
   # Make sure this is a valid snapshot
-  zfs list -t snapshot | grep -w "^${tank}${1}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
+  zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
   if [ $? -ne 0 ] ; then printerror "Invalid ZFS snapshot!" ; fi
 
   # Check if the jail is running first
@@ -260,7 +266,7 @@ revertZFSSnap() {
   fi
 
   # Rollback the snapshot
-  zfs rollback -R -f ${tank}${1}@$2
+  zfs rollback -R -f ${tank}${rp}@$2
 
   # If it was started, restart the jail now
   if [ "$restartJail" = "YES" ]; then
@@ -273,9 +279,11 @@ cloneZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
+  rp=`getZFSRelativePath "$1"`
+  cdir=`getZFSRelativePath "${CDIR}"`
 
   # Make sure this is a valid snapshot
-  zfs list -t snapshot | grep -w "^${tank}${1}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
+  zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
   if [ $? -ne 0 ] ; then printerror "Invalid ZFS snapshot!" ; fi
 
   if [ -d "${CDIR}/${3}-${2}" ] ; then
@@ -283,7 +291,7 @@ cloneZFSSnap() {
   fi
 
   # Clone the snapshot
-  zfs clone -p ${tank}${1}@$2 ${tank}${CDIR}/${3}-${2}
+  zfs clone -p ${tank}${rp}@$2 ${tank}${cdir}/${3}-${2}
 
   echo "Snapshot cloned and mounted to: ${CDIR}/${3}-${2}"
 }
