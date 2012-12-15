@@ -232,6 +232,7 @@ add_port devel/libffi
 add_port devel/gobject-introspection
 add_port www/py-httplib2
 add_port net/py-oauth2
+add_port sysutils/jailme
 
 if [ "${REPORTING}" = 1 ]; then
 	add_port graphics/png
