@@ -627,7 +627,7 @@ class AutoImportWizard(SessionWizardView):
     def done(self, form_list, **kwargs):
 
         cdata = self.get_cleaned_data_for_step('1') or {}
-        enc_disks = cdata.get("disks")
+        enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
         passphrase = cdata.get("passphrase")
         if key and passphrase:
