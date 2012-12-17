@@ -35,8 +35,11 @@ import re
 import tempfile
 
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
+from django.contrib.formtools.wizard.views import SessionWizardView
+from django.core.files.storage import FileSystemStorage
 from django.db import transaction
-from django.http import QueryDict
+from django.forms import FileField
+from django.http import HttpResponse, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
@@ -46,8 +49,10 @@ from freenasUI import choices
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.system import mount, umount
-from freenasUI.freeadmin.forms import (CronMultiple, UserField, GroupField,
-    WarningSelect)
+from freenasUI.freeadmin.forms import (
+    CronMultiple, UserField, GroupField, WarningSelect
+)
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -576,6 +581,187 @@ class VolumeImportForm(forms.Form):
         #notifier().reload("disk")
 
 
+def show_descrypt_condition(wizard):
+    cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
+    if cleaned_data.get("step") == "decrypt":
+        return True
+    else:
+        return False
+
+
+class AutoImportWizard(SessionWizardView):
+    file_storage = FileSystemStorage(location='/var/tmp/firmware')
+
+    def get_template_names(self):
+        return [
+            'storage/autoimport_wizard_%s.html' % self.get_step_index(),
+            'storage/autoimport_wizard.html',
+        ]
+
+    def process_step(self, form):
+        proc = super(AutoImportWizard, self).process_step(form)
+        """
+        We execute the form done method if there is one, for each step
+        """
+        if hasattr(form, 'done'):
+            retval = form.done(request=self.request,
+                form_list=self.form_list,
+                wizard=self)
+            if self.get_step_index() == self.steps.count - 1:
+                self.retval = retval
+        return proc
+
+    def render_to_response(self, context, **kwargs):
+        response = super(AutoImportWizard, self).render_to_response(
+            context,
+            **kwargs
+        )
+        # This is required for the workaround dojo.io.frame for file upload
+        if not self.request.is_ajax():
+            return HttpResponse(
+                "<html><body><textarea>"
+                + response.rendered_content +
+                "</textarea></boby></html>")
+        return response
+
+    def done(self, form_list, **kwargs):
+
+        cdata = self.get_cleaned_data_for_step('1') or {}
+        enc_disks = cdata.get("disks")
+        key = cdata.get("key")
+        passphrase = cdata.get("passphrase")
+        if key and passphrase:
+            encrypt = 2
+        elif key:
+            encrypt = 1
+        else:
+            encrypt = 0
+
+        cdata = self.get_cleaned_data_for_step('2') or {}
+        vol = cdata['volume']
+        volume_name = vol['label']
+        group_type = vol['group_type']
+        if vol['type'] == 'geom':
+            volume_fstype = 'UFS'
+        elif vol['type'] == 'zfs':
+            volume_fstype = 'ZFS'
+
+        with transaction.commit_on_success():
+            volume = models.Volume(
+                vol_name=volume_name,
+                vol_fstype=volume_fstype,
+                vol_encrypt=encrypt)
+            volume.save()
+            if encrypt > 0:
+                with open(volume.get_geli_keyfile(), 'wb') as f:
+                    f.write(key.read())
+            self.volume = volume
+
+            mp = models.MountPoint(mp_volume=volume,
+                mp_path='/mnt/' + volume_name,
+                mp_options='rw')
+            mp.save()
+
+            if vol['type'] != 'zfs':
+                notifier().label_disk(volume_name,
+                    "%s/%s" % (group_type, volume_name),
+                    'UFS')
+            else:
+                volume.vol_guid = vol['id']
+                volume.save()
+                models.Scrub.objects.create(scrub_volume=volume)
+
+            if vol['type'] == 'zfs' and not notifier().zfs_import(
+                    vol['label'], vol['id']):
+                raise MiddlewareError(_('The volume "%s" failed to import, '
+                    'for futher details check pool status') % vol['label'])
+            for disk in enc_disks:
+                if disk.startswith("gptid"):
+                    diskname = notifier().identifier_to_device(
+                        "{uuid}%s" % disk.replace("gptid/", "")
+                    )
+                else:
+                    diskname = disk
+                ed = models.EncryptedDisk()
+                ed.encrypted_volume = volume
+                ed.encrypted_disk = models.Disk.objects.filter(disk_name=diskname, disk_enabled=True)[0]
+                ed.encrypted_provider = disk
+                ed.save()
+
+        notifier().reload("disk")
+
+        return JsonResp(self.request, message=unicode(_("Volume imported")))
+
+
+class AutoImportChoiceForm(forms.Form):
+    step = forms.ChoiceField(
+        choices=(
+            ('import', _("Skip to import")),
+            ('decrypt', _("Decrypt disks")),
+        ),
+        label=_("Step"),
+        widget=forms.RadioSelect(),
+        initial="import",
+    )
+
+
+class AutoImportDecryptForm(forms.Form):
+    disks = forms.MultipleChoiceField(
+        choices=(),
+    )
+    key = FileField(
+        label=_("Encryption Key"),
+    )
+    passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(AutoImportDecryptForm, self).__init__(*args, **kwargs)
+        self.fields['disks'].choices=self._populate_disk_choices()
+
+    def _populate_disk_choices(self):
+        return notifier().geli_get_all_providers()
+
+    def clean(self):
+        key = self.cleaned_data.get("key")
+        if not key:
+            return self.cleaned_data
+
+        passphrase = self.cleaned_data.get("passphrase")
+        if passphrase:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
+            passphrase = passfile
+
+        keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
+        with open(keyfile, 'wb') as f:
+            f.write(key.read())
+
+        _notifier = notifier()
+        failed = []
+        for disk in self.cleaned_data.get("disks"):
+            if not _notifier.geli_attach_single(
+                disk,
+                keyfile,
+                passphrase=passphrase
+            ):
+                failed.append(disk)
+        if failed:
+            self._errors['__all__'] = self.error_class([
+                _("The following disks failed to attach: %s") % (
+                    ', '.join(failed),
+                )
+            ])
+        os.unlink(keyfile)
+        if passphrase:
+            os.unlink(passphrase)
+        return self.cleaned_data
+
+
 class VolumeAutoImportForm(forms.Form):
 
     volume_disks = forms.ChoiceField(
@@ -627,7 +813,7 @@ class VolumeAutoImportForm(forms.Form):
         cleaned_data = self.cleaned_data
         vols = notifier().detect_volumes()
         for vol in vols:
-            if vol['label'] == cleaned_data['volume_disks']:
+            if vol['label'] == cleaned_data.get('volume_disks'):
                 cleaned_data['volume'] = vol
                 break
 
@@ -666,43 +852,6 @@ class VolumeAutoImportForm(forms.Form):
                 raise NotImplementedError
 
         return cleaned_data
-
-    def done(self, request):
-
-        vol = self.cleaned_data['volume']
-        volume_name = vol['label']
-        group_type = vol['group_type']
-        if vol['type'] == 'geom':
-            volume_fstype = 'UFS'
-        elif vol['type'] == 'zfs':
-            volume_fstype = 'ZFS'
-
-        with transaction.commit_on_success():
-            volume = models.Volume(vol_name=volume_name,
-                vol_fstype=volume_fstype)
-            volume.save()
-            self.volume = volume
-
-            mp = models.MountPoint(mp_volume=volume,
-                mp_path='/mnt/' + volume_name,
-                mp_options='rw')
-            mp.save()
-
-            if vol['type'] != 'zfs':
-                notifier().label_disk(volume_name,
-                    "%s/%s" % (group_type, volume_name),
-                    'UFS')
-            else:
-                volume.vol_guid = vol['id']
-                volume.save()
-                models.Scrub.objects.create(scrub_volume=volume)
-
-            if vol['type'] == 'zfs' and not notifier().zfs_import(
-                    vol['label'], vol['id']):
-                raise MiddlewareError(_('The volume "%s" failed to import, '
-                    'for futher details check pool status') % vol['label'])
-
-        notifier().reload("disk")
 
 
 class DiskFormPartial(ModelForm):

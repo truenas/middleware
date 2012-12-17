@@ -27,6 +27,11 @@
 
 from django.conf.urls.defaults import patterns, url
 
+from freenasUI.storage.forms import (
+    AutoImportWizard, VolumeAutoImportForm, AutoImportChoiceForm,
+    AutoImportDecryptForm, show_descrypt_condition
+)
+
 urlpatterns = patterns('freenasUI.storage.views',
     url(r'^home/$', 'home', name="storage_home"),
     url(r'^tasks/$', 'tasks', name="storage_tasks"),
@@ -57,7 +62,7 @@ urlpatterns = patterns('freenasUI.storage.views',
     url(r'^detach/(?P<vid>\d+)/$', 'volume_detach', name="storage_detach"),
     url(r'^scrub/(?P<vid>\d+)/$', 'zpool_scrub', name="storage_scrub"),
     url(r'^import/$', 'volimport', name="storage_import"),
-    url(r'^auto-import/$', 'volautoimport', name="storage_autoimport"),
+    url(r'^auto-import/$', AutoImportWizard.as_view([AutoImportChoiceForm, AutoImportDecryptForm, VolumeAutoImportForm], condition_dict={'1': show_descrypt_condition}), name="storage_autoimport"),
     url(r'^periodic-snapshot/$', 'periodicsnap', name="storage_periodicsnap"),
     (r'volume/(?P<volume_id>\d+)/$', 'volume_disks'),
     url(r'^volume/zfs-edit/(?P<object_id>\d+)/$', 'zfsvolume_edit', name="storage_volume_edit"),
