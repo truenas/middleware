@@ -1173,6 +1173,21 @@ class notifier:
             return True
         return False
 
+    def geli_attach_single(self, prov, key, passphrase=None):
+        if passphrase is None:
+            _passphrase = "-p"
+        else:
+            _passphrase = "-j %s" % passphrase
+        proc = self.__pipeopen("geli attach %s -k %s %s" % (
+            _passphrase,
+            key,
+            prov,
+            ))
+        proc.communicate()
+        if os.path.exists("/dev/%s.eli" % prov):
+            return True
+        return False
+
     def geli_attach(self, volume, passphrase=None):
         """
         Attach geli providers of a given volume
@@ -1198,6 +1213,25 @@ class notifier:
             if proc.returncode != 0:
                 failed += 1
         return failed
+
+    def geli_get_all_providers(self):
+        providers = []
+        doc = self.__geom_confxml()
+        disks = self.get_disks()
+        for disk in disks:
+            parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/name" % disk)]
+            if not parts:
+                parts = [disk]
+            for part in parts:
+                proc = self.__pipeopen("geli dump %s" % part)
+                proc.communicate()
+                if proc.returncode == 0:
+                    gptid = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % part)
+                    if gptid:
+                        providers.append((gptid[0].content, part))
+                    else:
+                        providers.append((part, part))
+        return providers
 
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = ['']
