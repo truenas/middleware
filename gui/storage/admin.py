@@ -124,8 +124,10 @@ class VolumeFAdmin(BaseFreeAdmin):
 
         if decrypted is True:
             hide_enc = "row.data.vol_fstype !== undefined && row.data.is_decrypted == false"
-        else:
+        elif decrypted is False:
             hide_enc = "row.data.is_decrypted == true"
+        elif decrypted is None:
+            hide_enc = "false"
 
         if has_enc is True:
             if enc_level is not None:
@@ -184,6 +186,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             func="editScaryObject",
             icon="remove_volume",
             fstype="ALL",
+            decrypted=None,
             )
         actions['Scrub'] = self._action_builder("scrub", label=_('Scrub Volume'))
         actions['Options'] = self._action_builder("options",
