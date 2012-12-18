@@ -1149,7 +1149,7 @@ class notifier:
         return False
 
     def geli_attach_single(self, prov, key, passphrase=None):
-        if passphrase is None:
+        if not passphrase:
             _passphrase = "-p"
         else:
             _passphrase = "-j %s" % passphrase
