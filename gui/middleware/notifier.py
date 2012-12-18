@@ -1186,6 +1186,7 @@ class notifier:
                     ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
+                log.warn("Failed to geli attach %s: %s", dev, err)
                 failed += 1
         return failed
 
