@@ -990,7 +990,7 @@ table.grid tr {
     height:25px;
     padding:0;
     margin:0 auto;
-    margin-bottom:3px;
+    margin-bottom:2px;
     border:none !important;
 }
 .alert_warn {
@@ -999,7 +999,7 @@ table.grid tr {
     height:25px;
     padding:0 !important;
     margin:0 auto;
-    margin-bottom:3px;
+    margin-bottom:2px;
     border:none !important;
 }
 .alert_crit {
@@ -1008,7 +1008,7 @@ table.grid tr {
     height:25px;
     padding:0 !important;
     margin:0 auto;
-    margin-bottom:3px;
+    margin-bottom:2px;
     border:none !important;
 }
 span.shell_f0 {
