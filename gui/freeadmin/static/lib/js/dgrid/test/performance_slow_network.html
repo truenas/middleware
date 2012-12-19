@@ -58,11 +58,18 @@
 						deselectOnRefresh: false
 					}, "grid");
 					console.log(new Date().getTime() - start);
+					
+					grid.on("dgrid-refresh-complete", function(evt) {
+						console.log("Refresh completed", evt.results, evt.rows);
+					});
 				});
 				
 		</script>
 	</head>
 	<body class="tundra">
+		<div>Test refresh while preserving scroll position:
+			<button onclick="grid.refresh({keepScrollPosition:1})">refresh</button>
+		</div>
 		<h2 class="heading">Tests handling of large data sets on a (simulated) slow network, with results being returned
 			after a delay and out of order, and the total number of rows being returned at a different
 			time to the result set.</h2>

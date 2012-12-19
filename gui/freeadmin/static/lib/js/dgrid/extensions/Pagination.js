@@ -200,14 +200,14 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			}
 			this.inherited(arguments);
 			// reset to first page
-			this.gotoPage(1);
+			return this.gotoPage(1);
 		},
 		
 		gotoPage: function(page, focusLink){
 			// summary:
 			//		Loads the given page.  Note that page numbers start at 1.
 			var grid = this;
-			this._trackError(function(){
+			return this._trackError(function(){
 				var count = grid.rowsPerPage,
 					start = (page - 1) * count,
 					options = lang.mixin(grid.get("queryOptions"), {
@@ -268,8 +268,11 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 						// call resize in old IE in case grid is set to height: auto
 						grid.resize();
 					}
+					
+					return results;
 				}, function(error){
 					// enable loading again before throwing the error
+					put(loadingNode, "!");
 					delete grid._isLoading;
 					throw error;
 				});

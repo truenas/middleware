@@ -74,17 +74,7 @@ function(kernel, declare, listen, has, put, List){
 				};
 			}
 		},
-		_columnsCss: function(rule){
-			// This is an attempt at integration with xstyle, will probably change
-			rule.fullSelector = function(){
-				return this.parent.fullSelector() + " .dgrid-cell";
-			};
-			for(var i = 0;i < rule.children.length;i++){
-				var child = rule.children[i];
-				child.field = child.className = child.selector.substring(1); 
-			}
-			return rule.children;
-		},
+		
 		createRowCells: function(tag, each, subRows){
 			// summary:
 			//		Generates the grid for each row (used by renderHeader and and renderRow)
@@ -221,25 +211,43 @@ function(kernel, declare, listen, has, put, List){
 				// respond to click, space keypress, or enter keypress
 				if(event.type == "click" || event.keyCode == 32 /* space bar */ || (!has("opera") && event.keyCode == 13) /* enter */){
 					var target = event.target,
-						field, descending, parentNode, sort;
+						parentNode, field, sort, newSort, eventObj;
 					do{
 						if(target.sortable){
-							// stash node subject to DOM manipulations,
-							// to be referenced then removed by sort()
-							grid._sortNode = target;
-							
-							field = target.field || target.columnId;
-							
-							// if the click is on the same column as the active sort,
+							// If the click is on the same column as the active sort,
 							// reverse sort direction
-							descending = (sort = grid._sort[0]) && sort.attribute == field &&
-								!sort.descending;
+							newSort = [{
+								attribute: (field = target.field || target.columnId),
+								descending: (sort = grid._sort[0]) && sort.attribute == field &&
+									!sort.descending
+							}];
 							
-							return grid.set("sort", field, descending);
+							// Emit an event with the new sort 
+							eventObj = {
+								bubbles: true,
+								cancelable: true,
+								grid: grid,
+								parentType: event.type,
+								sort: newSort
+							};
+							
+							if (listen.emit(target, "dgrid-sort", eventObj)){
+								// Stash node subject to DOM manipulations,
+								// to be referenced then removed by sort()
+								grid._sortNode = target;
+								grid.set("sort", newSort);
+							}
+							
+							break;
 						}
 					}while((target = target.parentNode) && target != headerNode);
 				}
 			});
+			
+			// After re-rendering the header, re-apply the sort arrow if needed.
+			if (this._sort && this._sort.length){
+				this.updateSortArrow(this._sort);
+			}
 		},
 		
 		resize: function(){
@@ -278,21 +286,41 @@ function(kernel, declare, listen, has, put, List){
 			// summary:
 			//		Extension of List.js sort to update sort arrow in UI
 			
-			this.inherited(arguments); // normalize _sort first
+			// Normalize _sort first via inherited logic, then update the sort arrow
+			this.inherited(arguments);
+			this.updateSortArrow(this._sort);
+		},
+		
+		updateSortArrow: function(sort, updateSort){
+			// summary:
+			//		Method responsible for updating the placement of the arrow in the
+			//		appropriate header cell.  Typically this should not be called (call
+			//		set("sort", ...) when actually updating sort programmatically), but
+			//		this method may be used by code which is customizing sort (e.g.
+			//		by reacting to the dgrid-sort event, canceling it, then
+			//		performing logic and calling this manually).
+			// sort: Array
+			//		Standard sort parameter - array of object(s) containing attribute
+			//		and optionally descending property
+			// updateSort: Boolean?
+			//		If true, will update this._sort based on the passed sort array
+			//		(i.e. to keep it in sync when custom logic is otherwise preventing
+			//		it from being updated); defaults to false
 			
-			// clean up UI from any previous sort
+			// Clean up UI from any previous sort
 			if(this._lastSortedArrow){
-				// remove the sort classes from parent node
+				// Remove the sort classes from the parent node
 				put(this._lastSortedArrow, "<!dgrid-sort-up!dgrid-sort-down");
-				// destroy the lastSortedArrow node
+				// Destroy the lastSortedArrow node
 				put(this._lastSortedArrow, "!");
 				delete this._lastSortedArrow;
 			}
 			
-			if(!this._sort[0]){ return; } // nothing to do if no sort is specified
+			if(updateSort){ this._sort = sort; }
+			if(!sort[0]){ return; } // nothing to do if no sort is specified
 			
-			var prop = this._sort[0].attribute,
-				desc = this._sort[0].descending,
+			var prop = sort[0].attribute,
+				desc = sort[0].descending,
 				target = this._sortNode, // stashed if invoked from header click
 				columns, column, i;
 			
@@ -319,6 +347,7 @@ function(kernel, declare, listen, has, put, List){
 				this.resize();
 			}
 		},
+		
 		styleColumn: function(colId, css){
 			// summary:
 			//		Dynamically creates a stylesheet rule to alter a column's style.

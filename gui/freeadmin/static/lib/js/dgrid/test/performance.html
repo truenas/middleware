@@ -59,12 +59,18 @@
 						console.log("scroll time: " + (new Date() - start) + "ms");
 					};
 					
+					grid.on("dgrid-refresh-complete", function(evt) {
+						console.log("Refresh completed ", evt.results, evt.rows);
+					});
 				});
 				
 		</script>
 	</head>
 	<body class="tundra">
 		<h2 class="heading">A performance test designed to go head to head with DataGrid's test_datagrid_performance.html</h2>
+		<div>Test refresh while preserving scroll position:
+			<button onclick="grid.refresh({keepScrollPosition:1})">refresh</button>
+		</div>
 		<div id="grid"></div>
 	</body>
 </html>
