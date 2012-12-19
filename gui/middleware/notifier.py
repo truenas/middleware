@@ -1194,17 +1194,28 @@ class notifier:
         """
         Test key for geli providers of a given volume
         """
+
+        assert volume.vol_fstype == 'ZFS'
+
         geli_keyfile = volume.get_geli_keyfile()
         if not passphrase:
             _passphrase = "-p"
         else:
             _passphrase = "-j %s" % passphrase
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
+
+        """
+        Parse zpool status to get encrypted providers
+        EncryptedDisk table might be out of sync for some reason,
+        this is much more reliable!
+        """
+        zpool = self.zpool_parse(volume.vol_name)
+        for dev in zpool.get_devs():
+            if not dev.name.endswith(".eli"):
+                continue
             proc = self.__pipeopen("geli attach %s -k %s %s" % (
                _passphrase,
                geli_keyfile,
-               dev,
+               dev.name.replace(".eli", ""),
                ))
             err = proc.communicate()[1]
             if err.find('Wrong key') != -1:
