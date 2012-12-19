@@ -1190,6 +1190,27 @@ class notifier:
                 failed += 1
         return failed
 
+    def geli_testkey(self, volume, passphrase=None):
+        """
+        Test key for geli providers of a given volume
+        """
+        geli_keyfile = volume.get_geli_keyfile()
+        if not passphrase:
+            _passphrase = "-p"
+        else:
+            _passphrase = "-j %s" % passphrase
+        for ed in volume.encrypteddisk_set.all():
+            dev = ed.encrypted_provider
+            proc = self.__pipeopen("geli attach %s -k %s %s" % (
+               _passphrase,
+               geli_keyfile,
+               dev,
+               ))
+            err = proc.communicate()[1]
+            if err.find('Wrong key') != -1:
+                return False
+        return True
+
     def geli_get_all_providers(self):
         providers = []
         doc = self.__geom_confxml()
