@@ -163,7 +163,7 @@
     </div>
     {% if m.mp_volume.vol_encrypt == 1 %}
     <button id="addPassBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_change.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Create Passphrase"|escapejs %}', '{% url storage_volume_create_passphrase object_id=m.mp_volume.id %}', [this,]);
         </script>
@@ -173,7 +173,7 @@
     </div>
     {% elif m.mp_volume.vol_encrypt == 2 %}
     <button id="changePassBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_change.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Change Passphrase"|escapejs %}', '{% url storage_volume_change_passphrase object_id=m.mp_volume.id %}', [this,]);
         </script>
@@ -184,7 +184,7 @@
     {% endif %}
     {% if m.mp_volume.vol_encrypt > 0 %}
     <button id="keyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_download.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Download Key"|escapejs %}', '{% url storage_volume_key object_id=m.mp_volume.id %}', [this,]);
         </script>
@@ -194,7 +194,7 @@
     </div>
 
     <button id="rekeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_rekey.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Encryption Re-key"|escapejs %}', '{% url storage_volume_rekey object_id=m.mp_volume.id %}', [this,]);
         </script>
@@ -204,7 +204,7 @@
     </div>
 
     <button id="reckeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_addrecovery.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Add recovery key"|escapejs %}', '{% url storage_volume_recoverykey_add object_id=m.mp_volume.id %}', [this,]);
         </script>
@@ -214,7 +214,7 @@
     </div>
 
     <button id="rmreckeyBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
-        <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
+        <img src="{{ STATIC_URL }}images/ui/buttons/key_removerecovery.png" width="18px" height="18px">
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Remove recovery key"|escapejs %}', '{% url storage_volume_recoverykey_remove object_id=m.mp_volume.id %}', [this,]);
         </script>
