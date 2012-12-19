@@ -1388,6 +1388,14 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
             raise forms.ValidationError(
                 _("Confirmation does not match passphrase")
             )
+        passfile = tempfile.mktemp(dir='/tmp/')
+        with open(passfile, 'w') as f:
+            f.write(passphrase)
+        if not notifier().geli_testkey(self.volume, passphrase=passfile):
+            self._errors['pass'] = self.error_class([
+                _("Passphrase is not valid")
+            ])
+        os.unlink(passfile)
         return passphrase
 
     def done(self, fromdisk, label):
