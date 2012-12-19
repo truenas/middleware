@@ -199,7 +199,7 @@ _host_config()
 			done) > /etc/resolv.conf
 		fi
 
-		if [ ${netwait_enabled} -eq 1 ]; then
+		if [ "${netwait_enabled}" = 1 ]; then
 			echo netwait_enable=\"YES\"
 			if [ -z "${netwait_ip}" ]; then
 				if [ -n "${ipv4gateway}" ]; then
