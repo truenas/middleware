@@ -788,6 +788,8 @@ def volume_detach(request, vid):
         )
     usedsize = humanize_size(usedbytes)
     services = volume.has_attachments()
+    if volume.vol_encrypt > 0:
+        request.session["allow_gelikey"] = True
     if request.method == "POST":
         form = forms.VolumeExport(request.POST,
             instance=volume,
