@@ -106,6 +106,20 @@ class Pool(object):
                 unavails.extend(getattr(self, key).find_not_online())
         return unavails
 
+    def get_devs(self):
+        """
+        Get disks used within this pool
+        """
+        devs = []
+        for key in ('data', 'cache', 'spares', 'logs'):
+            klass = getattr(self, key)
+            if klass is None:
+                continue
+            for vdev in klass:
+                for dev in vdev:
+                    devs.append(dev)
+        return devs
+
     def get_disks(self):
         """
         Get disks used within this pool
