@@ -285,9 +285,11 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
+        self.instance._original_adv_autotune = self.instance.adv_autotune
 
     def save(self):
         super(AdvancedForm, self).save()
+        loader_reloaded = False
         if self.instance._original_adv_motd != self.instance.adv_motd:
             notifier().start("motd")
         if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
@@ -296,13 +298,22 @@ class AdvancedForm(ModelForm):
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
             notifier().start("ttys")
-            notifier().start("loader")
+            if not loader_reloaded:
+                notifier().reload("loader")
+                loader_reloaded = True
         if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
             if self.instance.adv_consolescreensaver == 0:
                 notifier().stop("saver")
             else:
                 notifier().start("saver")
-            notifier().start("loader")
+            if not loader_reloaded:
+                notifier().reload("loader")
+                loader_reloaded = True
+        if (
+            self.instance._original_adv_autotune != self.instance.adv_autotune
+            and not loader_reloaded
+        ):
+            notifier().reload("loader")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
@@ -313,6 +324,11 @@ class AdvancedForm(ModelForm):
         if self.instance._original_adv_advancedmode != self.instance.adv_advancedmode:
             #Invalidate cache
             request.session.pop("adv_mode", None)
+        if (
+            self.instance._original_adv_autotune != self.instance.adv_autotune
+            and self.instance.adv_autotune is True
+        ):
+            events.append("refreshTree()")
 
 
 class EmailForm(ModelForm):
