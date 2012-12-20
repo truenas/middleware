@@ -21,7 +21,7 @@
         <td>{{ c.get_human_daymonth }}</td>
         <td>{{ c.get_human_month }}</td>
         <td>{{ c.get_human_dayweek }}</td>
-        <td>{{ c.scrub_desc|default:_("None") }}</td>
+        <td>{{ c.scrub_description|default:_("None") }}</td>
         <td>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
