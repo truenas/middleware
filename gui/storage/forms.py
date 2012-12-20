@@ -704,6 +704,14 @@ class AutoImportChoiceForm(forms.Form):
         initial="import",
     )
 
+    def done(self, *args, **kwargs):
+        # Detach all unused geli providers before proceeding
+        # This makes sure do not import pools without proper key
+        _notifier = notifier()
+        for dev, name in notifier().geli_get_all_providers():
+            _notifier.geli_detach(dev)
+        log.error("detached")
+
 
 class AutoImportDecryptForm(forms.Form):
     disks = forms.MultipleChoiceField(

@@ -1247,12 +1247,35 @@ class notifier:
                 return False
         return True
 
+    def geli_detach(self, dev):
+        """
+        Detach geli provider
+
+        Returns false if a device suffixed with .eli exists at the end of
+        the operation and true otherwise
+        """
+        proc = self.__pipeopen("geli detach %s" % (
+            dev,
+            ))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.warn("Failed to geli detach %s: %s", dev, err)
+        if os.path.exists("/dev/%s.eli"):
+            return False
+        return True
+
     def geli_get_all_providers(self):
+        """
+        Get all unused geli providers
+
+        It might be an entire disk or a partition of type freebsd-zfs
+        (GELI on UFS not supported yet)
+        """
         providers = []
         doc = self.__geom_confxml()
         disks = self.get_disks()
         for disk in disks:
-            parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/name" % disk)]
+            parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/config[type = 'freebsd-zfs']/../name" % disk)]
             if not parts:
                 parts = [disk]
             for part in parts:
