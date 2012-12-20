@@ -244,29 +244,6 @@ def volimport(request):
     })
 
 
-def volautoimport(request):
-
-    if request.method == "POST":
-
-        form = forms.VolumeAutoImportForm(request.POST)
-        if form.is_valid():
-            form.done(request)
-            return JsonResponse(message=_("Volume successfully added."))
-        else:
-
-            if 'volume_disks' in request.POST:
-                disks = request.POST.getlist('volume_disks')
-            else:
-                disks = None
-    else:
-        form = forms.VolumeAutoImportForm()
-        disks = []
-    return render(request, 'storage/autoimport.html', {
-        'form': form,
-        'disks': disks
-    })
-
-
 def disks_datagrid(request):
 
     names = [
