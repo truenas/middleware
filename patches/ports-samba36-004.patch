@@ -1,0 +1,845 @@
+diff --git net/samba36/Makefile net/samba36/Makefile
+index cb55da9..2f85bc5 100644
+--- net/samba36/Makefile
++++ net/samba36/Makefile
+@@ -2,15 +2,15 @@
+ # Date created:				1 May 2011
+ # Whom:					timur@FreeBSD.org
+ #
+-# $FreeBSD: ports/net/samba36/Makefile,v 1.9 2012/08/15 00:20:31 delphij Exp $
++# $FreeBSD: head/net/samba36/Makefile 306898 2012-11-03 03:08:45Z timur $
+ #
+ 
+ PORTNAME=		${SAMBA_BASENAME}36
+-PORTVERSION=		3.6.7
++PORTVERSION=		3.6.9
+ PORTREVISION?=		0
+ CATEGORIES?=		net
+ MASTER_SITES=		${MASTER_SITE_SAMBA}
+-MASTER_SITE_SUBDIR=	. old-versions rc pre
++MASTER_SITE_SUBDIR=	samba samba/old-versions samba/rc samba/pre
+ DISTNAME=		${SAMBA_BASENAME}-${PORTVERSION:S|.p|pre|:S|.r|rc|:S|.t|tp|:S|.a|alpha|}
+ 
+ MAINTAINER?=		timur@FreeBSD.org
+@@ -37,11 +37,14 @@ AUTOCONF_ARGS=		${IPATHS}
+ USE_GMAKE=		yes
+ USE_ICONV=		yes
+ GNU_CONFIGURE=		yes
++USE_PKGCONFIG=		build
+ USE_AUTOTOOLS=		autoconf autoheader
+ USE_LDCONFIG=		${SAMBA_LIBDIR}
+-
++# pkg-config is used to find talloc
++PKGCONFIGDIR?=		${PREFIX}/libdata/pkgconfig
++PKGCONFIGDIR_REL?=	${PKGCONFIGDIR:S|^${PREFIX}/||}
+ # directories
+-VARDIR?=		/var
++VARDIR?=		${DESTDIR}/var
+ SAMBA_SPOOL?=		${VARDIR}/spool/${SAMBA_BASENAME}
+ SAMBA_LOGDIR=		${VARDIR}/log/${SAMBA_BASENAME}
+ SAMBA_RUNDIR=		${VARDIR}/run/${SAMBA_BASENAME}
+@@ -67,6 +70,7 @@ CONFIGURE_ARGS+=	--exec-prefix="${PREFIX}" \
+ 			--localstatedir="${VARDIR}" \
+ 			--with-piddir="${SAMBA_RUNDIR}" \
+ 			--with-ncalrpcdir="${SAMBA_RUNDIR}/ncalrpc" \
++			--with-nmbdsocketdir="${SAMBA_RUNDIR}/nmbd" \
+ 			--with-lockdir="${SAMBA_LOCKDIR}" \
+ 			--with-statedir="${SAMBA_LOCKDIR}" \
+ 			--with-cachedir="${SAMBA_LOCKDIR}" \
+@@ -79,11 +83,10 @@ LDFLAGS+=		-L${LOCALBASE}/lib
+ CONFIGURE_ENV+=		LDFLAGS="${LDFLAGS}" \
+ 			PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
+ 			PTHREAD_LDFLAGS="${PTHREAD_LIBS}"
+-# pkg-config is used to find talloc
+-PKGCONFIGDIR?=		${PREFIX}/libdata/pkgconfig
+-PKGCONFIGDIR_REL?=	${PKGCONFIGDIR:S|^${PREFIX}/||}
+-
+-USE_PKGCONFIG=		yes
++# XXX: Temporary hack for RELENG6
++CONFIGURE_ENV+=		ac_cv_header_sys_mount_h=yes
++# XXX: readdir test fails on ZFS, bringing unusable replacement code
++CONFIGURE_ENV+=		libreplace_cv_READDIR_NEEDED=no
+ # Let process generate meaningful backtrace on a core dump
+ LIB_DEPENDS+=		execinfo.1:${PORTSDIR}/devel/libexecinfo
+ # tdb
+@@ -95,7 +98,8 @@ BUILD_DEPENDS+=		talloc>=2.0.1:${PORTSDIR}/devel/talloc
+ RUN_DEPENDS+=		talloc>=2.0.1:${PORTSDIR}/devel/talloc
+ CONFIGURE_ARGS+=	--without-libtalloc --enable-external-libtalloc
+ # These options are common for all (sub)ports
+-CONFIGURE_ARGS+=	--with-libiconv="${LOCALBASE}"
++CONFIGURE_ARGS+=	--with-libiconv="${LOCALBASE}" \
++			--disable-as-needed
+ 
+ .if !defined(SAMBA_SUBPORT)
+ OPTIONS=	LDAP		"With LDAP support" on \
+@@ -103,8 +107,8 @@ OPTIONS=	LDAP		"With LDAP support" on \
+ 		CUPS		"With CUPS printing support" on \
+ 		WINBIND		"With WinBIND support" on \
+ 		SWAT		"With SWAT WebGUI" off \
+-		ACL_SUPPORT	"With ACL support" off \
+-		AIO_SUPPORT	"With Asyncronous IO support" off \
++		ACL_SUPPORT	"With ACL support" on \
++		AIO_SUPPORT	"With Asyncronous IO support" on \
+ 		FAM_SUPPORT	"With File Alteration Monitor" off \
+ 		SYSLOG		"With Syslog support" off \
+ 		QUOTAS		"With Disk quota support" off \
+@@ -112,6 +116,7 @@ OPTIONS=	LDAP		"With LDAP support" on \
+ 		PAM_SMBPASS	"With PAM authentication vs passdb backends" off \
+ 		DNSUPDATE	"With dynamic DNS update(require ADS)" off \
+ 		AVAHI		"With Bonjour service discovery support" off \
++		PTHREADPOOL	"With pthread pool" off \
+ 		EXP_MODULES	"With experimental modules" off \
+ 		POPT		"With system-wide POPT library" on \
+ 		IPV6		"With IPv6 support" on \
+@@ -158,8 +163,6 @@ CONFIGURE_ARGS+=	--with-pam --with-readline=/usr \
+ 			--without-libnetapi \
+ 			--without-libsmbsharemodes
+ 
+-# XXX: Temporary hack for RELENG6
+-CONFIGURE_ENV+=		ac_cv_header_sys_mount_h=yes
+ .if !defined(WITH_IPV6)
+ CONFIGURE_ENV+=		libreplace_cv_HAVE_IPV6=no
+ .endif
+@@ -288,14 +291,20 @@ CONFIGURE_ARGS+=	--without-dnsupdate
+ .endif
+ 
+ .if defined(WITH_AVAHI)
+-CPPFLAGS+=		`${PKG_CONFIG} --cflags avahi-client`
+-DNSSD_LIBS=		`${PKG_CONFIG} --libs avahi-client`
++CPPFLAGS+=		`pkg-config --cflags avahi-client`
++CONFIGURE_ENV+=		DNSSD_LIBS="`pkg-config --libs avahi-client`"
+ LIB_DEPENDS+=		avahi-client.3:${PORTSDIR}/net/avahi-app
+ CONFIGURE_ARGS+=	--enable-avahi
+ .else
+ CONFIGURE_ARGS+=	--disable-avahi
+ .endif
+ 
++.if defined(WITH_PTHREADPOOL)
++CONFIGURE_ARGS+=	--enable-pthreadpool
++.else
++CONFIGURE_ARGS+=	--disable-pthreadpool
++.endif
++
+ .if !defined(WITHOUT_POPT)
+ LIB_DEPENDS+=		popt.0:${PORTSDIR}/devel/popt
+ CONFIGURE_ARGS+=	--without-included-popt
+@@ -303,8 +312,6 @@ CONFIGURE_ARGS+=	--without-included-popt
+ CONFIGURE_ARGS+=	--with-included-popt
+ .endif
+ 
+-#--enable-pthreadpool
+-
+ .if defined(WITH_SMBTORTURE)
+ PLIST_SUB+=		SMBTORTURE=""
+ .else
+@@ -358,6 +365,8 @@ CONFIGURE_ARGS+=	--with-shared-modules="${WANT_EXP_MODULES:Q:C/(\\\\ )+/,/g}"
+ post-patch:
+ 		@${REINPLACE_CMD} -e 's|%%SAMBA_CONFIG%%|${SAMBA_CONFIG}|g' \
+ 		    ${WRKSRC}/Makefile.in
++		@${REINPLACE_CMD} -e 's|%%LOCALBASE%%|${LOCALBASE}|g' \
++		    ${WRKSRC}/configure.in ${WRKSRC}/m4/aclocal.m4
+ ###
+ ### end of common part
+ ###
+@@ -395,6 +404,10 @@ MAN8+=		swat.8
+ MAN8+=		vfs_notify_fam.8
+ .endif
+ 
++.if defined(WITH_PTHREADPOOL)
++MAN8+=		vfs_aio_pthread.8
++.endif
++
+ .if defined(SAMBA_WANT_LDAP)
+ MAN8+=		idmap_ldap.8
+ .endif
+diff --git net/samba36/distinfo net/samba36/distinfo
+index 8b3cba6..d438c20 100644
+--- net/samba36/distinfo
++++ net/samba36/distinfo
+@@ -1,2 +1,2 @@
+-SHA256 (samba-3.6.7.tar.gz) = b858a0f011ba7fe554881b9c7e6cb1c9cb7face22ed86860f560fcaecc4ed4ca
+-SIZE (samba-3.6.7.tar.gz) = 34067900
++SHA256 (samba-3.6.9.tar.gz) = 9714b50c1bbdb0d3521bdbf403bb112b5405040685cb0b4ff3f9a370d1e84020
++SIZE (samba-3.6.9.tar.gz) = 34077002
+diff --git net/samba36/files/patch-source3__auth__user_util.c net/samba36/files/patch-source3__auth__user_util.c
+new file mode 100644
+index 0000000..430fea3
+--- /dev/null
++++ net/samba36/files/patch-source3__auth__user_util.c
+@@ -0,0 +1,22 @@
++--- ./source3/auth/user_util.c.orig	2012-09-14 08:12:09.000000000 +0000
+++++ ./source3/auth/user_util.c	2012-10-18 20:58:57.065810414 +0000
++@@ -425,12 +425,14 @@
++ 	x_fclose(f);
++ 
++ 	/*
++-	 * Setup the last_from and last_to as an optimization so
++-	 * that we don't scan the file again for the same user.
+++	 * If mapping failed setup the last_from and last_to as
+++	 * an optimization so that we don't scan the file again
+++	 * for the same user.
++ 	 */
++-
++-	set_last_from_to(user_in, user_in);
++-	store_map_in_gencache(ctx, user_in, user_in);
+++	if(!mapped_user) {
+++		set_last_from_to(user_in, user_in);
+++		store_map_in_gencache(ctx, user_in, user_in);
+++	}
++ 
++ 	return mapped_user;
++ }
+diff --git net/samba36/files/patch-source3__configure.in net/samba36/files/patch-source3__configure.in
+index 98de2db..d2433da 100644
+--- net/samba36/files/patch-source3__configure.in
++++ net/samba36/files/patch-source3__configure.in
+@@ -1,18 +1,26 @@
+---- ./source3/configure.in.orig	2011-08-09 13:17:47.000000000 +0200
+-+++ ./source3/configure.in	2011-10-13 23:29:28.000000000 +0200
+-@@ -756,9 +756,9 @@
++--- ./source3/configure.in.orig	2012-10-29 09:05:46.000000000 +0000
+++++ ./source3/configure.in	2012-11-01 13:16:20.589876378 +0000
++@@ -759,7 +759,6 @@
+  if test x"$ac_cv_header_md5_h" = x"yes"; then
+  	AC_DEFINE(HAVE_MD5_H, 1,
+  		[Whether md5.h is available.])
+--	AC_CHECK_LIB(md5, MD5Update,
+-+	AC_CHECK_LIB(md, MD5Update,
+- 	    [
+--		LIBS="${LIBS} -lmd5"
+-+		LIBS="${LIBS} -lmd"
+- 		CRYPTO_MD5_OBJ=
+- 		AC_DEFINE(HAVE_LIBMD5, 1,
+- 		    [Whether libmd5 conformant to rfc1321 is available.])],
+-@@ -852,9 +852,13 @@
++-	AC_CHECK_LIB(md5, MD5Update, [samba_cv_md5lib=md5])
++ fi
++ 
++ if test x"$ac_cv_header_md5_h" = x"yes" -a \
++@@ -769,6 +768,11 @@
++ 
++ if test x"$ac_cv_header_md5_h" = x"yes" -a \
++         x"$samba_cv_md5lib" = x"none" ; then
+++	AC_CHECK_LIB(md5, MD5Update, [samba_cv_md5lib=md5])
+++fi
+++
+++if test x"$ac_cv_header_md5_h" = x"yes" -a \
+++        x"$samba_cv_md5lib" = x"none" ; then
++ 	AC_CHECK_LIB(c, MD5Update, [samba_cv_md5lib=""])
++ fi
++ 
++@@ -868,9 +872,13 @@
+  	AC_PATH_PROG(CUPS_CONFIG, cups-config)
+  
+          if test "x$CUPS_CONFIG" != x; then
+@@ -27,7 +35,7 @@
+  		AC_CHECK_HEADERS(cups/cups.h cups/language.h)
+  
+  		if test x"$ac_cv_header_cups_cups_h" = xyes -a \
+-@@ -863,7 +867,7 @@
++@@ -879,7 +887,7 @@
+  			# underlinked. With cups-config --libs we pull in unwanted and unneeded
+  			# dendencies including thread libraries - use cups-config only if really
+  			# required. 
+@@ -36,7 +44,7 @@
+  				[PRINT_LIBS="$ac_save_PRINT_LIBS -lcups"],
+  				[AC_MSG_WARN([your cups library doesn't link with -lcups alone, it might be underlinked.]) ;
+  				 PRINT_LIBS="$ac_save_PRINT_LIBS `$CUPS_CONFIG --libs`"])
+-@@ -873,10 +877,10 @@
++@@ -889,10 +897,10 @@
+  			AC_CHECK_LIB_EXT(cups, PRINT_LIBS, httpConnectEncrypt)
+  		else
+  			AC_MSG_WARN([cups-config around but cups-devel not installed])
+@@ -49,7 +57,16 @@
+  
+  	elif test x"$enable_cups" = x"yes"; then
+  		AC_MSG_ERROR(Cups support required but cups-config not located.  Make sure cups-devel related files are installed.)
+-@@ -1964,9 +1968,6 @@
++@@ -1849,7 +1857,7 @@
++ fi
++ 
++ if test x"$BLDSHARED" = x"true" ; then
++-	LDFLAGS="$LDFLAGS -L./bin"
+++	LDFLAGS="-L./bin $LDFLAGS"
++ fi
++ 
++ AC_MSG_RESULT($BLDSHARED)
++@@ -1980,9 +1988,6 @@
+  AC_MSG_CHECKING([PICFLAG])
+  AC_MSG_RESULT([$PICFLAG])
+  
+@@ -59,7 +76,7 @@
+  AC_CACHE_CHECK([whether building shared libraries actually works],
+                 [ac_cv_shlib_works],[
+     # try building a trivial shared library
+-@@ -4624,15 +4625,51 @@
++@@ -4639,15 +4644,51 @@
+  		x"$ac_cv_header_pam_pam_modules_h" = x"no" ; then
+  		if test x"${try_pam}" = x"yes";then
+  			AC_MSG_ERROR([--with-pam=yes but pam_modules.h not found])
+@@ -115,7 +132,7 @@
+  
+  		if test x"$create_pam_modules" = x"yes"; then
+  			AC_DEFINE(WITH_PAM_MODULES,1,[Whether to include PAM MODULES support])
+-@@ -4642,7 +4679,7 @@
++@@ -4657,7 +4698,7 @@
+  			AC_CHECK_HEADERS(pam/pam_ext.h pam/_pam_macros.h)
+  			AC_CHECK_FUNC_EXT(pam_vsyslog,$PAM_LIBS)
+  		else
+@@ -124,7 +141,7 @@
+  		fi
+  	fi
+  	AC_MSG_CHECKING(whether to use PAM support)
+-@@ -5844,9 +5881,17 @@
++@@ -5859,9 +5900,17 @@
+  [AC_MSG_RESULT(no)])
+  
+  			AC_MSG_CHECKING(for aio_suspend)
+@@ -145,7 +162,7 @@
+  [AC_MSG_RESULT(no)])
+  		fi
+  
+-@@ -6299,12 +6344,13 @@
++@@ -6319,12 +6368,13 @@
+  		NSSSONAMEVERSIONSUFFIX=".2"
+  		WINBIND_NSS_EXTRA_OBJS="../nsswitch/winbind_nss_linux.o"
+  		;;
+@@ -160,7 +177,7 @@
+  		WINBIND_NSS="../nsswitch/nss_winbind.$SHLIBEXT"
+  		WINBIND_WINS_NSS="../nsswitch/nss_wins.$SHLIBEXT"
+  		;;
+-@@ -6451,10 +6497,14 @@
++@@ -6471,10 +6521,14 @@
+          AC_MSG_RESULT(no$winbind_no_reason)
+  fi
+  
+@@ -175,7 +192,7 @@
+  AC_SUBST(NSSSONAMEVERSIONSUFFIX)
+  
+  AC_SUBST(WINBIND_KRB5_LOCATOR)
+-@@ -6773,13 +6823,21 @@
++@@ -6793,13 +6847,21 @@
+  # Start
+  AC_CHECK_FUNC(getmntent)
+  
+@@ -198,7 +215,7 @@
+  		int main(void)
+  		{
+  			struct statfs fsd;
+-@@ -7079,6 +7137,16 @@
++@@ -7099,6 +7161,16 @@
+  	LIBS="$LIBS -ldmalloc"
+  fi
+  
+@@ -215,3 +232,11 @@
+  dnl Remove -L/usr/lib/? from LDFLAGS and LIBS
+  LIB_REMOVE_USR_LIB(LDFLAGS)
+  LIB_REMOVE_USR_LIB(LIBS)
++@@ -7147,6 +7219,7 @@
++ AC_SUBST(SMBD_LIBS)
++ 
++ CFLAGS="${CFLAGS} \$(FLAGS)"
+++CFLAGS="${CFLAGS} -I%%LOCALBASE%%/include"
++ CFLAGS="${CFLAGS} -D_SAMBA_BUILD_=3"
++ 
++ # If we had to expand the includes, make tsure the output file is moved back
+diff --git net/samba36/files/patch-source3__m4__aclocal.m4 net/samba36/files/patch-source3__m4__aclocal.m4
+index 019b5b3..357dcf2 100644
+--- net/samba36/files/patch-source3__m4__aclocal.m4
++++ net/samba36/files/patch-source3__m4__aclocal.m4
+@@ -1,24 +1,15 @@
+---- ./source3/m4/aclocal.m4.orig	2011-08-09 13:17:47.000000000 +0200
+-+++ ./source3/m4/aclocal.m4	2011-10-05 22:59:19.000000000 +0200
+-@@ -385,11 +385,15 @@
++--- ./source3/m4/aclocal.m4.orig	2012-09-14 08:12:09.000000000 +0000
+++++ ./source3/m4/aclocal.m4	2012-10-20 13:13:36.975802862 +0000
++@@ -385,7 +385,7 @@
+    ac_new_flags=""
+    for i in [$]$1; do
+      case [$]i in
+ -    -I/usr/include|-I/usr/include/) ;;
+-+    -I/usr/include|-I/usr/include/|-I/usr/local/include/|-I/usr/local/include) f=1;;
+++    -I/usr/include|-I/usr/include/|-I%%LOCALBASE%%/include/|-I%%LOCALBASE%%/include) f=1;;
+      *) ac_new_flags="[$]ac_new_flags [$]i" ;;
+      esac
+    done
+--  $1=[$]ac_new_flags
+-+  if test [$]f; then
+-+    $1="[$]ac_new_flags -I/usr/local/include"
+-+  else
+-+    $1=[$]ac_new_flags
+-+  fi
+- ])
+- 
+- dnl Removes '-L/usr/lib[/]', '-Wl,-rpath,/usr/lib[/]'
+-@@ -437,104 +441,81 @@
++@@ -437,104 +437,81 @@
+    dnl those with the standalone portable libiconv installed).
+    AC_MSG_CHECKING(for iconv in $1)
+      jm_cv_func_iconv="no"
+diff --git net/samba36/files/samba.in net/samba36/files/samba.in
+index c21fa5f..b94ced8 100644
+--- net/samba36/files/samba.in
++++ net/samba36/files/samba.in
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ #
+-# $FreeBSD: ports/net/samba36/files/samba.in,v 1.3 2012/04/13 09:16:00 dougb Exp $
++# $FreeBSD: head/net/samba36/files/samba.in 306898 2012-11-03 03:08:45Z timur $
+ #
+ 
+ # PROVIDE: nmbd smbd
+@@ -14,9 +14,9 @@
+ # to enable this service:
+ #
+ #samba_enable="YES"
+-# or, for fine grain control:
+-#nmbd_enable="YES"
+-#smbd_enable="YES"
++# You can disable/enable any of the Samba daemons by specifying:
++#nmbd_enable="NO"
++#smbd_enable="NO"
+ %%WINBIND%%# You need to enable winbindd separately, by adding:
+ %%WINBIND%%#winbindd_enable="YES"
+ #
+@@ -28,43 +28,6 @@
+ 
+ name="samba"
+ rcvar=samba_enable
+-
+-# Defaults
+-samba_enable=${samba_enable:=NO}
+-samba_config_default="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
+-samba_config=${samba_config="${samba_config_default}"}
+-command_args=${samba_config:+-s "${samba_config}"}
+-# Fetch parameters from configuration file
+-testparm_command="%%PREFIX%%/bin/testparm"
+-smbcontrol_command="%%PREFIX%%/bin/smbcontrol"
+-samba_parm="${testparm_command} -s -v --parameter-name"
+-samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
+-samba_lockdir=$(${samba_parm} 'lock directory' "${samba_config}" 2>/dev/null)
+-# Load configuration
+-load_rc_config "${name}"
+-# Setup dependent variables
+-if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+-    nmbd_enable=${nmbd_enable=YES}
+-    smbd_enable=${smbd_enable=YES}
+-%%WINBIND%%    # Check that winbindd is actually configured
+-%%WINBIND%%    if [ -n "${samba_idmap}" ]; then
+-%%WINBIND%%	winbindd_enable=${winbindd_enable=YES}
+-%%WINBIND%%    fi
+-fi
+-# XXX: Hack to enable check of the dependent variables
+-eval real_${rcvar}="\${${rcvar}:=NO}"	${rcvar}=YES
+-%%WINBIND%%# winbindd
+-%%WINBIND%%rcvar=winbindd_enable
+-%%WINBIND%%winbindd_enable=${winbindd_enable:=NO}
+-%%WINBIND%%winbindd_flags=${winbindd_flags=''}
+-# nmbd
+-rcvar=nmbd_enable
+-nmbd_enable=${nmbd_enable:=NO}
+-nmbd_flags=${nmbd_flags="-D"}
+-# smbd
+-rcvar=smbd_enable
+-smbd_enable=${smbd_enable:=NO}
+-smbd_flags=${smbd_flags="-D"}
+ # Custom commands
+ extra_commands="reload status"
+ start_precmd="samba_start_precmd"
+@@ -75,16 +38,19 @@ restart_precmd="samba_checkconfig"
+ reload_precmd="samba_checkconfig"
+ reload_cmd="samba_reload_cmd"
+ rcvar_cmd="samba_rcvar_cmd"
++# Defaults
++samba_config_default="%%SAMBA_CONFDIR%%/%%SAMBA_CONFIG%%"
++testparm_command="%%PREFIX%%/bin/testparm"
++smbcontrol_command="%%PREFIX%%/bin/smbcontrol"
++samba_parm="${testparm_command} -s -v --parameter-name"
++pid_extra=
+ #
+ samba_daemons="nmbd smbd"
+ %%WINBIND%%samba_daemons="${samba_daemons} winbindd"
+-# Requirements
+-required_files="${samba_config}"
+-required_dirs="${samba_lockdir}"
+ 
+ samba_checkconfig() {
+     echo -n "Performing sanity check on Samba configuration: "
+-    if ${testparm_command} -s ${samba_config:+"${samba_config}"} >/dev/null 2>&1; then
++    if ${testparm_command} -s ${samba_config:+"${samba_config}"} >/dev/null 2>&1; then #"
+ 	echo "OK"
+     else
+ 	echo "FAILED"
+@@ -94,6 +60,10 @@ samba_checkconfig() {
+ }
+ 
+ samba_start_precmd() {
++    # Make sure rundir exists
++    if [ ! -d "%%SAMBA_RUNDIR%%" -a ! -e "%%SAMBA_RUNDIR%%" ]; then
++	install -m 0755 -d "%%SAMBA_RUNDIR%%"
++    fi
+     # XXX: Never delete winbindd_idmap, winbindd_cache and group_mapping
+     if [ -n "${samba_lockdir}" -a -d "${samba_lockdir}" ]; then
+ 	echo -n "Removing stale Samba tdb files: "
+@@ -108,13 +78,19 @@ samba_start_precmd() {
+ }
+ 
+ samba_rcvar_cmd() {
+-    local rcvar
++    local name rcvar
+     rcvar=${name}_enable
+-    eval ${rcvar}=\${real_${rcvar}}
+     # Prevent recursive calling
+     unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+     # Check master variable
+     run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
++    # Check dependent variables
++    for name in ${samba_daemons}; do
++	# XXX
++	rcvars=''; v=''
++	rcvar=${name}_enable
++	run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
++    done
+ }
+ 
+ samba_reload_cmd() {
+@@ -123,7 +99,7 @@ samba_reload_cmd() {
+     unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+     # Apply to all daemons
+     for name in ${samba_daemons}; do
+-    	rcvar=${name}_enable
++	rcvar=${name}_enable
+ 	command="%%PREFIX%%/sbin/${name}"
+ 	pidfile="%%SAMBA_RUNDIR%%/${name}${pid_extra}.pid"
+ 	# Daemon should be enabled and running
+@@ -150,19 +126,65 @@ samba_cmd() {
+     result=0
+     # Apply to all daemons
+     for name in ${samba_daemons}; do
+-	rcvar=${name}_enable
+ 	# XXX
+ 	rcvars=''; v=''
++	rcvar=${name}_enable
+ 	command="%%PREFIX%%/sbin/${name}"
+ 	pidfile="%%SAMBA_RUNDIR%%/${name}${pid_extra}.pid"
+ 	# Daemon should be enabled and running
+ 	if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+ 	    run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+-	    # If any of the of the commands failed, take it as a total result
++	    # If any of the commands failed, take it as a global result
+ 	    result=$((${result} || $?))
+ 	fi
+     done
+     return ${result}
+ }
+ 
++samba_config_init() {
++    local name
++    # Load configuration
++    load_rc_config "${name}"
++    for name in ${samba_daemons}; do
++	load_rc_config "${name}"
++    done
++    # Location of the config
++    samba_config=${samba_config="${samba_config_default}"} #"
++    # XXX: Hack to work around name change of pid file with non-default config
++    if [ -n "${samba_config}" -a "${samba_config}" != "${samba_config_default}" ]; then
++	pid_extra="-$(basename "${samba_config}")"
++    fi
++    # Setup dependent variables
++    if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
++	nmbd_enable=${nmbd_enable=YES}
++	smbd_enable=${smbd_enable=YES}
++    fi
++    # Defaults
++    samba_enable=${samba_enable:=NO}
++    nmbd_enable=${nmbd_enable:=NO}
++    smbd_enable=${smbd_enable:=NO}
++%%WINBIND%%    # Winbindd
++%%WINBIND%%    if [ -z "${winbind_enable}" ]; then
++%%WINBIND%%	samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
++%%WINBIND%%	# Check that winbindd is actually configured
++%%WINBIND%%	if [ -n "${samba_idmap}" ]; then
++%%WINBIND%%		winbindd_enable="YES"
++%%WINBIND%%	fi
++%%WINBIND%%	winbindd_enable=${winbindd_enable:=NO}
++%%WINBIND%%    fi
++}
++
++# Load configuration variables
++samba_config_init
++# Where is the lockdir
++samba_lockdir=$(${samba_parm} 'lock directory' "${samba_config}" 2>/dev/null)
++# Common flags
++command_args=${samba_config:+-s "${samba_config}"} #"
++nmbd_flags=${nmbd_flags="-D"}
++smbd_flags=${smbd_flags="-D"}
++%%WINBIND%%winbindd_flags=${winbindd_flags=''}
++# Requirements
++required_files="${samba_config}"
++required_dirs="${samba_lockdir}"
++
+ run_rc_command "$1"
+diff --git net/samba36/pkg-plist.swat net/samba36/pkg-plist.swat
+index 355118f..0aafe08 100644
+--- net/samba36/pkg-plist.swat
++++ net/samba36/pkg-plist.swat
+@@ -1,4 +1,3 @@
+-share/swat/help/Samba3-ByExample/net2000users.html
+ share/swat/help/Samba3-ByExample/Big500users.html
+ share/swat/help/Samba3-ByExample/DMSMig.html
+ share/swat/help/Samba3-ByExample/DomApps.html
+@@ -10,48 +9,64 @@ share/swat/help/Samba3-ByExample/appendix.html
+ share/swat/help/Samba3-ByExample/ch14.html
+ share/swat/help/Samba3-ByExample/go01.html
+ share/swat/help/Samba3-ByExample/happy.html
+-@comment share/swat/help/Samba3-ByExample/images/AccountingNetwork.png
+-@comment share/swat/help/Samba3-ByExample/images/Charity-Network.png
+-@comment share/swat/help/Samba3-ByExample/images/HostAnnouncment.png
+-@comment share/swat/help/Samba3-ByExample/images/NullConnect.png
+-@comment share/swat/help/Samba3-ByExample/images/UNIX-Samba-and-LDAP.png
+-@comment share/swat/help/Samba3-ByExample/images/UserConnect.png
+-@comment share/swat/help/Samba3-ByExample/images/UserMgrNT4.png
+-@comment share/swat/help/Samba3-ByExample/images/WINREPRESSME-Capture.png
+-@comment share/swat/help/Samba3-ByExample/images/WINREPRESSME-Capture2.png
+-@comment share/swat/help/Samba3-ByExample/images/WindowsXP-NullConnection.png
+-@comment share/swat/help/Samba3-ByExample/images/WindowsXP-UserConnection.png
+-@comment share/swat/help/Samba3-ByExample/images/XP-screen001.png
+-@comment share/swat/help/Samba3-ByExample/images/acct2net.png
+-@comment share/swat/help/Samba3-ByExample/images/ch7-dual-additive-LDAP-Ok.png
+-@comment share/swat/help/Samba3-ByExample/images/ch7-dual-additive-LDAP.png
+-@comment share/swat/help/Samba3-ByExample/images/ch7-fail-overLDAP.png
+-@comment share/swat/help/Samba3-ByExample/images/ch7-singleLDAP.png
+-@comment share/swat/help/Samba3-ByExample/images/ch8-migration.png
+-@comment share/swat/help/Samba3-ByExample/images/chap4-net.png
+-@comment share/swat/help/Samba3-ByExample/images/chap5-net.png
+-@comment share/swat/help/Samba3-ByExample/images/chap6-net.png
+-@comment share/swat/help/Samba3-ByExample/images/chap7-idresol.png
+-@comment share/swat/help/Samba3-ByExample/images/chap7-net-Ar.png
+-@comment share/swat/help/Samba3-ByExample/images/chap7-net2-Br.png
+-@comment share/swat/help/Samba3-ByExample/images/chap9-ADSDC.png
+-@comment share/swat/help/Samba3-ByExample/images/chap9-SambaDC.png
+-@comment share/swat/help/Samba3-ByExample/images/imc-usermanager2.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-config.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-group-members.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-groups.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-hosts.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-login.png
+-@comment share/swat/help/Samba3-ByExample/images/lam-users.png
+-@comment share/swat/help/Samba3-ByExample/images/openmag.png
+-@comment share/swat/help/Samba3-ByExample/images/wxpp001.png
+-@comment share/swat/help/Samba3-ByExample/images/wxpp004.png
+-@comment share/swat/help/Samba3-ByExample/images/wxpp006.png
+-@comment share/swat/help/Samba3-ByExample/images/wxpp007.png
+-@comment share/swat/help/Samba3-ByExample/images/wxpp008.png
++share/swat/help/Samba3-ByExample/images/AccountingNetwork.png
++share/swat/help/Samba3-ByExample/images/Charity-Network.png
++share/swat/help/Samba3-ByExample/images/Domain-WorkgroupAnnouncement.png
++share/swat/help/Samba3-ByExample/images/HostAnnouncment.png
++share/swat/help/Samba3-ByExample/images/LocalMasterAnnouncement.png
++share/swat/help/Samba3-ByExample/images/NullConnect.png
++share/swat/help/Samba3-ByExample/images/UNIX-Samba-and-LDAP.png
++share/swat/help/Samba3-ByExample/images/UserConnect.png
++share/swat/help/Samba3-ByExample/images/UserMgrNT4.png
++share/swat/help/Samba3-ByExample/images/WINREPRESSME-Capture.png
++share/swat/help/Samba3-ByExample/images/WINREPRESSME-Capture2.png
++share/swat/help/Samba3-ByExample/images/Windows-ME-WINEPRESSME-Startup-30min-ProtocolStats.png
++share/swat/help/Samba3-ByExample/images/Windows-ME-WINEPRESSME-Startup-30min-TraceStats.png
++share/swat/help/Samba3-ByExample/images/WindowsXP-NullConnection.png
++share/swat/help/Samba3-ByExample/images/WindowsXP-UserConnection.png
++share/swat/help/Samba3-ByExample/images/XP-screen001.png
++share/swat/help/Samba3-ByExample/images/acct2net.png
++share/swat/help/Samba3-ByExample/images/ch7-dual-additive-LDAP-Ok.png
++share/swat/help/Samba3-ByExample/images/ch7-dual-additive-LDAP.png
++share/swat/help/Samba3-ByExample/images/ch7-fail-overLDAP.png
++share/swat/help/Samba3-ByExample/images/ch7-singleLDAP.png
++share/swat/help/Samba3-ByExample/images/ch8-migration.png
++share/swat/help/Samba3-ByExample/images/chap4-net.png
++share/swat/help/Samba3-ByExample/images/chap5-net.png
++share/swat/help/Samba3-ByExample/images/chap6-net.png
++share/swat/help/Samba3-ByExample/images/chap7-idresol.png
++share/swat/help/Samba3-ByExample/images/chap7-net-A.png
++share/swat/help/Samba3-ByExample/images/chap7-net-Ar.png
++share/swat/help/Samba3-ByExample/images/chap7-net.png
++share/swat/help/Samba3-ByExample/images/chap7-net2-B.png
++share/swat/help/Samba3-ByExample/images/chap7-net2-Br.png
++share/swat/help/Samba3-ByExample/images/chap7-net2.png
++share/swat/help/Samba3-ByExample/images/chap7-net2r.png
++share/swat/help/Samba3-ByExample/images/chap7-netr.png
++share/swat/help/Samba3-ByExample/images/chap9-ADSDC.png
++share/swat/help/Samba3-ByExample/images/chap9-SambaDC.png
++share/swat/help/Samba3-ByExample/images/imc-usermanager2.png
++share/swat/help/Samba3-ByExample/images/lam-config.png
++share/swat/help/Samba3-ByExample/images/lam-group-members.png
++share/swat/help/Samba3-ByExample/images/lam-groups.png
++share/swat/help/Samba3-ByExample/images/lam-hosts.png
++share/swat/help/Samba3-ByExample/images/lam-login.png
++share/swat/help/Samba3-ByExample/images/lam-users.png
++share/swat/help/Samba3-ByExample/images/openmag.png
++share/swat/help/Samba3-ByExample/images/wxpp001.png
++share/swat/help/Samba3-ByExample/images/wxpp004.png
++share/swat/help/Samba3-ByExample/images/wxpp006.png
++share/swat/help/Samba3-ByExample/images/wxpp007.png
++share/swat/help/Samba3-ByExample/images/wxpp008.png
++share/swat/help/Samba3-ByExample/images/wxpp010.png
++share/swat/help/Samba3-ByExample/images/wxpp011.png
++share/swat/help/Samba3-ByExample/images/wxpp012.png
++share/swat/help/Samba3-ByExample/images/wxpp013.png
++share/swat/help/Samba3-ByExample/images/wxpp015.png
+ share/swat/help/Samba3-ByExample/index.html
+ share/swat/help/Samba3-ByExample/ix01.html
+ share/swat/help/Samba3-ByExample/kerberos.html
++share/swat/help/Samba3-ByExample/net2000users.html
+ share/swat/help/Samba3-ByExample/ntmigration.html
+ share/swat/help/Samba3-ByExample/nw4migration.html
+ share/swat/help/Samba3-ByExample/pr01.html
+@@ -123,60 +138,74 @@ share/swat/help/Samba3-HOWTO/domain-member.html
+ share/swat/help/Samba3-HOWTO/go01.html
+ share/swat/help/Samba3-HOWTO/groupmapping.html
+ share/swat/help/Samba3-HOWTO/idmapper.html
+-@comment share/swat/help/Samba3-HOWTO/images/10small.png
+-@comment share/swat/help/Samba3-HOWTO/images/11small.png
+-@comment share/swat/help/Samba3-HOWTO/images/12small.png
+-@comment share/swat/help/Samba3-HOWTO/images/13small.png
+-@comment share/swat/help/Samba3-HOWTO/images/14small.png
+-@comment share/swat/help/Samba3-HOWTO/images/1small.png
+-@comment share/swat/help/Samba3-HOWTO/images/2small.png
+-@comment share/swat/help/Samba3-HOWTO/images/3small.png
+-@comment share/swat/help/Samba3-HOWTO/images/4small.png
+-@comment share/swat/help/Samba3-HOWTO/images/5small.png
+-@comment share/swat/help/Samba3-HOWTO/images/6small.png
+-@comment share/swat/help/Samba3-HOWTO/images/7small.png
+-@comment share/swat/help/Samba3-HOWTO/images/8small.png
+-@comment share/swat/help/Samba3-HOWTO/images/9small.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME001.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME002.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME003.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME005.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME009.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME010.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME013.png
+-@comment share/swat/help/Samba3-HOWTO/images/WME014.png
+-@comment share/swat/help/Samba3-HOWTO/images/WXPP002.png
+-@comment share/swat/help/Samba3-HOWTO/images/WXPP003.png
+-@comment share/swat/help/Samba3-HOWTO/images/WXPP005.png
+-@comment share/swat/help/Samba3-HOWTO/images/WXPP009.png
+-@comment share/swat/help/Samba3-HOWTO/images/WXPP014.png
+-@comment share/swat/help/Samba3-HOWTO/images/a_small.png
+-@comment share/swat/help/Samba3-HOWTO/images/access1.png
+-@comment share/swat/help/Samba3-HOWTO/images/browsing1.png
+-@comment share/swat/help/Samba3-HOWTO/images/cups1.png
+-@comment share/swat/help/Samba3-HOWTO/images/cups2.png
+-@comment share/swat/help/Samba3-HOWTO/images/domain.png
+-@comment share/swat/help/Samba3-HOWTO/images/ethereal1.png
+-@comment share/swat/help/Samba3-HOWTO/images/ethereal2.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap-gid2sid.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap-sid2gid.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap-sid2uid.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap-store-gid2sid.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap-uid2sid.png
+-@comment share/swat/help/Samba3-HOWTO/images/idmap_winbind_no_loop.png
+-@comment share/swat/help/Samba3-HOWTO/images/pdftoepsonusb.png
+-@comment share/swat/help/Samba3-HOWTO/images/pdftosocket.png
+-@comment share/swat/help/Samba3-HOWTO/images/trusts1.png
+-@comment share/swat/help/Samba3-HOWTO/images/w2kp001.png
+-@comment share/swat/help/Samba3-HOWTO/images/w2kp002.png
+-@comment share/swat/help/Samba3-HOWTO/images/w2kp003.png
+-@comment share/swat/help/Samba3-HOWTO/images/w2kp004.png
+-@comment share/swat/help/Samba3-HOWTO/images/w2kp005.png
+-@comment share/swat/help/Samba3-HOWTO/images/wxpp001.png
+-@comment share/swat/help/Samba3-HOWTO/images/wxpp004.png
+-@comment share/swat/help/Samba3-HOWTO/images/wxpp006.png
+-@comment share/swat/help/Samba3-HOWTO/images/wxpp007.png
+-@comment share/swat/help/Samba3-HOWTO/images/wxpp008.png
++share/swat/help/Samba3-HOWTO/images/10small.png
++share/swat/help/Samba3-HOWTO/images/11small.png
++share/swat/help/Samba3-HOWTO/images/12small.png
++share/swat/help/Samba3-HOWTO/images/13small.png
++share/swat/help/Samba3-HOWTO/images/14small.png
++share/swat/help/Samba3-HOWTO/images/1small.png
++share/swat/help/Samba3-HOWTO/images/2small.png
++share/swat/help/Samba3-HOWTO/images/3small.png
++share/swat/help/Samba3-HOWTO/images/4small.png
++share/swat/help/Samba3-HOWTO/images/5small.png
++share/swat/help/Samba3-HOWTO/images/6small.png
++share/swat/help/Samba3-HOWTO/images/7small.png
++share/swat/help/Samba3-HOWTO/images/8small.png
++share/swat/help/Samba3-HOWTO/images/9small.png
++share/swat/help/Samba3-HOWTO/images/WME001.png
++share/swat/help/Samba3-HOWTO/images/WME002.png
++share/swat/help/Samba3-HOWTO/images/WME003.png
++share/swat/help/Samba3-HOWTO/images/WME004.png
++share/swat/help/Samba3-HOWTO/images/WME005.png
++share/swat/help/Samba3-HOWTO/images/WME006.png
++share/swat/help/Samba3-HOWTO/images/WME007.png
++share/swat/help/Samba3-HOWTO/images/WME008.png
++share/swat/help/Samba3-HOWTO/images/WME009.png
++share/swat/help/Samba3-HOWTO/images/WME010.png
++share/swat/help/Samba3-HOWTO/images/WME011.png
++share/swat/help/Samba3-HOWTO/images/WME012.png
++share/swat/help/Samba3-HOWTO/images/WME013.png
++share/swat/help/Samba3-HOWTO/images/WME014.png
++share/swat/help/Samba3-HOWTO/images/WXPP002.png
++share/swat/help/Samba3-HOWTO/images/WXPP003.png
++share/swat/help/Samba3-HOWTO/images/WXPP005.png
++share/swat/help/Samba3-HOWTO/images/WXPP009.png
++share/swat/help/Samba3-HOWTO/images/WXPP014.png
++share/swat/help/Samba3-HOWTO/images/a_small.png
++share/swat/help/Samba3-HOWTO/images/access1.png
++share/swat/help/Samba3-HOWTO/images/browsing1.png
++share/swat/help/Samba3-HOWTO/images/cups1.png
++share/swat/help/Samba3-HOWTO/images/cups2.png
++share/swat/help/Samba3-HOWTO/images/domain.png
++share/swat/help/Samba3-HOWTO/images/ethereal1.png
++share/swat/help/Samba3-HOWTO/images/ethereal2.png
++share/swat/help/Samba3-HOWTO/images/idmap-gid2sid.png
++share/swat/help/Samba3-HOWTO/images/idmap-groups.png
++share/swat/help/Samba3-HOWTO/images/idmap-sid2gid.png
++share/swat/help/Samba3-HOWTO/images/idmap-sid2uid.png
++share/swat/help/Samba3-HOWTO/images/idmap-store-gid2sid.png
++share/swat/help/Samba3-HOWTO/images/idmap-uid2sid.png
++share/swat/help/Samba3-HOWTO/images/idmap.png
++share/swat/help/Samba3-HOWTO/images/idmap_winbind_no_loop.png
++share/swat/help/Samba3-HOWTO/images/pdftoepsonusb.png
++share/swat/help/Samba3-HOWTO/images/pdftosocket.png
++share/swat/help/Samba3-HOWTO/images/trusts1.png
++share/swat/help/Samba3-HOWTO/images/w2kp001.png
++share/swat/help/Samba3-HOWTO/images/w2kp002.png
++share/swat/help/Samba3-HOWTO/images/w2kp003.png
++share/swat/help/Samba3-HOWTO/images/w2kp004.png
++share/swat/help/Samba3-HOWTO/images/w2kp005.png
++share/swat/help/Samba3-HOWTO/images/w2kp006.png
++share/swat/help/Samba3-HOWTO/images/wxpp001.png
++share/swat/help/Samba3-HOWTO/images/wxpp004.png
++share/swat/help/Samba3-HOWTO/images/wxpp006.png
++share/swat/help/Samba3-HOWTO/images/wxpp007.png
++share/swat/help/Samba3-HOWTO/images/wxpp008.png
++share/swat/help/Samba3-HOWTO/images/wxpp010.png
++share/swat/help/Samba3-HOWTO/images/wxpp011.png
++share/swat/help/Samba3-HOWTO/images/wxpp012.png
++share/swat/help/Samba3-HOWTO/images/wxpp013.png
++share/swat/help/Samba3-HOWTO/images/wxpp015.png
+ share/swat/help/Samba3-HOWTO/index.html
+ share/swat/help/Samba3-HOWTO/install.html
+ share/swat/help/Samba3-HOWTO/integrate-ms-networks.html
+@@ -252,6 +281,7 @@ share/swat/help/manpages/testparm.1.html
+ share/swat/help/manpages/vfs_acl_tdb.8.html
+ share/swat/help/manpages/vfs_acl_xattr.8.html
+ share/swat/help/manpages/vfs_aio_fork.8.html
++share/swat/help/manpages/vfs_aio_pthread.8.html
+ share/swat/help/manpages/vfs_audit.8.html
+ share/swat/help/manpages/vfs_cacheprime.8.html
+ share/swat/help/manpages/vfs_cap.8.html
+@@ -322,10 +352,10 @@ share/swat/lang/tr/images/viewconfig.gif
+ @dirrm share/swat/include
+ @dirrm share/swat/images
+ @dirrm share/swat/help/manpages
+-@comment @dirrm share/swat/help/Samba3-HOWTO/images
++@dirrm share/swat/help/Samba3-HOWTO/images
+ @dirrm share/swat/help/Samba3-HOWTO
+ @dirrm share/swat/help/Samba3-Developers-Guide
+-@comment @dirrm share/swat/help/Samba3-ByExample/images
++@dirrm share/swat/help/Samba3-ByExample/images
+ @dirrm share/swat/help/Samba3-ByExample
+ @dirrm share/swat/help
+ @dirrm share/swat
