@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.0-RELEASE-p1
+Release Notes for FreeNAS 8.3.1-BETA1
 
 *** IMPORTANT ***
 
@@ -124,11 +124,74 @@ FreeNAS interoperability in VM software (VMware, VirtualBox, etc).
 Errata
 ========================
 
+Volume encryption is a BETA feature.  When encryption goes wrong it
+can go really wrong.  We are releasing this BETA for public testing.
+Do not store critical data on it or use the system for mission-critical
+applications.
+
+The new version of istgt does target reload in a new way from the old
+version.  This could use wider testing.
+
+Samba has been upgraded to 3.6.9  This may have broken shadow copies in
+some instances.  Needs further testing.
+
 The plugin jail networking has been switched to VIMAGE, which requires
 bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+Changes since 8.3.0-RELEASE-p1:
+
+Enhancements
+========================
+
+1. Add volume encryption to ZFS. 
+
+2. Upgrade istgt to version 20121028
+
+3. Upgrade samba to version 3.6.9
+
+4. Add the ability to specify the MAC address to the bridge interface.
+
+5. Upgrade dojo to 1.8.1
+
+6. Add the ability to delete a VLAN from the console menu.
+
+7. Add the snp device to the kernel so watch works.
+
+8. Warn when adding a vdev to a pool that is of different size or type from
+   the existing vdevs.
+
+9. When deleting a lagg in the console menu cascade that delete to any children
+   of the lagg. (vlan interfaces are the likely candidate here)
+
+10. Multiple interfaces in the same subnet is generally a bad idea on FreeBSD.
+    Constrain the GUI to only allow one interface per subnet.
+
+11. Update ntfs-3g to 2012.1.15
+
+12. Update netatalk to 2.2.4
+
+13. Add some snapshot task intervals shorter than 15 minutes, useful for snapshot
+    based replication.
+
+14. Update django to 1.4.2
+
+15. Add vimage support to tap devices.  This fixes a panic when running openvpn
+    in a plugin jail.
+
+16. Add support for the Marvell 88SE9220/9230/9235 PCIe 2.0 x2 6Gbps SATA controllers.
+
+Bugfixes
+========================
+
+1. Fix a bug that kept asking if you want to shutdown or reboot from the
+   console menu even when you answer yes.
+
+2. Destroy snapshots recursively in the autosnapper.  This prevents snapshots
+   from persisting past their specified retention period.
+
 
 Changes since 8.3.0-RELEASE:
 
