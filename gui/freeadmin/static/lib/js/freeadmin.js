@@ -620,7 +620,6 @@ require([
 
         /* Remove errors from the form */
         query('ul[class=errorlist]', attrs.form.domNode).forEach(function(ul) {
-            console.log(ul);
             fx.wipeOut({
                 node: ul,
                 duration: 300
@@ -1270,7 +1269,6 @@ require([
                         height: size[1],
                         onUpdate: function() {
                             if(this.sizeChange) {
-                            console.log("here");
                                 shell._size();
                                 shell._position();
                                 this.sizeChange = false;
