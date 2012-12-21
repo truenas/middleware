@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import logging
 import os
 import shutil
 import socket
@@ -56,6 +57,8 @@ from freenasUI.system import forms, models
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
+
+log = logging.getLogger('system.views')
 
 
 def _system_info(request=None):
@@ -338,10 +341,10 @@ def clearcache(request):
 class DojoFileStore(object):
 
     def __init__(self, path, dirsonly=False, root="/", filterVolumes=True):
-        self.root = os.path.abspath(root)
+        self.root = os.path.abspath(str(root))
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
-            self.mp = [os.path.abspath(mp.mp_path) \
+            self.mp = [os.path.abspath(mp.mp_path.encode('utf8')) \
                 for mp in MountPoint.objects.filter(
                     mp_volume__vol_fstype__in=('ZFS', 'UFS'))]
 
@@ -351,6 +354,8 @@ class DojoFileStore(object):
         # as single slash.
         if self.path.startswith('//'):
             self.path = self.path[1:]
+
+        self.path = self.path.encode('utf8')
 
         self.dirsonly = dirsonly
         if self.dirsonly:
