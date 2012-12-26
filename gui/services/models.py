@@ -1698,7 +1698,7 @@ class SMART(Model):
             max_length=255,
             blank=True,
             help_text=_("Destination email address. Separate email addresses "
-                "by semi-colon"),
+                "by commas"),
             )
 
     class Meta:
