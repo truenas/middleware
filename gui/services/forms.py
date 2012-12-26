@@ -1221,7 +1221,7 @@ class SMARTForm(ModelForm):
         email = self.cleaned_data.get("smart_email")
         if email:
             invalids = []
-            for e in email.split(';'):
+            for e in email.split(','):
                 if not email_re.match(e.strip()):
                     invalids.append(e.strip())
 
