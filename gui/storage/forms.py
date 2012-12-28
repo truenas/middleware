@@ -464,10 +464,6 @@ class VolumeWizardForm(forms.Form):
 
                 if volume.vol_fstype == 'ZFS':
                     models.Scrub.objects.create(scrub_volume=volume)
-                    try:
-                        notifier().restart("cron")
-                    except:
-                        pass
 
         if mp_path in ('/etc', '/var', '/usr'):
             device = '/dev/ufs/' + volume_name
@@ -490,6 +486,9 @@ class VolumeWizardForm(forms.Form):
             # This must be outside transaction block to make sure the changes
             # are committed before the call of ix-fstab
             notifier().reload("disk")
+            # For scrub cronjob
+            if volume.vol_fstype == 'ZFS':
+                notifier().restart("cron")
 
 
 class VolumeImportForm(forms.Form):
@@ -1574,6 +1573,8 @@ class ScrubForm(ModelForm):
                     "11", "b").replace("12", "c")
             if ins.scrub_dayweek == '*':
                 ins.scrub_dayweek = "1,2,3,4,5,6,7"
+        else:
+            self.base_fields['scrub_month'].initial = "1,2,3,4,5,6,7,8,9,a,b,c"
         super(ScrubForm, self).__init__(*args, **kwargs)
 
     def clean_scrub_month(self):
