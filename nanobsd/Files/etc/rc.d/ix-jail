@@ -51,6 +51,11 @@ generate_plugins_jail_config()
 		local mntpath_plugins="${path}/${name}/mnt/plugins"
 		local mntpath_pbi="${path}/${name}/usr/pbi"
 
+		# Skip if jail path name does not exist
+		if [ ! -d "${path}/${name}" ]; then
+			continue
+		fi
+
 		if [ ! -d "${plugins}/pbi" ]
 		then
 			mkdir -p "${plugins}/pbi"
