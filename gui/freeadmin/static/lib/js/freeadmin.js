@@ -864,7 +864,10 @@ require([
 
         if(zfs) {
             domStyle.set('zfssectorsize', 'display', 'table-row');
-            domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
+            if(!add_mode)
+                domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
+            else
+                domStyle.set('zfsfulldiskencryption', 'display', 'none');
             domStyle.set('zfsdedup', 'display', 'table-row');
 
             if(d.length >= 3) {
