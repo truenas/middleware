@@ -336,17 +336,6 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_to_group'].choices = [(x.id, x.bsdgrp_group) \
             for x in models.bsdGroups.objects.all()]
 
-    def clean_bsdusr_uid(self):
-        bsdusr_uid = self.cleaned_data["bsdusr_uid"]
-        users = models.bsdUsers.objects.filter(bsdusr_uid=bsdusr_uid)
-        if self.instance.id is not None:
-            users = users.exclude(id=self.instance.id)
-        if users.exists():
-            raise forms.ValidationError(
-                _("A user with that uid already exists.")
-                )
-        return bsdusr_uid
-
     def clean_bsdusr_username(self):
         if self.instance.id is None:
             bsdusr_username = self.cleaned_data["bsdusr_username"]
