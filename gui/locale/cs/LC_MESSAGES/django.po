@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-11-11 21:45+0200\n"
-"Last-Translator: Radim <kolar.radim@gmail.com>\n"
+"PO-Revision-Date: 2013-01-03 03:27+0200\n"
+"Last-Translator: petrjakes <petr.jakes.tpc@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -453,6 +453,8 @@ msgstr "Zkrácený inicializační test"
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr ""
+"Test možného poškození disku, které bylo způsobeno při přepravě (Pouze pro "
+"ATA disky)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -472,7 +474,7 @@ msgstr ""
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Zatahnout"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -805,7 +807,7 @@ msgstr "Nelze načíst %(url)s: %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "Během unserializace došlo k chybě z %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -921,9 +923,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "síťové karty v LAGG (připojení přes více linek)"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "fyzická NIC"
+msgstr "LAGG (Link AGGregations) síťové karty."
 
 #: network/forms.py:360
 #, python-format
@@ -1280,11 +1281,11 @@ msgstr "TCP port pluginu"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
-msgstr ""
+msgstr "Cesta k plugin archívu."
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Cesta, kde jsou pluginy uloženy po ukončení instalace."
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1294,7 +1295,7 @@ msgstr "Pluginy"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Zdroj"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1310,37 +1311,32 @@ msgid "Mount Points"
 msgstr ""
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Plugin úspěšně updatován."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
-msgstr "%s úspěšně přidáno."
+msgstr "Plugin úspěšně odinstalován."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr ""
+msgstr "Plugin nebylo možné odebrat."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "%s úspěšně aktualizováno."
+msgstr "Plugin úspěšně aktualizován."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "%s úspěšně aktualizováno."
+msgstr "Plugin úspěšně nainstalován."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Při imprtování jailu se vyskytl problém."
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Jail byl úspěšně importován."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1368,9 +1364,8 @@ msgid "The NFS service failed to reload."
 msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Tato IP adresa již existuje."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1521,12 +1516,11 @@ msgstr "Pokud nastavíte uživatele musíte nastavit i heslo"
 
 #: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "Heslo pro peer nesmí být stejné, jako uživatelské heslo."
 
 #: services/forms.py:566 services/forms.py:569
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr "Pokud nastavíte uživatele musíte nastavit i heslo"
+msgstr "Pokud pro peer zadáte heslo, musíte zadat i jméno uživatele peeru."
 
 #: services/forms.py:582 services/forms.py:614 services/forms.py:756
 #: services/forms.py:821 services/forms.py:927 services/forms.py:955
@@ -1586,6 +1580,8 @@ msgstr "Musíte zadat soubor uvnitř vašeho svazku."
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
+"Cesta k rozšíření musí být uvnitř přípojného bodu (mount pointu)  "
+"svazku(volume) nebo sady dat (dataset)."
 
 #: services/forms.py:795
 msgid ""
@@ -1597,6 +1593,8 @@ msgstr ""
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
+"V případě, že pro extent nastavíte auto(0), musí již příslušný soubor "
+"existovat."
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1626,11 +1624,11 @@ msgstr ""
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Povoleny jsou alfanumerické znaky a znaky \".\", \"-\", \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Vymaže soubory v nižších úrovních."
 
 #: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
 #: templates/plugins/plugin_confirm_delete.html:10
@@ -1670,6 +1668,8 @@ msgstr "Ověřovací model"
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Při použití Active Directory nebo LDAP autentikace bude tato volba nahrazena "
+"(přepsána)."
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1684,6 +1684,8 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Skupina (workgroup), ve které se server objeví po dotazu klienta (max. 15 "
+"znaků)"
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
@@ -1817,11 +1819,11 @@ msgstr "Povolit AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr ""
+msgstr "Zapnutí/vypnutí podpory asynchronních I/O operací (AIO)."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
-msgstr ""
+msgstr "Minimální hodnota asynchronního I/O pro čtení."
 
 #: services/models.py:177
 msgid ""
@@ -1830,7 +1832,7 @@ msgstr ""
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
-msgstr ""
+msgstr "Minimální hodnota asynchronního I/O pro zápis."
 
 #: services/models.py:183
 msgid ""
@@ -1926,18 +1928,21 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Před název, který nezačíná znaky  'iqn.'  bude přiřazen počítačem "
+"vygenerovaný soubor znaků  (např. iqn.2007-09.jp.ne.peach.istgt, detaily viz "
+"RFC 3720 a 3721)."
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Ověřeovací metoda pro Discovery"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O timeout."
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O timeout ve vteřinách (výchozí hodnota 30)"
 
 #: services/models.py:281
 msgid "NOPIN Interval"
@@ -1949,19 +1954,19 @@ msgstr ""
 
 #: services/models.py:287
 msgid "Max. sessions"
-msgstr ""
+msgstr "Maximum sezení."
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Maximální počet současných sezení (výchozí hodnota 16)."
 
 #: services/models.py:293
 msgid "Max. connections"
-msgstr ""
+msgstr "Maximální počet spojení"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maximální počet spojení v každém sezení (výchozí hodnota 8)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
@@ -1979,7 +1984,7 @@ msgstr ""
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "Nastavení parametru pro iSCSI (výchozí hodnota 16)."
 
 #: services/models.py:311
 msgid "First burst length"
@@ -1995,7 +2000,7 @@ msgstr ""
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "Nastavení parametru pro iSCSI (výchozí hodnota (262144)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
@@ -2003,27 +2008,27 @@ msgstr "Maximální délka segmentu přijatých dat."
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "Výchozí čas čekání."
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "Nastavení parametru iSCSI (výchozí hodnota 2)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "Výchozí čas pozdržení."
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "Nastavení parametru iSCSI (výchozí hodnota 60)."
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr ""
+msgstr "Aktivace LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr ""
+msgstr "IP adresa kontroleru."
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
