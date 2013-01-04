@@ -291,7 +291,7 @@ class BaseFreeAdmin(object):
                 except MiddlewareError, e:
                     return JsonResp(request,
                         error=True,
-                        message=_("Error: %s") % str(e))
+                        message=_(u"Error: %s") % unicode(e))
                 except ServiceFailed, e:
                     return JsonResp(request,
                         error=True,
@@ -463,7 +463,7 @@ class BaseFreeAdmin(object):
                     return JsonResp(request,
                         form=mf,
                         error=True,
-                        message=_("Error: %s") % str(e))
+                        message=_(u"Error: %s") % unicode(e))
             else:
                 return JsonResp(request, form=mf, formsets=formsets)
 
