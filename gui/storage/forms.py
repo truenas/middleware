@@ -522,9 +522,10 @@ class VolumeImportForm(forms.Form):
         # NOTE: This approach may fail if device nodes are not accessible.
         _parts = n.get_partitions()
         for name, part in _parts.items():
-            if len([i for i in used_disks \
-                    if part['devname'].startswith(i)]) > 0:
-                del _parts[name]
+            for i in used_disks:
+                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
+                    del _parts[name]
+                    continue
 
         parts = []
         for name, part in _parts.items():
