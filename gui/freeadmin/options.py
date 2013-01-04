@@ -38,8 +38,9 @@ from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasUI.freeadmin.api.utils import (DojoModelResource,
-    DjangoAuthentication, DojoPaginator)
+from freenasUI.freeadmin.api.utils import (
+    DojoModelResource, DjangoAuthentication, DojoPaginator
+)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -108,7 +109,8 @@ class BaseFreeAdmin(object):
             for i in dir(obj):
                 if not i.startswith("__"):
                     if not hasattr(self, i):
-                        raise Exception("The attribute '%s' is a not valid "
+                        raise Exception(
+                            "The attribute '%s' is a not valid "
                             "in FreeAdmin" % i)
                     self.__setattr__(i, getattr(obj, i))
 
@@ -128,13 +130,13 @@ class BaseFreeAdmin(object):
                 include_resource_uri=False,
                 paginator_class=DojoPaginator,
                 authentication=DjangoAuthentication(),
-                ))
+            ))
 
             myres = type(
                 self._model._meta.object_name + 'Resource',
                 (DojoModelResource, ),
                 dict(Meta=myMeta)
-                )
+            )
             res = myres()
             self.resource = myres
         elif self.resource is False:
@@ -156,7 +158,8 @@ class BaseFreeAdmin(object):
         info = self.app_label, self.module_name
 
         if self._model:
-            urlpatterns = patterns('',
+            urlpatterns = patterns(
+                '',
                 url(r'^add/(?P<mf>.+?)?$',
                     wrap(self.add),
                     name='freeadmin_%s_%s_add' % info),
@@ -172,7 +175,8 @@ class BaseFreeAdmin(object):
             )
         else:
             urlpatterns = patterns('')
-        urlpatterns += patterns('',
+        urlpatterns += patterns(
+            '',
             url(r'^datagrid/$',
                 wrap(self.datagrid),
                 name='freeadmin_%s_%s_datagrid' % info),
@@ -216,7 +220,7 @@ class BaseFreeAdmin(object):
         if not isinstance(navtree._modelforms[m], dict):
             mf = navtree._modelforms[m]
         else:
-            if mf == None:
+            if mf is None:
                 try:
                     mf = navtree._modelforms[m][m._admin.create_modelform]
                 except:
@@ -239,7 +243,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
-                    _temp = __import__('%s.forms' % app,
+                    _temp = __import__(
+                        '%s.forms' % app,
                         globals(),
                         locals(),
                         [inline],
@@ -247,16 +252,19 @@ class BaseFreeAdmin(object):
                     inline = getattr(_temp, inline)
                     extrakw = {
                         'can_delete': False
-                        }
-                    fset = inlineformset_factory(m, inline._meta.model,
+                    }
+                    fset = inlineformset_factory(
+                        m,
+                        inline._meta.model,
                         form=inline,
                         extra=0,
                         **extrakw)
                     try:
                         fsname = 'formset_%s' % (
                             inline._meta.model._meta.module_name,
-                            )
-                        formsets[fsname] = fset(request.POST,
+                        )
+                        formsets[fsname] = fset(
+                            request.POST,
                             prefix=prefix,
                             instance=instance)
                     except dforms.ValidationError:
@@ -282,21 +290,25 @@ class BaseFreeAdmin(object):
                             mf.done(request=request, events=events)
                         except TypeError:
                             mf.done()
-                    return JsonResp(request, form=mf,
+                    return JsonResp(
+                        request,
+                        form=mf,
                         formsets=formsets,
                         message=_("%s successfully updated.") % (
                             m._meta.verbose_name,
-                            ),
+                        ),
                         events=events)
                 except MiddlewareError, e:
-                    return JsonResp(request,
+                    return JsonResp(
+                        request,
                         error=True,
                         message=_(u"Error: %s") % unicode(e))
                 except ServiceFailed, e:
-                    return JsonResp(request,
+                    return JsonResp(
+                        request,
                         error=True,
                         message=_("The service failed to restart.")
-                        )
+                    )
             else:
                 return JsonResp(request, form=mf, formsets=formsets)
 
@@ -307,27 +319,30 @@ class BaseFreeAdmin(object):
             if m._admin.inlines:
                 extrakw = {
                     'can_delete': False
-                    }
+                }
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
-                    _temp = __import__('%s.forms' % app,
+                    _temp = __import__(
+                        '%s.forms' % app,
                         globals(),
                         locals(),
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
-                    fset = inlineformset_factory(m, inline._meta.model,
+                    fset = inlineformset_factory(
+                        m,
+                        inline._meta.model,
                         form=inline,
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.module_name,
-                        )
+                    )
                     formsets[fsname] = fset(prefix=prefix, instance=instance)
                     formsets[fsname].verbose_name = (
                         inline._meta.model._meta.verbose_name
-                        )
+                    )
 
         context.update({
             'form': mf,
@@ -337,7 +352,7 @@ class BaseFreeAdmin(object):
         template = "%s/%s_add.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
-            )
+        )
         try:
             get_template(template)
         except:
@@ -395,7 +410,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
-                    _temp = __import__('%s.forms' % m._meta.app_label,
+                    _temp = __import__(
+                        '%s.forms' % m._meta.app_label,
                         globals(),
                         locals(),
                         [inline],
@@ -403,16 +419,19 @@ class BaseFreeAdmin(object):
                     inline = getattr(_temp, inline)
                     extrakw = {
                         'can_delete': True,
-                        }
-                    fset = inlineformset_factory(m, inline._meta.model,
+                    }
+                    fset = inlineformset_factory(
+                        m,
+                        inline._meta.model,
                         form=inline,
                         extra=0,
                         **extrakw)
                     try:
                         fsname = 'formset_%s' % (
                             inline._meta.model._meta.module_name,
-                            )
-                        formsets[fsname] = fset(request.POST,
+                        )
+                        formsets[fsname] = fset(
+                            request.POST,
                             prefix=prefix,
                             instance=instance)
                     except dforms.ValidationError:
@@ -439,28 +458,32 @@ class BaseFreeAdmin(object):
                         except TypeError:
                             mf.done()
                     if 'iframe' in request.GET:
-                        return JsonResp(request,
+                        return JsonResp(
+                            request,
                             form=mf,
                             formsets=formsets,
                             message=_("%s successfully updated.") % (
                                 m._meta.verbose_name,
-                                ))
+                            ))
                     else:
-                        return JsonResp(request,
+                        return JsonResp(
+                            request,
                             form=mf,
                             formsets=formsets,
                             message=_("%s successfully updated.") % (
                                 m._meta.verbose_name,
-                                ),
+                            ),
                             events=events)
                 except ServiceFailed, e:
-                    return JsonResp(request,
+                    return JsonResp(
+                        request,
                         form=mf,
                         error=True,
                         message=_("The service failed to restart."),
                         events=["serviceFailed(\"%s\")" % e.service])
                 except MiddlewareError, e:
-                    return JsonResp(request,
+                    return JsonResp(
+                        request,
                         form=mf,
                         error=True,
                         message=_(u"Error: %s") % unicode(e))
@@ -475,27 +498,30 @@ class BaseFreeAdmin(object):
             if m._admin.inlines:
                 extrakw = {
                     'can_delete': True,
-                    }
+                }
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
-                    _temp = __import__('%s.forms' % m._meta.app_label,
+                    _temp = __import__(
+                        '%s.forms' % m._meta.app_label,
                         globals(),
                         locals(),
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
-                    fset = inlineformset_factory(m, inline._meta.model,
+                    fset = inlineformset_factory(
+                        m,
+                        inline._meta.model,
                         form=inline,
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.module_name,
-                        )
+                    )
                     formsets[fsname] = fset(prefix=prefix, instance=instance)
                     formsets[fsname].verbose_name = (
                         inline._meta.model._meta.verbose_name
-                        )
+                    )
 
         context.update({
             'form': mf,
@@ -504,29 +530,36 @@ class BaseFreeAdmin(object):
             'delete_url': reverse('freeadmin_%s_%s_delete' % (
                 m._meta.app_label,
                 m._meta.module_name,
-                ), kwargs={
+            ), kwargs={
                 'oid': instance.id,
-                }),
+            }),
         })
 
         template = "%s/%s_edit.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
-            )
+        )
         try:
             get_template(template)
         except:
             template = 'freeadmin/generic_model_edit.html'
 
         if 'iframe' in request.GET:
-            resp = render(request, template, context,
-                    mimetype='text/html')
-            resp.content = ("<html><body><textarea>"
+            resp = render(
+                request,
+                template,
+                context,
+                mimetype='text/html')
+            resp.content = (
+                "<html><body><textarea>"
                 + resp.content +
                 "</textarea></boby></html>")
             return resp
         else:
-            return render(request, template, context,
+            return render(
+                request,
+                template,
+                context,
                 content_type='text/html')
 
     def delete(self, request, oid, mf=None):
@@ -539,11 +572,13 @@ class BaseFreeAdmin(object):
 
         try:
             if m._admin.delete_form_filter:
-                find = m.objects.filter(id=instance.id,
+                find = m.objects.filter(
+                    id=instance.id,
                     **m._admin.delete_form_filter)
                 if find.count() == 0:
                     raise
-            _temp = __import__('%s.forms' % m._meta.app_label,
+            _temp = __import__(
+                '%s.forms' % m._meta.app_label,
                 globals(),
                 locals(),
                 [m._admin.delete_form],
@@ -555,7 +590,7 @@ class BaseFreeAdmin(object):
         if not isinstance(navtree._modelforms[m], dict):
             mf = navtree._modelforms[m]
         else:
-            if mf == None:
+            if mf is None:
                 try:
                     mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
                 except:
@@ -584,16 +619,18 @@ class BaseFreeAdmin(object):
                     if hasattr(form_i, "done"):
                         form_i.done(events=events)
                     mf.delete(events=events)
-                    return JsonResp(request,
+                    return JsonResp(
+                        request,
                         message=_("%s successfully deleted.") % (
                             m._meta.verbose_name,
-                            ),
+                        ),
                         events=events)
 
             else:
                 events = []
                 mf.delete(events=events)
-                return JsonResp(request,
+                return JsonResp(
+                    request,
                     message=_("%s successfully deleted.") % (
                         m._meta.verbose_name,
                     ),
@@ -606,7 +643,7 @@ class BaseFreeAdmin(object):
         template = "%s/%s_delete.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
-            )
+        )
         try:
             get_template(template)
         except:
@@ -626,7 +663,8 @@ class BaseFreeAdmin(object):
             _inline = inlineopts.get("form")
             prefix = inlineopts.get("prefix")
             if prefix == request.GET.get("fsname"):
-                _temp = __import__('%s.forms' % m._meta.app_label,
+                _temp = __import__(
+                    '%s.forms' % m._meta.app_label,
                     globals(),
                     locals(),
                     [_inline],
@@ -635,7 +673,9 @@ class BaseFreeAdmin(object):
                 break
 
         if inline:
-            fset = inlineformset_factory(m, inline._meta.model,
+            fset = inlineformset_factory(
+                m,
+                inline._meta.model,
                 form=inline,
                 extra=1)
             fsins = fset(prefix=prefix)
@@ -724,7 +764,7 @@ class BaseFreeAdmin(object):
             if column.pop("tree", False) is True:
                 data['name'] = "tree(%s)" % (
                     json.dumps(column),
-                    )
+                )
             else:
                 data[name] = column
 
