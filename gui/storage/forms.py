@@ -887,13 +887,25 @@ class DiskFormPartial(ModelForm):
 
     def save(self, *args, **kwargs):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
-        if obj.disk_togglesmart != self._original_smart_en or \
-            obj.disk_smartoptions != self._original_smart_opts:
+        # Commit ataidle changes, if any
+        if (
+            obj.disk_hddstandby != obj._original_state['disk_hddstandby'] or
+            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt'] or
+            obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
+        ):
+            notifier().start_ataidle(obj.disk_name)
+
+        if (
+            obj.disk_togglesmart != self._original_smart_en or
+            obj.disk_smartoptions != self._original_smart_opts
+        ):
             started = notifier().restart("smartd")
             if started is False and \
               services.objects.get(srv_service='smartd').srv_enable:
-                raise ServiceFailed("smartd",
-                    _("The SMART service failed to restart."))
+                raise ServiceFailed(
+                    "smartd",
+                    _("The SMART service failed to restart.")
+                )
         return obj
 
 
