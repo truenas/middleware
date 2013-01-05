@@ -213,7 +213,7 @@ class VolumeWizardForm(forms.Form):
                     )
         elif fstype == "ZFS":
             if len(disks) >= 3:
-                grouptype_choices += (('raidz1', 'RAID-Z'), )
+                grouptype_choices += (('raidz', 'RAID-Z'), )
             if len(disks) >= 4:
                 grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
             if len(disks) >= 5:
