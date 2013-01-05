@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-11-10 22:15+0200\n"
-"Last-Translator: owevers <owevers@wbse.nl>\n"
+"PO-Revision-Date: 2013-01-04 13:26+0200\n"
+"Last-Translator: shalom <onzinmailhierheen@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -1537,13 +1537,12 @@ msgid "Controller Auth Group"
 msgstr "Controller Auth Group"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol Heeft toegang tot de doelen met een correcte gebruikersnaam en "
-"geheim gespecificeerd in Auth Group."
+"De istgtcontrol heeft toegang tot de doelen met een correcte gebruikersnaam "
+"en geheim gespecificeerd in Auth Group."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1776,9 +1775,8 @@ msgid "Auxiliary parameters"
 msgstr "Hulp Parameters"
 
 #: services/models.py:144
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Deze parameters zijn toegevoegd aan [Global] gedeelte van smb.conf"
+msgstr "Deze parameters zijn toegevoegd aan [global] sectie van smb.conf"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1818,6 +1816,9 @@ msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Deze uitbreidingen maken het mogelijk Samba beter de UNIX CIFS gebruikers te "
+"dienen, door het ondersteunen van functies zoals symbolische links, harde "
+"links, etc..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1859,6 +1860,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Zeroconf ondersteuning door Avahi laat gebruikers toe (met nadruk op de Mac "
+"OSX verkenner) om automatisch de CIFS shares te vinden op het systeem "
+"gelijkaardig aan de Computer Browser Service in Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1886,9 +1890,8 @@ msgid "Allows guest access to all apple shares on this box."
 msgstr "Sta gasten toegang toe tot alle apple shares op deze Machine"
 
 #: services/models.py:219
-#, fuzzy
 msgid "Max. Connections"
-msgstr "Max. connecties"
+msgstr "Max. Connecties"
 
 #: services/models.py:221
 msgid ""
@@ -2057,15 +2060,13 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Logische Eenheid Controller TCP poort (3261 is standaard)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Controller Geautoriseerd netmasker"
+msgstr "Controller Geautoriseerd Netwerk"
 
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
-"Logische Unit Controller Geautoriseerd netmasker (255.255.255.0 is standaard)"
+"Logical Unit Controller Geautoriseerd netmasker (255.255.255.0 is standaard)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
@@ -2154,9 +2155,8 @@ msgid "Portal"
 msgstr "Portal"
 
 #: services/models.py:522
-#, fuzzy
 msgid "IP Address"
-msgstr "IPv4 Adres"
+msgstr "IP Adres"
 
 #: services/models.py:534
 msgid "Portal IP"
@@ -2336,7 +2336,7 @@ msgstr "Updateperiode"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Tijd in seconden. Standaard is ongeveer 1 minuut."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2364,27 +2364,27 @@ msgstr "Domeinnaam"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Naam van het plugin domein"
 
 #: services/models.py:815
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Jail naam kan alleen letters, nummers en koppeltekens bevatten. Het kan niet "
+"eindigen met een koppelteken"
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Jail IP Adres"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "IPv4 Netmask"
+msgstr "Jail IP Netmasker"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "Plugin architectuur"
+msgstr "Plugin archief pad"
 
 #: services/models.py:852
 msgid "Location"
@@ -2448,13 +2448,12 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "De seriële of USB poort van uw UPS is aangesloten"
 
 #: services/models.py:910
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Hulp Parameters"
+msgstr "Hulp Parameters (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Aanvullende parameters bij het hardware-specifieke deel van de driver."
 
 #: services/models.py:923
 msgid "Shutdown mode"
@@ -2478,7 +2477,7 @@ msgstr "UPS hoofdgebruiker wachtwoord"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Extra gebruikers (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
@@ -2498,7 +2497,7 @@ msgstr "Ontvangende email adres. Gescheiden email adressen met comma."
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Email onderwerp"
 
 #: services/models.py:952
 msgid ""
@@ -2609,15 +2608,14 @@ msgid "Masquerade address"
 msgstr "Maskeeradres"
 
 #: services/models.py:1036
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
 "Zorgt ervoor dat de server netwerkinformatie weergeeft over het "
-"gespecificeerde IP adres naar de cliënt bij aanname dat het IP adres of de "
-"DNS host optreedt als een NAT gateway of poort forwarder voor de server."
+"gespecificeerde IP adres naar de cliënt, ervan uitgaand dat het IP adres of "
+"de DNS host optreedt als een NAT gateway of poort forwarder voor de server."
 
 #: services/models.py:1043
 msgid "Minimum passive port"
@@ -2830,41 +2828,36 @@ msgid "NetBIOS Name"
 msgstr "NetBIOS Naam"
 
 #: services/models.py:1250
-#, fuzzy
 msgid "System hostname"
-msgstr "Host Naam in oud formaat, bijv. VOORBEELD"
+msgstr "Systeem Host Naam"
 
 #: services/models.py:1254
 msgid "Workgroup Name"
 msgstr "Werkgroep Naam"
 
 #: services/models.py:1255
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Werkgroep Naam in oud formaat, bijv. VOORBEELD"
+msgstr "Werkgroep of domein naam in oud formaat, bijv. WORKGROUP"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Gasttoegang toestaan"
+msgstr "Vertrouwde domeinen toegang verlenen"
 
 #: services/models.py:1263
 msgid "Administrator Name"
 msgstr "Administrator Naam"
 
 #: services/models.py:1264
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Wachtwoord van het Domein Administrator account"
+msgstr " Domein Administrator account naam"
 
 #: services/models.py:1268
 msgid "Administrator Password"
 msgstr "Administrator Wachtwoord"
 
 #: services/models.py:1269
-#, fuzzy
 msgid "Domain Administrator account password."
-msgstr "Wachtwoord van het Domein Administrator account"
+msgstr "Domein Administrator account wachtwoord"
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
@@ -2968,9 +2961,8 @@ msgstr ""
 "zijn toegevoegd aan de LDAP directory, bijv. ou=Computers"
 
 #: services/models.py:1341
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "Authenticatie Model"
+msgstr "Encryptie Wijze"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -3009,7 +3001,7 @@ msgstr ""
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Configureer Rsyncd"
 
 #: services/models.py:1390
 msgid "Module name"
@@ -3173,25 +3165,21 @@ msgid "Add Device Extent"
 msgstr "Apparaat Extents Toevoegen"
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
-msgstr "Toon Alle Apparaat Extents"
+msgstr "Toon Apparaat Extents"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
-msgstr "Apparaat Extents"
+msgstr "Bestand Extents"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
-#, fuzzy
 msgid "Add File Extent"
-msgstr "Apparaat Extents Toevoegen"
+msgstr "Bestand Extents Toevoegen"
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
-msgstr "Toon Alle Extents"
+msgstr "Toon Bestand Extents"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3207,9 +3195,8 @@ msgid "Add Rsync Module"
 msgstr "Rsync module toevoegen"
 
 #: services/nav.py:159
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Rsync Modules"
+msgstr "Toon Rsync Modules"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
@@ -3217,9 +3204,8 @@ msgid "Settings"
 msgstr "Instellingen"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "iSCSI Beheer"
+msgstr "Beheer"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3230,14 +3216,13 @@ msgid "The service could not be started."
 msgstr "De service kan niet worden gestart."
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Wachtwoord delen"
+msgstr "Wachtwoord delen bevestigen"
 
 #: sharing/forms.py:139
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Pad naar extent"
+msgstr "Het pad %s bestaat niet"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -3277,9 +3262,8 @@ msgid "Browsable to Network Clients"
 msgstr "Te verkennen door Netwerk Cliënten"
 
 #: sharing/models.py:53
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Erven"
+msgstr "Eigenaar overnemen"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -3302,6 +3286,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Indien waar is er geen wachtwoord vereist om te verbinding te maken met de "
+"gedeelde map. De rechten van het Gast account zullen van toepassing zijn"
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3312,6 +3298,9 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Indien waar hebben alleen gast verbindingen toegang tot de gedeelde map. De "
+"parameter zal geen effect hebben als Gast Toegang Toelaten niet is ingesteld "
+"op de gedeelde map."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3352,14 +3341,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Deze parameters zijn toegevoegd aan de [Share] sectie van smb.conf"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Windows Share"
+msgstr "Windows (CIFS) Share"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Windows Shares (gedeelde mappen)"
+msgstr "Windows (CIFS) Shares"
 
 #: sharing/models.py:114
 msgid ""
@@ -3733,14 +3720,13 @@ msgid "Sharing"
 msgstr "Delen"
 
 #: storage/forms.py:105
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Voer positief nummer in (optioneel met M, G, T), of, 0"
+msgstr "Voer positief nummer in (optioneel gevolgd door K, M, G, T), of, 0"
 
 #: storage/forms.py:120
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "De gebruiker %s is niet geldig"
+msgstr "%s is geen geldig nummer"
 
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3758,7 +3744,7 @@ msgstr "Forceer 4096 bytes sector grootte"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
-msgstr ""
+msgstr "Geef een aangepast pad op"
 
 #: storage/forms.py:163
 #, fuzzy
@@ -3769,6 +3755,8 @@ msgstr "Volumenaam"
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Dit leeg laten zal het volume een standaard pad geven als "
+"/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
 #, fuzzy
@@ -4735,7 +4723,7 @@ msgstr "MOTD banner"
 
 #: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
-msgstr "Geadvanceerd"
+msgstr "Geavanceerd"
 
 #: system/models.py:209
 msgid "From email"
@@ -6382,7 +6370,7 @@ msgstr ""
 
 #: templates/system/reporting.html:2
 msgid "History"
-msgstr "Verleden"
+msgstr "Geschiedenis"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
@@ -6390,7 +6378,7 @@ msgstr "Lokale Map"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
-msgstr "Afgelegen"
+msgstr "Op afstand"
 
 #: templates/system/rsync.html:48
 #, fuzzy
@@ -6496,7 +6484,7 @@ msgstr "Doorverbonden via"
 
 #: templates/system/tunable.html:34
 msgid "No tunable setting defined."
-msgstr "Geen in te stellen instelling gedefinieerd"
+msgstr "Geen aanpasbare instelling gedefinieerd"
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
@@ -6746,17 +6734,14 @@ msgstr ""
 "bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
 "vereist."
 
-#, fuzzy
 msgid "CIFS Share"
-msgstr "UNIX Share"
+msgstr "CIFS Share"
 
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "UNIX Shares"
+msgstr "CIFS Shares"
 
-#, fuzzy
 msgid "NFS Share"
-msgstr "NFS Share Wijzigen"
+msgstr "NFS Share"
 
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr ""
