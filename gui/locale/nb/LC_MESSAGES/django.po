@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2011-12-27 22:51+0200\n"
+"PO-Revision-Date: 2013-01-06 23:44+0200\n"
 "Last-Translator: SnurrDass <danove@rotarynorge.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -456,21 +456,20 @@ msgid "Offline Immediate Test (ATA only)"
 msgstr "Frakoblet umiddelbar test (Kun ATA)"
 
 #: choices.py:562
-#, fuzzy
 msgid "Rsync module"
-msgstr "Asynkron tilstand"
+msgstr "Rsync modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync over SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Trykk"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Dra"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -537,7 +536,7 @@ msgstr "Lås bruker"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Opprett en ny primer gruppe for bruker"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -548,18 +547,16 @@ msgid "SSH Public Key"
 msgstr "SSH åpen nøkkel"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Hjemmemappe"
+msgstr "Hjemmemappe modus"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
 msgstr "Tilleggsgrupper"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "En bruker med det brukernavnet finnes allerede"
+msgstr "En bruker med det brukernavnet finnes allerede."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -722,9 +719,8 @@ msgid "Account"
 msgstr "Konto"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Konto"
+msgstr "Admin konto"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -778,7 +774,7 @@ msgid "Add %s"
 msgstr "Legg til %"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
 msgstr "Vis alle %"
 
@@ -797,17 +793,17 @@ msgstr "Steng ned"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "ingen data returnert fra %"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Kunne ikke motta %(url): %(error)"
 
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "En feil oppsto når unserializing fra %(url): %(error)"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -852,7 +848,7 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Du kan ikke bruke samme IP adresse på flere enn ett nettverks kort"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -876,20 +872,19 @@ msgstr "Du må velge mellom IPv4 og IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback er ikke en gyldig navneserver"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Uspesifiserte adresser er ikke gyldig som navneservere(DNS)"
 
 #: network/forms.py:167
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Dette feltet inneholder ikke en gyldig IP addresse eller nettverk"
+msgstr "Dette er ikke en gyldig navneserver (DNS) addresse"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 nettmaske er ikke gyldig for navneserver"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -925,9 +920,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Fysiske NIC i LAGG"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Fysisk NIC"
+msgstr "LAGG Fysisk Nettverkskort"
 
 #: network/forms.py:360
 #, python-format
@@ -936,27 +930,27 @@ msgstr "Nettverket '%' er ikke gyldig, forventet CIDR. "
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Du må spesifisere IPv4 adress også pr alias"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Du må spesifisere nettverksmaske også pr alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Du må spesifisere IPv6 adress også pr alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Du må spesifisere IPv6 nettverksmaske også pr alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Du må velge mellom IPv4 og IPv6 pr alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "Du må velge mellom en gyldig  IPv4 og IPv6 med maskbit pr alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1416,7 +1410,7 @@ msgstr ""
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr "Dette feltet er nødvendig for anonym innlogging."
+msgstr "Dette feltet er nødvendig for anonym innlogging"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
@@ -1502,11 +1496,11 @@ msgstr "Idap-tjenesten klarte ikke å laste på nytt."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
-msgstr "Hemmelighet"
+msgstr "Hemmelig"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr "Målside hemmelighet."
+msgstr "Destiansjon hemmelighet."
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
@@ -1514,7 +1508,7 @@ msgstr "Hemmelighet (bekreft)"
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
-msgstr "Skriv inn samme hemmeligheten som over for verifikasjon."
+msgstr "Skriv inn samme hemmeligheten som over for kontroll."
 
 #: services/forms.py:504
 msgid "Initiator Secret"
@@ -1522,7 +1516,7 @@ msgstr "Initiativtagers hemmelighet"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Initiativtagers alternativ hemmelighet. (for felles CHAP godkjenning)"
+msgstr "Initiativtagers hemmelighet. (for felles CHAP godkjenning)"
 
 #: services/forms.py:509
 msgid "Initiator Secret (Confirm)"
@@ -6434,9 +6428,8 @@ msgid "Connected through"
 msgstr ""
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Ingen brukere er definert"
+msgstr "Ingen tunable konfigurering er definert"
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
@@ -6489,6 +6482,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Følgene IP addresser er knyttet til iSCSI Portal men var ikke funnet i "
+"systemet: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"

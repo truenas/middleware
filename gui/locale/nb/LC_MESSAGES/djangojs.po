@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-12-27 22:51+0200\n"
+"PO-Revision-Date: 2013-01-06 23:25+0200\n"
 "Last-Translator: SnurrDass <danove@rotarynorge.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -48,9 +48,8 @@ msgstr "Lagring"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "En feil oppsto!"
+msgstr "En feil oppsto"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -62,16 +61,15 @@ msgstr "Endre disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Slett"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "Endre disk"
+msgstr "Slett disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "Vennligst vent"
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
