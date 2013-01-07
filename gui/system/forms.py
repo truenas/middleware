@@ -45,7 +45,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.freeadmin.forms import CronMultiple
+from freenasUI.freeadmin.forms import CronMultiple, DirectoryBrowser
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
@@ -975,3 +975,30 @@ class DebugForm(Form):
         if self.cleaned_data.get("zfs"):
             opts.append("-z")
         return opts
+
+
+class InitShutdownForm(ModelForm):
+
+    class Meta:
+        model = models.InitShutdown
+        widgets = {
+            'ini_script': DirectoryBrowser(dirsonly=False),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(InitShutdownForm, self).__init__(*args, **kwargs)
+        self.fields['ini_type'].widget.attrs['onChange'] = "initshutdownModeToggle();"
+
+    def clean_ini_command(self):
+        _type = self.cleaned_data.get("ini_type")
+        val = self.cleaned_data.get("ini_command")
+        if _type == 'command' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val
+
+    def clean_ini_script(self):
+        _type = self.cleaned_data.get("ini_type")
+        val = self.cleaned_data.get("ini_script")
+        if _type == 'script' and not val:
+            raise forms.ValidationError(_("This field is required"))
+        return val

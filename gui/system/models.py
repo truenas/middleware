@@ -864,3 +864,54 @@ class Tunable(Model):
         icon_object = u"TunableIcon"
         icon_add = u"AddTunableIcon"
         icon_view = u"ViewTunableIcon"
+
+
+class InitShutdown(Model):
+    ini_type = models.CharField(
+        choices=(
+            ('command', _('Command')),
+            ('script', _('Script')),
+        ),
+        default='command',
+        max_length=15,
+        verbose_name=_("Type"),
+    )
+    ini_command = models.CharField(
+        max_length=300,
+        verbose_name=_("Command"),
+        blank=True,
+    )
+    ini_script = PathField(
+        verbose_name=_("Script"),
+        blank=True,
+    )
+    ini_when = models.CharField(
+        choices=(
+            ('preinit', _('Pre Init')),
+            ('postinit', _('Post Init')),
+            ('shutdown', _('Shutdown')),
+        ),
+        max_length=15,
+        verbose_name=_("Type"),
+    )
+
+    def __unicode__(self):
+        if self.ini_type == 'command':
+            name = self.ini_command
+        else:
+            name = self.ini_script
+        return u"%s - %s" % (
+            self.get_ini_when_display(),
+            name,
+        )
+
+    class Meta:
+        verbose_name = _("Init/Shutdown Script")
+        verbose_name_plural = _("Init/Shutdown Scripts")
+
+    class FreeAdmin:
+        #FIXME
+        icon_model = u"TunableIcon"
+        icon_object = u"TunableIcon"
+        icon_add = u"AddTunableIcon"
+        icon_view = u"ViewTunableIcon"

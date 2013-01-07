@@ -403,6 +403,23 @@ require([
 
     }
 
+    initshutdownModeToggle = function() {
+
+        var select = registry.byId("id_ini_type");
+        var command = registry.byId("id_ini_command");
+        var script = registry.byId("id_ini_script");
+        var trc = command.domNode.parentNode.parentNode;
+        var trs = script.domNode.parentNode.parentNode;
+        if(select.get('value') == 'command') {
+            domStyle.set(trs, "display", "none");
+            domStyle.set(trc, "display", "table-row");
+        } else {
+            domStyle.set(trs, "display", "table-row");
+            domStyle.set(trc, "display", "none");
+        }
+
+    }
+
     iscsiExtentToggle = function() {
 
         var select = registry.byId("id_iscsi_extent_type");
