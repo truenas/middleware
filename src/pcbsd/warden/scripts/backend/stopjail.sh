@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh 
 # Script to stop a jail
-# Args $1 = jail-dir
+# Args $1 = jail-name
 #######################################################################
 
 # Source our functions
@@ -9,13 +9,13 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="${1}"
+JAILNAME="${1}"
 if [ "${2}" = "FAST" ]
 then
   FAST="Y"
 fi
 
-if [ -z "${IP}" ]
+if [ -z "${JAILNAME}" ]
 then
   echo "ERROR: No jail specified to delete!"
   exit 5
@@ -27,9 +27,11 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -42,37 +44,46 @@ HOST="`cat ${JMETADIR}/host`"
 echo -e "Stopping the jail...\c"
 
 # Get the JailID for this jail
-JID="`jls | grep ${JDIR}/${IP}$ | tr -s " " | cut -d " " -f 2`"
+JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
 echo -e ".\c"
 
 # Check if we need umount x mnts
-if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${IP} ; fi
+if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
 
 # Get list of IPs for this jail
-IPS="${IP}"
-if [ -e "${JMETADIR}/ip-extra" ] ; then
-  while read line
-  do
-    IPS="${IPS} $line"
-  done < ${JMETADIR}/ip-extra
+IP=
+if [ -e "${JMETADIR}/ip" ] ; then
+   IP=`cat "${JMETADIR}/ip"`
 fi
 
-# Check if we need to remove the IP aliases from this jail
-for _ip in $IPS
-do 
-  # See if active alias
-  ifconfig $NIC | grep -q "${_ip}"
-  if [ $? -ne 0 ] ; then continue ; fi
+_epairb=`jexec ${JID} ifconfig -a | grep '^epair' | cut -f1 -d:`
+if [ -n "${_epairb}" ] ; then
+   _epaira=`echo ${_epairb} | sed -E 's|b$|a|'`
+   _bridgeif=
 
-  isV6 "${_ip}"
-  if [ $? -eq 0 ] ; then
-    ifconfig $NIC inet6 ${_ip} delete
-  else
-    ifconfig $NIC inet -alias ${_ip}
-  fi
-  echo -e ".\c"
-done
+   for _bridge in `ifconfig -a | grep -E '^bridge[0-9]+' | cut -f1 -d:`
+   do
+      for _member in `ifconfig ${_bridge} | grep member | awk '{ print $2 }'`
+      do
+         if [ "${_member}" = "${_epaira}" ] ; then
+            _bridgeif="${_bridge}"
+             break
+         fi
+      done
+      if [ -n "${_bridgeif}" ] ; then
+         break
+      fi
+   done
+
+   jexec ${JID} ifconfig ${_epairb} down
+   ifconfig ${_epaira} down
+   ifconfig ${_epaira} destroy
+   _count=`ifconfig ${_bridgeif} | grep member | awk '{ print $2 }' | wc -l`
+   if [ "${_count}" -le "1" ] ; then
+      ifconfig ${_bridgeif} destroy
+   fi
+fi
 
 if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 
@@ -86,11 +97,11 @@ if [ "$LINUXJAIL" = "YES" ] ; then
     fi
   else
     # Check for different init styles
-    if [ -e "${JDIR}/${IP}/etc/init.d/rc" ] ; then
+    if [ -e "${JAILDIR}/etc/init.d/rc" ] ; then
       if [ -n "${JID}" ] ; then
         jexec ${JID} /bin/sh /etc/init.d/rc 0 2>&1
       fi
-    elif [ -e "${JDIR}/${IP}/etc/rc" ] ; then
+    elif [ -e "${JAILDIR}/etc/rc" ] ; then
       if [ -n "${JID}" ] ; then
         jexec ${JID} /bin/sh /etc/rc 0 2>&1
       fi
@@ -98,10 +109,10 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   fi
   sleep 3
 
-  umount -f ${JDIR}/${IP}/sys 2>/dev/null
-  umount -f ${JDIR}/${IP}/dev/fd 2>/dev/null
-  umount -f ${JDIR}/${IP}/dev 2>/dev/null
-  umount -f ${JDIR}/${IP}/lib/init/rw 2>/dev/null
+  umount -f ${JAILDIR}/sys 2>/dev/null
+  umount -f ${JAILDIR}/dev/fd 2>/dev/null
+  umount -f ${JAILDIR}/dev 2>/dev/null
+  umount -f ${JAILDIR}/lib/init/rw 2>/dev/null
 else
   # If we have a custom stop script
   if [ -e "${JMETADIR}/jail-stop" ] ; then
@@ -118,7 +129,7 @@ else
   fi
 fi
 
-umount -f ${JDIR}/${IP}/dev >/dev/null 2>/dev/null
+umount -f ${JAILDIR}/dev >/dev/null 2>/dev/null
 
 echo -e ".\c"
 
@@ -134,7 +145,7 @@ killall -j ${JID} -KILL 2>/dev/null
 echo -e ".\c"
 
 # Check if we need to unmount the devfs in jail
-mount | grep "${JDIR}/${IP}/dev" >/dev/null 2>/dev/null
+mount | grep "${JAILDIR}/dev" >/dev/null 2>/dev/null
 if [ "$?" = "0" ]
 then
   # Setup a 60 second timer to try and umount devfs, since takes a bit
@@ -145,7 +156,7 @@ then
    sleep 2
 
    # Try to unmount dev
-   umount -f "${JDIR}/${IP}/dev" 2>/dev/null
+   umount -f "${JAILDIR}/dev" 2>/dev/null
    if [ "$?" = "0" ]
    then
       break
@@ -163,9 +174,9 @@ then
 fi
 
 # Check if we need to unmount any extra dirs
-mount | grep "${JDIR}/${IP}/proc" >/dev/null 2>/dev/null
+mount | grep "${JAILDIR}/proc" >/dev/null 2>/dev/null
 if [ "$?" = "0" ]; then
-  umount -f "${JDIR}/${IP}/proc"
+  umount -f "${JAILDIR}/proc"
 fi
 
 if [ -e "${JMETADIR}/jail-portjail" ] ; then
@@ -181,5 +192,3 @@ if [ -n "${JID}" ] ; then
 fi
 
 echo -e "Done"
-
-

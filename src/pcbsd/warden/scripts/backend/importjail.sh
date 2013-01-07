@@ -9,8 +9,15 @@ PROGDIR="/usr/local/share/warden"
 . ${PROGDIR}/scripts/backend/functions.sh
 
 IFILE="$1"
-IP="${2}"
-HOST="${3}"
+HOST="${2}"
+IP="${3}"
+
+get_ip_and_netmask "${IP}"
+IP="${JIP}"
+MASK="${JMASK}"
+
+JAILNAME="${HOST}"
+JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ -z "${IFILE}" -o ! -e "${IFILE}" ]
 then
@@ -26,14 +33,15 @@ fi
 
 if [ "${IP}" != "OFF" ]
 then
-  # Make sure we don't have a jail with this new IP already
-  if [ -e "${JDIR}/${IP}" ]
-  then
-    echo "ERROR: A Jail exists with IP: $IP"
-    exit 5
-  fi
-  set_warden_metadir
+  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  do
+    if [ "`cat ${i}/ip`" = "${IP}" ] ; then
+      echo "ERROR: A Jail exists with IP: ${IP}"
+      exit 5
+    fi
+  done
 fi
+set_warden_metadir
 
 # Lets start importing the jail now
 ######################################################################
@@ -120,16 +128,16 @@ then
     echo "This jail may not work...Importing anyway..."
 fi
 
-
 if [ "${IP}" = "OFF" ]
 then
-  # Make sure we don't have a jail with this new IP already
-  if [ -e "${JDIR}/${FIP}" ]
-  then
-    echo "ERROR: A Jail already exists with IP: $FIP"
-    rm -rf tmp.$$ 2>/dev/null
-    exit 7
-  fi
+  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  do
+    if [ "`cat ${i}/ip`" = "${FIP}" ] ; then
+      echo "ERROR: A Jail already exists with IP: $FIP"
+      rm -rf tmp.$$ 2>/dev/null
+      exit 7
+    fi
+  done
  
   # The user didn't specify a new IP, so use the built in one
   IP="${FIP}"
@@ -139,7 +147,7 @@ SKIP="`awk '/^___WARDEN_START___/ { print NR + 1; exit 0; }' ${IFILE}`"
 echo "Importing ${IFILE} with IP: ${IP}..."
 
 # Make the new directory
-JAILDIR="${JDIR}/${IP}"
+JAILDIR="${JDIR}/${HOST}"
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
   # Create ZFS mount
@@ -161,10 +169,10 @@ cp tmp.$$/jail-* ${JMETADIR}/ 2>/dev/null
 rm -rf tmp.$$ 2>/dev/null
 
 # Extract the jail contents
-tail +${SKIP} ${IFILE} | tar xpf - -C "${JDIR}/${IP}" 2>/dev/null
+tail +${SKIP} ${IFILE} | tar xpf - -C "${JAILDIR}" 2>/dev/null
 
 # Make sure we have an IP address saved
-echo "${IP}" >"${JMETADIR}/ip"
+echo "${IP}/${MASK}" >"${JMETADIR}/ip"
 
 # Save the jail flags
 if [ -n "$JFLAGS" ] ; then
@@ -181,10 +189,10 @@ if [ "${HOST}" != "OFF" -a ! -z "${HOST}" ]; then
   echo "${HOST}" >"${JMETADIR}/host"
 
   # Change the hostname in rc.conf
-  if [ -e "${JDIR}/${IP}/etc/rc.conf" ] ; then
-    cat "${JDIR}/${IP}/etc/rc.conf" | grep -v "hostname=" >${JDIR}/${IP}/.rc.conf
-    echo "hostname=\"${HOST}\"" >>"${JDIR}/${IP}/.rc.conf"
-    mv "${JDIR}/${IP}/.rc.conf" "${JDIR}/${IP}/etc/rc.conf"
+  if [ -e "${JAILDIR}/etc/rc.conf" ] ; then
+    cat "${JAILDIR}/etc/rc.conf" | grep -v "hostname=" >${JAILDIR}/.rc.conf
+    echo "hostname=\"${HOST}\"" >>"${JAILDIR}/.rc.conf"
+    mv "${JAILDIR}/.rc.conf" "${JAILDIR}/etc/rc.conf"
   fi
 
 # Setup /etc/hosts now
@@ -202,7 +210,7 @@ echo "# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
 #
 ::1                     localhost localhost.localdomain
 127.0.0.1               localhost localhost.localdomain ${HOST}
-${IP}			${HOST}" > "${JDIR}/${IP}/etc/hosts"
+${IP}			${HOST}" > "${JAILDIR}/etc/hosts"
 
 # End Hostname setup
 fi

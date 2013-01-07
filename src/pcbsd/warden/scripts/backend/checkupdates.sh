@@ -1,6 +1,6 @@
 #!/bin/sh
 # Script to check for jail updates
-# Args $1 = IP
+# Args $1 = JAILNAME
 ######################################################################
 
 # Source our functions
@@ -9,11 +9,11 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="$1"
+JAILNAME="$1"
 
-if [ -z "$IP" ]
+if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify an IP to check"
+  echo "ERROR: You must specify a jail to check"
   exit 5
 fi
 
@@ -23,9 +23,11 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" -a "${IP}" != "all" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" -a "${JAILNAME}" != "all" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -34,12 +36,13 @@ fi
 #####################################################################
 
 # Check for updates
-if [ "$IP" = "all" ] ; then
+if [ "${JAILNAME}" = "all" ] ; then
   cd ${JDIR}
   for i in `ls -d .*.meta`
   do
     if [ ! -e "${i}/ip" ] ; then continue ; fi
     IP="`cat ${i}/ip`"
+    HOST="`cat ${i}/host`"
     set_warden_metadir
     if [ -e "${JMETADIR}/jail-linux" ] ; then continue; fi
 
@@ -47,10 +50,10 @@ if [ "$IP" = "all" ] ; then
     echo "################################################"
  
     # Check for meta-pkg updates
-    pc-metapkgmanager --chroot ${JDIR}/${IP} checkup
+    pc-metapkgmanager --chroot ${JDIR}/${HOST} checkup
 
     # Check for system-updates
-    chroot ${JDIR}/${IP} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+    chroot ${JDIR}/${HOST} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
   done
 else
   set_warden_metadir
@@ -63,8 +66,8 @@ else
    echo "Checking for jail updates to ${IP}..."
    echo "################################################"
    # Check for meta-pkg updates
-   pc-metapkgmanager --chroot ${JDIR}/${IP} checkup
+   pc-metapkgmanager --chroot ${JDIR}/${HOST} checkup
 
    # Check for system-updates
-   chroot ${JDIR}/${IP} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+   chroot ${JDIR}/${HOST} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
 fi

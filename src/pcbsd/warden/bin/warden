@@ -84,15 +84,15 @@ Available options:
 
 Usage:
 
-  warden get ip <Jail IP>
+  warden get ip <Jail>
 
-  warden get flags <Jail IP>
+  warden get flags <Jail>
 
 Example:
 
-  warden get ip 192.168.0.5
+  warden get ip myjail
 
-  warden get flags 192.168.0.5
+  warden get flags myjail
 "
 };
 
@@ -110,15 +110,15 @@ Available options:
 
 Usage:
 
-  warden set ip <Jail IP> <IP1>,<IP2>,<IP3>
+  warden set ip <Jail> <IP1>,<IP2>,<IP3>
 
-  warden set flags <Jail IP> <Flag1>,<Flag2>,<Flag3>
+  warden set flags <Jail> <Flag1>,<Flag2>,<Flag3>
 
 Example:
 
-  warden set ip 192.168.0.5 fe80::8e89:a5ff:fe52:ad19,192.168.1.50,192.168.2.10
+  warden set ip myjail fe80::8e89:a5ff:fe52:ad19,192.168.1.50,192.168.2.10
 
-  warden set flags 192.168.0.5 allow.raw_sockets=true,allow.chflags=true
+  warden set flags myjail allow.raw_sockets=true,allow.chflags=true
 "
 };
 
@@ -131,13 +131,13 @@ Check for updates to a jail(s)
 
 Usage:
 
-  warden checkup <IP>
+  warden checkup <Jail>
    or
   warden checkup all
 
 Example:
 
-  warden checkup 192.168.0.5
+  warden checkup myjail
 "
 };
 
@@ -150,11 +150,11 @@ List ZFS clones of a jail
 
 Usage:
 
-  warden zfslistclone <IP>
+  warden zfslistclone <Jail>
 
 Example:
 
-  warden zfslistclone 192.168.0.5
+  warden zfslistclone myjail
 "
 };
 
@@ -167,11 +167,11 @@ List ZFS snapshots of a jail
 
 Usage:
 
-  warden zfslistsnap <IP>
+  warden zfslistsnap <Jail>
 
 Example:
 
-  warden zfslistsnap 192.168.0.5
+  warden zfslistsnap myjail
 "
 };
 
@@ -184,11 +184,11 @@ Clone a ZFS jail snapshot
 
 Usage:
 
-  warden zfsclonesnap <IP> <SNAP>
+  warden zfsclonesnap <Jail> <SNAP>
 
 Example:
 
-  warden zfsclonesnap 192.168.0.5 20120505-140510
+  warden zfsclonesnap myjail 20120505-140510
 "
 };
 
@@ -201,7 +201,7 @@ Schedule a ZFS jail snapshot
 
 Usage:
 
-  warden zfscronsnap <IP> <action> <frequency> <daysToKeep>
+  warden zfscronsnap <Jail> <action> <frequency> <daysToKeep>
   
   action = start / stop
   frequency = daily / hourly
@@ -209,11 +209,11 @@ Usage:
 
 Example:
 
-  warden zfscronsnap 192.168.0.5 start daily 10
+  warden zfscronsnap myjail start daily 10
 
   or
 
-  warden zfscronsnap 192.168.0.5 stop
+  warden zfscronsnap myjail stop
 "
 };
 
@@ -226,11 +226,11 @@ Revert ZFS snapshot of a jail
 
 Usage:
 
-  warden zfsrevertsnap <IP> <SNAP>
+  warden zfsrevertsnap <Jail> <SNAP>
 
 Example:
 
-  warden zfsrevertsnap 192.168.0.5 20120505-140510
+  warden zfsrevertsnap myjail 20120505-140510
 "
 };
 
@@ -243,11 +243,11 @@ Remove ZFS clone of a jail
 
 Usage:
 
-  warden zfsrmclone <IP> <CLONE>
+  warden zfsrmclone <Jail> <CLONE>
 
 Example:
 
-  warden zfsrmclone 192.168.0.5 20120505-140510
+  warden zfsrmclone myjail 20120505-140510
 "
 };
 
@@ -260,11 +260,11 @@ Remove ZFS snapshot of a jail
 
 Usage:
 
-  warden zfsrmsnap <IP> <SNAP>
+  warden zfsrmsnap <Jail> <SNAP>
 
 Example:
 
-  warden zfsrmsnap 192.168.0.5 20120505-140510
+  warden zfsrmsnap myjail 20120505-140510
 "
 };
 
@@ -278,11 +278,11 @@ Create a new ZFS snapshot of a jail
 
 Usage:
 
-  warden zfsmksnap <IP>
+  warden zfsmksnap <Jail>
 
 Example:
 
-  warden zfsmksnap 192.168.0.5
+  warden zfsmksnap myjail
 "
 };
 
@@ -295,11 +295,11 @@ View usage details about a jail
 
 Usage:
 
-  warden details <IP>
+  warden details <Jail>
 
 Example:
 
-  warden details 192.168.0.5
+  warden details myjail
 "
 };
 
@@ -319,11 +319,11 @@ The flag status can be checked with 'warden list'.
 
 Usage:
 
-  warden type <IP> <type>
+  warden type <Jail> <type>
 
 Example:
 
-  warden type 192.168.0.5 portjail
+  warden type myjail portjail
 "
 };
 
@@ -339,11 +339,11 @@ The flag status can be checked with 'warden list'.
 
 Usage:
 
-  warden auto <IP>
+  warden auto <Jail>
 
 Example:
 
-  warden auto 192.168.0.5
+  warden auto myjail
 "
 };
 
@@ -356,11 +356,11 @@ Generates a listing of the installed ports in a jail.
 
 Usage:
 
-  warden pkgs
+  warden pkgs <Jail>
 
 Example:
 
-  warden pkgs 192.168.0.5
+  warden pkgs myjail
 "
 };
 
@@ -394,11 +394,11 @@ Available Flags:
 
 Usage:
 
-  warden export <IP> --dir=<path>
+  warden export <Jail> --dir=<path>
 
 Example:
 
-  warden export 192.168.0.5 --dir=/tmp
+  warden export myjail --dir=/tmp
 "
 };
 
@@ -411,8 +411,8 @@ Imports a jail from a .wdn file. Can assign a new IP / Hostname to
 the imported jail on the fly using optional flags.  
 
 Available Flags:
-  --ip=<IP>      (Specify a new IP address to assign to this jail)
-  --host=<HOST>  (Specify a new host name to assign to this jail)
+  --ip=<IP/NETMASK> (Specify a new IP/NETMASK address to assign to this jail)
+  --host=<HOST>     (Specify a new host name to assign to this jail)
 
 Usage:
 
@@ -420,7 +420,7 @@ Usage:
 
 Example:
 
-  warden import /home/kris/192.168.0.5.wdn
+  warden import /home/kris/myjail.wdn
 "
 };
 
@@ -435,11 +435,11 @@ Logs into a jail using chroot, or runs the supplied command.
 
 Usage:
 
-  warden chroot <IP> <optional cmd>
+  warden chroot <Jail> <optional cmd>
 
 Example:
 
-  warden chroot 192.168.0.5
+  warden chroot myjail
 "
 };
 
@@ -453,11 +453,11 @@ Starts a stopped jail
 
 Usage:
 
-  warden start <IP>
+  warden start <Jail>
 
 Example:
 
-  warden start 192.168.0.5
+  warden start myjail
 "
 };
 
@@ -469,11 +469,11 @@ help_stop()
 Stops a running jail
 
 Usage:
-  warden stop <IP>
+  warden stop <Jail>
 
 Example:
 
-  warden stop 192.168.0.5
+  warden stop myjail
 "
 };
 
@@ -490,11 +490,11 @@ Available Flags:
 
 Usage:
 
-  warden delete <IP>
+  warden delete <Jail>
 
 Example:
 
-  warden delete 192.168.0.5 
+  warden delete myjail
 "
 };
 
@@ -519,11 +519,11 @@ Available Flags:
 
 Usage:
 
-  warden create <IP> <HOSTNAME> <flags>
+  warden create <JAILNAME> <IP/NETMASK> <flags>
 
 Example:
 
-  warden create 192.168.0.5 jailbird --src --ports --startauto
+  warden create jailbird 192.168.0.25/24 --src --ports --startauto
 "
 };
 
@@ -562,25 +562,25 @@ case "$1" in
          esac  ;;
 
 
-    pkgs) IP="${2}"
-         if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+    pkgs) JAILNAME="${2}"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
 
-         ${PROGDIR}/scripts/backend/listpkgs.sh "${IP}" 
+         ${PROGDIR}/scripts/backend/listpkgs.sh "${JAILNAME}" 
          ;;
-details) IP="${2}"
-         if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+details) JAILNAME="${2}"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
 
-         ${PROGDIR}/scripts/backend/details.sh "${IP}" 
+         ${PROGDIR}/scripts/backend/details.sh "${JAILNAME}" 
          ;;
     get) require_root
 	 OPT="${2}"
-         IP="${3}"
-         if [ -z "${IP}" ] ; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ] ; then exit_err "No such jail!"; fi
+         JAILNAME="${3}"
+         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then exit_err "No such jail!"; fi
 	 set_warden_metadir
 
 	 case $OPT in
@@ -593,9 +593,9 @@ details) IP="${2}"
 
     set) require_root
 	 OPT="${2}" 
-         IP="${3}"
-         if [ -z "${IP}" ] ; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ] ; then exit_err "No such jail!"; fi
+         JAILNAME="${3}"
+         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then exit_err "No such jail!"; fi
 	 set_warden_metadir
 
 	 case $OPT in
@@ -617,39 +617,39 @@ details) IP="${2}"
          ;;
 
    type) require_root
-	 IP="${2}"
+	 JAILNAME="${2}"
          TYPE="${3}"
+         JAILDIR="${JDIR}/${JAILNAME}"
 
-         if [ -z "${IP}" ] ; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ] ; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JAILDIR}" ] ; then exit_err "No such jail!"; fi
 
 	 set_warden_metadir
 	 if [ -e "${JMETADIR}/jail-linux" ] ; then exit_err "Cannot change type on Linux jail!"; fi
 
 	 case $TYPE in
-	   portjail) mkportjail "${JDIR}/${IP}" ;;
-	   pluginjail) mkportjail "${JDIR}/${IP}" ;;
+	   portjail) mkportjail "${JAILDIR}" ;;
 	   standard) rm ${JMETADIR}/jail-portjail >/dev/null 2>/dev/null ;;
+	   pluginjail) ;;
 	   *) exit_err "Invalid TYPE" ;;
          esac
          ;;
 
    auto) require_root
-	 IP="${2}"
+	 JAILNAME="${2}"
 
-         if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
 
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-
 
          if [ -e "${JMETADIR}/autostart" ]
          then
             rm "${JMETADIR}/autostart"
-            echo "Disabled autostart for ${IP}"
+            echo "Disabled autostart for ${JAILNAME}"
          else
             touch "${JMETADIR}/autostart"
-            echo "Enabled autostart for ${IP}"
+            echo "Enabled autostart for ${JAILNAME}"
          fi 
 
          ;;
@@ -661,53 +661,55 @@ details) IP="${2}"
     
    start) require_root
 	  # Time to startup the jail
-          IP="${2}"
+          JAILNAME="${2}"
 
-          if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-          if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi 
+          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi 
 	  set_warden_metadir
          
           # Check if this jail is already running
-          ${PROGDIR}/scripts/backend/checkstatus.sh "${IP}"
+          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
           if [ "$?" = "0" ]; then exit_err "This jail is already running!"; fi
  
-          ${PROGDIR}/scripts/backend/startjail.sh "${IP}" 
+          ${PROGDIR}/scripts/backend/startjail.sh "${JAILNAME}" 
           ;;
    stop)  require_root
           # Time to stop the jail
-          IP="${2}"
+          JAILNAME="${2}"
 
-          if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-          if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi 
+          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi 
 	  set_warden_metadir
          
-          ${PROGDIR}/scripts/backend/stopjail.sh "${IP}" 
+          ${PROGDIR}/scripts/backend/stopjail.sh "${JAILNAME}" 
           ;;
 
  checkup) # Log a user into chroot session
-          IP="${2}"
+          JAILNAME="${2}"
 
-          if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-          if [ ! -e "${JDIR}/${IP}" -a "$IP" != "all" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" -a "${JAILNAME}" != "all" ]; then exit_err "No such jail!"; fi
 
-          ${PROGDIR}/scripts/backend/checkupdates.sh "${IP}"
+          ${PROGDIR}/scripts/backend/checkupdates.sh "${JAILNAME}"
           ;;
 
 
  chroot) # Log a user into chroot session
-          IP="${2}"
+          JAILNAME="${2}"
 
-          if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-          if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	  set_warden_metadir
 
-          ${PROGDIR}/scripts/backend/chrootjail.sh "${IP}" "${3}"
+          ${PROGDIR}/scripts/backend/chrootjail.sh "${JAILNAME}" "${3}"
           ;;
 
  import) require_root
 	 # The user wants to import a jail, lets do it!
          IFILE="$2"
          if [ ! -e "$IFILE" ]; then exit_err "Invalid filename: ${IFILE}"; fi
+
+         HOST=`basename "${IFILE}" | sed 's|\.wdn$||'`
 
          IP="OFF"
          HOST="OFF"
@@ -717,15 +719,20 @@ details) IP="${2}"
            echo "${i}" | grep '\-\-ip=' >/dev/null 2>/dev/null
            if [ "$?" = "0" ]
            then
-              IP="`echo ${i} | cut -d '=' -f 2`"
+              tmp="`echo ${i} | cut -d '=' -f 2`"
+              IP="`echo ${tmp} | cut -d '/' -f 1 -s`"
+              MASK="`echo ${tmp} | cut -d '/' -f 2 -s`"
 
               #Sanity check on the IP
               check_ip ${IP}
               if [ "$?" != "0" ]; then exit_err "Invalid IP address!"; fi
 
-              # Check if the directory already exists
-              if [ -e "${JDIR}/${IP}" ]; then exit_err "A jail with this IP already exists!"; fi
-
+              for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+              do
+                if [ "`cat ${i}/ip`" = "${IP}" ] ; then
+                  exit_err "A jail with this IP already exists!"
+                fi 
+              done 
            fi
   
            # Check if we have a new hostname for this jail
@@ -738,14 +745,14 @@ details) IP="${2}"
          done
 
           # Import the jail now!
-          ${PROGDIR}/scripts/backend/importjail.sh "${IFILE}" "${IP}" "${HOST}"
+          ${PROGDIR}/scripts/backend/importjail.sh "${IFILE}" "${HOST}" "${IP}/${MASK}"
         ;;
 
  export) require_root
          # The user wants to export a jail, lets do it!
-         IP="$2"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
 
          # Check if the user wants to place the file in their own DIR
@@ -763,90 +770,89 @@ details) IP="${2}"
          done
 
          # Export the jail now
-         ${PROGDIR}/scripts/backend/exportjail.sh "${IP}" "${DIR}"
+         ${PROGDIR}/scripts/backend/exportjail.sh "${JAILNAME}" "${DIR}"
 
          ;;
 
  zfsmksnap) require_root
-         IP="$2"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfsmksnap.sh "${IP}"
+         ${PROGDIR}/scripts/backend/zfsmksnap.sh "${JAILNAME}"
          ;;
 
  zfslistclone) require_root
-         IP="$2"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfslistclone.sh "${IP}"
+         ${PROGDIR}/scripts/backend/zfslistclone.sh "${JAILNAME}"
          ;;
 
  zfslistsnap) require_root
-         IP="$2"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfslistsnap.sh "${IP}"
+         ${PROGDIR}/scripts/backend/zfslistsnap.sh "${JAILNAME}"
          ;;
 
  zfsclonesnap) require_root
-         IP="$2"
+         JAILNAME="$2"
          SNAP="$3"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfsclonesnap.sh "${IP}" "$SNAP"
+         ${PROGDIR}/scripts/backend/zfsclonesnap.sh "${JAILNAME}" "${SNAP}"
          ;;
 
  zfscronsnap) require_root
-         IP="$2"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfscronsnap.sh "${IP}" "$3" "$4" "$5"
+         ${PROGDIR}/scripts/backend/zfscronsnap.sh "${JAILNAME}" "$3" "$4" "$5"
          ;;
 
 
  zfsrevertsnap) require_root
-         IP="$2"
+         JAILNAME="$2"
          SNAP="$3"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfsrevertsnap.sh "${IP}" "$SNAP"
+         ${PROGDIR}/scripts/backend/zfsrevertsnap.sh "${JAILNAME}" "$SNAP"
          ;;
 
  zfsrmclone) require_root
-         IP="$2"
+         JAILNAME="$2"
          CLONE="$3"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfsrmclone.sh "${IP}" "$CLONE"
+         ${PROGDIR}/scripts/backend/zfsrmclone.sh "${JAILNAME}" "${CLONE}"
          ;;
 
  zfsrmsnap) require_root
-         IP="$2"
+         JAILNAME="$2"
          SNAP="$3"
-         if [ -z "$IP" ]; then exit_err "No IP specified!"; fi
-
-         if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	 set_warden_metadir
-         ${PROGDIR}/scripts/backend/zfsrmsnap.sh "${IP}" "$SNAP"
+         ${PROGDIR}/scripts/backend/zfsrmsnap.sh "${JAILNAME}" "${SNAP}"
          ;;
 
  create) require_root
          # The user wants to create a new jail, do error checking
-         IP="$2"
-         HOST="$3"
-         if [ -z "$IP" -o -z "$HOST" ]; then exit_err "No IP / Host specified!"; fi
+         JAILNAME="$2"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
 
-         #Sanity check on the IP
-         check_ip ${IP}
-         if [ "$?" != "0" ]; then exit_err "Invalid IP address!"; fi
+         HOST="$2"
+         NETWORK="$3"
+
+         IP=`echo ${NETWORK} | cut -d '/' -f1`
+         MASK=`echo ${NETWORK} | cut -d '/' -f2 -s`
 
          #Now check for the presence of the optional flags
          SRC="NO"
@@ -895,44 +901,42 @@ details) IP="${2}"
          done
 
          # Check to ensure this jail does not already exist
-         if [ -e "${JDIR}/${IP}" ]; then exit_err "A jail with this IP already exists!"; fi  
+         if [ -e "${JDIR}/${JAILNAME}" ]; then exit_err "A jail with this name already exists!"; fi  
 
           # Passed all tests, create the jail now
-          ${PROGDIR}/scripts/backend/createjail.sh "${IP}" "${HOST}" "${SRC}" "${PORTS}" "${AUTO}" "${PORTJAIL}" "${LINUXJAIL}" "${ARCHIVE_FILE}"
+          ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}" "${IP}/${MASK}" "${SRC}" "${PORTS}" "${AUTO}" "${PORTJAIL}" "${LINUXJAIL}" "${ARCHIVE_FILE}"
 
         ;;
   delete) require_root
           # Time to delete a jail
-          IP="${2}"
+          JAILNAME="${2}"
 
-          if [ -z "${IP}" ]; then exit_err "No IP specified!"; fi
-          if [ ! -e "${JDIR}/${IP}" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
 	  set_warden_metadir
 
           if [ "$3" != "--confirm" ]
           then
-            echo "Are you sure you want to delete ${IP}?"
+            echo "Are you sure you want to delete ${JAILNAME}?"
             echo -e "Choice: (y/n)\c"
             read confirm
             if [ "$confirm" != "y" ]; then exit_err "Canceled!"; fi
           fi
 
           # Check if this jail is running
-          ${PROGDIR}/scripts/backend/checkstatus.sh "${IP}"
+          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
           if [ "$?" = "0" ] ; then
-            ${PROGDIR}/scripts/backend/stopjail.sh "${IP}"
+            ${PROGDIR}/scripts/backend/stopjail.sh "${JAILNAME}"
           fi
 
           # Check if this jail is STILL running
-          ${PROGDIR}/scripts/backend/checkstatus.sh "${IP}"
+          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
           if [ "$?" = "0" ] ; then exit_err "Jail still is running or has leftovers.."; fi
 
           # Delete it now
-          ${PROGDIR}/scripts/backend/deletejail.sh "${IP}"
+          ${PROGDIR}/scripts/backend/deletejail.sh "${JAILNAME}"
         ;;
    *) help_main ;;
 esac
 
 exit 0
-
-

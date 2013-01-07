@@ -20,18 +20,23 @@ for i in `ls -d .*.meta 2>/dev/null`
 do
   if [ ! -e "${i}/cron" ] ; then continue ; fi
   if [ ! -e "${i}/cron-keep" ] ; then continue ; fi
+
   jIP="`cat ${i}/ip`"
-  if [ ! -d "${JDIR}/${jIP}" ] ; then continue ; fi
+  jHOST="`cat ${i}/host`"
+  JAILDIR="${JDIR}/${jHOST}"
+
+  if [ ! -d "${JAILDIR}" ] ; then continue ; fi
+
   CRONFREQ="`cat ${i}/cron`"
   CRONKEEPDAYS="`cat ${i}/cron-keep`"
 
   # Figure out if we need to create a new snapshot
-  snaps=$(listZFSSnap "${JDIR}/$jIP")
+  snaps=$(listZFSSnap "${JAILDIR}")
   lastsnap=`echo $snaps | rev | cut -d " " -f 1 | rev`
   needSnap=0
   zdate=`date +%Y%m%d-%H%M%S`
   if [ "$CRONFREQ" = "daily" ] ; then
-     #echo "Checking for daily snapshots to ${jIP}..."
+     #echo "Checking for daily snapshots to ${jHOST}..."
      today=`date +%Y%m%d`
      lastsnap=`echo $lastsnap | cut -d '-' -f 1`
      if [ "$today" != "$lastsnap" ] ; then
@@ -39,7 +44,7 @@ do
      fi
   else
   # Hourly
-     #echo "Checking for hourly snapshots to ${jIP}..."
+     #echo "Checking for hourly snapshots to ${jHOST}..."
      today=`date +%Y%m%d`
      hour=`date +%H`
      lastday=`echo $lastsnap | cut -d '-' -f 1`
@@ -49,7 +54,7 @@ do
      fi
   fi
   if [ "$needSnap" = "1" ] ; then
-     mkZFSSnap "${JDIR}/${jIP}"
+     mkZFSSnap "${JAILDIR}"
   fi
 
   # Do any pruning
@@ -63,8 +68,7 @@ do
      fi
      if [ $num -gt $CRONKEEPDAYS ] ; then
         #echo "Pruning old snapshot: $snap"
-        rmZFSSnap "${JDIR}/${jIP}" "$snap"
+        rmZFSSnap "${JAILDIR}" "$snap"
      fi
   done
 done
-

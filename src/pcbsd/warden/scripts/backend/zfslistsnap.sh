@@ -1,6 +1,6 @@
 #!/bin/sh
 # ZFS functionality
-# Args $1 = jail-dir
+# Args $1 = jail-name
 # Args $2 = zfs directive
 #######################################################################
 
@@ -10,9 +10,9 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="${1}"
+JAILNAME="${1}"
 
-if [ -z "${IP}" ]
+if [ -z "${JAILNAME}" ]
 then
   echo "ERROR: No jail specified to start!"
   exit 5
@@ -24,10 +24,12 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
-listZFSSnap "${JDIR}/${IP}"
+listZFSSnap "${JAILDIR}"

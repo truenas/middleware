@@ -24,7 +24,7 @@ setup_linux_jail()
 
   mkdir -p ${JMETADIR}
   echo "${HOST}" > ${JMETADIR}/host
-  echo "${IP}" > ${JMETADIR}/ip
+  echo "${IP}/${MASK}" > ${JMETADIR}/ip
   if [ "$STARTUP" = "YES" ] ; then
     touch "${JMETADIR}/autostart"
   fi
@@ -32,31 +32,31 @@ setup_linux_jail()
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
     echo "Extracting ${LINUXARCHIVE_FILE}..."
-    tar xvf ${LINUXARCHIVE_FILE} -C "${JDIR}/${IP}" 2>/dev/null
+    tar xvf ${LINUXARCHIVE_FILE} -C "${JAILDIR}" 2>/dev/null
     if [ $? -ne 0 ] ; then
        echo "Failed Extracting ${LINUXARCHIVE_FILE}"
-       warden delete --confirm ${IP} 2>/dev/null
+       warden delete --confirm ${JAILNAME} 2>/dev/null
        exit 1
     fi
   else
-    sh ${LINUX_JAIL_SCRIPT} "${JDIR}/${IP}" "${IP}" "${JMETADIR}"
+    sh ${LINUX_JAIL_SCRIPT} "${JAILDIR}" "${IP}" "${JMETADIR}"
     if [ $? -ne 0 ] ; then
        echo "Failed running ${LINUX_JAIL_SCRIPT}"
-       warden delete --confirm ${IP} 2>/dev/null
+       warden delete --confirm ${JAILNAME} 2>/dev/null
        exit 1
     fi
   fi
   
   # Create the master.passwd
-  echo "root::0:0::0:0:Charlie &:/root:/bin/bash" > ${JDIR}/${IP}/etc/master.passwd
-  pwd_mkdb -d ${JDIR}/${IP}/tmp -p ${JDIR}/${IP}/etc/master.passwd 2>/dev/null
-  mv ${JDIR}/${IP}/tmp/master.passwd ${JDIR}/${IP}/etc/
-  mv ${JDIR}/${IP}/tmp/pwd.db ${JDIR}/${IP}/etc/
-  mv ${JDIR}/${IP}/tmp/spwd.db ${JDIR}/${IP}/etc/
-  rm ${JDIR}/${IP}/tmp/passwd
+  echo "root::0:0::0:0:Charlie &:/root:/bin/bash" > ${JAILDIR}/etc/master.passwd
+  pwd_mkdb -d ${JAILDIR}/tmp -p ${JAILDIR}/etc/master.passwd 2>/dev/null
+  mv ${JAILDIR}/tmp/master.passwd ${JAILDIR}/etc/
+  mv ${JAILDIR}/tmp/pwd.db ${JAILDIR}/etc/
+  mv ${JAILDIR}/tmp/spwd.db ${JAILDIR}/etc/
+  rm ${JAILDIR}/tmp/passwd
 
   # Copy resolv.conf
-  cp /etc/resolv.conf ${JDIR}/${IP}/etc/resolv.conf
+  cp /etc/resolv.conf ${JAILDIR}/etc/resolv.conf
 
   # Do some touch-up to make linux happy
   echo '#!/bin/bash
@@ -65,20 +65,21 @@ pwconv
 grpconv
 touch /etc/fstab
 touch /etc/mtab
-' > ${JDIR}/${IP}/.fixSH
-  chmod 755 ${JDIR}/${IP}/.fixSH
-  chroot ${JDIR}/${IP} /.fixSH
-  rm ${JDIR}/${IP}/.fixSH
+' > ${JAILDIR}/.fixSH
+  chmod 755 ${JAILDIR}/.fixSH
+  chroot ${JAILDIR} /.fixSH
+  rm ${JAILDIR}/.fixSH
 
   # If we are auto-starting the jail, do it now
-  if [ "$STARTUP" = "YES" ] ; then warden start ${IP} ; fi
+  if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
-  echo "Success! Linux jail created at ${JDIR}/${IP}"
+  echo "Success! Linux jail created at ${JAILDIR}"
 }
 
 # Load our passed values
-IP="${1}"
-HOST="${2}"
+JAILNAME="${1}"
+HOST="${1}"
+IP="${2}"
 SOURCE="${3}"
 PORTS="${4}"
 STARTUP="${5}"
@@ -86,18 +87,34 @@ PORTJAIL="${6}"
 LINUXJAIL="${7}"
 ARCHIVEFILE="${8}"
 
+get_ip_and_netmask "${IP}"
+IP="${JIP}"
+MASK="${JMASK}"
+
 # See if we are overriding the default archive file
 if [ ! -z "$ARCHIVEFILE" ] ; then
    WORLDCHROOT="$ARCHIVEFILE"
 fi
 
-if [ -z "$IP" -o -z "${HOST}" -o -z "$SOURCE" -o -z "${PORTS}" -o -z "${STARTUP}" ] 
+if [ -z "$IP" -o -z "$MASK" -o -z "${HOST}" -o -z "$SOURCE" -o -z "${PORTS}" -o -z "${STARTUP}" ] 
 then
-  echo "ERROR: Missing required data!"
+  if [ -z "$IP" ] ; then
+     echo "ERROR: Missing IP address!"
+
+  elif [ -z "$IP" ] ; then
+     echo "ERROR: Missing nemask!"
+
+  elif [ -z "$HOST" ] ; then
+     echo "ERROR: Missing hostname!"
+
+  else
+     echo "ERROR: Missing required data!"
+  fi
+
   exit 6
 fi
 
-JAILDIR="${JDIR}/${IP}"
+JAILDIR="${JDIR}/${JAILNAME}"
 set_warden_metadir
 
 if [ -e "${JAILDIR}" ]
@@ -118,7 +135,6 @@ done
 
 # Check if we need to download the chroot file
 if [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then downloadchroot ; fi
-
 
 # If we are setting up a linux jail, lets do it now
 if [ "$LINUXJAIL" = "YES" ] ; then
@@ -155,7 +171,7 @@ fi
 
 mkdir ${JMETADIR}
 echo "${HOST}" > ${JMETADIR}/host
-echo "${IP}" > ${JMETADIR}/ip
+echo "${IP}/${MASK}" > ${JMETADIR}/ip
 
 if [ "$SOURCE" = "YES" ]
 then
@@ -182,7 +198,7 @@ then
 fi
 
 # Create an empty fstab
-touch "${JDIR}/${IP}/etc/fstab"
+touch "${JAILDIR}/etc/fstab"
 
 # If this isn't a fresh jail, we can skip to not clobber existing setup
 if [ -z "$ARCHIVEFILE" ] ; then
@@ -192,7 +208,7 @@ sshd_enable=\"YES\"
 sendmail_enable=\"NO\"
 hostname=\"${HOST}\"
 devfs_enable=\"YES\"
-devfs_system_ruleset=\"devfsrules_common\"" > "${JDIR}/${IP}/etc/rc.conf"
+devfs_system_ruleset=\"devfsrules_common\"" > "${JAILDIR}/etc/rc.conf"
 
   # Create the host for this device
   echo "# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
@@ -209,16 +225,16 @@ devfs_system_ruleset=\"devfsrules_common\"" > "${JDIR}/${IP}/etc/rc.conf"
 #
 ::1                     localhost localhost.localdomain
 127.0.0.1               localhost localhost.localdomain ${HOST}
-${IP}			${HOST}" > "${JDIR}/${IP}/etc/hosts"
+${IP}			${HOST}" > "${JAILDIR}/etc/hosts"
 
   # Copy resolv.conf
-  cp /etc/resolv.conf "${JDIR}/${IP}/etc/resolv.conf"
+  cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
 
 
   # Check if ipv6
   isV6 "${IP}"
   if [ $? -eq 0 ] ; then
-    sed -i '' "s|#ListenAddress ::|ListenAddress ${IP}|g" ${JDIR}/${IP}/etc/ssh/sshd_config
+    sed -i '' "s|#ListenAddress ::|ListenAddress ${IP}|g" ${JAILDIR}/etc/ssh/sshd_config
   fi
 
 fi # End of ARCHIVEFILE check
@@ -229,23 +245,23 @@ fi
 
 # Check if we need to copy the timezone file
 if [ -e "/etc/localtime" ] ; then
-   cp /etc/localtime ${JDIR}/${IP}/etc/localtime
+   cp /etc/localtime ${JAILDIR}/etc/localtime
 fi
 
 # Set the default meta-pkg set
-mkdir -p ${JDIR}/${IP}/usr/local/etc >/dev/null 2>/dev/null
-echo "PCBSD_METAPKGSET: warden" > ${JDIR}/${IP}/usr/local/etc/pcbsd.conf
+mkdir -p ${JAILDIR}/usr/local/etc >/dev/null 2>/dev/null
+echo "PCBSD_METAPKGSET: warden" > ${JAILDIR}/usr/local/etc/pcbsd.conf
 
 # Copy over the pbid scripts
-checkpbiscripts "${JDIR}/${IP}"
+checkpbiscripts "${JAILDIR}"
 
 # Check if making a portjail
-if [ "$PORTJAIL" = "YES" ] ; then mkportjail "${JDIR}/${IP}" ; fi
+if [ "$PORTJAIL" = "YES" ] ; then mkportjail "${JAILDIR}" ; fi
 
 # If we are auto-starting the jail, do it now
-if [ "$STARTUP" = "YES" ] ; then warden start ${IP} ; fi
+if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
 echo "Success!"
-echo "Jail created at ${JDIR}/${IP}"
+echo "Jail created at ${JAILDIR}"
 
 exit 0

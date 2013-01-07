@@ -298,8 +298,69 @@ cloneZFSSnap() {
 
 set_warden_metadir()
 {
-   JMETADIR="${JDIR}/.${IP}.meta"
+   JMETADIR="${JDIR}/.${JAILNAME}.meta"
    export JMETADIR
+}
+
+get_ip_and_netmask()
+{
+   JIP=`echo "${1}" | cut -f1 -d'/'`
+   JMASK=`echo "${1}" | cut -f2 -d'/' -s`
+}
+
+get_interface_addresses()
+{
+   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+}
+
+get_interface_address()
+{
+   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+}
+
+get_interface_aliases()
+{
+   local _count
+
+   _count=`ifconfig ${1} | grep -w inet | wc -l`
+   : $((_count -= 1))
+
+   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+}
+
+get_default_route()
+{
+   netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
+}
+
+get_default_interface()
+{
+   netstat -f inet -nr | grep '^default' | awk '{ print $6 }'
+}
+
+get_bridge_interfaces()
+{
+   ifconfig -a | grep -E '^bridge[0-9]+' | cut -f1 -d:
+}
+
+get_bridge_members()
+{
+   ifconfig ${1} | grep -w member | awk '{ print $2 }'
+}
+
+is_bridge_member()
+{
+   local _bridge="${1}"
+   local _iface="${2}"
+
+   for _member in `get_bridge_members ${_bridge}`
+   do
+      if [ "${_member}" = "${_iface}" ] ; then
+         return 0
+      fi
+   done
+
+   return 1
 }
 
 enable_cron()

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Script to check a jail status
-# Args $1 = IP
+# Args $1 = JAILNAME
 ######################################################################
 
 # Source our functions
@@ -9,11 +9,11 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="$1"
+JAILNAME="$1"
 
-if [ -z "$IP" ]
+if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify an IP to check"
+  echo "ERROR: You must specify a jail name to check"
   exit 5
 fi
 
@@ -23,9 +23,11 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -34,17 +36,14 @@ fi
 
 # Check if anything is still mounted in this jail
 hasmount="0"
-for mountpoint in $(mount | grep -e '${JDIR}/${IP}/' | cut -d" " -f3); do
+for mountpoint in $(mount | grep -e '${JAILDIR}/' | cut -d" " -f3); do
   hasmount="1"
 done
 
 # Check if the jail is active
-jls | grep ${JDIR}/${IP}$ >/dev/null 2>/dev/null
+jls | grep ${JAILNAME}$ >/dev/null 2>/dev/null
 if [ "$?" = "0" -o "$hasmount" = "1" ]; then
   exit 0
 else
   exit 1
 fi
-
-
-

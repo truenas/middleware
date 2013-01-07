@@ -17,8 +17,8 @@ fi
 
 
 # Prints a listing of the available jails
-echo "IP			HOST		AUTOSTART	STATUS     TYPE
---------------------------------------------------------------------------------"
+printf "%-23s%-20s%-15s%-10s%-10s\n" HOST IP AUTOSTART STATUS TYPE
+echo "--------------------------------------------------------------------------------"
 
 cd ${JDIR}
 
@@ -36,6 +36,11 @@ do
     HOST="`cat ${i}/host`"
   fi
 
+  if [ -e "${i}/ip" ]
+  then
+    IP="`cat ${i}/ip`"
+  fi
+
   # Check if we are autostarting this jail
   if [ -e "${i}/autostart" ] ; then
     AUTO="Enabled"
@@ -44,6 +49,8 @@ do
   # Figure out the type of jail
   if [ -e "${i}/jail-portjail" ] ; then
     TYPE="portjail"
+  elif [ -e "${i}/jail-pluginjail" ] ; then
+    TYPE="pluginjail"
   elif [ -e "${i}/jail-linux" ] ; then
     TYPE="linuxjail"
   else
@@ -52,7 +59,9 @@ do
 
   jIP="`cat ${i}/ip`"
 
-  ${PROGDIR}/scripts/backend/checkstatus.sh ${jIP} 2>/dev/null
+  JAILNAME=`echo ${i}|sed -E 's|^.(.+).meta|\1|'`
+
+  ${PROGDIR}/scripts/backend/checkstatus.sh ${JAILNAME} 2>/dev/null
   if [ "$?" = "0" ]
   then
     STATUS="Running"
@@ -60,14 +69,6 @@ do
     STATUS="Stopped"
   fi
 
-  # Pad the variables a bit
-  IP=`echo "${jIP}                 " | cut -c 1-23`
-  AUTO=`echo "${AUTO}              " | cut -c 1-15`
-  STATUS=`echo "${STATUS}          " | cut -c 1-10`
-  HOST=`echo "${HOST}              " | cut -c 1-15`
-  TYPE=`echo "${TYPE}              " | cut -c 1-10`
-  
-
-  echo -e "${IP} ${HOST} ${AUTO} ${STATUS} ${TYPE}"
+  printf "%-23s%-20s%-15s%-10s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE}
 done
 

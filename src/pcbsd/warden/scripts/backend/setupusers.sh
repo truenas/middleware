@@ -1,6 +1,6 @@
 #!/bin/sh
 # Script to setup the initial rootpw on a jail
-# Args $1 = IP
+# Args $1 = JAILDIR
 # Args $2 = rootPW
 ######################################################################
 
@@ -10,15 +10,14 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="$1"
+JAILNAME="$1"
 ROOTPW="${2}"
 
 export ROOTPW
 
-
-if [ -z "$IP" ]
+if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify an IP of a jail"
+  echo "ERROR: You must specify a jail"
   exit 5
 fi
 
@@ -28,9 +27,11 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -52,25 +53,25 @@ if [ -e "${JMETADIR}/jail-linux" ] ; then
 
   echo '#!/bin/bash
 echo -e "${ROOTPW}\n${ROOTPW}" | passwd root
-' > "${JDIR}/${IP}/.chpass.sh"
+' > "${JAILDIR}/.chpass.sh"
 
 else
 
   echo '#!/bin/sh
 echo "${ROOTPW}" | pw usermod root -h 0
-' > "${JDIR}/${IP}/.chpass.sh"
+' > "${JAILDIR}/.chpass.sh"
 
 fi
 
-chmod 755 "${JDIR}/${IP}/.chpass.sh"
-chroot "${JDIR}/${IP}" /.chpass.sh
+chmod 755 "${JAILDIR}/.chpass.sh"
+chroot "${JAILDIR}" /.chpass.sh
 if [ $? -eq 0 ] ; then
   echo -e "Success!"
 else
   echo -e "FAILED!"
 fi
 
-rm "${JDIR}/${IP}/.chpass.sh"
+rm "${JAILDIR}/.chpass.sh"
 
 
 unset ROOTPW

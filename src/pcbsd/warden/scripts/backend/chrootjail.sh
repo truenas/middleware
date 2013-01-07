@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chroot into a working jail
-# IP = $1
+# JAILNAME = $1
 ######################################################################
 
 # Source our functions
@@ -9,9 +9,9 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="$1"
+JAILNAME="$1"
 
-if [ -z "${IP}" ]
+if [ -z "${JAILNAME}" ]
 then
   echo "ERROR: No jail specified to chroot into!"
   exit 5
@@ -23,16 +23,18 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
 set_warden_metadir
 
 # Make sure the jail is running
-jls | grep ${JDIR}/${IP}$ >/dev/null 2>/dev/null
+jls | grep ${JAILDIR}$ >/dev/null 2>/dev/null
 if [ "$?" != "0" ]
 then
   echo "ERROR: Jail is not running!"
@@ -40,7 +42,7 @@ then
 fi
 
 # Get the JailID for this jail
-JID="`jls | grep ${JDIR}/${IP}$ | tr -s " " | cut -d " " -f 2`"
+JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
 # If on an portjail, make display available
 if [ -e "${JMETADIR}/jail-portjail" ] ; then
@@ -57,7 +59,7 @@ fi
 ###################################################################
 
 if [ -z "$2" ] ; then
-  echo "Started shell session on ${IP}. Type exit when finished."
+  echo "Started shell session on ${JAILNAME}. Type exit when finished."
   if [ -e "${JMETADIR}/jail-linux" ] ; then
     jailme ${JID} /bin/bash
   else

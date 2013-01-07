@@ -1,6 +1,6 @@
 #!/bin/sh
 # Script to check a jail status
-# Args $1 = IP
+# Args $1 = JAILNAME
 ######################################################################
 
 # Source our functions
@@ -9,11 +9,11 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-IP="$1"
+JAILNAME="$1"
 
-if [ -z "$IP" ]
+if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify an IP to check"
+  echo "ERROR: You must specify a jail to check"
   exit 5
 fi
 
@@ -23,21 +23,27 @@ then
   exit 5
 fi
 
-if [ ! -d "${JDIR}/${IP}" ]
+JAILDIR="${JDIR}/${JAILNAME}"
+
+if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at $JDIR/$IP"
+  echo "ERROR: No jail located at ${JAILDIR}"
   exit 5
 fi
 
+set_warden_metadir
+
+IP="`cat ${JMETADIR}/ip`"
+
 # Display details about this jail now
 #####################################################################
-echo "Details for jail: ${IP}"
-isDirZFS "${JDIR}/${IP}" "1"
+echo "Details for jail: ${JAILNAME}"
+isDirZFS "${JAILDIR}" "1"
 if [ $? -eq 0 ] ; then 
-   tank=`getZFSTank "${JDIR}/${IP}"`
-   diskUsage=`df -m | grep -w ${tank}${JDIR}/${IP}$ | awk '{print $3}'`
+   tank=`getZFSTank "${JAILDIR}"`
+   diskUsage=`df -m | grep -w ${tank}${JAILDIR}$ | awk '{print $3}'`
 else
-   diskUsage=`du -c -x -m ${JDIR}/${IP} 2>/dev/null | grep total | tail -n 1 | awk '{print $1}'`
+   diskUsage=`du -c -x -m ${JAILDIR} 2>/dev/null | grep total | tail -n 1 | awk '{print $1}'`
 fi
 sockstat | grep "${IP}" | grep '*.*' | awk '{print $6}' | sed "s|${IP}:||g" | sort -g | uniq >/tmp/.socklist.$$
 while read line
