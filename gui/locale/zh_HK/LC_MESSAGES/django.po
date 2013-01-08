@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-01-31 09:44+0200\n"
-"Last-Translator: sing1209 <sing1209@hotmail.com>\n"
+"PO-Revision-Date: 2013-01-07 20:51+0200\n"
+"Last-Translator: danieljai <andle@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_HK\n"
 "MIME-Version: 1.0\n"
@@ -462,19 +462,19 @@ msgstr "離線後立即檢查 (只支援ATA硬碟)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr ""
+msgstr "Rsync 組件"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync 於 SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "推出"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "拉入"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -530,9 +530,8 @@ msgid "Shell"
 msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
-#, fuzzy
 msgid "Disable password logins"
-msgstr "停用登入"
+msgstr "關閉使用密碼登入"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -540,7 +539,7 @@ msgstr "封鎖使用者"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "新建主要群組給使用者"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -551,9 +550,8 @@ msgid "SSH Public Key"
 msgstr "SSH公開密鑰"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "主目錄"
+msgstr "主目錄模式"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -724,9 +722,8 @@ msgid "Account"
 msgstr ""
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "我的帳戶"
+msgstr "管理者帳戶"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -780,9 +777,9 @@ msgid "Add %s"
 msgstr "新增 %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "檢視全部使用者 %s"
+msgstr "檢視 %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -799,12 +796,12 @@ msgstr "關機"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "從%s  接收了空資料"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "無法讀取 %(url)s： %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -854,7 +851,7 @@ msgstr "網路介面"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "IP 地址 (%s) 不能重複地使用於多個網路介面上"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -874,11 +871,11 @@ msgstr "請指定 IPv6 遮罩"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "請選擇使用 IPv4 或 IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "資料回路 (Loopback)  不是有效的域名伺服器 (nameserver)"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
@@ -913,9 +910,8 @@ msgid "Parent Interface"
 msgstr "上層網路介面"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "名稱必須為 vlanXX, 其中 XX 為數字"
+msgstr "名稱必須為 vlanXX, 其中 XX 為整數"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -926,9 +922,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "LAGG 介面上的實體網路卡"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "物理界面"
+msgstr "網絡集合體 (LAGG) 實體網路介面卡"
 
 #: network/forms.py:360
 #, python-format
@@ -937,23 +932,23 @@ msgstr "此網絡 '%s' 並非有效項目, 需要 CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "請指定 IPv4 位址及其代稱"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "請指定 IPv4 遮罩及其代稱"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "請指定 IPv6 位址及其代稱"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "請指定 IPv6 遮罩及其代稱"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "請選擇使用 IPv4 或 IPv6"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -1060,7 +1055,7 @@ msgstr ""
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr ""
+msgstr "別名"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1068,9 +1063,8 @@ msgid "Virtual Interface"
 msgstr "虛擬介面"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "介面名稱必須為 vlanXX, 而 XX 需要是數字"
+msgstr "介面名稱必須為 vlanX, 而 XX 需為數字. 例：vlan0"
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1094,9 +1088,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:293
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "虛擬區網 (VLAN)"
 
 #: network/models.py:314
 msgid "Protocol Type"
@@ -1156,9 +1149,8 @@ msgid "View Link Aggregations"
 msgstr "監視所有 Link Aggregations"
 
 #: network/views.py:197
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "成功加入 %s"
+msgstr "LAGG 介面新增成功"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1362,11 +1354,11 @@ msgstr "用戶 %s 無效"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "欲使用 \"啟用瀏覽家目錄\" 的功能須填此欄位。"
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "欲使用 \"家目錄\" 的功能須填此欄位。"
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
@@ -1374,11 +1366,11 @@ msgstr ""
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP服務重新啟動時無法恢復"
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS服務重新啟動時無法恢復"
 
 #: services/forms.py:157
 #, fuzzy
@@ -1392,7 +1384,7 @@ msgstr "重啟服務失敗"
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr ""
+msgstr "檔案權限"
 
 #: services/forms.py:170
 msgid "Directory Permission"
@@ -1416,23 +1408,24 @@ msgstr "如欲使用「匿名登入」功能則須填寫此欄位"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP服務無法啟動"
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP 服務無法啟動"
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH 服務重新啟動時無法恢復"
 
 #: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync 服務重新啟動時無法恢復"
 
 #: services/forms.py:296
+#, fuzzy
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "名稱不能包含斜線或右括號"
 
 #: services/forms.py:320
 #, fuzzy
@@ -1441,7 +1434,7 @@ msgstr "改變密碼"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "動態DNS (DynamicDNS ) 服務重新啟動時無法恢復"
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
@@ -1459,7 +1452,7 @@ msgstr ""
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP 服務重新啟動時無法恢復"
 
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
@@ -1488,11 +1481,11 @@ msgstr "管理員密碼"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Active Directory 服務重新啟動時無法恢復"
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "LDAP 服務重新啟動時無法恢復"
 
 #: services/forms.py:498 services/models.py:598
 #, fuzzy
@@ -1510,7 +1503,7 @@ msgstr ""
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "為了驗證，請再次輸入密鑰"
 
 #: services/forms.py:504
 msgid "Initiator Secret"
@@ -1526,7 +1519,7 @@ msgstr ""
 
 #: services/forms.py:544
 msgid "Secret does not match"
-msgstr ""
+msgstr "密鑰不一致"
 
 #: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
@@ -1545,15 +1538,15 @@ msgstr ""
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI 服務重新啟動時無法恢復"
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN 已存在於同一目標"
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "管理驗證群組"
 
 #: services/forms.py:620
 msgid ""
@@ -1562,13 +1555,14 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:623 services/models.py:268
+#, fuzzy
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "探索驗證群組"
 
 #: services/forms.py:656
-#, python-format
+#, fuzzy, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "數值必須介於 %(start)d ～ %(end)d 之間。"
 
 #: services/forms.py:669
 msgid ""
@@ -1602,7 +1596,7 @@ msgstr ""
 #: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "基本數字輸入單位為 bytes。或在數字後加上 KB, MB, GB, TB 來更改單位"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
@@ -1613,14 +1607,14 @@ msgid "Disk device"
 msgstr "磁碟裝置"
 
 #: services/forms.py:948
-#, python-format
+#, fuzzy, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "您的入口群組編號 (Portal Group ID) 不可大於 %d"
 
 #: services/forms.py:1001
-#, python-format
+#, fuzzy, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "您的群組編號 (Group ID) 不可大於 %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1629,8 +1623,9 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:1032
+#, fuzzy
 msgid "Authentication Group number"
-msgstr ""
+msgstr "驗證群組 (Authentication Group) 編號"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1657,8 +1652,9 @@ msgid "Service"
 msgstr "服務"
 
 #: services/models.py:52
+#, fuzzy
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "服務名稱，應該在建置時期自動產生"
 
 #: services/models.py:55
 msgid "Enable Service"
@@ -1671,12 +1667,13 @@ msgstr "服務"
 
 #: services/models.py:72
 msgid "Authentication Model"
-msgstr ""
+msgstr "驗證模型"
 
 #: services/models.py:73
+#, fuzzy
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr ""
+msgstr "使用 Active Directory 或 LDAP 驗證將會取代此選項"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1694,7 +1691,7 @@ msgstr ""
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "伺服器說明 （可保持空白）"
 
 #: services/models.py:94
 msgid "DOS charset"
