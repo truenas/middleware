@@ -139,7 +139,6 @@ fi
 
 BRIDGE=
 
-echo "IFACE = $IFACE"
 # See if we need to create a new bridge, or use an existing one
 _bridges=`get_bridge_interfaces`
 if [ -n ${_bridges} ] ; then
@@ -160,11 +159,9 @@ if [ -n ${_bridges} ] ; then
 fi
 
 if [ -z "${BRIDGE}" ] ; then
-   echo ifconfig bridge create mtu ${MTU}
    BRIDGE=`ifconfig bridge create mtu ${MTU}`
 fi
 if [ -n "${IFACE}" ] ; then
-   echo ifconfig ${BRIDGE} addm ${IFACE}
    ifconfig ${BRIDGE} addm ${IFACE}
 fi
 
@@ -179,13 +176,11 @@ do
    _epair=`ifconfig epair create mtu ${MTU}`
    eval "epair${i}='${_epair}'"
 
-   echo ifconfig ${_epair} up
    ifconfig ${_epair} up
 
    _epairb=`echo ${_epair}|sed -E "s/([0-9])a$/\1b/g"`
    eval "epairb${i}='${_epairb}'"
 
-   echo ifconfig ${BRIDGE} addm ${_epair} up
    ifconfig ${BRIDGE} addm ${_epair} up
 
    : $((i += 1))
@@ -232,17 +227,14 @@ do
    _var="\$ip${i}"
    _ip=`eval "echo \${_var} 2>/dev/null"`
 
-   echo ifconfig ${_epairb} vnet ${JID}
    ifconfig ${_epairb} vnet ${JID}
 
    get_ip_and_netmask "${_ip}"
 
    isV6 "${JIP}"
    if [ "$?" = "0" ] ; then
-      echo jexec ${JID} ifconfig ${_epairb} inet6 ${_ip}
       jexec ${JID} ifconfig ${_epairb} inet6 ${_ip}
    else
-      echo jexec ${JID} ifconfig ${_epairb} inet ${_ip}
       jexec ${JID} ifconfig ${_epairb} inet ${_ip}
    fi
 
@@ -250,7 +242,6 @@ do
 done
 
 if [ -n "${GATEWAY}" ] ; then
-   echo jexec ${JID} route add default ${GATEWAY}
    jexec ${JID} route add default ${GATEWAY}
 fi
 
