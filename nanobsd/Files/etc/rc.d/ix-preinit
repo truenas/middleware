@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-preinit
+# BEFORE: fsck
+
+. /etc/rc.subr
+
+do_preinit()
+{
+	local IFS="|"
+	local f="ini_type ini_command ini_script ini_when"
+	eval local $f
+	local sf=$(var_to_sf $f)
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM system_initshutdown WHERE ini_when = 'preinit' ORDER BY id" | \
+	while eval read -r $f; do
+		if [ "${ini_type}" = "command" ]; then
+			eval ${ini_command}
+		else
+			. ${ini_script}
+		fi
+	done
+}
+
+name="ix-preinit"
+start_cmd='do_preinit'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
