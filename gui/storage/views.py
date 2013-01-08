@@ -211,6 +211,14 @@ def wizard(request):
     })
 
 
+def wizard_progress(request):
+    from freenasUI.middleware import encryption
+    return HttpResponse(
+        'new Object({state: "uploading", received: %s, size: 100});' % (
+            int(encryption.PROGRESS),
+        ))
+
+
 def volimport(request):
 
     if request.method == "POST":

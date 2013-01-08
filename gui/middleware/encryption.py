@@ -27,6 +27,7 @@
 
 from cStringIO import StringIO
 import ctypes
+import logging
 import os
 import re
 import signal
@@ -35,6 +36,7 @@ import tempfile
 import threading
 import time
 
+log = logging.getLogger('middleware.encryption')
 PROGRESS = 0.0
 
 
@@ -69,7 +71,7 @@ class RandomWorker(threading.Thread):
             [
                 "dd",
                 "if=/dev/random",
-                "of=/dev/%s" % self._dev,
+                "of=%s" % self._dev,
                 "bs=1m",
             ],
             stdout=subprocess.PIPE,

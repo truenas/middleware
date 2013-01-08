@@ -1,4 +1,3 @@
-
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         doSubmit({
@@ -6,7 +5,7 @@
           event: e,
           url: '{% url storage_wizard %}',
           onComplete: function(){wizardcheckings();},
-          progressbar: true
+          progressbar: '{% url storage_wizard_progress %}'
           });
     </script>
     <table>
@@ -89,6 +88,13 @@
             <td>
                 {{ form.encryption.errors }}
                 {{ form.encryption }}
+            </td>
+        </tr>
+        <tr id="diskencryptionrand" style="display: none">
+            <td>{% trans "Initialize with random data" %}</td>
+            <td>
+                {{ form.encryption_inirand.errors }}
+                {{ form.encryption_inirand }}
             </td>
         </tr>
         <tr id="zfsdedup" style="display: none">
