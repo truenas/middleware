@@ -928,6 +928,8 @@ require([
 
         var zfs = query("input[name=volume_fstype]")[1].checked || add_mode;
 
+        var enc = query("input[name=encryption]")[0].checked;
+
         registry.byId("id_volume_name").set('disabled', add_mode);
         query("input[name=volume_fstype]").forEach(function(item, idx) {
             var wg = registry.getEnclosingWidget(item);
@@ -1015,10 +1017,16 @@ require([
 
         if(zfs) {
             domStyle.set('zfssectorsize', 'display', 'table-row');
-            if(!add_mode)
+            if(!add_mode) {
                 domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
-            else
+                if(enc)
+                    domStyle.set('diskencryptionrand', 'display', 'table-row');
+                else
+                    domStyle.set('diskencryptionrand', 'display', 'none');
+            } else {
                 domStyle.set('zfsfulldiskencryption', 'display', 'none');
+                domStyle.set('diskencryptionrand', 'display', 'none');
+            }
             domStyle.set('zfsdedup', 'display', 'table-row');
 
             if(d.length >= 3) {

@@ -1,4 +1,3 @@
-
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e,  '{% url storage_wizard %}',
@@ -84,6 +83,13 @@
             <td>
                 {{ form.encryption.errors }}
                 {{ form.encryption }}
+            </td>
+        </tr>
+        <tr id="diskencryptionrand" style="display: none">
+            <td>{% trans "Initialize with random data" %}</td>
+            <td>
+                {{ form.encryption_inirand.errors }}
+                {{ form.encryption_inirand }}
             </td>
         </tr>
         <tr id="zfsdedup" style="display: none">

@@ -161,6 +161,10 @@ class VolumeWizardForm(forms.Form):
         required=False,
         initial=False,
         help_text=_('Whole disk encryption'))
+    encryption_inirand = forms.BooleanField(
+        initial=False,
+        required=False,
+        )
     dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP,
         initial="off",
@@ -187,6 +191,8 @@ class VolumeWizardForm(forms.Form):
             self.fields['volume_add'].widget.attrs['onChange'] = (
                 'wizardcheckings(true);')
         self.fields['volume_fstype'].widget.attrs['onClick'] = (
+            'wizardcheckings();')
+        self.fields['encryption'].widget.attrs['onClick'] = (
             'wizardcheckings();')
         self.fields['ufspathen'].widget.attrs['onClick'] = (
             'toggleGeneric("id_ufspathen", ["id_ufspath"], true);')
@@ -397,6 +403,7 @@ class VolumeWizardForm(forms.Form):
         disk_list = self.cleaned_data['volume_disks']
         group_type = self.cleaned_data.get('group_type')
         force4khack = self.cleaned_data.get("force4khack", False)
+        init_rand = self.cleaned_data.get("encryption_inirand", False)
         if self.cleaned_data.get("encryption", False):
             volume_encrypt = 1
         else:
@@ -456,8 +463,14 @@ class VolumeWizardForm(forms.Form):
                             force4khack=force4khack)
 
             else:
-                notifier().init("volume", volume, groups=grouped,
-                    force4khack=force4khack, path=ufspath)
+                notifier().init(
+                    "volume",
+                    volume,
+                    groups=grouped,
+                    force4khack=force4khack,
+                    path=ufspath,
+                    init_rand=init_rand,
+                )
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)

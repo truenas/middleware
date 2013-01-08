@@ -87,6 +87,7 @@ from freenasUI.common.pbi import (pbi_add, pbi_delete,
     PBI_PATCH_FLAGS_NOCHECKSIG)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from freenasUI.middleware import zfs
+from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 
@@ -1271,7 +1272,7 @@ class notifier:
         return providers
 
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
-        vdevs = ['']
+        vdevs = []
         gnop_devs = []
         if force4khack == None:
             test4k = False
@@ -1323,7 +1324,7 @@ class notifier:
 
         return vdevs, gnop_devs, want4khack
 
-    def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None):
+    def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None, init_rand=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_name = str(volume.vol_name)
         z_vdev = ""
@@ -1345,9 +1346,13 @@ class notifier:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
             vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack, encrypt, volume)
-            z_vdev += " ".join(vdevs)
+            z_vdev += " ".join([''] + vdevs)
             device_list += vdevs
             gnop_devs += gnops
+
+        # Initialize devices with random data
+        if init_rand:
+            random_wipe(device_list)
 
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
@@ -1611,7 +1616,7 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('force4khack', False), kwargs.pop('path', None))
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('force4khack', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
 
