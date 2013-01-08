@@ -93,7 +93,6 @@ downloadpluginjail() {
     fi
 
     pbi_add -e --no-checksig -p ${WORLDCHROOT} ${PJAIL}
-    #tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} #2>/dev/null
     if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
 
     zfs snapshot ${tank}${zfsp}@clean
@@ -256,6 +255,23 @@ mkportjail() {
   [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
   # Flag this type
   touch ${JMETADIR}/jail-portjail
+}
+
+mkpluginjail() {
+  if [ -z "${1}" ] ; then return ; fi
+  ETCFILES="resolv.conf passwd master.passwd spwd.db pwd.db group localtime"
+  for file in ${ETCFILES}; do
+    rm ${1}/etc/${file} >/dev/null 2>&1
+    cp /etc/${file} ${1}/etc/${file}
+  done
+  
+  # Need to symlink /home
+  chroot ${1} ln -fs /usr/home /home
+
+  # Make sure we remove our cleartmp rc.d script, causes issues
+  [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
+  # Flag this type
+  touch ${JMETADIR}/jail-pluginjail
 }
 
 mkZFSSnap() {

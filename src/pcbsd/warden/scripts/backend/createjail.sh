@@ -281,6 +281,9 @@ checkpbiscripts "${JAILDIR}"
 # Check if making a portjail
 if [ "$PORTJAIL" = "YES" ] ; then mkportjail "${JAILDIR}" ; fi
 
+# Check if making a pluginjail
+if [ "$PLUGINJAIL" = "YES" ] ; then mkpluginjail "${JAILDIR}" ; fi
+
 # If we are auto-starting the jail, do it now
 if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
