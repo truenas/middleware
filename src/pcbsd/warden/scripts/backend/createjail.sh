@@ -8,16 +8,6 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-# Location of the chroot environment
-isDirZFS "${JDIR}"
-if [ $? -eq 0 ] ; then
-  WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}"
-  export WORLDCHROOT
-else
-  WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.tbz"
-  export WORLDCHROOT
-fi
-
 setup_linux_jail()
 {
   echo "Setting up linux jail..."
@@ -83,9 +73,37 @@ IP="${2}"
 SOURCE="${3}"
 PORTS="${4}"
 STARTUP="${5}"
-PORTJAIL="${6}"
-LINUXJAIL="${7}"
-ARCHIVEFILE="${8}"
+JAILTYPE="${6}"
+ARCHIVEFILE="${7}"
+VERSION="${8}"
+
+case "${JAILTYPE}" in
+  portjail) PORTJAIL="YES" ;;
+  pluginjail) PLUGINJAIL="YES" ;;
+  linuxjail) LINUXJAIL="YES" ;;
+  standard) ;;
+esac
+
+if [ -z "${VERSION}" ] ; then VERSION=`cat /etc/version`; fi
+
+# Location of the chroot environment
+isDirZFS "${JDIR}"
+if [ $? -eq 0 ] ; then
+  if [ "${PLUGINJAIL}" = "YES" ] ; then
+    WORLDCHROOT="${JDIR}/.warden-pj-chroot-${ARCH}"
+  else
+    WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}"
+  fi
+  export WORLDCHROOT
+else
+  if [ "${PLUGINJAIL}" = "YES" ] ; then
+    WORLDCHROOT="${JDIR}/.warden-pj-chroot-${ARCH}.tbz"
+  else
+    WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.tbz"
+  fi
+  export WORLDCHROOT
+
+fi
 
 get_ip_and_netmask "${IP}"
 IP="${JIP}"
@@ -134,7 +152,12 @@ do
 done
 
 # Check if we need to download the chroot file
-if [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then downloadchroot ; fi
+if [ "${PLUGINJAIL}" = "YES" ] ; then
+  downloadpluginjail "${VERSION}"
+
+elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
+  downloadchroot
+fi
 
 # If we are setting up a linux jail, lets do it now
 if [ "$LINUXJAIL" = "YES" ] ; then

@@ -46,11 +46,70 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 # Clone directory
 CDIR="${JDIR}/clones"
 
+downloadpluginjail() {
+  local _ver="${1}"
+
+  SYSVER=`echo "${_ver}" | sed -E 's|^FreeNAS-(([0-9]+\.){2}[0-9]+).*|\1|'`
+  SYSREL=`echo "${_ver}" | sed -E 's|^FreeNAS-([0-9]+\.){2}[0-9]+-([a-zA-Z0-9]+)-.*|\2|'`
+  SYSARCH=`echo "${_ver}" | sed -E 's#^(.*)(x86|x64)#\2#'`
+
+  SF="http://downloads.sourceforge.net/project/freenas"
+  URL="${SF}/FreeNAS-${SYSVER}/${SYSREL}/${SYSARCH}/plugins"
+
+  PJAIL="FreeNAS-${SYSVER}-${SYSREL}-${SYSARCH}.Plugins_Jail.pbi"
+  PJAILSHA256="${PJAIL}.sha256"
+
+  if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
+  cd ${JDIR}
+
+  echo "Fetching jail environment. This may take a while..."
+  echo "Downloading ${URL}/${PJAIL} ..."
+
+  if [ ! -e "${PJAIL}" ] ; then
+     get_file "${URL}/${PJAIL}" "${PJAIL}" 3
+     [ $? -ne 0 ] && printerror "Error while downloading the pluginjail."
+  fi
+
+  if [ ! -e "${PJAILSHA256}" ] ; then
+     get_file "${URL}/${PJAILSHA256}" "${PJAILSHA256}" 3
+     [ $? -ne 0 ] && printerror "Error while downloading the pluginjail sha256."
+  fi
+
+  [ "$(sha256 -q ${PJAIL})" != "$(cat ${PJAILSHA256})" ] &&
+    printerror "Error in download data, checksum mismatch. Please try again later."
+
+  # Creating ZFS dataset?
+  isDirZFS "${JDIR}"
+  if [ $? -eq 0 ] ; then
+    local zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
+
+    # Use ZFS base for cloning
+    echo "Creating ZFS ${WORLDCHROOT} dataset..."
+    tank=`getZFSTank "${JDIR}"`
+    isDirZFS "${WORLDCHROOT}" "1"
+    if [ $? -ne 0 ] ; then
+       zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
+       if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
+    fi
+
+    pbi_add -e --no-checksig -p ${WORLDCHROOT} ${PJAIL}
+    #tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} #2>/dev/null
+    if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
+
+    zfs snapshot ${tank}${zfsp}@clean
+    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
+    rm ${PJAIL}
+  else
+    # Save the chroot tarball
+    mv ${PJAIL} ${WORLDCHROOT}
+  fi
+  rm ${PJAILSHA256}
+};
+
 ### Download the chroot
 downloadchroot() {
-
-  #SYSVER="$(pbreg get /PC-BSD/Version)"
-  SYSVER=8.2
+  # XXX If this is PCBSD, pbreg get /PC-BSD/Version
+  SYSVER=`uname -r | cut -f1 -d'-'`
   FBSD_TARBALL="fbsd-release.tbz"
   FBSD_TARBALL_CKSUM="${FBSD_TARBALL}.md5"
 
@@ -93,7 +152,7 @@ downloadchroot() {
        if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
     fi
 
-    tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} #2>/dev/null
+    tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} 2>/dev/null
     if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
 
     zfs snapshot ${tank}${zfsp}@clean

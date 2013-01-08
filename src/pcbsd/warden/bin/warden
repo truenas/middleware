@@ -513,9 +513,11 @@ Available Flags:
   --ports     		       (Includes the ports tree)
   --startauto 		       (Start this jail at system boot)
   --portjail  		       (Make this a portjail)
+  --pluginjail                 (Make this a pluginjail)
   --linuxjail <script>         (Make this a linux jail and use supplied script for installation)
   --archive <tar>              (Use specified tar file for BSD jail creation)
   --linuxarchive <tar>         (Use specified tar file for Linux jail creation)
+  --version                    (Use this instead of /etc/version)
 
 Usage:
 
@@ -628,9 +630,17 @@ details) JAILNAME="${2}"
 	 if [ -e "${JMETADIR}/jail-linux" ] ; then exit_err "Cannot change type on Linux jail!"; fi
 
 	 case $TYPE in
-	   portjail) mkportjail "${JAILDIR}" ;;
-	   standard) rm ${JMETADIR}/jail-portjail >/dev/null 2>/dev/null ;;
-	   pluginjail) ;;
+	   portjail)
+              rm ${JMETADIR}/jail-pluginjail > /dev/null 2>/dev/null
+              mkportjail "${JAILDIR}"
+              ;;
+	   standard)
+              rm ${JMETADIR}/jail-pluginjail > /dev/null 2>/dev/null
+              rm ${JMETADIR}/jail-portjail >/dev/null 2>/dev/null
+              ;;
+	   pluginjail)
+              mkpluginjail "${JAILDIR}"
+              ;;
 	   *) exit_err "Invalid TYPE" ;;
          esac
          ;;
@@ -858,15 +868,15 @@ details) JAILNAME="${2}"
          SRC="NO"
          PORTS="NO"
          AUTO="NO"
-         PORTJAIL="NO"
-         LINUXJAIL="NO"
+         JAILTYPE="standard"
          while [ $# -gt 0 ]; do
            case $1 in
              --src) SRC="YES" ;;
              --ports) PORTS="YES" ;;
              --startauto) AUTO="YES" ;;
-             --portjail) PORTJAIL="YES" ;;
-             --linuxjail) LINUXJAIL="YES" ; shift
+             --portjail) JAILTYPE="portjail" ;;
+             --pluginjail) JAILTYPE="pluginjail" ;; 
+             --linuxjail) JAILTYPE="linuxjail" ; shift
 			  if [ -z "$1" ] ; then exit_err "No linux setup script specified!"; fi
 			  LINUX_JAIL_SCRIPT="$1" ; export LINUX_JAIL_SCRIPT
 			  if [ -n "$LINUXARCHIVE_FILE" ] ; then 
@@ -886,7 +896,7 @@ details) JAILNAME="${2}"
 			     exit_err "No such file: $ARCHIVE_FILE"
 			  fi
 			  ;;
-             --linuxarchive) LINUXJAIL="YES" ; shift
+             --linuxarchive) JAILTYPE="linuxjail" ; shift
 			  if [ -z "$1" ] ; then exit_err "No archive file specified!"; fi
 			  LINUXARCHIVE_FILE="$1" ; export LINUXARCHIVE_FILE
 			  if [ ! -e "$LINUXARCHIVE_FILE" ] ; then
@@ -896,6 +906,10 @@ details) JAILNAME="${2}"
 			     exit_err "--linuxjail and --linuxarchive are mutually exclusive!"
 			  fi
 			  ;;
+             --version) shift
+			  if [ -z "$1" ] ; then exit_err "No version string specified!"; fi
+                          VERSION="${1}"
+                          ;;
            esac
            shift
          done
@@ -904,7 +918,7 @@ details) JAILNAME="${2}"
          if [ -e "${JDIR}/${JAILNAME}" ]; then exit_err "A jail with this name already exists!"; fi  
 
           # Passed all tests, create the jail now
-          ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}" "${IP}/${MASK}" "${SRC}" "${PORTS}" "${AUTO}" "${PORTJAIL}" "${LINUXJAIL}" "${ARCHIVE_FILE}"
+          ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}" "${IP}/${MASK}" "${SRC}" "${PORTS}" "${AUTO}" "${JAILTYPE}" "${ARCHIVE_FILE}" "${VERSION}"
 
         ;;
   delete) require_root
