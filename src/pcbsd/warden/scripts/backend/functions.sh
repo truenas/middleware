@@ -363,6 +363,42 @@ is_bridge_member()
    return 1
 }
 
+jail_interfaces_down()
+{
+   local _jid="${1}"
+   local _bridgeif
+   local _epaira
+   local _epairb
+
+   _epairb=`jexec ${_jid} ifconfig -a | grep '^epair' | cut -f1 -d:`
+   if [ -n "${_epairb}" ] ; then
+      _epaira=`echo ${_epairb} | sed -E 's|b$|a|'`
+      _bridgeif=
+
+      for _bridge in `ifconfig -a | grep -E '^bridge[0-9]+' | cut -f1 -d:`
+      do
+         for _member in `ifconfig ${_bridge} | grep member | awk '{ print $2 }'`
+         do
+            if [ "${_member}" = "${_epaira}" ] ; then
+               _bridgeif="${_bridge}"
+                break
+            fi
+         done
+         if [ -n "${_bridgeif}" ] ; then
+            break
+         fi
+      done
+
+      jexec ${_jid} ifconfig ${_epairb} down
+      ifconfig ${_epaira} down
+      ifconfig ${_epaira} destroy
+      _count=`ifconfig ${_bridgeif} | grep member | awk '{ print $2 }' | wc -l`
+      if [ "${_count}" -le "1" ] ; then
+         ifconfig ${_bridgeif} destroy
+      fi
+   fi
+}
+
 enable_cron()
 {
    cronscript="${PROGDIR}/scripts/backend/cronsnap.sh"

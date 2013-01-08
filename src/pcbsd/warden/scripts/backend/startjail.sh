@@ -139,6 +139,7 @@ fi
 
 BRIDGE=
 
+echo "IFACE = $IFACE"
 # See if we need to create a new bridge, or use an existing one
 _bridges=`get_bridge_interfaces`
 if [ -n ${_bridges} ] ; then
@@ -157,7 +158,6 @@ if [ -n ${_bridges} ] ; then
       fi
    done 
 fi
-BRIDGE=bridge0
 
 if [ -z "${BRIDGE}" ] ; then
    echo ifconfig bridge create mtu ${MTU}
@@ -216,20 +216,11 @@ echo "jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet"
 jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet
 if [ $? -ne 0 ] ; then
    echo "ERROR: Failed starting jail with above command..."
-
-   # Do cleanup now
-#   isV6 "${_ip}"
-#   if [ $? -eq 0 ] ; then
-#      ifconfig $NIC inet6 ${_ip} delete
-#   else
-#      ifconfig $NIC inet -alias ${_ip}
-#   fi
    umountjailxfs "${JAILNAME}"
    exit 1
 fi
 
 JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
-
 
 # Configure the IP addresses now
 i=0
