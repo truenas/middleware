@@ -46,6 +46,21 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 # Clone directory
 CDIR="${JDIR}/clones"
 
+downloadplugin() {
+  local _ver="${1}"
+  local _plugin="${2}"
+
+  SYSVER=`echo "${_ver}" | sed -E 's|^FreeNAS-(([0-9]+\.){2}[0-9]+).*|\1|'`
+  SYSREL=`echo "${_ver}" | sed -E 's|^FreeNAS-([0-9]+\.){2}[0-9]+-([a-zA-Z0-9]+)-.*|\2|'`
+  SYSARCH=`echo "${_ver}" | sed -E 's#^(.*)(x86|x64)#\2#'`
+
+  SF="http://downloads.sourceforge.net/project/freenas"
+  URL="${SF}/FreeNAS-${SYSVER}/${SYSREL}/${SYSARCH}/plugins"
+
+  #PLUGIN
+  #PLUGINSHA256
+}
+
 downloadpluginjail() {
   local _ver="${1}"
 

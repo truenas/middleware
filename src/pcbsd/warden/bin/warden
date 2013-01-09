@@ -55,6 +55,7 @@ echo "
        import - Imports a jail from a .wdn file
          list - Lists the installed jails
          pkgs - Lists the installed packages in a jail
+         pbis - Lists the installed pbi's in a jail
           set - Sets options for a jail
         start - Start a jail
          stop - Stops a jail
@@ -364,6 +365,23 @@ Example:
 "
 };
 
+help_pbis()
+{
+ title
+ echo "Help pbis
+
+Generates a listing of the installed pbi's in a jail.
+
+Usage:
+
+  warden pbis <Jail>
+
+Example:
+
+  warden pbis myjail
+"
+};
+
 help_list()
 {
  title
@@ -549,6 +567,7 @@ case "$1" in
            export) help_export ;;
            import) help_import ;;
            pkgs) help_pkgs ;;
+           pbis) help_pbis ;;
            type) help_type ;;
            get) help_get ;;
            set) help_set ;;
@@ -577,6 +596,13 @@ details) JAILNAME="${2}"
 	 set_warden_metadir
 
          ${PROGDIR}/scripts/backend/details.sh "${JAILNAME}" 
+         ;;
+    pbis) JAILNAME="${2}"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+	 set_warden_metadir
+
+         ${PROGDIR}/scripts/backend/listpbis.sh "${JAILNAME}" 
          ;;
     get) require_root
 	 OPT="${2}"
