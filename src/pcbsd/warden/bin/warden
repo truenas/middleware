@@ -535,7 +535,7 @@ Available Flags:
   --linuxjail <script>         (Make this a linux jail and use supplied script for installation)
   --archive <tar>              (Use specified tar file for BSD jail creation)
   --linuxarchive <tar>         (Use specified tar file for Linux jail creation)
-  --version                    (Use this instead of /etc/version)
+  --version <string>           (Use this instead of /etc/version)
 
 Usage:
 
