@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-01-04 13:26+0200\n"
+"PO-Revision-Date: 2013-01-09 18:28+0200\n"
 "Last-Translator: shalom <onzinmailhierheen@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Eenvoudig"
+msgstr "Gewoon"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -6507,7 +6507,7 @@ msgstr ""
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "Het volume %s status is DEGRADED"
 
 #: tools/alert.py:115
 #, python-format
@@ -6517,18 +6517,22 @@ msgstr "Het volume %(volume)s status is %(status)s: %(message)s"
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Het volume %(volume)s status is %(status)s"
 
 #: tools/alert.py:125
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Het wachtwoord voor de administrator dient te worden gewijzigd (momenteel is "
+"er geen wachtwoord benodigd om in te loggen)"
 
 #: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
 msgstr ""
+"Het WebGUI adres kon niet worden gebonden aan %s; bij het gebruiken van "
+"wildcard"
 
 #: tools/alert.py:147
 #, python-format
@@ -6541,7 +6545,7 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr "Kritieke meldingen"
+msgstr "Kritieke waarschuwingen"
 
 msgid "Selected"
 msgstr "Geselecteerd"
