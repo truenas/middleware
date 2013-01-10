@@ -1178,6 +1178,8 @@ require([
                 Menu.openNetwork(item.gname);
             } else if(item.type == 'en_dis_services') {
                 Menu.openServices();
+            } else if(item.type == 'openjails') {
+                Menu.openJails();
             } else if(item.type == 'pluginsfcgi') {
                 Menu.openPluginsFcgi(p, item);
             } else if(item.type == 'openaccount') {

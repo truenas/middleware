@@ -183,6 +183,9 @@ define([
 
         },
 
+        openJails: function(onload, jail) {
+        },
+
         openAccount: function(tab) {
             var opened = false;
             var p = registry.byId("content");
