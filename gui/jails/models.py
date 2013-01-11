@@ -31,7 +31,7 @@ from django.db.models.options import Options
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.warden import Warden
 
-class JailQuerySet(models.query.QuerySet):
+class JailsQuerySet(models.query.QuerySet):
     def iterator(self):
         wlist = Warden().list()
         for wj in wlist:
@@ -42,21 +42,21 @@ class JailQuerySet(models.query.QuerySet):
             jm = self.model(**tj)
             yield jm
 
-class JailManager(models.Manager):
+class JailsManager(models.Manager):
     use_for_related_fields = True
 
     def __init__(self, qs_class=models.query.QuerySet):
         self.queryset_class = qs_class
-        super(JailManager, self).__init__()
+        super(JailsManager, self).__init__()
 
     def get_query_set(self):
-        return JailQuerySet(self.model)
+        return JailsQuerySet(self.model)
 
     def __getattr__(self, name):
         return getattr(self.get_query_set(), name)
 
-class Jail(Model):
-    objects = JailManager()
+class Jails(Model):
+    objects = JailsManager()
 
     jail_host = models.CharField(max_length=120)
     jail_ip = models.CharField(max_length=255)
@@ -71,7 +71,7 @@ class Jail(Model):
         pass
 
     class Meta:
-        verbose_name = _("Jail")
+        verbose_name = _("Jails")
         verbose_name_plural = _("Jails") 
 
     class FreeAdmin:

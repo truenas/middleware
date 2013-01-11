@@ -34,7 +34,11 @@ from freenasUI.jails import models
 
 log = logging.getLogger('jails.forms')
 
-class JailForm(ModelForm):
+class JailsForm(ModelForm):
 
     class Meta:
-        model = models.Jail
+        model = models.Jails
+
+
+class JailsEditForm(JailsForm):
+    pass

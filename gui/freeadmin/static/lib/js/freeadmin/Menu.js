@@ -217,7 +217,7 @@ define([
                 pane.tab = 'jails';
                 p.addChild(pane);
                 p.selectChild(pane);
-                domClass.add(pane.domNode,["objrefresh", "data_jails"]);
+                domClass.add(pane.domNode,["objrefresh", "data_jails_jails"]);
             }
         },
 

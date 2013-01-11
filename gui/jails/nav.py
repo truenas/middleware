@@ -32,7 +32,7 @@ from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.common.warden import Warden
 
 NAME = _('Jails')
-BLACKLIST = ['JailManager', 'JailQuerySet']
+BLACKLIST = ['JailsManager', 'JailsQuerySet']
 ICON = u'ServicesIcon'
 
 class JailsSettings(TreeNode):

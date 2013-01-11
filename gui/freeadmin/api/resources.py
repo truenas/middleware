@@ -42,8 +42,11 @@ from freenasUI.plugins.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
-from freenasUI.jails.models import Jail
+from freenasUI.jails.models import Jails
 
+import logging
+
+log = logging.getLogger('freeadmin.api.resources')
 
 def _common_human_fields(bundle):
     for human in ('human_minute', 'human_hour', 'human_daymonth',
@@ -740,10 +743,10 @@ class NullMountPointResource(DojoModelResource):
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
 
-class JailResource(DojoModelResource):
+class JailsResource(DojoModelResource):
 
     class Meta:
-        queryset = Jail.objects.all()
+        queryset = Jails.objects.all()
         resource_name = 'jails'
         paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
