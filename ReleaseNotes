@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-BETA1
+Release Notes for FreeNAS 8.3.1-BETA2
 
 *** IMPORTANT ***
 
@@ -126,20 +126,56 @@ Errata
 
 Volume encryption is a BETA feature.  When encryption goes wrong it
 can go really wrong.  We are releasing this BETA for public testing.
-Do not store critical data on it or use the system for mission-critical
-applications.
+However, there have been no reported problems with 8.3.1-BETA1.
+The FreeNAS developers believe the encryption feature is ready for
+production use, however it has very little seat time, Your Milage
+May Vary.
 
-The new version of istgt does target reload in a new way from the old
-version.  This could use wider testing.
+The new version of istgt in 8.3.1-BETA1 does target reload in a new way
+from the old version.  This has been confirmed to work in multiple
+deployments, but could use wider testing.
 
 Samba has been upgraded to 3.6.9  This may have broken shadow copies in
-some instances.  Needs further testing.
+some instances.  This has been tested and confirmed working in multiple
+environments but could benefit from wider testing.
 
 The plugin jail networking has been switched to VIMAGE, which requires
 bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+Changes since 8.3.1-BETA1:
+
+Enhancements
+========================
+
+1. Add a feature to initialize disks with random data.
+
+2. Add the iconv option to rsync.
+
+Bugfixes
+========================
+
+1. Fix a bug that was preventing multiple destination address for
+   SMART from working.
+
+2. Create an empty /var/db/pkg to silence warnings from the SNMP
+   service.
+
+3. Fix a bug that was preventing the default scrubs from running.
+   ZFS scrubs are very I/O intensive, and this update will fix many instances
+   where the default monthly scrub wasn't running.  It's recommended to check
+   the scrub schedule and be aware of it's impact on FreeNAS.
+
+4. Disable the ZFS encryption option when extending a volume.  The system will
+    automatically match the encrrption state of the existing pool.
+
+5. Commit changes to ataidle immediately rather than requiring a reboot.
+
+6. Fix a bug that prevented creation of RAIDZ volumes.
+
+7. Fix a bug that prevented stopping the CIFS service.
 
 Changes since 8.3.0-RELEASE-p1:
 
