@@ -26,33 +26,53 @@
 #####################################################################
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.options import Options
 
-from freenasUI.freeadmin.models import (Model, UserField, GroupField,
-    PathField, MACField)
+from freenasUI.freeadmin.models import Model
+from freenasUI.common.warden import Warden
+
+class JailQuerySet(models.query.QuerySet):
+    def iterator(self):
+        wlist = Warden().list()
+        for wj in wlist:
+            tj = {}
+            for k in wj:
+                tj["jail_%s" % k] = wj[k]
+
+            jm = self.model(**tj)
+            yield jm
+
+class JailManager(models.Manager):
+    use_for_related_fields = True
+
+    def __init__(self, qs_class=models.query.QuerySet):
+        self.queryset_class = qs_class
+        super(JailManager, self).__init__()
+
+    def get_query_set(self):
+        return JailQuerySet(self.model)
+
+    def __getattr__(self, name):
+        return getattr(self.get_query_set(), name)
 
 class Jail(Model):
-    jail_host = models.CharField(
-            max_length=120
-            )
+    objects = JailManager()
 
-    jail_ip = models.CharField(
-            max_length=255
-            )
+    jail_host = models.CharField(max_length=120)
+    jail_ip = models.CharField(max_length=255)
+    jail_autostart = models.CharField(max_length=120)
+    jail_status = models.CharField(max_length=120)
+    jail_type = models.CharField(max_length=120)
+    
+    def delete(self):
+        pass
 
-    jail_autostart = models.BooleanField(
-            default=True,
-            )
-
-    jail_status = models.CharField(
-            max_length=120
-            )
-
-    jail_type = models.CharField(
-            max_length=120
-            )
+    def save(self):
+        pass
 
     class Meta:
-        pass
+        verbose_name = _("Jail")
+        verbose_name_plural = _("Jails") 
 
     class FreeAdmin:
         pass

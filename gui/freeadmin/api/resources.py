@@ -42,6 +42,7 @@ from freenasUI.plugins.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
+from freenasUI.jails.models import Jail
 
 
 def _common_human_fields(bundle):
@@ -737,4 +738,18 @@ class NullMountPointResource(DojoModelResource):
     def dehydrate(self, bundle):
         bundle = super(NullMountPointResource, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
+        return bundle
+
+class JailResource(DojoModelResource):
+
+    class Meta:
+        queryset = Jail.objects.all()
+        resource_name = 'jails'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bindle):
+        bundle = super(JailResource, self).dehydrate(bundle)
         return bundle

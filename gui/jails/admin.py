@@ -28,6 +28,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
+from freenasUI.freeadmin.api.resources import JailResource
+
 from freenasUI.jails import models
 
 class JailFAdmin(BaseFreeAdmin):
@@ -38,6 +40,8 @@ class JailFAdmin(BaseFreeAdmin):
     icon_model = u"ServicesIcon"
     icon_add = u"ServicesIcon"
     icon_view = u"ServicesIcon"
+
+    resource = JailResource
 
     def get_datagrid_columns(self):
         columns = super(JailFAdmin, self).get_datagrid_columns()
