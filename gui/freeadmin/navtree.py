@@ -309,9 +309,11 @@ class NavTree(object):
 
                     if reg and not navopt.type:
 
-                        qs = model.objects.filter(
-                            **model._admin.object_filters).order_by('-id')
-                        if qs.count() > 0:
+                        qs = None
+                        if model._admin.object_filters:
+                            qs = model.objects.filter(
+                                **model._admin.object_filters).order_by('-id')
+                        if qs and qs.count() > 0:
                             if model._admin.object_num > 0:
                                 qs = qs[:model._admin.object_num]
                             for e in qs:

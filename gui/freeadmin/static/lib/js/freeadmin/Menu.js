@@ -183,7 +183,7 @@ define([
 
         },
 
-        openJails: function(onload, jail) {
+        openJails: function(tab) {
             var opened = false;
             var p = registry.byId("content");
 
@@ -205,7 +205,7 @@ define([
                 }
             }
             if(opened != true) {
-                openurl = this.urlStorage;
+                openurl = this.urlJails;
                 if(tab) {
                     openurl += '?tab='+tab;
                 }

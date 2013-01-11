@@ -24,35 +24,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.models import (Model, UserField, GroupField,
-    PathField, MACField)
+from freenasUI.freeadmin.site import site
+from freenasUI.freeadmin.options import BaseFreeAdmin
+from freenasUI.jails import models
 
-class Jail(Model):
-    jail_host = models.CharField(
-            max_length=120
-            )
+class JailFAdmin(BaseFreeAdmin):
 
-    jail_ip = models.CharField(
-            max_length=255
-            )
+    create_modelform = "JailForm"
+    #edit_modelform = "JailEditForm"
+    icon_object = u"ServicesIcon"
+    icon_model = u"ServicesIcon"
+    icon_add = u"ServicesIcon"
+    icon_view = u"ServicesIcon"
 
-    jail_autostart = models.BooleanField(
-            default=True,
-            )
+    def get_datagrid_columns(self):
+        columns = super(JailFAdmin, self).get_datagrid_columns()
+        return columns
 
-    jail_status = models.CharField(
-            max_length=120
-            )
 
-    jail_type = models.CharField(
-            max_length=120
-            )
 
-    class Meta:
-        pass
-
-    class FreeAdmin:
-        pass
+site.register(models.Jail, JailFAdmin)

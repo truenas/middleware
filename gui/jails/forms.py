@@ -24,35 +24,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+import logging
 
-from freenasUI.freeadmin.models import (Model, UserField, GroupField,
-    PathField, MACField)
+from dojango import forms
+from freenasUI import choices
+from freenasUI.common.forms import ModelForm
 
-class Jail(Model):
-    jail_host = models.CharField(
-            max_length=120
-            )
+from freenasUI.jails import models
 
-    jail_ip = models.CharField(
-            max_length=255
-            )
+log = logging.getLogger('jails.forms')
 
-    jail_autostart = models.BooleanField(
-            default=True,
-            )
-
-    jail_status = models.CharField(
-            max_length=120
-            )
-
-    jail_type = models.CharField(
-            max_length=120
-            )
+class JailForm(ModelForm):
 
     class Meta:
-        pass
-
-    class FreeAdmin:
-        pass
+        model = models.Jail
