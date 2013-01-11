@@ -28,7 +28,7 @@
 from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('freenasUI.jails.views',
-    url(r'^index/$', 'index', name="jails_home"),
+    url(r'^home/$', 'home', name="jails_home"),
     url(r'enable/(?P<jail>\w+)/.*$', 'enable', name="jail_enable"),
     )
 

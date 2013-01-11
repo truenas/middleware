@@ -36,8 +36,10 @@ from freenasUI.services import models
 
 log = logging.getLogger("jails.views")
 
-def index(request):
-    return render(request, 'jails/index.html')
+def home(request):
+    return render(request, 'jails/index.html', {
+        'focused_tab': request.GET.get('tab', None),
+    })
 
 
 def enable(request, jail):
