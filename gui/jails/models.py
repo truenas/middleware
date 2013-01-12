@@ -37,20 +37,58 @@ class JailsQuerySet(models.query.QuerySet):
         self.__wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
         self.__wcount = len(self.__wlist)
 
+        tl = []
+        self.__wlist = self.__order_by("id")
+        for wj in self.__wlist:
+            tj = self.__to_model_dict(wj)
+            tl.append(tj)
+        self.__wlist = tl
+
+    def __to_model_dict(self, wj):
+        tj = {}
+        for k in wj:
+            nk = k
+            if k != "id":
+                nk = "jail_%s" % k
+            tj[nk] = wj[k]
+
+        return tj
+
     def iterator(self):
         for wj in self.__wlist:
-            tj = {}
-            for k in wj:
-                nk = k
-                if k != "id":
-                    nk = "jail_%s" % k
-                tj[nk] = wj[k]
-
-            jm = self.model(**tj)
-            yield jm
+            yield self.model(**wj)
 
     def count(self):
         return self.__wcount
+
+    def __order_by(self, *field_names):
+        for fn in field_names:
+            if (fn == "-id" or fn == "pk"):
+                fn = "id"
+            self.__wlist = sorted(self.__wlist, key=lambda k: k[fn]) 
+        return self.__wlist
+
+    def get(self, *args, **kwargs):
+        results = []
+        for wj in self.__wlist:
+
+            found = 0
+            count = len(kwargs) 
+            for k in kwargs:
+                key = k
+                if k == "pk":
+                    key = "id"
+                if wj.has_key(key) and wj[key] == kwargs[k]:
+                    found += 1
+
+            if found == count:
+                results.append(wj)
+
+        if len(results) == 0:
+            raise self.model.DoesNotExist("Jail matching query does not exist")
+        elif len(results) > 1:
+            raise self.model.MultipleObjectsReturned ("Query returned multiple Jails")
+        return self.model(**results[0])
 
 class JailsManager(models.Manager):
     use_for_related_fields = True

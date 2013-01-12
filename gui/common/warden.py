@@ -423,7 +423,7 @@ class warden_list(warden_base):
                 }
 
                 if self.flags & WARDEN_LIST_FLAGS_IDS:
-                    jail["id"] = parts[5]
+                    jail["id"] = int(parts[5])
 
                 jails.append(jail)
 
