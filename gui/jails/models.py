@@ -31,6 +31,10 @@ from django.db.models.options import Options
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.warden import Warden, WARDEN_LIST_FLAGS_IDS
 
+import logging
+
+log = logging.getLogger('jails.jails')
+
 class JailsQuerySet(models.query.QuerySet):
     def __init__(self, model=None, query=None, using=None):
         super(JailsQuerySet, self).__init__(model, query, using)
@@ -76,7 +80,8 @@ class JailsQuerySet(models.query.QuerySet):
             count = len(kwargs) 
             for k in kwargs:
                 key = k
-                if k == "pk":
+                if (k == "pk" or k == "id"):
+                    kwargs[k] = int(kwargs[k])
                     key = "id"
                 if wj.has_key(key) and wj[key] == kwargs[k]:
                     found += 1
