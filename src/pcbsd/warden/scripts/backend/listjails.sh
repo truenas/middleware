@@ -15,10 +15,15 @@ then
   exit 4
 fi
 
+SHOW_IDS="${1}"
+if [ "${SHOW_IDS}" = "YES" ] ; then
+  printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" HOST IP AUTOSTART STATUS TYPE ID
+else
+  printf "%-23s%-20s%-15s%-10s%-15s\n" HOST IP AUTOSTART STATUS TYPE
+fi
 
 # Prints a listing of the available jails
-printf "%-23s%-20s%-15s%-10s%-10s\n" HOST IP AUTOSTART STATUS TYPE
-echo "--------------------------------------------------------------------------------"
+echo "-----------------------------------------------------------------------------------------"
 
 cd ${JDIR}
 
@@ -69,6 +74,15 @@ do
     STATUS="Stopped"
   fi
 
-  printf "%-23s%-20s%-15s%-10s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE}
+  if [ "${SHOW_IDS}" = "YES" ] ; then
+    if [ -e "${i}/ip" ]
+    then
+      ID="`cat ${i}/id`"
+    fi
+    printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE} ${ID}
+  else 
+    printf "%-23s%-20s%-15s%-10s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE}
+  fi 
+
 done
 

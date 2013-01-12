@@ -390,6 +390,9 @@ help_list()
 Generates a quick listing of the installed jails, including the running
 status.
 
+Available Flags:
+  --ids        (Show id's for each jail)
+
 Usage:
 
   warden list
@@ -693,7 +696,9 @@ details) JAILNAME="${2}"
     gui) require_root
 	  ${PROGDIR}/bin/warden-gui ;;
 
-    list) ${PROGDIR}/scripts/backend/listjails.sh ;;
+    list) SHOW_IDS="NO"
+        if [ -n "${2}" ] ; then SHOW_IDS="YES" ; fi
+        ${PROGDIR}/scripts/backend/listjails.sh "${SHOW_IDS}" ;;
     
    start) require_root
 	  # Time to startup the jail

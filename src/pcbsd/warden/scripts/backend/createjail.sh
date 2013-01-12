@@ -151,6 +151,17 @@ do
   fi
 done
 
+# Get next unique ID
+META_ID=0
+for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+do
+  id=`cat ${i}/id`
+  if [ "${id}" -gt "${META_ID}" ] ; then
+    META_ID="${id}"
+  fi
+done
+: $(( META_ID += 1 ))
+
 # Check if we need to download the chroot file
 if [ "${PLUGINJAIL}" = "YES" ] ; then
   downloadpluginjail "${VERSION}"
@@ -195,6 +206,8 @@ fi
 mkdir ${JMETADIR}
 echo "${HOST}" > ${JMETADIR}/host
 echo "${IP}/${MASK}" > ${JMETADIR}/ip
+echo "${META_ID}" > ${JMETADIR}/id
+
 
 if [ "$SOURCE" = "YES" ]
 then
