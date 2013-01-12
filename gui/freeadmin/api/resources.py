@@ -753,6 +753,6 @@ class JailsResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
-    def dehydrate(self, bindle):
-        bundle = super(JailResource, self).dehydrate(bundle)
+    def dehydrate(self, bundle):
+        bundle = super(JailsResource, self).dehydrate(bundle)
         return bundle

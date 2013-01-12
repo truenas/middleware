@@ -33,6 +33,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = False
 #DEBUG = True
+#TASTYPIE_FULL_DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/account/login/'
@@ -176,6 +177,7 @@ INSTALLED_APPS = (
     'freenasUI.plugins',
     'freenasUI.jails',
 )
+
 
 BLACKLIST_NAV = (
     'django.contrib.auth',

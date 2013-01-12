@@ -21,7 +21,6 @@ from tastypie.api import Api
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
 
-
 class NotRegistered(Exception):
     pass
 

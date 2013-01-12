@@ -115,7 +115,10 @@ WARDEN_IMPORT_FLAGS = [
 ]
 
 WARDEN_LIST = "list"
-WARDEN_LIST_FLAGS = []
+WARDEN_LIST_FLAGS_IDS	= warden_arg(0x00000001, "--ids")
+WARDEN_LIST_FLAGS = [
+    WARDEN_LIST_FLAGS_IDS
+]
 
 WARDEN_PKGS = "pkgs"
 WARDEN_PKGS_FLAGS = []
@@ -418,6 +421,9 @@ class warden_list(warden_base):
                     "status": parts[3],
                     "type": parts[4]
                 }
+
+                if self.flags & WARDEN_LIST_FLAGS_IDS:
+                    jail["id"] = parts[5]
 
                 jails.append(jail)
 

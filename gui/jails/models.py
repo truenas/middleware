@@ -29,18 +29,28 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.options import Options
 
 from freenasUI.freeadmin.models import Model
-from freenasUI.common.warden import Warden
+from freenasUI.common.warden import Warden, WARDEN_LIST_FLAGS_IDS
 
 class JailsQuerySet(models.query.QuerySet):
+    def __init__(self, model=None, query=None, using=None):
+        super(JailsQuerySet, self).__init__(model, query, using)
+        self.__wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
+        self.__wcount = len(self.__wlist)
+
     def iterator(self):
-        wlist = Warden().list()
-        for wj in wlist:
+        for wj in self.__wlist:
             tj = {}
             for k in wj:
-                tj["jail_%s" % k] = wj[k]
+                nk = k
+                if k != "id":
+                    nk = "jail_%s" % k
+                tj[nk] = wj[k]
 
             jm = self.model(**tj)
             yield jm
+
+    def count(self):
+        return self.__wcount
 
 class JailsManager(models.Manager):
     use_for_related_fields = True
