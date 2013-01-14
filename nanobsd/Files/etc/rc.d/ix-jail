@@ -150,7 +150,8 @@ plugins_jail_start()
 			defaultroute=$(netstat -f inet -rn | grep default|awk '{print $2}')
 			#FIXME: perhaps select which iface to bridge with in the GUI
 			#FIXME: ipv6
-			defaultif=$(netstat -f inet -rn | grep default|awk '{print $6}')
+			#NOTE: Use -W for wider field size (#1997)
+			defaultif=$(netstat -f inet -rnW | grep default|awk '{print $7}')
 			mtu=$(ifconfig | grep "^${defaultif}" | sed -E 's/.*mtu ([0-9]+)/\1/g')
 			bridge=$(ifconfig bridge create mtu ${mtu})
 			epair=$(ifconfig epair create mtu ${mtu})
