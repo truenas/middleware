@@ -194,7 +194,7 @@ class InterfacesForm(ModelForm):
 
         return cdata
 
-    def done(self):
+    def done(self, *args, **kwargs):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
         notifier().start("network")
