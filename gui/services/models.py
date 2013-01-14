@@ -1383,10 +1383,6 @@ class ActiveDirectory(Model):
             verbose_name=_("Workgroup Name"),
             help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
             )
-    ad_verbose_logging = models.BooleanField(
-            default=False,
-            verbose_name=_("Verbose logging"),
-            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name=_("Administrator Name"),
@@ -1402,6 +1398,10 @@ class ActiveDirectory(Model):
     # AD Advanced settings
     #
 
+    ad_verbose_logging = models.BooleanField(
+            default=False,
+            verbose_name=_("Verbose logging"),
+            )
     ad_unix_extensions = models.BooleanField(
             default=False,
             verbose_name=_("UNIX extensions"),
@@ -1455,6 +1455,7 @@ class ActiveDirectory(Model):
         deletable = False
         icon_model = "ActiveDirectoryIcon"
         advanced_fields = (
+            'ad_verbose_logging',
             'ad_unix_extensions',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
