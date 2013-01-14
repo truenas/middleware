@@ -31,6 +31,7 @@ import logging
 import urllib
 
 from django import forms as dforms
+from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -148,7 +149,6 @@ class BaseFreeAdmin(object):
             self._admin.v1_api.register(res)
 
     def get_urls(self):
-        from django.conf.urls import patterns, url
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -284,12 +284,7 @@ class BaseFreeAdmin(object):
                         fs.save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
-                        # FIXME: temporary workaround to do not change all MF
-                        # to accept this arg
-                        try:
-                            mf.done(request=request, events=events)
-                        except TypeError:
-                            mf.done()
+                        mf.done(request=request, events=events)
                     return JsonResp(
                         request,
                         form=mf,
@@ -451,12 +446,7 @@ class BaseFreeAdmin(object):
                         fs.save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
-                        # FIXME: temporary workaround to do not change all MF
-                        # to accept this arg
-                        try:
-                            mf.done(request=request, events=events)
-                        except TypeError:
-                            mf.done()
+                        mf.done(request=request, events=events)
                     if 'iframe' in request.GET:
                         return JsonResp(
                             request,
