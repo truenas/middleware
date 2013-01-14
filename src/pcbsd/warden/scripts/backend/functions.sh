@@ -410,7 +410,7 @@ get_default_route()
 
 get_default_interface()
 {
-   netstat -f inet -nr | grep '^default' | awk '{ print $6 }'
+   netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
 }
 
 get_bridge_interfaces()
