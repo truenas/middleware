@@ -48,11 +48,25 @@ class JailsQuerySet(models.query.QuerySet):
             tl.append(tj)
         self.__wlist = tl
 
+    def __ispk(self, k):
+        ispk = False
+        if (k == "id" or k == "-id"):
+            ispk = True
+        elif (k == "pk" or k == "-pk"):
+            ispk = True
+        return ispk
+
+    def __key(self, k):
+        key = k
+        if self.__ispk(k):
+            key = "id"
+        return key
+
     def __to_model_dict(self, wj):
         tj = {}
         for k in wj:
-            nk = k
-            if k != "id":
+            nk = self.__key(k)
+            if not self.__ispk(k):
                 nk = "jail_%s" % k
             tj[nk] = wj[k]
 
@@ -67,8 +81,7 @@ class JailsQuerySet(models.query.QuerySet):
 
     def __order_by(self, *field_names):
         for fn in field_names:
-            if (fn == "-id" or fn == "pk"):
-                fn = "id"
+            fn = self.__key(fn)
             self.__wlist = sorted(self.__wlist, key=lambda k: k[fn]) 
         return self.__wlist
 
@@ -79,10 +92,9 @@ class JailsQuerySet(models.query.QuerySet):
             found = 0
             count = len(kwargs) 
             for k in kwargs:
-                key = k
-                if (k == "pk" or k == "id"):
+                key = self.__key(k)
+                if self.__ispk(key):
                     kwargs[k] = int(kwargs[k])
-                    key = "id"
                 if wj.has_key(key) and wj[key] == kwargs[k]:
                     found += 1
 
