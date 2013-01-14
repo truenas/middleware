@@ -1417,25 +1417,25 @@ class ActiveDirectory(Model):
             verbose_name=_("Use default domain"),
             help_text=_("Set this if you want to use the default domain for users and groups.")
             )
-    ad_dchost = models.CharField(
+    ad_dcname = models.CharField(
             max_length=120,
             blank=True,
             verbose_name=_("Domain Controller"),
             help_text=_("Hostname of the domain controller to use."),
             )
-    ad_gchost = models.CharField(
+    ad_gcname = models.CharField(
             max_length=120,
             blank=True,
             verbose_name=_("Global Catalog Server"),
             help_text=_("Hostname of the global catalog server to use."),
             )
-    ad_krbhost = models.CharField(
+    ad_krbname = models.CharField(
             max_length=120,
             blank=True,
             verbose_name=_("Kerberos Server"),
             help_text=_("Hostname of the kerberos server to use."),
             )
-    ad_kpwdhost = models.CharField(
+    ad_kpwdname = models.CharField(
             max_length=120,
             blank=True,
             verbose_name=_("Kerberos Password Server"),
