@@ -1482,6 +1482,11 @@ class ActiveDirectory(Model):
             verbose_name=_("AD timeout"),
             help_text=_("Timeout for AD related commands."),
             )
+    ad_dns_timeout = models.IntegerField(
+            default=10,
+            verbose_name=_("DNS timeout"),
+            help_text=_("Timeout for AD DNS queries."),
+            )
 
     class Meta:
         verbose_name = _("Active Directory")
@@ -1499,7 +1504,8 @@ class ActiveDirectory(Model):
             'ad_gcname',
             'ad_krbname',
             'ad_kpwdname',
-            'ad_timeout'
+            'ad_timeout',
+            'ad_dns_timeout'
             )
 
 class LDAP(Model):
