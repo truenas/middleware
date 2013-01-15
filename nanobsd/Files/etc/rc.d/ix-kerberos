@@ -16,7 +16,10 @@ generate_krb5_conf()
 	AD_init
 
 	local krbhost=$(AD_get krbhost)
+	local krbport=$(AD_get krbport)
+	local krbsvc=$(AD_get krbsvc)
 	local kpwdhost=$(AD_get kpwdhost)
+	local kpwdport=$(AD_get kpwdport)
 	local domainname=$(AD_get domainname)
 	local template="${PATH_KRB5_TEMPLATE}"
 
@@ -29,14 +32,32 @@ generate_krb5_conf()
 	fi
 
 	awk -v realm="${domainname}" \
-		-v kdc="${krbhost}" \
-		-v kpwd="${kpwdhost}" \
+		-v krbhost="${krbhost}" \
+		-v krbport="${krbport}" \
+		-v krbsvc="${krbsvc}" \
+		-v kpwdhost="${kpwdhost}" \
+		-v kpwdport="${kpwdport}" \
 	'
 	BEGIN {
-		kdc = sprintf("%s", tolower(kdc));
+		kdc = tolower(krbhost);
+		if (krbsvc) {
+			kdc = sprintf("%s/%s", tolower(krbsvc), kdc);
+		}
+		if (krbport) {
+			kdc = sprintf("%s:%d", kdc, krbport);
+		}
+		admin_server = tolower(krbhost);
+		if (krbport) {
+			admin_server = sprintf("%s:%d", admin_server, krbport);
+		}
+		kpwd = tolower(kpwdhost);
+		if (kpwdport) {
+			kpwd = sprintf("%s:%d", kpwd, kpwdport);
+		}
+
 		vars["@@UPPER_REALM@@"]  = toupper(realm);	
 		vars["@@LOWER_REALM@@"]  = tolower(realm);	
-		vars["@@ADMIN_SERVER@@"]  = kdc;	
+		vars["@@ADMIN_SERVER@@"]  = admin_server;	
 		vars["@@KPASSWD_SERVER@@"] = kpwd;
 		vars["@@DOMAIN@@"]  = tolower(realm);
 		vars["@@KDC@@"]  = kdc;	

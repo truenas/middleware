@@ -287,6 +287,15 @@ __get_SRV_record()
 	return ${res}
 }
 
+AD_get_root_domain()
+{
+	local domain="${1}"
+	local rdnc="$(AD_query_rootDSE|egrep '^rootDomainNamingContext'|cut -f2- -d:|xargs)"
+	local dnsroot="$(AD_get_partition "${rdnc}" dnsRoot|egrep '^dnsRoot'|cut -f2- -d:|xargs)"
+
+	echo "${dnsroot}"
+}
+
 AD_locate_domain_controllers_by_guid()
 {
 	local domain="${1}"
@@ -631,7 +640,7 @@ AD_get_kpasswd_server()
 
 __do_AD_query()
 {
-	local dcname="${1}"
+	local dchost="${1}"
 	local dcport="${2}"
 	local basedn="${3}"
 	local binddn="${4}"
@@ -641,7 +650,7 @@ __do_AD_query()
 	local attributes="${8}"
 	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
-	: ${dcname:="$(AD_get dcname)"}
+	: ${dchost:="$(AD_get dchost)"}
 	: ${dcport:="$(AD_get dcport)"}
 	: ${basedn:="$(AD_get basedn)"}
 	: ${binddn:="$(AD_get binddn)"}
@@ -651,7 +660,7 @@ __do_AD_query()
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-	    -H "ldap://${dcname}:${dcport}" \
+	    -H "ldap://${dchost}:${dcport}" \
 	    -b "${basedn}" \
 	    -D "${binddn}" \
 	    -w "${adminpw}" \
@@ -682,24 +691,37 @@ AD_query()
 
 	AD_log "AD_query: basedn = ${basedn}, filter = ${filter}, attributes = ${attributes}"
 
-	local dcname="$(AD_get dcname)"
+	local dchost="$(AD_get dchost)"
 	local dcport="$(AD_get dcport)"
 	local binddn="$(AD_get binddn)"
 	local adminpw="$(AD_get adminpw)"
 
-	__do_AD_query "${dcname}" "${dcport}" "${basedn}" \
+	__do_AD_query "${dchost}" "${dcport}" "${basedn}" \
 		"${binddn}" "${adminpw}" "sub" "${filter}" \
 		"${attributes}" 2>/dev/null
 }
 
-AD_query_partitions()
+AD_get_partitions()
 {
 	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
 	local basedn="CN=Partitions,${config}"
 
-	AD_log "AD_query_partitions: config = ${config}, basedn = ${basedn}"
+	AD_log "AD_get_partitions: config = ${config}, basedn = ${basedn}"
 
 	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
+}
+
+AD_get_partition()
+{
+	local ncname="${1}"
+	shift
+	local attributes="${*}"
+
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+	local basedn="CN=Partitions,${config}"
+
+	AD_log "AD_get_partition: config = ${config}, basedn = ${basedn}, ncname = ${ncname}"
+	AD_query "${basedn}" "ncname=${ncname}" ${attributes}
 }
 
 AD_query_global_catalog()
@@ -747,14 +769,14 @@ AD_query_rootDSE()
 
 	AD_log "AD_query_rootDSE: filter = ${filter}, attributes = ${attributes}"
 
-	local dcname="$(AD_get dcname)"
+	local dchost="$(AD_get dchost)"
 	local dcport="$(AD_get dcport)"
 	local binddn="$(AD_get binddn)"
 	local adminpw="$(AD_get adminpw)"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-	    -H "ldap://${dcname}:${dcport}" \
+	    -H "ldap://${dchost}:${dcport}" \
 	    -D "${binddn}" \
 	    -w "${adminpw}" \
 	    -b "" \
@@ -831,8 +853,9 @@ AD_set()
 AD_save()
 {
 	local prefix="__save_"
-	local vars="dcname dcport domainname basedn adminname \
-		adminpw workgroup netbiosname gchost gcport"
+	local vars="adminname domainname basedn binddn dcname \
+		dchost dcport gcname gchost gcport krbname krbhost \
+		krbport kpwdname kpwdhost kpwdport"
 	
 	for v in ${vars}
 	do
@@ -843,8 +866,9 @@ AD_save()
 AD_restore()
 {
 	local prefix="__save_"
-	local vars="dcname dcport domainname basedn adminname \
-		adminpw workgroup netbiosname gchost gcport"
+	local vars="adminname domainname basedn binddn dcname \
+		dchost dcport gcname gchost gcport krbname krbhost \
+		krbport kpwdname kpwdhost kpwdport"
 	
 	for v in ${vars}
 	do
@@ -856,7 +880,7 @@ AD_show_config()
 {
 	printf "Active Directory Config:\n"
 	printf "+------------------------------------------+\n"
-	printf "dcname:       %s\n" $(AD_get dcname)
+	printf "dchost:       %s\n" $(AD_get dchost)
 	printf "dcport:       %d\n" $(AD_get dcport)
 	printf "domainname:   %s\n" $(AD_get domainname)
 	printf "basedn:       %s\n" $(AD_get basedn)
@@ -866,6 +890,14 @@ AD_show_config()
 	printf "netbiosname:  %s\n" $(AD_get netbiosname)
 	printf "gchost:       %s\n" $(AD_get gchost)
 	printf "gcport:       %d\n" $(AD_get gcport)
+	printf "krbhost:      %s\n" $(AD_get krbhost)
+	printf "krbport:      %d\n" $(AD_get krbport)
+	printf "kpwdhost:     %s\n" $(AD_get kpwdhost)
+	printf "kpwdport:     %d\n" $(AD_get kpwdport)
+	printf "unix:         %s\n" $(AD_get unix_extensions)
+	printf "trusted:      %s\n" $(AD_get allow_trusted_doms)
+	printf "default:      %s\n" $(AD_get use_default_domain)
+	printf "verbose:      %s\n" $(AD_get verbose_logging)
 	printf "+------------------------------------------+\n"
 }
 
@@ -964,7 +996,15 @@ AD_load_database_values()
 		ad_adminpw,
 		ad_workgroup,
 		ad_netbiosname,
-		ad_verbose_logging
+		ad_verbose_logging,
+		ad_unix_extensions,
+		ad_allow_trusted_doms,
+		ad_use_default_domain,
+		ad_dcname,
+		ad_gcname,
+		ad_krbname,
+		ad_kpwdname,
+		ad_timeout
  
 	FROM
 		services_activedirectory
@@ -996,13 +1036,17 @@ AD_generate_config()
 		basedn \
 		binddn \
 		dcname \
+		dchost \
 		dcport \
-		dc \
+		gcname \
 		gchost \
 		gcport \
-		gc \
+		krbname\
 		krbhost \
+		krbport \
+		kpwdname \
 		kpwdhost \
+		kpwdport \
 	"
 
 	: > "${AD_CONFIG_FILE}"
@@ -1032,11 +1076,6 @@ AD_init()
 		config_exists=1
 	fi
 
-	if [ -f "${AD_KNOBS_FILE}" ]
-	then
-		. "${AD_KNOBS_FILE}"
-	fi
-
 	if [ "${config_exists}" = "1" ]
 	then
 		return 0
@@ -1048,48 +1087,70 @@ AD_init()
 	local binddn=$(AD_get binddn)
 	if [ -z "${binddn}" ]
 	then
-		AD_set binddn "${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+		binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+		AD_set binddn "${binddn}"
 	fi	
 	AD_log "AD_init: binddn = $(AD_get binddn)"
 
-	local dc=$(AD_get dc)
-	if [ -z "${dc}" ]
+	local dcname=$(AD_get dcname)
+	if [ -z "${dcname}" ]
 	then
-		dc=$(AD_get_domain_controller "${domainname}")
+		dcname=$(AD_get_domain_controller "${domainname}")
+		AD_set dcname "${dcname}"
 	fi
 
-	AD_set dcname "$(echo "${dc}"|cut -f1 -d:)"
-	AD_set dcport "$(echo "${dc}"|cut -f2 -d:)"
-	AD_log "AD_init: dcname = $(AD_get dcname), dcport = $(AD_get dcport)"
+	AD_set dchost "$(echo "${dcname}"|cut -f1 -d:)"
+	AD_set dcport "$(echo "${dcname}"|cut -f2 -d:)"
+	AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
 
 	local basedn=$(AD_get basedn)
 	if [ -z "${basedn}" ]
 	then
-		AD_set basedn "$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+		basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+		AD_set basedn "${basedn}"
 	fi
 	AD_log "AD_init: basedn = $(AD_get basedn)"
 
-	local gc=$(AD_get gc)
-	if [ -z "${gc}" ]
+	local gcname=$(AD_get gcname)
+	if [ -z "${gcname}" ]
 	then
-		gc=$(AD_get_domain_global_catalog_server "${domainname}")
+
+		local rd="$(AD_get_root_domain "${domainname}")"
+		gcname="$(AD_get_domain_global_catalog_server "${rd}")"
+		AD_set gcname "${gcname}"
 	fi
 
-	AD_set gchost "$(echo "${gc}"|cut -f1 -d:)"
-	AD_set gcport "$(echo "${gc}"|cut -f2 -d:)"
+	AD_set gchost "$(echo "${gcname}"|cut -f1 -d:)"
+	AD_set gcport "$(echo "${gcname}"|cut -f2 -d:)"
 	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
 
-	local krbhost=$(AD_get krbhost)
-	if [ -z "${krbhost}" ]
+	local krbname=$(AD_get krbname)
+	if [ -z "${krbname}" ]
 	then
-		AD_set krbhost "$(AD_get_kerberos_server ${domainname})"
+		krbname="$(AD_get_kerberos_server ${domainname})"
+		AD_set krbname "${krbname}"
 	fi
 
-	local kpwdhost=$(AD_get kpwdhost)
-	if [ -z "${kpwdhost}" ]
+	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
+	if [ -n "${krbsvc}" ]
 	then
-		AD_set kpwdhost "$(AD_get_kpasswd_server ${domainname})"
+		AD_set krbsvc "${krbsvc}"
 	fi
+
+	AD_set krbhost "$(echo "${krbname}"|cut -f1 -d:)"
+	AD_set krbport "$(echo "${krbname}"|cut -f2 -d:)"
+	AD_log "AD_init: krbhost = $(AD_get krbhost), krbport = $(AD_get krbport)"
+
+	local kpwdname=$(AD_get kpwdname)
+	if [ -z "${kpwdname}" ]
+	then
+		kpwdname="$(AD_get_kpasswd_server ${domainname})"
+		AD_set kpwdname "${kpwdname}"
+	fi
+
+	AD_set kpwdhost "$(echo "${kpwdname}"|cut -f1 -d:)"
+	AD_set kpwdport "$(echo "${kpwdname}"|cut -f2 -d:)"
+	AD_log "AD_init: kpwdhost = $(AD_get kpwdhost), kpwdport = $(AD_get kpwdport)"
 
 	AD_generate_config
 	return 0
