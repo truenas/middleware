@@ -1152,8 +1152,9 @@ AD_init()
 		AD_set krbsvc "${krbsvc}"
 	fi
 
-	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
-	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"
+	krbtemp="$(echo "${krbname}"|cut -f2 -d/)"
+	krbhost="$(echo "${krbtemp}"|cut -f1 -d:)"
+	krbport="$(echo "${krbtemp}"|cut -f2 -d: -s)"
 
 	if [ -z "${krbport}" ]
 	then
