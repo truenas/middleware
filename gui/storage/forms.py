@@ -709,10 +709,10 @@ class AutoImportWizard(SessionWizardView):
 class AutoImportChoiceForm(forms.Form):
     step = forms.ChoiceField(
         choices=(
-            ('import', _("Skip to import")),
-            ('decrypt', _("Decrypt disks")),
+            ('import', _("No: Skip to import")),
+            ('decrypt', _("Yes: Decrypt disks")),
         ),
-        label=_("Step"),
+        label=_("Encrypted ZFS volume?"),
         widget=forms.RadioSelect(),
         initial="import",
     )
