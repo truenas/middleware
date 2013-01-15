@@ -112,7 +112,7 @@ def send_mail(subject=None,
         if (timediff >= interval) or (timediff < timedelta()):
             open(channelfile, 'w').close()
         else:
-            return
+            return True, 'This message was already sent in the given interval'
 
     error = False
     errmsg = ''
