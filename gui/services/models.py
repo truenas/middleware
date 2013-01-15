@@ -1495,10 +1495,10 @@ class ActiveDirectory(Model):
             'ad_unix_extensions',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
-            'ad_dchost',
-            'ad_gchost',
-            'ad_krbhost',
-            'ad_kpwdhost',
+            'ad_dcname',
+            'ad_gcname',
+            'ad_krbname',
+            'ad_kpwdname',
             'ad_timeout'
             )
 
