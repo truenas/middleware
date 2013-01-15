@@ -1108,7 +1108,6 @@ AD_init()
 	AD_set dchost "${dchost}"
 	AD_set dcport "${dcport}"
 	
-	echo AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
 	AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
 
 	local basedn=$(AD_get basedn)
