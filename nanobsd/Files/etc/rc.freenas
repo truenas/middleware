@@ -1046,6 +1046,7 @@ AD_generate_config()
 		kpwdname \
 		kpwdhost \
 		kpwdport \
+		timeout \
 	"
 
 	: > "${AD_CONFIG_FILE}"
