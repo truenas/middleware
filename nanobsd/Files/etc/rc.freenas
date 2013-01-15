@@ -911,7 +911,7 @@ AD_join_domain()
 
 	AD_log "AD_join_domain: net ads join -U ${adminname}"
 
-	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	__tc "$(AD_get timeout)" /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -935,7 +935,7 @@ AD_status_domain()
 
 	AD_log "AD_status_domain: net ads status -U ${adminname}"
 
-	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	__tc "$(AD_get timeout)" /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Not okay"
@@ -959,7 +959,7 @@ AD_leave_domain()
 
 	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
 
-	__tc ${AD_NET_ADS_TIMEOUT} /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	__tc "$(AD_get timeout)" /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -1046,6 +1046,7 @@ AD_generate_config()
 		kpwdname \
 		kpwdhost \
 		kpwdport \
+		timeout \
 	"
 
 	: > "${AD_CONFIG_FILE}"
@@ -1078,6 +1079,13 @@ AD_init()
 	if [ "${config_exists}" = "1" ]
 	then
 		return 0
+	fi
+
+	timeout=$(AD_get timeout)
+	if [ -z "${timeout}" ]
+	then
+		timeout="${AD_NET_ADS_TIMEOUT}"
+		AD_set timeout "${timeout}"
 	fi
 
 	local adminname=$(AD_get adminname)
@@ -1152,9 +1160,8 @@ AD_init()
 		AD_set krbsvc "${krbsvc}"
 	fi
 
-	krbtemp="$(echo "${krbname}"|cut -f2 -d/)"
-	krbhost="$(echo "${krbtemp}"|cut -f1 -d:)"
-	krbport="$(echo "${krbtemp}"|cut -f2 -d: -s)"
+	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
+	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"
 
 	if [ -z "${krbport}" ]
 	then
