@@ -1419,22 +1419,6 @@ class ActiveDirectory(Model):
             verbose_name=_("Workgroup Name"),
             help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
             )
-    ad_allow_trusted_doms = models.BooleanField(
-            default=False,
-            verbose_name=_("Allow Trusted Domains"),
-            )
-    ad_use_default_domain = models.BooleanField(
-            default=True,
-            verbose_name=_("Use default domain"),
-            )
-    ad_unix_extensions = models.BooleanField(
-            default=False,
-            verbose_name=_("UNIX extensions"),
-            )
-    ad_verbose_logging = models.BooleanField(
-            default=False,
-            verbose_name=_("Verbose logging"),
-            )
     ad_adminname = models.CharField(
             max_length=120,
             verbose_name=_("Administrator Name"),
@@ -1446,6 +1430,59 @@ class ActiveDirectory(Model):
             help_text=_("Domain Administrator account password.")
             )
 
+    #
+    # AD Advanced settings
+    #
+
+    ad_verbose_logging = models.BooleanField(
+            default=False,
+            verbose_name=_("Verbose logging"),
+            )
+    ad_unix_extensions = models.BooleanField(
+            default=False,
+            verbose_name=_("UNIX extensions"),
+            help_text=_("Set this if your Active Directory has UNIX extensions.")
+            )
+    ad_allow_trusted_doms = models.BooleanField(
+            default=False,
+            verbose_name=_("Allow Trusted Domains"),
+            help_text=_("Set this if you want to allow Trusted Domains.")
+            )
+    ad_use_default_domain = models.BooleanField(
+            default=True,
+            verbose_name=_("Use default domain"),
+            help_text=_("Set this if you want to use the default domain for users and groups.")
+            )
+    ad_dcname = models.CharField(
+            max_length=120,
+            blank=True,
+            verbose_name=_("Domain Controller"),
+            help_text=_("Hostname of the domain controller to use."),
+            )
+    ad_gcname = models.CharField(
+            max_length=120,
+            blank=True,
+            verbose_name=_("Global Catalog Server"),
+            help_text=_("Hostname of the global catalog server to use."),
+            )
+    ad_krbname = models.CharField(
+            max_length=120,
+            blank=True,
+            verbose_name=_("Kerberos Server"),
+            help_text=_("Hostname of the kerberos server to use."),
+            )
+    ad_kpwdname = models.CharField(
+            max_length=120,
+            blank=True,
+            verbose_name=_("Kerberos Password Server"),
+            help_text=_("Hostname of the kerberos password server to use."),
+            )
+    ad_timeout = models.IntegerField(
+            default=10,
+            verbose_name=_("AD timeout"),
+            help_text=_("Timeout for AD related commands."),
+            )
+
     class Meta:
         verbose_name = _("Active Directory")
         verbose_name_plural = _("Active Directory")
@@ -1453,7 +1490,17 @@ class ActiveDirectory(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "ActiveDirectoryIcon"
-
+        advanced_fields = (
+            'ad_verbose_logging',
+            'ad_unix_extensions',
+            'ad_allow_trusted_doms',
+            'ad_use_default_domain',
+            'ad_dchost',
+            'ad_gchost',
+            'ad_krbhost',
+            'ad_kpwdhost',
+            'ad_timeout'
+            )
 
 class LDAP(Model):
     ldap_hostname = models.CharField(

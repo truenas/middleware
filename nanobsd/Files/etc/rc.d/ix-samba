@@ -285,8 +285,8 @@ EOF
 			    client use spnego = yes
 			    cache directory = ${FREENAS_CACHEDIR}/.samba
 
-			    wins server = $(AD_get dcname)
-			    password server = $(AD_get dcname)
+			    wins server = $(AD_get dchost)
+			    password server = $(AD_get dchost)
 
 			    local master = no
 			    domain master = no
