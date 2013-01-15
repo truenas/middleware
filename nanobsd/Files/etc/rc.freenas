@@ -120,6 +120,7 @@
 : ${AD_CONFIG_FILE:="${AD_CONFIG_PATH}/config"}
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
 : ${AD_NET_ADS_TIMEOUT:="10"}
+: ${AD_DNS_TIMEOUT:="10"}
 
 __proto()
 {
@@ -179,7 +180,7 @@ __get_SRV_host()
 	do
 		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
 		local port=$(echo "${line}"|awk '{ print $3 }')
-		local nc_timeout=5
+		local nc_timeout="$(AD_get dns_timeout)"
 		local nc_args=
 
 		AD_log "__get_SRV_host: trying ${host}:${port}"
@@ -854,7 +855,7 @@ AD_save()
 	local prefix="__save_"
 	local vars="adminname domainname basedn binddn dcname \
 		dchost dcport gcname gchost gcport krbname krbhost \
-		krbport kpwdname kpwdhost kpwdport"
+		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
 	
 	for v in ${vars}
 	do
@@ -867,7 +868,7 @@ AD_restore()
 	local prefix="__save_"
 	local vars="adminname domainname basedn binddn dcname \
 		dchost dcport gcname gchost gcport krbname krbhost \
-		krbport kpwdname kpwdhost kpwdport"
+		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
 	
 	for v in ${vars}
 	do
@@ -897,6 +898,8 @@ AD_show_config()
 	printf "trusted:      %s\n" $(AD_get allow_trusted_doms)
 	printf "default:      %s\n" $(AD_get use_default_domain)
 	printf "verbose:      %s\n" $(AD_get verbose_logging)
+	printf "timeout:      %s\n" $(AD_get timeout)
+	printf "dns_timeout:  %s\n" $(AD_get dns_timeout)
 	printf "+------------------------------------------+\n"
 }
 
@@ -1003,7 +1006,8 @@ AD_load_database_values()
 		ad_gcname,
 		ad_krbname,
 		ad_kpwdname,
-		ad_timeout
+		ad_timeout,
+		ad_dns_timeout
  
 	FROM
 		services_activedirectory
@@ -1047,6 +1051,7 @@ AD_generate_config()
 		kpwdhost \
 		kpwdport \
 		timeout \
+		dns_timeout \
 	"
 
 	: > "${AD_CONFIG_FILE}"
@@ -1086,6 +1091,13 @@ AD_init()
 	then
 		timeout="${AD_NET_ADS_TIMEOUT}"
 		AD_set timeout "${timeout}"
+	fi
+
+	dns_timeout=$(AD_get dns_timeout)
+	if [ -z "${dns_timeout}" ]
+	then
+		dns_timeout="${AD_DNS_TIMEOUT}"
+		AD_set dns_timeout "${dns_timeout}"
 	fi
 
 	local adminname=$(AD_get adminname)
