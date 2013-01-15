@@ -414,6 +414,8 @@ class warden_list(warden_base):
             line = line.strip()
             if not (line.startswith("HOST") or line.startswith("----")):
                 parts = line.split()
+                if len(parts) < 4:
+                    continue 
                 jail = {
                     "host": parts[0],
                     "ip": parts[1],
