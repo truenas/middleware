@@ -118,7 +118,6 @@
 #
 : ${AD_CONFIG_PATH:="/etc/ActiveDirectory"}
 : ${AD_CONFIG_FILE:="${AD_CONFIG_PATH}/config"}
-: ${AD_KNOBS_FILE:="${AD_CONFIG_PATH}/knobs"}
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
 : ${AD_NET_ADS_TIMEOUT:="10"}
 
@@ -1099,8 +1098,17 @@ AD_init()
 		AD_set dcname "${dcname}"
 	fi
 
-	AD_set dchost "$(echo "${dcname}"|cut -f1 -d:)"
-	AD_set dcport "$(echo "${dcname}"|cut -f2 -d:)"
+	local dchost="$(echo "${dcname}"|cut -f1 -d:)"
+	local dcport="$(echo "${dcname}"|cut -f2 -d: -s)"
+	if [ -z "${dcport}" ]
+	then
+		dcport=389
+	fi
+
+	AD_set dchost "${dchost}"
+	AD_set dcport "${dcport}"
+	
+	echo AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
 	AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
 
 	local basedn=$(AD_get basedn)
@@ -1120,8 +1128,16 @@ AD_init()
 		AD_set gcname "${gcname}"
 	fi
 
-	AD_set gchost "$(echo "${gcname}"|cut -f1 -d:)"
-	AD_set gcport "$(echo "${gcname}"|cut -f2 -d:)"
+	local gchost="$(echo "${gcname}"|cut -f1 -d:)"
+	local gcport="$(echo "${gcname}"|cut -f2 -d: -s)"
+
+	if [ -z "${gcport}" ]
+	then
+		gcport=3268
+	fi
+
+	AD_set gchost "${gchost}"
+	AD_set gcport "${gcport}"
 	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
 
 	local krbname=$(AD_get krbname)
@@ -1137,8 +1153,16 @@ AD_init()
 		AD_set krbsvc "${krbsvc}"
 	fi
 
-	AD_set krbhost "$(echo "${krbname}"|cut -f1 -d:)"
-	AD_set krbport "$(echo "${krbname}"|cut -f2 -d:)"
+	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
+	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"
+
+	if [ -z "${krbport}" ]
+	then
+		krbport=88
+	fi
+
+	AD_set krbhost "${krbhost}"
+	AD_set krbport "${krbport}"
 	AD_log "AD_init: krbhost = $(AD_get krbhost), krbport = $(AD_get krbport)"
 
 	local kpwdname=$(AD_get kpwdname)
@@ -1148,8 +1172,16 @@ AD_init()
 		AD_set kpwdname "${kpwdname}"
 	fi
 
-	AD_set kpwdhost "$(echo "${kpwdname}"|cut -f1 -d:)"
-	AD_set kpwdport "$(echo "${kpwdname}"|cut -f2 -d:)"
+	kpwdhost="$(echo "${kpwdname}"|cut -f1 -d:)"
+	kpwdport="$(echo "${kpwdname}"|cut -f2 -d: -s)"
+
+	if [ -z "${kpwdport}" ]
+	then
+		kpwdport=464
+	fi
+
+	AD_set kpwdhost "${kpwdhost}"
+	AD_set kpwdport "${kpwdname}"
 	AD_log "AD_init: kpwdhost = $(AD_get kpwdhost), kpwdport = $(AD_get kpwdport)"
 
 	AD_generate_config
