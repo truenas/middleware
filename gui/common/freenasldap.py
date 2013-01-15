@@ -1191,7 +1191,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             if len(parts) > 1:
                 self.dcport = parts[1]
 
-        if not self.dcname:
+        if not self.dchost:
             (host, port) = self.dc_connect(self.domain, self.binddn, self.bindpw)
         else:
             host = self.dchost
