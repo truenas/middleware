@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-01-03 03:27+0200\n"
-"Last-Translator: petrjakes <petr.jakes.tpc@gmail.com>\n"
+"PO-Revision-Date: 2013-01-15 22:47+0200\n"
+"Last-Translator: Charlieiv <charlieiv@tiscali.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -113,28 +113,28 @@ msgstr "Vypnuto"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Level 1 - Minimální spotřeba s pohotovostním režimem (spindown)"
+msgstr "Úroveň 1 - Minimální spotřeba s pohotovostním režimem (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Level 64 - Průměrná spotřeba s pohotovostním režimem"
+msgstr "Úroveň 64 - Průměrná spotřeba s pohotovostním režimem"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Level 127 - Průměrná spotřeba s pohotovostním režimem"
+msgstr "Úroveň 127 - Průměrná spotřeba s pohotovostním režimem"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"Level 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
+"Úroveň 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Level 192 - Průměrná spotřeba bez pohotovostního režimu"
+msgstr "Úroveň 192 - Průměrná spotřeba bez pohotovostního režimu"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Level 254 - Maximální výkon, maximální spotřeba"
+msgstr "Úroveň 254 - Maximální výkon, maximální spotřeba"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -198,31 +198,31 @@ msgstr "Prosinec"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr "Pondělí"
+msgstr "pondělí"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr "Úterý"
+msgstr "úterý"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr "Středa"
+msgstr "středa"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr "Čtvrtek"
+msgstr "čtvrtek"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr "Pátek"
+msgstr "pátek"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr "Sobota"
+msgstr "sobota"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr "Neděle"
+msgstr "neděle"
 
 #: choices.py:163
 msgid "Anonymous"
@@ -230,7 +230,7 @@ msgstr "Anonymní"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "llokální uživatel"
+msgstr "lokální uživatel"
 
 #: choices.py:189
 msgid "Normal"
@@ -242,7 +242,7 @@ msgstr "plný"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "lladění"
+msgstr "ladění"
 
 #: choices.py:195
 msgid "Default"
@@ -357,7 +357,7 @@ msgstr "gzip (maximální, pomalý)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr "hodina"
+msgstr "hodin"
 
 #: choices.py:490
 msgid "Day(s)"
@@ -470,11 +470,11 @@ msgstr "Rsync přes SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Stisknout"
 
 #: choices.py:568
 msgid "Pull"
-msgstr "Zatahnout"
+msgstr "táhnout"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -487,7 +487,7 @@ msgstr "Znak $ je povolen jen jako poslední znak"
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "Vaše jméno obsahuje nepovolené znaky (%s)."
+msgstr "Jméno obsahuje nepovolené znaky (%s)."
 
 #: account/forms.py:79
 #, python-format
@@ -552,15 +552,15 @@ msgstr "Veřejný SSH klíč"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "domovský adresář"
+msgstr "Mód domovského adresáře"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr "Další skupiny"
+msgstr "Vedlejší skupiny"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
-msgstr "Uživatelské jméno tímto UID již existuje."
+msgstr "Uživatelské jméno tohoto UID již existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -672,7 +672,7 @@ msgstr "Skupina %s nemůže být smazána!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr "IID uživatele"
+msgstr "ID uživatele"
 
 #: account/models.py:87
 msgid "User &"
@@ -688,7 +688,7 @@ msgstr "Zašifrované heslo SMB"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "IID výchozí skupiny"
+msgstr "ID výchozí skupiny"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -892,7 +892,7 @@ msgstr "Podsíť 169.254/16 není platná pro nameserver"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "jje nutné zadat název druhého DNS serveru před zadáním třetího serveru"
+msgstr "je nutné zadat název druhého DNS serveru před zadáním třetího serveru"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
@@ -1374,11 +1374,11 @@ msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr "oprávnění pro soubor"
+msgstr "oprávnění souboru"
 
 #: services/forms.py:170
 msgid "Directory Permission"
-msgstr "oprávnění pro adresář"
+msgstr "oprávnění složky"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
@@ -1535,7 +1535,7 @@ msgstr "LUN již existuje pro tento účel."
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Ovladač autorizační skupiny"
 
 #: services/forms.py:620
 msgid ""
@@ -1580,8 +1580,8 @@ msgstr "Musíte zadat soubor uvnitř vašeho svazku."
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"Cesta k rozšíření musí být uvnitř přípojného bodu (mount pointu)  "
-"svazku(volume) nebo sady dat (dataset)."
+"Cesta k rozšíření musí být uvnitř přípojného bodu (mount pointu)  svazku "
+"(volume) nebo sady dat (dataset)."
 
 #: services/forms.py:795
 msgid ""
@@ -6050,7 +6050,7 @@ msgstr "Mezipaměť nemohla být znovu vytvořena."
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
 msgid "Save Debug"
-msgstr "Uložit lazení"
+msgstr "Uložit ladění"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
