@@ -102,3 +102,5 @@ class JailsConfigurationForm(JailsForm):
                 }),
         }
 
+
+#class JailScriptUploadForm

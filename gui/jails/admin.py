@@ -44,7 +44,38 @@ class JailsFAdmin(BaseFreeAdmin):
     resource = JailsResource
 
     def get_datagrid_columns(self):
-        columns = super(JailsFAdmin, self).get_datagrid_columns()
+        columns = []
+
+        columns.append({
+            'name': 'jail_host',
+            'label': _('Jail'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'jail_ip',
+            'label': _('IP/Netmask'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'jail_autostart',
+            'label': _('Autostart'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'jail_status',
+            'label': _('Status'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'jail_type',
+            'label': _('Type'),
+            'sortable': False,
+        })
+
         return columns
 
 
