@@ -32,15 +32,22 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services import models
+from freenasUI.jails import forms
+from freenasUI.jails import models
 
 log = logging.getLogger("jails.views")
 
 def home(request):
-    return render(request, 'jails/index.html', {
-        'focused_tab': request.GET.get('tab', None),
-    })
 
+    try:
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+    except IndexError:
+        jailsconf = models.JailsConfiguration.objects.create().id
+
+    return render(request, 'jails/index.html', {
+        'focused_form': request.GET.get('tab', 'jails'),
+         'jailsconf': jailsconf
+    })
 
 def enable(request, jail):
     pass

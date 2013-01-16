@@ -40,5 +40,13 @@ class JailsForm(ModelForm):
         model = models.Jails
 
 
-class JailsEditForm(JailsForm):
-    pass
+class JailsConfigurationForm(JailsForm):
+
+    class Meta:
+        model = models.JailsConfiguration
+        widgets = {
+            'jc_path': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+        }
+

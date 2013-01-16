@@ -141,3 +141,18 @@ class Jails(Model):
 
     class FreeAdmin:
         pass
+
+class JailsConfiguration(Model):
+
+    jc_path = models.CharField(
+        max_length=120,
+        verbose_name=_("Jail Root"),
+        help_text=_("Path where to store jail data")
+        )
+
+    class Meta:
+        verbose_name = _("Jails Configuration")
+        verbose_name_plural = _("Jails Configuration") 
+
+    class FreeAdmin:
+        pass
