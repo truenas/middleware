@@ -92,7 +92,7 @@ class JailsForm(ModelForm):
 
         w.create(jail=jail_host, ip=jail_ip, flags=jail_flags)
 
-class JailsConfigurationForm(JailsForm):
+class JailsConfigurationForm(ModelForm):
 
     class Meta:
         model = models.JailsConfiguration
