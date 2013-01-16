@@ -1,22 +1,19 @@
-Index: www/dojo/Makefile
-===================================================================
-RCS file: /home/ncvs/ports/www/dojo/Makefile,v
-retrieving revision 1.14
-diff -u -r1.14 Makefile
---- www/dojo/Makefile	20 Aug 2011 17:27:37 -0000	1.14
-+++ www/dojo/Makefile	18 Dec 2012 11:35:04 -0000
-@@ -1,15 +1,9 @@
+diff --git www/dojo/Makefile www/dojo/Makefile
+index 275d026..9931d04 100644
+--- www/dojo/Makefile
++++ www/dojo/Makefile
+@@ -1,28 +1,22 @@
 -# New ports collection makefile for:	dojo
 -# Date created:		2008-01-29
 -# Whom:			Greg Larkin <glarkin@FreeBSD.org>
 -#
 -# $FreeBSD: ports/www/dojo/Makefile,v 1.14 2011/08/20 17:27:37 ohauer Exp $
 -#
-+# $FreeBSD: head/www/dojo/Makefile 306036 2012-10-17 19:23:20Z glarkin $
++# $FreeBSD: head/www/dojo/Makefile 310521 2013-01-16 19:49:14Z glarkin $
  
  PORTNAME=		dojo
 -PORTVERSION=		1.5.0
-+PORTVERSION=		1.8.2
++PORTVERSION=		1.8.3
  CATEGORIES=		www
 -MASTER_SITES=		http://download.dojotoolkit.org/release-${PORTVERSION}/ \
 -			LOCAL/glarkin
@@ -24,7 +21,8 @@ diff -u -r1.14 Makefile
  DISTNAME=		dojo-release-${PORTVERSION}
  
  MAINTAINER=		glarkin@FreeBSD.org
-@@ -17,12 +11,12 @@
+-COMMENT=		An open-source DHTML toolkit written in JavaScript
++COMMENT=		Open-source DHTML toolkit written in JavaScript
  
  NO_BUILD=		yes
  
@@ -41,31 +39,40 @@ diff -u -r1.14 Makefile
  CONFDIR=		${PREFIX}/${CONFDIR_REL}
  CONFDIR_REL=		${APACHEETCDIR}/Includes
  PLIST_SUB+=		NOAPACHE="" CONFDIR=${CONFDIR_REL}
-@@ -60,4 +54,4 @@
+@@ -60,4 +54,4 @@ post-install:
  	@${CAT} ${PKGMESSAGE}
  .endif
  
 -.include <bsd.port.post.mk>
 +.include <bsd.port.mk>
-Index: www/dojo/distinfo
-===================================================================
-RCS file: /home/ncvs/ports/www/dojo/distinfo,v
-retrieving revision 1.13
-diff -u -r1.13 distinfo
---- www/dojo/distinfo	19 Mar 2011 12:34:00 -0000	1.13
-+++ www/dojo/distinfo	18 Dec 2012 11:35:04 -0000
+diff --git www/dojo/distinfo www/dojo/distinfo
+index dde2eee..2f397ac 100644
+--- www/dojo/distinfo
++++ www/dojo/distinfo
 @@ -1,2 +1,2 @@
 -SHA256 (dojo-release-1.5.0.tar.gz) = da6c357d31c38b4eb27cf1d2860d0f504cf32a2fb2f423542b2c7dc11193a616
 -SIZE (dojo-release-1.5.0.tar.gz) = 3422622
-+SHA256 (dojo-release-1.8.2.tar.gz) = 5d6f67fdf453c4d1aea9f87387f04715fc29e2ca9028d4b9fbb5425adfe873d8
-+SIZE (dojo-release-1.8.2.tar.gz) = 7734263
-Index: www/dojo/pkg-plist
-===================================================================
-RCS file: /home/ncvs/ports/www/dojo/pkg-plist,v
-retrieving revision 1.12
-diff -u -r1.12 pkg-plist
---- www/dojo/pkg-plist	22 Apr 2011 15:08:37 -0000	1.12
-+++ www/dojo/pkg-plist	18 Dec 2012 11:35:07 -0000
++SHA256 (dojo-release-1.8.3.tar.gz) = 20cd986b1e134dff9a77996d360ade2a51f3bd555f097f112c8db698030a4012
++SIZE (dojo-release-1.8.3.tar.gz) = 7733625
+diff --git www/dojo/files/pkg-message.in www/dojo/files/pkg-message.in
+index da10c96..3b8ecac 100644
+--- www/dojo/files/pkg-message.in
++++ www/dojo/files/pkg-message.in
+@@ -4,10 +4,3 @@ You have just installed the Dojo DHTML toolkit.
+ 
+ Note that you should restart your Apache web server to ensure that
+ the Dojo configuration file is loaded.
+-
+-Dojo toolkit demonstration pages can be found at:
+-http://localhost/dojo/dijit/demos/chat.html
+-http://localhost/dojo/dijit/demos/form.html
+-http://localhost/dojo/dijit/demos/i18n.html
+-http://localhost/dojo/dijit/demos/mail.html
+-http://localhost/dojo/dijit/demos/nihao.html
+diff --git www/dojo/pkg-plist www/dojo/pkg-plist
+index a178131..e1b85dd 100644
+--- www/dojo/pkg-plist
++++ www/dojo/pkg-plist
 @@ -1,277 +1,650 @@
 -%%NOAPACHE%%%%CONFDIR%%/dojo.conf
 +%%WWWDIR%%/build-report.txt
@@ -8429,21 +8436,3 @@ diff -u -r1.12 pkg-plist
  @dirrm %%WWWDIR%%/dijit/_editor/nls/ar
  @dirrm %%WWWDIR%%/dijit/_editor/nls
  @dirrm %%WWWDIR%%/dijit/_editor
-Index: www/dojo/files/pkg-message.in
-===================================================================
-RCS file: /home/ncvs/ports/www/dojo/files/pkg-message.in,v
-retrieving revision 1.1
-diff -u -r1.1 pkg-message.in
---- www/dojo/files/pkg-message.in	13 Feb 2008 22:11:28 -0000	1.1
-+++ www/dojo/files/pkg-message.in	18 Dec 2012 11:35:08 -0000
-@@ -4,10 +4,3 @@
- 
- Note that you should restart your Apache web server to ensure that
- the Dojo configuration file is loaded.
--
--Dojo toolkit demonstration pages can be found at:
--http://localhost/dojo/dijit/demos/chat.html
--http://localhost/dojo/dijit/demos/form.html
--http://localhost/dojo/dijit/demos/i18n.html
--http://localhost/dojo/dijit/demos/mail.html
--http://localhost/dojo/dijit/demos/nihao.html
