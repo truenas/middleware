@@ -26,19 +26,71 @@
 #####################################################################
 import logging
 
+from django.utils.translation import ugettext_lazy as _
+
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 
 from freenasUI.jails import models
+from freenasUI.common.warden import Warden, \
+    WARDEN_FLAGS_NONE, WARDEN_CREATE_FLAGS_32BIT, \
+    WARDEN_CREATE_FLAGS_SRC, WARDEN_CREATE_FLAGS_PORTS, \
+    WARDEN_CREATE_FLAGS_STARTAUTO, WARDEN_CREATE_FLAGS_PORTJAIL, \
+    WARDEN_CREATE_FLAGS_PLUGINJAIL, WARDEN_CREATE_FLAGS_LINUXJAIL, \
+    WARDEN_CREATE_FLAGS_ARCHIVE, WARDEN_CREATE_FLAGS_LINUXARCHIVE
+
 
 log = logging.getLogger('jails.forms')
 
 class JailsForm(ModelForm):
+    jail_type = forms.ChoiceField(label=_("type"))
+    jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
+    jail_32bit = forms.BooleanField(label=_("32 bit"), required=False)
+    jail_source = forms.BooleanField(label=_("source"), required=False)
+    jail_ports = forms.BooleanField(label=_("ports"), required=False)
+    jail_archive = forms.BooleanField(label=_("archive"), required=False)
+    #jail_script = forms.CharField(label=_("script"), required=False)
 
     class Meta:
         model = models.Jails
+        exclude = ('jail_status')
 
+    def __init__(self, *args, **kwargs):
+        super(JailsForm, self).__init__(*args, **kwargs)
+        self.fields['jail_type'].choices = [(t, t) for t in Warden().types()]
+
+
+    def save(self):
+        jail_host = self.cleaned_data['jail_host']
+        jail_ip = self.cleaned_data['jail_ip']
+        jail_flags = WARDEN_FLAGS_NONE
+
+        w = Warden() 
+
+        if self.cleaned_data['jail_autostart']:
+            jail_flags |= WARDEN_CREATE_FLAGS_STARTAUTO
+        if self.cleaned_data['jail_32bit']:
+            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
+        if self.cleaned_data['jail_source']:
+            jail_flags |= WARDEN_CREATE_FLAGS_SRC
+        if self.cleaned_data['jail_ports']:
+            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
+
+        if self.cleaned_data['jail_type'] == 'portjail':
+            jail_flags |= WARDEN_CREATE_FLAGS_PORTJAIL
+        elif self.cleaned_data['jail_type'] == 'pluginjail':
+            jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
+        elif self.cleaned_data['jail_type'] == 'linuxjail':
+            jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
+
+        if self.cleaned_data['jail_archive']:
+            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
+                jail_flags |= WARDEN_CREATE_FLAGS_LINUXARCHIVE
+            else:
+                jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
+
+        w.create(jail=jail_host, ip=jail_ip, flags=jail_flags)
 
 class JailsConfigurationForm(JailsForm):
 

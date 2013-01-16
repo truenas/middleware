@@ -134,9 +134,6 @@ class Jails(Model):
     def delete(self):
         Warden().delete(jail=self.jail_host)
 
-    def save(self):
-        pass
-
     class Meta:
         verbose_name = _("Jails")
         verbose_name_plural = _("Jails") 

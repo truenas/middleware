@@ -730,6 +730,10 @@ class Warden(warden_base):
     def type(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_type(flags, **kwargs))
 
+    def types(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        types = ['standard', 'portjail', 'pluginjail', 'linuxjail']
+        return types
+
     def zfsmksnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_zfsmksnap(flags, **kwargs))
 
