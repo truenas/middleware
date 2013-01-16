@@ -202,7 +202,7 @@ __EOF__
         }
 
         #FIXME: get version from freenasUI.settings
-        location /dojango/dojo-media/release/1.8.1 {
+        location /dojango/dojo-media/release/1.8.2 {
             alias /usr/local/www/dojo;
         }
 
