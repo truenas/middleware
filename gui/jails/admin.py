@@ -49,31 +49,31 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_host',
             'label': _('Jail'),
-            'sortable': False,
+            'sortable': True,
         })
 
         columns.append({
             'name': 'jail_ip',
             'label': _('IP/Netmask'),
-            'sortable': False,
+            'sortable': True,
         })
 
         columns.append({
             'name': 'jail_autostart',
             'label': _('Autostart'),
-            'sortable': False,
+            'sortable': True,
         })
 
         columns.append({
             'name': 'jail_status',
             'label': _('Status'),
-            'sortable': False,
+            'sortable': True,
         })
 
         columns.append({
             'name': 'jail_type',
             'label': _('Type'),
-            'sortable': False,
+            'sortable': True,
         })
 
         return columns
