@@ -31,6 +31,8 @@ from django.db.models.options import Options
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.warden import Warden, WARDEN_LIST_FLAGS_IDS
 
+from freenasUI.middleware.notifier import notifier
+
 import logging
 
 log = logging.getLogger('jails.jails')
@@ -149,6 +151,11 @@ class JailsConfiguration(Model):
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
         )
+
+    def save(self):
+        super(JailsConfiguration, self).save()
+        notifier().start("ix-warden")
+
 
     class Meta:
         verbose_name = _("Jails Configuration")

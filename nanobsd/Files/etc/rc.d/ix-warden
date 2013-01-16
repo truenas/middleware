@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-warden
+# BEFORE: jail
+
+. /etc/rc.freenas
+
+WARDENCONF="/usr/local/etc/warden.conf"
+
+generate_warden_conf()
+{
+	local tmpfile
+	local wconf="${WARDENCONF}"
+	local jc_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			jc_path
+		FROM
+			jails_jailsconfiguration
+
+		ORDER BY
+			-id
+		LIMIT 1
+	")
+
+	if [ -n "${jc_path}" -a -d "${jc_path}" ]
+	then
+		if [ ! -f "${wconf}" ]
+		then
+			cat<<-__EOF__>>"${wconf}"
+			NIC: re0
+			WTMP: /usr/jails
+			JDIR: /usr/jails
+__EOF__
+		fi
+
+		tmpfile=$(mktemp /tmp/.warden.XXXXXX)
+		sed -e "s#^\(JDIR:.*\)#JDIR: ${jc_path}#g" \
+			-e "s#^\(WTMP:.*\)#WTMP: ${jc_path}#g" "${wconf}" > "${tmpfile}"
+		if [ "$?" = "0" -a -s "${tmpfile}" ]
+		then
+			mv "${tmpfile}" "${wconf}"
+		fi
+	fi
+}
+
+
+name="ix-warden"
+start_cmd='generate_warden_conf'
+            
+load_rc_config $name
+run_rc_command "$1"
