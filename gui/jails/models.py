@@ -132,7 +132,7 @@ class Jails(Model):
     jail_type = models.CharField(max_length=120)
     
     def delete(self):
-        pass
+        Warden().delete(jail=self.jail_host)
 
     def save(self):
         pass
