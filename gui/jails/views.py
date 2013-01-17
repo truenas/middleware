@@ -37,7 +37,7 @@ from freenasUI.jails import models
 
 log = logging.getLogger("jails.views")
 
-def home(request):
+def jails_home(request):
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
@@ -49,5 +49,74 @@ def home(request):
          'jailsconf': jailsconf
     })
 
-def enable(request, jail):
+def jail_auto(request, id):
+    log.debug("XXX: jail_auto() id = %d" % id)
+    pass
+
+def jail_checkup(request, id):
+    log.debug("XXX: jail_checkup() id = %d" % id)
+    pass
+
+def jail_details(request, id):
+    log.debug("XXX: jail_details() id = %d" % id)
+    pass
+
+def jail_export(request, id):
+    log.debug("XXX: jail_export() id = %d" % id)
+    pass
+
+def jail_import(request, id):
+    log.debug("XXX: jail_import() id = %d" % id)
+    pass
+
+def jail_options(request, id):
+    log.debug("XXX: jail_options() id = %d" % id)
+    pass
+
+def jail_pkgs(request, id):
+    log.debug("XXX: jail_pkgs() id = %d" % id)
+    pass
+
+def jail_pbis(request, id):
+    log.debug("XXX: jail_pbis() id = %d" % id)
+    pass
+
+def jail_start(request, id):
+    log.debug("XXX: jail_start() id = %d" % id)
+    pass
+
+def jail_stop(request, id):
+    log.debug("XXX: jail_stop() id = %d" % id)
+    pass
+
+def jail_zfsmksnap(request, id):
+    log.debug("XXX: jail_zfsmksnap() id = %d" % id)
+    pass
+
+def jail_zfslistclone(request, id):
+    log.debug("XXX: jail_zfslistclone() id = %d" % id)
+    pass
+
+def jail_zfslistsnap(request, id):
+    log.debug("XXX: jail_zfslistsnap() id = %d" % id)
+    pass
+
+def jail_zfsclonesnap(request, id):
+    log.debug("XXX: jail_zfsclonesnap() id = %d" % id)
+    pass
+
+def jail_zfscronsnap(request, id):
+    log.debug("XXX: jail_zfscronsnap() id = %d" % id)
+    pass
+
+def jail_zfsrevertsnap(request, id):
+    log.debug("XXX: jail_zfsrevertsnap() id = %d" % id)
+    pass
+
+def jail_zfsrmclonesnap(request, id):
+    log.debug("XXX: jail_zfsrmclonesnap() id = %d" % id)
+    pass
+
+def jail_zfsrmsnap(request, id):
+    log.debug("XXX: jail_zfsrmsnap() id = %d" % id)
     pass

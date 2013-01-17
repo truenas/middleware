@@ -755,4 +755,61 @@ class JailsResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(JailsResource, self).dehydrate(bundle)
+
+        bundle.data['name'] = bundle.obj.jail_host
+        bundle.data['_auto_url'] = reverse('jail_auto', kwargs={
+            'id': bundle.obj.id
+        })
+        bundle.data['_checkup_url'] = reverse('jail_checkup', kwargs={
+            'id': bundle.obj.id
+        })
+        bundle.data['_details_url'] = reverse('jail_details', kwargs={
+            'id': bundle.obj.id
+        })
+        bundle.data['_export_url'] = reverse('jail_export', kwargs={
+            'id': bundle.obj.id
+        })
+        bundle.data['_import_url'] = reverse('jail_import', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_options_url'] = reverse('jail_options', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_pkgs_url'] = reverse('jail_pkgs', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_pbis_url'] = reverse('jail_pbis', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_start_url'] = reverse('jail_start', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_stop_url'] = reverse('jail_stop', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfsmksnap_url'] = reverse('jail_zfsmksnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfslistclone_url'] = reverse('jail_zfslistclone', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfslistsnap_url'] = reverse('jail_zfslistsnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfsclonesnap_url'] = reverse('jail_zfsclonesnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfscronsnap_url'] = reverse('jail_zfscronsnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfsrevertsnap_url'] = reverse('jail_zfsrevertsnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfsrmclone_url'] = reverse('jail_zfsrmclonesnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+        bundle.data['_zfsrmsnap_url'] = reverse('jail_zfsrmsnap', kwargs={
+            'id': bundle.obj.id
+        }) 
+
         return bundle
