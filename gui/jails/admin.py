@@ -41,8 +41,8 @@ log = logging.getLogger('jails.admin')
 
 class JailsFAdmin(BaseFreeAdmin):
 
-    create_modelform = "JailsForm"
-    edit_modelform = "JailsEditForm"
+    create_modelform = "JailCreateForm"
+#    edit_modelform = "JailsEditForm"
     icon_object = u"ServicesIcon"
     icon_model = u"ServicesIcon"
     icon_add = u"ServicesIcon"

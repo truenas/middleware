@@ -43,7 +43,7 @@ from freenasUI.common.warden import Warden, \
 
 log = logging.getLogger('jails.forms')
 
-class JailsForm(ModelForm):
+class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(label=_("type"))
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
     jail_32bit = forms.BooleanField(label=_("32 bit"), required=False)
@@ -57,7 +57,7 @@ class JailsForm(ModelForm):
         exclude = ('jail_status')
 
     def __init__(self, *args, **kwargs):
-        super(JailsForm, self).__init__(*args, **kwargs)
+        super(JailCreateForm, self).__init__(*args, **kwargs)
         self.fields['jail_type'].choices = [(t, t) for t in Warden().types()]
 
 
@@ -102,5 +102,11 @@ class JailsConfigurationForm(ModelForm):
                 }),
         }
 
+class JailConfigureForm(ModelForm):
 
-#class JailScriptUploadForm
+    jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
+    jail_source = forms.BooleanField(label=_("source"), required=False)
+    jail_ports = forms.BooleanField(label=_("ports"), required=False)
+
+    class Meta:
+        model = models.Jails
