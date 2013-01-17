@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'CIFS.cifs_srv_hostlookup'
         db.add_column('services_cifs', 'cifs_srv_hostlookup',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      self.gf('django.db.models.fields.BooleanField')(default=1),
                       keep_default=False)
 
 
