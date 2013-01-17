@@ -240,6 +240,9 @@ class warden_base(object):
         return self.args
 
     def readconf(self):
+        if not os.path.exists(WARDENCONF):
+            #raise ValueError("Conf does not exist")
+            return
         wconf = open(WARDENCONF, "r")
         for line in wconf:
             line = line.strip()
