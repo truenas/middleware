@@ -757,58 +757,58 @@ class JailsResource(DojoModelResource):
         bundle = super(JailsResource, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
-        bundle.data['_auto_url'] = reverse('jail_auto', kwargs={
+        bundle.data['_jail_auto_url'] = reverse('jail_auto', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_checkup_url'] = reverse('jail_checkup', kwargs={
+        bundle.data['_jail_checkup_url'] = reverse('jail_checkup', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_details_url'] = reverse('jail_details', kwargs={
+        bundle.data['_jail_details_url'] = reverse('jail_details', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_export_url'] = reverse('jail_export', kwargs={
+        bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_import_url'] = reverse('jail_import', kwargs={
+        bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_options_url'] = reverse('jail_options', kwargs={
+        bundle.data['_jail_options_url'] = reverse('jail_options', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_pkgs_url'] = reverse('jail_pkgs', kwargs={
+        bundle.data['_jail_pkgs_url'] = reverse('jail_pkgs', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_pbis_url'] = reverse('jail_pbis', kwargs={
+        bundle.data['_jail_pbis_url'] = reverse('jail_pbis', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_start_url'] = reverse('jail_start', kwargs={
+        bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_stop_url'] = reverse('jail_stop', kwargs={
+        bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfsmksnap_url'] = reverse('jail_zfsmksnap', kwargs={
+        bundle.data['_jail_zfsmksnap_url'] = reverse('jail_zfsmksnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfslistclone_url'] = reverse('jail_zfslistclone', kwargs={
+        bundle.data['_jail_zfslistclone_url'] = reverse('jail_zfslistclone', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfslistsnap_url'] = reverse('jail_zfslistsnap', kwargs={
+        bundle.data['_jail_zfslistsnap_url'] = reverse('jail_zfslistsnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfsclonesnap_url'] = reverse('jail_zfsclonesnap', kwargs={
+        bundle.data['_jail_zfsclonesnap_url'] = reverse('jail_zfsclonesnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfscronsnap_url'] = reverse('jail_zfscronsnap', kwargs={
+        bundle.data['_jail_zfscronsnap_url'] = reverse('jail_zfscronsnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfsrevertsnap_url'] = reverse('jail_zfsrevertsnap', kwargs={
+        bundle.data['_jail_zfsrevertsnap_url'] = reverse('jail_zfsrevertsnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfsrmclone_url'] = reverse('jail_zfsrmclonesnap', kwargs={
+        bundle.data['_jail_zfsrmclone_url'] = reverse('jail_zfsrmclonesnap', kwargs={
             'id': bundle.obj.id
         }) 
-        bundle.data['_zfsrmsnap_url'] = reverse('jail_zfsrmsnap', kwargs={
+        bundle.data['_jail_zfsrmsnap_url'] = reverse('jail_zfsrmsnap', kwargs={
             'id': bundle.obj.id
         }) 
 
