@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2012-11-07 04:50+0200\n"
-"Last-Translator: xu <chinamfg@foxmail.com>\n"
+"PO-Revision-Date: 2013-01-20 11:11+0200\n"
+"Last-Translator: Ruyuen <luyuan.huang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -2157,7 +2157,7 @@ msgstr "授权访问"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr "服务名"
+msgstr "Target名称"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -2165,7 +2165,7 @@ msgstr "当启动是不带\"iqn.\"时，基本名将不会自动添加。"
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr "目标别名"
+msgstr "Target别名"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
@@ -2336,9 +2336,10 @@ msgid ""
 "system: 'admin@email.address'."
 msgstr "联系方式，例如：系统管理员名字或者邮件地址 'admin@email.address'."
 
+# SNMP专有名词
 #: services/models.py:867
 msgid "Community"
-msgstr "社区"
+msgstr "团体"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
@@ -6073,11 +6074,11 @@ msgstr "没有设置NTP服务器"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr "NTP对时服务器 1"
+msgstr "添加NTP服务器"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
-msgstr "NTP对时服务器 1"
+msgstr "添加NTP服务器"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
