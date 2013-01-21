@@ -1813,6 +1813,18 @@ class UnlockPassphraseForm(forms.Form):
         label=_("Passphrase"),
         widget=forms.widgets.PasswordInput(),
         )
+    services = forms.MultipleChoiceField(
+        label=_("Restart services"),
+        widget=forms.widgets.CheckboxSelectMultiple(),
+        initial=['cifs', 'afp', 'nfs', 'iscsitarget'],
+        choices=(
+            ('afp', _('AFP')),
+            ('cifs', _('CIFS')),
+            ('iscsitarget', _('iSCSI')),
+            ('nfs', _('NFS')),
+            ('plugins_jail', _('Plugins Jail')),
+        )
+    )
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
@@ -1831,6 +1843,10 @@ class UnlockPassphraseForm(forms.Form):
             else:
                 msg = _("Volume could not be imported")
             raise MiddlewareError(msg)
+
+        _notifier = notifier()
+        for svc in self.cleaned_data.get("services"):
+            started = _notifier.restart(svc)
 
 
 class KeyForm(forms.Form):
