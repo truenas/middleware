@@ -43,7 +43,9 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import MountPoint
-from freenasUI.system.forms import clean_path_execbit, FileWizard
+from freenasUI.system.forms import (
+    clean_path_execbit, clean_path_locked, FileWizard
+)
 
 log = logging.getLogger('plugins.forms')
 
@@ -157,6 +159,7 @@ class PBITemporaryLocationForm(Form):
     def clean_mountpoint(self):
         mp = self.cleaned_data.get("mountpoint")
         clean_path_execbit(mp)
+        clean_path_locked(mp)
         return mp
 
     def done(self, *args, **kwargs):
