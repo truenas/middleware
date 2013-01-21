@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-01-20 11:11+0200\n"
+"PO-Revision-Date: 2013-01-21 10:50+0200\n"
 "Last-Translator: Ruyuen <luyuan.huang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -97,7 +97,7 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "串口 1.5Gbit/s"
+msgstr "串口(SATA) 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
@@ -344,7 +344,7 @@ msgstr "lzjb算法压缩（推荐）"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr "gzip (默认压缩率, 6)"
+msgstr "gzip (默认级别, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
@@ -394,7 +394,7 @@ msgstr "只写"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "读和写"
+msgstr "读写"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -409,12 +409,12 @@ msgstr "%(hour)s 小时"
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hour)s 小时"
+msgstr "%(hour) 小时"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day)s 天"
+msgstr "%(day) 天"
 
 #: choices.py:519
 #, python-format
@@ -451,11 +451,11 @@ msgstr "传输过程自我测试（仅支持ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "离线后立即测试（仅仅支持ATA硬盘）"
+msgstr "离线后立即测试（仅支持ATA硬盘）"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Rsync备份模块"
+msgstr "Rsync模块"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -572,7 +572,7 @@ msgstr "两次输入的密码不一致。"
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "主目录必须以/mnt/或/nonexistent开头"
+msgstr "主目录必须以/mnt/开头，或为/nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
@@ -580,17 +580,17 @@ msgstr "用户不能属于超过64个辅助组"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "主目录是不可写的，离开这个空格"
+msgstr "主目录不可写，此项不填"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr "密码被禁用，此处请留空"
+msgstr "密码被禁用，此处不填"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "此栏目必填"
+msgstr "此栏必填"
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -622,7 +622,7 @@ msgstr "新密码确认"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "同样更改root密码"
+msgstr "同时更改root密码"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -655,7 +655,7 @@ msgstr "组"
 
 #: account/models.py:50 templates/account/index.html:13
 msgid "Groups"
-msgstr "组"
+msgstr "组列表"
 
 #: account/models.py:67
 #, python-format
@@ -672,11 +672,11 @@ msgstr "用户 &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "混杂(Hashed) UNIX 密码"
+msgstr "哈希 (Hashed) UNIX 密码"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "混杂(Hashed) SMB 密码"
+msgstr "哈希 (Hashed) SMB 密码"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -1064,9 +1064,10 @@ msgstr "接口名称格式为 vlanX，其中 X 为数字。如：vlan0。"
 msgid "Physical Interface"
 msgstr "物理接口"
 
+# 直译为VLAN标签或VLAN标记，VLAN号为网络术语，更易于理解
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
-msgstr "VLAN 标记"
+msgstr "VLAN号"
 
 #: network/models.py:278 network/models.py:392 services/models.py:86
 #: services/models.py:916 storage/models.py:211 storage/models.py:352
@@ -1074,7 +1075,7 @@ msgstr "VLAN 标记"
 #: templates/network/vlan.html:7 templates/system/cronjob.html:4
 #: templates/system/smarttest.html:6
 msgid "Description"
-msgstr "说明"
+msgstr "描述"
 
 #: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
@@ -1098,11 +1099,11 @@ msgstr "链路聚合"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr "LAGG 接口组"
+msgstr "链路聚合接口组"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr "LAGG 优先级编号"
+msgstr "链路聚合优先级数值"
 
 #: network/models.py:354
 msgid "Physical NIC"
@@ -1142,7 +1143,7 @@ msgstr "查看链路聚合"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
-msgstr "LAGG添加成功"
+msgstr "链路聚合设置成功"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
@@ -2339,15 +2340,16 @@ msgstr "联系方式，例如：系统管理员名字或者邮件地址 'admin@e
 # SNMP专有名词
 #: services/models.py:867
 msgid "Community"
-msgstr "团体"
+msgstr "团体字"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
 msgstr "在大多数情况下，在此使用'public'。"
 
+# SNMP专有名词
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr "发送SNMP诱骗信息"
+msgstr "发送SNMP Traps消息"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
@@ -2437,9 +2439,10 @@ msgstr ""
 msgid "UPS"
 msgstr "UPS"
 
+# 根据上下文翻译（非直译）
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr "FTP服务器绑定端口。"
+msgstr "FTP服务器监听端口。"
 
 #: services/models.py:973
 msgid "Clients"
@@ -2880,9 +2883,10 @@ msgstr "这些参数已经添加到ldap.conf。"
 msgid "LDAP"
 msgstr "LDAP"
 
+# 根据上下文翻译（非直译）
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
-msgstr "备用的TCP连接端口号。预设为873"
+msgstr "修改TCP端口号（默认为873）"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -3834,9 +3838,8 @@ msgid "Threshold days"
 msgstr ""
 
 #: storage/models.py:207
-#, fuzzy
 msgid "Determine how many days shall be between scrubs"
-msgstr "确定清理时间间隔"
+msgstr "确定ZFS显式清理时间间隔"
 
 #: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4346,7 +4349,7 @@ msgstr "WebGUI 地址"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr "Web 界面端口"
+msgstr "WebGUI 端口"
 
 #: system/models.py:62
 msgid "Language"
@@ -4435,11 +4438,11 @@ msgstr "启用控制台菜单"
 
 #: system/models.py:159
 msgid "Use Serial Console"
-msgstr "使用串口控制台"
+msgstr "启用串口控制台"
 
 #: system/models.py:161
 msgid "Enable screen saver"
-msgstr "启用屏保"
+msgstr "启用屏幕保护程序"
 
 #: system/models.py:163
 msgid "Automatically Check for New Firmware"
@@ -4923,7 +4926,7 @@ msgstr "删除用户"
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
 msgid "No users defined"
-msgstr "无用户被指定"
+msgstr "未定义用户"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
@@ -5057,7 +5060,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "FreeNAS测试"
 
 #: templates/freeadmin/index.html:76
 msgid "FreeNAS Docs"
@@ -5065,7 +5068,7 @@ msgstr "FreeNAS文档"
 
 #: templates/freeadmin/index.html:77
 msgid "FreeNAS Translations"
-msgstr ""
+msgstr "FreeNAS翻译"
 
 #: templates/freeadmin/index.html:82
 msgid "Support Issues"
@@ -5156,7 +5159,7 @@ msgstr "编辑成员"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr "LAGG 成员"
+msgstr "链路聚合的成员口"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
@@ -5164,11 +5167,11 @@ msgstr "未定义 LAGG 接口"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "添加 LAGG 接口"
+msgstr "添加链路聚合接口"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr "添加 LAGG"
+msgstr "添加链路聚合"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
@@ -5185,7 +5188,7 @@ msgstr "启用"
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr "添加 LAGG 成员"
+msgstr "添加链路聚合的成员口"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5319,7 +5322,7 @@ msgstr "欢迎 %(username)s 登录"
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "欢迎使用 %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:47
 msgid "Please log in."
@@ -5417,9 +5420,10 @@ msgstr ""
 msgid "iSCSI Management"
 msgstr "iSCSI 管理"
 
+# iScsi  专有名词
 #: templates/services/iscsi.html:8
 msgid "Portals"
-msgstr ""
+msgstr "Portals"
 
 #: templates/services/iscsi.html:14
 #, fuzzy
@@ -5428,7 +5432,7 @@ msgstr "授权的网络"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
-msgstr ""
+msgstr "认证"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5440,7 +5444,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr ""
+msgstr "关联Targets"
 
 #: templates/services/iscsi_assoctargets.html:31
 msgid "No associated targets defined"
@@ -5466,15 +5470,15 @@ msgstr "添加 iSCIS 用户"
 msgid "Authorized Network"
 msgstr "授权的网络"
 
+# 根据上下文翻译
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "授权的网络"
+msgstr "未定义任何Initiators"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr "添加授权起始人"
+msgstr "添加并授权Initiator"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
@@ -5502,15 +5506,16 @@ msgstr "监听"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "未设置IP"
 
+# Portal 为 SCSI专有名词
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
-msgstr ""
+msgstr "编辑Portal"
 
 #: templates/services/iscsi_portals.html:32
 msgid "Delete Portal"
-msgstr ""
+msgstr "删除Portal"
 
 #: templates/services/iscsi_portals.html:39
 msgid "No portals defined"
@@ -5519,16 +5524,16 @@ msgstr "未定义接口"
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
-msgstr ""
+msgstr "添加Portal"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "未定义任何Target"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr "增加目标机"
+msgstr "添加Target"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
@@ -5746,7 +5751,7 @@ msgstr "添加复制"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "显示公钥"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -5793,7 +5798,7 @@ msgstr "添加 ZFS 卷"
 #: templates/storage/scrub_confirm.html:6
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr ""
+msgstr "正在执行清理，确定要停止吗？"
 
 #: templates/storage/scrub_confirm.html:8
 #, fuzzy
@@ -5802,12 +5807,11 @@ msgstr "你确定需要导出吗?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "本操作讲将增大系统开销。"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "确认恢复出厂配置？"
+msgstr "确认回滚数据集至快照前的状态？"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
@@ -6092,9 +6096,8 @@ msgid ""
 msgstr "你确认要<strong>重启FreeNAS服务器</strong>吗?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "目录"
+msgstr "历史信息"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
