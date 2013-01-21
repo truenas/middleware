@@ -66,14 +66,26 @@ def clean_path_execbit(path):
                 raise forms.ValidationError(
                     _("The path '%s' requires execute permission bit") % (
                         current,
-                        )
                     )
+                )
         except OSError:
             break
 
         current = os.path.realpath(os.path.join(current, os.path.pardir))
         if current == '/':
             break
+
+
+def clean_path_locked(mp):
+    qs = MountPoint.objects.filter(mp_path=mp)
+    if qs.exists():
+        obj = qs[0]
+        if not obj.mp_volume.is_decrypted():
+            raise forms.ValidationError(
+                _("The volume %s is locked by encryption") % (
+                    obj.mp_volume.vol_name,
+                )
+            )
 
 
 class FileWizard(SessionWizardView):
@@ -603,6 +615,7 @@ class FirmwareTemporaryLocationForm(Form):
         mp = self.cleaned_data.get("mountpoint")
         if mp.startswith('/'):
             clean_path_execbit(mp)
+        clean_path_locked(mp)
         return mp
 
     def __init__(self, *args, **kwargs):
