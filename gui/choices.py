@@ -28,6 +28,7 @@
 import csv
 import cStringIO
 import freenasUI.settings
+import logging
 import os
 import re
 import sqlite3
@@ -35,6 +36,8 @@ import copy
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
+
+log = logging.getLogger('choices')
 
 SMTPAUTH_CHOICES = (
         ('plain', _('Plain')),
@@ -418,18 +421,33 @@ class NICChoices(object):
 
 class IPChoices(NICChoices):
 
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=False,
-            include_vlan_parent=True):
-        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured,
-            include_vlan_parent)
+    def __init__(
+        self,
+        ipv4=True,
+        ipv6=True,
+        nolagg=False,
+        novlan=False,
+        exclude_configured=False,
+        include_vlan_parent=True
+    ):
+        super(IPChoices, self).__init__(
+            nolagg=nolagg,
+            novlan=novlan,
+            exclude_configured=exclude_configured,
+            include_vlan_parent=include_vlan_parent
+        )
 
         self._IPlist = []
         for iface in self._NIClist:
             pipe = popen("/sbin/ifconfig %s" % iface)
             lines = pipe.read().strip().split('\n')
             for line in lines:
-                if line.startswith('\tinet'):
-                    self._IPlist.append(line.split(' ')[1])
+                if line.startswith('\tinet6'):
+                    if ipv6 is True:
+                        self._IPlist.append(line.split(' ')[1])
+                elif line.startswith('\tinet'):
+                    if ipv4 is True:
+                        self._IPlist.append(line.split(' ')[1])
             pipe.close()
             self._IPlist.sort()
 

@@ -203,7 +203,12 @@ class SettingsForm(ModelForm):
         self.fields['stg_guiaddress'] = forms.ChoiceField(
             label=self.fields['stg_guiaddress'].label
             )
-        self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices())
+        self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices(ipv6=False))
+
+        self.fields['stg_guiv6address'] = forms.ChoiceField(
+            label=self.fields['stg_guiv6address'].label
+            )
+        self.fields['stg_guiv6address'].choices = [['::', '::']] + list(choices.IPChoices(ipv4=False))
 
     def clean_stg_guiport(self):
         val = self.cleaned_data.get("stg_guiport")

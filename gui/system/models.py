@@ -57,7 +57,13 @@ class Settings(Model):
             max_length=120,
             blank=True,
             default='0.0.0.0',
-            verbose_name=_("WebGUI Address")
+            verbose_name=_("WebGUI IPv4 Address")
+            )
+    stg_guiv6address = models.CharField(
+            max_length=120,
+            blank=True,
+            default='::',
+            verbose_name=_("WebGUI IPv6 Address")
             )
     stg_guiport = models.CharField(
             max_length=120,
