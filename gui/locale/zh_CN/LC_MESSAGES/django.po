@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-01-21 10:50+0200\n"
+"PO-Revision-Date: 2013-01-22 05:15+0200\n"
 "Last-Translator: Ruyuen <luyuan.huang@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -3383,7 +3383,7 @@ msgstr "零设备编号"
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
-msgstr ""
+msgstr "一直使用0作为设备编号，有助于避免设备编号在重启后或应用集群后改变"
 
 #: sharing/models.py:200
 msgid "Disable File ID"
@@ -5046,9 +5046,8 @@ msgid "Mailing Lists"
 msgstr "邮件列表"
 
 #: templates/freeadmin/index.html:72
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "声明"
+msgstr "FreeNAS声明"
 
 #: templates/freeadmin/index.html:73
 msgid "FreeNAS Commit"
@@ -5818,12 +5817,10 @@ msgid "Clone snapshot"
 msgstr "克隆快照"
 
 #: templates/storage/snapshots.html:32
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "销毁快照"
 
 #: templates/storage/snapshots.html:37
-#, fuzzy
 msgid "Destroy this snapshot"
 msgstr "销毁快照"
 
