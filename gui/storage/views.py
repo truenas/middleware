@@ -146,7 +146,6 @@ def snapshots_data(request):
             else:
                 rev = False
             field = fieldmap.get(field, field)
-            log.error("filter really by: %s", field)
             if field in zfsnap_list[0]:
                 zfsnap_list.sort(key=lambda item: item[field], reverse=rev)
 
