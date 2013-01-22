@@ -58,7 +58,7 @@ setup_homedirs()
 
 nt4_start()
 {
-	if srv_enabled nt4
+	if dirsrv_enabled nt4
 	then
 		NT4_init
 
