@@ -129,6 +129,7 @@ options 	AHD_REG_PRETTY_PRINT	# Print register bitfields in debug
 					# output.  Adds ~215k to driver.
 device		amd		# AMD 53C974 (Tekram DC-390(T))
 device		hptiop		# Highpoint RocketRaid 3xxx series
+device		isci		# Intel C600 SAS controllers
 device		isp		# Qlogic family
 #device		ispfw		# Firmware for QLogic HBAs- normally a module
 device		mpt		# LSI-Logic MPT-Fusion
