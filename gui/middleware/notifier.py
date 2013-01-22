@@ -35,6 +35,7 @@ actions.
 """
 
 from collections import OrderedDict
+from decimal import Decimal
 import ctypes
 import errno
 import glob
@@ -3257,6 +3258,18 @@ class notifier:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
+    def _zfs_size_to_bytes(self, size):
+        if 'K' in size:
+            return Decimal(size.replace('K', '')) * 1024
+        elif 'M' in size:
+            return Decimal(size.replace('M', '')) * 1048576
+        elif 'G' in size:
+            return Decimal(size.replace('M', '')) * 1073741824
+        elif 'T' in size:
+            return Decimal(size.replace('M', '')) * 1099511627776
+        else:
+            return size
+
     def zfs_snapshot_list(self, path=None):
         fsinfo = dict()
 
@@ -3286,7 +3299,9 @@ class notifier:
                         ('fullname', snapname),
                         ('name', name),
                         ('used', used),
+                        ('usedb', float(self._zfs_size_to_bytes(used))),
                         ('refer', refer),
+                        ('referb', float(self._zfs_size_to_bytes(refer))),
                         ('mostrecent', mostrecent),
                         ('parent', 'filesystem' if fs not in zvols else 'volume'),
                         ]))

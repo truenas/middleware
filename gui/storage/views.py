@@ -144,6 +144,11 @@ def snapshots_data(request):
         else:
             r = None
 
+    fieldmap = {
+        'used': 'usedb',
+        'refer': 'referb',
+    }
+
     for key in request.GET.keys():
         reg = re.search(r'sort\((?P<sign>.)(?P<field>.+?)\)', key)
         if reg:
@@ -152,6 +157,8 @@ def snapshots_data(request):
                 rev = True
             else:
                 rev = False
+            field = fieldmap.get(field, field)
+            log.error("filter really by: %s", field)
             if field in zfsnap_list[0]:
                 zfsnap_list.sort(key=lambda item: item[field], reverse=rev)
 
