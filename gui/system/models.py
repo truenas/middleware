@@ -95,6 +95,13 @@ class Settings(Model):
             max_length=120,
             verbose_name=_("Syslog server")
             )
+    stg_directoryservice = models.CharField(
+            max_length=120,
+            blank=True,
+            choices=choices.DIRECTORY_SERVICE_CHOICES,
+            verbose_name=_("Directory Service"),
+            )
+
 
     class Meta:
         verbose_name = _("Settings")

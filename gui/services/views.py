@@ -38,6 +38,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services import models
+from freenasUI.services.directoryservice import DirectoryService
 
 log = logging.getLogger("services.views")
 
@@ -96,9 +97,12 @@ def plugins(request):
 def core(request):
 
     try:
-        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+        directoryservice = DirectoryService.objects.order_by("-id")[0]
     except IndexError:
-        activedirectory = models.ActiveDirectory.objects.create()
+        try:
+            directoryservice = DirectoryService.objects.create()
+        except:
+            directoryservice = None
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]
@@ -155,11 +159,6 @@ def core(request):
     except IndexError:
         ups = models.UPS.objects.create()
 
-    try:
-        ldap = models.LDAP.objects.order_by("-id")[0]
-    except IndexError:
-        ldap = models.LDAP.objects.create()
-
     plugins = None
     try:
         if notifier().plugins_jail_configured():
@@ -181,9 +180,8 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'activedirectory': activedirectory,
-        'ldap': ldap,
         'plugins': plugins,
+        'directoryservice': directoryservice,
         })
 
 
@@ -208,12 +206,12 @@ def servicesToggleView(request, formname):
         'ftp_toggle': 'ftp',
         'tftp_toggle': 'tftp',
         'ssh_toggle': 'ssh',
-        'activedirectory_toggle': 'activedirectory',
         'ldap_toggle': 'ldap',
         'rsync_toggle': 'rsync',
         'smartd_toggle': 'smartd',
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
+        'directoryservice_toggle': 'directoryservice',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
@@ -221,68 +219,32 @@ def servicesToggleView(request, formname):
 
     enabled_svcs = []
     disabled_svcs = []
+    directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
 
-    # Do not allow LDAP and AD to be enabled simultaniously
-    opposing_service = None
-    opp_svc_entry = None
-    if changing_service == "ldap":
-        opposing_service = "activedirectory"
-    if changing_service == "activedirectory":
-        opposing_service = "ldap"
     svc_entry = models.services.objects.get(srv_service=changing_service)
-    if opposing_service:
-        opp_svc_entry = models.services.objects.get(
-            srv_service=opposing_service)
+    if changing_service == "directoryservice": 
+        directoryservice = DirectoryService.objects.order_by("-id")[0]
+       
+        for svc in directory_services:
+            if svc != directoryservice.svc:
+                notifier().stop(svc)
 
-    # Turning things off is always ok
+        if svc_entry.srv_enable == 1:
+            started = notifier().start(directoryservice.svc)
+            if models.services.objects.get(srv_service='cifs').srv_enable:
+                enabled_svcs.append('cifs')
+        else:
+            started = notifier().stop(directoryservice.svc)
+            if not models.services.objects.get(srv_service='cifs').srv_enable:
+                disabled_svcs.append('cifs')
+
     if svc_entry.srv_enable:
         svc_entry.srv_enable = 0
     else:
-        if (opposing_service and
-                not opp_svc_entry.srv_enable == 1 or
-                not opposing_service):
-            svc_entry.srv_enable = 1
+        svc_entry.srv_enable = 1
+    svc_entry.save()
 
-    if changing_service != 'activedirectory':
-        svc_entry.save()
-
-    #
-    # forcestop then start to make sure the service is of the same status.
-    #
-    # Active Directory and LDAP are special cases, they are also mutually
-    # exclusive. It would be nice if they weren't, ... another time,
-    # another place. The return status from notifier needs to be checked
-    # to make sure that we were able to join the AD or LDAP domain.
-    #
-    if changing_service == "ldap":
-        if svc_entry.srv_enable == 1:
-            started = notifier()._start_ldap()
-            if models.services.objects.get(srv_service='cifs').srv_enable:
-                enabled_svcs.append('cifs')
-        else:
-            started = notifier()._stop_ldap()
-            if not models.services.objects.get(srv_service='cifs').srv_enable:
-                disabled_svcs.append('cifs')
-
-    elif changing_service == "activedirectory":
-        if svc_entry.srv_enable == 1:
-            svc_entry.save()
-            started = notifier().start("activedirectory") 
-            if models.services.objects.get(srv_service='cifs').srv_enable:
-                enabled_svcs.append('cifs')
-        else:
-            started = notifier().stop("activedirectory")
-            svc_entry.save()
-            if not models.services.objects.get(srv_service='cifs').srv_enable:
-                disabled_svcs.append('cifs')
-
-    elif changing_service == "plugins":
-        if svc_entry.srv_enable == 1:
-            started = notifier().start("plugins_jail")
-        else:
-            started = notifier().stop("plugins_jail")
-
-    else:
+    if changing_service != 'directoryservice':
         started = notifier().restart(changing_service)
 
     error = False
@@ -294,6 +256,7 @@ def servicesToggleView(request, formname):
             message = _("The service could not be stopped.")
             svc_entry.srv_enable = 1
             svc_entry.save()
+
     elif started is False:
         status = 'off'
         if svc_entry.srv_enable == 1:
@@ -301,11 +264,9 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ldap', 'activedirectory', 'ups'):
+            if changing_service in ('ups', 'plugins_jail') or \
+                changing_service in directory_services:
                 notifier().stop(changing_service)
-            elif changing_service == 'plugins':
-                notifier().stop('plugins_jail')
-
     else:
         if svc_entry.srv_enable == 1:
             status = 'on'

@@ -473,6 +473,38 @@ class UPSForm(ModelForm):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
 
 
+class NT4(ModelForm):
+    nt4_adminpw2 = forms.CharField(max_length=50,
+            label=_("Confirm Administrator Password"),
+            widget=forms.widgets.PasswordInput(),
+            required=False,
+            )
+
+    class Meta:
+        model = models.NT4
+        widgets = {
+            'nt4_adminpw': forms.widgets.PasswordInput(render_value=False),
+            }
+
+    def __init__(self, *args, **kwargs):
+        super(NT4, self).__init__(*args, **kwargs)
+        if self.instance.nt4_adminpw:
+            self.fields['nt4_adminpw'].required = False
+
+    def clean_nt4_adminpw2(self):
+        password1 = self.cleaned_data.get("nt4_adminpw")
+        password2 = self.cleaned_data.get("nt4_adminpw2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("nt4_adminpw"):
+            cdata['nt4_adminpw'] = self.instance.nt4_adminpw
+        return cdata
+
+
 class ActiveDirectoryForm(ModelForm):
     ad_adminpw2 = forms.CharField(max_length=50,
             label=_("Confirm Administrator Password"),
@@ -548,6 +580,11 @@ class ActiveDirectoryForm(ModelForm):
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
             raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
+
+
+class NIS(ModelForm):
+    class Meta:
+        model = models.NIS
 
 
 class LDAPForm(ModelForm):

@@ -660,3 +660,10 @@ SFTP_LOG_FACILITY = (
     ('LOCAL6', _('Local 6')),
     ('LOCAL7', _('Local 7')),
     )
+
+DIRECTORY_SERVICE_CHOICES = (
+    ('activedirectory', _('Active Directory')),
+    ('ldap', _('LDAP')),
+    ('nt4', _('NT4 Domain')),
+    ('nis', _('NIS')),
+)

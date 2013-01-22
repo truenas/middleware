@@ -479,6 +479,16 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd forcestop")
         self.__system("/usr/sbin/service rsyncd restart")
 
+    def _start_nis(self):
+        log.debug("XXX: _start_nis")
+        pass
+    def _restart_nis(self):
+        log.debug("XXX: _restart_nis")
+        pass
+    def _stop_nis(self):
+        log.debug("XXX: _stop_nis")
+        pass
+
     def _start_ldap(self):
         from freenasUI.services import models
 
@@ -587,6 +597,16 @@ class notifier:
 
     def _clear_activedirectory_config(self):
         self.__system("/bin/rm -f /etc/ActiveDirectory/config")
+
+    def _start_nt4(self):
+        log.debug("XXX: _start_nt4")
+        pass
+    def _restart_nt4(self):
+        log.debug("XXX: _restart_nt4")
+        pass
+    def _stop_nt4(self):
+        log.debug("XXX: _stop_nt4")
+        pass
 
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory,

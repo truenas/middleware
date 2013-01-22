@@ -1367,6 +1367,40 @@ class SSH(Model):
             )
 
 
+class NT4(Model):
+    nt4_netbiosname = models.CharField(
+            max_length=120,
+            verbose_name=_("NetBIOS Name"),
+            help_text=_("System hostname")
+            )
+    nt4_workgroup = models.CharField(
+            max_length=120,
+            verbose_name=_("Workgroup Name"),
+            help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
+            )
+    nt4_adminname = models.CharField(
+            max_length=120,
+            verbose_name=_("Administrator Name"),
+            help_text=_("Domain Administrator account name")
+            )
+    nt4_adminpw = models.CharField(
+            max_length=120,
+            verbose_name=_("Administrator Password"),
+            help_text=_("Domain Administrator account password.")
+            )
+
+    def __init__(self, *args, **kwargs):
+        super(NT4, self).__init__(*args, **kwargs)
+        self.svc = 'nt4'
+
+    class Meta:
+        verbose_name = _("NT4 Domain")
+        verbose_name_plural = _("NT4 Domain")
+
+    class FreeAdmin:
+        deletable = False
+
+
 class ActiveDirectory(Model):
     ad_domainname = models.CharField(
             max_length=120,
@@ -1452,6 +1486,10 @@ class ActiveDirectory(Model):
             help_text=_("Timeout for AD DNS queries."),
             )
 
+    def __init__(self, *args, **kwargs):
+        super(ActiveDirectory, self).__init__(*args, **kwargs)
+        self.svc = 'activedirectory'
+
     class Meta:
         verbose_name = _("Active Directory")
         verbose_name_plural = _("Active Directory")
@@ -1471,6 +1509,26 @@ class ActiveDirectory(Model):
             'ad_timeout',
             'ad_dns_timeout'
             )
+
+
+class NIS(Model):
+    nis_domain = models.CharField(
+        max_length=120,
+        verbose_name=_("NIS domain"),
+        help_text=_("NIS domain name")
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(NIS, self).__init__(*args, **kwargs)
+        self.svc = 'nis'
+
+    class Meta:
+        verbose_name = _("NIS Domain")
+        verbose_name_plural = _("NIS Domain")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class LDAP(Model):
     ldap_hostname = models.CharField(
@@ -1558,6 +1616,10 @@ class LDAP(Model):
             blank=True,
             help_text=_("These parameters are added to ldap.conf.")
             )
+
+    def __init__(self, *args, **kwargs):
+        super(LDAP, self).__init__(*args, **kwargs)
+        self.svc = 'ldap'
 
     class Meta:
         verbose_name = _("LDAP")
