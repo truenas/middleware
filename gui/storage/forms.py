@@ -327,7 +327,7 @@ class VolumeWizardForm(forms.Form):
                                 }
                             )
 
-                if len(disks) != len(list(iter(vdev))):
+                if len(disks) > 0 and len(disks) != len(list(iter(vdev))):
                     self.fields['force_vdev'] = forms.BooleanField(
                         required=True,
                         label=_("Force Volume Add"),
