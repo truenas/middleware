@@ -219,9 +219,17 @@ def servicesToggleView(request, formname):
 
     enabled_svcs = []
     disabled_svcs = []
-    directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
 
     svc_entry = models.services.objects.get(srv_service=changing_service)
+    if svc_entry.srv_enable:
+        svc_entry.srv_enable = 0
+    else:
+        svc_entry.srv_enable = 1
+
+    if changing_service != 'directoryservice':
+        svc_entry.save()
+
+    directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
     if changing_service == "directoryservice": 
         directoryservice = DirectoryService.objects.order_by("-id")[0]
        
@@ -230,19 +238,15 @@ def servicesToggleView(request, formname):
                 notifier().stop(svc)
 
         if svc_entry.srv_enable == 1:
+            svc_entry.save()
             started = notifier().start(directoryservice.svc)
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
             started = notifier().stop(directoryservice.svc)
+            svc_entry.save()
             if not models.services.objects.get(srv_service='cifs').srv_enable:
                 disabled_svcs.append('cifs')
-
-    if svc_entry.srv_enable:
-        svc_entry.srv_enable = 0
-    else:
-        svc_entry.srv_enable = 1
-    svc_entry.save()
 
     if changing_service != 'directoryservice':
         started = notifier().restart(changing_service)

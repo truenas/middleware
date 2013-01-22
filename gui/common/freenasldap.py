@@ -69,7 +69,7 @@ FREENAS_AD_LOCAL_USERCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".users")
 FREENAS_AD_LOCAL_GROUPCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".groups")
 
 FREENAS_AD_SEPARATOR = get_freenas_var("FREENAS_AD_SEPARATOR", '\\')
-FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE", "/etc/ActiveDirectory/config")
+FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE", "/etc/directoryservice/ActiveDirectory/config")
 
 FREENAS_LDAP_CACHE_EXPIRE = get_freenas_var("FREENAS_LDAP_CACHE_EXPIRE", 60)
 FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)

@@ -597,17 +597,25 @@ class notifier:
         self._start_ldap()
 
     def _clear_activedirectory_config(self):
-        self.__system("/bin/rm -f /etc/ActiveDirectory/config")
+        self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
+
+    def _started_nt4(self):
+        if self.__system("/etc/directoryservice/NT4/ctl status") == 0:
+            return True
+        else:
+            return False
 
     def _start_nt4(self):
-        log.debug("XXX: _start_nt4")
-        pass
+        log.debug("/etc/directoryservice/NT4/ctl start")
+        self.__system("/etc/directoryservice/NT4/ctl start")
+
     def _restart_nt4(self):
-        log.debug("XXX: _restart_nt4")
-        pass
+        log.debug("/etc/directoryservice/NT4/ctl restart")
+        self.__system("/etc/directoryservice/NT4/ctl restart")
+
     def _stop_nt4(self):
-        log.debug("XXX: _stop_nt4")
-        pass
+        log.debug("/etc/directoryservice/NT4/ctl stop")
+        self.__system("/etc/directoryservice/NT4/ctl stop")
 
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory,
@@ -631,13 +639,13 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        self.__system("/etc/ActiveDirectory/ctl start")
+        self.__system("/etc/directoryservice/ActiveDirectory/ctl start")
 
     def _stop_activedirectory(self):
-        self.__system("/etc/ActiveDirectory/ctl stop")
+        self.__system("/etc/directoryservice/ActiveDirectory/ctl stop")
 
     def _restart_activedirectory(self):
-        self.__system("/etc/ActiveDirectory/ctl restart")
+        self.__system("/etc/directoryservice/ActiveDirectory/ctl restart")
 
     def _restart_syslogd(self):
         self.__system("/usr/sbin/service ix-syslogd quietstart")

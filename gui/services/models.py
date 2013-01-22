@@ -1368,6 +1368,11 @@ class SSH(Model):
 
 
 class NT4(Model):
+    nt4_dcname = models.CharField(
+            max_length=120,
+            verbose_name=_("Domain Controller"),
+            help_text=_("Hostname of the domain controller to use."),
+            )
     nt4_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS Name"),
