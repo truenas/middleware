@@ -85,7 +85,7 @@ generate_krb5_conf()
 
 generate_kerberos_files()
 {
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory
 	then
 		generate_krb5_conf
 	fi

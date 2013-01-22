@@ -1,0 +1,1121 @@
+#!/bin/sh
+#-
+# Copyright (c) 2013 iXsystems, Inc., All rights reserved.
+#   Written by:	Xin LI
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+. /etc/rc.subr
+
+#
+#	Active Directory Functions
+#
+: ${AD_CONFIG_PATH:="/etc/directoryservice/ActiveDirectory"}
+: ${AD_CONFIG_FILE:="${AD_CONFIG_PATH}/config"}
+: ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
+: ${AD_NET_ADS_TIMEOUT:="10"}
+: ${AD_DNS_TIMEOUT:="10"}
+
+__AD_proto()
+{
+	local proto="${1}"
+	local default="${2}"
+
+	if [ -z "${default}" ]
+	then
+		default="tcp"
+	fi
+
+	if [ -z "${proto}" ]
+	then
+		proto="${default}"
+	fi
+
+	proto="$(echo ${proto}|tr A-Z a-z)"
+	if [ "${proto}" != "tcp" -a "${proto}" != "udp" ]
+	then
+		proto="${default}"
+	fi
+
+	echo "${proto}"
+}
+
+__AD_get_SRV_records()
+{
+	local host="${1}"
+	local proto=$(__AD_proto "${2}" tcp)
+	
+	AD_log "__AD_get_SRV_records: host=${host}"
+
+	if [ -z "${host}" ]
+	then
+		return 1
+	fi
+
+	AD_log "__AD_get_SRV_records: dig -t srv +short +nocomments ${host}"
+	dig -t srv +short +nocomments "${host}" | egrep -v '^[[:space:]]*;;' | sort -n +0 +1
+
+	return $?
+}
+
+__AD_get_SRV_host()
+{
+	local tmpfile="${1}"
+	local proto=$(__AD_proto "${2}" tcp)
+
+	if [ -z "${tmpfile}" -o ! -s "${tmpfile}" ]
+	then
+		return 1
+	fi
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
+		local port=$(echo "${line}"|awk '{ print $3 }')
+		local nc_timeout="$(AD_get dns_timeout)"
+		local nc_args=
+
+		AD_log "__AD_get_SRV_host: trying ${host}:${port}"
+
+		if [ "${proto}" = "tcp" ]
+		then
+			nc_args="-z -d -w ${nc_timeout}"
+
+		elif [ "${proto}" = "udp" ]
+		then
+			nc_args="-z -d -w ${nc_timeout} -u"
+		fi
+		
+		#
+		# UDP will always return that it was able to connect.
+		# Is there a better way to do this?
+		#
+		/usr/bin/nc ${nc_args} "${host}" "${port}" >/dev/null 2>&1
+		if [ "$?" = "0" ]
+		then
+			exec 0<&3
+			echo "${host}:${port}"
+
+			AD_log "__AD_get_SRV_host: Okay"
+			return 0
+		fi
+
+		AD_log "__AD_get_SRV_host: Fail"
+	done
+	exec 0<&3
+
+	return 1
+}
+
+__AD_tc()
+{
+	local timeout=$1
+	shift
+	local args="$*"
+
+	local i=0
+	local ret=1
+	local lf="$(mktemp /tmp/tmp.XXXXXX)"
+
+	lockf -k -s -t 0 ${lf} ${args} &
+	if [ "$?" != "0" ]
+	then
+		return ${ret}
+	fi
+
+	ret=2
+	while [ ${i} -lt ${timeout} ]
+	do
+		sleep 1
+
+		if lockf -k -s -t 0 ${lf} /usr/bin/true
+		then
+			rm -f ${lf}
+			ret=0
+			break
+		fi
+
+		: $((i += 1))
+	done
+
+	kill $! >/dev/null 2>&1
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill ${pid} >/dev/null 2>&1
+	fi
+
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill -9 ${pid} >/dev/null 2>&1
+	fi
+
+	rm -f ${lf}
+	return ${ret}
+}
+
+__AD_get_SRV_record()
+{
+	local host="${1}"
+	local proto=$(__AD_proto "${2}" tcp)
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	if [ -z "${proto}" ]
+	then
+		
+		proto="tcp"
+	fi
+
+	AD_log "__AD_get_SRV_record: host=${host}"
+	__AD_get_SRV_records "${host}" > "${tmpfile}"
+
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_get_root_domain()
+{
+	local domain="${1}"
+	local rdnc="$(AD_query_rootDSE|egrep '^rootDomainNamingContext'|cut -f2- -d:|xargs)"
+	local dnsroot="$(AD_get_partition "${rdnc}" dnsRoot|egrep '^dnsRoot'|cut -f2- -d:|xargs)"
+
+	echo "${dnsroot}"
+}
+
+AD_locate_domain_controllers_by_guid()
+{
+	local domain="${1}"
+	local guid="${2}"
+	local record
+
+	AD_log "AD_locate_domain_controllers_by_guid: domain=${domain}, guid=${guid}"
+
+	if [ -z "${domain}" -o -z "${guid}" ]
+	then
+		return 1
+	fi	
+
+	record="_ldap._tcp.${guid}.domains._msdcs.${domain}"
+
+	AD_log "AD_locate_domain_controllers_by_guid: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_domain_controller_by_guid()
+{
+	local domain="${1}"
+	local guid="${2}"
+	local record
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_domain_controllers_by_guid "${domain}" "${guid}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_domain_controllers()
+{
+	local domain="${1}"
+	local site="${2}"
+	local record
+
+	AD_log "AD_locate_domain_controllers: domain=${domain}, site=${site}"
+
+	if [ -z "${domain}" ]
+	then
+		return 1
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_ldap._tcp.dc._msdcs.${domain}"
+	else
+		record="_ldap._tcp.${site}._sites.dc._msdcs.${domain}"
+	fi
+
+	AD_log "AD_locate_domain_controllers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_domain_controller()
+{
+	local domain="${1}"
+	local site="${2}"
+	local record
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_domain_controllers "${domain}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return $?
+}
+
+AD_locate_primary_domain_controllers()
+{
+	local domain="${1}"
+	local record
+
+	AD_log "AD_locate_primary_domain_controllers: domain=${domain}"
+
+	if [ -z "${domain}" ]
+	then
+		return 1
+	fi
+
+	record="_ldap._tcp.pdc._msdcs.${domain}"
+
+	AD_log "AD_locate_primary_domain_controllers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_primary_domain_controller()
+{
+	local domain="${1}"
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_primary_domain_controllers "${domain}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_ldap_servers()
+{
+	local domain="${1}"
+	local site="${2}"
+	local record
+
+	AD_log "AD_locate_ldap_servers: domain=${domain}, site=${site}"
+
+	if [ -z "${domain}" ]
+	then
+		return 1
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_ldap._tcp.${domain}"
+	else
+		record="_ldap._tcp.${site}._sites.${domain}"
+	fi
+
+	AD_log "AD_locate_ldap_servers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_ldap_server()
+{
+	local domain="${1}"
+	local site="${2}"
+	local record
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_ldap_servers "${domain}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_forest_global_catalog_servers()
+{
+	local forest="${1}"
+	local site="${2}"
+	local record
+
+	AD_log "AD_locate_forest_global_catalog_servers: forest=${forest}, site=${site}"
+
+	if [ -z "${domain}" ]
+	then
+		return 1
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_ldap._tcp.gc._msdcs.${forest}"
+	else
+		record="_ldap._tcp.${site}._sites.gc._msdcs.${forest}"
+	fi
+
+	AD_log "AD_locate_forest_global_catalog_servers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_forest_global_catalog_server()
+{
+	local forest="${1}"
+	local site="${2}"
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_forest_global_catalog_servers "${forest}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_domain_global_catalog_servers()
+{
+	local domain="${1}"
+	local site="${2}"
+
+	AD_log "AD_locate_domain_global_catalog_servers: domain=${domain}, site=${site}"
+
+	if [ -z "${domain}" ]
+	then
+		return 1
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_gc._tcp.${domain}"
+	else
+		record="_gc._tcp.${site}._sites.${domain}"
+	fi
+
+	AD_log "AD_locate_global_catalogservers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_domain_global_catalog_server()
+{
+	local domain="${1}"
+	local site="${2}"
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_domain_global_catalog_servers "${domain}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_kerberos_servers()
+{
+	local domain="${1}"
+	local proto="${2}"
+	local site="${3}"
+	local record
+
+	AD_log "AD_locate_kerberos_servers: domain=${domain}, proto=${proto}, site=${site}"
+
+	if [ -z "${proto}" ]
+	then
+		proto="udp"
+	fi
+
+	proto="$(echo ${proto}|tr A-Z a-z)"
+	if [ "${proto}" != "tcp" -a "${proto}" != "udp" ]
+	then
+		proto="udp"
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_kerberos._${proto}.${domain}"
+	else
+		record="_kerberos._${proto}.${site}._sites.${domain}"
+	fi
+
+	AD_log "AD_locate_kerberos_servers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_kerberos_server()
+{
+	local domain="${1}"
+	local proto="${2}"
+	local site="${3}"
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_kerberos_servers "${domain}" "${proto}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+AD_locate_kpasswd_servers()
+{
+	local domain="${1}"
+	local proto="${2}"
+	local site="${3}"
+	local record
+
+	AD_log "AD_locate_kpasswd_servers: domain=${domain}, proto=${proto}, site=${site}"
+
+	if [ -z "${proto}" ]
+	then
+		proto="udp"
+	fi
+
+	proto="$(echo ${proto}|tr A-Z a-z)"
+	if [ "${proto}" != "tcp" -a "${proto}" != "udp" ]
+	then
+		proto="udp"
+	fi
+
+	if [ -z "${site}" ]
+	then
+		record="_kpasswd._${proto}.${domain}"
+	else
+		record="_kpasswd._${proto}.${site}._sites.${domain}"
+	fi
+
+	AD_log "AD_locate_kpasswd_servers: record=${record}"
+	__AD_get_SRV_records "${record}"
+
+	return $?
+}
+
+AD_get_kpasswd_server()
+{
+	local domain="${1}"
+	local proto="${2}"
+	local site="${3}"
+	local res
+
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	AD_locate_kpasswd_servers "${domain}" "${proto}" "${site}" > "${tmpfile}"
+	__AD_get_SRV_host "${tmpfile}"
+	res=$?
+
+	rm "${tmpfile}"
+	return ${res}
+}
+
+__do_AD_query()
+{
+	local dchost="${1}"
+	local dcport="${2}"
+	local basedn="${3}"
+	local binddn="${4}"
+	local adminpw="${5}"
+	local scope="${6}"
+	local filter="${7}"
+	local attributes="${8}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+
+	: ${dchost:="$(AD_get dchost)"}
+	: ${dcport:="$(AD_get dcport)"}
+	: ${basedn:="$(AD_get basedn)"}
+	: ${binddn:="$(AD_get binddn)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+	: ${scope:="sub"}
+	: ${filter:="(objectclass=*)"}
+
+	cat<<-__EOF__>"${tmpfile}"
+	/usr/local/bin/ldapsearch \
+	    -H "ldap://${dchost}:${dcport}" \
+	    -b "${basedn}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -s "${scope}" \
+	    -x \
+	    -z 0 \
+	    -E 'pr=16384/noprompt' \
+	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
+}
+
+AD_query()
+{
+	local basedn="${1}"
+	local filter="${2}"
+
+	shift
+	local attributes="${*}"
+
+	: ${basedn:="$(AD_get basedn)"}
+	: ${filter:='(objectclass=*)'}
+
+	AD_log "AD_query: basedn = ${basedn}, filter = ${filter}, attributes = ${attributes}"
+
+	local dchost="$(AD_get dchost)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
+
+	__do_AD_query "${dchost}" "${dcport}" "${basedn}" \
+		"${binddn}" "${adminpw}" "sub" "${filter}" \
+		"${attributes}" 2>/dev/null
+}
+
+AD_get_partitions()
+{
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+	local basedn="CN=Partitions,${config}"
+
+	AD_log "AD_get_partitions: config = ${config}, basedn = ${basedn}"
+
+	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
+}
+
+AD_get_partition()
+{
+	local ncname="${1}"
+	shift
+	local attributes="${*}"
+
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+	local basedn="CN=Partitions,${config}"
+
+	AD_log "AD_get_partition: config = ${config}, basedn = ${basedn}, ncname = ${ncname}"
+	AD_query "${basedn}" "ncname=${ncname}" ${attributes}
+}
+
+AD_query_global_catalog()
+{
+	local filter="${1}"
+
+	shift
+	local attributes="${*}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+
+    	: ${filter:='(objectclass=*)'}
+
+	AD_log "AD_query_global_catalog: filter = ${filter}, attributes = ${attributes}"
+
+	local gchost="$(AD_get gchost)"
+	local gcport="$(AD_get gcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
+
+	cat<<-__EOF__>"${tmpfile}"
+	/usr/local/bin/ldapsearch \
+	    -H "ldap://${gchost}:${gcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s sub \
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
+	    "${filter}" \
+	    ${attributes}
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
+}
+
+AD_query_rootDSE()
+{
+	local filter="${1}"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+
+	: ${filter:='(objectclass=*)'}
+
+	AD_log "AD_query_rootDSE: filter = ${filter}, attributes = ${attributes}"
+
+	local dchost="$(AD_get dchost)"
+	local dcport="$(AD_get dcport)"
+	local binddn="$(AD_get binddn)"
+	local adminpw="$(AD_get adminpw)"
+
+	cat<<-__EOF__>"${tmpfile}"
+	/usr/local/bin/ldapsearch \
+	    -H "ldap://${dchost}:${dcport}" \
+	    -D "${binddn}" \
+	    -w "${adminpw}" \
+	    -b "" \
+	    -s base \
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
+	   "${filter}"
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
+}
+
+__escape()
+{
+	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
+}
+
+__unescape()
+{
+	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
+}
+
+__do_AD_get()
+{
+	local prefix="${1}"
+	local name="${2}"
+	local var=\$$(printf "${prefix}${name}")
+	local val=$(eval "echo ${var} 2>/dev/null")
+
+	__unescape "${val}"
+}
+
+AD_get()
+{
+	local vars="${*}"
+	local prefix="__ad_"
+
+	for v in ${vars}
+	do
+		local var=\$$(printf "${v}")
+		local val=$(eval "echo ${var} 2>/dev/null")
+
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else
+			__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		fi
+	done
+}
+
+__do_AD_set()
+{
+	local prefix="${1}"
+	local var="${2}"
+	local val=$(__escape "${3}")
+	local pair="${var}=${val}"
+
+	eval "${prefix}${pair}"
+}
+
+AD_set()
+{
+	local var="${1}"
+	local val="${2}"
+	local prefix="__ad_"
+
+	__do_AD_set "${prefix}" "${var}" "${val}" 2>/dev/null
+}
+
+AD_save()
+{
+	local prefix="__save_"
+	local vars="adminname domainname basedn binddn dcname \
+		dchost dcport gcname gchost gcport krbname krbhost \
+		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
+	
+	for v in ${vars}
+	do
+		__do_AD_set "${prefix}" "${v}" "$(AD_get ${v})"
+	done
+}
+
+AD_restore()
+{
+	local prefix="__save_"
+	local vars="adminname domainname basedn binddn dcname \
+		dchost dcport gcname gchost gcport krbname krbhost \
+		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
+	
+	for v in ${vars}
+	do
+		AD_set "${v}" "$(__do_AD_get ${prefix} ${v})"
+	done
+}
+
+AD_show_config()
+{
+	printf "Active Directory Config:\n"
+	printf "+------------------------------------------+\n"
+	printf "dchost:       %s\n" $(AD_get dchost)
+	printf "dcport:       %d\n" $(AD_get dcport)
+	printf "domainname:   %s\n" $(AD_get domainname)
+	printf "basedn:       %s\n" $(AD_get basedn)
+	printf "adminname:    %s\n" $(AD_get adminname)
+	printf "adminpw:      %s\n" $(AD_get adminpw)
+	printf "workgroup:    %s\n" $(AD_get workgroup)
+	printf "netbiosname:  %s\n" $(AD_get netbiosname)
+	printf "gchost:       %s\n" $(AD_get gchost)
+	printf "gcport:       %d\n" $(AD_get gcport)
+	printf "krbhost:      %s\n" $(AD_get krbhost)
+	printf "krbport:      %d\n" $(AD_get krbport)
+	printf "kpwdhost:     %s\n" $(AD_get kpwdhost)
+	printf "kpwdport:     %d\n" $(AD_get kpwdport)
+	printf "unix:         %s\n" $(AD_get unix_extensions)
+	printf "trusted:      %s\n" $(AD_get allow_trusted_doms)
+	printf "default:      %s\n" $(AD_get use_default_domain)
+	printf "verbose:      %s\n" $(AD_get verbose_logging)
+	printf "timeout:      %s\n" $(AD_get timeout)
+	printf "dns_timeout:  %s\n" $(AD_get dns_timeout)
+	printf "+------------------------------------------+\n"
+}
+
+AD_join_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+	local res
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+
+	AD_log "AD_join_domain: net ads join -U ${adminname}"
+
+	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	res=$?
+
+	local ok="Failed"
+	if [ "${res}" = "0" ]
+	then
+		ok="Successful"
+	fi
+
+	AD_log "AD_join_domain: ${ok}"
+	return ${res}
+}
+
+AD_status_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+	local res
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+
+	AD_log "AD_status_domain: net ads status -U ${adminname}"
+
+	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	res=$?
+
+	local ok="Not okay"
+	if [ "${res}" = "0" ]
+	then
+		ok="Okay"
+	fi
+
+	AD_log "AD_status_domain: ${ok}"
+	return ${res}
+}
+
+AD_leave_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+	local res
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+
+	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
+
+	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	res=$?
+
+	local ok="Failed"
+	if [ "${res}" = "0" ]
+	then
+		ok="Successful"
+	fi
+
+	AD_log "AD_leave_domain: ${ok}"
+	return ${res}
+}
+
+AD_log()
+{
+	local args="$*"
+
+	local on="$(AD_get verbose_logging)"
+	if [ "${on}" = "1" ]
+	then
+		logger -t "ActiveDirectory" ${args} >/dev/null 2>&1
+	fi
+}
+
+
+AD_load_database_values()
+{
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
+	SELECT
+		ad_domainname,
+		ad_adminname,
+		ad_adminpw,
+		ad_workgroup,
+		ad_netbiosname,
+		ad_verbose_logging,
+		ad_unix_extensions,
+		ad_allow_trusted_doms,
+		ad_use_default_domain,
+		ad_dcname,
+		ad_gcname,
+		ad_krbname,
+		ad_kpwdname,
+		ad_timeout,
+		ad_dns_timeout
+ 
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-id	
+
+	LIMIT 1;
+__SQL__
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
+		val=$(echo ${line}|cut -f2- -d=|xargs)
+
+		AD_set "${var}" "${val}"
+	done
+	exec 0<&3
+	rm "${tmpfile}"
+}
+
+AD_generate_config()
+{
+	local vars="\
+		adminname \
+		domainname \
+		basedn \
+		binddn \
+		dcname \
+		dchost \
+		dcport \
+		gcname \
+		gchost \
+		gcport \
+		krbname\
+		krbhost \
+		krbport \
+		kpwdname \
+		kpwdhost \
+		kpwdport \
+		timeout \
+		dns_timeout \
+	"
+
+	: > "${AD_CONFIG_FILE}"
+	for var in ${vars}
+	do
+		local val="$(AD_get ${var})"
+		echo "${var}=\"${val}\"" >> "${AD_CONFIG_FILE}"
+	done
+
+	/bin/chmod 600 "${AD_CONFIG_FILE}"
+}
+
+AD_init()
+{
+	local config_exists=0
+	local verbose=0
+
+	AD_load_database_values
+
+	verbose=$(AD_get verbose_logging)
+
+	if [ -f "${AD_CONFIG_FILE}" ]
+	then
+		AD_log "AD_init: config exists, loading values from ${AD_CONFIG_FILE}"
+
+		. "${AD_CONFIG_FILE}"
+		config_exists=1
+	fi
+
+	if [ "${config_exists}" = "1" ]
+	then
+		return 0
+	fi
+
+	timeout=$(AD_get timeout)
+	if [ -z "${timeout}" ]
+	then
+		timeout="${AD_NET_ADS_TIMEOUT}"
+		AD_set timeout "${timeout}"
+	fi
+
+	dns_timeout=$(AD_get dns_timeout)
+	if [ -z "${dns_timeout}" ]
+	then
+		dns_timeout="${AD_DNS_TIMEOUT}"
+		AD_set dns_timeout "${dns_timeout}"
+	fi
+
+	local adminname=$(AD_get adminname)
+	local domainname=$(AD_get domainname)
+
+	local binddn=$(AD_get binddn)
+	if [ -z "${binddn}" ]
+	then
+		binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+		AD_set binddn "${binddn}"
+	fi	
+	AD_log "AD_init: binddn = $(AD_get binddn)"
+
+	local dcname=$(AD_get dcname)
+	if [ -z "${dcname}" ]
+	then
+		dcname=$(AD_get_domain_controller "${domainname}")
+		AD_set dcname "${dcname}"
+	fi
+
+	local dchost="$(echo "${dcname}"|cut -f1 -d:)"
+	local dcport="$(echo "${dcname}"|cut -f2 -d: -s)"
+	if [ -z "${dcport}" ]
+	then
+		dcport=389
+	fi
+
+	AD_set dchost "${dchost}"
+	AD_set dcport "${dcport}"
+	
+	AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
+
+	local basedn=$(AD_get basedn)
+	if [ -z "${basedn}" ]
+	then
+		basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+		AD_set basedn "${basedn}"
+	fi
+	AD_log "AD_init: basedn = $(AD_get basedn)"
+
+	local gcname=$(AD_get gcname)
+	if [ -z "${gcname}" ]
+	then
+
+		local rd="$(AD_get_root_domain "${domainname}")"
+		gcname="$(AD_get_domain_global_catalog_server "${rd}")"
+		AD_set gcname "${gcname}"
+	fi
+
+	local gchost="$(echo "${gcname}"|cut -f1 -d:)"
+	local gcport="$(echo "${gcname}"|cut -f2 -d: -s)"
+
+	if [ -z "${gcport}" ]
+	then
+		gcport=3268
+	fi
+
+	AD_set gchost "${gchost}"
+	AD_set gcport "${gcport}"
+	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
+
+	local krbname=$(AD_get krbname)
+	if [ -z "${krbname}" ]
+	then
+		krbname="$(AD_get_kerberos_server ${domainname})"
+		AD_set krbname "${krbname}"
+	fi
+
+	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
+	if [ -n "${krbsvc}" ]
+	then
+		AD_set krbsvc "${krbsvc}"
+	fi
+
+	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
+	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"
+
+	if [ -z "${krbport}" ]
+	then
+		krbport=88
+	fi
+
+	AD_set krbhost "${krbhost}"
+	AD_set krbport "${krbport}"
+	AD_log "AD_init: krbhost = $(AD_get krbhost), krbport = $(AD_get krbport)"
+
+	local kpwdname=$(AD_get kpwdname)
+	if [ -z "${kpwdname}" ]
+	then
+		kpwdname="$(AD_get_kpasswd_server ${domainname})"
+		AD_set kpwdname "${kpwdname}"
+	fi
+
+	kpwdhost="$(echo "${kpwdname}"|cut -f1 -d:)"
+	kpwdport="$(echo "${kpwdname}"|cut -f2 -d: -s)"
+
+	if [ -z "${kpwdport}" ]
+	then
+		kpwdport=464
+	fi
+
+	AD_set kpwdhost "${kpwdhost}"
+	AD_set kpwdport "${kpwdname}"
+	AD_log "AD_init: kpwdhost = $(AD_get kpwdhost), kpwdport = $(AD_get kpwdport)"
+
+	AD_generate_config
+	return 0
+}

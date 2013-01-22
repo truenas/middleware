@@ -16,7 +16,7 @@ kerberos_start()
 	local res=1
 	local pwfile
 
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory
 	then
 		AD_init
 
@@ -56,7 +56,7 @@ kerberos_status()
 {
 	local res=1
 
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory
 	then
 		AD_init
 

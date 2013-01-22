@@ -161,8 +161,19 @@ _interface_config()
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | xargs echo -n
 		echo \"
 	done
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_ipv4address, int_v4netmaskbit, int_dhcp, int_ipv6address, int_v6netmaskbit, int_ipv6auto, network_vlan.vlan_vint, network_vlan.vlan_tag FROM network_interfaces INNER JOIN network_vlan ON network_interfaces.int_interface=network_vlan.vlan_vint" | \
+	while read ipv4addr ipv4netmask dodhcp ipv6addr ipv6netmask doipv6auto vlan_vint vlan_tag; do
+		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+		echo -n ifconfig_${vlan_vint}=\"
+			if [ "${dodhcp}" = "1" ]; then
+				echo DHCP\"
+			elif [ -n "${ipv4addr}" ]; then
+				echo "inet ${ipv4addr}/${ipv4netmask}\""
+			else
+				echo \"
+			fi
+	done
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan WHERE vlan_vint NOT IN (SELECT int_interface from network_interfaces);" | \
 	while read vlan_vint vlan_tag; do
 		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
 	done
@@ -332,7 +343,6 @@ _gen_conf()
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
 	_bool_svcconfig samba_enable cifs
-	_bool_svcconfig winbindd_enable activedirectory
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
@@ -340,6 +350,12 @@ _gen_conf()
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadyn_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
+
+	if dirsrv_enabled activedirectory || dirsrv_enabled nt4; then
+		_bool_svcconfig winbindd_enable 1
+	else
+		_bool_svcconfig winbindd_enable 0
+	fi
 
 	local _avahi_srv_enable
 

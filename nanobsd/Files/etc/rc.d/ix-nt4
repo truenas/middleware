@@ -1,0 +1,105 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nt4
+# REQUIRE: ix-samba
+# BEFORE: winbindd
+
+. /etc/rc.freenas
+
+
+get_workgroup()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		nt4_workgroup
+
+	FROM
+		services_nt4
+
+	ORDER BY
+		-services_nt4.id
+
+	LIMIT 1;
+	"
+}
+
+get_cifs_homedir()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_homedir
+
+	FROM
+		services_cifs
+
+	ORDER BY
+		-services_cifs.id
+
+	LIMIT 1;
+	"
+}
+
+setup_homedirs()
+{
+	local cifs_home="$(get_cifs_homedir)"
+
+	if [ -n "${cifs_home}" ]
+	then
+		ln -sfh "$cifs_home" "/var/home"
+
+	elif [ ! -d "/var/home" ]
+	then
+		mkdir /var/home
+	fi
+}
+
+nt4_start()
+{
+	if srv_enabled nt4
+	then
+		NT4_init
+
+		NT4_log "nt4_start: trying to join domain"
+		if ! NT4_join_domain
+		then
+			/etc/directoryservice/NT4/ctl stop
+			return 1
+		fi
+
+		setup_homedirs
+		create_cache_filesystem
+		mkdir -p ${FREENAS_CACHEDIR}/.samba
+	fi
+	
+	return 0
+}
+
+nt4_status()
+{
+	NT4_init
+
+	NT4_log "NT4_status: checking status"
+	NT4_status_domain >/dev/null
+}
+
+nt4_stop()
+{
+	NT4_init
+
+        /usr/local/www/freenasUI/tools/cachetool.py expire
+
+	NT4_log "nt4_stop: leaving domain"
+	NT4_leave_domain
+}
+
+
+name="ix-nt4"
+start_cmd='nt4_start'
+status_cmd='nt4_status'
+stop_cmd='nt4_stop'
+            
+load_rc_config $name
+run_rc_command "$1"

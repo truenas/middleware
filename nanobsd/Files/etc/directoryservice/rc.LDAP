@@ -1,0 +1,164 @@
+#!/bin/sh
+#-
+# Copyright (c) 2013 iXsystems, Inc., All rights reserved.
+#   Written by:	Xin LI
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+. /etc/rc.subr
+
+#
+#	LDAP settings
+#
+: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
+: ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
+: ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
+: ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
+: ${LDAP_TIMEOUT:="0"}
+
+
+__do_LDAP_get()
+{
+	local prefix="${1}"
+	local name="${2}"
+	local var=\$$(printf "${prefix}${name}")
+	local val=$(eval "echo ${var} 2>/dev/null")
+
+	__unescape "${val}"
+}
+
+LDAP_get()
+{
+	local vars="${*}"
+	local prefix="__ldap_"
+
+	for v in ${vars}
+	do
+		local var=\$$(printf "${v}")
+		local val=$(eval "echo ${var} 2>/dev/null")
+
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else
+			__do_LDAP_get "${prefix}" "${v}" 2>/dev/null
+		fi
+	done
+}
+
+__do_LDAP_set()
+{
+	local prefix="${1}"
+	local var="${2}"
+	local val=$(__escape "${3}")
+	local pair="${var}=${val}"
+
+	eval "${prefix}${pair}"
+}
+
+LDAP_set()
+{
+	local var="${1}"
+	local val="${2}"
+	local prefix="__ldap_"
+
+	__do_LDAP_set "${prefix}" "${var}" "${val}" 2>/dev/null
+}
+
+LDAP_show_config()
+{
+	printf "LDAP Config:\n"
+	printf "+------------------------------------------+\n"
+	printf "hostname:          %s\n" $(LDAP_get hostname)
+	printf "basedn:            %s\n" $(LDAP_get basedn)
+	printf "anonbind:          %s\n" $(LDAP_get anonbind)
+	printf "rootbasedn:        %s\n" $(LDAP_get rootbasedn)
+	printf "rootbindpw:        %s\n" $(LDAP_get rootbindpw)
+	printf "pwencryption:      %s\n" $(LDAP_get pwencryption)
+	printf "usersuffix:        %s\n" $(LDAP_get usersuffix)
+	printf "groupsuffix:       %s\n" $(LDAP_get groupsuffix)
+	printf "passwordsuffix:    %s\n" $(LDAP_get passwordsuffix)
+	printf "machinesuffix:     %s\n" $(LDAP_get machinesuffix)
+	printf "ssl:               %s\n" $(LDAP_get ssl)
+	printf "tls_cacertfile:    %s\n" $(LDAP_get tls_cacertfile)
+	#printf "options:           %s\n" $(LDAP_get options)
+	printf "+------------------------------------------+\n"
+}
+
+LDAP_log()
+{
+	local args="$*"
+
+	local on="$(LDAP_get verbose_logging)"
+	if [ "${on}" = "1" ]
+	then
+		logger -t "LDAP" ${args} >/dev/null 2>&1
+	fi
+}
+
+LDAP_load_database_values()
+{
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
+	SELECT
+		ldap_hostname,
+		ldap_basedn,
+		ldap_anonbind,
+		ldap_rootbasedn,
+		ldap_rootbindpw,
+		ldap_pwencryption,
+		ldap_usersuffix,
+		ldap_groupsuffix,
+		ldap_passwordsuffix,
+		ldap_machinesuffix,
+		ldap_ssl,
+		ldap_tls_cacertfile,
+		ldap_options
+ 
+	FROM
+		services_ldap
+
+	ORDER BY
+		-id	
+
+	LIMIT 1;
+__SQL__
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
+		val=$(echo ${line}|cut -f2- -d=|xargs)
+
+		LDAP_set "${var}" "${val}"
+	done
+	exec 0<&3
+	rm "${tmpfile}"
+}
+
+LDAP_init()
+{
+	LDAP_load_database_values
+}
+

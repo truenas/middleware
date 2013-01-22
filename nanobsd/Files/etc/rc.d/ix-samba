@@ -11,6 +11,7 @@
 . /etc/rc.freenas
 
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
+: ${LMHOSTS:="/usr/local/etc/lmhosts"}
 AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
 : ${AVAHI_CIFS_SERVICE:=$AVAHI_SERVICES_DIR/cifs.service}
 
@@ -26,6 +27,185 @@ is_within_zfs() {
 	done
 	return 1
 
+}
+
+nt4_enabled()
+{
+	if dirsrv_enabled nt4 ; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
+activedirectory_enabled()
+{
+	if dirsrv_enabled activedirectory ; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
+nis_enabled()
+{
+	if dirsrv_enabled nis ; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
+ldap_enabled()
+{
+	if dirsrv_enabled ldap ; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
+generate_nt4_smbconf()
+{
+	local dcip="$(NT4_get dcip)"
+	local workgroup="$(NT4_get workgroup)"
+
+	cat<<-__EOF__ >"${LMHOSTS}"
+	${dcip}	${workgroup}
+__EOF__
+	
+	cat<<-__EOF__
+	    security = domain
+	    #password server = ...
+	    password server = *
+	    winbind uid = 10000-20000
+	    winbind gid = 10000-20000
+	    winbind enum users = yes
+	    winbind enum groups = yes
+	    template shell = /bin/sh
+
+	    local master = no
+	    domain master = no
+	    preferred master = no
+__EOF__
+}
+
+generate_activedirectory_smbconf()
+{
+	local domain=$(echo "$(AD_get domainname)"|tr a-z A-Z)
+	local ad_workgroup="$(AD_get workgroup)"
+	local trusted="no"
+	local default="no"
+	local homedir="/home/%D/%U"
+
+	mkdir -p ${FREENAS_CACHEDIR}/.samba
+
+	if [ "$(AD_get allow_trusted_doms)" = "1" ]
+	then
+		trusted="yes"
+	fi
+	if [ "$(AD_get use_default_domain)" = "1" ]
+	then
+		default="yes"
+		homedir="/home/%U"
+	fi
+
+	cat<<-__EOF__
+	    security = ADS
+	    realm = ${domain}
+	    client use spnego = yes
+	    cache directory = ${FREENAS_CACHEDIR}/.samba
+
+	    wins server = $(AD_get dchost)
+	    password server = $(AD_get dchost)
+
+	    local master = no
+	    domain master = no
+	    preferred master = no
+
+	    inherit acls = yes
+	    acl compatibility = auto
+	    acl check permissions = true
+	    acl map full control = true
+	    dos filemode = yes
+
+	    idmap uid = 10000-19999
+	    idmap gid = 10000-19999
+
+	    winbind cache time = 10
+	    winbind offline logon = yes
+	    winbind enum users = yes
+	    winbind enum groups = yes
+	    winbind nested groups = yes
+	    winbind use default domain = ${default}
+	    winbind refresh tickets = yes
+
+	    allow trusted domains = ${trusted}
+
+	    template shell = /bin/sh
+	    template homedir = ${homedir}
+
+__EOF__
+	if [ "$(AD_get unix_extensions)" = "0" ]
+	then
+		cat<<-__EOF__
+		    idmap config $(AD_get workgroup): backend = rid
+		    idmap config $(AD_get workgroup): range = 20000-20000000
+__EOF__
+	fi
+}
+
+generate_nis_smbconf()
+{
+}
+
+generate_ldap_smbconf()
+{
+	echo "    security = user"
+
+	if [ -n "$(LDAP_get hostname)" ]; then
+		echo "    passdb backend = ldapsam:ldap://$(LDAP_get hostname)"
+	fi
+
+	if [ -n "$(LDAP_get rootbasedn)" ]; then
+	    echo "    ldap admin dn = $(LDAP_get rootbasedn)"
+	fi
+
+	if [ -n "$(LDAP_get rootbindpw)" ]; then
+		/usr/local/bin/smbpasswd -w "$(LDAP_get rootbindpw)" >/dev/null 2>&1
+	fi
+
+	if [ -n "$(LDAP_get basedn)" ]; then
+	    echo "    ldap suffix = $(LDAP_get basedn)"
+	fi
+
+	if [ -n "$(LDAP_get usersuffix)" ]; then
+	    echo "    ldap user suffix = $(LDAP_get usersuffix)"
+	fi
+
+	if [ -n "$(LDAP_get groupsuffix)" ]; then
+	    echo "    ldap group suffix = $(LDAP_get groupsuffix)"
+	fi
+
+	if [ -n "$(LDAP_get machinesuffix)" ]; then
+	    echo "    ldap machine suffix = $(LDAP_get machinesuffix)"
+	fi
+
+	if [ "$(LDAP_get ssl)" = "start_tls" ]; then
+		echo "    ldap ssl = start tls"
+	else
+		echo "    ldap ssl = off"
+	fi
+
+	cat<<-__EOF__
+	    ldap replication sleep = 1000
+	    ldap passwd sync = yes
+	    #ldap debug level = 1
+	    #ldap debug threshold = 1
+	    ldapsam:trusted = yes
+	    idmap uid = 10000-39999
+	    idmap gid = 10000-39999
+__EOF__
 }
 
 generate_smbconf()
@@ -58,59 +238,13 @@ generate_smbconf()
 		cifs_srv_hostlookup,
 		cifs_srv_homedir_enable,
 		cifs_srv_homedir_browseable_enable,
-		cifs_srv_homedir,
-		(
-			SELECT
-				srv_enable
-			FROM
-				services_services
-			WHERE
-				srv_service = 'activedirectory'
-			ORDER BY
-				-id
-			LIMIT 1
-		) as cifs_srv_ad_enable,
-		(
-			SELECT
-				srv_enable
-			FROM
-				services_services
-			WHERE
-				srv_service = 'ldap'
-			ORDER BY
-				-id
-			LIMIT 1
-		) as cifs_srv_ldap_enable,
-		ad_domainname,
-		ad_netbiosname,
-		ad_workgroup,
-		ad_unix_extensions,
-		ad_allow_trusted_doms,
-		ad_use_default_domain,
-		ad_adminname,
-		ad_adminpw,
-		ldap_hostname,
-		ldap_basedn,
-		ldap_anonbind,
-		ldap_rootbasedn,
-		ldap_rootbindpw,
-		ldap_pwencryption,
-		ldap_ssl,
-		ldap_usersuffix,
-		ldap_groupsuffix,
-		ldap_passwordsuffix,
-		ldap_machinesuffix
+		cifs_srv_homedir
 
 	FROM
 		services_cifs
 
-	JOIN services_ldap ON (1 = 1)
-	JOIN services_activedirectory ON (1 = 1 )
-
 	ORDER BY
-		-services_cifs.id,
-		-services_ldap.id,
-		-services_activedirectory.id
+		-services_cifs.id
 
 	LIMIT 1
 	" | \
@@ -119,12 +253,32 @@ generate_smbconf()
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
-		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
-		ad_domainname ad_netbiosname ad_workgroup ad_unix_extensions ad_allow_trusted_doms \
-		ad_use_default_domain ad_adminname ad_adminpw ldap_hostname ldap_basedn \
-		ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_pwencryption ldap_ssl \
-		ldap_usersuffix ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
+		cifs_homedir_browseable cifs_homedir_mp ;
 	do
+		nt4_enable="$(nt4_enabled)"
+		if [ "${nt4_enable}" = "1" ]
+		then
+			NT4_init
+		fi
+
+		ad_enable="$(activedirectory_enabled)"
+		if [ "${ad_enable}" = "1" ] 
+		then
+			AD_init
+		fi
+
+		nis_enable="$(nis_enabled)"
+		if [ "${nis_enable}" = "1" ]
+		then
+			NIS_init
+		fi
+
+		ldap_enable="$(ldap_enabled)"
+		if [ "${ldap_enable}" = "1" ]
+		then
+			LDAP_init
+		fi
+		
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
 			guest=ftp
@@ -159,11 +313,18 @@ generate_smbconf()
 		    max protocol = SMB2
 EOF
 
-		if [ "${ad_enable}" = "0" ]; then
-			echo "    netbios name = ${netbiosname}"
-			echo "    workgroup = ${workgroup}"
+		if [ "${ad_enable}" = "1" ]; then
+			netbiosname="$(AD_get netbiosname)"
+			workgroup="$(AD_get workgroup)"
+
+		elif [ "${nt4_enable}" = "1" ]; then
+			netbiosname="$(NT4_get netbiosname)"
+			workgroup="$(NT4_get workgroup)"
 		fi
 
+		echo "    netbios name = ${netbiosname}"
+		echo "    workgroup = ${workgroup}"
+		
 		if [ -n "${cifs_description}" ]; then
 			echo "    server string = ${cifs_description}"
 		fi
@@ -193,7 +354,8 @@ EOF
 			echo "    unix extensions = no"
 		fi
 
-		if [ "${localmaster}" = "1" -a "${ad_enable}" !=  "1" ]; then
+		if [ "${localmaster}" = "1" \
+			-a "${ad_enable}" !=  "1" -a "${nt4_enable}" = "1" ]; then
 			echo "    local master = yes"
 		fi
 
@@ -206,123 +368,17 @@ EOF
 		fi
 
 		if [ "${ldap_enable}" = "1" ]; then
-			echo "    security = user"
+			generate_ldap_smbconf
 
-			if [ -n "${ldap_hostname}" ]; then
-				echo "    passdb backend = ldapsam:ldap://${ldap_hostname}"
-			fi
+		elif [ "${nis_enable}" = "1" ]; then
+			generate_nis_smbconf
 
-			if [ -n "${ldap_rootbasedn}" ]; then
-			    echo "    ldap admin dn = ${ldap_rootbasedn}"
-			fi
-
-			if [ -n "${ldap_rootbindpw}" ]; then
-				/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
-			fi
-
-			if [ -n "${ldap_basedn}" ]; then
-			    echo "    ldap suffix = ${ldap_basedn}"
-			fi
-
-			if [ -n "${ldap_usersuffix}" ]; then
-			    echo "    ldap user suffix = ${ldap_usersuffix}"
-			fi
-
-			if [ -n "${ldap_groupsuffix}" ]; then
-			    echo "    ldap group suffix = ${ldap_groupsuffix}"
-			fi
-
-			if [ -n "${ldap_machinesuffix}" ]; then
-			    echo "    ldap machine suffix = ${ldap_machinesuffix}"
-			fi
-
-			if [ "${ldap_ssl}" = "start_tls" ]; then
-				echo "    ldap ssl = start tls"
-			else
-				echo "    ldap ssl = off"
-			fi
-
-			cat<<-EOF
-			    ldap replication sleep = 1000
-			    ldap passwd sync = yes
-			    #ldap debug level = 1
-			    #ldap debug threshold = 1
-			    ldapsam:trusted = yes
-			    idmap uid = 10000-39999
-			    idmap gid = 10000-39999
-EOF
+		elif [ "${nt4_enable}" = "1" ]; then
+			generate_nt4_smbconf
 
 		elif [ "${ad_enable}" = "1" ]; then
-			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
-			local ad_workgroup="${ad_workgroup}"
-			local trusted="no"
-			local default="no"
-			local homedir="/home/%D/%U"
+			generate_activedirectory_smbconf
 
-			AD_init
-			mkdir -p ${FREENAS_CACHEDIR}/.samba
-
-			# wins server ?
-			# template??
-			# admin users??
-			# valid users??
-			# acls?
-
-			if [ "${ad_allow_trusted_doms}" = "1" ]
-			then
-				trusted="yes"
-			fi
-			if [ "${ad_use_default_domain}" = "1" ]
-			then
-				default="yes"
-				homedir="/home/%U"
-			fi
-
-			cat<<-EOF
-			    security = ADS
-			    realm = ${domain}
-			    workgroup = ${ad_workgroup}	
-			    netbios name = ${ad_netbiosname}
-			    client use spnego = yes
-			    cache directory = ${FREENAS_CACHEDIR}/.samba
-
-			    wins server = $(AD_get dchost)
-			    password server = $(AD_get dchost)
-
-			    local master = no
-			    domain master = no
-			    preferred master = no
-
-			    inherit acls = yes
-			    acl compatibility = auto
-			    acl check permissions = true
-			    acl map full control = true
-			    dos filemode = yes
-
-			    idmap uid = 10000-19999
-			    idmap gid = 10000-19999
-
-			    winbind cache time = 10
-			    winbind offline logon = yes
-			    winbind enum users = yes
-			    winbind enum groups = yes
-			    winbind nested groups = yes
-			    winbind use default domain = ${default}
-			    winbind refresh tickets = yes
-
-			    allow trusted domains = ${trusted}
-
-			    template shell = /bin/sh
-			    template homedir = ${homedir}
-
-EOF
-			if [ "${ad_unix_extensions}" = "0" ]
-			then
-				cat<<-EOF
-				    idmap config ${ad_workgroup}: backend = rid
-				    idmap config ${ad_workgroup}: range = 20000-20000000
-EOF
-			fi
 		else
 			echo "    security = ${authmodel}"
 			if [ "${authmodel}" = "share" ]; then
@@ -375,7 +431,7 @@ EOF
 
 		if [ "${cifs_homedir}" = "1" ]; then
 
-			if [ "${ad_enable}" = "1" -a "${ad_use_default_domain}" = "1" ]
+			if [ "${ad_enable}" = "1" -a "$(AD_get use_default_domain)" = "1" ]
 			then
 				valid_users_path="%U"
 				valid_users="%U"
@@ -605,7 +661,7 @@ generate_smb_config()
 	generate_exports >> ${SMB_CONF}
 	generate_avahi_cifs_service
 
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory
 	then
 		AD_init
 		AD_log "generate_smb_config: checking testparm issues"

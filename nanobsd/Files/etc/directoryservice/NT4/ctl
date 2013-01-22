@@ -1,0 +1,185 @@
+#!/bin/sh
+
+. /etc/rc.freenas
+
+cifs_file="/tmp/.cifs_AD"
+service=/usr/sbin/service
+python=/usr/local/bin/python
+notifier=/usr/local/www/freenasUI/middleware/notifier.py
+
+nt4ctl_cmd()
+{
+	local args="$*"
+
+	if [ -n "${args}" ]
+	then
+		logger -t NT4 "${args}"
+		${args}
+		return $?
+	fi
+
+	return 0
+}
+
+cifs_enabled()
+{
+	srv_enabled cifs && return 0
+	return 1
+}
+
+nt4_enabled()
+{
+	dirsrv_enabled nt4 && return 0
+	return 1
+}
+
+cifs_start()
+{
+	nt4ctl_cmd ${python} ${notifier} start cifs
+	return $?
+}
+
+cifs_stop()
+{
+	nt4ctl_cmd ${python} ${notifier} stop cifs
+	return $?
+}
+
+cifs_restart()
+{
+	nt4ctl_cmd ${python} ${notifier} stop cifs
+	nt4ctl_cmd ${python} ${notifier} start cifs
+	return $?
+}
+
+nt4ctl_start()
+{
+	local cifs_started=0	
+	local nt4_started=0
+
+	if cifs_enabled
+	then
+		cifs_started=1
+		cifs_stop
+	else
+		srv_set cifs 1
+	fi
+
+	if nt4_enabled
+	then
+		nt4_started=1
+	else		
+		srv_set directoryservice 1
+	fi
+
+	echo ${cifs_started} > "${cifs_file}"
+
+	nt4ctl_cmd ${service} ix-nsswitch quietstart
+	nt4ctl_cmd ${service} ix-pam quietstart
+	nt4ctl_cmd ${service} ix-samba quietstart
+	cifs_start
+
+	if ! nt4ctl_cmd ${service} ix-nt4 quietstart
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+	if ! nt4ctl_cmd ${service} ix-nt4 status
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+
+	cifs_restart
+
+	nt4ctl_cmd "${service} ix-cache quietstart &"
+
+	return 0
+}
+
+nt4ctl_stop()
+{
+	local cifs_started=1
+	local prev_cifs_started=0
+	if [ -s "${cifs_file}" ]
+	then
+		prev_cifs_started="$(cat "${cifs_file}")"
+	fi
+
+	if ! nt4_enabled
+	then
+		return 1
+	fi
+
+	if cifs_enabled
+	then
+		cifs_started=1
+		cifs_stop
+	fi
+
+	nt4ctl_cmd ${service} ix-nsswitch quietstart
+	nt4ctl_cmd ${service} ix-pam quietstart
+	nt4ctl_cmd ${service} ix-nt4 forcestop
+	nt4ctl_cmd "${service} ix-cache quietstop &"
+
+	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
+	then
+		nt4ctl_cmd ${service} samba forcestop
+		srv_set cifs 0
+		srv_set directoryservice 0
+		nt4ctl_cmd ${service} ix-samba start
+
+	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
+	then
+		nt4ctl_cmd ${service} samba forcestop
+		srv_set cifs 0
+		srv_set directoryservice 0
+		nt4ctl_cmd ${service} ix-samba start
+
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
+	then
+		nt4ctl_cmd ${service} samba forcestop
+		srv_set directoryservice 0
+		srv_set cifs 1
+		nt4ctl_cmd ${service} ix-samba start
+		cifs_start
+
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
+	then
+		nt4ctl_cmd ${service} samba forcestop
+		srv_set directoryservice 0
+		srv_set cifs 1
+		nt4ctl_cmd ${service} ix-samba start
+		cifs_start
+	fi
+
+	srv_set directoryservice 0
+	return 0
+}
+
+nt4ctl_restart()
+{
+	nt4ctl_start
+	nt4ctl_stop
+}
+
+usage()
+{
+	echo "Usage: $0 (start|stop|restart)"
+	exit 1
+}
+
+if [ "$#" -lt "1" ]
+then
+	usage
+fi
+
+cmd="$(echo "${1}"|tr A-Z a-z)"
+case "${cmd}" in
+	start) nt4ctl_start ;;
+	stop) nt4ctl_stop ;;
+	restart) nt4ctl_restart ;;
+	*) usage ;;
+esac
+
+exit $?

@@ -23,7 +23,7 @@ generate_nsswitch_conf()
 	local p="compat"
 	local g="compat"
 
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory || dirsrv_enabled nt4
 	then
 		ad="1"
 		ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -36,7 +36,7 @@ generate_nsswitch_conf()
 			LIMIT 1
 		")
 
-	elif srv_enabled ldap
+	elif dirsrv_enabled ldap
 	then
 		ldap="1"
 	fi
