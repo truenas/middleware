@@ -352,9 +352,9 @@ _gen_conf()
 	_bool_svcconfig smartd_enable smartd
 
 	if dirsrv_enabled activedirectory || dirsrv_enabled nt4; then
-		_bool_svcconfig winbindd_enable 1
+		echo "winbindd_enable=\"YES\""
 	else
-		_bool_svcconfig winbindd_enable 0
+		echo "winbindd_enable=\"NO\""
 	fi
 
 	local _avahi_srv_enable
