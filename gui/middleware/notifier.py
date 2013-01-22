@@ -480,15 +480,17 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd forcestop")
         self.__system("/usr/sbin/service rsyncd restart")
 
+    def _started_nis(self):
+        return True
+
     def _start_nis(self):
-        log.debug("XXX: _start_nis")
-        pass
+        self.__system("/etc/directoryservice/NIS/ctl start")
+
     def _restart_nis(self):
-        log.debug("XXX: _restart_nis")
-        pass
+        self.__system("/etc/directoryservice/NIS/ctl restart")
+
     def _stop_nis(self):
-        log.debug("XXX: _stop_nis")
-        pass
+        self.__system("/etc/directoryservice/NIS/ctl stop")
 
     def _start_ldap(self):
         from freenasUI.services import models
@@ -606,15 +608,12 @@ class notifier:
             return False
 
     def _start_nt4(self):
-        log.debug("/etc/directoryservice/NT4/ctl start")
         self.__system("/etc/directoryservice/NT4/ctl start")
 
     def _restart_nt4(self):
-        log.debug("/etc/directoryservice/NT4/ctl restart")
         self.__system("/etc/directoryservice/NT4/ctl restart")
 
     def _stop_nt4(self):
-        log.debug("/etc/directoryservice/NT4/ctl stop")
         self.__system("/etc/directoryservice/NT4/ctl stop")
 
     def _started_activedirectory(self):
