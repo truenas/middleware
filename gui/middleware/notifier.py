@@ -600,7 +600,7 @@ class notifier:
         self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
-        if self.__system("/etc/directoryservice/NT4/ctl status") == 0:
+        if self.__system("/etc/rc.d/ix-nt4 status") == 0:
             return True
         else:
             return False
