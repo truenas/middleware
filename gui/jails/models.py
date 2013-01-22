@@ -26,8 +26,6 @@
 #####################################################################
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.options import Options
-
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.warden import Warden, WARDEN_LIST_FLAGS_IDS
 
@@ -37,18 +35,32 @@ import logging
 
 log = logging.getLogger('jails.jails')
 
+
 class JailsQuerySet(models.query.QuerySet):
     def __init__(self, model=None, query=None, using=None):
         super(JailsQuerySet, self).__init__(model, query, using)
-        self.__wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
-        self.__wcount = len(self.__wlist)
+        self.__wlist_cache = None
+        self.__wcount_cache = None
 
-        tl = []
-        self.__wlist = self.__order_by("id")
-        for wj in self.__wlist:
-            tj = self.__to_model_dict(wj)
-            tl.append(tj)
-        self.__wlist = tl
+    @property
+    def __wlist(self):
+        if self.__wlist_cache is None:
+            wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
+            self.__wcount_cache = len(self.__wlist)
+
+            tl = []
+            wlist = self.__order_by(wlist, "id")
+            for wj in wlist:
+                tj = self.__to_model_dict(wj)
+                tl.append(tj)
+            self.__wlist_cache = tl
+        return self.__wlist_cache
+
+    @property
+    def __wcount(self):
+        if self.__wcount_cache is None:
+            self.__wcount_cache = len(self.__wlist)
+        return self.__wcount_cache
 
     def __ispk(self, k):
         ispk = False
@@ -81,23 +93,23 @@ class JailsQuerySet(models.query.QuerySet):
     def count(self):
         return self.__wcount
 
-    def __order_by(self, *field_names):
+    def __order_by(self, wlist, *field_names):
         for fn in field_names:
             fn = self.__key(fn)
-            self.__wlist = sorted(self.__wlist, key=lambda k: k[fn]) 
-        return self.__wlist
+            wlist = sorted(wlist, key=lambda k: k[fn])
+        return wlist
 
     def get(self, *args, **kwargs):
         results = []
         for wj in self.__wlist:
 
             found = 0
-            count = len(kwargs) 
+            count = len(kwargs)
             for k in kwargs:
                 key = self.__key(k)
                 if self.__ispk(key):
                     kwargs[k] = int(kwargs[k])
-                if wj.has_key(key) and wj[key] == kwargs[k]:
+                if key in wj and wj[key] == kwargs[k]:
                     found += 1
 
             if found == count:
@@ -106,8 +118,11 @@ class JailsQuerySet(models.query.QuerySet):
         if len(results) == 0:
             raise self.model.DoesNotExist("Jail matching query does not exist")
         elif len(results) > 1:
-            raise self.model.MultipleObjectsReturned ("Query returned multiple Jails")
+            raise self.model.MultipleObjectsReturned(
+                "Query returned multiple Jails"
+            )
         return self.model(**results[0])
+
 
 class JailsManager(models.Manager):
     use_for_related_fields = True
@@ -122,6 +137,7 @@ class JailsManager(models.Manager):
     def __getattr__(self, name):
         return getattr(self.get_query_set(), name)
 
+
 class Jails(Model):
     objects = JailsManager()
 
@@ -130,16 +146,17 @@ class Jails(Model):
     jail_autostart = models.CharField(max_length=120)
     jail_status = models.CharField(max_length=120)
     jail_type = models.CharField(max_length=120)
-    
+
     def delete(self):
         Warden().delete(jail=self.jail_host)
 
     class Meta:
         verbose_name = _("Jails")
-        verbose_name_plural = _("Jails") 
+        verbose_name_plural = _("Jails")
 
     class FreeAdmin:
         pass
+
 
 class JailsConfiguration(Model):
 
@@ -147,16 +164,15 @@ class JailsConfiguration(Model):
         max_length=120,
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
-        )
+    )
 
     def save(self):
         super(JailsConfiguration, self).save()
         notifier().start("ix-warden")
 
-
     class Meta:
         verbose_name = _("Jails Configuration")
-        verbose_name_plural = _("Jails Configuration") 
+        verbose_name_plural = _("Jails Configuration")
 
     class FreeAdmin:
         pass
