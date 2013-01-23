@@ -3317,9 +3317,9 @@ class notifier:
         elif 'M' in size:
             return Decimal(size.replace('M', '')) * 1048576
         elif 'G' in size:
-            return Decimal(size.replace('M', '')) * 1073741824
+            return Decimal(size.replace('G', '')) * 1073741824
         elif 'T' in size:
-            return Decimal(size.replace('M', '')) * 1099511627776
+            return Decimal(size.replace('T', '')) * 1099511627776
         else:
             return size
 
