@@ -46,6 +46,7 @@ from freenasUI.plugins.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
+from tastypie import fields
 
 import logging
 
@@ -870,3 +871,42 @@ class JailsResource(DojoModelResource):
         })
 
         return bundle
+
+
+class SnapshotResource(DojoResource):
+
+    name = fields.CharField(attribute='name')
+    fullname = fields.CharField(attribute='fullname')
+    refer = fields.CharField(attribute='refer')
+    used = fields.CharField(attribute='used')
+    mostrecent = fields.BooleanField(attribute='mostrecent')
+    parent_type = fields.CharField(attribute='parent_type')
+
+    class Meta:
+        resource_name = 'snapshot'
+        include_resource_uri = False
+        authentication = DjangoAuthentication()
+        object_class = zfs.Snapshot
+
+    def obj_get_list(self, request=None, **kwargs):
+        snapshots = notifier().zfs_snapshot_list()
+        results = []
+        for fs, snaps in snapshots.items():
+            for snap in snaps:
+                results.append(zfs.Snapshot(
+                    name=snap['name'],
+                    filesystem=fs,
+                    used=snap['used'],
+                    refer=snap['refer'],
+                    mostrecent=snap['mostrecent'],
+                    parent_type=snap['parent']
+                ))
+        for sfield in self._apply_sorting(request.GET):
+            if sfield.startswith('-'):
+                field = sfield[1:]
+                reverse = True
+            else:
+                field = sfield
+                reverse = False
+            results.sort(key=lambda item: getattr(item, field), reverse=reverse)
+        return results

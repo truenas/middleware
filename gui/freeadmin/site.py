@@ -5,6 +5,7 @@ import logging
 import os
 import re
 
+from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
 from django.db.models.base import ModelBase
 from django.http import HttpResponse, HttpResponseRedirect
@@ -20,6 +21,7 @@ from tastypie.api import Api
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
+
 
 class NotRegistered(Exception):
     pass
@@ -142,7 +144,9 @@ class FreeAdminSite(object):
         return update_wrapper(inner, view)
 
     def get_urls(self):
-        from django.conf.urls import patterns, url, include
+        from freenasUI.freeadmin.api.resources import SnapshotResource
+
+        self.v1_api.register(SnapshotResource())
 
         def wrap(view, cacheable=False):
             def wrapper(*args, **kwargs):

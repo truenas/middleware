@@ -519,6 +519,44 @@ class ZFSDataset(object):
     used_si = property(_get_used_si)
 
 
+class Snapshot(object):
+
+    name = None
+    filesystem = None
+    used = None
+    refer = None
+    mostrecent = False
+    parent_type = None
+
+    def __init__(
+        self,
+        name,
+        filesystem,
+        used,
+        refer,
+        mostrecent=False,
+        parent_type=None
+    ):
+        self.name = name
+        self.filesystem = filesystem
+        self.used = used
+        self.refer = refer
+        self.mostrecent = mostrecent
+        self.parent_type = parent_type
+
+    @property
+    def fullname(self):
+        return "%s@%s" % (self.filesystem, self.name)
+
+    @property
+    def used_bytes(self):
+        return 0
+
+    @property
+    def refer_bytes(self):
+        return 0
+
+
 def parse_status(name, doc, data):
 
     scrub = re.search(r'scrub: (.+)$', data, re.M)
