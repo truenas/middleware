@@ -15,7 +15,7 @@
         </td>
     </tr>
 {% endif %}
-{% if volume.vol_encrypt >= 0 %}
+{% if volume.vol_encrypt > 0 %}
     <tr>
         <td colspan="2">
         {% url storage_volume_key_download object_id=volume.id as downloadkey %}
