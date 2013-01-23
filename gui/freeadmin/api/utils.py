@@ -107,4 +107,19 @@ class DojoModelResource(ModelResource):
 
 
 class DojoResource(Resource):
-    pass
+
+    def _apply_sorting(self, options=None):
+        """
+        Dojo aware filtering
+        """
+        RE_SORT = re.compile(r'^sort\((.*)\)$')
+        fields = []
+        for key in options.keys():
+            if RE_SORT.match(key):
+                fields = RE_SORT.search(key).group(1)
+                fields = [f.strip() for f in fields.split(',')]
+                break
+        return fields
+
+    def alter_list_data_to_serialize(self, request, data):
+        return data['objects']

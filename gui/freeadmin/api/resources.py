@@ -31,7 +31,7 @@ from django.utils.translation import ugettext as _
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.freeadmin.api.utils import (
-    DojoModelResource, DjangoAuthentication, DojoPaginator
+    DojoResource, DojoModelResource, DjangoAuthentication, DojoPaginator
 )
 from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
