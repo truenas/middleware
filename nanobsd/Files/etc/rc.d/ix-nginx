@@ -104,6 +104,7 @@ generate_nginx_conf()
 	local addr6="${3}"
 	local port="${4}"
 	local working_ssl=false
+	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print settings.DOJANGO_DOJO_VERSION')
 	
 	{
 	cat << __EOF__
@@ -204,8 +205,7 @@ __EOF__
             alias /var/db/graphs;
         }
 
-        #FIXME: get version from freenasUI.settings
-        location /dojango/dojo-media/release/1.8.3 {
+        location /dojango/dojo-media/release/${dojo} {
             alias /usr/local/www/dojo;
         }
 
