@@ -2,54 +2,68 @@
 <div data-dojo-type="dijit.layout.ContentPane" id="datagrid" data-dojo-props="region: 'center'" style="height:100%; width:100%;">
 <script type="dojo/method">
 
-    function acts(v) {
-        var json = dojo.fromJson(v);
-        var content = new dijit.layout.ContentPane({});
-
+  var me = this;
+  require([
+  "dojo/on",
+  "dojo/store/JsonRest",
+  "dojo/data/ObjectStore",
+  "dijit/registry",
+  "dijit/Tooltip",
+  "dijit/form/Button",
+  "dijit/layout/ContentPane",
+  "dojox/grid/EnhancedGrid"
+  ], function(
+  on,
+  JsonRest,
+  ObjectStore,
+  registry,
+  Tooltip,
+  Button,
+  ContentPane,
+  EnhancedGrid) {
+    function acts(json) {
+        var content = new ContentPane({});
         if(json['clone_url']) {
-            var b = new dijit.form.Button({
+            var b = new Button({
                 label: '<img src="{{ STATIC_URL }}images/ui/buttons/clone_snapshot.png">',
             });
-            dojo.require("dijit.Tooltip");
-            new dijit.Tooltip({
+            new Tooltip({
                connectId: [b.domNode],
-               label: "{% trans "Clone Snapshot"|force_escape %}",
+               label: "{% trans "Clone Snapshot"|escapejs %}",
                position: ['above'],
             });
             content.domNode.appendChild(b.domNode);
-            dojo.connect(b, 'onClick', function() {
+            on(b, 'click', function() {
                 editObject('{% trans "Clone snapshot"|force_escape|force_escape %}', json['clone_url'], [this,]);
             });
         }
 
         if(json['delete_url']) {
-            var b = new dijit.form.Button({
+            var b = new Button({
                 label: '<img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">',
             });
-            dojo.require("dijit.Tooltip");
-            new dijit.Tooltip({
+            new Tooltip({
                connectId: [b.domNode],
-               label: "{% trans "Destroy Snapshot"|force_escape %}",
+               label: "{% trans "Destroy Snapshot"|escapejs %}",
                position: ['above'],
             });
             content.domNode.appendChild(b.domNode);
-            dojo.connect(b, 'onClick', function() {
+            on(b, 'click', function() {
                 editObject('{% trans "Destroy this snapshot"|force_escape|force_escape %}', json['delete_url'], [this,]);
             });
         }
 
         if(json['rollback_url']) {
-            var b = new dijit.form.Button({
+            var b = new Button({
                 label: '<img src="{{ STATIC_URL }}images/ui/buttons/rollback_snapshot.png">',
             });
-            dojo.require("dijit.Tooltip");
-            new dijit.Tooltip({
+            new Tooltip({
                connectId: [b.domNode],
-               label: "{% trans "Rollback Snapshot"|force_escape %}",
+               label: "{% trans "Rollback Snapshot"|escapejs %}",
                position: ['above'],
             });
             content.domNode.appendChild(b.domNode);
-            dojo.connect(b, 'onClick', function() {
+            on(b, 'click', function() {
                 editObject('{% trans "Rollback to this snapshot"|force_escape|force_escape %}', json['rollback_url'], [this,]);
             });
         }
@@ -57,10 +71,10 @@
         return content;
     }
 
-    var store = new dojox.data.JsonRestStore({
-        target: "{% url storage_snapshots_data %}",
-        idAttribute:"id",
-        });
+    var objectStore = new JsonRest({
+      target: "{% url api_dispatch_list api_name="v1.0" resource_name="snapshot" %}"
+    });
+    var store = new ObjectStore({objectStore: objectStore});
 
     var struc = [
     {
@@ -92,10 +106,10 @@
     },
     ];
 
-    var vd = dijit.byId("viewdatagrid");
+    var vd = registry.byId("viewdatagrid");
     if (vd) vd.destroy();
 
-    var grid4 = new dojox.grid.EnhancedGrid({
+    var grid4 = new EnhancedGrid({
         query: {},
         store: store,
         id: 'viewdatagrid',
@@ -108,16 +122,18 @@
             indirectSelection: true,
             filter: {
                 isServerSide: false,
-                },
             },
+        },
         structure: struc
     });
 
     // append the new grid to the div "gridContainer4":
-    this.domNode.appendChild(grid4.domNode);
+    me.domNode.appendChild(grid4.domNode);
 
     // Call startup, in order to render the grid:
     grid4.startup();
+
+  });
 </script>
 </div>
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom'" style="height:62px;">
@@ -126,26 +142,37 @@
         <p>{% trans "Destroy" %}</p>
 
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            dg = dijit.byId('viewdatagrid');
+          var me = this;
+          require([
+          "dojo/_base/array",
+          "dijit/registry",
+          "dojo/cookie",
+          "dojo/request/xhr"
+          ], function(
+          darray,
+          registry,
+          cookie,
+          xhr) {
+            dg = registry.byId('viewdatagrid');
             var snaps = [];
-            dojo.forEach(dg.selection.getSelected(), function(item, idx) {
+            darray.forEach(dg.selection.getSelected(), function(item, idx) {
                 snaps.push(item['fullname']);
             });
+            console.log(snaps);
             if(snaps.length == 0) return true;
 
-            editObject('{% trans "Delete snapshots"|escapejs %}', null, [this], function(data) {
+            editObject('{% trans "Delete snapshots"|escapejs %}', null, [me], function(data) {
                 var dialog = this;
-                dojo.xhrPost({
-                    url: '{% url storage_snapshot_delete_bulk %}',
-                    content: {snaps: snaps.join("|")},
-                    handleAs: "text",
-                    sync: true,
-                    headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
-                    load: function(data){
-                        dialog.set('content', data);
-                    },
+                xhr.post('{% url storage_snapshot_delete_bulk %}', {
+                  data: {snaps: snaps.join("|")},
+                  handleAs: "text",
+                  sync: true,
+                  headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
+                }).then(function(data){
+                     dialog.set('content', data);
                 });
             });
+          });
         </script>
     </button>
 </div>

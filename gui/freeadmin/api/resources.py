@@ -24,6 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
+import logging
+
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.utils.translation import ugettext as _
@@ -47,8 +50,6 @@ from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
 from tastypie import fields
-
-import logging
 
 log = logging.getLogger('freeadmin.api.resources')
 
@@ -875,7 +876,9 @@ class JailsResource(DojoModelResource):
 
 class SnapshotResource(DojoResource):
 
+    id = fields.CharField(attribute='filesystem')
     name = fields.CharField(attribute='name')
+    filesystem = fields.CharField(attribute='filesystem')
     fullname = fields.CharField(attribute='fullname')
     refer = fields.CharField(attribute='refer')
     used = fields.CharField(attribute='used')
@@ -908,5 +911,25 @@ class SnapshotResource(DojoResource):
             else:
                 field = sfield
                 reverse = False
-            results.sort(key=lambda item: getattr(item, field), reverse=reverse)
+            results.sort(
+                key=lambda item: getattr(item, field),
+                reverse=reverse)
         return results
+
+    def dehydrate(self, bundle):
+        bundle.data['extra'] = {
+            'clone_url': reverse(
+                'storage_clonesnap',
+                kwargs={
+                    'snapshot': bundle.obj.fullname,
+                }),
+            'rollback_url': reverse('storage_snapshot_rollback', kwargs={
+                'dataset': bundle.obj.filesystem,
+                'snapname': bundle.obj.name,
+            }) if bundle.obj.mostrecent else None,
+            'delete_url': reverse('storage_snapshot_delete', kwargs={
+                'dataset': bundle.obj.filesystem,
+                'snapname': bundle.obj.name,
+            }),
+        }
+        return bundle
