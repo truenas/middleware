@@ -904,6 +904,11 @@ class SnapshotResource(DojoResource):
                     mostrecent=snap['mostrecent'],
                     parent_type=snap['parent']
                 ))
+        FIELD_MAP = {
+            'used': 'used_bytes',
+            'refer': 'refer_bytes',
+            'extra': 'mostrecent',
+        }
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]
@@ -911,6 +916,7 @@ class SnapshotResource(DojoResource):
             else:
                 field = sfield
                 reverse = False
+            field = FIELD_MAP.get(field, field)
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)

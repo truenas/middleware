@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+from decimal import Decimal
 import logging
 import os
 import re
@@ -56,6 +57,19 @@ def _vdev_type(name):
         if name.startswith(_type):
             return _type
     return False
+
+
+def zfs_size_to_bytes(size):
+    if 'K' in size:
+        return Decimal(size.replace('K', '')) * 1024
+    elif 'M' in size:
+        return Decimal(size.replace('M', '')) * 1048576
+    elif 'G' in size:
+        return Decimal(size.replace('G', '')) * 1073741824
+    elif 'T' in size:
+        return Decimal(size.replace('T', '')) * 1099511627776
+    else:
+        return size
 
 
 class Pool(object):
@@ -550,11 +564,11 @@ class Snapshot(object):
 
     @property
     def used_bytes(self):
-        return 0
+        return zfs_size_to_bytes(self.used)
 
     @property
     def refer_bytes(self):
-        return 0
+        return zfs_size_to_bytes(self.refer)
 
 
 def parse_status(name, doc, data):
