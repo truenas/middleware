@@ -358,7 +358,7 @@ _gen_conf()
 	fi
 
 	if dirsrv_enabled nis; then
-		nisdomain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELCT nis_domain FROM services_nis")"
+		nisdomain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nis_domain FROM services_nis")"
 		echo "nisdomainname=\"${nisdomain}\""
 		echo "nis_client_enable=\"YES\""
 	fi
