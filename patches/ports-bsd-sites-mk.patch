@@ -1,0 +1,64 @@
+Index: Mk/bsd.sites.mk
+===================================================================
+RCS file: /home/ncvs/ports/Mk/bsd.sites.mk,v
+retrieving revision 1.574
+diff -u -r1.574 bsd.sites.mk
+--- Mk/bsd.sites.mk	29 Jun 2012 01:17:03 -0000	1.574
++++ Mk/bsd.sites.mk	23 Jan 2013 20:00:24 -0000
+@@ -1330,41 +1330,38 @@
+ .endif
+ 
+ # List:		http://www.vim.org/mirrors.php
+-# Updated:	2011-09-12
++# Updated:	2013-01-03
+ .if !defined(IGNORE_MASTER_SITE_VIM)
+ MASTER_SITE_VIM+= \
+-	http://ftp.au.vim.org/pub/vim/unix/ \
++	http://artfiles.org/vim.org/unix/ \
+ 	http://ftp.gr.vim.org/pub/vim/unix/ \
+-	http://ftp.ie.vim.org/pub/ftp.vim.org/pub/vim/unix/ \
+-	http://ftp.ro.vim.org/mirrors/ftp.vim.org/unix/ \
+ 	http://ftp.stut.edu.tw/vim/unix/ \
+ 	http://ftp.tw.vim.org/pub/vim/unix/ \
+-	http://ftp2.pl.vim.org/pub/vim/unix/ \
++	http://ftp.vim.ossmirror.de/pub/vim/unix/ \
++	http://ftp2.jp.vim.org/pub/vim/unix/ \
++	http://ftp2.kr.vim.org/pub/vim/unix/ \
+ 	http://ftp2.tw.vim.org/pub/vim/unix/ \
+ 	http://ftp2.uk.vim.org/pub/vim/unix/ \
+-	http://mirror.hostfuss.com/pub/vim/unix/ \
++	http://servingzone.com/mirrors/vim/unix/ \
+ 	http://tweedo.com/mirror/ftp.vim.org/unix/ \
+ 	http://vim.cybermirror.org/unix/ \
+ 	http://vim.mirror.fr/unix/ \
+-	http://vim.site2nd.org/unix/ \
+-	http://ftp.vim.org/pub/vim/unix/ \
++	ftp://artfiles.org/vim.org/unix/ \
++	ftp://ftp.ar.vim.org/pub/vim/unix/ \
+ 	ftp://ftp.ca.vim.org/pub/vim/unix/ \
+-	ftp://ftp.cz.vim.org/vim/unix/ \
+ 	ftp://ftp.de.vim.org/unix/ \
+-	ftp://ftp.home.vim.org/pub/vim/unix/ \
++	ftp://ftp.gr.vim.org/pub/vim/unix/ \
+ 	ftp://ftp.is.vim.org/pub/vim/unix/ \
+ 	ftp://ftp.jp.vim.org/pub/vim/unix/ \
+-	ftp://ftp.kr.vim.org/pub/vim/unix/ \
+-	ftp://ftp.nl.vim.org/pub/vim/unix/ \
+-	ftp://ftp.sk.vim.org/pub/vim/unix/ \
++	ftp://ftp.pl.vim.org/pub/vim/unix/ \
+ 	ftp://ftp.stut.edu.tw/pub/vim/unix/ \
+-	ftp://ftp.tw.vim.org/pub/vim/unix/ \
+ 	ftp://ftp.uk.vim.org/pub/vim/unix/ \
++	ftp://ftp.za.vim.org/mirrors/ftp.vim.org/unix/ \
++	ftp://ftp2.kr.vim.org/pub/vim/unix/ \
++	ftp://ftp2.tw.vim.org/pub/vim/unix/ \
++	ftp://ftp2.uk.vim.org/pub/vim/unix/ \
+ 	ftp://ftp3.de.vim.org/pub/vim/unix/ \
+-	ftp://ftp3.nl.vim.org/pub/vim/unix/ \
+-	ftp://ftp9.us.vim.org/pub/vim/unix/ \
+-	ftp://vim.tsu.ru/pub/vim/unix/ \
+-	ftp://ftp.vim.org/pub/vim/unix/
++	ftp://vim.tsu.ru/pub/vim/unix/
+ .endif
+ 
+ .if !defined(IGNORE_MASTER_SITE_WINDOWMAKER)
