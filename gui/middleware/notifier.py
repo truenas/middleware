@@ -3335,14 +3335,14 @@ class notifier:
                     snaplist = []
                     mostrecent = True
                 snaplist.insert(0,
-                    dict([
-                        ('fullname', snapname),
-                        ('name', name),
-                        ('used', used),
-                        ('refer', refer),
-                        ('mostrecent', mostrecent),
-                        ('parent', 'filesystem' if fs not in zvols else 'volume'),
-                        ]))
+                    zfs.Snapshot(
+                        name=name,
+                        filesystem=fs,
+                        used=used,
+                        refer=refer,
+                        mostrecent=mostrecent,
+                        parent_type='filesystem' if fs not in zvols else 'volume'
+                    ))
                 fsinfo[fs] = snaplist
         return fsinfo
 

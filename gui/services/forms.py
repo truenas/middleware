@@ -942,8 +942,8 @@ class iSCSITargetExtentForm(ModelForm):
                 if not zsnapshots:
                     continue
                 for snap in zsnapshots[0]:
-                    diskchoices["zvol/" + snap['fullname']] = "%s (%s)" % (
-                        snap['fullname'],
+                    diskchoices["zvol/" + snap.fullname] = "%s (%s)" % (
+                        snap.fullname,
                         attrs['volsize'])
 
         # Grab partition list

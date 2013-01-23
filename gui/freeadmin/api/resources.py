@@ -894,16 +894,8 @@ class SnapshotResource(DojoResource):
     def obj_get_list(self, request=None, **kwargs):
         snapshots = notifier().zfs_snapshot_list()
         results = []
-        for fs, snaps in snapshots.items():
-            for snap in snaps:
-                results.append(zfs.Snapshot(
-                    name=snap['name'],
-                    filesystem=fs,
-                    used=snap['used'],
-                    refer=snap['refer'],
-                    mostrecent=snap['mostrecent'],
-                    parent_type=snap['parent']
-                ))
+        for snaps in snapshots.values():
+            results.extend(snaps)
         FIELD_MAP = {
             'used': 'used_bytes',
             'refer': 'refer_bytes',
