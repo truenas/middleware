@@ -1768,7 +1768,8 @@ class UnlockPassphraseForm(forms.Form):
             ('iscsitarget', _('iSCSI')),
             ('nfs', _('NFS')),
             ('plugins_jail', _('Plugins Jail')),
-        )
+        ),
+        required=False,
     )
 
     def done(self, volume):
