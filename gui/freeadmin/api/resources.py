@@ -30,27 +30,36 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers, bsdGroups
-from freenasUI.freeadmin.api.utils import (DojoModelResource,
-    DjangoAuthentication, DojoPaginator)
+from freenasUI.freeadmin.api.utils import (
+    DojoModelResource, DjangoAuthentication, DojoPaginator
+)
+from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
-from freenasUI.network.models import (Interfaces, LAGGInterface,
-    LAGGInterfaceMembers)
-from freenasUI.services.models import (iSCSITargetPortal, iSCSITargetExtent,
-    iSCSITargetToExtent)
+from freenasUI.network.models import (
+    Interfaces, LAGGInterface, LAGGInterfaceMembers
+)
+from freenasUI.services.models import (
+    iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
+)
 from freenasUI.plugins.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
-from freenasUI.jails.models import Jails
 
 import logging
 
 log = logging.getLogger('freeadmin.api.resources')
 
+
 def _common_human_fields(bundle):
-    for human in ('human_minute', 'human_hour', 'human_daymonth',
-            'human_month', 'human_dayweek'):
+    for human in (
+        'human_minute',
+        'human_hour',
+        'human_daymonth',
+        'human_month',
+        'human_dayweek',
+    ):
         method = getattr(bundle.obj, "get_%s" % human, None)
         if not method:
             continue
@@ -63,9 +72,9 @@ class DiskResource(DojoModelResource):
         queryset = Disk.objects.filter(
             disk_enabled=True,
             disk_multipath_name=''
-            ).exclude(
-                Q(disk_name__startswith='multipath') | Q(disk_name='')
-            )
+        ).exclude(
+            Q(disk_name__startswith='multipath') | Q(disk_name='')
+        )
         resource_name = 'disk'
         paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
@@ -77,7 +86,7 @@ class DiskResource(DojoModelResource):
         bundle.data['_edit_url'] += '?deletable=false'
         bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
             'devname': bundle.obj.disk_name,
-            })
+        })
         return bundle
 
 
@@ -120,29 +129,36 @@ class VolumeResource(DojoModelResource):
             data['used'] = "%s (%s)" % (
                 data['used_si'],
                 data['used_pct'],
-                )
+            )
 
-            data['_dataset_delete_url'] = reverse('storage_dataset_delete',
+            data['_dataset_delete_url'] = reverse(
+                'storage_dataset_delete',
                 kwargs={
-                'name': dataset.path,
+                    'name': dataset.path,
                 })
-            data['_dataset_edit_url'] = reverse('storage_dataset_edit',
+            data['_dataset_edit_url'] = reverse(
+                'storage_dataset_edit',
                 kwargs={
-                'dataset_name': dataset.path,
+                    'dataset_name': dataset.path,
                 })
-            data['_dataset_create_url'] = reverse('storage_dataset', kwargs={
-                'fs': dataset.path,
-                })
-            data['_permissions_url'] = reverse('storage_mp_permission',
+            data['_dataset_create_url'] = reverse(
+                'storage_dataset',
                 kwargs={
-                'path': dataset.mountpoint,
+                    'fs': dataset.path,
                 })
-            data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
-                'parent': dataset.path,
-                })
-            data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+            data['_permissions_url'] = reverse(
+                'storage_mp_permission',
                 kwargs={
-                'fs': dataset.path,
+                    'path': dataset.mountpoint,
+                })
+            data['_add_zfs_volume_url'] = reverse(
+                'storage_zvol', kwargs={
+                    'parent': dataset.path,
+                })
+            data['_manual_snapshot_url'] = reverse(
+                'storage_manualsnap',
+                kwargs={
+                    'fs': dataset.path,
                 })
 
             if dataset.children:
@@ -160,48 +176,63 @@ class VolumeResource(DojoModelResource):
 
         bundle.data['name'] = bundle.obj.vol_name
 
-        bundle.data['_detach_url'] = reverse('storage_detach', kwargs={
-            'vid': bundle.obj.id,
+        bundle.data['_detach_url'] = reverse(
+            'storage_detach',
+            kwargs={
+                'vid': bundle.obj.id,
             })
         if bundle.obj.vol_fstype == 'ZFS':
-            bundle.data['_scrub_url'] = reverse('storage_scrub', kwargs={
-                'vid': bundle.obj.id,
+            bundle.data['_scrub_url'] = reverse(
+                'storage_scrub',
+                kwargs={
+                    'vid': bundle.obj.id,
                 })
-            bundle.data['_options_url'] = reverse('storage_volume_edit', kwargs={
-                'object_id': mp.id,
+            bundle.data['_options_url'] = reverse(
+                'storage_volume_edit',
+                kwargs={
+                    'object_id': mp.id,
                 })
-            bundle.data['_add_dataset_url'] = reverse('storage_dataset', kwargs={
-                'fs': bundle.obj.vol_name,
+            bundle.data['_add_dataset_url'] = reverse(
+                'storage_dataset',
+                kwargs={
+                    'fs': bundle.obj.vol_name,
                 })
-            bundle.data['_add_zfs_volume_url'] = reverse('storage_zvol', kwargs={
-                'parent': bundle.obj.vol_name,
+            bundle.data['_add_zfs_volume_url'] = reverse(
+                'storage_zvol',
+                kwargs={
+                    'parent': bundle.obj.vol_name,
                 })
 
-        bundle.data['_permissions_url'] = reverse('storage_mp_permission',
+        bundle.data['_permissions_url'] = reverse(
+            'storage_mp_permission',
             kwargs={
-            'path': mp.mp_path,
+                'path': mp.mp_path,
             })
         bundle.data['_status_url'] = "%s?id=%d" % (
             reverse('freeadmin_storage_volumestatus_datagrid'),
             bundle.obj.id,
-            )
+        )
 
         if bundle.obj.vol_fstype == 'ZFS':
-            bundle.data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+            bundle.data['_manual_snapshot_url'] = reverse(
+                'storage_manualsnap',
                 kwargs={
-                'fs': bundle.obj.vol_name,
+                    'fs': bundle.obj.vol_name,
                 })
-            bundle.data['_unlock_url'] = reverse('storage_volume_unlock',
+            bundle.data['_unlock_url'] = reverse(
+                'storage_volume_unlock',
                 kwargs={
-                'object_id': bundle.obj.id,
+                    'object_id': bundle.obj.id,
                 })
-            bundle.data['_download_key_url'] = reverse('storage_volume_key',
+            bundle.data['_download_key_url'] = reverse(
+                'storage_volume_key',
                 kwargs={
-                'object_id': bundle.obj.id,
+                    'object_id': bundle.obj.id,
                 })
-            bundle.data['_rekey_url'] = reverse('storage_volume_rekey',
+            bundle.data['_rekey_url'] = reverse(
+                'storage_volume_rekey',
                 kwargs={
-                'object_id': bundle.obj.id,
+                    'object_id': bundle.obj.id,
                 })
             bundle.data['_add_reckey_url'] = reverse(
                 'storage_volume_recoverykey_add',
@@ -225,7 +256,7 @@ class VolumeResource(DojoModelResource):
             bundle.data['used'] = "%s (%s)" % (
                 bundle.data['used_si'],
                 bundle.data['used_pct'],
-                )
+            )
         else:
             bundle.data['used'] = _("Locked")
 
@@ -238,7 +269,7 @@ class VolumeResource(DojoModelResource):
                 bundle.obj,
                 bundle.obj.get_datasets(hierarchical=True),
                 uid=uid,
-                )
+            )
 
             zvols = bundle.obj.get_zvols() or {}
             for name, zvol in zvols.items():
@@ -250,12 +281,15 @@ class VolumeResource(DojoModelResource):
                     'total_si': zvol['volsize'],
                 }
 
-                data['_zvol_delete_url'] = reverse('storage_zvol_delete', kwargs={
-                    'name': name,
-                    })
-                data['_manual_snapshot_url'] = reverse('storage_manualsnap',
+                data['_zvol_delete_url'] = reverse(
+                    'storage_zvol_delete',
                     kwargs={
-                    'fs': name,
+                        'name': name,
+                    })
+                data['_manual_snapshot_url'] = reverse(
+                    'storage_manualsnap',
+                    kwargs={
+                        'fs': name,
                     })
 
                 children.append(data)
@@ -275,7 +309,7 @@ class VolumeStatusResource(DojoModelResource):
         allowed_methods = ['get']
         filtering = {
             'id': ('exact', ),
-            }
+        }
 
     def dehydrate(self, bundle):
         bundle = super(VolumeStatusResource, self).dehydrate(bundle)
@@ -330,11 +364,12 @@ class VolumeStatusResource(DojoModelResource):
                             'children': [],
                         }
                         try:
-                            disk = Disk.objects.order_by('disk_enabled'
-                                ).filter(disk_name=current.disk)[0]
+                            disk = Disk.objects.order_by(
+                                'disk_enabled'
+                            ).filter(disk_name=current.disk)[0]
                             data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
-                                )
+                            )
                         except IndexError:
                             disk = None
                         if current.status == 'ONLINE':
@@ -343,7 +378,7 @@ class VolumeStatusResource(DojoModelResource):
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
-                                    })
+                                })
 
                         if current.replacing:
                             data['_detach_url'] = reverse(
@@ -351,22 +386,25 @@ class VolumeStatusResource(DojoModelResource):
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
-                                    })
+                                })
                         else:
                             data['_replace_url'] = reverse(
                                 'storage_zpool_disk_replace',
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
-                                    })
-                        if current.parent.parent.name in ('spares', 'cache',
-                                'logs'):
+                                })
+                        if current.parent.parent.name in (
+                            'spares',
+                            'cache',
+                            'logs',
+                        ):
                             data['_remove_url'] = reverse(
                                 'storage_zpool_disk_remove',
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
-                                    })
+                                })
 
                     else:
                         raise ValueError("Invalid node")
@@ -401,9 +439,10 @@ class VolumeStatusResource(DojoModelResource):
                 if qs:
                     i['_disk_url'] = "%s?deletable=false" % (
                         qs[0].get_edit_url(),
-                        )
+                    )
                 if i['status'] == 'UNAVAIL':
-                    i['_replace_url'] = reverse('storage_geom_disk_replace',
+                    i['_replace_url'] = reverse(
+                        'storage_geom_disk_replace',
                         kwargs={'vname': bundle.obj.vol_name})
                 i.update({
                     'id': uid.next(),
@@ -446,7 +485,7 @@ class ReplicationResource(DojoModelResource):
         bundle = super(ReplicationResource, self).dehydrate(bundle)
         bundle.data['ssh_remote_host'] = (
             bundle.obj.repl_remote.ssh_remote_hostname
-            )
+        )
         return bundle
 
 
@@ -472,20 +511,20 @@ class TaskResource(DojoModelResource):
             days = ', '.join(labels)
             repeat = _('on every %(days)s') % {
                 'days': days,
-                }
+            }
         else:
             repeat = ''
-        bundle.data['how'] = _("From %(begin)s through %(end)s, every "
-            "%(interval)s %(repeat)s") % {
+        bundle.data['how'] = _(
+            "From %(begin)s through %(end)s, every %(interv)s %(repeat)s") % {
                 'begin': bundle.obj.task_begin,
                 'end': bundle.obj.task_end,
-                'interval': bundle.obj.get_task_interval_display(),
+                'interv': bundle.obj.get_task_interval_display(),
                 'repeat': repeat,
             }
         bundle.data['keepfor'] = "%s %s" % (
             bundle.obj.task_ret_count,
             bundle.obj.task_ret_unit,
-            )
+        )
         return bundle
 
 
@@ -538,16 +577,18 @@ class LAGGInterfaceResource(DojoModelResource):
         bundle.data['int_interface'] = bundle.obj.lagg_interface.int_interface
         bundle.data['int_name'] = bundle.obj.lagg_interface.int_name
         bundle.data['_edit_url'] = reverse(
-            'freeadmin_network_interfaces_edit', kwargs={
+            'freeadmin_network_interfaces_edit',
+            kwargs={
                 'oid': bundle.obj.lagg_interface.id,
-                }) + '?deletable=false'
+            }) + '?deletable=false'
         bundle.data['_delete_url'] = reverse(
-            'freeadmin_network_interfaces_delete', kwargs={
+            'freeadmin_network_interfaces_delete',
+            kwargs={
                 'oid': bundle.obj.lagg_interface.id,
-                })
+            })
         bundle.data['_members_url'] = reverse(
             'freeadmin_network_lagginterfacemembers_datagrid'
-            ) + '?id=%d' % bundle.obj.id
+        ) + '?id=%d' % bundle.obj.id
         return bundle
 
 
@@ -564,7 +605,8 @@ class LAGGInterfaceMembersResource(DojoModelResource):
     def build_filters(self, filters=None):
         if filters is None:
             filters = {}
-        orm_filters = super(LAGGInterfaceMembersResource,
+        orm_filters = super(
+            LAGGInterfaceMembersResource,
             self).build_filters(filters)
         lagggrp = filters.get("lagg_interfacegroup__id")
         if lagggrp:
@@ -575,7 +617,7 @@ class LAGGInterfaceMembersResource(DojoModelResource):
         bundle = super(LAGGInterfaceMembersResource, self).dehydrate(bundle)
         bundle.data['lagg_interfacegroup'] = unicode(
             bundle.obj.lagg_interfacegroup
-            )
+        )
         return bundle
 
 
@@ -643,7 +685,7 @@ class ISCSIPortalResource(DojoModelResource):
         listen = ["%s:%s" % (
             p.iscsi_target_portalip_ip,
             p.iscsi_target_portalip_port,
-            ) for p in bundle.obj.iscsitargetportalip_set.all()]
+        ) for p in bundle.obj.iscsitargetportalip_set.all()]
         bundle.data['iscsi_target_portalip_ips'] = listen
         return bundle
 
@@ -683,14 +725,15 @@ class ISCSITargetExtentResource(DojoModelResource):
         elif bundle.obj.iscsi_target_extent_type == 'ZVOL':
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % (
                 bundle.data['iscsi_target_extent_path'],
-                )
+            )
         return bundle
 
 
 class BsdUserResource(DojoModelResource):
 
     class Meta:
-        queryset = bsdUsers.objects.all().order_by('bsdusr_builtin',
+        queryset = bsdUsers.objects.all().order_by(
+            'bsdusr_builtin',
             'bsdusr_uid')
         resource_name = 'bsdusers'
         paginator_class = DojoPaginator
@@ -700,14 +743,17 @@ class BsdUserResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(BsdUserResource, self).dehydrate(bundle)
-        bundle.data['_passwd_url'] = "%sbsdUserPasswordForm?deletable=false" % (
-            bundle.obj.get_edit_url(),
+        bundle.data['_passwd_url'] = (
+            "%sbsdUserPasswordForm?deletable=false" % (
+                bundle.obj.get_edit_url(),
             )
+        )
         bundle.data['_email_url'] = "%sbsdUserEmailForm?deletable=false" % (
             bundle.obj.get_edit_url(),
-            )
-        bundle.data['_auxiliary_url'] = reverse('account_bsduser_groups',
-            kwargs={'object_id': bundle.obj.id, })
+        )
+        bundle.data['_auxiliary_url'] = reverse(
+            'account_bsduser_groups',
+            kwargs={'object_id': bundle.obj.id})
         return bundle
 
 
@@ -723,8 +769,9 @@ class BsdGroupResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(BsdGroupResource, self).dehydrate(bundle)
-        bundle.data['_members_url'] = reverse('account_bsdgroup_members',
-            kwargs={'object_id': bundle.obj.id, })
+        bundle.data['_members_url'] = reverse(
+            'account_bsdgroup_members',
+            kwargs={'object_id': bundle.obj.id})
         return bundle
 
 
@@ -742,6 +789,7 @@ class NullMountPointResource(DojoModelResource):
         bundle = super(NullMountPointResource, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
+
 
 class JailsResource(DojoModelResource):
 
@@ -771,45 +819,54 @@ class JailsResource(DojoModelResource):
         })
         bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_options_url'] = reverse('jail_options', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_pkgs_url'] = reverse('jail_pkgs', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_pbis_url'] = reverse('jail_pbis', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
         bundle.data['_jail_zfsmksnap_url'] = reverse('jail_zfsmksnap', kwargs={
             'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfslistclone_url'] = reverse('jail_zfslistclone', kwargs={
-            'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfslistsnap_url'] = reverse('jail_zfslistsnap', kwargs={
-            'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfsclonesnap_url'] = reverse('jail_zfsclonesnap', kwargs={
-            'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfscronsnap_url'] = reverse('jail_zfscronsnap', kwargs={
-            'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfsrevertsnap_url'] = reverse('jail_zfsrevertsnap', kwargs={
-            'id': bundle.obj.id
-        }) 
-        bundle.data['_jail_zfsrmclone_url'] = reverse('jail_zfsrmclonesnap', kwargs={
-            'id': bundle.obj.id
-        }) 
+        })
+        bundle.data['_jail_zfslistclone_url'] = reverse(
+            'jail_zfslistclone',
+            kwargs={
+                'id': bundle.obj.id
+            })
+        bundle.data['_jail_zfslistsnap_url'] = reverse(
+            'jail_zfslistsnap',
+            kwargs={
+                'id': bundle.obj.id
+            })
+        bundle.data['_jail_zfsclonesnap_url'] = reverse(
+            'jail_zfsclonesnap',
+            kwargs={
+                'id': bundle.obj.id
+            })
+        bundle.data['_jail_zfscronsnap_url'] = reverse(
+            'jail_zfscronsnap', kwargs={
+                'id': bundle.obj.id
+            })
+        bundle.data['_jail_zfsrevertsnap_url'] = reverse(
+            'jail_zfsrevertsnap', kwargs={
+                'id': bundle.obj.id
+            })
+        bundle.data['_jail_zfsrmclone_url'] = reverse(
+            'jail_zfsrmclonesnap', kwargs={
+                'id': bundle.obj.id
+            })
         bundle.data['_jail_zfsrmsnap_url'] = reverse('jail_zfsrmsnap', kwargs={
             'id': bundle.obj.id
-        }) 
+        })
 
         return bundle
