@@ -751,6 +751,10 @@ class AutoImportDecryptForm(forms.Form):
         if not key:
             return self.cleaned_data
 
+        disks = self.cleaned_data.get("disks")
+        if not disks:
+            return self.cleaned_data
+
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
@@ -764,7 +768,7 @@ class AutoImportDecryptForm(forms.Form):
 
         _notifier = notifier()
         failed = []
-        for disk in self.cleaned_data.get("disks"):
+        for disk in disks:
             if not _notifier.geli_attach_single(
                 disk,
                 keyfile,
