@@ -1108,7 +1108,7 @@ AD_init()
 	fi
 
 	AD_set kpwdhost "${kpwdhost}"
-	AD_set kpwdport "${kpwdname}"
+	AD_set kpwdport "${kpwdport}"
 	AD_log "AD_init: kpwdhost = $(AD_get kpwdhost), kpwdport = $(AD_get kpwdport)"
 
 	AD_generate_config
