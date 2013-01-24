@@ -1061,7 +1061,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         if os.access(FREENAS_AD_CONFIG_FILE, os.F_OK):
             for var in self.config:
-                self.config[var] = get_freenas_var_by_file(FREENAS_AD_CONFIG_FILE, var)
+                self.config[var] = get_freenas_var_by_file(FREENAS_AD_CONFIG_FILE, "ad_%s" % var)
                 if self.config[var]:
                     res = True
         else:

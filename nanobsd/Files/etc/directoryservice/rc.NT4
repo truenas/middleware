@@ -89,7 +89,7 @@ __NT4_get_A_host()
 	exec 0<"${tmpfile}"
 	while read -r host
 	do
-		local dns_timeout="$(NT4_get dns_timeout)"
+		local dns_timeout="$(NT4_get nt4_dns_timeout)"
 		
 		NT4_log "__NT4_get_A_host: trying ${host}"
 
@@ -215,7 +215,12 @@ NT4_get()
 		local var=\$$(printf "${v}")
 		local val=$(eval "echo ${var} 2>/dev/null")
 
-		__do_NT4_get "${prefix}" "${v}" 2>/dev/null
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else		
+			__do_NT4_get "${prefix}" "${v}" 2>/dev/null
+		fi
 	done
 }
 
@@ -242,12 +247,12 @@ NT4_show_config()
 {
 	printf "NT4 Domain Config:\n"
 	printf "+------------------------------------------+\n"
-	printf "dcname:       %s\n" $(NT4_get dcname)
-	printf "dcip:         %s\n" $(NT4_get dcip)
-	printf "adminname:    %s\n" $(NT4_get adminname)
-	printf "adminpw:      %s\n" $(NT4_get adminpw)
-	printf "workgroup:    %s\n" $(NT4_get workgroup)
-	printf "netbiosname:  %s\n" $(NT4_get netbiosname)
+	printf "nt4_dcname:       %s\n" $(NT4_get nt4_dcname)
+	printf "nt4_dchost:       %s\n" $(NT4_get nt4_dchost)
+	printf "nt4_adminname:    %s\n" $(NT4_get nt4_adminname)
+	printf "nt4_adminpw:      %s\n" $(NT4_get nt4_adminpw)
+	printf "nt4_workgroup:    %s\n" $(NT4_get nt4_workgroup)
+	printf "nt4_netbiosname:  %s\n" $(NT4_get nt4_netbiosname)
 	printf "+------------------------------------------+\n"
 }
 
@@ -257,12 +262,12 @@ NT4_join_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(NT4_get adminname)"}
-	: ${adminpw:="$(NT4_get adminpw)"}
+	: ${adminname:="$(NT4_get nt4_adminname)"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	NT4_log "NT4_join_domain: net rpc join -U ${adminname}"
 
-	__NT4_tc "$(NT4_get timeout)" /usr/local/bin/net rpc join -U "${adminname}%${adminpw}"
+	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc join -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -281,12 +286,12 @@ NT4_status_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(NT4_get adminname)"}
-	: ${adminpw:="$(NT4_get adminpw)"}
+	: ${adminname:="$(NT4_get nt4_adminname)"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	NT4_log "NT4_status_domain: net rpc status -U ${adminname}"
 
-	__NT4_tc "$(NT4_get timeout)" /usr/local/bin/net rpc testjoin -U "${adminname}%${adminpw}"
+	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc testjoin -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Not okay"
@@ -305,12 +310,12 @@ NT4_leave_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(NT4_get adminname)"}
-	: ${adminpw:="$(NT4_get adminpw)"}
+	: ${adminname:="$(NT4_get nt4_adminname)"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	NT4_log "NT4_leave_domain: net rpc leave -U ${adminname}"
 
-	__NT4_tc "$(NT4_get timeout)" /usr/local/bin/net rpc leave -U "${adminname}%${adminpw}"
+	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc leave -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -327,7 +332,7 @@ NT4_log()
 {
 	local args="$*"
 
-	local on="$(NT4_get verbose_logging)"
+	local on="$(NT4_get nt4_verbose_logging)"
 	if [ "${on}" = "1" ]
 	then
 		logger -t "NT4" ${args} >/dev/null 2>&1
@@ -359,7 +364,7 @@ __SQL__
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
+		var=$(echo ${line}|cut -f1 -d=|xargs)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		NT4_set "${var}" "${val}"
@@ -372,18 +377,18 @@ NT4_init()
 {
 	NT4_load_database_values
 
-	NT4_set timeout "${NT4_NET_RPC_TIMEOUT}"
-	NT4_set dns_timeout "${NT4_DNS_TIMEOUT}"
+	NT4_set nt4_timeout "${NT4_NET_RPC_TIMEOUT}"
+	NT4_set nt4_dns_timeout "${NT4_DNS_TIMEOUT}"
 
-	dcname="$(NT4_get dcname)"
-	dcip="${dcname}"
+	local dcname="$(NT4_get nt4_dcname)"
+	local dchost="${dcname}"
 
 	if ! __NT4_isip "${dcname}"
 	then
-		local dcip="$(__NT4_get_A_record ${dcname})"
-		NT4_set dcip "${dcip}"
+		dchost="$(__NT4_get_A_record ${dcname})"
+		NT4_set nt4_dchost "${dchost}"
 	else
-		NT4_set dcip "${dcname}"
+		NT4_set nt4_dchost "${dcname}"
 	fi
 
 	return 0

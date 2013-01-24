@@ -87,28 +87,28 @@ LDAP_set()
 LDAP_show_config()
 {
 	printf "LDAP Config:\n"
-	printf "+------------------------------------------+\n"
-	printf "hostname:          %s\n" $(LDAP_get hostname)
-	printf "basedn:            %s\n" $(LDAP_get basedn)
-	printf "anonbind:          %s\n" $(LDAP_get anonbind)
-	printf "rootbasedn:        %s\n" $(LDAP_get rootbasedn)
-	printf "rootbindpw:        %s\n" $(LDAP_get rootbindpw)
-	printf "pwencryption:      %s\n" $(LDAP_get pwencryption)
-	printf "usersuffix:        %s\n" $(LDAP_get usersuffix)
-	printf "groupsuffix:       %s\n" $(LDAP_get groupsuffix)
-	printf "passwordsuffix:    %s\n" $(LDAP_get passwordsuffix)
-	printf "machinesuffix:     %s\n" $(LDAP_get machinesuffix)
-	printf "ssl:               %s\n" $(LDAP_get ssl)
-	printf "tls_cacertfile:    %s\n" $(LDAP_get tls_cacertfile)
-	#printf "options:           %s\n" $(LDAP_get options)
-	printf "+------------------------------------------+\n"
+	printf "+---------------------------------------------------------+\n"
+	printf "ldap_hostname:          %s\n" $(LDAP_get ldap_hostname)
+	printf "ldap_basedn:            %s\n" $(LDAP_get ldap_basedn)
+	printf "ldap_anonbind:          %s\n" $(LDAP_get ldap_anonbind)
+	printf "ldap_rootbasedn:        %s\n" $(LDAP_get ldap_rootbasedn)
+	printf "ldap_rootbindpw:        %s\n" $(LDAP_get ldap_rootbindpw)
+	printf "ldap_pwencryption:      %s\n" $(LDAP_get ldap_pwencryption)
+	printf "ldap_usersuffix:        %s\n" $(LDAP_get ldap_usersuffix)
+	printf "ldap_groupsuffix:       %s\n" $(LDAP_get ldap_groupsuffix)
+	printf "ldap_passwordsuffix:    %s\n" $(LDAP_get ldap_passwordsuffix)
+	printf "ldap_machinesuffix:     %s\n" $(LDAP_get ldap_machinesuffix)
+	printf "ldap_ssl:               %s\n" $(LDAP_get ldap_ssl)
+	printf "ldap_tls_cacertfile:    %s\n" $(LDAP_get ldap_tls_cacertfile)
+	#printf "ldap_options:           %s\n" $(LDAP_get ldap_options)
+	printf "+---------------------------------------------------------+\n"
 }
 
 LDAP_log()
 {
 	local args="$*"
 
-	local on="$(LDAP_get verbose_logging)"
+	local on="$(LDAP_get ldap_verbose_logging)"
 	if [ "${on}" = "1" ]
 	then
 		logger -t "LDAP" ${args} >/dev/null 2>&1
@@ -148,7 +148,7 @@ __SQL__
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
+		var=$(echo ${line}|cut -f1 -d=|xargs)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		LDAP_set "${var}" "${val}"

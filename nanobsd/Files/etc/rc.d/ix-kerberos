@@ -15,12 +15,12 @@ generate_krb5_conf()
 {
 	AD_init
 
-	local krbhost=$(AD_get krbhost)
-	local krbport=$(AD_get krbport)
-	local krbsvc=$(AD_get krbsvc)
-	local kpwdhost=$(AD_get kpwdhost)
-	local kpwdport=$(AD_get kpwdport)
-	local domainname=$(AD_get domainname)
+	local krbhost=$(AD_get ad_krbhost)
+	local krbport=$(AD_get ad_krbport)
+	local krbsvc=$(AD_get ad_krbsvc)
+	local kpwdhost=$(AD_get ad_kpwdhost)
+	local kpwdport=$(AD_get ad_kpwdport)
+	local domainname=$(AD_get ad_domainname)
 	local template="${PATH_KRB5_TEMPLATE}"
 
 	AD_log "generate_krb5_conf: krbhost=${krbhost}, kpwdhost=${kpwdhost}, " \

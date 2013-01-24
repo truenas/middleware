@@ -93,7 +93,7 @@ __AD_get_SRV_host()
 	do
 		local host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
 		local port=$(echo "${line}"|awk '{ print $3 }')
-		local nc_timeout="$(AD_get dns_timeout)"
+		local nc_timeout="$(AD_get ad_dns_timeout)"
 		local nc_args=
 
 		AD_log "__AD_get_SRV_host: trying ${host}:${port}"
@@ -563,11 +563,11 @@ __do_AD_query()
 	local attributes="${8}"
 	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
 
-	: ${dchost:="$(AD_get dchost)"}
-	: ${dcport:="$(AD_get dcport)"}
-	: ${basedn:="$(AD_get basedn)"}
-	: ${binddn:="$(AD_get binddn)"}
-	: ${adminpw:="$(AD_get adminpw)"}
+	: ${dchost:="$(AD_get ad_dchost)"}
+	: ${dcport:="$(AD_get ad_dcport)"}
+	: ${basedn:="$(AD_get ad_basedn)"}
+	: ${binddn:="$(AD_get ad_binddn)"}
+	: ${adminpw:="$(AD_get ad_adminpw)"}
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
@@ -599,15 +599,15 @@ AD_query()
 	shift
 	local attributes="${*}"
 
-	: ${basedn:="$(AD_get basedn)"}
+	: ${basedn:="$(AD_get ad_basedn)"}
 	: ${filter:='(objectclass=*)'}
 
 	AD_log "AD_query: basedn = ${basedn}, filter = ${filter}, attributes = ${attributes}"
 
-	local dchost="$(AD_get dchost)"
-	local dcport="$(AD_get dcport)"
-	local binddn="$(AD_get binddn)"
-	local adminpw="$(AD_get adminpw)"
+	local dchost="$(AD_get ad_dchost)"
+	local dcport="$(AD_get ad_dcport)"
+	local binddn="$(AD_get ad_binddn)"
+	local adminpw="$(AD_get ad_adminpw)"
 
 	__do_AD_query "${dchost}" "${dcport}" "${basedn}" \
 		"${binddn}" "${adminpw}" "sub" "${filter}" \
@@ -649,10 +649,10 @@ AD_query_global_catalog()
 
 	AD_log "AD_query_global_catalog: filter = ${filter}, attributes = ${attributes}"
 
-	local gchost="$(AD_get gchost)"
-	local gcport="$(AD_get gcport)"
-	local binddn="$(AD_get binddn)"
-	local adminpw="$(AD_get adminpw)"
+	local gchost="$(AD_get ad_gchost)"
+	local gcport="$(AD_get ad_gcport)"
+	local binddn="$(AD_get ad_binddn)"
+	local adminpw="$(AD_get ad_adminpw)"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
@@ -682,10 +682,10 @@ AD_query_rootDSE()
 
 	AD_log "AD_query_rootDSE: filter = ${filter}, attributes = ${attributes}"
 
-	local dchost="$(AD_get dchost)"
-	local dcport="$(AD_get dcport)"
-	local binddn="$(AD_get binddn)"
-	local adminpw="$(AD_get adminpw)"
+	local dchost="$(AD_get ad_dchost)"
+	local dcport="$(AD_get ad_dcport)"
+	local binddn="$(AD_get ad_binddn)"
+	local adminpw="$(AD_get ad_adminpw)"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
@@ -727,15 +727,21 @@ __do_AD_get()
 
 AD_get()
 {
-	local name="${1}"
-	local cached="${2}"
-
+	local vars="${*}"
 	local prefix="__ad_"
-	local var=\$$(printf "${name}")
-	local val=$(eval "echo ${var} 2>/dev/null")
 
-	__do_AD_get "${prefix}" "${name}" 2>/dev/null
+	for v in ${vars}
+	do
+		local var=\$$(printf "${v}")
+		local val=$(eval "echo ${var} 2>/dev/null")
 
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else
+			__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		fi
+	done
 }
 
 __do_AD_set()
@@ -760,9 +766,10 @@ AD_set()
 AD_save()
 {
 	local prefix="__save_"
-	local vars="adminname domainname basedn binddn dcname \
-		dchost dcport gcname gchost gcport krbname krbhost \
-		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
+	local vars="ad_adminname ad_domainname ad_basedn ad_binddn ad_dcname \
+		ad_dchost ad_dcport ad_gcname ad_gchost ad_gcport ad_krbname \
+		ad_krbhost ad_krbport ad_kpwdname ad_kpwdhost ad_kpwdport \
+		ad_timeout ad_dns_timeout"
 	
 	for v in ${vars}
 	do
@@ -773,9 +780,10 @@ AD_save()
 AD_restore()
 {
 	local prefix="__save_"
-	local vars="adminname domainname basedn binddn dcname \
-		dchost dcport gcname gchost gcport krbname krbhost \
-		krbport kpwdname kpwdhost kpwdport timeout dns_timeout"
+	local vars="ad_adminname ad_domainname ad_basedn ad_binddn ad_dcname \
+		ad_dchost ad_dcport ad_gcname ad_gchost ad_gcport ad_krbname \
+		ad_krbhost ad_krbport ad_kpwdname ad_kpwdhost ad_kpwdport \
+		ad_timeout ad_dns_timeout"
 	
 	for v in ${vars}
 	do
@@ -787,26 +795,26 @@ AD_show_config()
 {
 	printf "Active Directory Config:\n"
 	printf "+------------------------------------------+\n"
-	printf "dchost:       %s\n" $(AD_get dchost)
-	printf "dcport:       %d\n" $(AD_get dcport)
-	printf "domainname:   %s\n" $(AD_get domainname)
-	printf "basedn:       %s\n" $(AD_get basedn)
-	printf "adminname:    %s\n" $(AD_get adminname)
-	printf "adminpw:      %s\n" $(AD_get adminpw)
-	printf "workgroup:    %s\n" $(AD_get workgroup)
-	printf "netbiosname:  %s\n" $(AD_get netbiosname)
-	printf "gchost:       %s\n" $(AD_get gchost)
-	printf "gcport:       %d\n" $(AD_get gcport)
-	printf "krbhost:      %s\n" $(AD_get krbhost)
-	printf "krbport:      %d\n" $(AD_get krbport)
-	printf "kpwdhost:     %s\n" $(AD_get kpwdhost)
-	printf "kpwdport:     %d\n" $(AD_get kpwdport)
-	printf "unix:         %s\n" $(AD_get unix_extensions)
-	printf "trusted:      %s\n" $(AD_get allow_trusted_doms)
-	printf "default:      %s\n" $(AD_get use_default_domain)
-	printf "verbose:      %s\n" $(AD_get verbose_logging)
-	printf "timeout:      %s\n" $(AD_get timeout)
-	printf "dns_timeout:  %s\n" $(AD_get dns_timeout)
+	printf "ad_dchost:       %s\n" $(AD_get ad_dchost)
+	printf "ad_dcport:       %d\n" $(AD_get ad_dcport)
+	printf "ad_domainname:   %s\n" $(AD_get ad_domainname)
+	printf "ad_basedn:       %s\n" $(AD_get ad_basedn)
+	printf "ad_adminname:    %s\n" $(AD_get ad_adminname)
+	printf "ad_adminpw:      %s\n" $(AD_get ad_adminpw)
+	printf "ad_workgroup:    %s\n" $(AD_get ad_workgroup)
+	printf "ad_netbiosname:  %s\n" $(AD_get ad_netbiosname)
+	printf "ad_gchost:       %s\n" $(AD_get ad_gchost)
+	printf "ad_gcport:       %d\n" $(AD_get ad_gcport)
+	printf "ad_krbhost:      %s\n" $(AD_get ad_krbhost)
+	printf "ad_krbport:      %d\n" $(AD_get ad_krbport)
+	printf "ad_kpwdhost:     %s\n" $(AD_get ad_kpwdhost)
+	printf "ad_kpwdport:     %d\n" $(AD_get ad_kpwdport)
+	printf "ad_unix:         %s\n" $(AD_get ad_unix_extensions)
+	printf "ad_trusted:      %s\n" $(AD_get ad_allow_trusted_doms)
+	printf "ad_default:      %s\n" $(AD_get ad_use_default_domain)
+	printf "ad_verbose:      %s\n" $(AD_get ad_verbose_logging)
+	printf "ad_timeout:      %s\n" $(AD_get ad_timeout)
+	printf "ad_dns_timeout:  %s\n" $(AD_get ad_dns_timeout)
 	printf "+------------------------------------------+\n"
 }
 
@@ -816,12 +824,12 @@ AD_join_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(AD_get adminname)"}
-	: ${adminpw:="$(AD_get adminpw)"}
+	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${adminpw:="$(AD_get ad_adminpw)"}
 
 	AD_log "AD_join_domain: net ads join -U ${adminname}"
 
-	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -840,12 +848,12 @@ AD_status_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(AD_get adminname)"}
-	: ${adminpw:="$(AD_get adminpw)"}
+	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${adminpw:="$(AD_get ad_adminpw)"}
 
 	AD_log "AD_status_domain: net ads status -U ${adminname}"
 
-	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Not okay"
@@ -864,12 +872,12 @@ AD_leave_domain()
 	local adminpw="${2}"
 	local res
 
-	: ${adminname:="$(AD_get adminname)"}
-	: ${adminpw:="$(AD_get adminpw)"}
+	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${adminpw:="$(AD_get ad_adminpw)"}
 
 	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
 
-	__AD_tc "$(AD_get timeout)" /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
 	res=$?
 
 	local ok="Failed"
@@ -886,7 +894,7 @@ AD_log()
 {
 	local args="$*"
 
-	local on="$(AD_get verbose_logging)"
+	local on="$(AD_get ad_verbose_logging)"
 	if [ "${on}" = "1" ]
 	then
 		logger -t "ActiveDirectory" ${args} >/dev/null 2>&1
@@ -929,7 +937,7 @@ __SQL__
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2- -d_)
+		var=$(echo ${line}|cut -f1 -d=|xargs)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		AD_set "${var}" "${val}"
@@ -941,24 +949,24 @@ __SQL__
 AD_generate_config()
 {
 	local vars="\
-		adminname \
-		domainname \
-		basedn \
-		binddn \
-		dcname \
-		dchost \
-		dcport \
-		gcname \
-		gchost \
-		gcport \
-		krbname\
-		krbhost \
-		krbport \
-		kpwdname \
-		kpwdhost \
-		kpwdport \
-		timeout \
-		dns_timeout \
+		ad_adminname \
+		ad_domainname \
+		ad_basedn \
+		ad_binddn \
+		ad_dcname \
+		ad_dchost \
+		ad_dcport \
+		ad_gcname \
+		ad_gchost \
+		ad_gcport \
+		ad_krbname\
+		ad_krbhost \
+		ad_krbport \
+		ad_kpwdname \
+		ad_kpwdhost \
+		ad_kpwdport \
+		ad_timeout \
+		ad_dns_timeout \
 	"
 
 	: > "${AD_CONFIG_FILE}"
@@ -978,7 +986,7 @@ AD_init()
 
 	AD_load_database_values
 
-	verbose=$(AD_get verbose_logging)
+	verbose=$(AD_get ad_verbose_logging)
 
 	if [ -f "${AD_CONFIG_FILE}" ]
 	then
@@ -993,36 +1001,36 @@ AD_init()
 		return 0
 	fi
 
-	timeout=$(AD_get timeout)
+	timeout=$(AD_get ad_timeout)
 	if [ -z "${timeout}" ]
 	then
 		timeout="${AD_NET_ADS_TIMEOUT}"
-		AD_set timeout "${timeout}"
+		AD_set ad_timeout "${timeout}"
 	fi
 
-	dns_timeout=$(AD_get dns_timeout)
+	dns_timeout=$(AD_get ad_dns_timeout)
 	if [ -z "${dns_timeout}" ]
 	then
 		dns_timeout="${AD_DNS_TIMEOUT}"
-		AD_set dns_timeout "${dns_timeout}"
+		AD_set ad_dns_timeout "${dns_timeout}"
 	fi
 
-	local adminname=$(AD_get adminname)
-	local domainname=$(AD_get domainname)
+	local adminname=$(AD_get ad_adminname)
+	local domainname=$(AD_get ad_domainname)
 
-	local binddn=$(AD_get binddn)
+	local binddn=$(AD_get ad_binddn)
 	if [ -z "${binddn}" ]
 	then
 		binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
-		AD_set binddn "${binddn}"
+		AD_set ad_binddn "${binddn}"
 	fi	
-	AD_log "AD_init: binddn = $(AD_get binddn)"
+	AD_log "AD_init: binddn = $(AD_get ad_binddn)"
 
-	local dcname=$(AD_get dcname)
+	local dcname=$(AD_get ad_dcname)
 	if [ -z "${dcname}" ]
 	then
 		dcname=$(AD_get_domain_controller "${domainname}")
-		AD_set dcname "${dcname}"
+		AD_set ad_dcname "${dcname}"
 	fi
 
 	local dchost="$(echo "${dcname}"|cut -f1 -d:)"
@@ -1032,26 +1040,26 @@ AD_init()
 		dcport=389
 	fi
 
-	AD_set dchost "${dchost}"
-	AD_set dcport "${dcport}"
+	AD_set ad_dchost "${dchost}"
+	AD_set ad_dcport "${dcport}"
 	
-	AD_log "AD_init: dchost = $(AD_get dchost), dcport = $(AD_get dcport)"
+	AD_log "AD_init: dchost = $(AD_get ad_dchost), dcport = $(AD_get ad_dcport)"
 
-	local basedn=$(AD_get basedn)
+	local basedn=$(AD_get ad_basedn)
 	if [ -z "${basedn}" ]
 	then
 		basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
-		AD_set basedn "${basedn}"
+		AD_set ad_basedn "${basedn}"
 	fi
-	AD_log "AD_init: basedn = $(AD_get basedn)"
+	AD_log "AD_init: basedn = $(AD_get ad_basedn)"
 
-	local gcname=$(AD_get gcname)
+	local gcname=$(AD_get ad_gcname)
 	if [ -z "${gcname}" ]
 	then
 
 		local rd="$(AD_get_root_domain "${domainname}")"
 		gcname="$(AD_get_domain_global_catalog_server "${rd}")"
-		AD_set gcname "${gcname}"
+		AD_set ad_gcname "${gcname}"
 	fi
 
 	local gchost="$(echo "${gcname}"|cut -f1 -d:)"
@@ -1062,21 +1070,21 @@ AD_init()
 		gcport=3268
 	fi
 
-	AD_set gchost "${gchost}"
-	AD_set gcport "${gcport}"
-	AD_log "AD_init: gchost = $(AD_get gchost), gcport = $(AD_get gcport)"
+	AD_set ad_gchost "${gchost}"
+	AD_set ad_gcport "${gcport}"
+	AD_log "AD_init: gchost = $(AD_get ad_gchost), gcport = $(AD_get ad_gcport)"
 
-	local krbname=$(AD_get krbname)
+	local krbname=$(AD_get ad_krbname)
 	if [ -z "${krbname}" ]
 	then
 		krbname="$(AD_get_kerberos_server ${domainname})"
-		AD_set krbname "${krbname}"
+		AD_set ad_krbname "${krbname}"
 	fi
 
 	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
 	if [ -n "${krbsvc}" ]
 	then
-		AD_set krbsvc "${krbsvc}"
+		AD_set ad_krbsvc "${krbsvc}"
 	fi
 
 	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
@@ -1087,15 +1095,15 @@ AD_init()
 		krbport=88
 	fi
 
-	AD_set krbhost "${krbhost}"
-	AD_set krbport "${krbport}"
-	AD_log "AD_init: krbhost = $(AD_get krbhost), krbport = $(AD_get krbport)"
+	AD_set ad_krbhost "${krbhost}"
+	AD_set ad_krbport "${krbport}"
+	AD_log "AD_init: krbhost = $(AD_get ad_krbhost), krbport = $(AD_get ad_krbport)"
 
-	local kpwdname=$(AD_get kpwdname)
+	local kpwdname=$(AD_get ad_kpwdname)
 	if [ -z "${kpwdname}" ]
 	then
 		kpwdname="$(AD_get_kpasswd_server ${domainname})"
-		AD_set kpwdname "${kpwdname}"
+		AD_set ad_kpwdname "${kpwdname}"
 	fi
 
 	kpwdhost="$(echo "${kpwdname}"|cut -f1 -d:)"
@@ -1106,9 +1114,9 @@ AD_init()
 		kpwdport=464
 	fi
 
-	AD_set kpwdhost "${kpwdhost}"
-	AD_set kpwdport "${kpwdport}"
-	AD_log "AD_init: kpwdhost = $(AD_get kpwdhost), kpwdport = $(AD_get kpwdport)"
+	AD_set ad_kpwdhost "${kpwdhost}"
+	AD_set ad_kpwdport "${kpwdport}"
+	AD_log "AD_init: kpwdhost = $(AD_get ad_kpwdhost), kpwdport = $(AD_get ad_kpwdport)"
 
 	AD_generate_config
 	return 0

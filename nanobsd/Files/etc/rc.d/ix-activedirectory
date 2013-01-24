@@ -33,8 +33,8 @@ get_basename()
 generate_ldap_conf()
 {
 	local ldapconf="${LDAP_CONF}"
-	local dcname="$(AD_get dcname)"
-	local domainname="$(AD_get domainname)"
+	local dcname="$(AD_get ad_dcname)"
+	local domainname="$(AD_get ad_domainname)"
 	local basedn="$(get_basename "${domainname}")"
 
 	echo "HOST ${dcname}" > "${ldapconf}"
@@ -45,10 +45,10 @@ generate_nss_ldap_conf()
 {
 	local nssconf="${NSS_LDAP_CONF}"
 	local secret="${NSS_LDAP_SECRET}"
-	local dcname="$(AD_get dcname)"
-	local domainname="$(AD_get domainname)"
-	local adminname="$(AD_get adminname)"
-	local adminpw="$(AD_get adminpw)"
+	local dcname="$(AD_get ad_dcname)"
+	local domainname="$(AD_get ad_domainname)"
+	local adminname="$(AD_get ad_adminname)"
+	local adminpw="$(AD_get ad_adminpw)"
 	local base="$(get_basename "${domainname}")"
 
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 

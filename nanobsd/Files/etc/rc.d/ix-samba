@@ -67,17 +67,17 @@ ldap_enabled()
 
 generate_nt4_smbconf()
 {
-	local dcip="$(NT4_get dcip)"
-	local nt4_netbiosname="$(NT4_get netbiosname)"
-	local nt4_workgroup="$(NT4_get workgroup)"
+	local dchost="$(NT4_get nt4_dchost)"
+	local netbiosname="$(NT4_get nt4_netbiosname)"
+	local workgroup="$(NT4_get nt4_workgroup)"
 
 	cat<<-__EOF__ >"${LMHOSTS}"
-	${dcip}	${nt4_workgroup}
+	${dchost}	${workgroup}
 __EOF__
 	
 	cat<<-__EOF__
-	    netbios name = ${nt4_netbiosname}
-	    workgroup = ${nt4_workgroup}
+	    netbios name = ${netbiosname}
+	    workgroup = ${workgroup}
 
 	    security = domain
 	    #password server = ...
@@ -96,36 +96,36 @@ __EOF__
 
 generate_activedirectory_smbconf()
 {
-	local domain=$(echo "$(AD_get domainname)"|tr a-z A-Z)
-	local ad_netbiosname="$(AD_get netbiosname)"
-	local ad_workgroup="$(AD_get workgroup)"
+	local domain=$(echo "$(AD_get ad_domainname)"|tr a-z A-Z)
+	local netbiosname="$(AD_get ad_netbiosname)"
+	local workgroup="$(AD_get ad_workgroup)"
 	local trusted="no"
 	local default="no"
 	local homedir="/home/%D/%U"
 
 	mkdir -p ${FREENAS_CACHEDIR}/.samba
 
-	if [ "$(AD_get allow_trusted_doms)" = "1" ]
+	if [ "$(AD_get ad_allow_trusted_doms)" = "1" ]
 	then
 		trusted="yes"
 	fi
-	if [ "$(AD_get use_default_domain)" = "1" ]
+	if [ "$(AD_get ad_use_default_domain)" = "1" ]
 	then
 		default="yes"
 		homedir="/home/%U"
 	fi
 
 	cat<<-__EOF__
-	    netbios name = ${ad_netbiosname}
-	    workgroup = ${ad_workgroup}
+	    netbios name = ${netbiosname}
+	    workgroup = ${workgroup}
 
 	    security = ADS
 	    realm = ${domain}
 	    client use spnego = yes
 	    cache directory = ${FREENAS_CACHEDIR}/.samba
 
-	    wins server = $(AD_get dchost)
-	    password server = $(AD_get dchost)
+	    wins server = $(AD_get ad_dchost)
+	    password server = $(AD_get ad_dchost)
 
 	    local master = no
 	    domain master = no
@@ -154,11 +154,11 @@ generate_activedirectory_smbconf()
 	    template homedir = ${homedir}
 
 __EOF__
-	if [ "$(AD_get unix_extensions)" = "0" ]
+	if [ "$(AD_get ad_unix_extensions)" = "0" ]
 	then
 		cat<<-__EOF__
-		    idmap config $(AD_get workgroup): backend = rid
-		    idmap config $(AD_get workgroup): range = 20000-20000000
+		    idmap config $(AD_get ad_workgroup): backend = rid
+		    idmap config $(AD_get ad_workgroup): range = 20000-20000000
 __EOF__
 	fi
 }
@@ -171,35 +171,35 @@ generate_ldap_smbconf()
 {
 	echo "    security = user"
 
-	if [ -n "$(LDAP_get hostname)" ]; then
-		echo "    passdb backend = ldapsam:ldap://$(LDAP_get hostname)"
+	if [ -n "$(LDAP_get ldap_hostname)" ]; then
+		echo "    passdb backend = ldapsam:ldap://$(LDAP_get ldap_hostname)"
 	fi
 
-	if [ -n "$(LDAP_get rootbasedn)" ]; then
-	    echo "    ldap admin dn = $(LDAP_get rootbasedn)"
+	if [ -n "$(LDAP_get ldap_rootbasedn)" ]; then
+	    echo "    ldap admin dn = $(LDAP_get ldap_rootbasedn)"
 	fi
 
-	if [ -n "$(LDAP_get rootbindpw)" ]; then
-		/usr/local/bin/smbpasswd -w "$(LDAP_get rootbindpw)" >/dev/null 2>&1
+	if [ -n "$(LDAP_get ldap_rootbindpw)" ]; then
+		/usr/local/bin/smbpasswd -w "$(LDAP_get ldap_rootbindpw)" >/dev/null 2>&1
 	fi
 
-	if [ -n "$(LDAP_get basedn)" ]; then
-	    echo "    ldap suffix = $(LDAP_get basedn)"
+	if [ -n "$(LDAP_get ldap_basedn)" ]; then
+	    echo "    ldap suffix = $(LDAP_get ldap_basedn)"
 	fi
 
-	if [ -n "$(LDAP_get usersuffix)" ]; then
-	    echo "    ldap user suffix = $(LDAP_get usersuffix)"
+	if [ -n "$(LDAP_get ldap_usersuffix)" ]; then
+	    echo "    ldap user suffix = $(LDAP_get ldap_usersuffix)"
 	fi
 
-	if [ -n "$(LDAP_get groupsuffix)" ]; then
-	    echo "    ldap group suffix = $(LDAP_get groupsuffix)"
+	if [ -n "$(LDAP_get ldap_groupsuffix)" ]; then
+	    echo "    ldap group suffix = $(LDAP_get ldap_groupsuffix)"
 	fi
 
-	if [ -n "$(LDAP_get machinesuffix)" ]; then
-	    echo "    ldap machine suffix = $(LDAP_get machinesuffix)"
+	if [ -n "$(LDAP_get ldap_machinesuffix)" ]; then
+	    echo "    ldap machine suffix = $(LDAP_get ldap_machinesuffix)"
 	fi
 
-	if [ "$(LDAP_get ssl)" = "start_tls" ]; then
+	if [ "$(LDAP_get ldap_ssl)" = "start_tls" ]; then
 		echo "    ldap ssl = start tls"
 	else
 		echo "    ldap ssl = off"
@@ -432,7 +432,7 @@ EOF
 
 		if [ "${cifs_homedir}" = "1" ]; then
 
-			if [ "${ad_enable}" = "1" -a "$(AD_get use_default_domain)" = "1" ]
+			if [ "${ad_enable}" = "1" -a "$(AD_get ad_use_default_domain)" = "1" ]
 			then
 				valid_users_path="%U"
 				valid_users="%U"
