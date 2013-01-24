@@ -76,7 +76,7 @@ generate_nt4_smbconf()
 __EOF__
 	
 	cat<<-__EOF__
-	    netbiosname = ${nt4_netbiosname}
+	    netbios name = ${nt4_netbiosname}
 	    workgroup = ${nt4_workgroup}
 
 	    security = domain
@@ -116,7 +116,7 @@ generate_activedirectory_smbconf()
 	fi
 
 	cat<<-__EOF__
-	    netbiosname = ${ad_netbiosname}
+	    netbios name = ${ad_netbiosname}
 	    workgroup = ${ad_workgroup}
 
 	    security = ADS
@@ -321,17 +321,10 @@ generate_smbconf()
 		    max protocol = SMB2
 EOF
 
-		if [ "${ad_enable}" = "1" ]; then
-			netbiosname="$(AD_get netbiosname)"
-			workgroup="$(AD_get workgroup)"
-
-		elif [ "${nt4_enable}" = "1" ]; then
-			netbiosname="$(NT4_get netbiosname)"
-			workgroup="$(NT4_get workgroup)"
+		if [ "${ad_enable}" = "0" -a "${nt4_enable}" = "0" ]; then
+			echo "    netbios name = ${netbiosname}"
+			echo "    workgroup = ${workgroup}"
 		fi
-
-		echo "    netbios name = ${netbiosname}"
-		echo "    workgroup = ${workgroup}"
 		
 		if [ -n "${cifs_description}" ]; then
 			echo "    server string = ${cifs_description}"
