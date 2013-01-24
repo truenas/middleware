@@ -37,7 +37,8 @@ from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 
 from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
-from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, service_enabled
+from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, \
+    service_enabled, get_directoryservice
 
 log = logging.getLogger('common.freenasldap')
 
