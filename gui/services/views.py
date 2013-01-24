@@ -232,18 +232,19 @@ def servicesToggleView(request, formname):
     directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
     if changing_service == "directoryservice": 
         directoryservice = DirectoryService.objects.order_by("-id")[0]
-       
-        for svc in directory_services:
-            if svc != directoryservice.svc:
-                notifier().stop(svc)
 
+        n = notifier()
         if svc_entry.srv_enable == 1:
+            method = getattr(n, "_start_%s" % directoryservice.svc)
+
             svc_entry.save()
-            started = notifier().start(directoryservice.svc)
+            started = method() 
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
-            started = notifier().stop(directoryservice.svc)
+            method = getattr(n, "_stop_%s" % directoryservice.svc)
+
+            started = method()
             svc_entry.save()
             if not models.services.objects.get(srv_service='cifs').srv_enable:
                 disabled_svcs.append('cifs')
@@ -268,9 +269,11 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ups', 'plugins_jail') or \
-                changing_service in directory_services:
-                notifier().stop(changing_service)
+            if changing_service in ('ups', 'plugins_jail', 'directoryservice'):
+                if changing_service == 'directoryservice':
+                    notifier().stop(directoryservice.svc)
+                else: 
+                    notifier().stop(changing_service)
     else:
         if svc_entry.srv_enable == 1:
             status = 'on'
