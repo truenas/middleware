@@ -96,7 +96,13 @@ FLAGS_DBINIT             = 0x00010000
 
 
 def LDAPEnabled():
-    return service_enabled('ldap')
+    enabled = False
+
+    if service_enabled('directoryservice') and \
+        get_directoryservice() == 'ldap':
+        enabled = True
+
+    return enabled
 
 
 def LDAP_objects():
@@ -119,7 +125,13 @@ def LDAP_objects():
 
 
 def ActiveDirectoryEnabled():
-    return service_enabled('activedirectory')
+    enabled = False
+
+    if service_enabled('directoryservice') and \
+        get_directoryservice() == 'activedirectory':
+        enabled = True
+
+    return enabled
 
 
 def ActiveDirectory_objects():
