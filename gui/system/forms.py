@@ -198,6 +198,7 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
         self.instance._original_stg_guiport = self.instance.stg_guiport
         self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
+        self.instance._original_stg_directoryservice = self.instance.stg_directoryservice
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
@@ -227,6 +228,12 @@ class SettingsForm(ModelForm):
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
+        if self.instance._original_stg_directoryservice != self.instance.stg_directoryservice \
+            and self.instance._original_stg_directoryservice:
+            method = getattr(notifier(), "_stop_%s" % \
+                self.instance._original_stg_directoryservice)
+            method()
+
 
     def done(self, request, events):
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
