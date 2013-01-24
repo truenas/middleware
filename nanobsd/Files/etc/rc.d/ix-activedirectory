@@ -191,7 +191,7 @@ setup_homedirs()
 
 activedirectory_start()
 {
-	if srv_enabled activedirectory
+	if dirsrv_enabled activedirectory
 	then
 		AD_init
 

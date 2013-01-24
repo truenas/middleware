@@ -269,7 +269,7 @@ ldap_status()
 
 generate_ldap_config()
 {
-	if srv_enabled ldap; then
+	if dirsrv_enabled ldap; then
 		generate_ldapconf &&
 		setup_homedirs &&
 		create_cache_filesystem
