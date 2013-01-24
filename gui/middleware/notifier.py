@@ -1216,27 +1216,28 @@ class notifier:
             return True
         return False
 
-    def geli_attach(self, volume, passphrase=None):
+    def geli_attach(self, volume, passphrase=None, key=None):
         """
         Attach geli providers of a given volume
 
         Returns the number of providers that failed to attach
         """
         failed = 0
-        geli_keyfile = volume.get_geli_keyfile()
+        if key is None:
+            geli_keyfile = volume.get_geli_keyfile()
+        else:
+            geli_keyfile = key
+        if not passphrase:
+            _passphrase = "-p"
+        else:
+            _passphrase = "-j %s" % passphrase
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            if passphrase is None:
-                proc = self.__pipeopen("geli attach -p -k %s %s" % (
-                    geli_keyfile,
-                    dev,
-                    ))
-            else:
-                proc = self.__pipeopen("geli attach -k %s -j %s %s" % (
-                    geli_keyfile,
-                    passphrase,
-                    dev,
-                    ))
+            proc = self.__pipeopen("geli attach %s -k %s %s" % (
+                _passphrase,
+                geli_keyfile,
+                dev,
+            ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 log.warn("Failed to geli attach %s: %s", dev, err)

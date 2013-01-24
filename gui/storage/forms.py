@@ -1816,7 +1816,12 @@ class UnlockPassphraseForm(forms.Form):
     passphrase = forms.CharField(
         label=_("Passphrase"),
         widget=forms.widgets.PasswordInput(),
-        )
+        required=False,
+    )
+    key = FileField(
+        label=_("Recovery Key"),
+        required=False,
+    )
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
@@ -1831,13 +1836,36 @@ class UnlockPassphraseForm(forms.Form):
         required=False,
     )
 
+    def clean(self):
+        passphrase = self.cleaned_data.get("passphrase")
+        key = self.cleaned_data.get("key")
+        log.error("%r", key)
+        if not passphrase and key is None:
+            self._errors['__all__'] = self.error_class([
+                _("You need either a passphrase or a recovery key to unlock")
+            ])
+        return self.cleaned_data
+
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        passfile = tempfile.mktemp(dir='/tmp/')
-        with open(passfile, 'w') as f:
-            f.write(passphrase)
-        failed = notifier().geli_attach(volume, passfile)
-        os.unlink(passfile)
+        key = self.cleaned_data.get("key")
+        if passphrase:
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
+            failed = notifier().geli_attach(volume, passphrase=passfile)
+            os.unlink(passfile)
+        elif key is not None:
+            keyfile = tempfile.mktemp(dir='/tmp/')
+            with open(keyfile, 'wb') as f:
+                f.write(key.read())
+            failed = notifier().geli_attach(
+                volume,
+                passphrase=None,
+                key=keyfile)
+            os.unlink(keyfile)
+        else:
+            raise ValueError("Need a passphrase or recovery key")
         zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
         if not zimport:
             if failed > 0:
