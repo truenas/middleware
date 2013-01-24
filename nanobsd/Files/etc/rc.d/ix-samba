@@ -68,13 +68,17 @@ ldap_enabled()
 generate_nt4_smbconf()
 {
 	local dcip="$(NT4_get dcip)"
-	local workgroup="$(NT4_get workgroup)"
+	local nt4_netbiosname="$(NT4_get netbiosname)"
+	local nt4_workgroup="$(NT4_get workgroup)"
 
 	cat<<-__EOF__ >"${LMHOSTS}"
-	${dcip}	${workgroup}
+	${dcip}	${nt4_workgroup}
 __EOF__
 	
 	cat<<-__EOF__
+	    netbiosname = ${nt4_netbiosname}
+	    workgroup = ${nt4_workgroup}
+
 	    security = domain
 	    #password server = ...
 	    password server = *
@@ -93,6 +97,7 @@ __EOF__
 generate_activedirectory_smbconf()
 {
 	local domain=$(echo "$(AD_get domainname)"|tr a-z A-Z)
+	local ad_netbiosname="$(AD_get netbiosname)"
 	local ad_workgroup="$(AD_get workgroup)"
 	local trusted="no"
 	local default="no"
@@ -111,6 +116,9 @@ generate_activedirectory_smbconf()
 	fi
 
 	cat<<-__EOF__
+	    netbiosname = ${ad_netbiosname}
+	    workgroup = ${ad_workgroup}
+
 	    security = ADS
 	    realm = ${domain}
 	    client use spnego = yes
