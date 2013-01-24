@@ -735,7 +735,12 @@ AD_get()
 		local var=\$$(printf "${v}")
 		local val=$(eval "echo ${var} 2>/dev/null")
 
-		__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		if [ -n "${val}" ]
+		then
+			echo "${val}"
+		else
+			__do_AD_get "${prefix}" "${v}" 2>/dev/null
+		fi
 	done
 }
 
