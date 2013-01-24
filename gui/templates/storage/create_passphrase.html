@@ -1,1 +1,9 @@
 {% extends "freeadmin/generic_form.html" %}
+{% block form %}
+    <tr>
+        <td colspan="2">
+        <p style="color: red">Warning: this operation will remove the recovery key</p>
+        </td>
+    </tr>
+{{ block.super }}
+{% endblock %}
