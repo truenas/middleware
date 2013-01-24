@@ -727,21 +727,15 @@ __do_AD_get()
 
 AD_get()
 {
-	local vars="${*}"
+	local name="${1}"
+	local cached="${2}"
+
 	local prefix="__ad_"
+	local var=\$$(printf "${name}")
+	local val=$(eval "echo ${var} 2>/dev/null")
 
-	for v in ${vars}
-	do
-		local var=\$$(printf "${v}")
-		local val=$(eval "echo ${var} 2>/dev/null")
+	__do_AD_get "${prefix}" "${name}" 2>/dev/null
 
-		if [ -n "${val}" ]
-		then
-			echo "${val}"
-		else
-			__do_AD_get "${prefix}" "${v}" 2>/dev/null
-		fi
-	done
 }
 
 __do_AD_set()
