@@ -284,3 +284,22 @@ def service_enabled(name):
     h.close()
 
     return enabled
+
+def get_directoryservice():
+    directoryservice = None
+
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
+
+    enabled = False
+    sql = "select stg_directoryservice from system_settings"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0]:
+        directoryservice = row[0]
+
+    c.close()
+    h.close()
+
+    return directoryservice
