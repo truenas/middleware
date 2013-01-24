@@ -1668,7 +1668,7 @@ class CreatePassphraseForm(forms.Form):
                 f.write(passphrase)
         else:
             passfile = None
-        notifier().geli_passphrase(volume, passfile)
+        notifier().geli_passphrase(volume, passfile, rmrecovery=True)
         if passfile is not None:
             os.unlink(passfile)
         volume.vol_encrypt = 2

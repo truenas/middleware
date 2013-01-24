@@ -1029,7 +1029,7 @@ class notifier:
 
         return ("/dev/%s.eli" % devname)
 
-    def geli_passphrase(self, volume, passphrase):
+    def geli_passphrase(self, volume, passphrase, rmrecovery=False):
         """
         Set a passphrase in a geli
         If passphrase is None then remove the passphrase
@@ -1038,28 +1038,29 @@ class notifier:
             MiddlewareError
         """
         geli_keyfile = volume.get_geli_keyfile()
+        if passphrase:
+            _passphrase = "-J %s" % (passphrase, )
+        else:
+            _passphrase = "-P"
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            if passphrase is not None:
-                proc = self.__pipeopen("geli setkey -k %s -K %s -J %s %s" % (
-                    geli_keyfile,
-                    geli_keyfile,
-                    passphrase,
-                    dev,
-                    )
-                    )
-            else:
-                proc = self.__pipeopen("geli setkey -k %s -K %s -P %s" % (
-                    geli_keyfile,
-                    geli_keyfile,
-                    dev,
-                    )
-                    )
+            """
+            A new passphrase cannot be set without destroying the recovery key
+            """
+            if rmrecovery is True:
+                proc = self.__pipeopen("geli delkey -n 1 %s" % (dev, ))
+                proc.communicate()
+            proc = self.__pipeopen("geli setkey -n 0 %s -K %s %s" % (
+                _passphrase,
+                geli_keyfile,
+                dev,
+                )
+            )
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
 
-    def geli_rekey(self, volume, passphrase):
+    def geli_rekey(self, volume, passphrase=None, slot=0):
         """
         Regenerates the geli global key and set it to devs
 
@@ -1074,18 +1075,18 @@ class notifier:
         error = False
         applied = []
         if passphrase:
-            passphrase = "-J %s" % (passphrase, )
+            _passphrase = "-J %s" % (passphrase, )
         else:
-            passphrase = "-P"
+            _passphrase = "-P"
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli setkey %s -k %s -K %s.tmp %s" % (
-                passphrase,
-                geli_keyfile,
+            proc = self.__pipeopen("geli setkey %s -n %d -K %s.tmp %s" % (
+                _passphrase,
+                slot,
                 geli_keyfile,
                 dev,
                 )
-                )
+            )
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 error = True
@@ -1096,13 +1097,14 @@ class notifier:
         # If rekey failed for one of the devs, revert for the ones already applied
         if error:
             for dev in applied:
-                proc = self.__pipeopen("geli setkey %s -k %s.tmp -K %s %s" % (
-                    passphrase,
+                proc = self.__pipeopen("geli setkey %s -n %d -k %s.tmp -K %s %s" % (
+                    _passphrase,
+                    slot,
                     geli_keyfile,
                     geli_keyfile,
                     dev,
                     )
-                    )
+                )
                 proc.communicate()
             raise MiddlewareError("Unable to set key: %s" % (err, ))
         else:
