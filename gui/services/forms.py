@@ -1011,7 +1011,6 @@ class iSCSITargetExtentForm(ModelForm):
     def save(self, commit=True):
         oExtent = super(iSCSITargetExtentForm, self).save(commit=False)
         if commit and self.cleaned_data["iscsi_extent_type"] == 'disk':
-            # label it only if it is a real disk
             if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
                 oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_extent_disk"]
                 oExtent.iscsi_target_extent_type = 'ZVOL'
@@ -1023,11 +1022,24 @@ class iSCSITargetExtentForm(ModelForm):
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             else:
-                notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
-                if diskobj.disk_identifier.startswith("{devicename}") or \
-                        diskobj.disk_identifier.startswith("{uuid}"):
-                    notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
+                # label it only if it is a real disk
+                if (
+                    diskobj.disk_identifier.startswith("{devicename}")
+                    or
+                    diskobj.disk_identifier.startswith("{uuid}")
+                ):
+                    success, msg = notifier().label_disk(
+                        "extent_%s" % self.cleaned_data["iscsi_extent_disk"],
+                        self.cleaned_data["iscsi_extent_disk"]
+                    )
+                    if success is False:
+                        raise MiddlewareError(
+                            _("Serial not found and glabel failed for %s: %s" % (
+                                self.cleaned_data["iscsi_extent_disk"],
+                                msg,
+                            )
+                        )
                     notifier().sync_disk(self.cleaned_data["iscsi_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
