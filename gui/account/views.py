@@ -35,7 +35,8 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
 from freenasUI.account import forms, models
-from freenasUI.common.freenasldap import (FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
+from freenasUI.common.freenasldap import FLAGS_DBINIT
+from freenasUI.common.freenascache import (FLAGS_CACHE_READ_USER,
     FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name

@@ -36,9 +36,10 @@ import types
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 
-from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
 from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, \
-    service_enabled, get_directoryservice
+    ldap_enabled, ldap_objects, activedirectory_enabled, activedirectory_objects, \
+    FREENAS_DATABASE
+from freenasUI.common.freenascache import *
 
 log = logging.getLogger('common.freenasldap')
 
@@ -49,28 +50,9 @@ FREENAS_LDAP_USETLS = 2
 FREENAS_LDAP_PORT = get_freenas_var("FREENAS_LDAP_PORT", 389)
 FREENAS_LDAP_SSL_PORT = get_freenas_var("FREENAS_LDAP_SSL_PORT", 636)
 
-FREENAS_USERCACHE = os.path.join(FREENAS_CACHEDIR, ".users")
-FREENAS_GROUPCACHE = os.path.join(FREENAS_CACHEDIR, ".groups")
-
-FREENAS_LDAP_CACHEROOT = os.path.join(FREENAS_CACHEDIR, ".ldap")
-FREENAS_LDAP_QUERYCACHE = os.path.join(FREENAS_CACHEDIR, ".query")
-
-FREENAS_LDAP_CACHEDIR = os.path.join(FREENAS_LDAP_CACHEROOT, ".ldap")
-FREENAS_LDAP_USERCACHE = os.path.join(FREENAS_LDAP_CACHEDIR, ".users")
-FREENAS_LDAP_GROUPCACHE = os.path.join(FREENAS_LDAP_CACHEDIR, ".groups")
-FREENAS_LDAP_LOCALDIR = os.path.join(FREENAS_LDAP_CACHEDIR, ".local")
-FREENAS_LDAP_LOCAL_USERCACHE = os.path.join(FREENAS_LDAP_LOCALDIR, ".users")
-FREENAS_LDAP_LOCAL_GROUPCACHE = os.path.join(FREENAS_LDAP_LOCALDIR, "groups")
-
-FREENAS_AD_CACHEDIR = os.path.join(FREENAS_LDAP_CACHEROOT, ".activedirectory")
-FREENAS_AD_USERCACHE = os.path.join(FREENAS_AD_CACHEDIR, ".users")
-FREENAS_AD_GROUPCACHE = os.path.join(FREENAS_AD_CACHEDIR, ".groups")
-FREENAS_AD_LOCALDIR = os.path.join(FREENAS_AD_CACHEDIR, ".local")
-FREENAS_AD_LOCAL_USERCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".users")
-FREENAS_AD_LOCAL_GROUPCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".groups")
-
 FREENAS_AD_SEPARATOR = get_freenas_var("FREENAS_AD_SEPARATOR", '\\')
-FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE", "/etc/directoryservice/ActiveDirectory/config")
+FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE",
+    "/etc/directoryservice/ActiveDirectory/config")
 
 FREENAS_LDAP_CACHE_EXPIRE = get_freenas_var("FREENAS_LDAP_CACHE_EXPIRE", 60)
 FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)
@@ -81,295 +63,16 @@ FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
 
 FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 8192)
 
-FREENAS_DATABASE = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
-
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
-FLAGS_CACHE_READ_USER    = 0x00000001
-FLAGS_CACHE_WRITE_USER   = 0x00000002
-FLAGS_CACHE_READ_GROUP   = 0x00000004
-FLAGS_CACHE_WRITE_GROUP  = 0x00000008
-FLAGS_CACHE_READ_QUERY   = 0x00000010
-FLAGS_CACHE_WRITE_QUERY  = 0x00000020
+FLAGS_DBINIT = 0x00010000
 
-FLAGS_DBINIT             = 0x00010000
 
-
-def LDAPEnabled():
-    enabled = False
-
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'ldap':
-        enabled = True
-
-    return enabled
-
-
-def LDAP_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM services_ldap ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
-
-
-def ActiveDirectoryEnabled():
-    enabled = False
-
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'activedirectory':
-        enabled = True
-
-    return enabled
-
-
-def ActiveDirectory_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM services_activedirectory ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
-
-
-class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_UserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_LDAP_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_LDAP_UserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_LDAP_UserCache.__init__: leave")
-
-
-class FreeNAS_LDAP_GroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_GroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_LDAP_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_LDAP_GroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_LDAP_GroupCache.__init__: leave")
-
-
-class FreeNAS_LDAP_LocalUserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_LocalUserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_LDAP_LOCAL_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_LDAP_LocalUserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_LDAP_LocalUserCache.__init__: leave")
-
-
-class FreeNAS_LDAP_LocalGroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_LocalGroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_LDAP_LOCAL_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_LDAP_LocalGroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_LDAP_LocalGroupCache.__init__: leave")
-
-
-class FreeNAS_ActiveDirectory_UserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_ActiveDirectory_UserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_AD_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_ActiveDirectory_UserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_ActiveDirectory_UserCache.__init__: leave")
-
-
-class FreeNAS_ActiveDirectory_GroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_ActiveDirectory_GroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_AD_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_ActiveDirectory_GroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_ActiveDirectory_GroupCache.__init__: leave")
-
-
-class FreeNAS_ActiveDirectory_LocalUserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_ActiveDirectory_LocalUserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_AD_LOCAL_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_ActiveDirectory_LocalUserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_ActiveDirectory_LocalUserCache.__init__: leave")
-
-
-class FreeNAS_ActiveDirectory_LocalGroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_ActiveDirectory_LocalGroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_AD_LOCAL_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_ActiveDirectory_LocalGroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_ActiveDirectory_LocalGroupCache.__init__: leave")
-
-
-class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_QueryCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_LDAP_QUERYCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_LDAP_QueryCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_LDAP_QueryCache.__init__: leave")
-
-
-class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_Directory_UserCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled():
-            obj = FreeNAS_LDAP_UserCache(**kwargs)
-
-        elif ActiveDirectoryEnabled():
-            obj = FreeNAS_ActiveDirectory_UserCache(**kwargs)
-
-        log.debug("FreeNAS_Directory_UserCache.__new__: leave")
-        return obj
-
-
-class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_Directory_GroupCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled():
-            obj = FreeNAS_LDAP_GroupCache(**kwargs)
-
-        elif ActiveDirectoryEnabled():
-            obj = FreeNAS_ActiveDirectory_GroupCache(**kwargs)
-
-        log.debug("FreeNAS_Directory_GroupCache.__new__: leave")
-        return obj
-
-
-class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_Directory_LocalUserCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled():
-            obj = FreeNAS_LDAP_LocalUserCache(**kwargs)
-
-        elif ActiveDirectoryEnabled():
-            obj = FreeNAS_ActiveDirectory_LocalUserCache(**kwargs)
-
-        log.debug("FreeNAS_Directory_LocalUserCache.__new__: leave")
-        return obj
-
-
-class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_Directory_LocalGroupCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled():
-            obj = FreeNAS_LDAP_LocalGroupCache(**kwargs)
-
-        elif ActiveDirectoryEnabled():
-            obj = FreeNAS_ActiveDirectory_LocalGroupCache(**kwargs)
-
-        log.debug("FreeNAS_Directory_LocalGroupCache.__new__: leave")
-        return obj
-
-
-class FreeNAS_UserCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_UserCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled() or ActiveDirectoryEnabled():
-            obj = FreeNAS_Directory_LocalUserCache(**kwargs)
-
-        else:
-            obj = FreeNAS_BaseCache(**kwargs)
-
-        log.debug("FreeNAS_UserCache.__new__: leave")
-        return obj
-
-
-class FreeNAS_GroupCache(FreeNAS_BaseCache):
-    def __new__(cls, **kwargs):
-        log.debug("FreeNAS_GroupCache.__new__: enter")
-
-        obj = None
-        if LDAPEnabled() or ActiveDirectoryEnabled():
-            obj = FreeNAS_Directory_LocalGroupCache(**kwargs)
-
-        else:
-            obj = FreeNAS_BaseCache(**kwargs)
-
-        log.debug("FreeNAS_GroupCache.__new__: leave")
-        return obj
-
-
-# Fill these in!
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
-
-
 class FreeNAS_ActiveDirectory_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
-
-
 class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 
@@ -681,7 +384,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
     def __db_init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__db_init__: enter")
 
-        ldap = LDAP_objects()[0]
+        ldap = ldap_objects()[0]
 
         host = port = None
         tmphost = ldap['ldap_hostname']
@@ -1120,7 +823,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def __db_init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__db_init__: enter")
 
-        ad = ActiveDirectory_objects()[0]
+        ad = activedirectory_objects()[0]
 
         self.domain = self.adset(self.domain, ad['ad_domainname'])
         self.netbiosname = self.adset(self.netbiosname, ad['ad_workgroup'])

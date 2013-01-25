@@ -527,10 +527,11 @@ class notifier:
         return True
 
     def _started_ldap(self):
-        from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled, FLAGS_DBINIT
+        from freenasUI.common.freenasldap import FreeNAS_LDAP, FLAGS_DBINIT
+        from freenasUI.common.system import ldap_enabled
 
         ret = False
-        if LDAPEnabled():
+        if ldap_enabled():
             f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
             f.open()
             if f.isOpen():
@@ -616,8 +617,8 @@ class notifier:
         self.__system("/etc/directoryservice/NT4/ctl stop")
 
     def _started_activedirectory(self):
-        from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory,
-            ActiveDirectoryEnabled, FLAGS_DBINIT)
+        from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory, FLAGS_DBINIT)
+        from freenasUI.common.system import activedirectory_enabled
 
         for srv in ('kinit', 'activedirectory', ):
             if (self.__system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
@@ -625,7 +626,7 @@ class notifier:
                 return False
 
         ret = False
-        if ActiveDirectoryEnabled():
+        if activedirectory_enabled():
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             f.open()
             if f.isOpen():

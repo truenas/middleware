@@ -135,10 +135,10 @@ def _cache_keys_default(**kwargs):
         print "dg key: %s" % key
 
 def cache_keys(**kwargs):
-    if ActiveDirectoryEnabled():
+    if activedirectory_enabled():
         _cache_keys_ActiveDirectory(**kwargs)
 
-    elif LDAPEnabled():
+    elif ldap_enabled():
         _cache_keys_default(**kwargs)
 
     else:
@@ -187,10 +187,10 @@ def _cache_rawdump_default(**kwargs):
         print "dg: %s=%s" % (key, dgcache[key])
 
 def cache_rawdump(**kwargs):
-    if ActiveDirectoryEnabled():
+    if activedirectory_enabled():
         _cache_rawdump_ActiveDirectory(**kwargs)
 
-    elif LDAPEnabled():
+    elif ldap_enabled():
         _cache_rawdump_default(**kwargs)
 
     else:
@@ -306,10 +306,10 @@ def _cache_check_default(**kwargs):
                 print "%s: %s" % (val, dgcache[val])
 
 def cache_check(**kwargs):
-    if ActiveDirectoryEnabled():
+    if activedirectory_enabled():
         _cache_check_ActiveDirectory(**kwargs) 
 
-    elif LDAPEnabled():
+    elif ldap_enabled():
         _cache_check_default(**kwargs)
      
     else:
@@ -338,10 +338,10 @@ def _cache_count_default(**kwargs):
     print "\n"
 
 def cache_count(**kwargs):
-    if ActiveDirectoryEnabled():
+    if activedirectory_enabled():
         _cache_count_ActiveDirectory(**kwargs)
 
-    elif LDAPEnabled():
+    elif ldap_enabled():
         _cache_count_default(**kwargs)
 
     else:

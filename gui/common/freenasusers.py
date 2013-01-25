@@ -30,10 +30,10 @@ import pwd
 import sqlite3
 import types
 
-from freenasUI.common.freenasldap import (FREENAS_DATABASE,
-    LDAPEnabled, ActiveDirectoryEnabled,
-    FreeNAS_Directory_Group, FreeNAS_Directory_User,
-    FreeNAS_Directory_Groups, FreeNAS_Directory_Users)
+from freenasUI.common.system import (ldap_enabled,
+    activedirectory_enabled, nt4_enabled, FREENAS_DATABASE)
+from freenasUI.common.freenasldap import (FreeNAS_Directory_Group,
+    FreeNAS_Directory_User, FreeNAS_Directory_Groups, FreeNAS_Directory_Users)
 
 log = logging.getLogger("common.freenasusers")
 
@@ -200,12 +200,12 @@ class FreeNAS_Groups(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
-        ldap_enabled = LDAPEnabled()
-        ad_enabled = ActiveDirectoryEnabled()
+        _ldap_enabled = ldap_enabled()
+        _ad_enabled = activedirectory_enabled()
         try:
             self.__groups = FreeNAS_Directory_Groups(
-                ldap_enabled=ldap_enabled,
-                ad_enabled=ad_enabled,
+                ldap_enabled=_ldap_enabled,
+                ad_enabled=_ad_enabled,
                 **kwargs)
         except Exception, e:
             log.error("FreeNAS Directory Groups could not be retrieved: %s",
@@ -220,7 +220,7 @@ class FreeNAS_Groups(object):
         for obj in objects:
             self.__bsd_groups.append(
                 FreeNAS_Group(obj['bsdgrp_group'],
-                    ldap_enabled=ldap_enabled, ad_enabled=ad_enabled)
+                    ldap_enabled=_ldap_enabled, ad_enabled=_ad_enabled)
                 )
 
         log.debug("FreeNAS_Groups.__init__: leave")
@@ -317,12 +317,12 @@ class FreeNAS_Users(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
-        ldap_enabled = LDAPEnabled()
-        ad_enabled = ActiveDirectoryEnabled()
+        _ldap_enabled = ldap_enabled()
+        _ad_enabled = activedirectory_enabled()
         try:
             self.__users = FreeNAS_Directory_Users(
-                ldap_enabled=ldap_enabled,
-                ad_enabled=ad_enabled,
+                ldap_enabled=_ldap_enabled,
+                ad_enabled=_ad_enabled,
                 **kwargs)
         except Exception, e:
             log.error("FreeNAS Directory Users could not be retrieved: %s",
@@ -337,7 +337,7 @@ class FreeNAS_Users(object):
         for obj in objects:
             self.__bsd_users.append(
                 FreeNAS_User(obj['bsdusr_username'],
-                    ldap_enabled=ldap_enabled, ad_enabled=ad_enabled)
+                    ldap_enabled=_ldap_enabled, ad_enabled=_ad_enabled)
                 )
 
         log.debug("FreeNAS_Users.__init__: leave")
