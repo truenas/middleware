@@ -3089,10 +3089,11 @@ class notifier:
         elif fstype is None:
             p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
         else:
-            return False
-        if p1.wait() == 0:
-            return True
-        return False
+            return False, 'Unknown fstype %r' % fstype
+        err = p1.communicate()[1]
+        if p1.returncode == 0:
+            return True, ''
+        return False, err
 
     def detect_volumes(self, extra=None):
         """
