@@ -176,6 +176,7 @@ class FreeNAS_Group(object):
     def __new__(cls, group, **kwargs):
         log.debug("FreeNAS_Group.__new__: enter")
         log.debug("FreeNAS_Group.__new__: group = %s", group)
+        obj = None
 
         if ldap_enabled() or activedirectory_enabled():
             obj = FreeNAS_Directory_Group(group, **kwargs)
@@ -199,6 +200,7 @@ class FreeNAS_Group(object):
 class FreeNAS_Groups(object):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_Groups.__init__: enter")
+        self.__groups = None
 
         """
         FreeNAS_Directory_Groups call may fail for several reasons
@@ -309,6 +311,7 @@ class FreeNAS_User(object):
     def __new__(cls, user, **kwargs):
         log.debug("FreeNAS_User.__new__: enter")
         log.debug("FreeNAS_User.__new__: user = %s", user)
+        obj = None
 
         if ldap_enabled() or activedirectory_enabled(): 
             obj = FreeNAS_Directory_User(user, **kwargs)
@@ -332,6 +335,7 @@ class FreeNAS_User(object):
 class FreeNAS_Users(object):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_Users.__init__: enter")
+        self.__users = None
 
         """
         FreeNAS_Directory_Users call may fail for several reasons
