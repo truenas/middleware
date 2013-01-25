@@ -353,7 +353,128 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
 
 
 class FreeNAS_NT4_Groups(FreeNAS_NT4):
-    pass
+    def __init__(self, **kwargs):
+        log.debug("FreeNAS_NT4_Groups.__init__: enter")
+
+        super(FreeNAS_NT4_Groups, self).__init__(**kwargs)
+
+        self.__groups = {}
+        self.__gcache = {}
+        self.__dgcache = {}
+
+        if kwargs.has_key('domain') and kwargs['domain']:
+            self.__domains = self.get_domains(domain=kwargs['domain'])
+        else:
+            self.__domains = self.get_domains()
+
+        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
+            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+            for d in self.__domains:
+                self.__gcache[d] = FreeNAS_GroupCache(dir=d)
+                self.__dgcache[d] = FreeNAS_NT4_GroupCache(dir=d)
+
+        self.__get_groups()
+
+        log.debug("FreeNAS_NT4_Groups.__init__: leave")
+
+    def __loaded(self, index, domain=None, write=False):
+        ret = False
+
+        paths = {}
+        gcachedir = self.__gcache[domain].cachedir
+        paths['g'] = os.path.join(gcachedir, ".gl")
+
+        dgcachedir = self.__dgcache[domain].cachedir
+        paths['dg'] = os.path.join(dgcachedir, ".dgl")
+
+        file = None
+        try:
+            file = paths[index]
+
+        except:
+            file = None
+
+        if file and write:
+            try:
+                with open(file, 'w+') as f:
+                    f.close()
+                ret = True
+
+            except:
+                ret = False
+
+        elif file:
+            if os.access(file, os.F_OK):
+                ret = True
+
+        return ret
+
+    def __len__(self):
+        length = 0
+        for d in self.__domains:
+            length += len(self.__groups[d])
+        return length
+
+    def __iter__(self):
+        for d in self.__domains:
+            for group in self.__groups[d]:
+                yield group
+
+    def __get_groups(self):
+        log.debug("FreeNAS_NT4_Groups.__get_groups: enter")
+
+        if (self.flags & FLAGS_CACHE_READ_GROUP):
+            dcount = len(self.__domains)
+            count = 0
+
+            for d in self.__domains:
+                if self.__loaded('u', d):
+                    self.__groups[d] = self.__gcache[d]
+                    count += 1
+
+            if count == dcount:
+                log.debug("FreeNAS_NT4_Groups.__get_groups: groups in cache")
+                log.debug("FreeNAS_NT4_Groups.__get_groups: leave")
+                return
+
+        self._save()
+        for d in self.__domains:
+            self.__groups[d] = []
+
+            if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__loaded('dg', d):
+                log.debug("FreeNAS_NT4_Groups.__get_groups: "
+                    "NT4 [%s] groups in cache", d)
+                nt4_groups = self.__dgcache[d]
+
+            else:
+                log.debug("FreeNAS_NT4_Groups.__get_groups: "
+                    "NT4 [%s] groups not in cache", d)
+                nt4_groups = self.get_groups()
+
+            for g in nt4_groups:
+                sAMAccountName = g['sAMAccountName']
+
+                if self.flags & FLAGS_CACHE_WRITE_GROUP:
+                    self.__dgcache[d][sAMAccountName.upper()] = g
+
+                try:
+                    gr = grp.getgrnam(sAMAccountName)
+
+                except:
+                    continue
+
+                self.__groups[n].append(gr)
+                if self.flags & FLAGS_CACHE_WRITE_GROUP:
+                    self.__gcache[n][sAMAccountName.upper()] = gr
+
+                gr = None
+
+            if self.flags & FLAGS_CACHE_WRITE_GROUP:
+                self.__loaded('g', n, True)
+                self.__loaded('dg', n, True)
+
+        self._restore()
+        log.debug("FreeNAS_NT4_Groups.__get_groups: leave")
 
 
 class FreeNAS_NT4_User(FreeNAS_NT4):
@@ -411,7 +532,7 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
             log.debug("FreeNAS_NT4_User.__get_user: NT4 user not in cache")
             nt4_user = self.get_user(user)
 
-        u = nt4_user['uid']
+        u = nt4_user['sAMAccountName']
         try:
             pw = pwd.getpwnam(u)
 
@@ -427,4 +548,71 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
 
 
 class FreeNAS_NT4_Group(FreeNAS_NT4):
-    pass
+    def __new__(cls, group, **kwargs):
+        log.debug("FreeNAS_NT4_Group.__new__: enter")
+        log.debug("FreeNAS_NT4_Group.__new__: group = %s", group)
+
+        obj = None
+        group = group.encode('utf-8')
+        if group is not None:
+            parts = group.split(FREENAS_NT4_SEPARATOR)
+            if len(parts) > 1 and parts[1]:
+                obj = super(FreeNAS_NT4_Group, cls).__new__(cls, **kwargs)
+
+        log.debug("FreeNAS_NT4_Group.__new__: leave")
+        return obj
+
+    def __init__(self, group, **kwargs):
+        log.debug("FreeNAS_NT4_Group.__init__: enter")
+        log.debug("FreeNAS_NT4_Group.__init__: group = %s", group)
+
+        parts = group.split(FREENAS_NT4_SEPARATOR)
+        domain = parts[0]
+
+        self._gr = None
+
+        kwargs['domain'] = domain
+        super(FreeNAS_NT4_Group, self).__init__(**kwargs)
+
+        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
+            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+            self.__gcache = FreeNAS_GroupCache()
+            self.__dgcache = FreeNAS_NT4_GroupCache(dir=domain)
+            self.__key = group
+
+        self.__get_group(group, domain)
+
+        log.debug("FreeNAS_NT4_Group.__init__: leave")
+
+    def __get_group(self, group, domain):
+        log.debug("FreeNAS_NT4_Group.__get_group: enter")
+        log.debug("FreeNAS_NT4_Group.__get_group: group = %s", group)
+        log.debug("FreeNAS_NT4_Group.__get_group: domain = %s", domain)
+
+        if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__gcache.has_key(group):
+            log.debug("FreeNAS_NT4_User.__get_group: group in cache")
+            return self.__gcache[group]
+
+        g = gr = None
+        if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__dgcache.has_key(self.__key):
+            log.debug("FreeNAS_NT4_Group.__get_group: AD group in cache")
+            nt4_group = self.__dgcache[self.__key]
+
+        else:
+            log.debug("FreeNAS_NT4_Group.__get_group: AD group not in cache")
+            nt4_group = self.get_group(group)
+
+        g = nt4_group['sAMAccountName']
+        try:
+            gr = grp.getgrnam(g)
+
+        except:
+            gr = None
+
+        if (self.flags & FLAGS_CACHE_WRITE_GROUP) and gr:
+            self.__gcache[group] = gr
+            self.__dgcache[self.__key] = nt4_group
+
+        self._gr = gr
+        log.debug("FreeNAS_NT4_Group.__get_group: leave")
+
