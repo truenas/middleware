@@ -43,6 +43,7 @@ from freenasUI.common.cmd import cmd_pipe
 log = logging.getLogger('common.freenasnt4')
 
 WBINFO = "/usr/local/bin/wbinfo"
+FREENAS_NT4_SEPARATOR = '\\'
 
 class nt4_pipe(cmd_pipe):
     pass
@@ -109,7 +110,7 @@ class FreeNAS_NT4_Base(object):
 
     def get_user(self, who, domain=None):
         log.debug("FreeNAS_NT4_Base.get_user: enter")
-        log.debug("FreeNAS_NT4_Base.get_user: who = '%s'" % who)
+        log.debug("FreeNAS_NT4_Base.get_user: who = '%s'", who)
 
         wbargs = "--user-info '%s'" % who
         if domain:
@@ -167,7 +168,7 @@ class FreeNAS_NT4_Base(object):
 
     def get_group(self, who, domain=None):
         log.debug("FreeNAS_NT4_Base.get_group: enter")
-        log.debug("FreeNAS_NT4_Base.get_group: who = '%s'" % who)
+        log.debug("FreeNAS_NT4_Base.get_group: who = '%s'", who)
 
         wbargs = "--group-info '%s'" % who
         if domain:
@@ -215,16 +216,16 @@ class FreeNAS_NT4_Base(object):
         return groups
 
 
-class FreeNAS_NT4_Domain(FreeNAS_NT4_Base):
+class FreeNAS_NT4(FreeNAS_NT4_Base):
     def __init__(self, **kwargs):
-        log.debug("FreeNAS_NT4_Domain.__init__: enter")
+        log.debug("FreeNAS_NT4.__init__: enter")
 
-        super(FreeNAS_NT4_Domain, self).__init__(**kwargs)
+        super(FreeNAS_NT4, self).__init__(**kwargs)
 
-        log.debug("FreeNAS_NT4_Domain.__init__: leave")
+        log.debug("FreeNAS_NT4.__init__: leave")
 
 
-class FreeNAS_NT4_Users(FreeNAS_NT4_Domain):
+class FreeNAS_NT4_Users(FreeNAS_NT4):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_NT4_Users.__init__: enter")
 
@@ -304,12 +305,12 @@ class FreeNAS_NT4_Users(FreeNAS_NT4_Domain):
 
             if (self.flags & FLAGS_CACHE_READ_USER) and self.__loaded('du', d):
                 log.debug("FreeNAS_NT4_Users.__get_users: "
-                    "NT4 [%s] users in cache" % d)
+                    "NT4 [%s] users in cache", d)
                 nt4_users = self.__ducache[d]
 
             else:
                 log.debug("FreeNAS_NT4_Users.__get_users: "
-                    "NT4 [%s] users not in cache" % d)
+                    "NT4 [%s] users not in cache", d)
                 nt4_users = self.get_users(domain=d)
 
             for u in nt4_users:
@@ -351,13 +352,79 @@ class FreeNAS_NT4_Users(FreeNAS_NT4_Domain):
                 yield user
 
 
-class FreeNAS_NT4_Groups(FreeNAS_NT4_Domain):
+class FreeNAS_NT4_Groups(FreeNAS_NT4):
     pass
 
 
-class FreeNAS_NT4_User(FreeNAS_NT4_Domain):
-    pass
+class FreeNAS_NT4_User(FreeNAS_NT4):
+    def __new__(cls, user, **kwargs):
+        log.debug("FreeNAS_NT4_User.__new__: enter")
+        log.debug("FreeNAS_NT4_User.__new__: user = %s", user)
+
+        obj = None
+        user = user.encode('utf-8')
+        if user is not None:
+            parts = user.split(FREENAS_NT4_SEPARATOR) 
+            if len(parts) > 1 and parts[1]:
+                obj = super(FreeNAS_NT4_User, cls).__new__(cls, **kwargs)
+
+        log.debug("FreeNAS_NT4_User.__new__: leave")
+        return obj
+
+    def __init__(self, user, **kwargs):
+        log.debug("FreeNAS_NT4_User.__init__: enter")
+        log.debug("FreeNAS_NT4_User.__init__: user = %s", user)
+
+        parts = user.split(FREENAS_NT4_SEPARATOR)
+        domain = parts[0]
+
+        self._pw = None
+
+        kwargs['domain'] = domain
+        super(FreeNAS_NT4_User, self).__init__(**kwargs)
+
+        if (self.flags & FLAGS_CACHE_READ_USER) or \
+            (self.flags & FLAGS_CACHE_WRITE_USER):
+            self.__ucache = FreeNAS_UserCache()
+            self.__ducache = FreeNAS_NT4_UserCache(dir=domain)
+            self.__key = user
+
+        self.__get_user(user, domain)
+
+        log.debug("FreeNAS_NT4_User.__init__: leave")
+
+    def __get_user(self, user, domain):
+        log.debug("FreeNAS_NT4_User.__get_user: enter")
+        log.debug("FreeNAS_NT4_User.__get_user: user = %s", user)
+        log.debug("FreeNAS_NT4_User.__get_user: domain = %s", domain)
+
+        if (self.flags & FLAGS_CACHE_READ_USER) and self.__ucache.has_key(user):
+            log.debug("FreeNAS_NT4_User.__get_user: user in cache")
+            return self.__ucache[user]
+
+        pw = None
+        if (self.flags & FLAGS_CACHE_READ_USER) and self.__ducache.has_key(self.__key):
+            log.debug("FreeNAS_NT4_User.__get_user: NT4 user in cache")
+            nt4_user = self.__ducache[self.__key]
+
+        else:
+            log.debug("FreeNAS_NT4_User.__get_user: NT4 user not in cache")
+            nt4_user = self.get_user(user)
+
+        u = nt4_user['uid']
+        try:
+            pw = pwd.getpwnam(u)
+
+        except:
+            pw = None
+
+        if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:
+            self.__ucache[user] = pw
+            self.__ducache[self.__key] = nt4_user
+
+        self._pw = pw
+        log.debug("FreeNAS_NT4_User.__get_user: leave")
 
 
-class FreeNAS_NT4_Group(FreeNAS_NT4_Domain):
+class FreeNAS_NT4_Group(FreeNAS_NT4):
     pass

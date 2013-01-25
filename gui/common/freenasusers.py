@@ -34,6 +34,8 @@ from freenasUI.common.system import (ldap_enabled,
     activedirectory_enabled, nt4_enabled, FREENAS_DATABASE)
 from freenasUI.common.freenasldap import (FreeNAS_Directory_Group,
     FreeNAS_Directory_User, FreeNAS_Directory_Groups, FreeNAS_Directory_Users)
+from freenasUI.common.freenasnt4 import (FreeNAS_NT4_Group,
+    FreeNAS_NT4_User, FreeNAS_NT4_Groups, FreeNAS_NT4_Users)
 
 log = logging.getLogger("common.freenasusers")
 
@@ -175,7 +177,12 @@ class FreeNAS_Group(object):
         log.debug("FreeNAS_Group.__new__: enter")
         log.debug("FreeNAS_Group.__new__: group = %s", group)
 
-        obj = FreeNAS_Directory_Group(group, **kwargs)
+        if ldap_enabled() or activedirectory_enabled():
+            obj = FreeNAS_Directory_Group(group, **kwargs)
+
+        elif nt4_enabled():
+            obj = FreeNAS_NT4_Group(group, **kwargs)
+
         if obj is None:
             obj = FreeNAS_Local_Group(group, **kwargs)
 
@@ -202,15 +209,26 @@ class FreeNAS_Groups(object):
         """
         _ldap_enabled = ldap_enabled()
         _ad_enabled = activedirectory_enabled()
-        try:
-            self.__groups = FreeNAS_Directory_Groups(
-                ldap_enabled=_ldap_enabled,
-                ad_enabled=_ad_enabled,
-                **kwargs)
-        except Exception, e:
-            log.error("FreeNAS Directory Groups could not be retrieved: %s",
-                str(e))
-            self.__groups = None
+        _nt4_enabled = nt4_enabled()
+
+        if _ldap_enabled or _ad_enabled:
+            try:
+                self.__groups = FreeNAS_Directory_Groups(
+                    ldap_enabled=_ldap_enabled,
+                    ad_enabled=_ad_enabled,
+                    **kwargs)
+            except Exception, e:
+                log.error("FreeNAS Directory Groups could not be retrieved: %s",
+                    str(e))
+                self.__groups = None
+
+        elif _nt4_enabled:
+            try:
+                self.__groups = FreeNAS_NT4_Groups(**kwargs)
+            except Exception, e:
+                log.error("FreeNAS NT4 Groups could not be retrieved: %s",
+                    str(e))
+                self.__groups = None
 
         if self.__groups is None:
             self.__groups = []
@@ -292,7 +310,12 @@ class FreeNAS_User(object):
         log.debug("FreeNAS_User.__new__: enter")
         log.debug("FreeNAS_User.__new__: user = %s", user)
 
-        obj = FreeNAS_Directory_User(user, **kwargs)
+        if ldap_enabled() or activedirectory_enabled(): 
+            obj = FreeNAS_Directory_User(user, **kwargs)
+
+        elif nt4_enabled():
+            obj = FreeNAS_NT4_User(user, **kwargs)
+
         if not obj:
             obj = FreeNAS_Local_User(user, **kwargs)
 
@@ -319,15 +342,26 @@ class FreeNAS_Users(object):
         """
         _ldap_enabled = ldap_enabled()
         _ad_enabled = activedirectory_enabled()
-        try:
-            self.__users = FreeNAS_Directory_Users(
-                ldap_enabled=_ldap_enabled,
-                ad_enabled=_ad_enabled,
-                **kwargs)
-        except Exception, e:
-            log.error("FreeNAS Directory Users could not be retrieved: %s",
-                str(e))
-            self.__users = None
+        _nt4_enabled = nt4_enabled()
+
+        if _ldap_enabled or _ad_enabled:
+            try:
+                self.__users = FreeNAS_Directory_Users(
+                    ldap_enabled=_ldap_enabled,
+                    ad_enabled=_ad_enabled,
+                    **kwargs)
+            except Exception, e:
+                log.error("FreeNAS Directory Users could not be retrieved: %s",
+                    str(e))
+                self.__users = None
+
+        elif _nt4_enabled:
+            try:
+                self.__users = FreeNAS_NT4_Users(**kwargs)
+            except Exception, e:
+                log.error("FreeNAS NT4 Users could not be retrieved: %s",
+                    str(e))
+                self.__users = None
 
         if self.__users is None:
             self.__users = []
