@@ -480,7 +480,10 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd restart")
 
     def _started_nis(self):
-        return True
+        res = False
+        if self.__system_nolog("/user/sbin/service ix-nis status") == 0:
+            res = True
+        return res
 
     def _start_nis(self):
         self.__system("/etc/directoryservice/NIS/ctl start")
