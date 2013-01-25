@@ -1,0 +1,40 @@
+#!/bin/sh
+
+. /etc/rc.freenas
+
+service=/usr/sbin/service
+
+nisctl_cmd()
+{
+	local args="$*"
+
+	if [ -n "${args}" ]
+	then
+		logger -t NIS "${args}"
+		${args}
+		return $?	
+	fi		
+
+	return 0
+}
+
+nisctl_start()
+{
+}
+
+nisctl_stop()
+{
+}
+
+nisctl_status()
+{
+	nisctl_cmd ${service} ix-nis status
+}
+
+name="nisctl"
+start_cmd='nisctl_start'
+status_cmd='nisctl_status'
+stop_cmd='nisctl_stop'
+
+load_rc_config $name
+run_rc_command "$1"

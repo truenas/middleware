@@ -169,29 +169,15 @@ adctl_stop()
 	return 0
 }
 
-adctl_restart()
+adctl_status()
 {
-	adctl_start
-	adctl_stop
+	adctl_cmd ${service} ix-activedirectory status
 }
 
-usage()
-{
-	echo "Usage: $0 (start|stop|restart)"
-	exit 1
-}
+name="adctl"
+start_cmd='adctl_start'
+status_cmd='adctl_status'
+stop_cmd='adctl_stop'
 
-if [ "$#" -lt "1" ]
-then
-	usage
-fi
-
-cmd="$(echo "${1}"|tr A-Z a-z)"
-case "${cmd}" in
-	start) adctl_start ;;
-	stop) adctl_stop ;;
-	restart) adctl_restart ;;
-	*) usage ;;
-esac
-
-exit $?
+load_rc_config $name
+run_rc_command "$1"

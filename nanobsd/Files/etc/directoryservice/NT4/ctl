@@ -157,29 +157,15 @@ nt4ctl_stop()
 	return 0
 }
 
-nt4ctl_restart()
+nt4ctl_status()
 {
-	nt4ctl_start
-	nt4ctl_stop
+	nt4ctl_cmd ${service} ix-nt4 status
 }
 
-usage()
-{
-	echo "Usage: $0 (start|stop|restart)"
-	exit 1
-}
+name="nt4ctl"
+start_cmd='nt4ctl_start'
+status_cmd='nt4ctl_status'
+stop_cmd='nt4ctl_stop'
 
-if [ "$#" -lt "1" ]
-then
-	usage
-fi
-
-cmd="$(echo "${1}"|tr A-Z a-z)"
-case "${cmd}" in
-	start) nt4ctl_start ;;
-	stop) nt4ctl_stop ;;
-	restart) nt4ctl_restart ;;
-	*) usage ;;
-esac
-
-exit $?
+load_rc_config $name
+run_rc_command "$1"
