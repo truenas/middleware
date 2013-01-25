@@ -61,7 +61,7 @@ FREENAS_LDAP_VERSION = ldap.VERSION3
 FREENAS_LDAP_REFERRALS = get_freenas_var("FREENAS_LDAP_REFERRALS", 0)
 FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
 
-FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 8192)
+FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 1024)
 
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
@@ -268,6 +268,14 @@ class FreeNAS_LDAP_Directory(object):
         if not self._isopen:
             return None
 
+        #
+        # XXX
+        # For some reason passing attributes causes paged search results to hang/fail
+        # after a a certain numbe of pages. I can't figure out why. This is a workaround.
+        # XXX
+        #
+        attributes = None
+
         m = hashlib.sha256()
         m.update(filter + self.host + str(self.port) + (basedn if basedn else ''))
         key = m.hexdigest()
@@ -287,7 +295,7 @@ class FreeNAS_LDAP_Directory(object):
 
         paged_ctrls = {
             SimplePagedResultsControl.controlType: SimplePagedResultsControl,
-            }
+        }
 
         if self.pagesize > 0:
             log.debug("FreeNAS_LDAP_Directory._search: pagesize = %d",
@@ -315,10 +323,10 @@ class FreeNAS_LDAP_Directory(object):
                     id, resp_ctrl_classes=paged_ctrls
                 )
 
-                for entry in rdata:
-                    result.append(entry)
+                result.extend(rdata)
 
-                cookie = None
+                paged.size = 0
+                paged.cookie = cookie = None
                 for sc in serverctrls:
                     if sc.controlType == SimplePagedResultsControl.controlType:
                         cookie = sc.cookie
