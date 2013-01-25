@@ -1038,7 +1038,7 @@ class iSCSITargetExtentForm(ModelForm):
                             _("Serial not found and glabel failed for %s: %s" % (
                                 self.cleaned_data["iscsi_extent_disk"],
                                 msg,
-                            )
+                            ))
                         )
                     notifier().sync_disk(self.cleaned_data["iscsi_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
