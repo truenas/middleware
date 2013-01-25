@@ -1898,12 +1898,12 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
             if (self.flags & FLAGS_CACHE_READ_USER) and self.__loaded('du', n):
                 log.debug("FreeNAS_ActiveDirectory_Users.__get_users: "
-                    "AD [%s] users in cache", n)
+                    "AD [%s] users in cache" % n)
                 ad_users = self.__ducache[n]
 
             else:
                 log.debug("FreeNAS_ActiveDirectory_Users.__get_users: "
-                    "AD [%s] users not in cache", n)
+                    "AD [%s] users not in cache" % n)
                 ad_users = self.get_users()
 
             for u in ad_users:
