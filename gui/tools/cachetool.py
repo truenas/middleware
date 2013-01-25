@@ -103,20 +103,24 @@ def _cache_keys_ActiveDirectory(**kwargs):
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
-        for key in ucache.keys():
-            print "u key: %s" % key
+        if ucache: 
+            for key in ucache.keys():
+                print "u key: %s" % key
 
         gcache = FreeNAS_GroupCache(dir=workgroup)
-        for key in gcache.keys():
-            print "g key: %s" % key
+        if gcache:
+            for key in gcache.keys():
+                print "g key: %s" % key
 
         ducache = FreeNAS_Directory_UserCache(dir=workgroup)
-        for key in ducache.keys():
-            print "du key: %s" % key
+        if ducache:
+            for key in ducache.keys():
+                print "du key: %s" % key
 
         dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
-        for key in dgcache.keys():
-            print "dg key: %s" % key
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg key: %s" % key
 
 def _cache_keys_NT4(**kwargs):
     nt4 = FreeNAS_NT4()
@@ -127,37 +131,45 @@ def _cache_keys_NT4(**kwargs):
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
-        for key in ucache.keys():
-            print "u key: %s" % key
+        if ucache:
+            for key in ucache.keys():
+                print "u key: %s" % key
 
         gcache = FreeNAS_GroupCache(dir=workgroup)
-        for key in gcache.keys():
-            print "g key: %s" % key
+        if gcache:
+            for key in gcache.keys():
+                print "g key: %s" % key
 
         ducache = FreeNAS_Directory_UserCache(dir=workgroup)
-        for key in ducache.keys():
-            print "du key: %s" % key
+        if ducache:
+            for key in ducache.keys():
+                print "du key: %s" % key
 
         dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
-        for key in dgcache.keys():
-            print "dg key: %s" % key
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg key: %s" % key
 
 def _cache_keys_default(**kwargs):
     ucache = FreeNAS_UserCache()
-    for key in ucache.keys():
-        print "u key: %s" % key
+    if ucache:
+        for key in ucache.keys():
+            print "u key: %s" % key
 
     gcache = FreeNAS_GroupCache()
-    for key in gcache.keys():
-        print "g key: %s" % key
+    if gcache:
+        for key in gcache.keys():
+            print "g key: %s" % key
 
     ducache = FreeNAS_Directory_UserCache()
-    for key in ducache.keys():
-        print "du key: %s" % key
+    if ducache:
+        for key in ducache.keys():
+            print "du key: %s" % key
 
     dgcache = FreeNAS_Directory_GroupCache()
-    for key in dgcache.keys():
-        print "dg key: %s" % key
+    if dgcache:
+        for key in dgcache.keys():
+            print "dg key: %s" % key
 
 def cache_keys(**kwargs):
     if activedirectory_enabled():
@@ -182,20 +194,24 @@ def _cache_rawdump_ActiveDirectory(**kwargs):
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
-        for key in ucache.keys():
-            print "u: %s=%s" % (key, ucache[key])
+        if ucache:
+            for key in ucache.keys():
+                print "u: %s=%s" % (key, ucache[key])
 
         gcache = FreeNAS_GroupCache(dir=workgroup)
-        for key in gcache.keys():
-            print "g: %s=%s" % (key, gcache[key])
+        if gcache:
+            for key in gcache.keys():
+                print "g: %s=%s" % (key, gcache[key])
 
         ducache = FreeNAS_Directory_UserCache(dir=workgroup)
-        for key in ducache.keys():
-            print "du: %s=%s" % (key, ducache[key])
+        if ducache:
+            for key in ducache.keys():
+                print "du: %s=%s" % (key, ducache[key])
 
         dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
-        for key in dgcache.keys():
-            print "dg: %s=%s" % (key, dgcache[key])
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg: %s=%s" % (key, dgcache[key])
 
 def _cache_rawdump_NT4(**kwargs):
     nt4 = FreeNAS_NT4()
@@ -206,20 +222,24 @@ def _cache_rawdump_NT4(**kwargs):
         print "w: %s" % workgroup 
 
         ucache = FreeNAS_UserCache(dir=workgroup)
-        for key in ucache.keys():
-            print "u: %s=%s" % (key, ucache[key])
+        if ucache:
+            for key in ucache.keys():
+                print "u: %s=%s" % (key, ucache[key])
 
         gcache = FreeNAS_GroupCache(dir=workgroup)
-        for key in gcache.keys():
-            print "g: %s=%s" % (key, gcache[key])
+        if gcache:
+            for key in gcache.keys():
+                print "g: %s=%s" % (key, gcache[key])
 
         ducache = FreeNAS_Directory_UserCache(dir=workgroup)
-        for key in ducache.keys():
-            print "du: %s=%s" % (key, ducache[key])
+        if ducache:
+            for key in ducache.keys():
+                print "du: %s=%s" % (key, ducache[key])
 
         dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
-        for key in dgcache.keys():
-            print "dg: %s=%s" % (key, dgcache[key])
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg: %s=%s" % (key, dgcache[key])
 
 def _cache_rawdump_default(**kwargs):
     ucache = FreeNAS_UserCache()
@@ -227,16 +247,19 @@ def _cache_rawdump_default(**kwargs):
         print "u: %s=%s" % (key, ucache[key])
 
     gcache = FreeNAS_GroupCache()
-    for key in gcache.keys():
-        print "g: %s=%s" % (key, gcache[key])
+    if gcache:
+        for key in gcache.keys():
+            print "g: %s=%s" % (key, gcache[key])
 
     ducache = FreeNAS_Directory_UserCache()
-    for key in ducache.keys():
-        print "du: %s=%s" % (key, ducache[key])
+    if ducache:
+        for key in ducache.keys():
+            print "du: %s=%s" % (key, ducache[key])
 
     dgcache = FreeNAS_Directory_GroupCache()
-    for key in dgcache.keys():
-        print "dg: %s=%s" % (key, dgcache[key])
+    if dgcache:
+        for key in dgcache.keys():
+            print "dg: %s=%s" % (key, dgcache[key])
 
 def cache_rawdump(**kwargs):
     if activedirectory_enabled():
@@ -301,11 +324,11 @@ def _cache_check_ActiveDirectory(**kwargs):
             dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
 
             if key == 'u':
-                if ucache.has_key(val) and ucache[val]:
+                if ucache and ucache.has_key(val) and ucache[val]:
                     print "%s: %s" % (val, ucache[val])
 
             elif key == 'g':
-                if gcache.has_key(val) and gcache[val]:
+                if gcache and gcache.has_key(val) and gcache[val]:
                     print "%s: %s" % (val, gcache[val])
 
 
@@ -317,11 +340,11 @@ def _cache_check_ActiveDirectory(**kwargs):
                 dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
 
                 if key == 'du':
-                    if ducache.has_key(val) and ducache[val]:
+                    if ducache and ducache.has_key(val) and ducache[val]:
                         print "%s: %s" % (val, ducache[val])
 
                 elif key == 'dg':
-                    if dgache.has_key(val) and dgcache[val]:
+                    if dgcache and dgache.has_key(val) and dgcache[val]:
                         print "%s: %s" % (val, dgcache[val])
 
 def _cache_check_NT4(**kwargs):
@@ -373,11 +396,11 @@ def _cache_check_NT4(**kwargs):
             dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
 
             if key == 'u':
-                if ucache.has_key(val) and ucache[val]:
+                if ucache and ucache.has_key(val) and ucache[val]:
                     print "%s: %s" % (val, ucache[val])
 
             elif key == 'g':
-                if gcache.has_key(val) and gcache[val]:
+                if gcache and gcache.has_key(val) and gcache[val]:
                     print "%s: %s" % (val, gcache[val])
 
 
@@ -389,11 +412,11 @@ def _cache_check_NT4(**kwargs):
                 dgcache = FreeNAS_NT4_GroupCache(dir=workgroup)
 
                 if key == 'du':
-                    if ducache.has_key(val) and ducache[val]:
+                    if ducache and ducache.has_key(val) and ducache[val]:
                         print "%s: %s" % (val, ducache[val])
 
                 elif key == 'dg':
-                    if dgache.has_key(val) and dgcache[val]:
+                    if dgcache and dgcache.has_key(val) and dgcache[val]:
                         print "%s: %s" % (val, dgcache[val])
          
 
@@ -417,19 +440,19 @@ def _cache_check_default(**kwargs):
             continue
 
         if key == 'u':
-            if ucache.has_key(val) and ucache[val]:
+            if ucache and ucache.has_key(val) and ucache[val]:
                 print "%s: %s" % (val, ucache[val])
 
         elif key == 'g':
-            if gcache.has_key(val) and gcache[val]:
+            if gcache and gcache.has_key(val) and gcache[val]:
                 print "%s: %s" % (val, gcache[val])
 
         elif key == 'du':
-            if ducache.has_key(val) and ducache[val]:
+            if ducache and ducache.has_key(val) and ducache[val]:
                 print "%s: %s" % (val, ducache[val])
 
         elif key == 'dg':
-            if dgache.has_key(val) and dgcache[val]:
+            if dgcache and dgcache.has_key(val) and dgcache[val]:
                 print "%s: %s" % (val, dgcache[val])
 
 def cache_check(**kwargs):
