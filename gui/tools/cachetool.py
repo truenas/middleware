@@ -49,6 +49,16 @@ def usage(keys):
     print >> sys.stderr, "Usage: %s <%s>" % (sys.argv[0], join(keys, '|'))
     sys.exit(1)
 
+def _cachelen(cache):
+    cachelen = 0 
+
+    try:
+        cachelen = len(cache)
+
+    except:
+        cachelen = 0
+
+    return cachelen
 
 def cache_fill(**kwargs):
     uargs = { 'flags': FLAGS_DBINIT|FLAGS_CACHE_WRITE_USER }
@@ -408,8 +418,8 @@ def _cache_check_NT4(**kwargs):
             for workgroup in valid.keys():
                 ucache = FreeNAS_UserCache(dir=workgroup)
                 gcache = FreeNAS_GroupCache(dir=workgroup)
-                ducache = FreeNAS_NT4_UserCache(dir=workgroup)
-                dgcache = FreeNAS_NT4_GroupCache(dir=workgroup)
+                ducache = FreeNAS_Directory_UserCache(dir=workgroup)
+                dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
 
                 if key == 'du':
                     if ducache and ducache.has_key(val) and ducache[val]:
@@ -469,7 +479,6 @@ def cache_check(**kwargs):
         _cache_check_default(**kwargs)
 
 
-
 def _cache_count_ActiveDirectory(**kwargs):
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
     domains = ad.get_domains()
@@ -477,10 +486,10 @@ def _cache_count_ActiveDirectory(**kwargs):
         workgroup = d['nETBIOSName']
 
         print "w:  %s" % workgroup
-        print "u:  %ld" % len(FreeNAS_UserCache(dir=workgroup))
-        print "g:  %ld" % len(FreeNAS_GroupCache(dir=workgroup))
-        print "du: %ld" % len(FreeNAS_Directory_UserCache(dir=workgroup))
-        print "dg: %ld" % len(FreeNAS_Directory_GroupCache(dir=workgroup))
+        print "u:  %ld" % _cachelen(FreeNAS_UserCache(dir=workgroup))
+        print "g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=workgroup))
+        print "du: %ld" % _cachelen(FreeNAS_Directory_UserCache(dir=workgroup))
+        print "dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache(dir=workgroup))
         print "\n"
 
 def _cache_count_NT4(**kwargs):
@@ -490,17 +499,17 @@ def _cache_count_NT4(**kwargs):
         workgroup = d
 
         print "w:  %s" % workgroup
-        print "u:  %ld" % len(FreeNAS_UserCache(dir=workgroup))
-        print "g:  %ld" % len(FreeNAS_GroupCache(dir=workgroup))
-        print "du: %ld" % len(FreeNAS_NT4_UserCache(dir=workgroup))
-        print "dg: %ld" % len(FreeNAS_NT4_GroupCache(dir=workgroup))
+        print "u:  %ld" % _cachelen(FreeNAS_UserCache(dir=workgroup))
+        print "g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=workgroup))
+        print "du: %ld" % _cachelen(FreeNAS_NT4_UserCache(dir=workgroup))
+        print "dg: %ld" % _cachelen(FreeNAS_NT4_GroupCache(dir=workgroup))
         print "\n"
 
 def _cache_count_default(**kwargs):
-    print "u:  %ld" % len(FreeNAS_UserCache())
-    print "g:  %ld" % len(FreeNAS_GroupCache())
-    print "du: %ld" % len(FreeNAS_Directory_UserCache())
-    print "dg: %ld" % len(FreeNAS_Directory_GroupCache())
+    print "u:  %ld" % _cachelen(FreeNAS_UserCache())
+    print "g:  %ld" % _cachelen(FreeNAS_GroupCache())
+    print "du: %ld" % _cachelen(FreeNAS_Directory_UserCache())
+    print "dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache())
     print "\n"
 
 def cache_count(**kwargs):
