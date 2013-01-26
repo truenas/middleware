@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2012-06-30 20:04+0200\n"
-"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
+"PO-Revision-Date: 2013-01-25 17:35+0200\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -1223,9 +1223,8 @@ msgid "Jail IPv4 Netmask"
 msgstr "Маска Jail мережі IPv4"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Jail шлях плагінів"
+msgstr "Шлях до плагінів"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1245,9 +1244,9 @@ msgid "The path could not be mounted %s"
 msgstr "Шлях не може бути встановлений %s"
 
 #: plugins/forms.py:341
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be umounted %s"
-msgstr "Кеш не може бути відновлений"
+msgstr "Шлях не може бути размонтовано: %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1275,9 +1274,8 @@ msgid "Version of the plugin"
 msgstr "Версія плагіна"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Версія плагіна"
+msgstr "Версія API плагіна"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1299,13 +1297,12 @@ msgid "Plugin TCP port"
 msgstr "TCP порт плагіна"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Jail шлях плагінів"
+msgstr "Шлях до плагінів"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr ""
+msgstr "Шлях, де плагіни зберігаються після інсталяціі"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1327,9 +1324,8 @@ msgid "Mount Point"
 msgstr "Точка монтування"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
-msgstr "Точка монтування"
+msgstr "Точки монтування"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1344,23 +1340,20 @@ msgid "Unable to remove plugin."
 msgstr "Не вдається видалити плагін."
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
 msgstr "Плагін успішно оновлено."
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
 msgstr "Плагін успішно оновлено."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Виникла проблема під час імпорту jail."
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
-msgstr "%s успішно оновлено."
+msgstr "Jail успішно імпортовано."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1391,9 +1384,8 @@ msgid "This IP already exists."
 msgstr "Ця IP-адреса вже існує."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "Сервіс плагінів перезавантажився не вдало."
+msgstr "Не вдалося перезавантажити сервіс плагінів."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1413,7 +1405,7 @@ msgstr "Значення має бути між 1024 та 65535 включно. 
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Повинно бути більше ніж найменший пасивний порт."
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1558,13 +1550,12 @@ msgid "Controller Auth Group"
 msgstr "Група аутентифікації контролера"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"istgtcontrol може отримати доступ до цілі з правильним користувачем і "
-"секретом в обраній групі аунтіфікаціі."
+"istgtcontrol може отримати доступ до цілі з правильним ім'ям користувача та "
+"секретом в обраній групі аутентифікаціі."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1591,9 +1582,8 @@ msgstr ""
 "контролю методу авторизації."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Це не є допустимою маскою"
+msgstr "Це не є допустимою мережею"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -2400,14 +2390,12 @@ msgid "Jail IP address"
 msgstr "IP адреса Jail"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "Маска мережі IPv4"
+msgstr "Маска мережі jail"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "Jail шлях плагінів"
+msgstr "Шлях до плагінів"
 
 #: services/models.py:852
 msgid "Location"
@@ -3237,9 +3225,8 @@ msgid "Settings"
 msgstr "Установки"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "Управління iSCSI"
+msgstr "Управління"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3803,13 +3790,15 @@ msgstr "Шлях не є каталогом."
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr ""
+msgstr "Ви не можете вибрати існуючий том ZFS та вкзати нове ім'я тома"
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Ви повинні вказати ім'я нового ZFS тому, або вибрати ім'я існуючого тому для "
+"додання нового віртуального пристрою"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -3866,9 +3855,8 @@ msgstr ""
 "пулу"
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Не вдалося перезапустити службу"
+msgstr "Не вдалося перезапустити службу SMART"
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -4036,21 +4024,20 @@ msgid "day of month"
 msgstr "день місяця"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "Method"
-msgstr "Метод авторизації"
+msgstr "Метод"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Щвидкий"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Заповнити нулями"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Заповнити випадковими даними."
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4493,9 +4480,8 @@ msgid "The scrub process has begun"
 msgstr "Процес \"Scrub\" розпочався"
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s успішно оновлено."
+msgstr "Диск успішно стерто"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -4524,7 +4510,7 @@ msgstr "Сервер недоступний. Поставте \"Примусов
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "Наступні диски вже мають тести цього типу: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -5235,7 +5221,7 @@ msgstr "Відмінити"
 msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
-msgstr ""
+msgstr "Буде також видалено %(related_num)s залежних записів"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5515,9 +5501,8 @@ msgid "No plugins installed"
 msgstr "Плагіни не встановлені"
 
 #: templates/plugins/jail_import.html:2
-#, fuzzy
 msgid "Import"
-msgstr "Імпортувати том"
+msgstr "Імпорт"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5543,25 +5528,21 @@ msgid "Edit Mount Point"
 msgstr "Точка монтування"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
-msgstr "Точка монтування"
+msgstr "Видалити точку монтування"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "CronJobs не визначені"
+msgstr "Точки монтування не визначені"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
-msgstr "Точка монтування"
+msgstr "Додати точку монтування"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
-#, fuzzy
 msgid "Upload"
-msgstr "Завантажити плагін"
+msgstr "Завантажити"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
@@ -5699,7 +5680,6 @@ msgid "Associated Targets"
 msgstr "Пов'язані цілі"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Цілі не визначені"
 
@@ -5724,9 +5704,8 @@ msgid "Authorized Network"
 msgstr "Авторизовані мережі"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "Авторизований ініціатор"
+msgstr "Авторизованих ініціаторів не визначено"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5734,9 +5713,8 @@ msgid "Add Authorized Initiator"
 msgstr "Додати авторизований ініціатор"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "Цілі не визначені"
+msgstr "Екстенти пристроів не визначені"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5748,9 +5726,8 @@ msgid "File Extent"
 msgstr "Екстенти файла"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "Цілі не визначені"
+msgstr "Екстенти не визначені"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5769,9 +5746,8 @@ msgid "Delete Portal"
 msgstr "Видалити портал"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
-msgstr "Цілі не визначені"
+msgstr "Портали не визначені"
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
@@ -5788,42 +5764,40 @@ msgid "Add Target"
 msgstr "Додати Ціль"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
-msgstr "Точка монтування"
+msgstr "Перегляд точок монтування"
 
 #: templates/services/plugins.html:22
 msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"УВАГА: Службу плагинів не було запущено, деяка функціональність буде "
+"обмежена."
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Версія ОС"
+msgstr "Версія"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Служби"
+msgstr "Статус служби"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
 msgstr "Оновлення"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "Видалити плагін"
+msgstr "Поновити плагін"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "Немае плагінів"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
@@ -5968,9 +5942,8 @@ msgid "Are you sure you want to remove?"
 msgstr "Ви дійсно хочете видалити?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "Ви впевнені, що хочете відключити?"
+msgstr "Ви впевнені, що бажаете зтерти?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
@@ -6287,9 +6260,8 @@ msgstr "Оновлення прошивки"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Вилучити плагіни Jail"
+msgstr "Iмпортувати jail плагінів"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6355,9 +6327,8 @@ msgid ""
 msgstr "Ви збираєтеся <strong> ПЕРЕЗАВАНТАЖИТИ</ strong> систему?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Каталог"
+msgstr "Iсторія"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"

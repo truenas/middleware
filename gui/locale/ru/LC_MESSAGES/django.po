@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-01-25 11:46+0200\n"
+"PO-Revision-Date: 2013-01-25 18:05+0200\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -1086,7 +1086,6 @@ msgid "Virtual Interface"
 msgstr "Виртуальный интерфейс"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
 "Имена интерфейсов должны иметь вид: vlanXX, где XX - это число. Например: "
@@ -1171,7 +1170,7 @@ msgstr "Создать объединение интерфейсов"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
-msgstr "Просмотреть объединения интерфейсов"
+msgstr "Просмотр объединений интерфейсов"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
@@ -1211,18 +1210,16 @@ msgid "The full jail path cannot exceed 76 characters"
 msgstr "Полная длина пути jail не может превышать 76 символов"
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr "Путь плагинов не может быть или содержать jail путь."
+msgstr "Путь к jail плагинов не может быть частью пути к плагинам."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Путь плагинов не может быть или содержать jail путь."
+msgstr "Путь к плагинам не может быть частью пути к jail плагинов."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
-msgstr "Jail путь плагинов"
+msgstr "Путь к jail плагинов"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -1233,9 +1230,8 @@ msgid "Jail IPv4 Netmask"
 msgstr "Маска сети IPv4 Jail"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Jail путь плагинов"
+msgstr "Путь к плагинам"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1308,9 +1304,8 @@ msgid "Plugin TCP port"
 msgstr "TCP порт плагина"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Jail путь плагинов"
+msgstr "Путь к плагинам"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
@@ -1568,12 +1563,11 @@ msgid "Controller Auth Group"
 msgstr "Группа аунтификации контроллера"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"Istgtcontrol может получить доступ к цели с правильным пользователем и "
+"Istgtcontrol может получить доступ к цели с правильным именем пользователя и "
 "секретом в выбранной группе аунтификации."
 
 #: services/forms.py:623 services/models.py:268
@@ -2386,37 +2380,35 @@ msgstr "Динамический DNS"
 
 #: services/models.py:804
 msgid "Path to the plugins jail"
-msgstr "Путь к plugins jail"
+msgstr "Путь к jail плагинов"
 
 #: services/models.py:809
 msgid "Jail name"
-msgstr "Jail имя"
+msgstr "Имя jail"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
-msgstr "Имя plugins jail"
+msgstr "Имя jail плагинов"
 
 #: services/models.py:815
-#, fuzzy
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
-"Имя Jail может содержать только буквы, цифры и дефис. Оно не должно "
+"Имя jail может содержать только буквы, цифры и дефисы. Оно не должно "
 "заканчиваться дефисом."
 
 #: services/models.py:821
 msgid "Jail IP address"
-msgstr "Jail IP адрес"
+msgstr "IP адрес jail"
 
 #: services/models.py:825
 msgid "Jail IP Netmask"
-msgstr "Сетевая маска Jail"
+msgstr "Сетевая маска jail"
 
 #: services/models.py:829
-#, fuzzy
 msgid "Plugins archive path"
-msgstr "Jail путь плагинов"
+msgstr "Расположение плагинов"
 
 #: services/models.py:852
 msgid "Location"
@@ -2485,7 +2477,7 @@ msgstr "Дополнительные параметры (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr "Дополнительные параметры для аппаратно-ориентированной части драйвера."
+msgstr "Дополнительные параметры для аппаратно-зависимой части драйвера."
 
 #: services/models.py:923
 msgid "Shutdown mode"
@@ -2892,7 +2884,7 @@ msgstr "Имя администратора"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
-msgstr "Имя учетной записи администратора домен"
+msgstr "Имя учетной записи администратора домена"
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -2960,7 +2952,7 @@ msgstr "Протокол, используемый для изменения п�
 
 #: services/models.py:1317
 msgid "User Suffix"
-msgstr "Пользователь Suffix"
+msgstr "Суффикс пользователя"
 
 #: services/models.py:1318
 msgid ""
@@ -2972,7 +2964,7 @@ msgstr ""
 
 #: services/models.py:1323
 msgid "Group Suffix"
-msgstr "Группа Suffix"
+msgstr "Суффикс группы"
 
 #: services/models.py:1324
 msgid ""
@@ -2985,7 +2977,7 @@ msgstr ""
 # какое может быть окончание у пароля?...
 #: services/models.py:1328
 msgid "Password Suffix"
-msgstr "Пароль Suffix"
+msgstr "Суффикс пароля"
 
 #: services/models.py:1330
 msgid ""
@@ -2997,7 +2989,7 @@ msgstr ""
 
 #: services/models.py:1334
 msgid "Machine Suffix"
-msgstr "Машина Suffix"
+msgstr "Суффикс машины"
 
 #: services/models.py:1336
 msgid ""
@@ -3022,7 +3014,7 @@ msgstr "Самоподписанный сертификат"
 
 #: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
-msgstr "Поместите сюда содержимое файла вашего самоподписанного сертификата."
+msgstr "Поместите сюда содержимое файла Вашего самоподписанного сертификата."
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
@@ -3123,10 +3115,10 @@ msgid ""
 "Leave this field empty to use default settings"
 msgstr ""
 "Набор хостов разделённых запятой, пробелом или табуляцией, которым НЕ "
-"разрешен доступ к этому ресурсу. При этом конфликт-лист позволяет расставить "
-"приоритеты. В случае, если по умолчанию необходимо запретить все, "
-"используйте параметр ALL (или маску 0.0.0.0/0) а затем явно укажите хосты, "
-"доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
+"разрешен доступ к этому ресурсу. В случае конфликта список разрешенных "
+"хостов имеет приоритет. В случае, если по умолчанию необходимо запретить "
+"все, используйте параметр ALL (или маску 0.0.0.0/0) а затем явно укажите "
+"хосты, доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
 "настройки по умолчанию"
 
 #: services/models.py:1439
@@ -3166,7 +3158,7 @@ msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
-"Сообщает, если температура изменилась на N градусов (по Цельсию) с момента "
+"Сообщать, если температура изменилась на N градусов (по Цельсию) с момента "
 "последнего сообщения. 0 - для отключения"
 
 #: services/models.py:1475
@@ -3178,7 +3170,7 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
-"Сообщает, если температура больше или равна N градусов (по Цельсию). 0 - для "
+"Сообщать, если температура больше или равна N градусов (по Цельсию). 0 - для "
 "отключения"
 
 #: services/models.py:1480
@@ -3187,7 +3179,7 @@ msgstr "Критический"
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr "E-mail для сообщения"
+msgstr "E-mail для отчетов"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -3205,32 +3197,32 @@ msgstr "Управление службами"
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr "Экстенты устройства"
+msgstr "Экстенты устройств"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:72
 msgid "Add Device Extent"
-msgstr "Добавить Экстенты устройства"
+msgstr "Добавить экстент устройства"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:79
 msgid "View Device Extents"
-msgstr "Смотреть Экстенты устройства"
+msgstr "Просмотр экстентов устройств"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:92
 msgid "File Extents"
-msgstr "Экстенты файла"
+msgstr "Файловые экстенты"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr "Добавить Экстенты файла"
+msgstr "Добавить файловый экстент"
 
 #: services/nav.py:118
 msgid "View File Extents"
-msgstr "Смотреть Экстенты файла"
+msgstr "Просмотр файловых экстентов"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3320,7 +3312,7 @@ msgstr "Видимый для клиентов сети"
 
 #: sharing/models.py:53
 msgid "Inherit Owner"
-msgstr "Наследуется"
+msgstr "Наследовать владельца"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -3386,10 +3378,10 @@ msgid ""
 "Leave this field empty to use default settings."
 msgstr ""
 "Набор хостов разделённых запятой, пробелом или табуляцией, которым НЕ "
-"разрешен доступ к этому ресурсу. При этом конфликт-лист позволяет расставить "
-"приоритеты. В случае, если по умолчанию необходимо запретить все, "
-"используйте парамтр ALL (или маску 0.0.0.0/0), а затем явно укажите хосты, "
-"доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
+"разрешен доступ к этому ресурсу. Если списки конфликтуют, список разрешенных "
+"хостов имеет приоритет. В случае, если по умолчанию необходимо запретить "
+"все, используйте парамтр ALL (или маску 0.0.0.0/0), а затем явно укажите "
+"хосты, доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
 "настройки по умолчанию."
 
 #: sharing/models.py:83
@@ -3424,7 +3416,7 @@ msgstr ""
 
 #: sharing/models.py:118
 msgid "Share Comment"
-msgstr "Комментарии общего доступа"
+msgstr "Комментарии к общему ресурсу"
 
 #: sharing/models.py:125
 msgid "Share password"
@@ -3463,7 +3455,7 @@ msgid ""
 msgstr ""
 "Это опция разрешает выбранным пользователям и группам доступ к общему "
 "ресурсу. Пользователи и группы должны быть разделены запятыми. Группы "
-"обозначаются @ префиксом."
+"обозначаются префиксом \"@\"."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -3510,8 +3502,8 @@ msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
-"Разрешить другим системам открыть для этот ресурс в качестве диска данных, "
-"машины времени, резервного хранилища."
+"Разрешить другим системам видеть этот ресурс в качестве диска для данных,  "
+"резервного хранилища Time Machine или никак."
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
@@ -3523,13 +3515,13 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"Обратите внимание! Выбор 'Машина Времени' на нескольких общих ресурсах может "
-"привести к непредсказуемому поведению в MacOS. По умолчанию используется "
-"режим экспорта тома как тома данных."
+"Внимание! Выбор 'Time Machine' на нескольких общих ресурсах может привести к "
+"непредсказуемому поведению в MacOS. По умолчанию используется режим "
+"экспорта тома как тома данных."
 
 #: sharing/models.py:172
 msgid "Database Path"
-msgstr "Пути к базе данных"
+msgstr "Путь к базе данных"
 
 # смысл непонятен
 #: sharing/models.py:174
@@ -3537,8 +3529,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
-"Путь для хранения базы данных. Вы должны указать место для записи, даже если "
-"том доступен только для чтения."
+"Путь для хранения базы данных. Вы должны указать место с возможностью "
+"записи, даже если том доступен только для чтения."
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3550,9 +3542,9 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
-"AFPD использует ID информацию, хранящейся в файлах заголовков AppleDouble V2 "
-"для сокращению загрузки базы данных. Не устанавливайте эту опцию, если том "
-"изменяется не клиентами AFP (NFS/SMB/local)."
+"AFPD использует идентификационную информацию, хранящейся в файлах заголовков "
+"AppleDouble V2 для уменьшения загрузки базы данных. Не устанавливайте эту "
+"опцию, если том изменяется не клиентами AFP (NFS/SMB/local)."
 
 #: sharing/models.py:181
 msgid "Translate CR/LF"
@@ -3566,12 +3558,11 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
-"Разрешает использование crlf в текстовых файлах, автоматически "
+"Разрешает преобразование crlf в текстовых файлах, автоматически "
 "преобразовывыя разрывы строк Macintosh в Unix. Использование этой опции "
-"может быть опасным, так как некоторые старые программы хранят бинарные файлы "
-"как 'TEXT' когда сохраняют их, изменяя тип файла следующим шагом. AFPD может "
-"потенциально уничтожить такие файлы, когда 'ошибочно' Изменит байт для того, "
-"чтобы сделать перевод строки."
+"может быть опасным, так как некоторые старые программы сохраняют бинарные "
+"файлы как 'TEXT', изменяя тип файла следующим шагом. AFPD может потенциально "
+"повредить такие файлы, когда 'ошибочно' преобразует переводы строк."
 
 #: sharing/models.py:185
 msgid "Windows File Names"
@@ -3600,7 +3591,7 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
-msgstr "Номера нулевых устройств"
+msgstr "Обнулять номера устройств"
 
 # не совсем понятно, что они имели в виду
 #: sharing/models.py:197
@@ -3642,15 +3633,15 @@ msgstr "Обеспечить совместимость с клиентами Ap
 
 #: sharing/models.py:212
 msgid "No Stat"
-msgstr "Не использовать статистику"
+msgstr "Не использовать stat"
 
 #: sharing/models.py:213
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
-"Не включать путь к тому в список томов; это полезно для автомонтирования или "
-"для томов, созданных по сценарию preexec."
+"Не проверять пути при перечислении списка томов; это полезно для "
+"автомонтирования или для томов, созданных по сценарию preexec."
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
@@ -3670,11 +3661,11 @@ msgstr "Разрешения на каталог по умолчанию"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
-msgstr "Apple (AFP) общий ресурс"
+msgstr "Oбщий ресурс Apple (AFP)"
 
 #: sharing/models.py:239
 msgid "Apple (AFP) Shares"
-msgstr "Apple (AFP) общие ресурсы"
+msgstr "Общие ресурсы Apple (AFP)"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
@@ -3738,7 +3729,7 @@ msgstr "Закрепить идентификатор root за группой"
 
 #: sharing/models.py:296
 msgid "Group to map root to"
-msgstr "Назначить группе права доступа all"
+msgstr "Назначить группе права доступа root"
 
 #: sharing/models.py:299
 msgid "Mapall User"
@@ -3758,20 +3749,19 @@ msgstr "Назначить группе пользователей права д
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
-msgstr "Unix (NFS) общий ресурс"
+msgstr "Общий ресурс Unix (NFS)"
 
 #: sharing/models.py:322
 msgid "Unix (NFS) Shares"
-msgstr "Unix (NFS) общие ресурсы"
+msgstr "Общие ресурсы Unix (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
-msgstr "Совместное использование"
+msgstr "Общие ресурсы"
 
 #: storage/forms.py:105
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr ""
-"Введите положительное число (опционально с суффиксом K, М, G, T), или, 0"
+msgstr "Введите положительное число (опционально с суффиксом K, М, G, T) или 0"
 
 #: storage/forms.py:120
 #, python-format
@@ -3827,9 +3817,8 @@ msgid "Path is not a directory."
 msgstr "Путь не является каталогом."
 
 #: storage/forms.py:264
-#, fuzzy
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr "Невозможно выбрать существующий том ZFS и указать новое имя тома."
+msgstr "Вы не можете выбрать существующий том ZFS и указать новое имя тома."
 
 #: storage/forms.py:269
 msgid ""
@@ -3853,7 +3842,7 @@ msgstr "\"log\" зарезервированое слово и не может �
 
 #: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Имя тома НЕ может начаться с [0-9], mirror, raidz или spare"
+msgstr "Имя тома НЕ может начаться с c[0-9], mirror, raidz или spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3908,7 +3897,7 @@ msgstr "Степень сжатия"
 
 #: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
-msgstr "Включить atime"
+msgstr "Сохранять время доступа (atime)"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
@@ -3941,7 +3930,7 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Наборы данных должны начинаться с буквы или цифры и может содержать только "
+"Наборы данных должны начинаться с буквы или цифры и могут так-же содержать "
 "\"-\", \"_\", \":\" и \".\"."
 
 #: storage/forms.py:729 storage/forms.py:870
@@ -4038,7 +4027,7 @@ msgstr "Удаленный порт"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
-msgstr "Удаленный сервер ключей"
+msgstr "Ключ удаленного хоста"
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
@@ -4076,7 +4065,7 @@ msgstr "Полная с заполнением нулями"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr "Послная с произвольными данными"
+msgstr "Полная со случайными данными"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4084,7 +4073,7 @@ msgstr "Тип файловой системы"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr "Threshold дней"
+msgstr "Порог дней"
 
 #: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
@@ -4142,7 +4131,7 @@ msgstr "День недели"
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
 #: templates/system/sysctl.html:8 templates/system/tunable.html:8
 msgid "Enabled"
-msgstr "Включить"
+msgstr "Включено"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
@@ -4195,11 +4184,11 @@ msgstr "Выходные"
 
 #: storage/models.py:340
 msgid "Multipath name"
-msgstr "Multipath имя"
+msgstr "Имя Multipath"
 
 #: storage/models.py:346
 msgid "Multipath member"
-msgstr "Multipath member"
+msgstr "Член Multipath"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
@@ -4207,7 +4196,7 @@ msgstr "Режим передачи"
 
 #: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
-msgstr "Отключение HDD"
+msgstr "Отключение диска"
 
 #: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
@@ -4223,7 +4212,7 @@ msgstr "Включить S.M.A.R.T."
 
 #: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
-msgstr "S.M.A.R.T. дополнительные параметры"
+msgstr "Дополнительные параметры S.M.A.R.T."
 
 #: storage/models.py:444 system/models.py:660
 msgid "Disks"
@@ -4257,7 +4246,7 @@ msgstr "Файловая система / Том"
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
-"Послать последний снимок удаленной машине (оставьте пустым для полной "
+"Последний снимок посланный удаленной машине (оставьте пустым для полной "
 "репликации)"
 
 #: storage/models.py:666 system/models.py:458
@@ -4267,15 +4256,15 @@ msgstr "Удаленный хост"
 
 #: storage/models.py:669
 msgid "Remote ZFS filesystem name"
-msgstr "Имя удалённая файловаой системы ZFS"
+msgstr "Имя удалённой файловой системы ZFS"
 
 #: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
-"Это должно быть имя файловой системы ZFS на удалённой стороне. те: poolname/"
-"datasetname это не точка монтирования или путь файловой системы"
+"Это должно быть имя файловой системы ZFS на удалённой стороне. те: "
+"poolname/datasetname, а не точка монтирования или путь файловой системы"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4284,17 +4273,17 @@ msgstr "Рекурсивно копировать и удалять устаре
 #: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
-"Инициализация удаленной стороной только в этот раз. (Может привести к потере "
+"Инициализация удаленной стороны только в этот раз. (Может привести к потере "
 "данных на удаленной стороне!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
-msgstr "Лимит кБ/с"
+msgstr "Лимит (кБ/с)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
-"Максимальная скорость репликации. В килобайтах/секунду. 0 = не ограничена."
+"Максимальная скорость репликации. В килобайтах в секунду. 0 = не ограничена."
 
 #: storage/models.py:692
 msgid "Replication Task"
@@ -4314,11 +4303,11 @@ msgstr "Время жизни снимка"
 
 #: storage/models.py:732
 msgid "Snapshot lifetime unit"
-msgstr "Время жизни снимка"
+msgstr "Единицы измерения времени жизни снимка"
 
 #: storage/models.py:736
 msgid "Begin"
-msgstr "Начать"
+msgstr "Начало"
 
 #: storage/models.py:737
 msgid "Do not snapshot before"
@@ -4338,7 +4327,7 @@ msgstr "Интервал"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Время прошедшее между двумя попытками создания снимка."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4355,11 +4344,11 @@ msgstr "Будний день"
 # не знаю, как это перевести
 #: storage/models.py:785
 msgid "Periodic Snapshot Task"
-msgstr "Задача периодического снимка"
+msgstr "Задача периодического создания снимков"
 
 #: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr "Задачи периодических снимков"
+msgstr "Задачи периодического создания снимков"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
@@ -4434,7 +4423,7 @@ msgstr "Том успешно добавлен."
 
 #: storage/views.py:254
 msgid "S.M.A.R.T. Extra Options"
-msgstr "S.M.A.R.T. дополнительные параметры"
+msgstr "Дополнительные параметры S.M.A.R.T."
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4450,7 +4439,7 @@ msgstr "Том ZFS успешно добавлен."
 
 #: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr "Цель iSCSI уже используется, пожалуйста сначала удалите."
+msgstr "Уже используется целью iSCSI, пожалуйста сначала удалите ее."
 
 #: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
@@ -4486,7 +4475,7 @@ msgstr "Снимок успешно добавлен."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
-msgstr "Снимок успешно принят."
+msgstr "Снимок успешно создат"
 
 #: storage/views.py:664
 msgid "Snapshot successfully cloned."
@@ -4506,7 +4495,7 @@ msgstr "Отсоединение диска было успешно произв
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
-msgstr "Инициирована процедура замены диска."
+msgstr "Инициирована процедура отключения диска."
 
 #: storage/views.py:740
 msgid "Disk has been removed."
@@ -4534,11 +4523,11 @@ msgstr "Это значение должно быть от 1 до 65535 вклю
 
 #: system/forms.py:216
 msgid "Number is required."
-msgstr "Необходимо значение."
+msgstr "Необходимо число."
 
 #: system/forms.py:245
 msgid "Force"
-msgstr "Force"
+msgstr "Принудить"
 
 #: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
@@ -4546,12 +4535,12 @@ msgstr "Max Poll должно быть больше чем Min Poll"
 
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
-msgstr "Сервер недоступен. Поставьте \"Force\" чтобы не обращать внимание."
+msgstr "Сервер недоступен. Поставьте \"Принудить\" чтобы не обращать внимание."
 
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "Следующие диски уже имеют тесты этого типа: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -4614,7 +4603,7 @@ msgstr "Язык"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Раскладка клавиатуры консоли"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4622,7 +4611,7 @@ msgstr "Часовой пояс"
 
 #: system/models.py:80
 msgid "Syslog server"
-msgstr "Syslog сервер"
+msgstr "Сервер Syslog"
 
 #: system/models.py:92 templates/system/ntpserver.html:5
 msgid "Address"
@@ -4656,7 +4645,7 @@ msgstr ""
 
 #: system/models.py:112 templates/system/ntpserver.html:8
 msgid "Prefer"
-msgstr "Предпочтительный"
+msgstr "Предпочтитать"
 
 #: system/models.py:114
 msgid ""
@@ -4728,7 +4717,7 @@ msgstr "Включить специальные настройки систем�
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr "Включить Powerd (энергосберегающий демон)"
+msgstr "Включить powerd (демон энергосбережения)"
 
 #: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
@@ -4808,7 +4797,7 @@ msgstr "TLS/SSL"
 
 #: system/models.py:236
 msgid "Use SMTP Authentication"
-msgstr "Используется SMTP-аутентификация"
+msgstr "Использовать аутентификацию SMTP"
 
 #: system/models.py:244
 msgid "A username to authenticate to the remote server"
@@ -4848,7 +4837,7 @@ msgstr "Местоположение"
 
 #: system/models.py:288
 msgid "Locality Name (eg, city)"
-msgstr "Название местности (например city)"
+msgstr "Название местности (например, город)"
 
 #: system/models.py:294
 msgid "State"
@@ -4924,7 +4913,7 @@ msgstr "Удаленный путь"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr "Путь на удалённом хосте для rsync т.е. /mnt/tank напимер"
+msgstr "Путь на удалённом хосте для rsync, напимер, /mnt/tank"
 
 #: system/models.py:481 templates/system/rsync.html:8
 msgid "Direction"
@@ -4947,7 +4936,7 @@ msgstr "Время"
 
 #: system/models.py:532
 msgid "Preserve modification times"
-msgstr "Защитить изменение времени"
+msgstr "Сохранять время изменения"
 
 #: system/models.py:536
 msgid "Compress"
@@ -4955,7 +4944,7 @@ msgstr "Сжатие"
 
 #: system/models.py:537
 msgid "Compress data during the transfer"
-msgstr "Сжать данные при отправке"
+msgstr "Сжимать данные при передаче"
 
 #: system/models.py:541
 msgid "Archive"
@@ -5000,7 +4989,7 @@ msgstr "Удалить"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr "Удалить файлы на принимающей стороне, не влияет на отправителя"
+msgstr "Удалить на принимающей стороне файлы отсутствующие на отправителе"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
@@ -5014,7 +5003,7 @@ msgstr "Сохранить права"
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
-msgstr "Rsync установливает такие же права, как у источника"
+msgstr "Rsync установливает получателю такие же права, как у источника"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
@@ -5024,11 +5013,12 @@ msgstr "Сохранять расширенные атрибуты"
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
-msgstr "Rsync обновит расширенные атрибуты, как у локальных"
+msgstr ""
+"Rsync обновит расширенные атрибуты получателя до тех что установлены здесь"
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Дополнительные параметры rsync командной строки (обычно пусто)"
+msgstr "Дополнительные параметры командной строки rsync (обычно пусто)"
 
 #: system/models.py:580
 msgid "Rsync Task"
@@ -5040,17 +5030,17 @@ msgstr "Задачи Rsync"
 
 #: system/models.py:756
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T. тест"
+msgstr "Тест S.M.A.R.T."
 
 #: system/models.py:757
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. Тесты"
+msgstr "Тесты S.M.A.R.T."
 
 # или Доступно
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
 msgid "Variable"
-msgstr "Доступно"
+msgstr "Переменная"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
@@ -5067,7 +5057,7 @@ msgstr "Sysctls"
 
 #: system/models.py:834
 msgid "Tunable"
-msgstr "Настраеваемый"
+msgstr "Параметр настройки"
 
 #: system/models.py:835
 msgid "Tunables"
@@ -5092,11 +5082,11 @@ msgstr "Загруженный файл неправильный."
 # корневая связь - тупой перевод))
 #: system/views.py:239
 msgid "Reboot is being issued"
-msgstr "Перезагрузка была затребована"
+msgstr "Была затребована перезагрузка"
 
 #: system/views.py:264
 msgid "Shutdown is being issued"
-msgstr "Выключение было затребовано"
+msgstr "Было затребовано выключение"
 
 #: system/views.py:297
 #, python-format
@@ -5264,7 +5254,7 @@ msgstr "Отмена"
 msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
-msgstr ""
+msgstr "Будут так-же удалены %(related_num)s зависимых записей"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5470,7 +5460,7 @@ msgstr "Добавить члена LAGG"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr "Изменить статическую маршрутизацию"
+msgstr "Изменить статический маршрут"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
@@ -5510,7 +5500,7 @@ msgstr "Удалить VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr "VLAN не определена"
+msgstr "VLAN интерфейсы не определены"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -5573,12 +5563,11 @@ msgstr "Редактировать точку монтирования"
 
 #: templates/plugins/mountpoints.html:25
 msgid "Delete Mount Point"
-msgstr "Удалить точка монтирования"
+msgstr "Удалить точку монтирования"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "Задания Cron не определены."
+msgstr "Не определены точки монтирования"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
@@ -5611,7 +5600,7 @@ msgstr "Пожалуйста войдите."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr "Выход"
+msgstr "Вышедший"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
@@ -5671,7 +5660,7 @@ msgstr "Настройки SNMP"
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. Настройки"
+msgstr "Параметры S.M.A.R.T."
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5699,7 +5688,7 @@ msgstr "Ядро"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
-msgstr "управление iSCSI"
+msgstr "Управление iSCSI"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
@@ -5707,7 +5696,7 @@ msgstr "Порталы"
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
-msgstr "Авторизованный инициатор"
+msgstr "Авторизованные инициаторы"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5726,7 +5715,6 @@ msgid "Associated Targets"
 msgstr "Связанные цели"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Цели не определенны"
 
@@ -5751,9 +5739,8 @@ msgid "Authorized Network"
 msgstr "Авторизованные сети"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "Авторизованный инициатор"
+msgstr "Не определены авторизованные инициаторы"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5761,9 +5748,8 @@ msgid "Add Authorized Initiator"
 msgstr "Добавить авторизованный инициатор"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "Цели не определенны"
+msgstr "Не определенны экстенты устройств"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5773,16 +5759,15 @@ msgstr "Добавить экстент"
 # http://ru.wikipedia.org/wiki/Extent
 #: templates/services/iscsi_extents.html:5
 msgid "File Extent"
-msgstr "Экстенты файла"
+msgstr "Файловые экстенты"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "Цели не определенны"
+msgstr "Экстенты не определенны"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
-msgstr "Прослушивание"
+msgstr "Cлушать"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
@@ -5797,9 +5782,8 @@ msgid "Delete Portal"
 msgstr "Удалить портал"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
-msgstr "Цели не определенны"
+msgstr "Порталы не определенны"
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
@@ -5817,13 +5801,15 @@ msgstr "Добавить Цель"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
-msgstr "Просмотреть точки монтирования"
+msgstr "Просмотр точек монтирования"
 
 #: templates/services/plugins.html:22
 msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"ВНИМАНИЕ: Служба плагинов не запущена, некоторая функциональность будет "
+"недоступна."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5847,15 +5833,15 @@ msgstr "Обновить плагин"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "Нет доступных плагинов"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "Все файлы в песочнице плагинов будут удалены."
+msgstr "Все файлы в jail плагинов будут безвозвратно удалены."
 
 #: templates/services/pluginsjail_edit.html:12
 msgid "Delete Plugins Jail"
-msgstr "Удалить Plugins Jail"
+msgstr "Удалить Jail плагинов"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -5901,7 +5887,7 @@ msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Нет активных общих UNIX (NFS) ресурсов."
+msgstr "Нет активных общих ресурсов UNIX (NFS)."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
@@ -5921,7 +5907,7 @@ msgstr "Добавить общий ресурс UNIX (NFS)"
 
 #: templates/sharing/windows.html:7
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Нет активных общих Windows (CIFS) ресурсов."
+msgstr "Нет активных общих ресурсов Windows (CIFS)."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -6014,7 +6000,7 @@ msgstr "Снимки ZFS"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr "ZFS репликация"
+msgstr "Репликация ZFS"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
@@ -6070,7 +6056,7 @@ msgstr "Изменить репликацию"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
-msgstr "Не доступны ZFS репликации"
+msgstr "Нет доступных ZFS репликаций"
 
 #: templates/storage/scrub.html:42
 msgid "No scrub tasks defined."
@@ -6173,12 +6159,12 @@ msgstr "каждый"
 
 #: templates/storage/tasks.html:147
 msgid "There are no periodic snapshots scheduled."
-msgstr "Имеются не периодические запланированные снимки."
+msgstr "Нет периодических запланированных снимков."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr "У вас есть %(used)s из использованного места в этом томе"
+msgstr "У вас есть %(used)s использованного места в этом томе"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
@@ -6254,7 +6240,7 @@ msgstr "Дополнительные опции ZFS"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Использование только 1 журнала диска очень не рекомендуется"
+msgstr "Использование только одного диска журнала настоятельно не рекомендуется"
 
 #: templates/storage/wizard.html:116
 msgid "Log"
@@ -6313,9 +6299,8 @@ msgstr "Обновление прошивки"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Удалить Plugins Jail"
+msgstr "Импортировать jail плагинов"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6441,7 +6426,7 @@ msgstr "Тесты S.M.A.R.T. не определены"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. Test"
-msgstr "Добавить S.M.A.R.T. Тест"
+msgstr "Добавить тест S.M.A.R.T."
 
 #: templates/system/smarttest.html:46
 msgid "Add S.M.A.R.T. test"
@@ -6449,7 +6434,7 @@ msgstr "Добавить тест S.M.A.R.T"
 
 #: templates/system/sysctl.html:34
 msgid "No sysctl defined."
-msgstr "Параметры ядра не определены."
+msgstr "Параметры sysctl не определены."
 
 #: templates/system/sysctl.html:40
 msgid "Add sysctl"
@@ -6485,11 +6470,11 @@ msgstr "Средняя нагрузка"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr "Подключение через"
+msgstr "Подключено через"
 
 #: templates/system/tunable.html:34
 msgid "No tunable setting defined."
-msgstr "Настройки не определены."
+msgstr "Параметры настройки не определены."
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
@@ -6511,17 +6496,17 @@ msgstr "Состояние тома %s - В НОРМЕ"
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr "Состояние тома %s - РАЗРУШЕН"
+msgstr "Состояние тома %s - ПОВРЕЖДЕН"
 
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Том %(volume)s статус %(status)s: %(message)s"
+msgstr "Статус тома %(volume)s - %(status)s: %(message)s"
 
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr "Состояние тома %(volume)s %(status)s"
+msgstr "Состояние тома %(volume)s - %(status)s"
 
 #: tools/alert.py:125
 msgid ""
@@ -6705,7 +6690,7 @@ msgstr "Моя учётная запись"
 
 # Просмотрерть всех пользователей
 msgid "View All Users"
-msgstr "Просмотрерть всех пользователей"
+msgstr "Просмотр всех пользователей"
 
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
@@ -6767,13 +6752,13 @@ msgstr ""
 "существовать в файле паролей, но не требует корректного логина."
 
 msgid "CIFS Share"
-msgstr "CIFS шара"
+msgstr "Общий ресурс CIFS"
 
 msgid "CIFS Shares"
-msgstr "CIFS шара"
+msgstr "Общие ресурсы CIFS"
 
 msgid "NFS Share"
-msgstr "NFS шара"
+msgstr "Общий ресурс NFS"
 
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr "Когда начинать делать снимки, например 8:00"
@@ -6795,7 +6780,7 @@ msgstr "Загрузчики"
 
 # Просмотрерть всех пользователей
 msgid "View Loaders"
-msgstr "Показать загрузчики"
+msgstr "Просмотр загрузчиков"
 
 msgid "Reboot the System"
 msgstr "Перезагрузить систему"
@@ -7003,28 +6988,28 @@ msgid "Add Link Aggregation"
 msgstr "Добавить объединение интерфейсов"
 
 msgid "View All Interfaces"
-msgstr "Посмотреть все интерфейсы"
+msgstr "Посмотр всех интерфейсов"
 
 msgid "View All VLANs"
-msgstr "Просмотреть все VLAN"
+msgstr "Просмотр всех VLAN"
 
 msgid "View All Static Routes"
-msgstr "Просмотреть все статические маршруты"
+msgstr "Просмотр всех статических маршрутов"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr "Active Directory работает в этой версии Microsoft Windows."
 
 msgid "Service Principal Name"
-msgstr "Служба поддержка имён"
+msgstr "Service Principal Name"
 
 msgid "Service Principal Name, eg service/account."
-msgstr "Служба поддержка имён, например service/account."
+msgstr "Service Principal Name, например service/account."
 
 msgid "Service Principal Name Password"
-msgstr "Пароль службы поддержка имён"
+msgstr "Пароль Service Principal Name"
 
 msgid "Password of the Service Principal Name account."
-msgstr "Пароль учетной записи службы Service Principal Name."
+msgstr "Пароль учетной записи Service Principal Name."
 
 msgid "Kerberos Keytab File"
 msgstr "Файл Kerberos Keytab"
@@ -7062,7 +7047,7 @@ msgid "Other"
 msgstr "Другие"
 
 msgid "View All Periodic Snapshot Tasks"
-msgstr "Показать все задачи периодических снимков"
+msgstr "Просмотр задач периодического создания снимков"
 
 msgid "sucessfully edited"
 msgstr "успешно изменен"
