@@ -16,6 +16,7 @@ generate_nsswitch_conf()
 {
 	local ldap=0
 	local ad=0
+	local nis=0
 	local ad_unix=0
 	local hosts="files dns"
 	local conf="${PATH_NS_CONF}"
@@ -39,10 +40,13 @@ generate_nsswitch_conf()
 	elif dirsrv_enabled ldap
 	then
 		ldap="1"
+
+	elif dirsrv_enabled nis
+		nis="1"
 	fi
 
 
-	if [ "${ldap}" = "1" -o "${ad}" = "1" ]
+	if [ "${ldap}" = "1" -o "${ad}" = "1" -o "nis" = "1" ]
 	then
 		p="files"
 		g="files"
@@ -63,6 +67,11 @@ generate_nsswitch_conf()
 		then
 			p="${p} ldap"
 			g="${g} ldap"
+
+		elif [ "${nis}" = "1" ]
+			p="${p} nis"
+			g="${g} nis"
+			hosts="${hosts} nis"
 		fi
 	fi
 	
