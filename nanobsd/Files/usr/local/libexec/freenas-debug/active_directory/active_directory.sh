@@ -58,7 +58,7 @@ active_directory_func()
 		srv_service = 'activedirectory'
 	")
 
-    enabled="DISABLED"
+	enabled="DISABLED"
 	if [ "${onoff}" = "1" ]
 	then
 		enabled="ENABLED"
@@ -159,10 +159,35 @@ __EOF__
 	section_footer
 
 	#
-	#	Check Active Directory trust secret
+	#	Dump wbinfo information
 	#
 	section_header "Active Directory Trust Secret"
 	wbinfo -t
+	section_footer
+	section_header "Active Directory NETLOGON connection"
+	wbinfo -P
+	section_footer
+	section_header "Active Directory trusted domains"
+	wbinfo -m
+	section_footer
+	section_header "Active Directory all domains"
+	wbinfo --all-domains
+	section_footer
+	section_header "Active Directory down domain"
+	wbinfo --own-domain
+	section_footer
+	section_footer
+	section_header "Active Directory online status"
+	wbinfo --online-status
+	section_footer
+	section_header "Active Directory domain info"
+	wbinfo --domain-info="$(wbinfo --own-domain)"
+	section_footer
+	section_header "Active Directory DC name"
+	wbinfo --dsgetdcname="$(wbinfo --own-domain)"
+	section_footer
+	section_header "Active Directory DC info"
+	wbinfo --dc-info="$(wbinfo --own-domain)"
 	section_footer
 
 	#
