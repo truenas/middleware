@@ -42,6 +42,7 @@ generate_nsswitch_conf()
 		ldap="1"
 
 	elif dirsrv_enabled nis
+	then
 		nis="1"
 	fi
 
@@ -69,6 +70,7 @@ generate_nsswitch_conf()
 			g="${g} ldap"
 
 		elif [ "${nis}" = "1" ]
+		then
 			p="${p} nis"
 			g="${g} nis"
 			hosts="${hosts} nis"

@@ -358,7 +358,7 @@ _gen_conf()
 
 		echo "nisdomainname=\"${nisdomain}\""
 		echo "nis_client_enable=\"YES\""
-		echo "nis_client_flags="-S ${nisdomain},${fqdn}"
+		echo "nis_client_flags=\"-S ${nisdomain},${fqdn}\""
 	fi
 
 	local _avahi_srv_enable
