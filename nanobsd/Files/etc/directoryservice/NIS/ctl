@@ -3,6 +3,9 @@
 . /etc/rc.freenas
 
 service=/usr/sbin/service
+pwdstr='+:::::::::'
+grpstr='+:*::'
+
 
 nisctl_cmd()
 {
@@ -20,10 +23,36 @@ nisctl_cmd()
 
 nisctl_start()
 {
+	echo "${pwdstr}" >> /etc/master.passwd
+	pwd_mkdb -p /etc/master.passwd
+
+	echo "${grpstr}" >> /etc/group
+
+	if ! nisctl_cmd /etc/rc.d/nisdomain start
+	then
+		nisctl_cmd /etc/rc.d/ix-passwd start
+		return 1
+	fi
+
+	if ! nisctl_cmd /etc/rc.d/ypbind start
+	then
+		nisctl_cmd /etc/rc.d/ix-passwd start
+		return 1
+	fi
+
+	srv_set directoryservice 1
+	return 0
 }
 
 nisctl_stop()
 {
+	nisctl_cmd /etc/rc.d/ypbind stop
+	nisctl_cmd /etc/rc.d/nisdomain stop
+
+	nisctl_cmd /etc/rc.d/ix-passwd start
+
+	srv_set directoryservice 0
+	. /etc/rc.conf.local
 }
 
 nisctl_status()
