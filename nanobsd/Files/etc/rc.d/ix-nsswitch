@@ -46,8 +46,7 @@ generate_nsswitch_conf()
 		nis="1"
 	fi
 
-
-	if [ "${ldap}" = "1" -o "${ad}" = "1" -o "nis" = "1" ]
+	if [ "${ldap}" = "1" -o "${ad}" = "1" -o "${nis}" = "1" ]
 	then
 		p="files"
 		g="files"
