@@ -725,7 +725,6 @@ class AutoImportChoiceForm(forms.Form):
         _notifier = notifier()
         for dev, name in notifier().geli_get_all_providers():
             _notifier.geli_detach(dev)
-        log.error("detached")
 
 
 class AutoImportDecryptForm(forms.Form):
