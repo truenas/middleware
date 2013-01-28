@@ -268,18 +268,18 @@ class notifier:
         else:
             return False
 
-    def init(self, what, objectid = None, *args, **kwargs):
+    def init(self, what, objectid=None, *args, **kwargs):
         """ Dedicated command to create "what" designated by an optional objectid.
 
         The helper will use method self._init_[what]() to create the object"""
-        if objectid == None:
+        if objectid is None:
             self._simplecmd("init", what)
         else:
             f = getattr(self, '_init_' + what)
             f(objectid, *args, **kwargs)
 
-    def destroy(self, what, objectid = None):
-        if objectid == None:
+    def destroy(self, what, objectid=None):
+        if objectid is None:
             raise ValueError("Calling destroy without id")
         else:
             f = getattr(self, '_destroy_' + what)
@@ -1327,7 +1327,7 @@ class notifier:
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
         vdevs = []
         gnop_devs = []
-        if force4khack == None:
+        if force4khack is None:
             test4k = False
             want4khack = False
         else:
@@ -1570,7 +1570,7 @@ class notifier:
                             break
             except IOError:
                 retval = 'Try again later.'
-        if retval == None:
+        if retval is None:
             if recursive:
                 zfsproc = self.__pipeopen("zfs destroy -r %s" % (path))
             else:
@@ -3566,7 +3566,7 @@ class notifier:
         self.__twcli = {}
 
     def __geom_confxml(self):
-        if self.__confxml == None:
+        if self.__confxml is None:
             self.__confxml = libxml2.parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
 
