@@ -55,7 +55,7 @@ from freenasUI.freeadmin.forms import (
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.notifier import notifier, GELI_KEYPATH
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
@@ -666,6 +666,8 @@ class AutoImportWizard(SessionWizardView):
                 vol_encrypt=encrypt)
             volume.save()
             if encrypt > 0:
+                if not os.path.exists(GELI_KEYPATH):
+                    os.mkdir(GELI_KEYPATH)
                 with open(volume.get_geli_keyfile(), 'wb') as f:
                     f.write(key.read())
             self.volume = volume
