@@ -81,10 +81,7 @@ generate_crontab()
 					echo -n "${rsync_remotehost}::${rsync_remotemodule} '${rsync_path}'"
 				fi
 			else
-				if [ ${rsync_remoteport} -ne 22 ]; then
-					echo -n "--port=${rsync_remoteport} "
-				fi
-				echo -n "-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes' "
+				echo -n "-e 'ssh -p ${rsync_remoteport} -o BatchMode=yes -o StrictHostKeyChecking=yes' "
 				if [ "${rsync_direction}" = "push" ]; then
 					echo -n "'${rsync_path}' ${rsync_remotehost}:'${rsync_remotepath}'"
 				else
