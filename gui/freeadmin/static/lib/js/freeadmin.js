@@ -787,6 +787,11 @@ require([
         var add_mode = false;
         if(add && add.get("value") != '') {
             add_mode = true;
+            domStyle.set("addVolLabel", "display", "none");
+            domStyle.set("extendVolLabel", "display", "");
+        } else {
+            domStyle.set("addVolLabel", "display", "");
+            domStyle.set("extendVolLabel", "display", "none");
         }
         var disks = registry.byId("wizarddisks");
         var d = disks.get('value');

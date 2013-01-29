@@ -194,8 +194,13 @@
     <script type="dojo/method">
         wizardcheckings(true, true);
     </script>
+    <div id="addVolLabel">
     {% trans "Add Volume" %}<br />
     <b style="color: red">{% trans "Existing data will be cleared" %}</b>
+    </div>
+    <div id="extendVolLabel" style="display: none;">
+    {% trans "Exnted Volume" %}
+    </div>
         </button>
         <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
             {% trans "Cancel" %}
