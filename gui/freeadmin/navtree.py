@@ -197,189 +197,20 @@ class NavTree(object):
         self._generated = True
         self._navs.clear()
         tree_roots.clear()
-        _childs_of = []
+        childs_of = []
         for app in settings.INSTALLED_APPS:
 
             # If the app is listed at settings.BLACKLIST_NAV, skip it!
             if app in getattr(settings, 'BLACKLIST_NAV', []):
                 continue
 
-            # Thats the root node for the app tree menu
-            nav = TreeRoot(app.split(".")[-1])
-
-            modnav = self._get_module(app, 'nav')
-            if hasattr(modnav, 'BLACKLIST'):
-                BLACKLIST = modnav.BLACKLIST
-            else:
-                BLACKLIST = []
-
-            if hasattr(modnav, 'ICON'):
-                nav.icon = modnav.ICON
-
-            if hasattr(modnav, 'NAME'):
-                nav.name = modnav.NAME
-            else:
-                nav.name = self.titlecase(app)
-
-            if modnav:
-                modname = "%s.nav" % app
-                for c in dir(modnav):
-                    navc = getattr(modnav, c)
-                    try:
-                        subclass = issubclass(navc, TreeNode)
-                    except TypeError:
-                        continue
-                    if navc.__module__ == modname and subclass:
-                        obj = navc()
-
-                        if obj.skip is True:
-                            continue
-                        if not obj.append_to:
-                            self.register_option(obj, nav, replace=True)
-                        else:
-                            self._navs[obj.append_to + '.' + obj.gname] = obj
-
-                tree_roots.register(nav)  # We register it to the tree root
-                if hasattr(modnav, 'init'):
-                    modnav.init(tree_roots, nav)
-
-            else:
-                log.debug("App %s has no nav.py module, skipping", app)
-                continue
-
-            modmodels = self._get_module(app, 'models')
-            if modmodels:
-
-                modname = '%s.models' % app
-                for c in dir(modmodels):
-
-                    model = getattr(modmodels, c)
-                    try:
-                        if (
-                            issubclass(model, models.Model)
-                            and
-                            model._meta.app_label == app
-                        ):
-                            continue
-                    except TypeError, e:
-                        continue
-
-                    if c in BLACKLIST:
-                        log.debug(
-                            "Model %s from app %s blacklisted, skipping",
-                            c,
-                            app,
-                        )
-                        continue
-
-                    if not (
-                        model.__module__ in (
-                            modname,
-                            'freenasUI.' + modname,
-                        )
-                        and
-                        model in self._modelforms
-                    ):
-                        log.debug("Model %s does not have a ModelForm", model)
-                        continue
-
-                    if model._admin.deletable is False:
-                        navopt = TreeNode(
-                            str(model._meta.object_name),
-                            name=model._meta.verbose_name,
-                            model=c, app_name=app, type='dialog')
-                        try:
-                            navopt.kwargs = {
-                                'oid': model.objects.order_by("-id")[0].id,
-                            }
-                            navopt.view = 'freeadmin_%s_%s_edit' % (
-                                model._meta.app_label,
-                                model._meta.module_name,
-                            )
-                        except:
-                            navopt.view = 'freeadmin_%s_%s_add' % (
-                                model._meta.app_label,
-                                model._meta.module_name,
-                            )
-
-                    else:
-                        navopt = TreeNode(str(model._meta.object_name))
-                        navopt.name = model._meta.verbose_name_plural
-                        navopt.model = c
-                        navopt.app_name = app
-                        navopt.order_child = False
-
-                    for key in model._admin.nav_extra.keys():
-                        navopt.__setattr__(
-                            key,
-                            model._admin.nav_extra.get(key))
-                    if model._admin.icon_model is not None:
-                        navopt.icon = model._admin.icon_model
-
-                    if model._admin.menu_child_of is not None:
-                        _childs_of.append((navopt, model))
-                        reg = True
-                    else:
-                        reg = self.register_option(navopt, nav)
-
-                    if reg and not navopt.type:
-
-                        qs = model.objects.filter(
-                            **model._admin.object_filters).order_by('-id')
-                        if qs.count() > 0:
-                            if model._admin.object_num > 0:
-                                qs = qs[:model._admin.object_num]
-                            for e in qs:
-                                subopt = TreeNode('Edit')
-                                subopt.type = 'editobject'
-                                subopt.view = 'freeadmin_%s_%s_edit' % (
-                                    model._meta.app_label,
-                                    model._meta.module_name,
-                                )
-                                if model._admin.icon_object is not None:
-                                    subopt.icon = model._admin.icon_object
-                                subopt.model = c
-                                subopt.app_name = app
-                                subopt.kwargs = {
-                                    'oid': e.id,
-                                }
-                                try:
-                                    subopt.name = unicode(e)
-                                except:
-                                    subopt.name = 'Object'
-                                navopt.append_child(subopt)
-
-                        # Node to add an instance of model
-                        subopt = TreeNode('Add')
-                        subopt.name = _(u'Add %s') % model._meta.verbose_name
-                        subopt.view = 'freeadmin_%s_%s_add' % (
-                            model._meta.app_label,
-                            model._meta.module_name,
-                        )
-                        subopt.order = 500
-                        subopt.type = 'dialog'
-                        if model._admin.icon_add is not None:
-                            subopt.icon = model._admin.icon_add
-                        subopt.model = c
-                        subopt.app_name = app
-                        self.register_option(subopt, navopt)
-
-                        # Node to view all instances of model
-                        subopt = TreeNode('View')
-                        subopt.name = _(u'View %s') % (
-                            model._meta.verbose_name_plural,
-                        )
-                        subopt.view = u'freeadmin_%s_%s_datagrid' % (
-                            model._meta.app_label,
-                            model._meta.module_name,
-                        )
-                        if model._admin.icon_view is not None:
-                            subopt.icon = model._admin.icon_view
-                        subopt.model = c
-                        subopt.app_name = app
-                        subopt.order = 501
-                        subopt.type = 'viewmodel'
-                        self.register_option(subopt, navopt)
+            try:
+                self._generate_app(app, request, tree_roots, childs_of)
+            except Exception, e:
+                log.error(
+                    "Failed to generate navtree for app %s: %s",
+                    app,
+                    e)
 
         nav = TreeRoot(
             'display',
@@ -412,7 +243,7 @@ class NavTree(object):
             view='system_shutdown_dialog')
         tree_roots.register(nav)
 
-        for opt, model in _childs_of:
+        for opt, model in childs_of:
             for nav in tree_roots:
                 exists = nav.find_gname(model._admin.menu_child_of)
                 if exists is not False:
@@ -427,6 +258,185 @@ class NavTree(object):
         self.replace_navs(tree_roots)
         if notifier()._started_plugins_jail():
             self._get_plugins_nodes(request)
+
+    def _generate_app(self, app, request, tree_roots, childs_of):
+
+        # Thats the root node for the app tree menu
+        nav = TreeRoot(app.split(".")[-1])
+
+        modnav = self._get_module(app, 'nav')
+        if hasattr(modnav, 'BLACKLIST'):
+            BLACKLIST = modnav.BLACKLIST
+        else:
+            BLACKLIST = []
+
+        if hasattr(modnav, 'ICON'):
+            nav.icon = modnav.ICON
+
+        if hasattr(modnav, 'NAME'):
+            nav.name = modnav.NAME
+        else:
+            nav.name = self.titlecase(app)
+
+        if modnav:
+            modname = "%s.nav" % app
+            for c in dir(modnav):
+                navc = getattr(modnav, c)
+                try:
+                    subclass = issubclass(navc, TreeNode)
+                except TypeError:
+                    continue
+                if navc.__module__ == modname and subclass:
+                    obj = navc()
+
+                    if obj.skip is True:
+                        continue
+                    if not obj.append_to:
+                        self.register_option(obj, nav, replace=True)
+                    else:
+                        self._navs[obj.append_to + '.' + obj.gname] = obj
+
+            tree_roots.register(nav)  # We register it to the tree root
+            if hasattr(modnav, 'init'):
+                modnav.init(tree_roots, nav)
+
+        else:
+            log.debug("App %s has no nav.py module, skipping", app)
+            return
+
+        modmodels = self._get_module(app, 'models')
+        if modmodels:
+
+            modname = '%s.models' % app
+            for c in dir(modmodels):
+
+                model = getattr(modmodels, c)
+                try:
+                    if (
+                        issubclass(model, models.Model)
+                        and
+                        model._meta.app_label == app
+                    ):
+                        continue
+                except TypeError, e:
+                    continue
+
+                if c in BLACKLIST:
+                    log.debug(
+                        "Model %s from app %s blacklisted, skipping",
+                        c,
+                        app,
+                    )
+                    continue
+
+                if not (
+                    model.__module__ in (
+                        modname,
+                        'freenasUI.' + modname,
+                    )
+                    and
+                    model in self._modelforms
+                ):
+                    log.debug("Model %s does not have a ModelForm", model)
+                    continue
+
+                if model._admin.deletable is False:
+                    navopt = TreeNode(
+                        str(model._meta.object_name),
+                        name=model._meta.verbose_name,
+                        model=c, app_name=app, type='dialog')
+                    try:
+                        navopt.kwargs = {
+                            'oid': model.objects.order_by("-id")[0].id,
+                        }
+                        navopt.view = 'freeadmin_%s_%s_edit' % (
+                            model._meta.app_label,
+                            model._meta.module_name,
+                        )
+                    except:
+                        navopt.view = 'freeadmin_%s_%s_add' % (
+                            model._meta.app_label,
+                            model._meta.module_name,
+                        )
+
+                else:
+                    navopt = TreeNode(str(model._meta.object_name))
+                    navopt.name = model._meta.verbose_name_plural
+                    navopt.model = c
+                    navopt.app_name = app
+                    navopt.order_child = False
+
+                for key in model._admin.nav_extra.keys():
+                    navopt.__setattr__(
+                        key,
+                        model._admin.nav_extra.get(key))
+                if model._admin.icon_model is not None:
+                    navopt.icon = model._admin.icon_model
+
+                if model._admin.menu_child_of is not None:
+                    childs_of.append((navopt, model))
+                    reg = True
+                else:
+                    reg = self.register_option(navopt, nav)
+
+                if reg and not navopt.type:
+
+                    qs = model.objects.filter(
+                        **model._admin.object_filters).order_by('-id')
+                    if qs.count() > 0:
+                        if model._admin.object_num > 0:
+                            qs = qs[:model._admin.object_num]
+                        for e in qs:
+                            subopt = TreeNode('Edit')
+                            subopt.type = 'editobject'
+                            subopt.view = 'freeadmin_%s_%s_edit' % (
+                                model._meta.app_label,
+                                model._meta.module_name,
+                            )
+                            if model._admin.icon_object is not None:
+                                subopt.icon = model._admin.icon_object
+                            subopt.model = c
+                            subopt.app_name = app
+                            subopt.kwargs = {
+                                'oid': e.id,
+                            }
+                            try:
+                                subopt.name = unicode(e)
+                            except:
+                                subopt.name = 'Object'
+                            navopt.append_child(subopt)
+
+                    # Node to add an instance of model
+                    subopt = TreeNode('Add')
+                    subopt.name = _(u'Add %s') % model._meta.verbose_name
+                    subopt.view = 'freeadmin_%s_%s_add' % (
+                        model._meta.app_label,
+                        model._meta.module_name,
+                    )
+                    subopt.order = 500
+                    subopt.type = 'dialog'
+                    if model._admin.icon_add is not None:
+                        subopt.icon = model._admin.icon_add
+                    subopt.model = c
+                    subopt.app_name = app
+                    self.register_option(subopt, navopt)
+
+                    # Node to view all instances of model
+                    subopt = TreeNode('View')
+                    subopt.name = _(u'View %s') % (
+                        model._meta.verbose_name_plural,
+                    )
+                    subopt.view = u'freeadmin_%s_%s_datagrid' % (
+                        model._meta.app_label,
+                        model._meta.module_name,
+                    )
+                    if model._admin.icon_view is not None:
+                        subopt.icon = model._admin.icon_view
+                    subopt.model = c
+                    subopt.app_name = app
+                    subopt.order = 501
+                    subopt.type = 'viewmodel'
+                    self.register_option(subopt, navopt)
 
     def _plugin_fetch(self, args):
         plugin, host, request = args
