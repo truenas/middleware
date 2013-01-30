@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-BETA2
+Release Notes for FreeNAS 8.3.1-BETA3
 
 *** IMPORTANT ***
 
@@ -144,6 +144,55 @@ bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
 is used.  The current system chooses the interface with the default
 route.
+
+The plugin jail currently doesn't work properly if the external interface is
+a vlan pseudo-device.
+
+Changes since 8.3.1-BETA2:
+
+Enhancements
+========================
+
+1. Add additional AD fields to allow finer grained control of the AD
+   integration via the GUI.
+
+2. Update dojo to version 1.8.3
+
+3. Update the transmission plugin to version 2.76
+
+4. Sort snapshots by bytes used instead of using a string comparison.
+
+5. Add the isci driver for intel C60 SAS HBAs.
+
+6. Add ZFS ARC stats to top(1)
+
+Bugfixes
+========================
+
+1. Improve detection of the default interface, which improves connectivity
+   to the plugin jail.
+
+2. Change the example iqn of iSCSI targets to actually be a legal iqn.
+
+3. Disallow a locked volume to be used for uploading PBI or firmware images.
+
+4. Restart services after an encrypted volume is unlocked.
+
+5. Fix the suffix for G and T when setting ZFS quotas or reservations.
+
+6. Fix logic in volume detach for encrypted volumes.
+
+7. Allow a volume to be decrypted with the recovery key.
+
+8. Fix several issues related to the recovery key and either rekeying a volume
+   or setting a passphrase on the volume key.
+
+9. Do not unlabel a disk being used as an iSCSI device extent.
+
+10. Use the correct ssh port with rsync if one is specified in the GUI.
+
+11. Fix start time and end time of snapshot replication.
+
 
 Changes since 8.3.1-BETA1:
 
