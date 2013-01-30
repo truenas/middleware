@@ -38,8 +38,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from eventlet.green import urllib2
 
-from freenasUI.freeadmin.tree import (tree_roots, TreeRoot, TreeNode,
-    unserialize_tree)
+from freenasUI.freeadmin.tree import (
+    tree_roots, TreeRoot, TreeNode, unserialize_tree
+)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
@@ -86,8 +87,12 @@ class NavTree(object):
 
     def _get_module(self, where, name):
         try:
-            mod = __import__('%s.%s' % (where, name), globals(), locals(),
-                [name], -1)
+            mod = __import__(
+                '%s.%s' % (where, name),
+                globals(),
+                locals(),
+                [name],
+                -1)
             return mod
         except ImportError:
             return None
@@ -134,10 +139,10 @@ class NavTree(object):
                     break
 
     def titlecase(self, s):
-        return re.sub(r"[A-Za-z]+('[A-Za-z]+)?",
-                      lambda mo: mo.group(0)[0].upper() +
-                                 mo.group(0)[1:],
-                    s)
+        return re.sub(
+            r"[A-Za-z]+('[A-Za-z]+)?",
+            lambda mo: mo.group(0)[0].upper() + mo.group(0)[1:],
+            s)
 
     def prepare_modelforms(self):
         """
@@ -166,8 +171,8 @@ class NavTree(object):
                             else:
                                 tmp = _models[form._meta.model]
                                 _models[form._meta.model] = {
-                                        tmp.__name__: tmp,
-                                        form.__name__: form,
+                                    tmp.__name__: tmp,
+                                    form.__name__: form,
                                 }
                         else:
                             _models[form._meta.model] = form
@@ -250,43 +255,52 @@ class NavTree(object):
 
                     model = getattr(modmodels, c)
                     try:
-                        if issubclass(model, models.Model) and \
-                            model._meta.app_label == app:
+                        if (
+                            issubclass(model, models.Model)
+                            and
+                            model._meta.app_label == app
+                        ):
                             continue
                     except TypeError, e:
                         continue
 
                     if c in BLACKLIST:
-                        log.debug("Model %s from app %s blacklisted, skipping",
+                        log.debug(
+                            "Model %s from app %s blacklisted, skipping",
                             c,
                             app,
-                            )
+                        )
                         continue
 
-                    if not(model.__module__ in (modname,
-                                'freenasUI.' + modname) \
-                            and model in self._modelforms
-                          ):
+                    if not (
+                        model.__module__ in (
+                            modname,
+                            'freenasUI.' + modname,
+                        )
+                        and
+                        model in self._modelforms
+                    ):
                         log.debug("Model %s does not have a ModelForm", model)
                         continue
 
                     if model._admin.deletable is False:
-                        navopt = TreeNode(str(model._meta.object_name),
+                        navopt = TreeNode(
+                            str(model._meta.object_name),
                             name=model._meta.verbose_name,
                             model=c, app_name=app, type='dialog')
                         try:
                             navopt.kwargs = {
                                 'oid': model.objects.order_by("-id")[0].id,
-                                }
+                            }
                             navopt.view = 'freeadmin_%s_%s_edit' % (
                                 model._meta.app_label,
                                 model._meta.module_name,
-                                )
+                            )
                         except:
                             navopt.view = 'freeadmin_%s_%s_add' % (
                                 model._meta.app_label,
                                 model._meta.module_name,
-                                )
+                            )
 
                     else:
                         navopt = TreeNode(str(model._meta.object_name))
@@ -296,7 +310,8 @@ class NavTree(object):
                         navopt.order_child = False
 
                     for key in model._admin.nav_extra.keys():
-                        navopt.__setattr__(key,
+                        navopt.__setattr__(
+                            key,
                             model._admin.nav_extra.get(key))
                     if model._admin.icon_model is not None:
                         navopt.icon = model._admin.icon_model
@@ -320,14 +335,14 @@ class NavTree(object):
                                 subopt.view = 'freeadmin_%s_%s_edit' % (
                                     model._meta.app_label,
                                     model._meta.module_name,
-                                    )
+                                )
                                 if model._admin.icon_object is not None:
                                     subopt.icon = model._admin.icon_object
                                 subopt.model = c
                                 subopt.app_name = app
                                 subopt.kwargs = {
                                     'oid': e.id,
-                                    }
+                                }
                                 try:
                                     subopt.name = unicode(e)
                                 except:
@@ -338,9 +353,9 @@ class NavTree(object):
                         subopt = TreeNode('Add')
                         subopt.name = _(u'Add %s') % model._meta.verbose_name
                         subopt.view = 'freeadmin_%s_%s_add' % (
-                                model._meta.app_label,
-                                model._meta.module_name,
-                                )
+                            model._meta.app_label,
+                            model._meta.module_name,
+                        )
                         subopt.order = 500
                         subopt.type = 'dialog'
                         if model._admin.icon_add is not None:
@@ -353,11 +368,11 @@ class NavTree(object):
                         subopt = TreeNode('View')
                         subopt.name = _(u'View %s') % (
                             model._meta.verbose_name_plural,
-                            )
+                        )
                         subopt.view = u'freeadmin_%s_%s_datagrid' % (
                             model._meta.app_label,
                             model._meta.module_name,
-                            )
+                        )
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
                         subopt.model = c
@@ -366,19 +381,22 @@ class NavTree(object):
                         subopt.type = 'viewmodel'
                         self.register_option(subopt, navopt)
 
-        nav = TreeRoot('display',
+        nav = TreeRoot(
+            'display',
             name=_('Display System Processes'),
             action='displayprocs',
             icon='TopIcon')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shell',
+        nav = TreeRoot(
+            'shell',
             name=_('Shell'),
             icon='ShellIcon',
             action='shell')
         tree_roots.register(nav)
 
-        nav = TreeRoot('reboot',
+        nav = TreeRoot(
+            'reboot',
             name=_('Reboot'),
             action='reboot',
             icon='RebootIcon',
@@ -386,7 +404,8 @@ class NavTree(object):
             view='system_reboot_dialog')
         tree_roots.register(nav)
 
-        nav = TreeRoot('shutdown',
+        nav = TreeRoot(
+            'shutdown',
             name=_('Shutdown'),
             icon='ShutdownIcon',
             type='scary_dialog',
@@ -400,7 +419,8 @@ class NavTree(object):
                     exists.append_child(opt)
                     break
             if exists is False:
-                log.debug("Could not find %s to attach %r",
+                log.debug(
+                    "Could not find %s to attach %r",
                     model._admin.menu_child_of,
                     opt)
 
@@ -414,10 +434,11 @@ class NavTree(object):
         url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
         try:
             opener = urllib2.build_opener()
-            opener.addheaders = [('Cookie', 'sessionid=%s' % (
-                request.COOKIES.get("sessionid", ''),
+            opener.addheaders = [(
+                'Cookie', 'sessionid=%s' % (
+                    request.COOKIES.get("sessionid", ''),
                 )
-                )]
+            )]
             response = opener.open(url, None, 4)
             data = response.read()
             if not data:
@@ -426,13 +447,14 @@ class NavTree(object):
             log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
                 'url': url,
                 'error': e,
-                })
+            })
         return plugin, url, data
 
     def _get_plugins_nodes(self, request):
 
         host = get_base_url(request)
-        args = map(lambda y: (y, host, request),
+        args = map(
+            lambda y: (y, host, request),
             Plugins.objects.filter(plugin_enabled=True))
 
         pool = eventlet.GreenPool(20)
@@ -450,7 +472,8 @@ class NavTree(object):
 
                     found = False
                     if node.append_to:
-                        log.debug("Plugin %s requested to be appended to %s",
+                        log.debug(
+                            "Plugin %s requested to be appended to %s",
                             plugin.plugin_name, node.append_to)
                         places = node.append_to.split('.')
                         places.reverse()
@@ -461,7 +484,8 @@ class NavTree(object):
                                 found = True
                                 break
                     else:
-                        log.debug("Plugin %s didn't request to be appended "
+                        log.debug(
+                            "Plugin %s didn't request to be appended "
                             "anywhere specific",
                             plugin.plugin_name)
 
@@ -470,12 +494,14 @@ class NavTree(object):
                         tree_roots.register(node)
 
             except Exception, e:
-                log.warn(_("An error occurred while unserializing from "
+                log.warn(_(
+                    "An error occurred while unserializing from "
                     "%(url)s: %(error)s") % {'url': url, 'error': e})
-                log.debug(_("Error unserializing %(url)s (%(error)s), data "
+                log.debug(_(
+                    "Error unserializing %(url)s (%(error)s), data "
                     "retrieved:") % {
-                    'url': url,
-                    'error': e,
+                        'url': url,
+                        'error': e,
                     })
                 for line in data.splitlines():
                     log.debug(line)
@@ -501,9 +527,10 @@ class NavTree(object):
                 try:
                     url = option.get_absolute_url()
                 except NoReverseMatch, e:
-                    log.warn(_("Could not reverse url, skipping node %s: %s") % (
-                        option,
-                        e,
+                    log.warn(
+                        _("Could not reverse url, skipping node %s: %s") % (
+                            option,
+                            e,
                         ))
                     continue
                 try:
