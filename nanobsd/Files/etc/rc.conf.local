@@ -283,6 +283,31 @@ _staticroute_config()
 	fi
 }
 
+_nis_config() {
+	local IFS=\|
+	local nisdomain nisservers nissecure nismanycast
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nis_domain, nis_servers, nis_secure_mode, nis_manycast FROM services_nis;" | \
+	while read -r nisdomain nisservers nissecure nismanycast; do
+		local nisflags="-S ${nisdomain}"
+
+		echo "nisdomainname=\"${nisdomain}\""
+		echo "nis_client_enable=\"YES\""
+
+		if [ -n "${nisservers}" ]; then
+			nisflags="${nisflags},${nisservers}"
+		fi
+		if [ "${nissecure}" = "1" ]; then
+			nisflags="${nisflags} -s"
+		fi
+		if [ "${nismanycast}" = "1" ]; then
+			nisflags="${nisflags} -m"
+		fi
+
+		echo "nis_client_flags=\"${nisflags}\""
+	done
+}
+
 _nut_config() {
 	local IFS=\|
 	local boolvalue
@@ -347,18 +372,7 @@ _gen_conf()
 	fi
 
 	if dirsrv_enabled nis; then
-		nisdomain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nis_domain FROM services_nis")"
-
-		local fqdn="$(hostname)"
-		local domain="$(domainname)"
-		if [ -n "${domain}" ]
-		then
-			fqdn="${hostname}.${domain}"
-		fi
-
-		echo "nisdomainname=\"${nisdomain}\""
-		echo "nis_client_enable=\"YES\""
-		echo "nis_client_flags=\"-S ${nisdomain},${fqdn}\""
+		_nis_config
 	fi
 
 	local _avahi_srv_enable
