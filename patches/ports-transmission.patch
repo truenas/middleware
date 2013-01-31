@@ -126,6 +126,24 @@ index 49e1c57..2354401 100644
   
 -     if( s > -1 )
 +     if (s > -1)
+diff --git net-p2p/transmission-cli/files/patch-third-party_libutp_utp.cpp net-p2p/transmission-cli/files/patch-third-party_libutp_utp.cpp
+deleted file mode 100644
+index 8f4b486..0000000
+--- net-p2p/transmission-cli/files/patch-third-party_libutp_utp.cpp
++++ /dev/null
+@@ -1,12 +0,0 @@
+---- third-party/libutp/utp.cpp.orig	2011-04-29 21:45:38.000000000 -0500
+-+++ third-party/libutp/utp.cpp	2011-04-29 21:47:05.000000000 -0500
+-@@ -10,6 +10,9 @@
+- #include <stdlib.h>
+- #include <errno.h>
+- #include <limits.h> // for UINT_MAX
+-+#include <sys/types.h>
+-+#include <sys/socket.h>
+-+#include <netinet/in.h>
+- 
+- #ifdef WIN32
+- #include "win32_inet_ntop.h"
 diff --git net-p2p/transmission-cli/files/transmission.in net-p2p/transmission-cli/files/transmission.in
 index 7c1ed32..bb2e014 100644
 --- net-p2p/transmission-cli/files/transmission.in
