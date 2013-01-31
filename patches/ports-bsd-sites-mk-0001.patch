@@ -1,10 +1,10 @@
-Index: ports/Mk/bsd.sites.mk
+Index: Mk/bsd.sites.mk
 ===================================================================
 RCS file: /home/ncvs/ports/Mk/bsd.sites.mk,v
 retrieving revision 1.574
 diff -u -r1.574 bsd.sites.mk
---- ports/Mk/bsd.sites.mk	29 Jun 2012 01:17:03 -0000	1.574
-+++ ports/Mk/bsd.sites.mk	31 Jan 2013 17:44:09 -0000
+--- Mk/bsd.sites.mk	29 Jun 2012 01:17:03 -0000	1.574
++++ Mk/bsd.sites.mk	31 Jan 2013 17:50:17 -0000
 @@ -1114,15 +1114,10 @@
  
  .if !defined(IGNORE_MASTER_SITE_SAMBA)
