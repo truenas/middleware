@@ -1056,7 +1056,6 @@ AD_init()
 	local gcname=$(AD_get ad_gcname)
 	if [ -z "${gcname}" ]
 	then
-
 		local rd="$(AD_get_root_domain "${domainname}")"
 		gcname="$(AD_get_domain_global_catalog_server "${rd}")"
 		AD_set ad_gcname "${gcname}"
