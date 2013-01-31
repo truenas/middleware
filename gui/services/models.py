@@ -1518,10 +1518,25 @@ class ActiveDirectory(Model):
 
 class NIS(Model):
     nis_domain = models.CharField(
-        max_length=120,
-        verbose_name=_("NIS domain"),
-        help_text=_("NIS domain name")
-    )
+            max_length=120,
+            verbose_name=_("NIS domain"),
+            help_text=_("NIS domain name")
+            )
+    nis_servers = models.CharField(
+            max_length=8192,
+            verbose_name=_("NIS servers"),
+            help_text=_("Comma delimited list of NIS servers")
+            )
+    nis_secure_mode = models.BooleanField(
+            default=False,
+            verbose_name=_("Secure mode"),
+            help_text=_("Cause ypbind to run in secure mode")
+            )
+    nis_manycast = models.BooleanField(
+            default=False,
+            verbose_name=_("Manycast"),
+            help_text=_("Cause ypbind to use 'many-cast' instead of broadcast")
+            )
 
     def __init__(self, *args, **kwargs):
         super(NIS, self).__init__(*args, **kwargs)
