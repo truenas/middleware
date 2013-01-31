@@ -1523,6 +1523,7 @@ class NIS(Model):
             help_text=_("NIS domain name")
             )
     nis_servers = models.CharField(
+            blank=True,
             max_length=8192,
             verbose_name=_("NIS servers"),
             help_text=_("Comma delimited list of NIS servers")
