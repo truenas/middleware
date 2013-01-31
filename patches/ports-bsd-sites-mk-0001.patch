@@ -1,0 +1,27 @@
+Index: ports/Mk/bsd.sites.mk
+===================================================================
+RCS file: /home/ncvs/ports/Mk/bsd.sites.mk,v
+retrieving revision 1.574
+diff -u -r1.574 bsd.sites.mk
+--- ports/Mk/bsd.sites.mk	29 Jun 2012 01:17:03 -0000	1.574
++++ ports/Mk/bsd.sites.mk	31 Jan 2013 17:44:09 -0000
+@@ -1114,15 +1114,10 @@
+ 
+ .if !defined(IGNORE_MASTER_SITE_SAMBA)
+ MASTER_SITE_SAMBA+= \
+-	http://us1.samba.org/samba/ftp/%SUBDIR%/ \
+-	http://us2.samba.org/samba/ftp/%SUBDIR%/ \
+-	http://us4.samba.org/samba/ftp/%SUBDIR%/ \
+-	http://us3.samba.org/samba/ftp/%SUBDIR%/ \
+-	ftp://ca.samba.org/%SUBDIR%/ \
+-	ftp://de.samba.org/samba.org/%SUBDIR%/ \
+-	ftp://ftp.oss.eznetsols.org/samba/%SUBDIR%/ \
+-	ftp://ftp.easynet.be/samba/%SUBDIR%/ \
+-	ftp://ftp.linuxforum.net/ftp.samba.org/%SUBDIR%/ \
++	http://ftp.samba.org/pub/%SUBDIR%/ \
++	ftp://ca.samba.org/pub/%SUBDIR%/ \
++	ftp://de.samba.org/pub/%SUBDIR%/ \
++	ftp://ftp.easynet.be/%SUBDIR%/ \
+ 	${MASTER_SITE_RINGSERVER:S,%SUBDIR%,net/samba/&,}
+ .endif
+ 
