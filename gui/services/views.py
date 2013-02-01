@@ -193,7 +193,6 @@ def iscsi(request):
         'gconfid': gconfid,
         })
 
-
 def servicesToggleView(request, formname):
     form2namemap = {
         'cifs_toggle': 'cifs',
@@ -235,16 +234,12 @@ def servicesToggleView(request, formname):
 
         n = notifier()
         if svc_entry.srv_enable == 1:
-            method = getattr(n, "_start_%s" % directoryservice.svc)
-
             svc_entry.save()
-            started = method() 
+            started = notifier().start(directoryservice.svc)
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
-            method = getattr(n, "_stop_%s" % directoryservice.svc)
-
-            started = method()
+            started = notifier().stop(directoryservice.svc)
             svc_entry.save()
             if not models.services.objects.get(srv_service='cifs').srv_enable:
                 disabled_svcs.append('cifs')
