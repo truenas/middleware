@@ -2755,6 +2755,11 @@ class notifier:
             raise MiddlewareError("You cannot install %s jail pbi in an %s "
                 "architecture" % (arch, platform.machine()))
 
+        pjail, jail = self._get_plugins_jail()
+        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
+
+        self.__umount_filesystems_within(jailpath)
+
         pbifile = "%s/%s" % (plugins_path, pbi)
         self.__system("/bin/mv %s %s" % (pbipath, pbifile))
 
