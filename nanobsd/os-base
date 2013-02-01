@@ -722,7 +722,7 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
-		${XZ} --keep --verbose -9 < "$firmware_img" > \
+		${XZ_BIN} --keep --verbose -9 < "$firmware_img" > \
 		    "$gui_upgrade_bname.xz"
 
 		tar -cpvf - \
@@ -734,7 +734,7 @@ last_orders() {
 				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/} \
-		    | ${XZ} -9 -cz > "$gui_upgrade_bname.txz"
+		    | ${XZ_BIN} -9 -cz > "$gui_upgrade_bname.txz"
 
 		) > "${gui_image_log}" 2>&1
 
@@ -751,7 +751,7 @@ last_orders() {
 	# added because pc-sysinstall doesn't support raw images
 	# (-.-).
 	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
-	time ${XZ} --verbose -9 -f "$full_image"
+	time ${XZ_BIN} --verbose -9 -f "$full_image"
 
 	) > "${full_image_log}" 2>&1
 

@@ -153,18 +153,18 @@ unset PACKAGESITE
 # if it's installed.
 # Since the only valid values are pxz and xz setting env XZ=whatever
 # will cause the build to fall back to using xz.
-# TODO: If XZ is set to something other than pxz or xz and pxz is installed
+# TODO: If XZ_BIN is set to something other than pxz or xz and pxz is installed
 # we may as well use pxz here.
 
 if [ $(which pxz) ]; then 
-    if [ x"${XZ}" == "xpxz" -o -z ${XZ} ]; then 
-        XZ=pxz 
+    if [ x"${XZ_BIN}" == "xpxz" -o -z ${XZ} ]; then 
+        XZ_BIN=pxz 
     else 
-        XZ=xz 
+        XZ_BIN=xz 
     fi 
 else
-    XZ=xz
+    XZ_BIN=xz
 fi
-export XZ
+export XZ_BIN
 
 # vim: syntax=sh
