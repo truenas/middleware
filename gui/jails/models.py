@@ -46,7 +46,7 @@ class JailsQuerySet(models.query.QuerySet):
     def __wlist(self):
         if self.__wlist_cache is None:
             wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
-            self.__wcount_cache = len(self.__wlist)
+            self.__wcount_cache = len(wlist)
 
             tl = []
             wlist = self.__order_by(wlist, "id")
