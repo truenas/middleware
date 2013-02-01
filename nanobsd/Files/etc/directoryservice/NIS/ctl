@@ -60,7 +60,7 @@ nisctl_stop()
 
 	nisctl_cmd /etc/rc.d/ypbind stop
 	nisctl_cmd /etc/rc.d/nisdomain stop
-	nisctl_cmd  /etc/rc.d/ix-nsswitch stop
+	nisctl_cmd /etc/rc.d/ix-nsswitch stop
 
 	grep -v '^nis' /etc/host.conf > "${tmphostconf}"
 	mv "${tmphostconf}" /etc/host.conf
@@ -75,7 +75,7 @@ nisctl_stop()
 
 nisctl_status()
 {
-	nisctl_cmd ${service} ix-nis status
+	nisctl_cmd ypwhich
 }
 
 name="nisctl"
