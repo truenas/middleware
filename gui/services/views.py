@@ -231,6 +231,12 @@ def servicesToggleView(request, formname):
     directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
     if changing_service == "directoryservice": 
         directoryservice = DirectoryService.objects.order_by("-id")[0]
+        for ds in directory_services:
+            if ds != directoryservice.svc:
+                method = getattr(notifier(), "_started_%s" % ds)  
+                started = method()
+                if started:
+                    notifier().stop(ds)
 
         n = notifier()
         if svc_entry.srv_enable == 1:
