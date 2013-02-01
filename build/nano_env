@@ -156,8 +156,12 @@ unset PACKAGESITE
 # TODO: If XZ is set to something other than pxz or xz and pxz is installed
 # we may as well use pxz here.
 
-if [ $(which pxz) -a -z ${XZ} -o "${XZ}" = "pxz" ]; then
-    XZ=pxz
+if [ $(which pxz) ]; then 
+    if [ x"${XZ}" == "xpxz" -a -z ${XZ} ]; then 
+        XZ=pxz 
+    else 
+        XZ=xz 
+    fi 
 else
     XZ=xz
 fi
