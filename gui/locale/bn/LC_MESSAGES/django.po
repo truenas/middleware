@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2013-01-22 09:15+0200\n"
+"PO-Revision-Date: 2013-02-01 07:25+0200\n"
 "Last-Translator: asis <asis.ind@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bn\n"
@@ -257,7 +257,7 @@ msgstr ""
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "উভয় দিকে ছোট হাতের অক্ষরের নাম"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
