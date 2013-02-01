@@ -156,7 +156,7 @@ unset PACKAGESITE
 # we may as well use pxz here.
 
 if [ $(which pxz) ]; then 
-    if [ x"${XZ}" == "xpxz" -a -z ${XZ} ]; then 
+    if [ x"${XZ}" == "xpxz" -o -z ${XZ} ]; then 
         XZ=pxz 
     else 
         XZ=xz 
