@@ -148,4 +148,7 @@ unset MASTER_SITE_OVERRIDE
 unset PACKAGEROOT
 unset PACKAGESITE
 
+: ${XZ=xz}
+export XZ
+
 # vim: syntax=sh

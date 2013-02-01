@@ -772,11 +772,10 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
-		xz --keep --verbose -9 < "$firmware_img" > \
+		${XZ} --keep --verbose -9 < "$firmware_img" > \
 		    "$gui_upgrade_bname.xz"
 
-		tar --options=xz:compression-level=9 -cJpvf \
-		    "$gui_upgrade_bname.txz" \
+		tar -cpvf - \
 			-C "$NANO_WORLDDIR" \
 				etc/avatar.conf \
 			-C "$AVATAR_ROOT/nanobsd/Installer" \
@@ -784,7 +783,8 @@ last_orders() {
 			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \
 			-C "$NANO_DISKIMGDIR" \
-				${firmware_img##*/}
+				${firmware_img##*/} \
+		    | ${XZ} -9 -cz > "$gui_upgrade_bname.txz"
 
 		) > "${gui_image_log}" 2>&1
 
@@ -801,7 +801,7 @@ last_orders() {
 	# added because pc-sysinstall doesn't support raw images
 	# (-.-).
 	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
-	xz --verbose -9 -f "$full_image"
+	time ${XZ} --verbose -9 -f "$full_image"
 
 	) > "${full_image_log}" 2>&1
 
