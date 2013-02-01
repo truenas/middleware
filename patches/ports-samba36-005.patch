@@ -72,34 +72,6 @@ index 8d59153..d62b2e6 100644
   
   /* maximum number of SA_SIGINFO signals to hold in the queue.
     NB. This *MUST* be a power of 2, in order for the ring buffer
-diff --git net/samba36/files/patch-source3__auth__user_util.c net/samba36/files/patch-source3__auth__user_util.c
-new file mode 100644
-index 0000000..430fea3
---- /dev/null
-+++ net/samba36/files/patch-source3__auth__user_util.c
-@@ -0,0 +1,22 @@
-+--- ./source3/auth/user_util.c.orig	2012-09-14 08:12:09.000000000 +0000
-++++ ./source3/auth/user_util.c	2012-10-18 20:58:57.065810414 +0000
-+@@ -425,12 +425,14 @@
-+ 	x_fclose(f);
-+ 
-+ 	/*
-+-	 * Setup the last_from and last_to as an optimization so
-+-	 * that we don't scan the file again for the same user.
-++	 * If mapping failed setup the last_from and last_to as
-++	 * an optimization so that we don't scan the file again
-++	 * for the same user.
-+ 	 */
-+-
-+-	set_last_from_to(user_in, user_in);
-+-	store_map_in_gencache(ctx, user_in, user_in);
-++	if(!mapped_user) {
-++		set_last_from_to(user_in, user_in);
-++		store_map_in_gencache(ctx, user_in, user_in);
-++	}
-+ 
-+ 	return mapped_user;
-+ }
 diff --git net/samba36/files/patch-source3__configure.in net/samba36/files/patch-source3__configure.in
 index d2433da..30a50f9 100644
 --- net/samba36/files/patch-source3__configure.in
