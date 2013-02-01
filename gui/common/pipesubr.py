@@ -29,6 +29,8 @@ from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 from os import system as __system
 import logging
+import ctypes
+import signal
 
 logging.NOTICE = 60
 logging.addLevelName(logging.NOTICE, "NOTICE")
@@ -36,12 +38,30 @@ logging.ALERT = 70
 logging.addLevelName(logging.ALERT, "ALERT")
 log = logging.getLogger('common.pipesubr')
 
+SIG_BLOCK = 1
+SIG_UNBLOCK = 2
+SIG_SETMASK = 3
 
-def pipeopen(command, important=True, logger=log):
+def unblock_sigchld():
+    libc = ctypes.cdll.LoadLibrary("libc.so.7")
+    mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+    pmask = ctypes.pointer(mask)
+    libc.sigprocmask(SIG_BLOCK, 0, pmask)
+    libc.sigdelset(pmask, signal.SIGCHLD)
+    libc.sigprocmask(SIG_SETMASK, pmask, None)
+
+
+def pipeopen(command, important=True, logger=log, allowfork=False):
     logger.log(logging.NOTICE if important else logging.DEBUG,
         "Popen()ing: " + command)
     args = shlex_split(str(command))
-    return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+
+    preexec_fn = None
+    if allowfork:
+        preexec_fn = unblock_sigchld
+
+    return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        close_fds=True, preexec_fn=preexec_fn)
 
 
 def system(command, important=True, logger=log):
