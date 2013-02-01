@@ -166,6 +166,8 @@ Enhancements
 
 6. Add ZFS ARC stats to top(1)
 
+7. Update samba to 3.6.12
+
 Bugfixes
 ========================
 
