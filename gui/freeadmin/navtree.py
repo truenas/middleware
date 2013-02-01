@@ -212,7 +212,7 @@ class NavTree(object):
                     "Failed to generate navtree for app %s: %s",
                     app,
                     e)
-                log_traceback()
+                log_traceback(log=log)
 
         nav = TreeRoot(
             'display',
