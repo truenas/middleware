@@ -90,6 +90,7 @@ options		VFS_AIO
 options		VIMAGE
 device		carp
 device		snp
+options		NETGRAPH
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel

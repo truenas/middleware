@@ -153,6 +153,7 @@ WITHOUT_SHAREDOCS=true
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
+add_port emulators/virtualbox-ose-kmod
 add_port archivers/lzo2
 add_port security/openvpn
 add_port converters/libiconv
