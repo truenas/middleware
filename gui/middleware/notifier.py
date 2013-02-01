@@ -480,19 +480,20 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd restart")
 
     def _started_nis(self):
-        res = False
-        if self.__system_nolog("/etc/directoryservice/NIS/ctl status") == 0:
-            res = True
-        return res
+        res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
+        return (True if res == 0 else False)
 
     def _start_nis(self):
-        self.__system("/etc/directoryservice/NIS/ctl start")
+        res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
+        return (True if res == 0 else False)
 
     def _restart_nis(self):
-        self.__system("/etc/directoryservice/NIS/ctl restart")
+        res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
+        return (True if res == 0 else False)
 
     def _stop_nis(self):
-        self.__system("/etc/directoryservice/NIS/ctl stop")
+        res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
+        return (True if res == 0 else False)
 
     def _start_ldap(self):
         from freenasUI.services import models
@@ -605,19 +606,20 @@ class notifier:
         self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
-        if self.__system("/etc/rc.d/ix-nt4 status") == 0:
-            return True
-        else:
-            return False
+        res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
+        return (True if res == 0 else False)
 
     def _start_nt4(self):
-        self.__system("/etc/directoryservice/NT4/ctl start")
+        res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
+        return (True if res == 0 else False)
 
     def _restart_nt4(self):
-        self.__system("/etc/directoryservice/NT4/ctl restart")
+        res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
+        return (True if res == 0 else False)
 
     def _stop_nt4(self):
-        self.__system("/etc/directoryservice/NT4/ctl stop")
+        res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
+        return (True if res == 0 else False)
 
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory, FLAGS_DBINIT)
@@ -641,13 +643,16 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        self.__system("/etc/directoryservice/ActiveDirectory/ctl start")
+        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+        return (True if res == 0 else False)
 
     def _stop_activedirectory(self):
-        self.__system("/etc/directoryservice/ActiveDirectory/ctl stop")
+        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+        return (True if res == 0 else False)
 
     def _restart_activedirectory(self):
-        self.__system("/etc/directoryservice/ActiveDirectory/ctl restart")
+        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+        return (True if res == 0 else False)
 
     def _restart_syslogd(self):
         self.__system("/usr/sbin/service ix-syslogd quietstart")
