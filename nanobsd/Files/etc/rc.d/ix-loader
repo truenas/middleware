@@ -47,6 +47,33 @@ update_persistent_file()
 	return $rc
 }
 
+loader_virtio()
+{
+	local virtio_enable="0"
+
+	virtio_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_virtio
+
+	FROM
+		system_advanced
+
+	ORDER BY
+		-id
+	LIMIT 1")
+
+	if [ "${virtio_enable}" != "0" ]; then
+		cat << __EOF__
+virtio_load="YES"
+virtio_pci_load="YES"
+virtio_blk_load="YES"
+if_vtnet_load="YES"
+virtio_balloon_load="YES"
+__EOF__
+	fi
+}
+
+
 loader_serial()
 {
 	local serial_enable=0
@@ -140,7 +167,7 @@ generate_boot_loader_conf_local()
 	local settings
 	local tmp
 
-	settings="serial saver user"
+	settings="serial saver user virtio"
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
