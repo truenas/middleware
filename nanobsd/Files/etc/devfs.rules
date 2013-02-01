@@ -2,5 +2,4 @@
 add path 'usbctl' mode 660 group uucp
 add path 'usb/*' mode 660 group uucp
 add path 'ttyU*' mode 660 group uucp
-add path vboxdrv0 unhide
-add path vboxnetctl unhide
+

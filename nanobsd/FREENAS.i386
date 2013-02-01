@@ -90,7 +90,6 @@ options		VFS_AIO
 options		VIMAGE
 device		carp
 device		snp
-options		NETGRAPH
 
 options		KVA_PAGES=512
 
