@@ -166,6 +166,7 @@ name="nt4ctl"
 start_cmd='nt4ctl_start'
 status_cmd='nt4ctl_status'
 stop_cmd='nt4ctl_stop'
+extra_commands='status'
 
 load_rc_config $name
 run_rc_command "$1"

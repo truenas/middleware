@@ -178,6 +178,7 @@ name="adctl"
 start_cmd='adctl_start'
 status_cmd='adctl_status'
 stop_cmd='adctl_stop'
+extra_commands='status'
 
 load_rc_config $name
 run_rc_command "$1"
