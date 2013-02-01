@@ -148,7 +148,18 @@ unset MASTER_SITE_OVERRIDE
 unset PACKAGEROOT
 unset PACKAGESITE
 
-: ${XZ=xz}
+# Can be overriden with env when calling, but use pxz by default
+# if it's installed.
+# Since the only valid values are pxz and xz setting env XZ=whatever
+# will cause the build to fall back to using xz.
+# TODO: If XZ is set to something other than pxz or xz and pxz is installed
+# we may as well use pxz here.
+
+if [ $(which pxz) -a -z ${XZ} -o "${XZ}" = "pxz" ]; then
+    XZ=pxz
+else
+    XZ=xz
+fi
 export XZ
 
 # vim: syntax=sh
