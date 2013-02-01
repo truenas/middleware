@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from eventlet.green import urllib2
 
+from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
@@ -211,6 +212,7 @@ class NavTree(object):
                     "Failed to generate navtree for app %s: %s",
                     app,
                     e)
+                log_traceback()
 
         nav = TreeRoot(
             'display',
