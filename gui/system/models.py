@@ -217,6 +217,9 @@ class Advanced(Model):
     adv_autotune = models.BooleanField(
             verbose_name=_("Enable autotune"),
             default=False)
+    adv_virtio = models.BooleanField(
+            verbose_name=_("Enable Virtio"),
+            default=False)
     adv_anonstats = models.BooleanField(
             verbose_name=_("Enable report anonymous statistics"),
             default=True,
