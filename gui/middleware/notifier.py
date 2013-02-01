@@ -481,7 +481,7 @@ class notifier:
 
     def _started_nis(self):
         res = False
-        if self.__system_nolog("/user/sbin/service ix-nis status") == 0:
+        if self.__system_nolog("/etc/directoryservice/NIS/ctl status") == 0:
             res = True
         return res
 
