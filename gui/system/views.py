@@ -29,6 +29,7 @@ import logging
 import os
 import shutil
 import socket
+import string
 import subprocess
 import time
 import urllib
@@ -48,6 +49,7 @@ from django.views.decorators.cache import never_cache
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
@@ -503,9 +505,9 @@ def debug(request):
     if request.method == "POST":
         form = forms.DebugForm(request.POST)
         if form.is_valid():
-            opts = form.get_options()
-            p1 = subprocess.Popen(["/usr/local/bin/freenas-debug"] + opts,
-                stdout=subprocess.PIPE)
+            opts = ["/usr/local/bin/freenas-debug"]
+            opts += form.get_options()
+            p1 = pipeopen(string.join(opts, ' '), allowfork=True)
             debug = p1.communicate()[0]
             with open(DEBUG_TEMP, 'w') as f:
                 f.write(debug)
