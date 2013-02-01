@@ -158,7 +158,10 @@ __NT4_tc()
 	local lf="$(mktemp /tmp/tmp.XXXXXX)"
 
 	lockf -k -s -t 0 ${lf} ${args} &
-	if [ "$?" != "0" ]
+	ret=$?
+	lpid=$!
+
+	if [ "${ret}" != "0" ]
 	then
 		return ${ret}
 	fi
@@ -190,6 +193,9 @@ __NT4_tc()
 	then
 		kill -9 ${pid} >/dev/null 2>&1
 	fi
+
+	wait ${lpid}
+	ret=$?
 
 	rm -f ${lf}
 	return ${ret}
@@ -289,10 +295,11 @@ NT4_status_domain()
 	: ${adminname:="$(NT4_get nt4_adminname)"}
 	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
-	NT4_log "NT4_status_domain: net rpc status -U ${adminname}"
+	NT4_log "NT4_status_domain: net rpc info -U ${adminname}"
 
-	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc testjoin -U "${adminname}%${adminpw}"
+	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc info -U "${adminname}%${adminpw}"
 	res=$?
+echo RES = $res
 
 	local ok="Not okay"
 	if [ "${res}" = "0" ]

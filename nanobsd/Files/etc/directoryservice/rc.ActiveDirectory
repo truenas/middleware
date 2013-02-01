@@ -139,7 +139,10 @@ __AD_tc()
 	local lf="$(mktemp /tmp/tmp.XXXXXX)"
 
 	lockf -k -s -t 0 ${lf} ${args} &
-	if [ "$?" != "0" ]
+	ret=$?
+	lpid=$!
+
+	if [ "${ret}" != "0" ]
 	then
 		return ${ret}
 	fi
@@ -171,6 +174,9 @@ __AD_tc()
 	then
 		kill -9 ${pid} >/dev/null 2>&1
 	fi
+
+	wait ${lpid}
+	ret=$?
 
 	rm -f ${lf}
 	return ${ret}
