@@ -65,13 +65,7 @@ generate_ldapconf()
 		) as ldap_options
 
 	FROM
-		services_services,
 		services_ldap
-
-	WHERE (
-		srv_service = 'ldap' and
-		srv_enable = 1
-	)
 
 	ORDER BY
 		-services_ldap.id
