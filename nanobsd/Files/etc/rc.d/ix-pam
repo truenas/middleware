@@ -103,7 +103,7 @@ pam_ldap_file()
 	local temp="/tmp/.tmp.${service}"
 	local file="${PAM_DIR}/${service}"
 
-	awk -v '{
+	awk '{
 		if (/^#.*@@LDAP@@/) {
 			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
 			print $0;
