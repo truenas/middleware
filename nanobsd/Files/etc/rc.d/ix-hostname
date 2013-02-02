@@ -6,7 +6,7 @@
 # PROVIDE: ix-hostname
 # BEFORE: hostname
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 generate_hostname()
 {
@@ -21,6 +21,13 @@ generate_hostname()
         echo -e "127.0.0.1\t${gc_hostname} ${gc_hostname}.${gc_domain}" >> /etc/hosts
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hosts FROM network_globalconfiguration WHERE id = ${id}" >> /etc/hosts
     done
+
+    cp /conf/base/etc/host.conf /etc/host.conf
+    if dirsrv_enabled nis
+    then
+        echo nis >> /etc/host.conf
+        echo "${NIS_HOSTSSTR}" >> /etc/hosts
+    fi
 }
 
 name="ix-hostname"

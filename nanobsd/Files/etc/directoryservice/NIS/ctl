@@ -3,10 +3,6 @@
 . /etc/rc.freenas
 
 service=/usr/sbin/service
-pwdstr='+:::::::::'
-grpstr='+:*::'
-hostsstr='+::'
-
 
 nisctl_cmd()
 {
@@ -24,29 +20,29 @@ nisctl_cmd()
 
 nisctl_start()
 {
-	echo "${pwdstr}" >> /etc/master.passwd
-	pwd_mkdb -p /etc/master.passwd
+	srv_set directoryservice 0
 
-	echo "${grpstr}" >> /etc/group
+	nisctl_cmd ${service} ix-passwd start
+        nisctl_cmd ${service} ix-hostname start
 
-	echo nis >> /etc/host.conf
-	echo "${hostsstr}" >> /etc/hosts
-
-	if ! nisctl_cmd /etc/rc.d/ix-nsswitch start
+	if ! nisctl_cmd ${service} ix-nsswitch start
 	then
-		nisctl_cmd /etc/rc.d/ix-passwd start
+		nisctl_cmd ${service} ix-passwd start
+        	nisctl_cmd ${service} ix-hostname start
 		return 1
 	fi
 
-	if ! nisctl_cmd /etc/rc.d/nisdomain start
+	if ! nisctl_cmd ${service} nisdomain start
 	then
-		nisctl_cmd /etc/rc.d/ix-passwd start
+		nisctl_cmd ${service} ix-passwd start
+        	nisctl_cmd ${service} ix-hostname start
 		return 1
 	fi
 
-	if ! nisctl_cmd /etc/rc.d/ypbind start
+	if ! nisctl_cmd ${service} ypbind start
 	then
-		nisctl_cmd /etc/rc.d/ix-passwd start
+		nisctl_cmd ${service} ix-passwd start
+        	nisctl_cmd ${service} ix-hostname start
 		return 1
 	fi
 
@@ -56,18 +52,11 @@ nisctl_start()
 
 nisctl_stop()
 {
-	tmphostconf="$(mktemp /tmp/.XXXXXX)"
-
-	nisctl_cmd /etc/rc.d/ypbind stop
-	nisctl_cmd /etc/rc.d/nisdomain stop
-	nisctl_cmd /etc/rc.d/ix-nsswitch stop
-
-	grep -v '^nis' /etc/host.conf > "${tmphostconf}"
-	mv "${tmphostconf}" /etc/host.conf
-	chmod 644 /etc/host.conf
-
-	nisctl_cmd /etc/rc.d/ix-hostname start
-	nisctl_cmd /etc/rc.d/ix-passwd start
+	nisctl_cmd ${service} ypbind stop
+	nisctl_cmd ${service} nisdomain stop
+	nisctl_cmd ${service} ix-nsswitch stop
+	nisctl_cmd ${service} ix-hostname start
+	nisctl_cmd ${service} ix-passwd start
 
 	srv_set directoryservice 0
 	. /etc/rc.conf.local

@@ -65,7 +65,6 @@ nt4_start()
 		NT4_log "nt4_start: trying to join domain"
 		if ! NT4_join_domain
 		then
-			/etc/directoryservice/NT4/ctl stop
 			return 1
 		fi
 
@@ -82,7 +81,7 @@ nt4_status()
 	NT4_init
 
 	NT4_log "NT4_status: checking status"
-	NT4_status_domain >/dev/null
+	NT4_status_domain #>/dev/null
 }
 
 nt4_stop()

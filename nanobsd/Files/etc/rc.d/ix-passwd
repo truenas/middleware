@@ -7,7 +7,7 @@
 # REQUIRE: mountcritlocal
 # BEFORE: ix-zfs
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 generate_master.passwd()
 {
@@ -32,6 +32,11 @@ generate_master.passwd()
 		fi
 		echo "${bsdusr_username}:${passwd}:${bsdusr_uid}:${bsdgrp_gid}::0:0:${bsdusr_full_name}:${bsdusr_home}:${bsdusr_shell}"
 	done > /etc/master.passwd
+
+	if dirsrv_enabled nis
+	then
+		echo "${NIS_PWDSTR}" >> /etc/master.passwd
+	fi
 }
 
 group_membership()
@@ -67,6 +72,11 @@ generate_group()
 		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
 		echo
 	done > /etc/group
+
+	if dirsrv_enabled nis
+	then
+		echo "${NIS_GRPSTR}" >> /etc/group
+	fi
 }
 
 generate_all()
