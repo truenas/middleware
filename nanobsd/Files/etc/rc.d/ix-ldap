@@ -261,24 +261,45 @@ ldap_status()
 	return ${ret}
 }
 
-generate_ldap_config()
+ldap_start()
 {
-	if dirsrv_enabled ldap; then
-		generate_ldapconf &&
-		setup_homedirs &&
-		create_cache_filesystem
+	if dirsrv_enabled ldap
+	then
+		if ! generate_ldapconf
+		then
+			return 1
+		fi
+
+		if ! setup_homedirs
+		then
+			return 2
+		fi
+
+		if ! create_cache_filesystem
+		then
+			return 4
+		fi
 	fi
 }
 
-expire_cache()
+ldap_stop()
 {
+	rm -f "${NSS_LDAP_SECRET}"
+	rm -f /usr/local/etc/ldap.secret
+
+	rm -f "${NSS_LDAP_CONF}"
+	rm -f /usr/local/etc/ldap.conf
+
+	cp /usr/local/etc/nss_ldap.conf.sample /usr/local/etc/nss_ldap.conf 2>/dev/null
+
         /usr/local/www/freenasUI/tools/cachetool.py expire
 }
 
+
 name="ix-ldap"
-start_cmd='generate_ldap_config'
+start_cmd='ldap_start'
 status_cmd='ldap_status'
-stop_cmd='expire_cache'
+stop_cmd='ldap_stop'
             
 load_rc_config $name
 run_rc_command "$1"
