@@ -10,11 +10,10 @@
 
 populate_cache()
 {
-	if dirsrv_enabled ldap
-	then
-		/usr/local/www/freenasUI/tools/cachetool.py fill
-
-	elif dirsrv_enabled activedirectory
+	if dirsrv_enabled activedirectory ||
+		dirsrv_enabled nt4 ||
+		dirsrv_enabled nis ||
+		dirsrv_enabled ldap
 	then
 		/usr/local/www/freenasUI/tools/cachetool.py fill
 	fi
