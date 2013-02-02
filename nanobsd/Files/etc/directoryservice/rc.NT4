@@ -319,10 +319,11 @@ NT4_leave_domain()
 	: ${adminname:="$(NT4_get nt4_adminname)"}
 	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
-	NT4_log "NT4_leave_domain: net rpc leave -U ${adminname}"
+	#NT4_log "NT4_leave_domain: net rpc leave -U ${adminname}"
 
-	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc leave -U "${adminname}%${adminpw}"
-	res=$?
+	#__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc leave -U "${adminname}%${adminpw}"
+	#res=$?
+	res=0
 
 	local ok="Failed"
 	if [ "${res}" = "0" ]

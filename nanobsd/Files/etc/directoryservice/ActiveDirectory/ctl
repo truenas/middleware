@@ -127,9 +127,9 @@ adctl_stop()
 		cifs_stop
 	fi
 
-	adctl_cmd ${service} ix-kerberos quietstart
-	adctl_cmd ${service} ix-nsswitch quietstart
-	adctl_cmd ${service} ix-pam quietstart
+	adctl_cmd ${service} ix-kerberos quietstop
+	adctl_cmd ${service} ix-nsswitch quietstop
+	adctl_cmd ${service} ix-pam quietstop
 	adctl_cmd ${service} ix-kinit forcestop
 	adctl_cmd ${service} ix-activedirectory forcestop
 	adctl_cmd "${service} ix-cache quietstop &"

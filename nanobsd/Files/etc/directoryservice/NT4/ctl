@@ -117,8 +117,8 @@ nt4ctl_stop()
 		cifs_stop
 	fi
 
-	nt4ctl_cmd ${service} ix-nsswitch quietstart
-	nt4ctl_cmd ${service} ix-pam quietstart
+	nt4ctl_cmd ${service} ix-nsswitch quietstop
+	nt4ctl_cmd ${service} ix-pam quietstop
 	nt4ctl_cmd ${service} ix-nt4 forcestop
 	nt4ctl_cmd "${service} ix-cache quietstop &"
 

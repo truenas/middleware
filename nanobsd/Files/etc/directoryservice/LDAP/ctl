@@ -120,8 +120,8 @@ ldapctl_stop()
 	fi
 
 	ldapctl_cmd ${service} ix-ldap forcestop
-	ldapctl_cmd ${service} ix-nsswitch quietstart
-	ldapctl_cmd ${service} ix-pam quietstart
+	ldapctl_cmd ${service} ix-nsswitch quietstop
+	ldapctl_cmd ${service} ix-pam quietstop
 	ldapctl_cmd "${service} ix-cache quietstop &"
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
