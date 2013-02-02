@@ -66,8 +66,9 @@ FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 1024)
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
-FLAGS_DBINIT = 0x00010000
-
+FLAGS_DBINIT		= 0x00010000
+FLAGS_AD_ENABLED	= 0x00000001
+FLAGS_LDAP_ENABLED	= 0x00000002
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
@@ -1651,14 +1652,18 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
 
 class FreeNAS_Directory_Users(object):
-    def __new__(cls, ldap_enabled=False, ad_enabled=False, **kwargs):
+    def __new__(cls, **kwargs):
         log.debug("FreeNAS_Directory_Users.__new__: enter")
 
+        dflags = 0
+        if kwargs.has_key('dflags'):
+            dflags = kwargs['dflags']
+
         obj = None
-        if ldap_enabled:
+        if dflags & FLAGS_LDAP_ENABLED:
             obj = FreeNAS_LDAP_Users(**kwargs)
 
-        elif ad_enabled:
+        elif dflags & FLAGS_AD_ENABLED:
             obj = FreeNAS_ActiveDirectory_Users(**kwargs)
 
         log.debug("FreeNAS_Directory_Users.__new__: leave")
@@ -1906,14 +1911,18 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
 
 class FreeNAS_Directory_Groups(object):
-    def __new__(cls, ldap_enabled=False, ad_enabled=False, **kwargs):
+    def __new__(cls, **kwargs):
         log.debug("FreeNAS_Directory_Groups.__new__: enter")
 
+        dflags = 0
+        if kwargs.has_key('dflags'):
+            dflags = kwargs['dflags']
+
         obj = None
-        if ldap_enabled:
+        if dflags & FLAGS_LDAP_ENABLED:
             obj = FreeNAS_LDAP_Groups(**kwargs)
 
-        elif ad_enabled:
+        elif dflags & FLAGS_AD_ENABLED:
             obj = FreeNAS_ActiveDirectory_Groups(**kwargs)
 
         log.debug("FreeNAS_Directory_Groups.__new__: leave")
@@ -2074,11 +2083,15 @@ class FreeNAS_Directory_Group(object):
         log.debug("FreeNAS_Directory_Group.__new__: enter")
         log.debug("FreeNAS_Directory_Group.__new__: group = %s", group)
 
+        dflags = 0
+        if kwargs.has_key('dflags'):
+            dflags = kwargs['dflags']
+
         obj = None
-        if kwargs.get("ldap_enabled"):
+        if dflags & FLAGS_LDAP_ENABLED:
             obj = FreeNAS_LDAP_Group(group, **kwargs)
 
-        elif kwargs.get("ad_enabled"):
+        elif dflags & FLAGS_AD_ENABLED:
             obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
 
         if obj and obj._gr is None:
@@ -2244,11 +2257,15 @@ class FreeNAS_Directory_User(object):
         log.debug("FreeNAS_Directory_User.__new__: enter")
         log.debug("FreeNAS_Directory_User.__new__: user = %s", user)
 
+        dflags = 0
+        if kwargs.has_key('dflags'):
+            dflags = kwargs['dflags']
+
         obj = None
-        if kwargs.get("ldap_enabled"):
+        if dflags & FLAGS_LDAP_ENABLED:
             obj = FreeNAS_LDAP_User(user, **kwargs)
 
-        elif kwargs.get("ad_enabled"):
+        elif dflags & FLAGS_AD_ENABLED:
             obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
 
         if obj and obj._pw is None:
