@@ -203,7 +203,7 @@ class FreeNAS_Group(object):
         log.debug("FreeNAS_Group.__new__: group = %s", group)
 
         dflags = _get_dflags()
-        if kwargs.has_key('dflags') and kwargs['dflags']:
+        if kwargs.has_key('dflags'):
             dflags = kwargs['dflags']
 
         obj = None
@@ -339,7 +339,7 @@ class FreeNAS_User(object):
         log.debug("FreeNAS_User.__new__: user = %s", user)
 
         dflags = _get_dflags()
-        if kwargs.has_key('dflags') and kwargs['dflags']:
+        if kwargs.has_key('dflags'):
             dflags = kwargs['dflags']
 
         obj = None
@@ -402,9 +402,7 @@ class FreeNAS_Users(object):
         self.__bsd_users = []
         objects = bsdUsers_objects()
         for obj in objects:
-            print obj
-            self.__bsd_users.append(
-                FreeNAS_User(obj['bsdusr_username'], dflags=0))
+            self.__bsd_users.append(FreeNAS_User(obj['bsdusr_username'], dflags=0))
 
         log.debug("FreeNAS_Users.__init__: leave")
 
