@@ -463,15 +463,15 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
                 except:
                     continue
 
-                self.__groups[n].append(gr)
+                self.__groups[d].append(gr)
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
-                    self.__gcache[n][sAMAccountName.upper()] = gr
+                    self.__gcache[d][sAMAccountName.upper()] = gr
 
                 gr = None
 
             if self.flags & FLAGS_CACHE_WRITE_GROUP:
-                self.__loaded('g', n, True)
-                self.__loaded('dg', n, True)
+                self.__loaded('g', d, True)
+                self.__loaded('dg', d, True)
 
         self._restore()
         log.debug("FreeNAS_NT4_Groups.__get_groups: leave")
