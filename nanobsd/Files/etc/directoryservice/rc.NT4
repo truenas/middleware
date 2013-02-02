@@ -299,7 +299,6 @@ NT4_status_domain()
 
 	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc info -U "${adminname}%${adminpw}"
 	res=$?
-echo RES = $res
 
 	local ok="Not okay"
 	if [ "${res}" = "0" ]
