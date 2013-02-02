@@ -14,46 +14,23 @@
 
 generate_nsswitch_conf()
 {
-	local ldap=0
-	local ad=0
-	local nis=0
-	local ad_unix=0
+	local ad="${1}"
+	local ldap="${2}"
+	local nis="${3}"
 	local hosts="files dns"
 	local conf="${PATH_NS_CONF}"
 
 	local p="compat"
 	local g="compat"
 
-	if dirsrv_enabled activedirectory || dirsrv_enabled nt4
-	then
-		ad="1"
-		ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-			SELECT
-				ad_unix_extensions
-			FROM
-				services_activedirectory
-			ORDER BY
-				-id
-			LIMIT 1
-		")
-
-	elif dirsrv_enabled ldap
-	then
-		ldap="1"
-
-	elif dirsrv_enabled nis
-	then
-		nis="1"
-	fi
-
-	if [ "${ldap}" = "1" -o "${ad}" = "1" -o "${nis}" = "1" ]
+	if [ "${ldap}" = "1" -o -n "${ad}" -a "${ad}" != "0" -o "${nis}" = "1" ]
 	then
 		p="files"
 		g="files"
 
-		if [ "${ad}" = "1" ]
+		if [ "${ad}" != "0" ]
 		then
-			if [ "${ad_unix}" = "1" ]
+			if [ "${ad}" = "2" ]
 			then
 				p="${p} ldap"
 				g="${g} ldap"
@@ -76,7 +53,7 @@ generate_nsswitch_conf()
 		fi
 	fi
 	
-	cat >"${conf}" <<-EOF
+	cat <<-__EOF__>"${conf}"
 	group: ${g}
 	hosts: ${hosts}
 	networks: files
@@ -85,14 +62,61 @@ generate_nsswitch_conf()
 	services: files
 	protocols: files
 	rpc: files
-EOF
+__EOF__
 	
 	return 0
 }
 
+nsswitch_conf_start()
+{
+	local ad=0
+	local ldap=0
+	local nis=0
+
+	if dirsrv_enabled activedirectory
+	then
+		ad="1"
+		if ! dirsrv_enabled nt4
+		then
+			ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+				SELECT
+					ad_unix_extensions
+				FROM
+					services_activedirectory
+				ORDER BY
+					-id
+				LIMIT 1
+			")
+
+			if [ "${ad_unix}" = "1" ]; then
+				ad="2"
+			fi
+		fi
+
+	elif dirsrv_enabled nt4
+	then
+		ad="1"
+
+	elif dirsrv_enabled ldap
+	then
+		ldap="1"
+
+	elif dirsrv_enabled nis
+	then
+		nis="1"
+	fi
+
+	generate_nsswitch_conf "${ad}" "${ldap}" "${nis}"
+}
+
+nsswitch_conf_stop()
+{
+	generate_nsswitch_conf
+}
+
 name="ix-nsswitch"
-start_cmd='generate_nsswitch_conf'
-stop_cmd=':'
-        
+start_cmd='nsswitch_conf_start'
+stop_cmd='nsswitch_conf_stop'
+
 load_rc_config $name
 run_rc_command "$1"
