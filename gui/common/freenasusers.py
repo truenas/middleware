@@ -30,14 +30,39 @@ import pwd
 import sqlite3
 import types
 
-from freenasUI.common.system import (ldap_enabled,
-    activedirectory_enabled, nt4_enabled, FREENAS_DATABASE)
-from freenasUI.common.freenasldap import (FreeNAS_Directory_Group,
-    FreeNAS_Directory_User, FreeNAS_Directory_Groups, FreeNAS_Directory_Users)
+from freenasUI.common.system import (activedirectory_enabled,
+    ldap_enabled, nis_enabled, nt4_enabled, FREENAS_DATABASE)
+from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory_Group,
+    FreeNAS_ActiveDirectory_User, FreeNAS_ActiveDirectory_Groups,
+    FreeNAS_ActiveDirectory_Users, FreeNAS_LDAP_Group, FreeNAS_LDAP_User,
+    FreeNAS_LDAP_Groups, FreeNAS_LDAP_Users)
 from freenasUI.common.freenasnt4 import (FreeNAS_NT4_Group,
     FreeNAS_NT4_User, FreeNAS_NT4_Groups, FreeNAS_NT4_Users)
+from freenasUI.common.freenasnis import (FreeNAS_NIS_Group,
+    FreeNAS_NIS_User, FreeNAS_NIS_Groups, FreeNAS_NIS_Users)
 
 log = logging.getLogger("common.freenasusers")
+
+
+U_AD_ENABLED	= 0x00000001
+U_NT4_ENABLED	= 0x00000002
+U_NIS_ENABLED	= 0x00000004
+U_LDAP_ENABLED	= 0x00000008
+
+
+def _get_dflags():
+    dflags = 0
+
+    if activedirectory_enabled():
+        dflags |= U_AD_ENABLED
+    elif nt4_enabled():
+        dflags |= U_NT4_ENABLED
+    elif nis_enabled():
+        dflags |= U_NIS_ENABLED
+    elif ldap_enabled():
+        dflags |= U_LDAP_ENABLED
+
+    return dflags
 
 
 def bsdUsers_objects(**kwargs):
@@ -176,13 +201,20 @@ class FreeNAS_Group(object):
     def __new__(cls, group, **kwargs):
         log.debug("FreeNAS_Group.__new__: enter")
         log.debug("FreeNAS_Group.__new__: group = %s", group)
+
+        dflags = _get_dflags()
+        if kwargs.has_key('dflags') and kwargs['dflags']:
+            dflags = kwargs['dflags']
+
         obj = None
-
-        if ldap_enabled() or activedirectory_enabled():
-            obj = FreeNAS_Directory_Group(group, **kwargs)
-
-        elif nt4_enabled():
+        if dflags & U_AD_ENABLED:
+            obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+        elif dflags & U_NT4_ENABLED:
             obj = FreeNAS_NT4_Group(group, **kwargs)
+        elif dflags & U_NIS_ENABLED:
+            obj = FreeNAS_NIS_Group(group, **kwargs)
+        elif dflags & U_LDAP_ENABLED:
+            obj = FreeNAS_LDAP_Group(group, **kwargs)
 
         if obj is None:
             obj = FreeNAS_Local_Group(group, **kwargs)
@@ -209,27 +241,24 @@ class FreeNAS_Groups(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
-        _ldap_enabled = ldap_enabled()
-        _ad_enabled = activedirectory_enabled()
-        _nt4_enabled = nt4_enabled()
 
-        if _ldap_enabled or _ad_enabled:
-            try:
-                self.__groups = FreeNAS_Directory_Groups(
-                    ldap_enabled=_ldap_enabled,
-                    ad_enabled=_ad_enabled,
-                    **kwargs)
-            except Exception, e:
-                log.error("FreeNAS Directory Groups could not be retrieved: %s",
-                    str(e))
-                self.__groups = None
+        dir = None
+        dflags = _get_dflags()
+        if dflags & U_AD_ENABLED:
+            dir = FreeNAS_ActiveDirectory_Groups
+        elif dflags & U_NT4_ENABLED:
+            dir = FreeNAS_NT4_Groups
+        elif dflags & U_NIS_ENABLED:
+            dir = FreeNAS_NIS_Groups
+        elif dflags & U_LDAP_ENABLED:
+            dir = FreeNAS_LDAP_Groups
 
-        elif _nt4_enabled:
+        if dir is not None:
             try:
-                self.__groups = FreeNAS_NT4_Groups(**kwargs)
+                self.__groups = dir(**kwargs)
+
             except Exception, e:
-                log.error("FreeNAS NT4 Groups could not be retrieved: %s",
-                    str(e))
+                log.error("Directory Groups could not be retrieved: %s", str(e))
                 self.__groups = None
 
         if self.__groups is None:
@@ -238,10 +267,7 @@ class FreeNAS_Groups(object):
         self.__bsd_groups = []
         objects = bsdGroups_objects()
         for obj in objects:
-            self.__bsd_groups.append(
-                FreeNAS_Group(obj['bsdgrp_group'],
-                    ldap_enabled=_ldap_enabled, ad_enabled=_ad_enabled)
-                )
+            self.__bsd_groups.append(FreeNAS_Group(obj['bsdgrp_group'], dflags=0))
 
         log.debug("FreeNAS_Groups.__init__: leave")
 
@@ -311,13 +337,20 @@ class FreeNAS_User(object):
     def __new__(cls, user, **kwargs):
         log.debug("FreeNAS_User.__new__: enter")
         log.debug("FreeNAS_User.__new__: user = %s", user)
+
+        dflags = _get_dflags()
+        if kwargs.has_key('dflags') and kwargs['dflags']:
+            dflags = kwargs['dflags']
+
         obj = None
-
-        if ldap_enabled() or activedirectory_enabled(): 
-            obj = FreeNAS_Directory_User(user, **kwargs)
-
-        elif nt4_enabled():
+        if dflags & U_AD_ENABLED:
+            obj = FreeNAS_ActiveDirectory_User(group, **kwargs)
+        elif dflags & U_NT4_ENABLED:
             obj = FreeNAS_NT4_User(user, **kwargs)
+        elif dflags & U_NIS_ENABLED:
+            obj = FreeNAS_NIS_User(user, **kwargs)
+        elif dflags & U_LDAP_ENABLED:
+            obj = FreeNAS_LDAP_User(user, **kwargs)
 
         if not obj:
             obj = FreeNAS_Local_User(user, **kwargs)
@@ -344,27 +377,23 @@ class FreeNAS_Users(object):
 
         TODO: Warn the user in the GUI that "something" happenned
         """
-        _ldap_enabled = ldap_enabled()
-        _ad_enabled = activedirectory_enabled()
-        _nt4_enabled = nt4_enabled()
+        dir = None
+        dflags = _get_dflags()
+        if dflags & U_AD_ENABLED:
+            dir = FreeNAS_ActiveDirectory_Users
+        elif dflags & U_NT4_ENABLED:
+            dir = FreeNAS_NT4_Users
+        elif dflags & U_NIS_ENABLED:
+            dir = FreeNAS_NIS_Users
+        elif dflags & U_LDAP_ENABLED:
+            dir = FreeNAS_LDAP_Users
 
-        if _ldap_enabled or _ad_enabled:
+        if dir is not None:
             try:
-                self.__users = FreeNAS_Directory_Users(
-                    ldap_enabled=_ldap_enabled,
-                    ad_enabled=_ad_enabled,
-                    **kwargs)
-            except Exception, e:
-                log.error("FreeNAS Directory Users could not be retrieved: %s",
-                    str(e))
-                self.__users = None
+                self.__users = dir(**kwargs)
 
-        elif _nt4_enabled:
-            try:
-                self.__users = FreeNAS_NT4_Users(**kwargs)
             except Exception, e:
-                log.error("FreeNAS NT4 Users could not be retrieved: %s",
-                    str(e))
+                log.error("Directory Users could not be retrieved: %s", str(e))
                 self.__users = None
 
         if self.__users is None:
@@ -373,10 +402,9 @@ class FreeNAS_Users(object):
         self.__bsd_users = []
         objects = bsdUsers_objects()
         for obj in objects:
+            print obj
             self.__bsd_users.append(
-                FreeNAS_User(obj['bsdusr_username'],
-                    ldap_enabled=_ldap_enabled, ad_enabled=_ad_enabled)
-                )
+                FreeNAS_User(obj['bsdusr_username'], dflags=0))
 
         log.debug("FreeNAS_Users.__init__: leave")
 

@@ -1740,7 +1740,6 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
             log.debug("FreeNAS_LDAP_Groups.__get_groups: LDAP groups not in cache")
             ldap_groups = self.get_groups()
 
-        #groups = []
         for g in ldap_groups:
             CN = str(g[0])
             if self.flags & FLAGS_CACHE_WRITE_GROUP:
