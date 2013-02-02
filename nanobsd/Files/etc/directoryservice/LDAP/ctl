@@ -1,0 +1,174 @@
+#!/bin/sh
+
+. /etc/rc.freenas
+
+cifs_file="/tmp/.cifs_LDAP"
+service=/usr/sbin/service
+python=/usr/local/bin/python
+notifier=/usr/local/www/freenasUI/middleware/notifier.py
+
+ldapctl_cmd()
+{
+	local args="$*"
+
+	if [ -n "${args}" ]
+	then
+		logger -t LDAP "${args}"
+		${args}
+		return $?
+	fi
+
+	return 0
+}
+
+cifs_enabled()
+{
+	srv_enabled cifs && return 0
+	return 1
+}
+
+ldap_enabled()
+{
+	dirsrv_enabled ldap && return 0
+	return 1
+}
+
+cifs_start()
+{
+	ldapctl_cmd ${python} ${notifier} start cifs
+	return $?
+}
+
+cifs_stop()
+{
+	ldapctl_cmd ${python} ${notifier} stop cifs
+	return $?
+}
+
+cifs_restart()
+{
+	ldapctl_cmd ${python} ${notifier} stop cifs
+	ldapctl_cmd ${python} ${notifier} start cifs
+	return $?
+}
+
+ldapctl_start()
+{
+	local cifs_started=0	
+	local ldap_started=0
+
+	if cifs_enabled
+	then
+		cifs_started=1
+		cifs_stop
+	else
+		srv_set cifs 1
+	fi
+
+	if ldap_enabled
+	then
+		ldap_started=1
+	else		
+		srv_set directoryservice 1
+	fi
+
+	echo ${cifs_started} > "${cifs_file}"
+
+
+	if ! ldapctl_cmd ${service} ix-ldap quietstart
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+
+	ldapctl_cmd ${service} ix-nsswitch quietstart
+	ldapctl_cmd ${service} ix-pam quietstart
+	ldapctl_cmd ${service} ix-samba quietstart
+	cifs_start
+
+	if ! ldapctl_cmd ${service} ix-ldap status
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+
+	cifs_restart
+
+	ldapctl_cmd "${service} ix-cache quietstart &"
+
+	return 0
+}
+
+ldapctl_stop()
+{
+	local cifs_started=1
+	local prev_cifs_started=0
+	if [ -s "${cifs_file}" ]
+	then
+		prev_cifs_started="$(cat "${cifs_file}")"
+	fi
+
+	if ! ldap_enabled
+	then
+		return 1
+	fi
+
+	if cifs_enabled
+	then
+		cifs_started=1
+		cifs_stop
+	fi
+
+	ldapctl_cmd ${service} ix-ldap forcestop
+	ldapctl_cmd ${service} ix-nsswitch quietstart
+	ldapctl_cmd ${service} ix-pam quietstart
+	ldapctl_cmd "${service} ix-cache quietstop &"
+
+	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
+	then
+		ldapctl_cmd ${service} samba forcestop
+		srv_set cifs 0
+		srv_set directoryservice 0
+		ldapctl_cmd ${service} ix-samba start
+
+	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
+	then
+		ldapctl_cmd ${service} samba forcestop
+		srv_set cifs 0
+		srv_set directoryservice 0
+		ldapctl_cmd ${service} ix-samba start
+
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
+	then
+		ldapctl_cmd ${service} samba forcestop
+		srv_set directoryservice 0
+		srv_set cifs 1
+		ldapctl_cmd ${service} ix-samba start
+		cifs_start
+
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
+	then
+		ldapctl_cmd ${service} samba forcestop
+		srv_set directoryservice 0
+		srv_set cifs 1
+		ldapctl_cmd ${service} ix-samba start
+		cifs_start
+	fi
+
+	srv_set directoryservice 0
+	return 0
+}
+
+ldapctl_status()
+{
+	ldapctl_cmd ${service} ix-ldap status
+}
+
+name="ldapctl"
+start_cmd='ldapctl_start'
+status_cmd='ldapctl_status'
+stop_cmd='ldapctl_stop'
+extra_commands='status'
+
+load_rc_config $name
+run_rc_command "$1"
