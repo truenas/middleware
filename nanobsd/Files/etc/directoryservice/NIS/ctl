@@ -20,7 +20,7 @@ nisctl_cmd()
 
 nisctl_start()
 {
-	srv_set directoryservice 0
+	srv_set directoryservice 1
 
 	nisctl_cmd ${service} ix-passwd start
         nisctl_cmd ${service} ix-hostname start
@@ -29,6 +29,7 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
+		srv_set directoryservice 0
 		return 1
 	fi
 
@@ -36,6 +37,7 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
+		srv_set directoryservice 0
 		return 1
 	fi
 
@@ -43,10 +45,10 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
+		srv_set directoryservice 0
 		return 1
 	fi
 
-	srv_set directoryservice 1
 	return 0
 }
 
