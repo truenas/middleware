@@ -1,7 +1,6 @@
 #!/bin/sh
 #-
 # Copyright (c) 2013 iXsystems, Inc., All rights reserved.
-#   Written by:	Xin LI
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -382,7 +381,7 @@ AD_locate_forest_global_catalog_servers()
 
 	AD_log "AD_locate_forest_global_catalog_servers: forest=${forest}, site=${site}"
 
-	if [ -z "${domain}" ]
+	if [ -z "${forest}" ]
 	then
 		return 1
 	fi
