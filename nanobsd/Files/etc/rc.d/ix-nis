@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nis
+
+. /etc/rc.freenas
+
+nis_stop()
+{
+        /usr/local/www/freenasUI/tools/cachetool.py expire
+}
+
+
+name="ix-nis"
+start_cmd='nis_start'
+stop_cmd='nis_stop'
+            
+load_rc_config $name
+run_rc_command "$1"
