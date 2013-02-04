@@ -178,11 +178,11 @@ write_key()
 		keyfile[0] = null;
 		keyfile_size = 0;
 	}
-	/-----BEGIN RSA PRIVATE KEY-----/ {
+	/-----BEGIN (R|D)SA PRIVATE KEY-----/ {
 		inkeyfile = 1;
 	}
 
-	/-----END RSA PRIVATE KEY-----/ {
+	/-----END (R|D)SA PRIVATE KEY-----/ {
 		keyfile[keyfile_size++] = $0;
 		inkeyfile = 0;
 	}
