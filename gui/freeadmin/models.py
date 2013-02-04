@@ -121,8 +121,6 @@ class FreeModelBase(ModelBase):
             pass
         elif hasattr(new_class, 'FreeAdmin'):
             site.register(new_class, freeadmin=new_class.FreeAdmin)
-        else:
-            site.register(new_class)
 
         return new_class
 
