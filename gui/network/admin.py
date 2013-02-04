@@ -95,6 +95,8 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
 class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
+    icon_object = u"LAGGIcon"
+    icon_model = u"LAGGIcon"
     resource = LAGGInterfaceMembersResource
 
     def get_datagrid_filters(self, request):

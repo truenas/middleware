@@ -130,18 +130,6 @@ class bsdUsers(Model):
         verbose_name = _("User")
         verbose_name_plural = _("Users")
 
-    class FreeAdmin:
-        create_modelform = "bsdUserCreationForm"
-        edit_modelform = "bsdUserChangeForm"
-
-        object_filters = {'bsdusr_builtin__exact': False}
-        object_num = -1
-
-        icon_object = u"UserIcon"
-        icon_model = u"UsersIcon"
-        icon_add = u"AddUserIcon"
-        icon_view = u"ViewAllUsersIcon"
-
     def __unicode__(self):
         return self.bsdusr_username
 

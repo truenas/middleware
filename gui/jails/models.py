@@ -154,9 +154,6 @@ class Jails(Model):
         verbose_name = _("Jails")
         verbose_name_plural = _("Jails")
 
-    class FreeAdmin:
-        pass
-
 
 class JailsConfiguration(Model):
 

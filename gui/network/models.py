@@ -366,12 +366,6 @@ class LAGGInterface(Model):
         self.lagg_interface.delete()
         notifier().iface_destroy(self.lagg_interface.int_interface)
 
-    class FreeAdmin:
-        icon_object = u"VLANIcon"
-        icon_model = u"VLANIcon"
-        icon_add = u"AddVLANIcon"
-        icon_view = u"ViewAllVLANsIcon"
-
 
 class LAGGInterfaceMembers(Model):
     # Physical interfaces list inside one LAGG group
@@ -406,10 +400,6 @@ class LAGGInterfaceMembers(Model):
         verbose_name = _("Link Aggregation")
         verbose_name_plural = _("Link Aggregations")
         ordering = ["lagg_interfacegroup"]
-
-    class FreeAdmin:
-        icon_object = u"LAGGIcon"
-        icon_model = u"LAGGIcon"
 
 
 class StaticRoute(Model):
