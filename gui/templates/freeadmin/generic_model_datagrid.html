@@ -6,7 +6,7 @@
     <div class="gridAdd left">
       <button data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
-      <script type="dojo/method" event="onClick" args="evt">
+      <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
           editObject('{% trans "Add"|escapejs %}', '{{ add_url }}', [this,]);
       </script>
       </button>
@@ -17,7 +17,7 @@
   </div>
   {% endblock %}
   <div class="gridDiv" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'"></div>
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 40px;" doLayout="false">
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 40px;display: none;" doLayout="false">
 
       <div class="actionsPane" data-dojo-type="dijit.layout.ContentPane" style="background-color: white;" doLayout="false">
         {% block actions_pane %}
@@ -103,7 +103,7 @@ require([
         handleAs: 'json'
     }).then(function(data) {
         actions = data;
-	var funcs = {'on_select': 1, 'on_select_after': 0, 'on_click': 1};
+        var funcs = {'on_select': 1, 'on_select_after': 0, 'on_click': 1};
         for(var key in actions) {
             for(var func in funcs) {
               if(actions[key][func] === undefined && funcs[func] == 1) {
@@ -118,7 +118,7 @@ require([
 
             var n = domConstruct.create("div", null, pane);
             domClass.add(n, ["grid" + key, "left"]);
-	    domStyle.set(n, "display", "none");
+            domStyle.set(n, "display", "none");
 
             var but = new Button({
                 'label': actions[key]['button_name'],
@@ -162,6 +162,8 @@ require([
     });
 
     var selectionCheck = function(evt) {
+        var numselected = 0;
+        for(key in grid.selection) numselected++;
         for(key in actions) {
             var func = actions[key]['on_select'];
             try {
@@ -170,6 +172,16 @@ require([
               console.log(e);
             }
         }
+
+        // Disable actionsPane if there are no selected rows
+        var actpane = query(".actionsPane", cpane.domNode.parentNode)[0];
+        var border = registry.getEnclosingWidget(actpane.parentNode.parentNode);
+        if(numselected > 0) {
+            domStyle.set(actpane.parentNode, "display", "block");
+        } else {
+            domStyle.set(actpane.parentNode, "display", "none");
+        }
+        border.layout();
     };
     grid.on("dgrid-select, dgrid-deselect", function(evt) {
         selectionCheck(evt);
