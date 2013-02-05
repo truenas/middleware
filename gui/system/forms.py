@@ -439,39 +439,36 @@ class SSLForm(ModelForm):
 
     def clean_ssl_certfile(self):
         certfile = self.cleaned_data.get("ssl_certfile")
-        priv = certfile.split('-----BEGIN RSA PRIVATE KEY-----')
-        if len(priv) < 2:
+        reg = re.search(
+            r'(-----BEGIN ([DR]SA) PRIVATE KEY-----.*?'
+            r'-----END \2 PRIVATE KEY-----)',
+            certfile,
+            re.M|re.S)
+        if not reg:
             raise forms.ValidationError(
-                _("RSA private key not found")
+                _("RSA or DSA private key not found")
                 )
-        priv = priv[1].split('-----END RSA PRIVATE KEY-----')
-        if len(priv) < 2:
-            raise forms.ValidationError(
-                _("RSA private key not found")
-                )
-        priv = priv[0]
+        priv = reg.group()
 
-        rsa_file = tempfile.mktemp(dir='/tmp/')
-        with open(rsa_file, 'w') as f:
-            f.write('-----BEGIN RSA PRIVATE KEY-----')
+        priv_file = tempfile.mktemp(dir='/tmp/')
+        with open(priv_file, 'w') as f:
             f.write(priv)
-            f.write('-----END RSA PRIVATE KEY-----')
 
         proc = subprocess.Popen([
             "/usr/bin/openssl",
             "rsa",
             "-noout",
             "-modulus",
-            "-in", rsa_file,
+            "-in", priv_file,
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             )
         modulus1, err = proc.communicate()
-        os.unlink(rsa_file)
+        os.unlink(priv_file)
         if proc.returncode != 0:
             raise forms.ValidationError(
-                _("RSA private key is not valid: %s") % err
+                _("RSA or DSA private key is not valid: %s") % err
                 )
 
         cert = certfile.split('-----BEGIN CERTIFICATE-----')
@@ -482,7 +479,7 @@ class SSLForm(ModelForm):
         cert = cert[1].split('-----END CERTIFICATE-----')
         if len(priv) < 2:
             raise forms.ValidationError(
-                _("RSA private key not found")
+                _("Certificate end tag not found")
                 )
         cert = cert[0]
 
