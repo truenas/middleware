@@ -162,6 +162,31 @@ create_CA()
 	chmod 400 "${key}"
 }
 
+strip_passphrase()
+{
+	local keyfile="${1}"
+	local passfile="${2}"
+	local res=1
+
+	if [ ! -s "${keyfile}" -o ! -s "${passfile}" ]
+	then
+		return 1
+	fi
+
+	local tmp="$(mktemp /tmp/tmp.XXXXXXX)"
+	${OPENSSL} rsa -passin file:"${passfile}" -in "${keyfile}" -out "${tmp}"
+	if [ "$?" = "0" -a -s "${tmp}" ]
+	then
+		mv "${tmp}" "${keyfile}"
+		res=$?
+
+	else
+		rm -f "${tmp}" 2>/dev/null
+	fi
+
+	return ${res}
+}
+
 write_key()
 {
 	local infile="${1}"
@@ -178,11 +203,11 @@ write_key()
 		keyfile[0] = null;
 		keyfile_size = 0;
 	}
-	/-----BEGIN (R|D)SA PRIVATE KEY-----/ {
+	/-----BEGIN (.+) PRIVATE KEY-----/ {
 		inkeyfile = 1;
 	}
 
-	/-----END (R|D)SA PRIVATE KEY-----/ {
+	/-----END (.+) PRIVATE KEY-----/ {
 		keyfile[keyfile_size++] = $0;
 		inkeyfile = 0;
 	}
@@ -209,25 +234,29 @@ write_cert()
 		return 1
 	fi
 
-	awk -v cert="${outfile}" '
+	local ncerts="$(grep 'BEGIN CERTIFICATE' ${infile}|wc -l|xargs)"
+	awk -v cert="${outfile}" -v ncerts="${ncerts}" '
 	BEGIN {
-		incertfile = 0
 		certfile[0] = null;
 		certfile_size = 0;
+		certbegin = 0;
+		certend = 0;
 	}
 	/-----BEGIN CERTIFICATE-----/ {
-		incertfile = 1;
+		certbegin++;
+	}
+	/-----END CERTIFICATE-----/ {
+		certend++;
 	}
 	
-	/-----END CERTIFICATE-----/ {
-		certfile[certfile_size++] = $0;
-		incertfile = 0;
-	}
 	/.+/ {
-		if (incertfile)
+		if (certbegin > 0)
 			certfile[certfile_size++] = $0;
+		if (certbegin == certend && certbegin == ncerts)
+			exit(0);
 	}
 	END {
+
 		for (i = 0;i < certfile_size;i++)
 			print certfile[i] > cert
 	}
@@ -314,10 +343,11 @@ verify_signature()
 _configure_generic_ssl()
 {
 	local ssldir="${1}"
-	local tmpfile="${2}"
-	local keyfile="${3}"
-	local certfile="${4}"
-	local importfunc="${5}"
+	local tmpcertfile="${2}"
+	local tmppassfile="${3}"
+	local keyfile="${4}"
+	local certfile="${5}"
+	local importfunc="${6}"
 	local new_cert
 	local res=0
 
@@ -325,20 +355,20 @@ _configure_generic_ssl()
 		-z "${keyfile}" -o \
 		-z "${certfile}" -o \
 		-z "${importfunc}" -o \
-		-z "${tmpfile}" -o ! -f "${tmpfile}" ]
+		-z "${tmpcertfile}" -o ! -f "${tmpcertfile}" ]
 	then
 		return 1
 	fi
 
 	mkdir -p "${ssldir}"
-	size=$(wc -c "${tmpfile}" | awk '{ print $1 }')
+	size=$(wc -c "${tmpcertfile}" | awk '{ print $1 }')
 	if [ ${size} -gt 1 ]
 	then
 		local tmpkey="$(mktemp /tmp/tmp.XXXXXX)"
 		local tmpcrt="$(mktemp /tmp/tmp.XXXXXX)"
 
-		write_key "${tmpfile}" "${tmpkey}"
-		write_cert "${tmpfile}" "${tmpcrt}"
+		write_key "${tmpcertfile}" "${tmpkey}"
+		write_cert "${tmpcertfile}" "${tmpcrt}"
 
 		diff -Nq "${tmpkey}" "${keyfile}" >/dev/null
 		local rc1=$?
@@ -346,7 +376,7 @@ _configure_generic_ssl()
 		diff -Nq "${tmpcrt}" "${certfile}" >/dev/null
 		local rc2=$?
 
-		if [ "${rc1}" != "0" -a "${rc2}" != "0" ]
+		if [ "${rc1}" != "0" -o "${rc2}" != "0" ]
 		then
 			mv "${tmpkey}" "${keyfile}"
 			mv "${tmpcrt}" "${certfile}"
@@ -380,6 +410,13 @@ _configure_generic_ssl()
 		res=1
 	fi
 
+	if [ "${res}" = "0" -a -s "${tmppassfile}" ]
+	then
+		strip_passphrase "${keyfile}" "${tmppassfile}"
+		res=$?
+	fi
+
+	rm -f "${tmppassfile}"
 	return ${res}
 }
 
@@ -439,9 +476,9 @@ import_nginx_certificate()
 
 configure_nginx_ssl()
 {
-	local new_cert tmp
+	local tmpcertfile=$(mktemp /tmp/tmp.XXXXXX)
+	local tmppassfile=$(mktemp /tmp/tmp.XXXXXX)
 
-	tmpfile=$(mktemp /tmp/tmp.XXXXXX)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ssl_certfile
@@ -453,14 +490,29 @@ configure_nginx_ssl()
 		-id
 
 	LIMIT 1
-	" > "${tmpfile}"
+	" > "${tmpcertfile}"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ssl_passphrase
+
+	FROM
+		system_ssl
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	" > "${tmppassfile}"
+
 
 	_configure_generic_ssl "${HTTPDSSLDIR}" \
-		"${tmpfile}" "${HTTPDKEY}" "${HTTPDCERT}" \
+		"${tmpcertfile}" "${tmppassfile}" \
+		"${HTTPDKEY}" "${HTTPDCERT}" \
 		"import_nginx_certificate"
 	res=$?
 
-	rm -f "${tmpfile}"
+	rm -f "${tmpcertfile}"
 	return ${res}
 }
 
@@ -537,7 +589,7 @@ configure_proftpd_ssl()
 	" > "${tmpfile}"
 
 	_configure_generic_ssl "${FTPDSSLDIR}" \
-		"${tmpfile}" "${FTPDKEY}" "${FTPDCERT}" \
+		"${tmpfile}" "" "${FTPDKEY}" "${FTPDCERT}" \
 		"import_proftpd_certificate"
 	res=$?
 
