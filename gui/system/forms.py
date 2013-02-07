@@ -459,6 +459,8 @@ class SSLForm(ModelForm):
             'ssl_passphrase2',
             'ssl_certfile',
             ]
+        if self.instance.ssl_passphrase:
+            self.fields['ssl_passphrase'].required = False
 
     def clean_ssl_passphrase2(self):
         passphrase1 = self.cleaned_data.get("ssl_passphrase")
@@ -564,8 +566,8 @@ class SSLForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        if not cdata.get("ssl_passphrase"):
-            cdata['ssl_passphrase'] = self.instance.ssl_passphrase
+        if not cdata.get("ssl_passphrase2"):
+            cdata['ssl_passphrase'] = cdata['ssl_passphrase2']
         return cdata
 
     def save(self):
