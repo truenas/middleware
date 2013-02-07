@@ -4,9 +4,11 @@
         <script type="dojo/event" event="onSubmit" args="e">
             formSubmit(this, e, '{{ request.path }}', null, {progressbar: true});
         </script>
-    <table>
+    <table class="form">
+      {% block form %}
       {% dojo_render wizard.management_form %}
       {% admin_form wizard.form %}
+      {% endblock %}
         <tr>
             <td colspan="2">
                 <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
