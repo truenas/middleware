@@ -2306,9 +2306,13 @@ class notifier:
         # XXX: ugly
         self.__system("rm -rf */")
 
-        if self.__system_nolog('/usr/bin/tar -xJpf %s' % (path, )):
+        proc = self.__pipeopen('/usr/bin/tar -xJpf %s' % (path, ))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
             os.chdir('/')
-            raise MiddlewareError('The firmware is invalid')
+            raise MiddlewareError(
+                'The firmware image is invalid, make sure to use .txz file: %s' % err
+            )
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'pre-install'],
