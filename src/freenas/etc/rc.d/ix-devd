@@ -123,10 +123,12 @@ if [ \${EVENT} = "LINK_UP" ]; then
     # If we reached here, fenced is daemonized and have all drives reserved.
     ifconfig \${SUBSYSTEM} advskew 1
 
+    echo "Start volume import" | logger
     for volumename in ${volumenames}; do
 	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
+    echo "End volume import" | logger
 
     #mount -uw /
     /etc/rc.d/statd restart
@@ -150,6 +152,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     if  [ -f /tmp/failover_override ] ; then
         rm /tmp/failover_override
     fi
+    echo "Failover event complete." | logger
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
