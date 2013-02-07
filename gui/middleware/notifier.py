@@ -2674,6 +2674,8 @@ class notifier:
         return ret
 
     def update_jail_pbi(self, plugins_path, pbipath):
+        from freenasUI.plugins.models import NullMountPoint
+
         if pbipath is None:
             pbipath = "/var/tmp/firmware/pbifile.pbi"
 
@@ -2699,10 +2701,15 @@ class notifier:
             raise MiddlewareError("You cannot install %s jail pbi in an %s "
                 "architecture" % (arch, platform.machine()))
 
-        pjail, jail = self._get_plugins_jail()
-        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
+        """
+        Make sure all mountpoints are unmounted
 
-        self.__umount_filesystems_within(jailpath)
+        Adding mountpoints after a jail has been started will not put them in
+        the jail fstab, causing them to do not be automatically be unmounted
+        on jail stop, causing possible data loss
+        """
+        for nmp in NullMountPoint.objects.all():
+            self.__umount_filesystems_within(nmp.destination_jail)
 
         pbifile = "%s/%s" % (plugins_path, pbi)
         self.__system("/bin/mv %s %s" % (pbipath, pbifile))
