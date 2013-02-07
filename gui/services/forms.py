@@ -580,6 +580,8 @@ class ActiveDirectoryForm(ModelForm):
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
             raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
+ActiveDirectoryForm.base_fields.keyOrder.remove('ad_adminpw2')
+ActiveDirectoryForm.base_fields.keyOrder.insert(5, 'ad_adminpw2')
 
 
 class NIS(ModelForm):
