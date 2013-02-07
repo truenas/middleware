@@ -325,6 +325,13 @@ class SSL(Model):
             verbose_name=_("Common Name"),
             help_text=_("Common Name (eg, YOUR name)"),
             )
+    ssl_passphrase = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Passphrase"),
+            help_text=_("Private key passphrase)"),
+            )
     ssl_certfile = models.TextField(
             blank=True,
             null=True,
