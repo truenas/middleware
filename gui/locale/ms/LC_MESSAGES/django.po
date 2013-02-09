@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2011-08-20 11:10+0200\n"
-"Last-Translator: fx175 <felix83@gmail.com>\n"
+"PO-Revision-Date: 2013-02-08 14:03+0200\n"
+"Last-Translator: hamzul <zulkiflih@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
 "MIME-Version: 1.0\n"
@@ -113,11 +113,11 @@ msgstr "Tidak aktif"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Level 1 - penjimatan kuasa dalam mode sedia (spindown)"
+msgstr "Level 1 - paling jimat kuasa - mode sedia (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Level 64 - penjimatan kuasa sederhana dalam mode sedia"
+msgstr "Level 64 - guna separuh kuasa dalam mode sedia"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
@@ -251,7 +251,7 @@ msgstr "Setting Asal"
 # refer to Apple Time Machine
 #: choices.py:196
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Masa Peralatan"
 
 #: choices.py:199
 msgid "No case folding"
@@ -356,7 +356,7 @@ msgstr "gzip (pantas)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr "gzip (had maksimum, perlahan)"
+msgstr "gzip (paling mampat, proses paling lama)"
 
 #: choices.py:489
 msgid "Hour(s)"
