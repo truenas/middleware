@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-01-22 05:15+0200\n"
-"Last-Translator: Ruyuen <luyuan.huang@gmail.com>\n"
+"PO-Revision-Date: 2013-02-12 10:51+0200\n"
+"Last-Translator: zhaocz <zhaocz@163.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -3835,7 +3835,7 @@ msgstr "文件系统类型"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "阈值天数"
 
 #: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
@@ -4380,7 +4380,7 @@ msgid ""
 "When the server is reachable, send a burst of eight packets instead of the "
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
-msgstr ""
+msgstr "当服务器可到达时,发送一次连续的8个数据包传送,而不是平常的单个包。此功能是为了增强与服务器指令与地址的时间同步。"
 
 #: system/models.py:104
 msgid "IBurst"
@@ -4737,7 +4737,7 @@ msgstr "目录权限"
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
-msgstr ""
+msgstr "此选项使接收到的rsync权限与源权限保持同步。"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
@@ -4751,7 +4751,7 @@ msgstr "该选项将同步更新远程（主机）扩展属性与本地一致。
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
-msgstr ""
+msgstr "附加的rsync命令行参数（通常为空）"
 
 #: system/models.py:580
 msgid "Rsync Task"
@@ -4781,7 +4781,7 @@ msgstr "值"
 
 #: system/models.py:795
 msgid "Sysctl"
-msgstr ""
+msgstr "系统控制"
 
 #: system/models.py:796
 msgid "Sysctls"
@@ -5050,8 +5050,9 @@ msgid "FreeNAS Announce"
 msgstr "FreeNAS声明"
 
 #: templates/freeadmin/index.html:73
+#, fuzzy
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "freenas 命令提交"
 
 #: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
@@ -5425,9 +5426,8 @@ msgid "Portals"
 msgstr "Portals"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
-msgstr "授权的网络"
+msgstr "授权的 Initiators"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5439,7 +5439,7 @@ msgstr "iSCSI目标"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr ""
+msgstr "扩展"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
