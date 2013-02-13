@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
+import logging
 import re
 import socket
 
@@ -40,6 +40,8 @@ from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
+
+log = logging.getLogger('network.forms')
 
 
 class InterfacesForm(ModelForm):
@@ -99,7 +101,7 @@ class InterfacesForm(ModelForm):
             return dhcp
         qs = models.Interfaces.objects.filter(int_dhcp=True)
         if self.instance.id:
-            qs.exclude(id=self.instance.id)
+            qs = qs.exclude(id=self.instance.id)
         if qs.exists():
             raise forms.ValidationError(
                 _("Only one interface can be used for DHCP")
