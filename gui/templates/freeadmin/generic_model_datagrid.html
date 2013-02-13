@@ -150,8 +150,7 @@ require([
 
     var StandardGrid = declare([Grid, Selection, Keyboard, ColumnResizer]);
     var griddiv = query(".gridDiv", cpane.domNode.parentNode)[0];
-    grid = new StandardGrid({
-        id: 'orderGrid',
+    var grid = new StandardGrid({
         store: store,
         columns: columns,
         }, griddiv);
