@@ -56,6 +56,7 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
+    pkill -f fenced
 
     # Was the other peer UP in the last minute?
     WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
@@ -157,6 +158,7 @@ fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
+    pkill -f fenced
     ifconfig \${SUBSYSTEM} advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
     echo "block drop in quick proto tcp from any to any port 860" >> /etc/pf.conf.block
@@ -168,7 +170,6 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
-    pkill -f fenced
     watchdog -t 4
     for volumename in ${volumenames}; do
 	echo "Exporting \${volumename}!" | logger
