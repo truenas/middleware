@@ -57,7 +57,7 @@ class bsdGroups(Model):
         if self.bsdgrp_builtin == True:
             raise ValueError(_("Group %s is built-in and can not be "
                 "deleted!") % (self.bsdgrp_group))
-        notifier().user_deletegroup(self.bsdgrp_group.__str__())
+        notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
         super(bsdGroups, self).delete(using)
         if reload:
             notifier().reload("user")
@@ -137,7 +137,7 @@ class bsdUsers(Model):
         if self.bsdusr_builtin == True:
             raise ValueError(_("User %s is built-in and can not be "
                 "deleted!") % (self.bsdusr_username))
-        notifier().user_deleteuser(self.bsdusr_username.__str__())
+        notifier().user_deleteuser(self.bsdusr_username.encode('utf-8'))
         try:
             gobj = self.bsdusr_group
             count = bsdGroupMembership.objects.filter(
