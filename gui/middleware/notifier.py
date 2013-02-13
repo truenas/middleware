@@ -999,7 +999,7 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __encrypt_device(self, devname, diskname, volume, passphrase=None):
+    def __encrypt_device(self, devname, diskname, volume, sectorsize=None, passphrase=None):
         from freenasUI.storage.models import Disk, EncryptedDisk
 
         geli_keyfile = volume.get_geli_keyfile()
@@ -1014,10 +1014,12 @@ class notifier:
         else:
             _passphrase = "-P"
             _passphrase2 = "-p"
-
-        self.__system("geli init -B none %s -K %s /dev/%s" % (_passphrase, geli_keyfile, devname))
+        if sectorsize is not None:
+            _sector = "-s %d" % sectorsize
+        else:
+            _sector = ""
+        self.__system("geli init %s -B none %s -K %s /dev/%s" % (_sector, _passphrase, geli_keyfile, devname))
         self.__system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
-        # TODO: initialize the provider in background (wipe with random data)
 
         ident = self.device_to_identifier(diskname)
         diskobj = Disk.objects.get(disk_identifier=ident)
@@ -1284,10 +1286,7 @@ class notifier:
         else:
             test4k = not force4khack
             want4khack = force4khack
-        if encrypt:
-            test4k = False
-            force4khack = False
-            want4khack = False
+
         first = True
         for disk in disks:
             rv = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -1302,7 +1301,7 @@ class notifier:
         doc = self.__geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)
-            if want4khack:
+            if want4khack and not encrypt:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
                 devname = '/dev/%s.nop' % devname
                 gnop_devs.append(devname)
@@ -1314,7 +1313,11 @@ class notifier:
                     log.warn("Could not determine GPT uuid for %s", devname)
                     raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
                 else:
-                    devname = self.__encrypt_device("gptid/%s" % uuid[0].content, disk, volume)
+                    if want4khack:
+                        sectorsize = 4096
+                    else:
+                        sectorsize = None
+                    devname = self.__encrypt_device("gptid/%s" % uuid[0].content, disk, volume, sectorsize=sectorsize)
             else:
                 uuid = doc.xpathEval("//class[name = 'PART']"
                     "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
@@ -1633,7 +1636,6 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS'
 
-        # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
         from_swap = self.part_type_from_device('swap', from_disk)
         encrypt = (volume.vol_encrypt >= 1)
@@ -1673,14 +1675,34 @@ class notifier:
             else:
                 devname = "gptid/%s" % uuid[0].content
         else:
+
             if not uuid:
                 log.warn("Could not determine GPT uuid for %s", to_label)
                 raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-            else:
-                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
-                if from_diskobj.exists():
-                    ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
-                devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
+
+            """
+            We only care for 4khack with encrypted pools because the sector
+            size in geli has a performance impact in 512 vs 4096
+            """
+            pool = self.zpool_parse(volume.vol_name)
+            devs = pool.get_devs()
+            sectorsize = None
+            for dev in devs:
+                if dev.status != 'ONLINE':
+                    continue
+                proc = self.__pipeopen("diskinfo %s" % dev.name)
+                output = proc.communicate()[0]
+                if proc.returncode != 0:
+                    continue
+                sectorsize = int(re.sub(r'\s+', ' ', output).split(' ')[1])
+                break
+            if sectorsize is None:
+                log.error("Could not determine sector size for replacing disk, using default.")
+
+            from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
+            if from_diskobj.exists():
+                ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
+            devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, sectorsize=sectorsize, passphrase=passphrase)
 
         if from_disk == to_disk:
             self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
