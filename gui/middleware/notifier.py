@@ -1417,7 +1417,7 @@ class notifier:
 
         # Prepare disks nominated in this group
         vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack, encrypt, volume)[0]
-        z_vdev += " ".join(vdevs)
+        z_vdev += " ".join([''] + vdevs)
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
