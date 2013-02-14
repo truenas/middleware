@@ -163,8 +163,8 @@ class JailsConfiguration(Model):
         help_text=_("Path where to store jail data")
     )
 
-    def save(self):
-        super(JailsConfiguration, self).save()
+    def save(self, *args, **kwargs):
+        super(JailsConfiguration, self).save(*args, **kwargs)
         notifier().start("ix-warden")
 
     class Meta:
