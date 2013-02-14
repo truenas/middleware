@@ -710,15 +710,6 @@ __EOF__
 	rm "${tmpfile}"
 }
 
-__escape()
-{
-	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
-}
-
-__unescape()
-{
-	[ -n "${1}" ] && printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
-}
 
 __do_AD_get()
 {
@@ -942,8 +933,8 @@ __SQL__
 	exec 0<"${tmpfile}"
 	while read -r line
 	do
-		var=$(echo ${line}|cut -f1 -d=|xargs)
-		val=$(echo ${line}|cut -f2- -d=|xargs)
+		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
 
 		AD_set "${var}" "${val}"
 	done
