@@ -269,6 +269,7 @@ class AFP(Model):
 class NFS(Model):
     nfs_srv_servers = models.PositiveIntegerField(
             default=4,
+            validators=[MinValueValidator(1), MaxValueValidator(1024)],
             verbose_name=_("Number of servers"),
             help_text=_("Specifies how many servers to create. There should be"
                 " enough to handle the maximum level of concurrency from its "
