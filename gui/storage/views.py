@@ -962,3 +962,27 @@ def volume_recoverykey_remove(request, object_id):
     return render(request, "storage/recoverykey_remove.html", {
         'form': form,
     })
+
+
+def disk_editbulk(request):
+
+    if request.method == "POST":
+        ids = request.POST.get("ids", "").split(",")
+        disks = models.Disk.objects.filter(id__in=ids)
+        form = forms.DiskEditBulkForm(request.POST, disks=disks)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Disks successfully edited"))
+
+        return JsonResp(request, form=form)
+    else:
+        ids = request.GET.get("ids", "").split(",")
+        disks = models.Disk.objects.filter(id__in=ids)
+        form = forms.DiskEditBulkForm(disks=disks)
+
+    return render(request, "storage/disk_editbulk.html", {
+        'form': form,
+        'disks': ', '.join([disk.disk_name for disk in disks]),
+    })

@@ -37,6 +37,30 @@ class DiskFAdmin(BaseFreeAdmin):
             }""",
         }
 
+        actions['EditBulk'] = {
+            'button_name': _('Edit In Bulk'),
+            'on_click': """function() {
+                var mybtn = this;
+                var ids = [];
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    ids.push(data.id);
+                }
+                editObject('Edit In Bulk', data._editbulk_url + '?ids=' + ids.join(","), [mybtn,]);
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                if(evt.rows.length <= 1) {
+                    query(".grid" + actionName).forEach(function(item, idx) {
+                        domStyle.set(item, "display", "none");
+                    });
+                } else {
+                    query(".grid" + actionName).forEach(function(item, idx) {
+                        domStyle.set(item, "display", "block");
+                    });
+                }
+            }"""
+        }
+
         return actions
 
 

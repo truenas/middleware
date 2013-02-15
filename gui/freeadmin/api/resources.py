@@ -24,7 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import json
 import logging
 
 from django.core.urlresolvers import reverse
@@ -89,6 +88,7 @@ class DiskResource(DojoModelResource):
         bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
             'devname': bundle.obj.disk_name,
         })
+        bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
         return bundle
 
 
