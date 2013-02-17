@@ -919,6 +919,7 @@ require([
         if(!registry.byId("wizarddisks")) return;
         var add = registry.byId("id_volume_add");
         var add_mode = false;
+        var force4k = registry.byId("id_force4khack");
         if(add && add.get("value") != '') {
             add_mode = true;
             domStyle.set("addVolLabel", "display", "none");
@@ -1033,6 +1034,14 @@ require([
                 domStyle.set('diskencryptionrand', 'display', 'none');
             }
             domStyle.set('zfsdedup', 'display', 'table-row');
+            if(enc) {
+                force4k.set('disabled', true);
+                force4k.set('readonly', true);
+                force4k.set('checked', true);
+            } else {
+                force4k.set('disabled', false);
+                force4k.set('readonly', false);
+            }
 
             if(d.length >= 3) {
                 domStyle.set("grpraidz", "display", "block");
