@@ -1,5 +1,5 @@
---- testdisk/Makefile.orig	2013-02-16 18:30:54.334866580 -0800
-+++ testdisk/Makefile	2013-02-16 19:03:51.629859547 -0800
+--- sysutils/testdisk/Makefile.orig	2013-02-16 18:30:54.334866580 -0800
++++ sysutils/testdisk/Makefile	2013-02-16 19:03:51.629859547 -0800
 @@ -6,10 +6,11 @@
  #
  
@@ -23,8 +23,8 @@
  .else
  CONFIGURE_ARGS+=--without-ntfs3g
  .endif
---- testdisk/distinfo.orig	2013-02-16 18:33:55.543862988 -0800
-+++ testdisk/distinfo	2013-02-16 19:03:26.929863121 -0800
+--- sysutils/testdisk/distinfo.orig	2013-02-16 18:33:55.543862988 -0800
++++ sysutils/testdisk/distinfo	2013-02-16 19:03:26.929863121 -0800
 @@ -1,2 +1,2 @@
 -SHA256 (testdisk-6.13.tar.bz2) = 48275ccddfc9445b6c3e6e181728dae9e49bd25b824a6b5670d58f1f88cdf220
 -SIZE (testdisk-6.13.tar.bz2) = 560696
