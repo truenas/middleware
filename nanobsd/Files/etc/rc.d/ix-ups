@@ -29,7 +29,7 @@ generate_ups()
 	while eval read $f; do
 	    cat <<EOF
 [${ups_identifier}]
-    driver = $(echo "${ups_driver}"|tr -s " " "\n")
+    driver = $(echo "${ups_driver}"|cut -d"$" -f 1|tr -s " " "\n")
     port = ${ups_port}
     desc = "${ups_description}"
 EOF

@@ -601,7 +601,7 @@ class UPSDRIVER_CHOICES(object):
                     continue
                 if row[-1].find(' (experimental)') != -1:
                     row[-1] = row[-1].replace(' (experimental)', '').strip()
-                yield (row[-1], "%s (%s)" % (" ".join(row[0:-1]), row[-1]))
+                yield ("$".join([row[-1], row[3]]), "%s (%s)" % (" ".join(row[0:-1]), row[-1]))
 
 
 LDAP_SSL_CHOICES = (
