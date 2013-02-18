@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-BETA3
+Release Notes for FreeNAS 8.3.1-RC1
 
 *** IMPORTANT ***
 
@@ -105,7 +105,7 @@ existing pools is more intuitive than it was previously; selecting
 multiple disks for a storage volume is now done via a multiselect widget
 instead of checkboxes to improve ease of use when creating volumes.
 
-ZFS volumes can now have periodic scrub tasks configured for them; the
+ZFS volumes now have periodic scrub tasks configured for them; the
 default is set to 35 days to be consistent with the OS default.
 
 An autotuning script is now available -- disabled by default.  It sets
@@ -124,18 +124,11 @@ FreeNAS interoperability in VM software (VMware, VirtualBox, etc).
 Errata
 ========================
 
-Volume encryption is a BETA feature.  When encryption goes wrong it
-can go really wrong.  We are releasing this BETA for public testing.
-However, there have been no reported problems with 8.3.1-BETA1.
-The FreeNAS developers believe the encryption feature is ready for
-production use, however it has very little seat time, Your Milage
-May Vary.
+Encrypting a volume implies forcing a 4K block size.  This is enforced by
+the GUI.  However, clicking the encrypt volume checkbox then unchecking it
+will leave the Force 4K checkbox checked, which is not the default.
 
-The new version of istgt in 8.3.1-BETA1 does target reload in a new way
-from the old version.  This has been confirmed to work in multiple
-deployments, but could use wider testing.
-
-Samba has been upgraded to 3.6.9  This may have broken shadow copies in
+Samba has been upgraded to 3.6.12  This may have broken shadow copies in
 some instances.  This has been tested and confirmed working in multiple
 environments but could benefit from wider testing.
 
@@ -147,6 +140,44 @@ route.
 
 The plugin jail currently doesn't work properly if the external interface is
 a vlan pseudo-device.
+
+Changes since 8.3.1-BETA3:
+
+Enhancements
+========================
+
+1. Improve handling of user uploaded SSL certs, including certs that require
+   a passphrase.
+
+2. When upgrading, offer to save the config file.
+
+3. Always use 4K sectors when volume encryption is used.
+
+4. Add testdisk and photorec to the image.  These are useful tools for recovering
+   damaged partion tables or recovering files from damaged filesystems.
+
+5. arcstat.py and arc_summary.py have been moved into /usr/local/bin which
+   places them in $PATH.  No more specifying /usr/local/www/freenasUI/tools
+
+Bugfixes
+========================
+
+1. Handle single and double quotes in AD passwords properly.
+
+2. Fix a bug that prevented snapshot replication times from working properly
+   if the start time and end time crossed midnight.
+
+3. Fix a bug that sut down FreeNAS unnecessarily when UPS status was LowBattery
+   but OnLine.
+
+4. When updaing a plugin jail be extra paranoid about unmounting any null mounts into
+   the plugin jail to ensure no data is lost from a missed null mount.
+
+5. Fix a bug that prevented users or groups from being deleted with UTF-8
+   characters in the name.
+
+6. Volume encryption forces a 4K sector size.  Reflect this in the GUI by forcing the
+   "Force 4K sectors" box to checked when the encryption box is checked.
 
 Changes since 8.3.1-BETA2:
 
