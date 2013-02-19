@@ -382,6 +382,22 @@ require([
 
     }
 
+    disableGeneric = function(domid, farray, checkfn) {
+
+        var box = registry.byId(domid);
+        var bool = checkfn(box);
+        for(var i=0;i<farray.length;i++) {
+            if(bool) {
+                domClass.add(registry.byId(farray[i]).domNode, ['dijitDisabled', 'dijitTextBoxDisabled', 'dijitValidationTextBoxDisabled']);
+                registry.byId(farray[i]).set('readOnly', true);
+            } else {
+                domClass.remove(registry.byId(farray[i]).domNode, ['dijitDisabled', 'dijitTextBoxDisabled', 'dijitValidationTextBoxDisabled']);
+                registry.byId(farray[i]).set('readOnly', false);
+            }
+        }
+
+    }
+
     rsyncModeToggle = function() {
 
         var select = registry.byId("id_rsync_mode");

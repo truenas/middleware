@@ -31,23 +31,27 @@ import re
 import subprocess
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ungettext_lazy
 from django.core.validators import email_re
+from django.utils.safestring import mark_safe
+from django.utils.translation import (
+    ugettext_lazy as _, ungettext_lazy
+)
 
 from dojango import forms
 from freenasUI import choices
-from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
+from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.forms import DirectoryBrowser
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.network.models import Alias, Interfaces
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import (IPAddress, IPNetwork, AddressValueError,
-    NetmaskValueError)
+from ipaddr import (
+    IPAddress, IPNetwork, AddressValueError, NetmaskValueError
+)
 
 log = logging.getLogger('services.form')
 
@@ -421,6 +425,14 @@ class UPSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
+        self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
+            "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
+            "function(box) { if(box.get('value') == 'lowbatt') { return true; "
+            "} else { return false; } });")
+        if self.instance.id and self.instance.ups_shutdown == 'lowbatt':
+            self.fields['ups_shutdowntimer'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled '
+                'dijitValidationTextBoxDisabled')
         ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
         ports.extend(glob.glob('/dev/ugen*'))
         self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
