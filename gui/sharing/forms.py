@@ -35,16 +35,18 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.services.models import services
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import (IPAddress, IPNetwork, AddressValueError,
-    NetmaskValueError)
+from ipaddr import (
+    IPNetwork, AddressValueError, NetmaskValueError
+)
 
 
 class CIFS_ShareForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
-        self.fields['cifs_guestok'].widget.attrs['onChange'] = ('javascript:'
-            'toggleGeneric("id_cifs_guestok", ["id_cifs_guestonly"], true);')
+        self.fields['cifs_guestok'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_cifs_guestok", '
+            '["id_cifs_guestonly"], true);')
         if self.data:
             if self.data.get('cifs_guestok') is False:
                 self.fields['cifs_guestonly'].widget.attrs['disabled'] = \
@@ -77,11 +79,12 @@ class CIFS_ShareForm(ModelForm):
 
 class AFP_ShareForm(ModelForm):
 
-    afp_sharepw2 = forms.CharField(max_length=50,
-            label=_("Confirm Share Password"),
-            widget=forms.widgets.PasswordInput(render_value=False),
-            required=False,
-            )
+    afp_sharepw2 = forms.CharField(
+        max_length=50,
+        label=_("Confirm Share Password"),
+        widget=forms.widgets.PasswordInput(render_value=False),
+        required=False,
+    )
 
     class Meta:
         model = models.AFP_Share
@@ -91,19 +94,19 @@ class AFP_ShareForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
-        self.fields['afp_upriv'].widget.attrs['onChange'] = ('javascript:'
-            'toggleGeneric("id_afp_upriv", ["id_afp_fperm", '
+        self.fields['afp_upriv'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_afp_upriv", ["id_afp_fperm", '
             '"id_afp_dperm"], true);')
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
             initial=self.fields['afp_fperm'].initial,
             required=False,
-            )
+        )
         self.fields['afp_dperm'] = UnixPermissionField(
             label=self.fields['afp_dperm'].label,
             initial=self.fields['afp_dperm'].initial,
             required=False,
-            )
+        )
         if self.instance.id:
             self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
             if not self.instance.afp_upriv:
@@ -119,7 +122,7 @@ class AFP_ShareForm(ModelForm):
         if password1 != password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
-                )
+            )
         return password2
 
     def clean(self):
@@ -159,7 +162,7 @@ class NFS_ShareForm(ModelForm):
             except (AddressValueError, NetmaskValueError, ValueError):
                 raise forms.ValidationError(
                     _("This is not a valid network: %s") % n
-                    )
+                )
         return net
 
     def clean_nfs_hosts(self):
@@ -179,32 +182,43 @@ class NFS_ShareForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        for field in ('nfs_maproot_user', 'nfs_maproot_group',
-                        'nfs_mapall_user', 'nfs_mapall_group'):
+        for field in (
+            'nfs_maproot_user', 'nfs_maproot_group',
+            'nfs_mapall_user', 'nfs_mapall_group'
+        ):
             if cdata.get(field, None) in ('', '-----'):
                 cdata[field] = None
 
-        if (cdata.get('nfs_maproot_group', None) != None and
-            cdata.get('nfs_maproot_user', None) == None):
+        if (
+            cdata.get('nfs_maproot_group', None) is not None
+            and
+            cdata.get('nfs_maproot_user', None) is None
+        ):
             self._errors['nfs_maproot_group'] = self.error_class([
                 _("Maproot group requires Maproot user"),
-                ])
-        if (cdata.get('nfs_mapall_group', None) != None and
-            cdata.get('nfs_mapall_user', None) == None):
+            ])
+        if (
+            cdata.get('nfs_mapall_group', None) is not None
+            and
+            cdata.get('nfs_mapall_user', None) is None
+        ):
             self._errors['nfs_mapall_group'] = self.error_class([
                 _("Mapall group requires Mapall user"),
-                ])
-        if (cdata.get('nfs_maproot_user', None) != None or
-            cdata.get('nfs_maproot_group', None) != None):
-            if cdata.get('nfs_mapall_user', None) != None:
+            ])
+        if (
+            cdata.get('nfs_maproot_user', None) is not None
+            or
+            cdata.get('nfs_maproot_group', None) is not None
+        ):
+            if cdata.get('nfs_mapall_user', None) is not None:
                 self._errors['nfs_mapall_user'] = self.error_class([
                     _("Maproot user/group disqualifies Mapall"),
-                    ])
+                ])
                 del cdata['nfs_mapall_user']
-            if cdata.get('nfs_mapall_group', None) != None:
+            if cdata.get('nfs_mapall_group', None) is not None:
                 self._errors['nfs_mapall_group'] = self.error_class([
                     _("Maproot user/group disqualifies Mapall"),
-                    ])
+                ])
                 del cdata['nfs_mapall_group']
 
         return cdata
@@ -226,15 +240,15 @@ class NFS_ShareForm(ModelForm):
                     dev = stat.st_dev
                 elif dev != stat.st_dev:
                     self._fserrors = self.error_class([
-                    _("Paths for a NFS share must reside within the same "
-                        "filesystem")
+                        _("Paths for a NFS share must reside within the same "
+                            "filesystem")
                     ])
                     valid = False
                     break
                 if ismp:
                     self._fserrors = self.error_class([
-                    _("You cannot share a mount point and subdirectories "
-                        "all at once")
+                        _("You cannot share a mount point and subdirectories "
+                            "all at once")
                     ])
                     valid = False
                     break
@@ -257,12 +271,12 @@ class NFS_ShareForm(ModelForm):
             if share.nfs_network:
                 used_networks.extend(
                     map(lambda y: (y, stdev), share.nfs_network.split(" "))
-                    )
+                )
             if (self.cleaned_data.get("nfs_alldirs") and share.nfs_alldirs
                     and stdev == dev):
                 self._errors['nfs_alldirs'] = self.error_class([
                     _("This option is only available once per mountpoint")
-                    ])
+                ])
                 valid = False
                 break
 
@@ -272,9 +286,9 @@ class NFS_ShareForm(ModelForm):
                     self._errors['nfs_network'] = self.error_class([
                         _("The network %s is already being shared and cannot "
                             "be used twice for the same filesystem") % (
-                            network,
+                                network,
                             )
-                        ])
+                    ])
                     valid = False
                     break
 
@@ -299,5 +313,5 @@ class NFS_SharePathForm(ModelForm):
         if not os.path.exists(path):
             raise forms.ValidationError(_("The path %s does not exist") % (
                 path,
-                ))
+            ))
         return path
