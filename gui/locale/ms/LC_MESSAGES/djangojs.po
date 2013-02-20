@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-05-27 01:24+0200\n"
-"Last-Translator: hamzul <zulkiflih@gmail.com>\n"
+"PO-Revision-Date: 2013-02-20 05:09+0200\n"
+"Last-Translator: apis17 <mhbinet@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
 "MIME-Version: 1.0\n"
@@ -24,11 +24,11 @@ msgstr "Laporan"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
-msgstr ""
+msgstr "Setting"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr ""
+msgstr "Maklumat Sistem"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -36,7 +36,7 @@ msgstr "Setting Rangkaian"
 
 #: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
-msgstr ""
+msgstr "Servis"
 
 #: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
@@ -44,41 +44,41 @@ msgstr "Akaun"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
-msgstr ""
+msgstr "Ruang Storan"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
 msgid "Some error occurred"
-msgstr ""
+msgstr "Terdapat masalah berlaku"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
-msgstr ""
+msgstr "Ubah"
 
 #: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
-msgstr ""
+msgstr "Ubah Disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Padam"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 msgid "Wipe Disk"
-msgstr ""
+msgstr "Padam Disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "Sila tunggu.."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
-msgstr ""
+msgstr "Ada masalah berlaku!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr ""
+msgstr "Setiap pilihan"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
-msgstr ""
+msgstr "Setiap N"
