@@ -3112,7 +3112,9 @@ class notifier:
                 for consumer in entry.xpathEval('../consumer/provider'):
                     provider = consumer.prop("ref")
                     device = doc.xpathEval("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
-                    disks.append( {'name': device[0].content} )
+                    # The raid might be degraded
+                    if len(device) > 0:
+                        disks.append({'name': device[0].content})
 
                 # Next thing is find out whether this is a raw block device or has GPT
                 #TODO: MBR?
