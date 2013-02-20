@@ -27,19 +27,13 @@ case $1 in
 			/usr/local/sbin/upsmon -c fsd
 		fi
 		;;
-	#Differentiate via timer names
-        "SHUTDOWN"|"FSD")
-                if [ "${ups_emailnotify}" -eq 1 ]; then
-                        echo "$1" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
-                fi
-                ;;
 	"EMAIL"|"COMMBAD"|"COMMOK")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
 			echo "$NOTIFYTYPE - $UPSNAME" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
 		;;
 	"ONLINE")
-#Missed timer, but already emailed.
+		#Missed timer, but already emailed.
 		;;
 	*)
 		logger -t upssched-cmd "Unrecognized command: $1"
