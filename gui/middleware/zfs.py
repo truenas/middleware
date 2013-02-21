@@ -44,8 +44,11 @@ def _is_vdev(name):
     """
     Find out if a given name is a reserved word in zfs
     """
-    if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
-        or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
+    if (
+        name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3')
+        or
+        re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name)
+    ):
         return True
     return False
 
@@ -270,7 +273,7 @@ class Root(Tnode):
             'vdevs': vdevs,
             'numVdevs': len(vdevs),
             'status': self.status if self.status else '',
-            }
+        }
 
     def get_disks(self):
         """
@@ -316,7 +319,7 @@ class Vdev(Tnode):
             'type': self.type,
             'numDisks': len(disks),
             'status': self.status,
-            }
+        }
 
     def validate(self):
         """
@@ -357,14 +360,14 @@ class Dev(Tnode):
         return {
             'name': self.devname,
             'status': self.status,
-            }
+        }
 
     def validate(self):
         # The parent of a leaf should be a vdev
-        if not _is_vdev(self.parent.name) and \
-            self.parent.parent is not None:
-            raise Exception("Oh noes! This damn thing should be a vdev! %s" % \
-                                self.parent)
+        if not _is_vdev(self.parent.name) and self.parent.parent is not None:
+            raise Exception(
+                "Oh noes! This damn thing should be a vdev! %s" % self.parent
+            )
 
         name = self.name
         search = self._doc.xpathEval("//class[name = 'ELI']"
@@ -409,7 +412,7 @@ class Dev(Tnode):
                     reg = re.search(
                         r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % (
                             self.name,
-                            ),
+                        ),
                         zdb, re.M | re.S)
                     if reg:
                         self.path = reg.group("path")
@@ -521,7 +524,7 @@ class ZFSDataset(object):
         try:
             availpct = 100 * (
                 self._vfs.f_blocks - self._vfs.f_bavail
-                ) / self._vfs.f_blocks
+            ) / self._vfs.f_blocks
             return u"%d%%" % (availpct)
         except:
             return _(u"Error")
@@ -593,20 +596,25 @@ def parse_status(name, doc, data):
         pid = None
     pool = Pool(pid=pid, name=name, scrub=scrub)
     lastident = None
+    pnode = None
     for line in status.split('\n'):
         if not line.startswith('\t'):
             continue
 
         try:
             spaces, word, status, read, write, cksum = re.search(
-                r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)\s+(?P<read>\S+)\s+(?P<write>\S+)\s+(?P<cksum>\S+)',
-                line[1:]
-                ).groups()
+                r'''^(?P<spaces>[ ]*)  # Group spaces to know identation
+                    (?P<word>\S+)\s+
+                    (?P<status>\S+)\s+
+                    (?P<read>\S+)\s+(?P<write>\S+)\s+(?P<cksum>\S+)''',
+                line[1:],
+                re.X
+            ).groups()
         except Exception:
             spaces, word = re.search(
                 r'^(?P<spaces>[ ]*)(?P<word>\S+)',
                 line[1:]
-                ).groups()
+            ).groups()
             status = None
             read, write, cksum = 0, 0, 0
         ident = len(spaces) / 2
@@ -616,44 +624,52 @@ def parse_status(name, doc, data):
 
         if ident == 0:
             if word != 'NAME':
-                tree = Root(word, doc,
+                tree = Root(
+                    word,
+                    doc,
                     read=read,
                     write=write,
                     cksum=cksum,
-                    )
+                )
                 tree.status = status
                 pnode = tree
                 pool.add_root(tree)
 
         elif ident == 1:
             if _is_vdev(word):
-                node = Vdev(word, doc,
+                node = Vdev(
+                    word,
+                    doc,
                     status=status,
                     read=read,
                     write=write,
                     cksum=cksum,
-                    )
+                )
                 tree.append(node)
                 pnode = node
             else:
                 if lastident != ident:
-                    node = Vdev("stripe", doc,
+                    node = Vdev(
+                        "stripe",
+                        doc,
                         read=read,
                         write=write,
                         cksum=cksum,
-                        )
+                    )
                     node.status = status
                     pnode.append(node)
                 else:
                     node = pnode
                     pnode = node.parent
 
-                node2 = Dev(word, doc,
+                node2 = Dev(
+                    word,
+                    doc,
                     status=status,
                     read=read,
                     write=write,
                     cksum=cksum,
-                    )
+                )
                 node.append(node2)
                 pnode = node
         elif ident >= 2:
@@ -662,13 +678,15 @@ def parse_status(name, doc, data):
                     replacing = True
                 else:
                     replacing = False
-                node = Dev(word, doc,
+                node = Dev(
+                    word,
+                    doc,
                     status=status,
                     replacing=replacing,
                     read=read,
                     write=write,
                     cksum=cksum,
-                    )
+                )
                 pnode.append(node)
             ident = 2
 
@@ -678,7 +696,7 @@ def parse_status(name, doc, data):
 
 
 def list_datasets(path="", recursive=False, hierarchical=False,
-        include_root=False):
+                  include_root=False):
     """
     Return a dictionary that contains all ZFS dataset list and their
     mountpoints
@@ -695,7 +713,8 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     if path:
         args.append(path)
 
-    zfsproc = subprocess.Popen(args,
+    zfsproc = subprocess.Popen(
+        args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -718,7 +737,7 @@ def list_datasets(path="", recursive=False, hierarchical=False,
             avail=data[2],
             refer=data[3],
             mountpoint=data[4],
-            )
+        )
         if not hierarchical:
             zfslist.append(dataset)
             continue
