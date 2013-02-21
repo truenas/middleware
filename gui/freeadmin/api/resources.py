@@ -389,13 +389,18 @@ class VolumeStatusResource(DojoModelResource):
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
-                        else:
-                            data['_replace_url'] = reverse(
-                                'storage_zpool_disk_replace',
-                                kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
-                                })
+
+                        """
+                        Replacing might go south leaving multiple UNAVAIL disks
+                        For that reason replace button should be enable even for disks
+                        already under replacing subtree
+                        """
+                        data['_replace_url'] = reverse(
+                            'storage_zpool_disk_replace',
+                            kwargs={
+                                'vname': pool.name,
+                                'label': current.name,
+                            })
                         if current.parent.parent.name in (
                             'spares',
                             'cache',
