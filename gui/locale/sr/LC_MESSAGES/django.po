@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-04-10 22:46+0200\n"
-"Last-Translator: DeDaMrAz <dragan.savatic@gmail.com>\n"
+"PO-Revision-Date: 2013-02-21 10:33+0200\n"
+"Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -255,9 +255,8 @@ msgid "Time Machine"
 msgstr "Vremenska Mašina"
 
 #: choices.py:199
-#, fuzzy
 msgid "No case folding"
-msgstr "Bez konverzije"
+msgstr "Nijedan slučaj sklapanja"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -472,11 +471,11 @@ msgstr "Rsync preko SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Gurni"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "povuci"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -647,7 +646,7 @@ msgstr "Vaša stara šifra je uneta pogrešno. Molimo unesite je ponovo."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Da li želite da obrišete sve korisnike sa ovom primarnom grupom?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
@@ -728,9 +727,8 @@ msgid "Account"
 msgstr "Korisnički nalog"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Korisnički nalog"
+msgstr "Admin nalog"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -775,12 +773,12 @@ msgstr ""
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Putanja mora da postoji u okviru tačke postavljanja volumena"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Greška:% s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -807,21 +805,22 @@ msgstr "Isključi"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Prazan podatak vraćen od %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr ""
+"Došlo je do greške dok se vršila ne-serijalizacija od %(url)s: %(greška)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Nije bilo moguće da se preuzme trenutni status"
 
 # ako % predstavlja user  kao users 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
@@ -863,27 +862,27 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Nemožete konfigurisati višestruke interfejse za istu IP adresu (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Morate takođe navesti i IPv4 adresu"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Morate takođe da izaberete i IPv4 mrežnu masku"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Morate takođe da izaberete i IPv4 mrežnu adresu"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Morate takođe da izaberete i IPv6 mrežnu masku"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Morate da izaberete između IPv4 ili IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
@@ -891,31 +890,31 @@ msgstr ""
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Specificirana adrese nisu validne kao Serveri imena"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "Ovo nije validna adresa za Server imena"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 podmreža nije validna za Server imena"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Morate da popunite Server imena2 pre nego što popunite Server imena 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Obavezno je kada koristite Server imena 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Morate da popunite Server imena 1 pre nego što popunite Server imena 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Morate da popunite Server imena 1 pre nego što popunite Server imena 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
@@ -928,11 +927,11 @@ msgstr "Ime mora biti u oznaci vlanXX gde je XX ceo broj"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tagovi su od 1 do 4095"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fizički NIC u LAGG"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
@@ -941,7 +940,7 @@ msgstr ""
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Mreža '% S' nije validna, CIDR se očekuje."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
@@ -970,7 +969,7 @@ msgstr ""
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr ""
+msgstr "Ime računara"
 
 #: network/models.py:46
 msgid "Domain"
@@ -978,23 +977,23 @@ msgstr "Domen"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 podrazumevani mrežni prolaz"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 podrazumevani mrežni prolaz"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Server imena 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Server imena 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Server imena 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
@@ -1021,6 +1020,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Kada je omogućeno, koristite DHCP da se dobiju IPv4 adrese kao i "
+"podrazumevani ruter, itd."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1037,7 +1038,7 @@ msgstr "Automatski konfiguriši IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Kada je omogućeno, automatski konfiguriši IPv6 adresu preko rtsol (8)."
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
@@ -1137,7 +1138,7 @@ msgstr "Cilljna mreža"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Prolaz"
 
 #: network/models.py:397
 msgid "Static Route"
@@ -1153,7 +1154,7 @@ msgstr "Mreža"
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr ""
+msgstr "Pregled mreže"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
