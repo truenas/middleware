@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-02-21 10:33+0200\n"
+"PO-Revision-Date: 2013-02-21 23:54+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -886,7 +886,7 @@ msgstr "Morate da izaberete između IPv4 ili IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Adresa za kružni tok podataka nije validni Server imena"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
@@ -944,27 +944,27 @@ msgstr "Mreža '% S' nije validna, CIDR se očekuje."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Morate navesti IPv4 adresu kao i po pseudonimu"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Treba da izaberete IPv4 mrežnu masku kao i po pseudonimu"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Morate navesti IPv6 adresu kao i po pseudonimu"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Morate izabrati IPv6 mrežnu masku kao i po pseudonimu"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Morate izabrati između IPv4 ili IPv6 po pseudonimu"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "Morate navesti ili validne IPv4 ili IPv6 sa maskbitom po pseudonimu"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1371,7 +1371,7 @@ msgstr "Ovo nije ispravna maska"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Polje je zahtevano za \"Omogući pretraživanje matičnog direktorijuma\"."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
@@ -1516,11 +1516,11 @@ msgstr "Tajno"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr ""
+msgstr "Ciljna strana je tajna"
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Tajna (Potvrdi)"
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
