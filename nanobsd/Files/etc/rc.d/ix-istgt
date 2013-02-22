@@ -253,9 +253,11 @@ generate_istgt_conf()
 {
 	# TODO: Use mtree instead?
 	mkdir -p ${ISTGT_CONFPATH}
+	umask 137
 	generate_istgt_auth > ${ISTGT_AUTHFILE}
 	generate_istgt_config > ${ISTGT_CONFIG}
 	generate_istgt_ctlfile > ${ISTGT_CTLFILE}
+	chmod 640 ${ISTGT_AUTHFILE} ${ISTGT_CONFIG} ${ISTGT_CTLFILE}
 }
 
 name="ix-istgt"
