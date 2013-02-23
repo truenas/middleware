@@ -91,6 +91,7 @@ downloadpluginjail() {
     if [ $? -ne 0 ] ; then
        zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
        if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
+       mkdir -p "${WORLDCHROOT}/.plugins" >/dev/null 2>&1
     fi
 
     pbi_add -e --no-checksig -p ${WORLDCHROOT} ${PJAIL}
