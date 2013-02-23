@@ -63,14 +63,15 @@ downloadpluginjail() {
   cd ${JDIR}
 
   echo "Fetching jail environment. This may take a while..."
-  echo "Downloading ${URL}/${PJAIL} ..."
 
   if [ ! -e "${PJAIL}" ] ; then
+     echo "Downloading ${URL}/${PJAIL} ..."
      get_file "${URL}/${PJAIL}" "${PJAIL}" 3
      [ $? -ne 0 ] && printerror "Error while downloading the pluginjail."
   fi
 
   if [ ! -e "${PJAILSHA256}" ] ; then
+     echo "Downloading ${URL}/${PJAILSHA256} ..."
      get_file "${URL}/${PJAILSHA256}" "${PJAILSHA256}" 3
      [ $? -ne 0 ] && printerror "Error while downloading the pluginjail sha256."
   fi

@@ -163,7 +163,7 @@ done
 : $(( META_ID += 1 ))
 
 # Check if we need to download the chroot file
-if [ "${PLUGINJAIL}" = "YES" ] ; then
+if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
   downloadpluginjail "${VERSION}"
 
 elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
