@@ -181,10 +181,10 @@ def plugins_jail_import(request):
         form = forms.JailImportForm(request.POST)
 
         if form.is_valid():
-            jail_path = form.cleaned_data["jail_path"]
-            jail_ipv4address = form.cleaned_data["jail_ipv4address"]
-            jail_ipv4netmask = form.cleaned_data["jail_ipv4netmask"]
-            plugins_path = form.cleaned_data["plugins_path"]
+            jail_path = form.cleaned_data["jail_import_path"]
+            jail_ipv4address = form.cleaned_data["jail_import_ipv4address"]
+            jail_ipv4netmask = form.cleaned_data["jail_import_ipv4netmask"]
+            plugins_path = form.cleaned_data["plugins_import_path"]
 
             if not notifier().import_jail(jail_path,
                 jail_ipv4address,
