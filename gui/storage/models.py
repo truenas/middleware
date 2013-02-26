@@ -213,6 +213,11 @@ class Volume(Model):
         else:
             n.volume_detach(self.vol_name, self.vol_fstype)
 
+        # Detach geli providers
+        if self.vol_encrypt > 0:
+            for ed in self.encrypteddisk_set.all():
+                n.geli_detach(ed.encrypted_provider)
+
         return (svcs, reloads)
 
     def delete(self, destroy=True, cascade=True):
