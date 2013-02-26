@@ -1369,6 +1369,7 @@ class notifier:
             self.__system("zpool import -R /mnt %s" % (z_name))
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
+        #TODO: geli detach -l
 
     def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
         """Attach a disk group to a zfs volume"""
@@ -1393,6 +1394,7 @@ class notifier:
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
+        #TODO: geli detach -l
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None, sparse=False):
@@ -1678,6 +1680,7 @@ class notifier:
                 if encrypt:
                     self.__system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
+            #TODO: geli detach -l
 
         if to_swap:
             self.__system('/sbin/geli onetime /dev/%s' % (to_swap))
