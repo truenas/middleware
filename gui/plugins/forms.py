@@ -304,7 +304,7 @@ class JailImportForm(Form):
     def clean_jail_import_ipv4address(self):
         return _clean_jail_ipv4address(
             self.cleaned_data.get("jail_import_ipv4address")
-            )
+        )
 
 
 class JailPBIUploadForm(Form):
