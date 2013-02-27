@@ -86,6 +86,9 @@ from freenasUI.common.pbi import (pbi_add, pbi_delete,
     PBI_MAKEPATCH_FLAGS_NOCHECKSIG, PBI_PATCH_FLAGS_OUTDIR,
     PBI_PATCH_FLAGS_NOCHECKSIG)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
+from freenasUI.common.warden import (Warden, WardenJail,
+    WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
+    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
 from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -799,6 +802,25 @@ class notifier:
                     res = True
                     break
         return res
+
+    def pluginjail_running(self, pjail=None):
+        running = False
+
+        wlist = Warden().list()
+        for wj in wlist:
+            wj = WardenJail(**wj)
+            if pjail and wj.host == pjail:
+                if wj.type == WARDEN_TYPE_PLUGINJAIL and \
+                    wj.status == WARDEN_STATUS_RUNNING:
+                    running = True
+                    break
+
+            elif not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and \
+                wj.status == WARDEN_STATUS_RUNNING:
+                running = True
+                break
+
+        return running
 
     def start_ataidle(self, what=None):
         if what is not None:
@@ -2360,7 +2382,7 @@ class notifier:
                         mounted['fs_file'],
                         ))
 
-    def install_pbi(self):
+    def install_pbi(self, pjail):
         """
         Install a .pbi file into the plugins jail
 
@@ -2370,21 +2392,32 @@ class notifier:
         Raises::
             MiddlewareError: pbi_add failed
         """
-        from freenasUI.services.models import RPCToken, PluginsJail
+        from freenasUI.services.models import RPCToken
         from freenasUI.plugins.models import Plugins
+        from freenasUI.jails.models import JailsConfiguration
         ret = False
 
-        if not self._started_plugins_jail():
+        if not pjail:
             return False
 
-        qs = PluginsJail.objects.order_by('-id')
-        if qs.count() == 0:
+        if not self.pluginjail_running(pjail=pjail):
             return False
-        pjail = qs[0]
+
+        wjail = None
+        wlist = Warden().list()
+        for wj in wlist:
+            wj = WardenJail(**wj)
+            if wj.host  == pjail:
+                wjail = wj
+                break
+
+        if wjail is None:
+            raise MiddlewareError("The plugins jail is not running, start "
+                "it before proceeding")
 
         jail = None
         for j in Jls():
-            if j.hostname == pjail.jail_name:
+            if j.hostname == wjail.host:
                 jail = j
                 break
 
@@ -2393,10 +2426,18 @@ class notifier:
             raise MiddlewareError("The plugins jail is not running, start "
                 "it before proceeding")
 
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+
+        pjail_path = "%s/%s" % (jc.jc_path, wjail.host)
+        plugins_path = "%s/%s" % (pjail_path, ".plugins")
+
         pbi = pbiname = prefix = name = version = arch = None
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
-        out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
+        #p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
+        #out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
+
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
+        out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
             raise MiddlewareError("This file was not identified as in PBI "
@@ -2430,12 +2471,10 @@ class notifier:
                 #FIXME: do pbi_update instead
                 pass
 
-        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (
-            pjail.plugins_path,
-            pbi,
-            ))
+        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="/mnt/plugins/%s" % pbi)
+        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
+            ("/.plugins", pbi))
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
             qs = Plugins.objects.filter(plugin_name=name)
@@ -2453,6 +2492,7 @@ class notifier:
             plugin.plugin_arch = arch
             plugin.plugin_version = version
             plugin.plugin_pbiname = pbiname
+            plugin.plugin_jail = wjail.host
 
             # icky, icky icky, this is how we roll though.
             port = 12345
@@ -2478,11 +2518,8 @@ class notifier:
             rpctoken = RPCToken.new()
             plugin.plugin_secret = rpctoken
 
-            oauth_file = "%s/%s/%s/.oauth" % (
-                pjail.jail_path,
-                pjail.jail_name,
-                plugin.plugin_path,
-                )
+            plugin_path = "%s/%s" % (pjail_path, plugin.plugin_path)
+            oauth_file = "%s/%s" % (plugin_path, ".oauth")
 
             fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
             os.write(fd,"key = %s\n" % rpctoken.key)

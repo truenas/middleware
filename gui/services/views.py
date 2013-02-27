@@ -34,6 +34,7 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.common.jail import Jls
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
@@ -58,6 +59,7 @@ def plugins(request):
         'start_url',
         'stop_url',
         'status_url',
+        'jail_status',
         ])
 
     host = get_base_url(request)
@@ -66,9 +68,15 @@ def plugins(request):
 
     pool = eventlet.GreenPool(20)
     for plugin, json in pool.imap(get_plugin_status, args):
-
         if not json:
             continue
+
+        jail_status = None
+        for j in Jls():
+            if j.hostname == plugin.plugin_jail:
+                jail_status = "RUNNING"
+                log.debug("XXX: %s is RUNNING", j.hostname)
+                break
 
         plugin.service = Service(
             name=plugin.plugin_name,
@@ -77,17 +85,10 @@ def plugins(request):
             start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
             stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
             status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
+            jail_status=jail_status,
             )
 
-    srv_enable = False
-    s = models.services.objects.filter(srv_service='plugins')
-    if s:
-        s = s[0]
-        srv_enable = s.srv_enable
-
-    jail_configured = notifier().plugins_jail_configured() and \
-        notifier()._started_plugins_jail() and srv_enable
-
+    jail_configured = notifier().pluginjail_running()
     return render(request, "services/plugins.html", {
         'plugins': plugins,
         'jail_configured': jail_configured,
