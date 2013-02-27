@@ -105,6 +105,7 @@ define([
       templateString: template,
       disks: "{}",
       url: "",
+      url_progress: "",
       dedup_warning: "",
       extend: "",
       add_label: 'Add Volume<br/ ><span style="color: red;">Existing data will be cleared</span>',
@@ -188,29 +189,29 @@ define([
         }, this.dapExtend);
 
         new Select({
-            name: "dedup",
-            options: [
-                { label: "On", value: "on" },
-                { label: "Off", value: "off" },
-            ],
-            value: "off"
+          name: "dedup",
+          options: [
+            { label: "On", value: "on" },
+            { label: "Off", value: "off" },
+          ],
+          value: "off"
         }, this.dapDedup);
 
         enc = new CheckBox({
-            name: "encryption"
+          name: "encryption"
         }, this.dapDiskEnc);
 
         encini = new CheckBox({
-            name: "encryption_inirand",
-            disabled: true
+          name: "encryption_inirand",
+          disabled: true
         }, this.dapDiskEncIni);
 
         on(enc, "click", function() {
-            if(this.get("value") == "on") {
-                encini.set('disabled', false);
-            } else {
-                encini.set('disabled', true);
-            }
+          if(this.get("value") == "on") {
+            encini.set('disabled', false);
+          } else {
+            encini.set('disabled', true);
+          }
         });
 
         this._avail_disks = {};
@@ -312,15 +313,40 @@ define([
 
         var resize = new ResizeHandle({
             targetContainer: div,
-            resizeAxis: "x",
-            activeResize: true,
+            resizeAxis: "xy",
+            activeResize: false,
+            animateSizing: false, // Animated cause problem to get the size in onResize
+            _checkConstraints: function(newW, newH){
+              var perNode = 48;
+              var perRow = 30;
+              var numRows = (newH / perRow);
+              var floorR = Math.floor(numRows);
+
+              /*
+               * Make sure adding rows will keep the original width size
+               */
+              if(numRows - floorR < 0.6 && this.startSize.h == floorR * perRow) {
+                newH = floorR * perRow;
+                var numNodes = newW / perNode;
+                var floor = Math.floor(numNodes);
+                if(numNodes - floor < 0.5) {
+                  newW = floor * perNode;
+                } else {
+                  newW = (floor + 1) * perNode;
+                }
+              } else {
+                newH = (floorR + 1) * perRow;
+                newW = this.startSize.w;
+              }
+
+              return { w: newW, h: newH };
+            },
             minHeight: 30,
-            maxHeight: 30,
             minWidth: 30,
             intermediateChanges: true,
             getSlots: function() {
-                var width = domStyle.get(this.domNode.parentNode, "width");
-                return Math.floor(width / 48);
+              var width = domStyle.get(this.targetDomNode, "width");
+              return Math.floor(width / 48);
             },
             onResize: function(e) {
               var resize = this, drawer;
@@ -333,13 +359,17 @@ define([
                 }
               }
               if(numdisks > this.entry.disks.length && drawer) {
-                // add new disk to resizer
-                var newdisk = drawer[0].addToRow(this.entry);
+                for(var i=this.entry.disks.length;i<numdisks && drawer.length > 0;i++) {
+                  // add new disk to resizer
+                  var newdisk = drawer[0].addToRow(this.entry);
+                }
               } else if(numdisks < this.entry.disks.length) {
+                for(var i=numdisks;i<this.entry.disks.length;i++) {
                 query(".disk:last-child", this.domNode.parentNode).forEach(function(node) {
-                    var disk = registry.getEnclosingWidget(node);
-                    disk.remove();
+                  var disk = registry.getEnclosingWidget(node);
+                  disk.remove();
                 });
+                }
 
               }
               me._disksCheck(resize.entry);
@@ -361,8 +391,8 @@ define([
           var td = domConst.create("td", {innerHTML: "Delete"}, tr);
           on(td, "click", function() {
             while(true) {
-                if(this.entry.disks.length == 0) break;
-                var disk = this.entry.disks[0].remove();
+              if(this.entry.disks.length == 0) break;
+              var disk = this.entry.disks[0].remove();
             }
             domConst.destroy(tr);
           });
@@ -393,16 +423,16 @@ define([
       _disksCheck: function(entry) {
         var check = {
           'raidz': function(num) {
-              if(num < 3) return false;
-              return (Math.log(num - 1) / Math.LN2) % 1 == 0;
+            if(num < 3) return false;
+            return (Math.log(num - 1) / Math.LN2) % 1 == 0;
           },
           'raidz2': function(num) {
-              if(num < 4) return false;
-              return (Math.log(num - 2) / Math.LN2) % 1 == 0;
+            if(num < 4) return false;
+            return (Math.log(num - 2) / Math.LN2) % 1 == 0;
           },
           'raidz3': function(num) {
-              if(num < 5) return false;
-              return (Math.log(num - 3) / Math.LN2) % 1 == 0;
+            if(num < 5) return false;
+            return (Math.log(num - 3) / Math.LN2) % 1 == 0;
           }
         };
         var vdevtype = entry.vdev.get("value");
@@ -424,20 +454,21 @@ define([
          * It is easier than keep track of the fields on-the-fly
          */
         for(var i=0;i<this._layout.length;i++) {
-            var entry = this._layout[i];
-            entry.vdev.set('name', 'layout-' + i + '-vdevtype');
-            entry.vdisks.set('name', 'layout-' + i + '-disks');
-            var disks = [];
-            for(var key in entry.disks) {
-                disks.push(entry.disks[key].get("name"));
-            }
-            entry.vdisks.set('value', disks);
-            domAttr.set(entry.vdisks.domNode.parentNode, "data-dojo-name", 'layout-' + i + '-disks');
+          var entry = this._layout[i];
+          entry.vdev.set('name', 'layout-' + i + '-vdevtype');
+          entry.vdisks.set('name', 'layout-' + i + '-disks');
+          var disks = [];
+          for(var key in entry.disks) {
+            disks.push(entry.disks[key].get("name"));
+          }
+          entry.vdisks.set('value', disks);
+          domAttr.set(entry.vdisks.domNode.parentNode, "data-dojo-name", 'layout-' + i + '-disks');
         }
         this._total_vdevs.set('value', this._layout.length);
         doSubmit({
-            url: this.url,
-            form: this._form
+          url: this.url,
+          form: this._form,
+          progressbar: this.url_progress
         });
       }
     });
