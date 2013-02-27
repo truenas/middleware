@@ -56,8 +56,9 @@ require([
     "freeadmin/tree/Tree",
     "freeadmin/ESCDialog",
     "freeadmin/Menu",
-    "freeadmin/WebShell",
     "freeadmin/RRDControl",
+    "freeadmin/VolumeManager",
+    "freeadmin/WebShell",
     "freeadmin/tree/TreeLazy",
     "freeadmin/tree/JsonRestStore",
     "freeadmin/tree/ForestStoreModel",
@@ -129,8 +130,9 @@ require([
     Tree,
     ESCDialog,
     fMenu,
-    WebShell,
     RRDControl,
+    VolumeManager,
+    WebShell,
     TreeLazy,
     JsonRestStore,
     ForestStoreModel,
@@ -535,18 +537,27 @@ require([
                 domConstruct.destroy(item);
             });
             if(data.error == true) {
-                var first = null;
-                for(key in data.errors) {
+                var first, field, dom, node;
+                for(var key in data.errors) {
 
-                    field = query("input[name="+key+"],textarea[name="+key+"],select[name="+key+"]", form.domNode);
-                    if(field.length == 0) {
-                        console.log("Form element not found: ", key);
-                        continue;
+                    dom = query("input[name="+key+"],textarea[name="+key+"],select[name="+key+"]", form.domNode);
+                    if(dom.length == 0) {
+                        dom = query("div[data-dojo-name="+key+"]", form.domNode);
+                        if(dom.length != 0) {
+                            node = dom[0];
+                        } else {
+                            console.log("Form element not found: ", key);
+                            continue;
+                        }
+                    } else {
+                        field = registry.getEnclosingWidget(dom[0]);
+                        if(field) {
+                            if(!first && field.focus)
+                                first = field;
+                            node = field.domNode;
+                        }
                     }
-                    field = registry.getEnclosingWidget(field[0]);
-                    if(!first && field.focus)
-                        first = field;
-                    var ul = domConstruct.create('ul', {style: {display: "none"}}, field.domNode.parentNode, "first");
+                    var ul = domConstruct.create('ul', {style: {display: "none"}}, node.parentNode, "first");
                     domAttr.set(ul, "class", "errorlist");
                     for(var i=0; i<data.errors[key].length;i++) {
                         var li = domConstruct.create('li', {innerHTML: data.errors[key][i]}, ul);
@@ -631,8 +642,10 @@ require([
             attrs = {};
         }
 
-        // prevent the default submit
-        dEvent.stop(attrs.event);
+        if(attrs.event !== undefined) {
+            // prevent the default submit
+            dEvent.stop(attrs.event);
+        }
 
         query('input[type=button],input[type=submit]', attrs.form.domNode).forEach(
             function(inputElem){

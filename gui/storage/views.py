@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import defaultdict
+import json
 import logging
 import os
 import re
@@ -32,6 +34,7 @@ import subprocess
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
+from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import simplejson
@@ -108,6 +111,62 @@ def replications_keyscan(request):
 
 def snapshots(request):
     return render(request, 'storage/snapshots.html')
+
+
+def volumemanager(request):
+
+    if request.method == "POST":
+        form = forms.VolumeManagerForm(request.POST)
+        VdevFormSet = formset_factory(
+            forms.VolumeVdevForm,
+            formset=forms.VdevFormSet)
+        formset = VdevFormSet(request.POST, prefix='layout')
+        formset.form = form
+        if form.is_valid() and formset.is_valid() and form.done(formset):
+            return JsonResp(request, message=_("Volume successfully added."))
+        else:
+            return JsonResp(request, form=form, formsets={'layout': formset})
+    disks = []
+
+    # Grab disk list
+    # Root device already ruled out
+    for disk, info in notifier().get_disks().items():
+        disks.append(forms.Disk(
+            info['devname'],
+            info['capacity'],
+            serial=info.get('ident')
+        ))
+
+    # Exclude what's already added
+    used_disks = []
+    for v in models.Volume.objects.all():
+        used_disks.extend(v.get_disks())
+
+    qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+    used_disks.extend([i.get_device()[5:] for i in qs])
+
+    bysize = defaultdict(list)
+    for d in list(disks):
+        if d.dev in used_disks:
+            continue
+        hsize = forms.humanize_number_si(d.size)
+        bysize[hsize].append({
+            'dev': d.dev,
+            'name': str(d),
+            'size': d.size,
+            'serial': d.serial,
+        })
+
+    qs = models.Volume.objects.filter(vol_fstype='ZFS')
+
+    return render(request, "storage/volumemanager.html", {
+        'disks': json.dumps(bysize),
+        'dedup_warning': forms.DEDUP_WARNING,
+        'extend': json.dumps(
+            [{'value': '', 'label': '-----'}] +
+            [{'label': x.vol_name, 'value': x.vol_name} for x in qs]
+        ),
+    })
 
 
 def wizard(request):

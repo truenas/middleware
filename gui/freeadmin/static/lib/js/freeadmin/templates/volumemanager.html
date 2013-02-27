@@ -1,0 +1,74 @@
+<div data-dojo-attach-point="dapManager">
+<form data-dojo-attach-point="dapForm">
+  <input type="hidden" data-dojo-attach-point="dapAll" />
+  <table>
+    <tr>
+      <th>Volume Name</th>
+    </tr>
+    <tr>
+      <td>
+        <input data-dojo-attach-point="dapName" type="text" />
+      </td>
+    </tr>
+    <tr>
+      <th>Volume to extend</th>
+    </tr>
+    <tr>
+      <td>
+        <select data-dojo-attach-point="dapExtend"></select>
+      </td>
+    </tr>
+    <tr>
+      <th>Enable full disk encryption</th>
+    </tr>
+    <tr>
+      <td>
+        <input data-dojo-attach-point="dapDiskEnc" type="checkbox" />
+      </td>
+    </tr>
+    <tr>
+      <th>Initialize disks with random data</th>
+    </tr>
+    <tr>
+      <td>
+        <input data-dojo-attach-point="dapDiskEncIni" type="checkbox" />
+      </td>
+    </tr>
+    <tr>
+      <th>Deduplication</th>
+    </tr>
+    <tr>
+      <td>
+        <p>${dedup_warning}</p>
+        <input data-dojo-attach-point="dapDedup" type="checkbox" />
+      </td>
+    </tr>
+    <tr>
+      <th>Available disks</th>
+    </tr>
+    <tr>
+      <td>
+        <div data-dojo-attach-point="dapDisks">
+        <table data-dojo-attach-point="dapDisksTable">
+        </table>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <th>Volume layout</th>
+    </tr>
+    <tr>
+      <td>
+        <div data-dojo-attach-point="dapLayout">
+        <input type="hidden" data-dojo-attach-point="dapLayoutAll" />
+        <table data-dojo-attach-point="dapLayoutTable">
+        </table>
+        <button data-dojo-attach-point="dapLayoutAdd" />
+        </div>
+      </td>
+    </tr>
+  <table>
+  <button data-dojo-attach-point="dapAdd" />
+  <button data-dojo-attach-point="dapCancel" />
+</form>
+</div>

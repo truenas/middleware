@@ -90,6 +90,11 @@ class JsonResp(HttpResponse):
                 error = True
 
             for name, fs in self.formsets.items():
+                fserrors = fs.non_form_errors()
+                if fserrors:
+                    error = True
+                    errors["%s-__all__" % name] = [unicode(e) for e in fserrors]
+
                 for i, form in enumerate(fs.forms):
                     if form.errors:
                         error = True

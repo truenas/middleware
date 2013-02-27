@@ -39,6 +39,7 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.forms import FileField
+from django.forms.formsets import BaseFormSet
 from django.http import HttpResponse, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
@@ -135,7 +136,20 @@ def _clean_quota_fields(form, attrs, prefix):
     return cdata
 
 
-class VolumeWizardForm(forms.Form):
+class VolumeMixin(object):
+
+    def clean_volume_name(self):
+        vname = self.cleaned_data['volume_name']
+        if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
+            raise forms.ValidationError(_("The volume name must start with "
+                "letters and may include numbers, \"-\", \"_\" and \".\" ."))
+        if models.Volume.objects.filter(vol_name=vname).exists():
+            raise forms.ValidationError(_("A volume with that name already "
+                "exists."))
+        return vname
+
+
+class VolumeWizardForm(forms.Form, VolumeMixin):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -251,16 +265,6 @@ class VolumeWizardForm(forms.Form):
         choices = sorted(disks)
         choices = [tuple(d) for d in choices]
         return choices
-
-    def clean_volume_name(self):
-        vname = self.cleaned_data['volume_name']
-        if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
-            raise forms.ValidationError(_("The volume name must start with "
-                "letters and may include numbers, \"-\", \"_\" and \".\" ."))
-        if models.Volume.objects.filter(vol_name=vname).exists():
-            raise forms.ValidationError(_("A volume with that name already "
-                "exists."))
-        return vname
 
     def clean_group_type(self):
         len_disks = len(self.cleaned_data['volume_disks'])
@@ -502,6 +506,170 @@ class VolumeWizardForm(forms.Form):
             # For scrub cronjob
             if volume.vol_fstype == 'ZFS':
                 notifier().restart("cron")
+
+
+class VolumeManagerForm(VolumeMixin, forms.Form):
+    volume_name = forms.CharField(
+        max_length=30,
+        required=False)
+    volume_add = forms.CharField(
+        max_length=30,
+        required=False)
+    encryption = forms.BooleanField(
+        required=False,
+        initial=False,
+    )
+    encryption_inirand = forms.BooleanField(
+        initial=False,
+        required=False,
+    )
+    dedup = forms.ChoiceField(
+        choices=choices.ZFS_DEDUP,
+        initial="off",
+    )
+
+    def clean(self):
+        vname = (
+            self.cleaned_data.get("volume_name") or
+            self.cleaned_data.get("volume_add")
+        )
+        if not vname:
+            self._errors['__all__'] = self.error_class([
+                _("You must specify a new volume name or select an existing "
+                  "ZFS volume to append a virtual device"),
+            ])
+        else:
+            self.cleaned_data["volume_name"] = vname
+        return self.cleaned_data
+
+    def done(self, formset):
+        volume_name = self.cleaned_data.get("volume_name")
+        init_rand = self.cleaned_data.get("encryption_inirand", False)
+        if self.cleaned_data.get("encryption", False):
+            volume_encrypt = 1
+        else:
+            volume_encrypt = 0
+        dedup = self.cleaned_data.get("dedup", False)
+        force4khack = True
+
+        with transaction.commit_on_success():
+            vols = models.Volume.objects.filter(
+                vol_name=volume_name,
+                vol_fstype='ZFS')
+            if vols.count() > 0:
+                volume = vols[0]
+                add = True
+            else:
+                add = False
+                volume = models.Volume(
+                    vol_name=volume_name,
+                    vol_fstype='ZFS',
+                    vol_encrypt=volume_encrypt)
+                volume.save()
+
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options="rw",
+                )
+                mp.save()
+            self.volume = volume
+
+            grouped = OrderedDict()
+            #FIXME: Make log as log mirror
+            for i, form in enumerate(formset):
+                grouped[i] = {
+                    'type': form.cleaned_data.get("vdevtype"),
+                    'disks': form.cleaned_data.get("disks"),
+                }
+
+            if add:
+                for gtype, group in grouped.items():
+                    notifier().zfs_volume_attach_group(
+                        volume,
+                        group,
+                        force4khack=force4khack)
+
+            else:
+                notifier().init(
+                    "volume",
+                    volume,
+                    groups=grouped,
+                    force4khack=force4khack,
+                    init_rand=init_rand,
+                )
+
+                if dedup:
+                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
+
+                if volume.vol_fstype == 'ZFS':
+                    models.Scrub.objects.create(scrub_volume=volume)
+
+        # This must be outside transaction block to make sure the changes
+        # are committed before the call of ix-fstab
+        notifier().reload("disk")
+        # For scrub cronjob
+        if volume.vol_fstype == 'ZFS':
+            notifier().restart("cron")
+
+        return True
+
+
+class VolumeVdevForm(forms.Form):
+    vdevtype = forms.CharField(
+        max_length=20,
+    )
+    disks = forms.CharField(
+        max_length=100,
+        widget=forms.widgets.SelectMultiple(),
+    )
+
+    def clean_disks(self):
+        vdev = self.cleaned_data.get("vdevtype")
+        #TODO: Safe?
+        disks = eval(self.cleaned_data.get("disks"))
+        errmsg = _("You need at least %d disks")
+        if vdev == "mirror" and len(disks) < 2:
+            raise forms.ValidationError(errmsg % 2)
+        elif vdev == "raidz" and len(disks) < 3:
+            raise forms.ValidationError(errmsg % 3)
+        elif vdev == "raidz2" and len(disks) < 4:
+            raise forms.ValidationError(errmsg % 4)
+        elif vdev == "raidz3" and len(disks) < 5:
+            raise forms.ValidationError(errmsg % 5)
+        return disks
+
+    def clean(self):
+        if (
+            self.cleaned_data.get("vdevtype") == "log"
+            and
+            len(self.cleaned_data.get("disks")) > 1
+        ):
+            self.cleaned_data["vdevtype"] = "log mirror"
+        return self.cleaned_data
+
+
+class VdevFormSet(BaseFormSet):
+
+    def clean(self):
+        if any(self.errors):
+            # Don't bother validating the formset unless each form
+            # is valid on its own
+            return
+
+        """
+        We need to make sure at least one vdev is a
+        data vdev (non-log/cache/spare)
+        """
+        has_datavdev = False
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            vdevtype = form.cleaned_data['vdevtype']
+            if vdevtype in ('mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'):
+                has_datavdev = True
+                break
+        if not has_datavdev:
+            raise forms.ValidationError("You need a storage vdev")
 
 
 class VolumeImportForm(forms.Form):

@@ -1,6 +1,15 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_buttons %}
 
+    <button id="newVolumeBtn" data-dojo-type="dijit.form.Button">
+    <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
+    <p>{% trans "ZFS Volume Manager" %}</p>
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        editObject('{% trans "ZFS Volume Manager"|escapejs %}', '{% url storage_volumemanager %}', [this,]);
+    </script>
+    </button>
+
+
     <button id="addVolumeBtn" data-dojo-type="dijit.form.Button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
     <p>{% trans "Volume Manager" %}</p>

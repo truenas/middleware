@@ -1315,7 +1315,7 @@ class notifier:
 
         want4khack = force4khack
 
-        for name, vgrp in groups.items():
+        for vgrp in groups.values():
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
