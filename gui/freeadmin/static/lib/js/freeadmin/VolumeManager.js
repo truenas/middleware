@@ -360,7 +360,11 @@ define([
           var me = this;
           var td = domConst.create("td", {innerHTML: "Delete"}, tr);
           on(td, "click", function() {
-              domConst.destroy(tr);
+            while(true) {
+                if(this.entry.disks.length == 0) break;
+                var disk = this.entry.disks[0].remove();
+            }
+            domConst.destroy(tr);
           });
 
         }
@@ -376,6 +380,7 @@ define([
           numcol: numcol
         };
         resize.entry = entry;
+        td.entry = entry;
 
         on(vdevt, "change", function() {
             me._disksCheck(entry, disks.length);
