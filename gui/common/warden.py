@@ -45,6 +45,38 @@ class warden_pipe(cmd_pipe):
 class warden_exception(Exception):
     pass
 
+
+#
+# Warden dict keys
+#
+WARDEN_KEY_HOST      = "host"
+WARDEN_KEY_IP        = "ip"
+WARDEN_KEY_AUTOSTART = "autostart"
+WARDEN_KEY_STATUS    = "status"
+WARDEN_KEY_TYPE      = "type"
+WARDEN_KEY_ID        = "id"
+
+#
+# Warden jail status 
+#
+WARDEN_STATUS_RUNNING = "Running"
+WARDEN_STATUS_STOPPED = "Stopped"
+
+#
+# Warden jail type
+#
+WARDEN_TYPE_STANDARD   = "standard"
+WARDEN_TYPE_PLUGINJAIL = "pluginjail"
+WARDEN_TYPE_PORTJAIL   = "portjail"
+WARDEN_TYPE_LINUXJAIL  = "linuxjail"
+
+#
+# Warden jail autostart 
+#
+WARDEN_AUTOSTART_ENABLED  = "Enabled"
+WARDEN_AUTOSTART_DISABLED = "Disabled"
+
+
 WARDEN_FLAGS_NONE = warden_arg(0x00000000, None)
 
 WARDEN_AUTO = "auto"
@@ -141,12 +173,14 @@ WARDEN_STOP = "stop"
 WARDEN_STOP_FLAGS = []
 
 WARDEN_TYPE = "type"
-WARDEN_TYPE_FLAGS_PORTJAIL	= warden_arg(0x00000001, "portjail")
-WARDEN_TYPE_FLAGS_PLUGINJAIL	= warden_arg(0x00000002, "pluginjail")
-WARDEN_TYPE_FLAGS_STANARD	= warden_arg(0x00000004, "standard")
+WARDEN_TYPE_FLAGS_PORTJAIL	= warden_arg(0x00000001, WARDEN_TYPE_PORTJAIL)
+WARDEN_TYPE_FLAGS_PLUGINJAIL	= warden_arg(0x00000002, WARDEN_TYPE_PLUGINJAIL)
+WARDEN_TYPE_FLAGS_LINUXJAIL     = warden_arg(0x00000002, WARDEN_TYPE_LINUXJAIL)
+WARDEN_TYPE_FLAGS_STANARD	= warden_arg(0x00000004, WARDEN_TYPE_STANDARD)
 WARDEN_TYPE_FLAGS = [
     WARDEN_TYPE_FLAGS_PORTJAIL,
     WARDEN_TYPE_FLAGS_PLUGINJAIL,
+    WARDEN_TYPE_FLAGS_LINUXJAIL,
     WARDEN_TYPE_FLAGS_STANARD
 ]
 
@@ -173,6 +207,16 @@ WARDEN_ZFSRMCLONE_FLAGS = []
 
 WARDEN_ZFSRMSNAP = "zfsrmsnap"
 WARDEN_ZFSRMSNAP_FLAGS = []
+
+
+class WardenJail(object):
+    def __init__(self, **kwargs):
+        self.host = kwargs.get(WARDEN_KEY_HOST)
+        self.ip = kwargs.get(WARDEN_KEY_IP)
+        self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
+        self.status = kwargs.get(WARDEN_KEY_STATUS)
+        self.type = kwargs.get(WARDEN_KEY_TYPE)
+        self.id = kwargs.get(WARDEN_KEY_ID)
 
 
 class warden_base(object):
@@ -420,15 +464,15 @@ class warden_list(warden_base):
                 if len(parts) < 5:
                     continue 
                 jail = {
-                    "host": parts[0],
-                    "ip": parts[1],
-                    "autostart": parts[2],
-                    "status": parts[3],
-                    "type": parts[4]
+                    WARDEN_KEY_HOST: parts[0],
+                    WARDEN_KEY_IP: parts[1],
+                    WARDEN_KEY_AUTOSTART: parts[2],
+                    WARDEN_KEY_STATUS: parts[3],
+                    WARDEN_KEY_TYPE: parts[4]
                 }
 
                 if self.flags & WARDEN_LIST_FLAGS_IDS:
-                    jail["id"] = int(parts[5])
+                    jail[WARDEN_KEY_ID] = int(parts[5])
 
                 jails.append(jail)
 
@@ -734,7 +778,12 @@ class Warden(warden_base):
         return self.__call(warden_type(flags, **kwargs))
 
     def types(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        types = ['standard', 'portjail', 'pluginjail', 'linuxjail']
+        types = [
+            WARDEN_TYPE_STANDARD,
+            WARDEN_TYPE_PORTJAIL,
+            WARDEN_TYPE_PLUGINJAIL,
+            WARDEN_TYPE_LINUXJAIL
+        ]
         return types
 
     def zfsmksnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):

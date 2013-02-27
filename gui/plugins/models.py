@@ -87,6 +87,12 @@ class Plugins(Model):
         help_text=_("Path where the plugins are saved after installation")
         )
 
+    plugin_jail = models.CharField(
+        max_length=120,
+        verbose_name=_("Plugin jail name"),
+        help_text=_("Jail where the plugin is installed")
+        )
+
     plugin_secret = models.ForeignKey(
         'services.RPCToken',
         on_delete=models.PROTECT,  # Do not allow foreign key to be deleted

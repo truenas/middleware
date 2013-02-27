@@ -35,6 +35,9 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.warden import (Warden,
+    WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
+    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.forms import PathField
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -46,6 +49,7 @@ from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import (
     clean_path_execbit, clean_path_locked, FileWizard
 )
+from freenasUI.jails.models import JailsConfiguration
 
 log = logging.getLogger('plugins.forms')
 
@@ -170,15 +174,30 @@ class PBITemporaryLocationForm(Form):
 
 class PBIUploadForm(Form):
     pbifile = FileField(label=_("PBI file to be installed"), required=True)
+    pjail = forms.ChoiceField(
+        label=_("Plugin Jail"),
+        help_text=_("The plugin jail that the PBI is to be installed in."),
+        choices=(),
+        widget=forms.Select(attrs={'class': 'required'}),
+        )
 
     def __init__(self, *args, **kwargs):
         super(PBIUploadForm, self).__init__(*args, **kwargs)
 
-        pj = PluginsJail.objects.order_by("-id")[0]
+        jc = JailsConfiguration.objects.order_by("-id")[0]
         try:
-            clean_path_execbit(pj.plugins_path)
+            clean_path_execbit(jc.jc_path)
         except forms.ValidationError, e:
             self.errors['__all__'] = self.error_class(e.messages)
+
+        pjlist = []
+        wlist = Warden().list()
+        for wj in wlist:
+            if wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and \
+                wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
+                pjlist.append(wj[WARDEN_KEY_HOST])
+
+        self.fields['pjail'].choices = [(pj, pj) for pj in pjlist ]
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -200,8 +219,9 @@ class PBIUploadForm(Form):
         return cleaned_data
 
     def done(self, *args, **kwargs):
-        notifier().install_pbi()
-        notifier().restart("plugins")
+        pjail = self.cleaned_data.get('pjail')
+        notifier().install_pbi(pjail)
+#        notifier().restart("plugins")
 
 
 class PBIUpdateForm(PBIUploadForm):

@@ -158,10 +158,22 @@ class Jails(Model):
 class JailsConfiguration(Model):
 
     jc_path = models.CharField(
-        max_length=120,
+        max_length=1024,
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
-    )
+        )
+    jc_ipv4_network = models.CharField(
+        blank=True,
+        max_length=120,
+        verbose_name=_("IPv4 Network"),
+        help_text=_("IPv4 network range for jails and plugins")
+        )
+    jc_ipv6_network = models.CharField(
+        blank=True,
+        max_length=120,
+        verbose_name=_("IPv6 Network"),
+        help_text=_("IPv6 network range for jails and plugins")
+        )
 
     def save(self, *args, **kwargs):
         super(JailsConfiguration, self).save(*args, **kwargs)
