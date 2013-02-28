@@ -134,7 +134,7 @@ define([
             { label: "Log (ZIL)", value: "log" },
             { label: "Cache (L2ARC)", value: "cache" }
           ],
-        }, this.dapVdevType);
+        }).placeAt(this.dapVdevType);
         if(this.type) {
           this.vdevtype.set('value', this.type);
         }
