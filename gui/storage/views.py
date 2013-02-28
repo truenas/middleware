@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import defaultdict
+from collections import OrderedDict
 import json
 import logging
 import os
@@ -50,6 +50,16 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 
 log = logging.getLogger('storage.views')
+
+
+#FIXME: Move to a utils module
+def _diskcmp(a, b):
+    rega = re.search(r'^([a-z]+)(\d+)$', a[1])
+    regb = re.search(r'^([a-z]+)(\d+)$', b[1])
+    return cmp(
+        (a[0], rega.group(1), int(rega.group(2))),
+        (b[0], regb.group(1), int(regb.group(2))),
+    )
 
 
 def home(request):
@@ -136,7 +146,7 @@ def volumemanager(request):
             info['capacity'],
             serial=info.get('ident')
         ))
-    disks = sorted(disks)
+    disks = sorted(disks, key=lambda x: (x.size, x.dev), cmp=_diskcmp)
 
     # Exclude what's already added
     used_disks = []
@@ -146,17 +156,21 @@ def volumemanager(request):
     qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
     used_disks.extend([i.get_device()[5:] for i in qs])
 
-    bysize = defaultdict(list)
+    bysize = dict()
     for d in list(disks):
         if d.dev in used_disks:
             continue
         hsize = forms.humanize_number_si(d.size)
+        if hsize not in bysize:
+            bysize[hsize] = []
         bysize[hsize].append({
             'dev': d.dev,
             'name': str(d),
             'size': d.size,
             'serial': d.serial,
         })
+
+    bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
     qs = models.Volume.objects.filter(vol_fstype='ZFS')
 
