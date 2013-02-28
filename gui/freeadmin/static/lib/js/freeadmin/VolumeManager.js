@@ -171,8 +171,11 @@ define([
                  newW = this.lastW;
                  this._extraRows = this.lastExtra;
               } else {
-                 this.lastH = newH;
-                 this.lastW = newW;
+                if(this.lastH != newH || this.lastW != newW) {
+                  me.manager._disksCheck(me, false, floor, floorR);
+                  this.lastH = newH;
+                  this.lastW = newW;
+                }
                  this.lastExtra = this._extraRows;
               }
 
@@ -242,7 +245,11 @@ define([
         }
 
         on(this.vdevtype, "change", function() {
+          if(this._stopEvent !== true) {
             me.manager._disksCheck(me, true);
+          } else {
+            this._stopEvent = false;
+          }
         });
         this.manager._disksCheck(this);
 
@@ -486,14 +493,19 @@ define([
             return (Math.log(num - 3) / Math.LN2) % 1 == 0;
           }
       },
-      _disksCheck: function(vdev, manual) {
+      _disksCheck: function(vdev, manual, cols, rows) {
 
-        var found = false, has_check = false;
-        var numdisks = vdev.disks.length;
+        var found = false, has_check = false, numdisks;
+        if(cols !== undefined) {
+          numdisks = cols;
+        } else {
+          numdisks = vdev.disks.length;
+        }
 
         if(manual !== true) {
           for(var key in this._optimalCheck) {
             if(this._optimalCheck[key](numdisks)) {
+              vdev.vdevtype._stopEvent = true;
               vdev.vdevtype.set('value', key);
               found = true;
               has_check = true;
@@ -513,14 +525,19 @@ define([
           }
         }
 
+        if(rows !== undefined && rows > 1) {
+          rows = rows +'x ';
+        } else {
+          rows = '';
+        }
         if(has_check) {
           if(found) {
-            vdev.dapNumCol.innerHTML = numdisks + ' disks; optimal';
+            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks; optimal';
           } else {
-            vdev.dapNumCol.innerHTML = numdisks + ' disks; non-optimal';
+            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks; non-optimal';
           }
         } else {
-          vdev.dapNumCol.innerHTML = numdisks + ' disks';
+          vdev.dapNumCol.innerHTML = rows + numdisks + ' disks';
         }
       },
       submit: function() {
