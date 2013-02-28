@@ -132,6 +132,13 @@ define([
           }
         }
       },
+      getAvailDisksNum: function() {
+        var num = 0;
+        for(var size in this._avail_disks) {
+          num += this._avail_disks[size].length;
+        }
+        return num;
+      },
       postCreate: function() {
 
         var me = this, volume_name, volume_add, okbtn, enc, encini;
@@ -284,7 +291,7 @@ define([
       },
       addVdev: function(removable) {
 
-        var me = this;
+        var me = this, tr, td, div, div2, vdevdisks, resize;
         var disks = [];
         var vdevt = new Select({
           options: [
@@ -298,20 +305,20 @@ define([
           ],
         });
 
-        var tr = domConst.create("tr");
+        tr = domConst.create("tr");
 
-        var td = domConst.create("td", null, tr);
+        td = domConst.create("td", null, tr);
         domConst.place(vdevt.domNode, td);
 
-        var td = domConst.create("td", null, tr);
-        var div = domConst.create("div", null, td);
-        var div2 = domConst.create("div");
+        td = domConst.create("td", null, tr);
+        div = domConst.create("div", null, td);
+        div2 = domConst.create("div");
         div.appendChild(div2);
 
-        var vdevdisks = new _Widget();
+        vdevdisks = new _Widget();
         div.appendChild(vdevdisks.domNode);
 
-        var resize = new ResizeHandle({
+        resize = new ResizeHandle({
             targetContainer: div,
             resizeAxis: "xy",
             activeResize: false,
@@ -329,14 +336,29 @@ define([
                 newH = floorR * perRow;
                 var numNodes = newW / perNode;
                 var floor = Math.floor(numNodes);
-                if(numNodes - floor < 0.5) {
-                  newW = floor * perNode;
+
+                if(numNodes - floor >= 0.5) {
+                  floor += 1;
+                }
+                /*
+                 * Make sure the number of slots do not exceed number of avail disks
+                 */
+                if(this.entry.disks.length + me.getAvailDisksNum() < floor) {
+                  newW = (this.entry.disks.length + me.getAvailDisksNum()) * perNode;
                 } else {
-                  newW = (floor + 1) * perNode;
+                  newW = floor * perNode;
                 }
               } else {
-                newH = (floorR + 1) * perRow;
-                newW = this.startSize.w;
+                /*
+                 * Make sure the number of rows do not exceed number of available disks
+                 */
+                var maxrows = Math.floor((this.entry.disks.length + me.getAvailDisksNum()) / this.entry.disks.length);
+                if(floorR + 1 > maxrows) {
+                  newH = maxrows * perRow;
+                } else {
+                  newH = (floorR + 1) * perRow;
+                }
+                newW = this.entry.disks.length * perNode;
               }
 
               return { w: newW, h: newH };
