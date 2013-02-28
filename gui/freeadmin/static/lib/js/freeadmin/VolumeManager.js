@@ -97,6 +97,7 @@ define([
             var slots = lang.hitch(row.resize, row.resize.getSlots)();
             if(slots > row.disks.length) {
               this.addToRow(row);
+              break;
             }
           }
         } else {
@@ -188,7 +189,7 @@ define([
             minWidth: 30,
             intermediateChanges: true,
             getSlots: function() {
-              var width = domStyle.get(this.targetDomNode, "width");
+              var width = domStyle.get(this.domNode.parentNode, "width");
               return Math.floor(width / PER_NODE_WIDTH);
             },
             onResize: function(e) {
