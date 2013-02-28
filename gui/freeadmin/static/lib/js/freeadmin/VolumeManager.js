@@ -108,13 +108,18 @@ define([
 
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
       templateString: '<tr><td data-dojo-attach-point="dapVdevType"></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td><td data-dojo-attach-point="dapNumCol"></td><td data-dojo-attach-point="dapDelete">Delete</td></tr>',
-      name: "",
+      widgetsInTemplate: true,
       numDisks: 0,
       type: "",
       disks: [],
       can_delete: false,
       vdev: null,
       manager: null,
+      getChildren: function() {
+        // This needs investigating
+        // For some reason chidlren are not retrieved automatically
+        return [this.vdevtype, this.vdisks];
+      },
       postCreate: function() {
         var me = this;
         this.disks = [];
@@ -133,6 +138,7 @@ define([
         if(this.type) {
           this.vdevtype.set('value', this.type);
         }
+        this.vdevtype.startup();
 
         this.vdisks = new _Widget();
         this.dapResMain.appendChild(this.vdisks.domNode);
@@ -539,7 +545,7 @@ define([
         for(var i=0;i<this._layout.length;i++) {
           var vdev = this._layout[i];
           vdev.vdevtype.set('name', 'layout-' + i + '-vdevtype');
-          entry.vdisks.set('name', 'layout-' + i + '-disks');
+          vdev.vdisks.set('name', 'layout-' + i + '-disks');
           var disks = [];
           for(var key in vdev.disks) {
             disks.push(vdev.disks[key].get("name"));
