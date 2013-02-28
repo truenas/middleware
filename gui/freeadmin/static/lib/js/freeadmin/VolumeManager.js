@@ -77,7 +77,6 @@ define([
         this.domNode.parentNode.removeChild(this.domNode);
         row.resize.domNode.parentNode.appendChild(this.domNode);
         row.disks.push(this);
-        domStyle.set(row.resize.domNode.parentNode, "width", row.disks.length * PER_NODE_WIDTH + "px");
         lang.hitch(this.manager, this.manager.drawAvailDisks)();
         this.set('vdev', row);
         this.manager._disksCheck(row);
@@ -268,6 +267,7 @@ define([
               disk.addToRow(this);
             }
           }
+          domStyle.set(this.resize.domNode.parentNode, "width", this.numDisks * PER_NODE_WIDTH + "px");
         }
 
       }
