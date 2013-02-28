@@ -50,10 +50,10 @@ define([
   template) {
 
     var PER_NODE_WIDTH = 48;
-    var PER_NODE_HEIGHT = 30;
+    var PER_NODE_HEIGHT = 26;
 
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
-      templateString: '<div class="disk" style="width: 38px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
+      templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
       name: "",
       serial: "",
       size: "",
@@ -149,43 +149,31 @@ define([
             _extraRows: 0,
             animateSizing: false, // Animated cause problem to get the size in onResize
             _checkConstraints: function(newW, newH){
-              var numRows = (newH / PER_NODE_HEIGHT);
-              var floorR = Math.floor(numRows);
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
 
-              /*
-               * Make sure adding rows will keep the original width size
-               */
-              if(numRows - floorR < 0.6 && this.startSize.h == floorR * PER_NODE_HEIGHT) {
-                newH = floorR * PER_NODE_HEIGHT;
-                var numNodes = newW / PER_NODE_WIDTH;
-                var floor = Math.floor(numNodes);
+              var numRows = (newH / PER_NODE_HEIGHT);
+              var floorR = Math.floor(numRows);
+              if(numRows - floorR >= 0.5) {
+                floorR += 1;
+              }
+              newH = floorR * PER_NODE_HEIGHT;
 
-                if(numNodes - floor >= 0.5) {
-                  floor += 1;
-                }
-                /*
-                 * Make sure the number of slots do not exceed number of avail disks
-                 */
-                if(availDisks < floor) {
-                  newW = availDisks * PER_NODE_WIDTH;
-                } else {
-                  newW = floor * PER_NODE_WIDTH;
-                }
+              var numNodes = newW / PER_NODE_WIDTH;
+              var floor = Math.floor(numNodes);
+              if(numNodes - floor >= 0.5) {
+                floor += 1;
+              }
+              newW = floor * PER_NODE_WIDTH;
+              this._extraRows = floorR - 1;
+
+              if(floor * floorR > availDisks) {
+                 newH = this.lastH;
+                 newW = this.lastW;
+                 this._extraRows = this.lastExtra;
               } else {
-                /*
-                 * Make sure the number of rows do not exceed number of available disks
-                 */
-                var maxrows = Math.floor(availDisks / me.disks.length);
-                var rows;
-                if(floorR + 1 > maxrows) {
-                  rows = maxrows;
-                } else {
-                  rows = floorR + 1;
-                }
-                newH = rows * PER_NODE_HEIGHT;
-                this._extraRows = rows - 1;
-                newW = me.disks.length * PER_NODE_WIDTH;
+                 this.lastH = newH;
+                 this.lastW = newW;
+                 this.lastExtra = this._extraRows;
               }
 
               return { w: newW, h: newH };
@@ -200,17 +188,14 @@ define([
             onResize: function(e) {
               var resize = this, drawer;
               var numdisks = this.getSlots();
-              drawer = null;
-              for(var key in me.manager._avail_disks) {
-                if(me.manager._avail_disks[key].length > 0) {
-                  drawer = me.manager._avail_disks[key];
-                  break;
-                }
-              }
-              if(numdisks > me.disks.length && drawer) {
-                for(var i=me.disks.length;i<numdisks && drawer.length > 0;i++) {
-                  // add new disk to resizer
-                  drawer[0].addToRow(me);
+              if(numdisks > me.disks.length) {
+                for(var i=me.disks.length;i<numdisks;i++) {
+                  var disk = me.manager.popAvailDisk();
+                  if(disk) {
+                    disk.addToRow(me);
+                  } else {
+                    break;
+                  }
                 }
               } else if(numdisks < me.disks.length) {
                 for(var i=numdisks;i<me.disks.length;i++) {
@@ -230,6 +215,7 @@ define([
                   });
                 }
                 this._extraRows = 0;
+                this.lastExtra = 0;
                 domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
               }
               me.manager._disksCheck(me);
