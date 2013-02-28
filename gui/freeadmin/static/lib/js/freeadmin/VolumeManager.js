@@ -74,6 +74,7 @@ define([
         this.domNode.parentNode.removeChild(this.domNode);
         row.resize.domNode.parentNode.appendChild(this.domNode);
         row.disks.push(this);
+        domStyle.set(row.resize.domNode.parentNode, "width", row.disks.length * 48 + "px");
         lang.hitch(this.manager, this.manager.drawAvailDisks)();
         this.set('vdev', row);
         this.manager._disksCheck(row);
@@ -138,6 +139,17 @@ define([
           num += this._avail_disks[size].length;
         }
         return num;
+      },
+      popAvailDisk: function() {
+        var disk = null;
+        for(var size in this._avail_disks) {
+          for(var idx in this._avail_disks[size]) {
+            disk = this._avail_disks[size][idx];
+            break;
+          }
+          if(disk !== null) break;
+        }
+        return disk;
       },
       postCreate: function() {
 
@@ -244,7 +256,7 @@ define([
           label: "Add Extra Row"
         }, this.dapLayoutAdd);
         on(add_extra, "click", function(evt) {
-          lang.hitch(me, me.addVdev)(true);
+          lang.hitch(me, me.addVdev)({can_delete: true});
         });
 
         okbtn = new Button({
@@ -282,14 +294,14 @@ define([
         this._form.domNode.appendChild(this._total_vdevs.domNode);
         this._form.domNode.appendChild(this._initial_vdevs.domNode);
 
-        this.addVdev(false);
+        this.addVdev({can_delete: false});
 
         //this._supportingWidgets.push(slider);
 
         this.inherited(arguments);
 
       },
-      addVdev: function(removable) {
+      addVdev: function(attrs) {
 
         var me = this, tr, td, div, div2, vdevdisks, resize;
         var disks = [];
@@ -322,6 +334,7 @@ define([
             targetContainer: div,
             resizeAxis: "xy",
             activeResize: false,
+            _extraRows: 0,
             animateSizing: false, // Animated cause problem to get the size in onResize
             _checkConstraints: function(newW, newH){
               var perNode = 48;
@@ -353,11 +366,14 @@ define([
                  * Make sure the number of rows do not exceed number of available disks
                  */
                 var maxrows = Math.floor((this.entry.disks.length + me.getAvailDisksNum()) / this.entry.disks.length);
+                var rows;
                 if(floorR + 1 > maxrows) {
-                  newH = maxrows * perRow;
+                  rows = maxrows;
                 } else {
-                  newH = (floorR + 1) * perRow;
+                  rows = floorR + 1;
                 }
+                newH = rows * perRow;
+                this._extraRows = rows - 1;
                 newW = this.entry.disks.length * perNode;
               }
 
@@ -394,6 +410,16 @@ define([
                 }
 
               }
+              if(this._extraRows > 0) {
+                for(var i=0;i<this._extraRows;i++) {
+                  me.addVdev({
+                    can_delete: true,
+                    numDisks: this.entry.disks.length
+                  });
+                }
+                this._extraRows = 0;
+                domStyle.set(this.targetDomNode, "height", "30px");
+              }
               me._disksCheck(resize.entry);
 
               lang.hitch(me, me.drawAvailDisks)();
@@ -407,7 +433,7 @@ define([
 
         var numcol = domConst.create("td", null, tr);
 
-        if(removable) {
+        if(attrs.can_delete === true) {
 
           var me = this;
           var td = domConst.create("td", {innerHTML: "Delete"}, tr);
@@ -439,7 +465,17 @@ define([
         });
         this._disksCheck(entry, disks.length);
 
+        if(attrs.numDisks !== undefined) {
+          for(var i=0;i<attrs.numDisks;i++) {
+            var disk = me.popAvailDisk();
+            if(disk) {
+              disk.addToRow(entry);
+            }
+          }
+        }
+
         this._layout.push(entry);
+        return entry;
 
       },
       _disksCheck: function(entry) {
