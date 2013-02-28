@@ -49,6 +49,9 @@ define([
   ResizeHandle,
   template) {
 
+    var PER_NODE_WIDTH = 48;
+    var PER_NODE_HEIGHT = 30;
+
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
       templateString: '<div class="disk" style="width: 38px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
       name: "",
@@ -74,7 +77,7 @@ define([
         this.domNode.parentNode.removeChild(this.domNode);
         row.resize.domNode.parentNode.appendChild(this.domNode);
         row.disks.push(this);
-        domStyle.set(row.resize.domNode.parentNode, "width", row.disks.length * 48 + "px");
+        domStyle.set(row.resize.domNode.parentNode, "width", row.disks.length * PER_NODE_WIDTH + "px");
         lang.hitch(this.manager, this.manager.drawAvailDisks)();
         this.set('vdev', row);
         this.manager._disksCheck(row);
@@ -337,17 +340,15 @@ define([
             _extraRows: 0,
             animateSizing: false, // Animated cause problem to get the size in onResize
             _checkConstraints: function(newW, newH){
-              var perNode = 48;
-              var perRow = 30;
-              var numRows = (newH / perRow);
+              var numRows = (newH / PER_NODE_HEIGHT);
               var floorR = Math.floor(numRows);
 
               /*
                * Make sure adding rows will keep the original width size
                */
-              if(numRows - floorR < 0.6 && this.startSize.h == floorR * perRow) {
-                newH = floorR * perRow;
-                var numNodes = newW / perNode;
+              if(numRows - floorR < 0.6 && this.startSize.h == floorR * PER_NODE_HEIGHT) {
+                newH = floorR * PER_NODE_HEIGHT;
+                var numNodes = newW / PER_NODE_WIDTH;
                 var floor = Math.floor(numNodes);
 
                 if(numNodes - floor >= 0.5) {
@@ -357,9 +358,9 @@ define([
                  * Make sure the number of slots do not exceed number of avail disks
                  */
                 if(this.entry.disks.length + me.getAvailDisksNum() < floor) {
-                  newW = (this.entry.disks.length + me.getAvailDisksNum()) * perNode;
+                  newW = (this.entry.disks.length + me.getAvailDisksNum()) * PER_NODE_WIDTH;
                 } else {
-                  newW = floor * perNode;
+                  newW = floor * PER_NODE_WIDTH;
                 }
               } else {
                 /*
@@ -372,9 +373,9 @@ define([
                 } else {
                   rows = floorR + 1;
                 }
-                newH = rows * perRow;
+                newH = rows * PER_NODE_HEIGHT;
                 this._extraRows = rows - 1;
-                newW = this.entry.disks.length * perNode;
+                newW = this.entry.disks.length * PER_NODE_WIDTH;
               }
 
               return { w: newW, h: newH };
@@ -384,7 +385,7 @@ define([
             intermediateChanges: true,
             getSlots: function() {
               var width = domStyle.get(this.targetDomNode, "width");
-              return Math.floor(width / 48);
+              return Math.floor(width / PER_NODE_WIDTH);
             },
             onResize: function(e) {
               var resize = this, drawer;
@@ -418,15 +419,15 @@ define([
                   });
                 }
                 this._extraRows = 0;
-                domStyle.set(this.targetDomNode, "height", "30px");
+                domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
               }
               me._disksCheck(resize.entry);
 
               lang.hitch(me, me.drawAvailDisks)();
             }
         }, div2);
-        domStyle.set(div, "height", "30px");
-        domStyle.set(div, "width", "30px");
+        domStyle.set(div, "height", PER_NODE_HEIGHT + "px");
+        domStyle.set(div, "width", "5px");
         domStyle.set(div, "position", "relative");
         domStyle.set(div2, "position", "absolute");
         resize.startup();
@@ -461,9 +462,9 @@ define([
         td.entry = entry;
 
         on(vdevt, "change", function() {
-            me._disksCheck(entry, disks.length);
+            me._disksCheck(entry, true);
         });
-        this._disksCheck(entry, disks.length);
+        this._disksCheck(entry);
 
         if(attrs.numDisks !== undefined) {
           for(var i=0;i<attrs.numDisks;i++) {
@@ -478,8 +479,7 @@ define([
         return entry;
 
       },
-      _disksCheck: function(entry) {
-        var check = {
+      _optimalCheck: {
           'raidz': function(num) {
             if(num < 3) return false;
             return (Math.log(num - 1) / Math.LN2) % 1 == 0;
@@ -492,12 +492,36 @@ define([
             if(num < 5) return false;
             return (Math.log(num - 3) / Math.LN2) % 1 == 0;
           }
-        };
-        var vdevtype = entry.vdev.get("value");
-        var optimalf = check[vdevtype];
+      },
+      _disksCheck: function(entry, manual) {
+
+        var found = false, has_check = false;
         var numdisks = entry.disks.length;
-        if(optimalf !== undefined) {
-          if(optimalf(numdisks)) {
+
+        if(manual !== true) {
+          for(var key in this._optimalCheck) {
+            if(this._optimalCheck[key](numdisks)) {
+              entry.vdev.set('value', key);
+              found = true;
+              has_check = true;
+              break;
+            }
+          }
+          if(found == false) {
+            var vdevtype = entry.vdev.get("value");
+            has_check = this._optimalCheck[vdevtype] !== undefined;
+          }
+        } else {
+          var vdevtype = entry.vdev.get("value");
+          var optimalf = this._optimalCheck[vdevtype];
+          if(optimalf !== undefined) {
+            found = optimalf(numdisks);
+            has_check = true;
+          }
+        }
+
+        if(has_check) {
+          if(found) {
             entry.numcol.innerHTML = numdisks + ' disks; optimal';
           } else {
             entry.numcol.innerHTML = numdisks + ' disks; non-optimal';
