@@ -234,7 +234,6 @@ generate_smbconf()
 		cifs_srv_guest,
 		cifs_srv_filemask,
 		cifs_srv_dirmask,
-		cifs_srv_largerw,
 		cifs_srv_sendfile,
 		cifs_srv_easupport,
 		cifs_srv_dosattr,
@@ -259,7 +258,7 @@ generate_smbconf()
 	while read -r authmodel netbiosname workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest \
 		cifs_filemask cifs_dirmask \
-		largerw sendfile easupport dosattr nullpw unixext \
+		sendfile easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ;
 	do
@@ -332,10 +331,6 @@ EOF
 
 		if [ "${sendfile}" = "1" ]; then
 			echo "    use sendfile = yes"
-		fi
-
-		if [ "${largerw}" = "0" ]; then
-			echo "    large readwrite = no"
 		fi
 
 		if [ "${easupport}" = "1" ]; then
