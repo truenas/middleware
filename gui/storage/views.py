@@ -136,6 +136,7 @@ def volumemanager(request):
             info['capacity'],
             serial=info.get('ident')
         ))
+    disks = sorted(disks)
 
     # Exclude what's already added
     used_disks = []
