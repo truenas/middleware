@@ -319,6 +319,9 @@ define([
             { label: "Cache (L2ARC)", value: "cache" }
           ],
         });
+        if(attrs.type !== undefined) {
+          vdevt.set('value', attrs.type);
+        }
 
         tr = domConst.create("tr");
 
@@ -415,7 +418,8 @@ define([
                 for(var i=0;i<this._extraRows;i++) {
                   me.addVdev({
                     can_delete: true,
-                    numDisks: this.entry.disks.length
+                    numDisks: this.entry.disks.length,
+                    type: this.entry.vdev.get("value")
                   });
                 }
                 this._extraRows = 0;
