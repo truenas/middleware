@@ -330,7 +330,7 @@ class SSL(Model):
             null=True,
             max_length=120,
             verbose_name=_("Passphrase"),
-            help_text=_("Private key passphrase)"),
+            help_text=_("Private key passphrase"),
             )
     ssl_certfile = models.TextField(
             blank=True,
