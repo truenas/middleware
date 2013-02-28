@@ -478,6 +478,9 @@ define([
 
       },
       _optimalCheck: {
+          'mirror': function(num) {
+            return num == 2;
+          },
           'raidz': function(num) {
             if(num < 3) return false;
             return (Math.log(num - 1) / Math.LN2) % 1 == 0;
