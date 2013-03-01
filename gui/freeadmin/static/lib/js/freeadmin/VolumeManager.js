@@ -111,6 +111,7 @@ define([
       numDisks: 0,
       type: "",
       disks: [],
+      initialDisks: [],
       can_delete: false,
       vdev: null,
       manager: null,
@@ -166,19 +167,19 @@ define([
               }
               if(floor < 0) floor = 0;
               newW = floor * PER_NODE_WIDTH;
-              this._extraRows = floorR - 1;
 
-              if(floor * floorR > availDisks) {
+              var disks = me.manager._disksForVdev(me, floor, floorR);
+
+              if(floor * floorR > availDisks || disks === null) {
                  newH = this.lastH;
                  newW = this.lastW;
-                 this._extraRows = this.lastExtra;
               } else {
                 if(this.lastH != newH || this.lastW != newW) {
                   me.manager._disksCheck(me, false, floor, floorR);
                   this.lastH = newH;
                   this.lastW = newW;
+                  this._disks = disks;
                 }
-                 this.lastExtra = this._extraRows;
               }
 
               return { w: newW, h: newH };
@@ -191,38 +192,33 @@ define([
               return Math.floor(width / PER_NODE_WIDTH);
             },
             onResize: function(e) {
-              var resize = this, drawer;
-              var numdisks = this.getSlots();
-              if(numdisks > me.disks.length) {
-                for(var i=me.disks.length;i<numdisks;i++) {
-                  var disk = me.manager.popAvailDisk();
-                  if(disk) {
-                    disk.addToRow(me);
-                  } else {
-                    break;
+              if(this._disks !== null) {
+
+                for(var i=0,len=me.disks.length;i<len;i++) {
+                  var disk = me.disks[0];
+                  var index = this._disks[0].indexOf(disk);
+                  if(index == -1) {
+                    disk.remove();
                   }
                 }
-              } else if(numdisks < me.disks.length) {
-                for(var i=numdisks;i<me.disks.length;i++) {
-                query(".disk:last-child", this.domNode.parentNode).forEach(function(node) {
-                  var disk = registry.getEnclosingWidget(node);
-                  disk.remove();
-                });
+                for(var i in this._disks[0]) {
+                  var disk = this._disks[0][i];
+                  var index = me.disks.indexOf(disk);
+                  if(index == -1) {
+                    disk.addToRow(me);
+                  }
                 }
 
-              }
-              if(this._extraRows > 0) {
-                for(var i=0;i<this._extraRows;i++) {
-                  me.manager.addVdev({
+                for(var i=1;i<this._disks.length;i++) {
+                  var vdev = me.manager.addVdev({
                     can_delete: true,
-                    numDisks: me.disks.length,
+                    initialDisks: this._disks[i],
                     type: me.vdevtype.get("value")
                   });
                 }
-                this._extraRows = 0;
-                this.lastExtra = 0;
-                domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
+                this._disks = null;
               }
+              domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
               me.manager._disksCheck(me);
 
               lang.hitch(me.manager, me.manager.drawAvailDisks)();
@@ -262,8 +258,15 @@ define([
               disk.addToRow(this);
             }
           }
-          domStyle.set(this.resize.domNode.parentNode, "width", this.numDisks * PER_NODE_WIDTH + "px");
         }
+
+        if(this.initialDisks.length > 0) {
+          for(var i in this.initialDisks) {
+            this.initialDisks[i].addToRow(this);
+          }
+        }
+
+        domStyle.set(this.resize.domNode.parentNode, "width", this.disks.length * PER_NODE_WIDTH + "px");
 
       }
     });
@@ -477,6 +480,48 @@ define([
 
         this._layout.push(vdev);
         return vdev;
+
+      },
+      _disksForVdev: function(vdev, slots, rows) {
+
+        var disksrows = [];
+        // Clone all_disks from _avail_disks
+        var all_disks = {};
+        for(var size in this._avail_disks) {
+          all_disks[size] = [];
+          for(var i in this._avail_disks[size]) {
+            all_disks[size].push(this._avail_disks[size][i]);
+          }
+        }
+        // Add disks from current vdev to all_disks
+        if(vdev.disks.length > 0) {
+          for(var i in vdev.disks) {
+            var disk = vdev.disks[i];
+            all_disks[disk.size].push(disk);
+          }
+        }
+
+        for(var i=0;i<rows;i++) {
+
+          var disks = [];
+          for(var size in all_disks) {
+            var bysize = all_disks[size];
+            if(bysize.length >= slots) {
+              disks = bysize.slice(0, slots);
+              bysize.splice(0, slots);
+              break;
+            }
+          }
+          if(disks.length > 0) {
+            disksrows.push(disks);
+          } else {
+            disksrows = null;
+            break;
+          }
+
+        }
+
+        return disksrows;
 
       },
       _optimalCheck: {
