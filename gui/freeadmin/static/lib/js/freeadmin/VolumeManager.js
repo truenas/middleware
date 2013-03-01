@@ -147,8 +147,13 @@ define([
             targetContainer: this.dapResMain,
             resizeAxis: "xy",
             activeResize: false,
-            _extraRows: 0,
+            lastH: 0,
+            lastW: 0,
             animateSizing: false, // Animated cause problem to get the size in onResize
+            intermediateChanges: true,
+            minHeight: 30,
+            minWidth: 30,
+            _disks: null,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
 
@@ -157,7 +162,7 @@ define([
               if(numRows - floorR >= 0.5) {
                 floorR += 1;
               }
-              if(floorR < 1) floorR = 1;
+              if(floorR < 1) floorR = 1; // At least 1 row
               newH = floorR * PER_NODE_HEIGHT;
 
               var numNodes = newW / PER_NODE_WIDTH;
@@ -165,7 +170,7 @@ define([
               if(numNodes - floor >= 0.5) {
                 floor += 1;
               }
-              if(floor < 0) floor = 0;
+              if(floor < 0) floor = 0; // Non-negative disks
               newW = floor * PER_NODE_WIDTH;
 
               var disks = me.manager._disksForVdev(me, floor, floorR);
@@ -184,9 +189,6 @@ define([
 
               return { w: newW, h: newH };
             },
-            minHeight: 30,
-            minWidth: 30,
-            intermediateChanges: true,
             getSlots: function() {
               var width = domStyle.get(this.domNode.parentNode, "width");
               return Math.floor(width / PER_NODE_WIDTH);
@@ -194,6 +196,11 @@ define([
             onResize: function(e) {
               if(this._disks !== null) {
 
+                /*
+                 * We need to take care manipulating me.disks
+                 * because disk.remove() will interact over the same
+                 * structure
+                 */
                 for(var i=0,j=0,len=me.disks.length;i<len;i++) {
                   var disk = me.disks[j];
                   var index = this._disks[0].indexOf(disk);
@@ -220,7 +227,9 @@ define([
                 }
                 this._disks = null;
               }
+              // Set back the original height size after selecting multiple rows
               domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
+
               me.manager._disksCheck(me);
 
               lang.hitch(me.manager, me.manager.drawAvailDisks)();
@@ -231,11 +240,10 @@ define([
 
         if(this.can_delete === true) {
 
-          var me = this;
           on(this.dapDelete, "click", function() {
             while(true) {
               if(me.disks.length == 0) break;
-              var disk = me.disks[0].remove();
+              me.disks[0].remove();
             }
             me.destroy();
           });
@@ -297,7 +305,8 @@ define([
           var td = domConst.create("td", null, tr);
           var disks = this._avail_disks[size];
           if(disks.length == 0) {
-            td.innerHTML = "(all disks in use)";
+            td.innerHTML = "<i>(all disks in use)</i>";
+            domStyle.set(td, "color", "#aaa");
           }
           for(var key in disks) {
             var disk = disks[key];
@@ -506,6 +515,7 @@ define([
         for(var i=0;i<rows;i++) {
 
           var disks = [];
+          // Find disks for the same size for a row
           for(var size in all_disks) {
             var bysize = all_disks[size];
             if(bysize.length >= slots) {
@@ -514,6 +524,9 @@ define([
               break;
             }
           }
+          /*
+           * If not enough disks of same size per vdev were found, abort all
+           */
           if(disks.length > 0) {
             disksrows.push(disks);
           } else {
@@ -527,21 +540,21 @@ define([
 
       },
       _optimalCheck: {
-          'mirror': function(num) {
-            return num == 2;
-          },
-          'raidz': function(num) {
-            if(num < 3) return false;
-            return (Math.log(num - 1) / Math.LN2) % 1 == 0;
-          },
-          'raidz2': function(num) {
-            if(num < 4) return false;
-            return (Math.log(num - 2) / Math.LN2) % 1 == 0;
-          },
-          'raidz3': function(num) {
-            if(num < 5) return false;
-            return (Math.log(num - 3) / Math.LN2) % 1 == 0;
-          }
+        'mirror': function(num) {
+          return num == 2;
+        },
+        'raidz': function(num) {
+          if(num < 3) return false;
+          return (Math.log(num - 1) / Math.LN2) % 1 == 0;
+        },
+        'raidz2': function(num) {
+          if(num < 4) return false;
+          return (Math.log(num - 2) / Math.LN2) % 1 == 0;
+        },
+        'raidz3': function(num) {
+          if(num < 5) return false;
+          return (Math.log(num - 3) / Math.LN2) % 1 == 0;
+        }
       },
       _disksCheck: function(vdev, manual, cols, rows) {
 
@@ -555,6 +568,7 @@ define([
         if(manual !== true) {
           for(var key in this._optimalCheck) {
             if(this._optimalCheck[key](numdisks)) {
+              // .set will trigger onChange, ignore it once
               vdev.vdevtype._stopEvent = true;
               vdev.vdevtype.set('value', key);
               found = true;
