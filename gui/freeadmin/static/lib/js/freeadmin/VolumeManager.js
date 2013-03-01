@@ -194,11 +194,13 @@ define([
             onResize: function(e) {
               if(this._disks !== null) {
 
-                for(var i=0,len=me.disks.length;i<len;i++) {
-                  var disk = me.disks[0];
+                for(var i=0,j=0,len=me.disks.length;i<len;i++) {
+                  var disk = me.disks[j];
                   var index = this._disks[0].indexOf(disk);
                   if(index == -1) {
                     disk.remove();
+                  } else {
+                    j++;
                   }
                 }
                 for(var i in this._disks[0]) {
