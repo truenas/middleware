@@ -106,7 +106,7 @@ define([
     });
 
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
-      templateString: '<tr><td data-dojo-attach-point="dapVdevType"></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td><td data-dojo-attach-point="dapNumCol"></td><td data-dojo-attach-point="dapDelete">Delete</td></tr>',
+      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td><td data-dojo-attach-point="dapNumCol"></td><td data-dojo-attach-point="dapDelete">Delete</td></tr>',
       widgetsInTemplate: true,
       numDisks: 0,
       type: "",
@@ -285,6 +285,7 @@ define([
         domConst.empty(this.dapDisksTable);
         for(var size in this._avail_disks) {
           var tr = domConst.create("tr", null, this.dapDisksTable);
+          domStyle.set(tr, "height", (PER_NODE_HEIGHT + 2) + "px");
           domConst.create("th", {innerHTML: size}, tr);
           var td = domConst.create("td", null, tr);
           var disks = this._avail_disks[size];
