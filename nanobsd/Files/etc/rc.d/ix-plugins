@@ -3,112 +3,20 @@
 # $FreeBSD$
 #
 
-# REQUIRE: jail
+# REQUIRE: ix-warden jail
 # PROVIDE: ix-plugins
 
 . /etc/rc.freenas
 
-get_jid()
-{
-	ret=1
-	jid=0
-
-	if srv_enabled plugins
-	then
-        	_jail_name=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-        	SELECT
-			jail_name
-
-		FROM
-			services_pluginsjail
-
-		ORDER BY
-			-id
-
-		LIMIT 1
-		")
-
-		if [ -n "${_jail_name}" ]
-		then
-			local _ifs=${IFS}
-
-			IFS='
-'
-			for line in $(jls | tail +2)
-			do
-				line=$(echo ${line}|xargs)
-
-				local _jid=$(echo ${line}|cut -f1 -d' ')
-				local _hostname=$(echo ${line}|cut -f3 -d' ')
-
-				if [ "${_jail_name}" = "${_hostname}" ]
-				then
-					jid=${_jid}
-					ret=0
-					break
-				fi
-			
-			done
-			IFS=${_ifs}
-		fi
-	fi
-
-	echo "${jid}"
-	return ${ret}
-}
-
-get_jail_path()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_path || '/' || jail_name as jp
-	FROM
-		services_pluginsjail
-	ORDER BY
-		-id
-	LIMIT 1
-	"
-}
-
-get_jail_name()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_name
-	FROM
-		services_pluginsjail
-	ORDER BY
-		-id
-	LIMIT 1
-	"
-}
-
-get_jail_ip()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_ipv4address
-	FROM
-		services_pluginsjail
-	ORDER BY
-		-id
-	LIMIT 1
-	"
-}
 
 plugins_start()
 {
 	local args="$*"
 
-	local jid=$(get_jid)
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
 	sql="
 	SELECT
 		plugin_name,
+		plugin_jail,
 		plugin_path,
 		plugin_enabled,
 		plugin_port
@@ -140,15 +48,18 @@ plugins_start()
 	local _ifs="${IFS}"
 	IFS="|"
 
-	local jn=$(get_jail_name)
-	local jp=$(get_jail_path)
-	local jip=$(get_jail_ip)
-
 	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
-	while read name path enabled port
+	while read name jail path enabled port
 	do
 		if [ "${enabled}" != "1" -a "${rc_force}" != "yes" ]
+		then
+			continue
+		fi
+
+		local jip=$(jail_get_ip "${jail}")
+		local jid=$(jail_get_jid "${jail}")
+		if [ -z "${jid}" ]
 		then
 			continue
 		fi
@@ -175,15 +86,10 @@ plugins_stop()
 {
 	local args="$*"
 
-	local jid=$(get_jid)
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
 	sql="
 	SELECT
 		plugin_name,
+		plugin_jail,
 		plugin_path,
 		plugin_enabled
 	FROM
@@ -212,15 +118,18 @@ plugins_stop()
 
 	local _ifs="${IFS}"
 	IFS="|"
-
-	local jn=$(get_jail_name)
-	local jp=$(get_jail_path)
 	
 	local tmpfile="/var/tmp/...borked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
-	while read name path enabled 
+	while read name jail path enabled 
 	do
 		if [ "${enabled}" != "0" -a "${rc_force}" != "yes" ]
+		then
+			continue
+		fi
+
+		local jid=$(jail_get_jid "${jail}")
+		if [ -z "${jid}" ]
 		then
 			continue
 		fi
@@ -247,15 +156,10 @@ plugins_status()
 {
 	local args="$*"
 
-	local jid=$(get_jid)
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
 	sql="
 	SELECT
 		plugin_name,
+		plugin_jail,
 		plugin_path,
 		plugin_enabled
 	FROM
@@ -287,8 +191,14 @@ plugins_status()
 	
 	local tmpfile="/var/tmp/...sporked"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
-	while read name path enabled 
+	while read name jail path enabled 
 	do
+		local jid=$(jail_get_jid "${jail}")
+		if [ -z "${jid}" ]
+		then
+			continue
+		fi
+
 		jexec ${jid} "${path}/control" status 2>/dev/null
 		if [ "$?" != "0" ]
 		then
