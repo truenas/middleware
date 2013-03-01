@@ -156,6 +156,7 @@ define([
               if(numRows - floorR >= 0.5) {
                 floorR += 1;
               }
+              if(floorR < 1) floorR = 1;
               newH = floorR * PER_NODE_HEIGHT;
 
               var numNodes = newW / PER_NODE_WIDTH;
@@ -163,6 +164,7 @@ define([
               if(numNodes - floor >= 0.5) {
                 floor += 1;
               }
+              if(floor < 0) floor = 0;
               newW = floor * PER_NODE_WIDTH;
               this._extraRows = floorR - 1;
 
