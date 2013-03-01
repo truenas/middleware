@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-jail
+# REQUIRE: ix-warden
 # BEFORE: jail
 
 . /etc/rc.freenas
@@ -113,7 +114,7 @@ __EOF__
 }
 
 
-plugins_jail_start()
+plugins_jail_start_old()
 {
 	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
 	then
@@ -186,6 +187,80 @@ __EOF__
 	fi
 }
 
+jails_start()
+{
+	local jails="$*"
+	local res=0
+
+	if [ -z "${jails}" ]
+	then
+		jails=$(jail_get|awk '{ print $1 }')
+		for jail in ${jails}
+		do
+			local auto=$(jail_get_autostart "${jail}")
+			local status=$(jail_get_status "${jail}")
+
+			if [ "${auto}" = "Enabled" -a "${status}" = "Stopped" ]
+			then
+				jail_start ${jail}
+				if [ "$?" != "0" ]
+				then
+					warn "Could not start ${jail}"
+					res=1
+				fi
+			fi
+		done
+	else
+		for jail in ${jails}
+		do
+			jail_start ${jail}
+			if [ "$?" != "0" ]
+			then
+				warn "Could not start ${jail}"
+				res=1
+			fi
+		done
+	fi
+
+	return ${res}
+}
+
+jails_stop()
+{
+	local jails="$*"
+	local res=0
+
+	if [ -z "${jails}" ]
+	then
+		jails=$(jail_get|awk '{ print $1 }')
+		for jail in ${jails}
+		do
+			local status=$(jail_get_status "${jail}")
+			if [ "${status}" = "Running" ]
+			then
+				jail_stop ${jail}
+				if [ "$?" != "0" ]
+				then
+					warn "Could not stop ${jail}"
+					res=1
+				fi
+			fi
+		done
+	else
+		for jail in ${jails}
+		do
+			jail_stop ${jail}
+			if [ "$?" != "0" ]
+			then
+				warn "Could not stop ${jail}"
+				res=1
+			fi
+		done
+	fi
+
+	return ${res}
+}
+
 plugins_jail_stop()
 {
 	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
@@ -207,8 +282,8 @@ plugins_jail_stop()
 
 
 name="ix-jail"
-start_cmd='plugins_jail_start'
-stop_cmd='plugins_jail_stop'
+start_cmd='jails_start'
+stop_cmd='jails_stop'
 
 load_rc_config $name
-run_rc_command "$1"
+run_rc_command $*

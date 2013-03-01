@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-nginx
-# REQUIRE: django
+# REQUIRE: ix-warden django
 # BEFORE: nginx
 
 . /etc/rc.freenas
@@ -20,34 +20,14 @@ generate_plugins_conf()
 	local nginx_location
 
 	: > "${NGINX_PLUGINS_CONF}"
-	plugins_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		plugins_path
-	FROM
-		services_pluginsjail
-	ORDER BY
-		-id
-	LIMIT 1")
-
-	ip=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_ipv4address
-	FROM
-		services_pluginsjail
-	ORDER BY
-		-id
-	LIMIT 1")
 
         # Workaround: config check fail if it doesnt exist
         mkdir -p /var/tmp/nginx 2> /dev/null > /dev/null
 
-	if [ -z "${ip}" ]; then
-		return 0
-	fi
-
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		plugin_name,
+		plugin_jail,
 		plugin_enabled,
 		plugin_port,
 		plugin_path
@@ -58,17 +38,19 @@ generate_plugins_conf()
 	ORDER BY
 		-id
 	" | \
-	while read -r name enabled port path
+	while read -r name jail enabled port ppath
 	do
+		local ip=$(jail_get_ip "${jail}")
+		local jpath=$(jail_get_path "${jail}")
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
 		location ~ /plugins/${name}/ {
 		    fastcgi_pass   ${ip}:${port};
 		    include		fastcgi_params;
-		    root /usr/pbi/${name}-$(uname -m);
+		    root ${ppath};
 __EOF__
 
-		nginx_location="${plugins_path}/pbi/${name}-$(uname -m)/nginx_location"
+		nginx_location="${jpath}/${ppath}/nginx_location"
 		if [ -f ${nginx_location} ]; then
 			tmp=$(mktemp -t nginx)
 			echo "

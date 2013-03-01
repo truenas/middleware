@@ -7,6 +7,11 @@
 
 . /etc/rc.freenas
 
+nis_start()
+{
+	:
+}
+
 nis_stop()
 {
         /usr/local/www/freenasUI/tools/cachetool.py expire
