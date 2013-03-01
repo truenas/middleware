@@ -112,6 +112,11 @@
 #
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
 
+#
+#	Warden settings
+#
+: ${WARDEN:="/usr/local/bin/warden"}
+
 
 __escape()
 {
@@ -325,5 +330,156 @@ srv_set()
 		srv_service = '${service}'
 	"
 
+	return $?
+}
+
+
+#
+#	Jail functions
+#
+jail_get_path()
+{
+	local name="${1}"
+
+	local path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jc_path
+	FROM
+		jails_jailsconfiguration
+	ORDER BY
+		-id
+	LIMIT 1")
+
+	if [ -n "${name}" ]
+	then
+		path="${path}/${name}"
+	fi
+
+	echo "${path}"
+	return 0
+}
+
+jail_get_ip()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $2 }'|cut -f1 -d'/'
+	return $?
+}
+
+jail_get_netmask()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $2 }'|cut -f2 -d '/' -s
+	return $?
+}
+
+jail_get_autostart()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $3 }'
+	return $?
+}
+
+jail_get_status()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $4 }'
+	return $?
+}
+
+jail_get_type()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $5 }'
+	return $?
+}
+
+jail_get_jid()
+{
+	local name="${1}"
+	local jid=""
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	local jail=$(jls|tail +2|awk -v jail="^${name}\$" '$3 ~ jail { print $3 }')
+	if [ -n "${jail}" ]
+	then
+		jls|tail +2|awk -v jail="^${jail}\$" '$3 ~ jail { print $1 }'
+		return $?
+	fi
+
+	return  1
+}
+
+jail_get()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		${WARDEN} list|tail +3
+	else
+		${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $0 }'
+	fi
+
+	return $?
+}
+
+jail_start()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} start "${name}"
+	return $?
+}
+
+jail_stop()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} stop "${name}"
 	return $?
 }
