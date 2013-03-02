@@ -498,3 +498,106 @@ fix_old_meta()
       fi
    done
 }
+
+is_IPv4()
+{
+   local addr="${1}"
+   local res=1
+
+   local ipv4="$(sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
+   if [ "${ipv4}" = "ipv4" ]
+   then
+      res=0
+   fi
+
+   return ${res}
+}
+
+is_IPv6()
+{
+   local addr="${1}"
+   local res=1
+
+   local ipv6="$(sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
+   if [ "${ipv6}" = "ipv6" ]
+   then
+      res=0
+   fi
+
+   return ${res}
+}
+
+in_IPv4_network()
+{
+   local addr="${1}"
+   local network="${2}"
+   local res=1
+
+   local start="$(sipcalc "${network}"|awk '/^Usable/ { print $4 }')"
+   local end="$(sipcalc "${network}"|awk '/^Usable/ { print $6 }')"
+
+   local iaddr="$(sipcalc "${addr}"|awk '/(decimal)/ { print $5 }')"
+   local istart="$(sipcalc "${start}"|awk '/(decimal)/ { print $5 }')"
+   local iend="$(sipcalc "${end}"|awk '/(decimal)/ { print $5 }')"
+
+   if [ "${iaddr}" -ge "${istart}" -a "${iaddr}" -le "${iend}" ]
+   then
+      res=0
+   fi
+
+   return ${res}
+}
+
+IPv6_to_binary()
+{
+   echo ${1}|awk '{
+      split($1, octets, ":");
+      olen = length(octets);
+		
+      bnum = "";
+      for (i = 1;i <= olen;i++) {
+         tbnum = "";
+         dnum = int(sprintf("0x%s", octets[i]));
+         for (;;) {
+            rem = int(dnum % 2);
+            if (rem == 0) 
+               tbnum = sprintf("0%s", tbnum);
+            else		
+               tbnum = sprintf("1%s", tbnum);
+            dnum /= 2;
+            if (dnum < 1)
+               break;
+         }
+         bnum = sprintf("%s%016s", bnum, tbnum);
+      }
+      printf("%s", bnum);
+   }'
+}
+
+in_IPv6_network()
+{
+   local addr="${1}"
+   local network="${2}"
+   local mask="$(echo "${network}"|cut -f2 -d'/' -s)"
+   local res=1
+
+   local addr="$(sipcalc "${addr}"|awk \
+      '/^Expanded/ { print $4}')"
+   local start="$(sipcalc "${network}"|egrep \
+      '^Network range'|awk '{ print $4 }')"
+
+   local baddr="$(IPv6_to_binary "${addr}")"
+   local bstart="$(IPv6_to_binary "${start}")"
+
+   local baddrnet="$(echo "${baddr}"|awk -v mask="${mask}" \
+      '{ s = substr($0, 1, mask); printf("%s", s); }')"
+   local bstartnet="$(echo "${bstart}"|awk -v mask="${mask}" \
+      '{ s = substr($0, 1, mask); printf("%s", s); }')"
+
+   if [ "${baddrnet}" = "${bstartnet}" ]
+   then
+      res=0
+   fi
+
+   return ${res}
+}
