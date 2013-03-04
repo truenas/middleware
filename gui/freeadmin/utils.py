@@ -27,6 +27,9 @@
 import logging
 
 from django.db.models import CASCADE
+from django.utils import translation
+
+from freenasUI.system.models import Settings
 
 log = logging.getLogger('freeadmin.utils')
 
@@ -67,3 +70,8 @@ def get_related_objects(obj):
             reldict[related.model._meta.verbose_name] = list(qs)
 
     return reldict, relnum
+
+
+def set_language():
+    language = Settings.objects.order_by('-id')[0].stg_language
+    translation.activate(language)

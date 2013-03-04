@@ -46,6 +46,7 @@ from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import send_mail
+from freenasUI.freeadmin.utils import set_language
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import Volume
@@ -69,7 +70,7 @@ class Message(object):
         return str(self._message)
 
     def __unicode__(self):
-        return unicode(self._message)
+        return self._message.decode('utf8')
 
 
 class Alert(object):
@@ -251,6 +252,7 @@ class Alert(object):
         self.__s.close()
 
 if __name__ == '__main__':
+    set_language()
     alert = Alert()
     alert.perform()
     alert.email()
