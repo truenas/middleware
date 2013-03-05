@@ -1,5 +1,6 @@
 define([
   "dojo/_base/array",
+  "dojo/_base/connect",
   "dojo/_base/declare",
   "dojo/_base/lang",
   "dojo/dom-attr",
@@ -22,9 +23,11 @@ define([
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dojox/layout/ResizeHandle",
+  "dojox/widget/Toaster",
   "dojo/text!freeadmin/templates/volumemanager.html"
   ], function(
   array,
+  connect,
   declare,
   lang,
   domAttr,
@@ -47,6 +50,7 @@ define([
   TabContainer,
   ContentPane,
   ResizeHandle,
+  Toaster,
   template) {
 
     var PER_NODE_WIDTH = 48;
@@ -72,14 +76,25 @@ define([
         });
       },
       addToRow: function(row) {
-        var index = this.manager._avail_disks[this.size].indexOf(this);
-        this.manager._avail_disks[this.size].splice(index, 1);
-        this.domNode.parentNode.removeChild(this.domNode);
-        row.resize.domNode.parentNode.appendChild(this.domNode);
-        row.disks.push(this);
-        lang.hitch(this.manager, this.manager.drawAvailDisks)();
-        this.set('vdev', row);
-        this.manager._disksCheck(row);
+        try {
+          row.validate(this);
+          var index = this.manager._avail_disks[this.size].indexOf(this);
+          this.manager._avail_disks[this.size].splice(index, 1);
+          this.domNode.parentNode.removeChild(this.domNode);
+          row.resize.domNode.parentNode.appendChild(this.domNode);
+          row.disks.push(this);
+          lang.hitch(this.manager, this.manager.drawAvailDisks)();
+          this.set('vdev', row);
+          this.manager._disksCheck(row);
+        } catch(e) {
+          var me = this;
+          connect.publish("volumeManager", {
+            message: e.message,
+            type: "fatal",
+            duration: 50
+          });
+
+        }
       },
       remove: function() {
         this.manager._avail_disks[this.get("size")].push(this);
@@ -115,6 +130,19 @@ define([
       can_delete: false,
       vdev: null,
       manager: null,
+      validate: function(disk) {
+        var valid = true;
+        for(var key in this.disks) {
+          var each = this.disks[key];
+          if(each.size != disk.size) {
+            valid = false;
+            break;
+          }
+        }
+        if(valid === false) {
+          throw new Object({message: "Disk size mismatch"});
+        }
+      },
       getChildren: function() {
         // This needs investigating
         // For some reason chidlren are not retrieved automatically
@@ -474,6 +502,13 @@ define([
         });
         this._form.domNode.appendChild(this._total_vdevs.domNode);
         this._form.domNode.appendChild(this._initial_vdevs.domNode);
+
+        new Toaster({
+          messageTopic: "volumeManager",
+          separator: "<hr/>",
+          positionDirection: "br-left",
+          duration: "0"
+        }, this.dapToaster);
 
         this.addVdev({can_delete: false});
 
