@@ -4297,26 +4297,37 @@ class notifier:
             raise ValueError("Unknown disk %s" % (devname, ))
         return self.__get_geoms_recursive(provid)
 
+    def _do_disk_wipe_quick(self, devname):
+        pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
+            raise MiddlewareError(
+                "Failed to wipe %s: %s" % (devname, err)
+            )
+        try:
+            p1 = self.__pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+        except:
+            log.error("Unable to determine size of %s", devname)
+        else:
+            pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+                devname,
+                size / 1024 - 4,
+            ))
+            pipe.communicate()
+
     def disk_wipe(self, devname, mode='quick'):
         if mode == 'quick':
+            doc = self.__geom_confxml()
+            parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/name" % devname)]
+            """
+            Wipe beginning and the end of every partition
+            This should erase ZFS label and such to prevent further errors on replace
+            """
+            for part in parts:
+                self._do_disk_wipe_quick(part)
             self.__gpt_unlabeldisk(devname)
-            pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
-            err = pipe.communicate()[1]
-            if pipe.returncode != 0:
-                raise MiddlewareError(
-                    "Failed to wipe %s: %s" % (devname, err)
-                    )
-            try:
-                p1 = self.__pipeopen("diskinfo %s" % (devname, ))
-                size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
-            except:
-                log.error("Unable to determine size of %s", devname)
-            else:
-                pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                    devname,
-                    size / 1024 - 4,
-                    ))
-                pipe.communicate()
+            self._do_disk_wipe_quick(devname)
 
         elif mode in ('full', 'fullrandom'):
             libc = ctypes.cdll.LoadLibrary("libc.so.7")
