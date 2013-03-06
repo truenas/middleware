@@ -6,6 +6,11 @@
 # PROVIDE: failover
 # BEFORE: devd
 
+# Copyright (C) iXsystems 2010
+# This file is a part of TrueNAS
+# and may be copied and/or distributed
+# without the express permission of iXsystems.
+
 . /etc/rc.subr
 
 name="failover"
