@@ -155,6 +155,7 @@ WITHOUT_SHAREDOCS=true
 . ${NANO_CFG_BASE}/common
 
 add_port archivers/lzo2
+add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
 add_port lang/perl5.14
@@ -199,7 +200,6 @@ add_port sysutils/fusefs-kmod
 add_port sysutils/fusefs-libs
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
-add_port sysutils/ntfsprogs
 add_port sysutils/smartmontools
 add_port devel/glib20
 add_port net/libdnet
