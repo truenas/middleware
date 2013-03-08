@@ -11,6 +11,7 @@ TOP="$(pwd)"
 . build/pbi_env
 
 : ${SKIP_SOURCE_PATCHES="yes"}
+: ${SKIP_PORTS_PATCHES="yes"}
 : ${USE_GIT="yes"}
 
 # Should we build?
@@ -342,23 +343,87 @@ checkout_freebsd_source()
 {
 	if ${UPDATE}
 	then
-		if [ -z "${FREEBSD_CVSUP_HOST}" ]
-		then
-			error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
-		fi
 		mkdir -p ${AVATAR_ROOT}/FreeBSD
 
 
 		if [ "x$USE_GIT" = "xyes" ] ; then
 			echo "Use git set!"
 			freebsd_checkout_git
+
+			# Nuke newly created files to avoid build errors.
+			git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
+			rm -rf "$git_status_ok"
+			(
+			  cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
+			) | tee "$git_status_ok"
+			awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
+
+			# Checkout git ports
+			ports_checkout_git
 		else
 			echo "Use git unset!"
 			freebsd_checkout_svn
+
+			# Nuke newly created files to avoid build errors.
+			svn_status_ok="$AVATAR_ROOT/FreeBSD/.svn_status_ok"
+			rm -f "$svn_status_ok"
+			(
+			 svn status $AVATAR_ROOT/FreeBSD/src
+			 : > "$svn_status_ok"
+			) | \
+			    awk '$1 == "?" { print $2 }' | \
+			    xargs rm -Rf
+			[ -f "$svn_status_ok" ]
+
+			# Checkout cvs ports
+			ports_checkout_cvs
 		fi
 
-		SUPFILE=$AVATAR_ROOT/FreeBSD/supfile
-		cat <<EOF > $SUPFILE
+
+		#
+		# Force a repatch.
+		#
+		: > ${AVATAR_ROOT}/FreeBSD/src-patches
+		: > ${AVATAR_ROOT}/FreeBSD/ports-patches
+		: > ${AVATAR_ROOT}/FreeBSD/.pulled
+	fi
+}
+
+ports_checkout_git()
+{
+	(
+	cd "$AVATAR_ROOT/FreeBSD"
+	if [ -d ports/.git ] ; then
+		cd ports
+		git pull
+		cd ..
+	else
+		: ${GIT_PORTS_BRANCH=master}
+		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
+		spl="$-";set -x
+		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
+		echo $spl | grep -q x || set +x
+		if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
+			(
+			spl="$-";set -x
+			cd src && git checkout "tags/${GIT_PORTS_TAG}"
+			echo $spl | grep -q x || set +x
+			)
+		fi
+	fi
+	)
+}
+
+ports_checkout_cvs()
+{
+
+	if [ -z "${FREEBSD_CVSUP_HOST}" ]
+	then
+		error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
+	fi
+
+	SUPFILE=$AVATAR_ROOT/FreeBSD/supfile
+	cat <<EOF > $SUPFILE
 *default host=${FREEBSD_CVSUP_HOST}
 *default base=${AVATAR_ROOT}/FreeBSD/sup
 *default prefix=${AVATAR_ROOT}/FreeBSD
@@ -368,41 +433,15 @@ checkout_freebsd_source()
 
 ports-all date=2012.07.12.00.00.00
 EOF
-		# Nuke newly created files to avoid build errors.
-		if [ "x$USE_GIT" != "yes" ] ; then
-		    git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
-		    rm -rf "$git_status_ok"
-		    (
-		      cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
-		    ) | tee "$git_status_ok"
-		    awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
-		else
-		    svn_status_ok="$AVATAR_ROOT/FreeBSD/.svn_status_ok"
-		    rm -f "$svn_status_ok"
-		    (
-		     svn status $AVATAR_ROOT/FreeBSD/src
-		     : > "$svn_status_ok"
-		    ) | \
-			awk '$1 == "?" { print $2 }' | \
-			xargs rm -Rf
-		    [ -f "$svn_status_ok" ]
-		fi
 
-		for file in $(find ${AVATAR_ROOT}/FreeBSD/ports -name '*.orig' -size 0)
-		do
-			rm -f "$(echo ${file} | sed -e 's/.orig$//')"
-		done
+	for file in $(find ${AVATAR_ROOT}/FreeBSD/ports -name '*.orig' -size 0)
+	do
+		rm -f "$(echo ${file} | sed -e 's/.orig$//')"
+	done
 
-		echo "Checking out ports tree from ${FREEBSD_CVSUP_HOST}..."
-		csup -L 1 ${SUPFILE}
+	echo "Checking out ports tree from ${FREEBSD_CVSUP_HOST}..."
+	csup -L 1 ${SUPFILE}
 
-		#
-		# Force a repatch.
-		#
-		: > ${AVATAR_ROOT}/FreeBSD/src-patches
-		: > ${AVATAR_ROOT}/FreeBSD/ports-patches
-		: > ${AVATAR_ROOT}/FreeBSD/.pulled
-	fi
 }
 
 _lp=last-patch.$$.log
@@ -504,9 +543,11 @@ main()
 	# Apply source and port patches to FreeBSD source code
 	#
 	if [ "x${SKIP_SOURCE_PATCHES}" != "xyes" ] ; then
-	    do_source_patches
+		do_source_patches
 	fi
-	do_ports_patches
+	if [ "x${SKIP_PORTS_PATCHES}" != "xyes" ] ; then
+		do_ports_patches
+	fi
 
 	#
 	# HACK: chmod +x the script because:
