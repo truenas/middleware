@@ -326,7 +326,7 @@ freebsd_checkout_git()
 		: ${GIT_BRANCH=freenas-9-stable}
 		: ${GIT_REPO=https://github.com/trueos/trueos.git}
 		spl="$-";set -x
-		git clone -b ${GIT_BRANCH} ${GIT_REPO} src
+		git clone -b ${GIT_BRANCH} ${GIT_REPO} --depth 1 src
 		echo $spl | grep -q x || set +x
 		if [ "x${GIT_TAG}" != "x" ] ; then
 			(
