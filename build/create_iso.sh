@@ -94,6 +94,13 @@ EOF
 	# installer code.
 	rm -f "$INSTALLUFSDIR/etc/rc.conf.local"
 
+	# NOTE: only glabel and gpart work statically when hardlinked as
+	# geom(8).
+	#
+	# Look for "nvalid class name" in sbin/geom/core/geom.c for more
+	# details.
+	tar -cf - -C${NANO_OBJ}/_.w/sbin gmirror graid | tar -xpf - -C ${INSTALLUFSDIR}/rescue/
+
 	# Compress what's left of the image after mangling it
 	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
@@ -209,7 +216,7 @@ EOF
 # Boot loader file for $NANO_LABEL.  This relies on a hacked beastie.4th.
 #
 autoboot_delay="2"
-loader_logo="freenas"
+#loader_logo="freenas"
 
 mfsroot_load="YES"
 mfsroot_type="md_image"
@@ -219,16 +226,6 @@ init_path="/rescue/init"
 init_shell="/rescue/sh"
 init_script="/baseroot.rc"
 init_chroot="/baseroot"
-opensolaris_load="YES"
-zfs_load="YES"
-# GEOM support
-geom_mirror_load="YES"
-geom_stripe_load="YES"
-geom_raid3_load="YES"
-geom_raid5_load="YES"
-geom_gate_load="YES"
-ntfs_load="YES"
-smbfs_load="YES"
 EOF
 	eval ${MKISOFS_CMD}
 	echo "Created ${OUTPUT}"

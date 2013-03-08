@@ -10,6 +10,9 @@ TOP="$(pwd)"
 . build/functions.sh
 . build/pbi_env
 
+: ${SKIP_SOURCE_PATCHES="yes"}
+: ${USE_GIT="yes"}
+
 # Should we build?
 BUILD=true
 
@@ -288,6 +291,53 @@ build_targets()
 	done
 }
 
+freebsd_checkout_svn()
+{
+	: ${FREEBSD_SRC_REPOSITORY_ROOT=http://svn.freebsd.org/base}
+	FREEBSD_SRC_URL_REL="releng/9.1"
+
+	FREEBSD_SRC_URL_FULL="$FREEBSD_SRC_REPOSITORY_ROOT/$FREEBSD_SRC_URL_REL"
+
+	(
+	 cd "$AVATAR_ROOT/FreeBSD"
+	 if [ -d src/.svn ]; then
+		svn switch $FREEBSD_SRC_URL_FULL src
+		svn upgrade src >/dev/null 2>&1 || :
+	 	svn resolved src
+	 else
+		svn co $FREEBSD_SRC_URL_FULL src
+	 fi
+	 # Always do this so the csup pulled files are paved over.
+ 	 svn revert -R src
+	 svn up src
+	)
+}
+
+freebsd_checkout_git()
+{
+	(
+	cd "$AVATAR_ROOT/FreeBSD"
+	if [ -d src/.git ] ; then
+		cd src
+		git pull
+		cd ..
+	else
+		: ${GIT_BRANCH=freenas-9-stable}
+		: ${GIT_REPO=https://github.com/trueos/trueos.git}
+		spl="$-";set -x
+		git clone -b ${GIT_BRANCH} ${GIT_REPO} src
+		echo $spl | grep -q x || set +x
+		if [ "x${GIT_TAG}" != "x" ] ; then
+			(
+			spl="$-";set -x
+			cd src && git checkout "tags/${GIT_TAG}"
+			echo $spl | grep -q x || set +x
+			)
+		fi
+	fi
+	)
+}
+
 checkout_freebsd_source()
 {
 	if ${UPDATE}
@@ -298,29 +348,17 @@ checkout_freebsd_source()
 		fi
 		mkdir -p ${AVATAR_ROOT}/FreeBSD
 
-		: ${FREEBSD_SRC_REPOSITORY_ROOT=http://svn.freebsd.org/base}
-		FREEBSD_SRC_URL_REL="releng/8.3"
-		FREEBSD_SRC_URL_FULL="${FREEBSD_SRC_REPOSITORY_ROOT}/${FREEBSD_SRC_URL_REL}"
 
-		(
-	 		cd "${AVATAR_ROOT}/FreeBSD"
-	 		if [ -d src/.svn ]; then
-				svn switch ${FREEBSD_SRC_URL_FULL} src
-				svn upgrade src >/dev/null 2>&1 || :
-	 			svn resolved src
-	 		else
-				svn co ${FREEBSD_SRC_URL_FULL} src
-	 		fi
+		if [ "x$USE_GIT" = "xyes" ] ; then
+			echo "Use git set!"
+			freebsd_checkout_git
+		else
+			echo "Use git unset!"
+			freebsd_checkout_svn
+		fi
 
-			#
-	 		# Always do this so the csup pulled files are paved over.
-			#
- 	 		svn revert -R src
-	 		svn up src
-		)
-
-		SUPFILE=${AVATAR_ROOT}/FreeBSD/supfile
-		cat <<EOF > ${SUPFILE}
+		SUPFILE=$AVATAR_ROOT/FreeBSD/supfile
+		cat <<EOF > $SUPFILE
 *default host=${FREEBSD_CVSUP_HOST}
 *default base=${AVATAR_ROOT}/FreeBSD/sup
 *default prefix=${AVATAR_ROOT}/FreeBSD
@@ -330,18 +368,25 @@ checkout_freebsd_source()
 
 ports-all date=2012.07.12.00.00.00
 EOF
-		#
 		# Nuke newly created files to avoid build errors.
-		#
-		svn_status_ok="${AVATAR_ROOT}/FreeBSD/.svn_status_ok"
-		rm -f "${svn_status_ok}"
-		(
-	 		svn status ${AVATAR_ROOT}/FreeBSD/src
-	 		: > "${svn_status_ok}"
-		) | \
+		if [ "x$USE_GIT" != "yes" ] ; then
+		    git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
+		    rm -rf "$git_status_ok"
+		    (
+		      cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
+		    ) | tee "$git_status_ok"
+		    awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
+		else
+		    svn_status_ok="$AVATAR_ROOT/FreeBSD/.svn_status_ok"
+		    rm -f "$svn_status_ok"
+		    (
+		     svn status $AVATAR_ROOT/FreeBSD/src
+		     : > "$svn_status_ok"
+		    ) | \
 			awk '$1 == "?" { print $2 }' | \
 			xargs rm -Rf
-		[ -f "${svn_status_ok}" ]
+		    [ -f "$svn_status_ok" ]
+		fi
 
 		for file in $(find ${AVATAR_ROOT}/FreeBSD/ports -name '*.orig' -size 0)
 		do
@@ -360,45 +405,48 @@ EOF
 	fi
 }
 
-apply_patches()
+_lp=last-patch.$$.log
+
+patch_filter()
 {
-	local _lp=last-patch.$$.log
+    if [ "x$USE_GIT" = "xyes" ] ; then
+        sed 's/$FreeBSD[^$]*[$]/$FreeBSD$/g'
+    else
+        cat
+    fi
 
-	#
-	# Appply patches to FreeBSD source code
-	#
-	for _patch in $(cd ${AVATAR_ROOT}/patches && ls freebsd-*.patch)
-	do
-		if ! grep -q ${_patch} ${AVATAR_ROOT}/FreeBSD/src-patches
-		then
-			echo "Applying patch ${_patch}..."
-			(
-				cd FreeBSD/src &&
-		 		patch -C -f -p0 < ${AVATAR_ROOT}/patches/${_patch} >${_lp} 2>&1 ||
-		 		{ echo "Failed to apply patch: ${_patch} (check $(pwd)/${_lp})"; exit 1; } &&
-		 		patch -E -p0 -s < ${AVATAR_ROOT}/patches/${_patch}
-			)
-			echo ${_patch} >> ${AVATAR_ROOT}/FreeBSD/src-patches
-		fi
-	done
+}
 
-	#
-	# Apply patches to FreeBSD ports
-	#
-	for _patch in $(cd ${AVATAR_ROOT}/patches && ls ports-*.patch)
-	do
-		if ! grep -q ${_patch} ${AVATAR_ROOT}/FreeBSD/ports-patches
-		then
-			echo "Applying patch ${_patch}..."
-			(
-				cd FreeBSD/ports &&
-		 		patch -C -f -p0 < ${AVATAR_ROOT}/patches/${_patch} >${_lp} 2>&1 ||
-				{ echo "Failed to apply patch: ${_patch} (check $(pwd)/${_lp})"; exit 1; } &&
-		 		patch -E -p0 -s < ${AVATAR_ROOT}/patches/${_patch}
-			)
-			echo ${_patch} >> ${AVATAR_ROOT}/FreeBSD/ports-patches
-		fi
-	done
+do_source_patches()
+{
+for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
+	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
+		echo "Applying patch $patch..."
+        mkdir -p filtered-patches
+		(cd FreeBSD/src &&
+        patch_filter < $AVATAR_ROOT/patches/$patch > $AVATAR_ROOT/filtered-patches/$patch &&
+		 patch -C -f -p0 < $AVATAR_ROOT/filtered-patches/$patch >$_lp 2>&1 ||
+		 { echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		   exit 1; } &&
+		 patch -E -p0 -s < $AVATAR_ROOT/filtered-patches/$patch)
+		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
+	fi
+done
+}
+
+do_ports_patches()
+{
+for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
+	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
+		echo "Applying patch $patch..."
+		(cd FreeBSD/ports &&
+		 patch -C -f -p0 < $AVATAR_ROOT/patches/$patch >$_lp 2>&1 ||
+		{ echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		  exit 1; } &&
+		 patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
+		echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
+	fi
+done
 }
 
 do_pbi_wrapper_hack()
@@ -455,7 +503,10 @@ main()
 	#
 	# Apply source and port patches to FreeBSD source code
 	#
-	apply_patches
+	if [ "x${SKIP_SOURCE_PATCHES}" != "xyes" ] ; then
+	    do_source_patches
+	fi
+	do_ports_patches
 
 	#
 	# HACK: chmod +x the script because:

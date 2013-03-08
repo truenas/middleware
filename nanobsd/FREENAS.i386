@@ -368,3 +368,11 @@ device		sbp		# SCSI over FireWire (Requires scbus and da)
 
 # Needed for ipmi(4)
 device		smbus
+
+# VirtIO
+device		virtio
+device		virtio_pci
+device		virtio_blk
+device		virtio_balloon
+device		vtnet
+device		virtio_scsi

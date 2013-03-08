@@ -83,6 +83,7 @@ WITHOUT_BIND_LIBS_LWRES=true
 WITHOUT_BIND_NAMED=true
 WITHOUT_BLUETOOTH=true
 WITHOUT_CALENDAR=true
+WITHOUT_CLANG=true
 WITHOUT_CTM=true
 WITHOUT_CVS=true
 WITHOUT_DICT=true
@@ -153,7 +154,6 @@ WITHOUT_SHAREDOCS=true
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
-add_port emulators/virtio-kmod
 add_port archivers/lzo2
 add_port security/openvpn
 add_port converters/libiconv
@@ -316,7 +316,8 @@ add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
 add_port graphics/jpeg
-add_port sysutils/testdisk WITH_NTFS3G=y
+#FIXME: failing to fetch
+#add_port sysutils/testdisk WITH_NTFS3G=y
 
 # NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
 # counted against the release image's size because they aren't used in
@@ -557,6 +558,20 @@ select_httpd ( )
 	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
 }
 customize_cmd select_httpd
+
+# Ths is required to be added in rescue image as it is no longer
+# in the freebsd patch
+static_dialog()
+{
+	make \
+		-C ${NANO_SRC}/gnu/usr.bin/dialog \
+		BINDIR=/rescue \
+		DESTDIR=${NANO_WORLDDIR} \
+		NO_SHARED= \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+		clean all install
+}
+customize_cmd static_dialog
 
 remove_patch_divots ( )
 {

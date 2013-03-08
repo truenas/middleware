@@ -51,7 +51,7 @@ sockfile=${django_sockfile}
 path=${django_path}
 host=${django_host}
 port=${django_port}
-start_precmd="start_command"
+start_cmd="start_command"
 stop_cmd="stop_command"
 
 
