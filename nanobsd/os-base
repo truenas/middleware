@@ -307,6 +307,7 @@ add_port security/sudo
 add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
 add_port devel/py-mimeparse
+add_port devel/py-six
 add_port devel/py-dateutil
 add_port www/py-django-tastypie
 add_port devel/py-daemon
