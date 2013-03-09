@@ -26,6 +26,7 @@
 #####################################################################
 import hashlib
 import hmac
+import logging
 import uuid
 
 from django.db import models
@@ -40,6 +41,8 @@ from freenasUI.freeadmin.models import (Model, UserField, GroupField,
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
+
+log = logging.getLogger("services.forms")
 
 
 class services(Model):
@@ -523,10 +526,7 @@ class iSCSITargetExtent(Model):
                 disk = Disk.objects.get(id=self.iscsi_target_extent_path)
                 if self.iscsi_target_extent_type == "Disk":
                     devname = disk.identifier_to_device()
-                    if devname:
-                        notifier().unlabel_disk(disk.identifier_to_device())
-                        notifier().sync_disk(devname)
-                    else:
+                    if not devname:
                         disk.disk_enabled = False
                         disk.save()
                 expected_iscsi_volume_name = 'iscsi:%s' % (
@@ -534,8 +534,8 @@ class iSCSITargetExtent(Model):
                     )
                 vol = Volume.objects.get(vol_name=expected_iscsi_volume_name)
                 vol.delete()
-            except:
-                pass
+            except Exception, e:
+                log.error("Unable to sync of iSCSI extent delete: %s", e)
 
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()
