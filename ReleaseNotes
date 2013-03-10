@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-RC1
+Release Notes for FreeNAS 8.3.1-RELEASE
 
 *** IMPORTANT ***
 
@@ -128,10 +128,6 @@ Encrypting a volume implies forcing a 4K block size.  This is enforced by
 the GUI.  However, clicking the encrypt volume checkbox then unchecking it
 will leave the Force 4K checkbox checked, which is not the default.
 
-Samba has been upgraded to 3.6.12  This may have broken shadow copies in
-some instances.  This has been tested and confirmed working in multiple
-environments but could benefit from wider testing.
-
 The plugin jail networking has been switched to VIMAGE, which requires
 bridging the plugin jail with an external interface.  On systems with
 multiple interfaces there is currently no way to specify which interface
@@ -140,6 +136,30 @@ route.
 
 The plugin jail currently doesn't work properly if the external interface is
 a vlan pseudo-device.
+
+Changes since 8.3.1-RC1:
+
+Bugfixes
+========================
+
+1. Improve handling of UPS events.
+
+2. Fix permissions on istgt files so they aren't world readable.
+   These files can contain plaintext passwords for targets.
+
+3. Start nut with the ups identification from the GUI, not the generic
+   default.
+
+4. Do not automtically detach geli, this can cause problems for offline,
+   replace, etc.
+
+5. Fix a bug that prevented the plugin jail import from working.
+
+6. Remove the option to disable large read/write for CIFS.  Disabling this
+   could only cause pain and suffering.
+
+7. Do not unlabel the disk when deleting device extents.  This could cause
+   problems when moving the disk to a different system.
 
 Changes since 8.3.1-BETA3:
 
