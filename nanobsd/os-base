@@ -179,8 +179,7 @@ add_port databases/db46
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
 add_port net/nss_ldap
-add_port net/rsync WITHOUT_POPT_PORT=true WITH_SSH=true WITHOUT_ATIMES=true \
-	WITH_ACL=true WITH_ICONV=true WITHOUT_TIMELIMIT=true
+add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
 add_port dns/py-dnspython
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
@@ -209,7 +208,7 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port devel/py-distribute
 add_port www/py-flup
-add_port www/py-django WITHOUT_MYSQL=y
+add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
 add_port www/py-dojango
 add_port www/dojo
 add_port databases/py-south
@@ -268,8 +267,9 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
 					WITH_PYTHON_MODULE=y
 	add_port net/liboping
-	add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y \
-				   WITHOUT_X11=y WITH_DISK=y WITH_PYTHON=y
+	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
+				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
+				   WITHOUT_X11=y
 fi
 
 add_port devel/py-ipaddr
@@ -333,7 +333,7 @@ if [ "${DEBUG}" = 1 ]; then
 fi
 
 if [ "${DEBUG}" = 1 ]; then 
-	add_port security/ca_root_nss WITH_ETCSYMLINK=y
+	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
 	add_port ftp/curl
 	add_port devel/apr1
 	add_port devel/py-logilab-common
