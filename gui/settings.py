@@ -191,6 +191,10 @@ BLACKLIST_NAV = (
 
 FORCE_SCRIPT_NAME = ''
 
+#TODO: Revisit me against cache posion attacks
+#      Maybe offer as an option in the GUI
+ALLOWED_HOSTS = ['*']
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
 
