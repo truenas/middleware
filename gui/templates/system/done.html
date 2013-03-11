@@ -4,7 +4,7 @@
     {% if retval %}
     setMessage('{{ retval }}', 'error');
     {% else %}
-    window.location='{% url system_reboot %}';
+    window.location='{% url "system_reboot" %}';
     {% endif %}
 </script>
     {% if retval %}

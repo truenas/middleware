@@ -6,7 +6,7 @@
         <p>{% trans "Add Periodic Snapshot" %}</p>
 
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        addObject('{% trans "Periodic Snapshots"|escapejs %}', '{% url freeadmin_storage_task_add %}', [this,]);
+        addObject('{% trans "Periodic Snapshots"|escapejs %}', '{% url "freeadmin_storage_task_add" %}', [this,]);
     </script>
 </button>
 {% endblock %}

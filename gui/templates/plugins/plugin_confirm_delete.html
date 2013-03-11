@@ -3,7 +3,7 @@
     doSubmit({
         form: this,
         event: e,
-        url: '{% url plugin_delete plugin_id=plugin.id %}',
+        url: '{% url "plugin_delete" plugin_id=plugin.id %}',
     });
 </script>
 <table>

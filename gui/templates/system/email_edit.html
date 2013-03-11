@@ -7,7 +7,7 @@
                     doSubmit({
                         form: form,
                         event: e,
-                        url: '{% url system_testmail %}{% if inline %}?inline=true{% endif %}',
+                        url: '{% url "system_testmail" %}{% if inline %}?inline=true{% endif %}',
                         });
                 </script>
             {% trans "Send Test Mail" %}

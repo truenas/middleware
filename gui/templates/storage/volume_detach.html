@@ -3,7 +3,7 @@
   doSubmit({
       form: this,
       event: e,
-      url: '{% url storage_detach vid=volume.id %}',
+      url: '{% url "storage_detach" vid=volume.id %}',
       progressbar: true
       });
 {%endblock %}
@@ -23,7 +23,7 @@
 {% if volume.vol_encrypt > 0 %}
     <tr>
         <td colspan="2">
-        {% url storage_volume_key_download object_id=volume.id as downloadkey %}
+        {% url "storage_volume_key_download" object_id=volume.id as downloadkey %}
         <p>{% blocktrans with url=downloadkey %}This is an encrypted volume, make sure to <a href="{{ url }}" target="_blank">download</a> the key so you can be able to import it in the future{% endblocktrans %}</p>
         </td>
     </tr>

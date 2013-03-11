@@ -4,26 +4,26 @@
             <button data-dojo-type="dijit.form.Button">
             {% trans "Rebuild LDAP/AD Cache" %}
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-                rebuildAdLdapCache('{% url system_clearcache %}', this);
+                rebuildAdLdapCache('{% url "system_clearcache" %}', this);
                 </script>
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Save Debug" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    addObject('{% trans "Save Debug"|force_escape|force_escape %}', '{% url system_debug %}');
+                    addObject('{% trans "Save Debug"|force_escape|force_escape %}', '{% url "system_debug" %}');
                 </script>
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Firmware Update" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    addObject('{% trans "Firmware Update"|force_escape|force_escape %}', '{% url system_firmwizard %}');
+                    addObject('{% trans "Firmware Update"|force_escape|force_escape %}', '{% url "system_firmwizard" %}');
                 </script>
             </button>
             <!--
             <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Import Plugins Jail" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    addObject('{% trans "Import Plugins Jail"|force_escape|force_escape %}', '{% url plugins_jail_import %}');
+                    addObject('{% trans "Import Plugins Jail"|force_escape|force_escape %}', '{% url "plugins_jail_import" %}');
                 </script>
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">

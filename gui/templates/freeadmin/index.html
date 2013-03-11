@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block dojango_header_extra %}
-<script type="text/javascript" src="{% url django.views.i18n.javascript_catalog %}"></script>
+<script type="text/javascript" src="{% url "django.views.i18n.javascript_catalog" %}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js?cache={{ cache_hash }}"></script>
@@ -9,17 +9,17 @@
 <script type="text/javascript">
 menuSetURLs = function() {
 
-    Menu.urlInfo = '{% url system_info %}';
-    Menu.urlSettings = '{% url system_settings %}';
-    Menu.urlReporting = '{% url system_reporting %}';
-    Menu.urlNetwork = '{% url network_home %}';
-    Menu.urlSharing = '{% url sharing_home %}';
-    Menu.urlServices = '{% url services_home %}';
-    Menu.urlAccount = '{% url account_home %}';
-    Menu.urlStorage = '{% url storage_home %}';
-    Menu.urlJails = '{% url jails_home %}';
-    Menu.urlISCSI = '{% url services_iscsi %}';
-    Menu.urlTree = '{% url freeadmin_menu %}';
+    Menu.urlInfo = '{% url "system_info" %}';
+    Menu.urlSettings = '{% url "system_settings" %}';
+    Menu.urlReporting = '{% url "system_reporting" %}';
+    Menu.urlNetwork = '{% url "network_home" %}';
+    Menu.urlSharing = '{% url "sharing_home" %}';
+    Menu.urlServices = '{% url "services_home" %}';
+    Menu.urlAccount = '{% url "account_home" %}';
+    Menu.urlStorage = '{% url "storage_home" %}';
+    Menu.urlJails = '{% url "jails_home" %}';
+    Menu.urlISCSI = '{% url "services_iscsi" %}';
+    Menu.urlTree = '{% url "freeadmin_menu" %}';
 
 }
 

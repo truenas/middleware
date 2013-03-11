@@ -10,7 +10,7 @@
 <button data-dojo-type="dijit.form.Button" type="button" class="left">
   <p>{% trans "View Public Key" %}</p>
   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-      editObject('{% trans "View Public Key"|force_escape|force_escape %}', '{% url storage_replications_key %}', [this,]);
+      editObject('{% trans "View Public Key"|force_escape|force_escape %}', '{% url "storage_replications_key" %}', [this,]);
   </script>
 </button>
 <div class="left">

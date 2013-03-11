@@ -9,7 +9,7 @@
     <button id="viewReplBtn" data-dojo-type="dijit.form.Button" type="button">
     <p>{% trans "View Public Key" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        volumeWizard('{% trans "View Public Key"|force_escape|force_escape %}', '{% url storage_replications_key %}', [this,]);
+        volumeWizard('{% trans "View Public Key"|force_escape|force_escape %}', '{% url "storage_replications_key" %}', [this,]);
     </script>
     </button>
     <div>

@@ -1,33 +1,33 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_networksettings">
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Global Configuration"|force_escape|force_escape %}'
         {% if focus_form == "network.GlobalConfiguration" %}, selected: true{% endif %},
-        href: '{% url freeadmin_network_globalconfiguration_edit oid=globalconf %}?inline=true',
+        href: '{% url "freeadmin_network_globalconfiguration_edit" oid=globalconf %}?inline=true',
         doLayout: false,
         refreshOnShow: true" class="objrefresh data_network_GlobalConfiguration" tab="network.GlobalConfiguration">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Interfaces"|force_escape|force_escape %}'
         {% if focus_form == "network.Interfaces.View" %}, selected: true{% endif %},
-        href: '{% url freeadmin_network_interfaces_datagrid %}',
+        href: '{% url "freeadmin_network_interfaces_datagrid" %}',
         refreshOnShow: true" class="objrefresh data_network_Interfaces" tab="network.Interfaces.View">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Link Aggregation"|force_escape|force_escape %}'
         {% if focus_form == "network.LAGGInterfaceMembers.View" %}, selected: true{% endif %},
-        href: '{% url freeadmin_network_lagginterface_datagrid %}',
+        href: '{% url "freeadmin_network_lagginterface_datagrid" %}',
         refreshOnShow: true" class="objrefresh data_network_LAGGInterface" tab="network.LAGGInterfaceMembers.View">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Network Summary"|force_escape|force_escape %}'
         {% if focus_form == "network.NetworkSummary" %}, selected: true{% endif %},
-        href: '{% url network_summary %}',
+        href: '{% url "network_summary" %}',
         refreshOnShow: true" class="objrefresh" tab="network.NetworkSummary">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Static Routes"|force_escape|force_escape %}'
         {% if focus_form == "network.StaticRoute.View" %}, selected: true{% endif %},
-        href: '{% url freeadmin_network_staticroute_datagrid %}',
+        href: '{% url "freeadmin_network_staticroute_datagrid" %}',
         refreshOnShow: true" class="objrefresh data_network_StaticRoute" tab="network.StaticRoute.View">
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "VLAN"|force_escape|force_escape %}'
         {% if focus_form == "network.VLAN.View" %}, selected: true{% endif %},
-        href: '{% url freeadmin_network_vlan_datagrid %}',
+        href: '{% url "freeadmin_network_vlan_datagrid" %}',
         refreshOnShow: true" class="objrefresh data_network_VLAN" tab="network.VLAN.View">
         </div>
     </div>

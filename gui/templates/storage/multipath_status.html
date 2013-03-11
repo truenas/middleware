@@ -26,7 +26,7 @@ require([
   ) {
 
     var store = new ItemFileReadStore({
-        url: "{% url storage_multipath_status_json %}"
+        url: "{% url "storage_multipath_status_json" %}"
         });
 
     var treeModel = new ForestStoreModel({

@@ -1,7 +1,7 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_services">
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Core"|force_escape|force_escape %}'
         {% if focus_form == "services.services" %}, selected: true{% endif %},
-        href: '{% url services_core %}',
+        href: '{% url "services_core" %}',
         doLayout: false,
         {% if toggleCore %}toggleCore: '{{ toggleCore|escapejs }}',{% endif %}
         refreshOnShow: true" class="objrefresh data_services_services" tab="services.services">
@@ -15,7 +15,7 @@
         </div>
         <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Plugins"|force_escape|force_escape %}'
         {% if focus_form == "services.Plugins" %}, selected: true{% endif %},
-        href: '{% url services_plugins %}',
+        href: '{% url "services_plugins" %}',
         doLayout: false,
         refreshOnShow: true" class="objrefresh data_services_Plugins" tab="services.Plugins">
         </div>
