@@ -317,14 +317,18 @@ freebsd_checkout_svn()
 freebsd_checkout_git()
 {
 	(
+	: ${GIT_BRANCH=freenas-9-stable}
+	: ${GIT_REPO=https://github.com/trueos/trueos.git}
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d src/.git ] ; then
 		cd src
+		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${GIT_BRANCH}" ]; then
+
+			git checkout ${GIT_BRANCH}
+		fi
 		git pull
 		cd ..
 	else
-		: ${GIT_BRANCH=freenas-9-stable}
-		: ${GIT_REPO=https://github.com/trueos/trueos.git}
 		spl="$-";set -x
 		git clone -b ${GIT_BRANCH} ${GIT_REPO} --depth 1 src
 		echo $spl | grep -q x || set +x
