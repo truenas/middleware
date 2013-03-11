@@ -83,10 +83,11 @@ class DojoModelResource(ModelResource):
         response header so ranges could workd well with dojo
         XXXXXX
         """
-        objects = self.obj_get_list(request=request, **self.remove_api_resource_names(kwargs))
+        base_bundle = self.build_bundle(request=request)
+        objects = self.obj_get_list(bundle=base_bundle, **self.remove_api_resource_names(kwargs))
         sorted_objects = self.apply_sorting(objects, options=request.GET)
 
-        paginator = self._meta.paginator_class(request, sorted_objects, resource_uri=self.get_resource_list_uri(), limit=self._meta.limit)
+        paginator = self._meta.paginator_class(request, sorted_objects, resource_uri=self.get_resource_uri(), limit=self._meta.limit)
         to_be_serialized = paginator.page()
 
         bundles = [self.build_bundle(obj=obj, request=request) for obj in to_be_serialized['objects']]
