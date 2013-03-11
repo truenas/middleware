@@ -230,6 +230,9 @@ LOGGING = {
     }
 }
 
+# Django 1.5 requires it prior to run wsgi
+SECRET_KEY = "."
+
 try:
     from local_settings import *
 except:
