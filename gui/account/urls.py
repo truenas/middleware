@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib.auth.views import logout
 
 from freenasUI.common.system import get_sw_name

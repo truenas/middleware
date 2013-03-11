@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.sharing.views',
     url(r'^home/$', 'home', name="sharing_home"),

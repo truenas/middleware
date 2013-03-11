@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 from freenasUI.storage.forms import (
     AutoImportWizard, VolumeAutoImportForm, AutoImportChoiceForm,

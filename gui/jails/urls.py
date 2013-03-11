@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
