@@ -323,7 +323,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                         )
                     if not force_vdev:
                         errors.append(
-                            _("You're trying to add a virtual device of type "
+                            _("You are trying to add a virtual device of type "
                             "'%(addtype)s' in a pool that has a virtual "
                             "device of type '%(vdevtype)s'") % {
                                 'addtype': self.cleaned_data.get('group_type'),
@@ -339,9 +339,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                         )
                     if not force_vdev:
                         errors.append(
-                            _("You're trying to add a virtual device consisted"
-                            " of %(addnum)s devices in a pool that has a "
-                            "virtual device consisted of %(vdevnum)s devices"
+                            _("You are trying to add a virtual device consisting"
+                            " of %(addnum)s device(s) in a pool that has a "
+                            "virtual device consisted of %(vdevnum)s device(s)"
                             ) % {
                                 'addnum': len(disks),
                                 'vdevnum': len(list(iter(vdev))),
