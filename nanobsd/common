@@ -53,6 +53,8 @@ PKGNAME_HACK=PYTHON_CMD=/bin/true
 # this to go into nanobsd.sh
 NANO_PORTS=${NANO_PORTS:-/usr/ports}
 
+NANO_FETCH_PORTS_BG=""
+
 clean_packages()
 {
 	LOCAL_DIR=${NANO_WORLDDIR}/usr/local
@@ -200,8 +202,16 @@ do_add_pkg ()
 do_add_port ()
 {
 	local port_path
+	local fetch_list
 	port_path=$1
+	fetch_list=${NANO_OBJ}/_.fetch_list
 	shift
+
+	# Wait for port finish to fetch
+	while grep "^${port_path}" ${fetch_list}; do
+		sleep 1
+	done;
+
 	# Need to create ${NANO_OBJ}/ports in this add_port_${port} function
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
@@ -278,6 +288,7 @@ add_port ()
             customize_cmd add_pkg_${port}
             "
     else
+	NANO_FETCH_PORTS_BG="${NANO_FETCH_PORTS_BG} ${port_path}"
 	echo "Package is not yet built: $port"
         eval "
             add_port_${port} () {
@@ -288,6 +299,44 @@ add_port ()
 	NANO_PACKAGE_ONLY=0
     fi
 }
+
+do_fetch (){
+
+	local path=$1
+
+	(
+	cd ${NANO_PORTS}/${path}
+	env ARCH=${NANO_ARCH} SRC_DIR=${NANO_SRC} PORTSDIR=${NANO_PORTS} DISTDIR=${NANO_OBJ}/ports/distfiles make -I ${NANO_PORTS}/Mk fetch || :
+	)
+
+}
+
+do_fetch_background () {
+
+	local fetch_list=$1
+	set -- $NANO_FETCH_PORTS_BG
+	i=1
+	num_steps=$#
+	while [ $i -le $num_steps ]
+	do
+		do_fetch $1
+		newlist=$(cat ${fetch_list} | grep -v $1)
+		echo "${newlist}" > ${fetch_list}
+	        shift
+	        : $(( i += 1 ))
+	done
+	rm ${fetch_list}
+}
+
+fetch_background ()
+{
+	local fetch_list
+	pprint 2 "fetch ports in background"
+	fetch_list=${NANO_OBJ}/_.fetch_list
+	echo ${NANO_FETCH_PORTS_BG} | tr -s " " "\n" > ${fetch_list}
+	do_fetch_background ${fetch_list} &
+}
+customize_cmd fetch_background
 
 # Fill in stub functions for non-base OS images.
 if [ $AVATAR_COMPONENT != "os-base" ]
