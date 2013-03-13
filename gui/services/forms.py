@@ -73,6 +73,13 @@ class CIFSForm(ModelForm):
         except:
             raise forms.ValidationError(_("This is not a valid mask"))
 
+    def clean_cifs_srv_workgroup(self):
+        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
+        workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
+        if netbios and netbios.lower() == workgroup.lower():
+            raise forms.ValidationError("NetBIOS and Workgroup must be unique")
+        return workgroup
+
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()
         self.__check_octet(v)
