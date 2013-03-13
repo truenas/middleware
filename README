@@ -28,7 +28,7 @@ Building the System Quickstart Flow:
 
 - Checking out the code from git:
 
-% git clone git://github.com/freenas/freenas.git
+% git clone --depth 1 git://github.com/freenas/freenas.git
 % cd freenas
 
 - Use the build script
@@ -37,12 +37,12 @@ Building the System Quickstart Flow:
 
 This will fetch TrueOS and ports for the build. However it is recommended that you maintain a local git mirror to speed up further builds:
 
-% git clone git://github.com/freenas/ports.git ~/ports
-% git clone git://github.com/trueos/trueos.git ~/trueos
+% git clone git://github.com/freenas/ports.git ${HOME}/ports
+% git clone git://github.com/trueos/trueos.git ${HOME}/trueos
 
 To build using those local mirrors run:
 
-% env GIT_REPO=~/trueos GIT_PORTS_REPO=~/ports sudo build/do_build.sh
+% env GIT_REPO=${HOME}/trueos GIT_PORTS_REPO=${HOME}/ports sudo build/do_build.sh
 
 That's it.
 
