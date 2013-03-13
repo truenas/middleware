@@ -306,7 +306,7 @@ do_fetch (){
 
 	(
 	cd ${NANO_PORTS}/${path}
-	env ARCH=${NANO_ARCH} SRC_DIR=${NANO_SRC} PORTSDIR=${NANO_PORTS} DISTDIR=${NANO_OBJ}/ports/distfiles make -I ${NANO_PORTS}/Mk fetch || :
+	env ARCH=${NANO_ARCH} SRC_DIR=${NANO_SRC} PORTSDIR=${NANO_PORTS} DISTDIR=${NANO_OBJ}/ports/distfiles make -I ${NANO_PORTS}/Mk fetch-recursive || :
 	)
 
 }
