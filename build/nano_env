@@ -21,8 +21,8 @@
 # explicitly in the script.
 : ${FREENAS_ARCH=$(uname -p)}
 if ! [ "${FREENAS_ARCH}" == "amd64" -o "${FREENAS_ARCH}" == "i386" ] ; then
-    echo "Possible values for FREENAS_ARCH are amd64 or i386"
-    exit
+	echo "Possible values for FREENAS_ARCH are amd64 or i386"
+	exit
 fi
 NANO_ARCH=$FREENAS_ARCH
 
@@ -153,18 +153,18 @@ unset PACKAGESITE
 # if it's installed.
 # Since the only valid values are pxz and xz setting env XZ=whatever
 # will cause the build to fall back to using xz.
-# TODO: If XZ_BIN is set to something other than pxz or xz and pxz is installed
+# TODO: If NANO_XZ is set to something other than pxz or xz and pxz is installed
 # we may as well use pxz here.
 
-if [ $(which pxz) ]; then 
-    if [ x"${XZ_BIN}" == "xpxz" -o -z ${XZ} ]; then 
-        XZ_BIN=pxz 
-    else 
-        XZ_BIN=xz 
-    fi 
+if [ $(which pxz) ]; then
+	if [ x"${NANO_XZ}" == "xpxz" -o -z ${XZ} ]; then
+		NANO_XZ=pxz
+	else
+		NANO_XZ=xz
+	fi
 else
-    XZ_BIN=xz
+	NANO_XZ=xz
 fi
-export XZ_BIN
+export NANO_XZ
 
 # vim: syntax=sh
