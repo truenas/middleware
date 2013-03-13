@@ -112,8 +112,11 @@ $RELEASE_PHASES"
 # 2 - version1 > version2
 compare_version()
 {
-	version1=$(echo "$1"|sed -E s/-p[0-9]+-/-/)
-	version2=$(echo "$2"|sed -E s/-p[0-9]+-/-/)
+	# Just use the part that matters
+	# FreeNAS-X.X.X-PHASE
+	# FIXME: patchsets (-p1, -p2, etc)
+	version1=$(echo "$1"|cut -d"-" -f -3)
+	version2=$(echo "$2"|cut -d"-" -f -3)
 
 	if [ -z "$version2" ]
 	then
