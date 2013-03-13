@@ -26,18 +26,23 @@ Requirements:
 
 Building the System Quickstart Flow:
 
-- Checking out the code from svn:
+- Checking out the code from git:
 
-% svn co https://svn.code.sf.net/p/freenas/code/trunk
-% cd trunk
+% git clone git://github.com/freenas/freenas.git
+% cd freenas
 
-More information about checking out sources from svn via SourceForge
-can be found here: http://p.sf.net/sourceforge/svn .
+- Use the build script
 
-- Use the build script (substituting your favorite cvsup mirror)
+% sudo sh build/do_build.sh
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh
+This will fetch TrueOS and ports for the build. However it is recommended that you maintain a local git mirror to speed up further builds:
 
+% git clone git://github.com/freenas/ports.git ~/ports
+% git clone git://github.com/trueos/trueos.git ~/trueos
+
+To build using those local mirrors run:
+
+% env GIT_REPO=~/trueos GIT_PORTS_REPO=~/ports sudo build/do_build.sh
 
 That's it.
 
@@ -47,7 +52,7 @@ If your build completes successfully, you'll have an image in
 obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.img.xz where:
 
 - VVVV is the 'release' branch version or.
-- XXXX is the svn revision from the FreeNAS repo.
+- XXXX is the git commit hash from the FreeNAS repo.
 - yyyy is either i386 or amd64 depending on your platform and what was
   provided via $FREENAS_ARCH on the command line / via the environment.
 
@@ -65,12 +70,12 @@ Common workflows:
 
 2. Forcing an source / ports update:
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh -u
+% sudo sh build/do_build.sh -u
 
 3. Updating ports patches:
 
-% sudo rm -Rf obj.$FREENAS_ARCH/ports/packages/
-% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh -u
+% sudo rm -Rf os-base/$FREENAS_ARCH/ports/packages/
+% sudo sh build/do_build.sh -u
 
 NOTE: when things get smarter (and they will.. the developers feel your pain
 too :/..), nuking individual packages won't be required; this will require
@@ -81,11 +86,11 @@ things properly!).
 
 4. Update source and ports, patch, and rebuild FreeBSD:
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -fu
+% sudo sh build/do_build.sh -fu
 
 5. Force a build from scratch (nukes packages, rebuild FreeBSD):
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -ff
+% sudo sh build/do_build.sh -ff
 
 6. Build everything required (src, ports) but don't produce GUI upgrade/CD
    images:
