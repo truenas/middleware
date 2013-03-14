@@ -42,7 +42,7 @@ This will fetch TrueOS and ports for the build. However it is recommended that y
 
 To build using those local mirrors run:
 
-% env GIT_REPO=${HOME}/trueos GIT_PORTS_REPO=${HOME}/ports sudo build/do_build.sh
+% sudo env GIT_REPO=${HOME}/trueos GIT_PORTS_REPO=${HOME}/ports sh build/do_build.sh
 
 That's it.
 
