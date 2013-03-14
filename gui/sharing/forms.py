@@ -106,6 +106,14 @@ class AFP_ShareForm(ModelForm):
             )
         if self.instance.id:
             self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
+            if self.instance.afp_sharepw:
+                self.fields['afp_deletepw'] = forms.BooleanField(
+                    label=_("Delete password"),
+                    initial=False,
+                    required=False,
+                )
+                self.fields.keyOrder.remove('afp_deletepw')
+                self.fields.keyOrder.insert(5, 'afp_deletepw')
             if not self.instance.afp_upriv:
                 self.fields['afp_fperm'].widget.attrs['disabled'] = 'true'
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'true'
@@ -124,7 +132,7 @@ class AFP_ShareForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        if not cdata.get("afp_sharepw"):
+        if not cdata.get("afp_sharepw") and not cdata.get("afp_deletepw"):
             cdata['afp_sharepw'] = self.instance.afp_sharepw
         return cdata
 
