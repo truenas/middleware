@@ -3,3 +3,8 @@
 *.mo
 *.o
 gui/local_settings.py
+FreeBSD/
+filtered-patches/
+os-base/
+pbi/
+sbin/
