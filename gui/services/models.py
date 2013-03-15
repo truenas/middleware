@@ -276,12 +276,6 @@ class NFS(Model):
                 " enough to handle the maximum level of concurrency from its "
                 "clients, typically four to six.")
             )
-    nfs_srv_async = models.BooleanField(
-            default=False,
-            verbose_name=_("Asynchronous mode"),
-            help_text=_("Enable asynchronous mode, which will help "
-                          "performance beyond gigabit network speed.")
-            )
     nfs_srv_allow_nonroot = models.BooleanField(
             default=False,
             verbose_name=_("Allow non-root mount"),

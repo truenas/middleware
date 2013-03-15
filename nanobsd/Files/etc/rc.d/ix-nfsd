@@ -38,18 +38,6 @@ setgroup()
 	echo "${group}"
 }
 
-set_sysctl()
-{
-	local IFS="|"
-	local f="nfs_srv_async"
-	eval local $f
-	local sf=$(var_to_sf $f)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_nfs ORDER BY id DESC LIMIT 1" | \
-	while eval read $f; do
-		/sbin/sysctl vfs.nfsrv.async=${nfs_srv_async} > /dev/null
-	done
-}
-
 #
 # TODO: For now we overwrite /etc/exports, it's desirable to teach mountd about another
 # place so user can write their own entry.
@@ -107,9 +95,6 @@ generate_exports()
 			echo "${line}"
 		fi
 	done > /etc/exports
-
-	set_sysctl
-
 
 	if ! /etc/rc.d/mountd forcestatus 1>/dev/null 2>&1
 	then
