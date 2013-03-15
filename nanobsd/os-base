@@ -312,6 +312,7 @@ add_port devel/py-dateutil
 add_port www/py-django-tastypie
 add_port devel/py-daemon
 add_port devel/py-polib
+add_port devel/py-ujson
 add_port devel/py-simplejson
 add_port sysutils/bsdstats
 add_port www/wgetpaste
@@ -321,30 +322,15 @@ add_port graphics/jpeg
 #FIXME: failing to fetch
 #add_port sysutils/testdisk WITH_NTFS3G=y
 
-# NOTE: in reality these aren't DEBUG apps, but this ensures that they aren't
-# counted against the release image's size because they aren't used in
-# production yet.
 if [ "${DEBUG}" = 1 ]; then
-	add_port devel/py-zope.interface
-	add_port devel/py-twistedCore
-	add_port devel/py-ujson
-	add_port devel/py-lockfile
-	add_port devel/pyrex
-fi
 
-if [ "${DEBUG}" = 1 ]; then 
 	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
 	add_port ftp/curl
 	add_port devel/apr1
-	add_port devel/py-logilab-common
-	add_port devel/py-astng
-	add_port devel/pylint
 	add_port www/neon29
 	add_port devel/subversion
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
-	add_port devel/zmq
-	add_port devel/py-pyzmq
 	add_port devel/ipython WITHOUT_X11=y
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
