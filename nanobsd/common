@@ -314,7 +314,7 @@ do_fetch (){
 do_fetch_background () {
 
 	local fetch_list=$1
-	set -- $NANO_FETCH_PORTS_BG
+	set +e -- $NANO_FETCH_PORTS_BG
 	i=1
 	num_steps=$#
 	while [ $i -le $num_steps ]
@@ -326,6 +326,7 @@ do_fetch_background () {
 	        : $(( i += 1 ))
 	done
 	rm ${fetch_list}
+	set -e
 }
 
 fetch_background ()
