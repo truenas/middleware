@@ -161,6 +161,8 @@ Bugfixes
 7. Do not unlabel the disk when deleting device extents.  This could cause
    problems when moving the disk to a different system.
 
+8. Add the ability to delete the password from an AFP share.
+
 Changes since 8.3.1-BETA3:
 
 Enhancements
