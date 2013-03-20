@@ -21,6 +21,7 @@
                 <tr>
                     <td colspan="2">
                     {{ formset.verbose_name }}
+		    <input data-dojo-type="dijit.form.TextBox" type="hidden" name="{{ name }}-__all__" />
                     </td>
                 </tr>
                 {% for form in formset %}
