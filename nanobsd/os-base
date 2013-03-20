@@ -309,6 +309,7 @@ add_port www/py-django-json-rpc
 add_port devel/py-mimeparse
 add_port devel/py-six
 add_port devel/py-dateutil
+add_port devel/py-rose
 add_port www/py-django-tastypie
 add_port devel/py-daemon
 add_port devel/py-polib
