@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import os
 import re
 
@@ -38,6 +39,8 @@ from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (
     IPNetwork, AddressValueError, NetmaskValueError
 )
+
+log = logging.getLogger('sharing.forms')
 
 
 class CIFS_ShareForm(ModelForm):
@@ -300,6 +303,23 @@ class NFS_ShareForm(ModelForm):
                     valid = False
                     break
 
+        return valid
+
+    def is_valid(self, formsets):
+        paths = formsets.get("formset_nfs_share_path")
+        valid = False
+        for form in paths:
+            if (
+                form.cleaned_data.get("path")
+                and
+                not form.cleaned_data.get("DELETE")
+            ):
+                valid = True
+                break
+        if not valid:
+            paths._non_form_errors = self.error_class([
+                _("You need at least one path for the share"),
+            ])
         return valid
 
     def save(self, *args, **kwargs):
