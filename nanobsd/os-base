@@ -162,7 +162,7 @@ add_port lang/perl5.14
 add_port converters/iconv
 add_port devel/gettext
 add_port devel/pkgconf
-add_port devel/libpthread-stubs WITHOUT_X11=y
+add_port devel/libpthread-stubs
 add_port devel/cdialog
 add_port dns/inadyn
 add_port devel/pcre
@@ -262,14 +262,13 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11/xcb-proto
 	add_port x11/xcb-util-renderutil
 	add_port x11/pixman
-	add_port graphics/cairo WITHOUT_X11=y
-	add_port x11-toolkits/pango WITHOUT_X11=y
+	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11
+	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
 	add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
 					WITH_PYTHON_MODULE=y
 	add_port net/liboping
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
-				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
-				   WITHOUT_X11=y
+				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON
 fi
 
 add_port devel/py-ipaddr
@@ -282,12 +281,12 @@ add_port sysutils/areca-cli
 add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
-add_port devel/dbus WITHOUT_X11=y
-add_port devel/dbus-glib WITHOUT_X11=y
+add_port devel/dbus OPTIONS_FILE_UNSET+=X11
+add_port devel/dbus-glib
 add_port devel/libdaemon
 add_port databases/gdbm
-add_port net/avahi-app WITHOUT_X11=y
-add_port net/avahi-libdns WITHOUT_X11=y
+add_port net/avahi-app
+add_port net/avahi-libdns
 add_port textproc/py-xml
 add_port sysutils/throttle
 add_port sysutils/dmidecode
@@ -332,7 +331,7 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/subversion
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
-	add_port devel/ipython WITHOUT_X11=y
+	add_port devel/ipython OPTIONS_FILE_UNSET+=X11
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
