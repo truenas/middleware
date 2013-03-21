@@ -264,8 +264,9 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
-	add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
-					WITH_PYTHON_MODULE=y
+	add_port databases/rrdtool OPTIONS_FILE_SET+=PERL_MODULE \
+				OPTIONS_FILE_SET+=PYTHON_MODULE \
+				OPTIONS_FILE_SET+=JSON
 	add_port net/liboping
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
 				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON
