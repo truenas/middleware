@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import glob
 import logging
 import os
 import re
@@ -70,6 +71,7 @@ class RRDBase(object):
             self.unit = str(unit)
         if step is not None:
             self.step = int(step)
+        self._base_path = base_path
         self.base_path = os.path.join(base_path, self.plugin)
 
     def __repr__(self):
@@ -194,20 +196,17 @@ class InterfacePlugin(RRDBase):
 
     def get_identifiers(self):
         ids = []
-        re_octets = re.compile(r'(?<=octets-)[a-z0-9]+')
-        if not os.path.exists(self.base_path):
-            return ids
-        for _file in os.listdir(self.base_path):
-            reg = re_octets.search(_file)
-            if reg and not _file.startswith(".") and _file.find("usbus") == -1:
-                ids.append(reg.group(0))
+        for entry in glob.glob('%s/interface-*' % self._base_path):
+            ident = entry.rsplit('-', 1)[-1]
+            if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
+                ids.append(ident)
         return ids
 
     def graph(self):
         path = os.path.join(
-            self.base_path,
-            "if_octets-%s.rrd" % self.identifier
-            )
+            "%s/interface-%s" % (self._base_path, self.identifier),
+            "if_octets.rrd"
+        )
 
         args = [
             'DEF:min_rx_raw=%s:rx:MIN' % path,
