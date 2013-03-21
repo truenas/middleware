@@ -326,7 +326,7 @@ freebsd_checkout_git()
 
 			git checkout ${GIT_BRANCH}
 		fi
-		git pull
+		git pull --depth 1
 		cd ..
 	else
 		spl="$-";set -x
@@ -399,7 +399,7 @@ ports_checkout_git()
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d ports/.git ] ; then
 		cd ports
-		git pull
+		git pull --depth 1
 		cd ..
 	else
 		: ${GIT_PORTS_BRANCH=master}
