@@ -239,12 +239,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port devel/libstatgrab
 	add_port devel/libltdl
 	add_port print/freetype2
-	add_port x11/kbproto
 	add_port x11/xproto
-	add_port x11/libXdmcp
-	add_port x11/libXau
-	add_port x11/libxcb
-	add_port x11/libX11
 	add_port x11-fonts/fontconfig
 	add_port x11-fonts/libfontenc
 	add_port x11-fonts/mkfontscale
@@ -256,13 +251,8 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11-fonts/font-util
 	add_port x11-fonts/encodings
 	add_port x11-fonts/xorg-fonts-truetype
-	add_port x11/xcb-util
-	add_port x11/renderproto
-	add_port x11/libXrender
-	add_port x11/xcb-proto
-	add_port x11/xcb-util-renderutil
 	add_port x11/pixman
-	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11
+	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=GLIB OPTIONS_FILE_UNSET+=XCB
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
 	add_port databases/rrdtool OPTIONS_FILE_SET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
