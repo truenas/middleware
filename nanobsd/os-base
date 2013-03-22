@@ -284,9 +284,7 @@ add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
-add_port x11/libICE
-add_port x11/libSM
-add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y WITHOUT_X11=y
+add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
@@ -310,8 +308,7 @@ add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
 add_port graphics/jpeg
-#FIXME: failing to fetch
-#add_port sysutils/testdisk WITH_NTFS3G=y
+add_port sysutils/testdisk OPTIONS_FILE_SET+=NTFS OPTIONS_FILE_SET+=NTFS3G OPTIONS_FILE_SET+=ICONV
 
 if [ "${DEBUG}" = 1 ]; then
 
