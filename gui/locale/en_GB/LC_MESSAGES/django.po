@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-08-12 15:37+0200\n"
-"Last-Translator: Robert <robert_readman@hotmail.com>\n"
+"PO-Revision-Date: 2013-03-07 15:01+0200\n"
+"Last-Translator: levisguy <eweweng@ewie.com.my>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
@@ -2801,8 +2801,9 @@ msgid "Workgroup Name"
 msgstr "Workgroup Name"
 
 #: services/models.py:1255
+#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr ""
+msgstr "Workgroup or domain name in old format, eg WORKGROUP"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
@@ -3060,16 +3061,20 @@ msgstr "Rsync Modules"
 
 #: services/models.py:1459
 msgid "Check interval"
-msgstr ""
+msgstr "Check interval"
 
 #: services/models.py:1460
+#, fuzzy
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Sets the interval between disk checks to N minutes. The default is 30 "
+"minutes"
 
 #: services/models.py:1466
+#, fuzzy
 msgid "Power mode"
-msgstr ""
+msgstr "Power mode"
 
 #: services/models.py:1470
 msgid "Difference"
@@ -3463,13 +3468,16 @@ msgstr ""
 
 #: sharing/models.py:185
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows File Names"
 
 #: sharing/models.py:186
+#, fuzzy
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"This forces filenames to be restricted to the character set used by Windows. "
+"This is not recommended for shares used principally by Mac computers."
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"

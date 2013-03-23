@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-04-02 13:58+0200\n"
-"Last-Translator: alamati <alamati@gmail.com>\n"
+"PO-Revision-Date: 2013-03-15 11:46+0200\n"
+"Last-Translator: purya.ghahremani <pgh.443@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
@@ -315,25 +315,24 @@ msgid "UPS goes on battery"
 msgstr "UPS از باتری تغذیه می‌شود"
 
 #: choices.py:255
-#, fuzzy
 msgid "Preferred"
-msgstr "ترجیحی"
+msgstr "مقدم"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr ""
+msgstr "تحمل"
 
 #: choices.py:257
 msgid "Required"
-msgstr ""
+msgstr "لازم"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr ""
+msgstr "جانشین"
 
 #: choices.py:285
 msgid "On"
-msgstr ""
+msgstr "روشن"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
@@ -379,11 +378,11 @@ msgstr "سال(ها)"
 #: system/models.py:407 system/models.py:432 system/models.py:616
 #: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
-msgstr ""
+msgstr "هرروز"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr ""
+msgstr "هر روز انتخاب شده در هفته"
 
 #: choices.py:504
 msgid "Read-only"
@@ -395,7 +394,7 @@ msgstr "تنها نوشتنی"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr ""
+msgstr "خواندن و نوشتن"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -424,55 +423,58 @@ msgstr ""
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "هرگز - بررسی دستگاه بدون در نظر گرفتن حالت توان"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "خواب - مگر دستگاه در وضعیت خواب باشد"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"آماده به کار - بررسی دستگاه مگر آنکه را در خواب و یا حالت آماده به کار باشد"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"بیکار - بررسی دستگاه مگر آنکه را در خواب و یا حالت آماده به کار و یا بیکار "
+"باشد"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "بررسی خود به خود طولانی"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "بررسی خود به خود کوتاه"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "بررسی خود به خود واگذاری(ATA تنها)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "تست فوری آفلاین (ATA تنها)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr ""
+msgstr "افزونه Rsync"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync از طریق SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "هل دادن"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "کشیدن"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "نام شما نباید با \"-\" شروع شود"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -507,21 +509,21 @@ msgstr ""
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr ""
+msgstr "گذرواژه"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
-msgstr ""
+msgstr "تایید گذرواژه"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "رمز عبور را وارد کنید همانطور که در بالا است ، برای تأیید."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "خط فرمان"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -537,7 +539,7 @@ msgstr ""
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr ""
+msgstr "سرگروه"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -557,7 +559,7 @@ msgstr ""
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "کاربر با آن نام کاربری وجود دارد."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -569,7 +571,7 @@ msgstr ""
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "هردو فیلد رمز عبور همگون نیستند"
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -591,7 +593,7 @@ msgstr ""
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr ""
+msgstr "این فیلد الزامی است."
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -611,7 +613,7 @@ msgstr ""
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr ""
+msgstr "اعضاء"
 
 #: account/forms.py:852
 msgid "New password"
@@ -693,7 +695,7 @@ msgstr ""
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr ""
+msgstr "رایانامه"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -5841,7 +5843,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:61
 msgid "Available"
-msgstr ""
+msgstr "در دسترس"
 
 #: templates/storage/volumes.html:62
 msgid "Size"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2012-09-27 18:28+0200\n"
-"Last-Translator: bersanri <bersan.riccardo@gmail.com>\n"
+"PO-Revision-Date: 2013-03-12 19:00+0200\n"
+"Last-Translator: andrea <andr.rubi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -400,12 +400,12 @@ msgstr "Lettura e Scrittura"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)s minuto(i)"
+msgstr "%(minuti)s minuto(i)"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)s ora(e)"
+msgstr "%(ore)s ora(e)"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
@@ -1229,9 +1229,8 @@ msgid "Jail IPv4 Netmask"
 msgstr "Netmask IPv4"
 
 #: plugins/forms.py:228
-#, fuzzy
 msgid "Plugins archive Path"
-msgstr "Percorso alla jail dei plugin"
+msgstr "Percorso completo dei plugin"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1281,9 +1280,8 @@ msgid "Version of the plugin"
 msgstr "Versione del plugin"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Versione del plugin"
+msgstr "Versione delle API del plugin"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1360,7 +1358,7 @@ msgstr "Plugin aggiornato con successo."
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Si è verificato un problema durante l'importazione"
 
 #: plugins/views.py:204
 #, fuzzy
@@ -4795,9 +4793,8 @@ msgid "Show advanced fields by default"
 msgstr ""
 
 #: system/models.py:188
-#, fuzzy
 msgid "Enable autotune"
-msgstr "Abilita atime"
+msgstr "Abilita auto-ottimizzazione"
 
 #: system/models.py:196
 msgid "MOTD banner"
@@ -4957,7 +4954,7 @@ msgstr "Nome del modulo remoto"
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr ""
+msgstr "Nome del modulo definito nel demone remoto rsync"
 
 #: system/models.py:475
 #, fuzzy
@@ -5573,9 +5570,8 @@ msgid "Install Plugin"
 msgstr ""
 
 #: templates/plugins/index.html:31
-#, fuzzy
 msgid "Info"
-msgstr "Informale"
+msgstr "Informazioni"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"

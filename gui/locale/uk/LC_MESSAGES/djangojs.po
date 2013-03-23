@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-06-30 20:02+0200\n"
-"Last-Translator: BabyBrok <admin@babybrok.com.ua>\n"
+"PO-Revision-Date: 2013-03-13 00:47+0200\n"
+"Last-Translator: zubr139 <zubr139@ukr.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -62,11 +62,11 @@ msgstr "Редагувати диск"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr "Витерти"
+msgstr "Очищення"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 msgid "Wipe Disk"
-msgstr "Витерти диск"
+msgstr "Очистити диск"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
