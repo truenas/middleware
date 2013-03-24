@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-22 14:32+0200\n"
+"PO-Revision-Date: 2013-03-23 23:49+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1415,7 +1415,7 @@ msgstr ""
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Ovo mora da bude veća od minimalnog pasivnog porta"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1652,7 +1652,7 @@ msgstr "Broj Autentifikacione grupe"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Koristiti alfanumeričke znakove, \"-\" i \".\" \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1666,10 +1666,10 @@ msgstr "Obrisati osnovnu datoteku"
 msgid "Are you sure you want to delete?"
 msgstr ""
 
+# S.M.A.R.T. - Self-Monitoring, Analysis and Reporting Technology
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "AFP servis nije uspeo ponovo da se učita."
+msgstr "S.M.A.R.T. servis nije uspeo ponovo da se učita."
 
 #: services/models.py:51
 msgid "Service"
@@ -2062,25 +2062,28 @@ msgstr "DefaultTime2Retain"
 msgid "iSCSI initial parameter (60 by default)."
 msgstr "iSCSI početni parametar (60 je podrazumevana vrednost)."
 
+# LUC - Logical Unit Controller
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr ""
+msgstr "Omogućiti LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr ""
+msgstr "IP adresa kontrolera"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
+"IP adresa logičke jedinice kontrolera (127.0.0.1(lokalni host) je "
+"podrazumevana vrednost)"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr ""
+msgstr "TCP port kontrolera"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "TCP port logičke jedinice kontrolera (3261 je podrazumevana vrednost)"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
@@ -2092,11 +2095,11 @@ msgstr ""
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Metod za potvrdu identiteta kontrolera"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "Metod može biti prihvaćen u kontroleru."
 
 #: services/models.py:375
 msgid ""
@@ -2109,41 +2112,45 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Globalna konfiguracija odredišta"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr ""
+msgstr "Ime oblasti"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "Alfanumerički identifikator oblasti."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr ""
+msgstr "Tip oblasti"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr ""
+msgstr "Tip upotrebljen kao oblast."
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr ""
+msgstr "Putanja do oblasti"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Putanja datoteke (e.g. /mnt/sharename/extent/extent0) upotrebljena kao "
+"oblast."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr ""
+msgstr "Veličina oblasti"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Veličina oblasti, 0 znači automatski, neobrađena cifra je broj bajtova, ili "
+"sufiks koji označava KB, MB, TB."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2154,21 +2161,21 @@ msgstr ""
 #: templates/sharing/windows.html:13 templates/system/sysctl.html:7
 #: templates/system/tunable.html:7
 msgid "Comment"
-msgstr ""
+msgstr "Komentar"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Možete uneti ovde opis za referencu"
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr ""
+msgstr "Oblast"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr ""
+msgstr "ID grupe portala"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
