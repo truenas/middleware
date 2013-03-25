@@ -74,7 +74,7 @@ add_port lang/perl5.14
 #-editors/nano || converters/iconv
 add_port converters/iconv
 #+databases/tdb || ...
-add_port devel/pkg-config
+add_port devel/pkgconf
 #-databases/tdb || ...
 add_port devel/gettext
 add_port databases/db46
