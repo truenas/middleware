@@ -214,10 +214,11 @@ add_port www/dojo
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV OPTIONS_FILE_SET+=HTTP_SSL \
-                   OPTIONS_FILE_SET+=HTTP_UPLOAD \
-                   OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
-                   OPTIONS_FILE_SET+=STATUS
+add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
+		OPTIONS_FILE_SET+=HTTP_SSL \
+		OPTIONS_FILE_SET+=HTTP_UPLOAD \
+		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
+		OPTIONS_FILE_SET+=STATUS
 add_port net-mgmt/net-snmp
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 add_port textproc/libxml2
@@ -324,8 +325,9 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
 	add_port lang/p5-Error
-	add_port devel/git OPTIONS_FILE_SET+=SVN OPTIONS_FILE_UNSET+=CVS \
-                           OPTIONS_FILE_UNSET+=P4
+	add_port devel/git OPTIONS_FILE_SET+=SVN \
+			OPTIONS_FILE_UNSET+=CVS \
+			OPTIONS_FILE_UNSET+=P4
 	add_port devel/ctags
 fi
 
@@ -363,11 +365,11 @@ customize_cmd hack_nsswitch_conf
 
 add_gui()
 {
-    local gui dst dstCR
-    gui=${AVATAR_ROOT}/gui
-    dstCR=/usr/local/www/freenasUI
-    dst=${NANO_WORLDDIR}${dstCR}
-    if [ -d ${gui} ]; then
+	local gui dst dstCR
+	gui=${AVATAR_ROOT}/gui
+	dstCR=/usr/local/www/freenasUI
+	dst=${NANO_WORLDDIR}${dstCR}
+	if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
 	( cd ${gui}
@@ -380,59 +382,59 @@ add_gui()
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
-    else
-        pprint 2 "GUI OMITTED from image"
-    fi
+	else
+		pprint 2 "GUI OMITTED from image"
+	fi
 }
 customize_cmd add_gui
 
 add_autotune()
 {
-    local autotune autotune_src
+	local autotune autotune_src
 
-    # See ix-loader for more details.
-    autotune_src=$AVATAR_ROOT/src/autotune/files/autotune.py
-    autotune=$NANO_WORLDDIR/usr/local/bin/autotune
-    install -m 0755 $autotune_src $autotune
+	# See ix-loader for more details.
+	autotune_src=$AVATAR_ROOT/src/autotune/files/autotune.py
+	autotune=$NANO_WORLDDIR/usr/local/bin/autotune
+	install -m 0755 $autotune_src $autotune
 }
 customize_cmd add_autotune
 
 arch_specific_ko()
 {
-    cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
+	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
 }
 customize_cmd arch_specific_ko
 
 add_pbi_manager()
 {
-    local pm dst
-    pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
-    dst=${NANO_WORLDDIR}/usr/local
+	local pm dst
+	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
+	dst=${NANO_WORLDDIR}/usr/local
 
-    pprint 2 "Adding pbi-manager"
+	pprint 2 "Adding pbi-manager"
 
-    mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
-    cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
-    ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
-    rm -f ${dst}/pbi-manager
+	mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
+	cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
+	rm -f ${dst}/pbi-manager
 }
 customize_cmd add_pbi_manager
 
@@ -488,16 +490,16 @@ customize_cmd add_pcbsd_libsh
 
 add_pbi_wrapper()
 {
-    local _pm 
-    _pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper"
+	local _pm 
+	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper"
 
-    pprint 2 "Adding PBI wrapper"
+	pprint 2 "Adding PBI wrapper"
 
-    mkdir -p "${PBI_BUILDDIR}"
-    if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
-    then
-        cp "${_pm}" "${PBI_BUILDDIR}/.pbiwrapper"
-    fi
+	mkdir -p "${PBI_BUILDDIR}"
+	if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
+	then
+		cp "${_pm}" "${PBI_BUILDDIR}/.pbiwrapper"
+	fi
 }
 customize_cmd add_pbi_wrapper
 
@@ -570,7 +572,7 @@ shrink_md_fbsize()
 	# and gives us more back on 9.x as the default block and frag size
 	# are 4 times larger).
 	sed -i '' -e 's,-S -i 4096,-S -i 4096 -b 4096 -f 512,' \
-	    ${NANO_WORLDDIR}/etc/rc.initdiskless
+		${NANO_WORLDDIR}/etc/rc.initdiskless
 }
 customize_cmd shrink_md_fbsize
 
@@ -592,7 +594,7 @@ unmute_console_logging()
 	# /var is small. Don't fill it up with messages from console.log
 	# because it's a chatty log.
 	sed -i '' -e 's/#console.info/console.info/' \
-		     "${NANO_WORLDDIR}/etc/syslog.conf"
+			 "${NANO_WORLDDIR}/etc/syslog.conf"
 }
 customize_cmd unmute_console_logging
 
@@ -626,7 +628,7 @@ fix_fuse_module_location()
 	bad_modules_dir=${NANO_WORLDDIR}/usr/local/modules
 
 	tar -cf - -C "$bad_modules_dir" . | \
-	    tar -xpvf - -C ${NANO_WORLDDIR}/boot/kernel/.
+	tar -xpvf - -C ${NANO_WORLDDIR}/boot/kernel/.
 	rm -Rf "$bad_modules_dir"
 }
 customize_cmd fix_fuse_module_location
@@ -638,8 +640,8 @@ fix_easy_install_pth()
 	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
 
 	env PYTHONPATH=$site_packages \
-	    python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
-	    $site_packages
+		python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
+		$site_packages
 }
 customize_cmd fix_easy_install_pth
 
@@ -727,10 +729,10 @@ freenas_custom()
 	chown -R root:wheel ${NANO_WORLDDIR}/boot
 	chown root:wheel ${NANO_WORLDDIR}/
 	chown root:wheel ${NANO_WORLDDIR}/usr
-        find ${NANO_WORLDDIR} -type f -name "*~" -delete
-        find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
+	find ${NANO_WORLDDIR} -type f -name "*~" -delete
+	find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
 	mkdir ${NANO_WORLDDIR}/data/zfs
-        ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
+	ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
 	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
@@ -767,7 +769,7 @@ last_orders() {
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
 		${NANO_XZ} --keep --verbose -9 < "$firmware_img" > \
-		    "$gui_upgrade_bname.xz"
+			"$gui_upgrade_bname.xz"
 
 		tar -cpvf - \
 			-C "$NANO_WORLDDIR" \
@@ -778,7 +780,7 @@ last_orders() {
 				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/} \
-		    | ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
+			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
 
 		) > "${gui_image_log}" 2>&1
 
