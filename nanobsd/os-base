@@ -187,9 +187,11 @@ add_port devel/libexecinfo
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
-add_port net/samba36	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
-			WITH_ACL_SUPPORT=y WITH_PAM_SMBPASS=y \
-			WITH_AIO_SUPPORT=y WITH_EXP_MODULES=y
+add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
+	OPTIONS_FILE_SET+=ADS \
+	OPTIONS_FILE_SET+=AIO_SUPPORT \
+	OPTIONS_FILE_SET+=EXP_MODULES \
+	OPTIONS_FILE_SET+=PAM_SMBPASS
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
