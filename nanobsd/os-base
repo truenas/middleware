@@ -123,13 +123,13 @@ WITHOUT_WIRELESS=true
 WITHOUT_WPA_SUPPLICANT_EAPOL=true
 PYTHON_DEFAULT_VERSION=python2.7
 
+NOPORTDOCS=true
 
 LOCAL_DIRS=${NANO_LOCAL_DIRS}
 
 ${DEBUG_BUILD}
 "
 CONF_INSTALL="$CONF_BUILD
-NOPORTDOCS=t
 NO_INSTALL_MANPAGES=t
 # devel/apr sucks.
 WITH_BDB_VER=46
@@ -197,7 +197,7 @@ add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
 add_port sysutils/e2fsprogs
-add_port sysutils/fusefs-kmod
+add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
