@@ -496,26 +496,25 @@ class DFPlugin(RRDBase):
 
     def get_identifiers(self):
         ids = []
-        re_disk = re.compile(r'(?<=df-)(mnt-.*?)\.rrd')
-        if not os.path.exists(self.base_path):
-            return ids
-        for _file in os.listdir(self.base_path):
-            reg = re_disk.search(_file)
-            if reg and not _file.startswith("."):
-                ids.append(reg.group(1))
+        for entry in glob.glob('%s/df-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            if os.path.exists(os.path.join(entry, 'df_complex-free.rrd')):
+                ids.append(ident)
         return ids
 
     def graph(self):
 
-        path = os.path.join(self.base_path, "df-%s.rrd" % self.identifier)
+        path = os.path.join(self._base_path, "df-%s" % self.identifier)
+        free = os.path.join(path, "df_complex-free.rrd")
+        used = os.path.join(path, "df_complex-used.rrd")
 
         args = [
-            'DEF:free_min=%s:free:MIN' % path,
-            'DEF:free_avg=%s:free:AVERAGE' % path,
-            'DEF:free_max=%s:free:MAX' % path,
-            'DEF:used_min=%s:used:MIN' % path,
-            'DEF:used_avg=%s:used:AVERAGE' % path,
-            'DEF:used_max=%s:used:MAX' % path,
+            'DEF:free_min=%s:value:MIN' % free,
+            'DEF:free_avg=%s:value:AVERAGE' % free,
+            'DEF:free_max=%s:value:MAX' % free,
+            'DEF:used_min=%s:value:MIN' % used,
+            'DEF:used_avg=%s:value:AVERAGE' % used,
+            'DEF:used_max=%s:value:MAX' % used,
             'CDEF:both_avg=free_avg,used_avg,+',
             'AREA:both_avg#bfffbf',
             'AREA:used_avg#ffbfbf',
