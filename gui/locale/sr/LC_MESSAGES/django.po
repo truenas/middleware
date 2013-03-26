@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-23 23:49+0200\n"
+"PO-Revision-Date: 2013-03-25 23:14+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -4190,7 +4190,7 @@ msgstr ""
 #: storage/nav.py:63 templates/storage/volumes.html:28
 #: templates/storage/volumes.html.py:30
 msgid "View Disks"
-msgstr ""
+msgstr "Pogledati diskove"
 
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
@@ -4332,11 +4332,10 @@ msgstr "%s uspešno dodati."
 msgid "The scrub process has begun"
 msgstr ""
 
-# ako % predstavlja user  kao users 
+# wipe - isto kao i delete ali se prostor popunjava nulama i jedinicama u nekoliko iteracija
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s uspešno ažurirani."
+msgstr "Disk je uspešno trajno obrisan"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -4439,9 +4438,8 @@ msgid "Syslog server"
 msgstr ""
 
 #: system/models.py:92 templates/system/ntpserver.html:5
-#, fuzzy
 msgid "Address"
-msgstr "IPv4 Addresa"
+msgstr "Addresa"
 
 #: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
@@ -4475,20 +4473,25 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Označava server kao prioritetan. Sve ostale stvari su jednake, ovaj host će "
+"biti izabran za sinhronizaciju između skupa ispravno operativnih hostova."
 
 #: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Min. Upit"
 
 #: system/models.py:122
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"Minimalni interval upita za NTP poruke, kao stepen od 2 u sekundama. "
+"Podrazumevana vrednost je do 6 (64 s), ali može biti smanjen na donju "
+"granici od 4 (16 s)"
 
 #: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Max. Upit"
 
 #: system/models.py:130
 msgid ""
@@ -4496,6 +4499,9 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"Maksimalna interval upita za NTP poruke, kao stepen broja 2 u sekundama. "
+"Podrazumevana vrednost je do 10 (1,024 s), ali može da se poveća do gornje "
+"granice od 17 (36,4 h)"
 
 #: system/models.py:144
 msgid "NTP Server"
@@ -4832,25 +4838,24 @@ msgstr ""
 
 #: system/models.py:580
 msgid "Rsync Task"
-msgstr ""
+msgstr "Rsync Zadatak"
 
 #: system/models.py:581
 msgid "Rsync Tasks"
-msgstr ""
+msgstr "Rsync Zadaci"
 
 #: system/models.py:756
 msgid "S.M.A.R.T. Test"
-msgstr ""
+msgstr "S.M.A.R.T. Test"
 
 #: system/models.py:757
 msgid "S.M.A.R.T. Tests"
-msgstr ""
+msgstr "S.M.A.R.T. Testovi"
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Slobodno"
+msgstr "Promenljiva"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
@@ -5408,7 +5413,7 @@ msgstr "Dobro došli na %(sw_name)&trade; %(sw_login_version)"
 
 #: templates/registration/login.html:47
 msgid "Please log in."
-msgstr ""
+msgstr "Molim vas prijavite se."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -6002,7 +6007,7 @@ msgstr "Premotavanje volumena"
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Editovati ZFS Opcije"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
 #: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
@@ -6024,7 +6029,7 @@ msgstr "Uništi ZFS volumen"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
-msgstr ""
+msgstr "Nema definisanih volumena"
 
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
@@ -6036,15 +6041,15 @@ msgstr ""
 
 #: templates/storage/wizard.html:73
 msgid "Group type"
-msgstr ""
+msgstr "Tip grupe"
 
 #: templates/storage/wizard.html:105
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Ekstra"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Upotreba samo 1 diska za dnevnike nije preporučljivo"
 
 #: templates/storage/wizard.html:116
 msgid "Log"
@@ -6208,7 +6213,7 @@ msgstr "Konfiguracija za vraćanje u prethodno stanje"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
-msgstr "Sačuvaj podešavanja"
+msgstr "Sačuvaj konfiguraciju"
 
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
@@ -6413,7 +6418,7 @@ msgid "Used space"
 msgstr "Iskorišten prostor"
 
 msgid "Restore to Factory Defaults"
-msgstr "Resetuj na podrazumevana podešavanja"
+msgstr "Vratiti na fabrička podrazumevana podešavanja"
 
 msgid "Config"
 msgstr "Konfiguracija"

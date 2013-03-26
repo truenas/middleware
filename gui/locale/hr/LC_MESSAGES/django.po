@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-07-10 18:45+0200\n"
+"PO-Revision-Date: 2013-03-25 14:08+0200\n"
 "Last-Translator: Siljo <siljo22@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
@@ -548,7 +548,7 @@ msgstr "Osnovna grupa"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Javni ključ"
 
 #: account/forms.py:284 account/forms.py:549
 #, fuzzy
@@ -814,7 +814,7 @@ msgstr ""
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Nije moguće dohvatiti trenutni status"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -855,7 +855,7 @@ msgstr "Mrežni adapter"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr "Ne možete konfigurirati više sučelja s iste IP adrese (%s)"
+msgstr "Ne možete konfigurirati više sučelja sa istom IP adresom (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -3100,7 +3100,7 @@ msgstr ""
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
@@ -3119,7 +3119,7 @@ msgstr "Dodaj Rsync modul"
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Postavke"
 
 #: services/nav.py:186
 msgid "Management"
@@ -3768,7 +3768,7 @@ msgstr ""
 
 #: storage/forms.py:884 templates/system/rsync.html:7
 msgid "Mode"
-msgstr ""
+msgstr "Način"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
@@ -3846,11 +3846,11 @@ msgstr ""
 
 #: storage/forms.py:1269
 msgid "Method"
-msgstr ""
+msgstr "Način"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Brzo"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
@@ -3918,7 +3918,7 @@ msgstr ""
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:10
 msgid "Day of week"
-msgstr ""
+msgstr "Dan u tjednu"
 
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
@@ -4292,7 +4292,7 @@ msgstr ""
 
 #: storage/views.py:740
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disk je uklonjen"
 
 #: storage/views.py:766
 #, fuzzy
@@ -4394,7 +4394,7 @@ msgstr ""
 
 #: system/models.py:62
 msgid "Language"
-msgstr ""
+msgstr "Jezik"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
@@ -4402,7 +4402,7 @@ msgstr ""
 
 #: system/models.py:74
 msgid "Timezone"
-msgstr ""
+msgstr "Vremenska zona"
 
 #: system/models.py:80
 msgid "Syslog server"
@@ -4478,7 +4478,7 @@ msgstr "Servisi"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Omogući Izbornik Konzole"
 
 #: system/models.py:159
 msgid "Use Serial Console"
@@ -4486,7 +4486,7 @@ msgstr ""
 
 #: system/models.py:161
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Omogući čuvar zaslona"
 
 #: system/models.py:163
 msgid "Automatically Check for New Firmware"
@@ -4588,7 +4588,7 @@ msgstr ""
 
 #: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:266
 msgid "Organization"
@@ -4926,11 +4926,11 @@ msgstr ""
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr ""
+msgstr "Izmijeni"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Ukloni"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
@@ -4989,12 +4989,11 @@ msgstr ""
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
-msgstr ""
+msgstr "Osnovni Mod"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Dodaj Rsync modul"
+msgstr "Napredni Mod"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5067,7 +5066,7 @@ msgstr ""
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
 msgid "Loading..."
-msgstr ""
+msgstr "Učitavanje..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
@@ -5184,7 +5183,7 @@ msgstr ""
 
 #: templates/network/interface.html:34 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Brisanje sučelja"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5192,7 +5191,7 @@ msgstr ""
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
-msgstr ""
+msgstr "Dodaj sučelje"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5202,7 +5201,7 @@ msgstr ""
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Uredi Članove"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -5317,7 +5316,7 @@ msgstr ""
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
-msgstr ""
+msgstr "Uvoz"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5335,7 +5334,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr ""
+msgstr "Molimo pričekajte..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
@@ -5420,7 +5419,7 @@ msgstr ""
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
-msgstr ""
+msgstr "NFS Postavke"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
 #, fuzzy
@@ -5437,7 +5436,7 @@ msgstr ""
 
 #: templates/services/core.html:128
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMP Postavke"
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
@@ -5445,11 +5444,11 @@ msgstr "S.M.A.R.T postavke"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSH Postavke"
 
 #: templates/services/core.html:161
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTP Postavke"
 
 #: templates/services/core.html:172
 #, fuzzy
@@ -5967,7 +5966,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:63
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 #, fuzzy
@@ -5982,7 +5981,7 @@ msgstr "ZFS particija"
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Uredi ZFS mogućnosti"
 
 #: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
 #: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
@@ -6131,17 +6130,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Nisu definirani rsync"
+msgstr "Nema definiranih NTP poslužitelja"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr ""
+msgstr "Dodaj NTP server"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
-msgstr ""
+msgstr "Dodaj NTP server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6156,16 +6154,15 @@ msgstr ""
 
 #: templates/system/reporting.html:2
 msgid "History"
-msgstr ""
+msgstr "Povijest"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Lokalni nadzornik"
+msgstr "Lokalna Putanja"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
-msgstr ""
+msgstr "Udaljeno"
 
 #: templates/system/rsync.html:48
 #, fuzzy
@@ -6210,7 +6207,7 @@ msgstr ""
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr ""
+msgstr "Nepoznato"
 
 #: templates/system/smarttest.html:38
 #, fuzzy
@@ -6268,7 +6265,7 @@ msgstr "Prosječno opterećenje"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Povezano preko"
 
 #: templates/system/tunable.html:34
 #, fuzzy
