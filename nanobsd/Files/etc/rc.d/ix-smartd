@@ -65,7 +65,7 @@ parse_devlist()
 			;;
 		# HP Smart Array Controller
 		${disk}:ciss*)
-			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -a -d cciss,${CHANNEL_NO}"
+			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d cciss,${CHANNEL_NO}"
 			break
 			;;
                 # 3ware controller
@@ -120,7 +120,7 @@ EOF
 				;;
 			esac
 			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
-			if [ -z "$(/usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled")" ]; then
+			if [ -z "$(/usr/local/sbin/smartctl -i `echo ${prop_dev}` | egrep -i "^.*SMART.*Enabled")" ]; then
 				eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
 			fi
 			echo -n "${prop_dev}"
