@@ -201,7 +201,10 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 label=_('Volume add'),
                 required=False)
             self.fields['volume_add'].choices = [('', '-----')] + \
-                                        [(x.vol_name, x.vol_name) for x in qs]
+                [
+                ("%s|%s" % (x.vol_name, x.vol_encrypt > 0), x.vol_name)
+                for x in qs
+                ]
             self.fields['volume_add'].widget.attrs['onChange'] = (
                 'wizardcheckings(true);')
         self.fields['volume_fstype'].widget.attrs['onClick'] = (
@@ -309,6 +312,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             volume_name = cleaned_data.get("volume_add")
 
         if cleaned_data.get("volume_add"):
+            cleaned_data["volume_add"] = cleaned_data.get("volume_add").split("|")[0]
             zpool = notifier().zpool_parse(cleaned_data.get("volume_add"))
             force_vdev = True if self.data.get("force_vdev") == 'on' else False
 
@@ -482,6 +486,12 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 if volume.vol_fstype == 'ZFS':
                     models.Scrub.objects.create(scrub_volume=volume)
 
+        if volume.vol_encrypt >= 2 and add:
+            #FIXME: ask current passphrase to the user
+            notifier().geli_passphrase(volume, None)
+            volume.vol_encrypt = 1
+            volume.save()
+
         if mp_path in ('/etc', '/var', '/usr'):
             device = '/dev/ufs/' + volume_name
             mp = '/mnt/' + volume_name
@@ -604,6 +614,12 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
 
                 if volume.vol_fstype == 'ZFS':
                     models.Scrub.objects.create(scrub_volume=volume)
+
+        if volume.vol_encrypt >= 2 and add:
+            #FIXME: ask current passphrase to the user
+            notifier().geli_passphrase(volume, None)
+            volume.vol_encrypt = 1
+            volume.save()
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab

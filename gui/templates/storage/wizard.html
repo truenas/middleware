@@ -31,6 +31,7 @@
                 {% trans "Volume to extend" %}
             </td>
             <td>
+                <span id="vol_extend_enc_warn" style="display: none; color: red;">{% trans "Extending an encrypted volume will remove your passphrase and recovery key" %}<br /></span>
                 {{ form.volume_add.errors }}
                 {{ form.volume_add }}
             </td>

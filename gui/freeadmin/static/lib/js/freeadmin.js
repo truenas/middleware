@@ -819,9 +819,14 @@ require([
             add_mode = true;
             domStyle.set("addVolLabel", "display", "none");
             domStyle.set("extendVolLabel", "display", "");
+            if(add.get("value").indexOf("|True") != -1)
+              domStyle.set("vol_extend_enc_warn", "display", "");
+            else
+              domStyle.set("vol_extend_enc_warn", "display", "none");
         } else {
             domStyle.set("addVolLabel", "display", "");
             domStyle.set("extendVolLabel", "display", "none");
+            domStyle.set("vol_extend_enc_warn", "display", "none");
         }
         var disks = registry.byId("wizarddisks");
         var d = disks.get('value');
