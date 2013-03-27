@@ -25,6 +25,7 @@
 #
 #####################################################################
 import logging
+import math
 import syslog
 import types
 
@@ -44,7 +45,7 @@ class SysLogHandler(logging.Handler):
         "panic":    syslog.LOG_EMERG,      # DEPRECATED
         "warn":     syslog.LOG_WARNING,    # DEPRECATED
         "warning":  syslog.LOG_WARNING,
-        }
+    }
 
     def __init__(self, facility=syslog.LOG_USER):
         self.facility = facility
@@ -55,7 +56,20 @@ class SysLogHandler(logging.Handler):
         msg = self.format(record)
         if type(msg) is types.UnicodeType:
             msg = msg.encode('utf-8')
-        syslog.syslog(
-            self.priority_names.get(record.levelname.lower(), "debug"),
-            msg)
+        """
+        syslog has a character limit per message
+        split the message in chuncks
+
+        The value of 950 is a guess based on tests,
+        it could be a little higher.
+        """
+        num_msgs = int(math.ceil(len(msg) / 950.0))
+        for i in xrange(num_msgs):
+            if num_msgs == i - 1:
+                _msg = msg[950*i:]
+            else:
+                _msg = msg[950*i:950*(i+1)]
+            syslog.syslog(
+                self.priority_names.get(record.levelname.lower(), "debug"),
+                _msg)
         syslog.closelog()
