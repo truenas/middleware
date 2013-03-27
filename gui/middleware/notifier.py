@@ -3123,14 +3123,14 @@ class notifier:
                     'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
                     })
 
-        pool_name = re.compile(r'pool: (?P<name>%s)' % (zfs.ZPOOL_NAME_RE, ), re.I)
+        pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I|re.M|re.S)
         p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
 
-        for pool in pool_name.findall(res):
+        for pool, zid in pool_name.findall(res):
             # get status part of the pool
-            status = res.split('pool: %s\n' % pool)[1].split('pool:')[0]
-            roots = zfs.parse_status(pool, doc, status)
+            status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
+            roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
 
             if roots['data'].status != 'UNAVAIL':
                 volumes.append({
@@ -3161,6 +3161,11 @@ class notifier:
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
             return True
+        else:
+            log.error("Importing %s [%s] failed with: %s",
+                name,
+                id,
+                stderr)
         return False
 
     def volume_detach(self, vol_name, vol_fstype):

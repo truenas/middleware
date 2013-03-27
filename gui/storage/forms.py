@@ -998,7 +998,7 @@ class VolumeAutoImportForm(forms.Form):
                     vol['id'])
             else:
                 devname = "%s [%s]" % (vol['label'], vol['type'])
-            diskchoices[vol['label']] = "%s" % (devname,)
+            diskchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = "%s" % (devname,)
 
         choices = diskchoices.items()
         return choices
@@ -1006,10 +1006,12 @@ class VolumeAutoImportForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         vols = notifier().detect_volumes()
+        volume_name, zid = cleaned_data.get('volume_disks', '|').split('|', 1)
         for vol in vols:
-            if vol['label'] == cleaned_data.get('volume_disks'):
-                cleaned_data['volume'] = vol
-                break
+            if vol['label'] == volume_name:
+                if (zid and zid == vol['id']) or not zid:
+                    cleaned_data['volume'] = vol
+                    break
 
         if cleaned_data.get('volume', None) == None:
             self._errors['__all__'] = self.error_class([
