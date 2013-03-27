@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-25 23:14+0200\n"
+"PO-Revision-Date: 2013-03-26 23:55+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1645,6 +1645,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
+"Polje nije validna IP adresa ili mreža. Ključna reč \"ALL\" se može koristiti "
+"da dozvoli sve."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -2193,63 +2195,69 @@ msgstr "Portal"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Initiators"
 
 #: services/models.py:546
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Inicijator ovlašćen da pristupi iSCSI destinaciji. Uzima ime ili 'ALL' za "
+"bilo koje inicijatore."
 
 #: services/models.py:550
 msgid "Authorized network"
-msgstr ""
+msgstr "Ovlašćena mreža"
 
 #: services/models.py:552
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Mreža ovlašćen da pristupi iSCSI destinaciji. Uzima IP ili CIDR adrese ili "
+"'ALL' za bilo kakve IP adrese."
 
 #: services/models.py:562
 msgid "Initiator"
-msgstr ""
+msgstr "Inicijator"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Korisničko ime za ciljnu stranu. Obično je ime inicijatora kao podrazumevana "
+"vrednost."
 
 #: services/models.py:604
 msgid "Peer User"
-msgstr ""
+msgstr "Peer korisnik"
 
 #: services/models.py:609
 msgid "Peer Secret"
-msgstr ""
+msgstr "Peer tajna"
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr ""
+msgstr "Ovlašćeni pristup"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Ovlašćeni pristupi"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr ""
+msgstr "Ime cilja"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Osnovno ime će biti dodato automatski kada počinje bez 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr ""
+msgstr "Pseudonim cilja"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Opcioni korisniku prilagođeni string cilja."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2264,7 +2272,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr ""
+msgstr "Tip"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
