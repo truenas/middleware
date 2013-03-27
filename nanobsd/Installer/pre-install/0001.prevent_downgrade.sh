@@ -19,8 +19,8 @@
 
 # XXX: won't work with git and its non-monotonically increasing revision hashes
 compare_version \
-	$OLD_AVATAR_VERSION-$OLD_AVATAR_BUILD_NUMBER \
-	$NEW_AVATAR_VERSION-$NEW_AVATAR_BUILD_NUMBER
+	$OLD_AVATAR_VERSION \
+	$NEW_AVATAR_VERSION
 ec=$?
 case $ec in
 0)
