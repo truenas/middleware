@@ -63,7 +63,8 @@ def get_plugin_status(args):
                 request.COOKIES.get("sessionid", ''),
                 ))
             ]
-        response = opener.open(url, None, 4).read()
+        #TODO: Increase timeout based on number of plugins
+        response = opener.open(url, None, 5).read()
         json = simplejson.loads(response)
     except Exception, e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
