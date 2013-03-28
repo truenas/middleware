@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-26 23:55+0200\n"
+"PO-Revision-Date: 2013-03-27 23:58+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1472,7 +1472,7 @@ msgstr "SNMP servis nije uspeo da se ponovo učita."
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1569,6 +1569,8 @@ msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
+"Istgtcontrol može pristupiti ciljevima sa ispravnim korisnikom i lozinkom u "
+"određenoj autorizacionoj grupi."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1595,9 +1597,8 @@ msgstr ""
 "Kontrolora Auth metoda."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Ovo nije ispravna maska"
+msgstr "Ovo nije ispravna mreža"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1915,14 +1916,15 @@ msgid "Allows guest access to all apple shares on this box."
 msgstr "Omogućava gost pristup svim apple deljenim resursima na ovom polju."
 
 #: services/models.py:219
-#, fuzzy
 msgid "Max. Connections"
-msgstr "Max. konekcija"
+msgstr "Max. konekcije"
 
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
+"Maksimalan broj konekcija dozvoljenih preko AFP. Podrazumevana vrednost je "
+"50."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -2276,15 +2278,15 @@ msgstr "Tip"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Tip Logičke Jedinice mapiran na LUN"
 
 #: services/models.py:660
 msgid "Target Flags"
-msgstr ""
+msgstr "Ciljni flegovi"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Inicijator ID grupe"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
@@ -2295,44 +2297,50 @@ msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"Metod može biti prihvaćen od strane cilja. Auto znači i ništa i "
+"autentifikaciju."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "ID grupe za proveru identiteta"
 
 #: services/models.py:692
 msgid "Queue Depth"
-msgstr ""
+msgstr "Vrednost u redosledu"
 
 #: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0 = isključeno, 1-255 = omogućena komanda čekanja sa navedenim redosledom. "
+"Preporučena vrednost u redosledu je 32."
 
 #: services/models.py:698
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Veličina logičkog bloka"
 
 #: services/models.py:699
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Možete navesti dužinu logičkog bloka (512 je podrazumevana vrednost). "
+"Preporučuje dužina zbog kompatibilnost je 512."
 
 #: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Cilj"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Cilj ovog stepena pripada"
 
 #: services/models.py:734
 msgid "Target / Extent"
-msgstr ""
+msgstr "Cilj / Stepen"
 
 #: services/models.py:735
 msgid "Targets / Extents"
@@ -2340,21 +2348,23 @@ msgstr ""
 
 #: services/models.py:759
 msgid "Provider"
-msgstr ""
+msgstr "Provajder"
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr ""
+msgstr "Ime domena"
 
 #: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Alias za ime hosta. Ova opcija se može pojaviti više puta, za svaki domen "
+"koji ima isti IP. Koristite razmak za razdvajanje višestrukih aliasa."
 
 #: services/models.py:777
 msgid "Update period"
-msgstr ""
+msgstr "Period ažuriranja"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
@@ -2362,16 +2372,16 @@ msgstr ""
 
 #: services/models.py:783
 msgid "Forced update period"
-msgstr ""
+msgstr "Forsirani period ažuriranja"
 
 #: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "Ovi parametri će biti dodati globalnim podešavanjima u inadin.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Dinamički DNS"
 
 #: services/models.py:804
 msgid "Path to the plugins jail"
@@ -2407,60 +2417,68 @@ msgstr ""
 
 #: services/models.py:852
 msgid "Location"
-msgstr ""
+msgstr "Lokacija"
 
 #: services/models.py:854
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Informacije o lokaciji, npr fizička lokacija ovog sistema: 'sprat zgrade, "
+"soba xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
-msgstr ""
+msgstr "Kontakt"
 
 #: services/models.py:861
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Kontakt informacije, npr ime ili e-mail lica odgovornog za ovaj sistem: "
+"'admin@email.address'."
 
 #: services/models.py:867
 msgid "Community"
-msgstr ""
+msgstr "Zajednica"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "U većini slučajeva, \"public\" se ovde koristi."
 
+# a trap is an event notification message 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Pošalji SNMP notifikaciju o događaju"
 
+# Simple Network Management Protocol
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:893 storage/models.py:330
 msgid "Identifier"
-msgstr ""
+msgstr "Identifikator"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Ovo ime se koristi za jedinstvenu identifikaciju UPS uređaja na ovom "
+"sistemu."
 
 #: services/models.py:898
 msgid "Driver"
-msgstr ""
+msgstr "Drajver"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Drajver se koristi za komunikaciju sa vašim UPS uređajem."
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Serijski ili USB port gde je priključen UPS uređaj."
 
 #: services/models.py:910
 #, fuzzy
@@ -2473,7 +2491,7 @@ msgstr ""
 
 #: services/models.py:923
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Režim isključivanja"
 
 #: services/models.py:927
 msgid "Shutdown timer"
