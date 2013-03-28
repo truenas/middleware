@@ -44,30 +44,30 @@ log = logging.getLogger('storage.models')
 
 class Volume(Model):
     vol_name = models.CharField(
-            unique=True,
-            max_length=120,
-            verbose_name=_("Name")
-            )
+        unique=True,
+        max_length=120,
+        verbose_name=_("Name")
+    )
     vol_fstype = models.CharField(
-            max_length=120,
-            choices=choices.VolumeType_Choices,
-            verbose_name=_("File System Type"),
-            )
+        max_length=120,
+        choices=choices.VolumeType_Choices,
+        verbose_name=_("File System Type"),
+    )
     vol_guid = models.CharField(
-            max_length=50,
-            blank=True,
-            editable=False,
-            )
+        max_length=50,
+        blank=True,
+        editable=False,
+    )
     vol_encrypt = models.IntegerField(
-            choices=choices.VolumeEncrypt_Choices,
-            default=0,
-            verbose_name=_("Encryption Type"),
-            )
+        choices=choices.VolumeEncrypt_Choices,
+        default=0,
+        verbose_name=_("Encryption Type"),
+    )
     vol_encryptkey = models.CharField(
-            max_length=50,
-            blank=True,
-            editable=False,
-            )
+        max_length=50,
+        blank=True,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = _("Volume")
@@ -80,20 +80,23 @@ class Volume(Model):
                     pool = n.zpool_parse(self.vol_name)
                     self._disks = pool.get_disks()
                 else:
-                    prov = n.get_label_consumer(self.vol_fstype.lower(),
+                    prov = n.get_label_consumer(
+                        self.vol_fstype.lower(),
                         self.vol_name)
                     self._disks = n.get_disks_from_provider(prov) \
                         if prov else []
             return self._disks
         except Exception, e:
-            log.debug("Exception on retrieving disks for %s: %s",
+            log.debug(
+                "Exception on retrieving disks for %s: %s",
                 self.vol_name,
                 e)
             return []
 
     def get_datasets(self, hierarchical=False, include_root=False):
         if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(path=self.vol_name,
+            return zfs.list_datasets(
+                path=self.vol_name,
                 recursive=True,
                 hierarchical=hierarchical,
                 include_root=include_root)
@@ -116,7 +119,8 @@ class Volume(Model):
             return self._status
         except Exception, e:
             if self.is_decrypted():
-                log.debug("Exception on retrieving status for %s: %s",
+                log.debug(
+                    "Exception on retrieving status for %s: %s",
                     self.vol_name,
                     e)
                 return _(u"Error")
@@ -189,10 +193,13 @@ class Volume(Model):
 
             for mp in self.mountpoint_set.all():
                 attachments = mp.has_attachments()
-                reloads = map(sum,
-                              zip(reloads,
-                                [len(attachments[svc]) for svc in svcs])
-                             )
+                reloads = map(
+                    sum,
+                    zip(
+                        reloads,
+                        [len(attachments[svc]) for svc in svcs]
+                    )
+                )
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
@@ -265,52 +272,53 @@ class Volume(Model):
 
 
 class Scrub(Model):
-    scrub_volume = models.OneToOneField(Volume,
-            verbose_name=_("Volume"),
-            limit_choices_to={'vol_fstype': 'ZFS'},
-            )
+    scrub_volume = models.OneToOneField(
+        Volume,
+        verbose_name=_("Volume"),
+        limit_choices_to={'vol_fstype': 'ZFS'},
+    )
     scrub_threshold = models.PositiveSmallIntegerField(
-            verbose_name=_("Threshold days"),
-            default=35,
-            help_text=_("Determine how many days shall be between scrubs"),
-            )
+        verbose_name=_("Threshold days"),
+        default=35,
+        help_text=_("Determine how many days shall be between scrubs"),
+    )
     scrub_description = models.CharField(
-            max_length=200,
-            verbose_name=_("Description"),
-            blank=True,
-            )
+        max_length=200,
+        verbose_name=_("Description"),
+        blank=True,
+    )
     scrub_minute = models.CharField(
-            max_length=100,
-            default="00",
-            verbose_name=_("Minute"),
-            help_text=_("Values 0-59 allowed."),
-            )
+        max_length=100,
+        default="00",
+        verbose_name=_("Minute"),
+        help_text=_("Values 0-59 allowed."),
+    )
     scrub_hour = models.CharField(
-            max_length=100,
-            default="00",
-            verbose_name=_("Hour"),
-            help_text=_("Values 0-23 allowed."),
-            )
+        max_length=100,
+        default="00",
+        verbose_name=_("Hour"),
+        help_text=_("Values 0-23 allowed."),
+    )
     scrub_daymonth = models.CharField(
-            max_length=100,
-            default="*",
-            verbose_name=_("Day of month"),
-            help_text=_("Values 1-31 allowed."),
-            )
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of month"),
+        help_text=_("Values 1-31 allowed."),
+    )
     scrub_month = models.CharField(
-            max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,11,12',
-            verbose_name=_("Month"),
-            )
+        max_length=100,
+        default='1,2,3,4,5,6,7,8,9,10,11,12',
+        verbose_name=_("Month"),
+    )
     scrub_dayweek = models.CharField(
-            max_length=100,
-            default="7",
-            verbose_name=_("Day of week"),
-            )
+        max_length=100,
+        default="7",
+        verbose_name=_("Day of week"),
+    )
     scrub_enabled = models.BooleanField(
-            default=True,
-            verbose_name=_("Enabled"),
-            )
+        default=True,
+        verbose_name=_("Enabled"),
+    )
 
     class Meta:
         verbose_name = _("ZFS Scrub")
@@ -384,79 +392,79 @@ class Scrub(Model):
 
 class Disk(Model):
     disk_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Name")
-            )
+        max_length=120,
+        verbose_name=_("Name")
+    )
     disk_identifier = models.CharField(
-            max_length=42,
-            verbose_name=_("Identifier"),
-            editable=False,
-            )
+        max_length=42,
+        verbose_name=_("Identifier"),
+        editable=False,
+    )
     disk_serial = models.CharField(
-            max_length=30,
-            verbose_name=_("Serial"),
-            blank=True,
-            )
+        max_length=30,
+        verbose_name=_("Serial"),
+        blank=True,
+    )
     disk_multipath_name = models.CharField(
-            max_length=30,
-            verbose_name=_("Multipath name"),
-            blank=True,
-            editable=False,
-            )
+        max_length=30,
+        verbose_name=_("Multipath name"),
+        blank=True,
+        editable=False,
+    )
     disk_multipath_member = models.CharField(
-            max_length=30,
-            verbose_name=_("Multipath member"),
-            blank=True,
-            editable=False,
-            )
+        max_length=30,
+        verbose_name=_("Multipath member"),
+        blank=True,
+        editable=False,
+    )
     disk_description = models.CharField(
-            max_length=120,
-            verbose_name=_("Description"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Description"),
+        blank=True
+    )
     disk_transfermode = models.CharField(
-            max_length=120,
-            choices=choices.TRANSFERMODE_CHOICES,
-            default="Auto",
-            verbose_name=_("Transfer Mode")
-            )
+        max_length=120,
+        choices=choices.TRANSFERMODE_CHOICES,
+        default="Auto",
+        verbose_name=_("Transfer Mode")
+    )
     disk_hddstandby = models.CharField(
-            max_length=120,
-            choices=choices.HDDSTANDBY_CHOICES,
-            default="Always On",
-            verbose_name=_("HDD Standby")
-            )
+        max_length=120,
+        choices=choices.HDDSTANDBY_CHOICES,
+        default="Always On",
+        verbose_name=_("HDD Standby")
+    )
     disk_advpowermgmt = models.CharField(
-            max_length=120,
-            choices=choices.ADVPOWERMGMT_CHOICES,
-            default="Disabled",
-            verbose_name=_("Advanced Power Management")
-            )
+        max_length=120,
+        choices=choices.ADVPOWERMGMT_CHOICES,
+        default="Disabled",
+        verbose_name=_("Advanced Power Management")
+    )
     disk_acousticlevel = models.CharField(
-            max_length=120,
-            choices=choices.ACOUSTICLVL_CHOICES,
-            default="Disabled",
-            verbose_name=_("Acoustic Level")
-            )
+        max_length=120,
+        choices=choices.ACOUSTICLVL_CHOICES,
+        default="Disabled",
+        verbose_name=_("Acoustic Level")
+    )
     disk_togglesmart = models.BooleanField(
-            default=True,
-            verbose_name=_("Enable S.M.A.R.T."),
-            )
+        default=True,
+        verbose_name=_("Enable S.M.A.R.T."),
+    )
     disk_smartoptions = models.CharField(
-            max_length=120,
-            verbose_name=_("S.M.A.R.T. extra options"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("S.M.A.R.T. extra options"),
+        blank=True
+    )
     disk_enabled = models.BooleanField(
-            default=True,
-            editable=False,
-            )
+        default=True,
+        editable=False,
+    )
 
     def get_serial(self):
         n = notifier()
         return n.serial_from_device(
             n.identifier_to_device(self.disk_identifier)
-            )
+        )
 
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
@@ -478,7 +486,8 @@ class Disk(Model):
     def get_disk_size(self):
         #FIXME
         import subprocess
-        p1 = subprocess.Popen(["/usr/sbin/diskinfo", self.devname],
+        p1 = subprocess.Popen(
+            ["/usr/sbin/diskinfo", self.devname],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         if p1.wait() == 0:
@@ -495,8 +504,9 @@ class Disk(Model):
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
         #Delete device extents depending on this Disk
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk',
-                                        iscsi_target_extent_path=str(self.id))
+        qs = iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_type='Disk',
+            iscsi_target_extent_path=str(self.id))
         if qs.exists():
             qs.delete()
         super(Disk, self).delete()
@@ -514,26 +524,26 @@ class EncryptedDisk(Model):
     encrypted_volume = models.ForeignKey(Volume)
     encrypted_disk = models.ForeignKey(Disk)
     encrypted_provider = models.CharField(
-            unique=True,
-            max_length=120,
-            verbose_name=_("Underlying provider"),
-            )
+        unique=True,
+        max_length=120,
+        verbose_name=_("Underlying provider"),
+    )
 
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
     mp_path = models.CharField(
-            unique=True,
-            max_length=120,
-            verbose_name=_("Mount Point"),
-            help_text=_("Path to mount point"),
-            )
+        unique=True,
+        max_length=120,
+        verbose_name=_("Mount Point"),
+        help_text=_("Path to mount point"),
+    )
     mp_options = models.CharField(
-            max_length=120,
-            verbose_name=_("Mount options"),
-            help_text=_("Enter Mount Point options here"),
-            null=True,
-            )
+        max_length=120,
+        verbose_name=_("Mount options"),
+        help_text=_("Enter Mount Point options here"),
+        null=True,
+    )
 
     def is_my_path(self, path):
         if path == self.mp_path:
@@ -551,7 +561,9 @@ class MountPoint(Model):
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         """
-        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share_Path
+        from freenasUI.sharing.models import (
+            CIFS_Share, AFP_Share, NFS_Share_Path
+        )
         from freenasUI.services.models import iSCSITargetExtent
         mypath = os.path.abspath(self.mp_path)
         attachments = {
@@ -709,35 +721,36 @@ class MountPoint(Model):
 # own application
 class ReplRemote(Model):
     ssh_remote_hostname = models.CharField(
-            max_length=120,
-            verbose_name=_("Remote hostname"),
-            )
+        max_length=120,
+        verbose_name=_("Remote hostname"),
+    )
     ssh_remote_port = models.IntegerField(
-            default=22,
-            verbose_name=_("Remote port"),
-            )
+        default=22,
+        verbose_name=_("Remote port"),
+    )
     ssh_remote_dedicateduser_enabled = models.BooleanField(
-            default=False,
-            verbose_name=_("Remote Dedicated User Enabled"),
-            )
+        default=False,
+        verbose_name=_("Remote Dedicated User Enabled"),
+    )
     ssh_remote_dedicateduser = UserField(
-            verbose_name=_("Remote Dedicated User"),
-            blank=True,
-            null=True,
-            default='',
-            )
+        verbose_name=_("Remote Dedicated User"),
+        blank=True,
+        null=True,
+        default='',
+    )
     ssh_remote_hostkey = models.CharField(
-            max_length=2048,
-            verbose_name=_("Remote hostkey"),
-            )
+        max_length=2048,
+        verbose_name=_("Remote hostkey"),
+    )
     ssh_fast_cipher = models.BooleanField(
-            default=False,
-            verbose_name=_("High Speed Encryption Ciphers"),
-            help_text=_("Enabling this may increase transfer speed on high "
-                "speed/low latency local networks.  It uses less secure "
-                "encryption algorithms than the defaults, which make it less "
-                "desirable on untrusted networks.")
-            )
+        default=False,
+        verbose_name=_("High Speed Encryption Ciphers"),
+        help_text=_(
+            "Enabling this may increase transfer speed on high "
+            "speed/low latency local networks.  It uses less secure "
+            "encryption algorithms than the defaults, which make it less "
+            "desirable on untrusted networks.")
+    )
 
     class Meta:
         verbose_name = _(u"Remote Replication Host")
@@ -753,50 +766,59 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
-    repl_filesystem = models.CharField(max_length=150,
-            verbose_name=_("Filesystem/Volume"),
-            blank=True,
-            )
-    repl_lastsnapshot = models.CharField(max_length=120,
-            blank=True,
-            verbose_name=_("Last snapshot sent to remote side (leave blank "
-                "for full replication)"),
-            )
-    repl_remote = models.ForeignKey(ReplRemote,
-            verbose_name=_("Remote Host"),
-            )
-    repl_zfs = models.CharField(max_length=120,
-            verbose_name=_("Remote ZFS filesystem name"),
-            help_text=_("This should be the name of the ZFS filesystem on "
-                "remote side. eg: poolname/datasetname not the mountpoint or "
-                "filesystem path"),
-            )
+    repl_filesystem = models.CharField(
+        max_length=150,
+        verbose_name=_("Filesystem/Volume"),
+        blank=True,
+    )
+    repl_lastsnapshot = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name=_(
+            "Last snapshot sent to remote side (leave blank "
+            "for full replication)"),
+    )
+    repl_remote = models.ForeignKey(
+        ReplRemote,
+        verbose_name=_("Remote Host"),
+    )
+    repl_zfs = models.CharField(
+        max_length=120,
+        verbose_name=_("Remote ZFS filesystem name"),
+        help_text=_(
+            "This should be the name of the ZFS filesystem on "
+            "remote side. eg: poolname/datasetname not the mountpoint or "
+            "filesystem path"),
+    )
     repl_userepl = models.BooleanField(
-            default=False,
-            verbose_name=_("Recursively replicate and remove stale snapshot "
-                "on remote side"),
-            )
+        default=False,
+        verbose_name=_(
+            "Recursively replicate and remove stale snapshot "
+            "on remote side"),
+    )
     repl_resetonce = models.BooleanField(
-            default=False,
-            verbose_name=_("Initialize remote side for once. (May cause data"
-                " loss on remote side!)"),
-            )
+        default=False,
+        verbose_name=_(
+            "Initialize remote side for once. (May cause data"
+            " loss on remote side!)"),
+    )
     repl_limit = models.IntegerField(
-            default=0,
-            verbose_name=_("Limit (kB/s)"),
-            help_text=_("Limit the replication speed. Unit in "
-                "kilobytes/seconds. 0 = unlimited."),
-            )
+        default=0,
+        verbose_name=_("Limit (kB/s)"),
+        help_text=_(
+            "Limit the replication speed. Unit in "
+            "kilobytes/seconds. 0 = unlimited."),
+    )
     repl_begin = models.TimeField(
-            default=time(hour=0),
-            verbose_name=_("Begin"),
-            help_text=_("Do not start replication before"),
-            )
+        default=time(hour=0),
+        verbose_name=_("Begin"),
+        help_text=_("Do not start replication before"),
+    )
     repl_end = models.TimeField(
-            default=time(hour=23, minute=59),
-            verbose_name=_("End"),
-            help_text=_("Do not start replication after"),
-            )
+        default=time(hour=23, minute=59),
+        verbose_name=_("End"),
+        help_text=_("Do not start replication after"),
+    )
 
     class Meta:
         verbose_name = _(u"Replication Task")
@@ -804,7 +826,8 @@ class Replication(Model):
         ordering = ["repl_filesystem"]
 
     def __unicode__(self):
-        return '%s -> %s' % (self.repl_filesystem,
+        return '%s -> %s' % (
+            self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname)
 
     def delete(self):
@@ -818,54 +841,55 @@ class Replication(Model):
 
 
 class Task(Model):
-    task_filesystem = models.CharField(max_length=150,
-            verbose_name=_("Filesystem/Volume"),
-            )
+    task_filesystem = models.CharField(
+        max_length=150,
+        verbose_name=_("Filesystem/Volume"),
+    )
     task_recursive = models.BooleanField(
-            default=False,
-            verbose_name=_("Recursive"),
-            )
+        default=False,
+        verbose_name=_("Recursive"),
+    )
     task_ret_count = models.PositiveIntegerField(
-            default=2,
-            verbose_name=_("Snapshot lifetime value"),
-            )
+        default=2,
+        verbose_name=_("Snapshot lifetime value"),
+    )
     task_ret_unit = models.CharField(
-            default='week',
-            max_length=120,
-            choices=choices.RetentionUnit_Choices,
-            verbose_name=_("Snapshot lifetime unit"),
-            )
+        default='week',
+        max_length=120,
+        choices=choices.RetentionUnit_Choices,
+        verbose_name=_("Snapshot lifetime unit"),
+    )
     task_begin = models.TimeField(
-            default=time(hour=9),
-            verbose_name=_("Begin"),
-            help_text=_("Do not snapshot before"),
-            )
+        default=time(hour=9),
+        verbose_name=_("Begin"),
+        help_text=_("Do not snapshot before"),
+    )
     task_end = models.TimeField(
-            default=time(hour=18),
-            verbose_name=_("End"),
-            help_text=_("Do not snapshot after"),
-            )
+        default=time(hour=18),
+        verbose_name=_("End"),
+        help_text=_("Do not snapshot after"),
+    )
     task_interval = models.PositiveIntegerField(
-            default=60,
-            choices=choices.TASK_INTERVAL,
-            max_length=120,
-            verbose_name=_("Interval"),
-            help_text=_("How much time has been passed between two snapshot "
-                "attempts."),
-            )
+        default=60,
+        choices=choices.TASK_INTERVAL,
+        max_length=120,
+        verbose_name=_("Interval"),
+        help_text=_(
+            "How much time has been passed between two snapshot attempts."),
+    )
     task_repeat_unit = models.CharField(
-            default='weekly',
-            max_length=120,
-            choices=choices.RepeatUnit_Choices,
-            verbose_name=_("Occurrence"),
-            help_text=_("How the task is repeated"),
-            )
+        default='weekly',
+        max_length=120,
+        choices=choices.RepeatUnit_Choices,
+        verbose_name=_("Occurrence"),
+        help_text=_("How the task is repeated"),
+    )
     task_byweekday = models.CharField(
-            max_length=120,
-            default="1,2,3,4,5",
-            verbose_name=_("Weekday"),
-            blank=True,
-            )
+        max_length=120,
+        default="1,2,3,4,5",
+        verbose_name=_("Weekday"),
+        blank=True,
+    )
 #    task_bymonth = models.CharField(
 #            max_length = 120,
 #            default = "1,2,3,4,5,6,7,8,9,a,b,c",
@@ -879,11 +903,12 @@ class Task(Model):
 #            )
 
     def __unicode__(self):
-        return '%s - every %s - %d%s' % (self.task_filesystem,
-                self.get_task_interval_display(),
-                self.task_ret_count,
-                self.task_ret_unit,
-                )
+        return '%s - every %s - %d%s' % (
+            self.task_filesystem,
+            self.get_task_interval_display(),
+            self.task_ret_count,
+            self.task_ret_unit,
+        )
 
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
