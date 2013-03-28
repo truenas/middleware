@@ -201,6 +201,13 @@ class Volume(Model):
                     )
                 )
 
+        # Delete scheduled snapshots for this volume
+        Task.objects.filter(
+            models.Q(task_filesystem=self.vol_name)
+            |
+            models.Q(task_filesystem__startswith="%s/" % self.vol_name)
+        ).delete()
+
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
                 n.stop(svc)
