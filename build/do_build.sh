@@ -51,6 +51,27 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
+if [ ! -z "${SUDO_USER}" ] ; then
+        USERHOME=`eval "echo ~${SUDO_USER}"`
+else
+        USERHOME="${HOME}"
+fi
+GIT_CACHE="${USERHOME}/freenas/git/trueos.git"
+if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE}" ] ; then
+        GIT_REPO="${GIT_CACHE}"
+        echo "Using local mirror in ${GIT_REPO}."
+else
+        echo "no local mirror, to speed up builds we suggest doing"
+        echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
+fi
+GIT_PORTS_CACHE="${USERHOME}/freenas/git/ports.git"
+if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE" ] ;then
+    GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
+    echo "Using local git ports mirror in $GIT_PORTS_REPO"
+else
+    echo "no local mirror, to speed up builds we suggest doing"
+    echo "'git clone --mirror https://github.com/freenas/ports.git into ${HOME}/freenas/git/ports.git"
+fi
 
 usage() {
 	cat <<EOF
