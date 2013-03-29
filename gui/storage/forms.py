@@ -66,7 +66,8 @@ attrs_dict = {'class': 'required', 'maxHeight': 200}
 
 log = logging.getLogger('storage.forms')
 
-DEDUP_WARNING = _("Enabling dedup may have drastic performance implications,"
+DEDUP_WARNING = _(
+    "Enabling dedup may have drastic performance implications,"
     "<br /> as well as impact your ability to access your data.<br /> "
     "Consider using compression instead.")
 
@@ -115,8 +116,7 @@ def _clean_quota_fields(form, attrs, prefix):
             cdata[field] = ''
 
     r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
-    msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), "
-        "or, 0")
+    msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or 0")
 
     for attr in attrs:
         formfield = '%s%s' % (prefix, attr)
@@ -131,7 +131,7 @@ def _clean_quota_fields(form, attrs, prefix):
             except:
                 form._errors[formfield] = form.error_class([
                     _("%s is not a valid number") % (number, ),
-                    ])
+                ])
                 del cdata[formfield]
     return cdata
 
@@ -141,11 +141,12 @@ class VolumeMixin(object):
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
         if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
-            raise forms.ValidationError(_("The volume name must start with "
+            raise forms.ValidationError(_(
+                "The volume name must start with "
                 "letters and may include numbers, \"-\", \"_\" and \".\" ."))
         if models.Volume.objects.filter(vol_name=vname).exists():
-            raise forms.ValidationError(_("A volume with that name already "
-                "exists."))
+            raise forms.ValidationError(
+                _("A volume with that name already exists."))
         return vname
 
 
@@ -178,11 +179,12 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
     encryption_inirand = forms.BooleanField(
         initial=False,
         required=False,
-        )
-    dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+    )
+    dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP,
         initial="off",
-        )
+    )
     ufspathen = forms.BooleanField(
         initial=False,
         label=_('Specify custom path'),
@@ -200,11 +202,10 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             self.fields['volume_add'] = forms.ChoiceField(
                 label=_('Volume add'),
                 required=False)
-            self.fields['volume_add'].choices = [('', '-----')] + \
-                [
+            self.fields['volume_add'].choices = [('', '-----')] + [
                 ("%s|%s" % (x.vol_name, x.vol_encrypt > 0), x.vol_name)
                 for x in qs
-                ]
+            ]
             self.fields['volume_add'].widget.attrs['onChange'] = (
                 'wizardcheckings(true);')
         self.fields['volume_fstype'].widget.attrs['onClick'] = (
@@ -215,14 +216,14 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             'toggleGeneric("id_ufspathen", ["id_ufspath"], true);')
         if not self.data.get("ufspathen", False):
             self.fields['ufspath'].widget.attrs['disabled'] = 'disabled'
-        self.fields['ufspath'].widget.attrs['promptMessage'] = _("Leaving this"
-            " blank will give the volume a default path of "
+        self.fields['ufspath'].widget.attrs['promptMessage'] = _(
+            "Leaving this blank will give the volume a default path of "
             "/mnt/${VOLUME_NAME}")
 
         grouptype_choices = (
             ('mirror', 'mirror'),
             ('stripe', 'stripe'),
-            )
+        )
         fstype = self.data.get("volume_fstype", None)
         if "volume_disks" in self.data:
             disks = self.data.getlist("volume_disks")
@@ -233,7 +234,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             if l >= 2 and (((l - 1) & l) == 0):
                 grouptype_choices += (
                     ('raid3', 'RAID-3'),
-                    )
+                )
         elif fstype == "ZFS":
             if len(disks) >= 3:
                 grouptype_choices += (('raidz', 'RAID-Z'), )
@@ -250,7 +251,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         # Grab disk list
         # Root device already ruled out
         for disk, info in notifier().get_disks().items():
-            disks.append(Disk(info['devname'], info['capacity'],
+            disks.append(Disk(
+                info['devname'],
+                info['capacity'],
                 serial=info.get('ident')))
 
         # Exclude what's already added
@@ -302,17 +305,18 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             self._errors['__all__'] = self.error_class([
                 _("You cannot select an existing ZFS volume and specify a new "
                     "volume name"),
-                ])
+            ])
         elif not(volume_name or cleaned_data.get("volume_add")):
             self._errors['__all__'] = self.error_class([
                 _("You must specify a new volume name or select an existing "
                     "ZFS volume to append a virtual device"),
-                ])
+            ])
         elif not volume_name:
             volume_name = cleaned_data.get("volume_add")
 
         if cleaned_data.get("volume_add"):
-            cleaned_data["volume_add"] = cleaned_data.get("volume_add").split("|")[0]
+            cleaned_data["volume_add"] = cleaned_data.get(
+                "volume_add").split("|")[0]
             zpool = notifier().zpool_parse(cleaned_data.get("volume_add"))
             force_vdev = True if self.data.get("force_vdev") == 'on' else False
 
@@ -324,33 +328,32 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                         required=True,
                         label=_("Force Volume Add"),
                         initial=False,
-                        )
+                    )
                     if not force_vdev:
-                        errors.append(
-                            _("You are trying to add a virtual device of type "
+                        errors.append(_(
+                            "You are trying to add a virtual device of type "
                             "'%(addtype)s' in a pool that has a virtual "
                             "device of type '%(vdevtype)s'") % {
                                 'addtype': self.cleaned_data.get('group_type'),
                                 'vdevtype': vdev.type,
-                                }
-                            )
+                            }
+                        )
 
                 if len(disks) > 0 and len(disks) != len(list(iter(vdev))):
                     self.fields['force_vdev'] = forms.BooleanField(
                         required=True,
                         label=_("Force Volume Add"),
                         initial=False,
-                        )
+                    )
                     if not force_vdev:
-                        errors.append(
-                            _("You are trying to add a virtual device consisting"
+                        errors.append(_(
+                            "You are trying to add a virtual device consisting"
                             " of %(addnum)s device(s) in a pool that has a "
                             "virtual device consisted of %(vdevnum)s device(s)"
-                            ) % {
-                                'addnum': len(disks),
-                                'vdevnum': len(list(iter(vdev))),
-                                }
-                            )
+                        ) % {
+                            'addnum': len(disks),
+                            'vdevnum': len(list(iter(vdev))),
+                        })
 
                 if errors:
                     self._errors['force_vdev'] = self.error_class(errors)
@@ -365,14 +368,16 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             msg = _(u"This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
-        if (cleaned_data.get("volume_fstype") == 'ZFS' and \
-                models.Volume.objects.filter(vol_name=volume_name).exclude(
-                    vol_fstype='ZFS').count() > 0
-                ) or (
-                    cleaned_data.get("volume_fstype") == 'UFS' and \
-                    models.Volume.objects.filter(
-                        vol_name=volume_name).count() > 0
-                ):
+        if (
+            cleaned_data.get("volume_fstype") == 'ZFS'
+            and
+            models.Volume.objects.filter(vol_name=volume_name).exclude(
+                vol_fstype='ZFS').count() > 0
+        ) or (
+            cleaned_data.get("volume_fstype") == 'UFS'
+            and
+            models.Volume.objects.filter(vol_name=volume_name).count() > 0
+        ):
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
@@ -386,7 +391,8 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                     re.search(r'^mirror.*', volume_name) or \
                     re.search(r'^spare.*', volume_name) or \
                     re.search(r'^raidz.*', volume_name):
-                msg = _(u"The volume name may NOT start with c[0-9], mirror, "
+                msg = _(
+                    u"The volume name may NOT start with c[0-9], mirror, "
                     "raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
@@ -396,7 +402,8 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
             elif not re.search(r'^[a-z0-9]+$', volume_name, re.I):
-                msg = _(u"UFS volume names can only contain alphanumeric "
+                msg = _(
+                    u"UFS volume names can only contain alphanumeric "
                     "characters")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
@@ -405,8 +412,11 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
 
     def done(self, request):
         # Construct and fill forms into database.
-        volume_name = self.cleaned_data.get("volume_name") or \
-                            self.cleaned_data.get("volume_add")
+        volume_name = (
+            self.cleaned_data.get("volume_name")
+            or
+            self.cleaned_data.get("volume_add")
+        )
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         group_type = self.cleaned_data.get('group_type')
@@ -422,15 +432,18 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         mp_path = None
 
         with transaction.commit_on_success():
-            vols = models.Volume.objects.filter(vol_name=volume_name,
+            vols = models.Volume.objects.filter(
+                vol_name=volume_name,
                 vol_fstype='ZFS')
             if vols.count() == 1:
                 volume = vols[0]
                 add = True
             else:
                 add = False
-                volume = models.Volume(vol_name=volume_name,
-                    vol_fstype=volume_fstype, vol_encrypt=volume_encrypt)
+                volume = models.Volume(
+                    vol_name=volume_name,
+                    vol_fstype=volume_fstype,
+                    vol_encrypt=volume_encrypt)
                 volume.save()
 
                 mp_path = ufspath if ufspath else '/mnt/' + volume_name
@@ -438,7 +451,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 if volume_fstype == 'UFS':
                     mp_options = 'rw,nfsv4acls'
 
-                mp = models.MountPoint(mp_volume=volume, mp_path=mp_path,
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path=mp_path,
                     mp_options=mp_options)
                 mp.save()
             self.volume = volume
@@ -460,13 +475,16 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                         grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
 
             if len(disk_list) > 0 and add:
-                notifier().zfs_volume_attach_group(volume, grouped['root'],
+                notifier().zfs_volume_attach_group(
+                    volume,
+                    grouped['root'],
                     force4khack=force4khack)
 
             if add:
                 for grp_type in grouped:
                     if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(volume,
+                        notifier().zfs_volume_attach_group(
+                            volume,
                             grouped.get(grp_type),
                             force4khack=force4khack)
 
@@ -501,8 +519,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
 
             mount(device, mp)
             popen("/usr/local/bin/rsync -avzD '%s/*' '%s/'" % (
-                mp_path, mp)
-                ).close()
+                mp_path,
+                mp,
+            )).close()
             umount(mp)
 
             if access(mp, 0):
@@ -691,13 +710,16 @@ class VdevFormSet(BaseFormSet):
 class VolumeImportForm(forms.Form):
 
     volume_name = forms.CharField(max_length=30, label=_('Volume name'))
-    volume_disks = forms.ChoiceField(choices=(),
+    volume_disks = forms.ChoiceField(
+        choices=(),
         widget=forms.Select(attrs=attrs_dict),
-        label=_('Member disk'))
+        label=_('Member disk'),
+    )
     volume_fstype = forms.ChoiceField(
         choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
         widget=forms.RadioSelect(attrs=attrs_dict),
-        label='File System type')
+        label='File System type',
+    )
 
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
@@ -741,17 +763,19 @@ class VolumeImportForm(forms.Form):
             del cleaned_data["volume_name"]
 
         devpath = "/dev/%s" % (cleaned_data.get('volume_disks', []), )
-        isvalid = notifier().precheck_partition(devpath,
+        isvalid = notifier().precheck_partition(
+            devpath,
             cleaned_data.get('volume_fstype', ''))
         if not isvalid:
-            msg = _(u"The selected disks were not verified for this import "
-                "rules.")
+            msg = _(
+                u"The selected disks were not verified for this import rules.")
             self._errors["volume_name"] = self.error_class([msg])
             if "volume_name" in cleaned_data:
                 del cleaned_data["volume_name"]
 
         if "volume_name" in cleaned_data:
-            dolabel = notifier().label_disk(cleaned_data["volume_name"],
+            dolabel = notifier().label_disk(
+                cleaned_data["volume_name"],
                 devpath, cleaned_data['volume_fstype'])
             if not dolabel:
                 msg = _(u"An error occurred while labeling the disk.")
@@ -769,7 +793,9 @@ class VolumeImportForm(forms.Form):
         volume.save()
         self.volume = volume
 
-        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name,
+        mp = models.MountPoint(
+            mp_volume=volume,
+            mp_path='/mnt/' + volume_name,
             mp_options='rw')
         mp.save()
 
@@ -801,7 +827,8 @@ class AutoImportWizard(SessionWizardView):
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done(request=self.request,
+            retval = form.done(
+                request=self.request,
                 form_list=self.form_list,
                 wizard=self)
             if self.get_step_index() == self.steps.count - 1:
@@ -856,13 +883,15 @@ class AutoImportWizard(SessionWizardView):
                     f.write(key.read())
             self.volume = volume
 
-            mp = models.MountPoint(mp_volume=volume,
+            mp = models.MountPoint(
+                mp_volume=volume,
                 mp_path='/mnt/' + volume_name,
                 mp_options='rw')
             mp.save()
 
             if vol['type'] != 'zfs':
-                notifier().label_disk(volume_name,
+                notifier().label_disk(
+                    volume_name,
                     "%s/%s" % (group_type, volume_name),
                     'UFS')
             else:
@@ -872,7 +901,8 @@ class AutoImportWizard(SessionWizardView):
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(
                     vol['label'], vol['id']):
-                raise MiddlewareError(_('The volume "%s" failed to import, '
+                raise MiddlewareError(_(
+                    'The volume "%s" failed to import, '
                     'for futher details check pool status') % vol['label'])
             for disk in enc_disks:
                 if disk.startswith("gptid"):
@@ -883,7 +913,10 @@ class AutoImportWizard(SessionWizardView):
                     diskname = disk
                 ed = models.EncryptedDisk()
                 ed.encrypted_volume = volume
-                ed.encrypted_disk = models.Disk.objects.filter(disk_name=diskname, disk_enabled=True)[0]
+                ed.encrypted_disk = models.Disk.objects.filter(
+                    disk_name=diskname,
+                    disk_enabled=True
+                )[0]
                 ed.encrypted_provider = disk
                 ed.save()
 
@@ -926,7 +959,7 @@ class AutoImportDecryptForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(AutoImportDecryptForm, self).__init__(*args, **kwargs)
-        self.fields['disks'].choices=self._populate_disk_choices()
+        self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
         return notifier().geli_get_all_providers()
@@ -997,9 +1030,10 @@ class VolumeAutoImportForm(forms.Form):
         for vol in list(vols):
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
-                    if filter(lambda x: x is not None and \
-                                re.search(r'^%s([ps]|$)' % disk['name'], x),
-                            used_disks):
+                    if filter(lambda x: x is not None and re.search(
+                        r'^%s([ps]|$)' % disk['name'],
+                        x
+                    ), used_disks):
                         vols.remove(vol)
                         break
                 else:
@@ -1014,7 +1048,7 @@ class VolumeAutoImportForm(forms.Form):
                     vol['id'])
             else:
                 devname = "%s [%s]" % (vol['label'], vol['type'])
-            diskchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = "%s" % (devname,)
+            diskchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = devname
 
         choices = diskchoices.items()
         return choices
@@ -1029,10 +1063,10 @@ class VolumeAutoImportForm(forms.Form):
                     cleaned_data['volume'] = vol
                     break
 
-        if cleaned_data.get('volume', None) == None:
+        if cleaned_data.get('volume', None) is None:
             self._errors['__all__'] = self.error_class([
                 _("You must select a volume."),
-                ])
+            ])
 
         else:
             if models.Volume.objects.filter(
@@ -1053,7 +1087,8 @@ class VolumeAutoImportForm(forms.Form):
 
                 isvalid = notifier().precheck_partition(dev, 'UFS')
                 if not isvalid:
-                    msg = _(u"The selected disks were not verified for this "
+                    msg = _(
+                        u"The selected disks were not verified for this "
                         "import rules.")
                     self._errors["volume_disks"] = self.error_class([msg])
 
@@ -1071,7 +1106,7 @@ class DiskFormPartial(ModelForm):
         model = models.Disk
         exclude = (
             'disk_transfermode',  # This option isn't used anywhere
-            )
+        )
 
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
@@ -1080,11 +1115,13 @@ class DiskFormPartial(ModelForm):
             self._original_smart_en = self.instance.disk_togglesmart
             self._original_smart_opts = self.instance.disk_smartoptions
             self.fields['disk_name'].widget.attrs['readonly'] = True
-            self.fields['disk_name'].widget.attrs['class'] = ('dijitDisabled'
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
+            self.fields['disk_name'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled '
+                'dijitValidationTextBoxDisabled')
             self.fields['disk_serial'].widget.attrs['readonly'] = True
-            self.fields['disk_serial'].widget.attrs['class'] = ('dijitDisabled'
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled')
+            self.fields['disk_serial'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled '
+                'dijitValidationTextBoxDisabled')
 
     def clean_disk_name(self):
         return self.instance.disk_name
@@ -1093,8 +1130,10 @@ class DiskFormPartial(ModelForm):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
         # Commit ataidle changes, if any
         if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby'] or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt'] or
+            obj.disk_hddstandby != obj._original_state['disk_hddstandby']
+            or
+            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt']
+            or
             obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
         ):
             notifier().start_ataidle(obj.disk_name)
@@ -1104,8 +1143,11 @@ class DiskFormPartial(ModelForm):
             obj.disk_smartoptions != self._original_smart_opts
         ):
             started = notifier().restart("smartd")
-            if started is False and \
-              services.objects.get(srv_service='smartd').srv_enable:
+            if (
+                started is False
+                and
+                services.objects.get(srv_service='smartd').srv_enable
+            ):
                 raise ServiceFailed(
                     "smartd",
                     _("The SMART service failed to restart.")
@@ -1189,15 +1231,18 @@ class DiskEditBulkForm(Form):
                     if self.cleaned_data.get(opt):
                         setattr(disk, opt, self.cleaned_data.get(opt))
 
-                disk.disk_togglesmart = self.cleaned_data.get("disk_togglesmart")
-                # This is not a choice field and an empty value should reset all
-                disk.disk_smartoptions = self.cleaned_data.get("disk_smartoptions")
+                disk.disk_togglesmart = self.cleaned_data.get(
+                    "disk_togglesmart")
+                # This is not a choice field, an empty value should reset all
+                disk.disk_smartoptions = self.cleaned_data.get(
+                    "disk_smartoptions")
                 disk.save()
         return self._disks
 
 
 class ZFSDataset_CreateForm(Form):
-    dataset_name = forms.CharField(max_length=128,
+    dataset_name = forms.CharField(
+        max_length=128,
         label=_('Dataset Name'))
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
@@ -1227,11 +1272,12 @@ class ZFSDataset_CreateForm(Form):
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1g'))
-    dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+    dataset_dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
@@ -1240,13 +1286,15 @@ class ZFSDataset_CreateForm(Form):
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_("Dataset names must begin with an "
+            raise forms.ValidationError(_(
+                "Dataset names must begin with an "
                 "alphanumeric character and may only contain "
                 "\"-\", \"_\", \":\" and \".\"."))
         return name
 
     def clean(self):
-        cleaned_data = _clean_quota_fields(self,
+        cleaned_data = _clean_quota_fields(
+            self,
             ('refquota', 'quota', 'reserv', 'refreserv'),
             "dataset_")
         full_dataset_name = "%s/%s" % (
@@ -1293,11 +1341,12 @@ class ZFSDataset_EditForm(Form):
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1g'))
-    dataset_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+    dataset_dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="off",
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self._fs = kwargs.pop("fs", None)
@@ -1321,7 +1370,8 @@ class ZFSDataset_EditForm(Form):
             self.fields['dataset_dedup'].initial = 'off'
 
     def clean(self):
-        return _clean_quota_fields(self,
+        return _clean_quota_fields(
+            self,
             ('refquota', 'quota', 'reservation', 'refreservation'),
             "dataset_")
 
@@ -1350,10 +1400,11 @@ class ZFSVolume_EditForm(Form):
         initial=0,
         label=_('Reserved space for this volume'),
         help_text=_('0=None; example: 1g'))
-    volume_dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+    volume_dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self._mp = kwargs.pop("mp", None)
@@ -1378,7 +1429,8 @@ class ZFSVolume_EditForm(Form):
             self.fields['volume_dedup'].initial = 'off'
 
     def clean(self):
-        return _clean_quota_fields(self,
+        return _clean_quota_fields(
+            self,
             ('refquota', 'refreservation'),
             "volume_")
 
@@ -1400,25 +1452,27 @@ class ZVol_CreateForm(Form):
         label=_('Compression level'))
     zvol_sparse = forms.BooleanField(
         label=_('Sparse volume'),
-        help_text=_('Creates a sparse volume with no reservation, also kown '
+        help_text=_(
+            'Creates a sparse volume with no reservation, also kown '
             'as "thin provisioning". A "sparse volume" is a volume where the '
             'reservation is less then the volume size. Consequently, writes '
             'to a sparse volume can fail with ENOSPC when the pool is low on '
             'space. (NOT RECOMMENDED)'),
         required=False,
         initial=False,
-        )
+    )
     zvol_blocksize = forms.CharField(
         label=_('Block size'),
-        help_text=_('The default blocksize for volumes is 8 Kbytes. Any power '
+        help_text=_(
+            'The default blocksize for volumes is 8 Kbytes. Any power '
             'of 2 from 512 bytes to 128 Kbytes is valid.'),
         required=False,
         max_length=8,
-        )
+    )
 
     advanced_fields = (
         'zvol_blocksize',
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
@@ -1427,7 +1481,8 @@ class ZVol_CreateForm(Form):
     def clean_dataset_name(self):
         name = self.cleaned_data["zvol_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_("ZFS Volume names must begin with "
+            raise forms.ValidationError(_(
+                "ZFS Volume names must begin with "
                 "an alphanumeric character and may only contain "
                 "(-), (_), (:) and (.)."))
         return name
@@ -1453,14 +1508,20 @@ class MountPointAccessForm(Form):
     mp_user = UserField(label=_('Owner (user)'))
     mp_group = GroupField(label=_('Owner (group)'))
     mp_mode = UnixPermissionField(label=_('Mode'))
-    mp_acl = forms.ChoiceField(label=_('Type of ACL'), choices=(
-        ('unix', 'Unix'),
-        ('windows', 'Windows'),
-        ), initial='unix', widget=forms.widgets.RadioSelect())
-    mp_recursive = forms.BooleanField(initial=False,
-                                      required=False,
-                                      label=_('Set permission recursively')
-                                      )
+    mp_acl = forms.ChoiceField(
+        label=_('Type of ACL'),
+        choices=(
+            ('unix', 'Unix'),
+            ('windows', 'Windows'),
+        ),
+        initial='unix',
+        widget=forms.widgets.RadioSelect(),
+    )
+    mp_recursive = forms.BooleanField(
+        initial=False,
+        required=False,
+        label=_('Set permission recursively')
+    )
 
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
@@ -1474,7 +1535,7 @@ class MountPointAccessForm(Form):
             user, group = notifier().mp_get_owner(path)
             self.fields['mp_mode'].initial = "%.3o" % (
                 notifier().mp_get_permission(path),
-                )
+            )
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
 
@@ -1498,10 +1559,10 @@ class PeriodicSnapForm(ModelForm):
                 choices=choices.WEEKDAYS_CHOICES),
             'task_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-                }),
+            }),
             'task_end': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-                }),
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1510,19 +1571,21 @@ class PeriodicSnapForm(ModelForm):
             HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
             if "task_begin" in new:
                 search = HOUR.search(new['task_begin'])
-                new['task_begin'] = time(hour=int(search.group("hour")),
-                                           minute=int(search.group("min")),
-                                           second=int(search.group("sec")))
+                new['task_begin'] = time(
+                    hour=int(search.group("hour")),
+                    minute=int(search.group("min")),
+                    second=int(search.group("sec")))
             if "task_end" in new:
                 search = HOUR.search(new['task_end'])
-                new['task_end'] = time(hour=int(search.group("hour")),
-                                           minute=int(search.group("min")),
-                                           second=int(search.group("sec")))
+                new['task_end'] = time(
+                    hour=int(search.group("hour")),
+                    minute=int(search.group("min")),
+                    second=int(search.group("sec")))
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
         self.fields['task_filesystem'] = forms.ChoiceField(
-                label=self.fields['task_filesystem'].label,
-                )
+            label=self.fields['task_filesystem'].label,
+        )
         self.fields['task_filesystem'].choices = (
             notifier().list_zfs_fsvols().items())
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
@@ -1533,7 +1596,7 @@ class PeriodicSnapForm(ModelForm):
                 len(cdata['task_byweekday']) == 0:
             self._errors['task_byweekday'] = self.error_class([
                 _("At least one day must be chosen"),
-                ])
+            ])
             del cdata['task_byweekday']
         return cdata
 
@@ -1555,11 +1618,13 @@ class ManualSnapshotForm(Form):
         if regex.match(self.cleaned_data['ms_name'].__str__()) is None:
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_.] permitted as snapshot name")
-                )
+            )
         return self.cleaned_data['ms_name']
 
     def commit(self, fs):
-        notifier().zfs_mksnap(fs, str(self.cleaned_data['ms_name']),
+        notifier().zfs_mksnap(
+            fs,
+            str(self.cleaned_data['ms_name']),
             self.cleaned_data['ms_recursively'])
 
 
@@ -1571,8 +1636,9 @@ class CloneSnapshotForm(Form):
         is_volume = kwargs.pop('is_volume', False)
         super(CloneSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['cs_snapshot'].widget.attrs['readonly'] = True
-        self.fields['cs_snapshot'].widget.attrs['class'] = 'dijitDisabled' \
-                        ' dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        self.fields['cs_snapshot'].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled '
+            'dijitValidationTextBoxDisabled')
         self.fields['cs_snapshot'].initial = kwargs['initial']['cs_snapshot']
         self.fields['cs_snapshot'].value = kwargs['initial']['cs_snapshot']
         dataset, snapname = kwargs['initial']['cs_snapshot'].split('@')
@@ -1595,7 +1661,7 @@ class CloneSnapshotForm(Form):
         if regex.match(self.cleaned_data['cs_name'].__str__()) is None:
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_./] permitted as clone name")
-                )
+            )
         if '/' in self.fields['cs_snapshot'].initial:
             volname = self.fields['cs_snapshot'].initial.split('/')[0]
         else:
@@ -1603,12 +1669,13 @@ class CloneSnapshotForm(Form):
         if not self.cleaned_data['cs_name'].startswith('%s/' % (volname)):
             raise forms.ValidationError(
                 _("Clone must be within the same volume")
-                )
+            )
         return self.cleaned_data['cs_name']
 
     def commit(self):
         snapshot = self.cleaned_data['cs_snapshot'].__str__()
-        retval = notifier().zfs_clonesnap(snapshot,
+        retval = notifier().zfs_clonesnap(
+            snapshot,
             str(self.cleaned_data['cs_name']))
         return retval
 
@@ -1627,7 +1694,7 @@ class DiskReplacementForm(forms.Form):
         self.fields['volume_disks'].choices.sort(
             key=lambda a: float(
                 re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-                ))
+            ))
 
     def _populate_disk_choices(self):
 
@@ -1657,7 +1724,7 @@ class DiskReplacementForm(forms.Form):
         choices = diskchoices.items()
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-            ))
+        ))
         return choices
 
 
@@ -1747,23 +1814,25 @@ class ReplicationForm(ModelForm):
         label=_("Dedicated User Enabled"),
         help_text=_("If disabled then root will be used for replication."),
         required=False,
-        )
+    )
     remote_dedicateduser = UserField(
         label=_("Dedicated User"),
         required=False,
-        )
+    )
     remote_fast_cipher = forms.BooleanField(
         label=_("Enable High Speed Ciphers"),
         initial=False,
         required=False,
-        help_text=_("Enabling this may increase transfer speed on high "
+        help_text=_(
+            "Enabling this may increase transfer speed on high "
             "speed/low latency local networks.  It uses less secure encryption"
             " algorithms than the defaults, which makes it less desirable on "
             "untrusted networks."),
-        )
+    )
     remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
-        widget=forms.Textarea())
+        widget=forms.Textarea(),
+    )
 
     class Meta:
         model = models.Replication
@@ -1771,10 +1840,10 @@ class ReplicationForm(ModelForm):
         widgets = {
             'repl_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-                }),
+            }),
             'repl_end': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-                }),
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1783,24 +1852,26 @@ class ReplicationForm(ModelForm):
             HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
             if "repl_begin" in new:
                 search = HOUR.search(new['repl_begin'])
-                new['repl_begin'] = time(hour=int(search.group("hour")),
-                                           minute=int(search.group("min")),
-                                           second=int(search.group("sec")))
+                new['repl_begin'] = time(
+                    hour=int(search.group("hour")),
+                    minute=int(search.group("min")),
+                    second=int(search.group("sec")))
             if "repl_end" in new:
                 search = HOUR.search(new['repl_end'])
-                new['repl_end'] = time(hour=int(search.group("hour")),
-                                           minute=int(search.group("min")),
-                                           second=int(search.group("sec")))
+                new['repl_end'] = time(
+                    hour=int(search.group("hour")),
+                    minute=int(search.group("min")),
+                    second=int(search.group("sec")))
             args = (new,) + args[1:]
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
         self.fields['repl_filesystem'] = forms.ChoiceField(
-                label=self.fields['repl_filesystem'].label,
-                )
+            label=self.fields['repl_filesystem'].label,
+        )
         fs = list(set([
-                (task.task_filesystem, task.task_filesystem)
-                for task in models.Task.objects.all()
-             ]))
+            (task.task_filesystem, task.task_filesystem)
+            for task in models.Task.objects.all()
+        ]))
         self.fields['repl_filesystem'].choices = fs
 
         self.fields['remote_dedicateduser_enabled'].widget.attrs['onClick'] = (
@@ -1837,7 +1908,7 @@ class ReplicationForm(ModelForm):
         return user
 
     def save(self):
-        if self.instance.id == None:
+        if self.instance.id is None:
             r = models.ReplRemote()
         else:
             r = self.instance.repl_remote
@@ -1868,19 +1939,21 @@ class ReplRemoteForm(ModelForm):
 
 
 class VolumeExport(Form):
-    mark_new = forms.BooleanField(required=False,
+    mark_new = forms.BooleanField(
+        required=False,
         initial=False,
         label=_("Mark the disks as new (destroy data)"),
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         services = kwargs.pop('services', {})
         super(VolumeExport, self).__init__(*args, **kwargs)
         if services.keys():
-            self.fields['cascade'] = forms.BooleanField(initial=True,
-                    required=False,
-                    label=_("Delete all shares related to this volume"))
+            self.fields['cascade'] = forms.BooleanField(
+                initial=True,
+                required=False,
+                label=_("Delete all shares related to this volume"))
 
 
 class Dataset_Destroy(Form):
@@ -1896,7 +1969,8 @@ class Dataset_Destroy(Form):
                     "snapshots within this dataset"),
                 len(self.datasets)
             )
-            self.fields['cascade'] = forms.BooleanField(initial=True,
+            self.fields['cascade'] = forms.BooleanField(
+                initial=True,
                 label=label)
 
 
@@ -1906,15 +1980,16 @@ class ScrubForm(ModelForm):
         widgets = {
             'scrub_minute': CronMultiple(
                 attrs={'numChoices': 60, 'label': _("minute")},
-                ),
+            ),
             'scrub_hour': CronMultiple(
                 attrs={'numChoices': 24, 'label': _("hour")},
-                ),
+            ),
             'scrub_daymonth': CronMultiple(
-                attrs={'numChoices': 31,
+                attrs={
+                    'numChoices': 31,
                     'start': 1,
                     'label': _("day of month")},
-                ),
+            ),
             'scrub_dayweek': forms.CheckboxSelectMultiple(
                 choices=choices.WEEKDAYS_CHOICES),
             'scrub_month': forms.CheckboxSelectMultiple(
@@ -1965,7 +2040,7 @@ class DiskWipeForm(forms.Form):
             ("fullrandom", _("Full with random data")),
         ),
         widget=forms.widgets.RadioSelect(),
-        )
+    )
 
 
 class CreatePassphraseForm(forms.Form):
@@ -1973,11 +2048,11 @@ class CreatePassphraseForm(forms.Form):
     passphrase = forms.CharField(
         label=_("Passphrase"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
     passphrase2 = forms.CharField(
         label=_("Confirm Passphrase"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
 
     def clean_passphrase2(self):
         pass1 = self.cleaned_data.get("passphrase")
@@ -1985,7 +2060,7 @@ class CreatePassphraseForm(forms.Form):
         if pass1 != pass2:
             raise forms.ValidationError(
                 _("The passphrases do not match")
-                )
+            )
         return pass2
 
     def done(self, volume):
@@ -2008,19 +2083,19 @@ class ChangePassphraseForm(forms.Form):
     adminpw = forms.CharField(
         label=_("Admin password"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
     passphrase = forms.CharField(
         label=_("New Passphrase"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
     passphrase2 = forms.CharField(
         label=_("Confirm New Passphrase"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
     remove = forms.BooleanField(
         label=_("Remove passphrase"),
         required=False,
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(ChangePassphraseForm, self).__init__(*args, **kwargs)
@@ -2031,7 +2106,8 @@ class ChangePassphraseForm(forms.Form):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
 
-        user = User.objects.filter(is_superuser=True,
+        user = User.objects.filter(
+            is_superuser=True,
             password=UNUSABLE_PASSWORD)
         if user.exists():
             del self.fields['adminpw']
@@ -2041,7 +2117,7 @@ class ChangePassphraseForm(forms.Form):
         if not User.objects.filter(is_superuser=True)[0].check_password(pw):
             raise forms.ValidationError(
                 _("Invalid password")
-                )
+            )
         return pw
 
     def clean_passphrase2(self):
@@ -2050,7 +2126,7 @@ class ChangePassphraseForm(forms.Form):
         if pass1 != pass2:
             raise forms.ValidationError(
                 _("The passphrases do not match")
-                )
+            )
         return pass2
 
     def clean(self):
@@ -2149,7 +2225,7 @@ class UnlockPassphraseForm(forms.Form):
 
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
-            started = _notifier.restart(svc)
+            _notifier.restart(svc)
 
 
 class KeyForm(forms.Form):
@@ -2157,12 +2233,13 @@ class KeyForm(forms.Form):
     adminpw = forms.CharField(
         label=_("Admin password"),
         widget=forms.widgets.PasswordInput(),
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(KeyForm, self).__init__(*args, **kwargs)
 
-        user = User.objects.filter(is_superuser=True,
+        user = User.objects.filter(
+            is_superuser=True,
             password=UNUSABLE_PASSWORD)
         if user.exists():
             del self.fields['adminpw']
@@ -2172,7 +2249,7 @@ class KeyForm(forms.Form):
         if not User.objects.filter(is_superuser=True)[0].check_password(pw):
             raise forms.ValidationError(
                 _("Invalid password")
-                )
+            )
         return pw
 
 
@@ -2185,7 +2262,7 @@ class ReKeyForm(KeyForm):
             self.fields['passphrase'] = forms.CharField(
                 label=_("Passphrase"),
                 widget=forms.widgets.PasswordInput(),
-                )
+            )
 
     def done(self):
         passphrase = self.cleaned_data.get("passphrase")
