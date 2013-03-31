@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-30 09:58+0200\n"
-"Last-Translator: Alladin <mnjams@gmail.com>\n"
+"PO-Revision-Date: 2013-03-30 19:16+0200\n"
+"Last-Translator: kent1983 <kent_starup@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -907,7 +907,6 @@ msgid "Parent Interface"
 msgstr "Overordnet enhed"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr "Navnet skal være vlanXX hvor XX er et heltal."
 
@@ -942,15 +941,17 @@ msgstr "Du skal også angive en IPv6 adresse for hvert alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Du skal også angive en IPv6 adresse for hvert alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Du skal vælge imellem IPv4 eller IPv6 for hvert alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Du skal angive enten en gyldig IPv4 eller IPv6 med bitmaske for ethvert "
+"alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1236,7 +1237,7 @@ msgstr "Cachen kunne ikke genopbygges"
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Plugin Navn"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
@@ -1349,9 +1350,8 @@ msgid "Jail successfully imported."
 msgstr "%s blev opdateret."
 
 #: services/forms.py:70
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Brugeren %s er ikke gyldig."
+msgstr "Dette er ikke en gyldig maske"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1429,9 +1429,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Navnet må ikke indeholde / eller ]."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Skift adgangskode"
+msgstr "Bekræft adgangskode"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1498,7 +1497,6 @@ msgid "Target side secret."
 msgstr "Modtager side hemmelighed."
 
 #: services/forms.py:501
-#, fuzzy
 msgid "Secret (Confirm)"
 msgstr "Hemmelighed (Bekræft)"
 
@@ -1742,7 +1740,7 @@ msgstr ""
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr ""
+msgstr "Mappemaske"
 
 #: services/models.py:129
 msgid ""
@@ -1857,7 +1855,7 @@ msgstr ""
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:203
 msgid "Server Name"
@@ -2467,7 +2465,7 @@ msgstr ""
 
 #: services/models.py:973
 msgid "Clients"
-msgstr ""
+msgstr "Klienter"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
@@ -2475,15 +2473,15 @@ msgstr ""
 
 #: services/models.py:979
 msgid "Connections"
-msgstr ""
+msgstr "Forbindelser"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksimal antal af forbindelser per IP adresse (0 = ubegrænset)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr ""
+msgstr "Login forsøg"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -2634,7 +2632,6 @@ msgid "FTP"
 msgstr "FTP"
 
 #: services/models.py:1113
-#, fuzzy
 msgid "Directory"
 msgstr "Mappe"
 
@@ -5593,7 +5590,7 @@ msgstr ""
 
 #: templates/services/plugins.html:31
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
@@ -6321,7 +6318,7 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr ""
+msgstr "Kritiske alarmer"
 
 msgid "Selected"
 msgstr "Udvalgte"
