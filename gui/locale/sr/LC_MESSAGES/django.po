@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-27 23:58+0200\n"
+"PO-Revision-Date: 2013-03-31 22:13+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1869,6 +1869,7 @@ msgstr "Minimalna AIO veličina čitanja"
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
+"Samba će asinhrono pročitati ako je veličina zahteva veća od ove vrednosti."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1878,6 +1879,7 @@ msgstr "Minimalna AIO veličina zapisa"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
+"Samba će asinhrono upisati ako je veličina zahteva veća od ove vrednosti."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
@@ -2560,7 +2562,7 @@ msgstr "Konekcije"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksimalni broj konekcija po IP adresi (0 = neograničeno)"
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -2568,11 +2570,12 @@ msgstr "Pokušaji prijavljivanja"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Maksimalan broj dozvoljenih pokušaja unosa lozinke pre isključenja."
 
+# ili Prekid???
 #: services/models.py:991
 msgid "Timeout"
-msgstr ""
+msgstr "Pauza"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
@@ -2625,11 +2628,11 @@ msgstr ""
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Zahtevati IDENT Autentikaciju"
 
 #: services/models.py:1031
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Zahtevati Reverzni DNS za IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2644,7 +2647,7 @@ msgstr ""
 
 #: services/models.py:1043
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimalni pasivni port"
 
 #: services/models.py:1044
 msgid ""
@@ -2654,7 +2657,7 @@ msgstr ""
 
 #: services/models.py:1048
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maksimalni pasivni port"
 
 #: services/models.py:1049
 msgid ""
@@ -2702,20 +2705,20 @@ msgstr ""
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Omogućiti SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Ovi parametri su dodati u proftpd.conf."
 
 #: services/models.py:1090 services/models.py:1091
 #: templates/services/core.html:50
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:1113
 msgid "Directory"
-msgstr ""
+msgstr "Direktorijum"
 
 #: services/models.py:1114
 msgid ""
@@ -3615,9 +3618,9 @@ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr ""
 
 #: storage/forms.py:120
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "Korisnik %s nije ispravan."
+msgstr "%s nije ispravan broj."
 
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -4289,9 +4292,8 @@ msgstr ""
 
 # ako % predstavlja user  kao users 
 #: storage/views.py:524
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "%s uspešno ažurirani."
+msgstr "Fizički skup podataka uspešno izmenjen."
 
 #: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
@@ -4306,28 +4308,24 @@ msgid "Snapshot successfully deleted."
 msgstr ""
 
 #: storage/views.py:604
-#, fuzzy
 msgid "Snapshots successfully deleted."
-msgstr "%s uspešno dodati."
+msgstr "Snimak uspešno obrisan."
 
 #: storage/views.py:616
 msgid "Rollback successful."
 msgstr ""
 
 #: storage/views.py:634
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "%s uspešno dodati."
+msgstr "Snimak uspešno dodat."
 
 #: storage/views.py:648
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "%s uspešno dodati."
+msgstr "Snimak uspešno uzet."
 
 #: storage/views.py:664
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "%s uspešno dodati."
+msgstr "Snimak uspešno kloniran."
 
 #: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
@@ -4350,9 +4348,8 @@ msgid "Disk has been removed."
 msgstr ""
 
 #: storage/views.py:766
-#, fuzzy
 msgid "The volume has been successfully detached"
-msgstr "%s uspešno dodati."
+msgstr "Volumen je uspešno odvojen."
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
