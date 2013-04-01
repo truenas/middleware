@@ -390,9 +390,29 @@ get_interface_addresses()
    ifconfig ${1} | grep -w inet | awk '{ print $2 }'
 }
 
+get_interface_ipv4_addresses()
+{
+   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+}
+
+get_interface_ipv6_addresses()
+{
+   ifconfig ${1} | grep -w inet6 | awk '{ print $2 }'
+}
+
 get_interface_address()
 {
    ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+}
+
+get_interface_ipv4_address()
+{
+   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+}
+
+get_interface_ipv6_address()
+{
+   ifconfig ${1} | grep -w inet6 | head -1 | awk '{ print $2 }'
 }
 
 get_interface_aliases()
@@ -400,9 +420,29 @@ get_interface_aliases()
    local _count
 
    _count=`ifconfig ${1} | grep -w inet | wc -l`
-   : $((_count -= 1))
+   _count="$(echo "${_count} - 1" | bc)"
 
    ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+}
+
+get_interface_ipv4_aliases()
+{
+   local _count
+
+   _count=`ifconfig ${1} | grep -w inet | wc -l`
+   _count="$(echo "${_count} - 1" | bc)"
+
+   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+}
+
+get_interface_ipv6_aliases()
+{
+   local _count
+
+   _count=`ifconfig ${1} | grep -w inet | wc -l`
+   _count="$(echo "${_count} - 1" | bc)"
+
+   ifconfig ${1} | grep -w inet6 | tail -${_count} | awk '{ print $2 }'
 }
 
 get_default_route()
@@ -423,6 +463,58 @@ get_bridge_interfaces()
 get_bridge_members()
 {
    ifconfig ${1} | grep -w member | awk '{ print $2 }'
+}
+
+get_bridge_interface_by_ipv4_network()
+{
+   local network="${1}"
+   local bridges="$(get_bridge_interfaces)"
+
+   if [ -z "${network}" ]
+   then
+      return 1
+   fi
+
+   for _bridge in ${bridges}
+   do
+      local ips="$(get_interface_ipv4_aliases "${_bridge}")"
+      for _ip in ${ips}
+      do
+         if in_ipv4_network "${_ip}" "${network}"
+         then
+            echo "${_bridge}"
+            return 0
+         fi
+      done
+   done
+
+   return 1
+}
+
+get_bridge_interface_by_ipv6_network()
+{
+   local network="${1}"
+   local bridges="$(get_bridge_interfaces)"
+
+   if [ -z "${network}" ]
+   then
+      return 1
+   fi
+
+   for _bridge in ${bridges}
+   do
+      local ips="$(get_interface_ipv6_aliases "${_bridge}")"
+      for _ip in ${ips}
+      do
+         if in_ipv6_network "${_ip}" "${network}"
+         then
+            echo "${_bridge}"
+            return 0
+         fi
+      done
+   done
+
+   return 1
 }
 
 is_bridge_member()
@@ -499,7 +591,7 @@ fix_old_meta()
    done
 }
 
-is_IPv4()
+is_ipv4()
 {
    local addr="${1}"
    local res=1
@@ -513,7 +605,7 @@ is_IPv4()
    return ${res}
 }
 
-is_IPv6()
+is_ipv6()
 {
    local addr="${1}"
    local res=1
@@ -527,7 +619,7 @@ is_IPv6()
    return ${res}
 }
 
-in_IPv4_network()
+in_ipv4_network()
 {
    local addr="${1}"
    local network="${2}"
@@ -548,7 +640,7 @@ in_IPv4_network()
    return ${res}
 }
 
-IPv6_to_binary()
+ipv6_to_binary()
 {
    echo ${1}|awk '{
       split($1, octets, ":");
@@ -574,7 +666,7 @@ IPv6_to_binary()
    }'
 }
 
-in_IPv6_network()
+in_ipv6_network()
 {
    local addr="${1}"
    local network="${2}"
@@ -586,8 +678,8 @@ in_IPv6_network()
    local start="$(sipcalc "${network}"|egrep \
       '^Network range'|awk '{ print $4 }')"
 
-   local baddr="$(IPv6_to_binary "${addr}")"
-   local bstart="$(IPv6_to_binary "${start}")"
+   local baddr="$(ipv6_to_binary "${addr}")"
+   local bstart="$(ipv6_to_binary "${start}")"
 
    local baddrnet="$(echo "${baddr}"|awk -v mask="${mask}" \
       '{ s = substr($0, 1, mask); printf("%s", s); }')"
