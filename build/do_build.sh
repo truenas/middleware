@@ -485,6 +485,10 @@ patch_filter()
 
 do_source_patches()
 {
+cd "$AVATAR_ROOT/FreeBSD"
+if [ -d src/.git ] ; then
+	echo "Patching done... skipping"
+else
 for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
@@ -498,10 +502,16 @@ for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
 	fi
 done
+fi
 }
 
 do_ports_patches()
 {
+
+cd "$AVATAR_ROOT/FreeBSD"
+if [ -d ports/.git ] ; then
+	echo "Patching done... skipping"
+else
 for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
@@ -513,6 +523,7 @@ for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 		#echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
 	fi
 done
+fi
 }
 
 do_pbi_wrapper_hack()
