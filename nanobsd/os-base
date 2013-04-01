@@ -105,8 +105,8 @@ WITHOUT_MAN=true
 WITHOUT_NDIS=true
 #WITHOUT_NLS=true
 #WITHOUT_NS_CACHING=true
-#WITHOUT_PORTSNAP=true
-#WITHOUT_PPP=true
+WITHOUT_PORTSNAP=true
+WITHOUT_PPP=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
 WITHOUT_SENDMAIL=true
@@ -174,6 +174,27 @@ add_port security/libgcrypt
 add_port databases/db46
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
+add_port net/openldap24-server 	OPTIONS_FILE_SET+=ACCESSLOG \
+				OPTIONS_FILE_SET+=COLLECT \
+				OPTIONS_FILE_SET+=AUDITLOG \
+				OPTIONS_FILE_SET+=DDS \
+				OPTIONS_FILE_SET+=DNSSRV \
+				OPTIONS_FILE_SET+=DYNACL \
+				OPTIONS_FILE_SET+=DYNGROUP \
+				OPTIONS_FILE_SET+=DYNLIST \
+				OPTIONS_FILE_SET+=FETCH \
+				OPTIONS_FILE_SET+=MEMBEROF \
+				OPTIONS_FILE_SET+=PASSWD \
+				OPTIONS_FILE_SET+=PERL \
+				OPTIONS_FILE_SET+=PPOLICY \
+				OPTIONS_FILE_SET+=RLOOKUPS \
+				OPTIONS_FILE_SET+=RWM \
+				OPTIONS_FILE_SET+=SASL \
+				OPTIONS_FILE_SET+=SLAPI \
+				OPTIONS_FILE_SET+=SLP \
+				OPTIONS_FILE_SET+=SOCK \
+				OPTIONS_FILE_SET+=UNIQUE \
+				OPTIONS_FILE_SET+=VALSORT
 add_port net/nss-pam-ldapd
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
@@ -181,6 +202,8 @@ add_port dns/py-dnspython
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
 add_port devel/popt
+add_port ports-mgmt/portmaster 	OPTIONS_FILE_SET+=BASH \
+				OPTIONS_FILE_SET+=ZSH
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
 add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
@@ -191,6 +214,7 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
+add_port shells/zsh
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
