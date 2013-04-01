@@ -1,5 +1,5 @@
 #
-# GENERIC -- Generic kernel configuration file for FreeBSD/amd64
+# FREENAS64 -- FreeNAS kernel configuration file for FreeBSD/amd64
 #
 # For more information on this file, please read the config(5) manual page,
 # and/or the handbook section on Kernel Configuration Files:
@@ -316,6 +316,17 @@ device		md		# Memory "disks"
 device		gif		# IPv6 and IPv4 tunneling
 device		faith		# IPv6-to-IPv4 relaying (translation)
 device		firmware	# firmware assist module
+
+device    	lagg
+device   	pty
+device    	crypto    # hardware crypto access driver
+device    	cryptodev  # hardware crypto access driver
+device    	epair   # A pair of virtual back-to-back connected Ethernet interface
+device    	if_bridge   # network bridge device 
+
+
+# Needed for ipmi(4)
+device    smbus 
 
 # The `bpf' device enables the Berkeley Packet Filter.
 # Be aware of the administrative consequences of enabling this!
