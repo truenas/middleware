@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-30 09:58+0200\n"
-"Last-Translator: Alladin <mnjams@gmail.com>\n"
+"PO-Revision-Date: 2013-03-31 22:44+0200\n"
+"Last-Translator: kent1983 <kent_starup@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -907,7 +907,6 @@ msgid "Parent Interface"
 msgstr "Overordnet enhed"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr "Navnet skal være vlanXX hvor XX er et heltal."
 
@@ -942,15 +941,17 @@ msgstr "Du skal også angive en IPv6 adresse for hvert alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Du skal også angive en IPv6 adresse for hvert alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Du skal vælge imellem IPv4 eller IPv6 for hvert alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Du skal angive enten en gyldig IPv4 eller IPv6 med bitmaske for ethvert "
+"alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1236,7 +1237,7 @@ msgstr "Cachen kunne ikke genopbygges"
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
 msgid "Plugin name"
-msgstr ""
+msgstr "Plugin Navn"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
@@ -1349,9 +1350,8 @@ msgid "Jail successfully imported."
 msgstr "%s blev opdateret."
 
 #: services/forms.py:70
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Brugeren %s er ikke gyldig."
+msgstr "Dette er ikke en gyldig maske"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1429,9 +1429,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "Navnet må ikke indeholde / eller ]."
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Skift adgangskode"
+msgstr "Bekræft adgangskode"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
@@ -1498,7 +1497,6 @@ msgid "Target side secret."
 msgstr "Modtager side hemmelighed."
 
 #: services/forms.py:501
-#, fuzzy
 msgid "Secret (Confirm)"
 msgstr "Hemmelighed (Bekræft)"
 
@@ -1742,7 +1740,7 @@ msgstr ""
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr ""
+msgstr "Mappemaske"
 
 #: services/models.py:129
 msgid ""
@@ -1857,7 +1855,7 @@ msgstr ""
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:203
 msgid "Server Name"
@@ -2277,11 +2275,11 @@ msgstr ""
 
 #: services/models.py:759
 msgid "Provider"
-msgstr ""
+msgstr "Udbyderen"
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr ""
+msgstr "Domæne navn"
 
 #: services/models.py:765
 msgid ""
@@ -2291,7 +2289,7 @@ msgstr ""
 
 #: services/models.py:777
 msgid "Update period"
-msgstr ""
+msgstr "Updaterings periode"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
@@ -2467,7 +2465,7 @@ msgstr ""
 
 #: services/models.py:973
 msgid "Clients"
-msgstr ""
+msgstr "Klienter"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
@@ -2475,15 +2473,15 @@ msgstr ""
 
 #: services/models.py:979
 msgid "Connections"
-msgstr ""
+msgstr "Forbindelser"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksimal antal af forbindelser per IP adresse (0 = ubegrænset)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr ""
+msgstr "Login forsøg"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -2634,7 +2632,6 @@ msgid "FTP"
 msgstr "FTP"
 
 #: services/models.py:1113
-#, fuzzy
 msgid "Directory"
 msgstr "Mappe"
 
@@ -3951,15 +3948,13 @@ msgstr ""
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
-#, fuzzy
 msgid "Weekdays"
-msgstr "Uge(r)"
+msgstr "Ugedage"
 
 #: storage/models.py:308 system/models.py:436 system/models.py:641
 #: system/models.py:728
-#, fuzzy
 msgid "Weekends"
-msgstr "Uge(r)"
+msgstr "Weekend"
 
 #: storage/models.py:340
 msgid "Multipath name"
@@ -4466,7 +4461,7 @@ msgstr ""
 
 #: system/models.py:144
 msgid "NTP Server"
-msgstr ""
+msgstr "NTP Server"
 
 #: system/models.py:145
 #, fuzzy
@@ -4886,7 +4881,7 @@ msgstr "Din testemail er sendt!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Side Ikke Fundet"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5005,11 +5000,11 @@ msgstr ""
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "ADVARSEL"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "KRITISK"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -5055,7 +5050,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
-msgstr ""
+msgstr "Gem"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
@@ -5068,7 +5063,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
-msgstr ""
+msgstr "Hjælp & Support"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
@@ -5284,7 +5279,7 @@ msgstr ""
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Installeret..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
@@ -5373,7 +5368,7 @@ msgstr ""
 
 #: templates/registration/login.html:47
 msgid "Please log in."
-msgstr ""
+msgstr "Log venligst ind."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5381,7 +5376,7 @@ msgstr ""
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
-msgstr ""
+msgstr "Du er nu logget ud."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
@@ -5437,7 +5432,7 @@ msgstr ""
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "S.M.A.R.T. Indstillinger"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5457,7 +5452,7 @@ msgstr ""
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
-msgstr ""
+msgstr "Nej"
 
 #: templates/services/index.html:2
 msgid "Core"
@@ -5593,7 +5588,7 @@ msgstr ""
 
 #: templates/services/plugins.html:31
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
@@ -5606,7 +5601,7 @@ msgstr "Service"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
-msgstr ""
+msgstr "Opdatering"
 
 #: templates/services/plugins.html:56
 #, fuzzy
@@ -5633,7 +5628,7 @@ msgstr ""
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr ""
+msgstr "Aktive Delinger"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
@@ -5765,7 +5760,7 @@ msgstr "Erstatter disk"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Erstat disk"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
@@ -5908,7 +5903,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:23
 msgid "How"
-msgstr ""
+msgstr "Hvordan"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
@@ -5916,7 +5911,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:41
 msgid "From"
-msgstr ""
+msgstr "Fra"
 
 #: templates/storage/tasks.html:43
 msgid "through"
@@ -5928,7 +5923,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr ""
+msgstr "hverdag"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
@@ -5949,7 +5944,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:60
 msgid "Used"
-msgstr ""
+msgstr "Brugt"
 
 #: templates/storage/volumes.html:61
 msgid "Available"
@@ -5957,11 +5952,11 @@ msgstr "Tilgængelig"
 
 #: templates/storage/volumes.html:62
 msgid "Size"
-msgstr ""
+msgstr "Størrelse"
 
 #: templates/storage/volumes.html:63
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 #, fuzzy
@@ -6108,7 +6103,7 @@ msgstr "Tilføj CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Genstarter..."
 
 #: templates/system/email_edit.html:13
 msgid "Send Test Mail"
@@ -6131,11 +6126,11 @@ msgstr "Der er ikke defineret nogle rsyncs"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr ""
+msgstr "Tilføj NTP server"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
-msgstr ""
+msgstr "Tilføj NTP Server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6178,7 +6173,7 @@ msgstr "Tilføj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Generel"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
@@ -6190,7 +6185,7 @@ msgstr "Gendan Config"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
-msgstr ""
+msgstr "Gem Konfiguration"
 
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
@@ -6321,7 +6316,7 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr ""
+msgstr "Kritiske alarmer"
 
 msgid "Selected"
 msgstr "Udvalgte"
