@@ -174,7 +174,7 @@ add_port security/libgcrypt
 add_port databases/db46
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
-add_port net/nss_pam_ldap
+add_port net/nss-pam-ldapd
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
 add_port dns/py-dnspython
