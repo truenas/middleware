@@ -80,8 +80,10 @@ Lets you get options for your jail
 
 Available options:
 
-     ip: Lets you see additional IP addresses for this jail
-  flags: Lets you see additional flags to pass to the 'jail' command at startup
+           ip: Lets you see additional IP addresses for this jail
+      network: Lets you see the network range for this jail
+defaultrouter: Lets you see the default router for this jail
+        flags: Lets you see additional flags to pass to the 'jail' command at startup
 
 Usage:
 
@@ -106,8 +108,10 @@ Lets you set options for your jail
 
 Available options:
 
-     ip: Lets you set additional IP addresses for this jail
-  flags: Lets you set additional flags to pass to the 'jail' command at startup
+           ip: Lets you set additional IP addresses for this jail
+      network: Lets you set the network range for this jail
+defaultrouter: Lets you set the default router for this jail
+        flags: Lets you set additional flags to pass to the 'jail' command at startup
 
 Usage:
 
@@ -617,6 +621,8 @@ details) JAILNAME="${2}"
 	 case $OPT in
              ip) cat "${JMETADIR}/ip-extra"  2>/dev/null | sed 's| |,|g' ;;
           flags) cat "${JMETADIR}/jail-flags" 2>/dev/null | sed 's| |,|g' ;;
+        network) cat "${JMETADIR}/network" 2>/dev/null | sed 's| |,|g' ;;
+  defaultrouter) cat "${JMETADIR}/defaultrouter" 2>/dev/null | sed 's| |,|g' ;;
               *) exit_err "Invalid option!" ;;
          esac
                  
@@ -639,6 +645,19 @@ details) JAILNAME="${2}"
 	            echo "$_ip" >> "${JMETADIR}/ip-extra"
 	         done
                 ;;
+        network) NETWORK="${4}"
+
+	         NETWORKS=`echo $NETWORK| sed 's|,| |g'`
+	         rm "${JMETADIR}/network" >/dev/null 2>/dev/null
+                 for _network in $NETWORKS
+                 do
+	            echo "$_network" >> "${JMETADIR}/network"
+                 done
+                 ;;
+  defaultrouter) DEFAULTROUTER="${4}"
+
+	         echo "$DEFAULTROUTER" >> "${JMETADIR}/defaultrouter"
+                 ;;
           flags) EXTRAFLAGS="${4}"
 
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"

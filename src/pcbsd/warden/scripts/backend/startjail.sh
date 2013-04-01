@@ -1,4 +1,4 @@
-#!/bin/sh
+#/bin/sh
 # Script to startup a jail
 # Args $1 = jail-name
 #######################################################################
@@ -55,26 +55,36 @@ if [ -z "${IFACE}" ] ; then
   exit 6
 fi
 
+if [ -e "${JMETADIR}/defaultrouter" ] ; then
+  GATEWAY=`cat "${JMETADIR}/defaultrouter"`
+fi
+
+
 GATEWAY=
 MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
-# Determine gateway to use for this jail
-for _ip in `get_interface_addresses ${IFACE}`
-do
-   for _gw in `netstat -f inet -nr | grep ${IFACE} | awk '{ print $2 }'`
-   do
-      if [ "${_gw}" = "${_ip}" ] ; then
-         GATEWAY="${_ip}"
-         break
-      fi
-   done
-   if [ -n "${GATEWAY}" ] ; then
-      break
-   fi
-done
-if [ -z "${GATEWAY}" -a "${DEFAULT}" = "1" ] ; then
-   GATEWAY=`get_default_route`
-fi
+#if [ -e "${JMETADIR}/defaultrouter" ] ; then
+#  GATEWAY=`cat "${JMETADIR}/defaultrouter"`
+#else
+#  # Determine gateway to use for this jail
+#  for _ip in `get_interface_addresses ${IFACE}`
+#  do
+#     for _gw in `netstat -f inet -nr | grep ${IFACE} | awk '{ print $2 }'`
+#     do
+#        if [ "${_gw}" = "${_ip}" ] ; then
+#           GATEWAY="${_ip}"
+#           break
+#        fi
+#     done
+#     if [ -n "${GATEWAY}" ] ; then
+#        break
+#     fi
+#  done
+#fi
+
+#if [ -z "${GATEWAY}" -a "${DEFAULT}" = "1" ] ; then
+#   GATEWAY=`get_default_route`
+#fi
 
 set_warden_metadir
 
@@ -137,11 +147,18 @@ if [ -e "${JMETADIR}/ip-extra" ] ; then
   done < ${JMETADIR}/ip-extra
 fi
 
+if [ -e "${JMETADIR}/network" ] ; then
+  while read line
+  do
+    NETWORKS="${NETWORKS} $line" 
+  done < ${JMETADIR}/network
+fi
+
 BRIDGE=
 
 # See if we need to create a new bridge, or use an existing one
 _bridges=`get_bridge_interfaces`
-if [ -n ${_bridges} ] ; then
+if [ -n "${_bridges}" ] ; then
    for _bridge in ${_bridges}
    do
       _members=`get_bridge_members ${_bridge}`
@@ -158,11 +175,19 @@ if [ -n ${_bridges} ] ; then
    done 
 fi
 
+echo "BRIDGE = $BRIDGE"
+echo "GATEWAY = $GATEWAY"
+exit 1
+
 if [ -z "${BRIDGE}" ] ; then
    BRIDGE=`ifconfig bridge create mtu ${MTU}`
 fi
 if [ -n "${IFACE}" ] ; then
    ifconfig ${BRIDGE} addm ${IFACE}
+fi
+if [ -n "${GATEWAY}" ] ; then
+   get_ip_and_netmask "${_ip}"
+#   ifconfig ${BRIDGE} ${GATEWAY}
 fi
 
 i=0
