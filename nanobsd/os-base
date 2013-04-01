@@ -196,7 +196,7 @@ add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
-add_port sysutils/fusefs-smbfs
+add_port sysutils/fusefs-smbnetfs
 add_port sysutils/mountsmb2
 add_port sysutils/smartmontools
 add_port devel/glib20
