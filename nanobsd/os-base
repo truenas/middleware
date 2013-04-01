@@ -75,25 +75,24 @@ fi
 # NB: leave c++ enabled so devd can be built
 CONF_BUILD="
 #WITHOUT_ACPI=true
-WITHOUT_ATM=true
-WITHOUT_AUDIT=true
-WITHOUT_BIND_DNSSEC=true
-WITHOUT_BIND_ETC=true
-WITHOUT_BIND_LIBS_LWRES=true
-WITHOUT_BIND_NAMED=true
+#WITHOUT_ATM=true
+#WITHOUT_AUDIT=true
+#WITHOUT_BIND_DNSSEC=true
+#WITHOUT_BIND_ETC=true
+#WITHOUT_BIND_LIBS_LWRES=true
+#WITHOUT_BIND_NAMED=true
 WITHOUT_BLUETOOTH=true
-WITHOUT_CALENDAR=true
-WITHOUT_CLANG=true
-WITHOUT_CTM=true
+#WITHOUT_CALENDAR=true
+#WITHOUT_CTM=true
 WITHOUT_CVS=true
 WITHOUT_DICT=true
 WITHOUT_EXAMPLES=true
 WITHOUT_FORTRAN=true
 WITHOUT_FREEBSD_UPDATE=yes
 WITHOUT_GAMES=true
-WITHOUT_GCOV=true
+#WITHOUT_GCOV=true
 WITHOUT_GPIB=true
-WITHOUT_HTML=true
+#WITHOUT_HTML=true
 WITHOUT_I4B=true
 WITHOUT_IPFILTER=true
 WITHOUT_IPX=true
@@ -104,18 +103,17 @@ WITHOUT_LIBKSE=true
 WITHOUT_LPR=true
 WITHOUT_MAN=true
 WITHOUT_NDIS=true
-WITHOUT_NLS=true
-WITHOUT_NS_CACHING=true
-WITHOUT_OBJC=true
-WITHOUT_PORTSNAP=true
-WITHOUT_PPP=true
+#WITHOUT_NLS=true
+#WITHOUT_NS_CACHING=true
+#WITHOUT_PORTSNAP=true
+#WITHOUT_PPP=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
 WITHOUT_SENDMAIL=true
 # Knob needs to be fixed on systems that don't have the docs stuff
 # preinstalled, e.g. 9.x bsdinstall images.
 #WITHOUT_SHAREDOCS=true
-WITHOUT_SSP=true
+#WITHOUT_SSP=true
 WITHOUT_SYSINSTALL=true
 # Telnet's a useful tool to have on the remote box.
 #WITHOUT_TELNET=true
@@ -144,11 +142,9 @@ ${DEBUG_INSTALL}
 # WITHOUT_INFO=true			makeinfo
 # WITHOUT_RCS=true
 PKG_ONLY_MAKE_CONF="
-WITHOUT_TOOLCHAIN=true
-WITHOUT_INSTALLLIB=true
-WITHOUT_INFO=true
-WITHOUT_RCS=true
-WITHOUT_SHAREDOCS=true
+#WITHOUT_INFO=true
+#WITHOUT_RCS=true
+#WITHOUT_SHAREDOCS=true
 "
 
 # Pull in common definitions.
@@ -333,6 +329,9 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/ctags
 fi
 
+add_port lang/mono
+add_port www/xsp
+
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
@@ -360,7 +359,7 @@ hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
 	# Not sure this is still needed, but FreeNAS has it...
-	sed -i.bak -es/nis/files/g ${NANO_WORLDDIR}/etc/nsswitch.conf
+	sed -i.bak -es/nis/files ldap/g ${NANO_WORLDDIR}/etc/nsswitch.conf
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 customize_cmd hack_nsswitch_conf

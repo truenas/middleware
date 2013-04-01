@@ -340,8 +340,8 @@ freebsd_checkout_svn()
 freebsd_checkout_git()
 {
 	(
-	: ${GIT_BRANCH=freenas-9-stable}
-	: ${GIT_REPO=https://github.com/trueos/trueos.git}
+	: ${GIT_BRANCH=master}
+	: ${GIT_REPO=https://github.com/freebsd/freebsd.git}
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d src/.git ] ; then
 		cd src
@@ -426,7 +426,7 @@ ports_checkout_git()
 		cd ..
 	else
 		: ${GIT_PORTS_BRANCH=master}
-		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
+		: ${GIT_PORTS_REPO=git://github.com/freebsd/freebsd-ports.git}
 		spl="$-";set -x
 		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
 		echo $spl | grep -q x || set +x

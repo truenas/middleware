@@ -271,6 +271,9 @@ make_conf_install ( ) (
 install_world ( ) (
 	pprint 2 "installworld"
 	pprint 3 "log: ${NANO_OBJ}/_.iw"
+        
+	#Ensure pbiwrapper folder is created
+	mdkir -p ${NANO_WORLDDIR}/usr/pbi/.pbiwrapper
 
 	cd ${NANO_SRC}
 	env \
