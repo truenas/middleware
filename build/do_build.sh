@@ -12,8 +12,8 @@ export HOME
 . build/functions.sh
 . build/pbi_env
 
-: ${SKIP_SOURCE_PATCHES="yes"}
-: ${SKIP_PORTS_PATCHES="yes"}
+: ${SKIP_SOURCE_PATCHES="no"}
+: ${SKIP_PORTS_PATCHES="no"}
 : ${USE_GIT="yes"}
 
 # Should we build?

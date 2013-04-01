@@ -335,6 +335,7 @@ add_port databases/postgresql92-server 	OPTIONS_FILE_SET+=PAM \
 					OPTIONS_FILE_SET+=LDAP \
 					OPTIONS_FILE_SET+=INTDATE \
 					OPTIONS_FILE_SET+=OPTIMIZED_FLAGS
+add_port devel/llvm
 add_port lang/mono
 add_port www/xsp
 
