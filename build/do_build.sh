@@ -502,7 +502,6 @@ done
 
 do_ports_patches()
 {
-cd "$AVATAR_ROOT/FreeBSD"
 for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
