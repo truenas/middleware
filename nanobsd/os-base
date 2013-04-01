@@ -174,7 +174,7 @@ add_port security/libgcrypt
 add_port databases/db46
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
-add_port net/nss_ldap
+add_port net/nss_pam_ldap
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
 add_port dns/py-dnspython
@@ -188,7 +188,6 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 	OPTIONS_FILE_SET+=AIO_SUPPORT \
 	OPTIONS_FILE_SET+=EXP_MODULES \
 	OPTIONS_FILE_SET+=PAM_SMBPASS
-add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
@@ -197,6 +196,8 @@ add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
+add_port sysutils/fusefs-smbfs
+add_port sysutils/mountsmb2
 add_port sysutils/smartmontools
 add_port devel/glib20
 add_port net/libdnet
@@ -329,6 +330,11 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/ctags
 fi
 
+add_port databases/postgresql92-client 	
+add_port databases/postgresql92-server 	OPTIONS_FILE_SET+=PAM \
+					OPTIONS_FILE_SET+=LDAP \
+					OPTIONS_FILE_SET+=INTDATE \
+					OPTIONS_FILE_SET+=OPTIMIZED_FLAGS
 add_port lang/mono
 add_port www/xsp
 
