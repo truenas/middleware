@@ -1,5 +1,3 @@
-diff --git a/net-mgmt/collectd/Makefile b/net-mgmt/collectd/Makefile
-index 14460c3..1765f9b 100644
 --- a/net-mgmt/collectd/Makefile
 +++ b/net-mgmt/collectd/Makefile
 @@ -135,7 +135,8 @@ CONFIGURE_ARGS=	--localstatedir=/var \

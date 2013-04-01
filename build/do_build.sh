@@ -12,7 +12,7 @@ export HOME
 . build/functions.sh
 . build/pbi_env
 
-: ${SKIP_SOURCE_PATCHES="no"}
+: ${SKIP_SOURCE_PATCHES="yes"}
 : ${SKIP_PORTS_PATCHES="no"}
 : ${USE_GIT="yes"}
 
@@ -505,12 +505,12 @@ do_ports_patches()
 for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
-		(cd FreeBSD/ports &&
-		 patch -C -f -p0 < $AVATAR_ROOT/patches/$patch >$_lp 2>&1 ||
-		{ echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
-		  exit 1; } &&
-		 patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
-		echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
+		(cd FreeBSD/ports && git apply $AVATAR_ROOT/patches/$patch)
+		# patch -C -f -p0 < $AVATAR_ROOT/patches/$patch >$_lp 2>&1 ||
+		#{ echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		#  exit 1; } &&
+		# patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
+		#echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
 	fi
 done
 }
