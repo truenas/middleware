@@ -485,20 +485,16 @@ patch_filter()
 
 do_source_patches()
 {
-cd "$AVATAR_ROOT/FreeBSD"
-if [ -d src/.git ] ; then
-	echo "Patching done... skipping"
-else
 for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
-        mkdir -p filtered-patches
-		(cd FreeBSD/src &&
-        patch_filter < $AVATAR_ROOT/patches/$patch > $AVATAR_ROOT/filtered-patches/$patch &&
-		 patch -C -f -p0 < $AVATAR_ROOT/filtered-patches/$patch >$_lp 2>&1 ||
-		 { echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
-		   exit 1; } &&
-		 patch -E -p0 -s < $AVATAR_ROOT/filtered-patches/$patch)
+        	mkdir -p filtered-patches
+		(cd FreeBSD/src &&  && git apply $AVATAR_ROOT/patches/$patch)
+        	#patch_filter < $AVATAR_ROOT/patches/$patch > $AVATAR_ROOT/filtered-patches/$patch &&
+		#patch -C -f -p0 < $AVATAR_ROOT/filtered-patches/$patch >$_lp 2>&1 ||
+		# { echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
+		#   exit 1; } &&
+		#patch -E -p0 -s < $AVATAR_ROOT/filtered-patches/$patch)
 		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
 	fi
 done
@@ -507,11 +503,7 @@ fi
 
 do_ports_patches()
 {
-
 cd "$AVATAR_ROOT/FreeBSD"
-if [ -d ports/.git ] ; then
-	echo "Patching done... skipping"
-else
 for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
@@ -520,10 +512,9 @@ for patch in $(cd $AVATAR_ROOT/patches && ls ports-*.patch); do
 		#{ echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
 		#  exit 1; } &&
 		# patch -E -p0 -s < $AVATAR_ROOT/patches/$patch)
-		#echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
+		echo $patch >> $AVATAR_ROOT/FreeBSD/ports-patches
 	fi
 done
-fi
 }
 
 do_pbi_wrapper_hack()
