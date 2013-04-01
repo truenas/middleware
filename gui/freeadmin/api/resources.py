@@ -895,8 +895,9 @@ class SnapshotResource(DojoResource):
         include_resource_uri = False
         authentication = DjangoAuthentication()
         object_class = zfs.Snapshot
+        paginator_class = DojoPaginator
 
-    def obj_get_list(self, request=None, **kwargs):
+    def get_list(self, request, **kwargs):
         snapshots = notifier().zfs_snapshot_list()
         results = []
         for snaps in snapshots.values():
@@ -917,7 +918,21 @@ class SnapshotResource(DojoResource):
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
-        return results
+        paginator = self._meta.paginator_class(request, results, resource_uri=self.get_resource_uri(), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(results))
+        return response
 
     def dehydrate(self, bundle):
         bundle.data['extra'] = {
