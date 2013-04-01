@@ -561,6 +561,9 @@ class Snapshot(object):
         self.mostrecent = mostrecent
         self.parent_type = parent_type
 
+    def __repr__(self):
+        return u"<Snapshot: %s>" % self.fullname
+
     @property
     def fullname(self):
         return "%s@%s" % (self.filesystem, self.name)
