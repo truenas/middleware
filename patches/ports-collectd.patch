@@ -1,6 +1,8 @@
---- net-mgmt/collectd/Makefile.orig	2012-08-21 12:06:54.098136453 -0700
-+++ net-mgmt/collectd/Makefile	2012-08-21 12:07:24.188138538 -0700
-@@ -130,7 +130,8 @@
+diff --git a/net-mgmt/collectd/Makefile b/net-mgmt/collectd/Makefile
+index 14460c3..1765f9b 100644
+--- a/net-mgmt/collectd/Makefile
++++ b/net-mgmt/collectd/Makefile
+@@ -135,7 +135,8 @@ CONFIGURE_ARGS=	--localstatedir=/var \
  		--without-libcredis \
  		--without-libganglia \
  		--without-libesmtp \
@@ -8,5 +10,5 @@
 +		--disable-static \
 +		--enable-network
  
- .if defined(WITH_DEBUG)
+ .if ${PORT_OPTIONS:MDEBUG}
  CONFIGURE_ARGS+=--enable-debug

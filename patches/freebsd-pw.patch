@@ -1,8 +1,8 @@
-Index: usr.sbin/pw/pw_user.c
-===================================================================
---- usr.sbin/pw/pw_user.c	(revision 223099)
-+++ usr.sbin/pw/pw_user.c	(working copy)
-@@ -170,7 +170,7 @@ pw_user(struct userconf * cnf, int mode, struct ca
+diff --git a/usr.sbin/pw/pw_user.c b/usr.sbin/pw/pw_user.c
+index 5f4d7a9..cffeb11 100644
+--- a/usr.sbin/pw/pw_user.c
++++ b/usr.sbin/pw/pw_user.c
+@@ -166,7 +166,7 @@ pw_user(struct userconf * cnf, int mode, struct cargs * args)
  	 * If we'll need to use it or we're updating it,
  	 * then create the base home directory if necessary
  	 */
