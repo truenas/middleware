@@ -489,7 +489,7 @@ for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 	if ! grep -q $patch $AVATAR_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
         	mkdir -p filtered-patches
-		(cd FreeBSD/src &&  && git apply $AVATAR_ROOT/patches/$patch)
+		(cd FreeBSD/src && git apply $AVATAR_ROOT/patches/$patch)
         	#patch_filter < $AVATAR_ROOT/patches/$patch > $AVATAR_ROOT/filtered-patches/$patch &&
 		#patch -C -f -p0 < $AVATAR_ROOT/filtered-patches/$patch >$_lp 2>&1 ||
 		# { echo "Failed to apply patch: $patch (check $(pwd)/$_lp)";
