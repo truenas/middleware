@@ -498,7 +498,6 @@ for patch in $(cd $AVATAR_ROOT/patches && ls freebsd-*.patch); do
 		echo $patch >> $AVATAR_ROOT/FreeBSD/src-patches
 	fi
 done
-fi
 }
 
 do_ports_patches()
