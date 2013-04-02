@@ -1,0 +1,7 @@
+--- sysutils/testdisk/distinfo.orig	2013-04-02 15:25:14.698167244 -0600
++++ sysutils/testdisk/distinfo	2013-04-02 15:25:32.873704638 -0600
+@@ -1,2 +1,2 @@
+-SHA256 (testdisk-6.13.tar.bz2) = 48275ccddfc9445b6c3e6e181728dae9e49bd25b824a6b5670d58f1f88cdf220
+-SIZE (testdisk-6.13.tar.bz2) = 560696
++SHA256 (testdisk-6.14-WIP.tar.bz2) = 75b7370308c31deae147cf43599c82e712dd805b445757ca620083716bee6c01
++SIZE (testdisk-6.14-WIP.tar.bz2) = 577932
