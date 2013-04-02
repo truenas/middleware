@@ -1,0 +1,11 @@
+--- net-mgmt/bsnmptools/Makefile.orig	2013-04-02 16:59:24.031957432 -0600
++++ net-mgmt/bsnmptools/Makefile	2013-04-02 16:59:45.971541374 -0600
+@@ -20,7 +20,7 @@
+ WRKSRC=		${WRKDIR}/${PORTNAME}
+ MAKE_ARGS=	SHLIB_MAJOR=0 INCLUDEDIR=${PREFIX}/include LIBDIR=${PREFIX}/lib \
+ 		MANDIR=${MANPREFIX}/man/man NO_MANCOMPRESS=yes BINDIR=${PREFIX}/bin \
+-		NO_PROFILE=yes
++		NO_PROFILE=yes NO_WERROR=
+ CFLAGS=		-I${WRKSRC}/lib -L${WRKSRC}/lib
+ PLIST_FILES=	${BIN_FILES:S,^,bin/,} include/${PORTNAME}.h include/bsnmptc.h \
+ 		lib/lib${PORTNAME}.a lib/lib${PORTNAME}.so lib/lib${PORTNAME}.so.0
