@@ -537,6 +537,33 @@ class UPSForm(ModelForm):
                 0, (self.instance.ups_port, self.instance.ups_port)
             )
 
+    def clean_ups_remotehost(self):
+        rhost = self.cleaned_data.get("ups_remotehost")
+        if self.cleaned_data.get("ups_mode") != 'master':
+            if not rhost:
+                raise forms.ValidationError(
+                    _("This field is required")
+                )
+        return rhost
+
+    def clean_ups_remoteuser(self):
+        ruser = self.cleaned_data.get("ups_remoteuser")
+        if self.cleaned_data.get("ups_mode") != 'master':
+            if not ruser:
+                raise forms.ValidationError(
+                    _("This field is required")
+                )
+        return ruser
+
+    def clean_ups_remotepwd(self):
+        rpwd = self.cleaned_data.get("ups_remotepwd")
+        if self.cleaned_data.get("ups_mode") != 'master':
+            if not rpwd:
+                raise forms.ValidationError(
+                    _("This field is required")
+                )
+        return rpwd
+
     def clean_ups_identifier(self):
         ident = self.cleaned_data.get("ups_identifier")
         if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
