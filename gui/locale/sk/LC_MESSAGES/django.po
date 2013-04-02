@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2012-12-02 15:55+0200\n"
-"Last-Translator: reido <rado68@gmail.com>\n"
+"PO-Revision-Date: 2013-04-01 22:02+0200\n"
+"Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -938,15 +938,15 @@ msgstr "Musíte zadať IP adresu aj pre alias"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Musíte vybrať masku siete IPv4 aj pre alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Musíte zadať IPv6 adresu aj pre alias."
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Musíte vybrať masku siete IPv6 aj pre alias."
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
