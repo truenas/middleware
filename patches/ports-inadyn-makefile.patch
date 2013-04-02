@@ -1,0 +1,18 @@
+--- /dev/null	2013-04-02 15:11:00.000000000 -0600
++++ dns/inadyn/files/BSDmakefile	2013-04-02 15:19:14.647446273 -0600
+@@ -0,0 +1,15 @@
++PROG= inadyn
++
++MAN5= inadyn.conf.5
++
++MAN8= inadyn.8
++
++SRCS= base64utils.c dyndns.c errorcode.c get_cmd.c http_client.c ip.c main.c os.c os_psos.c os_unix.c os_windows.c tcp.c inadyn_cmd.c
++
++.PATH: man src
++
++WARNS= 2
++
++BINDIR= ${PREFIX}/bin
++
++.include <bsd.prog.mk>

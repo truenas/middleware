@@ -1,0 +1,42 @@
+--- dns/inadyn/Makefile.orig	2013-04-02 15:12:41.727386880 -0600
++++ dns/inadyn/Makefile	2013-04-02 15:16:01.818906053 -0600
+@@ -20,13 +20,11 @@
+ USE_RC_SUBR=	inadyn
+ USE_ZIP=	yes
+ USE_DOS2UNIX=	yes
+-USE_GMAKE=	yes
+-MAKEFILE=	makefile
+ 
+-.if !defined(NO_INSTALL_MANPAGES)
+-MAN8=		inadyn.8
+-MAN5=		inadyn.conf.5
+-.endif
++MAKE_JOBS_SAFE= yes
++MAKEFILE= ${FILESDIR}/BSDmakefile
++
++MAKE_ENV+= MANDIR=${MANPREFIX}/man
+ 
+ PORTDOCS=	readme.html
+ PLIST_FILES=	bin/inadyn
+@@ -35,20 +33,14 @@
+ 	@${MV} ${WRKDIR}/${PORTNAME} ${WRKSRC}
+ 
+ post-patch:
+-	@${REINPLACE_CMD} -e 's|gcc|$$\(CC\)|g' ${WRKSRC}/makefile
+ 	@${REINPLACE_CMD} -e "s,%%PREFIX%%,${PREFIX},g" \
+ 		${WRKSRC}/man/inadyn.8 ${WRKSRC}/readme.html \
+ 		${WRKSRC}/src/dyndns.h
+ 
+-do-install:
++pre-install:
+ .if !defined(NOPORTDOCS)
+ 	${MKDIR} ${DOCSDIR}
+ 	${INSTALL_DATA} -p ${WRKSRC}/${PORTDOCS} ${DOCSDIR}
+ .endif
+-	${INSTALL_PROGRAM} ${WRKSRC}/bin/linux/inadyn ${PREFIX}/bin
+-.if !defined(NO_INSTALL_MANPAGES)
+-	${INSTALL_MAN} ${WRKSRC}/man/inadyn.8 ${MANPREFIX}/man/man8
+-	${INSTALL_MAN} ${WRKSRC}/man/inadyn.conf.5 ${MANPREFIX}/man/man5
+-.endif
+ 
+ .include <bsd.port.mk>

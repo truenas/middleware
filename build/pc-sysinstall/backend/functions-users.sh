@@ -64,6 +64,27 @@ add_user()
 
 };
 
+# Function which add default groups
+setup_groups()
+{
+	echo "Adding UNIX Groups..."
+	run_chroot_cmd "pw add group -g 512 -n DomainAdmins"
+	run_chroot_cmd "pw add group -g 513 -n DomainUsers"
+	run_chroot_cmd "pw add group -g 514 -n DomainGuests"	
+	run_chroot_cmd "pw add group -g 515 -n DomainComputers"
+	run_chroot_cmd "pw add group -g 544 -n Administrators"
+	run_chroot_cmd "pw add group -g 545 -n Users"
+	run_chroot_cmd "pw add group -g 546 -n Guests"
+	run_chroot_cmd "pw add group -g 547 -n PowerUsers"
+	run_chroot_cmd "pw add group -g 548 -n AccountOperators"
+	run_chroot_cmd "pw add group -g 549 -n SystemOperators"
+	run_chroot_cmd "pw add group -g 550 -n PrintOperators"
+	run_chroot_cmd "pw add group -g 551 -n BackupOperators"
+	run_chroot_cmd "pw add group -g 552 -n Replicators"
+	run_chroot_cmd "pw add group -g 992 -n EmailUsers"
+}
+
+
 # Function which reads in the config, and adds any users specified
 setup_users()
 {
@@ -113,6 +134,8 @@ setup_users()
     then
       get_value_from_string "${line}"
       USERGROUPS="$VAL"
+    else
+	USERGROUPS="DomainUsers"
     fi
 
 

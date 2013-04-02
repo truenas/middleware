@@ -1,0 +1,12 @@
+--- a/net-mgmt/collectd/Makefile
++++ b/net-mgmt/collectd/Makefile
+@@ -135,7 +135,8 @@ CONFIGURE_ARGS=	--localstatedir=/var \
+ 		--without-libcredis \
+ 		--without-libganglia \
+ 		--without-libesmtp \
+-		--disable-static
++		--disable-static \
++		--enable-network
+ 
+ .if ${PORT_OPTIONS:MDEBUG}
+ CONFIGURE_ARGS+=--enable-debug

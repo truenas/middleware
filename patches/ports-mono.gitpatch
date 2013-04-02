@@ -1,0 +1,295 @@
+diff --git a/lang/mono/Makefile b/lang/mono/Makefile
+index 865650a..b0a3e0b 100644
+--- a/lang/mono/Makefile
++++ b/lang/mono/Makefile
+@@ -2,7 +2,7 @@
+ # $FreeBSD$
+ 
+ PORTNAME=	mono
+-PORTVERSION=	3.0.3
++PORTVERSION=	3.0.7
+ PORTREVISION=	2
+ CATEGORIES=	lang
+ MASTER_SITES=	http://download.mono-project.com/sources/${PORTNAME}/
+@@ -24,7 +24,7 @@ USE_GETTEXT=	yes
+ MAKE_JOBS_UNSAFE=yes
+ 
+ # Moonlight is installed as part of www/moonlight
+-CONFIGURE_ARGS=	--with-moonlight=no
++CONFIGURE_ARGS=	--with-moonlight=no --enable-big-arrays=yes
+ 
+ CONFIGURE_ENV=	ac_cv_header_sys_inotify_h=no
+ 
+diff --git a/lang/mono/files/patch-configure b/lang/mono/files/patch-configure
+deleted file mode 100644
+index 55aad83..0000000
+--- a/lang/mono/files/patch-configure
++++ /dev/null
+@@ -1,18 +0,0 @@
+-
+-$FreeBSD$
+-
+---- configure.orig
+-+++ configure
+-@@ -3993,12 +3993,6 @@
+- 
+- 		libdl=
+- 		libgc_threads=pthreads
+--		# This doesn't seem to work as of 7.0 on amd64
+--		with_sigaltstack=no
+--# TLS is only partially implemented on -CURRENT (compiler support
+--# but NOT library support)
+--#
+--		with_tls=pthread
+- 		use_sigposix=yes
+- 		;;
+- 	*-*-*openbsd*)
+diff --git a/lang/mono/files/patch-mcs_tools_gacutil_driver.cs b/lang/mono/files/patch-mcs_tools_gacutil_driver.cs
+deleted file mode 100644
+index b52a2db..0000000
+--- a/lang/mono/files/patch-mcs_tools_gacutil_driver.cs
++++ /dev/null
+@@ -1,41 +0,0 @@
+-
+-$FreeBSD$
+-
+---- mcs/tools/gacutil/driver.cs.orig
+-+++ mcs/tools/gacutil/driver.cs
+-@@ -427,15 +427,33 @@
+- 					break;
+- 
+- 				string dir = directories [i];
+-+				string extension = null;
+-+				
+-+				if (File.Exists(Path.Combine (dir, assembly_name + ".dll"))) {
+-+					extension = ".dll";
+-+				} else if (File.Exists(Path.Combine (dir, assembly_name + ".DLL"))) {
+-+					extension = ".DLL";
+-+				} else if (File.Exists(Path.Combine (dir, assembly_name + ".exe"))) {
+-+					extension = ".exe";
+-+				} else if (File.Exists(Path.Combine (dir, assembly_name + ".EXE"))) {
+-+					extension = ".EXE";
+-+				} else {
+-+					failures++;
+-+					WriteLine("Cannot find the assembly: " + assembly_name);
+-+					continue;
+-+				}
+-+
+-+				string AssemblyFilename = assembly_name + extension;
+- 
+- 				AssemblyName an = AssemblyName.GetAssemblyName (
+--					Path.Combine (dir, assembly_name + ".dll"));
+-+					Path.Combine(dir, AssemblyFilename));
+- 				WriteLine ("Assembly: " + an.FullName);
+- 
+- 				Directory.Delete (dir, true);
+- 				if (package != null) {
+- 					string link_dir = Path.Combine (libdir, package);
+--					string link = Path.Combine (link_dir, assembly_name + ".dll");
+-+					string link = Path.Combine(link_dir, AssemblyFilename);
+-+
+- 					try { 
+- 						File.Delete (link);
+- 					} catch {
+diff --git a/lang/mono/files/patch-mono_metadata_sgen-gc.c b/lang/mono/files/patch-mono_metadata_sgen-gc.c
+deleted file mode 100644
+index afb393e..0000000
+--- a/lang/mono/files/patch-mono_metadata_sgen-gc.c
++++ /dev/null
+@@ -1,55 +0,0 @@
+-
+-$FreeBSD$
+-
+---- mono/metadata/sgen-gc.c.orig
+-+++ mono/metadata/sgen-gc.c
+-@@ -179,6 +179,9 @@
+- #ifdef HAVE_PTHREAD_H
+- #include <pthread.h>
+- #endif
+-+#ifdef HAVE_PTHREAD_ATTR_GET_NP
+-+#include <pthread_np.h>
+-+#endif
+- #ifdef HAVE_SEMAPHORE_H
+- #include <semaphore.h>
+- #endif
+-@@ -3990,17 +3993,28 @@
+- #endif
+- 
+- 	/* try to get it with attributes first */
+--#if defined(HAVE_PTHREAD_GETATTR_NP) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
+--	{
+--		size_t size;
+--		void *sstart;
+--		pthread_attr_t attr;
+--		pthread_getattr_np (pthread_self (), &attr);
+--		pthread_attr_getstack (&attr, &sstart, &size);
+--		info->stack_start_limit = sstart;
+--		info->stack_end = (char*)sstart + size;
+--		pthread_attr_destroy (&attr);
+--	}
+-+#if (defined(HAVE_PTHREAD_GETATTR_NP) || defined(HAVE_PTHREAD_ATTR_GET_NP)) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
+-+  {
+-+	size_t size;
+-+	void *sstart;
+-+	pthread_attr_t attr;
+-+
+-+#if defined(HAVE_PTHREAD_GETATTR_NP)
+-+	/* Linux */
+-+	pthread_getattr_np (pthread_self (), &attr);
+-+#elif defined(HAVE_PTHREAD_ATTR_GET_NP)
+-+	/* BSD */
+-+	pthread_attr_init (&attr);
+-+	pthread_attr_get_np (pthread_self (), &attr);
+-+#else
+-+#error Cannot determine which API is needed to retrieve pthread attributes.
+-+#endif
+-+
+-+	pthread_attr_getstack (&attr, &sstart, &size);
+-+	info->stack_start_limit = sstart;
+-+	info->stack_end = (char*)sstart + size;
+-+	pthread_attr_destroy (&attr);
+-+  }
+- #elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
+- 		 info->stack_end = (char*)pthread_get_stackaddr_np (pthread_self ());
+- 		 info->stack_start_limit = (char*)info->stack_end - pthread_get_stacksize_np (pthread_self ());
+diff --git a/lang/mono/files/patch-mono_metadata_threads.c b/lang/mono/files/patch-mono_metadata_threads.c
+deleted file mode 100644
+index b986777..0000000
+--- a/lang/mono/files/patch-mono_metadata_threads.c
++++ /dev/null
+@@ -1,110 +0,0 @@
+-
+-$FreeBSD$
+-
+---- mono/metadata/threads.c.orig
+-+++ mono/metadata/threads.c
+-@@ -785,7 +785,16 @@
+- void
+- mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
+- {
+--#if defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
+-+#if defined(HOST_WIN32)
+-+	/* FIXME: 	If this function won't (or shouldn't) ever be called when running on
+-+			Windows, use the error preprocessor declaration here instead of this
+-+			default code (to _ensure_ we don't call this function on Windows). */
+-+	*staddr = NULL;
+-+	*stsize = (size_t)-1;
+-+	return;
+-+
+-+#elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
+-+	/* Mac OS X */
+- 	*staddr = (guint8*)pthread_get_stackaddr_np (pthread_self ());
+- 	*stsize = pthread_get_stacksize_np (pthread_self ());
+- 
+-@@ -793,52 +802,54 @@
+- 	*staddr -= *stsize;
+- 	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
+- 	return;
+--	/* FIXME: simplify the mess below */
+--#elif !defined(HOST_WIN32)
+-+
+-+#elif (defined(HAVE_PTHREAD_GETATTR_NP) || defined(HAVE_PTHREAD_ATTR_GET_NP)) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
+-+	/* Linux, BSD */
+-+
+- 	pthread_attr_t attr;
+- 	guint8 *current = (guint8*)&attr;
+- 
+--	pthread_attr_init (&attr);
+--#  ifdef HAVE_PTHREAD_GETATTR_NP
+--	pthread_getattr_np (pthread_self(), &attr);
+--#  else
+--#    ifdef HAVE_PTHREAD_ATTR_GET_NP
+--	pthread_attr_get_np (pthread_self(), &attr);
+--#    elif defined(sun)
+--	*staddr = NULL;
+--	pthread_attr_getstacksize (&attr, &stsize);
+--#    elif defined(__OpenBSD__)
+--	stack_t ss;
+--	int rslt;
+--
+--	rslt = pthread_stackseg_np(pthread_self(), &ss);
+--	g_assert (rslt == 0);
+-+	#if defined(HAVE_PTHREAD_GETATTR_NP)
+-+	/* Linux */
+-+	pthread_getattr_np (pthread_self (), &attr);
+- 
+--	*staddr = (guint8*)((size_t)ss.ss_sp - ss.ss_size);
+--	*stsize = ss.ss_size;
+--#    else
+--	*staddr = NULL;
+--	*stsize = 0;
+--	return;
+--#    endif
+--#  endif
+-+	#elif defined(HAVE_PTHREAD_ATTR_GET_NP)
+-+	/* BSD */
+-+	pthread_attr_init (&attr);
+-+	pthread_attr_get_np (pthread_self (), &attr);
+-+	
+-+	#else
+-+	#error Cannot determine which API is needed to retrieve pthread attributes.
+-+	#endif
+- 
+--#  if !defined(sun)
+--#    if !defined(__OpenBSD__)
+- 	pthread_attr_getstack (&attr, (void**)staddr, stsize);
+--#    endif
+-+	pthread_attr_destroy (&attr);
+-+
+- 	if (*staddr)
+- 		g_assert ((current > *staddr) && (current < *staddr + *stsize));
+--#  endif
+- 
+-+	/* When running under emacs, sometimes staddr is not aligned to a page size */
+-+	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
+-+
+-+#elif defined(sun)
+-+	/* What OS / architecture is this for? */
+-+	pthread_attr_t attr;
+-+	pthread_attr_init (&attr);
+-+	pthread_attr_getstacksize (&attr, &stsize);
+- 	pthread_attr_destroy (&attr);
+--#else
+- 	*staddr = NULL;
+--	*stsize = (size_t)-1;
+--#endif
+- 
+- 	/* When running under emacs, sometimes staddr is not aligned to a page size */
+- 	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
+-+	return;
+-+
+-+#else
+-+	/* FIXME:	It'd be better to use the 'error' preprocessor macro here so we know
+-+			at compile-time if the target platform isn't supported. */
+-+	*staddr = NULL;
+-+	*stsize = 0;
+-+	return;
+-+#endif
+- }	
+- 
+- MonoThread *
+diff --git a/lang/mono/files/patch-mono_mini_mini-exceptions.c b/lang/mono/files/patch-mono_mini_mini-exceptions.c
+deleted file mode 100644
+index c64ed15..0000000
+--- a/lang/mono/files/patch-mono_mini_mini-exceptions.c
++++ /dev/null
+@@ -1,19 +0,0 @@
+-
+-$FreeBSD$
+-
+---- mono/mini/mini-exceptions.c.orig
+-+++ mono/mini/mini-exceptions.c
+-@@ -2002,10 +2002,10 @@
+- 
+- 	sa.ss_sp = tls->signal_stack;
+- 	sa.ss_size = MONO_ARCH_SIGNAL_STACK_SIZE;
+--#if __APPLE__
+--	sa.ss_flags = 0;
+--#else
+-+#ifdef __linux__
+- 	sa.ss_flags = SS_ONSTACK;
+-+#else
+-+	sa.ss_flags = 0;
+- #endif
+- 	g_assert (sigaltstack (&sa, NULL) == 0);
+- 

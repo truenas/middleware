@@ -150,6 +150,21 @@ PKG_ONLY_MAKE_CONF="
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
+
+setup_sasl()
+{
+    	touch ${NANO_WORLDDIR}/etc/opiekeys
+	chown 389:389 ${NANO_WORLDDIR}/etc/opiekeys
+	touch ${NANO_WORLDDIR}/etc/opieaccess	
+    	chown 389:389 ${NANO_WORLDDIR}/etc/opieaccess
+}
+
+setup_ldap_port()
+{
+	cp ${HOME}/src/files/dlz.schema ${NANO_WORLDDIR}/usr/local/etc/openldap/schema/dlz.schema
+	mkdir -p ${NANO_WORLDDIR}/var/log/db
+}
+
 add_port archivers/lzo2
 add_port security/easy-rsa
 add_port security/openvpn
@@ -172,6 +187,7 @@ add_port net/istgt
 add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db46
+setup_sasl
 add_port security/cyrus-sasl2
 add_port net/openldap24-sasl-client
 add_port net/openldap24-server 	OPTIONS_FILE_SET+=ACCESSLOG \
@@ -195,6 +211,7 @@ add_port net/openldap24-server 	OPTIONS_FILE_SET+=ACCESSLOG \
 				OPTIONS_FILE_SET+=SOCK \
 				OPTIONS_FILE_SET+=UNIQUE \
 				OPTIONS_FILE_SET+=VALSORT
+setup_ldap_port
 add_port net/nss-pam-ldapd
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
@@ -215,6 +232,10 @@ add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
 add_port shells/zsh
+add_port dns/bind99 	OPTIONS_FILE_SET+=REPLACE_BASE \
+			OPTIONS_FILE_SET+=IDN \
+			OPTIONS_FILE_SET+=SIGCHASE \
+			OPTIONS_FILE_SET+=DLZ_LDAP
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
