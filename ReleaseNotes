@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-RELEASE
+Release Notes for FreeNAS 8.3.1-RELEASE-p1
 
 *** IMPORTANT ***
 
@@ -136,6 +136,24 @@ route.
 
 The plugin jail currently doesn't work properly if the external interface is
 a vlan pseudo-device.
+
+Changes since 8.3.1-RELEASE:
+
+Bugfixes
+========================
+
+1. Fix smartd with ciss based RAID controllers.
+
+2. Remove SVN revision checker from downgrade script.  This
+   is pointless in a git universe.
+
+3. Fix a kernel panic when the plugin jail is used with a
+   lagg interface.
+
+4. Remove testdisk from the image.  It's a great tool, but the distfile
+   keeps getting rerolled which breaks the build.
+
+5. Reset the passphrase and warn the use when extending an encrypted volume
 
 Changes since 8.3.1-RC1:
 
