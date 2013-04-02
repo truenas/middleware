@@ -67,6 +67,7 @@ class DiskFAdmin(BaseFreeAdmin):
 class VolumeFAdmin(BaseFreeAdmin):
 
     resource = VolumeResource
+    double_click = False
     exclude_fields = (
         'id',
         'vol_name',

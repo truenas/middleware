@@ -58,11 +58,12 @@ class BaseFreeAdmin(object):
     edit_modelform = None
     delete_form = None
     delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
-    exclude_fields = ('id', )
     deletable = True
     menu_child_of = None
 
+    exclude_fields = ('id', )
     resource = None
+    double_click = True
 
     advanced_fields = []
 
@@ -691,6 +692,7 @@ class BaseFreeAdmin(object):
             filters = ''
 
         context = {
+            'double_click': self.double_click,
             'model': m,
             'datagrid_filters': filters,
             'verbose_name': self.verbose_name,
