@@ -218,6 +218,7 @@ class notifier:
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
+            'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
         }
@@ -637,6 +638,16 @@ class notifier:
         self.__system("/usr/sbin/service nut restart")
         self.__system("/usr/sbin/service nut_upsmon restart")
         self.__system("/usr/sbin/service nut_upslog restart")
+
+    def _started_ups(self):
+        from freenasUI.services.models import UPS
+        mode = UPS.objects.order_by('-id')[0].ups_mode
+        if mode == "master":
+            svc = "ups"
+        else:
+            svc = "upsmon"
+        sn = self._started_notify("upsmon")
+        return self._started(svc, sn)
 
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
