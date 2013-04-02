@@ -508,6 +508,7 @@ class UPSForm(ModelForm):
     class Meta:
         model = models.UPS
         widgets = {
+            'ups_remoteport': forms.widgets.TextInput(),
             'ups_driver': forms.widgets.FilteringSelect(),
         }
 
@@ -517,6 +518,7 @@ class UPSForm(ModelForm):
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
             "function(box) { if(box.get('value') == 'lowbatt') { return true; "
             "} else { return false; } });")
+        self.fields['ups_mode'].widget.attrs['onChange'] = "upsModeToggle();"
         if self.instance.id and self.instance.ups_shutdown == 'lowbatt':
             self.fields['ups_shutdowntimer'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
@@ -544,6 +546,8 @@ class UPSForm(ModelForm):
         return ident
 
     def clean_ups_masterpwd(self):
+        if self.cleaned_data.get("ups_mode") != 'master':
+            return self.cleaned_data.get("ups_masterpwd")
         ident = self.cleaned_data.get("ups_masterpwd")
         if re.search(r'[ #]', ident, re.I):
             raise forms.ValidationError(

@@ -8,19 +8,51 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting field 'CIFS.cifs_srv_largerw'
-        db.delete_column('services_cifs', 'cifs_srv_largerw')
+        # Adding field 'UPS.ups_mode'
+        db.add_column(u'services_ups', 'ups_mode',
+                      self.gf('django.db.models.fields.CharField')(default='master', max_length=6),
+                      keep_default=False)
 
+        # Adding field 'UPS.ups_remotehost'
+        db.add_column(u'services_ups', 'ups_remotehost',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=50, blank=True),
+                      keep_default=False)
 
-    def backwards(self, orm):
-        # Adding field 'CIFS.cifs_srv_largerw'
-        db.add_column('services_cifs', 'cifs_srv_largerw',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+        # Adding field 'UPS.ups_remoteport'
+        db.add_column(u'services_ups', 'ups_remoteport',
+                      self.gf('django.db.models.fields.IntegerField')(default=5578, blank=True),
+                      keep_default=False)
+
+        # Adding field 'UPS.ups_remoteuser'
+        db.add_column(u'services_ups', 'ups_remoteuser',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=50, blank=True),
+                      keep_default=False)
+
+        # Adding field 'UPS.ups_remotepwd'
+        db.add_column(u'services_ups', 'ups_remotepwd',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=50, blank=True),
                       keep_default=False)
 
 
+    def backwards(self, orm):
+        # Deleting field 'UPS.ups_mode'
+        db.delete_column(u'services_ups', 'ups_mode')
+
+        # Deleting field 'UPS.ups_remotehost'
+        db.delete_column(u'services_ups', 'ups_remotehost')
+
+        # Deleting field 'UPS.ups_remoteport'
+        db.delete_column(u'services_ups', 'ups_remoteport')
+
+        # Deleting field 'UPS.ups_remoteuser'
+        db.delete_column(u'services_ups', 'ups_remoteuser')
+
+        # Deleting field 'UPS.ups_remotepwd'
+        db.delete_column(u'services_ups', 'ups_remotepwd')
+
+
     models = {
-        'services.activedirectory': {
+        u'services.activedirectory': {
             'Meta': {'object_name': 'ActiveDirectory'},
             'ad_adminname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ad_adminpw': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
@@ -37,17 +69,17 @@ class Migration(SchemaMigration):
             'ad_use_default_domain': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'ad_verbose_logging': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ad_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'services.afp': {
+        u'services.afp': {
             'Meta': {'object_name': 'AFP'},
             'afp_srv_connections_limit': ('django.db.models.fields.IntegerField', [], {'default': '50', 'max_length': '120'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
             'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'services.cifs': {
+        u'services.cifs': {
             'Meta': {'object_name': 'CIFS'},
             'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': '4096', 'max_length': '120'}),
@@ -76,9 +108,9 @@ class Migration(SchemaMigration):
             'cifs_srv_unixext': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cifs_srv_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'cifs_srv_zeroconf': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'services.dynamicdns': {
+        u'services.dynamicdns': {
             'Meta': {'object_name': 'DynamicDNS'},
             'ddns_domain': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ddns_fupdateperiod': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -87,9 +119,9 @@ class Migration(SchemaMigration):
             'ddns_provider': ('django.db.models.fields.CharField', [], {'default': "'dyndns'", 'max_length': '120', 'blank': 'True'}),
             'ddns_updateperiod': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ddns_username': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'services.ftp': {
+        u'services.ftp': {
             'Meta': {'object_name': 'FTP'},
             'ftp_anonpath': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'ftp_anonuserbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
@@ -118,53 +150,53 @@ class Migration(SchemaMigration):
             'ftp_ssltls': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ftp_ssltls_certfile': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ftp_timeout': ('django.db.models.fields.PositiveIntegerField', [], {'default': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'services.iscsitarget': {
+        u'services.iscsitarget': {
             'Meta': {'object_name': 'iSCSITarget'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_alias': ('django.db.models.fields.CharField', [], {'max_length': '120', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'iscsi_target_authgroup': ('django.db.models.fields.IntegerField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'iscsi_target_authtype': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
             'iscsi_target_flags': ('django.db.models.fields.CharField', [], {'default': "'rw'", 'max_length': '120'}),
             'iscsi_target_initialdigest': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
-            'iscsi_target_initiatorgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetAuthorizedInitiator']"}),
+            'iscsi_target_initiatorgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['services.iSCSITargetAuthorizedInitiator']"}),
             'iscsi_target_logical_blocksize': ('django.db.models.fields.IntegerField', [], {'default': '512', 'max_length': '3'}),
             'iscsi_target_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
-            'iscsi_target_portalgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetPortal']"}),
+            'iscsi_target_portalgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['services.iSCSITargetPortal']"}),
             'iscsi_target_queue_depth': ('django.db.models.fields.IntegerField', [], {'default': '32', 'max_length': '3'}),
             'iscsi_target_serial': ('django.db.models.fields.CharField', [], {'default': "'10000001'", 'max_length': '16'}),
             'iscsi_target_type': ('django.db.models.fields.CharField', [], {'default': "'Disk'", 'max_length': '120'})
         },
-        'services.iscsitargetauthcredential': {
+        u'services.iscsitargetauthcredential': {
             'Meta': {'object_name': 'iSCSITargetAuthCredential'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_auth_peersecret': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_auth_peeruser': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_auth_secret': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_auth_tag': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'iscsi_target_auth_user': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
-        'services.iscsitargetauthorizedinitiator': {
+        u'services.iscsitargetauthorizedinitiator': {
             'Meta': {'object_name': 'iSCSITargetAuthorizedInitiator'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_initiator_auth_network': ('django.db.models.fields.TextField', [], {'default': "'ALL'", 'max_length': '2048'}),
             'iscsi_target_initiator_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_initiator_initiators': ('django.db.models.fields.TextField', [], {'default': "'ALL'", 'max_length': '2048'}),
             'iscsi_target_initiator_tag': ('django.db.models.fields.IntegerField', [], {'default': '1', 'unique': 'True'})
         },
-        'services.iscsitargetextent': {
+        u'services.iscsitargetextent': {
             'Meta': {'ordering': "['iscsi_target_extent_name']", 'object_name': 'iSCSITargetExtent'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_extent_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_extent_filesize': ('django.db.models.fields.CharField', [], {'default': '0', 'max_length': '120'}),
             'iscsi_target_extent_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
             'iscsi_target_extent_path': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_extent_type': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
-        'services.iscsitargetglobalconfiguration': {
+        u'services.iscsitargetglobalconfiguration': {
             'Meta': {'object_name': 'iSCSITargetGlobalConfiguration'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_basename': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_defaultt2r': ('django.db.models.fields.IntegerField', [], {'default': '60', 'max_length': '120'}),
             'iscsi_defaultt2w': ('django.db.models.fields.IntegerField', [], {'default': '2', 'max_length': '120'}),
@@ -186,28 +218,28 @@ class Migration(SchemaMigration):
             'iscsi_r2t': ('django.db.models.fields.IntegerField', [], {'default': '32', 'max_length': '120'}),
             'iscsi_toggleluc': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
-        'services.iscsitargetportal': {
+        u'services.iscsitargetportal': {
             'Meta': {'object_name': 'iSCSITargetPortal'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_portal_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_portal_tag': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'})
         },
-        'services.iscsitargetportalip': {
+        u'services.iscsitargetportalip': {
             'Meta': {'unique_together': "(('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),)", 'object_name': 'iSCSITargetPortalIP'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_portalip_ip': ('django.db.models.fields.IPAddressField', [], {'max_length': '15'}),
             'iscsi_target_portalip_port': ('django.db.models.fields.SmallIntegerField', [], {'default': '3260'}),
-            'iscsi_target_portalip_portal': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetPortal']"})
+            'iscsi_target_portalip_portal': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['services.iSCSITargetPortal']"})
         },
-        'services.iscsitargettoextent': {
+        u'services.iscsitargettoextent': {
             'Meta': {'object_name': 'iSCSITargetToExtent'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'iscsi_extent': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetExtent']", 'unique': 'True'}),
-            'iscsi_target': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITarget']"})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'iscsi_extent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['services.iSCSITargetExtent']", 'unique': 'True'}),
+            'iscsi_target': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['services.iSCSITarget']"})
         },
-        'services.ldap': {
+        u'services.ldap': {
             'Meta': {'object_name': 'LDAP'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ldap_anonbind': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ldap_basedn': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_groupsuffix': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -222,33 +254,33 @@ class Migration(SchemaMigration):
             'ldap_tls_cacertfile': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ldap_usersuffix': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})
         },
-        'services.nfs': {
+        u'services.nfs': {
             'Meta': {'object_name': 'NFS'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nfs_srv_allow_nonroot': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_srv_bindip': ('django.db.models.fields.CharField', [], {'max_length': '250', 'blank': 'True'}),
             'nfs_srv_servers': ('django.db.models.fields.PositiveIntegerField', [], {'default': '4'})
         },
-        'services.nis': {
+        u'services.nis': {
             'Meta': {'object_name': 'NIS'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nis_domain': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nis_manycast': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_secure_mode': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_servers': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'blank': 'True'})
         },
-        'services.nt4': {
+        u'services.nt4': {
             'Meta': {'object_name': 'NT4'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nt4_adminname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_adminpw': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_dcname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
-        'services.pluginsjail': {
+        u'services.pluginsjail': {
             'Meta': {'object_name': 'PluginsJail'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'jail_ipv4address': ('freenasUI.contrib.IPAddressField.IPAddressField', [], {}),
             'jail_ipv4netmask': ('django.db.models.fields.CharField', [], {'max_length': '3'}),
             'jail_mac': ('freenasUI.freeadmin.models.MACField', [], {'default': "''", 'max_length': '17', 'blank': 'True'}),
@@ -256,21 +288,21 @@ class Migration(SchemaMigration):
             'jail_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'plugins_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'})
         },
-        'services.rpctoken': {
+        u'services.rpctoken': {
             'Meta': {'object_name': 'RPCToken'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'key': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'secret': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
         },
-        'services.rsyncd': {
+        u'services.rsyncd': {
             'Meta': {'object_name': 'Rsyncd'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'rsyncd_auxiliary': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncd_port': ('django.db.models.fields.IntegerField', [], {'default': '873'})
         },
-        'services.rsyncmod': {
+        u'services.rsyncmod': {
             'Meta': {'ordering': "['rsyncmod_name']", 'object_name': 'RsyncMod'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'rsyncmod_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'}),
@@ -282,15 +314,15 @@ class Migration(SchemaMigration):
             'rsyncmod_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'rsyncmod_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120', 'blank': 'True'})
         },
-        'services.services': {
+        u'services.services': {
             'Meta': {'object_name': 'services'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'srv_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'srv_service': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
-        'services.smart': {
+        u'services.smart': {
             'Meta': {'object_name': 'SMART'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'smart_critical': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'smart_difference': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'smart_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -298,18 +330,18 @@ class Migration(SchemaMigration):
             'smart_interval': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
             'smart_powermode': ('django.db.models.fields.CharField', [], {'default': "'never'", 'max_length': '60'})
         },
-        'services.snmp': {
+        u'services.snmp': {
             'Meta': {'object_name': 'SNMP'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'snmp_community': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'snmp_contact': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'snmp_location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'snmp_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'snmp_traps': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
-        'services.ssh': {
+        u'services.ssh': {
             'Meta': {'object_name': 'SSH'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ssh_compression': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ssh_host_dsa_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_dsa_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
@@ -328,9 +360,9 @@ class Migration(SchemaMigration):
             'ssh_tcpfwd': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ssh_tcpport': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
-        'services.tftp': {
+        u'services.tftp': {
             'Meta': {'object_name': 'TFTP'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'tftp_directory': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'tftp_newfiles': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -338,17 +370,22 @@ class Migration(SchemaMigration):
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_username': ('freenasUI.freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'})
         },
-        'services.ups': {
+        u'services.ups': {
             'Meta': {'object_name': 'UPS'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ups_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_driver': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_emailnotify': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ups_extrausers': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_identifier': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ups_masterpwd': ('django.db.models.fields.CharField', [], {'default': "'fixmepass'", 'max_length': '30'}),
+            'ups_masterpwd': ('django.db.models.fields.CharField', [], {'default': "'fixmepass'", 'max_length': '30', 'blank': 'True'}),
+            'ups_mode': ('django.db.models.fields.CharField', [], {'default': "'master'", 'max_length': '6'}),
             'ups_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_port': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'ups_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
+            'ups_remoteport': ('django.db.models.fields.IntegerField', [], {'default': '5578', 'blank': 'True'}),
+            'ups_remotepwd': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
+            'ups_remoteuser': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'ups_rmonitor': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ups_shutdown': ('django.db.models.fields.CharField', [], {'default': "'batt'", 'max_length': '120'}),
             'ups_shutdowntimer': ('django.db.models.fields.CharField', [], {'max_length': '120'}),

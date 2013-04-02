@@ -960,6 +960,35 @@ class SNMP(Model):
 
 
 class UPS(Model):
+    ups_mode = models.CharField(
+        default='master',
+        max_length=6,
+        choices=(
+            ('master', _("Master")),
+            ('slave', _("Slave")),
+        ),
+        verbose_name=_("UPS Mode")
+    )
+    ups_remotehost = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Remote Host")
+    )
+    ups_remoteport = models.IntegerField(
+        default=5578,
+        blank=True,
+        verbose_name=_("Remote Port")
+    )
+    ups_remoteuser = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Remote User")
+    )
+    ups_remotepwd = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Remote Password")
+    )
     ups_identifier = models.CharField(
             max_length=120,
             verbose_name=_("Identifier"),
@@ -1006,6 +1035,7 @@ class UPS(Model):
     ups_masterpwd = models.CharField(
             max_length=30,
             default="fixmepass",
+            blank=True,
             verbose_name=_("UPS Master User Password"),
             )
     ups_extrausers = models.TextField(

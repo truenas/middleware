@@ -421,6 +421,51 @@ require([
 
     }
 
+    upsModeToggle = function() {
+
+        var select = registry.byId("id_ups_mode");
+        var rh = registry.byId("id_ups_remotehost");
+        var rp = registry.byId("id_ups_remoteport");
+        var rpw = registry.byId("id_ups_remotepwd");
+        var ru = registry.byId("id_ups_remoteuser");
+        var d = registry.byId("id_ups_driver");
+        var p = registry.byId("id_ups_port");
+        var pw = registry.byId("id_ups_masterpwd");
+        var e = registry.byId("id_ups_extrausers");
+        var m = registry.byId("id_ups_rmonitor");
+        var trh = rh.domNode.parentNode.parentNode;
+        var trp = rp.domNode.parentNode.parentNode;
+        var trpw = rpw.domNode.parentNode.parentNode;
+        var tru = ru.domNode.parentNode.parentNode;
+        var td = d.domNode.parentNode.parentNode;
+        var tp = p.domNode.parentNode.parentNode;
+        var tpw = pw.domNode.parentNode.parentNode;
+        var te = e.domNode.parentNode.parentNode;
+        var tm = m.domNode.parentNode.parentNode;
+        if(select.get('value') == 'master') {
+            domStyle.set(trh, "display", "none");
+            domStyle.set(trp, "display", "none");
+            domStyle.set(trpw, "display", "none");
+            domStyle.set(tru, "display", "none");
+            domStyle.set(td, "display", "table-row");
+            domStyle.set(tp, "display", "table-row");
+            domStyle.set(tpw, "display", "table-row");
+            domStyle.set(te, "display", "table-row");
+            domStyle.set(tm, "display", "table-row");
+        } else {
+            domStyle.set(trp, "display", "table-row");
+            domStyle.set(trh, "display", "table-row");
+            domStyle.set(trp, "display", "table-row");
+            domStyle.set(trpw, "display", "table-row");
+            domStyle.set(td, "display", "none");
+            domStyle.set(tp, "display", "none");
+            domStyle.set(tpw, "display", "none");
+            domStyle.set(te, "display", "none");
+            domStyle.set(tm, "display", "none");
+        }
+
+    }
+
     initshutdownModeToggle = function() {
 
         var select = registry.byId("id_ini_type");
