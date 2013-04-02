@@ -155,6 +155,9 @@ Bugfixes
 
 5. Reset the passphrase and warn the use when extending an encrypted volume
 
+6. Fix regression that prevented disk serial numbers from appearing
+   in the view disks screen.
+
 Changes since 8.3.1-RC1:
 
 Bugfixes
