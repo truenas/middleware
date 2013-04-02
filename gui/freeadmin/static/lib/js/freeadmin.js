@@ -457,6 +457,7 @@ require([
             domStyle.set(trh, "display", "table-row");
             domStyle.set(trp, "display", "table-row");
             domStyle.set(trpw, "display", "table-row");
+            domStyle.set(tru, "display", "table-row");
             domStyle.set(td, "display", "none");
             domStyle.set(tp, "display", "none");
             domStyle.set(tpw, "display", "none");
