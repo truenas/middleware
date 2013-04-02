@@ -273,7 +273,7 @@ install_world ( ) (
 	pprint 3 "log: ${NANO_OBJ}/_.iw"
         
 	#Ensure pbiwrapper folder is created
-	mdkir -p ${NANO_WORLDDIR}/usr/pbi/.pbiwrapper
+	mkdir -p ${NANO_WORLDDIR}/usr/pbi/.pbiwrapper
 
 	cd ${NANO_SRC}
 	env \
@@ -495,7 +495,7 @@ create_i386_diskimage ( ) (
 		printf "# %s\n", $0
 
 		# size of cylinder in sectors
-		cs = $3 * $4
+v		cs = $3 * $4
 
 		# number of full cylinders on media
 		cyl = int ($1 / cs)

@@ -4,7 +4,7 @@
 # Version:  10.0.0
 
 all:
-	sh build/do_build.sh -ff
+	sh build/do_build.sh
 
 clean:
 	rm -rf ./FreeBSD

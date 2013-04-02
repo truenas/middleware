@@ -113,7 +113,7 @@ NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 NANO_LOCAL_DIRS=""
 
 # Modules to build with the kernel.
-NANO_MODULES="cxgb ext2fs geom ipmi iscsi pf pflog ipdivert linux linprocfs netgraph vmm fdescfs fuse ulpt if_bridge if_tap bridgestp dtrace smb libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+NANO_MODULES="cxgb ext2fs geom ipmi iscsi pf pflog ipdivert linux linprocfs vmm fdescfs fuse ipdivert if_tun if_bridge if_tap bridgestp dtrace libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 
 # Feature sets to enable as part of the build.
 SW_FEATURES="DEBUG REPORTING"
