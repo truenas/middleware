@@ -155,10 +155,12 @@ require([
         columns: columns,
         }, griddiv);
 
+    {% if double_click %}
     grid.on(".dgrid-row:dblclick", function(evt) {
         var row = grid.row(evt);
         editObject('{% trans "Edit"|escapejs %}', row.data._edit_url, [this, ]);
     });
+    {% endif %}
 
     var selectionCheck = function(evt) {
         var numselected = 0;
