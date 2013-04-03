@@ -975,7 +975,7 @@ class UPS(Model):
         verbose_name=_("Remote Host")
     )
     ups_remoteport = models.IntegerField(
-        default=5578,
+        default=3493,
         blank=True,
         verbose_name=_("Remote Port")
     )

@@ -20,7 +20,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'UPS.ups_remoteport'
         db.add_column(u'services_ups', 'ups_remoteport',
-                      self.gf('django.db.models.fields.IntegerField')(default=5578, blank=True),
+                      self.gf('django.db.models.fields.IntegerField')(default=3493, blank=True),
                       keep_default=False)
 
         # Adding field 'UPS.ups_remoteuser'
@@ -383,7 +383,7 @@ class Migration(SchemaMigration):
             'ups_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_port': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'ups_remoteport': ('django.db.models.fields.IntegerField', [], {'default': '5578', 'blank': 'True'}),
+            'ups_remoteport': ('django.db.models.fields.IntegerField', [], {'default': '3493', 'blank': 'True'}),
             'ups_remotepwd': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'ups_remoteuser': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'ups_rmonitor': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
