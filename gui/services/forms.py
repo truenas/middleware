@@ -525,7 +525,10 @@ class UPSForm(ModelForm):
                 'dijitValidationTextBoxDisabled')
         ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
         ports.extend(glob.glob('/dev/ugen*'))
-        self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
+        self.fields['ups_port'] = forms.ChoiceField(
+            label=_("Port"),
+            required=False,
+        )
         self.fields['ups_port'].widget = forms.widgets.ComboBox()
         self.fields['ups_port'].choices = [(port, port) for port in ports]
         if self.data and self.data.get("ups_port"):
@@ -536,6 +539,14 @@ class UPSForm(ModelForm):
             self.fields['ups_port'].choices.insert(
                 0, (self.instance.ups_port, self.instance.ups_port)
             )
+
+    def clean_ups_port(self):
+        port = self.cleaned_data.get("ups_port")
+        if self.cleaned_data.get("ups_mode") == 'master' and not port:
+            raise forms.ValidationError(
+                _("This field is required")
+            )
+        return port
 
     def clean_ups_remotehost(self):
         rhost = self.cleaned_data.get("ups_remotehost")
