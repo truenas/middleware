@@ -40,25 +40,27 @@ EOF
 generate_upsmon()
 {
     local IFS="|"
-    local f="ups_mode ups_remoteuser ups_remotepwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
+    local f="ups_mode ups_remotehost ups_remoteport ups_remoteuser ups_remotepwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
     eval local $f
     local sf=$(var_to_sf $f)
-    local user passwd
+    local user passwd ident
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
 
 		if [ "${ups_mode}" = "master" ]; then
+			ident="${ups_identifier}"
 			user="upsmon"
 			passwd=`echo ${ups_masterpwd}|sed -E 's/([#$])/\\\1/g'`
 		else
+			ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
 			user=`echo ${ups_remoteuser}|sed -E 's/([#$])/\\\1/g'`
 			passwd=`echo ${ups_remotepwd}|sed -E 's/([#$])/\\\1/g'`
 		fi
 
 		cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
-MONITOR ${ups_identifier} 1 ${user} ${passwd} ${ups_mode}
+MONITOR ${ident} 1 ${user} ${passwd} ${ups_mode}
 NOTIFYCMD "/usr/local/sbin/upssched"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
