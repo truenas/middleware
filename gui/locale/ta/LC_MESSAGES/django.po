@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2013-04-03 08:28+0200\n"
+"Last-Translator: venkavis <venkavis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr ""
+msgstr "தானாக"
 
 #: choices.py:54
 msgid "PIO0"
@@ -105,11 +105,11 @@ msgstr ""
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "எப்போதும் மேல்"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "முடக்கப்பட்டது"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -137,91 +137,91 @@ msgstr ""
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr ""
+msgstr "குறைந்தபட்சம்"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "ஊடகம்"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "அதிகபட்சம்"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr ""
+msgstr "ஜனவரி"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr ""
+msgstr "பெப்ரவரி"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr ""
+msgstr "மார்ச்"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr ""
+msgstr "ஏப்ரல்"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr ""
+msgstr "மே"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr ""
+msgstr "ஜூன்"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr ""
+msgstr "ஜூலை"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr ""
+msgstr "ஆகஸ்ட்"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr ""
+msgstr "செப்டெம்பர்"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr ""
+msgstr "அக்டோபர்"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr ""
+msgstr "நவம்பர்"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr ""
+msgstr "டிசம்பர்"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr ""
+msgstr "திங்கள்"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr ""
+msgstr "செவ்வாய்"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr ""
+msgstr "புதன்"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr ""
+msgstr "வியாழன்"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr ""
+msgstr "வெள்ளி"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr ""
+msgstr "சனி"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr ""
+msgstr "ஞாயிறு"
 
 #: choices.py:163
 msgid "Anonymous"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-31 22:13+0200\n"
+"PO-Revision-Date: 2013-04-02 23:10+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1845,7 +1845,7 @@ msgstr ""
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Unix ekstenzije"
 
 #: services/models.py:167
 msgid ""
@@ -1883,7 +1883,7 @@ msgstr ""
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Zeroconf deljeno otkrivanje"
 
 #: services/models.py:189
 msgid ""
@@ -2546,7 +2546,7 @@ msgstr "UPS"
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port za povezivanje FTP servera."
 
 #: services/models.py:973
 msgid "Clients"
@@ -2579,7 +2579,7 @@ msgstr "Pauza"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maksimalno vreme mirovanja u sekundama."
 
 #: services/models.py:996
 msgid "Allow Root Login"
@@ -2587,7 +2587,7 @@ msgstr "Dozvoli prijavljivanje Root korisnika"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Dozvoliti anonimno prijavljivanje"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2600,15 +2600,16 @@ msgstr "Putanja"
 
 #: services/models.py:1003
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Dozvoliti prijavljivanje lokalnog korisnika"
 
 #: services/models.py:1006
 msgid "Banner"
-msgstr ""
+msgstr "Baner"
 
+# nisam siguran bas????
 #: services/models.py:1008
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Pozdravni baner prikazan od strane FTP-a prilikom prve konekcije."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
