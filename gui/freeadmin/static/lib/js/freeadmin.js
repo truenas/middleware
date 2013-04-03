@@ -433,6 +433,7 @@ require([
         var pw = registry.byId("id_ups_masterpwd");
         var e = registry.byId("id_ups_extrausers");
         var m = registry.byId("id_ups_rmonitor");
+        var o = registry.byId("id_ups_options");
         var trh = rh.domNode.parentNode.parentNode;
         var trp = rp.domNode.parentNode.parentNode;
         var trpw = rpw.domNode.parentNode.parentNode;
@@ -442,6 +443,7 @@ require([
         var tpw = pw.domNode.parentNode.parentNode;
         var te = e.domNode.parentNode.parentNode;
         var tm = m.domNode.parentNode.parentNode;
+        var to = o.domNode.parentNode.parentNode;
         if(select.get('value') == 'master') {
             domStyle.set(trh, "display", "none");
             domStyle.set(trp, "display", "none");
@@ -452,6 +454,7 @@ require([
             domStyle.set(tpw, "display", "table-row");
             domStyle.set(te, "display", "table-row");
             domStyle.set(tm, "display", "table-row");
+            domStyle.set(to, "display", "table-row");
         } else {
             domStyle.set(trp, "display", "table-row");
             domStyle.set(trh, "display", "table-row");
@@ -463,6 +466,7 @@ require([
             domStyle.set(tpw, "display", "none");
             domStyle.set(te, "display", "none");
             domStyle.set(tm, "display", "none");
+            domStyle.set(to, "display", "none");
         }
 
     }
