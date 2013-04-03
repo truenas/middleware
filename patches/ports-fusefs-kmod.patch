@@ -1,0 +1,11 @@
+--- sysutils/fusefs-kmod/Makefile.orig	2013-04-02 18:41:50.670635532 -0600
++++ sysutils/fusefs-kmod/Makefile	2013-04-02 18:42:09.978568803 -0600
+@@ -22,7 +22,7 @@
+ PLIST_SUB=	KMODDIR=${KMODDIR}
+ MAKE_ENV=	BINDIR="${PREFIX}/sbin" MANDIR="${MANPREFIX}/man/man" \
+ 		KMODDIR="${KMODDIR}" SYSDIR="${SRC_BASE}/sys" \
+-		MOUNT="${SRC_BASE}/sbin/mount"
++		MOUNT="${SRC_BASE}/sbin/mount" NO_WERROR= WERROR=
+ WRKSRC=		${WRKDIR}/fuse4bsd-${HG_SHORTREV}
+ DISABLE_SIZE=	yes
+ 
