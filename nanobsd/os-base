@@ -353,7 +353,6 @@ add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
 add_port graphics/jpeg
-add_port sysutils/testdisk OPTIONS_FILE_SET+=NTFS OPTIONS_FILE_SET+=NTFS3G OPTIONS_FILE_SET+=ICONV
 
 if [ "${DEBUG}" = 1 ]; then
 

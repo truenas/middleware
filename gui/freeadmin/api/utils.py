@@ -113,7 +113,6 @@ class DojoResource(Resource):
         """
         Dojo aware filtering
         """
-        RE_SORT = re.compile(r'^sort\((.*)\)$')
         fields = []
         for key in options.keys():
             if RE_SORT.match(key):
