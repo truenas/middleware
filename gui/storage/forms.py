@@ -1507,7 +1507,7 @@ class ZVol_CreateForm(Form):
 class MountPointAccessForm(Form):
     mp_user = UserField(label=_('Owner (user)'))
     mp_group = GroupField(label=_('Owner (group)'))
-    mp_mode = UnixPermissionField(label=_('Mode'))
+    mp_mode = UnixPermissionField(label=_('Mode'), required=False)
     mp_acl = forms.ChoiceField(
         label=_('Type of ACL'),
         choices=(
@@ -1530,6 +1530,7 @@ class MountPointAccessForm(Form):
         if path:
             if os.path.exists(os.path.join(path, ".windows")):
                 self.fields['mp_acl'].initial = 'windows'
+                self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
             else:
                 self.fields['mp_acl'].initial = 'unix'
             user, group = notifier().mp_get_owner(path)
@@ -1538,6 +1539,18 @@ class MountPointAccessForm(Form):
             )
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
+        self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
+
+    def clean(self):
+        if (
+            self.cleaned_data.get("mp_acl") == "unix"
+            and
+            not self.cleaned_data.get("mp_mode")
+        ):
+            self._errors['mp_mode'] = self.error_class([
+                _("This field is required")
+            ])
+        return self.cleaned_data
 
     def commit(self, path='/mnt/'):
 

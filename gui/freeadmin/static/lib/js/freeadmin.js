@@ -400,6 +400,17 @@ require([
 
     }
 
+    mpAclChange = function(acl) {
+      var mode = registry.byId("id_mp_mode");
+      if(acl.get('value') === false) {
+        // do noting
+      } else if(acl.get('value') == 'unix') {
+        mode.set('disabled', false);
+      } else {
+        mode.set('disabled', true);
+      }
+    }
+
     rsyncModeToggle = function() {
 
         var select = registry.byId("id_rsync_mode");
