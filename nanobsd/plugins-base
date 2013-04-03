@@ -95,6 +95,7 @@ add_port textproc/expat2
 add_port devel/libltdl
 add_port devel/py-ipaddr
 add_port converters/base64
+add_port devel/libffi
 add_port devel/glib20
 add_port devel/gamin
 add_port devel/gio-fam-backend
