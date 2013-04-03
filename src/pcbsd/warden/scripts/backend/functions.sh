@@ -596,7 +596,7 @@ is_ipv4()
    local addr="${1}"
    local res=1
 
-   local ipv4="$(sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
+   local ipv4="$(/usr/local/bin/sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
    if [ "${ipv4}" = "ipv4" ]
    then
       res=0
@@ -610,7 +610,7 @@ is_ipv6()
    local addr="${1}"
    local res=1
 
-   local ipv6="$(sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
+   local ipv6="$(/usr/local/bin/sipcalc "${addr}"|head -1|cut -f2 -d'['|awk '{ print $1 }')"
    if [ "${ipv6}" = "ipv6" ]
    then
       res=0
@@ -625,12 +625,12 @@ in_ipv4_network()
    local network="${2}"
    local res=1
 
-   local start="$(sipcalc "${network}"|awk '/^Usable/ { print $4 }')"
-   local end="$(sipcalc "${network}"|awk '/^Usable/ { print $6 }')"
+   local start="$(/usr/local/bin/sipcalc "${network}"|awk '/^Usable/ { print $4 }')"
+   local end="$(/usr/local/bin/sipcalc "${network}"|awk '/^Usable/ { print $6 }')"
 
-   local iaddr="$(sipcalc "${addr}"|awk '/(decimal)/ { print $5 }')"
-   local istart="$(sipcalc "${start}"|awk '/(decimal)/ { print $5 }')"
-   local iend="$(sipcalc "${end}"|awk '/(decimal)/ { print $5 }')"
+   local iaddr="$(/usr/local/bin/sipcalc "${addr}"|awk '/(decimal)/ { print $5 }')"
+   local istart="$(/usr/local/bin/sipcalc "${start}"|awk '/(decimal)/ { print $5 }')"
+   local iend="$(/usr/local/bin/sipcalc "${end}"|awk '/(decimal)/ { print $5 }')"
 
    if [ "${iaddr}" -ge "${istart}" -a "${iaddr}" -le "${iend}" ]
    then
@@ -673,9 +673,9 @@ in_ipv6_network()
    local mask="$(echo "${network}"|cut -f2 -d'/' -s)"
    local res=1
 
-   local addr="$(sipcalc "${addr}"|awk \
+   local addr="$(/usr/local/bin/sipcalc "${addr}"|awk \
       '/^Expanded/ { print $4}')"
-   local start="$(sipcalc "${network}"|egrep \
+   local start="$(/usr/local/bin/sipcalc "${network}"|egrep \
       '^Network range'|awk '{ print $4 }')"
 
    local baddr="$(ipv6_to_binary "${addr}")"

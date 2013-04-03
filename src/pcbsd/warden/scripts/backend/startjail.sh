@@ -163,37 +163,6 @@ if [ -n "${IFACE}" ] ; then
    ifconfig ${BRIDGE} addm ${IFACE}
 fi
 
-if [ -n "${BRIDGEIPS}" ] ; then
-   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
-   _has_ipv4=$?
-
-   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
-   _has_ipv6=$?
-
-   for _ip in ${BRIDGEIPS}
-   do
-      if is_ipv4 "${_ip}" ; then
-         if [ "${_has_ipv4}" = "0" ]
-         then
-             ifconfig ${BRIDGE} inet "${_ip}"
-            _has_ipv4=1
-         else
-            ifconfig ${BRIDGE} inet alias "${_ip}"
-         fi
-      fi
-
-      if is_ipv6 "${_ip}" ; then
-         if [ "${_has_ipv6}" = "0" ]
-         then
-             ifconfig ${BRIDGE} inet6 "${_ip}"
-            _has_ipv6=1
-         else
-            ifconfig ${BRIDGE} inet6 alias "${_ip}"
-         fi
-      fi
-   done
-fi
-
 i=0
 npairs=0
 
@@ -215,6 +184,39 @@ do
    : $((i += 1))
 done
 npairs=${i}
+
+if [ -n "${BRIDGEIPS}" ] ; then
+   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
+   _has_ipv4=$?
+
+   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
+   _has_ipv6=$?
+
+   for _ip in ${BRIDGEIPS}
+   do
+      get_ip_and_netmask "${_ip}"
+
+      if is_ipv4 "${JIP}" ; then
+         if [ "${_has_ipv4}" != "0" ]
+         then
+             ifconfig ${BRIDGE} inet "${JIP}"
+            _has_ipv4=1
+         else
+            ifconfig ${BRIDGE} inet alias "${JIP}"
+         fi
+      fi
+
+      if is_ipv6 "${JIP}" ; then
+         if [ "${_has_ipv6}" != "0" ]
+         then
+             ifconfig ${BRIDGE} inet6 "${JIP}"
+            _has_ipv6=1
+         else
+            ifconfig ${BRIDGE} inet6 alias "${JIP}"
+         fi
+      fi
+   done
+fi
 
 # Setup the IPs for this jail
 #for _ip in $IPS
@@ -333,6 +335,7 @@ sysctl net.inet.ip.forwarding=1
 sysctl net.inet6.ip6.forwarding=1
 
 tmp_rcconf=`mktemp /tmp/.wdn.XXXXXX`
+
 egrep -v '^(firewall_(enable|type)|natd_(enable|interface|flags))' \
    /etc/rc.conf >> "${tmp_rcconf}"
 cat<<__EOF__>>"${tmp_rcconf}"
@@ -350,9 +353,12 @@ if [ -s "${tmp_rcconf}" ] ; then
    fi
 fi
 
-if [ `sysctl -n net.inet.ip.fw.enable 2>/dev/null` = "0" ] ; then
-   /etc/rc.d/ipfw start
+fw_enable=`sysctl -n net.inet.ip.fw.enable 2>/dev/null`
+if [ -z "${fw_enable}" -o "${fw_enable}" = "0" ] ; then
+   /etc/rc.d/ipfw restart
+   ipfw -q add 00050 divert 8668 ip4 from any to any via ${IFACE}
 fi
+
 
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom start script
