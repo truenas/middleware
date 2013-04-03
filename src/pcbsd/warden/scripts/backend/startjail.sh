@@ -55,36 +55,17 @@ if [ -z "${IFACE}" ] ; then
   exit 6
 fi
 
-if [ -e "${JMETADIR}/defaultrouter" ] ; then
-  GATEWAY=`cat "${JMETADIR}/defaultrouter"`
-fi
-
-
-GATEWAY=
 MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
-#if [ -e "${JMETADIR}/defaultrouter" ] ; then
-#  GATEWAY=`cat "${JMETADIR}/defaultrouter"`
-#else
-#  # Determine gateway to use for this jail
-#  for _ip in `get_interface_addresses ${IFACE}`
-#  do
-#     for _gw in `netstat -f inet -nr | grep ${IFACE} | awk '{ print $2 }'`
-#     do
-#        if [ "${_gw}" = "${_ip}" ] ; then
-#           GATEWAY="${_ip}"
-#           break
-#        fi
-#     done
-#     if [ -n "${GATEWAY}" ] ; then
-#        break
-#     fi
-#  done
-#fi
+GATEWAYS=
+if [ -e "${JMETADIR}/defaultrouter" ] ; then
+  GATEWAYS=`cat "${JMETADIR}/defaultrouter"`
+fi
 
-#if [ -z "${GATEWAY}" -a "${DEFAULT}" = "1" ] ; then
-#   GATEWAY=`get_default_route`
-#fi
+BRIDGEIPS=
+if [ -e "${JMETADIR}/bridgeip" ] ; then
+  BRIDGEIPS=`cat "${JMETADIR}/bridgeip"`
+fi
 
 set_warden_metadir
 
@@ -175,19 +156,42 @@ if [ -n "${_bridges}" ] ; then
    done 
 fi
 
-echo "BRIDGE = $BRIDGE"
-echo "GATEWAY = $GATEWAY"
-exit 1
-
 if [ -z "${BRIDGE}" ] ; then
    BRIDGE=`ifconfig bridge create mtu ${MTU}`
 fi
 if [ -n "${IFACE}" ] ; then
    ifconfig ${BRIDGE} addm ${IFACE}
 fi
-if [ -n "${GATEWAY}" ] ; then
-   get_ip_and_netmask "${_ip}"
-#   ifconfig ${BRIDGE} ${GATEWAY}
+
+if [ -n "${BRIDGEIPS}" ] ; then
+   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
+   _has_ipv4=$?
+
+   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
+   _has_ipv6=$?
+
+   for _ip in ${BRIDGEIPS}
+   do
+      if is_ipv4 "${_ip}" ; then
+         if [ "${_has_ipv4}" = "0" ]
+         then
+             ifconfig ${BRIDGE} inet "${_ip}"
+            _has_ipv4=1
+         else
+            ifconfig ${BRIDGE} inet alias "${_ip}"
+         fi
+      fi
+
+      if is_ipv6 "${_ip}" ; then
+         if [ "${_has_ipv6}" = "0" ]
+         then
+             ifconfig ${BRIDGE} inet6 "${_ip}"
+            _has_ipv6=1
+         else
+            ifconfig ${BRIDGE} inet6 alias "${_ip}"
+         fi
+      fi
+   done
 fi
 
 i=0
@@ -266,8 +270,88 @@ do
    : $((i += 1))
 done
 
-if [ -n "${GATEWAY}" ] ; then
-   jexec ${JID} route add default ${GATEWAY}
+#
+# A defaultrouter file exists. IPv4 and IPv6 gateways can exist
+# so we iterate and set them if specified.
+#
+if [ -n "${GATEWAYS}" ] ; then
+   _has_ipv4_route=0
+   _has_ipv6_route=0
+
+   for _ip in ${GATEWAYS}
+   do
+      if is_ipv4 "${_ip}" && [ "${_has_ipv4_route}" = "0" ] ; then
+         jexec ${JID} route add -inet default ${_ip}
+         _has_ipv4_route=1
+      fi
+      if is_ipv6 "${_ip}" && [ "${_has_ipv6_route}" = "0" ] ; then
+         jexec ${JID} route add -inet6 default ${_ip}
+         _has_ipv6_route=1
+      fi
+   done
+
+#
+# No defaultrouter configured, so if bridge IP addresses were
+# configured, we set the default router to that IP.
+#
+elif [ -n "${BRIDGEIPS}" ] ; then
+   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
+   _has_ipv4=$?
+
+   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
+   _has_ipv6=$?
+
+   _has_ipv4_route=0
+   _has_ipv6_route=0
+
+   for _ip in ${BRIDGEIPS}
+   do
+      get_ip_and_netmask "${_ip}"
+
+      if is_ipv4 "${JIP}" ; then
+         if [ "${_has_ipv4}" = "0" -a "${_has_ipv4_route}" = "0" ] ; then
+            jexec ${JID} route add -inet default ${JIP}
+            _has_ipv4_route=1
+         fi
+      fi
+
+      if is_ipv6 "${JIP}" ; then
+         if [ "${_has_ipv6}" = "0" -a "${_has_ipv6_route}" = "0" ] ; then
+            jexec ${JID} route add -inet6 default ${JIP}
+            _has_ipv6_route=1
+         fi
+      fi
+   done
+fi
+
+#
+# Set ourself to be a jail router with NAT. Don't
+# use PF since it will panic the box when used
+# with VIMAGE.
+#
+sysctl net.inet.ip.forwarding=1
+sysctl net.inet6.ip6.forwarding=1
+
+tmp_rcconf=`mktemp /tmp/.wdn.XXXXXX`
+egrep -v '^(firewall_(enable|type)|natd_(enable|interface|flags))' \
+   /etc/rc.conf >> "${tmp_rcconf}"
+cat<<__EOF__>>"${tmp_rcconf}"
+firewall_enable="YES"
+firewall_type="open"
+natd_enable="YES"
+natd_interface="${IFACE}"
+natd_flags="-dynamic -m"
+__EOF__
+if [ -s "${tmp_rcconf}" ] ; then
+   cp /etc/rc.conf /var/tmp/rc.conf.bak
+   mv "${tmp_rcconf}" /etc/rc.conf
+   if [ "$?" != "0" ] ; then
+      mv /var/tmp/rc.conf.bak /etc/rc.conf
+   fi
+fi
+
+if [ `sysctl -n net.inet.ip.fw.enable 2>/dev/null` = "0" ] ; then
+   /etc/rc.d/ipfw start
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
