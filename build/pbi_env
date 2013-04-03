@@ -26,9 +26,9 @@ fi
 export PBI_BINDIR
 
 #
-# Force pbi_create to checkout 8.0-RELEASE source
+# Force pbi_create to checkout 9.0-RELEASE source
 #
-PBI_OSREL="8.0-RELEASE"
+PBI_OSREL="9.0-RELEASE"
 export PBI_OSREL
 
 #
