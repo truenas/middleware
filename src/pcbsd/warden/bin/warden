@@ -82,6 +82,7 @@ Available options:
 
            ip: Lets you see additional IP addresses for this jail
       network: Lets you see the network range for this jail
+     bridgeip: Lets you see the vnet bridge IP address for this jail
 defaultrouter: Lets you see the default router for this jail
         flags: Lets you see additional flags to pass to the 'jail' command at startup
 
@@ -110,6 +111,7 @@ Available options:
 
            ip: Lets you set additional IP addresses for this jail
       network: Lets you set the network range for this jail
+     bridgeip: Lets you set the vnet bridge IP address for this jail
 defaultrouter: Lets you set the default router for this jail
         flags: Lets you set additional flags to pass to the 'jail' command at startup
 
@@ -622,6 +624,7 @@ details) JAILNAME="${2}"
              ip) cat "${JMETADIR}/ip-extra"  2>/dev/null | sed 's| |,|g' ;;
           flags) cat "${JMETADIR}/jail-flags" 2>/dev/null | sed 's| |,|g' ;;
         network) cat "${JMETADIR}/network" 2>/dev/null | sed 's| |,|g' ;;
+       bridgeip) cat "${JMETADIR}/bridgeip" 2>/dev/null | sed 's| |,|g' ;;
   defaultrouter) cat "${JMETADIR}/defaultrouter" 2>/dev/null | sed 's| |,|g' ;;
               *) exit_err "Invalid option!" ;;
          esac
@@ -653,6 +656,10 @@ details) JAILNAME="${2}"
                  do
 	            echo "$_network" >> "${JMETADIR}/network"
                  done
+                 ;;
+       bridgeip) BRIDGEIP="${4}"
+
+	         echo "$BRIDGEIP" >> "${JMETADIR}/bridgeip"
                  ;;
   defaultrouter) DEFAULTROUTER="${4}"
 
