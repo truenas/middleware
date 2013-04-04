@@ -1035,6 +1035,7 @@ class iSCSITargetExtentForm(ModelForm):
         choices=(),
         widget=forms.Select(attrs={'maxHeight': 200}),
         label=_('Disk device'),
+        required=False,
     )
 
     class Meta:
@@ -1120,7 +1121,19 @@ class iSCSITargetExtentForm(ModelForm):
 
         return diskchoices.items()
 
+    def clean_iscsi_extent_disk(self):
+        _type = self.cleaned_data.get("iscsi_extent_type")
+        disk = self.cleaned_data.get("clean_iscsi_extent_disk")
+        if _type == 'disk' and not disk:
+            raise forms.ValidationError(
+                _("This field is required")
+            )
+        return disk
+
     def clean_iscsi_target_extent_path(self):
+        _type = self.cleaned_data["iscsi_extent_type"]
+        if _type == 'disk':
+            return ''
         path = self.cleaned_data["iscsi_target_extent_path"]
         if not path:
             return None
@@ -1154,6 +1167,7 @@ class iSCSITargetExtentForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
+        _type = cdata.get("iscsi_extent_type")
         path = cdata.get("iscsi_target_extent_path")
         if (
             cdata.get("iscsi_target_extent_filesize") == "0"
@@ -1170,8 +1184,14 @@ class iSCSITargetExtentForm(ModelForm):
                 )
             )
         ):
-                self._errors['iscsi_target_extent_path'] = self.error_class([_("The file must exist if the extent size is set to auto (0)")])
-                del cdata['iscsi_target_extent_path']
+            self._errors['iscsi_target_extent_path'] = self.error_class([
+                _("The file must exist if the extent size is set to auto (0)")
+            ])
+            del cdata['iscsi_target_extent_path']
+        elif _type == 'file' and not path:
+            self._errors['iscsi_target_extent_path'] = self.error_class([
+                _("This field is required")
+            ])
         return cdata
 
     def save(self, commit=True):
