@@ -245,13 +245,22 @@ AUTHGROUP_CHOICES = (
 
 
 DYNDNSPROVIDER_CHOICES = (
-        ('dyndns@dyndns.org', 'dyndns.org'),
-        ('default@freedns.afraid.org', 'freedns.afraid.org'),
-        ('default@zoneedit.com', 'zoneedit.com'),
-        ('default@no-ip.com', 'no-ip.com'),
-        ('default@easydns.com', 'easydns.com'),
-        ('dyndns@3322.org', '3322.org'),
-        )
+    ('dyndns@dyndns.org', 'dyndns.org'),
+    ('default@freedns.afraid.org', 'freedns.afraid.org'),
+    ('default@zoneedit.com', 'zoneedit.com'),
+    ('default@no-ip.com', 'no-ip.com'),
+    ('default@easydns.com', 'easydns.com'),
+    ('dyndns@3322.org', '3322.org'),
+    ('default@sitelutions.com', 'sitelutions.com'),
+    ('default@dnsomatic.com', 'dnsomatic.com'),
+    ('ipv6tb@he.net', 'he.net'),
+    ('default@tzo.com', 'tzo.com'),
+    ('default@dynsip.org', 'dynsip.org'),
+    ('default@dhis.org', 'dhis.org'),
+    ('default@majimoto.net', 'majimoto.net'),
+    ('default@zerigo.com', 'zerigo.com'),
+)
+
 SNMP_CHOICES = (
         ('mibll', 'Mibll'),
         ('netgraph', 'Netgraph'),
