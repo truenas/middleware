@@ -40,7 +40,7 @@ EOF
 generate_upsmon()
 {
     local IFS="|"
-    local f="ups_mode ups_remotehost ups_remoteport ups_remoteuser ups_remotepwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
+    local f="ups_mode ups_remotehost ups_remoteport ups_monuser ups_monpwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
     eval local $f
     local sf=$(var_to_sf $f)
     local user passwd ident
@@ -48,14 +48,12 @@ generate_upsmon()
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
 
+		user=`echo ${ups_monuser}|sed -E 's/([#$])/\\\1/g'`
+		passwd=`echo ${ups_monpwd}|sed -E 's/([#$])/\\\1/g'`
 		if [ "${ups_mode}" = "master" ]; then
 			ident="${ups_identifier}"
-			user="upsmon"
-			passwd=`echo ${ups_masterpwd}|sed -E 's/([#$])/\\\1/g'`
 		else
 			ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
-			user=`echo ${ups_remoteuser}|sed -E 's/([#$])/\\\1/g'`
-			passwd=`echo ${ups_remotepwd}|sed -E 's/([#$])/\\\1/g'`
 		fi
 
 		cat <<EOF
@@ -80,9 +78,10 @@ EOF
 generate_upsdusers()
 {
 
-	local passwd=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_masterpwd FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
+	local user=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_monuser FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
+	local passwd=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_monpwd FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
 	cat <<EOF
-[upsmon]
+[${user}]
     password = ${passwd}
     upsmon master
 
