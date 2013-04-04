@@ -164,7 +164,7 @@ add_port devel/gettext
 add_port devel/pkgconf
 add_port devel/libpthread-stubs
 add_port devel/cdialog
-add_port dns/inadyn
+add_port dns/inadyn-mt
 add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
