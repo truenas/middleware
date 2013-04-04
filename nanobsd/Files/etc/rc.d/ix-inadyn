@@ -40,7 +40,7 @@ generate_inadyn_real()
 
 generate_inadyn()
 {
-	generate_inadyn_real > /usr/local/etc/inadyn.conf
+	generate_inadyn_real > /usr/local/etc/inadyn-mt.conf
 }
 
 name="ix-inadyn"
