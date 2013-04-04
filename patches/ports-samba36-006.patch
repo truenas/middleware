@@ -1,0 +1,187 @@
+diff --git net/samba36/Makefile net/samba36/Makefile
+index e5829bc..7f87bd5 100644
+--- net/samba36/Makefile
++++ net/samba36/Makefile
+@@ -6,11 +6,11 @@
+ #
+ 
+ PORTNAME=		${SAMBA_BASENAME}36
+-PORTVERSION=		3.6.12
++PORTVERSION=		3.6.13
+ PORTREVISION?=		0
+ CATEGORIES?=		net
+ MASTER_SITES=		${MASTER_SITE_SAMBA}
+-MASTER_SITE_SUBDIR=	samba samba/old-versions samba/rc samba/pre
++MASTER_SITE_SUBDIR=	samba samba/stable samba/pre
+ DISTNAME=		${SAMBA_BASENAME}-${PORTVERSION:S|.p|pre|:S|.r|rc|:S|.t|tp|:S|.a|alpha|}
+ 
+ MAINTAINER?=		timur@FreeBSD.org
+@@ -80,8 +80,7 @@ CONFIGURE_ARGS+=	--exec-prefix="${PREFIX}" \
+ CPPFLAGS+=		-I${LOCALBASE}/include
+ LDFLAGS+=		-L${LOCALBASE}/lib
+ 
+-CONFIGURE_ENV+=		LDFLAGS="${LDFLAGS}" \
+-			PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
++CONFIGURE_ENV+=		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
+ 			PTHREAD_LDFLAGS="${PTHREAD_LIBS}"
+ # XXX: Temporary hack for RELENG6
+ CONFIGURE_ENV+=		ac_cv_header_sys_mount_h=yes
+@@ -373,7 +372,7 @@ post-patch:
+ 
+ .if !defined(SAMBA_SUBPORT)
+ # Samba server only
+-MAN1=		findsmb.1 \
++MAN1=		dbwrap_tool.1 findsmb.1 \
+ 		log2pcap.1 nmblookup.1 ntlm_auth.1 profiles.1 rpcclient.1 \
+ 		sharesec.1 smbcacls.1 smbclient.1 smbcontrol.1 smbcquotas.1 \
+ 		smbget.1 smbstatus.1 smbtar.1 smbtree.1 testparm.1 vfstest.1
+diff --git net/samba36/distinfo net/samba36/distinfo
+index 79cde8b..3cf71c8 100644
+--- net/samba36/distinfo
++++ net/samba36/distinfo
+@@ -1,2 +1,2 @@
+-SHA256 (samba-3.6.12.tar.gz) = 6ff797c1772613bd5172d2c8b900fd56bf096d7252faee8b47c4925a4fdc9f8b
+-SIZE (samba-3.6.12.tar.gz) = 34073788
++SHA256 (samba-3.6.13.tar.gz) = 992f8ad56717bf551b00ad1d31170588a087fb5c2d4d9cd38fd11544f2b8a596
++SIZE (samba-3.6.13.tar.gz) = 34101849
+diff --git net/samba36/files/patch-nsswitch__winbind_nss_freebsd.c net/samba36/files/patch-nsswitch__winbind_nss_freebsd.c
+new file mode 100644
+index 0000000..103059a
+--- /dev/null
++++ net/samba36/files/patch-nsswitch__winbind_nss_freebsd.c
+@@ -0,0 +1,100 @@
++--- ./nsswitch/winbind_nss_freebsd.c.orig	2012-10-02 08:24:41.000000000 +0000
+++++ ./nsswitch/winbind_nss_freebsd.c	2013-03-13 09:40:37.285778609 +0000
++@@ -5,6 +5,7 @@
++    routines against Samba winbind/Windows NT Domain
++ 
++    Copyright (C) Aaron Collins 2003
+++   Copyright (C) Timur I. Bakeyev 2013
++ 
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++@@ -53,6 +54,9 @@
++ NSS_METHOD_PROTOTYPE(__nss_compat_getpwent_r);
++ NSS_METHOD_PROTOTYPE(__nss_compat_setpwent);
++ NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
+++NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
+++
+++NSS_METHOD_PROTOTYPE(__freebsd_getgroupmembership);
++ 
++ static ns_mtab methods[] = {
++ { NSDB_GROUP, "getgrnam_r", __nss_compat_getgrnam_r, _nss_winbind_getgrnam_r },
++@@ -60,6 +64,7 @@
++ { NSDB_GROUP, "getgrent_r", __nss_compat_getgrent_r, _nss_winbind_getgrent_r },
++ { NSDB_GROUP, "setgrent",   __nss_compat_setgrent,   _nss_winbind_setgrent },
++ { NSDB_GROUP, "endgrent",   __nss_compat_endgrent,   _nss_winbind_endgrent },
+++{ NSDB_GROUP, "getgroupmembership", __freebsd_getgroupmembership, NULL },
++ 
++ { NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r, _nss_winbind_getpwnam_r },
++ { NSDB_PASSWD, "getpwuid_r", __nss_compat_getpwuid_r, _nss_winbind_getpwuid_r },
++@@ -69,6 +74,71 @@
++ 
++ };
++ 
+++/* Taken from libc */
+++static int
+++gr_addgid(gid_t gid, gid_t *groups, int maxgrp, int *grpcnt)
+++{
+++	int	ret, dupc;
+++
+++	/* skip duplicates */
+++	for (dupc = 0; dupc < MIN(maxgrp, *grpcnt); dupc++) {
+++		if (groups[dupc] == gid)
+++			return 1;
+++	}
+++
+++	ret = 1;
+++	if (*grpcnt < maxgrp)			/* add this gid */
+++		groups[*grpcnt] = gid;
+++	else
+++		ret = 0;
+++
+++	(*grpcnt)++;
+++
+++	return ret;
+++}
+++
+++/*
+++    rv = _nsdispatch(NULL, dtab, NSDB_GROUP, "getgroupmembership",
+++	            defaultsrc, uname, agroup, groups, maxgrp, grpcnt);
+++*/
+++
+++int
+++__freebsd_getgroupmembership(void *retval, void *mdata, va_list ap)
+++{
+++	const char 	*uname  = va_arg(ap, const char *);
+++	gid_t		 group  = va_arg(ap, gid_t);
+++	gid_t		*groups = va_arg(ap, gid_t *);
+++	int		 maxgrp = va_arg(ap, int);
+++	int		*groupc = va_arg(ap, int *);
+++
+++	NSS_STATUS ret;
+++	long int lcount, lsize;
+++	int i, errnop;
+++	gid_t *tmpgroups;
+++
+++	/* Can be realloc() inside _nss_winbind_initgroups_dyn() */
+++	if ((tmpgroups=calloc(maxgrp, sizeof(gid_t))) == NULL) {
+++		errno = ENOMEM;
+++		return NS_TRYAGAIN;
+++	}
+++
+++	lcount = 0;
+++	lsize = maxgrp;
+++	/* insert primary membership(possibly already there) */
+++	gr_addgid(group, groups, maxgrp, groupc);
+++	/* Don't limit number of groups, we want to know total size */
+++	ret = _nss_winbind_initgroups_dyn(uname, group, &lcount, &lsize,
+++		&tmpgroups, 0, &errnop);
+++	if (ret == NSS_STATUS_SUCCESS) {
+++		/* lcount potentially can be bigger than maxgrp, so would groupc */
+++		for (i = 0; i < lcount; i++)
+++			 gr_addgid(tmpgroups[i], groups, maxgrp, groupc);
+++	}
+++	free(tmpgroups);
+++	/* Let following nsswitch backend(s) add more groups(?) */
+++	return NSS_STATUS_NOTFOUND;
+++}
+++
++ ns_mtab *
++ nss_module_register(const char *source, unsigned int *mtabsize,
++     nss_module_unregister_fn *unreg)
+diff --git net/samba36/files/patch-nsswitch__wins_freebsd.c net/samba36/files/patch-nsswitch__wins_freebsd.c
+index b526acc..e0f8377 100644
+--- net/samba36/files/patch-nsswitch__wins_freebsd.c
++++ net/samba36/files/patch-nsswitch__wins_freebsd.c
+@@ -1,25 +1,25 @@
+ --- ./nsswitch/wins_freebsd.c.orig	2010-04-23 01:08:35.000000000 +0200
+ +++ ./nsswitch/wins_freebsd.c	2010-04-23 01:08:35.000000000 +0200
+ @@ -0,0 +1,79 @@
+-+/* 
+++/*
+ +   Unix SMB/CIFS implementation.
+ +
+ +   Copyright (C) Timur I. Bakeyev 2007
+-+   
+++
+ +   This library is free software; you can redistribute it and/or
+ +   modify it under the terms of the GNU Library General Public
+ +   License as published by the Free Software Foundation; either
+ +   version 2 of the License, or (at your option) any later version.
+-+   
+++
+ +   This library is distributed in the hope that it will be useful,
+ +   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ +   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ +   Library General Public License for more details.
+-+   
+++
+ +   You should have received a copy of the GNU Library General Public
+ +   License along with this library; if not, write to the
+ +   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+-+   Boston, MA  02111-1307, USA.   
+++   Boston, MA  02111-1307, USA.
+ +*/
+ +
+ +#include "winbind_client.h"
