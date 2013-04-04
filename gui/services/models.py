@@ -969,6 +969,12 @@ class UPS(Model):
         ),
         verbose_name=_("UPS Mode")
     )
+    ups_identifier = models.CharField(
+        max_length=120,
+        verbose_name=_("Identifier"),
+        help_text=_("This name is used to uniquely identify your UPS on "
+            "this system.")
+    )
     ups_remotehost = models.CharField(
         max_length=50,
         blank=True,
@@ -979,12 +985,6 @@ class UPS(Model):
         blank=True,
         verbose_name=_("Remote Port")
     )
-    ups_identifier = models.CharField(
-            max_length=120,
-            verbose_name=_("Identifier"),
-            help_text=_("This name is used to uniquely identify your UPS on "
-                "this system.")
-            )
     ups_driver = models.CharField(
             max_length=120,
             verbose_name=_("Driver"),
