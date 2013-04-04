@@ -212,7 +212,7 @@ class notifier:
             'nfs': ('nfsd', None),
             'afp': ('afpd', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
-            'dynamicdns': ('inadyn', None),
+            'dynamicdns': ('inadyn-mt', None),
             'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
@@ -814,7 +814,7 @@ class notifier:
 
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
-        self.__system("/usr/sbin/service inadyn restart")
+        self.__system("/usr/sbin/service inadyn-mt restart")
 
     def _restart_system(self):
         self.__system("/bin/sleep 3 && /sbin/shutdown -r now &")
