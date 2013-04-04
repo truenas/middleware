@@ -565,6 +565,14 @@ class UPSForm(ModelForm):
             )
         return ident
 
+    def clean_ups_monuser(self):
+        user = self.cleaned_data.get("ups_monuser")
+        if re.search(r'[ #]', user, re.I):
+            raise forms.ValidationError(
+                _("Spaces or number signs are not allowed.")
+            )
+        return user
+
     def clean_ups_monpwd(self):
         pwd = self.cleaned_data.get("ups_monpwd")
         if re.search(r'[ #]', pwd, re.I):
