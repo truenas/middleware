@@ -557,24 +557,6 @@ class UPSForm(ModelForm):
                 )
         return rhost
 
-    def clean_ups_remoteuser(self):
-        ruser = self.cleaned_data.get("ups_remoteuser")
-        if self.cleaned_data.get("ups_mode") != 'master':
-            if not ruser:
-                raise forms.ValidationError(
-                    _("This field is required")
-                )
-        return ruser
-
-    def clean_ups_remotepwd(self):
-        rpwd = self.cleaned_data.get("ups_remotepwd")
-        if self.cleaned_data.get("ups_mode") != 'master':
-            if not rpwd:
-                raise forms.ValidationError(
-                    _("This field is required")
-                )
-        return rpwd
-
     def clean_ups_identifier(self):
         ident = self.cleaned_data.get("ups_identifier")
         if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
@@ -583,15 +565,13 @@ class UPSForm(ModelForm):
             )
         return ident
 
-    def clean_ups_masterpwd(self):
-        if self.cleaned_data.get("ups_mode") != 'master':
-            return self.cleaned_data.get("ups_masterpwd")
-        ident = self.cleaned_data.get("ups_masterpwd")
-        if re.search(r'[ #]', ident, re.I):
+    def clean_ups_monpwd(self):
+        pwd = self.cleaned_data.get("ups_monpwd")
+        if re.search(r'[ #]', pwd, re.I):
             raise forms.ValidationError(
                 _("Spaces or number signs are not allowed.")
             )
-        return ident
+        return pwd
 
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")

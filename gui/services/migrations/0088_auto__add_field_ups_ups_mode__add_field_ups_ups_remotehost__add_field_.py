@@ -8,6 +8,8 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        db.rename_column(u'services_ups', 'ups_masterpwd', 'ups_monpwd')
+
         # Adding field 'UPS.ups_mode'
         db.add_column(u'services_ups', 'ups_mode',
                       self.gf('django.db.models.fields.CharField')(default='master', max_length=6),
@@ -23,18 +25,14 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.IntegerField')(default=3493, blank=True),
                       keep_default=False)
 
-        # Adding field 'UPS.ups_remoteuser'
-        db.add_column(u'services_ups', 'ups_remoteuser',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=50, blank=True),
-                      keep_default=False)
-
-        # Adding field 'UPS.ups_remotepwd'
-        db.add_column(u'services_ups', 'ups_remotepwd',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=50, blank=True),
+        # Adding field 'UPS.ups_monuser'
+        db.add_column(u'services_ups', 'ups_monuser',
+                      self.gf('django.db.models.fields.CharField')(default='upsmon', max_length=50),
                       keep_default=False)
 
 
     def backwards(self, orm):
+
         # Deleting field 'UPS.ups_mode'
         db.delete_column(u'services_ups', 'ups_mode')
 
@@ -44,11 +42,10 @@ class Migration(SchemaMigration):
         # Deleting field 'UPS.ups_remoteport'
         db.delete_column(u'services_ups', 'ups_remoteport')
 
-        # Deleting field 'UPS.ups_remoteuser'
-        db.delete_column(u'services_ups', 'ups_remoteuser')
+        # Deleting field 'UPS.ups_monuser'
+        db.delete_column(u'services_ups', 'ups_monuser')
 
-        # Deleting field 'UPS.ups_remotepwd'
-        db.delete_column(u'services_ups', 'ups_remotepwd')
+        db.rename_column(u'services_ups', 'ups_monpwd', 'ups_masterpwd')
 
 
     models = {
@@ -378,14 +375,13 @@ class Migration(SchemaMigration):
             'ups_emailnotify': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ups_extrausers': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_identifier': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ups_masterpwd': ('django.db.models.fields.CharField', [], {'default': "'fixmepass'", 'max_length': '30', 'blank': 'True'}),
             'ups_mode': ('django.db.models.fields.CharField', [], {'default': "'master'", 'max_length': '6'}),
+            'ups_monpwd': ('django.db.models.fields.CharField', [], {'default': "'fixmepass'", 'max_length': '30'}),
+            'ups_monuser': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'ups_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_port': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'ups_remoteport': ('django.db.models.fields.IntegerField', [], {'default': '3493', 'blank': 'True'}),
-            'ups_remotepwd': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'ups_remoteuser': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'ups_rmonitor': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ups_shutdown': ('django.db.models.fields.CharField', [], {'default': "'batt'", 'max_length': '120'}),
             'ups_shutdowntimer': ('django.db.models.fields.CharField', [], {'max_length': '120'}),

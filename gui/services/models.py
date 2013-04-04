@@ -979,16 +979,6 @@ class UPS(Model):
         blank=True,
         verbose_name=_("Remote Port")
     )
-    ups_remoteuser = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name=_("Remote User")
-    )
-    ups_remotepwd = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name=_("Remote Password")
-    )
     ups_identifier = models.CharField(
             max_length=120,
             verbose_name=_("Identifier"),
@@ -1032,12 +1022,15 @@ class UPS(Model):
                 "the UPS happens to come back before the time is up the "
                 "shutdown is canceled.")
             )
-    ups_masterpwd = models.CharField(
-            max_length=30,
-            default="fixmepass",
-            blank=True,
-            verbose_name=_("UPS Master User Password"),
-            )
+    ups_monuser = models.CharField(
+        max_length=50,
+        verbose_name=_("Monitor User")
+    )
+    ups_monpwd = models.CharField(
+        max_length=30,
+        default="fixmepass",
+        verbose_name=_("Monitor Password"),
+    )
     ups_extrausers = models.TextField(
             blank=True,
             verbose_name=_("Extra users (upsd.users)"),
