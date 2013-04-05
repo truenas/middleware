@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-02 23:10+0200\n"
+"PO-Revision-Date: 2013-04-04 23:19+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2093,11 +2093,13 @@ msgstr "TCP port logičke jedinice kontrolera (3261 je podrazumevana vrednost)"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
-msgstr ""
+msgstr "Autorizovana Mreža Kontrolera"
 
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
+"Autorizovana mrežna maska Logičke Jedinice Kontrolera (127.0.0.0/8 je "
+"podrazumevana vrednost)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
@@ -2188,14 +2190,12 @@ msgid "Portal"
 msgstr "Portal"
 
 #: services/models.py:522
-#, fuzzy
 msgid "IP Address"
-msgstr "IPv4 Addresa"
+msgstr "IP Addresa"
 
 #: services/models.py:534
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portal"
+msgstr "IP Portala"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2483,13 +2483,12 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "Serijski ili USB port gde je priključen UPS uređaj."
 
 #: services/models.py:910
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Ostali parametri"
+msgstr "Pomoćni parametri (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Dodatni parametri na hardverski specifičnom delu drajvera."
 
 #: services/models.py:923
 msgid "Shutdown mode"
@@ -2726,65 +2725,73 @@ msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Direktorijum sadrži datoteke koje želite da objavite. Udaljeni host ne mora "
+"da prođe pored direktorijuma kao deo transfera."
 
 #: services/models.py:1117
 msgid "Allow New Files"
-msgstr ""
+msgstr "Dozvoli nove datoteke"
 
 #: services/models.py:1121
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Port za slušanje. Podrazumevano je da se sluša tftp port naveden u "
+"/etc/services."
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Navodi korisničko ime koje će servis da koristi za pokretanje."
 
 #: services/models.py:1131
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:1132
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Postaviti umask za novo kreirane fajlove u navedenoj vrednosti. "
+"Podrazumevana vrednost je 022 (svako može da čita, niko ne može da piše)."
 
 #: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
-msgstr ""
+msgstr "Ekstra opcije"
 
 #: services/models.py:1138
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Ektra opcije komandne linije (obično prazna)."
 
 #: services/models.py:1142 services/models.py:1143
 #: templates/services/core.html:155
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Port"
 
 #: services/models.py:1154
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternativni TCP port. Podrazumevana vrednost je 22"
 
 #: services/models.py:1157
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Prijavite se kao Root sa lozinkom"
 
 #: services/models.py:1158
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Onemogućeno: Root se samo može autentifikovati javnim ključem; Omogućeno: "
+"logovanje Root-a dozvoljena sa lozinkom"
 
 #: services/models.py:1161
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Dozvoliti Autentikaciju Lozinkom"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
@@ -2796,38 +2803,40 @@ msgstr ""
 
 #: services/models.py:1168
 msgid "Host Private Key"
-msgstr ""
+msgstr "Privatni ključ hosta"
 
 #: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Nalepite ovde RSA privatni ključ u PEM formatu."
 
 #: services/models.py:1176
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Ekstra opcije u /etc/ssh/sshd_config (obično je prazno). Napomena, netačno "
+"unete opcije sprečavaju SSH servis da se pokrene."
 
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Ime Domen Kontrolera"
 
 #: services/models.py:1240
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD ili PDC ime."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Ime domena (DNS/Realm-Ime)"
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Ime domena, npr. example.com"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
@@ -2839,7 +2848,7 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Ime radne grupe"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
@@ -2851,7 +2860,7 @@ msgstr ""
 
 #: services/models.py:1263
 msgid "Administrator Name"
-msgstr ""
+msgstr "Ime administratora"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
@@ -2859,7 +2868,7 @@ msgstr ""
 
 #: services/models.py:1268
 msgid "Administrator Password"
-msgstr ""
+msgstr "Administratorska lozinka"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
@@ -2868,21 +2877,23 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "Aktivni Direktorijum"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Ime ili IP adresa LDAP servera"
 
 #: services/models.py:1290
 msgid "Base DN"
-msgstr ""
+msgstr "Osnovni DN"
 
 #: services/models.py:1292
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Podrazumevano osnovno Distinguished Name (DN) se koristi za pretraćivanje, "
+"npr. dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
