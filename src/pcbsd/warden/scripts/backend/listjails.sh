@@ -15,15 +15,30 @@ then
   exit 4
 fi
 
+line()
+{
+  len="${1}"
+
+  i=0 
+  while [ "${i}" -lt "${len}" ] ; do
+    i=`expr ${i} + 1`
+    echo -n '-' 
+  done
+  echo 
+}
+
+lineline=0
 SHOW_IDS="${1}"
 if [ "${SHOW_IDS}" = "YES" ] ; then
-  printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" HOST IP AUTOSTART STATUS TYPE ID
+  printf "%-23s%-40s%-10s%-9s%-12s%-10s\n" HOST IP AUTOSTART STATUS TYPE ID
+  linelen=105
 else
-  printf "%-23s%-20s%-15s%-10s%-15s\n" HOST IP AUTOSTART STATUS TYPE
+  printf "%-23s%-40s%-10s%-9s%-12s\n" HOST IP AUTOSTART STATUS TYPE
+  linelen=95
 fi
 
 # Prints a listing of the available jails
-echo "-----------------------------------------------------------------------------------------"
+line "${linelen}"
 
 cd ${JDIR}
 
@@ -74,14 +89,16 @@ do
     STATUS="Stopped"
   fi
 
+  get_ip_and_netmask "${IP}"
+
   if [ "${SHOW_IDS}" = "YES" ] ; then
     if [ -e "${i}/ip" ]
     then
       ID="`cat ${i}/id`"
     fi
-    printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE} ${ID}
+    printf "%-23s%-40s%-10s%-9s%-12s%-10s\n" ${HOST} ${JIP} ${AUTO} ${STATUS} ${TYPE} ${ID}
   else 
-    printf "%-23s%-20s%-15s%-10s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE}
+    printf "%-23s%-40s%-10s%-9s%-12s\n" ${HOST} ${JIP} ${AUTO} ${STATUS} ${TYPE}
   fi 
 
 done
