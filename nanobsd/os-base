@@ -595,7 +595,7 @@ unmute_console_logging()
 	# /var is small. Don't fill it up with messages from console.log
 	# because it's a chatty log.
 	sed -i '' -e 's/#console.info/console.info/' \
-			 "${NANO_WORLDDIR}/etc/syslog.conf"
+			"${NANO_WORLDDIR}/etc/syslog.conf"
 }
 customize_cmd unmute_console_logging
 
