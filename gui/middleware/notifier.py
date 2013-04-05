@@ -855,20 +855,8 @@ class notifier:
             return c, conn
         return c
 
-    def __gpt_labeldisk(self, type, devname, test4k=False, swapsize=2):
+    def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
-        if test4k:
-            # Taste the disk to know whether it's 4K formatted.
-            # requires > 8.1-STABLE after r213467
-            ret_4kstripe = self.__system_nolog("geom disk list %s "
-                                               "| grep 'Stripesize: 4096'" % (devname, ))
-            ret_512bsector = self.__system_nolog("geom disk list %s "
-                                                 "| grep 'Sectorsize: 512'" % (devname, ))
-            # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
-            # while using 4k stripe, use an offset of 64.
-            need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
-        else:
-            need4khack = False
 
         # Calculate swap size.
         swapgb = swapsize
@@ -916,8 +904,6 @@ class notifier:
         # Invalidating confxml is required or changes wont be seen
         self.__confxml = None
         self.sync_disk(devname)
-
-        return need4khack
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
@@ -1216,38 +1202,17 @@ class notifier:
                         providers.append((part, part))
         return providers
 
-    def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
+    def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
-        gnop_devs = []
-        if force4khack is None:
-            test4k = False
-            want4khack = False
-        else:
-            test4k = not force4khack
-            want4khack = force4khack
-        if encrypt:
-            test4k = False
-            force4khack = False
-            want4khack = False
-        first = True
         for disk in disks:
-            rv = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                      devname = disk,
-                                      test4k = (first and test4k),
-                                      swapsize=swapsize)
-            first = False
-            if test4k:
-                test4k = False
-                want4khack = rv
+            self.__gpt_labeldisk(type = "freebsd-zfs",
+                                 devname = disk,
+                                 swapsize=swapsize)
 
         doc = self.__geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)
-            if want4khack:
-                self.__system("gnop create -S 4096 /dev/%s" % devname)
-                devname = '/dev/%s.nop' % devname
-                gnop_devs.append(devname)
-            elif encrypt:
+            if encrypt:
                 uuid = doc.xpathEval("//class[name = 'PART']"
                     "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
                     )
@@ -1267,19 +1232,16 @@ class notifier:
                     devname = "/dev/gptid/%s" % uuid[0].content
             vdevs.append(devname)
 
-        return vdevs, gnop_devs, want4khack
+        return vdevs
 
-    def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None, init_rand=False):
+    def __create_zfs_volume(self, volume, swapsize, groups, path=None, init_rand=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_name = str(volume.vol_name)
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
-        gnop_devs = []
         device_list = []
-
-        want4khack = force4khack
 
         for vgrp in groups.values():
             vgrp_type = vgrp['type']
@@ -1290,10 +1252,9 @@ class notifier:
             else:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack, encrypt, volume)
+            vdevs = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, encrypt, volume)
             z_vdev += " ".join([''] + vdevs)
             device_list += vdevs
-            gnop_devs += gnops
 
         # Initialize devices with random data
         if init_rand:
@@ -1327,17 +1288,10 @@ class notifier:
 
         self.zfs_inherit_option(z_name, 'mountpoint')
 
-        # If we have 4k hack then restore system to whatever it should be
-        if want4khack:
-            self.__system("zpool export %s" % (z_name))
-            for gnop in gnop_devs:
-                self.__system("gnop destroy %s" % gnop)
-            self.__system("zpool import -R /mnt %s" % (z_name))
-
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
         #TODO: geli detach -l
 
-    def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
+    def zfs_volume_attach_group(self, volume, group, encrypt=False):
         """Attach a disk group to a zfs volume"""
 
         vgrp_type = group['type']
@@ -1359,7 +1313,7 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack, encrypt, volume)[0]
+        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
         z_vdev += " ".join([''] + vdevs)
 
         # Finally, attach new groups to the zpool.
@@ -1567,7 +1521,7 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('force4khack', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
 
