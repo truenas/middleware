@@ -31,6 +31,8 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
+from freenasUI.common.sipcalc import sipcalc_type
+from freenasUI.common.warden import WardenJail
 
 from freenasUI.jails import models
 from freenasUI.common.warden import Warden, \
@@ -52,6 +54,15 @@ class JailCreateForm(ModelForm):
     jail_archive = forms.BooleanField(label=_("archive"), required=False)
     #jail_script = forms.CharField(label=_("script"), required=False)
 
+    advanced_fields = [
+        'jail_autostart',
+        'jail_32bit',
+        'jail_source',
+        'jail_ports',
+        'jail_archive',
+        'jail_ip',
+    ]
+
     class Meta:
         model = models.Jails
         exclude = ('jail_status')
@@ -60,6 +71,56 @@ class JailCreateForm(ModelForm):
         super(JailCreateForm, self).__init__(*args, **kwargs)
         self.fields['jail_type'].choices = [(t, t) for t in Warden().types()]
 
+        st_ipv4_network = None
+        st_ipv6_network = None
+
+        try:
+            jc = models.JailsConfiguration.objects.order_by("-id")[0]
+            st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
+            st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
+
+        except:
+            pass
+
+        high_ipv4 = None
+        high_ipv6 = None
+
+        wlist = Warden().list()
+        for wj in wlist:
+            wo = WardenJail(**wj)
+            st = sipcalc_type(wo.ip)
+            
+            if st.is_ipv4() and st_ipv4_network is not None:
+                if st_ipv4_network.in_network(st):
+                    if st > high_ipv4:
+                        high_ipv4 = st
+
+            if st.is_ipv6() and st_ipv6_network is not None:
+                if st_ipv6_network.in_network(st):
+                    if st > high_ipv6:
+                        high_ipv6 = st
+
+        if high_ipv4 is None and st_ipv4_network is not None:
+            high_ipv4 = sipcalc_type(st_ipv4_network.usable_range[0])
+
+        elif high_ipv4 is not None and st_ipv4_network is not None:
+            high_ipv4 += 1
+            if not st_ipv4_network.in_network(high_ipv4):
+                high_ipv4 = None 
+
+        if high_ipv6 is None and st_ipv6_network is not None:
+            high_ipv6 = sipcalc_type(st_ipv6_network .network_range[0])
+            high_ipv6 += 1
+
+        elif high_ipv6 is not None and st_ipv6_network is not None:
+            high_ipv6 += 1
+            if not st_ipv6_network.in_network(high_ipv6):
+                high_ipv6 = None 
+
+        if high_ipv6 is not None:
+            self.fields['jail_ip'].initial = high_ipv6
+        elif high_ipv4 is not None:
+            self.fields['jail_ip'].initial = high_ipv4
 
     def save(self):
         jail_host = self.cleaned_data['jail_host']
