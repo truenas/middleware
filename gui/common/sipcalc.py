@@ -37,7 +37,8 @@ class sipcalc_base_type(object):
         self.args = args 
 
         self.sipcalc_args = [self.sipcalc]
-        self.sipcalc_args += args
+        for arg in args:
+            self.sipcalc_args.append(str(arg))
 
         obj = None
         p1 = pipeopen(string.join(self.sipcalc_args, ' '), allowfork=True)
