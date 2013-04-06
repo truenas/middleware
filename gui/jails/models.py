@@ -27,7 +27,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.models import Model
-from freenasUI.common.warden import Warden, WARDEN_LIST_FLAGS_IDS
+from freenasUI.common.warden import Warden
 
 from freenasUI.middleware.notifier import notifier
 
@@ -45,7 +45,7 @@ class JailsQuerySet(models.query.QuerySet):
     @property
     def __wlist(self):
         if self.__wlist_cache is None:
-            wlist = Warden().list(flags=WARDEN_LIST_FLAGS_IDS)
+            wlist = Warden().list()
             self.__wcount_cache = len(wlist)
 
             tl = []
