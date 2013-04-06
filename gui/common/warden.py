@@ -27,6 +27,7 @@
 #####################################################################
 import logging
 import os
+import string
 
 log = logging.getLogger('common.warden')
 
@@ -49,12 +50,21 @@ class warden_exception(Exception):
 #
 # Warden dict keys
 #
-WARDEN_KEY_HOST      = "host"
-WARDEN_KEY_IP        = "ip"
-WARDEN_KEY_AUTOSTART = "autostart"
-WARDEN_KEY_STATUS    = "status"
-WARDEN_KEY_TYPE      = "type"
-WARDEN_KEY_ID        = "id"
+WARDEN_KEY_ID             = "id"
+WARDEN_KEY_HOST           = "host"
+WARDEN_KEY_IP4            = "ip4"
+WARDEN_KEY_ALIASIP4       = "alias_ip4"
+WARDEN_KEY_BRIDGEIP4      = "bridge_ip4"
+WARDEN_KEY_ALIASBRIDGEIP4 = "alias_bridge_ip4"
+WARDEN_KEY_DEFAULTROUTER4 = "defaultrouter4"
+WARDEN_KEY_IP6            = "ip6"
+WARDEN_KEY_ALIASIP6       = "alias_ip6"
+WARDEN_KEY_BRIDGEIP6      = "bridge_ip6"
+WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ip6"
+WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter6"
+WARDEN_KEY_AUTOSTART      = "autostart"
+WARDEN_KEY_STATUS         = "status"
+WARDEN_KEY_TYPE           = "type"
 
 #
 # Warden jail status 
@@ -93,6 +103,8 @@ WARDEN_CHROOT_FLAGS = []
 
 WARDEN_CREATE = "create"
 WARDEN_CREATE_FLAGS_32BIT		= warden_arg(0x00000001, "-32")
+WARDEN_CREATE_FLAGS_IPV4		= warden_arg(0x00000001, "--ipv4", True, "ipv4")
+WARDEN_CREATE_FLAGS_IPV6		= warden_arg(0x00000001, "--ipv6", True, "ipv6")
 WARDEN_CREATE_FLAGS_SRC			= warden_arg(0x00000002, "--src")
 WARDEN_CREATE_FLAGS_PORTS		= warden_arg(0x00000004, "--ports")
 WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000008, "--startauto")
@@ -104,6 +116,8 @@ WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000100, "--linuxarchive", True
 WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00000200, "--version", True, "string")
 WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_32BIT,
+    WARDEN_CREATE_FLAGS_IPV4,
+    WARDEN_CREATE_FLAGS_IPV6,
     WARDEN_CREATE_FLAGS_SRC,
     WARDEN_CREATE_FLAGS_PORTS,
     WARDEN_CREATE_FLAGS_STARTAUTO,
@@ -131,25 +145,45 @@ WARDEN_EXPORT_FLAGS = [
 ]
 
 WARDEN_GET = "get"
-WARDEN_GET_FLAGS_IP	= warden_arg(0x00000001, "ip")
-WARDEN_GET_FLAGS_FLAGS	= warden_arg(0x00000002, "flags")
+WARDEN_GET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4")
+WARDEN_GET_FLAGS_IPV6			= warden_arg(0x00000001, "ipv6")
+WARDEN_GET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000001, "alias-ipv4")
+WARDEN_GET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000001, "alias-ipv6")
+WARDEN_GET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000001, "bridge-ipv4")
+WARDEN_GET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000001, "bridge-ipv6")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000001, "alias-bridge-ipv4")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000001, "alias-bridge-ipv6")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000001, "defaultrouter-ipv4")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000001, "defaultrouter-ipv6")
+WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000002, "flags")
 WARDEN_GET_FLAGS = [
-    WARDEN_GET_FLAGS_IP,
+    WARDEN_GET_FLAGS_IPV4,
+    WARDEN_GET_FLAGS_IPV6,
+    WARDEN_GET_FLAGS_ALIAS_IPV4,
+    WARDEN_GET_FLAGS_ALIAS_IPV6,
+    WARDEN_GET_FLAGS_BRIDGE_IPV4,
+    WARDEN_GET_FLAGS_BRIDGE_IPV6,
+    WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4,
+    WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6,
+    WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4,
+    WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_GET_FLAGS_FLAGS
 ]
 
 WARDEN_IMPORT = "import"
-WARDEN_IMPORT_FLAGS_IP		= warden_arg(0x00000001, "--ip", True, "ip")
+WARDEN_IMPORT_FLAGS_IPV4	= warden_arg(0x00000001, "--ipv4", True, "ipv4")
+WARDEN_IMPORT_FLAGS_IPV6	= warden_arg(0x00000001, "--ipv6", True, "ipv6")
 WARDEN_IMPORT_FLAGS_HOST	= warden_arg(0x00000002, "--host", True, "host")
 WARDEN_IMPORT_FLAGS = [
-    WARDEN_IMPORT_FLAGS_IP,
+    WARDEN_IMPORT_FLAGS_IPV4,
+    WARDEN_IMPORT_FLAGS_IPV6,
     WARDEN_IMPORT_FLAGS_HOST
 ]
 
 WARDEN_LIST = "list"
-WARDEN_LIST_FLAGS_IDS	= warden_arg(0x00000001, "--ids")
+WARDEN_LIST_FLAGS_VERBOSE	= warden_arg(0x00000001, "-v")
 WARDEN_LIST_FLAGS = [
-    WARDEN_LIST_FLAGS_IDS
+    WARDEN_LIST_FLAGS_VERBOSE
 ]
 
 WARDEN_PKGS = "pkgs"
@@ -159,10 +193,28 @@ WARDEN_PBIS = "pbis"
 WARDEN_PBIS_FLAGS = []
 
 WARDEN_SET = "set"
-WARDEN_SET_FLAGS_IP	= warden_arg(0x00000001, "ip", True, "ip")
-WARDEN_SET_FLAGS_FLAGS	= warden_arg(0x00000002, "flags", True, "jflags")
+WARDEN_SET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4", True, "ipv4")
+WARDEN_SET_FLAGS_IPV6			= warden_arg(0x00000001, "ipv6", True, "ipv6")
+WARDEN_SET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000001, "alias-ipv4", True, "alias-ipv4")
+WARDEN_SET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000001, "alias-ipv6", True, "alias-ipv6")
+WARDEN_SET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000001, "bridge-ipv4", True, "bridge-ipv4",)
+WARDEN_SET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000001, "bridge-ipv6", True, "bridge-ipv6")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000001, "alias-bridge-ipv4", True, "alias-bridge-ipv4")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000001, "alias-bridge-ipv6", True, "alias-bridge-ipv6")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000001, "defaultrouter-ipv4", True, "defaultrouter-ipv4")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000001, "defaultrouter-ipv6", True, "defaultrouter-ipv6")
+WARDEN_SET_FLAGS_FLAGS			= warden_arg(0x00000002, "flags", True, "jflags")
 WARDEN_SET_FLAGS = [
-    WARDEN_SET_FLAGS_IP,
+    WARDEN_SET_FLAGS_IPV4,
+    WARDEN_SET_FLAGS_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_IPV6,
+    WARDEN_SET_FLAGS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_SET_FLAGS_FLAGS
 ]
 
@@ -211,12 +263,21 @@ WARDEN_ZFSRMSNAP_FLAGS = []
 
 class WardenJail(object):
     def __init__(self, **kwargs):
+        self.id = kwargs.get(WARDEN_KEY_ID)
         self.host = kwargs.get(WARDEN_KEY_HOST)
-        self.ip = kwargs.get(WARDEN_KEY_IP)
+        self.ip4 = kwargs.get(WARDEN_KEY_IP4)
+        self.alias_ip4 = kwargs.get(WARDEN_KEY_ALIASIP4)
+        self.bridge_ip4 = kwargs.get(WARDEN_KEY_BRIDGEIP4)
+        self.alias_bridge_ip4 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP4)
+        self.defaultrouter4 = kwargs.get(WARDEN_KEY_DEFAULTROUTER4)
+        self.ip6 = kwargs.get(WARDEN_KEY_IP6)
+        self.alias_ip6 = kwargs.get(WARDEN_KEY_ALIASIP6)
+        self.bridge_ip6 = kwargs.get(WARDEN_KEY_BRIDGEIP6)
+        self.alias_bridge_ip6 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP6)
+        self.defaultrouter6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
         self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
-        self.id = kwargs.get(WARDEN_KEY_ID)
 
 
 class warden_base(object):
@@ -451,31 +512,48 @@ class warden_import(warden_base):
 
 class warden_list(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        super(warden_list, self).__init__(WARDEN_LIST, WARDEN_LIST_FLAGS, flags, **kwargs)
+        super(warden_list, self).__init__(WARDEN_LIST, WARDEN_LIST_FLAGS,
+            flags | WARDEN_LIST_FLAGS_VERBOSE, **kwargs)
 
     def parse(self, thestuff):
+        themap = {
+            'ID': WARDEN_KEY_ID,
+            'HOST': WARDEN_KEY_HOST,
+            'IP4': WARDEN_KEY_IP4,
+            'ALIASIP4': WARDEN_KEY_ALIASIP4,
+            'BRIDGEIP4': WARDEN_KEY_BRIDGEIP4,
+            'ALIASBRIDGEIP4': WARDEN_KEY_ALIASBRIDGEIP4,
+            'DEFAULTROUTER4': WARDEN_KEY_DEFAULTROUTER4,
+            'IP6': WARDEN_KEY_IP6,
+            'ALIASIP6': WARDEN_KEY_ALIASIP6,
+            'BRIDGEIP6': WARDEN_KEY_BRIDGEIP6,
+            'ALIASBRIDGEIP6': WARDEN_KEY_ALIASBRIDGEIP6,
+            'DEFAULTROUTER6': WARDEN_KEY_DEFAULTROUTER6,
+            'AUTOSTART': WARDEN_KEY_AUTOSTART,
+            'STATUS': WARDEN_KEY_STATUS,
+            'TYPE': WARDEN_KEY_TYPE
+        } 
+
         lines = thestuff[1].splitlines()
 
+        jail = {}
         jails = []
         for line in lines:
-            line = line.strip()
-            if not (line.startswith("HOST") or line.startswith("----")):
-                parts = line.split()
-                if len(parts) < 5:
-                    continue 
-                jail = {
-                    WARDEN_KEY_HOST: parts[0],
-                    WARDEN_KEY_IP: parts[1],
-                    WARDEN_KEY_AUTOSTART: parts[2],
-                    WARDEN_KEY_STATUS: parts[3],
-                    WARDEN_KEY_TYPE: parts[4]
-                }
-
-                if self.flags & WARDEN_LIST_FLAGS_IDS:
-                    jail[WARDEN_KEY_ID] = int(parts[5])
-
-                jails.append(jail)
-
+            for k in themap:
+                if line.startswith(k + ':'):
+                    parts = line.split(':')
+                    if k == 'ID': 
+                        if jail:
+                            jails.append(jail)
+                        jail = { WARDEN_KEY_ID: parts[1].strip() } 
+                    else:
+                        val = None
+                        parts = line.split()
+                        if len(parts) > 1:
+                            val = parts[1].strip()
+                        jail[themap[k]] = val
+        if jail:
+            jails.append(jail) 
         return jails
 
 
