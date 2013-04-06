@@ -14,7 +14,14 @@ setup_linux_jail()
 
   mkdir -p ${JMETADIR}
   echo "${HOST}" > ${JMETADIR}/host
-  echo "${IP}/${MASK}" > ${JMETADIR}/ip
+
+  if [ "${IP4}" != "OFF" ] ; then
+    echo "${IP4}/${MASK4}" > ${JMETADIR}/ipv4
+  fi
+  if [ "${IP6}" != "OFF" ] ; then
+    echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
+  fi
+
   if [ "$STARTUP" = "YES" ] ; then
     touch "${JMETADIR}/autostart"
   fi
@@ -69,13 +76,14 @@ touch /etc/mtab
 # Load our passed values
 JAILNAME="${1}"
 HOST="${1}"
-IP="${2}"
-SOURCE="${3}"
-PORTS="${4}"
-STARTUP="${5}"
-JAILTYPE="${6}"
-ARCHIVEFILE="${7}"
-VERSION="${8}"
+IP4="${2}"
+IP6="${3}"
+SOURCE="${4}"
+PORTS="${5}"
+STARTUP="${6}"
+JAILTYPE="${7}"
+ARCHIVEFILE="${8}"
+VERSION="${9}"
 
 case "${JAILTYPE}" in
   portjail) PORTJAIL="YES" ;;
@@ -105,26 +113,27 @@ else
 
 fi
 
-get_ip_and_netmask "${IP}"
-IP="${JIP}"
-MASK="${JMASK}"
+if [ "${IP4}" != "OFF" ] ; then
+  get_ip_and_netmask "${IP4}"
+  IP4="${JIP}"
+  MASK4="${JMASK}"
+fi
+
+if [ "${IP6}" != "OFF" ] ; then
+  get_ip_and_netmask "${IP6}"
+  IP6="${JIP}"
+  MASK6="${JMASK}"
+fi
 
 # See if we are overriding the default archive file
 if [ ! -z "$ARCHIVEFILE" ] ; then
    WORLDCHROOT="$ARCHIVEFILE"
 fi
 
-if [ -z "$IP" -o -z "$MASK" -o -z "${HOST}" -o -z "$SOURCE" -o -z "${PORTS}" -o -z "${STARTUP}" ] 
+if [ -z "${HOST}" -o -z "$SOURCE" -o -z "${PORTS}" -o -z "${STARTUP}" ] 
 then
-  if [ -z "$IP" ] ; then
-     echo "ERROR: Missing IP address!"
-
-  elif [ -z "$IP" ] ; then
-     echo "ERROR: Missing nemask!"
-
-  elif [ -z "$HOST" ] ; then
+  if [ -z "$HOST" ] ; then
      echo "ERROR: Missing hostname!"
-
   else
      echo "ERROR: Missing required data!"
   fi
@@ -202,12 +211,15 @@ else
    echo "Done"
 fi
 
-
 mkdir ${JMETADIR}
 echo "${HOST}" > ${JMETADIR}/host
-echo "${IP}/${MASK}" > ${JMETADIR}/ip
+if [ "${IP4}" != "OFF" ] ; then
+   echo "${IP4}/${MASK4}" > ${JMETADIR}/ipv4
+fi
+if [ "${IP6}" != "OFF" ] ; then
+   echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
+fi
 echo "${META_ID}" > ${JMETADIR}/id
-
 
 if [ "$SOURCE" = "YES" ]
 then
@@ -247,7 +259,8 @@ devfs_enable=\"YES\"
 devfs_system_ruleset=\"devfsrules_common\"" > "${JAILDIR}/etc/rc.conf"
 
   # Create the host for this device
-  echo "# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
+cat<<__EOF__>"${JAILDIR}/etc/hosts"
+# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
 #
 # Host Database
 #
@@ -261,17 +274,18 @@ devfs_system_ruleset=\"devfsrules_common\"" > "${JAILDIR}/etc/rc.conf"
 #
 ::1                     localhost localhost.localdomain
 127.0.0.1               localhost localhost.localdomain ${HOST}
-${IP}			${HOST}" > "${JAILDIR}/etc/hosts"
+__EOF__
+
+  if [ "${IP4}" != "OFF" ] ; then
+    echo "${IP4}			${HOST}" > "${JAILDIR}/etc/hosts"
+  fi
+  if [ "${IP6}" != "OFF" ] ; then
+    echo "${IP6}			${HOST}" > "${JAILDIR}/etc/hosts"
+    sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
+  fi
 
   # Copy resolv.conf
   cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
-
-
-  # Check if ipv6
-  isV6 "${IP}"
-  if [ $? -eq 0 ] ; then
-    sed -i '' "s|#ListenAddress ::|ListenAddress ${IP}|g" ${JAILDIR}/etc/ssh/sshd_config
-  fi
 
 fi # End of ARCHIVEFILE check
 

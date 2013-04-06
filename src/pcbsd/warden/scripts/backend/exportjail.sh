@@ -45,11 +45,17 @@ cd ${JAILDIR}
 
 # Get the Hostname
 HOST="`cat ${JMETADIR}/host`"
-IP="`cat ${JMETADIR}/ip`"
 
-get_ip_and_netmask "${IP}"
-IP="${JIP}"
-MASK="${JMASK}"
+IP4="`cat ${JMETADIR}/ipv4 2>/dev/null`"
+IP6="`cat ${JMETADIR}/ipv6 2>/dev/null`"
+
+get_ip_and_netmask "${IP4}"
+IP4="${JIP}"
+MASK4="${JMASK}"
+
+get_ip_and_netmask "${IP6}"
+IP6="${JIP}"
+MASK6="${JMASK}"
 
 echo "Creating compressed archive of ${JAILNAME}... Please Wait..." >&1
 tar cvJf "${WTMP}/${JAILNAME}.tlz" -C "${JAILDIR}" . 2>${WTMP}/${JAILNAME}.files
@@ -64,7 +70,8 @@ echo "[Warden file]
 Ver: 1.0 
 OS: `uname -r | cut -d '-' -f 1`
 Files: $LINES
-IP: ${IP}/${MASK}
+IP4: ${IP4}/${MASK4}
+IP6: ${IP6}/${MASK6}
 HOST: ${HOST}
 " >${WTMP}/${JAILNAME}.header
 

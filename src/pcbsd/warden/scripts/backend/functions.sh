@@ -693,3 +693,29 @@ in_ipv6_network()
 
    return ${res}
 }
+
+ipv4_configured()
+{
+   local iface="${1}"
+   local jid="${2}"
+   local jexec=
+
+   if [ -n "${jid}" ] ; then
+      jexec="jexec ${jid}"
+   fi
+
+   ${jexec} ifconfig "${iface}" | grep -qw inet 2>/dev/null
+}
+
+ipv6_configured()
+{
+   local iface="${1}"
+   local jid="${2}"
+   local jexec=
+
+   if [ -n "${jid}" ] ; then
+      jexec="jexec ${jid}"
+   fi
+
+   ${jexec} ifconfig "${iface}" | grep -qw inet6 2>/dev/null
+}
