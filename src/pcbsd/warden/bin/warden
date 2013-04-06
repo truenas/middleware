@@ -662,10 +662,10 @@ defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |
 
 	 case $OPT in
              ipv4) IP4="${4}"
-	         echo "$IP4" >> "${JMETADIR}/ipv4"
+	         echo "$IP4" > "${JMETADIR}/ipv4"
                  ;;
              ipv6) IP6="${4}"
-	         echo "$IP6" >> "${JMETADIR}/ipv6"
+	         echo "$IP6" > "${JMETADIR}/ipv6"
                  ;;
        alias-ipv4) EXTRAIPS="${4}"
 	         IPS=`echo $EXTRAIPS | sed 's|,| |g'`
@@ -684,10 +684,10 @@ defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |
 	         done
                 ;;
        bridge-ipv4) BIP4="${4}"
-	         echo "$BIP4" >> "${JMETADIR}/bridge-ipv4"
+	         echo "$BIP4" > "${JMETADIR}/bridge-ipv4"
                  ;;
        bridge-ipv6) BIP6="${4}"
-	         echo "$BIP6" >> "${JMETADIR}/bridge-ipv6"
+	         echo "$BIP6" > "${JMETADIR}/bridge-ipv6"
                  ;;
  alias-bridge-ipv4) EXTRAIPS="${4}"
 	         IPS=`echo $EXTRAIPS | sed 's|,| |g'`
@@ -706,10 +706,10 @@ defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |
 	         done
                 ;;
 defaultrouter-ipv4) DEFAULTROUTER="${4}"
-	         echo "$DEFAULTROUTER" >> "${JMETADIR}/defaultrouter-ipv4"
+	         echo "$DEFAULTROUTER" > "${JMETADIR}/defaultrouter-ipv4"
                  ;;
 defaultrouter-ipv6) DEFAULTROUTER="${4}"
-	         echo "$DEFAULTROUTER" >> "${JMETADIR}/defaultrouter-ipv6"
+	         echo "$DEFAULTROUTER" > "${JMETADIR}/defaultrouter-ipv6"
                  ;;
           flags) EXTRAFLAGS="${4}"
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"

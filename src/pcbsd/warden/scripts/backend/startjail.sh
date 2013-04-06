@@ -58,12 +58,12 @@ fi
 MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
 GATEWAY4=
-if [ -e "${JMETADIR}/defaultrouter4" ] ; then
-  GATEWAY4=`cat "${JMETADIR}/defaultrouter4"`
+if [ -e "${JMETADIR}/defaultrouter-ipv4" ] ; then
+  GATEWAY4=`cat "${JMETADIR}/defaultrouter-ipv4"`
 fi
 GATEWAY6=
-if [ -e "${JMETADIR}/defaultrouter6" ] ; then
-  GATEWAY6=`cat "${JMETADIR}/defaultrouter6"`
+if [ -e "${JMETADIR}/defaultrouter-ipv6" ] ; then
+  GATEWAY6=`cat "${JMETADIR}/defaultrouter-ipv6"`
 fi
 
 BRIDGEIP4=
@@ -192,7 +192,9 @@ if [ -z "${BRIDGE}" ] ; then
    BRIDGE=`ifconfig bridge create mtu ${MTU}`
 fi
 if [ -n "${IFACE}" ] ; then
-   ifconfig ${BRIDGE} addm ${IFACE}
+   if ! is_bridge_member "${BRIDGE}" "${IFACE}" ; then
+      ifconfig ${BRIDGE} addm ${IFACE}
+   fi
 fi
 
 # create epair for vimage jail
@@ -202,51 +204,33 @@ ifconfig ${EPAIRA} up
 EPAIRB=`echo ${EPAIRA}|sed -E "s/([0-9])a$/\1b/g"`
 ifconfig ${BRIDGE} addm ${EPAIRA} up
 
-if [ -n "${BRIDGEIPS}" ] ; then
-   ipv4_configured "${BRIDGE}"
-   _has_ipv4=$?
-
-   ipv6_configured "${BRIDGE}"
-   _has_ipv6=$?
-
-   for _ip in ${BRIDGEIPS}
+if [ -n "${BRIDGEIP4}" ] ; then
+   if ! ipv4_configured "${BRIDGE}" ; then
+      ifconfig ${BRIDGE} inet "${BRIDGEIP4}"
+   else
+      ifconfig ${BRIDGE} inet alias "${BRIDGEIP4}"
+   fi
+fi
+if [ -n "${BRIDGEIPS4}" ] ; then
+   for _ip in ${BRIDGEIPS4}
    do
-      get_ip_and_netmask "${_ip}"
-
-      if is_ipv4 "${JIP}" ; then
-         if [ "${_has_ipv4}" != "0" ]
-         then
-             ifconfig ${BRIDGE} inet "${JIP}"
-            _has_ipv4=1
-         else
-            ifconfig ${BRIDGE} inet alias "${JIP}"
-         fi
-      fi
-
-      if is_ipv6 "${JIP}" ; then
-         if [ "${_has_ipv6}" != "0" ]
-         then
-             ifconfig ${BRIDGE} inet6 "${JIP}"
-            _has_ipv6=1
-         else
-            ifconfig ${BRIDGE} inet6 alias "${JIP}"
-         fi
-      fi
+      ifconfig ${BRIDGE} inet alias "${_ip}"
    done
 fi
 
-# Setup the IPs for this jail
-#for _ip in $IPS
-#do
-#  isV6 "${_ip}"
-#  if [ $? -eq 0 ] ; then
-#    ifconfig $NIC inet6 alias ${_ip}
-#    _ipflags="${_ipflags} ip6.addr=${_ip}"
-#  else
-#    ifconfig $NIC inet alias ${_ip}/32
-#    _ipflags="${_ipflags} ip4.addr=${_ip}"
-#  fi
-#done
+if [ -n "${BRIDGEIP6}" ] ; then
+   if ! ipv6_configured "${BRIDGE}" ; then
+      ifconfig ${BRIDGE} inet6 "${BRIDGEIP6}"
+   else
+      ifconfig ${BRIDGE} inet6 alias "${BRIDGEIP6}"
+   fi
+fi
+if [ -n "${BRIDGEIPS6}" ] ; then
+   for _ip in ${BRIDGEIPS6}
+   do
+      ifconfig ${BRIDGE} inet6 alias "${_ip}"
+   done
+fi
 
 jFlags=""
 # Grab any additional jail flags

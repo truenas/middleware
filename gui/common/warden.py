@@ -52,16 +52,16 @@ class warden_exception(Exception):
 #
 WARDEN_KEY_ID             = "id"
 WARDEN_KEY_HOST           = "host"
-WARDEN_KEY_IP4            = "ip4"
-WARDEN_KEY_ALIASIP4       = "alias_ip4"
-WARDEN_KEY_BRIDGEIP4      = "bridge_ip4"
-WARDEN_KEY_ALIASBRIDGEIP4 = "alias_bridge_ip4"
-WARDEN_KEY_DEFAULTROUTER4 = "defaultrouter4"
-WARDEN_KEY_IP6            = "ip6"
-WARDEN_KEY_ALIASIP6       = "alias_ip6"
-WARDEN_KEY_BRIDGEIP6      = "bridge_ip6"
-WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ip6"
-WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter6"
+WARDEN_KEY_IP4            = "ipv4"
+WARDEN_KEY_ALIASIP4       = "alias_ipv4"
+WARDEN_KEY_BRIDGEIP4      = "bridge_ipv4"
+WARDEN_KEY_ALIASBRIDGEIP4 = "alias_bridge_ipv4"
+WARDEN_KEY_DEFAULTROUTER4 = "defaultrouter_ipv4"
+WARDEN_KEY_IP6            = "ipv6"
+WARDEN_KEY_ALIASIP6       = "alias_ipv6"
+WARDEN_KEY_BRIDGEIP6      = "bridge_ipv6"
+WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ipv6"
+WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
 WARDEN_KEY_AUTOSTART      = "autostart"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
@@ -265,16 +265,16 @@ class WardenJail(object):
     def __init__(self, **kwargs):
         self.id = kwargs.get(WARDEN_KEY_ID)
         self.host = kwargs.get(WARDEN_KEY_HOST)
-        self.ip4 = kwargs.get(WARDEN_KEY_IP4)
-        self.alias_ip4 = kwargs.get(WARDEN_KEY_ALIASIP4)
-        self.bridge_ip4 = kwargs.get(WARDEN_KEY_BRIDGEIP4)
-        self.alias_bridge_ip4 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP4)
-        self.defaultrouter4 = kwargs.get(WARDEN_KEY_DEFAULTROUTER4)
-        self.ip6 = kwargs.get(WARDEN_KEY_IP6)
-        self.alias_ip6 = kwargs.get(WARDEN_KEY_ALIASIP6)
-        self.bridge_ip6 = kwargs.get(WARDEN_KEY_BRIDGEIP6)
-        self.alias_bridge_ip6 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP6)
-        self.defaultrouter6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
+        self.ipv4 = kwargs.get(WARDEN_KEY_IP4)
+        self.alias_ipv4 = kwargs.get(WARDEN_KEY_ALIASIP4)
+        self.bridge_ipv4 = kwargs.get(WARDEN_KEY_BRIDGEIP4)
+        self.alias_bridge_ipv4 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP4)
+        self.defaultrouter_ipv4 = kwargs.get(WARDEN_KEY_DEFAULTROUTER4)
+        self.ipv6 = kwargs.get(WARDEN_KEY_IP6)
+        self.alias_ipv6 = kwargs.get(WARDEN_KEY_ALIASIP6)
+        self.bridge_ipv6 = kwargs.get(WARDEN_KEY_BRIDGEIP6)
+        self.alias_bridge_ipv6 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP6)
+        self.defaultrouter_ipv6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
         self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
@@ -517,21 +517,21 @@ class warden_list(warden_base):
 
     def parse(self, thestuff):
         themap = {
-            'ID': WARDEN_KEY_ID,
-            'HOST': WARDEN_KEY_HOST,
-            'IP4': WARDEN_KEY_IP4,
-            'ALIASIP4': WARDEN_KEY_ALIASIP4,
-            'BRIDGEIP4': WARDEN_KEY_BRIDGEIP4,
-            'ALIASBRIDGEIP4': WARDEN_KEY_ALIASBRIDGEIP4,
-            'DEFAULTROUTER4': WARDEN_KEY_DEFAULTROUTER4,
-            'IP6': WARDEN_KEY_IP6,
-            'ALIASIP6': WARDEN_KEY_ALIASIP6,
-            'BRIDGEIP6': WARDEN_KEY_BRIDGEIP6,
-            'ALIASBRIDGEIP6': WARDEN_KEY_ALIASBRIDGEIP6,
-            'DEFAULTROUTER6': WARDEN_KEY_DEFAULTROUTER6,
-            'AUTOSTART': WARDEN_KEY_AUTOSTART,
-            'STATUS': WARDEN_KEY_STATUS,
-            'TYPE': WARDEN_KEY_TYPE
+            'id': WARDEN_KEY_ID,
+            'host': WARDEN_KEY_HOST,
+            'ipv4': WARDEN_KEY_IP4,
+            'alias-ipv4': WARDEN_KEY_ALIASIP4,
+            'bridge-ipv4': WARDEN_KEY_BRIDGEIP4,
+            'alias-bridge-ipv4': WARDEN_KEY_ALIASBRIDGEIP4,
+            'defaultrouter-ipv4': WARDEN_KEY_DEFAULTROUTER4,
+            'ipv6': WARDEN_KEY_IP6,
+            'alias-ipv6': WARDEN_KEY_ALIASIP6,
+            'bridge-ipv6': WARDEN_KEY_BRIDGEIP6,
+            'alias-bridge-ipv6': WARDEN_KEY_ALIASBRIDGEIP6,
+            'defaultrouter-ipv6': WARDEN_KEY_DEFAULTROUTER6,
+            'autostart': WARDEN_KEY_AUTOSTART,
+            'status': WARDEN_KEY_STATUS,
+            'type': WARDEN_KEY_TYPE
         } 
 
         lines = thestuff[1].splitlines()
@@ -542,7 +542,7 @@ class warden_list(warden_base):
             for k in themap:
                 if line.startswith(k + ':'):
                     parts = line.split(':')
-                    if k == 'ID': 
+                    if k == 'id': 
                         if jail:
                             jails.append(jail)
                         jail = { WARDEN_KEY_ID: parts[1].strip() } 
