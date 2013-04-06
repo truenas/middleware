@@ -55,8 +55,7 @@ class DojoPaginator(Paginator):
             r = r.split('=', 1)[1].split('-')
             self.offset = int(r[0])
             if r[1]:
-                r2 = int(r[1]) + 1
-            self.limit = r2 - self.offset
+                self.limit = int(r[1]) + 1 - self.offset
 
 
 class DojoModelResource(ModelResource):
