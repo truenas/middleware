@@ -28,15 +28,28 @@ line()
 }
 
 lineline=0
-VERBOSE="${1}"
+VERBOSE="NO"
+JAILS=
+while [ "$#" -gt "0" ] ; do
+  case "$1" in
+    -v) VERBOSE="YES" ;; 
+     *) JAILS="${JAILS} .$1.meta" ;;
+  esac
+  shift 
+done
 
+if [ "${VERBOSE}" != "YES" ] ; then
 # Prints a listing of the available jails
-printf "%-24s%-12s%-12s%-12s\n" HOST AUTOSTART STATUS TYPE
-line "75"
+  printf "%-24s%-12s%-12s%-12s\n" HOST AUTOSTART STATUS TYPE
+  line "75"
+fi
 
 cd ${JDIR}
+if [ -z "${JAILS}" ] ; then
+  JAILS=`ls -d .*.meta 2>/dev/null`
+fi
 
-for i in `ls -d .*.meta 2>/dev/null`
+for i in ${JAILS}
 do
   AUTO="Disabled" 
   STATUS="<unknown>"

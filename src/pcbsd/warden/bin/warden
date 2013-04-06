@@ -415,7 +415,7 @@ Available Flags:
 
 Usage:
 
-  warden list
+  warden list [flags] [hosts]
 "
 };
 
@@ -767,14 +767,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
     gui) require_root
 	  ${PROGDIR}/bin/warden-gui ;;
 
-    list) VERBOSE="NO"
-        if [ -n "${2}" ] ; then
-          echo "${2}" | grep -qw '\-v' 2>/dev/null
-          if [ "$?" = "0" ] ; then
-            VERBOSE="YES"
-          fi
-        fi
-        ${PROGDIR}/scripts/backend/listjails.sh "${VERBOSE}" ;;
+    list) shift;
+        ${PROGDIR}/scripts/backend/listjails.sh $* ;;
     
    start) require_root
 	  # Time to startup the jail
