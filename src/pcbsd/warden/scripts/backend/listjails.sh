@@ -134,21 +134,21 @@ do
   if [ "${VERBOSE}" = "YES" ] ; then
     cat<<__EOF__ 
 
-ID: ${ID}
-HOST: ${HIST}
-IP4: ${IP4}
-ALIASIP4: ${IPS4}
-BRIDGEIP4: ${BRIDGEIP4}
-ALIASBRIDGEIP4: ${BRIDGEIPS4}
-DEFAULTROUTER4: ${GATEWAY4}
-IP6: ${IP6}
-ALIASIP6: ${IPS6}
-BRIDGEIP6: ${BRIDGEIP6}
-ALIASBRIDGEIP6: ${BRIDGEIPS6}
-DEFAULTROUTER6: ${GATEWAY6}
-AUTOSTART: ${AUTOSTART}
-STATUS: ${STATUS}
-TYPE: ${TYPE}
+id: ${ID}
+host: ${HIST}
+ipv4: ${IP4}
+alias-ipv4: ${IPS4}
+bridge-ipv4: ${BRIDGEIP4}
+alias-bridge-ipv4: ${BRIDGEIPS4}
+defaultrouter-ipv4: ${GATEWAY4}
+ipv6: ${IP6}
+alias-ipv6: ${IPS6}
+bridge-ipv6: ${BRIDGEIP6}
+alias-bridge-ipv6: ${BRIDGEIPS6}
+defaultrouter-ipv6: ${GATEWAY6}
+autostart: ${AUTOSTART}
+status: ${STATUS}
+type: ${TYPE}
 
 __EOF__
 
