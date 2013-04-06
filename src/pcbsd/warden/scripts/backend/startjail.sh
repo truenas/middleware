@@ -57,14 +57,39 @@ fi
 
 MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
-GATEWAYS=
-if [ -e "${JMETADIR}/defaultrouter" ] ; then
-  GATEWAYS=`cat "${JMETADIR}/defaultrouter"`
+GATEWAY4=
+if [ -e "${JMETADIR}/defaultrouter4" ] ; then
+  GATEWAY4=`cat "${JMETADIR}/defaultrouter4"`
+fi
+GATEWAY6=
+if [ -e "${JMETADIR}/defaultrouter6" ] ; then
+  GATEWAY6=`cat "${JMETADIR}/defaultrouter6"`
 fi
 
-BRIDGEIPS=
-if [ -e "${JMETADIR}/bridgeip" ] ; then
-  BRIDGEIPS=`cat "${JMETADIR}/bridgeip"`
+BRIDGEIP4=
+if [ -e "${JMETADIR}/bridge-ipv4" ] ; then
+  BRIDGEIP4=`cat "${JMETADIR}/bridge-ipv4"`
+fi
+
+BRIDGEIPS4=
+if [ -e "${JMETADIR}/alias-bridge-ipv4" ] ; then
+  while read line
+  do
+    BRIDGEIPS4="${BRIDGEIPS4} $line" 
+  done < ${JMETADIR}/alias-bridge-ipv4
+fi
+
+BRIDGEIP6=
+if [ -e "${JMETADIR}/bridge-ipv6" ] ; then
+  BRIDGEIP6=`cat "${JMETADIR}/bridge-ipv6"`
+fi
+
+BRIDGEIPS6=
+if [ -e "${JMETADIR}/alias-bridge-ipv6" ] ; then
+  while read line
+  do
+    BRIDGEIPS6="${BRIDGEIPS6} $line" 
+  done < ${JMETADIR}/alias-bridge-ipv6
 fi
 
 set_warden_metadir
@@ -116,23 +141,30 @@ else
   if [ -e "${JMETADIR}/jail-portjail" ] ; then mountjailxfs ${JAILNAME} ; fi
 fi
 
-IPS=
-if [ -e "${JMETADIR}/ip" ] ; then
-  IPS=`cat "${JMETADIR}/ip"`
+IP4=
+if [ -e "${JMETADIR}/ipv4" ] ; then
+  IP4=`cat "${JMETADIR}/ipv4"`
 fi
 
-if [ -e "${JMETADIR}/ip-extra" ] ; then
+IPS4=
+if [ -e "${JMETADIR}/alias-ipv4" ] ; then
   while read line
   do
-    IPS="${IPS} $line" 
-  done < ${JMETADIR}/ip-extra
+    IPS4="${IPS4} $line" 
+  done < ${JMETADIR}/alias-ipv4
 fi
 
-if [ -e "${JMETADIR}/network" ] ; then
+IP6=
+if [ -e "${JMETADIR}/ipv6" ] ; then
+  IP6=`cat "${JMETADIR}/ipv6"`
+fi
+
+IPS6=
+if [ -e "${JMETADIR}/alias-ipv6" ] ; then
   while read line
   do
-    NETWORKS="${NETWORKS} $line" 
-  done < ${JMETADIR}/network
+    IPS6="${IPS6} $line" 
+  done < ${JMETADIR}/alias-ipv6
 fi
 
 BRIDGE=
@@ -163,33 +195,18 @@ if [ -n "${IFACE}" ] ; then
    ifconfig ${BRIDGE} addm ${IFACE}
 fi
 
-i=0
-npairs=0
+# create epair for vimage jail
+EPAIRA=`ifconfig epair create mtu ${MTU}`
+ifconfig ${EPAIRA} up
 
-# create an epair for every IP address specified
-for _ip in ${IPS}
-do
-   eval "ip${i}='${_ip}'"
- 
-   _epair=`ifconfig epair create mtu ${MTU}`
-   eval "epair${i}='${_epair}'"
-
-   ifconfig ${_epair} up
-
-   _epairb=`echo ${_epair}|sed -E "s/([0-9])a$/\1b/g"`
-   eval "epairb${i}='${_epairb}'"
-
-   ifconfig ${BRIDGE} addm ${_epair} up
-
-   : $((i += 1))
-done
-npairs=${i}
+EPAIRB=`echo ${EPAIRA}|sed -E "s/([0-9])a$/\1b/g"`
+ifconfig ${BRIDGE} addm ${EPAIRA} up
 
 if [ -n "${BRIDGEIPS}" ] ; then
-   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
+   ipv4_configured "${BRIDGE}"
    _has_ipv4=$?
 
-   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
+   ipv6_configured "${BRIDGE}"
    _has_ipv6=$?
 
    for _ip in ${BRIDGEIPS}
@@ -248,82 +265,65 @@ fi
 
 JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
-# Configure the IP addresses now
-i=0
-while [ "${i}" -lt "${npairs}" ]
+# Move epairb into jail
+ifconfig ${EPAIRB} vnet ${JID}
+
+# Configure the IPv4 addresses
+if [ -n "${IP4}" ] ; then
+   jexec ${JID} ifconfig ${EPAIRB} inet "${IP4}"
+fi
+for ip4 in ${IPS4}
 do
-   _var="\$epairb${i}"
-   _epairb=`eval "echo ${_var} 2>/dev/null"`
-
-   _var="\$ip${i}"
-   _ip=`eval "echo \${_var} 2>/dev/null"`
-
-   ifconfig ${_epairb} vnet ${JID}
-
-   get_ip_and_netmask "${_ip}"
-
-   isV6 "${JIP}"
+   ipv4_configured ${EPAIRB} ${JID}
    if [ "$?" = "0" ] ; then
-      jexec ${JID} ifconfig ${_epairb} inet6 ${_ip}
+      jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
    else
-      jexec ${JID} ifconfig ${_epairb} inet ${_ip}
+      jexec ${JID} ifconfig ${EPAIRB} inet ${ip4}
    fi
+done
 
-   : $((i += 1))
+# Configure the IPv6 addresses
+if [ -n "${IP6}" ] ; then
+   jexec ${JID} ifconfig ${EPAIRB} inet6 "${IP4}"
+fi
+for ip6 in ${IPS6}
+do
+   ipv6_configured ${EPAIRB} ${JID}
+   if [ "$?" = "0" ] ; then
+      jexec ${JID} ifconfig ${EPAIRB} inet6 alias ${ip6}
+   else
+      jexec ${JID} ifconfig ${EPAIRB} inet6 ${ip6}
+   fi
 done
 
 #
-# A defaultrouter file exists. IPv4 and IPv6 gateways can exist
-# so we iterate and set them if specified.
+# Configure default IPv4 gateway 
 #
-if [ -n "${GATEWAYS}" ] ; then
-   _has_ipv4_route=0
-   _has_ipv6_route=0
-
-   for _ip in ${GATEWAYS}
-   do
-      if is_ipv4 "${_ip}" && [ "${_has_ipv4_route}" = "0" ] ; then
-         jexec ${JID} route add -inet default ${_ip}
-         _has_ipv4_route=1
-      fi
-      if is_ipv6 "${_ip}" && [ "${_has_ipv6_route}" = "0" ] ; then
-         jexec ${JID} route add -inet6 default ${_ip}
-         _has_ipv6_route=1
-      fi
-   done
+if [ -n "${GATEWAY4}" ] ; then
+   jexec ${JID} route add -inet default ${GATEWAY4}
 
 #
-# No defaultrouter configured, so if bridge IP addresses were
+# No defaultrouter configured for IPv4, so if bridge IP address was
 # configured, we set the default router to that IP.
 #
-elif [ -n "${BRIDGEIPS}" ] ; then
-   ifconfig ${BRIDGE} | grep -qw inet 2>/dev/null
-   _has_ipv4=$?
+elif [ -n "${BRIDGEIP4}" ] ; then
+   get_ip_and_netmask "${BRIDGEIP4}"
+   jexec ${JID} route add -inet default ${JIP}
+fi
 
-   ifconfig ${BRIDGE} | grep -qw inet6 2>/dev/null
-   _has_ipv6=$?
+#
+# Configure default IPv6 gateway
+#
+if [ -n "${GATEWAY6}" ] ; then
+   jexec ${JID} route add -inet6 default ${GATEWAY6}
 
-   _has_ipv4_route=0
-   _has_ipv6_route=0
-
-   for _ip in ${BRIDGEIPS}
-   do
-      get_ip_and_netmask "${_ip}"
-
-      if is_ipv4 "${JIP}" ; then
-         if [ "${_has_ipv4}" = "0" -a "${_has_ipv4_route}" = "0" ] ; then
-            jexec ${JID} route add -inet default ${JIP}
-            _has_ipv4_route=1
-         fi
-      fi
-
-      if is_ipv6 "${JIP}" ; then
-         if [ "${_has_ipv6}" = "0" -a "${_has_ipv6_route}" = "0" ] ; then
-            jexec ${JID} route add -inet6 default ${JIP}
-            _has_ipv6_route=1
-         fi
-      fi
-   done
+#
+# No defaultrouter configured for IPv6, so if bridge IP address was
+# configured, we set the default router to that IP.
+#
+elif [ -n "${BRIDGEIP6}" ] ; then
+   get_ip_and_netmask "${BRIDGEIP6}"
+   jexec ${JID} route add -inet6 default ${JIP}
 fi
 
 #

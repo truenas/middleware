@@ -40,13 +40,11 @@ if [ "${JAILNAME}" = "all" ] ; then
   cd ${JDIR}
   for i in `ls -d .*.meta`
   do
-    if [ ! -e "${i}/ip" ] ; then continue ; fi
-    IP="`cat ${i}/ip`"
     HOST="`cat ${i}/host`"
     set_warden_metadir
     if [ -e "${JMETADIR}/jail-linux" ] ; then continue; fi
 
-    echo "Checking for jail updates to ${IP}"
+    echo "Checking for jail updates to ${HOST}"
     echo "################################################"
  
     # Check for meta-pkg updates
@@ -63,7 +61,7 @@ else
     exit 5
   fi
 
-   echo "Checking for jail updates to ${IP}..."
+   echo "Checking for jail updates to ${HOST}..."
    echo "################################################"
    # Check for meta-pkg updates
    pc-metapkgmanager --chroot ${JDIR}/${HOST} checkup

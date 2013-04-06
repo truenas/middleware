@@ -51,12 +51,6 @@ echo -e ".\c"
 # Check if we need umount x mnts
 if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
 
-# Get list of IPs for this jail
-IP=
-if [ -e "${JMETADIR}/ip" ] ; then
-   IP=`cat "${JMETADIR}/ip"`
-fi
-
 jail_interfaces_down "${JID}"
 
 if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi

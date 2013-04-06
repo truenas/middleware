@@ -10,11 +10,20 @@ PROGDIR="/usr/local/share/warden"
 
 IFILE="$1"
 HOST="${2}"
-IP="${3}"
+IP4="${3}"
+IP6="${4}"
 
-get_ip_and_netmask "${IP}"
-IP="${JIP}"
-MASK="${JMASK}"
+if [ "${IP4}" != "OFF" ] ; then
+  get_ip_and_netmask "${IP4}"
+  IP4="${JIP}"
+  MASK4="${JMASK}"
+fi
+
+if [ "${IP6}" != "OFF" ] ; then
+  get_ip_and_netmask "${IP6}"
+  IP6="${JIP}"
+  MASK6="${JMASK}"
+fi
 
 JAILNAME="${HOST}"
 JAILDIR="${JDIR}/${JAILNAME}"
@@ -31,12 +40,24 @@ then
   exit 5
 fi
 
-if [ "${IP}" != "OFF" ]
+if [ "${IP4}" != "OFF" ]
 then
   for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
   do
-    if [ "`cat ${i}/ip`" = "${IP}" ] ; then
-      echo "ERROR: A Jail exists with IP: ${IP}"
+    if [ "`cat ${i}/ipv4 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
+      echo "ERROR: A Jail exists with IP: ${IP4}"
+      exit 5
+    fi
+  done
+fi
+if [ "${IP6}" != "OFF" ]
+then
+  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  do
+    _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
+    _nipv6="`echo ${IP6}|tr a-z A-Z`/${MASK6}"
+    if [ "${ipv6}" = "${_nipv6}" ] ; then
+      echo "ERROR: A Jail exists with IP: ${IP6}"
       exit 5
     fi
   done
@@ -73,7 +94,8 @@ fi
 VER=""
 OS=""
 FILES=""
-FIP=""
+FIP4=""
+FIP6=""
 FHOST=""
 
 HEADER=`ls *.header`
@@ -98,10 +120,16 @@ do
     FILES="`echo $line | cut -d ' ' -f 2-10`"
   fi
   
-  # Check for the built in IP
-  echo "$line" | grep -q "IP:"
+  # Check for the built in IP4
+  echo "$line" | grep -q "IP4:"
   if [ $? -eq 0 ]; then
-    FIP="`echo $line | cut -d ' ' -f 2-10`"
+    FIP4="`echo $line | cut -d ' ' -f 2-10`"
+  fi
+
+  # Check for the built in IP6
+  echo "$line" | grep -q "IP6:"
+  if [ $? -eq 0 ]; then
+    FIP6="`echo $line | cut -d ' ' -f 2-10`"
   fi
   
   # Check for the built in HOST
@@ -128,23 +156,49 @@ then
     echo "This jail may not work...Importing anyway..."
 fi
 
-if [ "${IP}" = "OFF" ]
+if [ "${IP4}" = "OFF" ]
 then
   for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
   do
-    if [ "`cat ${i}/ip`" = "${FIP}" ] ; then
-      echo "ERROR: A Jail already exists with IP: $FIP"
-      rm -rf tmp.$$ 2>/dev/null
-      exit 7
+    if [ -n "${FIP4}" ] ; then
+      if [ "`cat ${i}/ipv4`" = "${FIP4}" ] ; then
+        echo "ERROR: A Jail already exists with IP: $FIP4"
+        rm -rf tmp.$$ 2>/dev/null
+        exit 7
+      fi
     fi
   done
  
-  # The user didn't specify a new IP, so use the built in one
-  IP="${FIP}"
+  # The user didn't specify a new IPv4 address, so use the built in one
+  IP4="${FIP4}"
+fi
+
+if [ "${IP6}" = "OFF" ]
+then
+  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  do
+    if [ -n "${FIP6}" ] ; then
+
+      _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
+      _nipv6=`echo ${FIP6}|tr a-z A-Z`
+      if [ "${ipv6}" = "${_nipv6}" ] ; then
+        echo "ERROR: A Jail already exists with IP: $FIP6"
+        rm -rf tmp.$$ 2>/dev/null
+        exit 7
+      fi
+    fi
+  done
+ 
+  # The user didn't specify a new IPv6 address, so use the built in one
+  IP6="${FIP6}"
 fi
 
 SKIP="`awk '/^___WARDEN_START___/ { print NR + 1; exit 0; }' ${IFILE}`"
-echo "Importing ${IFILE} with IP: ${IP}..."
+if [ -n "${IP4}" ] ; then
+  echo "Importing ${IFILE} with IP: ${IP4}..."
+elif [ -n "${IP6}" ] ; then
+  echo "Importing ${IFILE} with IP: ${IP6}..."
+fi
 
 # Make the new directory
 JAILDIR="${JDIR}/${HOST}"
@@ -158,12 +212,26 @@ else
   mkdir -p "${JAILDIR}"
 fi
 
+# Get next unique ID
+META_ID=0
+for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+do
+  id=`cat ${i}/id`
+  if [ "${id}" -gt "${META_ID}" ] ; then
+    META_ID="${id}"
+  fi
+done
+: $(( META_ID += 1 ))
+
 # Create the meta-dir
 set_warden_metadir
 mkdir ${JMETADIR}
 
 # Copy over extra jail flags
 cp tmp.$$/jail-* ${JMETADIR}/ 2>/dev/null
+
+# give new jail an id
+echo "${META_ID}" > ${JMETADIR}/id
 
 # Cleanup tmp meta-dir
 rm -rf tmp.$$ 2>/dev/null
@@ -172,7 +240,12 @@ rm -rf tmp.$$ 2>/dev/null
 tail +${SKIP} ${IFILE} | tar xpf - -C "${JAILDIR}" 2>/dev/null
 
 # Make sure we have an IP address saved
-echo "${IP}/${MASK}" >"${JMETADIR}/ip"
+if [ -n "${IP4}" ] ; then
+  echo "${IP4}/${MASK4}" >"${JMETADIR}/ipv4"
+fi
+if [ -n "${IP6}" ] ; then
+  echo "${IP6}/${MASK6}" >"${JMETADIR}/ipv6"
+fi
 
 # Save the jail flags
 if [ -n "$JFLAGS" ] ; then
@@ -196,6 +269,7 @@ if [ "${HOST}" != "OFF" -a ! -z "${HOST}" ]; then
   fi
 
 # Setup /etc/hosts now
+cat<<__EOF__>"${JAILDIR}/etc/hosts"
 echo "# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
 #
 # Host Database
@@ -210,7 +284,14 @@ echo "# : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
 #
 ::1                     localhost localhost.localdomain
 127.0.0.1               localhost localhost.localdomain ${HOST}
-${IP}			${HOST}" > "${JAILDIR}/etc/hosts"
+__EOF__
+
+if [ -n "${IP4}" ] ; then
+  echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
+fi
+if [ -n "${IP6}" ] ; then
+  echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
+fi
 
 # End Hostname setup
 fi
