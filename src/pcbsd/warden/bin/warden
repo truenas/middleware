@@ -129,13 +129,15 @@ defaultrouter-ipv6: Lets you set the default IPv6 router for this jail
 
 Usage:
 
-  warden set ip <Jail> <IP1>,<IP2>,<IP3>
+  warden set ipv4 <Jail> <IP1>,<IP2>,<IP3>
 
   warden set flags <Jail> <Flag1>,<Flag2>,<Flag3>
 
 Example:
 
-  warden set ip myjail fe80::8e89:a5ff:fe52:ad19,192.168.1.50,192.168.2.10
+  warden set ipv4 myjail 192.168.1.50,192.168.2.10
+
+  warden set ipv6 myjail fe80::8e89:a5ff:fe52:ad19,fe80::8e89:a5ff:fe52:ad21
 
   warden set flags myjail allow.raw_sockets=true,allow.chflags=true
 "
