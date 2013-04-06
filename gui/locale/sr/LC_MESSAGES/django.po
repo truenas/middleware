@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-04 23:19+0200\n"
+"PO-Revision-Date: 2013-04-05 22:11+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -769,7 +769,7 @@ msgstr "Korisnik %s nije ispravan."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Grupa %s nije ispravna."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
@@ -2370,7 +2370,7 @@ msgstr "Period ažuriranja"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Vreme u sekundama. Podrazumevana vrednost je oko 1 min."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2404,9 +2404,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:821
-#, fuzzy
 msgid "Jail IP address"
-msgstr "IPv4 Addresa"
+msgstr "Jail IP addresa"
 
 #: services/models.py:825
 #, fuzzy
@@ -2506,11 +2505,11 @@ msgstr ""
 
 #: services/models.py:933
 msgid "UPS Master User Password"
-msgstr ""
+msgstr "Lozinka Glavnog Korisnika neprekidnog napajanja"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Dodatni korisnici (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
@@ -2530,7 +2529,7 @@ msgstr ""
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Tema e-poruke"
 
 #: services/models.py:952
 msgid ""
@@ -2892,12 +2891,12 @@ msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
-"Podrazumevano osnovno Distinguished Name (DN) se koristi za pretraćivanje, "
+"Podrazumevano osnovno Distinguished Name (DN) se koristi za pretraživanje, "
 "npr. dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Dozvoliti anonimno povezivanje"
 
 #: services/models.py:1298
 msgid "Root bind DN"
@@ -2919,7 +2918,7 @@ msgstr ""
 
 #: services/models.py:1311
 msgid "Password Encryption"
-msgstr ""
+msgstr "Šifrovanje lozinke"
 
 #: services/models.py:1312
 msgid "The password change protocol to use."
@@ -2927,43 +2926,51 @@ msgstr ""
 
 #: services/models.py:1317
 msgid "User Suffix"
-msgstr ""
+msgstr "Sufiks korisnika"
 
 #: services/models.py:1318
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Ovaj parametar određuje sufiks koji se koristi za korisnike kada se oni "
+"dodaju u LDAP direktorijum, npr. ou=Users"
 
 #: services/models.py:1323
 msgid "Group Suffix"
-msgstr ""
+msgstr "Sufiks grupe"
 
 #: services/models.py:1324
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Ovaj parametar određuje sufiks koji se koristi za grupe kada se one dodaju u "
+"LDAP direktorijum, npr. ou=Groups"
 
 #: services/models.py:1328
 msgid "Password Suffix"
-msgstr ""
+msgstr "Sufiks lozinke"
 
 #: services/models.py:1330
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Ovaj parametar određuje sufiks koji se koristi za lozinke kada se one dodaju "
+"u LDAP direktorijum, npr. ou=Passwords"
 
 #: services/models.py:1334
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Sufiks računara"
 
 #: services/models.py:1336
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Ovaj parametar određuje sufiks koji se koristi za računare kada se oni "
+"dodaju u LDAP direktorijum, npr. ou=Computers"
 
 #: services/models.py:1341
 #, fuzzy
@@ -2973,14 +2980,15 @@ msgstr "Model Autentifikacije"
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Ovaj parametar određuje da li će se koristiti SSL/TLS, npr. on/off/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Samo potpisan sertifikat"
 
 #: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Postavite sadržaj vašeg samo potpisanog sertifikata ovde."
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
@@ -2988,16 +2996,16 @@ msgstr ""
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Ovi parametri su dodati u ldap.conf."
 
 #: services/models.py:1357 services/models.py:1358
 #: templates/services/core.html:74
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternativni TCP port. Podrazumevano je 873"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -3136,7 +3144,7 @@ msgstr ""
 
 #: services/nav.py:15
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrolni servisi"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
@@ -3210,24 +3218,24 @@ msgstr ""
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Polje nije ispravna IP adresa ili mreža"
 
 #: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "IP adresa '%s' nije ispravna."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot grupa zahteva Maproot korisnika"
 
 #: sharing/forms.py:184
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall grupa zahteva Mapall korisnika"
 
 #: sharing/forms.py:190 sharing/forms.py:195
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot korisnik/grupa diskvalifikuje Mapall"
 
 #: sharing/models.py:39 sharing/models.py:113 storage/models.py:45
 #: storage/models.py:326 storage/views.py:246
@@ -3235,7 +3243,7 @@ msgstr ""
 #: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
-msgstr ""
+msgstr "Ime"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
@@ -3583,7 +3591,7 @@ msgstr ""
 
 #: sharing/models.py:285
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot korisnik"
 
 #: sharing/models.py:289
 msgid "User to map root to"
@@ -3591,7 +3599,7 @@ msgstr ""
 
 #: sharing/models.py:292
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Grupa"
 
 #: sharing/models.py:296
 msgid "Group to map root to"
@@ -3599,7 +3607,7 @@ msgstr ""
 
 #: sharing/models.py:299
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall korisnik"
 
 #: sharing/models.py:303
 msgid "User to map all users to"
@@ -3607,7 +3615,7 @@ msgstr ""
 
 #: sharing/models.py:306
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Grupa"
 
 #: sharing/models.py:310
 msgid "Group to map all users to"
