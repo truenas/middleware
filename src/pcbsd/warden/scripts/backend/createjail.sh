@@ -110,7 +110,6 @@ else
     WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.tbz"
   fi
   export WORLDCHROOT
-
 fi
 
 if [ "${IP4}" != "OFF" ] ; then
@@ -316,5 +315,9 @@ if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
 echo "Success!"
 echo "Jail created at ${JAILDIR}"
+
+if [ "${PLUGINJAIL}" = "YES" ] ; then
+  mkdir -p "${JAILDIR}/.plugins"
+fi
 
 exit 0
