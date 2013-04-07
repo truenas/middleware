@@ -75,7 +75,6 @@ def plugins(request):
         for j in Jls():
             if j.hostname == plugin.plugin_jail:
                 jail_status = "RUNNING"
-                log.debug("XXX: %s is RUNNING", j.hostname)
                 break
 
         plugin.service = Service(

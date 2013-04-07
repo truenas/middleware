@@ -2479,9 +2479,12 @@ class notifier:
         if res and res[0] == 0:
             qs = Plugins.objects.filter(plugin_name=name)
             if qs.count() > 0:
-                log.warn("Plugin named %s already exists in database, "
-                    "overwriting.", name)
-                plugin = qs[0]
+		if qs[0].plugin_jail == pjail:
+                    log.warn("Plugin named %s already exists in database, "
+                        "overwriting.", name)
+                    plugin = qs[0]
+                else:
+                    plugin = Plugins()
             else:
                 plugin = Plugins()
 

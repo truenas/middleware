@@ -206,7 +206,6 @@ class Jails(Model):
             max_length=120
             )
 
-
     def delete(self):
         Warden().delete(jail=self.jail_host)
 
