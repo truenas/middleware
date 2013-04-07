@@ -135,7 +135,7 @@ do
     cat<<__EOF__ 
 
 id: ${ID}
-host: ${HIST}
+host: ${HOST}
 ipv4: ${IP4}
 alias-ipv4: ${IPS4}
 bridge-ipv4: ${BRIDGEIP4}
@@ -146,7 +146,7 @@ alias-ipv6: ${IPS6}
 bridge-ipv6: ${BRIDGEIP6}
 alias-bridge-ipv6: ${BRIDGEIPS6}
 defaultrouter-ipv6: ${GATEWAY6}
-autostart: ${AUTOSTART}
+autostart: ${AUTO}
 status: ${STATUS}
 type: ${TYPE}
 
