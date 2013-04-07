@@ -170,7 +170,9 @@ then
   done
  
   # The user didn't specify a new IPv4 address, so use the built in one
-  IP4="${FIP4}"
+  get_ip_and_netmask "${FIP4}"
+  IP4="${JIP}"
+  MASK4="${JMASK}"
 fi
 
 if [ "${IP6}" = "OFF" ]
@@ -190,7 +192,9 @@ then
   done
  
   # The user didn't specify a new IPv6 address, so use the built in one
-  IP6="${FIP6}"
+  get_ip_and_netmask "${FIP6}"
+  IP6="${JIP}"
+  MASK6="${JMASK}"
 fi
 
 SKIP="`awk '/^___WARDEN_START___/ { print NR + 1; exit 0; }' ${IFILE}`"

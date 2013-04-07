@@ -40,7 +40,8 @@ from freenasUI.common.warden import Warden, \
     WARDEN_CREATE_FLAGS_SRC, WARDEN_CREATE_FLAGS_PORTS, \
     WARDEN_CREATE_FLAGS_STARTAUTO, WARDEN_CREATE_FLAGS_PORTJAIL, \
     WARDEN_CREATE_FLAGS_PLUGINJAIL, WARDEN_CREATE_FLAGS_LINUXJAIL, \
-    WARDEN_CREATE_FLAGS_ARCHIVE, WARDEN_CREATE_FLAGS_LINUXARCHIVE
+    WARDEN_CREATE_FLAGS_ARCHIVE, WARDEN_CREATE_FLAGS_LINUXARCHIVE, \
+    WARDEN_CREATE_FLAGS_IPV4, WARDEN_CREATE_FLAGS_IPV6
 
 
 log = logging.getLogger('jails.forms')
@@ -66,7 +67,18 @@ class JailCreateForm(ModelForm):
 
     class Meta:
         model = models.Jails
-        exclude = ('jail_status')
+        exclude = (
+            'jail_id',
+            'jail_status',
+            'jail_alias_ipv4',
+            'jail_bridge_ipv4',
+            'jail_alias_bridge_ipv4',
+            'jail_defaultrouter_ipv4',
+            'jail_alias_ipv6',
+            'jail_bridge_ipv6',
+            'jail_alias_bridge_ipv6',
+            'jail_defaultrouter_ipv6'
+        )
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
@@ -89,20 +101,28 @@ class JailCreateForm(ModelForm):
         wlist = Warden().list()
         for wj in wlist:
             wo = WardenJail(**wj)
-            st = sipcalc_type(wo.ip)
-            
-            if st.is_ipv4() and st_ipv4_network is not None:
-                if st_ipv4_network.in_network(st):
-                    if st > high_ipv4:
-                        high_ipv4 = st
 
-            if st.is_ipv6() and st_ipv6_network is not None:
-                if st_ipv6_network.in_network(st):
-                    if st > high_ipv6:
-                        high_ipv6 = st
+            st_ipv4 = None
+            st_ipv6 = None
+
+            if wo.ipv4:
+                st_ipv4 = sipcalc_type(wo.ipv4)
+            if wo.ipv6:
+                st_ipv6 = sipcalc_type(wo.ipv6)
+            
+            if st_ipv4 and st_ipv4_network is not None:
+                if st_ipv4_network.in_network(st_ipv4):
+                    if st_ipv4 > high_ipv4:
+                        high_ipv4 = st_ipv4
+
+            if st_ipv6 and st_ipv6_network is not None:
+                if st_ipv6_network.in_network(st_ipv6):
+                    if st_ipv6 > high_ipv6:
+                        high_ipv6 = st_ipv6
 
         if high_ipv4 is None and st_ipv4_network is not None:
-            high_ipv4 = sipcalc_type(st_ipv4_network.usable_range[0])
+            high_ipv4 = sipcalc_type("%s/%d" % (st_ipv4_network.usable_range[0],
+                st_ipv4_network.network_mask_bits))
 
         elif high_ipv4 is not None and st_ipv4_network is not None:
             high_ipv4 += 1
@@ -110,7 +130,8 @@ class JailCreateForm(ModelForm):
                 high_ipv4 = None 
 
         if high_ipv6 is None and st_ipv6_network is not None:
-            high_ipv6 = sipcalc_type(st_ipv6_network .network_range[0])
+            high_ipv6 = sipcalc_type("%s/%d" % (st_ipv6_network .network_range[0],
+                st_ipv6_network.prefix_length))
             high_ipv6 += 1
 
         elif high_ipv6 is not None and st_ipv6_network is not None:
@@ -153,7 +174,19 @@ class JailCreateForm(ModelForm):
             else:
                 jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
 
-        w.create(jail=jail_host, ip=jail_ip, flags=jail_flags)
+        jail_create_args = { }
+        jail_create_args['jail'] = jail_host
+
+        if jail_ipv4:
+            jail_flags |= WARDEN_CREATE_FLAGS_IPV4
+            jail_create_args['ipv4'] = jail_ipv4
+
+        if jail_ipv6:
+            jail_flags |= WARDEN_CREATE_FLAGS_IPV6
+            jail_create_args['ipv6'] = jail_ipv6
+
+        jail_create_args['flags'] = jail_flags
+        w.create(**jail_create_args)
 
 class JailsConfigurationForm(ModelForm):
 
@@ -166,6 +199,15 @@ class JailsConfigurationForm(ModelForm):
         }
 
 class JailConfigureForm(ModelForm):
+
+    jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
+    jail_source = forms.BooleanField(label=_("source"), required=False)
+    jail_ports = forms.BooleanField(label=_("ports"), required=False)
+
+    class Meta:
+        model = models.Jails
+
+class JailsEditForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
     jail_source = forms.BooleanField(label=_("source"), required=False)
