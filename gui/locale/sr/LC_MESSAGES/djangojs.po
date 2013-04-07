@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-03-02 18:33+0200\n"
+"PO-Revision-Date: 2013-04-06 22:54+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -66,7 +66,7 @@ msgstr "Brisanje"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 msgid "Wipe Disk"
-msgstr "Brisanje diska"
+msgstr "Briši disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."

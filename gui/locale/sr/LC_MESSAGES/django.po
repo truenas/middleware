@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-05 22:11+0200\n"
+"PO-Revision-Date: 2013-04-06 22:53+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -507,10 +507,8 @@ msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr "Obavezno. 16 znakova i manje. Slova, brojevi i @/./+/-/_ isključivo."
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Ova vrednost može isključivo sadržati slova, brojeve i @/./+/-/_ znakove."
+msgstr "Ova vrednost može sadržati samo slova, brojeve i ./-/ _ znakove."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -634,7 +632,7 @@ msgstr "Potvrda nove šifre"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Promeni takođe i ROOT šifru"
+msgstr "Promeni takođe i root lozinku"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -786,9 +784,9 @@ msgid "Add %s"
 msgstr "Dodaj %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Pogledaj sve %s"
+msgstr "Prikaži %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -816,7 +814,7 @@ msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr ""
-"Došlo je do greške dok se vršila ne-serijalizacija od %(url)s: %(greška)s"
+"Došlo je do greške dok se vršila ne-serijalizacija od %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -906,7 +904,7 @@ msgstr "Morate da popunite Server imena2 pre nego što popunite Server imena 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Obavezno je kada koristite Server imena 3"
+msgstr "Obavezno kada koristite Server imena 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -921,9 +919,8 @@ msgid "Parent Interface"
 msgstr "Nadređeni interfejs"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "Ime mora biti u oznaci vlanXX gde je XX ceo broj"
+msgstr "Ime mora da bude vlanXX gde je XX ceo broj"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1074,14 +1071,12 @@ msgstr "Aliasi"
 # Virtuelni?
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
-#, fuzzy
 msgid "Virtual Interface"
-msgstr "Virtualni Interfejsi"
+msgstr "Virtuelni Interfejs"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "Imena interfejsa moraju biti u oznaci vlanXX gde je XX broj"
+msgstr "Imena interfejsa moraju biti vlanXX gde je XX broj. Primer: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1134,7 +1129,7 @@ msgstr "Fizički NIC"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "Cilljna mreža"
+msgstr "Odredišna mreža"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1233,7 +1228,7 @@ msgstr "JAIL PBI dodatne komponente"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr "Postavljanje?"
+msgstr "Postavljen?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
@@ -1335,7 +1330,7 @@ msgstr "Dodatak uspesno ažuriran."
 
 #: plugins/views.py:80
 msgid "Plugin successfully removed."
-msgstr "Dodatak uspošno uklonjen."
+msgstr "Dodatna komponenta uspešno uklonjena."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -1389,9 +1384,8 @@ msgid "This IP already exists."
 msgstr "Ova IP već postoji."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "AFP servis nije uspeo ponovo da se učita."
+msgstr "Servis dodatnih komponenti za JAIL nije uspeo da se ponovo učita."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1503,9 +1497,8 @@ msgid "The ldap service failed to reload."
 msgstr "LDAP servis nije uspeo da se ponovo učita."
 
 #: services/forms.py:498 services/models.py:598
-#, fuzzy
 msgid "Secret"
-msgstr "Tajno"
+msgstr "Tajna"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
@@ -1651,7 +1644,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr "Broj Autentifikacione grupe"
+msgstr "Broj grupe za autentikaciju"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1694,7 +1687,7 @@ msgstr "Servisi"
 # Authentication - provera identiteta
 #: services/models.py:72
 msgid "Authentication Model"
-msgstr "Model Autentifikacije"
+msgstr "Model Autentikacije"
 
 #: services/models.py:73
 msgid ""
@@ -1811,7 +1804,7 @@ msgstr "Ostali parametri"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr ""
+msgstr "Ovi parametri su dodati na [global] sekciju smb.conf"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1852,6 +1845,8 @@ msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Ovi dodaci omogućavaju da Samba bolje služiti UNIX CIFS klijentima "
+"podržavajući funkcije kao što su simboličke veze, čvrste vezama, itd..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1859,7 +1854,7 @@ msgstr "Omogući AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Omogućiti/onemogućiti AIO podršku."
+msgstr "Omogući/onemogući AIO podršku."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
@@ -1891,6 +1886,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Zeroconf podrška preko Avahi omogućava klijentima (Mac OSX Finder posebno) "
+"da automatski otkrije CIFS deljene resurse na sistemu sličnih Computer "
+"Browser servisa u Windows sistemu."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1955,6 +1953,8 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Omogući asinhroni režim, koji će unaprediti performanse van gigabitnih "
+"mrežnih brzina."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -1995,7 +1995,7 @@ msgstr "NOPIN interval za slanje u sekundama (20 je podrazumevana vrednost)."
 
 #: services/models.py:287
 msgid "Max. sessions"
-msgstr "Maksimalni broj sesija"
+msgstr "Maks. sesije"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -2005,7 +2005,7 @@ msgstr ""
 
 #: services/models.py:293
 msgid "Max. connections"
-msgstr "Max. konekcija"
+msgstr "Maks. konekcije"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
@@ -2265,11 +2265,11 @@ msgstr "Opcioni korisniku prilagođeni string cilja."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
-msgstr ""
+msgstr "Serijski"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Serijski broj za logičku jedinicu"
 
 #: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
@@ -2292,15 +2292,15 @@ msgstr "Inicijator ID grupe"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
-msgstr ""
+msgstr "Metod provere identiteta"
 
 #: services/models.py:675 services/models.py:687
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
-"Metod može biti prihvaćen od strane cilja. Auto znači i ništa i "
-"autentifikaciju."
+"Metod može biti prihvaćen od strane cilja. Auto znači i ništa i proveru "
+"identiteta."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
@@ -2338,7 +2338,7 @@ msgstr "Cilj"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr "Cilj ovog stepena pripada"
+msgstr "Cilj ovog opsega pripada"
 
 #: services/models.py:734
 msgid "Target / Extent"
@@ -2346,7 +2346,7 @@ msgstr "Cilj / Stepen"
 
 #: services/models.py:735
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Ciljevi / Opsezi"
 
 #: services/models.py:759
 msgid "Provider"
@@ -2495,13 +2495,15 @@ msgstr "Režim isključivanja"
 
 #: services/models.py:927
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Tajmer isključivanja"
 
 #: services/models.py:928
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Vreme u sekundama kada je pokrenuto isključivanje. Ako se desi da se UPS "
+"vrati pre nego što je vreme isteklo isključivanja je otkazano."
 
 #: services/models.py:933
 msgid "UPS Master User Password"
@@ -2513,11 +2515,11 @@ msgstr "Dodatni korisnici (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Daljinsko nadgledanje"
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Pošalji Email o promeni statusa"
 
 #: services/models.py:945
 msgid "To email"
@@ -2525,7 +2527,7 @@ msgstr ""
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Odredišna email adresa. Odvojiti email adrese sa tačka-zarezom."
 
 #: services/models.py:951
 msgid "Email Subject"
@@ -2612,6 +2614,8 @@ msgstr "Pozdravni baner prikazan od strane FTP-a prilikom prve konekcije."
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Koristite ovu opciju da biste zamenili masku kreiranja datoteke (077 je "
+"podrazumevano)."
 
 #: services/models.py:1023
 msgid "Enable FXP"
@@ -2619,11 +2623,11 @@ msgstr "Omogući FXP"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Dozvoli nastavak Transfera"
 
 #: services/models.py:1027
 msgid "Always Chroot"
-msgstr ""
+msgstr "Uvek Chroot"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
@@ -2653,6 +2657,8 @@ msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Minimalna port izdvojen za PASV stil konekcije podataka (0 = koristiti bilo "
+"port)."
 
 #: services/models.py:1048
 msgid "Maximum passive port"
@@ -2669,6 +2675,14 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Maksimalna port izdvojen za PASV stil konekcije podataka (0 = koristiti bilo "
+"koji port). Pasivne portove ograničava opseg portova koje će server "
+"izabrati prilikom slanja PASV komande od klijenta. Server će nasumično "
+"izabrati broj u okviru određenog opsega sve dok se ne pronađe otvoren port. "
+"Izabrani opseg portova mora biti u ne-privilegovanom opsegu (npr. veći ili "
+"jednak 1024). Preporučuje se da izabrani opseg mora biti dovoljno veliki da "
+"obradi mnogo istovremenih pasivnih konekcija (na primer, 49152-65534, IANA-"
+"registrovani kratkotrajni opseg portova)."
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
@@ -2900,21 +2914,24 @@ msgstr "Dozvoliti anonimno povezivanje"
 
 #: services/models.py:1298
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root vezivanje DN"
 
+# directory server = katalog server
 #: services/models.py:1300
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Specifično ime sa kojima se vezuje katalog server, npr. cn = admin, dc = "
+"test, dc = org"
 
 #: services/models.py:1304
 msgid "Root bind password"
-msgstr ""
+msgstr "Root lozinka za vezivanje"
 
 #: services/models.py:1306
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Akreditivi sa kojima se vezuje."
 
 #: services/models.py:1311
 msgid "Password Encryption"
