@@ -359,7 +359,7 @@ jail_get_path()
 	return 0
 }
 
-jail_get_ip()
+jail_get_ipv4()
 {
 	local name="${1}"
 
@@ -368,11 +368,11 @@ jail_get_ip()
 		return 1
 	fi
 
-	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $2 }'|cut -f1 -d'/'
+	${WARDEN} list -v "${name}"|awk '/^ipv4:/ { print $2 }'
 	return $?
 }
 
-jail_get_netmask()
+jail_get_alias_ipv4()
 {
 	local name="${1}"
 
@@ -381,8 +381,127 @@ jail_get_netmask()
 		return 1
 	fi
 
-	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $2 }'|cut -f2 -d '/' -s
+	${WARDEN} list -v "${name}"|grep -E '^alias-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
 	return $?
+}
+
+jail_get_bridge_ipv4()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|awk '/^bridge-ipv4:/ { print $2 }'
+	return $?
+}
+
+jail_get_alias_bridge_ipv4()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|grep -E '^alias-bridge-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
+	return $?
+}
+
+jail_get_defaultrouter_ipv4()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|awk '/^defaultrouter-ipv4:/ { print $2 }'
+	return $?
+}
+
+jail_get_ipv6()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|awk '/^ipv6:/ { print $2 }'
+	return $?
+}
+
+jail_get_alias_ipv6()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|grep -E '^alias-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
+	return $?
+}
+
+jail_get_bridge_ipv6()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|awk '/^bridge-ipv6:/ { print $2 }'
+	return $?
+}
+
+jail_get_alias_bridge_ipv6()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|grep -E '^alias-bridge-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
+	return $?
+}
+
+jail_get_defaultrouter_ipv6()
+{
+	local name="${1}"
+
+	if [ -z "${name}" ]
+	then
+		return 1
+	fi
+
+	${WARDEN} list -v "${name}"|awk '/^defaultrouter-ipv6:/ { print $2 }'
+	return $?
+}
+
+jail_get_ip_and_netmask()
+{
+	local ip="${1}"
+
+	if [ -z "${ip}" ]
+	then
+		return 1
+	fi
+
+	JIP=`echo "${ip}" | cut -f1 -d'/'`
+	JMASK=`echo "${ip}" | cut -f2 -d'/' -s`
+
+	return 0
 }
 
 jail_get_autostart()
@@ -394,7 +513,7 @@ jail_get_autostart()
 		return 1
 	fi
 
-	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $3 }'
+	${WARDEN} list -v "${name}"|awk '/^autostart:/ { print $2 }'
 	return $?
 }
 
@@ -407,7 +526,7 @@ jail_get_status()
 		return 1
 	fi
 
-	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $4 }'
+	${WARDEN} list -v "${name}"|awk '/^status:/ { print $2 }'
 	return $?
 }
 
@@ -420,7 +539,7 @@ jail_get_type()
 		return 1
 	fi
 
-	${WARDEN} list|tail +3|awk -v name="^${name}\$" '$1 ~ name { print $5 }'
+	${WARDEN} list -v "${name}"|awk '/^type:/ { print $2 }'
 	return $?
 }
 
