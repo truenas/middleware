@@ -49,6 +49,19 @@ class JailsFAdmin(BaseFreeAdmin):
     icon_view = u"ServicesIcon"
 
     resource = JailsResource
+    exclude_fields = (
+        'jail_id',
+        'jail_ipv4',
+        'jail_alias_ipv4',
+        'jail_bridge_ipv4',
+        'jail_alias_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
+        'jail_ipv6',
+        'jail_alias_ipv6',
+        'jail_bridge_ipv6',
+        'jail_alias_bridge_ipv6',
+        'jail_defaultrouter_ipv6'
+    )
 
     def get_datagrid_columns(self):
         columns = []
@@ -56,12 +69,6 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_host',
             'label': _('Jail'),
-            'sortable': True,
-        })
-
-        columns.append({
-            'name': 'jail_ip',
-            'label': _('IP/Netmask'),
             'sortable': True,
         })
 

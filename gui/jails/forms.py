@@ -60,7 +60,8 @@ class JailCreateForm(ModelForm):
         'jail_source',
         'jail_ports',
         'jail_archive',
-        'jail_ip',
+        'jail_ipv4',
+        'jail_ipv6',
     ]
 
     class Meta:
@@ -118,13 +119,14 @@ class JailCreateForm(ModelForm):
                 high_ipv6 = None 
 
         if high_ipv6 is not None:
-            self.fields['jail_ip'].initial = high_ipv6
+            self.fields['jail_ipv6'].initial = high_ipv6
         elif high_ipv4 is not None:
-            self.fields['jail_ip'].initial = high_ipv4
+            self.fields['jail_ipv4'].initial = high_ipv4
 
     def save(self):
         jail_host = self.cleaned_data['jail_host']
-        jail_ip = self.cleaned_data['jail_ip']
+        jail_ipv4 = self.cleaned_data['jail_ipv4']
+        jail_ipv6 = self.cleaned_data['jail_ipv6']
         jail_flags = WARDEN_FLAGS_NONE
 
         w = Warden() 

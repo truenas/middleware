@@ -141,11 +141,71 @@ class JailsManager(models.Manager):
 class Jails(Model):
     objects = JailsManager()
 
-    jail_host = models.CharField(max_length=120)
-    jail_ip = models.CharField(max_length=255)
-    jail_autostart = models.CharField(max_length=120)
-    jail_status = models.CharField(max_length=120)
-    jail_type = models.CharField(max_length=120)
+    jail_host = models.CharField(
+            max_length=120
+            )
+    jail_ipv4 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_alias_ipv4 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_bridge_ipv4 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_alias_bridge_ipv4 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_defaultrouter_ipv4 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_ipv6 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_alias_ipv6 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_bridge_ipv6 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_alias_bridge_ipv6 = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_defaultrouter_ipv6 = models.CharField( 
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_autostart = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True
+            )
+    jail_status = models.CharField(
+            max_length=120
+            )
+    jail_type = models.CharField(
+            max_length=120
+            )
+
 
     def delete(self):
         Warden().delete(jail=self.jail_host)
