@@ -40,8 +40,25 @@ generate_plugins_conf()
 	" | \
 	while read -r name jail enabled port ppath
 	do
-		local ip=$(jail_get_ip "${jail}")
+		local ipv4=$(jail_get_ipv4 "${jail}")
+		local ipv6=$(jail_get_ipv6 "${jail}")
 		local jpath=$(jail_get_path "${jail}")
+		local ip=
+
+		#
+		# Default to IPv4 now if it exists, I'm unsure if
+		# this will work with IPv6, needs testing.
+		#
+		if [ -n "${ipv4}" ]
+		then
+			jail_get_ip_and_netmask "${ipv4}"
+			ip="${JIP}"
+
+		elif [ -n "${ipv6}" ]
+		then
+			jail_get_ip_and_netmask "${ipv6}"
+			ip="${JIP}"
+		fi
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
 		location ~ /plugins/${name}/ {

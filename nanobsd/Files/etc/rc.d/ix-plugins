@@ -57,13 +57,27 @@ plugins_start()
 			continue
 		fi
 
-		local jip=$(jail_get_ip "${jail}")
+		local jip=
+		local ipv4=$(jail_get_ipv4 "${jail}")
+		local ipv6=$(jail_get_ipv6 "${jail}")
+		if [ -n "${ipv4}" ]
+		then
+			jail_get_ip_and_netmask "${ipv4}"
+			jip="${JIP}"
+		
+		elif [ -n "${ipv6}" ]
+		then
+			jail_get_ip_and_netmask "${ipv6}"
+			jip="${JIP}"
+		fi
+
 		local jid=$(jail_get_jid "${jail}")
 		if [ -z "${jid}" ]
 		then
 			continue
 		fi
 
+		echo jexec ${jid} "${path}/control" start "${jip}" "${port}"
 		jexec ${jid} "${path}/control" start "${jip}" "${port}" 2>/dev/null
 		if [ "$?" != "0" ]
 		then
