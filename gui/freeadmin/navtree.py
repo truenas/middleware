@@ -46,6 +46,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 
+from freenasUI.jails.models import Jails
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -258,8 +259,10 @@ class NavTree(object):
                     opt)
 
         self.replace_navs(tree_roots)
-        if notifier()._started_plugins_jail():
-            self._get_plugins_nodes(request)
+
+        for j in Jails.objects.all():
+            if j.jail_type == 'pluginjail' and j.jail_status == 'Running':
+                self._get_plugins_nodes(request, j)
 
     def _generate_app(self, app, request, tree_roots, childs_of):
 
@@ -463,12 +466,12 @@ class NavTree(object):
             })
         return plugin, url, data
 
-    def _get_plugins_nodes(self, request):
+    def _get_plugins_nodes(self, request, jail):
 
         host = get_base_url(request)
         args = map(
             lambda y: (y, host, request),
-            Plugins.objects.filter(plugin_enabled=True))
+            Plugins.objects.filter(plugin_enabled=True, plugin_jail=jail.jail_host))
 
         pool = eventlet.GreenPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
