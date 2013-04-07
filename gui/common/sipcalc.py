@@ -61,7 +61,12 @@ class sipcalc_base_type(object):
         return res
 
     def __str__(self):
-        return self.args[0]
+        self_str = None 
+        if self.is_ipv4():
+            self_str = "%s/%d" % (self.host_address, self.network_mask_bits)
+        elif self.is_ipv6():
+            self_str = "%s/%d" % (self.expanded_address, self.prefix_length)
+        return self_str
 
     def __lt__(self, other):
         return self.to_decimal() < other
@@ -355,15 +360,17 @@ class sipcalc_ipv4_type(sipcalc_base_type):
         oct3 = (num >> 8) & 0xff
         oct4 = (num >> 0) & 0xff
 
-        addr = "%d.%d.%d.%d" % (oct1, oct2, oct3, oct4)
+        addr = "%d.%d.%d.%d/%d" % (oct1, oct2, oct3, oct4, self.network_mask_bits)
         return addr
 
     def in_network(self, addr):
         res = False
 
         st_addr = sipcalc_type(addr).host_address_dec
-        st_start = sipcalc_type(self.network_range[0]).host_address_dec
-        st_end = sipcalc_type(self.network_range[1]).host_address_dec
+        st_start = sipcalc_type("%s/%d" % (self.network_range[0],
+            self.network_mask_bits)).host_address_dec
+        st_end = sipcalc_type("%s/%d" % (self.network_range[1],
+            self.network_mask_bits)).host_address_dec
 
         if st_addr >= st_start and st_addr <= st_end:
             res = True 
@@ -515,6 +522,7 @@ class sipcalc_ipv6_type(sipcalc_base_type):
                     addr += ':'
                 i += 1 
 
+        addr = "%s/%d" % (addr, self.prefix_length)
         return addr
    
     def in_network(self, addr):
