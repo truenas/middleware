@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-06 22:53+0200\n"
+"PO-Revision-Date: 2013-04-07 22:50+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -4426,7 +4426,7 @@ msgstr ""
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "Sledeći diskovi već imaju testove za ovaj tip: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -4524,17 +4524,17 @@ msgid ""
 msgstr ""
 
 #: system/models.py:112 templates/system/ntpserver.html:8
-#, fuzzy
 msgid "Prefer"
-msgstr "Preporučeni"
+msgstr "Poželjan"
 
 #: system/models.py:114
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
-"Označava server kao prioritetan. Sve ostale stvari su jednake, ovaj host će "
-"biti izabran za sinhronizaciju između skupa ispravno operativnih hostova."
+"Označava server kao prioritetan. Sve ostale stvari koje su jednake, ovaj "
+"host će biti izabran za sinhronizaciju između skupa ispravno operativnih "
+"hostova."
 
 #: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
@@ -5519,9 +5519,10 @@ msgstr ""
 msgid "NFS Settings"
 msgstr ""
 
+# dodatna komponenta - dodatak
 #: templates/services/core.html:103 templates/services/core.html.py:105
 msgid "Plugins Settings"
-msgstr "Podešavanja komponenti"
+msgstr "Podešavanja dodatnih komponenti"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
@@ -6054,7 +6055,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:63
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Detach Volume"
@@ -6081,7 +6082,7 @@ msgstr "Status volumena"
 
 #: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Uništi skup podataka"
 
 #: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
 msgid "Destroy ZFS Volume"
@@ -6169,7 +6170,7 @@ msgstr "Ažuriranje firmvera"
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
 msgid "Import Plugins Jail"
-msgstr ""
+msgstr "Uvezi dodatne komponente za JAIL"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6253,7 +6254,7 @@ msgstr "Ni jedan rsync zadatak nije definisan"
 
 #: templates/system/rsync.html:54
 msgid "Add rsync task"
-msgstr "Dodati rsync modul"
+msgstr "Dodaj rsync modul"
 
 #: templates/system/rsync.html:56
 msgid "Add Rsync"
@@ -6308,11 +6309,11 @@ msgstr "Nije definisan sysctl."
 
 #: templates/system/sysctl.html:40
 msgid "Add sysctl"
-msgstr "Dodati sysctl"
+msgstr "Dodaj sysctl"
 
 #: templates/system/sysctl.html:42
 msgid "Add Sysctl"
-msgstr "Dodati Sysctl"
+msgstr "Dodaj Sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6343,17 +6344,16 @@ msgid "Connected through"
 msgstr "Povezani preko"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Ni jedan rsync modul nije definisan"
+msgstr "Nije definisano Tunable podešavanje."
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
-msgstr ""
+msgstr "Dodaj Tunable"
 
 #: templates/system/tunable.html:42
 msgid "Add Loader"
-msgstr "Dodati modul za učitavanje "
+msgstr "Dodati modul za učitavanje"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6372,7 +6372,7 @@ msgstr "Status volumena %s je DEGRADIRAN"
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "Volumen %(volumen)s status je %(status)s: %(poruka)s"
 
 #: tools/alert.py:119
 #, python-format
@@ -6398,6 +6398,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Sledeće IP adrese su povezane na iSCSI Portal ali nisu pronađene u sistemu: "
+"%s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
@@ -6444,13 +6446,11 @@ msgstr "Lokalna pristup"
 msgid "Guest Account"
 msgstr "Gostinski korisnički nalog"
 
-#, fuzzy
 msgid "Loader"
-msgstr "Prosečno Opterećenje"
+msgstr "Modula za učitavanje"
 
-#, fuzzy
 msgid "Loaders"
-msgstr "Prosečno Opterećenje"
+msgstr "Moduli za učitavanje"
 
 msgid "Are you sure you want to export?"
 msgstr "Da li ste sigurni da želite da izvezete?"

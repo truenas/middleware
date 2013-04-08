@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-04-06 22:54+0200\n"
+"PO-Revision-Date: 2013-04-07 22:11+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Izveštaj"
+msgstr "Izveštavanje"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -33,7 +33,7 @@ msgstr "Informacije o Sistemu"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
-msgstr "Podešavanje Mreže"
+msgstr "Mrežna Podešavanja"
 
 #: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
