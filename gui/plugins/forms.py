@@ -221,12 +221,16 @@ class PBIUploadForm(Form):
     def done(self, *args, **kwargs):
         pjail = self.cleaned_data.get('pjail')
         notifier().install_pbi(pjail)
-#        notifier().restart("plugins")
+        notifier().restart("plugins")
 
 
 class PBIUpdateForm(PBIUploadForm):
+    def __init__(self, *args, **kwargs):
+        self.plugin = kwargs.pop('plugin') 
+        super(PBIUpdateForm, self).__init__(*args, **kwargs)
+
     def done(self, *args, **kwargs):
-        notifier().update_pbi()
+        notifier().update_pbi(self.plugin)
         notifier().restart("plugins")
 
 

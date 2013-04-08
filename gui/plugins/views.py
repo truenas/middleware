@@ -88,10 +88,13 @@ def plugin_delete(request, plugin_id):
 
 
 def plugin_update(request, plugin_id):
+    plugin_id = int(plugin_id)
+    plugin = models.Plugins.objects.get(id=plugin_id)
+
     pj = PluginsJail.objects.order_by("-id")[0]
     notifier().change_upload_location(pj.plugins_path)
     if request.method == "POST":
-        form = forms.PBIUpdateForm(request.POST, request.FILES)
+        form = forms.PBIUpdateForm(request.POST, request.FILES, plugin=plugin)
         if form.is_valid():
             form.done()
             return JsonResp(request,
@@ -109,7 +112,7 @@ def plugin_update(request, plugin_id):
                 )
             return resp
     else:
-        form = forms.PBIUpdateForm()
+        form = forms.PBIUpdateForm(plugin=plugin)
 
     return render(request, "plugins/plugin_update.html", {
         'form': form,
