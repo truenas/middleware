@@ -2567,11 +2567,11 @@ class notifier:
 
         return pjail, jail
 
-    def _get_pbi_info(self, pbifile, jid):
+    def _get_pbi_info(self, pbifile):
         pbi = pbiname = prefix = name = version = arch = None
 
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
-        out = p.info(True, jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
+        out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
             raise MiddlewareError("This file was not identified as in PBI "
@@ -2609,24 +2609,46 @@ class notifier:
 
         return  plugin
 
-    def update_pbi(self):
+    def update_pbi(self, plugin=None):
+        from freenasUI.jails.models import JailsConfiguration
         ret = False
 
-        # Get the jail
-        pjail, jail = self._get_plugins_jail()
+        if not plugin:
+            raise MiddlewareError("plugin is NULL")
+
+        (c, conn) = self.__open_db(ret_conn=True)
+        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
+        row = c.fetchone()
+        if not row:
+            log.debug("update_pbi: plugins plugin not in database")
+            return False
+        
+        jail_name = row[0]
+
+        jail = None
+        for j in Jls():
+            if j.hostname == jail_name:
+                jail = j
+                break
+
         if jail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
+            return ret
+
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+
+        jail_root = jc.jc_path
+        jail_path = "%s/%s" % (jail_root, jail_name)
+        plugins_path = "%s/%s" % (jail_path, ".plugins")
 
         # Get new PBI settings
         newpbi, newpbiname, newprefix, newname, newversion, newarch = self._get_pbi_info(
-            "/mnt/plugins/.freenas/pbifile.pbi", jail.jid)
+            "/var/tmp/firmware/pbifile.pbi")
 
         plugin = self._get_plugin_info(newname)
 
         pbitemp = "/var/tmp/pbi"
-        newpbifile = "%s/%s" % (pjail.plugins_path, newpbi)
-        oldpbifile = "%s/%s.pbi" % (pjail.plugins_path, plugin.plugin_pbiname)
+        newpbifile = "%s/%s" % (plugins_path, newpbi)
+        oldpbifile = "%s/%s.pbi" % (plugins_path, plugin.plugin_pbiname)
 
         # Rename PBI to it's actual name
         self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
@@ -2642,9 +2664,7 @@ class notifier:
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
         newpbiname = "%s.pbi" % newpbiname
 
-        jailpath = "%s/%s" % (pjail.jail_path, pjail.jail_name)
-
-        self.__umount_filesystems_within("%s%s" % (jailpath, newprefix))
+        self.__umount_filesystems_within("%s%s" % (jail_path, newprefix))
 
         # Create a PBI from the installed version
         p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
@@ -2655,7 +2675,7 @@ class notifier:
 
         # Copy the old PBI over to our temporary PBI workspace
         out = Jexec(jid=jail.jid, command="/bin/cp %s/%s %s" % (
-            pbitemp, oldpbiname, "/mnt/plugins/")).run()
+            pbitemp, oldpbiname, "/.plugins/")).run()
         if out[0] != 0:
             raise MiddlewareError("Unable to copy old PBI file to plugins directory")
 
@@ -2663,7 +2683,7 @@ class notifier:
         newpbifile = "%s/%s" % (pbitemp, newpbiname)
 
         # Copy the new PBI over to our temporary PBI workspace
-        out = Jexec(jid=jail.jid, command="/bin/cp /mnt/plugins/%s %s/" % (
+        out = Jexec(jid=jail.jid, command="/bin/cp /.plugins/%s %s/" % (
             newpbiname, pbitemp)).run()
         if out[0] != 0:
             raise MiddlewareError("Unable to copy new PBI file to plugins directory")
@@ -2678,7 +2698,7 @@ class notifier:
         pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
             plugin.plugin_version, newversion, plugin.plugin_arch)
 
-        fullpbppath = "%s/%s/%s" % (jailpath, pbitemp, pbpfile)
+        fullpbppath = "%s/%s/%s" % (jail_path, pbitemp, pbpfile)
         if not os.access(fullpbppath, os.F_OK):
             raise MiddlewareError("Unable to create PBP file")
 
@@ -2864,12 +2884,13 @@ class notifier:
         ret = False
 
         (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT jail_name, jail_path FROM services_pluginsjail ORDER BY -id LIMIT 1")
+        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
         row = c.fetchone()
         if not row:
-            log.debug("delete_pbi: plugins jail info not in database")
+            log.debug("delete_pbi: plugins plugin not in database")
             return False
-        jail_name, jail_path = row
+        
+        jail_name = row[0]
 
         jail = None
         for j in Jls():
@@ -2880,9 +2901,12 @@ class notifier:
         if jail is None:
             return ret
 
+        jail_path = j.path
+
         info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
         res = info.run(jail=True, jid=jail.jid)
         plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
+
         # Plugin is not installed in the jail at all
         if res[0] == 0 and plugin.plugin_name not in plugins:
             plugin.delete()

@@ -36,6 +36,9 @@ import logging
 log = logging.getLogger('jails.jails')
 
 
+# 
+# XXX - Should implement order_by() and filter() methods
+# 
 class JailsQuerySet(models.query.QuerySet):
     def __init__(self, model=None, query=None, using=None):
         super(JailsQuerySet, self).__init__(model, query, using)
