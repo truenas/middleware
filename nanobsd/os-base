@@ -771,11 +771,7 @@ last_orders() {
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
 		${NANO_XZ} --keep --verbose -9 < "$firmware_img" > \
-<<<<<<< HEAD
-			"$gui_upgrade_bname.xz"
-=======
 		    "$gui_upgrade_bname.xz"
->>>>>>> 6b794d5... Bring trunk changes into pluginjail branch (including updating to FreeBSD
 
 		tar -cpvf - \
 			-C "$NANO_WORLDDIR" \
@@ -786,12 +782,7 @@ last_orders() {
 				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/} \
-<<<<<<< HEAD
-			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
-=======
 		    | ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
->>>>>>> 6b794d5... Bring trunk changes into pluginjail branch (including updating to FreeBSD
-
 		) > "${gui_image_log}" 2>&1
 
 	fi
