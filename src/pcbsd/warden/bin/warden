@@ -350,6 +350,26 @@ Example:
 };
 
 
+help_bspkgng()
+{
+ title
+ echo "Help bspkgng
+
+BootStraps the pkgng package system, and installs the TrueOS repository
+and utilities into a jail.
+
+Usage:
+
+  warden bspkgng <Jail>
+
+Example:
+
+  warden bspkgng myjail
+"
+};
+
+
+
 help_auto()
 {
  title
@@ -556,6 +576,7 @@ Available Flags:
   --ipv6 <ip/mask>             (Set primary IPv6 address for jail)
   --src                        (Includes /usr/src system source)
   --ports                      (Includes the ports tree)
+  --vanilla                    (Don't install PC-BSD pkgng repo and utilities)
   --startauto                  (Start this jail at system boot)
   --portjail                   (Make this a portjail)
   --pluginjail                 (Make this a pluginjail)
@@ -583,6 +604,7 @@ case "$1" in
 
    help) case "$2" in
              auto) help_auto ;;
+          bspkgng) help_bspkgng ;;
            create) help_create ;;
            start) help_start ;;
            stop) help_stop ;;
@@ -746,6 +768,13 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          esac
          ;;
 
+ bspkgng) require_root
+    JAILNAME="${2}"
+         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         bootstrap_pkgng "${JDIR}/JAILNAMEIP"
+         ;;
+
    auto) require_root
 	 JAILNAME="${2}"
 
@@ -819,7 +848,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  import) require_root
 	 # The user wants to import a jail, lets do it!
          IFILE="$2"
-         #if [ ! -e "$IFILE" ]; then exit_err "Invalid filename: ${IFILE}"; fi
+         if [ ! -e "$IFILE" ]; then exit_err "Invalid filename: ${IFILE}"; fi
 
          HOST=`basename "${IFILE}" | sed 's|\.wdn$||'`
 
@@ -1001,7 +1030,10 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          SRC="NO"
          PORTS="NO"
          AUTO="NO"
+         VANILLA="NO"
+         VERSION=
          JAILTYPE="standard"
+         ARCHIVE_FILE= 
          while [ $# -gt 0 ]; do
            case $1 in
              --ipv4) shift
@@ -1016,6 +1048,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
              --src) SRC="YES" ;;
              --ports) PORTS="YES" ;;
              --startauto) AUTO="YES" ;;
+             --vanilla) VANILLA="YES" ;;
              --portjail) JAILTYPE="portjail" ;;
              --pluginjail) JAILTYPE="pluginjail" ;; 
              --linuxjail) JAILTYPE="linuxjail" ; shift
@@ -1059,8 +1092,22 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          # Check to ensure this jail does not already exist
          if [ -e "${JDIR}/${JAILNAME}" ]; then exit_err "A jail with this name already exists!"; fi  
 
+          #
+          # Redonkulous number of parameters that exceeds 9,
+          # export into environment
+          #
+          export IP4
+          export IP6
+          export SRC
+          export PORTS
+          export AUTO
+          export JAILTYPE
+          export ARCHIVE_FILE
+          export VERSION
+          export VANILLA
+
           # Passed all tests, create the jail now
-          ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}" "${IP4}" "${IP6}" "${SRC}" "${PORTS}" "${AUTO}" "${JAILTYPE}" "${ARCHIVE_FILE}" "${VERSION}"
+          ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}"
 
         ;;
   delete) require_root
