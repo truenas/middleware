@@ -371,6 +371,29 @@ getZFSTank() {
   return 1
 }
 
+# Get the mountpoint for a ZFS name
+# Arg1 = name
+getZFSMountpoint() {
+   local _chkName="${1}"
+   if [ -z "${_chkName}" ]; then return 1 ; fi
+
+   zfs list "${_chkName}" | tail -1 | awk '{ print $5 }'
+}
+
+# Get the ZFS relative path for a path
+# Arg1 = Path
+getZFSRelativePath() {
+   local _chkDir="${1}"
+   local _tank=`getZFSTank "$_chkDir"`
+   local _mp=`getZFSMountpoint "${_tank}"`
+
+   if [ -z "${_tank}" ] ; then return 1 ; fi
+
+   local _name="${_chkDir#${_mp}}"
+   echo "${_name}"
+   return 0
+}
+
 # Check if an address is IPv6
 isV6() {
   echo ${1} | grep -q ":"
