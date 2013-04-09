@@ -337,12 +337,11 @@ if [ -s "${tmp_rcconf}" ] ; then
    fi
 fi
 
-fw_enable=`sysctl -n net.inet.ip.fw.enable 2>/dev/null`
-if [ -z "${fw_enable}" -o "${fw_enable}" = "0" ] ; then
+ipfw list | grep -Eq '^00500 divert' 2>/dev/null
+if [ "$?" != "0" ] ; then
    /etc/rc.d/ipfw restart
    ipfw -q add 00050 divert 8668 ip4 from any to any via ${IFACE}
 fi
-
 
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom start script
