@@ -76,14 +76,8 @@ touch /etc/mtab
 # Load our passed values
 JAILNAME="${1}"
 HOST="${1}"
-IP4="${2}"
-IP6="${3}"
-SOURCE="${4}"
-PORTS="${5}"
-STARTUP="${6}"
-JAILTYPE="${7}"
-ARCHIVEFILE="${8}"
-VERSION="${9}"
+
+# Everything else is passed via environmental variables
 
 case "${JAILTYPE}" in
   portjail) PORTJAIL="YES" ;;
@@ -184,7 +178,11 @@ if [ "$LINUXJAIL" = "YES" ] ; then
    if [ $? -eq 0 ] ; then
      # Create ZFS mount
      tank=`getZFSTank "$JDIR"`
+     if [ -z "$tank" ] ; then
+       exit_err "Failed getting ZFS dataset for $JDIR..";
+     fi
      zfs create -o mountpoint=${JAILDIR} -p ${tank}${JAILDIR}
+     if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS dataset"; fi
    else
      mkdir -p "${JAILDIR}"
    fi
@@ -206,7 +204,11 @@ else
    # Running on UFS
    mkdir -p "${JAILDIR}"
    echo "Installing world..."
-   tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
+   if [ -d "${WORLDCHROOT}" ] ; then
+     tar cvf - -C ${WORLDCHROOT} . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
+   else
+     tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
+   fi
    echo "Done"
 fi
 
@@ -224,10 +226,15 @@ if [ "$SOURCE" = "YES" ]
 then
   echo "Installing source..."
   mkdir -p "${JAILDIR}/usr/src"
-  if [ ! -e "/usr/src/COPYRIGHT" ] ; then
-     echo "No system-sources on host.. You will need to manually download these in the jail."
+  cd ${JAILDIR}
+  SYSVER="$(uname -r)"
+  get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz"
+  if [ $? -ne 0 ] ; then
+    echo "Error while downloading the freebsd world."
   else
-    tar cvf - -C /usr/src . 2>/dev/null | tar xvf - -C "${JAILDIR}/usr/src" 2>/dev/null
+    echo "Extracting sources.. May take a while.."
+    tar xvf src.txz -C "${JAILDIR}" 2>/dev/null
+    rm src.txz
     echo "Done"
   fi
 fi
@@ -292,9 +299,20 @@ if [ "$STARTUP" = "YES" ] ; then
   touch "${JMETADIR}/autostart"
 fi
 
+# Allow pinging by default
+echo "allow.raw_sockets=true" > ${JMETADIR}/jail-flags
+
 # Check if we need to copy the timezone file
 if [ -e "/etc/localtime" ] ; then
    cp /etc/localtime ${JAILDIR}/etc/localtime
+fi
+
+# Setup PC-BSD PKGNG repo / utilities
+if [ "$VANILLA" != "YES" ] ; then
+  bootstrap_pkgng "${JAILDIR}"
+  if [ $? -ne 0 ] ; then
+     echo "You can manually re-try by running # warden bspkgng ${IP}"
+  fi
 fi
 
 # Set the default meta-pkg set

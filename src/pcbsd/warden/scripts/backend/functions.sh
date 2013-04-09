@@ -694,6 +694,44 @@ in_ipv6_network()
    return ${res}
 }
 
+bootstrap_pkgng()
+{
+  cd ${1} 
+  SYSVER="$(uname -r)"
+  echo "Boot-strapping pkgng"
+  mkdir -p ${1}/usr/local/etc
+  cp /usr/local/etc/pkg-pubkey.cert ${1}/usr/local/etc/
+
+  echo '#!/bin/sh
+  tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
+  pkg add pkg.txz
+  rm pkg.txz
+  ARCH=$(uname -m)
+  REL=$(uname -r)
+  echo "packagesite: http://getmirror.pcbsd.org/packages/$REL/$ARCH" >/usr/local/etc/pkg.conf
+  echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
+  echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
+  echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
+  pkg install -y pcbsd-utils
+  exit $?
+' > ${1}/bootstrap-pkgng
+  chmod 755 ${1}/bootstrap-pkgng
+
+  if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
+  get_file_from_mirrors "/packages/${SYSVER}/${ARCH}/Latest/pkg.txz" "pkg.txz"
+  if [ $? -eq 0 ] ; then
+    chroot ${1} /bootstrap-pkgng
+    if [ $? -eq 0 ] ; then
+      rm ${1}/bootstrap-pkgng
+      chroot ${1} pc-extractoverlay server --sysinit
+      return 0
+    fi
+  fi
+  echo "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
+  rm ${1}/bootstrap-pkgng
+  return 1
+}
+
 ipv4_configured()
 {
    local iface="${1}"
