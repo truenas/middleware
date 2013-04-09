@@ -812,6 +812,9 @@ class JailsResource(DojoModelResource):
         bundle = super(JailsResource, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
+        bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
+            'id': bundle.obj.id
+        })
         bundle.data['_jail_auto_url'] = reverse('jail_auto', kwargs={
             'id': bundle.obj.id
         })

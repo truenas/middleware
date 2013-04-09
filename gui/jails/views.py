@@ -49,6 +49,10 @@ def jails_home(request):
          'jailsconf': jailsconf
     })
 
+def jail_edit(request, id):
+    log.debug("XXX: jail_edit()")
+    return render(request, 'jails/edit.html', { })
+
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
     return render(request, 'jails/auto.html', { }) 
