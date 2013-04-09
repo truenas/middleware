@@ -29,6 +29,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
+    url(r'^edit/(?P<id>\d+)$', 'jail_edit', name="jail_edit"),
     url(r'^auto/(?P<id>\d+)$', 'jail_auto', name="jail_auto"),
     url(r'^checkup/(?P<id>\d+)$', 'jail_checkup', name="jail_checkup"),
     url(r'^detals/(?P<id>\d+)$', 'jail_details', name="jail_details"),
