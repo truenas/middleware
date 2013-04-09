@@ -43,8 +43,9 @@ if [ -e "${PROGDIR}/bin/warden-gui" ] ; then
    echo "   gui - Launch the GUI menu"
 fi
 
-echo "
+cat<<__EOF__
          auto - Toggles the autostart flag for a jail
+      bspkgng - BootStrap pkgng and setup TrueOS repo
       checkup - Check for updates to a jail
        chroot - Launches chroot into a jail 
        create - Creates a new jail 
@@ -68,7 +69,7 @@ echo "
 zfsrevertsnap - Revert jail to a snapshot
    zfsrmclone - Remove a clone directory
     zfsrmsnap - Remove snapshot of a jail
-"
+__EOF__
 };
 
 help_get()
