@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-08 22:37+0200\n"
+"PO-Revision-Date: 2013-04-09 22:50+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -4417,7 +4417,7 @@ msgstr ""
 
 #: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
-msgstr ""
+msgstr "Max Poll bi trebalo da bude veći nego Min Poll"
 
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
@@ -4463,6 +4463,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Da bi koristili rsync preko SSH potreban je korisnik<br />sa javnim ključem "
+"(DSA/ECDSA/GER) postavljen u matični direktorijum."
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
@@ -5530,7 +5532,7 @@ msgstr "Instalirati Jail PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
-msgstr ""
+msgstr "Rsync Podešavanja"
 
 #: templates/services/core.html:128
 msgid "SNMP Settings"
@@ -6022,11 +6024,11 @@ msgstr ""
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
-msgstr ""
+msgstr "svakodnevni"
 
 #: templates/storage/tasks.html:51
 msgid "on every"
-msgstr ""
+msgstr "na svakom"
 
 #: templates/storage/tasks.html:147
 msgid "There are no periodic snapshots scheduled."
@@ -6039,11 +6041,11 @@ msgstr "Imate %(upotrebljeno)s od upotrebljenog prostora u ovom volumenu"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Urediti ZFS Volumen"
 
 #: templates/storage/volumes.html:60
 msgid "Used"
-msgstr ""
+msgstr "Upotrebljen"
 
 #: templates/storage/volumes.html:61
 msgid "Available"
@@ -6051,7 +6053,7 @@ msgstr "Slobodno"
 
 #: templates/storage/volumes.html:62
 msgid "Size"
-msgstr ""
+msgstr "Veličina"
 
 #: templates/storage/volumes.html:63
 msgid "Status"
@@ -6098,7 +6100,7 @@ msgstr "Volumen za proširivanje"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
-msgstr ""
+msgstr "Diskovi članovi"
 
 #: templates/storage/wizard.html:73
 msgid "Group type"
