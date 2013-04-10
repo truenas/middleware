@@ -163,7 +163,7 @@ for replication in replication_tasks:
     # Test if there is work to do, if so, own them
     MNTLOCK.lock()
     log.debug("Checking dataset %s" % (localfs))
-    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs), debug)
+    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s' % (localfs), debug)
     output, error = zfsproc.communicate()
     if zfsproc.returncode:
         log.warn('Could not determine last available snapshot for dataset %s: %s' % (
@@ -174,6 +174,7 @@ for replication in replication_tasks:
         continue
     if output != '':
         snapshots_list = output.split('\n')
+        snapshots_list.reverse()
         found_latest = False
         for snapshot_item in snapshots_list:
             if snapshot_item != '':
@@ -217,7 +218,7 @@ for replication in replication_tasks:
 
     if known_latest_snapshot != '' and not resetonce:
         # Check if it matches remote snapshot
-        rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 1 %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
+        rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
         sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':
@@ -291,7 +292,7 @@ Hello,
         log.debug("Replication result: %s" % (msg))
 
         # Determine if the remote side have the snapshot we have now.
-        rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 1 %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
+        rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
         sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':
