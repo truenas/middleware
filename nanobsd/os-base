@@ -442,7 +442,7 @@ customize_cmd add_pbi_manager
 
 add_pc_extractoverlay()
 {
-	local src dst share
+	local pce src dst pcbsd bin
 
 	pce="pc-extractoverlay"
 	src="${AVATAR_ROOT}/src/pcbsd/${pce}"
