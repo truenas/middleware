@@ -875,7 +875,6 @@ require([
         } else {
             domStyle.set("addVolLabel", "display", "");
             domStyle.set("extendVolLabel", "display", "none");
-            domStyle.set("vol_extend_enc_warn", "display", "none");
         }
         var disks = registry.byId("wizarddisks");
         var d = disks.get('value');
