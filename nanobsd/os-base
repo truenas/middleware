@@ -155,6 +155,7 @@ WITHOUT_SHAREDOCS=true
 . ${NANO_CFG_BASE}/common
 
 add_port archivers/lzo2
+add_port www/aria2
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
