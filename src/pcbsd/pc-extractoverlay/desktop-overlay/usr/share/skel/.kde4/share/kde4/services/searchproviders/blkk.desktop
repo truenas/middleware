@@ -1,0 +1,8 @@
+[Desktop Entry]
+Charset=
+Hidden=false
+Keys=blkk
+Name=Blekko
+Query=http://blekko.com/ws/\\{@}
+ServiceTypes=SearchProvider
+Type=Service

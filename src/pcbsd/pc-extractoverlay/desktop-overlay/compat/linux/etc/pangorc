@@ -1,0 +1,4 @@
+[Pango]
+ModuleFiles=/compat/linux/etc/pango/pango.modules
+[PangoX]
+AliasFiles=/compat/linux/etc/pango/pangox.aliases
