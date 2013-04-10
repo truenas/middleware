@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-RELEASE-p1
+Release Notes for FreeNAS 8.3.1-RELEASE-p2
 
 *** IMPORTANT ***
 
@@ -136,6 +136,14 @@ route.
 
 The plugin jail currently doesn't work properly if the external interface is
 a vlan pseudo-device.
+
+Changes since 8.3.1-RELEASE-p1:
+
+Bugfixes
+========================
+
+1. Fix volume manager when there is no other volume to be extended
+
 
 Changes since 8.3.1-RELEASE:
 
