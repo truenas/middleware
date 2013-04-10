@@ -305,7 +305,7 @@ fi
 if [ "$VANILLA" != "YES" ] ; then
   bootstrap_pkgng "${JAILDIR}"
   if [ $? -ne 0 ] ; then
-     echo "You can manually re-try by running # warden bspkgng ${IP}"
+     echo "You can manually re-try by running # warden bspkgng ${JAILNAME}"
   fi
 fi
 

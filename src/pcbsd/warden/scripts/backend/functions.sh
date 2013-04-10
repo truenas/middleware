@@ -701,29 +701,57 @@ in_ipv6_network()
    return ${res}
 }
 
+install_pc_extractoverlay()
+{
+  if [ -z "${1}" ] ; then
+    return 1 
+  fi 
+
+  mkdir -p ${1}/usr/local/bin
+  mkdir -p ${1}/usr/local/share/pcbsd/conf
+  mkdir -p ${1}/usr/local/share/pcbsd/distfiles
+
+  cp /usr/local/bin/pc-extractoverlay ${1}/usr/local/bin/
+  chmod 755 ${1}/usr/local/bin/pc-extractoverlay
+
+  cp /usr/local/share/pcbsd/conf/server-excludes \
+    ${1}/usr/local/share/pcbsd/conf
+  cp /usr/local/share/pcbsd/distfiles/server-overlay.txz \
+    ${1}/usr/local/share/pcbsd/distfiles
+
+  return 0
+}
+
 bootstrap_pkgng()
 {
   cd ${1} 
   SYSVER="${FREEBSD_RELEASE}"
   echo "Boot-strapping pkgng"
   mkdir -p ${1}/usr/local/etc
-  cp /usr/local/etc/pkg-pubkey.cert ${1}/usr/local/etc/
+  pubcert="/usr/local/etc/pkg-pubkey.cert"
 
-  echo '#!/bin/sh
-  tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
-  pkg add pkg.txz
-  rm pkg.txz
+  cp "${pubcert}" ${1}/usr/local/etc
+  install_pc_extractoverlay "${1}"
 
-  ARCH=$(uname -m)
-  REL="${FREEBSD_RELEASE}"
+  get_mirror
+  MIRRORURL="$VAL"
 
-  echo "packagesite: http://getmirror.pcbsd.org/packages/$REL/$ARCH" >/usr/local/etc/pkg.conf
-  echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
-  echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
-  echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
-  pkg install -y pcbsd-utils
-  exit $?
-' > ${1}/bootstrap-pkgng
+cat<<__EOF__>${1}/bootstrap-pkgng
+#!/bin/sh
+tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
+pkg add pkg.txz
+rm pkg.txz
+
+ARCH=$(uname -m)
+
+echo "packagesite: ${MIRRORURL}/packages/${FREEBSD_RELEASE}/${ARCH}" >/usr/local/etc/pkg.conf
+echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
+echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
+echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
+pkg install -y pcbsd-utils
+exit $?
+__EOF__
+
   chmod 755 ${1}/bootstrap-pkgng
 
   if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
