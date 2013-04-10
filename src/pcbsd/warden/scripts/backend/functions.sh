@@ -111,7 +111,7 @@ downloadpluginjail() {
 downloadchroot() {
   # XXX If this is PCBSD, pbreg get /PC-BSD/Version
   SYSVER=`uname -r | cut -f1 -d'-'`
-  FBSD_TARBALL="fbsd-release.tbz"
+  FBSD_TARBALL="fbsd-release.txz"
   FBSD_TARBALL_CKSUM="${FBSD_TARBALL}.md5"
 
   # Set the mirror URL, may be overridden by setting MIRRORURL environment variable
