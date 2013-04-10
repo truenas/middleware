@@ -123,15 +123,9 @@ if [ ! -z "$ARCHIVEFILE" ] ; then
    WORLDCHROOT="$ARCHIVEFILE"
 fi
 
-if [ -z "${HOST}" -o -z "$SOURCE" -o -z "${PORTS}" -o -z "${STARTUP}" ] 
-then
-  if [ -z "$HOST" ] ; then
-     echo "ERROR: Missing hostname!"
-  else
-     echo "ERROR: Missing required data!"
-  fi
-
-  exit 6
+if [ -z "$HOST" ] ; then
+   echo "ERROR: Missing hostname!"
+exit 6
 fi
 
 JAILDIR="${JDIR}/${JAILNAME}"
