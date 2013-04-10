@@ -456,10 +456,13 @@ add_pc_extractoverlay()
 	cp ${src}/${pce} ${bin}/${pce}
 	chmod 755 ${bin}/${pce}
 
+    mkdir -p ${dst}/etc
 	mkdir -p ${pcbsd}/conf
 	mkdir -p ${pcbsd}/distfiles
 
 	cp ${src}/server-excludes ${pcbsd}/conf
+	cp ${src}/server-overlay/usr/local/etc/pkg-pubkey.cert ${dst}/etc
+
 	tar -cvJf ${pcbsd}/distfiles/server-overlay.txz -C ${src}/server-overlay .
 }
 customize_cmd add_pc_extractoverlay
