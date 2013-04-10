@@ -173,6 +173,7 @@ add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
+add_port net/vblade
 add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db46
