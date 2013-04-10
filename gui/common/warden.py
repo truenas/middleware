@@ -291,6 +291,7 @@ class warden_base(object):
         self.error = None
         self.wtmp = None
         self.jdir = None
+        self.release = None
 
         if not hasattr(self, "jail"):
             self.jail = None
@@ -361,6 +362,11 @@ class warden_base(object):
                 if len(parts) > 1:
                     self.jdir = parts[1].strip()
 
+            elif line.startswith("FREEBSD_RELEASE:"):
+                parts = line.split(':')
+                if len(parts) > 1:
+                    self.release = parts[1].strip()
+
         wconf.close()
 
     def save(self):
@@ -374,6 +380,10 @@ class warden_base(object):
 
             elif line.startswith("JDIR:"):
                 line = "JDIR: %s" % self.jdir
+
+            elif line.startswith("FREEBSD_RELEASE:"):
+                if self.release:
+                    line = "FREEBSD_RELEASE: %s" % self.release
 
             lines.append(line) 
 
