@@ -1,0 +1,6 @@
+# make sure each line ends in LF not CRLF!
+xterm:xterm
+Edit menu:gvim ~/.windowlab/windowlab.menurc
+About:windowlab -about | xmessage -file -
+Reload:pkill -HUP windowlab
+Quit:killall windowlab
