@@ -440,6 +440,29 @@ add_pbi_manager()
 }
 customize_cmd add_pbi_manager
 
+add_pc_extractoverlay()
+{
+	local src dst share
+
+	pce="pc-extractoverlay"
+	src="${AVATAR_ROOT}/src/pcbsd/${pce}"
+	dst="${NANO_WORLDDIR}/usr/local"
+	pcbsd="${dst}/share/pcbsd"
+	bin="${dst}/bin"
+
+	pprint 2 "Adding pc-extractoverlay"
+
+	cp ${src}/${pce} ${bin}/${pce}
+	chmod 755 ${bin}/${pce}
+
+	mkdir -p ${pcbsd}/conf
+	mkdir -p ${pcbsd}/distfiles
+
+	cp ${src}/server-excludes ${pcbsd}/conf
+	tar -cvJf ${pcbsd}/distfiles/server-overlay.txz -C ${src}/server-overlay .
+}
+customize_cmd add_pc_extractoverlay
+
 add_warden()
 {
 	local src dst share
