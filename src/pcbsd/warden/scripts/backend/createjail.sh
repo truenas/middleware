@@ -221,7 +221,7 @@ then
   echo "Installing source..."
   mkdir -p "${JAILDIR}/usr/src"
   cd ${JAILDIR}
-  SYSVER="$(uname -r)"
+  SYSVER="${FREEBSD_RELEASE}"
   get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz"
   if [ $? -ne 0 ] ; then
     echo "Error while downloading the freebsd world."

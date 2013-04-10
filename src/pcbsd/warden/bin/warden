@@ -772,7 +772,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
     JAILNAME="${2}"
          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
-         bootstrap_pkgng "${JDIR}/JAILNAMEIP"
+         bootstrap_pkgng "${JDIR}/JAILNAME}"
          ;;
 
    auto) require_root
