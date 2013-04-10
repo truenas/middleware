@@ -32,6 +32,13 @@ export NIC
 WTMP="$(grep ^WTMP: /usr/local/etc/warden.conf | cut -d' ' -f2)"
 export WTMP
 
+# FreeBSD release
+FREEBSD_RELEASE="$(grep ^FREEBSD_RELEASE: /usr/local/etc/warden.conf | cut -d' ' -f2)"
+if [ -z "${FREEBSD_RELEASE}" ] ; then
+  FREEBSD_RELEASE="$(uname -r)"
+fi
+export FREEBSD_RELEASE
+
 # Temp file for dialog responses
 ATMP="/tmp/.wans"
 export ATMP
@@ -110,7 +117,7 @@ downloadpluginjail() {
 ### Download the chroot
 downloadchroot() {
   # XXX If this is PCBSD, pbreg get /PC-BSD/Version
-  SYSVER=`uname -r | cut -f1 -d'-'`
+  SYSVER="$(echo "${FREEBSD_RELEASE}" | cut -f1 -d'-')"
   FBSD_TARBALL="fbsd-release.txz"
   FBSD_TARBALL_CKSUM="${FBSD_TARBALL}.md5"
 
@@ -697,7 +704,7 @@ in_ipv6_network()
 bootstrap_pkgng()
 {
   cd ${1} 
-  SYSVER="$(uname -r)"
+  SYSVER="${FREEBSD_RELEASE}"
   echo "Boot-strapping pkgng"
   mkdir -p ${1}/usr/local/etc
   cp /usr/local/etc/pkg-pubkey.cert ${1}/usr/local/etc/
@@ -706,8 +713,10 @@ bootstrap_pkgng()
   tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
   pkg add pkg.txz
   rm pkg.txz
+
   ARCH=$(uname -m)
-  REL=$(uname -r)
+  REL="${FREEBSD_RELEASE}"
+
   echo "packagesite: http://getmirror.pcbsd.org/packages/$REL/$ARCH" >/usr/local/etc/pkg.conf
   echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
   echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
