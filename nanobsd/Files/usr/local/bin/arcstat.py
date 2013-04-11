@@ -297,15 +297,15 @@ def init():
         i += 1
 
     argv = sys.argv[i:]
-    sint = int(argv[0]) if argv else sint
+    sint = Decimal(argv[0]) if argv else sint
     count = int(argv[1]) if len(argv) > 1 else count
 
     if len(argv) > 1:
-        sint = int(argv[0])
+        sint = Decimal(argv[0])
         count = int(argv[1])
 
     elif len(argv) > 0:
-        sint = int(argv[0])
+        sint = Decimal(argv[0])
         count = 0
 
     if hflag or (xflag and desired_cols):
