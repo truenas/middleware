@@ -91,20 +91,18 @@ if [ -z "${VERSION}" ] ; then VERSION=`cat /etc/version`; fi
 # Location of the chroot environment
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
-  if [ "${PLUGINJAIL}" = "YES" ] ; then
-    WORLDCHROOT="${JDIR}/.warden-pj-chroot-${ARCH}"
-  else
-    WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}"
-  fi
-  export WORLDCHROOT
+  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}"
+  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}"
 else
-  if [ "${PLUGINJAIL}" = "YES" ] ; then
-    WORLDCHROOT="${JDIR}/.warden-pj-chroot-${ARCH}.tbz"
-  else
-    WORLDCHROOT="${JDIR}/.warden-chroot-${ARCH}.tbz"
-  fi
-  export WORLDCHROOT
+  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}.tbz"
+  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}.tbz"
 fi
+if [ "${PLUGINJAIL}" = "YES" ] ; then
+  WORLDCHROOT="${WORLDCHROOT_PLUGINJAIL}"
+else
+  WORLDCHROOT="${WORLDCHROOT_STANDARD}"
+fi
+export WORLDCHROOT WORLDCHROOT_PLUGINJAIL WORLDCHROOT_STANDARD
 
 if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
@@ -125,7 +123,7 @@ fi
 
 if [ -z "$HOST" ] ; then
    echo "ERROR: Missing hostname!"
-exit 6
+   exit 6
 fi
 
 JAILDIR="${JDIR}/${JAILNAME}"
@@ -159,8 +157,42 @@ done
 : $(( META_ID += 1 ))
 
 # Check if we need to download the chroot file
+
+#
+# If this is a pluginjail, we clone a regular freebsd chroot, then we
+# bootstrap packageng, install the required packages that a pluginjail
+# needs, then snapshot it. Once this is done, creating a pluginjail is
+# as easy as doing a zfs clone.
+#
 if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
-  downloadpluginjail "${VERSION}"
+  if [ ! -e "${WORLDCHROOT_STANDARD}" ] ; then
+    downloadchroot
+  fi
+
+  isDirZFS "${JDIR}"
+  if [ $? -eq 0 ] ; then
+    tank=`getZFSTank "$JDIR"`
+    zfsp=`getZFSRelativePath "${WORLDCHROOT_STANDARD}"`
+    clonep="/$(basename ${WORLDCHROOT_PLUGINJAIL})"
+
+    mnt=`getZFSMountpoint ${tank}`
+    pjdir="${mnt}${clonep}"
+
+    zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
+    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS pluginjail clone"; fi
+
+    cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
+
+    bootstrap_pkgng "${pjdir}" "pluginjail"
+
+    zfs snapshot ${tank}${clonep}@clean
+    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS pluginjail snapshot"; fi
+
+  # We're on UFS :-(
+  else
+    downloadchroot
+
+  fi
 
 elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
   downloadchroot
@@ -203,6 +235,12 @@ else
    else
      tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
    fi
+
+   # If this is a pluginjail on UFS :-( Do things the hard way.
+   if [ "${PLUGINJAIL}" = "YES" ] ; then
+     bootstrap_pkgng "${pjdir}" "pluginjail"
+   fi
+
    echo "Done"
 fi
 
@@ -221,7 +259,7 @@ then
   echo "Installing source..."
   mkdir -p "${JAILDIR}/usr/src"
   cd ${JAILDIR}
-  SYSVER="${FREEBSD_RELEASE}"
+  SYSVER="$(uname -r)"
   get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz"
   if [ $? -ne 0 ] ; then
     echo "Error while downloading the freebsd world."

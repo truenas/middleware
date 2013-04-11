@@ -207,28 +207,34 @@ ifconfig ${BRIDGE} addm ${EPAIRA} up
 if [ -n "${BRIDGEIP4}" ] ; then
    if ! ipv4_configured "${BRIDGE}" ; then
       ifconfig ${BRIDGE} inet "${BRIDGEIP4}"
-   else
+
+   elif ! ipv4_address_configured "${BRIDGE}" "${BRIDGEIP4}" ; then
       ifconfig ${BRIDGE} inet alias "${BRIDGEIP4}"
    fi
 fi
 if [ -n "${BRIDGEIPS4}" ] ; then
    for _ip in ${BRIDGEIPS4}
    do
-      ifconfig ${BRIDGE} inet alias "${_ip}"
+      if ! ipv4_address_configured "${BRIDGE}" "${_ip}" ; then
+         ifconfig ${BRIDGE} inet alias "${_ip}"
+      fi 
    done
 fi
 
 if [ -n "${BRIDGEIP6}" ] ; then
    if ! ipv6_configured "${BRIDGE}" ; then
       ifconfig ${BRIDGE} inet6 "${BRIDGEIP6}"
-   else
+
+   elif ! ipv6_address_configured "${BRIDGE}" "${BRIDGEIP6}" ; then
       ifconfig ${BRIDGE} inet6 alias "${BRIDGEIP6}"
    fi
 fi
 if [ -n "${BRIDGEIPS6}" ] ; then
    for _ip in ${BRIDGEIPS6}
    do
-      ifconfig ${BRIDGE} inet6 alias "${_ip}"
+      if ! ipv6_address_configured "${BRIDGE}" "${_ip}" ; then
+         ifconfig ${BRIDGE} inet6 alias "${_ip}"
+      fi
    done
 fi
 
@@ -260,7 +266,9 @@ for ip4 in ${IPS4}
 do
    ipv4_configured ${EPAIRB} ${JID}
    if [ "$?" = "0" ] ; then
-      jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
+      if ! ipv4_address_configured "${EPAIRB}" "${ip4}" "${JID}" ; then
+         jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
+      fi
    else
       jexec ${JID} ifconfig ${EPAIRB} inet ${ip4}
    fi
@@ -274,7 +282,9 @@ for ip6 in ${IPS6}
 do
    ipv6_configured ${EPAIRB} ${JID}
    if [ "$?" = "0" ] ; then
-      jexec ${JID} ifconfig ${EPAIRB} inet6 alias ${ip6}
+      if ! ipv6_address_configured "${EPAIRB}" "${ip6}" "${JID}" ; then
+         jexec ${JID} ifconfig ${EPAIRB} inet6 alias ${ip6}
+      fi
    else
       jexec ${JID} ifconfig ${EPAIRB} inet6 ${ip6}
    fi
@@ -337,7 +347,7 @@ if [ -s "${tmp_rcconf}" ] ; then
    fi
 fi
 
-ipfw list | grep -Eq '^00500 divert' 2>/dev/null
+ipfw list | grep -Eq '^00050 divert' >/dev/null 2>&1
 if [ "$?" != "0" ] ; then
    /etc/rc.d/ipfw restart
    ipfw -q add 00050 divert 8668 ip4 from any to any via ${IFACE}
