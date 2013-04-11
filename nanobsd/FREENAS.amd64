@@ -76,9 +76,15 @@ options 	MAC			# TrustedBSD MAC Framework
 #options 	KDTRACE_HOOKS		# Kernel DTrace hooks
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
 
-options		IPFIREWALL
+# ipfw and nat for jails
 options		IPDIVERT
+options		IPFIREWALL
+options		IPFIREWALL_VERBOSE
+options		IPFIREWALL_FORWARD
 options		IPFIREWALL_DEFAULT_TO_ACCEPT
+options		IPFIREWALL_NAT
+options		DUMMYNET
+options		LIBALIAS
 
 # Debugging for use in -current
 options		KDB			# Enable kernel debugger support.
