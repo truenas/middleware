@@ -313,7 +313,7 @@ Hello,
                 continue
             else:
                 log.warn("Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
-                rzfscmd = '"zfs list -Ho name -t snapshot -d 1 %s | head -n 1 | cut -d@ -f2"' % (remotefs_final)
+                rzfscmd = '"zfs list -Ho name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
                 sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
                 output = sshproc.communicate()[0]
                 if output != '':
