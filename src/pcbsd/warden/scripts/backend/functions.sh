@@ -37,7 +37,7 @@ FREEBSD_RELEASE="$(grep ^FREEBSD_RELEASE: /usr/local/etc/warden.conf | cut -d' '
 if [ -z "${FREEBSD_RELEASE}" ] ; then
   FREEBSD_RELEASE="$(uname -r)"
 fi
-export FREEBSD_RELEASE
+export UNAME_r="${FREEBSD_RELEASE}"
 
 # Temp file for dialog responses
 ATMP="/tmp/.wans"
@@ -117,7 +117,7 @@ downloadpluginjail() {
 ### Download the chroot
 downloadchroot() {
   # XXX If this is PCBSD, pbreg get /PC-BSD/Version
-  SYSVER="$(echo "${FREEBSD_RELEASE}" | cut -f1 -d'-')"
+  SYSVER="$(echo "$(uname -r)" | cut -f1 -d'-')"
   FBSD_TARBALL="fbsd-release.txz"
   FBSD_TARBALL_CKSUM="${FBSD_TARBALL}.md5"
 
@@ -722,50 +722,118 @@ install_pc_extractoverlay()
   return 0
 }
 
-bootstrap_pkgng()
+make_bootstrap_pkgng_file_standard()
 {
-  cd ${1} 
-  SYSVER="${FREEBSD_RELEASE}"
-  echo "Boot-strapping pkgng"
-  mkdir -p ${1}/usr/local/etc
-  pubcert="/usr/local/etc/pkg-pubkey.cert"
+  local jaildir="${1}"
+  local outfile="${2}"
 
-  cp "${pubcert}" ${1}/usr/local/etc
-  install_pc_extractoverlay "${1}"
+  local release="$(uname -r)"
+  local arch="$(uname -m)"
 
   get_mirror
-  MIRRORURL="$VAL"
+  local mirror="${VAL}"
 
-cat<<__EOF__>${1}/bootstrap-pkgng
+cat<<__EOF__>"${outfile}"
 #!/bin/sh
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
-ARCH=$(uname -m)
-
-echo "packagesite: ${MIRRORURL}/packages/${FREEBSD_RELEASE}/${ARCH}" >/usr/local/etc/pkg.conf
+echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 pkg install -y pcbsd-utils
 exit $?
 __EOF__
+}
 
-  chmod 755 ${1}/bootstrap-pkgng
+make_bootstrap_pkgng_file_pluginjail()
+{
+
+  local jaildir="${1}"
+  local outfile="${2}"
+
+  local release="$(uname -r)"
+  local arch="$(uname -m)"
+
+  get_mirror
+  local mirror="${VAL}"
+
+  cp /usr/local/share/warden/pluginjail-packages "${jaildir}/pluginjail-packages"
+
+cat<<__EOF__>"${outfile}"
+#!/bin/sh
+tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
+pkg add pkg.txz
+rm pkg.txz
+
+mount -t devfs devfs /dev
+
+echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
+echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
+echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
+echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
+pkg install -y pcbsd-utils
+__EOF__
+
+echo '
+i=0
+count=`wc -l /pluginjail-packages| awk "{ print $1 }"`
+for p in `cat /pluginjail-packages`
+do
+  pkg install -y ${p}
+  : $(( i += 1 ))
+done
+
+umount devfs
+exit $?
+' >> "${outfile}"
+}
+
+
+bootstrap_pkgng()
+{
+  local jaildir="${1}"
+  local jailtype="${2}"
+  if [ -z "${jailtype}" ] ; then
+    jailtype="standard"
+  fi
+  local release="$(uname -r)"
+  local arch="$(uname -m)"
+
+  local ffunc="make_bootstrap_pkgng_file_standard"
+  if [ "${jailtype}" = "pluginjail" ] ; then
+    ffunc="make_bootstrap_pkgng_file_pluginjail"
+  fi
+
+  cd ${jaildir} 
+  echo "Boot-strapping pkgng"
+
+  mkdir -p ${jaildir}/usr/local/etc
+  pubcert="/usr/local/etc/pkg-pubkey.cert"
+
+  cp "${pubcert}" ${jaildir}/usr/local/etc
+  install_pc_extractoverlay "${jaildir}"
+
+  ${ffunc} "${jaildir}" "${jaildir}/bootstrap-pkgng"
+  chmod 755 "${jaildir}/bootstrap-pkgng"
 
   if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
-  get_file_from_mirrors "/packages/${SYSVER}/${ARCH}/Latest/pkg.txz" "pkg.txz"
+  get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
   if [ $? -eq 0 ] ; then
-    chroot ${1} /bootstrap-pkgng
+    chroot ${jaildir} /bootstrap-pkgng
     if [ $? -eq 0 ] ; then
-      rm ${1}/bootstrap-pkgng
-      chroot ${1} pc-extractoverlay server --sysinit
+      rm -f "${jaildir}/bootstrap-pkgng"
+      rm -f "${jaildir}/pluginjail-packages"
+      chroot ${jaildir} pc-extractoverlay server --sysinit
       return 0
     fi
   fi
+
   echo "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
-  rm ${1}/bootstrap-pkgng
+  rm -f "${jaildir}/bootstrap-pkgng"
+  rm -f "${jaildir}/pluginjail-packages"
   return 1
 }
 
@@ -780,6 +848,27 @@ ipv4_configured()
    fi
 
    ${jexec} ifconfig "${iface}" | grep -qw inet 2>/dev/null
+   return $?
+}
+
+ipv4_address_configured()
+{
+   local iface="${1}"
+   local addr="${2}"
+   local jid="${3}"
+   local jexec= 
+
+   addr="$(echo ${addr}|cut -f1 -d'/')"
+
+   if [ -n "${jid}" ] ; then
+      jexec="jexec ${jid}"
+   fi
+
+   ${jexec} ifconfig "${iface}" | \
+      grep -w inet | \
+      awk '{ print $2 }' | \
+      grep -Ew "^${addr}" >/dev/null 2>&1
+   return $?
 }
 
 ipv6_configured()
@@ -793,4 +882,25 @@ ipv6_configured()
    fi
 
    ${jexec} ifconfig "${iface}" | grep -qw inet6 2>/dev/null
+   return $?
+}
+
+ipv6_address_configured()
+{
+   local iface="${1}"
+   local addr="${2}"
+   local jid="${3}"
+   local jexec= 
+
+   addr="$(echo ${addr}|cut -f1 -d'/')"
+
+   if [ -n "${jid}" ] ; then
+      jexec="jexec ${jid}"
+   fi
+
+   ${jexec} ifconfig "${iface}" | \
+      grep -w inet6 | \
+      awk '{ print $2 }' | \
+      grep -Ew "^${addr}" >/dev/null 2>&1
+   return $?
 }

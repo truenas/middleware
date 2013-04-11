@@ -68,6 +68,9 @@ class sipcalc_base_type(object):
             self_str = "%s/%d" % (self.expanded_address, self.prefix_length)
         return self_str
 
+    def __int__(self):
+        return self.to_decimal()
+
     def __lt__(self, other):
         return self.to_decimal() < other
 

@@ -1050,7 +1050,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
              --startauto) AUTO="YES" ;;
              --vanilla) VANILLA="YES" ;;
              --portjail) JAILTYPE="portjail" ;;
-             --pluginjail) JAILTYPE="pluginjail" ;; 
+             --pluginjail) JAILTYPE="pluginjail" ; VANILLA="YES" ;; 
              --linuxjail) JAILTYPE="linuxjail" ; shift
 			  if [ -z "$1" ] ; then exit_err "No linux setup script specified!"; fi
 			  LINUX_JAIL_SCRIPT="$1" ; export LINUX_JAIL_SCRIPT

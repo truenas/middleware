@@ -485,6 +485,9 @@ add_warden()
 	cp ${src}/bin/warden ${dst}/bin/warden
 	chmod 755 ${dst}/bin/warden
 
+	cp ${src}/pluginjail-packages ${share}/pluginjail-packages
+	chmod 644 ${share}/pluginjail-packages
+
 	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
 	chmod 644 ${dst}/etc/warden.conf
 
