@@ -309,6 +309,7 @@ ZFS_CompressionChoices = (
         ('gzip-1',  _('gzip (fastest)')),
         ('gzip-9',  _('gzip (maximum, slow)')),
         ('zle',  _('zle (runs of zeros)')),
+        ('lz4',  _('lz4 (high-performance replacement for lzjb)')),
         )
 
 
