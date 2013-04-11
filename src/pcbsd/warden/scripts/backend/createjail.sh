@@ -8,6 +8,7 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
+
 setup_linux_jail()
 {
   echo "Setting up linux jail..."
@@ -22,7 +23,7 @@ setup_linux_jail()
     echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
   fi
 
-  if [ "$STARTUP" = "YES" ] ; then
+  if [ "$AUTOSTART" = "YES" ] ; then
     touch "${JMETADIR}/autostart"
   fi
   touch "${JMETADIR}/jail-linux"
@@ -327,7 +328,7 @@ __EOF__
 
 fi # End of ARCHIVEFILE check
 
-if [ "$STARTUP" = "YES" ] ; then
+if [ "$AUTOSTART" = "YES" ] ; then
   touch "${JMETADIR}/autostart"
 fi
 

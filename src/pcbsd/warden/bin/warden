@@ -1029,7 +1029,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          IP6="OFF"
          SRC="NO"
          PORTS="NO"
-         AUTO="NO"
+         AUTOSTART="NO"
          VANILLA="NO"
          VERSION=
          JAILTYPE="standard"
@@ -1047,7 +1047,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
              --src) SRC="YES" ;;
              --ports) PORTS="YES" ;;
-             --startauto) AUTO="YES" ;;
+             --startauto) AUTOSTART="YES" ;;
              --vanilla) VANILLA="YES" ;;
              --portjail) JAILTYPE="portjail" ;;
              --pluginjail) JAILTYPE="pluginjail" ; VANILLA="YES" ;; 
@@ -1100,7 +1100,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           export IP6
           export SRC
           export PORTS
-          export AUTO
+          export AUTOSTART
           export JAILTYPE
           export ARCHIVE_FILE
           export VERSION
