@@ -521,6 +521,21 @@ add_pcbsd_libsh()
 }
 customize_cmd add_pcbsd_libsh
 
+add_pcbsd_mirrors()
+{
+	local src dst
+	src="${AVATAR_ROOT}/src/pcbsd/conf"
+	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/conf"
+
+	pprint 2 "Adding pcbsd mirrors"
+
+	mkdir -p ${dst} >/dev/null 2>/dev/null
+
+	cp ${src}/pcbsd-mirrors ${dst}/pcbsd-mirrors
+	chmod 644 ${dst}/pcbsd-mirrors
+}
+customize_cmd add_pcbsd_mirrors
+
 add_pbi_wrapper()
 {
 	local _pm 
