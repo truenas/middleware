@@ -220,8 +220,6 @@ class JailCreateForm(ModelForm):
 
         w = Warden() 
 
-        if self.cleaned_data['jail_autostart']:
-            jail_flags |= WARDEN_CREATE_FLAGS_STARTAUTO
         if self.cleaned_data['jail_32bit']:
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
         if self.cleaned_data['jail_source']:
@@ -275,6 +273,11 @@ class JailCreateForm(ModelForm):
 
         jail_set_args['flags'] = jail_flags
         w.set(**jail_set_args)
+
+        if self.cleaned_data['jail_autostart']:
+            w.auto(jail=jail_host)
+
+        w.start(jail=jail_host)
 
 class JailsConfigurationForm(ModelForm):
 
