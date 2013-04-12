@@ -116,6 +116,8 @@ downloadpluginjail() {
 
 ### Download the chroot
 downloadchroot() {
+  local CHROOT="${1}"
+
   # XXX If this is PCBSD, pbreg get /PC-BSD/Version
   SYSVER="$(echo "$(uname -r)" | cut -f1 -d'-')"
   FBSD_TARBALL="fbsd-release.txz"
@@ -149,18 +151,18 @@ downloadchroot() {
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
-    local zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
+    local zfsp=`getZFSRelativePath "${CHROOT}"`
 
     # Use ZFS base for cloning
-    echo "Creating ZFS ${WORLDCHROOT} dataset..."
+    echo "Creating ZFS ${CHROOT} dataset..."
     tank=`getZFSTank "${JDIR}"`
-    isDirZFS "${WORLDCHROOT}" "1"
+    isDirZFS "${CHROOT}" "1"
     if [ $? -ne 0 ] ; then
        zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
        if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
     fi
 
-    tar xvpf ${FBSD_TARBALL} -C ${WORLDCHROOT} 2>/dev/null
+    tar xvpf ${FBSD_TARBALL} -C ${CHROOT} 2>/dev/null
     if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
 
     zfs snapshot ${tank}${zfsp}@clean
@@ -168,7 +170,7 @@ downloadchroot() {
     rm ${FBSD_TARBALL}
   else
     # Save the chroot tarball
-    mv ${FBSD_TARBALL} ${WORLDCHROOT}
+    mv ${FBSD_TARBALL} ${CHROOT}
   fi
   rm ${FBSD_TARBALL_CKSUM}
 };

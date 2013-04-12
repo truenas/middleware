@@ -86,8 +86,6 @@ case "${JAILTYPE}" in
   standard) ;;
 esac
 
-if [ -z "${VERSION}" ] ; then VERSION=`cat /etc/version`; fi
-
 # Location of the chroot environment
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
@@ -166,7 +164,7 @@ done
 #
 if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
   if [ ! -e "${WORLDCHROOT_STANDARD}" ] ; then
-    downloadchroot
+    downloadchroot "${WORLDCHROOT_STANDARD}"
   fi
 
   isDirZFS "${JDIR}"
@@ -190,12 +188,12 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
 
   # We're on UFS :-(
   else
-    downloadchroot
+    downloadchroot "${WORLDCHROOT_STANDARD}"
 
   fi
 
 elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
-  downloadchroot
+  downloadchroot "${WORLDCHROOT}"
 fi
 
 # If we are setting up a linux jail, lets do it now
