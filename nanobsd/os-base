@@ -196,6 +196,7 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
+add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-kmod NOPORTDOCS=y
