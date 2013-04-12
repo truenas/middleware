@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-09 22:50+0200\n"
+"PO-Revision-Date: 2013-04-11 23:12+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2387,34 +2387,35 @@ msgstr "Dinamički DNS"
 
 #: services/models.py:804
 msgid "Path to the plugins jail"
-msgstr ""
+msgstr "Putanja do JAIL dodatnih komponenti"
 
 #: services/models.py:809
 msgid "Jail name"
-msgstr ""
+msgstr "JAIL ime"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Ime JAIL dodatnih komponenti"
 
 #: services/models.py:815
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"JAIL ime može da sadrži samo slova, brojeve i crtice. To ne mora da se "
+"završi sa crticom."
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Jail IP addresa"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "IPv4 maska mreže"
+msgstr "JAIL IP mrežna maska"
 
 #: services/models.py:829
 msgid "Plugins archive path"
-msgstr ""
+msgstr "Arhivska putanja za dodatne komponente"
 
 #: services/models.py:852
 msgid "Location"
@@ -3009,7 +3010,7 @@ msgstr "Postavite sadržaj vašeg samo potpisanog sertifikata ovde."
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Pomoćni Parametri"
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
@@ -3034,7 +3035,7 @@ msgstr ""
 
 #: services/models.py:1390
 msgid "Module name"
-msgstr ""
+msgstr "Ime modula"
 
 #: services/models.py:1399
 msgid "Path to be shared"
@@ -3042,19 +3043,19 @@ msgstr ""
 
 #: services/models.py:1405
 msgid "Access Mode"
-msgstr ""
+msgstr "Režim pristupa"
 
 #: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Ovo kontroliše pristup koji udaljeni host ima za ovaj modul"
 
 #: services/models.py:1410
 msgid "Maximum connections"
-msgstr ""
+msgstr "Maksimalan broj veza"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Maksimalan broj istovremenih veza. Podrazumevano je 0 (neograničeno)"
 
 #: services/models.py:1417
 msgid ""
@@ -3063,6 +3064,10 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Ova opcija određuje korisničko ime sa kojim će se fajl transferi do i od tog "
+"modula održati. U kombinaciji sa \"Grupe\" opcijom se određuje koje fajl "
+"dozvole su na raspolaganju. Ostavite ovo polje prazno da koristite "
+"podrazumevana podešavanja"
 
 #: services/models.py:1424
 msgid ""
@@ -3285,11 +3290,11 @@ msgstr ""
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Prikaži skrivene datoteke"
 
 #: sharing/models.py:61
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Omogući Guest pristup"
 
 #: sharing/models.py:62
 msgid ""
@@ -3299,7 +3304,7 @@ msgstr ""
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Samo omogući Guest pristup"
 
 #: sharing/models.py:66
 msgid ""
@@ -3317,10 +3322,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Ova opcija je zarez, razmak, ili tabulatorom razgraničen skup hostova kojima "
+"je dozvoljeno da pristupe ovom deljenom resursu. Možete da navedete hosta "
+"po imenu ili IP broju. Ostavite ovo polje prazno da koristite podrazumevana "
+"podešavanja."
 
 #: sharing/models.py:76
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Zabrani hostove"
 
 #: sharing/models.py:77
 msgid ""
@@ -3331,10 +3340,17 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Ova opcija je zarezom, razmakom, ili tabulatorom razgraničen skup hostova "
+"kojima nije dozvoljeno da pristupe ovom deljenom resursu. Gde se liste "
+"sukobljavaju onda lista sa dozvoljenim pristupima ima prednost. U slučaju da "
+"je neophodno da se brani sve kao podrazumevana vrednost, koristite ključnu "
+"reč ALL (ili netmask 0.0.0.0 / 0), a zatim eksplicitno navesti omogući "
+"parametar onim hostovima kojima bi trebalo da bude dozvoljen pristup. "
+"Ostavite ovo polje prazno kako bi se koristila podrazumevana podešavanja."
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Ovi parametri su dodati na [Share] sekciju smb.conf"
 
 #: sharing/models.py:94
 msgid "Windows (CIFS) Share"
