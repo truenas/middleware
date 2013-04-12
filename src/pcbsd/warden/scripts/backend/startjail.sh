@@ -325,32 +325,46 @@ fi
 # use PF since it will panic the box when used
 # with VIMAGE.
 #
-sysctl net.inet.ip.forwarding=1
-sysctl net.inet6.ip6.forwarding=1
-
-tmp_rcconf=`mktemp /tmp/.wdn.XXXXXX`
-
-egrep -v '^(firewall_(enable|type)|natd_(enable|interface|flags))' \
-   /etc/rc.conf >> "${tmp_rcconf}"
-cat<<__EOF__>>"${tmp_rcconf}"
-firewall_enable="YES"
-firewall_type="open"
-natd_enable="YES"
-natd_interface="${IFACE}"
-natd_flags="-dynamic -m"
-__EOF__
-if [ -s "${tmp_rcconf}" ] ; then
-   cp /etc/rc.conf /var/tmp/rc.conf.bak
-   mv "${tmp_rcconf}" /etc/rc.conf
-   if [ "$?" != "0" ] ; then
-      mv /var/tmp/rc.conf.bak /etc/rc.conf
-   fi
+ip_forwarding=`sysctl -n net.inet.ip.forwarding`
+if [ "${ip_forwarding}" = "0" ] ; then
+   sysctl net.inet.ip.forwarding=1
 fi
 
-ipfw list | grep -Eq '^00050 divert' >/dev/null 2>&1
-if [ "$?" != "0" ] ; then
-   /etc/rc.d/ipfw restart
-   ipfw -q add 00050 divert 8668 ip4 from any to any via ${IFACE}
+ip6_forwarding=`sysctl -n net.inet6.ip6.forwarding`
+if [ "${ip6_forwarding}" = "0" ] ; then
+   sysctl net.inet6.ip6.forwarding=1
+fi
+
+firewall_enable=`egrep '^firewall_enable' /etc/rc.conf|cut -f2 -d'='|sed 's|"||g'`
+firewall_type=`egrep '^firewall_type' /etc/rc.conf|cut -f2 -d'='|sed 's|"||g'`
+
+if [ "${firewall_enable}" != "YES" -o "${firewall_type}" != "open" ] ; then
+   tmp_rcconf=`mktemp /tmp/.wdn.XXXXXX`
+   egrep -v '^firewall_(enable|type)' /etc/rc.conf >> "${tmp_rcconf}"
+
+   cat<<__EOF__>>"${tmp_rcconf}"
+firewall_enable="YES"
+firewall_type="open"
+__EOF__
+
+   if [ -s "${tmp_rcconf}" ] ; then
+      cp /etc/rc.conf /var/tmp/rc.conf.bak
+      mv "${tmp_rcconf}" /etc/rc.conf
+      if [ "$?" != "0" ] ; then
+         mv /var/tmp/rc.conf.bak /etc/rc.conf
+      fi
+   fi
+   /etc/rc.d/ipfw forcerestart
+fi
+
+instance=`get_ipfw_nat_instance "${IFACE}"`
+if [ -z "${instance}" ] ; then
+echo "NAT IS NULL"
+   priority=`get_ipfw_nat_priority`
+   instance=`get_ipfw_nat_instance`
+
+   ipfw "${priority}" add nat "${instance}" all from any to any
+   ipfw nat "${instance}" config if "${IFACE}" reset
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
