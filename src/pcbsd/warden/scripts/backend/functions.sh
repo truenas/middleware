@@ -904,3 +904,65 @@ ipv6_address_configured()
       grep -Ew "^${addr}" >/dev/null 2>&1
    return $?
 }
+
+get_ipfw_nat_instance()
+{
+   local iface="${1}"
+   local res=1
+
+   if [ -z "${iface}" ] ; then
+      local instance="`ipfw list|egrep '[0-9]+ nat'|awk '{ print $3 }'|tail -1`"
+      if [ -z "${instance}" ] ; then
+         instance="100"
+      else		  
+         : $(( instance += 100 )) 
+      fi
+      echo "${instance}"
+      return 0
+   fi
+
+   for ni in `ipfw list|egrep '[0-9]+ nat'|awk '{ print $3 }'`
+   do
+      ipfw nat "${ni}" show config|egrep -qw "${iface}"
+      if [ "$?" = "0" ] ; then
+         echo "${ni}"
+         res=0
+         break
+      fi
+   done
+
+   return ${res}
+}
+
+get_ipfw_nat_priority()
+{
+   local iface="${1}"
+   local res=1
+
+   if [ -z "${iface}" ] ; then
+      local priority="`ipfw list|egrep '[0-9]+ nat'|awk '{ print $1 }'|tail -1`"
+      if [ -z "${priority}" ] ; then
+         priority=1
+      fi
+      printf "%05d\n" "${priority}"
+      return 0
+   fi
+
+   local IFS='
+'
+   for rule in `ipfw list|egrep '[0-9]+ nat'`
+   do
+      local priority="`echo "${rule}"|awk '{ print $1 }'`"
+      local ni="`echo "${rule}"|awk '{ print $3 }'`"
+
+      ipfw nat "${ni}" show config|egrep -qw "${iface}"
+      if [ "$?" = "0" ] ; then
+         echo "${priority}"
+         res=0
+         break
+      fi
+   done
+
+   return ${res}
+}
+

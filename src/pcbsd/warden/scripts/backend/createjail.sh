@@ -8,7 +8,6 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-
 setup_linux_jail()
 {
   echo "Setting up linux jail..."
@@ -69,7 +68,7 @@ touch /etc/mtab
   rm ${JAILDIR}/.fixSH
 
   # If we are auto-starting the jail, do it now
-  if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
+  if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
   echo "Success! Linux jail created at ${JAILDIR}"
 }
@@ -316,10 +315,10 @@ cat<<__EOF__>"${JAILDIR}/etc/hosts"
 __EOF__
 
   if [ "${IP4}" != "OFF" ] ; then
-    echo "${IP4}			${HOST}" > "${JAILDIR}/etc/hosts"
+    echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
   fi
   if [ "${IP6}" != "OFF" ] ; then
-    echo "${IP6}			${HOST}" > "${JAILDIR}/etc/hosts"
+    echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
     sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
   fi
 
@@ -362,7 +361,7 @@ if [ "$PORTJAIL" = "YES" ] ; then mkportjail "${JAILDIR}" ; fi
 if [ "$PLUGINJAIL" = "YES" ] ; then mkpluginjail "${JAILDIR}" ; fi
 
 # If we are auto-starting the jail, do it now
-if [ "$STARTUP" = "YES" ] ; then warden start ${JAILNAME} ; fi
+if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
 echo "Success!"
 echo "Jail created at ${JAILDIR}"
