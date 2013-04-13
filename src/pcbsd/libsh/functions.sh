@@ -355,12 +355,13 @@ getZFSDataset() {
 # Arg1 = Directory to check
 getZFSTank() {
   local _chkDir="$1"
+
+  _chkdir=${_chkDir%/}
   while :
   do
-     line=`mount | grep -we "$_chkDir" | grep -e "(zfs,"`
-     mount | grep -we "$_chkDir" | grep -q -e "(zfs,"
-     if [ $? -eq 0 ] ; then
-        echo $line | cut -d '/' -f -1 | awk '{print $1}'
+     zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
+     if [ -n "${zpath}" ] ; then
+        echo $zpath | cut -f1 -d '/'
         return 0
      fi
 
