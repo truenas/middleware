@@ -944,7 +944,7 @@ get_ipfw_nat_priority()
    if [ -z "${iface}" ] ; then
       local priority="`ipfw list|egrep '[0-9]+ nat'|awk '{ print $1 }'|tail -1`"
       if [ -z "${priority}" ] ; then
-         priority=1
+         priority=2000
       fi
       printf "%05d\n" "${priority}"
       return 0

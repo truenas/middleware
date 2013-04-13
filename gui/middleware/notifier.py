@@ -2382,7 +2382,21 @@ class notifier:
                         mounted['fs_file'],
                         ))
 
+    def get_plugin_upload_path(self):
+        from freenasUI.jails.models import JailsConfiguration
+
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        plugin_upload_path = "%s/%s" % (jc.jc_path, ".plugins")
+
+        if not os.path.exists(plugin_upload_path):
+            self.__system("/bin/mkdir -p %s" % plugin_upload_path)
+            self.__system("/usr/sbin/chown www:www %s" % plugin_upload_path)
+            self.__system("/bin/chmod 755 %s" % plugin_upload_path)
+
+        return plugin_upload_path
+
     def install_pbi(self, pjail):
+        log.debug("install_pbi: pjail = %s", pjail)
         """
         Install a .pbi file into the plugins jail
 
@@ -2398,9 +2412,11 @@ class notifier:
         ret = False
 
         if not pjail:
+            log.debug("install_pbi: pjail is NULL")
             return False
 
         if not self.pluginjail_running(pjail=pjail):
+            log.debug("install_pbi: pjail is is not running")
             return False
 
         wjail = None
@@ -2431,11 +2447,9 @@ class notifier:
         pjail_path = "%s/%s" % (jc.jc_path, wjail.host)
         plugins_path = "%s/%s" % (pjail_path, ".plugins")
 
+        log.debug("install_pbi: pjail_path = %s, plugins_path = %s", pjail_path, plugins_path)
+
         pbi = pbiname = prefix = name = version = arch = None
-
-        #p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/mnt/plugins/.freenas/pbifile.pbi")
-        #out = p.info(True, jail.jid, 'pbi information for', 'prefix', 'name', 'version', 'arch')
-
         p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
         out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
@@ -2512,6 +2526,10 @@ class notifier:
             out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
             if out and out[0] == 0:
                 for line in out[1].splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+
                     key, value = [i.strip() for i in line.split(':', 1)]
                     key = key.lower()
                     value = value.strip()
@@ -2524,15 +2542,21 @@ class notifier:
             plugin_path = "%s/%s" % (pjail_path, plugin.plugin_path)
             oauth_file = "%s/%s" % (plugin_path, ".oauth")
 
+            log.debug("install_pbi: plugin_path = %s, oauth_file = %s",
+                plugin_path, oauth_file)
+
             fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
             os.write(fd,"key = %s\n" % rpctoken.key)
             os.write(fd, "secret = %s\n" % rpctoken.secret)
             os.close(fd)
 
             try:
+                log.debug("install_pbi: trying to save plugin to database")
                 plugin.save()
+                log.debug("install_pbi: plugin saved to database")
                 ret = True
-            except Exception:
+            except Exception, e:
+                log.debug("install_pbi: FAIL! %s", e)
                 ret = False
 
         elif res and res[0] != 0:
@@ -2546,6 +2570,7 @@ class notifier:
                     )
             raise MiddlewareError(p.error)
 
+        log.debug("install_pbi: everything went well, returning %s", ret)
         return ret
 
     def _get_plugins_jail(self):
