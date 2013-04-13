@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -35,9 +36,11 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 from freenasUI.services.models import PluginsJail
+from freenasUI.jails.models import Jails, JailsConfiguration
 
 import freenasUI.plugins.api_calls
 
+log = logging.getLogger('plugins.views')
 
 def plugin_edit(request, plugin_id):
     plugin = models.Plugins.objects.filter(id=plugin_id)[0]
@@ -120,8 +123,9 @@ def plugin_update(request, plugin_id):
 
 
 def plugin_install(request):
-    pj = PluginsJail.objects.order_by("-id")[0]
-    notifier().change_upload_location(pj.plugins_path)
+    plugin_upload_path = notifier().get_plugin_upload_path()
+    notifier().change_upload_location(plugin_upload_path)
+
     if request.method == "POST":
         form = forms.PBIUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -153,6 +157,10 @@ def plugin_fcgi_client(request, name, path):
     """
     This is a view that works as a FCGI client
     It is used for development server (no nginx) for easier development
+
+    XXX
+    XXX - This will no longer work with multiple jail model
+    XXX
     """
     qs = models.Plugins.objects.filter(plugin_name=name)
     if not qs.exists():

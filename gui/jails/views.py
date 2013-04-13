@@ -49,9 +49,41 @@ def jails_home(request):
          'jailsconf': jailsconf
     })
 
+
 def jail_edit(request, id):
-    log.debug("XXX: jail_edit()")
-    return render(request, 'jails/edit.html', { })
+
+
+#    if request.method == 'POST':
+#        form = forms.MountPointAccessForm(request.POST)
+#        if form.is_valid():
+#            form.commit(path=path)
+#            return JsonResp(
+#                request,
+#                message=_("Mount Point permissions successfully updated."))
+#    else:
+#        form = forms.MountPointAccessForm(initial={'path': path})
+#
+    try:
+        jail = models.Jails.objects.get(id=id)
+    except Exception, e:
+        jail = None 
+
+    if request.method == 'POST':
+        form = forms.JailsEditForm(request.POST, instance=jail)
+    else:
+        form = forms.JailsEditForm(instance=jail)
+
+    return render(request, 'jails/edit.html', { 
+        'form': form
+    })
+
+def jail_start(request, id):
+    log.debug("XXX: jail_start()")
+    return render(request, 'jails/start.html', { }) 
+
+def jail_stop(request, id):
+    log.debug("XXX: jail_stop()")
+    return render(request, 'jails/stop.html', { }) 
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
@@ -84,14 +116,6 @@ def jail_pkgs(request, id):
 def jail_pbis(request, id):
     log.debug("XXX: jail_pbis()")
     return render(request, 'jails/pbis.html', { }) 
-
-def jail_start(request, id):
-    log.debug("XXX: jail_start()")
-    return render(request, 'jails/start.html', { }) 
-
-def jail_stop(request, id):
-    log.debug("XXX: jail_stop()")
-    return render(request, 'jails/stop.html', { }) 
 
 def jail_zfsmksnap(request, id):
     log.debug("XXX: jail_zfsmksnap()")

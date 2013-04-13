@@ -112,7 +112,7 @@ class JailsQuerySet(models.query.QuerySet):
                 key = self.__key(k)
                 if self.__ispk(key):
                     kwargs[k] = int(kwargs[k])
-                if key in wj and wj[key] == kwargs[k]:
+                if key in wj and str(wj[key]) == str(kwargs[k]):
                     found += 1
 
             if found == count:
