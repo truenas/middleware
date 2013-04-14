@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-11 23:12+0200\n"
+"PO-Revision-Date: 2013-04-13 23:07+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -441,8 +441,8 @@ msgstr ""
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Pasivno - Proveri uređaj ukoliko nije u režimu SPAVANJA, PRIPRAVNOSTI ili "
-"PASIVNO"
+"Mirovanje - Proveri uređaj ukoliko nije u režimu SPAVANJA, PRIPRAVNOSTI ili "
+"MIROVANJA"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -453,9 +453,8 @@ msgid "Short Self-Test"
 msgstr "Kratko Samo-testiranje"
 
 #: choices.py:532
-#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Samo-testiranje prenosa (samo ATA)"
+msgstr "Samo-testiranje prenosa (samo za ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -475,7 +474,7 @@ msgstr "Gurni"
 
 #: choices.py:568
 msgid "Pull"
-msgstr "povuci"
+msgstr "Povuci"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -884,35 +883,35 @@ msgstr "Morate da izaberete između IPv4 ili IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr "Adresa za kružni tok podataka nije validni Server imena"
+msgstr "Adresa za kružni tok podataka nije validni server imena"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Specificirana adrese nisu validne kao Serveri imena"
+msgstr "Specificirana adrese nisu validne kao serveri imena"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr "Ovo nije validna adresa za Server imena"
+msgstr "Ovo nije validna adresa za server imena"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 podmreža nije validna za Server imena"
+msgstr "169.254/16 podmreža nije validna za server imena"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Morate da popunite Server imena2 pre nego što popunite Server imena 3"
+msgstr "Morate da popunite server imena 2 pre nego što popunite server imena 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Obavezno kada koristite Server imena 3"
+msgstr "Obavezno kada koristite server imena 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Morate da popunite Server imena 1 pre nego što popunite Server imena 3"
+msgstr "Morate da popunite server imena 1 pre nego što popunite server imena 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Morate da popunite Server imena 1 pre nego što popunite Server imena 2"
+msgstr "Morate da popunite server imena 1 pre nego što popunite server imena 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
@@ -1007,7 +1006,7 @@ msgstr "Naziv interfejsa"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Dodaj naziv svom NIC-u"
+msgstr "Dodaj naziv svom NIC-u."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1161,7 +1160,7 @@ msgstr "Pogledaj agregacije linka"
 
 #: network/views.py:197
 msgid "LAGG successfully added"
-msgstr "LAGG uspešno dodati."
+msgstr "LAGG je uspešno dodat"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
@@ -1204,7 +1203,7 @@ msgstr ""
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
-"Dodaci za arhivsku putanju ne mogu biti poskup dodataka za Jail putanju."
+"Dodaci za arhivsku putanju ne mogu biti podskup dodataka za JAIL putanju."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
@@ -1334,7 +1333,7 @@ msgstr "Dodatna komponenta uspešno uklonjena."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr "Nemoguće je ukloniti dodatnu komponentu"
+msgstr "Nemoguće je ukloniti dodatnu komponentu."
 
 # ako % predstavlja user  kao users 
 #: plugins/views.py:101
@@ -1490,7 +1489,7 @@ msgstr "Potvrditi Administratorsku lozinku"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr "Active Directory servis nije uspeo da se ponovo učita."
+msgstr "Servis activnog directorijuma nije uspeo da se ponovo učita."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
@@ -1502,7 +1501,7 @@ msgstr "Tajna"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr "Ciljna strana je tajna"
+msgstr "Ciljna strana je tajna."
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
@@ -1530,17 +1529,17 @@ msgstr "Tajna se ne podudara"
 
 #: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
-msgstr "Tajna za peer je potrebna ako je postavljen peer korisnik"
+msgstr "Tajna za peer je potrebna ako je postavljen peer korisnik."
 
 #: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Tajna za peer ne može biti ista kao tajna za korisnika"
+msgstr "Tajna za peer ne može biti ista kao tajna za korisnika."
 
 #: services/forms.py:566 services/forms.py:569
 msgid "The peer user is required if you set a peer secret."
 msgstr ""
 "Ravnopravni korisnički nalog je obavezan ako je postavljena tajna između "
-"ravnopravnih uređaja"
+"ravnopravnih uređaja."
 
 #: services/forms.py:582 services/forms.py:614 services/forms.py:756
 #: services/forms.py:821 services/forms.py:927 services/forms.py:955
@@ -1749,12 +1748,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Koristite ovu opciju da nadjača korisničko ime (\"nobody\" kao podrazumevano) "
-"koji će se koristiti za pristup servisima koje su navedene kao guest. Kakve "
-"god privilegije ovaj korisnik ima one će biti dostupne svakom klijentu "
-"povezanom na guest servis. Ovaj korisnik mora da postoji u datoteci lozinki, "
-"ali ne zahteva validno prijavljivanje. Korisnik root ne može da se koristi "
-"kao guest nalog."
+"Koristite ovu opciju da nadjača korisničko ime ('nobody' kao podrazumevana "
+"vrednost) koji će se koristiti za pristup servisima koje su navedene kao "
+"guest. Kakve god privilegije ovaj korisnik ima one će biti dostupne svakom "
+"klijentu povezanom na guest servis. Ovaj korisnik mora da postoji u datoteci "
+"lozinki, ali ne zahteva validno prijavljivanje. Korisnik root ne može da se "
+"koristi kao guest nalog."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
@@ -1764,7 +1763,7 @@ msgstr "Maska datoteke"
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "Koristiti ovu opciju da bi se zamenila maska kreiranja datoteke "
-"(podrazumevana vrednost je 0666)"
+"(podrazumevana vrednost je 0666)."
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
@@ -1775,7 +1774,7 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
 "Koristiti ovu opciju da bi se zamenila maska kreiranja direktorijuma "
-"(podrazumevana vrednost je 0777)"
+"(podrazumevana vrednost je 0777)."
 
 #: services/models.py:132
 msgid "Large RW support"
@@ -1812,7 +1811,7 @@ msgstr "Omogućiti matične direktorijume"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr "Omogućiti/onemogućiti matične direktorijume za Samba korisnika."
+msgstr "Omogućiti/onemogućiti matične direktorijume za SAMBA korisnika."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
@@ -1821,7 +1820,7 @@ msgstr "Omogućiti pretraživanje matičnih direktorijuma"
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Omogućiti/onemogućiti pregledanje matičnih direktorijuma za Samba korisnika."
+"Omogućiti/onemogućiti pregledanje matičnih direktorijuma za SAMBA korisnika."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1983,7 +1982,7 @@ msgstr "I/O vremensko ograničenje"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O vremensko ograničenje u sekundama (30 je podrazumevana vrednost)"
+msgstr "I/O vremensko ograničenje u sekundama (30 je podrazumevana vrednost)."
 
 #: services/models.py:281
 msgid "NOPIN Interval"
@@ -2030,7 +2029,7 @@ msgstr "MaxOutstandingR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSI inicijalni parametar (16 je podrazumevana vrednost)"
+msgstr "iSCSI inicijalni parametar (16 je podrazumevana vrednost)."
 
 #: services/models.py:311
 msgid "First burst length"
@@ -2038,7 +2037,7 @@ msgstr "Prva veličina zapisa"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "iSCSI inicijalni parametar (65536 je podrazumevana vrednost)"
+msgstr "iSCSI inicijalni parametar (65536 je podrazumevana vrednost)."
 
 #: services/models.py:317
 msgid "Max burst length"
@@ -2173,7 +2172,7 @@ msgstr "Komentar"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr "Možete uneti ovde opis za referencu"
+msgstr "Možete uneti ovde opis za referencu."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
@@ -2199,7 +2198,7 @@ msgstr "IP Portala"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr "Initiators"
+msgstr "Inicijatori"
 
 #: services/models.py:546
 msgid ""
@@ -2280,7 +2279,7 @@ msgstr "Tip"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr "Tip Logičke Jedinice mapiran na LUN"
+msgstr "Tip Logičke Jedinice mapiran na LUN."
 
 #: services/models.py:660
 msgid "Target Flags"
@@ -2447,7 +2446,7 @@ msgstr "Zajednica"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "U većini slučajeva, \"public\" se ovde koristi."
+msgstr "U većini slučajeva, 'public' se ovde koristi."
 
 # a trap is an event notification message 
 #: services/models.py:871
@@ -2563,7 +2562,7 @@ msgstr "Konekcije"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Maksimalni broj konekcija po IP adresi (0 = neograničeno)"
+msgstr "Maksimalni broj konekcija po IP adresi (0 = neograničeno)."
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -3065,7 +3064,7 @@ msgid ""
 "use default settings"
 msgstr ""
 "Ova opcija određuje korisničko ime sa kojim će se fajl transferi do i od tog "
-"modula održati. U kombinaciji sa \"Grupe\" opcijom se određuje koje fajl "
+"modula održati. U kombinaciji sa 'Grupe' opcijom se određuje koje fajl "
 "dozvole su na raspolaganju. Ostavite ovo polje prazno da koristite "
 "podrazumevana podešavanja"
 
@@ -3673,7 +3672,7 @@ msgstr ""
 #: storage/forms.py:120
 #, python-format
 msgid "%s is not a valid number"
-msgstr "%s nije ispravan broj."
+msgstr "%s nije ispravan broj"
 
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3694,9 +3693,8 @@ msgid "Specify custom path"
 msgstr ""
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Particija sa ZFS sistemom datoteka"
+msgstr "Dodaj volumen"
 
 #: storage/forms.py:175
 msgid ""
@@ -3784,9 +3782,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Servis nije uspešno restartovan."
+msgstr "SMART servis nije uspešno restartovan."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -4028,9 +4025,8 @@ msgstr ""
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
 #: templates/system/sysctl.html:8 templates/system/tunable.html:8
-#, fuzzy
 msgid "Enabled"
-msgstr "Omogući AIO"
+msgstr "Omogućeno"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
@@ -4073,15 +4069,13 @@ msgstr ""
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
-#, fuzzy
 msgid "Weekdays"
-msgstr "Nedelja(s)"
+msgstr "Radni dani"
 
 #: storage/models.py:308 system/models.py:436 system/models.py:641
 #: system/models.py:728
-#, fuzzy
 msgid "Weekends"
-msgstr "Nedelja(s)"
+msgstr "Vikendi"
 
 #: storage/models.py:340
 msgid "Multipath name"
@@ -4254,9 +4248,8 @@ msgid "View Snapshots"
 msgstr "Pogledaj sve %s"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
-msgstr "Pogledaj Sve Grupe"
+msgstr "Pogledaj ZFS premotavanja"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
@@ -4402,7 +4395,7 @@ msgstr ""
 
 #: storage/views.py:766
 msgid "The volume has been successfully detached"
-msgstr "Volumen je uspešno odvojen."
+msgstr "Volumen je bio uspešno odvojen"
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
@@ -4479,8 +4472,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
-"Da bi koristili rsync preko SSH potreban je korisnik<br />sa javnim ključem "
-"(DSA/ECDSA/GER) postavljen u matični direktorijum."
+"Da bi koristili rsync preko SSH potreban vam je korisnik<br />sa javnim "
+"ključem (DSA/ECDSA/GER) postavljen u matični direktorijum."
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
@@ -4627,9 +4620,9 @@ msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Izmena veličine na svakom diska u GB, utiče samo na nove diskove. "
-"Postavljajući ovo na 0 onemogućava se stvaranje potpuno zamene (NIJE "
-"PREPORUČLJIVO)"
+"Izmena veličine na svakom diska u GiB, utiče samo na nove diskove. "
+"Postavljajući ovu vrednost na 0 onemogućava se stvaranje potpuno zamene "
+"(NIJE PREPORUČLJIVO)."
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
@@ -5703,8 +5696,8 @@ msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
-"PAŽNJA: servis za komponente nije pokrenut, nekoliko funkcionalnosti su "
-"onemogućene."
+"PAŽNJA: servis za dodatne komponente nije pokrenut, nekoliko funkcionalnosti "
+"su onemogućene."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5802,7 +5795,7 @@ msgstr "Dodati UNIX (NFS) deljeni resurs"
 
 #: templates/sharing/windows.html:7
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Nema aktivnih Windows (CIFS) deljenih resursa"
+msgstr "Nema aktivnih Windows (CIFS) deljenih resursa."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -6224,8 +6217,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
-"SAVET: Test e-mailovi su poslati root korisniku. Da biste ovo konfigurisali "
-"upotrebite Korisnici -> root -> Promeni e-mail"
+"PREDLOG: Test e-mailovi su poslati root korisniku. Da biste ovo "
+"konfigurisali upotrebite Korisnici -> root -> Promeni e-mail"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6268,7 +6261,7 @@ msgstr "Udaljeni"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
-msgstr "Ni jedan rsync zadatak nije definisan"
+msgstr "Ni jedan rsync zadatak nije definisan."
 
 #: templates/system/rsync.html:54
 msgid "Add rsync task"
@@ -6363,7 +6356,7 @@ msgstr "Povezani preko"
 
 #: templates/system/tunable.html:34
 msgid "No tunable setting defined."
-msgstr "Nije definisano Tunable podešavanje."
+msgstr "Nije definisano TUNABLE podešavanje."
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
@@ -6488,9 +6481,8 @@ msgstr "Ova vrednost mora biti između 0 i 1000, uključujući i njih."
 msgid "Enable DDP"
 msgstr "Omogući DDP"
 
-#, fuzzy
 msgid "The volume failed to export"
-msgstr "Servis nije uspešno restartovan."
+msgstr "Volumen nije uspešno izvezen"
 
 msgid "Used space"
 msgstr "Iskorišten prostor"
