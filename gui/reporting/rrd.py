@@ -198,6 +198,8 @@ class InterfacePlugin(RRDBase):
         ids = []
         for entry in glob.glob('%s/interface-*' % self._base_path):
             ident = entry.rsplit('-', 1)[-1]
+            if re.match("usbus", ident):
+                continue
             if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
                 ids.append(ident)
         return ids
