@@ -268,10 +268,6 @@ Hello,
         system(destroycmd)
         known_latest_snapshot = ''
     if known_latest_snapshot == '':
-        # Create remote filesystem
-        log.log(logging.NOTICE, "Creating %s on remote system" % (remotefs_parent))
-        replcmd = '%s -p %d %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote_port, remote, remotefs_parent)
-        system(replcmd)
         last_snapshot = ''
     else:
         last_snapshot = known_latest_snapshot
