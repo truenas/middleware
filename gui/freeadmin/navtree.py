@@ -46,6 +46,9 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 
+from freenasUI.common.warden import WARDEN_STATUS_RUNNING, \
+    WARDEN_TYPE_PLUGINJAIL
+
 from freenasUI.jails.models import Jails
 
 log = logging.getLogger('freeadmin.navtree')
@@ -261,7 +264,9 @@ class NavTree(object):
         self.replace_navs(tree_roots)
 
         for j in Jails.objects.all():
-            if j.jail_type == 'pluginjail' and j.jail_status == 'Running':
+
+            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
+                j.jail_status == WARDEN_STATUS_RUNNING:
                 self._get_plugins_nodes(request, j)
 
     def _generate_app(self, app, request, tree_roots, childs_of):

@@ -32,7 +32,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.sipcalc import sipcalc_type
-from freenasUI.common.warden import WardenJail
+from freenasUI.common.warden import WardenJail, Warden
 
 from freenasUI.jails import models
 from freenasUI.common.warden import Warden, \
@@ -49,10 +49,46 @@ from freenasUI.common.warden import Warden, \
     WARDEN_CREATE_FLAGS_LINUXARCHIVE, \
     WARDEN_CREATE_FLAGS_IPV4, \
     WARDEN_CREATE_FLAGS_IPV6, \
+    WARDEN_SET_FLAGS_IPV4, \
+    WARDEN_SET_FLAGS_IPV6, \
+    WARDEN_SET_FLAGS_ALIAS_IPV4, \
+    WARDEN_SET_FLAGS_ALIAS_IPV6, \
     WARDEN_SET_FLAGS_BRIDGE_IPV4, \
-    WARDEN_SET_FLAGS_BRIDGE_IPV6
+    WARDEN_SET_FLAGS_BRIDGE_IPV6, \
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4, \
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6, \
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4, \
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6, \
+    WARDEN_SET_FLAGS_FLAGS
+
 
 log = logging.getLogger('jails.forms')
+
+
+def setflags(keys):
+    flags = WARDEN_FLAGS_NONE
+    for k in keys:
+        if k == 'jail_ipv4':
+            flags |= WARDEN_SET_FLAGS_IPV4
+        elif k == 'jail_ipv6':
+            flags |= WARDEN_SET_FLAGS_IPV6 
+        elif k == 'jail_alias_ipv4':
+            flags |= WARDEN_SET_FLAGS_ALIAS_IPV4
+        elif k == 'jail_alias_ipv6':
+            flags |= WARDEN_SET_FLAGS_ALIAS_IPV6
+        elif k == 'jail_bridge_ipv4':
+            flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
+        elif k == 'jail_bridge_ipv6':
+            flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
+        elif k == 'jail_alias_bridge_ipv4':
+            flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4
+        elif k == 'jail_alias_bridge_ipv6':
+            flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6
+        elif k == 'jail_defaultrouter_ipv4':
+            flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4
+        elif k == 'jail_defaultrouter_ipv6':
+            flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
+    return flags
 
 class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(
@@ -301,8 +337,6 @@ class JailConfigureForm(ModelForm):
 class JailsEditForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
-#    jail_source = forms.BooleanField(label=_("source"), required=False)
-#    jail_ports = forms.BooleanField(label=_("ports"), required=False)
 
     def __set_ro(self, instance, key):
         if instance and instance.id:
@@ -321,13 +355,118 @@ class JailsEditForm(ModelForm):
                     )
                 )
 
+    def __instance_save(self, instance, keys):
+        for key in keys:
+            okey = "__original_%s" % key
+            instance.__dict__[okey] = instance.__dict__[key]
+
+    def __instance_diff(self, instance, keys):
+        res = False
+
+        for key in keys:
+            okey = "__original_%s" % key
+            if instance.__dict__[okey] != self.cleaned_data.get(key):
+                if not instance.__dict__[okey] and not self.cleaned_data.get(key):
+                    continue
+                res = True
+                break
+
+        return res
+
+    def __instance_changed_fields(self, instance, keys):
+        changed_keys = []
+
+        for key in keys:
+            okey = "__original_%s" % key
+            if instance.__dict__[okey] != self.cleaned_data.get(key):
+                if not instance.__dict__[okey] and not self.cleaned_data.get(key):
+                    continue
+                changed_keys.append(key)
+
+        return changed_keys
 
     def __init__(self, *args, **kwargs):
         super(JailsEditForm, self).__init__(*args, **kwargs)
+        self.__myfields = [
+            'jail_autostart',
+            'jail_ipv4',
+            'jail_alias_ipv4',
+            'jail_bridge_ipv4',
+            'jail_alias_bridge_ipv4',
+            'jail_defaultrouter_ipv4',
+            'jail_ipv6',
+            'jail_alias_ipv6',
+            'jail_bridge_ipv6',
+            'jail_alias_bridge_ipv6',
+            'jail_defaultrouter_ipv6'
+        ]
+
         instance = getattr(self, 'instance', None)
+        self.__instance_save(instance, self.__myfields)
+
         self.__set_ro(instance, 'jail_host')
         self.__set_ro(instance, 'jail_status')
         self.__set_ro(instance, 'jail_type')
+
+    def save(self):
+        jail_host = self.cleaned_data.get('jail_host')
+
+        instance = getattr(self, 'instance', None)
+        if self.__instance_diff(instance, self.__myfields):
+            keys = self.__instance_changed_fields(instance, self.__myfields)
+
+        changed_fields = self.__instance_changed_fields(instance, self.__myfields)
+        for cf in changed_fields: 
+            if cf == 'jail_autostart':
+                Warden().auto(jail=jail_host)
+            else:
+                args = {}
+                flags = WARDEN_FLAGS_NONE 
+
+                if cf == 'jail_ipv4':
+                    flags |= WARDEN_SET_FLAGS_IPV4
+                    args['ipv4'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_ipv6':
+                    flags |= WARDEN_SET_FLAGS_IPV6 
+                    args['ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_alias_ipv4':
+                    flags |= WARDEN_SET_FLAGS_ALIAS_IPV4
+                    args['alias-ipv4'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_alias_ipv6':
+                    flags |= WARDEN_SET_FLAGS_ALIAS_IPV6
+                    args['alias-ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_bridge_ipv4':
+                    flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
+                    args['bridge-ipv4'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_bridge_ipv6':
+                    flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
+                    args['bridge-ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_alias_bridge_ipv4':
+                    flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4
+                    args['alias-bridge-ipv4'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_alias_bridge_ipv6':
+                    flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6
+                    args['alias-bridge-ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_defaultrouter_ipv4':
+                    flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4
+                    args['defaultrouter-ipv4'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_defaultrouter_ipv6':
+                    flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
+                    args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
+
+                args['jail'] = jail_host
+                args['flags'] = flags
+
+                Warden().set(**args)
 
     class Meta:
         model = models.Jails

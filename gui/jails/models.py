@@ -27,7 +27,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.models import Model
-from freenasUI.common.warden import Warden
+from freenasUI.common.warden import Warden, WARDEN_AUTOSTART_ENABLED
 
 from freenasUI.middleware.notifier import notifier
 
@@ -208,6 +208,13 @@ class Jails(Model):
     jail_type = models.CharField(
             max_length=120
             )
+
+    def __init__(self, *args, **kwargs):
+        super(Jails, self).__init__(*args, **kwargs)
+        if self.jail_autostart == WARDEN_AUTOSTART_ENABLED:
+            self.jail_autostart = True
+        else:
+            self.jail_autostart = False
 
     def delete(self):
         Warden().delete(jail=self.jail_host)

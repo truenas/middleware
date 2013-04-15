@@ -42,7 +42,7 @@ log = logging.getLogger('jails.admin')
 class JailsFAdmin(BaseFreeAdmin):
 
     create_modelform = "JailCreateForm"
-#    edit_modelform = "JailsEditForm"
+    edit_modelform = "JailsEditForm"
     icon_object = u"ServicesIcon"
     icon_model = u"ServicesIcon"
     icon_add = u"ServicesIcon"
@@ -146,33 +146,33 @@ class JailsFAdmin(BaseFreeAdmin):
         
         actions = OrderedDict()
 
-        actions['auto'] = self._action_builder('jail_auto', label=_("Autostart"))
-        actions['checkup'] = self._action_builder('jail_checkup', label=_("Checkup"))
-        actions['detiuls'] = self._action_builder('jail_details', label=_("Details"))
-        actions['export'] = self._action_builder('jail_export', label=_("Export"))
-        actions['import'] = self._action_builder('jail_import', label=_("Import"))
-        actions['options'] = self._action_builder('jail_options', label=_("Options"))
-        actions['pkgs'] = self._action_builder('jail_pkgs', label=_("Packages"))
-        actions['pbis'] = self._action_builder('jail_pbis', label=_("PBI's"))
+#        actions['auto'] = self._action_builder('jail_auto', label=_("Autostart"))
+#        actions['checkup'] = self._action_builder('jail_checkup', label=_("Checkup"))
+#        actions['detiuls'] = self._action_builder('jail_details', label=_("Details"))
+#        actions['export'] = self._action_builder('jail_export', label=_("Export"))
+#        actions['import'] = self._action_builder('jail_import', label=_("Import"))
+#        actions['options'] = self._action_builder('jail_options', label=_("Options"))
+#        actions['pkgs'] = self._action_builder('jail_pkgs', label=_("Packages"))
+#        actions['pbis'] = self._action_builder('jail_pbis', label=_("PBI's"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
 
-        actions['zfsmksnap'] = self._action_builder('jail_zfsmksnap',
-            label=_("ZFS Snapshot"))
-        actions['zfslistclone'] = self._action_builder('jail_zfslistclone',
-            label=_("ZFS Clones"))
-        actions['zfslistsnap'] = self._action_builder('jail_zfslistsnap',
-            label=_("ZFS Snapshots"))
-        actions['zfsclonesnap'] = self._action_builder('jail_zfsclonesnap',
-            label=_("ZFS Clone Snapshot"))
-        actions['zfscronsnap'] = self._action_builder('jail_zfscronsnap',
-            label=_("ZFS Cron Snapshot"))
-        actions['zfrevertsnap'] = self._action_builder('jail_zfsrevertsnap',
-            label=_("ZFS Revert Snapshot"))
-        actions['zfsrmclonesnap'] = self._action_builder('jail_zfsrmclonesnap',
-            label=_("ZFS Remove Clone Snapshot"))
-        actions['zfsrmsnap'] = self._action_builder('jail_zfsrmsnap',
-            label=_("ZFS Remove Snapshot"))
+#        actions['zfsmksnap'] = self._action_builder('jail_zfsmksnap',
+#            label=_("ZFS Snapshot"))
+#        actions['zfslistclone'] = self._action_builder('jail_zfslistclone',
+#            label=_("ZFS Clones"))
+#        actions['zfslistsnap'] = self._action_builder('jail_zfslistsnap',
+#            label=_("ZFS Snapshots"))
+#        actions['zfsclonesnap'] = self._action_builder('jail_zfsclonesnap',
+#            label=_("ZFS Clone Snapshot"))
+#        actions['zfscronsnap'] = self._action_builder('jail_zfscronsnap',
+#            label=_("ZFS Cron Snapshot"))
+#        actions['zfrevertsnap'] = self._action_builder('jail_zfsrevertsnap',
+#            label=_("ZFS Revert Snapshot"))
+#        actions['zfsrmclonesnap'] = self._action_builder('jail_zfsrmclonesnap',
+#            label=_("ZFS Remove Clone Snapshot"))
+#        actions['zfsrmsnap'] = self._action_builder('jail_zfsrmsnap',
+#            label=_("ZFS Remove Snapshot"))
 
         return actions
 
