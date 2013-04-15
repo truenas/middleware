@@ -50,7 +50,7 @@ class JailsFAdmin(BaseFreeAdmin):
 
     resource = JailsResource
     exclude_fields = (
-        'jail_id',
+        'id',
         'jail_ipv4',
         'jail_alias_ipv4',
         'jail_bridge_ipv4',

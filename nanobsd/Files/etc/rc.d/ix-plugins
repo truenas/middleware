@@ -13,7 +13,7 @@ plugins_start()
 {
 	local args="$*"
 
-	sql="
+	local sql="
 	SELECT
 		plugin_name,
 		plugin_jail,
@@ -26,24 +26,31 @@ plugins_start()
 
 	if [ -n "${args}" ]
 	then
-		names=""
+		local where_args=""
+
 		for p in ${args}
 		do
-			if [ -z "${names}" ]
-			then
-				names="'${p}'"
-			else
-				names="${names},'${p}'"
+			local jail="$(echo ${p}|cut -f1 -d':' -s)"
+			local plugin="$(echo ${p}|cut -f2 -d':' -s)"
+			if [ -z "${jail}" -o -z "${plugin}" ]
+			then 
+				continue
 			fi
-		done
-		sql="${sql}
-		WHERE	
-			plugin_name
-		IN
-			($names)
-		"
-	fi
 
+			if [ -z "${where_args}" ]
+			then
+				where_args="plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			else
+				where_args="${where_args} OR
+					plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			fi	
+		done
+
+		if [ -n "${where_args}" ]
+		then
+			sql="${sql} WHERE ( ${where_args} )"
+		fi
+	fi
 
 	local _ifs="${IFS}"
 	IFS="|"
@@ -112,22 +119,30 @@ plugins_stop()
 
 	if [ -n "${args}" ]
 	then
-		names=""
+		local where_args=""
+
 		for p in ${args}
 		do
-			if [ -z "${names}" ]
-			then
-				names="'${p}'"
-			else
-				names="${names},'${p}'"
+			local jail="$(echo ${p}|cut -f1 -d':' -s)"
+			local plugin="$(echo ${p}|cut -f2 -d':' -s)"
+			if [ -z "${jail}" -o -z "${plugin}" ]
+			then 
+				continue
 			fi
+
+			if [ -z "${where_args}" ]
+			then
+				where_args="plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			else
+				where_args="${where_args} OR
+					plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			fi	
 		done
-		sql="${sql}
-		WHERE	
-			plugin_name
-		IN
-			($names)
-		"
+
+		if [ -n "${where_args}" ]
+		then
+			sql="${sql} WHERE ( ${where_args} )"
+		fi
 	fi
 
 	local _ifs="${IFS}"
@@ -182,22 +197,30 @@ plugins_status()
 
 	if [ -n "${args}" ]
 	then
-		names=""
+		local where_args=""
+
 		for p in ${args}
 		do
-			if [ -z "${names}" ]
-			then
-				names="'${p}'"
-			else
-				names="${names},'${p}'"
+			local jail="$(echo ${p}|cut -f1 -d':' -s)"
+			local plugin="$(echo ${p}|cut -f2 -d':' -s)"
+			if [ -z "${jail}" -o -z "${plugin}" ]
+			then 
+				continue
 			fi
+
+			if [ -z "${where_args}" ]
+			then
+				where_args="plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			else
+				where_args="${where_args} OR
+					plugin_jail = '${jail}' AND plugin_name = '${plugin}'"
+			fi	
 		done
-		sql="${sql}
-		WHERE	
-			plugin_name
-		IN
-			($names)
-		"
+
+		if [ -n "${where_args}" ]
+		then
+			sql="${sql} WHERE ( ${where_args} )"
+		fi
 	fi
 
 	local _ifs="${IFS}"

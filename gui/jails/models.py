@@ -26,9 +26,9 @@
 #####################################################################
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.warden import Warden, WARDEN_AUTOSTART_ENABLED
-
 from freenasUI.middleware.notifier import notifier
 
 import logging
@@ -145,68 +145,82 @@ class Jails(Model):
     objects = JailsManager()
 
     jail_host = models.CharField(
-            max_length=120
+            max_length=120,
+            verbose_name=_("Host")
             )
     jail_ipv4 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv4 address")
             )
     jail_alias_ipv4 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv4 aliases")
             )
     jail_bridge_ipv4 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv4 bridge address")
             )
     jail_alias_bridge_ipv4 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv4 bridge aliases")
             )
     jail_defaultrouter_ipv4 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv4 default gateway")
             )
     jail_ipv6 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv6 address")
             )
     jail_alias_ipv6 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv6 aliases")
             )
     jail_bridge_ipv6 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv6 bridge address")
             )
     jail_alias_bridge_ipv6 = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv6 bridge aliases")
             )
     jail_defaultrouter_ipv6 = models.CharField( 
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("IPv6 default gateway")
             )
     jail_autostart = models.CharField(
             max_length=120,
             blank=True,
-            null=True
+            null=True,
+            verbose_name=_("Autostart")
             )
     jail_status = models.CharField(
-            max_length=120
+            max_length=120,
+            verbose_name=_("Status")
             )
     jail_type = models.CharField(
-            max_length=120
+            max_length=120,
+            verbose_name=_("Type")
             )
 
     def __init__(self, *args, **kwargs):
@@ -217,7 +231,17 @@ class Jails(Model):
             self.jail_autostart = False
 
     def delete(self):
-        Warden().delete(jail=self.jail_host)
+        from freenasUI.plugins.models import Plugins
+
+        try:
+            plugins = Plugins.objects.filter(plugin_jail=self.jail_host)
+            for p in plugins:
+                p.delete()
+
+            Warden().delete(jail=self.jail_host)
+
+        except:
+            pass
 
     class Meta:
         verbose_name = _("Jails")
