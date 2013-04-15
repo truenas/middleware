@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-13 23:07+0200\n"
+"PO-Revision-Date: 2013-04-14 13:46+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -402,27 +402,27 @@ msgstr "Čitanje i Pisanje"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)-a minuta"
+msgstr "%(minutes)s minuta"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)-a sati"
+msgstr "%(hour)s sati"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours)-a sati"
+msgstr "%(hours)s sati"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day)-a dan"
+msgstr "%(day)s dan"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) nedelja"
+msgstr "%(nedelja)s nedelja"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
@@ -507,7 +507,7 @@ msgstr "Obavezno. 16 znakova i manje. Slova, brojevi i @/./+/-/_ isključivo."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Ova vrednost može sadržati samo slova, brojeve i ./-/ _ znakove."
+msgstr "Ova vrednost može da sadrži samo slova, brojeve i ./-/_ znakove."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -775,7 +775,7 @@ msgstr "Putanja mora da postoji u okviru tačke postavljanja volumena"
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr "Greška:% s"
+msgstr "Greška: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -936,7 +936,7 @@ msgstr "LAGG fizički NIC"
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Mreža '% S' nije validna, CIDR se očekuje."
+msgstr "Mreža '%s' nije validna, CIDR se očekuje."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
@@ -1571,7 +1571,7 @@ msgstr "Otkrivanje grupe za proveru identiteta"
 #: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Ova vrednost mora da bude između% (start)d i% (kraj)d, uključujući ih."
+msgstr "Ova vrednost mora da bude između %(start)d i %(kraj)d, uključujući ih."
 
 #: services/forms.py:669
 msgid ""
@@ -1647,7 +1647,7 @@ msgstr "Broj grupe za autentikaciju"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr "Koristiti alfanumeričke znakove, \"-\" i \".\" \":\"."
+msgstr "Koristi alfanumeričke znakove, \".\", \"-\" i \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1916,7 +1916,7 @@ msgstr "Omogućava gost pristup svim apple deljenim resursima na ovom polju."
 
 #: services/models.py:219
 msgid "Max. Connections"
-msgstr "Max. konekcije"
+msgstr "Max. Konekcije"
 
 #: services/models.py:221
 msgid ""
@@ -2922,8 +2922,8 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Specifično ime sa kojima se vezuje katalog server, npr. cn = admin, dc = "
-"test, dc = org"
+"Specifično ime sa kojim se vezuje server direktorijuma, npr. cn=admin, "
+"dc=test, dc=org"
 
 #: services/models.py:1304
 msgid "Root bind password"
@@ -3343,7 +3343,7 @@ msgstr ""
 "kojima nije dozvoljeno da pristupe ovom deljenom resursu. Gde se liste "
 "sukobljavaju onda lista sa dozvoljenim pristupima ima prednost. U slučaju da "
 "je neophodno da se brani sve kao podrazumevana vrednost, koristite ključnu "
-"reč ALL (ili netmask 0.0.0.0 / 0), a zatim eksplicitno navesti omogući "
+"reč ALL (ili netmask 0.0.0.0/0), a zatim eksplicitno navesti omogući "
 "parametar onim hostovima kojima bi trebalo da bude dozvoljen pristup. "
 "Ostavite ovo polje prazno kako bi se koristila podrazumevana podešavanja."
 
@@ -4243,9 +4243,8 @@ msgid "Storage"
 msgstr "Uređaj za skladištenje"
 
 #: storage/nav.py:24
-#, fuzzy
 msgid "View Snapshots"
-msgstr "Pogledaj sve %s"
+msgstr "Pogledaj Snimke"
 
 #: storage/nav.py:34
 msgid "View ZFS Scrubs"
@@ -5143,7 +5142,7 @@ msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
 msgstr ""
-"Postoje %(related_num) povezanih stavki koje će biti izbrisane, kao i zbog "
+"Postoje %(related_num)s povezanih stavki koje će biti izbrisane, kao i zbog "
 "toga što zavisi od ove"
 
 #: templates/freeadmin/generic_model_delete.html:30
@@ -5431,7 +5430,7 @@ msgstr "Uvoz"
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "Korak %(step) od %(step_count)"
+msgstr "Korak %(step)s od %(step_count)s"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
@@ -5480,7 +5479,7 @@ msgstr ""
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Dobro došli na %(sw_name)&trade; %(sw_login_version)"
+msgstr "Dobro došli na %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:47
 msgid "Please log in."
@@ -5549,7 +5548,7 @@ msgstr ""
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. podešavanja"
+msgstr "S.M.A.R.T. Podešavanja"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5816,7 +5815,7 @@ msgstr ""
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Da li ste sigurni da želite da uništite \"%(ime)s\"?"
+msgstr "Da li ste sigurni da želite da uništite \"%(name)s\"?"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -6046,7 +6045,7 @@ msgstr "Nije određeno uzimanje periodičnih snimaka."
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr "Imate %(upotrebljeno)s od upotrebljenog prostora u ovom volumenu"
+msgstr "Imate %(used)s od upotrebljenog prostora u ovom volumenu"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
@@ -6150,7 +6149,7 @@ msgstr "Zameniti disk"
 #: templates/storage/zvols.html:3
 #, python-format
 msgid "Create ZFS volume on %(name)s"
-msgstr "Kreirati ZFS volumen na %(ime)s"
+msgstr "Kreirati ZFS volumen na %(name)s"
 
 #: templates/storage/zvols.html:6
 msgid "Add ZFS Volume"
@@ -6308,7 +6307,7 @@ msgstr "Nisu definisani S.M.A.R.T. testovi"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. Test"
-msgstr "Dodati S.M.A.R.T. test"
+msgstr "Dodati S.M.A.R.T. Test"
 
 #: templates/system/smarttest.html:46
 msgid "Add S.M.A.R.T. test"
@@ -6383,12 +6382,12 @@ msgstr "Status volumena %s je DEGRADIRAN"
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "Volumen %(volumen)s status je %(status)s: %(poruka)s"
+msgstr "Volumen %(volume)s status je %(status)s: %(message)s"
 
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr "Volumen %(volumen)s status je %(status)s"
+msgstr "Volumen %(volume)s status je %(status)s"
 
 #: tools/alert.py:125
 msgid ""
