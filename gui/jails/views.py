@@ -31,9 +31,13 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.views import JsonResp   
 from freenasUI.middleware.notifier import notifier
 from freenasUI.jails import forms
 from freenasUI.jails import models
+from freenasUI.common.warden import Warden, \
+    WARDEN_STATUS_RUNNING, \
+    WARDEN_STATUS_STOPPED
 
 log = logging.getLogger("jails.views")
 
@@ -52,17 +56,6 @@ def jails_home(request):
 
 def jail_edit(request, id):
 
-
-#    if request.method == 'POST':
-#        form = forms.MountPointAccessForm(request.POST)
-#        if form.is_valid():
-#            form.commit(path=path)
-#            return JsonResp(
-#                request,
-#                message=_("Mount Point permissions successfully updated."))
-#    else:
-#        form = forms.MountPointAccessForm(initial={'path': path})
-#
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:
@@ -70,6 +63,10 @@ def jail_edit(request, id):
 
     if request.method == 'POST':
         form = forms.JailsEditForm(request.POST, instance=jail)
+        if form.is_valid():
+            form.save() 
+            return JsonResp(request,
+                message=_("Jail successfully edited."))
     else:
         form = forms.JailsEditForm(instance=jail)
 
@@ -78,12 +75,26 @@ def jail_edit(request, id):
     })
 
 def jail_start(request, id):
-    log.debug("XXX: jail_start()")
-    return render(request, 'jails/start.html', { }) 
+    try:
+        jail = models.Jails.objects.get(id=id)
+    except Exception, e:
+        jail = None 
+
+    if jail and jail.jail_status == WARDEN_STATUS_STOPPED:
+        Warden().start(jail=jail.jail_host)
+
+    return JsonResp(request, message=_("Jail successfully started."))
 
 def jail_stop(request, id):
-    log.debug("XXX: jail_stop()")
-    return render(request, 'jails/stop.html', { }) 
+    try:
+        jail = models.Jails.objects.get(id=id)
+    except Exception, e:
+        jail = None 
+
+    if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
+        Warden().stop(jail=jail.jail_host)
+
+    return JsonResp(request, message=_("Jail successfully stopped."))
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
