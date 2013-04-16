@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-14 13:46+0200\n"
+"PO-Revision-Date: 2013-04-15 22:52+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1476,7 +1476,7 @@ msgstr "Koristiti alfanumeričke karaktere, \".\", \"-\" i \"_\"."
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "Sledeći e-mailovi nisu validni: %(email)s"
-msgstr[1] ""
+msgstr[1] "Sledeće e-mail poruje nisu važeće: %(email)s"
 msgstr[2] ""
 
 #: services/forms.py:437
@@ -3073,10 +3073,13 @@ msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Ova opcija određuje ime grupe koja bi trebalo da fajl transfere do i od tog "
+"modula održi. Ostavite ovo polje prazno da bi koristili podrazumevana "
+"podešavanja"
 
 #: services/models.py:1428
 msgid "Hosts allow"
-msgstr ""
+msgstr "Dozvoljeni hostovi"
 
 #: services/models.py:1429
 msgid ""
@@ -3084,10 +3087,14 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Ova opcija je zarez, razmak, ili tabulator razgraničen skup hostova kojima "
+"je dozvoljeno da pristupe ovom modulu. Možete da navedete hostove po imenu "
+"ili IP broju. Ostavite ovo polje prazno da koristite podrazumevana "
+"podešavanja"
 
 #: services/models.py:1433
 msgid "Hosts deny"
-msgstr ""
+msgstr "Zabranjeni hostovi"
 
 #: services/models.py:1434
 msgid ""
@@ -3098,19 +3105,26 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"Ova opcija je zarez, razmak, ili tabulator razgraničen skup hostova kojima "
+"nije dozvoljeno da pristupe ovom modulu. Gde su liste u konfliktu, lista sa "
+"dozvolama ima prednost. U slučaju da je neophodno da se brani sve kao "
+"podrazumevana vrednost, koristite ključnu reč ALL (ili mrežnu masku "
+"0.0.0.0/0), a zatim eksplicitno navesti kojim hostovima bi trebalo da bude "
+"dozvoljen pristup. Ostavite ovo polje prazno da koristite podrazumevana "
+"podešavanja"
 
 #: services/models.py:1439
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr ""
+msgstr "Ovi parametri će biti dodati u konfiguraciji modula u rsyncd.conf"
 
 #: services/models.py:1444
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Modul"
 
 #: services/models.py:1445
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Moduli"
 
 #: services/models.py:1459
 msgid "Check interval"
@@ -3372,11 +3386,11 @@ msgstr ""
 
 #: sharing/models.py:118
 msgid "Share Comment"
-msgstr ""
+msgstr "Deljeni Komentar"
 
 #: sharing/models.py:125
 msgid "Share password"
-msgstr ""
+msgstr "Deljenia lozinka"
 
 #: sharing/models.py:127
 msgid ""
@@ -3384,20 +3398,24 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Ova opcija vam omogućava da podesite lozinku za volumen, koja može biti "
+"najviše 8 znakova (preporučuje se korišćenjem ASCIIa u vreme pisanja ovog "
+"teksta)."
 
 #: sharing/models.py:131
 msgid "Share Character Set"
-msgstr ""
+msgstr "Deljeni skup znakova"
 
 #: sharing/models.py:133
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Navodi deljeni skup znakova. Na primer UTF8, UTF8-MAC, ISO-8859-15, itd."
 
 #: sharing/models.py:137
 msgid "Allow List"
-msgstr ""
+msgstr "Lista dozvola"
 
 #: sharing/models.py:139
 msgid ""
@@ -3405,6 +3423,9 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Ova opcija omogućava da korisnici i grupe koje pristupaju deljenom resursu "
+"budu navedeni. Navedeni korisnici i grupe su razgraničeni zarezima. Grupe su "
+"označene sa @ prefiksom."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -5829,7 +5850,7 @@ msgid_plural ""
 msgstr[0] "Ovo će obrisati sve fajlove u okviru skupa podataka.\n"
 msgstr[1] "Ovo će obrisati sve fajlove unutar skupa podataka i podređenih skupova "
 "podataka.\n"
-msgstr[2] ""
+msgstr[2] "Ovo će obrisati sve fajlove unutar skupa podataka i podređenih skupova.\n"
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
