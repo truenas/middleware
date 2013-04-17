@@ -287,49 +287,50 @@ class JailsConfiguration(Model):
         deletable = False
 
 
-#class NullMountPoint(Model):
-#
-#    source = models.CharField(
-#        max_length=300,
-#        verbose_name=_("Source"),
-#        )
-#
-#    destination = models.CharField(
-#        max_length=300,
-#        verbose_name=_("Destination"),
-#        )
-#
-#    class Meta:
-#        verbose_name = _(u"Mount Point")
-#        verbose_name_plural = _(u"Mount Points")
-#
-#    def __unicode__(self):
-#        return self.source
-#
-#    def delete(self, *args, **kwargs):
-#        if self.mounted:
-#            self.umount()
-#        super(NullMountPoint, self).delete(*args, **kwargs)
-#
-#    @property
-#    def mounted(self):
-#        return is_mounted(device=self.source, path=self.destination_jail)
-#
-#    def __get_jail(self):
-#        from freenasUI.services.models import PluginsJail
-#        if not hasattr(self, "__jail"):
-#            self.__jail = PluginsJail.objects.order_by('-id')[0]
-#        return self.__jail
-#
-#    @property
-#    def destination_jail(self):
-#        jail = self.__get_jail()
-#        return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
-#
-#    def mount(self):
-#        mount(self.source, self.destination_jail, fstype="nullfs")
-#        return self.mounted
-#
-#    def umount(self):
-#        umount(self.destination_jail)
-#        return not self.mounted
+class NullMountPoint(Model):
+
+    jail = models.CharField(
+        max_length=120,
+        verbose_name=_("Jail"),
+        )
+    source = models.CharField(
+        max_length=300,
+        verbose_name=_("Source"),
+        )
+
+    destination = models.CharField(
+        max_length=300,
+        verbose_name=_("Destination"),
+        )
+
+    class Meta:
+        verbose_name = _(u"Mount Point")
+        verbose_name_plural = _(u"Mount Points")
+
+    class FreeAdmin:
+        deletable = True
+
+    def __unicode__(self):
+        return self.source
+
+    def delete(self, *args, **kwargs):
+        if self.mounted:
+            self.umount()
+        super(NullMountPoint, self).delete(*args, **kwargs)
+
+    @property
+    def mounted(self):
+        return is_mounted(device=self.source, path=self.destination_jail)
+
+    @property
+    def destination_jail(self):
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        return u"%s/%s%s" % (jc.jc_path, self.jail, self.destination)
+
+    def mount(self):
+        mount(self.source, self.destination_jail, fstype="nullfs")
+        return self.mounted
+
+    def umount(self):
+        umount(self.destination_jail)
+        return not self.mounted

@@ -108,19 +108,19 @@ class PluginsSettings(TreeNode):
         super(PluginsSettings, self).__init__(*args, **kwargs)
 
 
-class PluginsManagement(TreeNode):
-
-    gname = 'management'
-    name = _(u'Management')
-    icon = u"SettingsIcon"
-    skip = True
-    order = -1
-
-    def __init__(self, *args, **kwargs):
-        super(PluginsManagement, self).__init__(*args, **kwargs)
-        self.append_children([PluginsSettings()])
-
-    def pre_dehydrate(self):
+#class PluginsManagement(TreeNode):
+#
+#    gname = 'management'
+#    name = _(u'Management')
+#    icon = u"SettingsIcon"
+#    skip = True
+#    order = -1
+#
+#    def __init__(self, *args, **kwargs):
+#        super(PluginsManagement, self).__init__(*args, **kwargs)
+#        self.append_children([PluginsSettings()])
+#
+#    def pre_dehydrate(self):
 #        #if notifier().plugins_jail_configured():
 #        #    return
 #
@@ -144,22 +144,14 @@ class PluginsManagement(TreeNode):
 #    type = u'nullmountpoint'
 #    icon = u"SettingsIcon"
 
-#class Rsync(TreeNode):
+#class Plugins(TreeNode):
 #
-#    gname = 'Rsync'
-#    name = _(u'Rsync')
-#    type = u'rsync'
-#    icon = u'rsyncIcon'
-
-
-class Plugins(TreeNode):
-
-    gname = 'Plugins'
-    name = _(u'Plugins')
-    #icon = models.PluginsJail._admin.icon_model
-
-    def __init__(self, *args, **kwargs):
-        super(Plugins, self).__init__(*args, **kwargs)
-
-        self.append_children([PluginsManagement()])
+#    gname = 'Plugins'
+#    name = _(u'Plugins')
+#    #icon = models.PluginsJail._admin.icon_model
+#
+#    def __init__(self, *args, **kwargs):
+#        super(Plugins, self).__init__(*args, **kwargs)
+#
+#        self.append_children([PluginsManagement()])
 
