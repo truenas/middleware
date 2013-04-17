@@ -28,13 +28,13 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
+from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.common.warden import Warden, WARDEN_AUTOSTART_ENABLED
 from freenasUI.middleware.notifier import notifier
 
 import logging
 
 log = logging.getLogger('jails.jails')
-
 
 # 
 # XXX - Should implement order_by() and filter() methods
@@ -223,6 +223,9 @@ class Jails(Model):
             verbose_name=_("Type")
             )
 
+    def __str__(self):
+        return self.jail_host
+
     def __init__(self, *args, **kwargs):
         super(Jails, self).__init__(*args, **kwargs)
         if self.jail_autostart == WARDEN_AUTOSTART_ENABLED:
@@ -262,7 +265,8 @@ class JailsConfiguration(Model):
         blank=True,
         max_length=120,
         verbose_name=_("IPv4 Network"),
-        help_text=_("IPv4 network range for jails and plugins")
+        help_text=_("IPv4 network range for jails and plugins"),
+        default="192.168.99.0/24"
         )
     jc_ipv6_network = models.CharField(
         blank=True,
@@ -280,4 +284,52 @@ class JailsConfiguration(Model):
         verbose_name_plural = _("Jails Configuration")
 
     class FreeAdmin:
-        pass
+        deletable = False
+
+
+#class NullMountPoint(Model):
+#
+#    source = models.CharField(
+#        max_length=300,
+#        verbose_name=_("Source"),
+#        )
+#
+#    destination = models.CharField(
+#        max_length=300,
+#        verbose_name=_("Destination"),
+#        )
+#
+#    class Meta:
+#        verbose_name = _(u"Mount Point")
+#        verbose_name_plural = _(u"Mount Points")
+#
+#    def __unicode__(self):
+#        return self.source
+#
+#    def delete(self, *args, **kwargs):
+#        if self.mounted:
+#            self.umount()
+#        super(NullMountPoint, self).delete(*args, **kwargs)
+#
+#    @property
+#    def mounted(self):
+#        return is_mounted(device=self.source, path=self.destination_jail)
+#
+#    def __get_jail(self):
+#        from freenasUI.services.models import PluginsJail
+#        if not hasattr(self, "__jail"):
+#            self.__jail = PluginsJail.objects.order_by('-id')[0]
+#        return self.__jail
+#
+#    @property
+#    def destination_jail(self):
+#        jail = self.__get_jail()
+#        return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
+#
+#    def mount(self):
+#        mount(self.source, self.destination_jail, fstype="nullfs")
+#        return self.mounted
+#
+#    def umount(self):
+#        umount(self.destination_jail)
+#        return not self.mounted

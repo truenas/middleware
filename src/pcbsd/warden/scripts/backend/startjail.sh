@@ -221,6 +221,7 @@ if [ -n "${BRIDGEIPS4}" ] ; then
    done
 fi
 
+
 if [ -n "${BRIDGEIP6}" ] ; then
    if ! ipv6_configured "${BRIDGE}" ; then
       ifconfig ${BRIDGE} inet6 "${BRIDGEIP6}"
@@ -359,7 +360,6 @@ fi
 
 instance=`get_ipfw_nat_instance "${IFACE}"`
 if [ -z "${instance}" ] ; then
-echo "NAT IS NULL"
    priority=`get_ipfw_nat_priority`
    instance=`get_ipfw_nat_instance`
 
@@ -389,6 +389,6 @@ else
     jexec ${JID} ${sCmd} 2>&1
   else
     echo "Starting jail with: /etc/rc"
-    jexec ${JID} /bin/sh /etc/rc 2>&1
+    jexec ${JID} /bin/sh /etc/rc >/dev/tty 2>&1
   fi
 fi

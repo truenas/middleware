@@ -163,6 +163,7 @@ plugins_stop()
 			continue
 		fi
 
+		echo jexec ${jid} "${path}/control" stop
 		jexec ${jid} "${path}/control" stop 2>/dev/null
 		if [ "$?" != "0" ]
 		then

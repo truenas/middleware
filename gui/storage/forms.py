@@ -2189,8 +2189,7 @@ class UnlockPassphraseForm(forms.Form):
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
             ('iscsitarget', _('iSCSI')),
-            ('nfs', _('NFS')),
-            ('plugins_jail', _('Plugins Jail')),
+            ('nfs', _('NFS'))
         ),
         required=False,
     )

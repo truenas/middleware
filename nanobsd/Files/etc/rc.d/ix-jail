@@ -9,183 +9,92 @@
 
 . /etc/rc.freenas
 
-get_plugins_jail_name()
-{
-	jail_name=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_name
+#generate_plugins_jail_config()
+#{
+#	local IFS="|"
+#	local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
+#
+#	grep -v "jail_" /etc/rc.conf > "${tmpfile}"
+#
+#	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+#	SELECT
+#		jail_path,
+#		jail_name,
+#		plugins_path
+#	FROM
+#		services_pluginsjail
+#
+#	ORDER BY
+#		-services_pluginsjail.id
+#
+#	LIMIT 1
+#	" | \
+#	while read -r path name plugins
+#	do
+#		local mntpath_plugins="${path}/${name}/mnt/plugins"
+#		local mntpath_pbi="${path}/${name}/usr/pbi"
+#
+#		# Skip if jail path name does not exist
+#		if [ ! -d "${path}/${name}" ]; then
+#			continue
+#		fi
+#
+#		if [ ! -d "${plugins}/pbi" ]
+#		then
+#			mkdir -p "${plugins}/pbi"
+#		fi
+#		if [ ! -d "${mntpath_plugins}" ]
+#		then
+#			mkdir -p "${mntpath_plugins}"
+#		fi
+#		if [ ! -d "${mntpath_pbi}" ]
+#		then
+#			mkdir -p "${mntpath_pbi}"
+#		fi
+#
+#		echo "${plugins}	${mntpath_plugins}	nullfs	rw	0	0" | sed 's/ /\\040/g' > "/etc/fstab.${name}"
+#		echo "${plugins}/pbi	${mntpath_pbi}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
+#
+#		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+#		SELECT
+#			source,
+#			destination
+#		FROM
+#			plugins_nullmountpoint
+#		" | \
+#		while read -r source destination
+#		do
+#			echo "${source}	${path}/${name}/${destination}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
+#		done
+#
+#		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf 2> /dev/null
+#		cp /etc/localtime ${path}/${name}/etc/localtime 2> /dev/null
+#		sysctl security.jail.allow_raw_sockets=1
+#
+#		# No VIM colors needed here
+#		cat<<-__EOF__>>"${tmpfile}"
+#
+#		jail_${name}_rootdir="${path}/${name}"
+#		jail_${name}_hostname="${name}"
+#		jail_${name}_devfs_enable="YES"
+#		jail_${name}_devfs_ruleset="devfsrules_jail"
+#		jail_${name}_procfs_enable="YES"
+#		jail_${name}_mount_enable="YES"
+#		jail_${name}_vnet_enable="YES"
+#		jail_${name}_flags="-l -U root -c persist"
+#		jail_${name}_exec_afterstart0="ifconfig lo0 127.0.0.1"
+#		jail_${name}_exec_start="/bin/sh /dev/null"
+#		jail_sysvipc_allow="YES"
+#		jail_list="${name}"
+#		jail_v2_enable="YES"
+#		jail_enable="YES"
+#__EOF__
+#	done
+#
+#	mv "${tmpfile}" /etc/rc.conf
+#	return $?
+#}
 
-	FROM
-		services_pluginsjail
-
-	ORDER BY	
-		-id
-
-	LIMIT 1;
-	")
-
-	echo "${jail_name}"
-}
-	
-generate_plugins_jail_config()
-{
-	local IFS="|"
-	local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
-
-	grep -v "jail_" /etc/rc.conf > "${tmpfile}"
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		jail_path,
-		jail_name,
-		plugins_path
-	FROM
-		services_pluginsjail
-
-	ORDER BY
-		-services_pluginsjail.id
-
-	LIMIT 1
-	" | \
-	while read -r path name plugins
-	do
-		local mntpath_plugins="${path}/${name}/mnt/plugins"
-		local mntpath_pbi="${path}/${name}/usr/pbi"
-
-		# Skip if jail path name does not exist
-		if [ ! -d "${path}/${name}" ]; then
-			continue
-		fi
-
-		if [ ! -d "${plugins}/pbi" ]
-		then
-			mkdir -p "${plugins}/pbi"
-		fi
-		if [ ! -d "${mntpath_plugins}" ]
-		then
-			mkdir -p "${mntpath_plugins}"
-		fi
-		if [ ! -d "${mntpath_pbi}" ]
-		then
-			mkdir -p "${mntpath_pbi}"
-		fi
-
-		echo "${plugins}	${mntpath_plugins}	nullfs	rw	0	0" | sed 's/ /\\040/g' > "/etc/fstab.${name}"
-		echo "${plugins}/pbi	${mntpath_pbi}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
-
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			source,
-			destination
-		FROM
-			plugins_nullmountpoint
-		" | \
-		while read -r source destination
-		do
-			echo "${source}	${path}/${name}/${destination}	nullfs	rw	0	0" | sed 's/ /\\040/g' >> "/etc/fstab.${name}"
-		done
-
-		cp /etc/resolv.conf ${path}/${name}/etc/resolv.conf 2> /dev/null
-		cp /etc/localtime ${path}/${name}/etc/localtime 2> /dev/null
-		sysctl security.jail.allow_raw_sockets=1
-
-		# No VIM colors needed here
-		cat<<-__EOF__>>"${tmpfile}"
-
-		jail_${name}_rootdir="${path}/${name}"
-		jail_${name}_hostname="${name}"
-		jail_${name}_devfs_enable="YES"
-		jail_${name}_devfs_ruleset="devfsrules_jail"
-		jail_${name}_procfs_enable="YES"
-		jail_${name}_mount_enable="YES"
-		jail_${name}_vnet_enable="YES"
-		jail_${name}_flags="-l -U root -c persist"
-		jail_${name}_exec_afterstart0="ifconfig lo0 127.0.0.1"
-		jail_${name}_exec_start="/bin/sh /dev/null"
-		jail_sysvipc_allow="YES"
-		jail_list="${name}"
-		jail_v2_enable="YES"
-		jail_enable="YES"
-__EOF__
-	done
-
-	mv "${tmpfile}" /etc/rc.conf
-	return $?
-}
-
-
-plugins_jail_start_old()
-{
-	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
-	then
-		local jail_name="$(get_plugins_jail_name)"
-
-		generate_plugins_jail_config
-		/etc/rc.d/jail start "${jail_name}"
-		rc=$?
-
-		if [ ${rc} -eq 0 ]; then
-
-			jail=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-			SELECT
-				jail_ipv4address,
-				jail_ipv4netmask,
-				jail_mac
-			FROM
-				services_pluginsjail
-			ORDER BY
-				-id
-			LIMIT 1;
-			")
-
-			jail_id=$(jls | tail +2 |grep "\b${jail_name}\b"|awk '{print $1}')
-			if [ -z ${jail_id} ]; then
-				logger -t ix-jail "Could not determine jail id (not running?)"
-				return 1
-			fi
-
-			ipv4addr=$(echo ${jail}|cut -d "|" -f 1)
-			ipv4netmask=$(echo ${jail}|cut -d "|" -f 2)
-			macaddr=$(echo ${jail}|cut -d "|" -f 3)
-			#FIXME: ipv6
-			defaultroute=$(netstat -f inet -rn | grep default|awk '{print $2}')
-			#FIXME: perhaps select which iface to bridge with in the GUI
-			#FIXME: ipv6
-			#NOTE: Use -W for wider field size (#1997)
-			defaultif=$(netstat -f inet -rnW | grep default|awk '{print $7}')
-			mtu=$(ifconfig | grep "^${defaultif}" | sed -E 's/.*mtu ([0-9]+)/\1/g')
-			bridge=$(ifconfig bridge create mtu ${mtu})
-			epair=$(ifconfig epair create mtu ${mtu})
-			ifconfig ${epair} up
-			epairb=$(echo ${epair}|sed -E "s/([0-9])a$/\1b/g")
-			ifconfig ${bridge} addm ${epair} up
-			if [ -n "${macaddr}" ]; then
-				ifconfig ${epairb} ether ${macaddr}
-			fi
-			ifconfig ${epairb} vnet ${jail_id}
-			jexec ${jail_id} ifconfig ${epairb} ${ipv4addr}/${ipv4netmask}
-			if [ -n "${defaultroute}" ]; then
-				jexec ${jail_id} route add default ${defaultroute}
-			fi
-			if [ -n "${defaultif}" ]; then
-				ifconfig ${bridge} addm ${defaultif}
-			fi
-
-			jexec ${jail_id} /bin/sh /etc/rc &
-
-			cat<<-__EOF__>> /etc/rc.conf
-			jail_${jail_name}_exec_poststop0="ifconfig ${bridge} destroy"
-			jail_${jail_name}_exec_poststop1="ifconfig ${epair} destroy"
-			jail_${jail_name}_exec_poststop2="arp -d ${ipv4addr}"
-			jail_${jail_name}_exec_poststop3="jail -r ${jail_id}"
-__EOF__
-
-		fi
-
-		return ${rc}
-
-	fi
-}
 
 jails_start()
 {
@@ -261,23 +170,23 @@ jails_stop()
 	return ${res}
 }
 
-plugins_jail_stop()
-{
-	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
-	then
-		local jail_name="$(get_plugins_jail_name)"
-		if [ -n "${jail_name}" ]
-		then
-			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
-
-			/etc/rc.d/jail stop "${jail_name}"
-			grep -v "jail_" /etc/rc.conf > "${tmpfile}"
-			mv "${tmpfile}" /etc/rc.conf
-
-			rm -f "/etc/fstab.${jail_name}"
-		fi
-	fi
-}
+#plugins_jail_stop()
+#{
+#	if srv_enabled plugins || [ "${rc_force}" = "yes" ]
+#	then
+#		local jail_name="$(get_plugins_jail_name)"
+#		if [ -n "${jail_name}" ]
+#		then
+#			local tmpfile="$(mktemp -q /var/tmp/.rcfooXXXXXX)"
+#
+#			/etc/rc.d/jail stop "${jail_name}"
+#			grep -v "jail_" /etc/rc.conf > "${tmpfile}"
+#			mv "${tmpfile}" /etc/rc.conf
+#
+#			rm -f "/etc/fstab.${jail_name}"
+#		fi
+#	fi
+#}
 
 
 

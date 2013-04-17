@@ -53,8 +53,9 @@ def __popen(cmd):
 
 
 def __get_plugins_jail_info():
-    jail_info = services.models.PluginsJail.objects.order_by("-pk")
-    return jail_info[0] if jail_info else None
+    pass
+#    jail_info = services.models.PluginsJail.objects.order_by("-pk")
+#    return jail_info[0] if jail_info else None
 
 
 def __get_plugins_jail_path():

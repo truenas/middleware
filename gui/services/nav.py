@@ -106,12 +106,6 @@ class PluginsSettings(TreeNode):
 
     def __init__(self, *args, **kwargs):
         super(PluginsSettings, self).__init__(*args, **kwargs)
-        if notifier().plugins_jail_configured():
-            oid = models.PluginsJail.objects.order_by('-id')[0].id
-            self.view = 'freeadmin_services_pluginsjail_edit'
-            self.kwargs = {'oid': oid}
-        else:
-            self.view = 'plugins_jailpbi'
 
 
 class PluginsManagement(TreeNode):
@@ -127,28 +121,45 @@ class PluginsManagement(TreeNode):
         self.append_children([PluginsSettings()])
 
     def pre_dehydrate(self):
-        if notifier().plugins_jail_configured():
-            return
+#        #if notifier().plugins_jail_configured():
+#        #    return
+#
+#        for nav in list(self.option_list):
+#            if nav.gname == 'NullMountPoint':
+#                self.option_list.remove(nav)
+#                break
 
-        for nav in list(self.option_list):
-            if nav.gname == 'NullMountPoint':
-                self.option_list.remove(nav)
-                break
 
+#class MountPoints(TreeNode):
+#
+#    gname = 'View'
+#    view = 'freeadmin_plugins_nullmountpoint_datagrid'
+#    append_to = 'services.Plugins.NullMountPoint'
+#    #append_to = 'services.PluginsJail.management.NullMountPoint'
 
-class MountPoints(TreeNode):
+#class MountPoint(TreeNode):
+#
+#    gname = 'NullMountPoint'
+#    name = _(u'NullMountPoint')
+#    type = u'nullmountpoint'
+#    icon = u"SettingsIcon"
 
-    gname = 'View'
-    view = 'freeadmin_plugins_nullmountpoint_datagrid'
-    append_to = 'services.PluginsJail.management.NullMountPoint'
+#class Rsync(TreeNode):
+#
+#    gname = 'Rsync'
+#    name = _(u'Rsync')
+#    type = u'rsync'
+#    icon = u'rsyncIcon'
 
 
 class Plugins(TreeNode):
 
-    gname = 'PluginsJail'
+    gname = 'Plugins'
     name = _(u'Plugins')
-    icon = models.PluginsJail._admin.icon_model
+    #icon = models.PluginsJail._admin.icon_model
 
     def __init__(self, *args, **kwargs):
         super(Plugins, self).__init__(*args, **kwargs)
+
         self.append_children([PluginsManagement()])
+

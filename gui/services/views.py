@@ -71,12 +71,7 @@ def plugins(request):
         if not json:
             continue
 
-        jail_status = None
-        for j in Jls():
-            if j.hostname == plugin.plugin_jail:
-                jail_status = "RUNNING"
-                break
-
+        jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
         plugin.service = Service(
             name=plugin.plugin_name,
             status=json['status'],
@@ -87,10 +82,8 @@ def plugins(request):
             jail_status=jail_status,
             )
 
-    jail_configured = notifier().pluginjail_running()
     return render(request, "services/plugins.html", {
-        'plugins': plugins,
-        'jail_configured': jail_configured,
+        'plugins': plugins
     })
 
 
@@ -159,13 +152,6 @@ def core(request):
     except IndexError:
         ups = models.UPS.objects.create()
 
-    plugins = None
-    try:
-        if notifier().plugins_jail_configured():
-            plugins = models.PluginsJail.objects.order_by("-id")[0]
-    except IndexError:
-        plugins = None
-
     srv = models.services.objects.all()
     return render(request, 'services/core.html', {
         'srv': srv,
@@ -180,7 +166,6 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'plugins': plugins,
         'directoryservice': directoryservice,
         })
 
@@ -270,7 +255,7 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ups', 'plugins_jail', 'directoryservice'):
+            if changing_service in ('ups', 'directoryservice'):
                 if changing_service == 'directoryservice':
                     notifier().stop(directoryservice.svc)
                 else: 

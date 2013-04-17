@@ -35,7 +35,6 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
-from freenasUI.services.models import PluginsJail
 from freenasUI.jails.models import Jails, JailsConfiguration
 
 import freenasUI.plugins.api_calls
@@ -94,8 +93,9 @@ def plugin_update(request, plugin_id):
     plugin_id = int(plugin_id)
     plugin = models.Plugins.objects.get(id=plugin_id)
 
-    pj = PluginsJail.objects.order_by("-id")[0]
-    notifier().change_upload_location(pj.plugins_path)
+    plugin_upload_path = notifier().get_plugin_upload_path()
+    notifier().change_upload_location(plugin_upload_path)
+
     if request.method == "POST":
         form = forms.PBIUpdateForm(request.POST, request.FILES, plugin=plugin)
         if form.is_valid():
@@ -154,64 +154,35 @@ def plugin_install(request):
 
 @public
 def plugin_fcgi_client(request, name, path):
-    """
-    This is a view that works as a FCGI client
-    It is used for development server (no nginx) for easier development
-
-    XXX
-    XXX - This will no longer work with multiple jail model
-    XXX
-    """
-    qs = models.Plugins.objects.filter(plugin_name=name)
-    if not qs.exists():
-        raise Http404
-
-    plugin = qs[0]
-    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
-
-    app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
-    env = request.META.copy()
-    env.pop('wsgi.file_wrapper', None)
-    env.pop('wsgi.version', None)
-    env.pop('wsgi.input', None)
-    env.pop('wsgi.errors', None)
-    env.pop('wsgi.multiprocess', None)
-    env.pop('wsgi.run_once', None)
-    env['SCRIPT_NAME'] = env['PATH_INFO']
-    args = request.POST if request.method == "POST" else request.GET
-    status, headers, body, raw = app(env, args=args)
-
-    resp = HttpResponse(body)
-    for header, value in headers:
-        resp[header] = value
-    return resp
-
-
-def plugins_jail_import(request):
-    if request.method == "POST":
-        form = forms.JailImportForm(request.POST)
-
-        if form.is_valid():
-            jail_path = form.cleaned_data["jail_import_path"]
-            jail_ipv4address = form.cleaned_data["jail_import_ipv4address"]
-            jail_ipv4netmask = form.cleaned_data["jail_import_ipv4netmask"]
-            plugins_path = form.cleaned_data["plugins_import_path"]
-
-            if not notifier().import_jail(jail_path,
-                jail_ipv4address,
-                jail_ipv4netmask,
-                plugins_path):
-                return JsonResp(request,
-                    message=_("There was a problem importing the jail."))
-            else:
-                return JsonResp(request,
-                    message=_("Jail successfully imported."))
-
-        else:
-            return JsonResp(request, form=form)
-
-    else:
-        form = forms.JailImportForm()
-        return render(request, "plugins/jail_import.html", {
-            "form": form,
-            })
+    pass
+#    """
+#    This is a view that works as a FCGI client
+#    It is used for development server (no nginx) for easier development
+#
+#    XXX
+#    XXX - This will no longer work with multiple jail model
+#    XXX
+#    """
+#    qs = models.Plugins.objects.filter(plugin_name=name)
+#    if not qs.exists():
+#        raise Http404
+#
+#    plugin = qs[0]
+#    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
+#
+#    app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
+#    env = request.META.copy()
+#    env.pop('wsgi.file_wrapper', None)
+#    env.pop('wsgi.version', None)
+#    env.pop('wsgi.input', None)
+#    env.pop('wsgi.errors', None)
+#    env.pop('wsgi.multiprocess', None)
+#    env.pop('wsgi.run_once', None)
+#    env['SCRIPT_NAME'] = env['PATH_INFO']
+#    args = request.POST if request.method == "POST" else request.GET
+#    status, headers, body, raw = app(env, args=args)
+#
+#    resp = HttpResponse(body)
+#    for header, value in headers:
+#        resp[header] = value
+#    return resp

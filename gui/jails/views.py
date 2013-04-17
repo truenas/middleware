@@ -74,6 +74,22 @@ def jail_edit(request, id):
         'form': form
     })
 
+
+def jail_storage(request, id):
+    return render(request, 'jails/auto.html', { }) 
+
+#    if request.method == 'POST':
+#    else:
+#        form = forms.
+#
+#    fsvols = notifier().list_zfs_fsvols()
+#
+#    return render(request, 'jails/storage.html', {
+#        'form': form,
+#        'fsvols': fsvols
+#    }) 
+    
+
 def jail_start(request, id):
     try:
         jail = models.Jails.objects.get(id=id)
@@ -83,7 +99,15 @@ def jail_start(request, id):
     if jail and jail.jail_status == WARDEN_STATUS_STOPPED:
         Warden().start(jail=jail.jail_host)
 
-    return JsonResp(request, message=_("Jail successfully started."))
+    resp = render(request, "jails/start.html", { })
+    resp.content = (
+        "<html><body>"
+        + "Jail successfully started." +
+        "</boby></html>"
+    )
+
+    return resp
+
 
 def jail_stop(request, id):
     try:
@@ -94,7 +118,25 @@ def jail_stop(request, id):
     if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
         Warden().stop(jail=jail.jail_host)
 
-    return JsonResp(request, message=_("Jail successfully stopped."))
+    resp = render(request, "jails/stop.html", { })
+    resp.content = (
+        "<html><body>"
+        + "Jail successfully stopped." +
+        "</boby></html>"
+    )
+
+    return resp
+
+def jail_delete(request, id):
+    try:
+        jail = models.Jails.objects.get(id=id)
+    except Exception, e:
+        jail = None 
+
+    if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
+        Warden().delete(jail=jail.jail_host)
+
+    return JsonResp(request, message=_("Jail successfully deleted."))
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
