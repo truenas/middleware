@@ -106,12 +106,14 @@ if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
   IP4="${JIP}"
   MASK4="${JMASK}"
+  if [ -z "$MASK4" ] ; then MASK4="24"; fi
 fi
 
 if [ "${IP6}" != "OFF" ] ; then
   get_ip_and_netmask "${IP6}"
   IP6="${JIP}"
   MASK6="${JMASK}"
+  if [ -z "$MASK6" ] ; then MASK6="64"; fi
 fi
 
 # See if we are overriding the default archive file

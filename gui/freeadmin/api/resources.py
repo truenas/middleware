@@ -44,7 +44,7 @@ from freenasUI.network.models import (
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
 )
-#from freenasUI.jails.models import NullMountPoint
+from freenasUI.jails.models import NullMountPoint
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -782,20 +782,20 @@ class BsdGroupResource(DojoModelResource):
         return bundle
 
 
-#class NullMountPointResource(DojoModelResource):
-#
-#    class Meta:
-#        queryset = NullMountPoint.objects.all()
-#        resource_name = 'nullmountpoint'
-#        paginator_class = DojoPaginator
-#        authentication = DjangoAuthentication()
-#        include_resource_uri = False
-#        allowed_methods = ['get']
-#
-#    def dehydrate(self, bundle):
-#        bundle = super(NullMountPointResource, self).dehydrate(bundle)
-#        bundle.data['mounted'] = bundle.obj.mounted
-#        return bundle
+class NullMountPointResource(DojoModelResource):
+
+    class Meta:
+        queryset = NullMountPoint.objects.all()
+        resource_name = 'nullmountpoint'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(NullMountPointResource, self).dehydrate(bundle)
+        bundle.data['mounted'] = bundle.obj.mounted
+        return bundle
 
 
 class JailsResource(DojoModelResource):

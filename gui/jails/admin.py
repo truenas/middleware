@@ -30,8 +30,9 @@ from django.utils.html import escapejs
 
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from freenasUI.freeadmin.api.resources import JailsResource
+from freenasUI.freeadmin.api.resources import (JailsResource, NullMountPointResource)
 from freenasUI.jails import models
+
 
 from collections import OrderedDict
 
@@ -154,4 +155,26 @@ class JailsFAdmin(BaseFreeAdmin):
         return actions
 
 
+class NullMountPointFAdmin(BaseFreeAdmin):
+
+    #menu_child_of = u"jails.Jails.management"
+    menu_child_of = u"jails.Jails"
+    icon_model = u"MountPointIcon"
+    icon_object = u"MountPointIcon"
+    icon_add = u"AddMountPointIcon"
+    icon_view = u"ViewMountPointIcon"
+
+    resource = NullMountPointResource
+
+    def get_datagrid_columns(self):
+        columns = super(NullMountPointFAdmin,self).get_datagrid_columns()
+        columns.insert(2, {
+            'name': 'mounted',
+            'label': _('Mounted?'),
+            'sortable': False,
+        })
+        return columns
+
+
 site.register(models.Jails, JailsFAdmin)
+site.register(models.NullMountPoint, NullMountPointFAdmin)

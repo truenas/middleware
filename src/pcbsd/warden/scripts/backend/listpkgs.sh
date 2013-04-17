@@ -32,4 +32,10 @@ fi
 
 # Done with error checking, now lets get a package listing
 ###################################################################
-chroot "${JAILDIR}" pkg_info
+
+# Check if we are using pkgng or old-style
+if [ -e "${JAILDIR}/usr/local/sbin/pkg-static" ] ; then
+  chroot "${JAILDIR}" pkg info
+else
+  chroot "${JAILDIR}" pkg_info
+fi

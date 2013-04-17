@@ -221,7 +221,6 @@ if [ -n "${BRIDGEIPS4}" ] ; then
    done
 fi
 
-
 if [ -n "${BRIDGEIP6}" ] ; then
    if ! ipv6_configured "${BRIDGE}" ; then
       ifconfig ${BRIDGE} inet6 "${BRIDGEIP6}"
