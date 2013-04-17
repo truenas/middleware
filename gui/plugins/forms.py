@@ -73,7 +73,6 @@ class PluginsForm(ModelForm):
 
     def save(self):
         super(PluginsForm, self).save()
-        log.debug("XXX: plugin jail = %s", self.instance.plugin_jail)
         notifier()._restart_plugins(self.instance.plugin_name)
 
 

@@ -24,16 +24,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 import logging
 
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.warden import WardenJail, Warden
-
 from freenasUI.jails import models
 from freenasUI.common.warden import Warden, \
     WARDEN_FLAGS_NONE, \
@@ -63,7 +64,8 @@ from freenasUI.common.warden import Warden, \
     WARDEN_TYPE_STANDARD, \
     WARDEN_TYPE_PLUGINJAIL, \
     WARDEN_TYPE_PORTJAIL, \
-    WARDEN_TYPE_LINUXJAIL
+    WARDEN_TYPE_LINUXJAIL, \
+    WARDEN_KEY_HOST
 
 
 log = logging.getLogger('jails.forms')
@@ -482,66 +484,77 @@ class JailsEditForm(ModelForm):
         model = models.Jails
 
 
-#class NullMountPointForm(ModelForm):
-#
-#    mounted = forms.BooleanField(
-#        label=_("Mounted?"),
-#        required=False,
-#        initial=True,
-#        )
-#
-#    class Meta:
-#        model = models.NullMountPoint
-#        widgets = {
-#            'source': forms.widgets.TextInput(attrs={
-#                'data-dojo-type': 'freeadmin.form.PathSelector',
-#                }),
-#            'destination': forms.widgets.TextInput(attrs={
-#                'data-dojo-type': 'freeadmin.form.PathSelector',
-#                }),
-#        }
-#
-#    def clean_source(self):
-#        src = self.cleaned_data.get("source")
-#        src = os.path.abspath(src.strip().replace("..", ""))
-#        return src
-#
-#    def clean_destination(self):
-#        dest = self.cleaned_data.get("destination")
-#        dest = os.path.abspath(dest.strip().replace("..", ""))
-#        jail = PluginsJail.objects.order_by('-id')[0]
-#        full = "%s/%s%s" % (jail.jail_path, jail.jail_name, dest)
-#        if len(full) > 88:
-#            raise forms.ValidationError(
-#                _("The full path cannot exceed 88 characters")
-#                )
-#        return dest
-#
-#    def __init__(self, *args, **kwargs):
-#        super(NullMountPointForm, self).__init__(*args, **kwargs)
-#
-#        jail = PluginsJail.objects.order_by("-pk")[0]
-#        self.fields['destination'].widget.attrs['root'] = (
-#                os.path.join(jail.jail_path, jail.jail_name)
-#            )
-#        if self.instance.id:
-#            self.fields['mounted'].initial = self.instance.mounted
-#        else:
-#            self.fields['mounted'].widget = forms.widgets.HiddenInput()
-#
-#    def save(self, *args, **kwargs):
-#        obj = super(NullMountPointForm, self).save(*args, **kwargs)
-#        mounted = self.cleaned_data.get("mounted")
-#        if mounted == obj.mounted:
-#            return obj
-#        if mounted and not obj.mount():
-#            #FIXME better error handling, show the user why
-#            raise MiddlewareError(_("The path could not be mounted %s") % (
-#                obj.source,
-#                ))
-#        if not mounted and not obj.umount():
-#            #FIXME better error handling, show the user why
-#            raise MiddlewareError(_("The path could not be umounted %s") % (
-#                obj.source,
-#                ))
-#        return obj
+class NullMountPointForm(ModelForm):
+
+    mounted = forms.BooleanField(
+        label=_("Mounted?"),
+        required=False,
+        initial=True,
+        )
+
+    class Meta:
+        model = models.NullMountPoint
+        widgets = {
+            'source': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+            'destination': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+        }
+
+    def clean_source(self):
+        src = self.cleaned_data.get("source")
+        src = os.path.abspath(src.strip().replace("..", ""))
+        return src
+
+    def clean_destination(self):
+        dest = self.cleaned_data.get("destination")
+        dest = os.path.abspath(dest.strip().replace("..", ""))
+
+        full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
+
+        if len(full) > 88:
+            raise forms.ValidationError(
+                _("The full path cannot exceed 88 characters")
+                )
+        return dest
+
+    def __init__(self, *args, **kwargs):
+        self.jail = kwargs.pop('jail') 
+        super(NullMountPointForm, self).__init__(*args, **kwargs)
+
+        self.fields['jail'].initial = self.jail.jail_host
+        self.fields['jail'].widget.attrs = {
+            'readonly': True,
+            'class': (
+                'dijitDisabled dijitTextBoxDisabled'
+                ' dijitValidationTextBoxDisabled' 
+            ),
+        }
+
+        self.jc = models.JailsConfiguration.objects.order_by("-id")[0]
+        jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+
+        self.fields['destination'].widget.attrs['root'] = (jail_path)
+        if self.instance.id:
+            self.fields['mounted'].initial = self.instance.mounted
+        else:
+            self.fields['mounted'].widget = forms.widgets.HiddenInput()
+
+    def save(self, *args, **kwargs):
+        obj = super(NullMountPointForm, self).save(*args, **kwargs)
+        mounted = self.cleaned_data.get("mounted")
+        if mounted == obj.mounted:
+            return obj
+        if mounted and not obj.mount():
+            #FIXME better error handling, show the user why
+            raise MiddlewareError(_("The path could not be mounted %s") % (
+                obj.source,
+                ))
+        if not mounted and not obj.umount():
+            #FIXME better error handling, show the user why
+            raise MiddlewareError(_("The path could not be umounted %s") % (
+                obj.source,
+                ))
+        return obj

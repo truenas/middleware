@@ -76,21 +76,28 @@ def jail_edit(request, id):
 
 
 def jail_storage(request, id):
-    return render(request, 'jails/auto.html', { }) 
 
-#    if request.method == 'POST':
-#    else:
-#        form = forms.
-#
-#    fsvols = notifier().list_zfs_fsvols()
-#
-#    return render(request, 'jails/storage.html', {
-#        'form': form,
-#        'fsvols': fsvols
-#    }) 
+    try:
+        jail = models.Jails.objects.get(id=id)
+    except Exception, e:
+        jail = None 
+
+    if request.method == 'POST':
+        form = forms.NullMountPointForm(request.POST, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Storage successfully added."))
+    else:
+        form = forms.NullMountPointForm(jail=jail)
+
+    return render(request, 'jails/storage.html', {
+        'form': form,
+    }) 
     
 
 def jail_start(request, id):
+
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:
@@ -110,6 +117,7 @@ def jail_start(request, id):
 
 
 def jail_stop(request, id):
+
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:
@@ -128,6 +136,7 @@ def jail_stop(request, id):
     return resp
 
 def jail_delete(request, id):
+
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:
