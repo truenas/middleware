@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-15 22:52+0200\n"
+"PO-Revision-Date: 2013-04-16 23:08+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1347,7 +1347,7 @@ msgstr "Dodatna komponenta uspešno instalirana"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr ""
+msgstr "Došlo je problema sa uvozom JAIL-a."
 
 # ako % predstavlja user  kao users 
 #: plugins/views.py:204
@@ -1364,7 +1364,7 @@ msgstr "Polje je zahtevano za \"Omogući pretraživanje matičnog direktorijuma\
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Ovo polje je obavezno za \"Matične direktorijume\"."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
@@ -1833,7 +1833,7 @@ msgstr "Ostali parametri"
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr ""
+msgstr "Ovi parametri su dodati na [matičnu] sekciju smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
@@ -2041,7 +2041,7 @@ msgstr "iSCSI inicijalni parametar (65536 je podrazumevana vrednost)."
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr ""
+msgstr "Maksimalna dužina paketa"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
@@ -2523,7 +2523,7 @@ msgstr "Pošalji Email o promeni statusa"
 
 #: services/models.py:945
 msgid "To email"
-msgstr ""
+msgstr "Do email-a"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
@@ -2538,6 +2538,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Predmet email-a. Možete da koristite sledeće parametre za zamenu:<br "
+"/><ul><li>%d - Datum</li><li>%h - Ime Hosta</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
