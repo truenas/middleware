@@ -263,10 +263,10 @@ class NavTree(object):
 
         self.replace_navs(tree_roots)
 
-#        for j in Jails.objects.all():
-#            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
-#                j.jail_status == WARDEN_STATUS_RUNNING:
-#                self._get_plugins_nodes(request, j)
+        for j in Jails.objects.all():
+            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
+                j.jail_status == WARDEN_STATUS_RUNNING:
+                self._get_plugins_nodes(request, j)
 
     def _generate_app(self, app, request, tree_roots, childs_of):
 
@@ -450,7 +450,7 @@ class NavTree(object):
     def _plugin_fetch(self, args):
         plugin, host, request = args
         data = None
-        url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
+        url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
         try:
             opener = urllib2.build_opener()
             opener.addheaders = [(

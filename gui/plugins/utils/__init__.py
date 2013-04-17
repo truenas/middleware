@@ -51,9 +51,10 @@ def get_base_url(request):
 def get_plugin_status(args):
 
     plugin, host, request = args
-    url = "%s/plugins/%s/_s/status" % (
+    url = "%s/plugins/%s/%d/_s/status" % (
         host,
-        plugin.plugin_name)
+        plugin.plugin_name,
+        plugin.id)
     json = None
 
     try:

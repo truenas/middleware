@@ -76,9 +76,9 @@ def plugins(request):
             name=plugin.plugin_name,
             status=json['status'],
             pid=json.get("pid", None),
-            start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
-            stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
-            status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
+            start_url="/plugins/%s/%d/_s/start" % (plugin.plugin_name, plugin.id),
+            stop_url="/plugins/%s/%d/_s/stop" % (plugin.plugin_name, plugin.id),
+            status_url="/plugins/%s/%d/_s/status" % (plugin.plugin_name, plugin.id),
             jail_status=jail_status,
             )
 

@@ -304,7 +304,7 @@ require([
 
     }
 
-    togglePluginService = function(from, name) {
+    togglePluginService = function(from, name, id) {
 
         var td = from.parentNode;
         var _status = domAttr.get(from, "status");
@@ -320,9 +320,9 @@ require([
             action = "start";
         }
 
-        var checkStatus = function(name) {
+        var checkStatus = function(name, id) {
 
-            xhr.get("/plugins/"+name+"/_s/status", {
+            xhr.get("/plugins/"+name+"/"+id+"/_s/status", {
                 handleAs: "json"
                 }).then(function(data) {
                     if(data.status == 'RUNNING') {
@@ -332,7 +332,7 @@ require([
                         from.src = '/static/images/ui/buttons/off.png';
                         domAttr.set(from, "status", "off");
                     } else {
-                        setTimeout('checkStatus(name);', 1000);
+                        setTimeout('checkStatus(name, id);', 1000);
                         return;
                     }
                     if(data.error) {
@@ -347,7 +347,7 @@ require([
 
         }
 
-        var deferred = xhr.get("/plugins/" + name + "/_s/" + action, {
+        var deferred = xhr.get("/plugins/" + name + "/" + id + "/_s/" + action, {
             handleAs: "text"
             }).then(function(data) {
                 try {
@@ -356,7 +356,7 @@ require([
                         setMessage(json.message, 'error');
                     }
                 } catch(e) {}
-                setTimeout(function() { checkStatus(name); }, 1000);
+                setTimeout(function() { checkStatus(name, id); }, 1000);
             },
             function(evt) {
                 domConstruct.destroy(n);
