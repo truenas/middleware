@@ -35,6 +35,10 @@ then
   exit 5
 fi
 
+# pre-stop hooks
+if [ -x "${JMETADIR}/jail-pre-stop" ] ; then
+  "${JMETADIR}/jail-pre-stop"
+fi
 
 HOST="`cat ${JMETADIR}/host`"
 
@@ -157,6 +161,11 @@ echo -e ".\c"
 
 if [ -n "${JID}" ] ; then
   jail -r ${JID}
+fi
+
+# post-stop hooks
+if [ -x "${JMETADIR}/jail-post-stop" ] ; then
+  "${JMETADIR}/jail-post-stop"
 fi
 
 echo -e "Done"
