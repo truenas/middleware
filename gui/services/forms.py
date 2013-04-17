@@ -171,49 +171,6 @@ class NFSForm(ModelForm):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 
-class PluginsJailForm(ModelForm):
-
-    class Meta:
-        model = models.PluginsJail
-
-    def clean_plugins_path(self):
-        ppath = self.cleaned_data.get("plugins_path")
-        jpath = self.cleaned_data.get("jail_path")
-        jname = self.cleaned_data.get("jail_name")
-        if not ppath:
-            return None
-        ppath, jpath = os.path.abspath(ppath), os.path.abspath(jpath)
-        jpathname = os.path.join(jpath, jname)
-        if ppath == jpath or ppath.startswith(jpathname):
-            raise forms.ValidationError(
-                _("The plugins archive path cannot be a subset of the plugins "
-                    "jail path.")
-            )
-        return ppath
-
-    def clean_jail_ipv4address(self):
-        jip = self.cleaned_data.get("jail_ipv4address")
-        if (
-            Alias.objects.filter(alias_v4address=jip).exists()
-            or
-            Interfaces.objects.filter(int_ipv4address=jip).exists()
-        ):
-            raise forms.ValidationError(_("This IP already exists."))
-        return jip
-
-    def save(self):
-        super(PluginsJailForm, self).save()
-        started = notifier().restart("plugins_jail")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='plugins').srv_enable
-        ):
-            raise ServiceFailed(
-                "plugins_jail", _("The Plugins Jail service failed to reload.")
-            )
-
-
 class FTPForm(ModelForm):
 
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
@@ -1444,23 +1401,6 @@ class ExtentDelete(Form):
             os.path.exists(self.instance.iscsi_target_extent_path)
         ):
             os.unlink(self.instance.iscsi_target_extent_path)
-
-
-class PluginsJailDeleteForm(Form):
-    delete = forms.BooleanField(
-        label=_("Are you sure you want to delete?"),
-        initial=False,
-        required=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.instance = kwargs.pop('instance', None)
-        super(PluginsJailDeleteForm, self).__init__(*args, **kwargs)
-
-    def done(self, *args, **kwargs):
-        events = kwargs.pop('events', None)
-        if events is not None:
-            events.append("refreshPlugins()")
 
 
 class SMARTForm(ModelForm):

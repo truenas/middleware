@@ -1,5 +1,3 @@
-{% if jail_configured %}
-
     <button id="addPBIBtn" data-dojo-type="dijit.form.Button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
     <p>{% trans "Install Plugin" %}</p>
@@ -7,8 +5,6 @@
         addObject('{% trans "Install Plugin"|force_escape|force_escape %}', '{% url "plugins_pbiwizard" %}', [this,]);
     </script>
     </button>
-
-{% endif %}
 
     <table class="grid">
         <thead class="ghead">
@@ -40,14 +36,12 @@
                     </script>
                 </button>
 
-                {% if jail_configured %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Delete" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                       editObject('{% trans "Delete plugin"|force_escape|force_escape %}', '{% url "plugin_delete" plugin_id=p.id %}', [this,]);
                   </script>
                 </button>
-                {% endif %}
             </td>
         <tr>
         {% empty %}

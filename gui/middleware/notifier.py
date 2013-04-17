@@ -707,100 +707,33 @@ class notifier:
         self.__system("/usr/sbin/service statd quietstart")
         self.__system("/usr/sbin/service lockd quietstart")
 
-    def _start_plugins_jail(self):
-        """
-        Currently the ix-jail script relies on the default gw
-        to find out which iface to bridge with and default route
-        to add in the jail
-        """
-        proc = self.__pipeopen("/usr/bin/netstat -f inet -rn")
-        netstat = proc.communicate()[0]
-        if not re.search(r'^default\s', netstat, re.M):
-            from freenasUI.services.models import services
-            services.objects.filter(srv_service='plugins').update(srv_enable=False)
-            raise MiddlewareError("Please configure a default gateway")
-        self.__system("/usr/sbin/service ix-jail quietstart")
-        self.__system_nolog("/usr/sbin/service ix-plugins start")
-
-    def _stop_plugins_jail(self):
-        self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
-        self.__system("/usr/sbin/service ix-jail forcestop")
-
     def _force_stop_jail(self):
         self.__system("/usr/sbin/service jail forcestop")
 
-    def _restart_plugins_jail(self):
-        self._stop_plugins_jail()
-        self._start_plugins_jail()
-
-    def _started_plugins_jail(self):
-        c = self.__open_db()
-        c.execute("SELECT jail_name FROM services_pluginsjail ORDER BY -id LIMIT 1")
-        try:
-            jail_name = c.fetchone()[0]
-        except:
-            return False
-
-        retval = 1
-        idfile = "/var/run/jail_%s.id" % jail_name
-        if os.access(idfile, os.F_OK):
-            jail_id = int(open(idfile).read().strip())
-            retval = self.__system_nolog("jls -j %d" % jail_id)
-
-        if retval == 0:
-            return True
-        else:
-            return False
-
-    def _start_plugins(self, plugin=None):
-        if plugin is not None:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestart %s" % plugin)
+    def _start_plugins(self, jail=None, plugin=None):
+        if jail and plugin:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
         else:
             self.__system_nolog("/usr/sbin/service ix-plugins forcestart")
 
-    def _stop_plugins(self, plugin=None):
-        if plugin is not None:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestop %s" % plugin)
+    def _stop_plugins(self, jail=None, plugin=None):
+        if jail and plugin:
+            self.__system_nolog("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
         else:
             self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
 
-    def _restart_plugins(self, plugin=None):
-        self._stop_plugins(plugin)
-        self._start_plugins(plugin)
+    def _restart_plugins(self, jail=None, plugin=None):
+        self._stop_plugins(jail, plugin)
+        self._start_plugins(jail, plugin)
 
-    def _started_plugins(self, plugin=None):
+    def _started_plugins(self, jail=None, plugin=None):
         res = False
-        if plugin is not None:
-            if self.__system_nolog("/usr/sbin/service ix-plugins status %s" % plugin) == 0:
+        if jail and plugin:
+            if self.__system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
                 res = True 
         else: 
             if self.__system_nolog("/usr/sbin/service ix-plugins status") == 0:
                 res = True 
-        return res
-
-    def plugins_jail_configured(self):
-        res = False
-        c = self.__open_db()
-        c.execute("SELECT count(*) from services_pluginsjail")
-        if int(c.fetchone()[0]) > 0:
-            c.execute("""
-            SELECT
-                jail_path,
-                jail_name,
-                jail_ipv4address,
-                jail_ipv4netmask,
-                plugins_path
-            FROM
-                services_pluginsjail
-            ORDER BY
-                -id
-            LIMIT 1
-            """)
-            sp = c.fetchone()
-            for i in sp:
-                if i not in (None, ''):
-                    res = True
-                    break
         return res
 
     def pluginjail_running(self, pjail=None):
@@ -1480,7 +1413,6 @@ class notifier:
         return retval
 
     def list_zfs_fsvols(self):
-
         proc = self.__pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
         out, err = proc.communicate()
         out = out.split('\n')
@@ -2395,7 +2327,7 @@ class notifier:
 
         return plugin_upload_path
 
-    def install_pbi(self, pjail):
+    def install_pbi(self, pjail, newplugin):
         log.debug("install_pbi: pjail = %s", pjail)
         """
         Install a .pbi file into the plugins jail
@@ -2553,6 +2485,7 @@ class notifier:
             try:
                 log.debug("install_pbi: trying to save plugin to database")
                 plugin.save()
+                newplugin.append(plugin)
                 log.debug("install_pbi: plugin saved to database")
                 ret = True
             except Exception, e:
@@ -2572,25 +2505,6 @@ class notifier:
 
         log.debug("install_pbi: everything went well, returning %s", ret)
         return ret
-
-    def _get_plugins_jail(self):
-        from freenasUI.services.models import PluginsJail
-
-        if not self._started_plugins_jail():
-            return None, None
-
-        qs = PluginsJail.objects.order_by('-id')
-        if qs.count() == 0:
-            return False
-        pjail = qs[0]
-
-        jail = None
-        for j in Jls():
-            if j.hostname == pjail.jail_name:
-                jail = j
-                break
-
-        return pjail, jail
 
     def _get_pbi_info(self, pbifile):
         pbi = pbiname = prefix = name = version = arch = None
@@ -2750,161 +2664,6 @@ class notifier:
 
         return ret
 
-    def update_jail_pbi(self, plugins_path, pbipath):
-        from freenasUI.plugins.models import NullMountPoint
-
-        if pbipath is None:
-            pbipath = "/var/tmp/firmware/pbifile.pbi"
-
-        pbifile = prefix = ename = pbi = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbipath)
-        out = p.info(False, -1, 'prefix', 'pbi information for', 'arch')
-
-        if not out:
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
-
-        for pair in out:
-            (var, val) = pair.split('=', 1)
-            var = var.lower()
-            if var == 'prefix':
-                prefix = val
-            elif var == 'pbi information for':
-                pbi = "%s.pbi" % val
-            elif var == 'arch':
-                arch = val
-
-        if arch != platform.machine():
-            raise MiddlewareError("You cannot install %s jail pbi in an %s "
-                "architecture" % (arch, platform.machine()))
-
-        """
-        Make sure all mountpoints are unmounted
-
-        Adding mountpoints after a jail has been started will not put them in
-        the jail fstab, causing them to do not be automatically be unmounted
-        on jail stop, causing possible data loss
-        """
-        for nmp in NullMountPoint.objects.all():
-            self.__umount_filesystems_within(nmp.destination_jail)
-
-        pbifile = "%s/%s" % (plugins_path, pbi)
-        self.__system("/bin/mv %s %s" % (pbipath, pbifile))
-
-        if self.__system_nolog("/root/pbi.sh pbibackup") != 0:
-            raise MiddlewareError("Unable to backup plugins")
-
-        if self.__system_nolog("/root/pbi.sh jailupdate %s" % pbifile) != 0:
-            raise MiddlewareError("Unable to upgrade jail")
-
-        if self.__system_nolog("/root/pbi.sh pbirestore") != 0:
-            raise MiddlewareError("Unable to restore plugins")
-
-        return True
-
-    def install_jail_pbi(self, path, name, plugins_path, pbipath=None):
-        """
-        Install the plugins jail PBI
-
-        Returns::
-            bool: installation succeeded?
-
-        Raises::
-            MiddlewareError: pbi file corrupt or invalid
-        """
-        ret = False
-        if pbipath is None:
-            pbipath = "/var/tmp/firmware/pbifile.pbi"
-
-        if self._started_plugins_jail():
-            raise MiddlewareError("The plugins jail must be turned off")
-
-        prefix = ename = pbi = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbipath)
-        out = p.info(False, -1, 'prefix', 'pbi information for', 'arch')
-
-        if not out:
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
-
-        for pair in out:
-            (var, val) = pair.split('=', 1)
-            var = var.lower()
-            if var == 'prefix':
-                prefix = val
-            elif var == 'pbi information for':
-                pbi = "%s.pbi" % val
-            elif var == 'arch':
-                arch = val
-
-        if arch != platform.machine():
-            raise MiddlewareError("You cannot install %s jail pbi in an %s "
-                "architecture" % (arch, platform.machine()))
-
-        dst = os.path.join(path, name)
-        p = pbi_add(flags=PBI_ADD_FLAGS_EXTRACT_ONLY|PBI_ADD_FLAGS_OUTPATH|PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE,
-            pbi=pbipath, outpath=dst)
-        res = p.run()
-
-        if res and res[0] == 0:
-            self.__system("/bin/mv %s %s/%s" % (pbipath, plugins_path, pbi))
-            ret = True
-
-        else:
-            # pbid seems to return 255 for any kind of error
-            # lets use error str output to find out what happenned
-            if re.search(r'failed checksum', res[1], re.I|re.S|re.M):
-                raise MiddlewareError("The PBI file ('%s') is corrupt"
-                                      % (os.path.basename(path), ) )
-            raise MiddlewareError(p.error)
-
-        return ret
-
-    def import_jail(self, jail_path, jail_ip, jail_netmask, plugins_path):
-        from freenasUI.services.models import PluginsJail
-        ret = False
-
-        if not jail_path:
-            return ret
-        if not jail_ip:
-            return ret
-        if not plugins_path:
-            return ret
-
-        if not os.access(jail_path, os.F_OK):
-            return ret
-        if not os.access(plugins_path, os.F_OK):
-            return ret
-
-        parts = jail_path.split('/')
-        if not parts:
-            return ret
-
-        jail_path = '/'.join(parts[:-1])
-        if not jail_path:
-            jail_path = "/"
-        jail_name = parts[-1]
-
-        #
-        # XXX: At some point (soon), plugins/jail need to support IPv6
-        # XXX: I agree.
-        #
-        pj = PluginsJail()
-        pj.jail_name = jail_name
-        pj.jail_path = jail_path
-        pj.jail_ipv4address = jail_ip
-        pj.jail_ipv4netmask = jail_netmask
-        pj.plugins_path = plugins_path
-
-        try:
-            pj.save()
-            ret = True
-        except Exception, err:
-            log.debug("import_jail: failed %s", str(err))
-            ret = False
-
-        return ret
-
     def delete_pbi(self, plugin):
         ret = False
 
@@ -2956,92 +2715,6 @@ class notifier:
                 log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
                 ret = False
 
-        return ret
-
-    def delete_plugins_jail(self, jail_id):
-        from freenasUI.services.models import PluginsJail
-        from freenasUI.plugins.models import Plugins
-        ret = False
-
-        log.debug("delete_plugins_jail: stopping plugins")
-        self._stop_plugins()
-
-        log.debug("delete_plugins_jail: getting plugins from the database")
-        for plugin in Plugins.objects.all():
-            try:
-                if not self.delete_pbi(plugin):
-                    plugin.delete()
-            except Exception:
-                log.debug("delete_plugins_jail: unable to delete plugin %s (%d)",
-                    plugin.plugin_name,
-                    plugin.id)
-
-
-        log.debug("delete_plugins_jail: stopping plugins jail")
-        self._stop_plugins_jail()
-
-        log.debug("delete_plugins_jail: checking if jail stopped")
-        if self._started_plugins_jail():
-            log.debug("delete_plugins_jail: plugins jail not stopped, forcing")
-            self._force_stop_jail()
-
-        log.debug("delete_plugins_jail: checking if jail stopped")
-        if self._started_plugins_jail():
-            log.debug("delete_plugins_jail: unable to stop plugins jail")
-            return False
-
-        # Make sure there are no plugins left in database
-        Plugins.objects.all().delete()
-
-        log.debug("delete_plugins_jail: getting jail info from database")
-        try:
-            pjail = PluginsJail.objects.get(id=jail_id)
-        except PluginsJail.DoesNotExist:
-            log.debug("delete_plugins_jail: plugins jail info not in database")
-            return False
-
-        full_jail_path = os.path.join(pjail.jail_path, pjail.jail_name)
-
-        log.debug("delete_plugins_jail: checking jail path in filesystem")
-        if not os.access(full_jail_path, os.F_OK):
-            log.debug("delete_plugins_jail: unable to access %s", full_jail_path)
-            return False
-
-        self.__umount_filesystems_within(full_jail_path)
-
-        cmd = "/usr/bin/find %s|/usr/bin/xargs /bin/chflags noschg" % full_jail_path
-        log.debug("delete_plugins_jail: %s", cmd)
-        p = self.__pipeopen(cmd)
-        p.communicate()
-        if p.returncode != 0:
-            log.debug("delete_plugins_jail: unable to chflags on %s", full_jail_path)
-            return False
-
-        cmd = "/bin/rm -rf %s" % full_jail_path
-        log.debug("delete_plugins_jail: %s", cmd)
-        p = self.__pipeopen(cmd)
-        p.communicate()
-        if p.returncode != 0:
-            log.debug("delete_plugins_jail: unable to rm -rf %s", full_jail_path)
-            return False
-
-        pbi_path = "%s/%s" % (pjail.plugins_path, "pbi")
-        cmd = "/bin/rm -rf %s" % pbi_path
-        log.debug("delete_plugins_jail: %s", cmd)
-        p = self.__pipeopen(cmd)
-        p.communicate()
-        if p.returncode != 0:
-            log.debug("delete_plugins_jail: unable to rm -rf %s/*", pbi_path)
-
-        log.debug("delete_plugins_jail: deleting jail from database")
-        try:
-            pjail.delete()
-            ret = True
-        except Exception, err:
-            log.debug("delete_plugins_jail: unable to delete plugins jail from database (%s)", err)
-            ret = False
-
-        log.debug("delete_plugins_jail: returning %s", ret)
         return ret
 
     def get_volume_status(self, name, fs):

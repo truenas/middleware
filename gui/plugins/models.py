@@ -28,7 +28,6 @@
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.freeadmin.models import Model
 
 
@@ -109,51 +108,3 @@ class Plugins(Model):
         with transaction.commit_on_success():
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
-
-
-class NullMountPoint(Model):
-
-    source = models.CharField(
-        max_length=300,
-        verbose_name=_("Source"),
-        )
-
-    destination = models.CharField(
-        max_length=300,
-        verbose_name=_("Destination"),
-        )
-
-    class Meta:
-        verbose_name = _(u"Mount Point")
-        verbose_name_plural = _(u"Mount Points")
-
-    def __unicode__(self):
-        return self.source
-
-    def delete(self, *args, **kwargs):
-        if self.mounted:
-            self.umount()
-        super(NullMountPoint, self).delete(*args, **kwargs)
-
-    @property
-    def mounted(self):
-        return is_mounted(device=self.source, path=self.destination_jail)
-
-    def __get_jail(self):
-        from freenasUI.services.models import PluginsJail
-        if not hasattr(self, "__jail"):
-            self.__jail = PluginsJail.objects.order_by('-id')[0]
-        return self.__jail
-
-    @property
-    def destination_jail(self):
-        jail = self.__get_jail()
-        return u"%s/%s%s" % (jail.jail_path, jail.jail_name, self.destination)
-
-    def mount(self):
-        mount(self.source, self.destination_jail, fstype="nullfs")
-        return self.mounted
-
-    def umount(self):
-        umount(self.destination_jail)
-        return not self.mounted

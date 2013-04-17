@@ -48,7 +48,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.common.system import send_mail
 from freenasUI.freeadmin.utils import set_language
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import PluginsJail
 from freenasUI.storage.models import Volume
 from freenasUI.system.models import Alert as mAlert, Settings
 
@@ -192,28 +191,11 @@ class Alert(object):
                     )
                 )
 
-    def plugin_jail_reachable(self):
-        if not notifier()._started_plugins_jail():
-            return
-        for jail in PluginsJail.objects.all():
-            proc = subprocess.Popen([
-                "/sbin/ping",
-                "-c", "1",
-                "-t", "1",
-                str(jail.jail_ipv4address),
-                ], stdout=subprocess.PIPE)
-            if proc.wait() != 0:
-                self.log(self.LOG_WARN,
-                    _('The plugins jail IP is not reachable, the plugins will '
-                        'malfunction.')
-                    )
-
     def perform(self):
         self.volumes_status()
         self.admin_password()
         self.httpd_bindaddr()
         self.iscsi_portal_ips()
-        self.plugin_jail_reachable()
         self.multipaths_status()
 
     def write(self):

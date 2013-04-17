@@ -154,8 +154,11 @@ class JailsFAdmin(BaseFreeAdmin):
 #        actions['options'] = self._action_builder('jail_options', label=_("Options"))
 #        actions['pkgs'] = self._action_builder('jail_pkgs', label=_("Packages"))
 #        actions['pbis'] = self._action_builder('jail_pbis', label=_("PBI's"))
+
+        actions['storage'] = self._action_builder('jail_storage', label=_("Add Storage"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
+        actions['delete'] = self._action_builder('jail_delete', label=_("Delete"))
 
 #        actions['zfsmksnap'] = self._action_builder('jail_zfsmksnap',
 #            label=_("ZFS Snapshot"))

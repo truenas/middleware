@@ -59,7 +59,11 @@ from freenasUI.common.warden import Warden, \
     WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6, \
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4, \
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6, \
-    WARDEN_SET_FLAGS_FLAGS
+    WARDEN_SET_FLAGS_FLAGS, \
+    WARDEN_TYPE_STANDARD, \
+    WARDEN_TYPE_PLUGINJAIL, \
+    WARDEN_TYPE_PORTJAIL, \
+    WARDEN_TYPE_LINUXJAIL
 
 
 log = logging.getLogger('jails.forms')
@@ -137,6 +141,7 @@ class JailCreateForm(ModelForm):
 #    )
 
     advanced_fields = [
+        'jail_type',
         'jail_autostart',
         'jail_32bit',
         'jail_source',
@@ -164,7 +169,12 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
-        self.fields['jail_type'].choices = [(t, t) for t in Warden().types()]
+        self.fields['jail_type'].choices = (
+            (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
+            (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
+            (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
+            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+        )
 
         high_ipv4 = None
         high_ipv6 = None
@@ -265,11 +275,11 @@ class JailCreateForm(ModelForm):
         if self.cleaned_data['jail_vanilla']:
             jail_flags |= WARDEN_CREATE_FLAGS_VANILLA
 
-        if self.cleaned_data['jail_type'] == 'portjail':
+        if self.cleaned_data['jail_type'] == WARDEN_TYPE_PORTJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PORTJAIL
-        elif self.cleaned_data['jail_type'] == 'pluginjail':
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_PLUGINJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
-        elif self.cleaned_data['jail_type'] == 'linuxjail':
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_LINUXJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
 
         if self.cleaned_data['jail_archive']:
@@ -313,7 +323,7 @@ class JailCreateForm(ModelForm):
         if self.cleaned_data['jail_autostart']:
             w.auto(jail=jail_host)
 
-        #w.start(jail=jail_host)
+        w.start(jail=jail_host)
 
 class JailsConfigurationForm(ModelForm):
 
@@ -470,3 +480,68 @@ class JailsEditForm(ModelForm):
 
     class Meta:
         model = models.Jails
+
+
+#class NullMountPointForm(ModelForm):
+#
+#    mounted = forms.BooleanField(
+#        label=_("Mounted?"),
+#        required=False,
+#        initial=True,
+#        )
+#
+#    class Meta:
+#        model = models.NullMountPoint
+#        widgets = {
+#            'source': forms.widgets.TextInput(attrs={
+#                'data-dojo-type': 'freeadmin.form.PathSelector',
+#                }),
+#            'destination': forms.widgets.TextInput(attrs={
+#                'data-dojo-type': 'freeadmin.form.PathSelector',
+#                }),
+#        }
+#
+#    def clean_source(self):
+#        src = self.cleaned_data.get("source")
+#        src = os.path.abspath(src.strip().replace("..", ""))
+#        return src
+#
+#    def clean_destination(self):
+#        dest = self.cleaned_data.get("destination")
+#        dest = os.path.abspath(dest.strip().replace("..", ""))
+#        jail = PluginsJail.objects.order_by('-id')[0]
+#        full = "%s/%s%s" % (jail.jail_path, jail.jail_name, dest)
+#        if len(full) > 88:
+#            raise forms.ValidationError(
+#                _("The full path cannot exceed 88 characters")
+#                )
+#        return dest
+#
+#    def __init__(self, *args, **kwargs):
+#        super(NullMountPointForm, self).__init__(*args, **kwargs)
+#
+#        jail = PluginsJail.objects.order_by("-pk")[0]
+#        self.fields['destination'].widget.attrs['root'] = (
+#                os.path.join(jail.jail_path, jail.jail_name)
+#            )
+#        if self.instance.id:
+#            self.fields['mounted'].initial = self.instance.mounted
+#        else:
+#            self.fields['mounted'].widget = forms.widgets.HiddenInput()
+#
+#    def save(self, *args, **kwargs):
+#        obj = super(NullMountPointForm, self).save(*args, **kwargs)
+#        mounted = self.cleaned_data.get("mounted")
+#        if mounted == obj.mounted:
+#            return obj
+#        if mounted and not obj.mount():
+#            #FIXME better error handling, show the user why
+#            raise MiddlewareError(_("The path could not be mounted %s") % (
+#                obj.source,
+#                ))
+#        if not mounted and not obj.umount():
+#            #FIXME better error handling, show the user why
+#            raise MiddlewareError(_("The path could not be umounted %s") % (
+#                obj.source,
+#                ))
+#        return obj

@@ -263,11 +263,10 @@ class NavTree(object):
 
         self.replace_navs(tree_roots)
 
-        for j in Jails.objects.all():
-
-            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
-                j.jail_status == WARDEN_STATUS_RUNNING:
-                self._get_plugins_nodes(request, j)
+#        for j in Jails.objects.all():
+#            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
+#                j.jail_status == WARDEN_STATUS_RUNNING:
+#                self._get_plugins_nodes(request, j)
 
     def _generate_app(self, app, request, tree_roots, childs_of):
 

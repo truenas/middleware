@@ -1,5 +1,3 @@
-{% if jail_configured %}
-
 <button data-dojo-type="dijit.form.Button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png" />
     <p>{% trans "Install Plugin" %}</p>
@@ -15,12 +13,6 @@
         viewModel('{% trans "View Mount Points"|force_escape|force_escape %}', '{% url "freeadmin_plugins_nullmountpoint_datagrid" %}', 'services.Plugins.management.NullMountPoint.View');
     </script>
 </button>
-
-{% else %}
-    <div>
-    <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: The plugins service is not running, several functionalities have been disabled." %}</span></p>
-    </div>
-{% endif %}
 
 <table class="grid">
     <thead class="header">
@@ -45,7 +37,7 @@
                {{ p.plugin_pbiname }}
            </td>
            <td>
-               {% if p.service.jail_status == "RUNNING" %}
+               {% if p.service.jail_status %}
                {{ p.plugin_jail }}
                {% else %}
                <p style="margin:10px;"><span style="color: red;">{{ p.plugin_jail }}</span></p>
@@ -53,10 +45,10 @@
 
            </td>
            <td>
-                <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}')" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
+                <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}', {{ p.id|escapejs }})" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
            </td>
            <td>
-                {% if jail_configured %}
+                {% if p.service.jail_status %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Update" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
