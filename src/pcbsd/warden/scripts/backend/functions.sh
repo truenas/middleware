@@ -44,7 +44,7 @@ ATMP="/tmp/.wans"
 export ATMP
 
 # Warden Version
-WARDENVER="1.2"
+WARDENVER="1.3"
 export WARDENVER
 
 # Dirs to nullfs mount in X jail

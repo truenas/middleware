@@ -58,3 +58,19 @@ ICON = u'ServicesIcon'
 #    def __init__(self, *args, **kwargs):
 #        super(JailsManagement, self).__init__(*args, **kwargs)
 #        self.append_children([JailsSettings()])
+
+#class MountPoints(TreeNode):
+#
+#    gname = 'View'
+#    view = 'freeadmin_plugins_nullmountpoint_datagrid'
+#    #append_to = 'services.Plugins.NullMountPoint'
+#    #append_to = 'services.PluginsJail.management.NullMountPoint'
+#    append_to = 'jails.Jails.management.NullMountPoint'
+
+
+#class MountPoint(TreeNode):
+#
+#    gname = 'NullMountPoint'
+#    name = _(u'NullMountPoint')
+#    type = u'nullmountpoint'
+#    icon = u"SettingsIcon"

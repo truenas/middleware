@@ -40,7 +40,7 @@ done
 
 if [ "${VERBOSE}" != "YES" ] ; then
 # Prints a listing of the available jails
-  printf "%-24s%-12s%-12s%-12s\n" HOST AUTOSTART STATUS TYPE
+  printf "%-24s%-12s%-12s%-12s\n" ID AUTOSTART STATUS TYPE
   line "75"
 fi
 
@@ -54,7 +54,28 @@ do
   AUTO="Disabled" 
   STATUS="<unknown>"
 
-  if [ ! -e "${i}/id" ] ; then continue ; fi
+  if [ ! -e "${i}/id" ] ; then
+     # Check if its an old-style jail
+     if [ ! -e "${i}/ip" ] ; then
+       continue
+     fi
+     # This is an old style jail, lets convert it
+     cp ${i}/ip ${i}/ipv4
+
+     # Get next unique ID
+     META_ID=0
+     for iDir in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+     do
+       if [ ! -e "${iDir}/id" ] ; then continue ; fi
+       id=`cat ${iDir}/id`
+       if [ "${id}" -gt "${META_ID}" ] ; then
+          META_ID="${id}"
+       fi
+     done
+     : $(( META_ID += 1 ))
+     echo "$META_ID" > ${i}/id
+
+  fi
 
   ID="`cat ${i}/id 2>/dev/null`"
   HOST="`cat ${i}/host 2>/dev/null`"
@@ -121,7 +142,7 @@ do
     TYPE="standard"
   fi
 
-  JAILNAME=`echo ${i}|sed -E 's|^.(.+).meta|\1|'`
+  JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
 
   ${PROGDIR}/scripts/backend/checkstatus.sh ${JAILNAME} 2>/dev/null
   if [ "$?" = "0" ]
@@ -153,7 +174,7 @@ type: ${TYPE}
 __EOF__
 
   else
-    printf "%-24s%-12s%-12s%-12s\n" ${HOST} ${AUTO} ${STATUS} ${TYPE}
+    printf "%-24s%-12s%-12s%-12s\n" ${JAILNAME} ${AUTO} ${STATUS} ${TYPE}
   fi
 done
 

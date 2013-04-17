@@ -52,8 +52,8 @@ fi
 echo "Details for jail: ${JAILNAME}"
 isDirZFS "${JAILDIR}" "1"
 if [ $? -eq 0 ] ; then 
-   tank=`getZFSTank "${JAILDIR}"`
-   diskUsage=`df -m | grep -w ${tank}${JAILDIR}$ | awk '{print $3}'`
+   tank=`getZFSDataset "${JAILDIR}"`
+   diskUsage=`df -m | grep -w "^${tank} " | awk '{print $3}'`
 else
    diskUsage=`du -c -x -m ${JAILDIR} 2>/dev/null | grep total | tail -n 1 | awk '{print $1}'`
 fi
