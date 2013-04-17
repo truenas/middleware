@@ -39,6 +39,11 @@ then
   exit 6
 fi
 
+# pre-start hooks
+if [ -x "${JMETADIR}/jail-pre-start" ] ; then
+  "${JMETADIR}/jail-pre-start"
+fi
+
 IFACE=
 DEFAULT=0
 
@@ -390,4 +395,9 @@ else
     echo "Starting jail with: /etc/rc"
     jexec ${JID} /bin/sh /etc/rc >/dev/tty 2>&1
   fi
+fi
+
+# post-start hooks
+if [ -x "${JMETADIR}/jail-post-start" ] ; then
+  "${JMETADIR}/jail-post-start"
 fi
