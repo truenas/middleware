@@ -10,6 +10,7 @@ PROGDIR="/usr/local/share/warden"
 . ${PROGDIR}/scripts/backend/functions.sh
 
 JAILNAME="${1}"
+export JAILNAME
 
 if [ -z "${JAILNAME}" ]
 then
