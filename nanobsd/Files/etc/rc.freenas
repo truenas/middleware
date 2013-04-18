@@ -607,6 +607,7 @@ jail_pre_start()
 {
 	local jail="${1}"
 	local jc_path
+	local jail_path
 	local jail_metadir
 
 	local IFS="|"
@@ -625,6 +626,7 @@ jail_pre_start()
 	")
 
 	jail_metadir="${jc_path}/.${jail}.meta"
+	jail_path="${jc_path}/${jail}"
 
 	: > "${jail_metadir}/fstab"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -643,7 +645,7 @@ jail_pre_start()
 	" | \
 	while read -r source destination
 	do
-		echo "${source} ${destination} nullfs rw 0 0" >> "${jail_metadir}/fstab"
+		echo "${source} ${jail_path}/${destination} nullfs rw 0 0" >> "${jail_metadir}/fstab"
 	done
 }
 
