@@ -146,6 +146,12 @@ else
   if [ -e "${JMETADIR}/jail-portjail" ] ; then mountjailxfs ${JAILNAME} ; fi
 fi
 
+# Check for user-supplied mounts
+if [ -e "${JMETADIR}/fstab" ] ; then
+   echo "Mounting user-supplied file-systems"
+   mount -a -F ${JMETADIR}/fstab
+fi
+
 IP4=
 if [ -e "${JMETADIR}/ipv4" ] ; then
   IP4=`cat "${JMETADIR}/ipv4"`
