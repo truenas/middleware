@@ -602,3 +602,173 @@ jail_stop()
 	${WARDEN} stop "${name}"
 	return $?
 }
+
+jail_pre_start()
+{
+	local jail="${1}"
+	local jc_path
+	local jail_metadir
+
+	local IFS="|"
+	jc_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			jc_path
+
+		FROM
+			jails_jailsconfiguration
+
+		ORDER BY
+			-id
+
+		LIMIT
+			1
+	")
+
+	jail_metadir="${jc_path}/.${jail}.meta"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			source,
+			destination
+
+		FROM
+			jails_nullmountpoint
+
+		WHERE
+			jail = '${jail}'
+
+		ORDER BY
+			-id
+	" | \
+	while read -r source destination
+	do
+		echo "${source} ${destination} nullfs rw 0 0" > "${jail_metadir}/fstab"
+	done
+}
+
+jail_post_start()
+{
+	local jail="${1}"
+	local ipv4
+	local ipv6
+	local jip
+	local jid
+
+	ipv4=$(jail_get_ipv4 "${jail}")
+	ipv6=$(jail_get_ipv6 "${jail}")
+	jid="$(jail_get_jid "${jail}")"
+
+	if [ -n "${ipv4}" ]
+	then
+		jail_get_ip_and_netmask "${ipv4}"
+		jip="${JIP}"
+
+	elif [ -n "${ipv6}" ]
+	then
+		jail_get_ip_and_netmask "${ipv6}"
+		jip="${JIP}"
+	fi
+
+	local IFS="|"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			plugin_name,
+			plugin_path,
+			plugin_port
+
+		FROM
+			plugins_plugins
+
+		WHERE
+			plugin_jail = '${jail}'
+
+		ORDER BY
+			-id
+	" | \
+	while read -r plugin_name plugin_path plugin_port
+	do
+		local control="${plugin_path}/control"
+
+		echo jexec ${jid} "${control}" start "${jip}" "${jail_port}"
+		jexec ${jid} "${control}" start "${jip}" "${jail_port}"
+	done
+}
+
+jail_pre_stop()
+{
+	local jail="${1}"
+	local jid
+
+	jid="$(jail_get_jid "${jail}")"
+
+	local IFS="|"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			plugin_name,
+			plugin_path
+
+		FROM
+			plugins_plugins
+
+		WHERE
+			plugin_jail = '${jail}'
+
+		ORDER BY
+			-id
+	" | \
+	while read -r plugin_name plugin_path
+	do
+		local control="${plugin_path}/control"
+
+		echo jexec ${jid} "${control}" stop
+		jexec ${jid} "${control}" stop
+	done
+}
+
+jail_post_stop()
+{
+	:
+}
+
+jail_pre_delete()
+{
+	:
+}
+
+jail_post_delete()
+{
+	local jail="${1}"
+	local jc_path
+	local jail_metadir
+
+	local IFS="|"
+	jc_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			jc_path
+
+		FROM
+			jails_jailsconfiguration
+
+		ORDER BY
+			-id
+
+		LIMIT
+			1
+	")
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		DELETE FROM
+			jails_nullmountpoint
+
+		WHERE
+			jail = '${jail}'
+	"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		DELETE FROM
+			plugins_plugins
+
+		WHERE
+			plugin_jail = '${jail}'
+	"
+}
