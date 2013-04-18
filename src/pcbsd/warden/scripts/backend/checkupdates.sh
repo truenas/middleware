@@ -54,7 +54,7 @@ if [ "${JAILNAME}" = "all" ] ; then
     fi
 
     # Check for system-updates
-    chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|!  -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+    chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
   done
 else
   set_warden_metadir
