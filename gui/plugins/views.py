@@ -154,6 +154,9 @@ def plugin_install(request):
 
 @public
 def plugin_fcgi_client(request, name, path):
+    log.debug("XXX: plugin_fcgi_client: reqest = %s", request)
+    log.debug("XXX: plugin_fcgi_client: name = %s", name)
+    log.debug("XXX: plugin_fcgi_client: path = %s", path)
     pass
 #    """
 #    This is a view that works as a FCGI client

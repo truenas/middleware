@@ -21,7 +21,7 @@ class FireflyForm(forms.ModelForm):
             )
 
     def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail')
+        self.jail_path = kwargs.pop('jail_path')
         super(FireflyForm, self).__init__(*args, **kwargs)
 
         if self.instance.admin_pw:
@@ -29,21 +29,13 @@ class FireflyForm(forms.ModelForm):
 
         self.fields['mp3_dir'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
+            'root': self.jail_path,
             'dirsonly': 'true',
             })
 
         self.fields['logfile'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
+            'root': self.jail_path,
             'dirsonly': 'false',
             })
 

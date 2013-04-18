@@ -26,6 +26,7 @@ generate_plugins_conf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
+		id,
 		plugin_name,
 		plugin_jail,
 		plugin_enabled,
@@ -38,7 +39,7 @@ generate_plugins_conf()
 	ORDER BY
 		-id
 	" | \
-	while read -r name jail enabled port ppath
+	while read -r id name jail enabled port ppath
 	do
 		local ipv4=$(jail_get_ipv4 "${jail}")
 		local ipv6=$(jail_get_ipv6 "${jail}")
@@ -61,7 +62,7 @@ generate_plugins_conf()
 		fi
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
-		location ~ /plugins/${name}/ {
+		location ~ /plugins/${name}/${id}/ {
 		    fastcgi_pass   ${ip}:${port};
 		    include		fastcgi_params;
 		    root ${ppath};

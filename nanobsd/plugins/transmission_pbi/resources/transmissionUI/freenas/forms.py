@@ -25,16 +25,12 @@ class TransmissionForm(forms.ModelForm):
             )
 
     def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail')
+        self.jail_path = kwargs.pop('jail_path')
         super(TransmissionForm, self).__init__(*args, **kwargs)
 
         self.fields['logfile'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
+            'root': self.jail_path,
             'dirsonly': 'false',
             })
 
@@ -42,11 +38,7 @@ class TransmissionForm(forms.ModelForm):
         self.fields['download_dir'].widget = \
         self.fields['watch_dir'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
+            'root': self.jail_path,
             'dirsonly': 'true',
             })
 
