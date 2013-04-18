@@ -2,4 +2,4 @@
 
 . /etc/rc.freenas
 
-jail_post_start "${JAILNAME}"
+jail_post_stop "${JAILNAME}"
