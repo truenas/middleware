@@ -475,7 +475,7 @@ add_warden()
 	src="${AVATAR_ROOT}/src/pcbsd/warden"
 	dst="${NANO_WORLDDIR}/usr/local"
 	share="${dst}/share/warden"
-	hooks="${share}/hooks"
+	hooks="${share}/scripts/hooks"
 
 	pprint 2 "Adding warden"
 
