@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-16 23:08+0200\n"
+"PO-Revision-Date: 2013-04-17 22:55+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2641,7 +2641,7 @@ msgstr "Zahtevati Reverzni DNS za IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
-msgstr ""
+msgstr "Adresa za maskiranje"
 
 #: services/models.py:1036
 msgid ""
@@ -2814,11 +2814,11 @@ msgstr ""
 
 #: services/models.py:1165
 msgid "Compress Connections"
-msgstr ""
+msgstr "Komprimovati konekcije"
 
 #: services/models.py:1168
 msgid "Host Private Key"
-msgstr "Privatni ključ hosta"
+msgstr "Host privatni ključ"
 
 #: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
@@ -2867,7 +2867,7 @@ msgstr "Ime radne grupe"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr ""
+msgstr "Ime radne grupe ili domena u starom formatu, npr. RADNAGRUPA"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
@@ -2907,8 +2907,8 @@ msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
-"Podrazumevano osnovno Distinguished Name (DN) se koristi za pretraživanje, "
-"npr. dc=test,dc=org"
+"Podrazumevano osnovno specifično ime (DN) se koristi za pretraživanje, npr. "
+"dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
@@ -3130,20 +3130,22 @@ msgstr "Rsync Moduli"
 
 #: services/models.py:1459
 msgid "Check interval"
-msgstr ""
+msgstr "Interval provere"
 
 #: services/models.py:1460
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Postavlja interval između provera diska na N minuta. Podrazumevano je 30 "
+"minuta"
 
 #: services/models.py:1466
 msgid "Power mode"
-msgstr ""
+msgstr "Režim napajanja"
 
 #: services/models.py:1470
 msgid "Difference"
-msgstr ""
+msgstr "Razlika"
 
 #: services/models.py:1471
 msgid ""
@@ -3214,7 +3216,7 @@ msgstr ""
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -3237,11 +3239,11 @@ msgstr ""
 
 #: services/views.py:326
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Servis nije moguće zaustaviti."
 
 #: services/views.py:333
 msgid "The service could not be started."
-msgstr ""
+msgstr "Servis nije moguće pokrenuti."
 
 #: sharing/forms.py:81
 #, fuzzy
@@ -3441,7 +3443,7 @@ msgstr ""
 
 #: sharing/models.py:149
 msgid "Read-only Access"
-msgstr ""
+msgstr "Pristup samo za čitanje"
 
 #: sharing/models.py:151
 msgid ""
@@ -3451,7 +3453,7 @@ msgstr ""
 
 #: sharing/models.py:155
 msgid "Read-write Access"
-msgstr ""
+msgstr "Čitanje-upis pristup"
 
 #: sharing/models.py:157
 msgid ""
@@ -3461,7 +3463,7 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Otkrivanje diska"
 
 #: sharing/models.py:161
 msgid ""
@@ -3471,7 +3473,7 @@ msgstr ""
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Režim otkrivanja diska"
 
 #: sharing/models.py:168
 msgid ""
@@ -3482,7 +3484,7 @@ msgstr ""
 
 #: sharing/models.py:172
 msgid "Database Path"
-msgstr ""
+msgstr "Putanja baze podataka"
 
 #: sharing/models.py:174
 msgid ""
@@ -3492,7 +3494,7 @@ msgstr ""
 
 #: sharing/models.py:177
 msgid "Cache CNID"
-msgstr ""
+msgstr "Keširati CNID"
 
 #: sharing/models.py:178
 msgid ""
@@ -3500,10 +3502,14 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Ako je podešeno da afpd koristi ID informacije sačuvane u AppleDouble V2 "
+"zaglavlju datoteke za smanjenje opterećenja baze podataka. Nemojte da "
+"uključite ovu opciju ukoliko je volumen modifikovana od strane klijenata "
+"koji nisu AFP (NFS/SMB/lokalni)."
 
 #: sharing/models.py:181
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Prevedi CR/LF"
 
 #: sharing/models.py:182
 msgid ""
@@ -3513,16 +3519,25 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Omogućavanje crlf prevoda za tekstualne datoteke, automatski se konvertuje "
+"Macintosh prelom reda u Unix format. Korišćenje ove opcije može biti opasno, "
+"jer nekim starijim programima gde se smeštaju binarne datoteke podataka kao "
+"'TEXT' format, kada čuvaju i prebacuju tip datoteke u sledećem koraku. Afpd "
+"će potencijalno uništiti takve fajlove kada se 'pogrešno' menjaju bajtovi "
+"kako bi se uradilo prelamanje redova."
 
 #: sharing/models.py:185
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows imena datoteka"
 
 #: sharing/models.py:186
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Ovo primorava da imena datoteka budu ograničena na skup znakova koje koristi "
+"Windows operativni sistem. Ovo se ne preporučuje za deljene resurse koji se "
+"uglavnom upotrebljavaju za Mac računare."
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"
