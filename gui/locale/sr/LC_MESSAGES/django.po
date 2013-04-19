@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-17 22:55+0200\n"
+"PO-Revision-Date: 2013-04-18 22:57+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2855,11 +2855,11 @@ msgstr "Ime domena, npr. example.com"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
-msgstr ""
+msgstr "NetBIOS ime"
 
 #: services/models.py:1250
 msgid "System hostname"
-msgstr ""
+msgstr "Sistemsko ime hosta"
 
 #: services/models.py:1254
 msgid "Workgroup Name"
@@ -3152,21 +3152,24 @@ msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Prijavi ukoliko se temperatura nije promenilo za najmanje N stepeni "
+"Celzijusa od poslednjeg izveštaja. 0 da bi se onemogućilo"
 
 #: services/models.py:1475
-#, fuzzy
 msgid "Informal"
-msgstr "Normalno"
+msgstr "Neformalno"
 
 #: services/models.py:1476 services/models.py:1481
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Prijavi ukoliko je temperatura veća ili jednaka od N stepeni Celzijusa. 0 da "
+"bi se onemogućilo"
 
 #: services/models.py:1480
 msgid "Critical"
-msgstr ""
+msgstr "Kritično"
 
 #: services/models.py:1484
 msgid "Email to report"
@@ -3174,7 +3177,7 @@ msgstr ""
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
+msgstr "Odredišna email adresa. Razdvojiti email adrese sa tačka-zarezom"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3551,21 +3554,23 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Brojevi nultog uredjaja"
 
 #: sharing/models.py:197
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Uvek koristite 0 za broj uređaja, pomaže kada je uređaj broj nije konstantan "
+"preko restarta, klastera, ..."
 
 #: sharing/models.py:200
 msgid "Disable File ID"
-msgstr ""
+msgstr "Onemogući ID datoteke"
 
 #: sharing/models.py:201
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Nemojte reklamirati createfileid, resolveid, deleteid pozive."
 
 #: sharing/models.py:204
 msgid "Disable :hex Names"
