@@ -11,7 +11,7 @@ Requirements:
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.
 - You will need the following ports/packages when compiling anything
   FreeNAS-related:
-  - devel/git
+  - devel/git [Make sure to enable 'SVN']
   - lang/python26 or lang/python27
 
 - You need the following additional ports/packages to build the FreeNAS base
