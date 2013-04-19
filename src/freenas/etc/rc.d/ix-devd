@@ -7,9 +7,9 @@
 # REQUIRE: ix-zfs
 # BEFORE: devd pf
 
-# Copyright (C) iXsystems 2010
+# Copyright (c) 2010 iXsystems, Inc.  All rights reserved.
 # This file is a part of TrueNAS
-# and may be copied and/or distributed
+# and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
 . /etc/rc.subr
