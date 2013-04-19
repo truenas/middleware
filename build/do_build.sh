@@ -54,7 +54,9 @@ NANO_ARGS=""
 GIT_CACHE="/freenas-build/trueos.git"
 if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE}" ] ; then
         GIT_REPO="${GIT_CACHE}"
-        echo "Using local mirror in ${GIT_REPO}."
+fi
+if [ -e "${GIT_REPO}" ]; then
+        echo "Using local mirror in $GIT_REPO"
 else
         echo "no local mirror, to speed up builds we suggest doing"
         echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
@@ -62,6 +64,8 @@ fi
 GIT_PORTS_CACHE="/freenas-build/ports.git"
 if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE" ] ;then
     GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
+fi
+if [ -e "${GIT_PORTS_REPO}" ]; then
     echo "Using local git ports mirror in $GIT_PORTS_REPO"
 else
     echo "no local mirror, to speed up builds we suggest doing"
