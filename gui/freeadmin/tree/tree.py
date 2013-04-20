@@ -29,7 +29,6 @@ import bisect
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
-
 class TreeType(object):
     parent = None
 
@@ -53,6 +52,7 @@ class TreeType(object):
     append_app = True
     append_url = None
     option_list = []
+    request = None
 
     _children = []
 

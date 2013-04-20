@@ -25,6 +25,7 @@
 #
 #####################################################################
 import logging
+import os
 
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -33,9 +34,7 @@ from eventlet.green import urllib2
 
 log = logging.getLogger('plugins.utils')
 
-
-def get_base_url(request):
-
+def get_base_url(request=None):
     proto = 'https' if request.is_secure() else 'http'
     addr = request.META.get("SERVER_ADDR")
     if not addr:
@@ -43,8 +42,9 @@ def get_base_url(request):
     else:
         port = int(request.META.get("SERVER_PORT", 80))
         if ((proto == 'http' and port != 80) or
-                (proto == 'https' and port != 443)):
+            (proto == 'https' and port != 443)):
             addr = "%s:%d" % (addr, port)
+
     return "%s://%s" % (proto, addr)
 
 

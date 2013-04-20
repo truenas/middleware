@@ -35,37 +35,46 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.warden import WardenJail, Warden
-from freenasUI.jails import models
-from freenasUI.common.warden import Warden, \
-    WARDEN_FLAGS_NONE, \
-    WARDEN_CREATE_FLAGS_32BIT, \
-    WARDEN_CREATE_FLAGS_SRC, \
-    WARDEN_CREATE_FLAGS_PORTS, \
-    WARDEN_CREATE_FLAGS_VANILLA, \
-    WARDEN_CREATE_FLAGS_STARTAUTO, \
-    WARDEN_CREATE_FLAGS_PORTJAIL, \
-    WARDEN_CREATE_FLAGS_PLUGINJAIL, \
-    WARDEN_CREATE_FLAGS_LINUXJAIL, \
-    WARDEN_CREATE_FLAGS_ARCHIVE, \
-    WARDEN_CREATE_FLAGS_LINUXARCHIVE, \
-    WARDEN_CREATE_FLAGS_IPV4, \
-    WARDEN_CREATE_FLAGS_IPV6, \
-    WARDEN_SET_FLAGS_IPV4, \
-    WARDEN_SET_FLAGS_IPV6, \
-    WARDEN_SET_FLAGS_ALIAS_IPV4, \
-    WARDEN_SET_FLAGS_ALIAS_IPV6, \
-    WARDEN_SET_FLAGS_BRIDGE_IPV4, \
-    WARDEN_SET_FLAGS_BRIDGE_IPV6, \
-    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4, \
-    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6, \
-    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4, \
-    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6, \
-    WARDEN_SET_FLAGS_FLAGS, \
-    WARDEN_TYPE_STANDARD, \
-    WARDEN_TYPE_PLUGINJAIL, \
-    WARDEN_TYPE_PORTJAIL, \
-    WARDEN_TYPE_LINUXJAIL, \
-    WARDEN_KEY_HOST
+from freenasUI.jails.models import JailsConfiguration, Jails, NullMountPoint
+from freenasUI.common.warden import (
+    Warden,
+    WARDEN_FLAGS_NONE,
+    WARDEN_CREATE_FLAGS_32BIT,
+    WARDEN_CREATE_FLAGS_SRC,
+    WARDEN_CREATE_FLAGS_PORTS,
+    WARDEN_CREATE_FLAGS_VANILLA,
+    WARDEN_CREATE_FLAGS_STARTAUTO,
+    WARDEN_CREATE_FLAGS_PORTJAIL,
+    WARDEN_CREATE_FLAGS_PLUGINJAIL,
+    WARDEN_CREATE_FLAGS_LINUXJAIL,
+    WARDEN_CREATE_FLAGS_ARCHIVE,
+    WARDEN_CREATE_FLAGS_LINUXARCHIVE,
+    WARDEN_CREATE_FLAGS_IPV4,
+    WARDEN_CREATE_FLAGS_IPV6,
+    WARDEN_SET_FLAGS_IPV4,
+    WARDEN_SET_FLAGS_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_IPV6,
+    WARDEN_SET_FLAGS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
+    WARDEN_SET_FLAGS_FLAGS,
+    WARDEN_TYPE_STANDARD,
+    WARDEN_TYPE_PLUGINJAIL, 
+    WARDEN_TYPE_PORTJAIL,
+    WARDEN_TYPE_LINUXJAIL,
+    WARDEN_KEY_HOST,
+    WARDEN_KEY_STATUS,
+    WARDEN_STATUS_RUNNING
+)
+
+from freenasUI.system.forms import (
+    clean_path_execbit, clean_path_locked, FileWizard
+)
+
 
 
 log = logging.getLogger('jails.forms')
@@ -157,7 +166,7 @@ class JailCreateForm(ModelForm):
     ]
 
     class Meta:
-        model = models.Jails
+        model = Jails
         exclude = (
             'jail_id',
             'jail_status',
@@ -185,7 +194,7 @@ class JailCreateForm(ModelForm):
         st_ipv6_network = None
 
         try:
-            jc = models.JailsConfiguration.objects.order_by("-id")[0]
+            jc = JailsConfiguration.objects.order_by("-id")[0]
             st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
             st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
 
@@ -330,7 +339,7 @@ class JailCreateForm(ModelForm):
 class JailsConfigurationForm(ModelForm):
 
     class Meta:
-        model = models.JailsConfiguration
+        model = JailsConfiguration
         widgets = {
             'jc_path': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
@@ -344,7 +353,7 @@ class JailConfigureForm(ModelForm):
     jail_ports = forms.BooleanField(label=_("ports"), required=False)
 
     class Meta:
-        model = models.Jails
+        model = Jails
 
 class JailsEditForm(ModelForm):
 
@@ -481,7 +490,7 @@ class JailsEditForm(ModelForm):
                 Warden().set(**args)
 
     class Meta:
-        model = models.Jails
+        model = Jails
 
 
 class NullMountPointForm(ModelForm):
@@ -493,7 +502,7 @@ class NullMountPointForm(ModelForm):
         )
 
     class Meta:
-        model = models.NullMountPoint
+        model = NullMountPoint
         widgets = {
             'source': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
@@ -521,26 +530,52 @@ class NullMountPointForm(ModelForm):
         return dest
 
     def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail') 
+        self.jail = None
+        if kwargs and kwargs.has_key('jail'):
+            self.jail = kwargs.pop('jail') 
+
         super(NullMountPointForm, self).__init__(*args, **kwargs)
 
-        self.fields['jail'].initial = self.jail.jail_host
-        self.fields['jail'].widget.attrs = {
-            'readonly': True,
-            'class': (
-                'dijitDisabled dijitTextBoxDisabled'
-                ' dijitValidationTextBoxDisabled' 
-            ),
-        }
+        if self.jail:
+            self.fields['jail'].initial = self.jail.jail_host
+            self.fields['jail'].widget.attrs = {
+                'readonly': True,
+                'class': (
+                    'dijitDisabled dijitTextBoxDisabled'
+                    ' dijitValidationTextBoxDisabled' 
+                ),
+            }
 
-        self.jc = models.JailsConfiguration.objects.order_by("-id")[0]
-        jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+            self.jc = JailsConfiguration.objects.order_by("-id")[0]
+            jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
 
-        self.fields['destination'].widget.attrs['root'] = (jail_path)
-        if self.instance.id:
-            self.fields['mounted'].initial = self.instance.mounted
+            self.fields['destination'].widget.attrs['root'] = (jail_path)
+            if self.instance.id:
+                self.fields['mounted'].initial = self.instance.mounted
+            else:
+                self.fields['mounted'].widget = forms.widgets.HiddenInput()
+
         else:
-            self.fields['mounted'].widget = forms.widgets.HiddenInput()
+            self.fields['jail'] = forms.ChoiceField(
+                label=_("Jail"),
+                choices=(),
+                widget=forms.Select(attrs={'class': 'required'}),
+            )
+
+            jc = JailsConfiguration.objects.order_by("-id")[0]
+            try:
+                clean_path_execbit(jc.jc_path)
+            except forms.ValidationError, e:
+                self.errors['__all__'] = self.error_class(e.messages)
+
+            pjlist = []
+            wlist = Warden().list()
+            for wj in wlist:
+                if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
+                    pjlist.append(wj[WARDEN_KEY_HOST])
+
+            self.fields['jail'].choices = [(pj, pj) for pj in pjlist ]
+
 
     def save(self, *args, **kwargs):
         obj = super(NullMountPointForm, self).save(*args, **kwargs)

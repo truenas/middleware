@@ -122,12 +122,20 @@ def plugin_update(request, plugin_id):
         })
 
 
-def plugin_install(request):
+def plugin_install(request, jail_id=-1):
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
 
+    jail = None
+    if jail_id > 0:
+        try:
+            jail = Jails.objects.filter(pk=jail_id)[0]
+
+        except Exception, e: 
+            jail = None
+
     if request.method == "POST":
-        form = forms.PBIUploadForm(request.POST, request.FILES)
+        form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
         if form.is_valid():
             form.done()
             return JsonResp(request,
@@ -145,7 +153,7 @@ def plugin_install(request):
                 )
             return resp
     else:
-        form = forms.PBIUploadForm()
+        form = forms.PBIUploadForm(jail=jail)
 
     return render(request, "plugins/plugin_install.html", {
         'form': form,
@@ -157,7 +165,6 @@ def plugin_fcgi_client(request, name, path):
     log.debug("XXX: plugin_fcgi_client: reqest = %s", request)
     log.debug("XXX: plugin_fcgi_client: name = %s", name)
     log.debug("XXX: plugin_fcgi_client: path = %s", path)
-    pass
 #    """
 #    This is a view that works as a FCGI client
 #    It is used for development server (no nginx) for easier development

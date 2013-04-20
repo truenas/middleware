@@ -75,7 +75,7 @@ def jail_edit(request, id):
     })
 
 
-def jail_storage(request, id):
+def jail_storage(request, id=-1):
 
     try:
         jail = models.Jails.objects.get(id=id)

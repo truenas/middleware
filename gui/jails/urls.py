@@ -31,7 +31,7 @@ urlpatterns = patterns('freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
     url(r'^edit/(?P<id>\d+)$', 'jail_edit', name="jail_edit"),
     url(r'^delete/(?P<id>\d+)$', 'jail_delete', name="jail_delete"),
-    url(r'^storage/(?P<id>\d+)$', 'jail_storage', name="jail_storage"),
+    url(r'^storage/(?P<id>\d+)?$', 'jail_storage', name="jail_storage"),
     url(r'^start/(?P<id>\d+)$', 'jail_start', name="jail_start"),
     url(r'^stop/(?P<id>\d+)$', 'jail_stop', name="jail_stop"),
     )

@@ -86,22 +86,37 @@ class PBIUploadForm(Form):
         )
 
     def __init__(self, *args, **kwargs):
+        self.jail = None
+        if kwargs and kwargs.has_key('jail'):
+            self.jail = kwargs.pop('jail')
+
         super(PBIUploadForm, self).__init__(*args, **kwargs)
 
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        try:
-            clean_path_execbit(jc.jc_path)
-        except forms.ValidationError, e:
-            self.errors['__all__'] = self.error_class(e.messages)
+        if not self.jail:
+            jc = JailsConfiguration.objects.order_by("-id")[0]
+            try:
+                clean_path_execbit(jc.jc_path)
+            except forms.ValidationError, e:
+                self.errors['__all__'] = self.error_class(e.messages)
 
-        pjlist = []
-        wlist = Warden().list()
-        for wj in wlist:
-            if wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and \
-                wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
-                pjlist.append(wj[WARDEN_KEY_HOST])
+            pjlist = []
+            wlist = Warden().list()
+            for wj in wlist:
+                if wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and \
+                    wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
+                    pjlist.append(wj[WARDEN_KEY_HOST])
 
-        self.fields['pjail'].choices = [(pj, pj) for pj in pjlist ]
+            self.fields['pjail'].choices = [(pj, pj) for pj in pjlist ]
+
+        else:
+            self.fields['pjail'].choices = [(self.jail.jail_host, self.jail.jail_host)]
+            self.fields['pjail'].widget.attrs = {
+                'readonly': True,
+                'class': (
+                    'dijitDisabled dijitTextBoxDisabled'
+                    ' dijitValidationTextBoxDisabled'
+                ),
+            }
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -133,7 +148,10 @@ class PBIUploadForm(Form):
 
 class PBIUpdateForm(PBIUploadForm):
     def __init__(self, *args, **kwargs):
-        self.plugin = kwargs.pop('plugin') 
+        self.plugin = None
+        if kwargs and kwargs.has_key('plugin'):
+            self.plugin = kwargs.pop('plugin') 
+
         super(PBIUpdateForm, self).__init__(*args, **kwargs)
 
         self.fields['pjail'].initial = self.plugin.plugin_jail

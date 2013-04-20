@@ -126,6 +126,31 @@ class JailsQuerySet(models.query.QuerySet):
             )
         return self.model(**results[0])
 
+    #
+    # Minimal filter() implementation....
+    #
+    def filter(self, *args, **kwargs):
+        models = []
+        results = []
+        for wj in self.__wlist:
+
+            found = 0
+            count = len(kwargs)
+            for k in kwargs:
+                key = self.__key(k)
+                if self.__ispk(key):
+                    kwargs[k] = int(kwargs[k])
+                if key in wj and str(wj[key]) == str(kwargs[k]):
+                    found += 1
+
+            if found == count:
+                results.append(wj)
+
+        for r in results:
+            models.append(self.model(**r))
+
+        return models
+
 
 class JailsManager(models.Manager):
     use_for_related_fields = True
@@ -224,7 +249,10 @@ class Jails(Model):
             )
 
     def __str__(self):
-        return self.jail_host
+        return str(self.jail_host)
+
+    def __unicode__(self):
+        return unicode(self.jail_host)
 
     def __init__(self, *args, **kwargs):
         super(Jails, self).__init__(*args, **kwargs)
@@ -304,11 +332,11 @@ class NullMountPoint(Model):
         )
 
     class Meta:
-        verbose_name = _(u"Mount Point")
-        verbose_name_plural = _(u"Mount Points")
+        verbose_name = _(u"Storage")
+        verbose_name_plural = _(u"Storage")
 
     class FreeAdmin:
-        deletable = True
+        deletable = False
 
     def __unicode__(self):
         return self.source
