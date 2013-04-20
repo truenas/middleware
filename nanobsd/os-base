@@ -505,7 +505,7 @@ add_warden()
 	cp ${src}/agent.png ${share}/warden.png
 
 	mkdir -p ${share}/bin >/dev/null 2>/dev/null
-	mkdir -p ${share}/hooks >/dev/null 2>/dev/null
+	mkdir -p ${hooks} >/dev/null 2>/dev/null
 
 	cp ${wt}/jail-* ${hooks}/
 	cmod 755 ${hooks}/jail-*
