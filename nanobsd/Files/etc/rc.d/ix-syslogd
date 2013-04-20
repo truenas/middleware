@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-syslogd
-# REQUIRE: root
+# REQUIRE: zfs
 # BEFORE: syslogd
 
 . /etc/rc.subr
@@ -39,8 +39,102 @@ generate_syslog_conf()
 	done
 }
 
+ix_syslogd_start()
+{
+	generate_syslog_conf
+
+	local syslog_volumes="$(zfs list -H|awk '{ print $1 }'|grep -i syslog)"
+	if [ -z "${syslog_volumes}" ]
+	then
+		return 0
+	fi
+
+	for sv in ${syslog_volumes}
+	do
+		zfs list -H|egrep -qw "^${sv}" >/dev/null 2>&1
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+
+		local bn="$(basename ${sv})"
+
+		echo "${bn}"|egrep -qi '^syslog$' >/dev/null 2>&1
+		if [ "$?" = "0" ]
+		then
+			local mp="$(zfs list -H|egrep -w "^${sv}"|awk '{ print $5 }')"
+			if [ -z "${mp}" ]
+			then
+				break
+			fi
+
+			/etc/rc.d/syslogd status >/dev/null 2>&1
+			if [ "$?" = "0" ]
+			then
+				/etc/rc.d/syslogd stop
+			fi
+
+			#
+			#	log directory exists, pick up any new files or
+			#	directories and create them. Existing files will be
+			#	appended. This is done this way so that ownership and
+			#	permissions are always preserved.
+			#
+			if [ -d "${mp}/log" ]
+			then
+
+				#
+				#	Pick up any new directories and sync them
+				#
+				for dir in $(find /var/log -type d)
+				do
+					if [ ! -d "${mp}${dir}" ]
+					then
+						/usr/local/bin/rsync -avz ${dir}/* ${mp}${dir}/ >/dev/null 2>&1
+					fi
+				done
+
+				#
+				#	Find all files that are not a directory and see if
+				#	they exist. If the file exists already, append to
+				#	it, otherwise, copy it over.
+				#
+				for file in $(find /var/log ! -type d)
+				do
+					if [ ! -f "${mp}${file}" ]
+					then
+						cp -p ${file} ${mp}${file}
+					else
+						cat ${file} >> ${mp}${file}
+					fi
+				done
+
+			#
+			#	This is the first time syslog is going to log to this
+			#	directory, so create the log directory and sync files.
+			#
+			else
+				mkdir -p ${mp}/log
+				chmod 755 ${mp}/log
+				chown root:wheel ${mp}/log
+
+				/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
+			fi
+
+			mv /var/log /var/.log.old
+			ln -s ${mp}/log /var/log
+
+			/etc/rc.d/syslogd restart
+
+			break
+		fi
+	done
+
+	return 0
+}
+
 name="ix-syslogd"
-start_cmd='generate_syslog_conf'
+start_cmd='ix_syslogd_start'
 stop_cmd=':'
         
 load_rc_config $name
