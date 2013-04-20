@@ -6,6 +6,14 @@
     </script>
 </button>
 
+<button data-dojo-type="dijit.form.Button">
+    <p>{% trans "View Jail Storage" %}</p>
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        viewModel('{% trans "View Jail Storage"|force_escape|force_escape %}', '{% url "freeadmin_jails_nullmountpoint_datagrid" %}', 'jails.NullMountPoint.View');
+    </script>
+</button>
+
+
 <table class="grid">
     <thead class="header">
         <tr>
