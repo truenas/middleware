@@ -59,7 +59,7 @@ plugins_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled port
 	do
-		if [ "${enabled}" != "1" -a "${rc_force}" != "yes" ]
+		if [ "${enabled}" != "1" ]
 		then
 			continue
 		fi
@@ -152,7 +152,7 @@ plugins_stop()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled 
 	do
-		if [ "${enabled}" != "0" -a "${rc_force}" != "yes" ]
+		if [ "${enabled}" != "0" ]
 		then
 			continue
 		fi
