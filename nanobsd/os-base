@@ -508,7 +508,7 @@ add_warden()
 	mkdir -p ${hooks} >/dev/null 2>/dev/null
 
 	cp ${wt}/jail-* ${hooks}/
-	cmod 755 ${hooks}/jail-*
+	chmod 755 ${hooks}/jail-*
 }
 customize_cmd add_warden
 
