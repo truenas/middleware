@@ -148,17 +148,20 @@ class JailsFAdmin(BaseFreeAdmin):
         actions = OrderedDict()
 
         actions['storage'] = self._action_builder('jail_storage', label=_("Add Storage"))
+        actions['plugins'] = self._action_builder('plugin_install', label=_("Install Plugins"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
-        actions['delete'] = self._action_builder('jail_delete', label=_("Delete"))
+        actions['delete'] = self._action_builder(
+            'jail_delete',
+            label=_("Delete"),
+            func='editScaryObject'
+        )
 
         return actions
 
 
 class NullMountPointFAdmin(BaseFreeAdmin):
 
-    #menu_child_of = u"jails.Jails.management"
-    #menu_child_of = u"jails.Jails"
     menu_child_of = u"jails"
     icon_model = u"MountPointIcon"
     icon_object = u"MountPointIcon"
