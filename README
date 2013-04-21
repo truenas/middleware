@@ -1,0 +1,103 @@
+FreeNAS 8.x is a complete different software compared to 0.7. There is a
+complete feature parity between 0.7 (legacy) and 8.x with plugins, there
+are also some features in 8.x that aren't available in 0.7.
+There isn't an upgrade path from 0.7 to 8.x.
+
+To build the system (experts only):
+
+Requirements:
+
+- Your build environment must be FreeBSD 8.1-RELEASE or newer.
+- amd64 or i386 for i386 builds; an amd64 for amd64 builds.
+- You will need the following ports/packages when compiling anything
+  FreeNAS-related:
+  - devel/git-subversion
+  - lang/python26 or lang/python27
+
+- You need the following additional ports/packages to build the FreeNAS base
+  OS image:
+  - sysutils/cdrtools
+
+- You need the following additional ports/packages to build the plugins jail:
+  - ports-mgmt/pbi-manager
+
+- The port security/sudo is recommended but not required, if you do not have
+  the port installed you can run the commands listed in this doc as root.
+
+Building the System Quickstart Flow:
+
+- Checking out the code from git:
+
+% git clone --depth 1 git://github.com/freenas/freenas.git
+% cd freenas
+
+- Use the build script
+
+% sudo sh build/do_build.sh
+
+This will fetch TrueOS and ports for the build. However it is recommended that you maintain a local git mirror to speed up further builds:
+
+% git clone git://github.com/freenas/ports.git ${HOME}/ports
+% git clone git://github.com/trueos/trueos.git ${HOME}/trueos
+
+To build using those local mirrors run:
+
+% sudo env GIT_REPO=${HOME}/trueos GIT_PORTS_REPO=${HOME}/ports sh build/do_build.sh
+
+That's it.
+
+The End Result:
+
+If your build completes successfully, you'll have an image in
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.img.xz where:
+
+- VVVV is the 'release' branch version or.
+- XXXX is the git commit hash from the FreeNAS repo.
+- yyyy is either i386 or amd64 depending on your platform and what was
+  provided via $FREENAS_ARCH on the command line / via the environment.
+
+This is a compressed raw disk image, and needs to be decompressed and
+converted to your favorite VM container format before use, flashed on to a USB
+key fob, etc.  There will also be a CD/DVD image,
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.iso, that you can use to install/upgrade
+FreeNAS.
+
+Common workflows:
+
+1. Building an i386 on an amd64 build server:
+
+% sudo env FREENAS_ARCH=i386 sh build/do_build.sh
+
+2. Forcing an source / ports update:
+
+% sudo sh build/do_build.sh -u
+
+3. Updating ports patches:
+
+% sudo rm -Rf os-base/$FREENAS_ARCH/ports/packages/
+% sudo sh build/do_build.sh -u
+
+NOTE: when things get smarter (and they will.. the developers feel your pain
+too :/..), nuking individual packages won't be required; this will require
+fiddling around with the ports infrastructure, which is a semi-large
+undertaking. Thus, I wouldn't expect this to be enhanced anytime soon :(..
+(but it's annoyed the author of this document enough that it's time to fix
+things properly!).
+
+4. Update source and ports, patch, and rebuild FreeBSD:
+
+% sudo sh build/do_build.sh -fu
+
+5. Force a build from scratch (nukes packages, rebuild FreeBSD):
+
+% sudo sh build/do_build.sh -ff
+
+6. Build everything required (src, ports) but don't produce GUI upgrade/CD
+   images:
+
+% sudo sh build/do_build.sh -- -i
+
+Submitting Build Bugs:
+
+Please execute the 'build/build_bug.sh' command and follow the directions
+described by the script.
