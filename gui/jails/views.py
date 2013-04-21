@@ -106,17 +106,23 @@ def jail_start(request, id):
     except Exception, e:
         jail = None 
 
-    if jail and jail.jail_status == WARDEN_STATUS_STOPPED:
+    if request.method == 'POST':
+        try:
+            Warden().start(jail=jail.jail_host)
+            return JsonResp(
+                request,
+                message=_("Jail successfully started.")
+            )
+
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
+
+    else:
+        return render(request, "jails/start.html", {
+            'name': jail.jail_host
+        })
+
         Warden().start(jail=jail.jail_host)
-
-    resp = render(request, "jails/start.html", { })
-    resp.content = (
-        "<html><body>"
-        + "Jail successfully started." +
-        "</boby></html>"
-    )
-
-    return resp
 
 
 def jail_stop(request, id):
@@ -126,17 +132,22 @@ def jail_stop(request, id):
     except Exception, e:
         jail = None 
 
-    if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
-        Warden().stop(jail=jail.jail_host)
+    if request.method == 'POST':
+        try:
+            Warden().stop(jail=jail.jail_host)
+            return JsonResp(
+                request,
+                message=_("Jail successfully stopped.")
+            )
 
-    resp = render(request, "jails/stop.html", { })
-    resp.content = (
-        "<html><body>"
-        + "Jail successfully stopped." +
-        "</boby></html>"
-    )
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
 
-    return resp
+    else:
+        return render(request, "jails/stop.html", {
+            'name': jail.jail_host
+        })
+
 
 def jail_delete(request, id):
 
@@ -145,17 +156,22 @@ def jail_delete(request, id):
     except Exception, e:
         jail = None 
 
-    if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
-        Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+    if request.method == 'POST':
+        try:
+            Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+            return JsonResp(
+                request,
+                message=_("Jail successfully deleted.")
+            )
 
-    resp = render(request, "jails/delete.html", { })
-    resp.content = (
-        "<html><body>"
-        + "Jail successfully deleted." +
-        "</boby></html>"
-    )
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
 
-    return resp
+
+    else:
+        return render(request, "jails/delete.html", {
+            'name': jail.jail_host
+        })
 
 def jail_export(request, id):
     log.debug("XXX: jail_export()")
