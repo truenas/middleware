@@ -157,6 +157,14 @@ def jail_delete(request, id):
 
     return resp
 
+def jail_export(request, id):
+    log.debug("XXX: jail_export()")
+    return render(request, 'jails/export.html', { }) 
+
+def jail_import(request):
+    log.debug("XXX: jail_import()")
+    return render(request, 'jails/import.html', { }) 
+
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
     return render(request, 'jails/auto.html', { }) 
