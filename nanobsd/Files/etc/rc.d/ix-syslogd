@@ -86,11 +86,13 @@ ix_syslogd_start()
 				#
 				#	Pick up any new directories and sync them
 				#
-				for dir in $(find /var/log -type d)
+				for dir in $(find /var/log/ -type d)
 				do
-					if [ ! -d "${mp}${dir}" ]
+					local dst="${mp}/log/${dir#/var/log/}"
+
+					if [ ! -d "${dst}" ]
 					then
-						/usr/local/bin/rsync -avz ${dir}/* ${mp}${dir}/ >/dev/null 2>&1
+						/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
 					fi
 				done
 
@@ -99,15 +101,18 @@ ix_syslogd_start()
 				#	they exist. If the file exists already, append to
 				#	it, otherwise, copy it over.
 				#
-				for file in $(find /var/log ! -type d)
+				for file in $(find /var/log/ ! -type d)
 				do
-					if [ ! -f "${mp}${file}" ]
+					local dst="${mp}/log/${file#/var/log/}"
+
+					if [ ! -f "${dst}" ]
 					then
-						cp -p ${file} ${mp}${file}
+						cp -p ${file} ${dst}
 					else
-						cat ${file} >> ${mp}${file}
+						cat ${file} >> ${dst}
 					fi
 				done
+
 
 			#
 			#	This is the first time syslog is going to log to this

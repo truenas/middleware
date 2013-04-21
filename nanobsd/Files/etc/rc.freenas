@@ -735,11 +735,6 @@ jail_post_stop()
 
 jail_pre_delete()
 {
-	:
-}
-
-jail_post_delete()
-{
 	local jail="${1}"
 	local jc_path
 	local jail_metadir
@@ -774,4 +769,9 @@ jail_post_delete()
 		WHERE
 			plugin_jail = '${jail}'
 	"
+}
+
+jail_post_delete()
+{
+	:
 }
