@@ -136,7 +136,6 @@ def jail_stop(request, id):
     return resp
 
 def jail_delete(request, id):
-
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:

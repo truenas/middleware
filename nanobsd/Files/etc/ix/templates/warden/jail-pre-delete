@@ -2,4 +2,4 @@
 
 . /etc/rc.freenas
 
-jail_post_delete "${JAILNAME}"
+jail_pre_delete "${JAILNAME}"
