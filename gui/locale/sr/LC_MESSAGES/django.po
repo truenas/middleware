@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-18 22:57+0200\n"
+"PO-Revision-Date: 2013-04-20 20:34+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2649,6 +2649,9 @@ msgid ""
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Uzrokuje da server prikazuje informacije o mreži za navedenu adresu "
+"klijenta, pod pretpostavkom da IP adresa ili DNS host deluju kao NAT mrežni "
+"prolaz ili prenosnik porta za server."
 
 #: services/models.py:1043
 msgid "Minimum passive port"
@@ -3182,7 +3185,7 @@ msgstr "Odredišna email adresa. Razdvojiti email adrese sa tačka-zarezom"
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:15
 msgid "Control Services"
@@ -3581,14 +3584,16 @@ msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Onemogući :hex prevode za nešto osim dot datoteke. Ova opcija čini '/' "
+"ilegalan karakter."
 
 #: sharing/models.py:208
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:209
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Obezbediti kompatibilnost sa Apple II klijentima."
 
 #: sharing/models.py:212
 msgid "No Stat"
