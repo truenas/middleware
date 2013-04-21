@@ -29,7 +29,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
 from freenasUI.common.system import is_mounted, mount, umount
-from freenasUI.common.warden import Warden, WARDEN_AUTOSTART_ENABLED
+from freenasUI.common.warden import (
+    Warden,
+    WARDEN_AUTOSTART_ENABLED,
+    WARDEN_DELETE_FLAGS_CONFIRM
+)
 from freenasUI.middleware.notifier import notifier
 
 import logging
@@ -262,17 +266,7 @@ class Jails(Model):
             self.jail_autostart = False
 
     def delete(self):
-        from freenasUI.plugins.models import Plugins
-
-        try:
-            plugins = Plugins.objects.filter(plugin_jail=self.jail_host)
-            for p in plugins:
-                p.delete()
-
-            Warden().delete(jail=self.jail_host)
-
-        except:
-            pass
+        Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
 
     class Meta:
         verbose_name = _("Jails")

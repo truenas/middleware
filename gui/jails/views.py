@@ -35,9 +35,12 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.jails import forms
 from freenasUI.jails import models
-from freenasUI.common.warden import Warden, \
-    WARDEN_STATUS_RUNNING, \
-    WARDEN_STATUS_STOPPED
+from freenasUI.common.warden import (
+    Warden,
+    WARDEN_STATUS_RUNNING,
+    WARDEN_STATUS_STOPPED,
+    WARDEN_DELETE_FLAGS_CONFIRM
+)
 
 log = logging.getLogger("jails.views")
 
@@ -136,15 +139,23 @@ def jail_stop(request, id):
     return resp
 
 def jail_delete(request, id):
+
     try:
         jail = models.Jails.objects.get(id=id)
     except Exception, e:
         jail = None 
 
     if jail and jail.jail_status == WARDEN_STATUS_RUNNING:
-        Warden().delete(jail=jail.jail_host)
+        Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
 
-    return JsonResp(request, message=_("Jail successfully deleted."))
+    resp = render(request, "jails/delete.html", { })
+    resp.content = (
+        "<html><body>"
+        + "Jail successfully deleted." +
+        "</boby></html>"
+    )
+
+    return resp
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
