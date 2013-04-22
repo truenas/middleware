@@ -33,13 +33,13 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.views import JsonResp   
 from freenasUI.middleware.notifier import notifier
-from freenasUI.jails import forms
-from freenasUI.jails import models
+from freenasUI.jails import forms, models
 from freenasUI.common.warden import (
     Warden,
     WARDEN_STATUS_RUNNING,
     WARDEN_STATUS_STOPPED,
-    WARDEN_DELETE_FLAGS_CONFIRM
+    WARDEN_DELETE_FLAGS_CONFIRM,
+    WARDEN_EXPORT_FLAGS_DIR
 )
 
 log = logging.getLogger("jails.views")
@@ -59,10 +59,7 @@ def jails_home(request):
 
 def jail_edit(request, id):
 
-    try:
-        jail = models.Jails.objects.get(id=id)
-    except Exception, e:
-        jail = None 
+    jail = models.Jails.objects.get(id=id)
 
     if request.method == 'POST':
         form = forms.JailsEditForm(request.POST, instance=jail)
@@ -80,10 +77,7 @@ def jail_edit(request, id):
 
 def jail_storage(request, id=-1):
 
-    try:
-        jail = models.Jails.objects.get(id=id)
-    except Exception, e:
-        jail = None 
+    jail = models.Jails.objects.get(id=id)
 
     if request.method == 'POST':
         form = forms.NullMountPointForm(request.POST, jail=jail)
@@ -101,10 +95,7 @@ def jail_storage(request, id=-1):
 
 def jail_start(request, id):
 
-    try:
-        jail = models.Jails.objects.get(id=id)
-    except Exception, e:
-        jail = None 
+    jail = models.Jails.objects.get(id=id)
 
     if request.method == 'POST':
         try:
@@ -127,10 +118,7 @@ def jail_start(request, id):
 
 def jail_stop(request, id):
 
-    try:
-        jail = models.Jails.objects.get(id=id)
-    except Exception, e:
-        jail = None 
+    jail = models.Jails.objects.get(id=id)
 
     if request.method == 'POST':
         try:
@@ -151,10 +139,7 @@ def jail_stop(request, id):
 
 def jail_delete(request, id):
 
-    try:
-        jail = models.Jails.objects.get(id=id)
-    except Exception, e:
-        jail = None 
+    jail = models.Jails.objects.get(id=id)
 
     if request.method == 'POST':
         try:
@@ -167,15 +152,38 @@ def jail_delete(request, id):
         except Exception, e:
             return JsonResp(request, error=True, message=e)
 
-
     else:
         return render(request, "jails/delete.html", {
             'name': jail.jail_host
         })
 
 def jail_export(request, id):
-    log.debug("XXX: jail_export()")
-    return render(request, 'jails/export.html', { }) 
+
+    jail = models.Jails.objects.get(id=id)
+    jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
+
+    dir = jailsconf.jc_path
+    filename = "%s/%s.wdn" % (dir, jail.jail_host)
+
+    Warden().export(jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR)
+
+    freenas_build = "UNKNOWN"
+    try:
+        with open(VERSION_FILE) as d:
+            freenas_build = d.read().strip()
+    except:
+        pass
+
+    wrapper = FileWrapper(file(filename))
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Disposition'] = \
+        'attachment; filename=%s-%s-%s.wdn' % (
+            jail.jail_host.encode('utf-8'),
+            freenas_build,
+            time.strftime('%Y%m%d%H%M%S'))
+
+    return response
 
 def jail_import(request):
     log.debug("XXX: jail_import()")
@@ -192,14 +200,6 @@ def jail_checkup(request, id):
 def jail_details(request, id):
     log.debug("XXX: jail_details()")
     return render(request, 'jails/details.html', { }) 
-
-def jail_export(request, id):
-    log.debug("XXX: jail_export()")
-    return render(request, 'jails/export.html', { }) 
-
-def jail_import(request, id):
-    log.debug("XXX: jail_import()")
-    return render(request, 'jails/import.html', { }) 
 
 def jail_options(request, id):
     log.debug("XXX: jail_options()")
