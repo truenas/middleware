@@ -60,7 +60,8 @@ BLACKLIST = [
     'JailsManager',
     'JailsQuerySet',
     'Jails',
-    'NullMountPoint'
+    'NullMountPoint',
+    'Mkdir'
 ]
 
 import logging
@@ -172,6 +173,18 @@ class ViewJailsBase(TreeNode):
 
         return storage_node_add 
 
+    def new_storage_node_mkdir(self, jail):
+        storage_node_add = TreeNode()
+
+        storage_node_add.name = _('Make Directory')
+        storage_node_add.type = 'editobject'
+        storage_node_add.view = 'jail_mkdir'
+        storage_node_add.kwargs = { 'id': jail.id }
+        storage_node_add.icon = u'SettingsIcon'
+        storage_node_add.app_name = 'jails' 
+
+        return storage_node_add 
+
 
 class ViewPluginJails(ViewJailsBase):
 
@@ -207,6 +220,11 @@ class ViewPluginJails(ViewJailsBase):
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
+
+            storage_node_mkdir = self.new_storage_node_mkdir(jail)
+            storage_node_mkdir.order = storage_order
+            storage_node.append_child(storage_node_mkdir)
+            storage_order += 1
 
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
@@ -324,6 +342,11 @@ class ViewStandardJails(ViewJailsBase):
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
 
+            storage_node_mkdir = self.new_storage_node_mkdir(jail)
+            storage_node_mkdir.order = storage_order
+            storage_node.append_child(storage_node_mkdir)
+            storage_order += 1
+
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
             storage_node.append_child(storage_node_add)
@@ -362,6 +385,11 @@ class ViewPortJails(ViewJailsBase):
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
 
+            storage_node_mkdir = self.new_storage_node_mkdir(jail)
+            storage_node_mkdir.order = storage_order
+            storage_node.append_child(storage_node_mkdir)
+            storage_order += 1
+
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
             storage_node.append_child(storage_node_add)
@@ -399,6 +427,11 @@ class ViewLinuxJails(ViewJailsBase):
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
+
+            storage_node_mkdir = self.new_storage_node_mkdir(jail)
+            storage_node_mkdir.order = storage_order
+            storage_node.append_child(storage_node_mkdir)
+            storage_order += 1
 
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
