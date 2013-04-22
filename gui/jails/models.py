@@ -356,3 +356,27 @@ class NullMountPoint(Model):
     def umount(self):
         umount(self.destination_jail)
         return not self.mounted
+
+
+class Mkdir(Model):
+    jail = models.CharField(
+        max_length=120,
+        verbose_name=_("Jail")
+    )
+
+    path = models.CharField(
+        max_length=300,  
+        verbose_name=_("Path")
+    )
+
+    directory = models.CharField(
+        max_length=300,
+        verbose_name=_("Directory")
+    )  
+
+    class Meta:
+        verbose_name = _(u"Make Directory")
+        verbose_name_plural = _(u"Make Directory")
+
+    class FreeAdmin:
+        deletable = False

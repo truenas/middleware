@@ -75,6 +75,24 @@ def jail_edit(request, id):
     })
 
 
+def jail_mkdir(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        form = forms.MkdirForm(request.POST, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Directory successfully created."))
+    else: 
+        form = forms.MkdirForm(jail=jail)
+
+    return render(request, 'jails/mkdir.html', {
+        'form': form,
+    }) 
+   
+
 def jail_storage(request, id=-1):
 
     jail = models.Jails.objects.get(id=id)

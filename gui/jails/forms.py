@@ -25,6 +25,8 @@
 #
 #####################################################################
 import os
+import sys
+import stat
 import logging
 
 from django.utils.translation import ugettext_lazy as _
@@ -32,10 +34,16 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 
 from freenasUI import choices
-from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.warden import WardenJail, Warden
-from freenasUI.jails.models import JailsConfiguration, Jails, NullMountPoint
+from freenasUI.freeadmin.models import Model
+from freenasUI.jails.models import (
+    JailsConfiguration,
+    Jails,
+    NullMountPoint,
+    Mkdir
+)
 from freenasUI.common.warden import (
     Warden,
     WARDEN_FLAGS_NONE,
@@ -592,4 +600,108 @@ class NullMountPointForm(ModelForm):
             raise MiddlewareError(_("The path could not be umounted %s") % (
                 obj.source,
                 ))
+
         return obj
+
+
+class MkdirForm(ModelForm):
+
+    class Meta:
+       model = Mkdir
+       widgets = {
+            'path': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+            'directory': forms.widgets.TextInput(attrs={
+                'data-dojo-type': 'freeadmin.form.PathSelector',
+                }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.jail = None
+        if kwargs and kwargs.has_key('jail'):
+            self.jail = kwargs.pop('jail') 
+
+        super(MkdirForm, self).__init__(*args, **kwargs)
+
+        if self.jail:
+            self.jc = JailsConfiguration.objects.order_by("-id")[0]
+            jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+
+            self.fields['path'].widget.attrs['root'] = (jail_path)
+            self.fields['jail'].initial = self.jail.jail_host
+            self.fields['jail'].widget.attrs = {
+                'readonly': True,
+                'class': (
+                    'dijitDisabled dijitTextBoxDisabled'
+                    ' dijitValidationTextBoxDisabled' 
+                ),
+            }
+
+        else:
+            self.fields['jail'] = forms.ChoiceField(
+                label=_("Jail"),
+                choices=(),
+                widget=forms.Select(attrs={'class': 'required'}),
+            )
+
+            pjlist = []
+            wlist = Warden().list()
+            for wj in wlist:
+                if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
+                    pjlist.append(wj[WARDEN_KEY_HOST])
+
+            self.fields['jail'].choices = [(pj, pj) for pj in pjlist ]
+
+    def clean_jail(self):
+        jail = self.cleaned_data.get('jail')
+
+        if not jail:
+            raise forms.ValidationError(_("Jail not specified."))
+
+        return jail
+
+    def clean_path(self):
+        path = self.cleaned_data.get('path')
+        jail = self.cleaned_data.get('jail')
+
+        self.jc = JailsConfiguration.objects.order_by("-id")[0]
+        jail_path = "%s/%s" % (self.jc.jc_path, jail)
+
+        if not path:
+            raise forms.ValidationError(_("Path not specified."))
+        if not path.startswith(jail_path):
+            raise forms.ValidationError(_("Path must be a jail path."))
+        if not os.access(path, 0):
+            raise forms.ValidationError(_("Path does not exist."))
+        st = os.stat(path)
+        if not stat.S_ISDIR(st.st_mode):
+            raise forms.ValidationError(_("Path is not a directory."))
+
+        path = os.path.abspath(path.strip().replace("..", ""))
+
+        return path
+
+    def clean_directory(self):
+        directory = self.cleaned_data.get('directory')
+
+        if not directory:
+            raise forms.ValidationError(_("Directory not specified."))
+
+        return directory
+
+    def save(self):
+        path = self.cleaned_data.get('path')
+        directory = self.cleaned_data.get('directory')
+
+        newdir = "%s/%s" % (path, directory)
+        ret = True
+
+        try:
+            os.makedirs(newdir, mode=0755)
+
+        except Exception, e:
+            self._errors['__all__'] = self.error_class([_(e)])
+            ret = False
+
+        return ret
