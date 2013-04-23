@@ -792,6 +792,11 @@ freenas_custom()
 	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
 	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
 	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
+
+	cp ${AVATAR_ROOT}/tools/migrate_pluginjail.sh \
+		${NANO_WORLDDIR}/root/migrate_pluginjail.sh
+	chown root:wheel ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
+	chmod 0755 ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
 }
 late_customize_cmd freenas_custom
 
