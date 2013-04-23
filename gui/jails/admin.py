@@ -147,10 +147,10 @@ class JailsFAdmin(BaseFreeAdmin):
         
         actions = OrderedDict()
 
-        actions['storage'] = self._action_builder('jail_storage', label=_("Add Storage"))
+        actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
         actions['plugins'] = self._action_builder('plugin_install', label=_("Install Plugins"))
-        actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
-        actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
+        #actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
+        #actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
         actions['delete'] = self._action_builder(

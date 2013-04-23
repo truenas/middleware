@@ -968,3 +968,21 @@ get_ipfw_nat_priority()
    return ${res}
 }
 
+get_next_id()
+{
+   local jdir="${1}"
+   local meta_id=0
+
+   if [ -d "${jdir}" ] ; then
+      for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
+      do
+        id=`cat ${i}/id`
+        if [ "${id}" -gt "${meta_id}" ] ; then
+          meta_id="${id}"
+        fi
+      done
+   fi
+
+   : $(( meta_id += 1 ))
+   echo ${meta_id}
+}

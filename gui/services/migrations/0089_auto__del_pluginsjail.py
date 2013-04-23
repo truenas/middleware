@@ -9,7 +9,8 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Deleting model 'PluginsJail'
-        db.delete_table(u'services_pluginsjail')
+        # db.delete_table(u'services_pluginsjail')
+        pass  
 
 
     def backwards(self, orm):

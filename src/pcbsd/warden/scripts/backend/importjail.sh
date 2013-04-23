@@ -217,15 +217,7 @@ else
 fi
 
 # Get next unique ID
-META_ID=0
-for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
-do
-  id=`cat ${i}/id`
-  if [ "${id}" -gt "${META_ID}" ] ; then
-    META_ID="${id}"
-  fi
-done
-: $(( META_ID += 1 ))
+META_ID="$(get_next_id "${JDIR}")"
 
 # Create the meta-dir
 set_warden_metadir

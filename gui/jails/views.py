@@ -48,12 +48,27 @@ def jails_home(request):
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+
     except IndexError:
         jailsconf = models.JailsConfiguration.objects.create().id
 
     return render(request, 'jails/index.html', {
-        'focused_form': request.GET.get('tab', 'jails'),
-         'jailsconf': jailsconf
+        'focus_form': request.GET.get('tab', 'jails.View'),
+        'jailsconf': jailsconf
+    })
+
+
+def jails_jailsconfiguration(request):
+
+    try:
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+
+    except IndexError:
+        jailsconf = models.JailsConfiguration.objects.create().id
+
+    return render(request, 'jails/index.html', {
+        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration'),
+        'jailsconf': jailsconf
     })
 
 
@@ -93,9 +108,9 @@ def jail_mkdir(request, id):
     }) 
    
 
-def jail_storage(request, id=-1):
+def jail_storage_add(request, jail_id):
 
-    jail = models.Jails.objects.get(id=id)
+    jail = models.Jails.objects.get(id=jail_id)
 
     if request.method == 'POST':
         form = forms.NullMountPointForm(request.POST, jail=jail)
@@ -105,6 +120,24 @@ def jail_storage(request, id=-1):
                 message=_("Storage successfully added."))
     else:
         form = forms.NullMountPointForm(jail=jail)
+
+    return render(request, 'jails/storage.html', {
+        'form': form,
+    }) 
+
+def jail_storage_view(request, id):
+
+    nmp = models.NullMountPoint.objects.get(id=id)
+    jail = models.Jails.objects.get(jail_host=nmp.jail)
+
+    if request.method == 'POST':
+        form = forms.NullMountPointForm(request.POST, instance=nmp, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Storage successfully added."))
+    else:
+        form = forms.NullMountPointForm(instance=nmp, jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,

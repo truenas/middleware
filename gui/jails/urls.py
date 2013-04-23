@@ -29,10 +29,12 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
+    url(r'^configuration/$', 'jails_jailsconfiguration', name="jails_jailsconfiguration"),
     url(r'^edit/(?P<id>\d+)$', 'jail_edit', name="jail_edit"),
     url(r'^delete/(?P<id>\d+)$', 'jail_delete', name="jail_delete"),
     url(r'^mkdir/(?P<id>\d+)?$', 'jail_mkdir', name="jail_mkdir"),
-    url(r'^storage/(?P<id>\d+)?$', 'jail_storage', name="jail_storage"),
+    url(r'^storage_add/(?P<jail_id>\d+)$', 'jail_storage_add', name="jail_storage_add"),
+    url(r'^storage_view/(?P<id>\d+)$', 'jail_storage_view', name="jail_storage_view"),
     url(r'^export/(?P<id>\d+)$', 'jail_export', name="jail_export"),
     url(r'^import/$', 'jail_import', name="jail_import"),
     url(r'^start/(?P<id>\d+)$', 'jail_start', name="jail_start"),

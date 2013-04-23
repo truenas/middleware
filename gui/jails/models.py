@@ -175,7 +175,7 @@ class Jails(Model):
 
     jail_host = models.CharField(
             max_length=120,
-            verbose_name=_("Host")
+            verbose_name=_("Jail Name")
             )
     jail_ipv4 = models.CharField(
             max_length=120,
@@ -273,7 +273,7 @@ class Jails(Model):
         verbose_name_plural = _("Jails")
 
     class FreeAdmin:
-        deletable = False
+        deletable = True
 
 
 class JailsConfiguration(Model):
@@ -330,7 +330,7 @@ class NullMountPoint(Model):
         verbose_name_plural = _(u"Storage")
 
     class FreeAdmin:
-        deletable = False
+        deletable = True
 
     def __unicode__(self):
         return self.source

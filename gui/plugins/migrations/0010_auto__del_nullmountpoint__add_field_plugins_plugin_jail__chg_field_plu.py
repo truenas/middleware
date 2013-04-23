@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Deleting model 'NullMountPoint'
-        db.delete_table(u'plugins_nullmountpoint')
+        # db.delete_table(u'plugins_nullmountpoint')
 
         # Adding field 'Plugins.plugin_jail'
         db.add_column(u'plugins_plugins', 'plugin_jail',

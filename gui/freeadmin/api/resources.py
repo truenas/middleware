@@ -815,8 +815,8 @@ class JailsResource(DojoModelResource):
         bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_jail_storage_url'] = reverse('jail_storage', kwargs={
-            'id': bundle.obj.id
+        bundle.data['_jail_storage_add_url'] = reverse('jail_storage_add', kwargs={
+            'jail_id': bundle.obj.id
         })
         bundle.data['_plugin_install_url'] = reverse('plugin_install', kwargs={
             'jail_id': bundle.obj.id
