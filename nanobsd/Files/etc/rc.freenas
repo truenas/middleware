@@ -730,7 +730,43 @@ jail_pre_stop()
 
 jail_post_stop()
 {
-	:
+	local jail="${1}"
+	local jid
+
+	jid="$(jail_get_jid "${jail}")"
+
+	local IFS="|"
+	jc_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			jc_path
+
+		FROM
+			jails_jailsconfiguration
+
+		ORDER BY
+			-id
+
+		LIMIT
+			1
+	")
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			destination
+
+		FROM
+			jails_nullmountpoint	
+
+		WHERE
+			jail = '${jail}'
+
+		ORDER BY
+			-id
+	" | \
+	while read -r destination
+	do
+		umount "${jc_path}/${jail}/${destination}" >/dev/null 2>&1
+	done
 }
 
 jail_pre_delete()
