@@ -61,6 +61,11 @@ generate_plugins_conf()
 			ip="${JIP}"
 		fi
 
+		if [ -z "${name}" -o -z "${ip}" -o -z "${path}" ]
+		then
+			continue
+		fi
+
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
 		location ~ /plugins/${name}/${id}/ {
 		    fastcgi_pass   ${ip}:${port};
