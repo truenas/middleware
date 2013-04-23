@@ -72,37 +72,8 @@ class ViewJailsConfiguration(TreeNode):
     gname = 'Configuration'
     name  = _(u'Configuration')
     icon = u'SettingsIcon'
+    view = 'jails_jailsconfiguration'
     order = 1
-
-    def __init__(self, *args, **kwargs):
-        super(ViewJailsConfiguration, self).__init__(*args, **kwargs)
-
-        jc = JailsConfiguration.objects.order_by("-id")
-        if jc:
-            jc = jc[0]
-
-            jc_node_view = TreeNode("View")
-            jc_node_view.name = _(u'Edit Jails Configuration')
-            jc_node_view.type = u'editobject'
-            jc_node_view.view = 'freeadmin_jails_jailsconfiguration_edit'
-            jc_node_view.kwargs = { 'oid': jc.id }
-            jc_node_view.model = 'JailsConfiguration'
-            jc_node_view.icon = u'SettingsIcon'
-            jc_node_view.app_name = 'jails' 
-
-            self.append_children([jc_node_view])
-  
-        else:  
-
-            jc_node_add = TreeNode("Add")
-            jc_node_add.name = _(u'Add Jails Configuration')
-            jc_node_add.type = u'object'
-            jc_node_add.view = 'freeadmin_jails_jailsconfiguration_add'
-            jc_node_add.model = 'JailsConfiguration'
-            jc_node_add.icon = u'SettingsIcon'
-            jc_node_add.app_name = 'jails' 
-
-            self.append_children([jc_node_add])
 
 
 class ViewJailsBase(TreeNode):
@@ -147,13 +118,13 @@ class ViewJailsBase(TreeNode):
 
         return storage_node
 
-    def new_storage_node_view(self, nmp, jail):
+    def new_storage_node_view(self, nmp):
         storage_node_view = TreeNode()
 
         storage_node_view.name = _('%s' % nmp.destination)
         storage_node_view.type = 'editobject'
-        storage_node_view.view = 'jail_storage'
-        storage_node_view.kwargs = { 'id': jail.id }
+        storage_node_view.view = 'jail_storage_view'
+        storage_node_view.kwargs = { 'id': nmp.id }
         storage_node_view.model = 'NullMountPoint'
         storage_node_view.icon = u'SettingsIcon'
         storage_node_view.app_name = 'jails' 
@@ -165,8 +136,8 @@ class ViewJailsBase(TreeNode):
 
         storage_node_add.name = _('Add Storage')
         storage_node_add.type = 'editobject'
-        storage_node_add.view = 'jail_storage'
-        storage_node_add.kwargs = { 'id': jail.id }
+        storage_node_add.view = 'jail_storage_add'
+        storage_node_add.kwargs = { 'jail_id': jail.id }
         storage_node_add.model = 'NullMountPoint'
         storage_node_add.icon = u'SettingsIcon'
         storage_node_add.app_name = 'jails' 
@@ -216,7 +187,7 @@ class ViewPluginJails(ViewJailsBase):
             storage_order = 1
             nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
             for nmp in nmps:
-                storage_node_view = self.new_storage_node_view(nmp, jail)
+                storage_node_view = self.new_storage_node_view(nmp)
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
@@ -337,7 +308,7 @@ class ViewStandardJails(ViewJailsBase):
             nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
             for nmp in nmps:
 
-                storage_node_view = self.new_storage_node_view(nmp, jail)
+                storage_node_view = self.new_storage_node_view(nmp)
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
@@ -380,7 +351,7 @@ class ViewPortJails(ViewJailsBase):
             nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
             for nmp in nmps:
 
-                storage_node_view = self.new_storage_node_view(nmp, jail)
+                storage_node_view = self.new_storage_node_view(nmp)
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1
@@ -423,7 +394,7 @@ class ViewLinuxJails(ViewJailsBase):
             nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
             for nmp in nmps:
 
-                storage_node_view = self.new_storage_node_view(nmp, jail)
+                storage_node_view = self.new_storage_node_view(nmp)
                 storage_node_view.order = storage_order
                 storage_node.append_child(storage_node_view)
                 storage_order += 1

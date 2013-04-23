@@ -68,8 +68,17 @@ def plugins(request):
 
     pool = eventlet.GreenPool(20)
     for plugin, json in pool.imap(get_plugin_status, args):
+
+        #
+        #    XXX Hacky Hack XXX
+        #
+        #    This lets the plugins be displayed, even if they aren't reachable.
+        #    This is useful for things like viewing, deleting and updating 
+        #    plugins even if they aren't reachable. 
+        #
         if not json:
-            continue
+            json = {} 
+            json['status'] = None
 
         jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
         plugin.service = Service(

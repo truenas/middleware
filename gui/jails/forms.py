@@ -544,6 +544,9 @@ class NullMountPointForm(ModelForm):
 
         super(NullMountPointForm, self).__init__(*args, **kwargs)
 
+        if kwargs and kwargs.has_key('instance'):
+            self.instance = kwargs.pop('instance') 
+
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
             self.fields['jail'].widget.attrs = {
@@ -558,10 +561,6 @@ class NullMountPointForm(ModelForm):
             jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
 
             self.fields['destination'].widget.attrs['root'] = (jail_path)
-            if self.instance.id:
-                self.fields['mounted'].initial = self.instance.mounted
-            else:
-                self.fields['mounted'].widget = forms.widgets.HiddenInput()
 
         else:
             self.fields['jail'] = forms.ChoiceField(
@@ -583,6 +582,12 @@ class NullMountPointForm(ModelForm):
                     pjlist.append(wj[WARDEN_KEY_HOST])
 
             self.fields['jail'].choices = [(pj, pj) for pj in pjlist ]
+
+        if self.instance.id:
+            self.fields['mounted'].initial = self.instance.mounted
+        else:
+            self.fields['mounted'].widget = forms.widgets.HiddenInput()
+
 
 
     def save(self, *args, **kwargs):
