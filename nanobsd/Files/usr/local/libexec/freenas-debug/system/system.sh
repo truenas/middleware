@@ -35,6 +35,14 @@ system_func()
 	uptime
 	section_footer
 
+	section_header "date"
+	date
+	section_footer
+
+	section_header "ntpq -c rv"
+	ntpq -c rv
+	section_footer
+
 	section_header "ps -axw"
 	ps -axw
 	section_footer
