@@ -90,7 +90,7 @@ usage()
 	XXX Only tweak the settings if you really know what you are doing. XXX
 	XXX                                                                XXX
 	XXX Please be aware that any plugins you have will need to be      XXX
-    XXX updated after this migration.                                  XXX 
+	XXX updated after this migration.                                  XXX 
 	XXX                                                                XXX
 	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -550,12 +550,12 @@ main()
 
 	if [ "${plugins_migration}" = "1" ]
 	then
-#		do_plugins_plugins_migration "${jail_host}"
+		do_plugins_plugins_migration "${jail_host}"
 	fi
 
 	if [ "${nullmountpoint_migration}" = "1" ]
 	then
-#		do_plugins_nullmountpoint_migration "${jail_host}"
+		do_plugins_nullmountpoint_migration "${jail_host}"
 	fi
 
 	return 0
