@@ -72,10 +72,10 @@ usage()
 	# Do a default migration with default values
 	migrate_pluginjail.sh -D
 
-	# Migrate to a new dataset, jail name will remain the same
+	# Migrate to a different jail name, dataset will remain the same
 	migrate_pluginjail.sh -j newjail
 
-	# Migrate to a different jail name, dataset will remain the same
+	# Migrate to a new dataset, jail name will remain the same
 	migrate_pluginjail.sh -p /mnt/newdataset
 
 	# Migrate to a new network with a new jail IP address and default gateway
