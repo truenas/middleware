@@ -100,11 +100,24 @@ class JailsQuerySet(models.query.QuerySet):
     def count(self):
         return self.__wcount
 
-    def __order_by(self, wlist, *field_names):
-        for fn in field_names:
+    def __order_by(self, wlist, *fields):
+        for fn in fields:
             fn = self.__key(fn)
             wlist = sorted(wlist, key=lambda k: k[fn])
         return wlist
+
+    def order_by(self, *fields):
+        models = []
+
+        wlist = self.__wlist
+        for fn in fields:
+            fn = self.__key(fn)
+            wlist = sorted(wlist, key=lambda k: k[fn])
+
+        for wj in wlist:
+            models.append(self.model(**wj))
+         
+        return models
 
     def get(self, *args, **kwargs):
         results = []

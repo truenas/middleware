@@ -70,25 +70,25 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_host',
             'label': _('Jail'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_autostart',
             'label': _('Autostart'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_status',
             'label': _('Status'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_type',
             'label': _('Type'),
-            'sortable': True,
+            'sortable': False,
         })
 
         return columns
@@ -144,7 +144,6 @@ class JailsFAdmin(BaseFreeAdmin):
         return data
 
     def get_actions(self):
-        
         actions = OrderedDict()
 
         actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
