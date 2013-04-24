@@ -21,7 +21,6 @@ do
   if [ ! -e "${i}/cron" ] ; then continue ; fi
   if [ ! -e "${i}/cron-keep" ] ; then continue ; fi
 
-  jIP="`cat ${i}/ip`"
   jHOST="`cat ${i}/host`"
   JAILDIR="${JDIR}/${jHOST}"
 

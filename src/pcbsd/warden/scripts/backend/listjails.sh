@@ -15,36 +15,107 @@ then
   exit 4
 fi
 
-SHOW_IDS="${1}"
-if [ "${SHOW_IDS}" = "YES" ] ; then
-  printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" HOST IP AUTOSTART STATUS TYPE ID
-else
-  printf "%-23s%-20s%-15s%-10s%-15s\n" HOST IP AUTOSTART STATUS TYPE
+line()
+{
+  len="${1}"
+
+  i=0 
+  while [ "${i}" -lt "${len}" ] ; do
+    i=`expr ${i} + 1`
+    echo -n '-' 
+  done
+  echo 
+}
+
+lineline=0
+VERBOSE="NO"
+JAILS=
+while [ "$#" -gt "0" ] ; do
+  case "$1" in
+    -v) VERBOSE="YES" ;; 
+     *) JAILS="${JAILS} .$1.meta" ;;
+  esac
+  shift 
+done
+
+if [ "${VERBOSE}" != "YES" ] ; then
+# Prints a listing of the available jails
+  printf "%-24s%-12s%-12s%-12s\n" ID AUTOSTART STATUS TYPE
+  line "75"
 fi
 
-# Prints a listing of the available jails
-echo "-----------------------------------------------------------------------------------------"
-
 cd ${JDIR}
+if [ -z "${JAILS}" ] ; then
+  JAILS=`ls -d .*.meta 2>/dev/null`
+fi
 
-for i in `ls -d .*.meta 2>/dev/null`
+for i in ${JAILS}
 do
-  HOST="<unknown>"
   AUTO="Disabled" 
   STATUS="<unknown>"
 
-  if [ ! -e "${i}/ip" ] ; then continue ; fi
+  if [ ! -e "${i}/id" ] ; then
+     # Check if its an old-style jail
+     if [ ! -e "${i}/ip" ] ; then
+       continue
+     fi
+     # This is an old style jail, lets convert it
+     cp ${i}/ip ${i}/ipv4
 
-  # Get the HostName
-  if [ -e "${i}/host" ]
-  then
-    HOST="`cat ${i}/host`"
+     # Get next unique ID
+     META_ID="$(get_next_id "${JDIR}")"
+     echo "$META_ID" > ${i}/id
+
   fi
 
-  if [ -e "${i}/ip" ]
-  then
-    IP="`cat ${i}/ip`"
+  ID="`cat ${i}/id 2>/dev/null`"
+  HOST="`cat ${i}/host 2>/dev/null`"
+
+  #
+  # IPv4 networking
+  # 
+  IPS4=
+  IP4=`cat ${i}/ipv4 2>/dev/null`
+  if [ -e "${i}/alias-ipv4" ] ; then
+    while read line
+    do
+      IPS4="${IPS4} ${line}" 
+    done < "${i}/alias-ipv4"
   fi
+
+  BRIDGEIPS4=
+  BRIDGEIP4=`cat ${i}/bridge-ipv4 2>/dev/null`
+  if [ -e "${i}/alias-bridge-ipv4" ] ; then
+    while read line
+    do
+      BRIDGEIPS4="${BRIDGEIPS4} ${line}" 
+    done < "${i}/alias-bridge-ipv4"
+  fi
+
+  GATEWAY4=`cat ${i}/defaultrouter-ipv4 2>/dev/null`
+
+  #
+  # IPv6 networking
+  # 
+  IPS6=
+  IP6=`cat ${i}/ipv6 2>/dev/null`
+  if [ -e "${i}/alias-ipv6" ] ; then
+    while read line
+    do
+      IPS6="${IPS6} ${line}" 
+    done < "${i}/alias-ipv6"
+  fi
+
+  BRIDGEIPS6=
+  BRIDGEIP6=`cat ${i}/bridge-ipv6 2>/dev/null`
+  if [ -e "${i}/alias-bridge-ipv6" ] ; then
+    while read line
+    do
+      BRIDGEIPS6="${BRIDGEIPS6} ${line}" 
+    done < "${i}/alias-bridge-ipv6"
+  fi
+
+  GATEWAY6=`cat ${i}/defaultrouter-ipv6 2>/dev/null`
 
   # Check if we are autostarting this jail
   if [ -e "${i}/autostart" ] ; then
@@ -62,9 +133,7 @@ do
     TYPE="standard"
   fi
 
-  jIP="`cat ${i}/ip`"
-
-  JAILNAME=`echo ${i}|sed -E 's|^.(.+).meta|\1|'`
+  JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
 
   ${PROGDIR}/scripts/backend/checkstatus.sh ${JAILNAME} 2>/dev/null
   if [ "$?" = "0" ]
@@ -74,15 +143,29 @@ do
     STATUS="Stopped"
   fi
 
-  if [ "${SHOW_IDS}" = "YES" ] ; then
-    if [ -e "${i}/ip" ]
-    then
-      ID="`cat ${i}/id`"
-    fi
-    printf "%-23s%-20s%-15s%-10s%-15s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE} ${ID}
-  else 
-    printf "%-23s%-20s%-15s%-10s%-10s\n" ${HOST} ${IP} ${AUTO} ${STATUS} ${TYPE}
-  fi 
+  if [ "${VERBOSE}" = "YES" ] ; then
+    cat<<__EOF__ 
 
+id: ${ID}
+host: ${HOST}
+ipv4: ${IP4}
+alias-ipv4: ${IPS4}
+bridge-ipv4: ${BRIDGEIP4}
+alias-bridge-ipv4: ${BRIDGEIPS4}
+defaultrouter-ipv4: ${GATEWAY4}
+ipv6: ${IP6}
+alias-ipv6: ${IPS6}
+bridge-ipv6: ${BRIDGEIP6}
+alias-bridge-ipv6: ${BRIDGEIPS6}
+defaultrouter-ipv6: ${GATEWAY6}
+autostart: ${AUTO}
+status: ${STATUS}
+type: ${TYPE}
+
+__EOF__
+
+  else
+    printf "%-24s%-12s%-12s%-12s\n" ${JAILNAME} ${AUTO} ${STATUS} ${TYPE}
+  fi
 done
 

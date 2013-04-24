@@ -1,28 +1,19 @@
-{% if jail_configured %}
-
 <button data-dojo-type="dijit.form.Button">
-    <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png" />
+    <img src="{{ STATIC_URL }}images/ui/buttons/plugin_install.png" />
     <p>{% trans "Install Plugin" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
         addObject('{% trans "Install Plugin"|force_escape|force_escape %}', '{% url "plugin_install" %}', [this,]);
     </script>
 </button>
 
-
 <button data-dojo-type="dijit.form.Button">
-    <p>{% trans "View Mount Points" %}</p>
+    <img src="{{ STATIC_URL }}images/ui/buttons/jail_storage.png" />
+    <p>{% trans "View Jail Storage" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        viewModel('{% trans "View Mount Points"|force_escape|force_escape %}', '{% url "freeadmin_plugins_nullmountpoint_datagrid" %}', 'services.Plugins.management.NullMountPoint.View');
+        viewModel('{% trans "View Jail Storage"|force_escape|force_escape %}', '{% url "freeadmin_jails_nullmountpoint_datagrid" %}', 'jails.NullMountPoint.View');
     </script>
 </button>
 
-{% else %}
-
-    <div>
-    <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: The plugins service is not running, several functionalities have been disabled." %}</span></p>
-    </div>
-
-{% endif %}
 
 <table class="grid">
     <thead class="header">
@@ -30,6 +21,7 @@
             <td>{% trans "Plugin name" %}</td>
             <td>{% trans "Version" %}</td>
             <td>{% trans "PBI" %}</td>
+            <td>{% trans "Jail" %}</td>
             <td>{% trans "Service status" %}</td>
             <td>{% trans "Actions" %}</td>
         </tr>
@@ -46,10 +38,18 @@
                {{ p.plugin_pbiname }}
            </td>
            <td>
-                <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}')" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
+               {% if p.service.jail_status %}
+               {{ p.plugin_jail }}
+               {% else %}
+               <p style="margin:10px;"><span style="color: red;">{{ p.plugin_jail }}</span></p>
+               {% endif %} 
+
            </td>
            <td>
-                {% if jail_configured %}
+                <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}', {{ p.id|escapejs }})" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
+           </td>
+           <td>
+                {% if p.service.jail_status %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Update" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">

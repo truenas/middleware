@@ -369,7 +369,6 @@ checkout_freebsd_source()
 	then
 		mkdir -p ${AVATAR_ROOT}/FreeBSD
 
-
 		if [ "x$USE_GIT" = "xyes" ] ; then
 			echo "Use git set!"
 			freebsd_checkout_git

@@ -155,6 +155,7 @@ WITHOUT_SHAREDOCS=true
 . ${NANO_CFG_BASE}/common
 
 add_port archivers/lzo2
+add_port www/aria2
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
@@ -196,6 +197,7 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
+add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-kmod NOPORTDOCS=y
@@ -440,12 +442,41 @@ add_pbi_manager()
 }
 customize_cmd add_pbi_manager
 
+add_pc_extractoverlay()
+{
+	local pce src dst pcbsd bin
+
+	pce="pc-extractoverlay"
+	src="${AVATAR_ROOT}/src/pcbsd/${pce}"
+	dst="${NANO_WORLDDIR}/usr/local"
+	pcbsd="${dst}/share/pcbsd"
+	bin="${dst}/bin"
+
+	pprint 2 "Adding pc-extractoverlay"
+
+	cp ${src}/${pce} ${bin}/${pce}
+	chmod 755 ${bin}/${pce}
+
+    mkdir -p ${dst}/etc
+	mkdir -p ${pcbsd}/conf
+	mkdir -p ${pcbsd}/distfiles
+
+	cp ${src}/server-excludes ${pcbsd}/conf
+	cp ${src}/server-overlay/usr/local/etc/pkg-pubkey.cert ${dst}/etc
+
+	tar -cvJf ${pcbsd}/distfiles/server-overlay.txz -C ${src}/server-overlay .
+}
+customize_cmd add_pc_extractoverlay
+
 add_warden()
 {
-	local src dst share
+	local wt src dst share hooks
+
+	wt="${AVATAR_ROOT}/nanobsd/Files/etc/ix/templates/warden"
 	src="${AVATAR_ROOT}/src/pcbsd/warden"
 	dst="${NANO_WORLDDIR}/usr/local"
 	share="${dst}/share/warden"
+	hooks="${share}/scripts/hooks"
 
 	pprint 2 "Adding warden"
 
@@ -457,6 +488,9 @@ add_warden()
 
 	cp ${src}/bin/warden ${dst}/bin/warden
 	chmod 755 ${dst}/bin/warden
+
+	cp ${src}/pluginjail-packages ${share}/pluginjail-packages
+	chmod 644 ${share}/pluginjail-packages
 
 	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
 	chmod 644 ${dst}/etc/warden.conf
@@ -472,6 +506,10 @@ add_warden()
 	cp ${src}/agent.png ${share}/warden.png
 
 	mkdir -p ${share}/bin >/dev/null 2>/dev/null
+	mkdir -p ${hooks} >/dev/null 2>/dev/null
+
+	cp ${wt}/jail-* ${hooks}/
+	chmod 755 ${hooks}/jail-*
 }
 customize_cmd add_warden
 
@@ -489,6 +527,21 @@ add_pcbsd_libsh()
 	chmod 755 ${dst}/functions.sh
 }
 customize_cmd add_pcbsd_libsh
+
+add_pcbsd_mirrors()
+{
+	local src dst
+	src="${AVATAR_ROOT}/src/pcbsd/conf"
+	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/conf"
+
+	pprint 2 "Adding pcbsd mirrors"
+
+	mkdir -p ${dst} >/dev/null 2>/dev/null
+
+	cp ${src}/pcbsd-mirrors ${dst}/pcbsd-mirrors
+	chmod 644 ${dst}/pcbsd-mirrors
+}
+customize_cmd add_pcbsd_mirrors
 
 add_pbi_wrapper()
 {
@@ -740,6 +793,11 @@ freenas_custom()
 	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
 	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
 	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
+
+	cp ${AVATAR_ROOT}/tools/migrate_pluginjail.sh \
+		${NANO_WORLDDIR}/root/migrate_pluginjail.sh
+	chown root:wheel ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
+	chmod 0755 ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
 }
 late_customize_cmd freenas_custom
 
@@ -771,7 +829,7 @@ last_orders() {
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
 		${NANO_XZ} --keep --verbose -9 < "$firmware_img" > \
-			"$gui_upgrade_bname.xz"
+		    "$gui_upgrade_bname.xz"
 
 		tar -cpvf - \
 			-C "$NANO_WORLDDIR" \
@@ -782,8 +840,7 @@ last_orders() {
 				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/} \
-			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
-
+		    | ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
 		) > "${gui_image_log}" 2>&1
 
 	fi

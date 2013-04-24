@@ -27,6 +27,7 @@
 #####################################################################
 import logging
 import os
+import string
 
 log = logging.getLogger('common.warden')
 
@@ -45,10 +46,54 @@ class warden_pipe(cmd_pipe):
 class warden_exception(Exception):
     pass
 
+
+#
+# Warden dict keys
+#
+WARDEN_KEY_ID             = "id"
+WARDEN_KEY_HOST           = "host"
+WARDEN_KEY_IP4            = "ipv4"
+WARDEN_KEY_ALIASIP4       = "alias_ipv4"
+WARDEN_KEY_BRIDGEIP4      = "bridge_ipv4"
+WARDEN_KEY_ALIASBRIDGEIP4 = "alias_bridge_ipv4"
+WARDEN_KEY_DEFAULTROUTER4 = "defaultrouter_ipv4"
+WARDEN_KEY_IP6            = "ipv6"
+WARDEN_KEY_ALIASIP6       = "alias_ipv6"
+WARDEN_KEY_BRIDGEIP6      = "bridge_ipv6"
+WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ipv6"
+WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
+WARDEN_KEY_AUTOSTART      = "autostart"
+WARDEN_KEY_STATUS         = "status"
+WARDEN_KEY_TYPE           = "type"
+
+#
+# Warden jail status 
+#
+WARDEN_STATUS_RUNNING = "Running"
+WARDEN_STATUS_STOPPED = "Stopped"
+
+#
+# Warden jail type
+#
+WARDEN_TYPE_STANDARD   = "standard"
+WARDEN_TYPE_PLUGINJAIL = "pluginjail"
+WARDEN_TYPE_PORTJAIL   = "portjail"
+WARDEN_TYPE_LINUXJAIL  = "linuxjail"
+
+#
+# Warden jail autostart 
+#
+WARDEN_AUTOSTART_ENABLED  = "Enabled"
+WARDEN_AUTOSTART_DISABLED = "Disabled"
+
+
 WARDEN_FLAGS_NONE = warden_arg(0x00000000, None)
 
 WARDEN_AUTO = "auto"
 WARDEN_AUTO_FLAGS = []
+
+WARDEN_BSPKGNG = "bspkgng"
+WARDEN_BSPKGNG_FLAGS = []
 
 WARDEN_CHECKUP = "checkup"
 WARDEN_CHECKUP_FLAGS_ALL = warden_arg(0x00000001, "all")
@@ -61,19 +106,25 @@ WARDEN_CHROOT_FLAGS = []
 
 WARDEN_CREATE = "create"
 WARDEN_CREATE_FLAGS_32BIT		= warden_arg(0x00000001, "-32")
-WARDEN_CREATE_FLAGS_SRC			= warden_arg(0x00000002, "--src")
-WARDEN_CREATE_FLAGS_PORTS		= warden_arg(0x00000004, "--ports")
-WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000008, "--startauto")
-WARDEN_CREATE_FLAGS_PORTJAIL		= warden_arg(0x00000010, "--portjail")
-WARDEN_CREATE_FLAGS_PLUGINJAIL		= warden_arg(0x00000020, "--pluginjail")
-WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000040, "--linuxjail", True, "script")
-WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000080, "--archive", True, "tar")
-WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000100, "--linuxarchive", True, "tar")
-WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00000200, "--version", True, "string")
+WARDEN_CREATE_FLAGS_IPV4		= warden_arg(0x00000002, "--ipv4", True, "ipv4")
+WARDEN_CREATE_FLAGS_IPV6		= warden_arg(0x00000004, "--ipv6", True, "ipv6")
+WARDEN_CREATE_FLAGS_SRC			= warden_arg(0x00000008, "--src")
+WARDEN_CREATE_FLAGS_PORTS		= warden_arg(0x00000010, "--ports")
+WARDEN_CREATE_FLAGS_VANILLA		= warden_arg(0x00000020, "--vanilla")
+WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000040, "--startauto")
+WARDEN_CREATE_FLAGS_PORTJAIL		= warden_arg(0x00000080, "--portjail")
+WARDEN_CREATE_FLAGS_PLUGINJAIL		= warden_arg(0x00000100, "--pluginjail")
+WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000200, "--linuxjail", True, "script")
+WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000400, "--archive", True, "tar")
+WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000800, "--linuxarchive", True, "tar")
+WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00001000, "--version", True, "string")
 WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_32BIT,
+    WARDEN_CREATE_FLAGS_IPV4,
+    WARDEN_CREATE_FLAGS_IPV6,
     WARDEN_CREATE_FLAGS_SRC,
     WARDEN_CREATE_FLAGS_PORTS,
+    WARDEN_CREATE_FLAGS_VANILLA,
     WARDEN_CREATE_FLAGS_STARTAUTO,
     WARDEN_CREATE_FLAGS_PORTJAIL,
     WARDEN_CREATE_FLAGS_PLUGINJAIL,
@@ -99,25 +150,45 @@ WARDEN_EXPORT_FLAGS = [
 ]
 
 WARDEN_GET = "get"
-WARDEN_GET_FLAGS_IP	= warden_arg(0x00000001, "ip")
-WARDEN_GET_FLAGS_FLAGS	= warden_arg(0x00000002, "flags")
+WARDEN_GET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4")
+WARDEN_GET_FLAGS_IPV6			= warden_arg(0x00000002, "ipv6")
+WARDEN_GET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000004, "alias-ipv4")
+WARDEN_GET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000008, "alias-ipv6")
+WARDEN_GET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000010, "bridge-ipv4")
+WARDEN_GET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000020, "bridge-ipv6")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000040, "alias-bridge-ipv4")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6")
+WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
 WARDEN_GET_FLAGS = [
-    WARDEN_GET_FLAGS_IP,
+    WARDEN_GET_FLAGS_IPV4,
+    WARDEN_GET_FLAGS_IPV6,
+    WARDEN_GET_FLAGS_ALIAS_IPV4,
+    WARDEN_GET_FLAGS_ALIAS_IPV6,
+    WARDEN_GET_FLAGS_BRIDGE_IPV4,
+    WARDEN_GET_FLAGS_BRIDGE_IPV6,
+    WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4,
+    WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6,
+    WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4,
+    WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_GET_FLAGS_FLAGS
 ]
 
 WARDEN_IMPORT = "import"
-WARDEN_IMPORT_FLAGS_IP		= warden_arg(0x00000001, "--ip", True, "ip")
-WARDEN_IMPORT_FLAGS_HOST	= warden_arg(0x00000002, "--host", True, "host")
+WARDEN_IMPORT_FLAGS_IPV4	= warden_arg(0x00000001, "--ipv4", True, "ipv4")
+WARDEN_IMPORT_FLAGS_IPV6	= warden_arg(0x00000002, "--ipv6", True, "ipv6")
+WARDEN_IMPORT_FLAGS_HOST	= warden_arg(0x00000004, "--host", True, "host")
 WARDEN_IMPORT_FLAGS = [
-    WARDEN_IMPORT_FLAGS_IP,
+    WARDEN_IMPORT_FLAGS_IPV4,
+    WARDEN_IMPORT_FLAGS_IPV6,
     WARDEN_IMPORT_FLAGS_HOST
 ]
 
 WARDEN_LIST = "list"
-WARDEN_LIST_FLAGS_IDS	= warden_arg(0x00000001, "--ids")
+WARDEN_LIST_FLAGS_VERBOSE	= warden_arg(0x00000001, "-v")
 WARDEN_LIST_FLAGS = [
-    WARDEN_LIST_FLAGS_IDS
+    WARDEN_LIST_FLAGS_VERBOSE
 ]
 
 WARDEN_PKGS = "pkgs"
@@ -127,10 +198,28 @@ WARDEN_PBIS = "pbis"
 WARDEN_PBIS_FLAGS = []
 
 WARDEN_SET = "set"
-WARDEN_SET_FLAGS_IP	= warden_arg(0x00000001, "ip", True, "ip")
-WARDEN_SET_FLAGS_FLAGS	= warden_arg(0x00000002, "flags", True, "jflags")
+WARDEN_SET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4", True, "ipv4")
+WARDEN_SET_FLAGS_IPV6			= warden_arg(0x00000002, "ipv6", True, "ipv6")
+WARDEN_SET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000004, "alias-ipv4", True, "alias-ipv4")
+WARDEN_SET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000008, "alias-ipv6", True, "alias-ipv6")
+WARDEN_SET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000010, "bridge-ipv4", True, "bridge-ipv4",)
+WARDEN_SET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000020, "bridge-ipv6", True, "bridge-ipv6")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000040, "alias-bridge-ipv4", True, "alias-bridge-ipv4")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6", True, "alias-bridge-ipv6")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4", True, "defaultrouter-ipv4")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6", True, "defaultrouter-ipv6")
+WARDEN_SET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags", True, "jflags")
 WARDEN_SET_FLAGS = [
-    WARDEN_SET_FLAGS_IP,
+    WARDEN_SET_FLAGS_IPV4,
+    WARDEN_SET_FLAGS_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_IPV6,
+    WARDEN_SET_FLAGS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4,
+    WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4,
+    WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_SET_FLAGS_FLAGS
 ]
 
@@ -141,12 +230,14 @@ WARDEN_STOP = "stop"
 WARDEN_STOP_FLAGS = []
 
 WARDEN_TYPE = "type"
-WARDEN_TYPE_FLAGS_PORTJAIL	= warden_arg(0x00000001, "portjail")
-WARDEN_TYPE_FLAGS_PLUGINJAIL	= warden_arg(0x00000002, "pluginjail")
-WARDEN_TYPE_FLAGS_STANARD	= warden_arg(0x00000004, "standard")
+WARDEN_TYPE_FLAGS_PORTJAIL	= warden_arg(0x00000001, WARDEN_TYPE_PORTJAIL)
+WARDEN_TYPE_FLAGS_PLUGINJAIL	= warden_arg(0x00000002, WARDEN_TYPE_PLUGINJAIL)
+WARDEN_TYPE_FLAGS_LINUXJAIL     = warden_arg(0x00000004, WARDEN_TYPE_LINUXJAIL)
+WARDEN_TYPE_FLAGS_STANARD	= warden_arg(0x00000008, WARDEN_TYPE_STANDARD)
 WARDEN_TYPE_FLAGS = [
     WARDEN_TYPE_FLAGS_PORTJAIL,
     WARDEN_TYPE_FLAGS_PLUGINJAIL,
+    WARDEN_TYPE_FLAGS_LINUXJAIL,
     WARDEN_TYPE_FLAGS_STANARD
 ]
 
@@ -175,6 +266,25 @@ WARDEN_ZFSRMSNAP = "zfsrmsnap"
 WARDEN_ZFSRMSNAP_FLAGS = []
 
 
+class WardenJail(object):
+    def __init__(self, **kwargs):
+        self.id = kwargs.get(WARDEN_KEY_ID)
+        self.host = kwargs.get(WARDEN_KEY_HOST)
+        self.ipv4 = kwargs.get(WARDEN_KEY_IP4)
+        self.alias_ipv4 = kwargs.get(WARDEN_KEY_ALIASIP4)
+        self.bridge_ipv4 = kwargs.get(WARDEN_KEY_BRIDGEIP4)
+        self.alias_bridge_ipv4 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP4)
+        self.defaultrouter_ipv4 = kwargs.get(WARDEN_KEY_DEFAULTROUTER4)
+        self.ipv6 = kwargs.get(WARDEN_KEY_IP6)
+        self.alias_ipv6 = kwargs.get(WARDEN_KEY_ALIASIP6)
+        self.bridge_ipv6 = kwargs.get(WARDEN_KEY_BRIDGEIP6)
+        self.alias_bridge_ipv6 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP6)
+        self.defaultrouter_ipv6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
+        self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
+        self.status = kwargs.get(WARDEN_KEY_STATUS)
+        self.type = kwargs.get(WARDEN_KEY_TYPE)
+
+
 class warden_base(object):
     def __init__(self, cmd, objflags, flags=WARDEN_FLAGS_NONE, **kwargs):
         log.debug("warden_base.__init__: enter")
@@ -186,6 +296,7 @@ class warden_base(object):
         self.error = None
         self.wtmp = None
         self.jdir = None
+        self.release = None
 
         if not hasattr(self, "jail"):
             self.jail = None
@@ -201,7 +312,7 @@ class warden_base(object):
             if self.flags & obj:
                 if obj.arg == True and obj.argname is not None and \
                     kwargs.has_key(obj.argname) and kwargs[obj.argname] is not None:
-                    self.args += " %s=%s" % (obj, kwargs[obj.argname])
+                    self.args += " %s" % self.ass(obj, kwargs[obj.argname])
 
                 elif obj.arg == False:
                     self.args += " %s" % obj
@@ -213,6 +324,9 @@ class warden_base(object):
             self.pipe_func = kwargs["pipe_func"]
 
         log.debug("warden_base.__init__: leave")
+
+    def ass(self, key, val):
+        return "%s=%s" % (key, val)
 
     def run(self, jail=False, jid=0):
         log.debug("warden_base.run: enter")
@@ -256,6 +370,11 @@ class warden_base(object):
                 if len(parts) > 1:
                     self.jdir = parts[1].strip()
 
+            elif line.startswith("FREEBSD_RELEASE:"):
+                parts = line.split(':')
+                if len(parts) > 1:
+                    self.release = parts[1].strip()
+
         wconf.close()
 
     def save(self):
@@ -269,6 +388,10 @@ class warden_base(object):
 
             elif line.startswith("JDIR:"):
                 line = "JDIR: %s" % self.jdir
+
+            elif line.startswith("FREEBSD_RELEASE:"):
+                if self.release:
+                    line = "FREEBSD_RELEASE: %s" % self.release
 
             lines.append(line) 
 
@@ -305,6 +428,19 @@ class warden_auto(warden_base):
         return None 
 
 
+class warden_bspkgng(warden_base):
+    def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        self.args = ""
+        self.jail = None
+
+        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+            self.jail = kwargs["jail"]
+            self.args += " %s" % self.jail
+
+        super(warden_bspkgng, self).__init__(WARDEN_BSPKGNG,
+            WARDEN_BSPKGNG_FLAGS, flags, **kwargs)
+
+
 class warden_checkup(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         if not (kwargs.has_key("jail") and kwargs["jail"] is not None):
@@ -337,12 +473,11 @@ class warden_create(warden_base):
             self.jail = kwargs["jail"]
             self.args += " %s" % self.jail
 
-        if kwargs.has_key("ip") and kwargs["ip"] is not None:
-            self.ip = kwargs["ip"]
-            self.args += " %s" % self.ip
-
         super(warden_create, self).__init__(WARDEN_CREATE,
             WARDEN_CREATE_FLAGS, flags, **kwargs)
+
+    def ass(self, key, val):
+        return "%s %s" % (key, val)
 
 
 class warden_details(warden_base):
@@ -407,31 +542,48 @@ class warden_import(warden_base):
 
 class warden_list(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        super(warden_list, self).__init__(WARDEN_LIST, WARDEN_LIST_FLAGS, flags, **kwargs)
+        super(warden_list, self).__init__(WARDEN_LIST, WARDEN_LIST_FLAGS,
+            flags | WARDEN_LIST_FLAGS_VERBOSE, **kwargs)
 
     def parse(self, thestuff):
+        themap = {
+            'id': WARDEN_KEY_ID,
+            'host': WARDEN_KEY_HOST,
+            'ipv4': WARDEN_KEY_IP4,
+            'alias-ipv4': WARDEN_KEY_ALIASIP4,
+            'bridge-ipv4': WARDEN_KEY_BRIDGEIP4,
+            'alias-bridge-ipv4': WARDEN_KEY_ALIASBRIDGEIP4,
+            'defaultrouter-ipv4': WARDEN_KEY_DEFAULTROUTER4,
+            'ipv6': WARDEN_KEY_IP6,
+            'alias-ipv6': WARDEN_KEY_ALIASIP6,
+            'bridge-ipv6': WARDEN_KEY_BRIDGEIP6,
+            'alias-bridge-ipv6': WARDEN_KEY_ALIASBRIDGEIP6,
+            'defaultrouter-ipv6': WARDEN_KEY_DEFAULTROUTER6,
+            'autostart': WARDEN_KEY_AUTOSTART,
+            'status': WARDEN_KEY_STATUS,
+            'type': WARDEN_KEY_TYPE
+        } 
+
         lines = thestuff[1].splitlines()
 
+        jail = {}
         jails = []
         for line in lines:
-            line = line.strip()
-            if not (line.startswith("HOST") or line.startswith("----")):
-                parts = line.split()
-                if len(parts) < 5:
-                    continue 
-                jail = {
-                    "host": parts[0],
-                    "ip": parts[1],
-                    "autostart": parts[2],
-                    "status": parts[3],
-                    "type": parts[4]
-                }
-
-                if self.flags & WARDEN_LIST_FLAGS_IDS:
-                    jail["id"] = int(parts[5])
-
-                jails.append(jail)
-
+            for k in themap:
+                if line.startswith(k + ':'):
+                    parts = line.split(':')
+                    if k == 'id': 
+                        if jail:
+                            jails.append(jail)
+                        jail = { WARDEN_KEY_ID: parts[1].strip() } 
+                    else:
+                        val = None
+                        parts = line.split()
+                        if len(parts) > 1:
+                            val = parts[1].strip()
+                        jail[themap[k]] = val
+        if jail:
+            jails.append(jail) 
         return jails
 
 
@@ -465,15 +617,12 @@ class warden_set(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         saved_flags = flags
 
-        if flags & WARDEN_SET_FLAGS_IP:
-            flags &= ~WARDEN_SET_FLAGS_IP
-            if kwargs.has_key("ip") and kwargs["ip"] is not None:
-                self.args = "ip"
-                
-        elif flags & WARDEN_SET_FLAGS_FLAGS:
-            flags &= ~WARDEN_SET_FLAGS_FLAGS
-            if kwargs.has_key("jflags") and kwargs["jflags"] is not None:
-                self.args = "flags"
+        for wsf in WARDEN_SET_FLAGS:
+            if flags & wsf:
+                flags &= ~wsf  
+                if kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
+                    self.args = wsf.string
+                    break
 
         super(warden_set, self).__init__(WARDEN_SET, WARDEN_SET_FLAGS, flags, **kwargs)
 
@@ -481,13 +630,11 @@ class warden_set(warden_base):
             self.jail = kwargs["jail"]
             self.args += " %s" % self.jail
 
-        if saved_flags & WARDEN_SET_FLAGS_IP:
-            if kwargs.has_key("ip") and kwargs["ip"] is not None:
-                self.args += " %s" % kwargs["ip"]
-
-        elif saved_flags & WARDEN_SET_FLAGS_FLAGS:
-            if kwargs.has_key("jflags") and kwargs["jflags"] is not None:
-                self.args += " %s" % kwargs["jflags"]
+        for wsf in WARDEN_SET_FLAGS:
+            if saved_flags & wsf: 
+                if kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
+                    self.args += " %s" % kwargs[wsf.string]
+                    break
 
 
 class warden_start(warden_base):
@@ -691,6 +838,9 @@ class Warden(warden_base):
     def auto(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_auto(flags, **kwargs))
 
+    def bspkgng(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        return self.__call(warden_bspkgng(flags, **kwargs))
+
     def checkup(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_checkup(flags, **kwargs))
 
@@ -734,7 +884,12 @@ class Warden(warden_base):
         return self.__call(warden_type(flags, **kwargs))
 
     def types(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        types = ['standard', 'portjail', 'pluginjail', 'linuxjail']
+        types = [
+            WARDEN_TYPE_STANDARD,
+            WARDEN_TYPE_PORTJAIL,
+            WARDEN_TYPE_PLUGINJAIL,
+            WARDEN_TYPE_LINUXJAIL
+        ]
         return types
 
     def zfsmksnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):

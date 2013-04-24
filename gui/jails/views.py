@@ -31,9 +31,16 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.views import JsonResp   
 from freenasUI.middleware.notifier import notifier
-from freenasUI.jails import forms
-from freenasUI.jails import models
+from freenasUI.jails import forms, models
+from freenasUI.common.warden import (
+    Warden,
+    WARDEN_STATUS_RUNNING,
+    WARDEN_STATUS_STOPPED,
+    WARDEN_DELETE_FLAGS_CONFIRM,
+    WARDEN_EXPORT_FLAGS_DIR
+)
 
 log = logging.getLogger("jails.views")
 
@@ -41,13 +48,197 @@ def jails_home(request):
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+
     except IndexError:
         jailsconf = models.JailsConfiguration.objects.create().id
 
     return render(request, 'jails/index.html', {
-        'focused_form': request.GET.get('tab', 'jails'),
-         'jailsconf': jailsconf
+        'focus_form': request.GET.get('tab', 'jails.View'),
+        'jailsconf': jailsconf
     })
+
+
+def jailsconfiguration(request):
+
+    try:
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+
+    except IndexError:
+        jailsconf = models.JailsConfiguration.objects.create().id
+
+    return render(request, 'jails/index.html', {
+        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
+        'jailsconf': jailsconf
+    })
+
+
+def jail_edit(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        form = forms.JailsEditForm(request.POST, instance=jail)
+        if form.is_valid():
+            form.save() 
+            return JsonResp(request,
+                message=_("Jail successfully edited."))
+    else:
+        form = forms.JailsEditForm(instance=jail)
+
+    return render(request, 'jails/edit.html', { 
+        'form': form
+    })
+
+
+def jail_mkdir(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        form = forms.MkdirForm(request.POST, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Directory successfully created."))
+    else: 
+        form = forms.MkdirForm(jail=jail)
+
+    return render(request, 'jails/mkdir.html', {
+        'form': form,
+    }) 
+   
+
+def jail_storage_add(request, jail_id):
+
+    jail = models.Jails.objects.get(id=jail_id)
+
+    if request.method == 'POST':
+        form = forms.NullMountPointForm(request.POST, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Storage successfully added."))
+    else:
+        form = forms.NullMountPointForm(jail=jail)
+
+    return render(request, 'jails/storage.html', {
+        'form': form,
+    }) 
+
+def jail_storage_view(request, id):
+
+    nmp = models.NullMountPoint.objects.get(id=id)
+    jail = models.Jails.objects.get(jail_host=nmp.jail)
+
+    if request.method == 'POST':
+        form = forms.NullMountPointForm(request.POST, instance=nmp, jail=jail)
+        if form.is_valid():
+            form.save()
+            return JsonResp(request,
+                message=_("Storage successfully added."))
+    else:
+        form = forms.NullMountPointForm(instance=nmp, jail=jail)
+
+    return render(request, 'jails/storage.html', {
+        'form': form,
+    }) 
+    
+
+def jail_start(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        try:
+            Warden().start(jail=jail.jail_host)
+            return JsonResp(
+                request,
+                message=_("Jail successfully started.")
+            )
+
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
+
+    else:
+        return render(request, "jails/start.html", {
+            'name': jail.jail_host
+        })
+
+        Warden().start(jail=jail.jail_host)
+
+
+def jail_stop(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        try:
+            Warden().stop(jail=jail.jail_host)
+            return JsonResp(
+                request,
+                message=_("Jail successfully stopped.")
+            )
+
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
+
+    else:
+        return render(request, "jails/stop.html", {
+            'name': jail.jail_host
+        })
+
+
+def jail_delete(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        try:
+            Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+            return JsonResp(
+                request,
+                message=_("Jail successfully deleted.")
+            )
+
+        except Exception, e:
+            return JsonResp(request, error=True, message=e)
+
+    else:
+        return render(request, "jails/delete.html", {
+            'name': jail.jail_host
+        })
+
+def jail_export(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+    jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
+
+    dir = jailsconf.jc_path
+    filename = "%s/%s.wdn" % (dir, jail.jail_host)
+
+    Warden().export(jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR)
+
+    freenas_build = "UNKNOWN"
+    try:
+        with open(VERSION_FILE) as d:
+            freenas_build = d.read().strip()
+    except:
+        pass
+
+    wrapper = FileWrapper(file(filename))
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Disposition'] = \
+        'attachment; filename=%s-%s-%s.wdn' % (
+            jail.jail_host.encode('utf-8'),
+            freenas_build,
+            time.strftime('%Y%m%d%H%M%S'))
+
+    return response
+
+def jail_import(request):
+    log.debug("XXX: jail_import()")
+    return render(request, 'jails/import.html', { }) 
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
@@ -61,14 +252,6 @@ def jail_details(request, id):
     log.debug("XXX: jail_details()")
     return render(request, 'jails/details.html', { }) 
 
-def jail_export(request, id):
-    log.debug("XXX: jail_export()")
-    return render(request, 'jails/export.html', { }) 
-
-def jail_import(request, id):
-    log.debug("XXX: jail_import()")
-    return render(request, 'jails/import.html', { }) 
-
 def jail_options(request, id):
     log.debug("XXX: jail_options()")
     return render(request, 'jails/options.html', { }) 
@@ -80,14 +263,6 @@ def jail_pkgs(request, id):
 def jail_pbis(request, id):
     log.debug("XXX: jail_pbis()")
     return render(request, 'jails/pbis.html', { }) 
-
-def jail_start(request, id):
-    log.debug("XXX: jail_start()")
-    return render(request, 'jails/start.html', { }) 
-
-def jail_stop(request, id):
-    log.debug("XXX: jail_stop()")
-    return render(request, 'jails/stop.html', { }) 
 
 def jail_zfsmksnap(request, id):
     log.debug("XXX: jail_zfsmksnap()")

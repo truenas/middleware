@@ -163,7 +163,7 @@ class JsonResponse(HttpResponse):
         return field
 
 
-def start(request):
+def start(request, plugin_id):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
     url = utils.get_rpc_url(request)
@@ -171,7 +171,7 @@ def start(request):
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -182,7 +182,8 @@ def start(request):
         firefly = models.Firefly.objects.create(enable=True)
 
     try:
-        form = forms.FireflyForm(firefly.__dict__, instance=firefly, jail=jail)
+        form = forms.FireflyForm(firefly.__dict__, instance=firefly,
+            jail_path=jail_path)
         form.is_valid()
         form.save()
     except ValueError:
@@ -202,7 +203,7 @@ def start(request):
         }))
 
 
-def stop(request):
+def stop(request, plugin_id):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
     url = utils.get_rpc_url(request)
@@ -210,7 +211,7 @@ def stop(request):
         secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -221,7 +222,8 @@ def stop(request):
         firefly = models.Firefly.objects.create(enable=False)
 
     try:
-        form = forms.FireflyForm(firefly.__dict__, instance=firefly, jail=jail)
+        form = forms.FireflyForm(firefly.__dict__, instance=firefly,
+            jail_path=jail_path)
         form.is_valid()
         form.save()
     except ValueError:
@@ -238,7 +240,7 @@ def stop(request):
         }))
 
 
-def edit(request):
+def edit(request, plugin_id):
     firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
 
     url = utils.get_rpc_url(request)
@@ -256,7 +258,7 @@ def edit(request):
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
-        jail = json.loads(server.plugins.jail.info())[0]
+        jail_path = server.plugins.jail.path(plugin_id)
         auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
         assert auth
     except Exception, e:
@@ -264,7 +266,7 @@ def edit(request):
 
     if request.method == "GET":
         form = forms.FireflyForm(instance=firefly,
-            jail=jail)
+            jail_path=jail_path)
         return render(request, "edit.html", {
             'form': form,
         })
@@ -274,7 +276,7 @@ def edit(request):
 
     form = forms.FireflyForm(request.POST,
         instance=firefly,
-        jail=jail)
+        jail_path=jail_path)
     if form.is_valid():
         form.save()
         return JsonResponse(request, error=True, message="Firefly settings successfully saved.")
@@ -282,7 +284,7 @@ def edit(request):
     return JsonResponse(request, form=form)
 
 
-def treemenu(request):
+def treemenu(request, plugin_id):
     """
     This is how we inject nodes to the Tree Menu
 
@@ -292,17 +294,17 @@ def treemenu(request):
 
     plugin = {
         'name': 'Firefly',
-        'append_to': 'services.PluginsJail',
-        'icon': reverse("treemenu_icon"),
+        'append_to': 'services.Plugins',
+        'icon': reverse("treemenu_icon", kwargs={'plugin_id': plugin_id}),
         'type': 'pluginsfcgi',
-        'url': reverse('firefly_edit'),
-        'kwargs': {'plugin_name': 'firefly'},
+        'url': reverse('firefly_edit', kwargs={'plugin_id': plugin_id}),
+        'kwargs': {'plugin_name': 'firefly', 'plugin_id': plugin_id},
     }
 
     return HttpResponse(json.dumps([plugin]), content_type='application/json')
 
 
-def status(request):
+def status(request, plugin_id):
     """
     Returns a dict containing the current status of the services
 
@@ -331,7 +333,7 @@ def status(request):
         content_type='application/json')
 
 
-def treemenu_icon(request):
+def treemenu_icon(request, plugin_id):
     with open(utils.firefly_icon, 'rb') as f:
         icon = f.read()
 

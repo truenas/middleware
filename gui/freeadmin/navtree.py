@@ -43,9 +43,13 @@ from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url
+#from freenasUI.plugins.models import Plugins
+#from freenasUI.plugins.utils import get_base_url
 
+from freenasUI.common.warden import WARDEN_STATUS_RUNNING, \
+    WARDEN_TYPE_PLUGINJAIL
+
+from freenasUI.jails.models import Jails
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -258,8 +262,6 @@ class NavTree(object):
                     opt)
 
         self.replace_navs(tree_roots)
-        if notifier()._started_plugins_jail():
-            self._get_plugins_nodes(request)
 
     def _generate_app(self, app, request, tree_roots, childs_of):
 
@@ -289,7 +291,7 @@ class NavTree(object):
                 except TypeError:
                     continue
                 if navc.__module__ == modname and subclass:
-                    obj = navc()
+                    obj = navc(request=request)
 
                     if obj.skip is True:
                         continue
@@ -311,7 +313,6 @@ class NavTree(object):
 
             modname = '%s.models' % app
             for c in dir(modmodels):
-
                 model = getattr(modmodels, c)
                 try:
                     if (
@@ -440,86 +441,6 @@ class NavTree(object):
                     subopt.type = 'viewmodel'
                     self.register_option(subopt, navopt)
 
-    def _plugin_fetch(self, args):
-        plugin, host, request = args
-        data = None
-        url = "%s/plugins/%s/_s/treemenu" % (host, plugin.plugin_name)
-        try:
-            opener = urllib2.build_opener()
-            opener.addheaders = [(
-                'Cookie', 'sessionid=%s' % (
-                    request.COOKIES.get("sessionid", ''),
-                )
-            )]
-            #TODO: Increase timeout based on number of plugins
-            response = opener.open(url, None, 5)
-            data = response.read()
-            if not data:
-                log.warn(_("Empty data returned from %s") % (url,))
-        except Exception, e:
-            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                'url': url,
-                'error': e,
-            })
-        return plugin, url, data
-
-    def _get_plugins_nodes(self, request):
-
-        host = get_base_url(request)
-        args = map(
-            lambda y: (y, host, request),
-            Plugins.objects.filter(plugin_enabled=True))
-
-        pool = eventlet.GreenPool(20)
-        for plugin, url, data in pool.imap(self._plugin_fetch, args):
-
-            if not data:
-                continue
-
-            try:
-                data = simplejson.loads(data)
-
-                nodes = unserialize_tree(data)
-                for node in nodes:
-                    #We have our TreeNode's, find out where to place them
-
-                    found = False
-                    if node.append_to:
-                        log.debug(
-                            "Plugin %s requested to be appended to %s",
-                            plugin.plugin_name, node.append_to)
-                        places = node.append_to.split('.')
-                        places.reverse()
-                        for root in tree_roots:
-                            find = root.find_place(list(places))
-                            if find:
-                                find.append_child(node)
-                                found = True
-                                break
-                    else:
-                        log.debug(
-                            "Plugin %s didn't request to be appended "
-                            "anywhere specific",
-                            plugin.plugin_name)
-
-                    if not found:
-                        node.tree_root = 'main'
-                        tree_roots.register(node)
-
-            except Exception, e:
-                log.warn(_(
-                    "An error occurred while unserializing from "
-                    "%(url)s: %(error)s") % {'url': url, 'error': e})
-                log.debug(_(
-                    "Error unserializing %(url)s (%(error)s), data "
-                    "retrieved:") % {
-                        'url': url,
-                        'error': e,
-                    })
-                for line in data.splitlines():
-                    log.debug(line)
-                continue
-
     def _build_nav(self, user):
         navs = []
         for nav in tree_roots['main']:
@@ -565,6 +486,7 @@ class NavTree(object):
                 option.get_absolute_url()
                 option.option_list = self.build_options(option, user)
                 options.append(option)
+
         return options
 
     def dehydrate(self, o, uid, gname=None):

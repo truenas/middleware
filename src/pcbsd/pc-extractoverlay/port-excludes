@@ -1,0 +1,3 @@
+# List of files to exclude when re-extracting overlay distfile
+# Make sure to update both copies of this file in
+./usr/local/etc/gdm

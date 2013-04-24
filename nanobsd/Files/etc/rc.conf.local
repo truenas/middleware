@@ -171,7 +171,7 @@ _interface_config()
 _host_config()
 {
 	local IFS=\|
-	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway netwait_enabled netwait_ip jail_path
+	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway netwait_enabled netwait_ip
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway, gc_netwait_enabled, gc_netwait_ip FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while read -r hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway netwait_enabled netwait_ip; do
 		echo hostname=\"${hostname}.${domainname}\"
@@ -192,15 +192,6 @@ _host_config()
 					echo "nameserver ${ns}"
 				fi
 			done) > /etc/resolv.conf
-			jail_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-			SELECT
-				jail_path || '/' || jail_name
-			FROM
-				services_pluginsjail
-			ORDER BY -id LIMIT 1")
-			if [ -n "${jail_path}" ]; then
-				cp /etc/resolv.conf "${jail_path}/etc/resolv.conf" 2> /dev/null || :
-			fi
 		fi
 
 		if [ ${netwait_enabled} -eq 1 ]; then

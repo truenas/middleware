@@ -10,6 +10,8 @@ PROGDIR="/usr/local/share/warden"
 . ${PROGDIR}/scripts/backend/functions.sh
 
 JAILNAME="${1}"
+export JAILNAME
+
 if [ "${2}" = "FAST" ]
 then
   FAST="Y"
@@ -35,6 +37,10 @@ then
   exit 5
 fi
 
+# pre-stop hooks
+if [ -x "${JMETADIR}/jail-pre-stop" ] ; then
+  "${JMETADIR}/jail-pre-stop"
+fi
 
 HOST="`cat ${JMETADIR}/host`"
 
@@ -51,15 +57,15 @@ echo -e ".\c"
 # Check if we need umount x mnts
 if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
 
-# Get list of IPs for this jail
-IP=
-if [ -e "${JMETADIR}/ip" ] ; then
-   IP=`cat "${JMETADIR}/ip"`
-fi
-
 jail_interfaces_down "${JID}"
 
 if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
+
+# Check for user-supplied mounts
+if [ -e "${JMETADIR}/fstab" ] ; then
+   echo "Unmounting user-supplied file-systems"
+   umount -a -f -F ${JMETADIR}/fstab
+fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom stop script
@@ -163,6 +169,11 @@ echo -e ".\c"
 
 if [ -n "${JID}" ] ; then
   jail -r ${JID}
+fi
+
+# post-stop hooks
+if [ -x "${JMETADIR}/jail-post-stop" ] ; then
+  "${JMETADIR}/jail-post-stop"
 fi
 
 echo -e "Done"

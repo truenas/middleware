@@ -34,13 +34,15 @@ from django.core import serializers
 from django.contrib import auth
 from django.utils.importlib import import_module
 
-from freenasUI import plugins, services, storage
+from freenasUI.storage.models import MountPoint
+from freenasUI.plugins.models import Plugins
+from freenasUI.jails.models import Jails, JailsConfiguration
 
 from jsonrpc import jsonrpc_method
 
 log = logging.getLogger("plugins.api_calls")
 
-PLUGINS_API_VERSION = "1"
+PLUGINS_API_VERSION = "2"
 
 
 #
@@ -52,40 +54,46 @@ def __popen(cmd):
         close_fds=True)
 
 
-def __get_plugins_jail_info():
-    jail_info = services.models.PluginsJail.objects.order_by("-pk")
-    return jail_info[0] if jail_info else None
+def __get_jailsconfiguration():
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+
+    return jc
 
 
-def __get_plugins_jail_path():
+def __get_jails(jail_name=None):
+    jails = []
+
+    if jail_name:
+        jail = Jails.objects.get(jail_host=jail_name)
+        jails.append(jail) 
+
+    else:
+        jails = Jails.objects.all()
+
+    return jails
+
+
+def __get_plugins_jail_info(plugin_id):
+    jail = None
+
+    plugin = Plugins.objects.filter(pk=plugin_id)
+    if plugin:
+        plugin = plugin[0]
+        jail = Jails.objects.get(jail_host=plugin.plugin_jail)
+
+    return jail
+
+
+def __get_plugins_jail_path(plugin_id):
     jail_path = None
-    jail_info = __get_plugins_jail_info()
+
+    jail_info = __get_plugins_jail_info(plugin_id)
     if jail_info:
-        jail_path = jail_info.jail_path
+        jc = __get_jailsconfiguration()
+        if jc: 
+            jail_path = "%s/%s" % (jc.jc_path, jail_info.jail_host)
+
     return jail_path
-
-
-def __get_plugins_jail_name():
-    jail_name = None
-    jail_info = __get_plugins_jail_info()
-    if jail_info:
-        jail_name = jail_info.jail_name
-    return jail_name
-
-
-def __get_plugins_jail_full_path():
-    jail_name = None
-    jail_name = __get_plugins_jail_name()
-    if not jail_name:
-        return None
-
-    jail_path = None
-    jail_path = __get_plugins_jail_path()
-    if not jail_path:
-        return None
-
-    jail_full_path = os.path.join(jail_path, jail_name)
-    return jail_full_path
 
 
 def __serialize(objects):
@@ -103,6 +111,18 @@ def __api_call_not_implemented(request):
 def __api_call_api_version(request):
     return PLUGINS_API_VERSION
 
+#
+#	Jail methods
+#
+@jsonrpc_method("jails.jailsconfiguration.get")
+def __jails_jailsconfiguration_get(request):
+    return __serialize([__get_jailsconfiguration()])
+
+
+@jsonrpc_method("jails.jails.get")
+def __jails_jails_get(request, jail_name=None):
+    return __serialize([__get_jails(jail_name)])
+
 
 #
 #    Plugins methods
@@ -110,15 +130,19 @@ def __api_call_api_version(request):
 @jsonrpc_method("plugins.plugins.get")
 def __plugins_plugins_get(request, plugin_name=None):
     if plugin_name:
-        return __serialize(plugins.models.Plugins.objects.filter(
-            plugin_name=plugin_name))
+        return __serialize(Plugins.objects.filter(plugin_name=plugin_name))
     else:
-        return __serialize(plugins.models.Plugins.objects.order_by("-pk"))
+        return __serialize(Plugins.objects.order_by("-pk"))
 
 
 @jsonrpc_method("plugins.jail.info")
-def __plugins_jail_info(request):
-    return __serialize([__get_plugins_jail_info()])
+def __plugins_jail_info(request, plugin_id=None):
+    return __serialize([__get_plugins_jail_info(plugin_id)])
+
+
+@jsonrpc_method("plugins.jail.path")
+def __plugins_jail_path(request, plugin_id=None):
+    return __get_plugins_jail_path(plugin_id)
 
 
 @jsonrpc_method("plugins.is_authenticated")
@@ -151,7 +175,7 @@ def plugins_is_authenticated(request, sessionid):
 @jsonrpc_method("fs.mountpoints.get")
 def __fs_mountpoints_get(request):
     path_list = []
-    mp_list = storage.models.MountPoint.objects.exclude(
+    mp_list = MountPoint.objects.exclude(
         mp_volume__vol_fstype__exact='iscsi').select_related().all()
 
     for mp in mp_list:
@@ -193,8 +217,8 @@ def __fs_mounted_get(request, path=None):
 
 
 @jsonrpc_method("fs.mount")
-def __fs_mount_filesystem(request, src, dst):
-    jail_path = __get_plugins_jail_full_path()
+def __fs_mount_filesystem(request, plugin_id, src, dst):
+    jail_path = __get_plugins_jail_path(plugin_id)
     if not jail_path:
         data = {"error": True,
             "message": "source or destination not specified"}
@@ -216,8 +240,8 @@ def __fs_mount_filesystem(request, src, dst):
 
 
 @jsonrpc_method("fs.umount")
-def __fs_umount_filesystem(request, dst):
-    jail_path = __get_plugins_jail_full_path()
+def __fs_umount_filesystem(request, plugin_id, dst):
+    jail_path = __get_plugins_jail_path(plugin_id)
     if not jail_path:
         data = {"error": True, "message": "plugins jail is not configured"}
         return data

@@ -860,64 +860,6 @@ class DynamicDNS(Model):
         icon_model = u"DDNSIcon"
 
 
-class PluginsJail(Model):
-    jail_path = PathField(
-            verbose_name=_("Plugins jail path"),
-            help_text=_("Path to the plugins jail"),
-            blank=False
-            )
-    jail_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Jail name"),
-            help_text=_("Name of the plugins jail"),
-            default='',
-            validators=[
-                RegexValidator(
-                    regex=r"^[a-zA-Z][a-zA-Z0-9]{1,62}$",
-                    message=_("Jail name can only contain alphanumeric "
-                        "characters. It must start with a letter."),
-                    )
-                ]
-            )
-    jail_ipv4address = IPAddressField(
-            verbose_name=_("Jail IP address"),
-            help_text=_("Choose an IPv4 address within the same network of "
-                "this machine")
-            )
-    jail_ipv4netmask = models.CharField(
-            max_length=3,
-            verbose_name=_("Jail IP Netmask"),
-            choices=choices.v4NetmaskBitList,
-            )
-    jail_mac = MACField(
-            verbose_name=_("MAC"),
-            blank=True,
-            default='',
-            help_text=_("Ethernet MAC address used for the virtual ethernet "
-                "interface in the jail. Leave blank for random MAC on every "
-                "jail start"),
-            )
-    plugins_path = PathField(
-            verbose_name=_("Plugins archive path"),
-            help_text=_("Path where the plugins are saved after installation"),
-            blank=False
-            )
-
-    class Meta:
-        verbose_name = _("Plugins")
-        verbose_name_plural = _("Plugins")
-
-    class FreeAdmin:
-        deletable = False
-        delete_form = "PluginsJailDeleteForm"
-        icon_model = u"PluginIcon"
-
-    def delete(self, *args, **kwargs):
-        notifier().delete_plugins_jail(self.id)
-        super(PluginsJail, self).delete(*args, **kwargs)
-        services.objects.filter(srv_service='plugins').update(srv_enable=False)
-
-
 class SNMP(Model):
     snmp_location = models.CharField(
             max_length=255,

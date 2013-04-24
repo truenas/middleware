@@ -164,7 +164,7 @@ class JsonResponse(HttpResponse):
         return field
 
 
-def start(request):
+def start(request, plugin_id):
     (transmission_key,
     transmission_secret) = utils.get_transmission_oauth_creds()
 
@@ -176,7 +176,7 @@ def start(request):
     auth = server.plugins.is_authenticated(
         request.COOKIES.get("sessionid", "")
         )
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -189,7 +189,7 @@ def start(request):
     try:
         form = forms.TransmissionForm(transmission.__dict__,
             instance=transmission,
-            jail=jail)
+            jail_path=jail_path)
         form.is_valid()
         form.save()
     except ValueError:
@@ -210,7 +210,7 @@ def start(request):
         }), content_type='application/json')
 
 
-def stop(request):
+def stop(request, plugin_id):
     (transmission_key,
     transmission_secret) = utils.get_transmission_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -221,7 +221,7 @@ def stop(request):
     auth = server.plugins.is_authenticated(
         request.COOKIES.get("sessionid", "")
         )
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -234,7 +234,7 @@ def stop(request):
     try:
         form = forms.TransmissionForm(transmission.__dict__,
             instance=transmission,
-            jail=jail)
+            jail_path=jail_path)
         form.is_valid()
         form.save()
     except ValueError:
@@ -251,7 +251,8 @@ def stop(request):
         }), content_type='application/json')
 
 
-def edit(request):
+def edit(request, plugin_id):
+    from syslog import *
     (transmission_key,
     transmission_secret) = utils.get_transmission_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -269,7 +270,7 @@ def edit(request):
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
-        jail = json.loads(server.plugins.jail.info())[0]
+        jail_path = server.plugins.jail.path(plugin_id)
         auth = server.plugins.is_authenticated(
             request.COOKIES.get("sessionid", "")
             )
@@ -279,7 +280,7 @@ def edit(request):
 
     if request.method == "GET":
         form = forms.TransmissionForm(instance=transmission,
-            jail=jail)
+            jail_path=jail_path)
         return render(request, "edit.html", {
             'form': form,
         })
@@ -289,7 +290,7 @@ def edit(request):
 
     form = forms.TransmissionForm(request.POST,
         instance=transmission,
-        jail=jail)
+        jail_path=jail_path)
     if form.is_valid():
         form.save()
 
@@ -303,7 +304,7 @@ def edit(request):
     return JsonResponse(request, form=form)
 
 
-def treemenu(request):
+def treemenu(request, plugin_id):
     """
     This is how we inject nodes to the Tree Menu
 
@@ -313,17 +314,17 @@ def treemenu(request):
 
     plugin = {
         'name': 'Transmission',
-        'append_to': 'services.PluginsJail',
-        'icon': reverse('treemenu_icon'),
+        'append_to': 'services.Plugins',
+        'icon': reverse('treemenu_icon', kwargs={'plugin_id': plugin_id}),
         'type': 'pluginsfcgi',
-        'url': reverse('transmission_edit'),
-        'kwargs': {'plugin_name': 'transmission'},
+        'url': reverse('transmission_edit', kwargs={'plugin_id': plugin_id}),
+        'kwargs': {'plugin_name': 'transmission', 'plugin_id': plugin_id },
     }
 
     return HttpResponse(json.dumps([plugin]), content_type='application/json')
 
 
-def status(request):
+def status(request, plugin_id):
     """
     Returns a dict containing the current status of the services
 
@@ -354,7 +355,7 @@ def status(request):
         content_type='application/json')
 
 
-def treemenu_icon(request):
+def treemenu_icon(request, plugin_id):
 
     with open(utils.transmission_icon, 'rb') as f:
         icon = f.read()

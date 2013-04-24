@@ -34,6 +34,7 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.common.jail import Jls
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
@@ -58,6 +59,7 @@ def plugins(request):
         'start_url',
         'stop_url',
         'status_url',
+        'jail_status',
         ])
 
     host = get_base_url(request)
@@ -67,30 +69,30 @@ def plugins(request):
     pool = eventlet.GreenPool(20)
     for plugin, json in pool.imap(get_plugin_status, args):
 
+        #
+        #    XXX Hacky Hack XXX
+        #
+        #    This lets the plugins be displayed, even if they aren't reachable.
+        #    This is useful for things like viewing, deleting and updating 
+        #    plugins even if they aren't reachable. 
+        #
         if not json:
-            continue
+            json = {} 
+            json['status'] = None
 
+        jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
         plugin.service = Service(
             name=plugin.plugin_name,
             status=json['status'],
             pid=json.get("pid", None),
-            start_url="/plugins/%s/_s/start" % (plugin.plugin_name, ),
-            stop_url="/plugins/%s/_s/stop" % (plugin.plugin_name, ),
-            status_url="/plugins/%s/_s/status" % (plugin.plugin_name, ),
+            start_url="/plugins/%s/%d/_s/start" % (plugin.plugin_name, plugin.id),
+            stop_url="/plugins/%s/%d/_s/stop" % (plugin.plugin_name, plugin.id),
+            status_url="/plugins/%s/%d/_s/status" % (plugin.plugin_name, plugin.id),
+            jail_status=jail_status,
             )
 
-    srv_enable = False
-    s = models.services.objects.filter(srv_service='plugins')
-    if s:
-        s = s[0]
-        srv_enable = s.srv_enable
-
-    jail_configured = notifier().plugins_jail_configured() and \
-        notifier()._started_plugins_jail() and srv_enable
-
     return render(request, "services/plugins.html", {
-        'plugins': plugins,
-        'jail_configured': jail_configured,
+        'plugins': plugins
     })
 
 
@@ -159,13 +161,6 @@ def core(request):
     except IndexError:
         ups = models.UPS.objects.create()
 
-    plugins = None
-    try:
-        if notifier().plugins_jail_configured():
-            plugins = models.PluginsJail.objects.order_by("-id")[0]
-    except IndexError:
-        plugins = None
-
     srv = models.services.objects.all()
     return render(request, 'services/core.html', {
         'srv': srv,
@@ -180,7 +175,6 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'plugins': plugins,
         'directoryservice': directoryservice,
         })
 
@@ -270,7 +264,7 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ups', 'plugins_jail', 'directoryservice'):
+            if changing_service in ('ups', 'directoryservice'):
                 if changing_service == 'directoryservice':
                     notifier().stop(directoryservice.svc)
                 else: 

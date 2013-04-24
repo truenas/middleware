@@ -928,6 +928,96 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.JailDeleteIcon {
+    background-image:url('/static/images/ui/tree/jail_delete.png');
+    width:16px;
+    height:16px;
+}
+.JailExportIcon {
+    background-image:url('/static/images/ui/tree/jail_export.png');
+    width:16px;
+    height:16px;
+}
+.JailImportIcon {
+    background-image:url('/static/images/ui/tree/jail_import.png');
+    width:16px;
+    height:16px;
+}
+.PluginInstallIcon {
+    background-image:url('/static/images/ui/tree/plugin_install.png');
+    width:16px;
+    height:16px;
+}
+.JailIcon {
+    background-image:url('/static/images/ui/tree/jail.png');
+    width:16px;
+    height:16px;
+}
+.LinuxJailIcon {
+    background-image:url('/static/images/ui/tree/linuxjail.png');
+    width:16px;
+    height:16px;
+}
+.JailMkdirIcon {
+    background-image:url('/static/images/ui/tree/jail_mkdir.png');
+    width:16px;
+    height:16px;
+}
+.JailStorageIcon {
+    background-image:url('/static/images/ui/tree/jail_storage.png');
+    width:16px;
+    height:16px;
+}
+.JailPluginIcon {
+    background-image:url('/static/images/ui/tree/jail_plugin.png');
+    width:16px;
+    height:16px;
+}
+.PluginJailIcon {
+    background-image:url('/static/images/ui/tree/pluginjail.png');
+    width:16px;
+    height:16px;
+}
+.StandardJailIcon {
+    background-image:url('/static/images/ui/tree/standardjail.png');
+    width:16px;
+    height:16px;
+}
+.PortJailIcon {
+    background-image:url('/static/images/ui/tree/portjail.png');
+    width:16px;
+    height:16px;
+}
+.JailStartIcon {
+    background-image:url('/static/images/ui/tree/jail_start.png');
+    width:16px;
+    height:16px;
+}
+.JailStopIcon {
+    background-image:url('/static/images/ui/tree/jail_stop.png');
+    width:16px;
+    height:16px;
+}
+.JailAddIcon {
+    background-image:url('/static/images/ui/tree/jail_add.png');
+    width:16px;
+    height:16px;
+}
+.BeastieIcon {
+    background-image:url('/static/images/ui/tree/beastie.png');
+    width:16px;
+    height:16px;
+}
+.BobbleIcon {
+    background-image:url('/static/images/ui/tree/bobble.png');
+    width:16px;
+    height:16px;
+}
+.TuxIcon {
+    background-image:url('/static/images/ui/tree/tux.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }

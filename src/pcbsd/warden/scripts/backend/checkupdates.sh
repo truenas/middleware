@@ -40,20 +40,21 @@ if [ "${JAILNAME}" = "all" ] ; then
   cd ${JDIR}
   for i in `ls -d .*.meta`
   do
-    if [ ! -e "${i}/ip" ] ; then continue ; fi
-    IP="`cat ${i}/ip`"
+    JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
     HOST="`cat ${i}/host`"
     set_warden_metadir
     if [ -e "${JMETADIR}/jail-linux" ] ; then continue; fi
 
-    echo "Checking for jail updates to ${IP}"
+    echo "Checking for jail updates to ${HOST}"
     echo "################################################"
- 
-    # Check for meta-pkg updates
-    pc-metapkgmanager --chroot ${JDIR}/${HOST} checkup
+
+    # Check for pkgng updates
+    if [ -e "${JDIR}/${JAILNAME}/usr/local/sbin/pkg-static" ] ; then
+       chroot "${JDIR}/${JAILNAME}" pkg upgrade -n
+    fi
 
     # Check for system-updates
-    chroot ${JDIR}/${HOST} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+    chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
   done
 else
   set_warden_metadir
@@ -63,11 +64,14 @@ else
     exit 5
   fi
 
-   echo "Checking for jail updates to ${IP}..."
+   echo "Checking for jail updates to ${JAILNAME}..."
    echo "################################################"
-   # Check for meta-pkg updates
-   pc-metapkgmanager --chroot ${JDIR}/${HOST} checkup
+
+   # Check for pkgng updates
+   if [ -e "${JDIR}/${JAILNAME}/usr/local/sbin/pkg-static" ] ; then
+      chroot "${JDIR}/${JAILNAME}" pkg upgrade -n
+   fi
 
    # Check for system-updates
-   chroot ${JDIR}/${HOST} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+   chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|!  -t 0|-z '1'|g' | /bin/sh -s 'fetch'
 fi

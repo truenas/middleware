@@ -30,8 +30,9 @@ from django.utils.html import escapejs
 
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from freenasUI.freeadmin.api.resources import JailsResource
+from freenasUI.freeadmin.api.resources import (JailsResource, NullMountPointResource)
 from freenasUI.jails import models
+
 
 from collections import OrderedDict
 
@@ -42,13 +43,26 @@ log = logging.getLogger('jails.admin')
 class JailsFAdmin(BaseFreeAdmin):
 
     create_modelform = "JailCreateForm"
-#    edit_modelform = "JailsEditForm"
+    edit_modelform = "JailsEditForm"
     icon_object = u"ServicesIcon"
     icon_model = u"ServicesIcon"
     icon_add = u"ServicesIcon"
     icon_view = u"ServicesIcon"
 
     resource = JailsResource
+    exclude_fields = (
+        'id',
+        'jail_ipv4',
+        'jail_alias_ipv4',
+        'jail_bridge_ipv4',
+        'jail_alias_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
+        'jail_ipv6',
+        'jail_alias_ipv6',
+        'jail_bridge_ipv6',
+        'jail_alias_bridge_ipv6',
+        'jail_defaultrouter_ipv6'
+    )
 
     def get_datagrid_columns(self):
         columns = []
@@ -56,31 +70,25 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_host',
             'label': _('Jail'),
-            'sortable': True,
-        })
-
-        columns.append({
-            'name': 'jail_ip',
-            'label': _('IP/Netmask'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_autostart',
             'label': _('Autostart'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_status',
             'label': _('Status'),
-            'sortable': True,
+            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_type',
             'label': _('Type'),
-            'sortable': True,
+            'sortable': False,
         })
 
         return columns
@@ -136,38 +144,42 @@ class JailsFAdmin(BaseFreeAdmin):
         return data
 
     def get_actions(self):
-        
         actions = OrderedDict()
 
-        actions['auto'] = self._action_builder('jail_auto', label=_("Autostart"))
-        actions['checkup'] = self._action_builder('jail_checkup', label=_("Checkup"))
-        actions['detiuls'] = self._action_builder('jail_details', label=_("Details"))
-        actions['export'] = self._action_builder('jail_export', label=_("Export"))
-        actions['import'] = self._action_builder('jail_import', label=_("Import"))
-        actions['options'] = self._action_builder('jail_options', label=_("Options"))
-        actions['pkgs'] = self._action_builder('jail_pkgs', label=_("Packages"))
-        actions['pbis'] = self._action_builder('jail_pbis', label=_("PBI's"))
+        actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
+        actions['plugins'] = self._action_builder('plugin_install', label=_("Install Plugins"))
+        #actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
+        #actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
-
-        actions['zfsmksnap'] = self._action_builder('jail_zfsmksnap',
-            label=_("ZFS Snapshot"))
-        actions['zfslistclone'] = self._action_builder('jail_zfslistclone',
-            label=_("ZFS Clones"))
-        actions['zfslistsnap'] = self._action_builder('jail_zfslistsnap',
-            label=_("ZFS Snapshots"))
-        actions['zfsclonesnap'] = self._action_builder('jail_zfsclonesnap',
-            label=_("ZFS Clone Snapshot"))
-        actions['zfscronsnap'] = self._action_builder('jail_zfscronsnap',
-            label=_("ZFS Cron Snapshot"))
-        actions['zfrevertsnap'] = self._action_builder('jail_zfsrevertsnap',
-            label=_("ZFS Revert Snapshot"))
-        actions['zfsrmclonesnap'] = self._action_builder('jail_zfsrmclonesnap',
-            label=_("ZFS Remove Clone Snapshot"))
-        actions['zfsrmsnap'] = self._action_builder('jail_zfsrmsnap',
-            label=_("ZFS Remove Snapshot"))
+        actions['delete'] = self._action_builder(
+            'jail_delete',
+            label=_("Delete"),
+            func='editScaryObject'
+        )
 
         return actions
 
 
+class NullMountPointFAdmin(BaseFreeAdmin):
+
+    menu_child_of = u"jails"
+    icon_model = u"MountPointIcon"
+    icon_object = u"MountPointIcon"
+    icon_add = u"AddMountPointIcon"
+    icon_view = u"ViewMountPointIcon"
+
+    resource = NullMountPointResource
+
+    def get_datagrid_columns(self):
+        columns = super(NullMountPointFAdmin,self).get_datagrid_columns()
+        columns.insert(2, {
+            'name': 'mounted',
+            'label': _('Mounted?'),
+            'sortable': False,
+        })
+        return columns
+
+
 site.register(models.Jails, JailsFAdmin)
+site.register(models.NullMountPoint, NullMountPointFAdmin)

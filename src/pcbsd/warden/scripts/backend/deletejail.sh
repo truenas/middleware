@@ -10,6 +10,7 @@ PROGDIR="/usr/local/share/warden"
 . ${PROGDIR}/scripts/backend/functions.sh
 
 JAILNAME="$1"
+export JAILNAME
 
 if [ -z "${JAILNAME}" ]
 then
@@ -33,6 +34,11 @@ if [ ! -d "${JAILDIR}" ] ; then
 fi
 
 set_warden_metadir
+
+# pre-delete hooks
+if [ -x "${JMETADIR}/jail-pre-delete" ] ; then
+  "${JMETADIR}/jail-pre-delete"
+fi
 
 # Check if the jail is running first
 ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
@@ -64,6 +70,11 @@ fi
 
 if [ ! -z "${JMETADIR}" -a "${JMETADIR}" != " " ] ; then
   rm -rf "${JMETADIR}"
+fi
+
+# post-delete hooks
+if [ -x "${JMETADIR}/jail-post-delete" ] ; then
+  "${JMETADIR}/jail-post-delete"
 fi
 
 echo "Done"
