@@ -29,7 +29,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
-    url(r'^configuration/$', 'jails_jailsconfiguration', name="jails_jailsconfiguration"),
+    url(r'^configuration/$', 'jailsconfiguration', name="jailsconfiguration"),
     url(r'^edit/(?P<id>\d+)$', 'jail_edit', name="jail_edit"),
     url(r'^delete/(?P<id>\d+)$', 'jail_delete', name="jail_delete"),
     url(r'^mkdir/(?P<id>\d+)?$', 'jail_mkdir', name="jail_mkdir"),

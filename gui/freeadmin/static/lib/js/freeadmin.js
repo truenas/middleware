@@ -1276,7 +1276,7 @@ require([
             } else if(item.type == 'en_dis_services') {
                 Menu.openServices();
             } else if(item.type == 'openjails') {
-                Menu.openJails();
+                Menu.openJails(item.gname);
             } else if(item.type == 'pluginsfcgi') {
                 Menu.openPluginsFcgi(p, item);
             } else if(item.type == 'openaccount') {

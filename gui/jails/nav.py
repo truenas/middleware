@@ -54,7 +54,7 @@ from freenasUI.freeadmin.tree import (
 )
 
 NAME = _('Jails')
-ICON = u'ServicesIcon'
+ICON = u'JailIcon'
 BLACKLIST = [
     'JailsConfiguration',
     'JailsManager',
@@ -67,12 +67,13 @@ BLACKLIST = [
 import logging
 log = logging.getLogger('jails.nav')
 
+
 class ViewJailsConfiguration(TreeNode):
 
-    gname = 'Configuration'
+    gname  = 'Configuration'
     name  = _(u'Configuration')
     icon = u'SettingsIcon'
-    view = 'jails_jailsconfiguration'
+    type = 'openjails'
     order = 1
 
 
@@ -80,19 +81,19 @@ class ViewJailsBase(TreeNode):
 
     gname = 'Base'
     name  = _(u'Base')
-    icon = u'SettingsIcon'
+    icon = u'JailIcon'
     order = -1
     skip = True
 
     def __init__(self, *args, **kwargs):
         super(ViewJailsBase, self).__init__(*args, **kwargs)
 
-    def new_jail_node(self, jail):
+    def new_jail_node(self, jail, icon=u'JailIcon'):
         jail_node = TreeNode()
 
         jail_node.gname = jail.jail_host
         jail_node.name = jail.jail_host
-        jail_node.icon = u'SettingsIcon'
+        jail_node.icon = icon
 
         return jail_node
 
@@ -114,7 +115,7 @@ class ViewJailsBase(TreeNode):
 
         storage_node.gname = 'Storage'
         storage_node.name = _(u'Storage')
-        storage_node.icon = u'SettingsIcon'
+        storage_node.icon = u'JailStorageIcon'
 
         return storage_node
 
@@ -139,7 +140,7 @@ class ViewJailsBase(TreeNode):
         storage_node_add.view = 'jail_storage_add'
         storage_node_add.kwargs = { 'jail_id': jail.id }
         storage_node_add.model = 'NullMountPoint'
-        storage_node_add.icon = u'SettingsIcon'
+        storage_node_add.icon = u'JailStorageIcon'
         storage_node_add.app_name = 'jails' 
 
         return storage_node_add 
@@ -151,7 +152,7 @@ class ViewJailsBase(TreeNode):
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_mkdir'
         storage_node_add.kwargs = { 'id': jail.id }
-        storage_node_add.icon = u'SettingsIcon'
+        storage_node_add.icon = u'JailMkdirIcon'
         storage_node_add.app_name = 'jails' 
 
         return storage_node_add 
@@ -161,7 +162,7 @@ class ViewPluginJails(ViewJailsBase):
 
     gname = 'Plugin Jails'
     name = _(u'Plugin Jails')
-    icon = u'SettingsIcon'
+    icon = u'PluginJailIcon'
     skip = False
     order = 2
 
@@ -173,7 +174,7 @@ class ViewPluginJails(ViewJailsBase):
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PLUGINJAIL)
 
         for jail in jails:
-            jail_node = self.new_jail_node(jail)
+            jail_node = self.new_jail_node(jail, u'JailPluginIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -204,7 +205,7 @@ class ViewPluginJails(ViewJailsBase):
             plugin_node = TreeNode()
             plugin_node.gname = 'Plugins'
             plugin_node.name = _(u'Plugins')
-            plugin_node.icon = u'SettingsIcon'
+            plugin_node.icon = u'PluginIcon'
             plugin_node.order = 3
 
             args = map(
@@ -246,7 +247,7 @@ class ViewPluginJails(ViewJailsBase):
             plugin_node_add.view = 'plugin_install'
             plugin_node_add.kwargs = {'jail_id': jail.id }
             plugin_node_add.model = 'Plugins'
-            plugin_node_add.icon = u'SettingsIcon'
+            plugin_node_add.icon = u'PluginInstallIcon'
             plugin_node_add.app_name = 'jails' 
             plugin_node_add.order = plugin_order
 
@@ -284,7 +285,7 @@ class ViewStandardJails(ViewJailsBase):
 
     gname = 'Standard Jails'
     name = _(u'Standard Jails')
-    icon = u'SettingsIcon'
+    icon = u'StandardJailIcon'
     skip = False
     order = 3
 
@@ -293,7 +294,7 @@ class ViewStandardJails(ViewJailsBase):
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_STANDARD)
         for jail in jails:
-            jail_node = self.new_jail_node(jail)
+            jail_node = self.new_jail_node(jail, u'BeastieIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -327,7 +328,7 @@ class ViewPortJails(ViewJailsBase):
 
     gname = 'Port Jails'
     name = _(u'Port Jails')
-    icon = u'SettingsIcon'
+    icon = u'PortJailIcon'
     skip = False
     order = 4
 
@@ -336,7 +337,7 @@ class ViewPortJails(ViewJailsBase):
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PORTJAIL)
         for jail in jails:
-            jail_node = self.new_jail_node(jail)
+            jail_node = self.new_jail_node(jail, u'BobbleIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -370,7 +371,7 @@ class ViewLinuxJails(ViewJailsBase):
 
     gname = 'Linux Jails'
     name = _(u'Linux Jails')
-    icon = u'SettingsIcon'
+    icon = u'LinuxJailIcon'
     skip = False
     order = 5
 
@@ -379,7 +380,7 @@ class ViewLinuxJails(ViewJailsBase):
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_LINUXJAIL)
         for jail in jails:
-            jail_node = self.new_jail_node(jail)
+            jail_node = self.new_jail_node(jail, u'TuxIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -413,7 +414,7 @@ class AddJail(TreeNode):
 
     gname = 'Add Jails'
     name = _(u'Add Jails')
-    icon = u'SettingsIcon'
+    icon = u'JailAddIcon'
     type = 'object'
     view = 'freeadmin_jails_jails_add'
     order = 6

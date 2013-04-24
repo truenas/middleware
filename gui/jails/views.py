@@ -58,7 +58,7 @@ def jails_home(request):
     })
 
 
-def jails_jailsconfiguration(request):
+def jailsconfiguration(request):
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
@@ -67,7 +67,7 @@ def jails_jailsconfiguration(request):
         jailsconf = models.JailsConfiguration.objects.create().id
 
     return render(request, 'jails/index.html', {
-        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration'),
+        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
         'jailsconf': jailsconf
     })
 
