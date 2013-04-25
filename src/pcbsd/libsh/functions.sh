@@ -361,7 +361,7 @@ getZFSTank() {
   do
      zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
      if [ -n "${zpath}" ] ; then
-        echo $zpath | cut -f1 -d '/'
+        echo $zpath
         return 0
      fi
 
@@ -391,6 +391,10 @@ getZFSRelativePath() {
    if [ -z "${_tank}" ] ; then return 1 ; fi
 
    local _name="${_chkDir#${_mp}}"
+   if [ -z "${_name}" ] ; then 
+       _name="/`basename ${_chkDir}`"
+   fi
+
    echo "${_name}"
    return 0
 }
