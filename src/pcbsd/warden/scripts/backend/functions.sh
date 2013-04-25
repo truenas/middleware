@@ -13,6 +13,9 @@ PROGDIR="/usr/local/share/warden"
 JDIR="$(grep ^JDIR: /usr/local/etc/warden.conf | cut -d' ' -f2)"
 export JDIR
 
+HOME=JDIR
+export HOME
+
 # Set arch type
 REALARCH=`uname -m`
 export REALARCH
