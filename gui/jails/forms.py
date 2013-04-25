@@ -84,6 +84,7 @@ from freenasUI.system.forms import (
 )
 
 
+LINUXSCRIPT = "/usr/local/share/warden/linux-installs/gentoo-stage3-i486"
 
 log = logging.getLogger('jails.forms')
 
@@ -171,6 +172,7 @@ class JailCreateForm(ModelForm):
         'jail_bridge_ipv4',
         'jail_ipv6',
         'jail_bridge_ipv6',
+        'jail_script'
     ]
 
     class Meta:
@@ -281,7 +283,10 @@ class JailCreateForm(ModelForm):
         jail_host = self.cleaned_data.get('jail_host')
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
         jail_ipv6 = self.cleaned_data.get('jail_ipv6')
+
         jail_flags = WARDEN_FLAGS_NONE
+        jail_create_args = { }
+        jail_create_args['jail'] = jail_host
 
         w = Warden() 
 
@@ -300,15 +305,13 @@ class JailCreateForm(ModelForm):
             jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_LINUXJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
+            jail_create_args['script'] = LINUXSCRIPT
 
         if self.cleaned_data['jail_archive']:
             if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
                 jail_flags |= WARDEN_CREATE_FLAGS_LINUXARCHIVE
             else:
                 jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
-
-        jail_create_args = { }
-        jail_create_args['jail'] = jail_host
 
         if jail_ipv4:
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
@@ -378,7 +381,7 @@ class JailsEditForm(ModelForm):
                             'readonly': True,
                             'class': (
                                 'dijitDisabled dijitTextBoxDisabled'
-                                ' dijitValidationTextBoxDisabled'
+                                'dijitValidationTextBoxDisabled'
                             ),
                         },
                     )
@@ -553,7 +556,7 @@ class NullMountPointForm(ModelForm):
                 'readonly': True,
                 'class': (
                     'dijitDisabled dijitTextBoxDisabled'
-                    ' dijitValidationTextBoxDisabled' 
+                    'dijitValidationTextBoxDisabled' 
                 ),
             }
 
@@ -639,7 +642,7 @@ class MkdirForm(ModelForm):
                 'readonly': True,
                 'class': (
                     'dijitDisabled dijitTextBoxDisabled'
-                    ' dijitValidationTextBoxDisabled' 
+                    'dijitValidationTextBoxDisabled' 
                 ),
             }
 

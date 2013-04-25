@@ -199,12 +199,14 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      if [ -z "$tank" ] ; then
        exit_err "Failed getting ZFS dataset for $JDIR..";
      fi
-     zfs create -o mountpoint=${JAILDIR} -p ${tank}${JAILDIR}
+     jailp=`getZFSRelativePath "${JAILDIR}"`
+     zfs create -o mountpoint=/${tank}${jailp} -p ${tank}${jailp}
      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS dataset"; fi
    else
      mkdir -p "${JAILDIR}"
    fi
    setup_linux_jail
+   echo "${META_ID}" > ${JMETADIR}/id
    exit 0
 fi
 
