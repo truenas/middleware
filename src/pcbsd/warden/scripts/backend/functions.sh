@@ -13,7 +13,7 @@ PROGDIR="/usr/local/share/warden"
 JDIR="$(grep ^JDIR: /usr/local/etc/warden.conf | cut -d' ' -f2)"
 export JDIR
 
-HOME="${JDIR}"
+HOME=${JDIR}
 export HOME
 
 # Set arch type
@@ -77,13 +77,19 @@ downloadpluginjail() {
   if [ ! -e "${PJAIL}" ] ; then
      echo "Downloading ${URL}/${PJAIL} ..."
      get_file "${URL}/${PJAIL}" "${PJAIL}" 3
-     [ $? -ne 0 ] && printerror "Error while downloading the pluginjail."
+     if [ $? -ne 0 ] ; then
+       rm -f ${PJAIL}
+       printerror "Error while downloading the pluginjail."
+     fi
   fi
 
   if [ ! -e "${PJAILSHA256}" ] ; then
      echo "Downloading ${URL}/${PJAILSHA256} ..."
      get_file "${URL}/${PJAILSHA256}" "${PJAILSHA256}" 3
-     [ $? -ne 0 ] && printerror "Error while downloading the pluginjail sha256."
+     if [ $? -ne 0 ] ; then
+       rm -f ${PJAILSHA256}
+       printerror "Error while downloading the pluginjail sha256."
+     fi
   fi
 
   [ "$(sha256 -q ${PJAIL})" != "$(cat ${PJAILSHA256})" ] &&
@@ -139,13 +145,23 @@ downloadchroot() {
   echo "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
 
   if [ ! -e "$FBSD_TARBALL" ] ; then
+     trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
-     [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+     if [ $? -ne 0 ] ; then
+       rm -f "${FBSD_TARBALL}"
+       printerror "Error while downloading the portsjail."
+     fi
+     trap 2 3 6 9
   fi
 
   if [ ! -e "$FBSD_TARBALL_CKSUM" ] ; then
+     trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" 2 3 6 9
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
-     [ $? -ne 0 ] && printerror "Error while downloading the portsjail."
+     if [ $? -ne 0 ] ; then
+       rm -f "${FBSD_TARBALL_CKSUM}"
+       printerror "Error while downloading the portsjail."
+     fi
+     trap 2 3 6 9
   fi
 
   [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
@@ -740,9 +756,12 @@ make_bootstrap_pkgng_file_standard()
 
 cat<<__EOF__>"${outfile}"
 #!/bin/sh
+
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
+
+trap "umount devfs; exit 3;" 2 3 6 9 
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
@@ -769,17 +788,26 @@ make_bootstrap_pkgng_file_pluginjail()
 
 cat<<__EOF__>"${outfile}"
 #!/bin/sh
+
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
 mount -t devfs devfs /dev
 
+trap "umount devfs; exit 3;" 2 3 6 9 
+
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 pkg install -y pcbsd-utils
+if [ "$?" != "0" ]
+then
+  umount devfs
+  exit 1
+fi
+
 __EOF__
 
 echo '
@@ -788,6 +816,12 @@ count=`wc -l /pluginjail-packages| awk "{ print $1 }"`
 for p in `cat /pluginjail-packages`
 do
   pkg install -y ${p}
+  if [ "$?" != "0" ]
+  then
+      umount devfs
+      exit 2
+  fi
+
   : $(( i += 1 ))
 done
 

@@ -176,9 +176,16 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
     cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
 
     bootstrap_pkgng "${pjdir}" "pluginjail"
+    if [ "$?" != "0" ] ; then
+       echo "bootstrap_pkng for ${pjdir} failed"
+       zfs destroy "${tank}${clonep}"
+    fi
 
     zfs snapshot ${tank}${clonep}@clean
-    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS pluginjail snapshot"; fi
+    if [ $? -ne 0 ] ; then
+       zfs destroy "${tank}${clonep}"
+       exit_err "Failed creating clean ZFS pluginjail snapshot"
+    fi
 
   # We're on UFS :-(
   else
