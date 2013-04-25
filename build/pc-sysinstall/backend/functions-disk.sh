@@ -273,6 +273,9 @@ delete_all_gpart()
 # Function to export all zpools before starting an install
 stop_all_zfs()
 {
+  if [ ! -c /dev/zfs ]; then
+    return;
+  fi
   # Export all zpools again, so that we can overwrite these partitions potentially
   for i in `zpool list -H -o name`
   do
@@ -284,6 +287,9 @@ stop_all_zfs()
 stop_all_gmirror()
 {
   if [ ! -x /sbin/gmirror ]; then
+    return;
+  fi
+  if [ ! -d /dev/mirror ]; then
     return;
   fi
   DISK="${1}"
