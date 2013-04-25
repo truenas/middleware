@@ -192,11 +192,10 @@ class cmd_pipe(object):
         log.debug("cmd_pipe.__init__: enter")
         log.debug("cmd_pipe.__init__: cmd = %s", cmd)
 
+        from freenasUI.common.pipesubr import pipeopen
+
         self.error = None
-        self.__pipe = Popen(cmd, stdin=PIPE, stdout=PIPE,
-            stderr=PIPE, shell=True, env={
-                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                })
+        self.__pipe = pipeopen(cmd, allowfork=True)
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
