@@ -91,7 +91,7 @@ __SSL__
 	certificate                     = ${SSLCACERT}
 	private_key                     = ${SSLCAKEY}
 	default_days                    = 3650
-	default_md                      = md5
+	default_md                      = sha1
 	preserve                        = no
 	email_in_dn                     = no
 	nameopt                         = default_ca
@@ -108,9 +108,9 @@ __SSL__
 	emailAddress                    = optional
 
 	[ req ]
-	default_bits                    = 1024
+	default_bits                    = 2048
 	default_keyfile                 = key.pem
-	default_md                      = md5
+	default_md                      = sha1
 	string_mask                     = nombstr
 	distinguished_name              = req_distinguished_name
 	req_extensions                  = v3_req
