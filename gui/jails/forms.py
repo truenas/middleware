@@ -280,6 +280,16 @@ class JailCreateForm(ModelForm):
             self.fields['jail_bridge_ipv6'].initial = bridge_ipv6
 
     def save(self):
+        try:
+            jc = JailsConfiguration.objects.order_by("-id")[0]
+        except Exception, e:
+            self.errors['__all__'] = self.error_class(e.messages)
+            return
+
+        if not jc.jc_path:
+           self.errors['__all__'] = self.error_class(["No jail root configured."])
+           return
+
         jail_host = self.cleaned_data.get('jail_host')
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
         jail_ipv6 = self.cleaned_data.get('jail_ipv6')
