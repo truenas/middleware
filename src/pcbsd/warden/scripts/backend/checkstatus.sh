@@ -41,7 +41,7 @@ for mountpoint in $(mount | grep -e '${JAILDIR}/' | cut -d" " -f3); do
 done
 
 # Check if the jail is active
-jls | grep ${JAILNAME}$ >/dev/null 2>/dev/null
+jls | grep -w ${JAILNAME}$ >/dev/null 2>/dev/null
 if [ "$?" = "0" -o "$hasmount" = "1" ]; then
   exit 0
 else
