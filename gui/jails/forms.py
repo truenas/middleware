@@ -282,8 +282,8 @@ class JailCreateForm(ModelForm):
     def save(self):
         try:
             jc = JailsConfiguration.objects.order_by("-id")[0]
-        except Exception, e:
-            self.errors['__all__'] = self.error_class(e.messages)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
             return
 
         if not jc.jc_path:
@@ -332,7 +332,12 @@ class JailCreateForm(ModelForm):
             jail_create_args['ipv6'] = jail_ipv6
 
         jail_create_args['flags'] = jail_flags
-        w.create(**jail_create_args)
+
+        try:
+            w.create(**jail_create_args)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            return
 
         jail_set_args = { }
         jail_set_args['jail'] = jail_host
@@ -350,12 +355,25 @@ class JailCreateForm(ModelForm):
             jail_set_args['bridge-ipv6'] = jail_bridge_ipv6
 
         jail_set_args['flags'] = jail_flags
-        w.set(**jail_set_args)
+
+        try:
+            w.set(**jail_set_args)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            return
 
         if self.cleaned_data['jail_autostart']:
-            w.auto(jail=jail_host)
+            try:
+                w.auto(jail=jail_host)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
-        w.start(jail=jail_host)
+        try:
+            w.start(jail=jail_host)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            return
 
 class JailsConfigurationForm(ModelForm):
 
