@@ -213,7 +213,12 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      mkdir -p "${JAILDIR}"
    fi
    setup_linux_jail
+
    echo "${META_ID}" > ${JMETADIR}/id
+   if [ -d "${PROGDIR}/scripts/hooks" ] ; then
+     cp ${PROGDIR}/scripts/hooks/jail-* "${JMETADIR}"
+   fi
+
    exit 0
 fi
 

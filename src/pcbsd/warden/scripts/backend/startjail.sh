@@ -256,6 +256,7 @@ if [ -e "${JMETADIR}/jail-flags" ] ; then
   jFlags=`cat ${JMETADIR}/jail-flags`
 fi
 
+
 # Start the jail now
 echo "jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet"
 jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet
