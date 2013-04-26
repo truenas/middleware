@@ -310,7 +310,6 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
         self.instance._original_adv_autotune = self.instance.adv_autotune
-        self.instance._original_adv_virtio = self.instance.adv_virtio
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -337,8 +336,6 @@ class AdvancedForm(ModelForm):
         if (
             (
                 self.instance._original_adv_autotune != self.instance.adv_autotune
-                or
-                self.instance._original_adv_virtio != self.instance.adv_virtio
             )
             and not loader_reloaded
         ):
