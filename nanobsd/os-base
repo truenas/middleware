@@ -60,7 +60,7 @@ NANO_IMAGES=2
 # Remove .orig and .rej too
 # Removing X11 needs more work, it blows rdd + fonts
 NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|\.orig$|\.rej$)/')
-FlashDevice generic 3900m
+FlashDevice generic 3700m
 
 if [ "$DEBUG" = 1 ]; then
 	DEBUG_BUILD="
