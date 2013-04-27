@@ -330,12 +330,12 @@ class NICChoices(object):
     """Populate a list of NIC choices"""
     def __init__(self, nolagg=False, novlan=False,
             exclude_configured=True, include_vlan_parent=False,
-            with_alias=False):
+            with_alias=False, nobridge=True, noepair=True):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
         self._NIClist = filter(
-            lambda y: y not in ('lo0', 'pfsync0', 'pflog0'),
+            lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
             self._NIClist)
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
@@ -419,6 +419,18 @@ class NICChoices(object):
                 for interface in c:
                     if interface[0] in self._NIClist:
                         self._NIClist.remove(interface[0])
+
+        if nobridge:
+            for nic in self._NIClist:
+                if nic.startswith('bridge'):
+                    self._NIClist.remove(nic)
+
+        if noepair:
+            niclist = copy.deepcopy(self._NIClist)
+            for nic in niclist:
+                if nic.startswith('epair'):
+                    self._NIClist.remove(nic)
+
 
         self.max_choices = len(self._NIClist)
 
