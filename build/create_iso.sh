@@ -137,7 +137,7 @@ mount_cd()
 {
 	local CD
 
-	for CD in /dev/cd[0-9] /dev/acd[0-9]; do
+	for CD in /dev/cd[0-9] /dev/acd[0-9] /dev/vtbd[0-9]*; do
 		try_mount ${CD} "-t cd9660" && return 0
 	done
 	return 1
