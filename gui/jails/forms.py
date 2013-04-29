@@ -125,11 +125,11 @@ class JailCreateForm(ModelForm):
         initial=True
     )
 
-    jail_32bit = forms.BooleanField(
-        label=_("32 bit"),
-        required=False,
-        initial=False
-    )
+#    jail_32bit = forms.BooleanField(
+#        label=_("32 bit"),
+#        required=False,
+#        initial=False
+#    )
 
     jail_source = forms.BooleanField(
         label=_("source"),
@@ -163,7 +163,6 @@ class JailCreateForm(ModelForm):
     advanced_fields = [
         'jail_type',
         'jail_autostart',
-        'jail_32bit',
         'jail_source',
         'jail_ports',
         'jail_vanilla',
@@ -194,7 +193,7 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+#            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         )
 
         high_ipv4 = None
@@ -300,8 +299,8 @@ class JailCreateForm(ModelForm):
 
         w = Warden() 
 
-        if self.cleaned_data['jail_32bit']:
-            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
+#        if self.cleaned_data['jail_32bit']:
+#            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
         if self.cleaned_data['jail_source']:
             jail_flags |= WARDEN_CREATE_FLAGS_SRC
         if self.cleaned_data['jail_ports']:
