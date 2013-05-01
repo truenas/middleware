@@ -458,11 +458,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.ActiveDirectoryIcon {
-    background-image:url('/static/images/ui/tree/active_directory.png');
-    width:16px;
-    height:16px;
-}
 .DDNSIcon {
     background-image:url('/static/images/ui/tree/dynamic_dns.png');
     width:16px;
@@ -480,6 +475,26 @@ table.grid tr {
 }
 .TFTPIcon {
     background-image:url('/static/images/ui/tree/tftp.png');
+    width:16px;
+    height:16px;
+}
+.DirectoryServiceIcon {
+    background-image:url('/static/images/ui/tree/directory_service.png');
+    width:16px;
+    height:16px;
+}
+.ActiveDirectoryIcon {
+    background-image:url('/static/images/ui/tree/active_directory.png');
+    width:16px;
+    height:16px;
+}
+.NT4Icon {
+    background-image:url('/static/images/ui/tree/nt4.png');
+    width:16px;
+    height:16px;
+}
+.NISIcon {
+    background-image:url('/static/images/ui/tree/nis.png');
     width:16px;
     height:16px;
 }
