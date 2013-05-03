@@ -421,7 +421,7 @@ ports_checkout_git()
 		git pull --depth 1
 		cd ..
 	else
-		: ${GIT_PORTS_BRANCH=master}
+		: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
 		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
 		spl="$-";set -x
 		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
