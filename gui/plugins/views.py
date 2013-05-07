@@ -159,6 +159,9 @@ def plugin_install(request, jail_id=-1):
         'form': form,
         })
 
+def plugin_install_nojail(request):
+    return plugin_install(request)
+
 
 @public
 def plugin_fcgi_client(request, name, path):
