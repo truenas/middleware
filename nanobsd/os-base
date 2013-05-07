@@ -826,6 +826,7 @@ last_orders() {
 
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
+		)
 	fi
 
 	pprint 2 "Compressing full disk image"
