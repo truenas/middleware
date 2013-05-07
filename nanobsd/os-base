@@ -807,7 +807,7 @@ if $do_image; then
 last_orders() {
 	local cd_image_log
 	local full_image full_image_log
-	local firmware_img 
+	local firmware_img gui_upgrade_bname gui_upgrade_image_log
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
@@ -815,6 +815,7 @@ last_orders() {
 
 	firmware_img="$NANO_DISKIMGDIR/firmware.img"
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
+	gui_upgrade_bname="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 
 	if $do_copyout_partition; then
 
@@ -826,7 +827,18 @@ last_orders() {
 
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
-		)
+
+		tar -cpvf - \
+			-C "$NANO_WORLDDIR" \
+				etc/avatar.conf \
+			-C "$AVATAR_ROOT/nanobsd/Installer" \
+				. \
+			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				. \
+			-C "$NANO_DISKIMGDIR" \
+				${firmware_img##*/} \
+			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
+		) > "${gui_image_log}" 2>&1
 	fi
 
 	pprint 2 "Compressing full disk image"
