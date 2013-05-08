@@ -154,6 +154,11 @@ WITHOUT_SHAREDOCS=true
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
+customize_cmd build_debug_kernel
+customize_cmd install_debug_kernel
+
+add_port textproc/libxml2
+add_port devel/libffi
 add_port archivers/lzo2
 add_port www/aria2
 add_port security/easy-rsa
@@ -226,14 +231,12 @@ add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=STATUS
 add_port net-mgmt/net-snmp
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
-add_port textproc/libxml2
 add_port textproc/py-libxml2
 add_port textproc/expat2
 add_port devel/gamin
 add_port devel/gio-fam-backend
 add_port devel/m4
 add_port devel/bison
-add_port devel/libffi
 add_port misc/gnomehier
 add_port devel/gobject-introspection
 add_port www/py-httplib2
@@ -868,3 +871,102 @@ last_orders() {
 
 }
 fi # $do_image
+
+
+build_kernel2 ( ) (
+	local _kernel=$1
+	if [ -z "$1" ] ; then
+		_kernel=${NANO_KERNEL}
+	fi
+	local _logfile="${MAKEOBJDIRPREFIX}/_.bk_$(basename ${_kernel})"
+
+	pprint 2 "build kernel ($_kernel)"
+	pprint 3 "log: ${_logfile}"
+
+	(
+	if [ -f ${_kernel} ] ; then
+		kernconfdir=$(realpath $(dirname ${_kernel}))
+		kernconf=$(basename ${_kernel})
+	else
+		kernconf=${_kernel}
+	fi
+
+	cd ${NANO_SRC};
+	# unset these just in case to avoid compiler complaints
+	# when cross-building
+	unset TARGET_CPUTYPE
+	unset TARGET_BIG_ENDIAN
+	# Note: We intentionally build all modules, not only the ones in
+	# NANO_MODULES so the built world can be reused by multiple images.
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		buildkernel \
+		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
+		KERNCONF=${kernconf} \
+		MODULES_OVERRIDE="${NANO_MODULES}" \
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+	) > ${_logfile} 2>&1
+)
+
+install_kernel2 ( ) (
+	local _kernel=$1
+	local _kodir=$2
+
+	if [ -z "$1" ] ; then
+		_kernel=${NANO_KERNEL}
+	fi
+	if [ -z "$2" ] ; then
+		_kodir=/boot/kernel
+	fi
+
+	local _logfile="${NANO_OBJ}/_.ik_$(basename ${_kernel})"
+	pprint 2 "install kernel ($_kernel)"
+	pprint 3 "log: ${_logfile}"
+
+	(
+	if [ -f ${_kernel} ] ; then
+		kernconfdir=$(realpath $(dirname ${_kernel}))
+		kernconf=$(basename ${_kernel})
+	else
+		kernconf=${_kernel}
+	fi
+
+	cd ${NANO_SRC}
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		installkernel \
+		INSTALL_NODEBUG= \
+		DESTDIR=${NANO_WORLDDIR} \
+		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
+		KERNCONF=${kernconf} \
+		KODIR=${_kodir} \
+		MODULES_OVERRIDE="${NANO_MODULES}"
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
+	) > ${_logfile} 2>&1
+)
+
+build_debug_kernel ( ) 
+{
+	local _kernconfdir=$(dirname ${NANO_KERNEL})
+	local _kernconf=$(basename ${NANO_KERNEL})
+
+	(
+	cd ${_kernconfdir}
+	cat $_kernconf DEBUG > ${NANO_OBJ}/${_kernconf}-DEBUG
+	)
+
+	build_kernel2 ${NANO_OBJ}/${_kernconf}-DEBUG /boot/kernel-debug
+}
+
+install_debug_kernel ( )
+{
+	local _kernconf=$(basename ${NANO_KERNEL})
+
+	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
+}

@@ -284,8 +284,11 @@ build_target()
 
 	if ! $BUILD
 	then
-		echo ${_cmd}
 		exit 0
+	fi
+
+	if -n "${TRACE}"
+		echo ${_cmd}
 	fi
 
 	if sh ${TRACE} ${_cmd}
