@@ -24,6 +24,18 @@ Requirements:
 - The port security/sudo is recommended but not required, if you do not have
   the port installed you can run the commands listed in this doc as root.
 
+- If you have the devel/gamin port installed, you may encounter errors
+  during the FreeNAS build when it tries to unmount nullfs file systems.
+  To fix this, you either can remove the port, or create a config file
+  /usr/local/etc/gamin/gaminrc with the following entries to disable gamin
+  notifications on certain file systems:
+
+    fsset nullfs none
+    fsset ufs none
+    fsset zfs none
+
+  See:  http://people.gnome.org/~veillard/gamin/config.html for more details.
+
 Building the System Quickstart Flow:
 
 - Checking out the code from git:
