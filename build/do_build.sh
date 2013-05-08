@@ -287,7 +287,7 @@ build_target()
 		exit 0
 	fi
 
-	if -n "${TRACE}"
+	if -n "${TRACE}"; then
 		echo ${_cmd}
 	fi
 
