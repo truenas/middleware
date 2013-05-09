@@ -140,7 +140,7 @@ generate_activedirectory_smbconf()
 	    idmap uid = 10000-19999
 	    idmap gid = 10000-19999
 
-	    winbind cache time = 10
+	    winbind cache time = 7200
 	    winbind offline logon = yes
 	    winbind enum users = yes
 	    winbind enum groups = yes
