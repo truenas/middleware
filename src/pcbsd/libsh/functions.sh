@@ -60,6 +60,50 @@ download_cache_packages()
   done
 }
 
+verify_mirror() {
+  local mirror="${1}"
+  local proto
+  local host
+  local port
+  local proto
+
+  if [ -z "${mirror}" ] ; then
+     return 1
+  fi
+
+  proto="$(echo "${mirror}"|cut -f1 -d:|tr A-Z a-z)"
+  case "${proto}" in
+     ftp) mirror=${mirror#ftp://} ;;
+     ftps) mirror=${mirror#ftps://} ;;
+     http) mirror=${mirror#http://} ;;
+     https) mirror=${mirror#https://} ;;
+     *) proto= ;;
+  esac
+
+  mirror=${mirror%%/*}
+  if [ -z "${proto}" ] ; then
+     proto="http"
+  fi
+
+  mirror=${mirror#*@}
+
+  port="$(echo "${mirror}"|cut -f2 -d: -s)"
+  if [ -z "${port}" ] ; then
+     case "${proto}" in
+        ftp) port=21 ;;
+        ftps) port=990 ;;
+        http) port=80 ;;
+        https) port=443 ;;
+        *) port=80 ;;
+     esac
+  fi
+
+  host=${mirror%:*}
+  echo | /usr/bin/nc -w 60 ${host} ${port}
+
+  return $?
+}
+
 get_mirror() {
 
   # Check if we already looked up a mirror we can keep using
@@ -87,7 +131,7 @@ get_mirror() {
   fetch -o $mFile http://getmirror.pcbsd.org >/dev/null 2>/dev/null
   VAL="`cat $mFile | grep 'URL: ' | sed 's|URL: ||g'`"
   rm $mFile
-  if [ -n "$VAL" ] ; then
+  if [ -n "${VAL}" ] && verify_mirror "${VAL}" ; then
      echo "Using mirror: $VAL"
      CACHED_PCBSD_MIRROR="$VAL"
      export VAL CACHED_PCBSD_MIRROR
