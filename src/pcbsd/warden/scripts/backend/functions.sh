@@ -83,8 +83,12 @@ downloadchroot() {
      trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
      if [ $? -ne 0 ] ; then
-       rm -f "${FBSD_TARBALL}"
-       printerror "Error while downloading the portsjail."
+       MIRRORURL="ftp://ftp.pcbsd.org/pub/mirror" 
+       get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
+       if [ $? -ne 0 ] ; then
+         rm -f "${FBSD_TARBALL}"
+         printerror "Error while downloading the portsjail."
+       fi
      fi
      trap 2 3 6 9
   fi
@@ -93,8 +97,12 @@ downloadchroot() {
      trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" 2 3 6 9
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
      if [ $? -ne 0 ] ; then
-       rm -f "${FBSD_TARBALL_CKSUM}"
-       printerror "Error while downloading the portsjail."
+       MIRRORURL="ftp://ftp.pcbsd.org/pub/mirror" 
+       get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
+       if [ $? -ne 0 ] ; then
+         rm -f "${FBSD_TARBALL_CKSUM}"
+         printerror "Error while downloading the portsjail."
+       fi
      fi
      trap 2 3 6 9
   fi
