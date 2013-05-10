@@ -79,7 +79,7 @@ if [ -z "${SVNVERSION}" ]; then
 	if [ -z "$svn" ]; then
 		if [ -n "$git_cmd" ] ; then
 			git=`$git_cmd rev-parse --verify --short HEAD 2>/dev/null`
-			svn=`$git_cmd svn find-rev $git 2>/dev/null`
+			svn=`$git_cmd svn find-rev $git 2>/dev/null || echo ""`
 			if [ -n "$svn" ] ; then
 				svn="r${svn}"
 				git="=${git}"
