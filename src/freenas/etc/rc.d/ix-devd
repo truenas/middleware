@@ -158,7 +158,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     if  [ -f /tmp/failover_override ] ; then
         rm /tmp/failover_override
     fi
-    /usr/sbin/service ix-cron quietstart
+    /usr/sbin/service ix-crontab quietstart
     echo "Failover event complete." | logger
 fi
 
@@ -184,7 +184,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     done
     watchdog -t 0
     /etc/rc.d/watchdogd start
-    /usr/sbin/service ix-cron quietstart
+    /usr/sbin/service ix-crontab quietstart
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 fi
 
