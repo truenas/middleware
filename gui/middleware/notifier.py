@@ -34,7 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 import ctypes
 import errno
 import glob
@@ -3712,10 +3712,10 @@ class notifier:
             True in case the label succeeded and False otherwise
         """
         p1 = subprocess.Popen(["/sbin/gmultipath", "label", name] + consumers, stdout=subprocess.PIPE)
-        if p1.wait() != 0:
-            return False
         # We need to invalidate confxml cache
         self.__confxml = None
+        if p1.wait() != 0:
+            return False
         return True
 
     def multipath_next(self):
@@ -3770,24 +3770,22 @@ class notifier:
             reserved.extend(vol.get_disks())
 
         disks = []
-        serials = {}
+        serials = defaultdict(list)
         RE_CD = re.compile('^cd[0-9]')
         for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
             name = geom.xpathEval("./name")[0].content
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
             serial = self.serial_from_device(name)
+            size = geom.xpathEval("./mediasize")[0].content
             if not serial:
                 disks.append(name)
             else:
-                if not serials.has_key(serial):
-                    serials[serial] = [name]
-                else:
-                    serials[serial].append(name)
+                serials[(serial, size)].append(name)
 
         disks = sorted(disks)
 
-        for serial, disks in serials.items():
+        for disks in serials.values():
             if not len(disks) > 1:
                 continue
             name = self.multipath_next()
