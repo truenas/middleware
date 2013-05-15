@@ -31,6 +31,7 @@ ident		FREENAS64
 # env		"GENERIC.env"
 
 makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
+makeoptions	WITH_CTF=1
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
@@ -72,8 +73,9 @@ options 	HWPMC_HOOKS		# Necessary kernel hooks for hwpmc(4)
 options 	AUDIT			# Security event auditing
 options 	MAC			# TrustedBSD MAC Framework
 #options	FLOWTABLE		# per-cpu routing cache
-#options 	KDTRACE_FRAME		# Ensure frames are compiled in
-#options 	KDTRACE_HOOKS		# Kernel DTrace hooks
+options 	KDTRACE_FRAME		# Ensure frames are compiled in
+options 	KDTRACE_HOOKS		# Kernel DTrace hooks
+options 	DDB_CTF			# Kernel ELF linker loads CTF data
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
 
 # ipfw and nat for jails

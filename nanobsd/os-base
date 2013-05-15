@@ -202,6 +202,7 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash WITHOUT_NLS=y
+add_port shells/ksh93
 add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
@@ -718,9 +719,10 @@ freenas_custom()
 {
 	compress_ko()
 	{
-		if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]; then
-			gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
-		fi
+# XXX: If we want to Dtrace the kernel it cannot be compressed
+#		if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]; then
+#			gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
+#		fi
 	}
 
 	# Compress the kernel and preloaded modules
