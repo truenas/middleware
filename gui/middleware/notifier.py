@@ -3873,6 +3873,18 @@ class notifier:
 
         return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
 
+    def retaste_disks(self):
+        """
+        Retaste disks for GEOM metadata
+
+        This will not work if the device is already open
+
+        It is useful in multipath situations, for example.
+        """
+        disks = self.__get_disks()
+        for disk in disks:
+            open("/dev/%s" % disk, 'w').close()
+
     def gmirror_status(self, name):
         """
         Get all available gmirror instances
