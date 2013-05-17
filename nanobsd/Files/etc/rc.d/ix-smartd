@@ -21,6 +21,7 @@ print_devlist ()
 			;;
 		\<[^\>]*)
 			TGT=$(expr "$LINE" : '.*target \([0-9]*\).*')
+			LUN=$(expr "$LINE" : '.*lun \([0-9]*\).*')
 			DEV1=$(expr "$LINE" : '.*(\([a-z]*[0-9]*\),.*)')
 			DEV2=$(expr "$LINE" : '.*(.*,\([a-z]*[0-9]*\))')
 			case $DEV2 in
@@ -31,7 +32,7 @@ print_devlist ()
 				DEV=$DEV2
 				;;
 			esac
-			echo "$DRV|$CID|$TGT|$DEV"
+			echo "$DRV|$CID|$TGT|$LUN|$DEV"
 			;;
 		esac
 	done
@@ -42,8 +43,14 @@ parse_devlist()
 	disk=$1
 
 	local IFS="|"
-	while read DRIVER CONTROLLER_ID CHANNEL_NO DEVICE; do
+	while read DRIVER CONTROLLER_ID CHANNEL_NO LUN_ID DEVICE; do
 		case ${DEVICE}:${DRIVER} in
+		# Areca Controller support(at least the 12xx family, possibly others)
+		${disk}:arcmsr*)
+			DEVID=$(($LUN_ID+1+($CHANNEL_NO*8)))
+			echo -n "/dev/arcmsr${CONTROLLER_ID} -d areca,${DEVID}"
+			break
+			;;
 		# Highpoint Rocket Raid 27xx controller
 		${disk}:rr274x_3x)
 			CONTROLLER_ID=$(($CONTROLLER_ID+1))

@@ -3321,6 +3321,12 @@ class notifier:
                     "-d",
                     "hpt,%d/%d" % (info["controller"] + 1, channel)
                     ]
+            elif info.get("drv").startswith("arcmsr"):
+                args = [
+                    "/dev/%s%d" % (info["drv"], info["controller"]),
+                    "-d",
+                    "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
+                    ]
             elif info.get("drv").startswith("hpt"):
                 args = [
                     "/dev/%s" % info["drv"],
@@ -3527,8 +3533,8 @@ class notifier:
         self.__camcontrol = {}
 
         re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
-        drv, cid, tgt, dev, devtmp = (None, ) * 5
+        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
+        drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
         proc = self.__pipeopen("camcontrol devlist -v")
         for line in proc.communicate()[0].splitlines():
@@ -3543,6 +3549,7 @@ class notifier:
                 if not reg:
                     continue
                 tgt = reg.group("tgt")
+                lun = reg.group("lun")
                 dev = reg.group("dv1")
                 devtmp = reg.group("dv2")
                 if dev.startswith("pass"):
@@ -3551,6 +3558,7 @@ class notifier:
                     'drv': drv,
                     'controller': int(cid),
                     'channel': int(tgt),
+                    'lun': int(lun)
                     }
         return self.__camcontrol
 
