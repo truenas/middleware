@@ -278,7 +278,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 len_disks > 1 and \
                 self.cleaned_data['group_type'] in (None, ''):
             raise forms.ValidationError(_("This field is required."))
-        if len_disks < 2:
+        if len_disks == 1:
             if self.cleaned_data.get("volume_fstype") == 'ZFS':
                 return 'stripe'
             else:
@@ -312,7 +312,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                     "ZFS volume to append a virtual device"),
             ])
         elif not volume_name:
-            volume_name = cleaned_data.get("volume_add")
+            volume_name = cleaned_data.get("volume_add", '').split('|')[0]
 
         if cleaned_data.get("volume_add"):
             cleaned_data["volume_add"] = cleaned_data.get(
@@ -321,6 +321,10 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             force_vdev = True if self.data.get("force_vdev") == 'on' else False
 
             for vdev in zpool.data:
+
+                if not self.cleaned_data.get('group_type'):
+                    continue
+
                 errors = []
                 if vdev.type != self.cleaned_data.get('group_type'):
                     #and not force_vdev:
@@ -363,6 +367,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             msg = _(u"You must select a filesystem")
             self._errors["volume_fstype"] = self.error_class([msg])
             cleaned_data.pop("volume_fstype", None)
+
         if len(disks) == 0 and models.Volume.objects.filter(
                 vol_name=volume_name).count() == 0:
             msg = _(u"This field is required")
