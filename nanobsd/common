@@ -189,7 +189,7 @@ do_add_pkg ()
 	    ${NANO_WORLDDIR}/usr/ports/packages
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
-	CR "cd /usr/ports/packages/All;pkg_add -F $1.tbz"
+	CR "cd /usr/ports/packages/All;pkg_add -F -I $1.tbz"
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
