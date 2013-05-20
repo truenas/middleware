@@ -20,6 +20,12 @@
                         this.mode = 'basic';
                         this.set('label', gettext('Advanced Mode'));
                     }
+                    var dialog = getDialog(this);
+                    if(dialog) {
+                        //dialog.layout();
+                        dialog._size();
+                        dialog._position();
+                    }
                 </script>
                 {% if form.advDefault %}
                 {% trans "Basic Mode" %}
