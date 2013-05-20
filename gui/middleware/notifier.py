@@ -1339,9 +1339,14 @@ class notifier:
 
     def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
         """Attach a disk group to a zfs volume"""
-        c = self.__open_db()
-        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize=c.fetchone()[0]
+
+        vgrp_type = group['type']
+        if vgrp_type in ('log', 'cache'):
+            swapsize = 0
+        else:
+            c = self.__open_db()
+            c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+            swapsize = c.fetchone()[0]
 
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
@@ -1350,7 +1355,6 @@ class notifier:
 
         # FIXME swapoff -a is overkill
         self.__system("swapoff -a")
-        vgrp_type = group['type']
         if vgrp_type != 'stripe':
             z_vdev += " " + vgrp_type
 
