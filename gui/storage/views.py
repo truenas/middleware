@@ -44,6 +44,7 @@ from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
@@ -691,7 +692,12 @@ def volume_detach(request, vid):
 
 def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
-    pool = notifier().zpool_parse(volume.vol_name)
+    try:
+        pool = notifier().zpool_parse(volume.vol_name)
+    except:
+        raise MiddlewareError(
+            _('Pool output could not be parsed. Is the pool imported?')
+        )
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
