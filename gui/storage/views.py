@@ -286,6 +286,9 @@ def dataset_create(request, fs):
                     message=_("Dataset successfully added."))
             else:
                 dataset_form.set_error(errmsg)
+                return JsonResp(request, form=dataset_form)
+        else:
+            return JsonResp(request, form=dataset_form)
     else:
         dataset_form = forms.ZFSDataset_CreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
