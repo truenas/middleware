@@ -143,6 +143,11 @@ class NFSForm(ModelForm):
 
     class Meta:
         model = models.NFS
+        widgets = {
+            'nfs_srv_mountd_port': forms.widgets.TextInput(),
+            'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
+            'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
+        }
 
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
