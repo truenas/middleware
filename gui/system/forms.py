@@ -143,6 +143,19 @@ class FirmwareWizard(FileWizard):
         #form = form_list[1]
         #return self.render_revalidation_failure('1', form)
 
+        # Verify integrity of uploaded image.
+        assert ('sha256' in cleaned_data)
+        checksum = notifier().checksum(path)
+        if checksum != str(cleaned_data['sha256']).strip():
+            self.file_storage.delete(firmware.name)
+            raise MiddlewareError("Invalid firmware, wrong checksum")
+
+        # Validate that the image would pass all pre-install
+        # requirements.
+        #
+        # IMPORTANT: pre-install step have scripts or executables
+        # from the upload, so the integrity has to be verified
+        # before we proceed with this step.
         try:
             retval = notifier().validate_update(path)
         except:
@@ -155,14 +168,6 @@ class FirmwareWizard(FileWizard):
             #del cleaned_data["firmware"]
             self.file_storage.delete(firmware.name)
             raise MiddlewareError("Invalid firmware")
-        elif 'sha256' in cleaned_data:
-            checksum = notifier().checksum(path)
-            if checksum != str(cleaned_data['sha256']).strip():
-                self.file_storage.delete(firmware.name)
-                raise MiddlewareError("Invalid firmware, wrong checksum")
-                #msg = _(u"Invalid checksum")
-                #self._errors["firmware"] = self.error_class([msg])
-                #del cleaned_data["firmware"]
 
         notifier().apply_update(path)
         try:
