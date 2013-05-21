@@ -201,7 +201,7 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 	OPTIONS_FILE_SET+=PAM_SMBPASS
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
-add_port shells/bash WITHOUT_NLS=y
+add_port shells/bash OPTIONS_FILE_UNSET+=NLS
 add_port shells/ksh93
 add_port shells/mksh
 add_port shells/scponly
