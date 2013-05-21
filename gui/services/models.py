@@ -31,13 +31,14 @@ import uuid
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.core.validators import (MinValueValidator, MaxValueValidator,
-    RegexValidator)
+from django.core.validators import (
+    MinValueValidator, MaxValueValidator
+)
 
 from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IPAddressField
-from freenasUI.freeadmin.models import (Model, UserField, GroupField,
-    PathField, MACField)
+from freenasUI.freeadmin.models import (
+    Model, UserField, GroupField, PathField
+)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
@@ -295,6 +296,38 @@ class NFS(Model):
                 "to INADDR_ANY. It will automatically add 127.0.0.1 and if "
                 "IPv6 is enabled, ::1 to the list.")
             )
+    nfs_srv_mountd_port = models.SmallIntegerField(
+        verbose_name=_("mountd(8) bind port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        blank=True,
+        null=True,
+        help_text=_(
+            "Force mountd to bind to the specified port, for both AF_INET and "
+            "AF_INET6 address families. This is typically done to ensure that "
+            "the port which mountd binds to is a known quantity which can be "
+            "used in firewall rulesets."
+        )
+    )
+    nfs_srv_rpcstatd_port = models.SmallIntegerField(
+        verbose_name=_("rpc.statd(8) bind port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        blank=True,
+        null=True,
+        help_text=_(
+            "This option allow to force the daemon to bind to the specified "
+            "port, for both AF_INET and AF_INET6 address families."
+        )
+    )
+    nfs_srv_rpclockd_port = models.SmallIntegerField(
+        verbose_name=_("rpc.lockd(8) bind port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        blank=True,
+        null=True,
+        help_text=_(
+            "This option allow to force the daemon to bind to the specified "
+            "port, for both AF_INET and AF_INET6 address families."
+        )
+    )
 
     class Meta:
         verbose_name = _("NFS")
