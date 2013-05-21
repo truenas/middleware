@@ -1283,12 +1283,25 @@ class ZFSDataset_CreateForm(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
+    dataset_recordsize = forms.CharField(
+        label=_('Record Size'),
+        initial="",
+        required=False,
+        help_text=_(
+            "Specifies a suggested block size for files in the file system. "
+            "This property is designed solely for use with database workloads "
+            "that access files in fixed-size records.  ZFS automatically tunes"
+            " block sizes according to internal algorithms optimized for "
+            "typical access patterns."
+        )
+    )
 
     advanced_fields = (
         'dataset_refquota',
         'dataset_quota',
         'dataset_refreserv',
         'dataset_reserv',
+        'dataset_recordsize'
     )
 
     def __init__(self, *args, **kwargs):
@@ -1303,6 +1316,24 @@ class ZFSDataset_CreateForm(Form):
                 "alphanumeric character and may only contain "
                 "\"-\", \"_\", \":\" and \".\"."))
         return name
+
+    def clean_dataset_recordsize(self):
+        rs = self.cleaned_data.get("dataset_recordsize")
+        if not rs:
+            return rs
+        if not re.search(r'^[0-9]+K?', rs, re.I):
+            raise forms.ValidationError(_("This is not a valid record size"))
+        if rs[-1].lower() == 'k':
+            rs = int(rs[:-1]) * 1024
+        else:
+            rs = int(rs)
+        poftwo = pow(rs, 0.5)
+        if (rs < 512 or rs > 131072) or poftwo != int(poftwo):
+            raise forms.ValidationError(_(
+                "The size specified must be a power of two greater than or "
+                "equal to 512 and less than or equal to 128 Kbytes."
+            ))
+        return rs
 
     def clean(self):
         cleaned_data = _clean_quota_fields(

@@ -274,6 +274,9 @@ def dataset_create(request, fs):
             dedup = cleaned_data.get('dataset_dedup')
             if dedup != 'off':
                 props['dedup'] = dedup.__str__()
+            recordsize = cleaned_data.get('dataset_recordsize')
+            if recordsize:
+                props['recordsize'] = recordsize
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
