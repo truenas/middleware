@@ -51,7 +51,7 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
-GIT_CACHE="/freenas-build/trueos.git"
+GIT_CACHE="file:///freenas-build/trueos.git"
 if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE}" ] ; then
         GIT_REPO="${GIT_CACHE}"
 fi
@@ -61,7 +61,7 @@ else
         echo "no local mirror, to speed up builds we suggest doing"
         echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
 fi
-GIT_PORTS_CACHE="/freenas-build/ports.git"
+GIT_PORTS_CACHE="file:///freenas-build/ports.git"
 if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE" ] ;then
     GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
 fi
