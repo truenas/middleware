@@ -1284,6 +1284,13 @@ class ZFSDataset_CreateForm(Form):
         initial="inherit",
     )
 
+    advanced_fields = (
+        'dataset_refquota',
+        'dataset_quota',
+        'dataset_refreserv',
+        'dataset_reserv',
+    )
+
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         super(ZFSDataset_CreateForm, self).__init__(*args, **kwargs)
@@ -1351,6 +1358,13 @@ class ZFSDataset_EditForm(Form):
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="off",
+    )
+
+    advanced_fields = (
+        'dataset_refquota',
+        'dataset_quota',
+        'dataset_refreservation',
+        'dataset_reservation',
     )
 
     def __init__(self, *args, **kwargs):
