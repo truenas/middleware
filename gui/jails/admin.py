@@ -24,21 +24,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import OrderedDict
+import logging
+
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from freenasUI.freeadmin.api.resources import (JailsResource, NullMountPointResource)
+from freenasUI.freeadmin.api.resources import (
+    JailsResource, NullMountPointResource
+)
 from freenasUI.jails import models
 
-
-from collections import OrderedDict
-
-import logging
-
 log = logging.getLogger('jails.admin')
+
 
 class JailsFAdmin(BaseFreeAdmin):
 
@@ -173,13 +174,12 @@ class NullMountPointFAdmin(BaseFreeAdmin):
 
     def get_datagrid_columns(self):
         columns = super(NullMountPointFAdmin,self).get_datagrid_columns()
-        columns.insert(2, {
+        columns.insert(3, {
             'name': 'mounted',
             'label': _('Mounted?'),
             'sortable': False,
         })
         return columns
-
 
 site.register(models.Jails, JailsFAdmin)
 site.register(models.NullMountPoint, NullMountPointFAdmin)
