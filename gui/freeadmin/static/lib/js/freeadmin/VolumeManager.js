@@ -324,7 +324,8 @@ define([
       _form: null,
       _avail_disks: [],
       drawAvailDisks: function() {
-
+        // In dojo 1.9 we need to orphan the disks before empty the node
+        query(".disk", this.dapDisksTable).orphan();
         domConst.empty(this.dapDisksTable);
         for(var size in this._avail_disks) {
           var tr = domConst.create("tr", null, this.dapDisksTable);
