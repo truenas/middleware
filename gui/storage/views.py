@@ -341,6 +341,9 @@ def dataset_edit(request, dataset_name):
                     dataset_form._errors[field] = dataset_form.error_class([
                         err,
                     ])
+                return JsonResp(request, form=dataset_form)
+        else:
+            return JsonResp(request, form=dataset_form)
     else:
         dataset_form = forms.ZFSDataset_EditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
