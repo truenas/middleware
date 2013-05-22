@@ -376,10 +376,9 @@ class BaseFreeAdmin(object):
             'inline': inline,
             'extra_js': m._admin.extra_js,
             'verbose_name': m._meta.verbose_name,
+            'deletable': m._admin.deletable,
         }
 
-        if m._admin.deletable is False:
-            context.update({'deletable': False})
         if 'deletable' in request.GET and 'deletable' not in context:
             context.update({'deletable': False})
 
