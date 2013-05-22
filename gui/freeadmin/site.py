@@ -158,8 +158,6 @@ class FreeAdminSite(object):
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
-            url(r'^api/',
-                include(self.v1_api.urls)),
             url(r'^menu\.json/$',
                 wrap(self.menu),
                 name="freeadmin_menu"),
@@ -183,6 +181,11 @@ class FreeAdminSite(object):
                     ),
                     include(model_admin.urls))
             )
+
+        urlpatterns += patterns('',
+            url(r'^api/',
+                include(self.v1_api.urls)),
+        )
         return urlpatterns
 
     @property
