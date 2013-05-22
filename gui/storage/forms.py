@@ -697,19 +697,22 @@ class VdevFormSet(BaseFormSet):
             # is valid on its own
             return
 
-        """
-        We need to make sure at least one vdev is a
-        data vdev (non-log/cache/spare)
-        """
-        has_datavdev = False
-        for i in range(0, self.total_form_count()):
-            form = self.forms[i]
-            vdevtype = form.cleaned_data['vdevtype']
-            if vdevtype in ('mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'):
-                has_datavdev = True
-                break
-        if not has_datavdev:
-            raise forms.ValidationError("You need a storage vdev")
+        if not self.form.cleaned_data.get("volume_add"):
+            """
+            We need to make sure at least one vdev is a
+            data vdev (non-log/cache/spare)
+            """
+            has_datavdev = False
+            for i in range(0, self.total_form_count()):
+                form = self.forms[i]
+                vdevtype = form.cleaned_data['vdevtype']
+                if vdevtype in (
+                    'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
+                ):
+                    has_datavdev = True
+                    break
+            if not has_datavdev:
+                raise forms.ValidationError("You need a storage vdev")
 
 
 class VolumeImportForm(forms.Form):
