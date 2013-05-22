@@ -997,14 +997,14 @@ class iSCSITargetExtentForm(ModelForm):
     iscsi_extent_type = forms.ChoiceField(
         choices=(
             ('file', _('File')),
-            ('disk', _('Disk')),
+            ('disk', _('Device')),
         ),
         label=_("Extent Type"),
     )
     iscsi_extent_disk = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs={'maxHeight': 200}),
-        label=_('Disk device'),
+        label=_('Device'),
         required=False,
     )
 
