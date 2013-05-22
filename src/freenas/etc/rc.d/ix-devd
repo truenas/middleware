@@ -130,10 +130,19 @@ if [ \${EVENT} = "LINK_UP" ]; then
     ifconfig \${SUBSYSTEM} advskew 1
 
     echo "Start volume import" | logger
+    if [ -s /data/zfs/zpool.cache ]; then
+	if ([ ! -e /data/zfs/zpool.cache.saved ] || [ /data/zfs/zpool.cache -nt /data/zfs/zpool.cache.saved ]); then
+	    cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+	fi
+    fi
+
     for volumename in ${volumenames}; do
-	/sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
+	[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f \${volumename} || /sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
+
+    cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+
     echo "End volume import" | logger
 
     #mount -uw /
