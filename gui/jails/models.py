@@ -24,149 +24,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.freeadmin.models import Model
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.common.warden import (
     Warden,
     WARDEN_AUTOSTART_ENABLED,
     WARDEN_DELETE_FLAGS_CONFIRM
 )
+from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
-import logging
-
-log = logging.getLogger('jails.jails')
-
-# 
-# XXX - Should implement order_by() and filter() methods
-# 
-class JailsQuerySet(models.query.QuerySet):
-    def __init__(self, model=None, query=None, using=None):
-        super(JailsQuerySet, self).__init__(model, query, using)
-        self.__wlist_cache = None
-        self.__wcount_cache = None
-
-    @property
-    def __wlist(self):
-        if self.__wlist_cache is None:
-            wlist = Warden().list()
-            self.__wcount_cache = len(wlist)
-
-            tl = []
-            wlist = self.__order_by(wlist, "id")
-            for wj in wlist:
-                tj = self.__to_model_dict(wj)
-                tl.append(tj)
-            self.__wlist_cache = tl
-        return self.__wlist_cache
-
-    @property
-    def __wcount(self):
-        if self.__wcount_cache is None:
-            self.__wcount_cache = len(self.__wlist)
-        return self.__wcount_cache
-
-    def __ispk(self, k):
-        ispk = False
-        if (k == "id" or k == "-id"):
-            ispk = True
-        elif (k == "pk" or k == "-pk"):
-            ispk = True
-        return ispk
-
-    def __key(self, k):
-        key = k
-        if self.__ispk(k):
-            key = "id"
-        return key
-
-    def __to_model_dict(self, wj):
-        tj = {}
-        for k in wj:
-            nk = self.__key(k)
-            if not self.__ispk(k):
-                nk = "jail_%s" % k
-            tj[nk] = wj[k]
-
-        return tj
-
-    def iterator(self):
-        for wj in self.__wlist:
-            yield self.model(**wj)
-
-    def count(self):
-        return self.__wcount
-
-    def __order_by(self, wlist, *fields):
-        for fn in fields:
-            fn = self.__key(fn)
-            wlist = sorted(wlist, key=lambda k: k[fn])
-        return wlist
-
-    def order_by(self, *fields):
-        models = []
-
-        wlist = self.__wlist
-        for fn in fields:
-            fn = self.__key(fn)
-            wlist = sorted(wlist, key=lambda k: k[fn])
-
-        for wj in wlist:
-            models.append(self.model(**wj))
-         
-        return models
-
-    def get(self, *args, **kwargs):
-        results = []
-        for wj in self.__wlist:
-
-            found = 0
-            count = len(kwargs)
-            for k in kwargs:
-                key = self.__key(k)
-                if self.__ispk(key):
-                    kwargs[k] = int(kwargs[k])
-                if key in wj and str(wj[key]) == str(kwargs[k]):
-                    found += 1
-
-            if found == count:
-                results.append(wj)
-
-        if len(results) == 0:
-            raise self.model.DoesNotExist("Jail matching query does not exist")
-        elif len(results) > 1:
-            raise self.model.MultipleObjectsReturned(
-                "Query returned multiple Jails"
-            )
-        return self.model(**results[0])
-
-    #
-    # Minimal filter() implementation....
-    #
-    def filter(self, *args, **kwargs):
-        models = []
-        results = []
-        for wj in self.__wlist:
-
-            found = 0
-            count = len(kwargs)
-            for k in kwargs:
-                key = self.__key(k)
-                if self.__ispk(key):
-                    kwargs[k] = int(kwargs[k])
-                if key in wj and str(wj[key]) == str(kwargs[k]):
-                    found += 1
-
-            if found == count:
-                results.append(wj)
-
-        for r in results:
-            models.append(self.model(**r))
-
-        return models
+log = logging.getLogger('jails.models')
 
 
 class JailsManager(models.Manager):
@@ -177,6 +49,9 @@ class JailsManager(models.Manager):
         super(JailsManager, self).__init__()
 
     def get_query_set(self):
+        # For some obscure reason this had to be splitten and lazy imported
+        # See commit message for further details
+        from freenasUI.jails.queryset import JailsQuerySet
         return JailsQuerySet(self.model)
 
     def __getattr__(self, name):
