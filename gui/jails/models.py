@@ -36,6 +36,7 @@ from freenasUI.common.warden import (
     WARDEN_DELETE_FLAGS_CONFIRM
 )
 from freenasUI.freeadmin.models import Model
+from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('jails.models')
@@ -49,9 +50,6 @@ class JailsManager(models.Manager):
         super(JailsManager, self).__init__()
 
     def get_query_set(self):
-        # For some obscure reason this had to be splitten and lazy imported
-        # See commit message for further details
-        from freenasUI.jails.queryset import JailsQuerySet
         return JailsQuerySet(self.model)
 
     def __getattr__(self, name):

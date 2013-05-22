@@ -16,6 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.freeadmin.options import BaseFreeAdmin
 from tastypie.api import Api
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
@@ -43,7 +44,6 @@ class FreeAdminSite(object):
         admin options). If keyword arguments are given they'll be applied
         as options to the admin class.
         """
-        from freenasUI.freeadmin.options import BaseFreeAdmin
         if not admin_class:
             admin_class = BaseFreeAdmin
 
