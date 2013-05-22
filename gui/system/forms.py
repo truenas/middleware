@@ -140,9 +140,19 @@ class FirmwareWizard(FileWizard):
         firmware = cleaned_data.get('firmware')
         path = self.file_storage.path(firmware.file.name)
 
-        #form = form_list[1]
-        #return self.render_revalidation_failure('1', form)
+        # Verify integrity of uploaded image.
+        assert ('sha256' in cleaned_data)
+        checksum = notifier().checksum(path)
+        if checksum != str(cleaned_data['sha256']).strip():
+            self.file_storage.delete(firmware.name)
+            raise MiddlewareError("Invalid firmware, wrong checksum")
 
+        # Validate that the image would pass all pre-install
+        # requirements.
+        #
+        # IMPORTANT: pre-install step have scripts or executables
+        # from the upload, so the integrity has to be verified
+        # before we proceed with this step.
         try:
             retval = notifier().validate_update(path)
         except:
@@ -150,19 +160,8 @@ class FirmwareWizard(FileWizard):
             raise
 
         if not retval:
-            #msg = _(u"Invalid firmware")
-            #self._errors["firmware"] = self.error_class([msg])
-            #del cleaned_data["firmware"]
             self.file_storage.delete(firmware.name)
             raise MiddlewareError("Invalid firmware")
-        elif 'sha256' in cleaned_data:
-            checksum = notifier().checksum(path)
-            if checksum != str(cleaned_data['sha256']).strip():
-                self.file_storage.delete(firmware.name)
-                raise MiddlewareError("Invalid firmware, wrong checksum")
-                #msg = _(u"Invalid checksum")
-                #self._errors["firmware"] = self.error_class([msg])
-                #del cleaned_data["firmware"]
 
         notifier().apply_update(path)
         try:
@@ -172,7 +171,6 @@ class FirmwareWizard(FileWizard):
         self.request.session['allow_reboot'] = True
 
         response = render_to_response('system/done.html', {
-            #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
