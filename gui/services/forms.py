@@ -149,6 +149,18 @@ class NFSForm(ModelForm):
             'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(NFSForm, self).__init__(*args, **kwargs)
+        self.fields['nfs_srv_mountd_port'].label = (
+            self.fields['nfs_srv_mountd_port'].label.lower()
+        )
+        self.fields['nfs_srv_rpcstatd_port'].label = (
+            self.fields['nfs_srv_rpcstatd_port'].label.lower()
+        )
+        self.fields['nfs_srv_rpclockd_port'].label = (
+            self.fields['nfs_srv_rpclockd_port'].label.lower()
+        )
+
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
         if not ips:
