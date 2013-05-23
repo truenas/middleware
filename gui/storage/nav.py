@@ -32,8 +32,8 @@ class ViewSnap(TreeNode):
 class AddVolume(TreeNode):
 
     gname = 'Add'
-    name = _(u'Volume Manager')
-    view = 'storage_wizard'
+    name = _(u'ZFS Volume Manager')
+    view = 'storage_volumemanager'
     type = 'volumewizard'
     icon = u'AddVolumeIcon'
     app_name = 'storage'

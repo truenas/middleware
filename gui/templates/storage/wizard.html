@@ -3,9 +3,9 @@
         doSubmit({
           form: this,
           event: e,
-          url: '{% url "storage_wizard" %}',
+          url: '{% url "storage_volumemanager_ufs" %}',
           onComplete: function(){wizardcheckings();},
-          progressbar: '{% url "storage_wizard_progress" %}'
+          progressbar: '{% url "storage_volumemanager_progress" %}'
           });
     </script>
     <table>

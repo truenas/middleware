@@ -185,11 +185,11 @@ def volumemanager(request):
     })
 
 
-def wizard(request):
+def volumemanager_ufs(request):
 
     if request.method == "POST":
 
-        form = forms.VolumeWizardForm(request.POST)
+        form = forms.VolumeManagerUFSForm(request.POST)
         if form.is_valid():
             form.done(request)
             return JsonResp(request, message=_("Volume successfully added."))
@@ -204,7 +204,7 @@ def wizard(request):
                 for i in request.POST.keys() if zpoolfields.match(i)]
 
     else:
-        form = forms.VolumeWizardForm()
+        form = forms.VolumeManagerUFSForm()
         disks = []
         zfsextra = None
     return render(request, 'storage/wizard.html', {
@@ -216,7 +216,7 @@ def wizard(request):
     })
 
 
-def wizard_progress(request):
+def volumemanager_progress(request):
     from freenasUI.middleware import encryption
     return HttpResponse(
         'new Object({state: "uploading", received: %s, size: 100});' % (
