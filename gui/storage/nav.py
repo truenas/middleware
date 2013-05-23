@@ -44,6 +44,18 @@ class AddVolume(TreeNode):
     skip = True
 
 
+class AddVolumeUFS(TreeNode):
+
+    gname = 'Add'
+    name = _(u'UFS Volume Manager')
+    view = 'storage_volumemanager_ufs'
+    type = 'volumewizard'
+    icon = u'AddVolumeIcon'
+    app_name = 'storage'
+    model = 'Volumes'
+    skip = True
+
+
 class ImportVolume(TreeNode):
 
     gname = 'Import'
@@ -171,6 +183,7 @@ class Volumes(TreeNode):
         super(Volumes, self).__init__(*args, **kwargs)
         self.append_children([
             AddVolume(),
+            AddVolumeUFS(),
             ImportVolume(),
             AutoImportVolume(),
             ViewVolumes(),
