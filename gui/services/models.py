@@ -270,41 +270,44 @@ class AFP(Model):
 
 class NFS(Model):
     nfs_srv_servers = models.PositiveIntegerField(
-            default=4,
-            validators=[MinValueValidator(1), MaxValueValidator(256)],
-            verbose_name=_("Number of servers"),
-            help_text=_("Specifies how many servers to create. There should be"
-                " enough to handle the maximum level of concurrency from its "
-                "clients, typically four to six.")
-            )
+        default=4,
+        validators=[MinValueValidator(1), MaxValueValidator(256)],
+        verbose_name=_("Number of servers"),
+        help_text=_("Specifies how many servers to create. There should be"
+            " enough to handle the maximum level of concurrency from its "
+            "clients, typically four to six."
+        )
+    )
     nfs_srv_allow_nonroot = models.BooleanField(
-            default=False,
-            verbose_name=_("Allow non-root mount"),
-            help_text=_("Allow non-root mount requests to be served. "
-                "This should only be specified if there are clients "
-                "such as PC's, that require it.  It will automatically clear "
-                "the vfs.nfsrv.nfs_privport sysctl flag, which controls if the"
-                " kernel will accept NFS requests from reserved ports only."),
-            )
+        default=False,
+        verbose_name=_("Allow non-root mount"),
+        help_text=_("Allow non-root mount requests to be served. This should "
+            "only be specified if there are clients that require it.  It will "
+            "automatically clear the vfs.nfsrv.nfs_privport sysctl flag, "
+            "which controls if the kernel will accept NFS requests from "
+            "reserved ports only."
+        ),
+    )
     nfs_srv_bindip = models.CharField(
-            blank=True,
-            max_length=250,
-            verbose_name=_("Bind IP Addresses"),
-            help_text=_("Specify specific IP addresses (separated by commas) "
-                "to bind to for TCP and UDP requests. This option may be "
-                "specified multiple times. If no IP is specified it will bind "
-                "to INADDR_ANY. It will automatically add 127.0.0.1 and if "
-                "IPv6 is enabled, ::1 to the list.")
-            )
+        blank=True,
+        max_length=250,
+        verbose_name=_("Bind IP Addresses"),
+        help_text=_("Specify specific IP addresses (separated by commas) to "
+            "bind to for TCP and UDP requests. This option may be specified "
+            "multiple times. If no IP is specified it will bind to INADDR_ANY."
+            " It will automatically add 127.0.0.1 and if IPv6 is enabled, ::1 "
+            "to the list."
+        )
+    )
     nfs_srv_mountd_port = models.SmallIntegerField(
         verbose_name=_("mountd(8) bind port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
         blank=True,
         null=True,
         help_text=_(
-            "Force mountd to bind to the specified port, for both AF_INET and "
-            "AF_INET6 address families. This is typically done to ensure that "
-            "the port which mountd binds to is a known quantity which can be "
+            "Force mountd to bind to the specified port, for both IPv4 and "
+            "IPv6 address families. This is typically done to ensure that "
+            "the port which mountd binds to is a known value which can be "
             "used in firewall rulesets."
         )
     )
@@ -314,8 +317,8 @@ class NFS(Model):
         blank=True,
         null=True,
         help_text=_(
-            "This option allow to force the daemon to bind to the specified "
-            "port, for both AF_INET and AF_INET6 address families."
+            "This option forces the rpc.statd daemon to bind to the specified "
+            "port, for both IPv4 and IPv6 address families."
         )
     )
     nfs_srv_rpclockd_port = models.SmallIntegerField(
@@ -324,8 +327,8 @@ class NFS(Model):
         blank=True,
         null=True,
         help_text=_(
-            "This option allow to force the daemon to bind to the specified "
-            "port, for both AF_INET and AF_INET6 address families."
+            "This option forces rpc.lockd the daemon to bind to the specified "
+            "port, for both IPv4 and IPv6 address families."
         )
     )
 
