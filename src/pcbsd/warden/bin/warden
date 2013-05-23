@@ -1180,4 +1180,4 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
    *) help_main ;;
 esac
 
-exit 0
+exit $?
