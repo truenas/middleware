@@ -150,7 +150,7 @@ class VolumeMixin(object):
         return vname
 
 
-class VolumeWizardForm(forms.Form, VolumeMixin):
+class VolumeManagerUFSForm(forms.Form, VolumeMixin):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -174,7 +174,7 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         required=False)
 
     def __init__(self, *args, **kwargs):
-        super(VolumeWizardForm, self).__init__(*args, **kwargs)
+        super(VolumeManagerUFSForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         #qs = models.Volume.objects.filter(vol_fstype='ZFS')
         self.fields['ufspathen'].widget.attrs['onClick'] = (
