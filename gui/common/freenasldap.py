@@ -1933,7 +1933,9 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
     def __init__(self, group, **kwargs):
         log.debug("FreeNAS_LDAP_Group.__init__: enter")
         log.debug("FreeNAS_LDAP_Group.__init__: group = %s", group)
-        group = group.encode('utf-8')
+
+        if group:
+            group = group.encode('utf-8')
 
         super(FreeNAS_LDAP_Group, self).__init__(**kwargs)
 
@@ -2005,8 +2007,8 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         log.debug("FreeNAS_ActiveDirectory_Group.__new__: group = %s", group)
 
         obj = None
-        group = group.encode('utf-8')
-        if group is not None:
+        if group:
+            group = group.encode('utf-8')
             parts = group.split(FREENAS_AD_SEPARATOR)
             if len(parts) > 1 and parts[1]:
                 obj = super(FreeNAS_ActiveDirectory_Group, cls).__new__(cls, **kwargs)
@@ -2105,7 +2107,9 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
     def __init__(self, user, **kwargs):
         log.debug("FreeNAS_LDAP_User.__init__: enter")
         log.debug("FreeNAS_LDAP_User.__init__: user = %s", user)
-        user = user.encode('utf-8')
+
+        if user:
+            user = user.encode('utf-8')
 
         super(FreeNAS_LDAP_User, self).__init__(**kwargs)
 
@@ -2179,8 +2183,8 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         log.debug("FreeNAS_ActiveDirectory_User.__new__: user = %s", user)
 
         obj = None
-        user = user.encode('utf-8')
-        if user is not None:
+        if user:
+            user = user.encode('utf-8')
             parts = user.split(FREENAS_AD_SEPARATOR)
             if len(parts) > 1 and parts[1]:
                 obj = super(FreeNAS_ActiveDirectory_User, cls).__new__(cls, **kwargs)

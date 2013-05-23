@@ -446,6 +446,8 @@ class FreeNAS_NIS_User(FreeNAS_NIS):
 
         self._pw = None
         domain = self.get_domain()
+        if user:
+            user = user.encode('utf-8')
 
         kwargs['domain'] = domain
         super(FreeNAS_NIS_User, self).__init__(**kwargs)
@@ -500,6 +502,8 @@ class FreeNAS_NIS_Group(FreeNAS_NIS):
 
         self._gr = None
         domain = self.get_domain()
+        if group:
+            group = group.encode('utf-8')
 
         kwargs['domain'] = domain
         super(FreeNAS_NIS_Group, self).__init__(**kwargs)

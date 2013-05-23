@@ -344,7 +344,7 @@ class FreeNAS_User(object):
 
         obj = None
         if dflags & U_AD_ENABLED:
-            obj = FreeNAS_ActiveDirectory_User(group, **kwargs)
+            obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
         elif dflags & U_NT4_ENABLED:
             obj = FreeNAS_NT4_User(user, **kwargs)
         elif dflags & U_NIS_ENABLED:
