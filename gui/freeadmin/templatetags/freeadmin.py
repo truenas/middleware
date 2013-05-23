@@ -65,7 +65,7 @@ class FormRender(template.Node):
         if top_errors:
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % (
                 force_unicode(top_errors),
-                ))
+            ))
         else:
             if form.prefix:
                 prefix = form.prefix + "-__all__"
@@ -96,7 +96,7 @@ class FormRender(template.Node):
                     bf = BoundField(form, form.fields.get(field), field)
                     bf_errors = form.error_class(
                         [conditional_escape(error) for error in bf.errors]
-                        )
+                    )
                     html += unicode(bf_errors) + unicode(bf)
                 html += u"</td></tr>"
                 output.append(html)
@@ -104,7 +104,7 @@ class FormRender(template.Node):
                 bf = BoundField(form, form.fields.get(field), field)
                 bf_errors = form.error_class(
                     [conditional_escape(error) for error in bf.errors]
-                    )
+                )
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))
                 else:
@@ -119,7 +119,7 @@ class FormRender(template.Node):
                         bf_errors,
                         bf,
                         help_text,
-                        )
+                    )
                     output.append(html)
 
         if hidden_fields:
@@ -137,7 +137,7 @@ def do_admin_form(parser, token):
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % (
             token.contents.split()[0],
-            ))
+        ))
 
     return FormRender(arg)
 
@@ -151,8 +151,11 @@ class DojoFormRender(template.Node):
         form = self.arg.resolve(context)
 
         rendered = unicode(form)
-        for find in re.finditer(r'(type=[\'"]hidden[\'"])', rendered, re.S | re.M):
-            rendered = rendered.replace(find.group(0),
+        for find in re.finditer(
+            r'(type=[\'"]hidden[\'"])', rendered, re.S | re.M
+        ):
+            rendered = rendered.replace(
+                find.group(0),
                 'type="hidden" data-dojo-type="dijit.form.TextBox"',
                 1)
 
@@ -167,6 +170,6 @@ def do_dojo_render(parser, token):
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % (
             token.contents.split()[0],
-            ))
+        ))
 
     return DojoFormRender(arg)
