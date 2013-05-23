@@ -6,17 +6,20 @@ NAME = _('Storage')
 BLACKLIST = ['Disk', 'ReplRemote', 'Volume', 'MountPoint']
 ICON = u'StorageIcon'
 
+
 class ViewRemote(TreeNode):
 
     gname = 'View'
     type = 'openstorage'
     append_to = 'storage.Replication'
 
+
 class ViewPeriodic(TreeNode):
 
     gname = 'View'
     type = 'openstorage'
     append_to = 'storage.Task'
+
 
 class ViewSnap(TreeNode):
 
@@ -40,6 +43,7 @@ class AddVolume(TreeNode):
     model = 'Volumes'
     skip = True
 
+
 class ImportVolume(TreeNode):
 
     gname = 'Import'
@@ -50,6 +54,7 @@ class ImportVolume(TreeNode):
     app_name = 'storage'
     model = 'Volume'
     skip = True
+
 
 class ViewDisks(TreeNode):
 
@@ -62,6 +67,7 @@ class ViewDisks(TreeNode):
     model = 'Disk'
     skip = True
 
+
 class ViewMultipaths(TreeNode):
 
     gname = 'storage.View.Multipaths'
@@ -73,6 +79,7 @@ class ViewMultipaths(TreeNode):
     model = 'Disk'
     skip = True
 
+
 class AutoImportVolume(TreeNode):
 
     gname = 'AutoImport'
@@ -83,6 +90,7 @@ class AutoImportVolume(TreeNode):
     app_name = 'storage'
     model = 'Volume'
     skip = True
+
 
 class ViewVolumes(TreeNode):
 
@@ -107,6 +115,7 @@ class AddZVol(TreeNode):
     model = 'Volumes'
     skip = True
 
+
 class CreatePeriodicSnap(TreeNode):
 
     gname = 'Add'
@@ -117,6 +126,7 @@ class CreatePeriodicSnap(TreeNode):
     app_name = 'storage'
     model = 'Task'
     append_to = 'storage.Task'
+
 
 class Volumes(TreeNode):
 
@@ -159,16 +169,17 @@ class Volumes(TreeNode):
     def __init__(self, *args, **kwargs):
 
         super(Volumes, self).__init__(*args, **kwargs)
-        self.append_children([AddVolume(),
-                                ImportVolume(),
-                                AutoImportVolume(),
-                                ViewVolumes(),
-                                ViewDisks(),
-                             ])
+        self.append_children([
+            AddVolume(),
+            ImportVolume(),
+            AutoImportVolume(),
+            ViewVolumes(),
+            ViewDisks(),
+        ])
 
-        en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
-
-        has_multipath = models.Disk.objects.exclude(disk_multipath_name='').exists()
+        has_multipath = models.Disk.objects.exclude(
+            disk_multipath_name=''
+        ).exists()
         if has_multipath:
             self.append_child(ViewMultipaths())
 
@@ -187,7 +198,6 @@ class Volumes(TreeNode):
                 ds.view = 'storage_dataset'
                 ds.icon = u'AddDatasetIcon'
                 ds.type = 'object'
-                append_app = False
                 ds.kwargs = {'fs': i.mp_volume.vol_name}
                 nav.append_child(ds)
 
