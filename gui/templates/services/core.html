@@ -24,7 +24,7 @@
    {% if directoryservice %}
    <tr>
        <td>
-           <strong>{% trans "Directory Service" %}</strong>
+           <strong>{% trans "Directory Services" %}</strong>
        </td>
        <td>
        <img id="directoryservice_toggle" name="directoryservice_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s in srv %}{% if s.srv_service == "directoryservice" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
