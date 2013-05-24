@@ -34,10 +34,10 @@ class IndexController extends Zend_Controller_Action
         }
 
         $form = new FreeNAS_Form_Edit;
-        $jail = Tivoka::createRequest('1', 'plugins.jail.info');
+        $jail = Tivoka::createRequest('1', 'plugins.jail.path', array($this->getParam("plugin_id")));
         $this->lib->getRpc()->send($jail);
-        $jail = json_decode($jail->result);
-        $form->media_dir->setAttrib('root', $jail[0]->fields->jail_path . '/' . $jail[0]->fields->jail_name);
+        $jail_path = $jail->result;
+        $form->media_dir->setAttrib('root', $jail_path);
 
         if($this->getRequest()->isPost()) {
 
