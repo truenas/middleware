@@ -1,4 +1,4 @@
-fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+fastcgi_param  SCRIPT_FILENAME $document_root/plugins/minidlna/public/index.php;
 if ($request_filename !~ .*\.php) {
         rewrite ^(.*)$ /plugins/minidlna/%%PLUGIN_ID%%public/index.php?q=$1 last;
         break;
