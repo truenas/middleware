@@ -223,7 +223,11 @@ class JailCreateForm(ModelForm):
                 st_ipv6_network.prefix_length))
             high_ipv6 += 25 
 
-        wlist = Warden().list()
+        try:
+            wlist = Warden().list()
+        except:
+            wlist = []
+
         for wj in wlist:
             wo = WardenJail(**wj)
 
@@ -606,7 +610,11 @@ class NullMountPointForm(ModelForm):
                 self.errors['__all__'] = self.error_class(e.messages)
 
             pjlist = []
-            wlist = Warden().list()
+            try:
+                wlist = Warden().list()
+            except:
+                wlist = []
+
             for wj in wlist:
                 if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
                     pjlist.append(wj[WARDEN_KEY_HOST])
@@ -681,7 +689,11 @@ class MkdirForm(ModelForm):
             )
 
             pjlist = []
-            wlist = Warden().list()
+            try:
+                wlist = Warden().list()
+            except:
+                wlist = []
+
             for wj in wlist:
                 if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
                     pjlist.append(wj[WARDEN_KEY_HOST])

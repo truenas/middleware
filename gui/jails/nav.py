@@ -172,7 +172,6 @@ class ViewPluginJails(ViewJailsBase):
 
         host = get_base_url(request)
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PLUGINJAIL)
-
         for jail in jails:
             jail_node = self.new_jail_node(jail, u'JailPluginIcon')
             self.append_child(jail_node)
