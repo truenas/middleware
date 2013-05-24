@@ -1285,10 +1285,10 @@ class ZFSVolume_EditForm(Form):
 
 
 class ZVol_CreateForm(Form):
-    zvol_name = forms.CharField(max_length=128, label=_('ZFS Volume Name'))
+    zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
     zvol_size = forms.CharField(
         max_length=128,
-        label=_('Size for this ZFS Volume'),
+        label=_('Size for this zvol'),
         help_text=_('Example: 1g'))
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
