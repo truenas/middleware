@@ -119,7 +119,7 @@ class ViewVolumes(TreeNode):
 class AddZVol(TreeNode):
 
     gname = 'storage.ZVol.Add'
-    name = _(u'Create ZFS Volume')
+    name = _(u'Create zvol')
     view = 'storage_zvol'
     icon = u'AddZFSVolumeIcon'
     type = 'object'

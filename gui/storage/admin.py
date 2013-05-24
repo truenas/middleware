@@ -221,7 +221,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Create ZFS Dataset'),
             )
         actions['NewVolume'] = self._action_builder("add_zfs_volume",
-            label=_('Create ZFS Volume'),
+            label=_('Create zvol'),
             )
         actions['ChangePerm'] = self._action_builder("permissions",
             label=_('Change Permissions'),
@@ -296,13 +296,13 @@ class VolumeFAdmin(BaseFreeAdmin):
             show="DATASET",
             )
         actions['NewDsVolume'] = self._action_builder("add_zfs_volume",
-            label=_('Create ZFS Volume'),
+            label=_('Create zvol'),
             show="DATASET",
             )
 
         # ZVol actions
         actions['ZVolDelete'] = self._action_builder("zvol_delete",
-            label=_('Destroy ZFS Volume'),
+            label=_('Destroy zvol'),
             func="editScaryObject",
             icon="remove_volume",
             show="ZVOL",
