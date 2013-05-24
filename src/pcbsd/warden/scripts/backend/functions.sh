@@ -84,7 +84,7 @@ downloadchroot() {
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL}"
-       printerror "Error while downloading the portsjail."
+       exit_err "Error while downloading the chroot."
      fi
      trap 2 3 6 9
   fi
@@ -94,7 +94,7 @@ downloadchroot() {
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL_CKSUM}"
-       printerror "Error while downloading the portsjail."
+       exit_err "Error while downloading the chroot checksum."
      fi
      trap 2 3 6 9
   fi

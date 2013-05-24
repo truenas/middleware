@@ -483,8 +483,8 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
         log.debug("FreeNAS_NT4_User.__new__: user = %s", user)
 
         obj = None
-        user = user.encode('utf-8')
-        if user is not None:
+        if user:
+            user = user.encode('utf-8')
             parts = user.split(FREENAS_NT4_SEPARATOR) 
             if len(parts) > 1 and parts[1]:
                 obj = super(FreeNAS_NT4_User, cls).__new__(cls, **kwargs)
@@ -553,8 +553,8 @@ class FreeNAS_NT4_Group(FreeNAS_NT4):
         log.debug("FreeNAS_NT4_Group.__new__: group = %s", group)
 
         obj = None
-        group = group.encode('utf-8')
-        if group is not None:
+        if group:
+            group = group.encode('utf-8')
             parts = group.split(FREENAS_NT4_SEPARATOR)
             if len(parts) > 1 and parts[1]:
                 obj = super(FreeNAS_NT4_Group, cls).__new__(cls, **kwargs)
