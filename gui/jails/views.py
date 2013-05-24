@@ -47,10 +47,10 @@ log = logging.getLogger("jails.views")
 def jails_home(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create().id
+        jailsconf = models.JailsConfiguration.objects.create()
 
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.View'),
@@ -61,10 +61,10 @@ def jails_home(request):
 def jailsconfiguration(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create().id
+        jailsconf = models.JailsConfiguration.objects.create()
 
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
