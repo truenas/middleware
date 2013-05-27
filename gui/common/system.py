@@ -100,8 +100,9 @@ def send_mail(subject=None,
               extra_headers=None,
               attachments=None,
               ):
-    from freenasUI.system.models import Email
     from freenasUI.account.models import bsdUsers
+    from freenasUI.network.models import GlobalConfiguration
+    from freenasUI.system.models import Email
     if not channel:
         channel = get_sw_name().lower()
     if interval > timedelta():
@@ -144,16 +145,28 @@ def send_mail(subject=None,
     msg = msg.as_string()
 
     try:
+        gc = GlobalConfiguration.objects.order_by('-id')[0]
+        local_hostname = "%s.%s" % (gc.gc_hostname, gc.gc_domain)
+    except:
+        local_hostname = None
+
+    try:
         if not em.em_outgoingserver or not em.em_port:
             # See NOTE below.
             raise ValueError('you must provide an outgoing mailserver and mail'
                              ' server port when sending mail')
         if em.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(em.em_outgoingserver, em.em_port,
-                                      timeout=10)
+            server = smtplib.SMTP_SSL(
+                em.em_outgoingserver,
+                em.em_port,
+                timeout=10,
+                local_hostname=local_hostname)
         else:
-            server = smtplib.SMTP(em.em_outgoingserver, em.em_port,
-                                  timeout=10)
+            server = smtplib.SMTP(
+                em.em_outgoingserver,
+                em.em_port,
+                timeout=10,
+                local_hostname=local_hostname)
             if em.em_security == 'tls':
                 server.starttls()
         if em.em_smtp:
