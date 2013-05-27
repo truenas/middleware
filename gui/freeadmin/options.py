@@ -379,7 +379,7 @@ class BaseFreeAdmin(object):
             'deletable': m._admin.deletable,
         }
 
-        if 'deletable' in request.GET and 'deletable' not in context:
+        if 'deletable' in request.GET:
             context.update({'deletable': False})
 
         instance = get_object_or_404(m, pk=oid)
