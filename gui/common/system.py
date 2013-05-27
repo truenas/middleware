@@ -38,8 +38,9 @@ from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
 
-RE_MOUNT = re.compile(r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) '
-    '\((?P<fs_vfstype>\w+)', re.S)
+RE_MOUNT = re.compile(
+    r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
+)
 VERSION_FILE = '/etc/version'
 _VERSION = None
 log = logging.getLogger("common.system")
@@ -89,6 +90,7 @@ def get_freenas_var(var, default=None):
     return val
 
 FREENAS_DATABASE = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+
 
 def send_mail(subject=None,
               text=None,
@@ -155,7 +157,8 @@ def send_mail(subject=None,
             if em.em_security == 'tls':
                 server.starttls()
         if em.em_smtp:
-            server.login(em.em_user.encode('utf-8'),
+            server.login(
+                em.em_user.encode('utf-8'),
                 em.em_pass.encode('utf-8'))
         # NOTE: Don't do this.
         #
@@ -242,7 +245,8 @@ def mount(dev, path, mntopts=None, fstype=None):
 
     fstype = ['-t', fstype] if fstype else []
 
-    proc = subprocess.Popen(['/sbin/mount'] + opts + fstype + [dev, path],
+    proc = subprocess.Popen(
+        ['/sbin/mount'] + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
     output = proc.communicate()[0]
@@ -256,7 +260,8 @@ def mount(dev, path, mntopts=None, fstype=None):
 
 def umount(path):
 
-    proc = subprocess.Popen(['/sbin/umount', path, ],
+    proc = subprocess.Popen(
+        ['/sbin/umount', path],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
     output = proc.communicate()[0]
@@ -286,6 +291,7 @@ def service_enabled(name):
 
     return enabled
 
+
 def get_directoryservice():
     directoryservice = None
 
@@ -293,7 +299,6 @@ def get_directoryservice():
     h = sqlite3.connect(db)
     c = h.cursor()
 
-    enabled = False
     sql = "select stg_directoryservice from system_settings"
     c.execute(sql)
     row = c.fetchone()
@@ -309,8 +314,10 @@ def get_directoryservice():
 def ldap_enabled():
     enabled = False
 
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'ldap':
+    if (
+        service_enabled('directoryservice') and
+        get_directoryservice() == 'ldap'
+    ):
         enabled = True
 
     return enabled
@@ -338,8 +345,10 @@ def ldap_objects():
 def activedirectory_enabled():
     enabled = False
 
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'activedirectory':
+    if (
+        service_enabled('directoryservice') and
+        get_directoryservice() == 'activedirectory'
+    ):
         enabled = True
 
     return enabled
@@ -367,8 +376,10 @@ def activedirectory_objects():
 def nt4_enabled():
     enabled = False
 
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'nt4':
+    if (
+        service_enabled('directoryservice') and
+        get_directoryservice() == 'nt4'
+    ):
         enabled = True
 
     return enabled
@@ -392,11 +403,14 @@ def nt4_objects():
     h.close()
     return objects
 
+
 def nis_enabled():
     enabled = False
 
-    if service_enabled('directoryservice') and \
-        get_directoryservice() == 'nis':
+    if (
+        service_enabled('directoryservice') and
+        get_directoryservice() == 'nis'
+    ):
         enabled = True
 
     return enabled
