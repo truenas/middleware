@@ -218,10 +218,13 @@ def volumemanager_ufs(request):
 
 def volumemanager_progress(request):
     from freenasUI.middleware import encryption
-    return HttpResponse(
-        'new Object({state: "uploading", received: %s, size: 100});' % (
-            int(encryption.PROGRESS),
-        ))
+    if encryption.PROGRESS > 0:
+        return HttpResponse(
+            'new Object({state: "uploading", received: %s, size: 100});' % (
+                int(encryption.PROGRESS),
+            ))
+    else:
+        return HttpResponse('new Object({state: "starting"})')
 
 
 def volimport(request):
