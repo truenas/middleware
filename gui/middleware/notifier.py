@@ -3789,7 +3789,7 @@ class notifier:
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
             serial = self.serial_from_device(name)
-            size = geom.xpathEval("./mediasize")[0].content
+            size = geom.xpathEval("./provider/mediasize")[0].content
             if not serial:
                 disks.append(name)
             else:
