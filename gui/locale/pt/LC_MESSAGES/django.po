@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-10-14 04:09+0200\n"
-"Last-Translator: kellvynatary <kellvynataryads@gmail.com>\n"
+"PO-Revision-Date: 2013-05-27 20:39+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -308,7 +308,7 @@ msgstr "CHAP mútuo"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "UPS com bateria fraca."
+msgstr "UPS com bateria fraca"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -800,7 +800,7 @@ msgstr "Nenhum dado retornado de %s"
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr "Não pude aceder a %(url): %(error)s"
+msgstr "Não pude aceder a %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -941,25 +941,25 @@ msgstr "Tem de especificar um endereço IPv4 bem como um nome (alias)"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr "Tem de escolhar uma netmask IPv4, por cada \"alias\""
+msgstr "Tem de escolhar uma netmask IPv4, por cada alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr "Tem de especificar um endereço IPv6 bem como uma \"alias\""
+msgstr "Tem de especificar um endereço IPv6 bem como uma alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "Tem de escolher uma netmask IPv6, por cada \"alias\""
+msgstr "Tem de escolher uma netmask IPv6, por cada alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr "Tem de escolher entre IPv4 e IPv6 por \"alias\""
+msgstr "Tem de escolher entre IPv4 e IPv6 por alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
 "Tem de especificar ou um IPv4 válido ou um IPv6 válido, com o maskbit por "
-"cada \"alias\""
+"cada alias"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -1164,7 +1164,7 @@ msgstr "LAGG adicionados com sucesso"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
-msgstr "Este IP já se encontra em uso"
+msgstr "Este IP já se encontra em uso."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
@@ -1176,7 +1176,7 @@ msgid ""
 "installed."
 msgstr ""
 "O sistema usará este lugar para armazenar temporariamente o arquivo PBI "
-"antes de o instalar"
+"antes de o instalar."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
@@ -1193,19 +1193,19 @@ msgstr "A path %s já existe"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr "A path completa do \"jail\" não pode exceder os 76 caracteres"
+msgstr "A path completa do jail não pode exceder os 76 caracteres"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
 "A path dos \"Jail plugins\" não pode ser um subset da path do arquivo de "
-"plugins"
+"plugins."
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
-"A path do arquivo de plugins não pode ser um subset da path do \"plugins "
-"jail\""
+"A caminho do arquivo de plugins não pode ser um subset do caminho dos "
+"plugins."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
@@ -1229,11 +1229,11 @@ msgstr "Plugins \"Jail\" PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr "Montado ?"
+msgstr "Montado?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr "A path completa não pode exceder os 88 caracteres."
+msgstr "A path completa não pode exceder os 88 caracteres"
 
 #: plugins/forms.py:336
 #, python-format
@@ -1334,19 +1334,19 @@ msgstr "Volume removido com sucesso."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr "Não foi possível remover plugin"
+msgstr "Não foi possível remover plugin."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
-msgstr "Plugin actualizado com sucesso."
+msgstr "Plugin actualizado com sucesso"
 
 #: plugins/views.py:130
 msgid "Plugin successfully installed"
-msgstr "Plugin instalado com sucesso."
+msgstr "Plugin instalado com sucesso"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
-msgstr "Ocorreu um problema ao importar o jail"
+msgstr "Ocorreu um problema ao importar o jail."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
@@ -1379,12 +1379,11 @@ msgstr "O serviço NFS falhou no reinicio."
 
 #: services/forms.py:157
 msgid "This IP already exists."
-msgstr "Este IP já existe"
+msgstr "Este IP já existe."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
-msgstr "O serviço AFP falhou no reinicio."
+msgstr "O serviço Plugins Jail falhou no reinicio."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1465,7 +1464,7 @@ msgstr "Porta"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr "Use caracteres alfanuméricos, \".\", \"-\"- e \"_\" ."
+msgstr "Use caracteres alfanuméricos, \".\", \"-\" e \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -1584,7 +1583,7 @@ msgid ""
 "Auth Method."
 msgstr ""
 "Este campo é obrigatório sempre que o metro de autenticação seja CHAP ou "
-"CHAP Mutuo,"
+"CHAP Mutuo."
 
 #: services/forms.py:730
 msgid "This is not a valid network"
@@ -1616,7 +1615,7 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 "O ficheiro deve existir se o seu tamanho estiver definido como automático "
-"(0)  "
+"(0)"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1797,9 +1796,8 @@ msgstr "Parâmetros auxiliares"
 
 # Passando para português brasileiro
 #: services/models.py:144
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Esses parâmetros são adicionados à seção [global] do smb.conf"
+msgstr "Estes parâmetros são adicionados à seção [global] do smb.conf"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1824,18 +1822,16 @@ msgid "Home directories"
 msgstr "Directórios home"
 
 #: services/models.py:160
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "Parâmetros auxiliares"
+msgstr "Origens parâmetros auxiliares"
 
 #: services/models.py:162
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Estes parâmetros foram adicionados á [Share] secção do smb.conf"
+msgstr "Estes parâmetros foram adicionados á [homes] secção do smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Extensões Unix"
 
 #: services/models.py:167
 msgid ""
@@ -2088,11 +2084,10 @@ msgid "Controller Authorized Network"
 msgstr "Controlador Autorizado de máscara de rede"
 
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
-"Unidade Lógica de Controlador Autorizado de máscara de rede (255.255.255.0 "
-"por defeito)"
+"Unidade Lógica de Controlador Autorizado de máscara de rede (127.0.0.0/8 por "
+"defeito)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
@@ -2251,9 +2246,8 @@ msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr "Nome Base será anexado automaticamente ao iniciar sem 'iqn.'."
 
 #: services/models.py:640
-#, fuzzy
 msgid "Target Alias"
-msgstr "Atalho de Destino"
+msgstr "Alias do Destino"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
@@ -2299,7 +2293,6 @@ msgstr ""
 "autenticação."
 
 #: services/models.py:679
-#, fuzzy
 msgid "Authentication Group ID"
 msgstr "ID de Autenticação do Grupo"
 
@@ -2892,9 +2885,8 @@ msgid "Administrator Name"
 msgstr "Nome do Administrador"
 
 #: services/models.py:1264
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Password do Domínio da conta de Administrador."
+msgstr "Nome da conta do Administrador de Domínio"
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -3273,9 +3265,9 @@ msgid "Confirm Share Password"
 msgstr "Confirmar Palavra-chave da partilha"
 
 #: sharing/forms.py:139
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Caminho não existe."
+msgstr "Caminho %s não existe"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -4525,9 +4517,8 @@ msgid "The scrub process has begun"
 msgstr ""
 
 #: storage/views.py:922
-#, fuzzy
 msgid "Disk successfully wiped"
-msgstr "%s actualizado com sucesso."
+msgstr "Disco limpo com sucesso"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
@@ -5585,9 +5576,8 @@ msgid "Delete Mount Point"
 msgstr "Ponto de Montagem"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
-msgstr "Sem CronJobs definidos."
+msgstr "Sem pontos de montagem definidos"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 #, fuzzy
@@ -5612,7 +5602,7 @@ msgstr "Bem vindo, %(username)s. Obrigado por ter entrado."
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Bemvindo a %(sw_name)s&trade; %(sw_login_versions)s"
+msgstr "Bemvindo a %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:47
 msgid "Please log in."
@@ -6072,7 +6062,7 @@ msgid ""
 "to create a replication task"
 msgstr ""
 "ATENÇÃO: São criados instantâneos sobre os ZFS ficheiros de sistema/volume "
-"obtidos para a criação duma réplica da tarefa."
+"obtidos para a criação duma réplica da tarefa"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -6470,11 +6460,11 @@ msgstr "Nenhum teste S.M.A.R.T. definido"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. Test"
-msgstr "Adicionar teste S.M.A.R.T. "
+msgstr "Adicionar S.M.A.R.T. Teste"
 
 #: templates/system/smarttest.html:46
 msgid "Add S.M.A.R.T. test"
-msgstr "Adicionar teste S.M.A.R.T. "
+msgstr "Adicionar S.M.A.R.T. teste"
 
 #: templates/system/sysctl.html:34
 msgid "No sysctl defined."
@@ -6933,7 +6923,7 @@ msgid "Add ZVol"
 msgstr "Adicionar ZVol"
 
 msgid "English"
-msgstr "IInglês"
+msgstr "Inglês"
 
 msgid "Level"
 msgstr "Nível"
