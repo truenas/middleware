@@ -52,7 +52,9 @@ TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}s${OTHER_PARTNUM}a/' { pri
 dd if=/dev/zero of=/dev/${TARGET_DRIVE}s$PARTNUM bs=1m count=1 > /dev/null 2>&1
 
 # Copy in new system
-dd of=/dev/${TARGET_DRIVE}s$PARTNUM obs=128k conv=sparse
+dd of=/dev/${TARGET_DRIVE}s$PARTNUM obs=128k conv=sparse 2>> /tmp/.upgrade_dd &
+echo $! > /tmp/.upgrade_dd
+wait
 
 # Check that it worked
 fsck_ffs -n /dev/${TARGET_DRIVE}s${PARTNUM}a
