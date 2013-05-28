@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-inadyn
-# BEFORE: inadyn
+# BEFORE: inadynmt
 
 . /etc/rc.subr
 
