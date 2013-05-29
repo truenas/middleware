@@ -46,6 +46,8 @@ from freenasUI.common.freenasusers import (
 )
 from freenasUI.storage.models import MountPoint
 
+import ipaddr
+
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 
 
@@ -215,6 +217,27 @@ class MACField(forms.CharField):
                 value,
             ))
         value = super(MACField, self).clean(value)
+        return value
+
+
+class Network4Field(forms.CharField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 18  # 255.255.255.255/32
+        super(Network4Field, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        try:
+            value = str(ipaddr.IPv4Network(value))
+        except ipaddr.AddressValueError, e:
+            raise forms.ValidationError(
+                _("Invalid address: %s") % e
+            )
+        except ipaddr.NetmaskValueError, e:
+            raise forms.ValidationError(
+                _("Invalid network: %s") % e
+            )
+        value = super(Network4Field, self).clean(value)
         return value
 
 
