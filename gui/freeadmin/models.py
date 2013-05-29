@@ -112,6 +112,20 @@ class MACField(models.Field):
         return value
 
 
+class Network4Field(models.CharField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 18  # 255.255.255.255/32
+        super(Network4Field, self).__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        #FIXME: Move to top (causes cycle-dependency)
+        from freenasUI.freeadmin.forms import Network4Field as NF
+        defaults = {'form_class': NF}
+        kwargs.update(defaults)
+        return super(Network4Field, self).formfield(**kwargs)
+
+
 class FreeModelBase(ModelBase):
     def __new__(cls, name, bases, attrs):
         from freenasUI.freeadmin.site import site
