@@ -35,7 +35,7 @@ from freenasUI.common.warden import (
     WARDEN_AUTOSTART_ENABLED,
     WARDEN_DELETE_FLAGS_CONFIRM
 )
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import Model, Network4Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.notifier import notifier
 
@@ -168,20 +168,19 @@ class JailsConfiguration(Model):
         max_length=1024,
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
-        )
-    jc_ipv4_network = models.CharField(
+    )
+    jc_ipv4_network = Network4Field(
         blank=True,
-        max_length=120,
         verbose_name=_("IPv4 Network"),
         help_text=_("IPv4 network range for jails and plugins"),
         default="192.168.99.0/24"
-        )
+    )
     jc_ipv6_network = models.CharField(
         blank=True,
         max_length=120,
         verbose_name=_("IPv6 Network"),
         help_text=_("IPv6 network range for jails and plugins")
-        )
+    )
 
     def save(self, *args, **kwargs):
         super(JailsConfiguration, self).save(*args, **kwargs)
