@@ -37,10 +37,13 @@ from dojango import forms
 from dojango.forms import widgets
 from dojango.forms.widgets import DojoWidgetMixin
 from freenasUI.common.freenasldap import FLAGS_DBINIT
-from freenasUI.common.freenascache import (FLAGS_CACHE_READ_USER,
-    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
-from freenasUI.common.freenasusers import (FreeNAS_Users, FreeNAS_User,
-    FreeNAS_Groups, FreeNAS_Group)
+from freenasUI.common.freenascache import (
+    FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP
+)
+from freenasUI.common.freenasusers import (
+    FreeNAS_Users, FreeNAS_User, FreeNAS_Groups, FreeNAS_Group
+)
 from freenasUI.storage.models import MountPoint
 
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
@@ -68,7 +71,7 @@ class DirectoryBrowser(TextInput):
         self.attrs.update({
             'dojoType': 'freeadmin.form.PathSelector',
             'dirsonly': dirsonly,
-            })
+        })
 
 
 class UserField(forms.ChoiceField):
@@ -88,8 +91,9 @@ class UserField(forms.ChoiceField):
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        users = FreeNAS_Users(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER |
-                FLAGS_CACHE_WRITE_USER)
+        users = FreeNAS_Users(
+            flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
+        )
         if len(users) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -98,7 +102,7 @@ class UserField(forms.ChoiceField):
                 kwargs['exclude'] = ','.join(self._exclude)
             self.widget = FilteredSelectJSON(
                 url=("account_bsduser_json", None, (), kwargs)
-                )
+            )
         else:
             ulist = []
             if not self.required:
@@ -107,8 +111,9 @@ class UserField(forms.ChoiceField):
                 map(
                     lambda x: (x.pw_name, x.pw_name, ),
                     filter(
-                        lambda y:
-                            y is not None and y.pw_name not in self._exclude,
+                        lambda y: (
+                            y is not None and y.pw_name not in self._exclude
+                        ),
                         users
                     )
                 )
@@ -120,7 +125,7 @@ class UserField(forms.ChoiceField):
     def clean(self, user):
         if not self.required and user in ('-----', '', None):
             return None
-        if FreeNAS_User(user, flags=FLAGS_DBINIT) == None:
+        if FreeNAS_User(user, flags=FLAGS_DBINIT) is None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
@@ -141,8 +146,10 @@ class GroupField(forms.ChoiceField):
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        groups = FreeNAS_Groups(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP |
-                FLAGS_CACHE_WRITE_GROUP)
+        groups = FreeNAS_Groups(
+            flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP |
+            FLAGS_CACHE_WRITE_GROUP
+        )
         if len(groups) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -160,10 +167,10 @@ class GroupField(forms.ChoiceField):
     def clean(self, group):
         if not self.required and group in ('-----', ''):
             return None
-        if FreeNAS_Group(group, flags=FLAGS_DBINIT) == None:
+        if FreeNAS_Group(group, flags=FLAGS_DBINIT) is None:
             raise forms.ValidationError(
                 _("The group %s is not valid.") % group
-                )
+            )
         return group
 
 
@@ -190,7 +197,7 @@ class PathField(forms.CharField):
             if not valid:
                 raise forms.ValidationError(
                     _("The path must reside within a volume mount point")
-                    )
+                )
             return value if not self.abspath else absv
         return value
 
@@ -206,7 +213,7 @@ class MACField(forms.CharField):
         if value and not MAC_RE.search(value):
             raise forms.ValidationError("%s is not a valid MAC Address" % (
                 value,
-                ))
+            ))
         value = super(MACField, self).clean(value)
         return value
 
