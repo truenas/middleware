@@ -35,6 +35,7 @@ add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.MACField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.Network4Field"])
 
 
 class UserField(models.CharField):
