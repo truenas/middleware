@@ -40,7 +40,7 @@ import_zpools()
 		# Fixup mountpoints
 		[ -d /mnt/mnt ] && /sbin/zfs inherit -r mountpoint ${vol_name}
 	done
-	cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+	cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved 2> /dev/null
 }
 
 name="ix-zfs"
