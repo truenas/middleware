@@ -68,15 +68,6 @@ import logging
 log = logging.getLogger('jails.nav')
 
 
-class ViewJailsConfiguration(TreeNode):
-
-    gname  = 'Configuration'
-    name  = _(u'Configuration')
-    icon = u'SettingsIcon'
-    type = 'openjails'
-    order = 1
-
-
 class ViewJailsBase(TreeNode):
 
     gname = 'Base'
@@ -158,13 +149,32 @@ class ViewJailsBase(TreeNode):
         return storage_node_add 
 
 
+class AddJail(TreeNode):
+
+    gname = 'Add Jails'
+    name = _(u'Add Jails')
+    icon = u'JailAddIcon'
+    type = 'object'
+    view = 'freeadmin_jails_jails_add'
+    order = 1
+
+
+class ViewJailsConfiguration(TreeNode):
+
+    gname  = 'Configuration'
+    name  = _(u'Configuration')
+    icon = u'SettingsIcon'
+    type = 'openjails'
+    order = 2
+
+
 class ViewPluginJails(ViewJailsBase):
 
     gname = 'Plugin Jails'
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
     skip = False
-    order = 2
+    order = 3
 
     def __init__(self, *args, **kwargs):
         super(ViewPluginJails, self).__init__(*args, **kwargs)
@@ -280,20 +290,20 @@ class ViewPluginJails(ViewJailsBase):
         return plugin, url, data
 
 
-class ViewStandardJails(ViewJailsBase):
+class ViewPortJails(ViewJailsBase):
 
-    gname = 'Standard Jails'
-    name = _(u'Standard Jails')
-    icon = u'StandardJailIcon'
+    gname = 'Port Jails'
+    name = _(u'Port Jails')
+    icon = u'PortJailIcon'
     skip = False
-    order = 3
+    order = 4
 
     def __init__(self, *args, **kwargs):
-        super(ViewStandardJails, self).__init__(*args, **kwargs)
+        super(ViewPortJails, self).__init__(*args, **kwargs)
 
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_STANDARD)
+        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PORTJAIL)
         for jail in jails:
-            jail_node = self.new_jail_node(jail, u'BeastieIcon')
+            jail_node = self.new_jail_node(jail, u'BobbleIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -323,20 +333,20 @@ class ViewStandardJails(ViewJailsBase):
             storage_node.append_child(storage_node_add)
 
 
-class ViewPortJails(ViewJailsBase):
+class ViewStandardJails(ViewJailsBase):
 
-    gname = 'Port Jails'
-    name = _(u'Port Jails')
-    icon = u'PortJailIcon'
+    gname = 'Standard Jails'
+    name = _(u'Standard Jails')
+    icon = u'StandardJailIcon'
     skip = False
-    order = 4
+    order = 5
 
     def __init__(self, *args, **kwargs):
-        super(ViewPortJails, self).__init__(*args, **kwargs)
+        super(ViewStandardJails, self).__init__(*args, **kwargs)
 
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PORTJAIL)
+        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_STANDARD)
         for jail in jails:
-            jail_node = self.new_jail_node(jail, u'BobbleIcon')
+            jail_node = self.new_jail_node(jail, u'BeastieIcon')
             self.append_child(jail_node)
 
             jail_node_view = self.new_jail_node_view(jail)
@@ -407,13 +417,3 @@ class ViewPortJails(ViewJailsBase):
 #            storage_node_add = self.new_storage_node_add(jail)
 #            storage_node_add.order = storage_order
 #            storage_node.append_child(storage_node_add)
-
-
-class AddJail(TreeNode):
-
-    gname = 'Add Jails'
-    name = _(u'Add Jails')
-    icon = u'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jails_add'
-    order = 6
