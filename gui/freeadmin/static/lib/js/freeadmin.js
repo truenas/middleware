@@ -1187,6 +1187,7 @@ require([
             id: "fntree",
             model: treeModel,
             showRoot: false,
+            persist: true,
             onClick: treeclick,
             onLoad: function() {
                 var fadeArgs = {
