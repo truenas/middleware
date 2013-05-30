@@ -153,7 +153,7 @@ class FreeNAS_Local_Group(object):
 
         obj = None
         if group is not None:
-            obj = super(FreeNAS_Local_Group, cls).__new__(cls, **kwargs)
+            obj = super(FreeNAS_Local_Group, cls).__new__(cls)
 
         log.debug("FreeNAS_Local_Group.__new__: leave")
         return obj
@@ -162,7 +162,7 @@ class FreeNAS_Local_Group(object):
         log.debug("FreeNAS_Local_Group.__init__: enter")
         log.debug("FreeNAS_Local_Group.__init__: group = %s", group)
 
-        super(FreeNAS_Local_Group, self).__init__(**kwargs)
+        super(FreeNAS_Local_Group, self).__init__()
 
         self._gr = None
         if group is not None:
@@ -288,7 +288,7 @@ class FreeNAS_Local_User(object):
 
         obj = None
         if user is not None:
-            obj = super(FreeNAS_Local_User, cls).__new__(cls, **kwargs)
+            obj = super(FreeNAS_Local_User, cls).__new__(cls)
 
         log.debug("FreeNAS_Local_User.__new__: leave")
         return obj
@@ -297,7 +297,7 @@ class FreeNAS_Local_User(object):
         log.debug("FreeNAS_Local_User.__init__: enter")
         log.debug("FreeNAS_Local_User.__init__: user = %s", user)
 
-        super(FreeNAS_Local_User, self).__init__(**kwargs)
+        super(FreeNAS_Local_User, self).__init__()
 
         self._pw = None
         if user is not None:
