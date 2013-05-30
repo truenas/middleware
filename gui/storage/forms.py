@@ -375,7 +375,6 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         else:
             volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
-        force4khack = True
 
         with transaction.commit_on_success():
             vols = models.Volume.objects.filter(
@@ -412,15 +411,13 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
                 for gtype, group in grouped.items():
                     notifier().zfs_volume_attach_group(
                         volume,
-                        group,
-                        force4khack=force4khack)
+                        group)
 
             else:
                 notifier().init(
                     "volume",
                     volume,
                     groups=grouped,
-                    force4khack=force4khack,
                     init_rand=init_rand,
                 )
 

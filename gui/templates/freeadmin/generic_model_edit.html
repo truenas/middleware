@@ -1,12 +1,13 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form" encType="multipart/form-data">
 {% block post_form %}
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+<script type="dojo/on" data-dojo-event="submit" data-dojo-args="e">
      doSubmit({
         form: this,
         event: e,
         url: '{{ request.path }}{% if inline %}?inline=true{% endif %}'
      });
+     return false;
 </script>
 {% endblock %}
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
@@ -53,6 +54,9 @@
             <button class="submitform" data-dojo-type="dojox.form.BusyButton" data-dojo-props="type:'submit'">
                 <script type="dojo/method">
                         {{ extra_js }}
+                </script>
+                <script type="dojo/on" data-dojo-event="click">
+                   getForm(this).submit(); // Workaround bug in dojo 1.9.0
                 </script>
                 {% if inline %}
                 {% trans "Save" %}

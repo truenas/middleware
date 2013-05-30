@@ -7,6 +7,7 @@
 	    event: e,
 	    url: '{% block formpost %}{{ request.path }}{% endblock %}'
 	    });
+        return false;
         {% endblock %}
     </script>
 <table class="form">
@@ -17,6 +18,9 @@
 </table>
     {% block buttons %}
     <button data-dojo-type="dojox.form.BusyButton" type="submit" data-dojo-props="type:'submit'" class="submitform">
+        <script type="dojo/on" data-dojo-event="click">
+           getForm(this).submit(); // Workaround bug in dojo 1.9.0
+        </script>
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
     {% if not inline %}
