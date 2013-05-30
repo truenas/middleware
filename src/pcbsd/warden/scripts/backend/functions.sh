@@ -180,12 +180,18 @@ downloadchroot() {
     tank=`getZFSTank "${JDIR}"`
     isDirZFS "${CHROOT}" "1"
     if [ $? -ne 0 ] ; then
+       warden_print zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
+
        zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
        if [ $? -ne 0 ] ; then warden_exit "Failed creating ZFS base dataset"; fi
     fi
 
+    warden_print tar xvpf ${FBSD_TARBALL} -C ${CHROOT}
+
     tar xvpf ${FBSD_TARBALL} -C ${CHROOT} 2>/dev/null
     if [ $? -ne 0 ] ; then warden_exit "Failed extracting ZFS chroot environment"; fi
+
+    warden_print zfs snapshot ${tank}${zfsp}@clean
 
     zfs snapshot ${tank}${zfsp}@clean
     if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base snapshot"; fi
@@ -887,10 +893,12 @@ bootstrap_pkgng()
   if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
   get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
   if [ $? -eq 0 ] ; then
+    warden_print chroot ${jaildir} /bootstrap-pkgng
     chroot ${jaildir} /bootstrap-pkgng | warden_pipe
     if [ $? -eq 0 ] ; then
       rm -f "${jaildir}/bootstrap-pkgng"
       rm -f "${jaildir}/pluginjail-packages"
+      warden_print chroot ${jaildir} pc-extractoverlay server --sysinit
       chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
       return 0
     fi

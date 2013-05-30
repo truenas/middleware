@@ -303,6 +303,13 @@ class JailCreateForm(ModelForm):
 
         w = Warden() 
 
+        logfile = "%s/warden.log" % jc.jc_path
+        if os.access(logfile, os.F_OK):
+            os.unlink(logfile) 
+
+        w.logfile = logfile
+        w.syslog = True
+
 #        if self.cleaned_data['jail_32bit']:
 #            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
         if self.cleaned_data['jail_source']:

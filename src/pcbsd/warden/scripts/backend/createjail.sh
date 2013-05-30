@@ -180,6 +180,8 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
 
     trap clean_exit 2 3 6 9
 
+    warden_print zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
+
     zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
     if [ $? -ne 0 ] ; then
        rm -rf "${pjdir}" >/dev/null 2>&1
@@ -188,15 +190,23 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
 
     cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
 
+    warden_print bootstrap_pkgng "${pjdir}" "pluginjail"
+
     bootstrap_pkgng "${pjdir}" "pluginjail"
     if [ "$?" != "0" ] ; then
+       warden_print zfs destroy -R "${tank}${clonep}"
+
        zfs destroy -R "${tank}${clonep}"
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "bootstrap_pkng for ${pjdir} failed"
     fi
 
+    warden_print zfs snapshot ${tank}${clonep}@clean
+
     zfs snapshot ${tank}${clonep}@clean
     if [ $? -ne 0 ] ; then
+       warden_print zfs destroy -R "${tank}${clonep}"
+
        zfs destroy -R "${tank}${clonep}"
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "Failed creating clean ZFS pluginjail snapshot"
@@ -247,6 +257,7 @@ if [ $? -eq 0 ] ; then
    tank=`getZFSTank "$JDIR"`
    zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
    jailp=`getZFSRelativePath "${JAILDIR}"`
+   warden_print zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
    zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
    if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
 else
