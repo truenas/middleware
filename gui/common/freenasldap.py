@@ -1270,7 +1270,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         results = self._search(self.basedn, scope, filter, self.attributes)
         if results:
             for r in results:
-                if r[0]:
+                if r[0] and r[1] and r[1].has_key('sAMAccountType'):
                     type = int(r[1]['sAMAccountType'][0])
                     if not (type & 0x1):
                         users.append(r)
