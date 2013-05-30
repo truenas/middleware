@@ -12,7 +12,7 @@ require_root()
 {
   UTEST="`whoami`"
   if [ "$UTEST" != "root" ] ; then
-     exit_err "This command must be run as root!"
+     warden_exit "This command must be run as root!"
   fi
 }
 
@@ -24,7 +24,7 @@ PROGDIR="/usr/local/share/warden"
 
 title()
 {
-  echo "Warden version ${WARDENVER}
+  warden_print "Warden version ${WARDENVER}
 ---------------------------------"
 };
 
@@ -33,7 +33,7 @@ title()
 help_main()
 {
   title
-  echo "Available commands
+  warden_print "Available commands
 
 Type in help <command> for information and usage about that command
 
@@ -41,11 +41,12 @@ Type in help <command> for information and usage about that command
 
 
 if [ -e "${PROGDIR}/bin/warden-gui" ] ; then
-   echo "          gui - Launch the GUI menu"
+   warden_print "          gui - Launch the GUI menu"
 
 fi
 
-cat<<__EOF__
+out="$(mktemp /tmp/.wdnXXXXXX)"
+cat<<__EOF__>"${out}"
          auto - Toggles the autostart flag for a jail
       bspkgng - BootStrap pkgng and setup TrueOS repo
       checkup - Check for updates to a jail
@@ -73,12 +74,14 @@ zfsrevertsnap - Revert jail to a snapshot
    zfsrmclone - Remove a clone directory
     zfsrmsnap - Remove snapshot of a jail
 __EOF__
+warden_cat "${out}"
+rm -f "${out}"
 };
 
 help_get()
 {
  title
- echo "Help get
+ warden_print "Help get
 
 Lets you get options for your jail
 
@@ -113,7 +116,7 @@ Example:
 help_set()
 {
  title
- echo "Help set
+ warden_print "Help set
 
 Lets you set options for your jail
 
@@ -150,7 +153,7 @@ Example:
 help_checkup()
 {
  title
- echo "Help checkup
+ warden_print "Help checkup
 
 Check for updates to a jail(s)
 
@@ -169,7 +172,7 @@ Example:
 help_zfslistclone()
 {
  title
- echo "Help zfslistclone
+ warden_print "Help zfslistclone
 
 List ZFS clones of a jail
 
@@ -186,7 +189,7 @@ Example:
 help_zfslistsnap()
 {
  title
- echo "Help zfslistsnap
+ warden_print "Help zfslistsnap
 
 List ZFS snapshots of a jail
 
@@ -203,7 +206,7 @@ Example:
 help_zfsclonesnap()
 {
  title
- echo "Help zfsclonesnap
+ warden_print "Help zfsclonesnap
 
 Clone a ZFS jail snapshot
 
@@ -220,7 +223,7 @@ Example:
 help_zfscronsnap()
 {
  title
- echo "Help zfscronsnap
+ warden_print "Help zfscronsnap
 
 Schedule a ZFS jail snapshot
 
@@ -245,7 +248,7 @@ Example:
 help_zfsrevertsnap()
 {
  title
- echo "Help zfsrevertsnap
+ warden_print "Help zfsrevertsnap
 
 Revert ZFS snapshot of a jail
 
@@ -262,7 +265,7 @@ Example:
 help_zfsrmclone()
 {
  title
- echo "Help zfsrmclone
+ warden_print "Help zfsrmclone
 
 Remove ZFS clone of a jail
 
@@ -279,7 +282,7 @@ Example:
 help_zfsrmsnap()
 {
  title
- echo "Help zfsrmsnap
+ warden_print "Help zfsrmsnap
 
 Remove ZFS snapshot of a jail
 
@@ -297,7 +300,7 @@ Example:
 help_zfsmksnap()
 {
  title
- echo "Help zfsmksnap
+ warden_print "Help zfsmksnap
 
 Create a new ZFS snapshot of a jail
 
@@ -314,7 +317,7 @@ Example:
 help_details()
 {
  title
- echo "Help details
+ warden_print "Help details
 
 View usage details about a jail
 
@@ -332,7 +335,7 @@ Example:
 help_type()
 {
  title
- echo "Help type
+ warden_print "Help type
 
 Lets you set the type of jail to these options:
 
@@ -356,7 +359,7 @@ Example:
 help_bspkgng()
 {
  title
- echo "Help bspkgng
+ warden_print "Help bspkgng
 
 BootStraps the pkgng package system, and installs the TrueOS repository
 and utilities into a jail.
@@ -376,7 +379,7 @@ Example:
 help_auto()
 {
  title
- echo "Help auto
+ warden_print "Help auto
 
 Toggles the autostart flag for a specified jail. If the flag is 
 enabled, then the jail will be started at system bootup automatically.
@@ -395,7 +398,7 @@ Example:
 help_pkgs()
 {
  title
- echo "Help pkgs
+ warden_print "Help pkgs
 
 Generates a listing of the installed ports in a jail.
 
@@ -412,7 +415,7 @@ Example:
 help_pbis()
 {
  title
- echo "Help pbis
+ warden_print "Help pbis
 
 Generates a listing of the installed pbi's in a jail.
 
@@ -429,7 +432,7 @@ Example:
 help_list()
 {
  title
- echo "Help list
+ warden_print "Help list
 
 Generates a quick listing of the installed jails, including the running
 status.
@@ -446,7 +449,7 @@ Usage:
 help_export()
 {
  title
- echo "Help export
+ warden_print "Help export
 
 Export will backup a full copy of your jail, compressing it and 
 saving it to a .wdn file. This file can then be taken and 
@@ -470,7 +473,7 @@ Example:
 help_fstab()
 {
  title
- echo "Help fstab
+ warden_print "Help fstab
 
 Runs the users \$EDITOR on the jails custom fstab file. Can be used to setup
 nullfs mounts and others for a specific jail
@@ -484,7 +487,7 @@ Usage:
 help_import()
 {
  title
- echo "Help import
+ warden_print "Help import
 
 Imports a jail from a .wdn file. Can assign a new IP / Hostname to
 the imported jail on the fly using optional flags.  
@@ -509,7 +512,7 @@ Example:
 help_chroot()
 {
  title
- echo "Help chroot
+ warden_print "Help chroot
 
 Logs into a jail using chroot, or runs the supplied command. 
 
@@ -527,7 +530,7 @@ Example:
 help_start()
 {
  title
- echo "Help start 
+ warden_print "Help start 
 
 Starts a stopped jail
 
@@ -544,7 +547,7 @@ Example:
 help_stop()
 {
  title
- echo "Help stop
+ warden_print "Help stop
 
 Stops a running jail
 
@@ -561,7 +564,7 @@ Example:
 help_delete()
 {
  title
- echo "Help delete
+ warden_print "Help delete
 
 Stops and deletes a jail
 
@@ -583,7 +586,7 @@ Example:
 help_create()
 {
  title
- echo "Help create
+ warden_print "Help create
 
 Creates a new jail, with options for system source, ports and autostarting.
 
@@ -651,29 +654,29 @@ case "$1" in
 
 
     pkgs) JAILNAME="${2}"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
          ${PROGDIR}/scripts/backend/listpkgs.sh "${JAILNAME}" 
          ;;
 details) JAILNAME="${2}"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
          ${PROGDIR}/scripts/backend/details.sh "${JAILNAME}" 
          ;;
     pbis) JAILNAME="${2}"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
          ${PROGDIR}/scripts/backend/listpbis.sh "${JAILNAME}" 
          ;;
     fstab) JAILNAME="${2}"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
     set_warden_metadir
          if [ ! -e "${JMETADIR}/fstab" ] ; then
              echo "# Device  Mountpoint  FStype          Options Dump Pass" > ${JMETADIR}/fstab
@@ -685,8 +688,8 @@ details) JAILNAME="${2}"
     get) require_root
 	 OPT="${2}"
          JAILNAME="${3}"
-         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ] ; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
 	 case $OPT in
@@ -701,15 +704,15 @@ details) JAILNAME="${2}"
  alias-bridge-ipv6) cat "${JMETADIR}/alias-bridge-ipv6" 2>/dev/null | sed 's| |,|g' ;;
 defaultrouter-ipv4) cat "${JMETADIR}/defaultrouter-ipv4" 2>/dev/null | sed 's| |,|g' ;;
 defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |,|g' ;;
-              *) exit_err "Invalid option!" ;;
+              *) warden_exit "Invalid option!" ;;
          esac
          ;;
 
     set) require_root
 	 OPT="${2}" 
          JAILNAME="${3}"
-         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ] ; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ] ; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
 	 case $OPT in
@@ -774,7 +777,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           flags) EXTRAFLAGS="${4}"
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"
                 ;;
-              *) exit_err "Invalid option!" ;;
+              *) warden_exit "Invalid option!" ;;
 	   esac
          ;;
 
@@ -783,11 +786,11 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          TYPE="${3}"
          JAILDIR="${JDIR}/${JAILNAME}"
 
-         if [ -z "${JAILNAME}" ] ; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JAILDIR}" ] ; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ] ; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JAILDIR}" ] ; then warden_exit "No such jail!"; fi
 
 	 set_warden_metadir
-	 if [ -e "${JMETADIR}/jail-linux" ] ; then exit_err "Cannot change type on Linux jail!"; fi
+	 if [ -e "${JMETADIR}/jail-linux" ] ; then warden_exit "Cannot change type on Linux jail!"; fi
 
 	 case $TYPE in
 	   portjail)
@@ -801,23 +804,23 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 	   pluginjail)
               mkpluginjail "${JAILDIR}"
               ;;
-	   *) exit_err "Invalid TYPE" ;;
+	   *) warden_exit "Invalid TYPE" ;;
          esac
          ;;
 
  bspkgng) require_root
     JAILNAME="${2}"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
          bootstrap_pkgng "${JDIR}/${JAILNAME}"
          ;;
 
    auto) require_root
 	 JAILNAME="${2}"
 
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
 
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
          if [ -e "${JMETADIR}/autostart" ]
@@ -842,13 +845,13 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 	  # Time to startup the jail
           JAILNAME="${2}"
 
-          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi 
+          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi 
 	  set_warden_metadir
          
           # Check if this jail is already running
           ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
-          if [ "$?" = "0" ]; then exit_err "This jail is already running!"; fi
+          if [ "$?" = "0" ]; then warden_exit "This jail is already running!"; fi
  
           ${PROGDIR}/scripts/backend/startjail.sh "${JAILNAME}" 
           ;;
@@ -856,8 +859,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           # Time to stop the jail
           JAILNAME="${2}"
 
-          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi 
+          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi 
 	  set_warden_metadir
          
           ${PROGDIR}/scripts/backend/stopjail.sh "${JAILNAME}" 
@@ -866,8 +869,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  checkup) # Log a user into chroot session
           JAILNAME="${2}"
 
-          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-          if [ ! -e "${JDIR}/${JAILNAME}" -a "${JAILNAME}" != "all" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" -a "${JAILNAME}" != "all" ]; then warden_exit "No such jail!"; fi
 
           ${PROGDIR}/scripts/backend/checkupdates.sh "${JAILNAME}"
           ;;
@@ -876,8 +879,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  chroot) # Log a user into chroot session
           JAILNAME="${2}"
 
-          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	  set_warden_metadir
 
           ${PROGDIR}/scripts/backend/chrootjail.sh "${JAILNAME}" "${3}"
@@ -886,7 +889,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  import) require_root
 	 # The user wants to import a jail, lets do it!
          IFILE="$2"
-         if [ ! -e "$IFILE" ]; then exit_err "Invalid filename: ${IFILE}"; fi
+         if [ ! -e "$IFILE" ]; then warden_exit "Invalid filename: ${IFILE}"; fi
 
          HOST=`basename "${IFILE}" | sed 's|\.wdn$||'`
 
@@ -905,13 +908,13 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
               #Sanity check on the IP
               if ! is_ipv4 "${IP4}" ; then
-                 exit_err "Invalid IPv4 address!"
+                 warden_exit "Invalid IPv4 address!"
               fi
 
               for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
               do
                 if [ "`cat ${i}/ipv4 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
-                  exit_err "A jail with this IPv4 address already exists!"
+                  warden_exit "A jail with this IPv4 address already exists!"
                 fi 
               done 
            fi
@@ -926,7 +929,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
               #Sanity check on the IP
               if ! is_ipv6 "${IP6}" ; then
-                 exit_err "Invalid IPv6 address!"
+                 warden_exit "Invalid IPv6 address!"
               fi
 
               for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
@@ -935,7 +938,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
                 _nipv6="`echo ${IP6}|tr a-z A-Z`/${MASK6}"
                 
                 if [ "${_ipv6}" = "${_nipv6}" ] ; then
-                  exit_err "A jail with this IPv6 address already exists!"
+                  warden_exit "A jail with this IPv6 address already exists!"
                 fi 
               done 
            fi
@@ -963,8 +966,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  export) require_root
          # The user wants to export a jail, lets do it!
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
          # Check if the user wants to place the file in their own DIR
@@ -976,7 +979,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
            then
               DIR="`echo ${i} | cut -d '=' -f 2`"
               # Check if the directory exists
-              if [ ! -d "${DIR}" ]; then exit_err "No such directory ${DIR}!"; fi
+              if [ ! -d "${DIR}" ]; then warden_exit "No such directory ${DIR}!"; fi
            fi
 
          done
@@ -988,24 +991,24 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
  zfsmksnap) require_root
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfsmksnap.sh "${JAILNAME}"
          ;;
 
  zfslistclone) require_root
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfslistclone.sh "${JAILNAME}"
          ;;
 
  zfslistsnap) require_root
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfslistsnap.sh "${JAILNAME}"
          ;;
@@ -1013,16 +1016,16 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  zfsclonesnap) require_root
          JAILNAME="$2"
          SNAP="$3"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfsclonesnap.sh "${JAILNAME}" "${SNAP}"
          ;;
 
  zfscronsnap) require_root
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfscronsnap.sh "${JAILNAME}" "$3" "$4" "$5"
          ;;
@@ -1031,8 +1034,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  zfsrevertsnap) require_root
          JAILNAME="$2"
          SNAP="$3"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfsrevertsnap.sh "${JAILNAME}" "$SNAP"
          ;;
@@ -1040,8 +1043,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  zfsrmclone) require_root
          JAILNAME="$2"
          CLONE="$3"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfsrmclone.sh "${JAILNAME}" "${CLONE}"
          ;;
@@ -1049,8 +1052,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  zfsrmsnap) require_root
          JAILNAME="$2"
          SNAP="$3"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-         if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+         if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
          ${PROGDIR}/scripts/backend/zfsrmsnap.sh "${JAILNAME}" "${SNAP}"
          ;;
@@ -1058,7 +1061,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
  create) require_root
          # The user wants to create a new jail, do error checking
          JAILNAME="$2"
-         if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
+         if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
 
          HOST="$2"
 
@@ -1075,11 +1078,11 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          while [ $# -gt 0 ]; do
            case $1 in
              --ipv4) shift
-			  if [ -z "$1" ] ; then exit_err "No IPv4 address specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No IPv4 address specified!"; fi
                           IP4="${1}"
                           ;;
              --ipv6) shift
-			  if [ -z "$1" ] ; then exit_err "No IPv6 address specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No IPv6 address specified!"; fi
                           IP6="${1}"
                           ;;
 
@@ -1090,37 +1093,37 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
              --portjail) JAILTYPE="portjail" ;;
              --pluginjail) JAILTYPE="pluginjail" ; VANILLA="YES" ;; 
              --linuxjail) JAILTYPE="linuxjail" ; shift
-			  if [ -z "$1" ] ; then exit_err "No linux setup script specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No linux setup script specified!"; fi
 			  LINUX_JAIL_SCRIPT="$1" ; export LINUX_JAIL_SCRIPT
 			  if [ -n "$LINUXARCHIVE_FILE" ] ; then 
-			     exit_err "--linuxjail and --linuxarchive are mutually exclusive!"
+			     warden_exit "--linuxjail and --linuxarchive are mutually exclusive!"
 			  fi
 			  ;;
 	             -32) if [ "$REALARCH" != "amd64" ] ; then
-                                exit_err "-32 can only be used on amd64 host"
+                                warden_exit "-32 can only be used on amd64 host"
                           fi
                           ARCH=i386
 			  export ARCH
                           ;;
              --archive) shift
-			  if [ -z "$1" ] ; then exit_err "No archive file specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No archive file specified!"; fi
 			  ARCHIVE_FILE="$1" ; export ARCHIVE_FILE
 			  if [ ! -e "$ARCHIVE_FILE" ] ; then
-			     exit_err "No such file: $ARCHIVE_FILE"
+			     warden_exit "No such file: $ARCHIVE_FILE"
 			  fi
 			  ;;
              --linuxarchive) JAILTYPE="linuxjail" ; shift
-			  if [ -z "$1" ] ; then exit_err "No archive file specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No archive file specified!"; fi
 			  LINUXARCHIVE_FILE="$1" ; export LINUXARCHIVE_FILE
 			  if [ ! -e "$LINUXARCHIVE_FILE" ] ; then
-			     exit_err "No such file: $LINUXARCHIVE_FILE"
+			     warden_exit "No such file: $LINUXARCHIVE_FILE"
 			  fi
 			  if [ -n "$LINUX_JAIL_SCRIPT" ] ; then 
-			     exit_err "--linuxjail and --linuxarchive are mutually exclusive!"
+			     warden_exit "--linuxjail and --linuxarchive are mutually exclusive!"
 			  fi
 			  ;;
              --version) shift
-			  if [ -z "$1" ] ; then exit_err "No version string specified!"; fi
+			  if [ -z "$1" ] ; then warden_exit "No version string specified!"; fi
                           VERSION="${1}"
                           ;;
            esac
@@ -1128,7 +1131,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          done
 
          # Check to ensure this jail does not already exist
-         if [ -e "${JDIR}/${JAILNAME}" ]; then exit_err "A jail with this name already exists!"; fi  
+         if [ -e "${JDIR}/${JAILNAME}" ]; then warden_exit "A jail with this name already exists!"; fi  
 
           #
           # Redonkulous number of parameters that exceeds 9,
@@ -1152,8 +1155,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           # Time to delete a jail
           JAILNAME="${2}"
 
-          if [ -z "${JAILNAME}" ]; then exit_err "No jail specified!"; fi
-          if [ ! -e "${JDIR}/${JAILNAME}" ]; then exit_err "No such jail!"; fi
+          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
+          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	  set_warden_metadir
 
           if [ "$3" != "--confirm" ]
@@ -1161,7 +1164,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
             echo "Are you sure you want to delete ${JAILNAME}?"
             echo -e "Choice: (y/n)\c"
             read confirm
-            if [ "$confirm" != "y" ]; then exit_err "Canceled!"; fi
+            if [ "$confirm" != "y" ]; then warden_exit "Canceled!"; fi
           fi
 
           # Check if this jail is running
@@ -1172,7 +1175,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
           # Check if this jail is STILL running
           ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
-          if [ "$?" = "0" ] ; then exit_err "Jail still is running or has leftovers.."; fi
+          if [ "$?" = "0" ] ; then warden_exit "Jail still is running or has leftovers.."; fi
 
           # Delete it now
           ${PROGDIR}/scripts/backend/deletejail.sh "${JAILNAME}"

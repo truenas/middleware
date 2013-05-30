@@ -14,14 +14,14 @@ export JAILNAME
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to delete!"
+  warden_error "No jail specified to delete!"
   rtn
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   rtn
   exit 5
 fi
@@ -29,7 +29,7 @@ fi
 JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ] ; then
-   echo "ERROR: No such jail at ${JAILDIR}"
+   warden_error "No such jail at ${JAILDIR}"
    exit 5
 fi
 
@@ -51,7 +51,7 @@ fi
 # Confirm jail was shutdown and no mounts are left
 ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
 if [ "$?" = "0" ] ; then
-   echo "ERROR: Jail is still running, or has active mount-points.. Please stop manually."
+   warden_error "Jail is still running, or has active mount-points.. Please stop manually."
    exit 5
 fi
 
@@ -77,4 +77,4 @@ if [ -x "${JMETADIR}/jail-post-delete" ] ; then
   "${JMETADIR}/jail-post-delete"
 fi
 
-echo "Done"
+warden_print "Done"

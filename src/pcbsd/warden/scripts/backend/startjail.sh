@@ -14,13 +14,13 @@ export JAILNAME
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to start!"
+  warden_error "No jail specified to start!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -28,7 +28,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -36,7 +36,7 @@ fi
 jls | grep ${JAILDIR}$ >/dev/null 2>/dev/null
 if [ "$?" = "0" ]
 then
-  echo "ERROR: Jail appears to be running already!"
+  warden_error "Jail appears to be running already!"
   exit 6
 fi
 
@@ -57,7 +57,7 @@ if [ -z "${IFACE}" ] ; then
    DEFAULT=1
 fi
 if [ -z "${IFACE}" ] ; then
-  echo "ERROR: no interface specified and a default doesn't exist!"
+  warden_error "no interface specified and a default doesn't exist!"
   exit 6
 fi
 
@@ -107,7 +107,7 @@ fi
 HOST="`cat ${JMETADIR}/host`"
 
 if is_symlinked_mountpoint ${JAILDIR}/dev; then
-   echo "${JAILDIR}/dev has symlink as parent, not mounting"
+   warden_print "${JAILDIR}/dev has symlink as parent, not mounting"
 else
    mount -t devfs devfs "${JAILDIR}/dev"
 fi
@@ -115,23 +115,23 @@ fi
 if [ "$LINUXJAIL" = "YES" ] ; then
   # Linux Jail
   if is_symlinked_mountpoint ${JAILDIR}/proc; then
-     echo "${JAILDIR}/proc has symlink as parent, not mounting"
+     warden_print "${JAILDIR}/proc has symlink as parent, not mounting"
   else
      mount -t linprocfs linproc "${JAILDIR}/proc"
   fi
   if is_symlinked_mountpoint ${JAILDIR}/dev/fd; then
-     echo "${JAILDIR}/dev/fd has symlink as parent, not mounting"
+     warden_print "${JAILDIR}/dev/fd has symlink as parent, not mounting"
   else
      mount -t fdescfs null "${JAILDIR}/dev/fd"
   fi
   if is_symlinked_mountpoint ${JAILDIR}/sys; then
-     echo "${JAILDIR}/sys has symlink as parent, not mounting"
+     warden_print "${JAILDIR}/sys has symlink as parent, not mounting"
   else
      mount -t linsysfs linsys "${JAILDIR}/sys"
   fi
   if [ -e "${JAILDIR}/lib/init/rw" ] ; then
     if is_symlinked_mountpoint ${JAILDIR}/lib/init/rw; then
-       echo "${JAILDIR}/lib/init/rw has symlink as parent, not mounting"
+       warden_print "${JAILDIR}/lib/init/rw has symlink as parent, not mounting"
     else
        mount -t tmpfs tmpfs "${JAILDIR}/lib/init/rw"
     fi
@@ -139,7 +139,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
 else
   # FreeBSD Jail
   if is_symlinked_mountpoint ${JAILDIR}/proc; then
-     echo "${JAILDIR}/proc has symlink as parent, not mounting"
+     warden_print "${JAILDIR}/proc has symlink as parent, not mounting"
   else
      mount -t procfs proc "${JAILDIR}/proc"
   fi
@@ -149,7 +149,7 @@ fi
 
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
-   echo "Mounting user-supplied file-systems"
+   warden_print "Mounting user-supplied file-systems"
    mount -a -F ${JMETADIR}/fstab
 fi
 
@@ -261,7 +261,7 @@ fi
 echo "jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet"
 jail -c path=${JAILDIR} host.hostname=${HOST} ${jFlags} persist vnet
 if [ $? -ne 0 ] ; then
-   echo "ERROR: Failed starting jail with above command..."
+   warden_error "Failed starting jail with above command..."
    umountjailxfs "${JAILNAME}"
    exit 1
 fi
@@ -383,7 +383,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom start script
   if [ -e "${JMETADIR}/jail-start" ] ; then
     sCmd=`cat ${JMETADIR}/jail-start`
-    echo "Starting jail with: ${sCmd}"
+    warden_print "Starting jail with: ${sCmd}"
     jexec ${JID} ${sCmd} 2>&1
   else
     # Check for different init styles
@@ -397,10 +397,10 @@ else
   # If we have a custom start script
   if [ -e "${JMETADIR}/jail-start" ] ; then
     sCmd=`cat ${JMETADIR}/jail-start`
-    echo "Starting jail with: ${sCmd}"
+    warden_print "Starting jail with: ${sCmd}"
     jexec ${JID} ${sCmd} 2>&1
   else
-    echo "Starting jail with: /etc/rc"
+    warden_print "Starting jail with: /etc/rc"
     jexec ${JID} /bin/sh /etc/rc >/dev/tty 2>&1
   fi
 fi

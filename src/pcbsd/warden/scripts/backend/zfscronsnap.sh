@@ -15,13 +15,13 @@ ACTION="${2}"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to start!"
+  warden_error "No jail specified to start!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -29,7 +29,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -43,17 +43,20 @@ if [ "$ACTION" = "start" ] ; then
   COUNT="${4}"
   case $TIME in
   daily|hourly) ;;
-	*) echo "ERROR: Invalid frequency specified!" ; exit 5 ;;
+	*) warden_error "Invalid frequency specified!" ; exit 5 ;;
   esac
   if [ ! $(is_num "$COUNT") ] ; then
-     echo "ERROR: Invalid count specified!" ; exit 5
+     warden_error "Invalid count specified!" ; exit 5
   fi
 
   enable_cron
+
   echo "${TIME}" >${JMETADIR}/cron
   echo "${COUNT}" >${JMETADIR}/cron-keep
-  echo "Snapshot frequency set: $TIME"
-  echo "Snapshot days to keep set: $COUNT"
+
+  warden_print "Snapshot frequency set: $TIME"
+  warden_print "Snapshot days to keep set: $COUNT"
+
   exit 0
 fi
 

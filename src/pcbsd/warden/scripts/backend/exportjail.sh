@@ -13,13 +13,13 @@ OUTDIR="$2"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to chroot into!"
+  warden_error "No jail specified to chroot into!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -27,7 +27,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -57,7 +57,7 @@ get_ip_and_netmask "${IP6}"
 IP6="${JIP}"
 MASK6="${JMASK}"
 
-echo "Creating compressed archive of ${JAILNAME}... Please Wait..." >&1
+warden_print "Creating compressed archive of ${JAILNAME}... Please Wait..."
 tar cvJf "${WTMP}/${JAILNAME}.tlz" -C "${JAILDIR}" . 2>${WTMP}/${JAILNAME}.files
 
 cd ${WTMP}
@@ -106,9 +106,9 @@ if [ ! -z "${OUTDIR}" ]
 then
   mkdir -p ${OUTDIR} 2>/dev/null
   mv ${JAILNAME}.wdn ${OUTDIR}/
-  echo "Created ${JAILNAME}.wdn in ${OUTDIR}" >&1
+  warden_print "Created ${JAILNAME}.wdn in ${OUTDIR}" 
 else 
-  echo "Created ${JAILNAME}.wdn in ${WTMP}" >&1
+  warden_print "Created ${JAILNAME}.wdn in ${WTMP}"
 fi
 
 exit 0

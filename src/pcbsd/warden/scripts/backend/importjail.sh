@@ -30,13 +30,13 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ -z "${IFILE}" -o ! -e "${IFILE}" ]
 then
-  echo "ERROR: No jail specified or invalid file!"
+  warden_error "No jail specified or invalid file!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -45,7 +45,7 @@ then
   for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
   do
     if [ "`cat ${i}/ipv4 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
-      echo "ERROR: A Jail exists with IP: ${IP4}"
+      warden_error "A Jail exists with IP: ${IP4}"
       exit 5
     fi
   done
@@ -57,7 +57,7 @@ then
     _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
     _nipv6="`echo ${IP6}|tr a-z A-Z`/${MASK6}"
     if [ "${ipv6}" = "${_nipv6}" ] ; then
-      echo "ERROR: A Jail exists with IP: ${IP6}"
+      warden_error "A Jail exists with IP: ${IP6}"
       exit 5
     fi
   done
@@ -84,7 +84,7 @@ cd tmp.$$
 tar xvzf ${IFILE} >/dev/null 2>/dev/null
 if [ "${?}" != "0" ]
 then
-    echo "ERROR: Extracting header info failed! "
+    warden_error "Extracting header info failed! "
     cd ..
     rm -rf tmp.$$
     exit 5
@@ -144,7 +144,7 @@ cd ..
 
 # Make sure this is a file version we understand
 if [ "${VER}" != "1.0" ]; then
-    echo "ERROR: Specified file is a incompatiable .wdn file!"
+    warden_error "Specified file is a incompatiable .wdn file!"
     rm -rf tmp.$$ 2>/dev/null
     exit 7
 fi
@@ -152,8 +152,8 @@ fi
 # Check that we are on the same OS platform
 if [ "${OS}" != "`uname -r | cut -d '-' -f 1`" ]
 then
-    echo "WARNING: This .wdn file was created on $OS, while this host is `uname -r | cut -d '-' -f 1`"
-    echo "This jail may not work...Importing anyway..."
+    warden_print "WARNING: This .wdn file was created on $OS, while this host is `uname -r | cut -d '-' -f 1`"
+    warden_print "This jail may not work...Importing anyway..."
 fi
 
 if [ "${IP4}" = "OFF" ]
@@ -162,7 +162,7 @@ then
   do
     if [ -n "${FIP4}" ] ; then
       if [ "`cat ${i}/ipv4`" = "${FIP4}" ] ; then
-        echo "ERROR: A Jail already exists with IP: $FIP4"
+        warden_error "A Jail already exists with IP: $FIP4"
         rm -rf tmp.$$ 2>/dev/null
         exit 7
       fi
@@ -184,7 +184,7 @@ then
       _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
       _nipv6=`echo ${FIP6}|tr a-z A-Z`
       if [ "${ipv6}" = "${_nipv6}" ] ; then
-        echo "ERROR: A Jail already exists with IP: $FIP6"
+        warden_error "A Jail already exists with IP: $FIP6"
         rm -rf tmp.$$ 2>/dev/null
         exit 7
       fi
@@ -199,9 +199,9 @@ fi
 
 SKIP="`awk '/^___WARDEN_START___/ { print NR + 1; exit 0; }' ${IFILE}`"
 if [ -n "${IP4}" ] ; then
-  echo "Importing ${IFILE} with IP: ${IP4}..."
+  warden_print "Importing ${IFILE} with IP: ${IP4}..."
 elif [ -n "${IP6}" ] ; then
-  echo "Importing ${IFILE} with IP: ${IP6}..."
+  warden_print "Importing ${IFILE} with IP: ${IP6}..."
 fi
 
 # Make the new directory
@@ -292,4 +292,4 @@ fi
 # End Hostname setup
 fi
 
-echo "Done"
+warden_print "Done"

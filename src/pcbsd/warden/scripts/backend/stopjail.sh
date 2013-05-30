@@ -19,13 +19,13 @@ fi
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to delete!"
+  warden_error "No jail specified to delete!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -33,7 +33,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -47,12 +47,12 @@ HOST="`cat ${JMETADIR}/host`"
 # End of error checking, now shutdown this jail
 ##################################################################
 
-echo -e "Stopping the jail...\c"
+warden_printf "Stopping the jail..."
 
 # Get the JailID for this jail
 JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
-echo -e ".\c"
+warden_printf "."
 
 # Check if we need umount x mnts
 if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
@@ -63,7 +63,7 @@ if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
-   echo "Unmounting user-supplied file-systems"
+   warden_print "Unmounting user-supplied file-systems"
    umount -a -f -F ${JMETADIR}/fstab
 fi
 
@@ -71,7 +71,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom stop script
   if [ -e "${JMETADIR}/jail-stop" ] ; then
     sCmd=`cat ${JMETADIR}/jail-stop`
-    echo "Stopping jail with: ${sCmd}"
+    warden_print "Stopping jail with: ${sCmd}"
     if [ -n "${JID}" ] ; then
       jexec ${JID} ${sCmd} 2>&1
     fi
@@ -98,12 +98,12 @@ else
   if [ -e "${JMETADIR}/jail-stop" ] ; then
     if [ -n "${JID}" ] ; then
       sCmd=`cat ${JMETADIR}/jail-stop`
-      echo "Stopping jail with: ${sCmd}"
+      warden_print "Stopping jail with: ${sCmd}"
       jexec ${JID} ${sCmd} 2>&1
     fi
   else
     if [ -n "${JID}" ] ; then
-      echo "Stopping jail with: /etc/rc.shutdown"
+      warden_print "Stopping jail with: /etc/rc.shutdown"
       jexec ${JID} /bin/sh /etc/rc.shutdown >/dev/null 2>/dev/null
     fi
   fi
@@ -111,7 +111,7 @@ fi
 
 umount -f ${JAILDIR}/dev >/dev/null 2>/dev/null
 
-echo -e ".\c"
+warden_printf "."
 
 # Skip the time consuming portion if we are shutting down
 if [ "$FAST" != "Y" ]
@@ -122,7 +122,7 @@ killall -j ${JID} -TERM 2>/dev/null
 sleep 1
 killall -j ${JID} -KILL 2>/dev/null
 
-echo -e ".\c"
+warden_printf "."
 
 # Check if we need to unmount the devfs in jail
 mount | grep "${JAILDIR}/dev" >/dev/null 2>/dev/null
@@ -143,7 +143,7 @@ then
    fi
 
    SEC="`expr $SEC + 2`"
-   echo -e ".\c"
+   warden_printf "."
 
    if [ ${SEC} -gt 60 ]
    then
@@ -165,7 +165,7 @@ fi
 
 fi # End of FAST check
 
-echo -e ".\c"
+warden_printf "."
 
 if [ -n "${JID}" ] ; then
   jail -r ${JID}
@@ -176,4 +176,4 @@ if [ -x "${JMETADIR}/jail-post-stop" ] ; then
   "${JMETADIR}/jail-post-stop"
 fi
 
-echo -e "Done"
+warden_printf "Done"

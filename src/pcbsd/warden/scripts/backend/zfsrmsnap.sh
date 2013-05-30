@@ -15,13 +15,13 @@ SNAP="${2}"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to start!"
+  warden_error "No jail specified to start!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -29,7 +29,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 

@@ -57,6 +57,72 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 # Clone directory
 CDIR="${JDIR}/clones"
 
+warden_printf() {
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    printf $* >> ${WARDEN_LOGFILE}
+  fi
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    logger -t warden $*
+  fi
+  printf $*
+};
+
+warden_cat() {
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    cat "$*" >> ${WARDEN_LOGFILE}
+  fi
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    cat "$*" | logger -t warden
+  fi
+  cat "$*"
+};
+
+warden_pipe() {
+  while read val ; do
+    if [ -n "${WARDEN_LOGFILE}" ] ; then
+      echo ${val} >> ${WARDEN_LOGFILE}
+    fi
+    if [ -n "${WARDEN_USESYSLOG}" ] ; then
+      logger -t warden ${val}
+    fi
+    echo ${val}
+  done
+};
+
+warden_print() {
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo "$*" >> ${WARDEN_LOGFILE}
+  fi
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    logger -t warden $*
+  fi
+  echo "$*"
+};
+
+warden_error() {
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo "ERROR: $*" >> ${WARDEN_LOGFILE}
+  fi
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    logger -t warden "ERROR: $*"
+  fi
+  echo >&2 "ERROR: $*" 
+};
+
+warden_warn() {
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo "WARN: $*" >> ${WARDEN_LOGFILE}
+  fi
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    logger -t warden "WARN: $*"
+  fi
+  echo >&2 "ERROR: $*" 
+};
+
+warden_exit() {
+  warden_error $*
+  exit 1
+};
 
 ### Download the chroot
 downloadchroot() {
@@ -76,15 +142,15 @@ downloadchroot() {
   if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
   cd ${JDIR}
 
-  echo "Fetching jail environment. This may take a while..."
-  echo "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
+  warden_print "Fetching jail environment. This may take a while..."
+  warden_print "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
 
   if [ ! -e "$FBSD_TARBALL" ] ; then
      trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL}"
-       exit_err "Error while downloading the chroot."
+       warden_exit "Error while downloading the chroot."
      fi
      trap 2 3 6 9
   fi
@@ -94,39 +160,64 @@ downloadchroot() {
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL_CKSUM}"
-       exit_err "Error while downloading the chroot checksum."
+       warden_exit "Error while downloading the chroot checksum."
      fi
      trap 2 3 6 9
   fi
 
   [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
-    printerror "Error in download data, checksum mismatch. Please try again later."
+    warden_error "Error in download data, checksum mismatch. Please try again later."
 
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
+    trap "rmchroot ${CHROOT}" 2 3 6 9
+
     local zfsp=`getZFSRelativePath "${CHROOT}"`
 
     # Use ZFS base for cloning
-    echo "Creating ZFS ${CHROOT} dataset..."
+    warden_print "Creating ZFS ${CHROOT} dataset..."
     tank=`getZFSTank "${JDIR}"`
     isDirZFS "${CHROOT}" "1"
     if [ $? -ne 0 ] ; then
        zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
-       if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
+       if [ $? -ne 0 ] ; then warden_exit "Failed creating ZFS base dataset"; fi
     fi
 
     tar xvpf ${FBSD_TARBALL} -C ${CHROOT} 2>/dev/null
-    if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS chroot environment"; fi
+    if [ $? -ne 0 ] ; then warden_exit "Failed extracting ZFS chroot environment"; fi
 
     zfs snapshot ${tank}${zfsp}@clean
-    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
+    if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base snapshot"; fi
     rm ${FBSD_TARBALL}
+
+    trap 2 3 6 9
+
   else
     # Save the chroot tarball
     mv ${FBSD_TARBALL} ${CHROOT}
   fi
   rm ${FBSD_TARBALL_CKSUM}
+};
+
+
+rmchroot()
+{
+  local CHROOT="${1}"
+
+  isDirZFS "${JDIR}"
+  if [ $? -eq 0 ] ; then
+    local zfsp=`getZFSRelativePath "${CHROOT}"`
+    tank=`getZFSTank "${JDIR}"`
+
+    warden_print "Destroying dataset ${tank}${zfsp}"
+    zfs destroy -R ${tank}${zfsp}
+    if [ $? -ne 0 ] ; then warden_error "Failed to destroy ZFS base dataset"; fi
+
+    warden_print "Removing ${CHROOT}"
+    rm -rf ${CHROOT} >/dev/null 2>&1
+    if [ $? -ne 0 ] ; then warden_error "Failed to remove chroot directory"; fi
+  fi
 };
 
 
@@ -137,11 +228,11 @@ mountjailxfs() {
       mkdir -p "${JDIR}/${1}${nullfs_mount}"
     fi
     if is_symlinked_mountpoint ${nullfs_mount}; then
-      echo "${nullfs_mount} has symlink as parent, not mounting"
+      warden_print "${nullfs_mount} has symlink as parent, not mounting"
       continue
     fi
 
-    echo "Mounting ${JDIR}/${1}${nullfs_mount}"
+    warden_print "Mounting ${JDIR}/${1}${nullfs_mount}"
     mount_nullfs ${nullfs_mount} ${JDIR}/${1}${nullfs_mount}
   done
 
@@ -150,10 +241,10 @@ mountjailxfs() {
     mkdir -p ${JDIR}/${1}/compat/linux/proc
   fi
   if is_symlinked_mountpoint ${JDIR}/${1}/compat/linux/proc; then
-    echo "${JDIR}/${1}/compat/linux/proc has symlink as parent, not mounting"
+    warden_print "${JDIR}/${1}/compat/linux/proc has symlink as parent, not mounting"
     return
   fi
-  echo "Enabling linprocfs support."
+  warden_print "Enabling linprocfs support."
   mount -t linprocfs linprocfs ${JDIR}/${1}/compat/linux/proc
 }
 
@@ -241,7 +332,7 @@ mkpluginjail() {
 
 mkZFSSnap() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   rp=`getZFSRelativePath "$1"`
   zdate=`date +%Y-%m-%d-%H-%M-%S`
@@ -250,7 +341,7 @@ mkZFSSnap() {
 
 listZFSSnap() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   rp=`getZFSRelativePath "$1"`
   zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}'
@@ -258,18 +349,18 @@ listZFSSnap() {
 
 listZFSClone() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   cdir=`getZFSRelativePath "${CDIR}"` 
-  echo "Clone Directory: ${CDIR}"
-  echo "-----------------------------------"
+  warden_print "Clone Directory: ${CDIR}"
+  warden_print "-----------------------------------"
   zfs list | grep -w "^${tank}${cdir}/${2}" | awk '{print $5}' | sed "s|${CDIR}/${2}-||g"
 }
 
 rmZFSClone() {
   CLONEDIR="${CDIR}/${3}-${2}"
   isDirZFS "${CLONEDIR}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${CLONEDIR}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${CLONEDIR}" ; fi
   tank=`getZFSTank "${CLONEDIR}"`
   rp=`getZFSRelativePath "${CLONEDIR}"`
   zfs destroy ${tank}${rp}
@@ -277,7 +368,7 @@ rmZFSClone() {
 
 rmZFSSnap() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   rp=`getZFSRelativePath "$1"`
   zfs destroy $tank${rp}@$2
@@ -285,13 +376,13 @@ rmZFSSnap() {
 
 revertZFSSnap() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   rp=`getZFSRelativePath "$1"`
 
   # Make sure this is a valid snapshot
   zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
-  if [ $? -ne 0 ] ; then printerror "Invalid ZFS snapshot!" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Invalid ZFS snapshot!" ; fi
 
   # Check if the jail is running first
   ${PROGDIR}/scripts/backend/checkstatus.sh "${3}"
@@ -301,7 +392,7 @@ revertZFSSnap() {
     ${PROGDIR}/scripts/backend/stopjail.sh "${3}"
     ${PROGDIR}/scripts/backend/checkstatus.sh "${3}"
     if [ "$?" = "0" ]; then
-      printerror "Could not stop jail... Halting..."
+      warden_error "Could not stop jail... Halting..."
     fi
   fi
 
@@ -317,23 +408,23 @@ revertZFSSnap() {
 
 cloneZFSSnap() {
   isDirZFS "${1}" "1"
-  if [ $? -ne 0 ] ; then printerror "Not a ZFS volume: ${1}" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
   tank=`getZFSTank "$1"`
   rp=`getZFSRelativePath "$1"`
   cdir=`getZFSRelativePath "${CDIR}"`
 
   # Make sure this is a valid snapshot
   zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
-  if [ $? -ne 0 ] ; then printerror "Invalid ZFS snapshot!" ; fi
+  if [ $? -ne 0 ] ; then warden_error "Invalid ZFS snapshot!" ; fi
 
   if [ -d "${CDIR}/${3}-${2}" ] ; then
-     printerror "This snapshot is already cloned and mounted at: ${CDIR}/${3}-${2}"
+     warden_error "This snapshot is already cloned and mounted at: ${CDIR}/${3}-${2}"
   fi
 
   # Clone the snapshot
   zfs clone -p ${tank}${rp}@$2 ${tank}${cdir}/${3}-${2}
 
-  echo "Snapshot cloned and mounted to: ${CDIR}/${3}-${2}"
+  warden_print "Snapshot cloned and mounted to: ${CDIR}/${3}-${2}"
 }
 
 set_warden_metadir()
@@ -782,7 +873,7 @@ bootstrap_pkgng()
   fi
 
   cd ${jaildir} 
-  echo "Boot-strapping pkgng"
+  warden_print "Boot-strapping pkgng"
 
   mkdir -p ${jaildir}/usr/local/etc
   pubcert="/usr/local/etc/pkg-pubkey.cert"
@@ -796,16 +887,16 @@ bootstrap_pkgng()
   if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
   get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
   if [ $? -eq 0 ] ; then
-    chroot ${jaildir} /bootstrap-pkgng
+    chroot ${jaildir} /bootstrap-pkgng | warden_pipe
     if [ $? -eq 0 ] ; then
       rm -f "${jaildir}/bootstrap-pkgng"
       rm -f "${jaildir}/pluginjail-packages"
-      chroot ${jaildir} pc-extractoverlay server --sysinit
+      chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
       return 0
     fi
   fi
 
-  echo "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
+  warden_error "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
   rm -f "${jaildir}/bootstrap-pkgng"
   rm -f "${jaildir}/pluginjail-packages"
   return 1
