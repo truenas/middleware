@@ -821,6 +821,32 @@ class Warden(warden_base):
         self.obj = None
         self.out = ""
         self.returncode = 0
+        self._logfile = None
+        self._syslog = False
+
+    @property
+    def logfile(self):
+        return self._logfile
+
+    @logfile.setter
+    def logfile(self, val=None):
+        if val:
+            self._logfile = val
+            os.environ["WARDEN_LOGFILE"] = val
+        else: 
+            del os.environ["WARDEN_LOGFILE"]
+    
+    @property
+    def syslog(self):
+        return self._syslog
+
+    @syslog.setter
+    def syslog(self, val=None):
+        if val:
+            self._syslog = True
+            os.environ["WARDEN_USESYSLOG"] = "TRUE"
+        else: 
+            del os.environ["WARDEN_USESYSLOG"]
 
     def __call(self, obj):
         if obj is not None:
