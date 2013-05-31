@@ -241,6 +241,28 @@ class Network4Field(forms.CharField):
         return value
 
 
+class Network6Field(forms.CharField):
+
+    def __init__(self, *args, **kwargs):
+        # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128
+        kwargs['max_length'] = 43
+        super(Network6Field, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        try:
+            value = str(ipaddr.IPv6Network(value))
+        except ipaddr.AddressValueError, e:
+            raise forms.ValidationError(
+                _("Invalid address: %s") % e
+            )
+        except ipaddr.NetmaskValueError, e:
+            raise forms.ValidationError(
+                _("Invalid network: %s") % e
+            )
+        value = super(Network6Field, self).clean(value)
+        return value
+
+
 class WarningWidgetMixin(object):
     """
     This mixin for widgets adds a warning text above the widget
