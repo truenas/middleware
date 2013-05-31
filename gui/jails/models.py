@@ -35,7 +35,7 @@ from freenasUI.common.warden import (
     WARDEN_AUTOSTART_ENABLED,
     WARDEN_DELETE_FLAGS_CONFIRM
 )
-from freenasUI.freeadmin.models import Model, Network4Field
+from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.notifier import notifier
 
@@ -175,9 +175,8 @@ class JailsConfiguration(Model):
         help_text=_("IPv4 network range for jails and plugins"),
         default="192.168.99.0/24"
     )
-    jc_ipv6_network = models.CharField(
+    jc_ipv6_network = Network6Field(
         blank=True,
-        max_length=120,
         verbose_name=_("IPv6 Network"),
         help_text=_("IPv6 network range for jails and plugins")
     )
