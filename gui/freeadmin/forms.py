@@ -227,6 +227,8 @@ class Network4Field(forms.CharField):
         super(Network4Field, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        if not value:
+            return value
         try:
             value = str(ipaddr.IPv4Network(value))
         except ipaddr.AddressValueError, e:
@@ -249,6 +251,8 @@ class Network6Field(forms.CharField):
         super(Network6Field, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        if not value:
+            return value
         try:
             value = str(ipaddr.IPv6Network(value))
         except ipaddr.AddressValueError, e:
