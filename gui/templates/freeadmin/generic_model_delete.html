@@ -1,12 +1,11 @@
 <form data-dojo-type="dijit.form.Form">
-<script type="dojo/on" data-dojo-event="submit" data-dojo-args="e">
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     {% block onsubmit %}
     doSubmit({
         form: this,
 	event: e,
 	url: '{{ request.path }}'
 	});
-    return false;
     {% endblock %}
 </script>
 <table class="form">
@@ -33,9 +32,6 @@
     <tr>
         <td>
             <button class="submitform" data-dojo-type="dojox.form.BusyButton" data-dojo-props="type: 'submit'">
-                <script type="dojo/on" data-dojo-event="click">
-                   getForm(this).submit(); // Workaround bug in dojo 1.9.0
-                </script>
                 {% trans "Yes" %}
             </button>
             <button data-dojo-type="dijit.form.Button" class="cancelform">

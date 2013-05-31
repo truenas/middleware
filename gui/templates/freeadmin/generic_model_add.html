@@ -1,13 +1,12 @@
 {% load freeadmin %}
 <form data-dojo-type="dijit.form.Form">
 {% block post_form %}
-<script type="dojo/on" data-dojo-event="submit" data-dojo-args="e">
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     doSubmit({
        form: this,
        event: e,
        url: '{{ request.path }}'
     });
-    return false;
 </script>
 {% endblock %}
 <table class="form">
@@ -48,9 +47,6 @@
         <button class="submitform" data-dojo-type="dojox.form.BusyButton" data-dojo-props="type: 'submit'">
             <script type="dojo/method">
                 {{ extra_js }}
-            </script>
-            <script type="dojo/on" data-dojo-event="click">
-               getForm(this).submit(); // Workaround bug in dojo 1.9.0
             </script>
             {% trans "OK" %}
         </button>
