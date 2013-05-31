@@ -331,7 +331,8 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
 	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
 			OPTIONS_FILE_UNSET+=CVS \
-			OPTIONS_FILE_UNSET+=P4
+			OPTIONS_FILE_UNSET+=P4 \
+			OPTIONS_FILE_UNSET+=PERL
 	add_port devel/ctags
 fi
 
