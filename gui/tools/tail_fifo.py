@@ -111,7 +111,7 @@ def main():
                 break
             os.close(fd) 
 
-        except Except as e:
+        except Exception as e:
             print >> sys.stderr, e
             ret = 1
             break
