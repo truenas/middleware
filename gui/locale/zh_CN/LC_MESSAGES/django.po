@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-02-12 10:51+0200\n"
-"Last-Translator: zhaocz <zhaocz@163.com>\n"
+"PO-Revision-Date: 2013-05-31 03:17+0200\n"
+"Last-Translator: Hugh____ <box.xoq@msn.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1442,7 +1442,7 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、“.”“-”和 “_”。"
 
-# 无效的Email地址
+# 邮件地址：%(email)s无效
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1525,11 +1525,10 @@ msgid "Controller Auth Group"
 msgstr "控制器认证群组"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
-msgstr "istgtcontrol 正确的用户可以访问特定的认证和加密群组目标。"
+msgstr "通过指定的认证群组中正确的用户名和密码, istgtcontrol 可以访问目标。"
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -2929,7 +2928,6 @@ msgid ""
 msgstr "指定使用文件传输模块的帐号。可结合'群组'的选项，会决定授予哪些文件权限。本项空白时，则使用缺省设值。"
 
 #: services/models.py:1424
-#, fuzzy
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
@@ -3210,7 +3208,6 @@ msgid "Windows (CIFS) Shares"
 msgstr "Windows (CIFS) 共享列表"
 
 #: sharing/models.py:114
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -3325,7 +3322,7 @@ msgstr "数据库路径"
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
-msgstr ""
+msgstr "设置存储在路径中的数据库信息。即使卷是只读的，也必须给出一个可写的目录。"
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3337,6 +3334,8 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"如已设定在afpd中使用了储存在 AppleDouble V2(Mac OS "
+"X中的影子文件)头文件中的id信息以减少数据库载入,在此卷已被非AFP客户端((NFS/SMB/local)存取的情况下请不要选中此选项。"
 
 #: sharing/models.py:181
 msgid "Translate CR/LF"
@@ -3424,7 +3423,7 @@ msgstr ""
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 UNIX 权限"
 
 #: sharing/models.py:217
 msgid "Use AFP3 unix privileges."
@@ -3479,14 +3478,13 @@ msgstr "此共享为只读，无法写入"
 
 # where is it use for?
 #: sharing/models.py:281 system/models.py:552
-#, fuzzy
 msgid "Quiet"
 msgstr "安静模式"
 
 #: sharing/models.py:282
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr ""
+msgstr "如果共享有问题，则不要在系统日志出现警告。"
 
 #: sharing/models.py:285
 msgid "Maproot User"
@@ -3662,7 +3660,7 @@ msgstr "压缩级别"
 
 #: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
-msgstr ""
+msgstr "启用时间戳记(atime)"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
@@ -3787,7 +3785,6 @@ msgid "Remote port"
 msgstr "远程端口"
 
 #: storage/forms.py:1128 storage/models.py:639
-#, fuzzy
 msgid "Remote hostkey"
 msgstr "远程主机密钥"
 
@@ -3897,12 +3894,11 @@ msgstr "启用"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "ZFS 数据显式清理"
 
 #: storage/models.py:249
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "UNIX共享"
+msgstr "显示当前ZFS显式清理操作"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
@@ -3966,7 +3962,6 @@ msgid "Advanced Power Management"
 msgstr "高级电源管理"
 
 #: storage/models.py:377 storage/views.py:252
-#, fuzzy
 msgid "Acoustic Level"
 msgstr "音量"
 
@@ -4373,7 +4368,7 @@ msgstr "地址"
 
 #: system/models.py:96 templates/system/ntpserver.html:6
 msgid "Burst"
-msgstr ""
+msgstr "突发传输"
 
 #: system/models.py:98
 msgid ""
@@ -4384,14 +4379,14 @@ msgstr "当服务器可到达时,发送一次连续的8个数据包传送,而不
 
 #: system/models.py:104
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:106
 msgid ""
 "When the server is unreachable, send a burst of eight packets instead of the "
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
-msgstr ""
+msgstr "服务器不可达时，连续发送8个包，而非正常的1个。使用服务器命令和s地址，该设计可加速初始同步获取的速度。"
 
 #: system/models.py:112 templates/system/ntpserver.html:8
 msgid "Prefer"
@@ -4637,7 +4632,6 @@ msgid "Remote Module Name"
 msgstr "远程模块名"
 
 #: system/models.py:470
-#, fuzzy
 msgid "Name of the module defined in the remote rsync daemon"
 msgstr "在远程rsync守护进程中定义模块的名称"
 
@@ -4667,7 +4661,6 @@ msgid "Times"
 msgstr "耗时"
 
 #: system/models.py:532
-#, fuzzy
 msgid "Preserve modification times"
 msgstr "保留修改次数"
 
@@ -4729,9 +4722,8 @@ msgid "Suppress non-error messages"
 msgstr "屏蔽无错信息"
 
 #: system/models.py:557
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "目录权限"
+msgstr "保留权限"
 
 #: system/models.py:558
 msgid ""
@@ -4785,17 +4777,15 @@ msgstr "系统控制"
 
 #: system/models.py:796
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:834
-#, fuzzy
 msgid "Tunable"
-msgstr "启用 AIO"
+msgstr "Tunable"
 
 #: system/models.py:835
-#, fuzzy
 msgid "Tunables"
-msgstr "启用 AIO"
+msgstr "Tunables"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -5039,7 +5029,7 @@ msgstr "IRC(聊天)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "freenode上的#freenas"
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
@@ -5050,13 +5040,12 @@ msgid "FreeNAS Announce"
 msgstr "FreeNAS声明"
 
 #: templates/freeadmin/index.html:73
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "freenas 命令提交"
+msgstr "FreeNAS命令提交"
 
 #: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS开发"
 
 #: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
@@ -5278,7 +5267,7 @@ msgstr "第 %(step)s 步，共 %(step_count)s 步"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "上传Jail PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5378,7 +5367,7 @@ msgstr "插件设置"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "安装Jail PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5414,7 +5403,7 @@ msgstr "不"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "核心"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5451,15 +5440,15 @@ msgstr "未定义关联目标"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "向目标添加Extent"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "向目标添加Extent"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
-msgstr ""
+msgstr "对端"
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
@@ -5480,24 +5469,21 @@ msgid "Add Authorized Initiator"
 msgstr "添加并授权Initiator"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "没有设置静态路由"
+msgstr "设备extent未设置"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "添加Extent"
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
-msgstr "范围"
+msgstr "文件Extent"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
-msgstr "无用户被指定"
+msgstr "未定义任何extent"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5701,9 +5687,8 @@ msgid "Are you sure you want to remove?"
 msgstr "确定移除?"
 
 #: templates/storage/disk_wipe.html:4
-#, fuzzy
 msgid "Are you sure you want to wipe?"
-msgstr "你确定需要删除吗?"
+msgstr "你确定要擦除吗？"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
@@ -5756,7 +5741,7 @@ msgstr "显示公钥"
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
-msgstr ""
+msgstr "注意：要创建复制任务，必需要对指定的ZFS文件系统/文件卷做定期快照"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5781,18 +5766,16 @@ msgid "No ZFS replication available"
 msgstr "ZFS 复制不存在"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "未定义rsyncs"
+msgstr "未定义scrub任务。"
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "添加ZFS scrub任务"
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "添加 ZFS 卷"
+msgstr "添加 ZFS Scrub"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -5800,9 +5783,8 @@ msgid ""
 msgstr "正在执行清理，确定要停止吗？"
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "你确定需要导出吗?"
+msgstr "你确定要scrub？"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
@@ -5825,18 +5807,16 @@ msgid "Destroy this snapshot"
 msgstr "销毁快照"
 
 #: templates/storage/snapshots.html:48
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "回退至此快照"
+msgstr "回滚快照"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
 msgstr "回退至此快照"
 
 #: templates/storage/snapshots.html:126
-#, fuzzy
 msgid "Destroy"
-msgstr "销毁卷"
+msgstr "销毁"
 
 #: templates/storage/snapshots.html:136
 msgid "Delete snapshots"
@@ -5916,9 +5896,8 @@ msgid "Detach Volume"
 msgstr "分离卷"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS 卷"
+msgstr "scrub卷"
 
 #: templates/storage/volumes.html:111 templates/storage/volumes.html.py:115
 #: templates/storage/volumes.html:200 templates/storage/volumes.html.py:204
@@ -6024,9 +6003,8 @@ msgstr "固件升级"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "删除对应的文件存储"
+msgstr "导入插件Jail"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6037,17 +6015,14 @@ msgid "Are you sure you want to restore to factory config?"
 msgstr "确认恢复出厂配置？"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
-msgstr "没有定义计划任务"
+msgstr "未定义计划任务。"
 
 #: templates/system/cronjob.html:47
-#, fuzzy
 msgid "Add a cron job"
 msgstr "添加计划任务"
 
 #: templates/system/cronjob.html:49
-#, fuzzy
 msgid "Add cron job"
 msgstr "添加计划任务"
 
@@ -6067,7 +6042,7 @@ msgstr "提示： 测试用电子邮件已发送至root用户。通过Users -> r
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
-msgstr ""
+msgstr "iBurst"
 
 #: templates/system/ntpserver.html:38
 msgid "No NTP servers defined."
@@ -6148,34 +6123,28 @@ msgid "Unknown"
 msgstr "未知"
 
 #: templates/system/smarttest.html:38
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "S.M.A.R.T. 设置"
+msgstr "S.M.A.R.T. 测试未定义"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "添加S.M.A.R.T.检测"
 
 #: templates/system/smarttest.html:46
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "添加S.M.A.R.T.检测"
 
 #: templates/system/sysctl.html:34
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "未定义rsyncs"
+msgstr "未定义sysctl。"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add sysctl"
-msgstr "添加 Rsync"
+msgstr "添加 sysctl"
 
 #: templates/system/sysctl.html:42
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "添加 Rsync"
+msgstr "添加 systl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6206,19 +6175,16 @@ msgid "Connected through"
 msgstr "通过连接"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "没有定义共享"
+msgstr "没有定义tunable设置。"
 
 #: templates/system/tunable.html:40
-#, fuzzy
 msgid "Add Tunable"
-msgstr "增加目标机"
+msgstr "添加tunable"
 
 #: templates/system/tunable.html:42
-#, fuzzy
 msgid "Add Loader"
-msgstr "增加目标机"
+msgstr "添加Loader"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6333,13 +6299,11 @@ msgstr "查看同步任务列表"
 msgid "View S.M.A.R.T. Tests"
 msgstr "查看 S.M.A.R.T.测试列表"
 
-#, fuzzy
 msgid "View Sysctls"
-msgstr "查看磁盘"
+msgstr "查看系统控制"
 
-#, fuzzy
 msgid "View Tunables"
-msgstr "查看所有用户"
+msgstr "查看所有Tunable"
 
 msgid "Browse"
 msgstr "浏览"
@@ -6465,11 +6429,9 @@ msgstr "网络授时服务器 2"
 msgid "NTP server 3"
 msgstr "网络授时服务器 3"
 
-#, fuzzy
 msgid "Loader"
 msgstr "平均负载"
 
-#, fuzzy
 msgid "Loaders"
 msgstr "平均负载"
 
@@ -6491,9 +6453,8 @@ msgstr "你确定需要导出吗?"
 msgid "Export Volume"
 msgstr "导出卷"
 
-#, fuzzy
 msgid "Add loader"
-msgstr "增加目标机"
+msgstr "添加负载均衡"
 
 msgid "successfully added"
 msgstr "成功添加"
@@ -6528,7 +6489,6 @@ msgstr "开/关 TLS"
 msgid "The volume failed to export"
 msgstr "卷无法提供服务"
 
-#, fuzzy
 msgid "Cron Scheduler"
 msgstr "定期快照计划"
 
