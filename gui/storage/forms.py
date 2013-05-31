@@ -448,7 +448,7 @@ class VolumeVdevForm(forms.Form):
         max_length=20,
     )
     disks = forms.CharField(
-        max_length=100,
+        max_length=200,
         widget=forms.widgets.SelectMultiple(),
     )
 
