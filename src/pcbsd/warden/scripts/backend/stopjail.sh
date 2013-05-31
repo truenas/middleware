@@ -47,12 +47,12 @@ HOST="`cat ${JMETADIR}/host`"
 # End of error checking, now shutdown this jail
 ##################################################################
 
-warden_printf "Stopping the jail..."
+warden_printf "%s" "Stopping the jail..."
 
 # Get the JailID for this jail
 JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
-warden_printf "."
+warden_printf "%s" "."
 
 # Check if we need umount x mnts
 if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
@@ -111,7 +111,7 @@ fi
 
 umount -f ${JAILDIR}/dev >/dev/null 2>/dev/null
 
-warden_printf "."
+warden_printf "%s" "."
 
 # Skip the time consuming portion if we are shutting down
 if [ "$FAST" != "Y" ]
@@ -122,7 +122,7 @@ killall -j ${JID} -TERM 2>/dev/null
 sleep 1
 killall -j ${JID} -KILL 2>/dev/null
 
-warden_printf "."
+warden_printf "%s" "."
 
 # Check if we need to unmount the devfs in jail
 mount | grep "${JAILDIR}/dev" >/dev/null 2>/dev/null
@@ -143,7 +143,7 @@ then
    fi
 
    SEC="`expr $SEC + 2`"
-   warden_printf "."
+   warden_printf "%s" "."
 
    if [ ${SEC} -gt 60 ]
    then
@@ -165,7 +165,7 @@ fi
 
 fi # End of FAST check
 
-warden_printf "."
+warden_printf "%s" "."
 
 if [ -n "${JID}" ] ; then
   jail -r ${JID}
@@ -176,4 +176,4 @@ if [ -x "${JMETADIR}/jail-post-stop" ] ; then
   "${JMETADIR}/jail-post-stop"
 fi
 
-warden_printf "Done"
+warden_printf "%s" "Done"

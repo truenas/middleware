@@ -158,6 +158,7 @@ META_ID="$(get_next_id "${JDIR}")"
 #
 if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
   if [ ! -e "${WORLDCHROOT_STANDARD}" ] ; then
+    warden_print downloadchroot "${WORLDCHROOT_STANDARD}"
     downloadchroot "${WORLDCHROOT_STANDARD}"
   fi
 
@@ -187,7 +188,6 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "Failed creating clean ZFS pluginjail clone"
     fi
-
     cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
 
     warden_print bootstrap_pkgng "${pjdir}" "pluginjail"

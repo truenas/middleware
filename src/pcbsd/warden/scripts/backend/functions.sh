@@ -2,6 +2,8 @@
 # Functions / variables for warden
 ######################################################################
 # DO NOT EDIT 
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+export PATH
 
 # Source local functions
 . /usr/local/share/pcbsd/scripts/functions.sh
@@ -91,7 +93,7 @@ warden_pipe() {
 
 warden_print() {
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo "$*" >> ${WARDEN_LOGFILE}
+    echo $* >> ${WARDEN_LOGFILE}
   fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden $*

@@ -47,7 +47,7 @@ set_warden_metadir
 # End of error checking, now lets add the users / passwords
 #####################################################################
 
-warden_printf "Changing root password on: ${IP} "
+warden_printf "%s" "Changing root password on: ${IP} "
 
 if [ -e "${JMETADIR}/jail-linux" ] ; then
 

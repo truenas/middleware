@@ -22,6 +22,8 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
+warden_print "warden $*"
+
 title()
 {
   warden_print "Warden version ${WARDENVER}
@@ -658,6 +660,7 @@ case "$1" in
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
+         lockf "/var/tmp/.${JAILNAME}_pkgs" \
          ${PROGDIR}/scripts/backend/listpkgs.sh "${JAILNAME}" 
          ;;
 details) JAILNAME="${2}"
@@ -665,6 +668,7 @@ details) JAILNAME="${2}"
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
+         lockf "/var/tmp/.${JAILNAME}_detals" \
          ${PROGDIR}/scripts/backend/details.sh "${JAILNAME}" 
          ;;
     pbis) JAILNAME="${2}"
@@ -672,6 +676,7 @@ details) JAILNAME="${2}"
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
 
+         lockf "/var/tmp/.${JAILNAME}_pbis" \
          ${PROGDIR}/scripts/backend/listpbis.sh "${JAILNAME}" 
          ;;
     fstab) JAILNAME="${2}"
@@ -682,7 +687,7 @@ details) JAILNAME="${2}"
              echo "# Device  Mountpoint  FStype          Options Dump Pass" > ${JMETADIR}/fstab
          fi
          if [ -z "$EDITOR" ]; then EDITOR="vi"; fi
-             $EDITOR ${JMETADIR}/fstab
+             lockf "/var/tmp/.${JAILNAME}_fstab" $EDITOR ${JMETADIR}/fstab
          exit $?
          ;;
     get) require_root
@@ -839,7 +844,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
     list) require_root
         shift
-        ${PROGDIR}/scripts/backend/listjails.sh $* ;;
+        lockf "/var/tmp/.wlist" ${PROGDIR}/scripts/backend/listjails.sh $* ;;
     
    start) require_root
 	  # Time to startup the jail
@@ -853,6 +858,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
           if [ "$?" = "0" ]; then warden_exit "This jail is already running!"; fi
  
+          lockf "/var/tmp/.${JAILNAME}_start" \
           ${PROGDIR}/scripts/backend/startjail.sh "${JAILNAME}" 
           ;;
    stop)  require_root
@@ -863,6 +869,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi 
 	  set_warden_metadir
          
+          lockf "/var/tmp/.${JAILNAME}_stop" \
           ${PROGDIR}/scripts/backend/stopjail.sh "${JAILNAME}" 
           ;;
 
@@ -872,6 +879,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
           if [ ! -e "${JDIR}/${JAILNAME}" -a "${JAILNAME}" != "all" ]; then warden_exit "No such jail!"; fi
 
+          lockf "/var/tmp/.${JAILNAME}_checkup" \
           ${PROGDIR}/scripts/backend/checkupdates.sh "${JAILNAME}"
           ;;
 
@@ -960,8 +968,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          fi
 
          # Import the jail now!
+         lockf "/var/tmp/.${HOST}_import" \
          ${PROGDIR}/scripts/backend/importjail.sh "${IFILE}" "${HOST}" "${IP4}" "${IP6}"
-        ;;
+         ;;
 
  export) require_root
          # The user wants to export a jail, lets do it!
@@ -985,8 +994,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          done
 
          # Export the jail now
+         lockf "/var/tmp/.${JAILNAME}_export" \
          ${PROGDIR}/scripts/backend/exportjail.sh "${JAILNAME}" "${DIR}"
-
          ;;
 
  zfsmksnap) require_root
@@ -994,6 +1003,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfsmksnap" \
          ${PROGDIR}/scripts/backend/zfsmksnap.sh "${JAILNAME}"
          ;;
 
@@ -1002,6 +1012,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfslistclone" \
          ${PROGDIR}/scripts/backend/zfslistclone.sh "${JAILNAME}"
          ;;
 
@@ -1010,6 +1021,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfslistsnap" \
          ${PROGDIR}/scripts/backend/zfslistsnap.sh "${JAILNAME}"
          ;;
 
@@ -1019,6 +1031,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfsclonesnap" \
          ${PROGDIR}/scripts/backend/zfsclonesnap.sh "${JAILNAME}" "${SNAP}"
          ;;
 
@@ -1027,6 +1040,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfscronsnap" \
          ${PROGDIR}/scripts/backend/zfscronsnap.sh "${JAILNAME}" "$3" "$4" "$5"
          ;;
 
@@ -1037,6 +1051,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfsrevertsnap" \
          ${PROGDIR}/scripts/backend/zfsrevertsnap.sh "${JAILNAME}" "$SNAP"
          ;;
 
@@ -1046,6 +1061,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfsrmclone" \
          ${PROGDIR}/scripts/backend/zfsrmclone.sh "${JAILNAME}" "${CLONE}"
          ;;
 
@@ -1055,6 +1071,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
 	 set_warden_metadir
+         lockf "/var/tmp/.${JAILNAME}_zfsrmsnap" \
          ${PROGDIR}/scripts/backend/zfsrmsnap.sh "${JAILNAME}" "${SNAP}"
          ;;
 
@@ -1148,9 +1165,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           export VANILLA
 
           # Passed all tests, create the jail now
+          lockf "/var/tmp/.${JAILNAME}" \
           ${PROGDIR}/scripts/backend/createjail.sh "${JAILNAME}"
-
-        ;;
+          ;;
   delete) require_root
           # Time to delete a jail
           JAILNAME="${2}"
@@ -1178,8 +1195,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           if [ "$?" = "0" ] ; then warden_exit "Jail still is running or has leftovers.."; fi
 
           # Delete it now
+          lockf /var/tmp/.${JAILNAME} \
           ${PROGDIR}/scripts/backend/deletejail.sh "${JAILNAME}"
-        ;;
+          ;;
    *) help_main ;;
 esac
 
