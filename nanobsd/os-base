@@ -160,7 +160,7 @@ customize_cmd install_debug_kernel
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lzo2
-add_port www/aria2
+add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
@@ -207,7 +207,7 @@ add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
-add_port sysutils/fusefs-kmod NOPORTDOCS=y
+add_port sysutils/fusefs-kmod
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/smartmontools
