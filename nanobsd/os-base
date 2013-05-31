@@ -206,8 +206,8 @@ add_port shells/ksh93
 add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
-add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
+add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/smartmontools
