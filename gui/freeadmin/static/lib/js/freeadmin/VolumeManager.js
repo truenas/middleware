@@ -63,6 +63,7 @@ define([
       size: "",
       vdev: null,
       manager: null,
+      disksAvail: null,
       postCreate: function() {
         var me = this;
         new Tooltip({
@@ -78,12 +79,11 @@ define([
       addToRow: function(row) {
         try {
           row.validate(this);
-          var index = this.manager._avail_disks[this.size].indexOf(this);
-          this.manager._avail_disks[this.size].splice(index, 1);
-          this.domNode.parentNode.removeChild(this.domNode);
+          var index = this.disksAvail.disks.indexOf(this);
+          this.disksAvail.disks.splice(index, 1);
           row.resize.domNode.parentNode.appendChild(this.domNode);
           row.disks.push(this);
-          lang.hitch(this.manager, this.manager.drawAvailDisks)();
+          this.disksAvail.update();
           this.set('vdev', row);
           this.manager._disksCheck(row);
         } catch(e) {
@@ -97,10 +97,10 @@ define([
         }
       },
       remove: function() {
-        this.manager._avail_disks[this.get("size")].push(this);
+        this.disksAvail.disks.push(this);
         this.domNode.parentNode.removeChild(this.domNode);
         this.vdev.disks.splice(this.vdev.disks.indexOf(this), 1);
-        lang.hitch(this.manager, this.manager.drawAvailDisks)();
+        this.disksAvail.update();
         this.manager._disksCheck(this.vdev);
         this.set('vdev', null);
       },
@@ -117,6 +117,23 @@ define([
         } else {
           this.remove();
         }
+      }
+    });
+
+    var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
+      templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span> drives)</div>',
+      disks: [],
+      size: "",
+      postCreate: function() {
+        for(var i in this.disks) {
+          this.disks[i].disksAvail = this;
+        }
+        this.update();
+      },
+      update: function() {
+        console.log(this.dapSize);
+        this.dapSize.innerHTML = this.size;
+        this.dapNum.innerHTML = this.disks.length;
       }
     });
 
@@ -240,6 +257,7 @@ define([
                 }
                 for(var i in this._disks[0]) {
                   var disk = this._disks[0][i];
+                  console.log(disk);
                   var index = me.disks.indexOf(disk);
                   if(index == -1) {
                     disk.addToRow(me);
@@ -324,29 +342,15 @@ define([
       _form: null,
       _avail_disks: [],
       drawAvailDisks: function() {
-        // In dojo 1.9 we need to orphan the disks before empty the node
-        query(".disk", this.dapDisksTable).orphan();
-        domConst.empty(this.dapDisksTable);
-        for(var size in this._avail_disks) {
-          var tr = domConst.create("tr", null, this.dapDisksTable);
-          domStyle.set(tr, "height", (PER_NODE_HEIGHT + 2) + "px");
-          domConst.create("th", {innerHTML: size}, tr);
-          var td = domConst.create("td", null, tr);
-          var disks = this._avail_disks[size];
-          if(disks.length == 0) {
-            td.innerHTML = "<i>(all disks in use)</i>";
-            domStyle.set(td, "color", "#aaa");
-          }
-          for(var key in disks) {
-            var disk = disks[key];
-            td.appendChild(disk.domNode);
-          }
+        for(var i in this._avail_disks) {
+          var dAvail = this._avail_disks[i];
+          this.dapDisksTable.appendChild(dAvail.domNode);
         }
       },
       getAvailDisksNum: function() {
         var num = 0;
-        for(var size in this._avail_disks) {
-          num += this._avail_disks[size].length;
+        for(var i in this._avail_disks) {
+          num += this._avail_disks[i].disks.length;
         }
         return num;
       },
@@ -443,18 +447,23 @@ define([
           }
         });
 
-        this._avail_disks = {};
+        this._avail_disks = [];
         for(var size in this.disks) {
           var disks = this.disks[size];
-          this._avail_disks[size] = [];
+          var avail_disks = [];
           for(var key in disks) {
-            this._avail_disks[size].push(new Disk({
+            avail_disks.push(new Disk({
               manager: this,
               name: disks[key]['dev'],
               size: size,
               serial: disks[key]['serial']
             }));
           }
+          var dAvail = new DisksAvail({
+            disks: avail_disks,
+            size: size,
+          });
+          this._avail_disks.push(dAvail);
         }
 
         lang.hitch(this, this.drawAvailDisks)();
@@ -534,12 +543,14 @@ define([
         var disksrows = [];
         // Clone all_disks from _avail_disks
         var all_disks = {};
-        for(var size in this._avail_disks) {
-          all_disks[size] = [];
-          for(var i in this._avail_disks[size]) {
-            all_disks[size].push(this._avail_disks[size][i]);
+        for(var i in this._avail_disks) {
+          var dAvail = this._avail_disks[i];
+          all_disks[dAvail.size] = [];
+          for(var j in dAvail.disks) {
+            all_disks[dAvail.size].push(dAvail.disks[j]);
           }
         }
+
         // Add disks from current vdev to all_disks
         if(vdev.disks.length > 0) {
           for(var i in vdev.disks) {
