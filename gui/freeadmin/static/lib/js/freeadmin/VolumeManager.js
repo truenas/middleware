@@ -138,7 +138,7 @@ define([
     });
 
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
-      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td><td data-dojo-attach-point="dapNumCol"></td><td data-dojo-attach-point="dapDelete">Delete</td></tr>',
+      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"><br /><span data-dojo-attach-point="dapNumCol"></span><span data-dojo-attach-point="dapDelete">Delete</span></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td></tr>',
       widgetsInTemplate: true,
       numDisks: 0,
       type: "",
@@ -179,7 +179,7 @@ define([
             { label: "Log (ZIL)", value: "log" },
             { label: "Cache (L2ARC)", value: "cache" }
           ],
-        }).placeAt(this.dapVdevType);
+        }).placeAt(this.dapVdevType, 0);
         if(this.type) {
           this.vdevtype.set('value', this.type);
         }
@@ -643,9 +643,9 @@ define([
         }
         if(has_check) {
           if(found) {
-            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks; optimal';
+            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks<br />optimal';
           } else {
-            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks; non-optimal';
+            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks<br />non-optimal';
           }
         } else {
           vdev.dapNumCol.innerHTML = rows + numdisks + ' disks';
