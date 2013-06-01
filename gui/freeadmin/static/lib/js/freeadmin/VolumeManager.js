@@ -58,7 +58,8 @@ define([
     var PER_NODE_WIDTH = 49;
     var PER_NODE_HEIGHT = 26;
     var HEADER_HEIGHT = 14;
-    var EMPTY_WIDTH = 5;
+    var EMPTY_WIDTH = 6;
+    var EMPTY_NODE = 19;
 
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
       //templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
@@ -224,7 +225,7 @@ define([
             animateSizing: false, // Animated cause problem to get the size in onResize
             intermediateChanges: true,
             minHeight: 43,
-            minWidth: 35,
+            minWidth: 5,
             _disks: null,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
@@ -239,13 +240,27 @@ define([
               if(floorR < 1) floorR = 1; // At least 1 row
               newH = (floorR * PER_NODE_HEIGHT) + HEADER_HEIGHT;
 
-              var numNodes = newW / PER_NODE_WIDTH;
-              var floor = Math.floor(numNodes);
-              if(numNodes - floor >= 0.5) {
-                floor += 1;
+              var numNodes, floor;
+              var currentW = PER_NODE_WIDTH * me.disks.length;
+              if(newW > currentW) {
+                numNodes = (newW - currentW) / EMPTY_NODE;
+
+                floor = Math.floor(numNodes);
+                if(numNodes - floor >= 0.5) {
+                  floor += 1;
+                }
+                if(floor < 0) floor = 0; // Non-negative disks
+                newW = EMPTY_WIDTH + currentW + floor * EMPTY_NODE;
+                floor += currentW / PER_NODE_WIDTH;
+              } else {
+                numNodes = newW / PER_NODE_WIDTH;
+                floor = Math.floor(numNodes);
+                if(numNodes - floor >= 0.5) {
+                  floor += 1;
+                }
+                newW = (floor * PER_NODE_WIDTH) + EMPTY_WIDTH;
+
               }
-              if(floor < 0) floor = 0; // Non-negative disks
-              newW = (floor * PER_NODE_WIDTH) + EMPTY_WIDTH;
 
               var disks = me.manager._disksForVdev(me, floor, floorR);
 
@@ -303,12 +318,12 @@ define([
                 */
                 this._disks = null;
               }
-              // Set back the original height size after selecting multiple rows
-              domStyle.set(this.targetDomNode, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
+              // Set the new correct width after releasing mouse
+              domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + me.disks.length * PER_NODE_WIDTH) + "px");
 
               me.manager._disksCheck(me);
 
-              lang.hitch(me.manager, me.manager.drawAvailDisks)();
+              //lang.hitch(me.manager, me.manager.drawAvailDisks)();
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
