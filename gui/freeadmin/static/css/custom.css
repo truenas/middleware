@@ -1209,3 +1209,52 @@ label[for=stopmsgrefresh] {
 .clear {
     clear: both;
 }
+
+.groupDisksTable {
+    color: #cfcfcf;
+    padding: 0;
+    table-layout: fixed;
+    border-collapse:collapse;
+    white-space:nowrap;
+}
+
+.groupDisksTable th {
+    background-color: #eaeaea;
+    padding: 0;
+    min-width: 18px;
+    white-space:nowrap;
+    border-top: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+}
+
+.groupDisksTable th.first {
+    width: 5px;
+    min-width: 5px;
+}
+
+.groupDisksTable th:last-child {
+    border-right: 1px solid #ddd;
+}
+
+.groupDisksTable th.active {
+    color: #000;
+    background-color: #ccc;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable td {
+    background-color: #efefef;
+    padding: 0;
+    border-left: 1px solid #ddd;
+    height: 26px;
+}
+
+.groupDisksTable td.active {
+    color: #000;
+    background-color: #ddd;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable td:last-child {
+    border-right: 1px solid #ddd;
+}

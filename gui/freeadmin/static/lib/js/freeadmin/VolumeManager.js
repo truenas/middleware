@@ -4,6 +4,7 @@ define([
   "dojo/_base/declare",
   "dojo/_base/lang",
   "dojo/dom-attr",
+  "dojo/dom-class",
   "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/json",
@@ -31,6 +32,7 @@ define([
   declare,
   lang,
   domAttr,
+  domClass,
   domConst,
   domStyle,
   json,
@@ -53,11 +55,14 @@ define([
   Toaster,
   template) {
 
-    var PER_NODE_WIDTH = 48;
+    var PER_NODE_WIDTH = 49;
     var PER_NODE_HEIGHT = 26;
+    var HEADER_HEIGHT = 14;
+    var EMPTY_WIDTH = 5;
 
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
-      templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
+      //templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
+      templateString: '<div class="disk" style="margin: 2px; padding: 2px; width: 40px;">${name}</div>',
       name: "",
       serial: "",
       size: "",
@@ -79,13 +84,16 @@ define([
       addToRow: function(row) {
         try {
           row.validate(this);
+          var inCol = row.disks.length + 2; // First column empty
+          var cell = query("tr:nth-child(2) td:nth-child("+inCol+")", row.dapTable)[0];
           var index = this.disksAvail.disks.indexOf(this);
           this.disksAvail.disks.splice(index, 1);
-          row.resize.domNode.parentNode.appendChild(this.domNode);
+          cell.appendChild(this.domNode);
           row.disks.push(this);
           this.disksAvail.update();
           this.set('vdev', row);
           this.manager._disksCheck(row);
+          row.colorActive();
         } catch(e) {
           var me = this;
           connect.publish("volumeManager", {
@@ -102,6 +110,7 @@ define([
         this.vdev.disks.splice(this.vdev.disks.indexOf(this), 1);
         this.disksAvail.update();
         this.manager._disksCheck(this.vdev);
+        this.vdev.colorActive();
         this.set('vdev', null);
       },
       onClick: function() {
@@ -131,14 +140,13 @@ define([
         this.update();
       },
       update: function() {
-        console.log(this.dapSize);
         this.dapSize.innerHTML = this.size;
         this.dapNum.innerHTML = this.disks.length;
       }
     });
 
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
-      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"><br /><span data-dojo-attach-point="dapNumCol"></span><span data-dojo-attach-point="dapDelete">Delete</span></td><td><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: relative;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div></td></tr>',
+      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"><br /><span data-dojo-attach-point="dapNumCol"></span><br /><span data-dojo-attach-point="dapDelete">Delete</span></td><td><div style="position: relative"><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: absolute;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div><table border="0" cellspacing="0" cellpadding="0" class="groupDisksTable" data-dojo-attach-point="dapTable"><tr><th class="first"></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table></div></td></tr>',
       widgetsInTemplate: true,
       numDisks: 0,
       type: "",
@@ -159,6 +167,25 @@ define([
         if(valid === false) {
           throw new Object({message: "Disk size mismatch"});
         }
+      },
+      colorActive: function() {
+
+        var cols = this.disks.length;
+        query("td", this.dapTable).forEach(function(item, idx) {
+            if(idx > cols) {
+              domClass.remove(item, "active");
+            } else {
+              domClass.add(item, "active");
+            }
+        });
+        query("th", this.dapTable).forEach(function(item, idx) {
+            if(idx > cols) {
+              domClass.remove(item, "active");
+            } else {
+              domClass.add(item, "active");
+            }
+        });
+
       },
       getChildren: function() {
         // This needs investigating
@@ -196,11 +223,13 @@ define([
             lastW: 0,
             animateSizing: false, // Animated cause problem to get the size in onResize
             intermediateChanges: true,
-            minHeight: 30,
-            minWidth: 30,
+            minHeight: 43,
+            minWidth: 35,
             _disks: null,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
+              newH -= HEADER_HEIGHT;
+              newW -= EMPTY_WIDTH;
 
               var numRows = (newH / PER_NODE_HEIGHT);
               var floorR = Math.floor(numRows);
@@ -208,7 +237,7 @@ define([
                 floorR += 1;
               }
               if(floorR < 1) floorR = 1; // At least 1 row
-              newH = floorR * PER_NODE_HEIGHT;
+              newH = (floorR * PER_NODE_HEIGHT) + HEADER_HEIGHT;
 
               var numNodes = newW / PER_NODE_WIDTH;
               var floor = Math.floor(numNodes);
@@ -216,7 +245,7 @@ define([
                 floor += 1;
               }
               if(floor < 0) floor = 0; // Non-negative disks
-              newW = floor * PER_NODE_WIDTH;
+              newW = (floor * PER_NODE_WIDTH) + EMPTY_WIDTH;
 
               var disks = me.manager._disksForVdev(me, floor, floorR);
 
@@ -257,13 +286,13 @@ define([
                 }
                 for(var i in this._disks[0]) {
                   var disk = this._disks[0][i];
-                  console.log(disk);
                   var index = me.disks.indexOf(disk);
                   if(index == -1) {
                     disk.addToRow(me);
                   }
                 }
 
+                /*
                 for(var i=1;i<this._disks.length;i++) {
                   var vdev = me.manager.addVdev({
                     can_delete: true,
@@ -271,17 +300,18 @@ define([
                     type: me.vdevtype.get("value")
                   });
                 }
+                */
                 this._disks = null;
               }
               // Set back the original height size after selecting multiple rows
-              domStyle.set(this.targetDomNode, "height", PER_NODE_HEIGHT + "px");
+              domStyle.set(this.targetDomNode, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
 
               me.manager._disksCheck(me);
 
               lang.hitch(me.manager, me.manager.drawAvailDisks)();
             }
         }, this.dapRes);
-        domStyle.set(this.dapResMain, "height", PER_NODE_HEIGHT + "px");
+        domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
         this.resize.startup();
 
         if(this.can_delete === true) {
