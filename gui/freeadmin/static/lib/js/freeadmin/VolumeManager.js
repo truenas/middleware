@@ -25,7 +25,8 @@ define([
   "dijit/layout/ContentPane",
   "dojox/layout/ResizeHandle",
   "dojox/widget/Toaster",
-  "dojo/text!freeadmin/templates/volumemanager.html"
+  "dojo/text!freeadmin/templates/volumemanager.html",
+  "dojo/text!freeadmin/templates/volumemanager_diskgroup.html"
   ], function(
   array,
   connect,
@@ -53,7 +54,8 @@ define([
   ContentPane,
   ResizeHandle,
   Toaster,
-  template) {
+  template,
+  diskGroupTemplate) {
 
     var PER_NODE_WIDTH = 49;
     var PER_NODE_HEIGHT = 26;
@@ -87,7 +89,8 @@ define([
           vdev.validate(this);
 
           if(query("tr", vdev.dapTable).length - 1 < row + 1) {
-            var tr = domConst.create("tr", null, vdev.dapTable.childNodes[0]);
+            var tbody = query("tbody", vdev.dapTable)[0];
+            var tr = domConst.create("tr", null, tbody);
             for(var i=0;i<16;i++) {
               domConst.create("td", null, tr);
             }
@@ -151,7 +154,7 @@ define([
     });
 
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
-      templateString: '<tr><td data-dojo-attach-point="dapVdevType" style="width: 110px;"><br /><span data-dojo-attach-point="dapNumCol"></span><br /><span data-dojo-attach-point="dapDelete">Delete</span></td><td><div style="position: relative"><div class="vdev" data-dojo-attach-point="dapResMain" style="width: 5px; position: absolute;"><div data-dojo-attach-point="dapRes" style="position: absolute;"></div></div><table border="0" cellspacing="0" cellpadding="0" class="groupDisksTable" data-dojo-attach-point="dapTable"><tr><th class="first"></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table></div></td></tr>',
+      templateString: diskGroupTemplate,
       widgetsInTemplate: true,
       numDisks: 0,
       type: "",
