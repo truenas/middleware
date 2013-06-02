@@ -82,25 +82,31 @@ define([
           lang.hitch(me, me.onClick)();
         });
       },
-      addToRow: function(row) {
+      addToRow: function(vdev, row, col) {
         try {
-          row.validate(this);
-          var inCol = row.disks.length + 2; // First column empty
-          var cell = query("tr:nth-child(2) td:nth-child("+inCol+")", row.dapTable)[0];
+          vdev.validate(this);
+
+          if(query("tr", vdev.dapTable).length - 1 < row + 1) {
+            var tr = domConst.create("tr", null, vdev.dapTable.childNodes[0]);
+            for(var i=0;i<16;i++) {
+              domConst.create("td", null, tr);
+            }
+          }
+          var cell = query("tr:nth-child("+(row+2)+") td:nth-child("+(col+2)+")", vdev.dapTable)[0];
           var index = this.disksAvail.disks.indexOf(this);
           this.disksAvail.disks.splice(index, 1);
           cell.appendChild(this.domNode);
-          row.disks.push(this);
+          vdev.disks.push(this);
           this.disksAvail.update();
-          this.set('vdev', row);
-          this.manager._disksCheck(row);
-          row.colorActive();
+          this.set('vdev', vdev);
+          this.manager._disksCheck(vdev);
+          vdev.colorActive();
         } catch(e) {
           var me = this;
           connect.publish("volumeManager", {
             message: e.message,
             type: "fatal",
-            duration: 50
+            duration: 500
           });
 
         }
@@ -155,6 +161,7 @@ define([
       initialDisks: [],
       can_delete: false,
       vdev: null,
+      rows: 1,
       manager: null,
       validate: function(disk) {
         var valid = true;
@@ -171,13 +178,16 @@ define([
       },
       colorActive: function() {
 
-        var cols = this.disks.length;
-        query("td", this.dapTable).forEach(function(item, idx) {
+        var cols = this.disks.length / this.rows;
+        query("tr", this.dapTable).forEach(function(item, idx) {
+          if(idx == 0) return;
+          query("td", item).forEach(function(item, idx) {
             if(idx > cols) {
               domClass.remove(item, "active");
             } else {
               domClass.add(item, "active");
             }
+          });
         });
         query("th", this.dapTable).forEach(function(item, idx) {
             if(idx > cols) {
@@ -258,6 +268,7 @@ define([
                 if(numNodes - floor >= 0.5) {
                   floor += 1;
                 }
+                if(floor < 0) floor = 0; // Non-negative disks
                 newW = (floor * PER_NODE_WIDTH) + EMPTY_WIDTH;
 
               }
@@ -275,6 +286,7 @@ define([
                   this._disks = disks;
                 }
               }
+              me.rows = floorR; // dirty hack to set number of rows in group
 
               return { w: newW, h: newH };
             },
@@ -290,24 +302,22 @@ define([
                  * because disk.remove() will interact over the same
                  * structure
                  */
-                for(var i=0,j=0,len=me.disks.length;i<len;i++) {
-                  var disk = me.disks[j];
-                  var index = this._disks[0].indexOf(disk);
-                  if(index == -1) {
-                    disk.remove();
-                  } else {
-                    j++;
-                  }
+                while(me.disks.length > 0) {
+                  me.disks[0].remove();
                 }
-                for(var i in this._disks[0]) {
-                  var disk = this._disks[0][i];
-                  var index = me.disks.indexOf(disk);
-                  if(index == -1) {
-                    disk.addToRow(me);
+
+                for(var i=0;i<this._disks.length;i++) {
+                  for(var j=0;j<this._disks[i].length;j++) {
+                    var disk = this._disks[i][j];
+                    var index = me.disks.indexOf(disk);
+                    console.log (i, j);
+                    if(index == -1) {
+                      disk.addToRow(me, i, j);
+                    }
                   }
                 }
 
-                /*
+/*
                 for(var i=1;i<this._disks.length;i++) {
                   var vdev = me.manager.addVdev({
                     can_delete: true,
@@ -315,15 +325,13 @@ define([
                     type: me.vdevtype.get("value")
                   });
                 }
-                */
+*/
                 this._disks = null;
               }
               // Set the new correct width after releasing mouse
-              domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + me.disks.length * PER_NODE_WIDTH) + "px");
+              domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + (me.disks.length / me.rows) * PER_NODE_WIDTH) + "px");
 
               me.manager._disksCheck(me);
-
-              //lang.hitch(me.manager, me.manager.drawAvailDisks)();
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
@@ -585,7 +593,8 @@ define([
       },
       _disksForVdev: function(vdev, slots, rows) {
 
-        var disksrows = [];
+        var disksrows = null;
+        var total = slots * rows;
         // Clone all_disks from _avail_disks
         var all_disks = {};
         for(var i in this._avail_disks) {
@@ -604,28 +613,17 @@ define([
           }
         }
 
-        for(var i=0;i<rows;i++) {
-
-          var disks = [];
-          // Find disks for the same size for a row
-          for(var size in all_disks) {
-            var bysize = all_disks[size];
-            if(bysize.length >= slots) {
-              disks = bysize.slice(0, slots);
+        // Find disks for the same size for a row
+        for(var size in all_disks) {
+          var bysize = all_disks[size];
+          if(bysize.length >= total) {
+            disksrows = [];
+            for(var i=0;i<rows;i++) {
+              disksrows.push(bysize.slice(0, slots));
               bysize.splice(0, slots);
-              break;
             }
-          }
-          /*
-           * If not enough disks of same size per vdev were found, abort all
-           */
-          if(disks.length > 0) {
-            disksrows.push(disks);
-          } else {
-            disksrows = null;
             break;
           }
-
         }
 
         return disksrows;
