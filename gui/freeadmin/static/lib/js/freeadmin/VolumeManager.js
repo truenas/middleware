@@ -69,6 +69,7 @@ define([
       name: "",
       serial: "",
       size: "",
+      sizeBytes: 0,
       vdev: null,
       manager: null,
       disksAvail: null,
@@ -176,6 +177,34 @@ define([
         if(valid === false) {
           throw new Object({message: "Disk size mismatch"});
         }
+      },
+      getCapacity: function() {
+        if(this.disks.length == 0) return 0;
+        var dataDisks;
+        var disks = this.disks.length / this.rows;
+        switch(this.vdevtype.get('value')) {
+          case 'raidz':
+            dataDisks = disks - 1;
+            break;
+          case 'raidz2':
+            dataDisks = disks - 2;
+            break;
+          case 'raidz3':
+            dataDisks = disks - 3;
+            break;
+          case 'stripe':
+            dataDisks = disks;
+            break;
+          case 'mirror':
+            dataDisks = 1;
+            break;
+          case 'log':
+          case 'cache':
+          case 'spare':
+            dataDisks = 0;
+            break;
+        }
+        return this.disks[0].sizeBytes * dataDisks * this.rows;
       },
       colorActive: function() {
 
@@ -508,6 +537,7 @@ define([
               manager: this,
               name: disks[key]['dev'],
               size: size,
+              sizeBytes: disks[key]['size'],
               serial: disks[key]['serial']
             }));
           }
