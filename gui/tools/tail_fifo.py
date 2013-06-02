@@ -50,6 +50,7 @@ from signal import (
 )
 
 TAIL_FIFO = "/var/tmp/tail_fifo"
+PIDFILE = "/var/run/tail_fifo.pid"
 
 def tail_file(thefile):
     thefile.seek(0,2)
@@ -66,10 +67,12 @@ def tail_file(thefile):
 
 def cleanup(*args):
     os.unlink(TAIL_FIFO)
+    os.unlink(PIDFILE)
     sys.exit(0)
 
 def main():
     global TAIL_FIFO
+    global PIDFILE
 
     if len(sys.argv) < 2:
         print >> sys.stderr, "Usage: %s <file>" % sys.argv[0]
@@ -100,6 +103,10 @@ def main():
     signal(SIGTERM, cleanup)
     signal(SIGHUP, cleanup)
 
+    fd = os.open(PIDFILE, os.O_WRONLY | os.O_CREAT)
+    os.write(fd, "%d" % os.getpid())
+    os.close(fd)
+
     ret = 0
     for line in tail_file(f):
         line = line.strip()
@@ -117,6 +124,7 @@ def main():
             break
 
     os.unlink(TAIL_FIFO)
+    os.unlink(PIDFILE)
     sys.exit(ret)
 
 if __name__ == '__main__':
