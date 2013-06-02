@@ -237,6 +237,7 @@ define([
             minHeight: 43,
             minWidth: 5,
             _disks: null,
+            _resizingRows: 1,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
               newH -= HEADER_HEIGHT;
@@ -251,7 +252,7 @@ define([
               newH = (floorR * PER_NODE_HEIGHT) + HEADER_HEIGHT;
 
               var numNodes, floor;
-              var currentW = PER_NODE_WIDTH * me.disks.length;
+              var currentW = PER_NODE_WIDTH * (me.disks.length / me.rows);
               if(newW > currentW) {
                 numNodes = (newW - currentW) / EMPTY_NODE;
 
@@ -286,7 +287,7 @@ define([
                   this._disks = disks;
                 }
               }
-              me.rows = floorR; // dirty hack to set number of rows in group
+              this._resizingRows = floorR; // dirty hack to set number of rows in group
 
               return { w: newW, h: newH };
             },
@@ -295,6 +296,7 @@ define([
               return Math.floor(width / PER_NODE_WIDTH);
             },
             onResize: function(e) {
+              me.rows = this._resizingRows;
               if(this._disks !== null) {
 
                 /*
@@ -310,7 +312,6 @@ define([
                   for(var j=0;j<this._disks[i].length;j++) {
                     var disk = this._disks[i][j];
                     var index = me.disks.indexOf(disk);
-                    console.log (i, j);
                     if(index == -1) {
                       disk.addToRow(me, i, j);
                     }
