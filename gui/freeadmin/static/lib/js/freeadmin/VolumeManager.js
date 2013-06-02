@@ -359,6 +359,7 @@ define([
               domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + (me.disks.length / me.rows) * PER_NODE_WIDTH) + "px");
 
               me.manager._disksCheck(me);
+              me.manager.updateCapacity();
               me.colorActive();
             }
         }, this.dapRes);
@@ -619,6 +620,15 @@ define([
         this._layout.push(vdev);
         return vdev;
 
+      },
+      updateCapacity: function() {
+        var capacity = 0;
+        for(var key in this._layout) {
+          var diskg = this._layout[key];
+          capacity += diskg.getCapacity();
+        }
+        this.dapCapacity.innerHTML = (capacity / 1024 / 1024 / 1024) + ' TiB'
+        return capacity;
       },
       _disksForVdev: function(vdev, slots, rows) {
 
