@@ -100,7 +100,6 @@ define([
           this.disksAvail.update();
           this.set('vdev', vdev);
           this.manager._disksCheck(vdev);
-          vdev.colorActive();
         } catch(e) {
           var me = this;
           connect.publish("volumeManager", {
@@ -117,7 +116,6 @@ define([
         this.vdev.disks.splice(this.vdev.disks.indexOf(this), 1);
         this.disksAvail.update();
         this.manager._disksCheck(this.vdev);
-        this.vdev.colorActive();
         this.set('vdev', null);
       },
       onClick: function() {
@@ -254,7 +252,7 @@ define([
               var numNodes, floor;
               var currentW = PER_NODE_WIDTH * (me.disks.length / me.rows);
               if(newW > currentW) {
-                numNodes = (newW - currentW) / EMPTY_NODE;
+                numNodes = (newW - currentW - EMPTY_WIDTH) / EMPTY_NODE;
 
                 floor = Math.floor(numNodes);
                 if(numNodes - floor >= 0.5) {
@@ -282,12 +280,12 @@ define([
               } else {
                 if(this.lastH != newH || this.lastW != newW) {
                   me.manager._disksCheck(me, false, floor, floorR);
+                  this._resizingRows = floorR;
                   this.lastH = newH;
                   this.lastW = newW;
                   this._disks = disks;
                 }
               }
-              this._resizingRows = floorR; // dirty hack to set number of rows in group
 
               return { w: newW, h: newH };
             },
@@ -329,6 +327,7 @@ define([
               domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + (me.disks.length / me.rows) * PER_NODE_WIDTH) + "px");
 
               me.manager._disksCheck(me);
+              me.colorActive();
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
