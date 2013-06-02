@@ -179,9 +179,18 @@ define([
         }
       },
       getCapacity: function() {
-        if(this.disks.length == 0) return 0;
-        var dataDisks;
-        var disks = this.disks.length / this.rows;
+        var dataDisks, disks, rows, bytes;
+        if(this.resize._resizingCols === null) {
+          disks = this.disks.length;
+          rows = this.rows;
+          if(disks == 0) return 0;
+          bytes = this.disks[0].sizeBytes;
+        } else {
+          disks = this.resize._resizingCols;
+          rows = this.resize._resizingRows;
+          if(disks == 0) return 0;
+          bytes = this.resize._disks[0][0].sizeBytes;
+        }
         switch(this.vdevtype.get('value')) {
           case 'raidz':
             dataDisks = disks - 1;
@@ -204,7 +213,7 @@ define([
             dataDisks = 0;
             break;
         }
-        return this.disks[0].sizeBytes * dataDisks * this.rows;
+        return bytes * dataDisks * rows;
       },
       colorActive: function() {
 
@@ -268,6 +277,7 @@ define([
             minWidth: 5,
             _disks: null,
             _resizingRows: 1,
+            _resizingCols: null,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
               newH -= HEADER_HEIGHT;
@@ -311,11 +321,13 @@ define([
                  newW = this.lastW;
               } else {
                 if(this.lastH != newH || this.lastW != newW) {
-                  me.manager._disksCheck(me, false, floor, floorR);
+                  this._disks = disks;
                   this._resizingRows = floorR;
+                  this._resizingCols = floor;
                   this.lastH = newH;
                   this.lastW = newW;
-                  this._disks = disks;
+                  me.manager._disksCheck(me, false, floor, floorR);
+                  me.manager.updateCapacity(); // FIXME: double call with _disksCheck
                 }
               }
 
@@ -327,6 +339,7 @@ define([
             },
             onResize: function(e) {
               me.rows = this._resizingRows;
+              this._resizingCols = null;
               if(this._disks !== null) {
 
                 /*
@@ -386,6 +399,7 @@ define([
           } else {
             this._stopEvent = false;
           }
+          me.manager.updateCapacity();
         });
         this.manager._disksCheck(this);
 
@@ -691,7 +705,7 @@ define([
         if(cols !== undefined) {
           numdisks = cols;
         } else {
-          numdisks = vdev.disks.length;
+          numdisks = vdev.disks.length / vdev.rows;
         }
 
         if(manual !== true) {
