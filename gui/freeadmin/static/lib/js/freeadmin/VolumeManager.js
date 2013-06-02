@@ -317,15 +317,11 @@ define([
                   }
                 }
 
-/*
-                for(var i=1;i<this._disks.length;i++) {
-                  var vdev = me.manager.addVdev({
-                    can_delete: true,
-                    initialDisks: this._disks[i],
-                    type: me.vdevtype.get("value")
-                  });
+                var extraRows = query("tr", me.dapTable).length - this._disks.length - 1;
+                for(var i=0;i<extraRows;i++) {
+                  query("tr:nth-child("+(this._disks.length+2)+")", me.dapTable).forEach(domConst.destroy);
                 }
-*/
+
                 this._disks = null;
               }
               // Set the new correct width after releasing mouse
