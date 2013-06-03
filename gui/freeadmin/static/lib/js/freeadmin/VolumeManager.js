@@ -8,6 +8,7 @@ define([
   "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/json",
+  "dojo/mouse",
   "dojo/on",
   "dojo/query",
   "dojo/topic",
@@ -38,6 +39,7 @@ define([
   domConst,
   domStyle,
   json,
+  mouse,
   on,
   query,
   topic,
@@ -185,6 +187,7 @@ define([
       vdev: null,
       rows: 1,
       manager: null,
+      _dragTooltip: null,
       validate: function(disk) {
         var valid = true;
         for(var key in this.disks) {
@@ -294,7 +297,7 @@ define([
       getChildren: function() {
         // This needs investigating
         // For some reason chidlren are not retrieved automatically
-        return [this.vdevtype, this.vdisks];
+        return [this.vdevtype, this.vdisks, this.resize, this._dragTooltip];
       },
       postCreate: function() {
         var me = this;
@@ -476,6 +479,19 @@ define([
         }
 
         domStyle.set(this.resize.domNode.parentNode, "width", this.disks.length * PER_NODE_WIDTH + "px");
+
+        this._dragTooltip = Tooltip({
+          connectId: [this.resize.domNode],
+          label: "Drag and drop this to resize"
+        })
+        //on.once(me.resize.domNode, mouse.enter, function() {
+        //  Tooltip.hide(me.resize.domNode);
+        //});
+        this._dragTooltip.startup();
+        //FIXME: find a way to do that on instantiation
+        setTimeout(function() {
+          me._dragTooltip.open(me.resize.domNode);
+        }, 100);
 
       }
     });
