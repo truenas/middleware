@@ -181,7 +181,7 @@ define([
       getCapacity: function() {
         var dataDisks, disks, rows, bytes;
         if(this.resize._resizingCols === null) {
-          disks = this.disks.length;
+          disks = this.disks.length / this.rows;
           rows = this.rows;
           if(disks == 0) return 0;
           bytes = this.disks[0].sizeBytes;
