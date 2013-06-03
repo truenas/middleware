@@ -522,7 +522,7 @@ define([
               if(me.disks.length == 0) break;
               me.disks[0].remove();
             }
-            me.destroy();
+            me.destroyRecursive();
           });
 
         } else {

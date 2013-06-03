@@ -1250,6 +1250,7 @@ table.layoutTable {
     background-color: #efefef;
     padding: 0;
     border-left: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
     height: 26px;
 }
 
@@ -1257,6 +1258,7 @@ table.layoutTable {
     color: #000;
     background-color: #ddd;
     border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
 }
 
 .groupDisksTable td:last-child {
