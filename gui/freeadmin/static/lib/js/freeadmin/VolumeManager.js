@@ -16,14 +16,17 @@ define([
   "dijit/_TemplatedMixin",
   "dijit/registry",
   "dijit/Tooltip",
+  "dijit/TooltipDialog",
   "dijit/form/Button",
   "dijit/form/CheckBox",
   "dijit/form/Form",
+  "dijit/form/RadioButton",
   "dijit/form/Select",
   "dijit/form/TextBox",
   "dijit/form/ToggleButton",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
+  "dijit/popup",
   "dojox/layout/ResizeHandle",
   "dojox/string/sprintf",
   "dojox/widget/Toaster",
@@ -47,14 +50,17 @@ define([
   _Templated,
   registry,
   Tooltip,
+  TooltipDialog,
   Button,
   CheckBox,
   Form,
+  RadioButton,
   Select,
   TextBox,
   ToggleButton,
   TabContainer,
   ContentPane,
+  popup,
   ResizeHandle,
   sprintf,
   Toaster,
@@ -431,6 +437,76 @@ define([
               me.manager._disksCheck(me);
               me.manager.updateCapacity();
               me.colorActive();
+
+              /*
+               * From now on we will be dealing with switching the type of disks
+               * pre-selected for this group.
+               *
+               * e.g. Disks of 1TB ha been selected for this group, it will ask
+               * if you want to switch for 2TB, whenever possible
+               *
+               * FIXME: Code is a mess! :)
+               */
+              var canswitch = [];
+              var currentslot;
+              var aDisks = me.manager._avail_disks;
+              for(var i=0;i<aDisks.length;i++) {
+                if(me.disks.length > 0) {
+                  if(aDisks[i].size != me.disks[0].size && aDisks[i].disks.length >= me.disks.length) {
+                    canswitch.push(i);
+                  } else if(aDisks[i].size == me.disks[0].size) {
+                    currentslot = i;
+                  }
+                }
+              }
+
+              if(canswitch.length > 0 && currentslot !== undefined) {
+
+                var onChangeFnc = function(value) {
+                  if(value === false) return;
+                  var idx = this.get("value");
+                  var num = me.disks.length;
+                  var rows = me.rows;
+                  while(me.disks.length > 0) {
+                    me.disks[0].remove();
+                  }
+                  for(var i=0;i<num/rows;i++) {
+                    for(var j=0;j<rows;j++) {
+                      aDisks[idx].disks[0].addToRow(me, j, i);
+                    }
+                  }
+                };
+                var div = domConst.create("div");
+                var divh = domConst.create("div", null, div);
+                var rb = new RadioButton({
+                  name: "size",
+                  value: currentslot,
+                  checked: true,
+                }).placeAt(divh);
+                domConst.create("label", {innerHTML: aDisks[currentslot].size}, divh);
+                on(rb, "change", onChangeFnc);
+
+                for(var i in canswitch) {
+                  var divh = domConst.create("div", null, div);
+                  var rb = new RadioButton({
+                    name: "size",
+                    value: canswitch[i]
+                  }).placeAt(divh);
+                  domConst.create("label", {innerHTML: aDisks[canswitch[i]].size}, divh);
+                  on(rb, "change", onChangeFnc);
+                }
+                var td = new TooltipDialog({
+                  content: div,
+                  onMouseLeave: function() {
+                    popup.close(td);
+                    td.destroyRecursive();
+                  }
+                });
+                popup.open({
+                  popup: td,
+                  around: me.resize.domNode
+                });
+              }
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
