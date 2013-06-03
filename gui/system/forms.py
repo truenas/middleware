@@ -310,6 +310,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
         self.instance._original_adv_autotune = self.instance.adv_autotune
+        self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -339,6 +340,8 @@ class AdvancedForm(ModelForm):
             )
             and not loader_reloaded
         ):
+            notifier().reload("loader")
+        if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
             notifier().reload("loader")
 
     def done(self, request, events):

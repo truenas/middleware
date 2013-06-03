@@ -217,6 +217,9 @@ class Advanced(Model):
     adv_autotune = models.BooleanField(
             verbose_name=_("Enable autotune"),
             default=False)
+    adv_debugkernel = models.BooleanField(
+            verbose_name=_("Enable debug kernel"),
+            default=False)
     adv_anonstats = models.BooleanField(
             verbose_name=_("Enable report anonymous statistics"),
             default=True,
