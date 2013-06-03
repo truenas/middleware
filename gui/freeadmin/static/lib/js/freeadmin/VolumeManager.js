@@ -226,9 +226,17 @@ define([
          * It should works all times, even while resizing
          */
         if(this.resize._resizingCols === null) {
-          return this.disks[0].sizeBytes;
+          if(this.disks.length > 0) {
+            return this.disks[0].sizeBytes;
+          } else {
+            return 0;
+          }
         } else {
-          return this.resize._disks[0][0].sizeBytes;
+          if(this.resize._disks[0].length > 0) {
+            return this.resize._disks[0][0].sizeBytes;
+          } else {
+            return 0;
+          }
         }
       },
       getCapacity: function() {
@@ -664,6 +672,7 @@ define([
         }, this.dapToaster);
 
         this.addVdev({can_delete: false});
+        this.updateCapacity();
 
         //this._supportingWidgets.push(slider);
 
@@ -687,7 +696,7 @@ define([
           var diskg = this._layout[key];
           capacity += diskg.getCapacity();
         }
-        this.dapCapacity.innerHTML = (capacity / 1024 / 1024 / 1024) + ' TiB'
+        this.dapCapacity.innerHTML = humanizeSize(capacity);
         return capacity;
       },
       _disksForVdev: function(vdev, slots, rows) {
@@ -785,12 +794,12 @@ define([
         }
         if(has_check) {
           if(found) {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
           } else {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
           }
         } else {
-          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
+          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
         }
       },
       submit: function() {
