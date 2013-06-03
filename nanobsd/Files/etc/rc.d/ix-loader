@@ -87,6 +87,27 @@ loader_user() {
 
 }
 
+loader_debugkernel()
+{
+	local debugkernel_enable=0
+
+	debugkernel_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_debugkernel
+
+	FROM
+		system_advanced
+	
+	ORDER BY
+		-id
+	LIMIT 1")
+
+	if [ "${debugkernel_enable}" != "0" ]; then
+		echo 'kernel="kernel-debug"'
+		echo 'module_path="/boot/kernel-debug;/boot/modules"'
+	fi
+}
+
 do_autotune()
 {
 	local autotune
@@ -118,7 +139,7 @@ generate_boot_loader_conf_local()
 	local settings
 	local tmp
 
-	settings="serial user"
+	settings="serial user debugkernel"
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
