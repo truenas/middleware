@@ -1210,6 +1210,10 @@ label[for=stopmsgrefresh] {
     clear: both;
 }
 
+table.layoutTable {
+    padding-left: 0;
+}
+
 .groupDisksTable {
     color: #cfcfcf;
     padding: 0;
