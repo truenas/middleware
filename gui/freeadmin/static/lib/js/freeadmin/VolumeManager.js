@@ -65,6 +65,24 @@ define([
     var EMPTY_WIDTH = 6;
     var EMPTY_NODE = 19;
 
+    var IEC_MAP = [
+      ['PiB', 1125899906842624],
+      ['TiB', 1099511627776],
+      ['GiB', 1073741824],
+      ['MiB', 1048576],
+      ['KiB', 1024],
+      ['B', 1],
+    ];
+
+    var humanizeSize = function(bytes) {
+      for(var i=0;i<IEC_MAP.length;i++) {
+        if(bytes > IEC_MAP[i][1]) {
+          return sprintf("%.2f %s", bytes / IEC_MAP[i][1], IEC_MAP[i][0]);
+        }
+      }
+      return bytes + ' B';
+    }
+
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
       //templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
       templateString: '<div class="disk" style="margin: 2px; padding: 2px; width: 40px;">${name}</div>',
