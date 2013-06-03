@@ -433,6 +433,9 @@ define([
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
         this.resize.startup();
 
+        this.dapDelete = Button({
+          label: "X"
+        }, this.dapDelete);
         if(this.can_delete === true) {
 
           on(this.dapDelete, "click", function() {
@@ -444,7 +447,7 @@ define([
           });
 
         } else {
-          domConst.destroy(this.dapDelete);
+          this.dapDelete.set('disabled', true);
         }
 
         on(this.vdevtype, "change", function() {
