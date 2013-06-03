@@ -207,7 +207,7 @@ add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
-add_port sysutils/fusefs-kmod
+add_port sysutils/fusefs-kmod OPTIONS_FILE_UNSET+=DOCS
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/smartmontools
