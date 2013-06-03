@@ -24,6 +24,7 @@ define([
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dojox/layout/ResizeHandle",
+  "dojox/string/sprintf",
   "dojox/widget/Toaster",
   "dojo/text!freeadmin/templates/volumemanager.html",
   "dojo/text!freeadmin/templates/volumemanager_diskgroup.html"
@@ -53,6 +54,7 @@ define([
   TabContainer,
   ContentPane,
   ResizeHandle,
+  sprintf,
   Toaster,
   template,
   diskGroupTemplate) {
@@ -178,19 +180,45 @@ define([
           throw new Object({message: "Disk size mismatch"});
         }
       },
+      getCurrentCols: function() {
+        /*
+         * This function gets the number of disks per vdev/row
+         * It should works all times, even while resizing
+         */
+        if(this.resize._resizingCols === null) {
+          return this.disks.length / this.rows;
+        } else {
+          return this.resize._resizingCols;
+        }
+      },
+      getCurrentRows: function() {
+        /*
+         * This function gets the number of vdevs/rows
+         * It should works all times, even while resizing
+         */
+        if(this.resize._resizingCols === null) {
+          return this.rows;
+        } else {
+          return this.resize._resizingRows;
+        }
+      },
+      getCurrentDiskSize: function() {
+        /*
+         * This function gets the current size of the disk in group
+         * It should works all times, even while resizing
+         */
+        if(this.resize._resizingCols === null) {
+          return this.disks[0].sizeBytes;
+        } else {
+          return this.resize._disks[0][0].sizeBytes;
+        }
+      },
       getCapacity: function() {
         var dataDisks, disks, rows, bytes;
-        if(this.resize._resizingCols === null) {
-          disks = this.disks.length / this.rows;
-          rows = this.rows;
-          if(disks == 0) return 0;
-          bytes = this.disks[0].sizeBytes;
-        } else {
-          disks = this.resize._resizingCols;
-          rows = this.resize._resizingRows;
-          if(disks == 0) return 0;
-          bytes = this.resize._disks[0][0].sizeBytes;
-        }
+        disks = this.getCurrentCols();
+        if(disks == 0) return 0;
+        rows = this.getCurrentRows();
+        bytes = this.getCurrentDiskSize();
         switch(this.vdevtype.get('value')) {
           case 'raidz':
             dataDisks = disks - 1;
@@ -739,12 +767,12 @@ define([
         }
         if(has_check) {
           if(found) {
-            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks<br />optimal';
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
           } else {
-            vdev.dapNumCol.innerHTML = rows + numdisks + ' disks<br />non-optimal';
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
           }
         } else {
-          vdev.dapNumCol.innerHTML = rows + numdisks + ' disks';
+          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s", vdev.getCurrentCols(), vdev.getCurrentRows(), vdev.getCapacity());
         }
       },
       submit: function() {
