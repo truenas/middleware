@@ -139,6 +139,7 @@ define([
             for(var i=0;i<16;i++) {
               domConst.create("td", null, tr);
             }
+            vdev._addFormVdev(row);
           }
           var cell = query("tr:nth-child("+(row+2)+") td:nth-child("+(col+2)+")", vdev.dapTable)[0];
           var index = this.disksAvail.disks.indexOf(this);
@@ -258,6 +259,7 @@ define([
       rows: 1,
       manager: null,
       _dragTooltip: null,
+      _formVdevs: {},
       validate: function(disk) {
         var valid = true;
         for(var key in this.disks) {
@@ -367,11 +369,24 @@ define([
       getChildren: function() {
         // This needs investigating
         // For some reason chidlren are not retrieved automatically
-        return [this.vdevtype, this.vdisks, this.resize, this._dragTooltip];
+        return [this.vdevtype, this.resize, this._dragTooltip];
+      },
+      _addFormVdev: function(row) {
+        if(!this._formVdevs[row]) {
+          console.log("add", row);
+          var vtype = new _Widget();
+          this.manager._form.domNode.appendChild(vtype.domNode);
+          var vdisks = new _Widget();
+          this.manager._form.domNode.appendChild(vdisks.domNode);
+          this._formVdevs[row] = [vtype, vdisks];
+        }
       },
       postCreate: function() {
         var me = this;
         this.disks = [];
+
+        this._formVdevs = {};
+        this._addFormVdev(0);
 
         this.vdevtype = new Select({
           options: [
@@ -388,9 +403,6 @@ define([
           this.vdevtype.set('value', this.type);
         }
         this.vdevtype.startup();
-
-        this.vdisks = new _Widget();
-        this.dapResMain.appendChild(this.vdisks.domNode);
 
         this.resize = new ResizeHandle({
             targetContainer: this.dapResMain,
@@ -491,6 +503,12 @@ define([
                 var extraRows = query("tr", me.dapTable).length - this._disks.length - 1;
                 for(var i=0;i<extraRows;i++) {
                   query("tr:nth-child("+(this._disks.length+2)+")", me.dapTable).forEach(domConst.destroy);
+                  var formVdev = me._formVdevs[this._disks.length+i];
+                  if(formVdev) {
+                    formVdev[0].destroyRecursive();
+                    formVdev[1].destroyRecursive();
+                    delete me._formVdevs[this._disks.length+i];
+                  }
                 }
 
                 this._disks = null;
@@ -966,18 +984,22 @@ define([
          * Set all field names for layout before submit
          * It is easier than keep track of the fields on-the-fly
          */
-        for(var i=0;i<this._layout.length;i++) {
+        for(var i=0,k=0;i<this._layout.length;i++) {
           var vdev = this._layout[i];
-          vdev.vdevtype.set('name', 'layout-' + i + '-vdevtype');
-          vdev.vdisks.set('name', 'layout-' + i + '-disks');
-          var disks = [];
-          for(var key in vdev.disks) {
-            disks.push(vdev.disks[key].get("name"));
+          var perRow = vdev.disks.length / vdev.rows;
+          for(var j=0;j<vdev.rows;j++,k++) {
+            var disks = [];
+            for(var d=perRow*j;d<perRow*(j+1);d++) {
+              disks.push(vdev.disks[d].get("name"));
+            }
+            console.log(vdev._formVdevs[k]);
+            vdev._formVdevs[k][0].set('name', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[k][0].set('value', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[k][1].set('name', 'layout-' + k + '-disks');
+            vdev._formVdevs[k][1].set('value', disks);
           }
-          vdev.vdisks.set('value', disks);
-          domAttr.set(vdev.vdisks.domNode.parentNode, "data-dojo-name", 'layout-' + i + '-disks');
         }
-        this._total_vdevs.set('value', this._layout.length);
+        this._total_vdevs.set('value', k);
         doSubmit({
           url: this.url,
           form: this._form,
