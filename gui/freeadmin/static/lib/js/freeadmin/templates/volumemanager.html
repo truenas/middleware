@@ -3,39 +3,35 @@
   <input type="hidden" data-dojo-attach-point="dapAll" />
   <table>
     <tr>
-      <th>Volume Name</th>
+      <th colspan="2">Volume Name</th>
     </tr>
     <tr>
-      <td>
+      <td colspan="2">
         <input data-dojo-attach-point="dapName" type="text" />
       </td>
     </tr>
     <tr>
-      <th>Volume to extend</th>
+      <th colspan="2">Volume to extend</th>
     </tr>
     <tr>
-      <td>
+      <td colspan="2">
         <select data-dojo-attach-point="dapExtend"></select>
       </td>
     </tr>
     <tr>
-      <th>Enable full disk encryption</th>
+      <th>Encryption</th>
+      <th>Initialize Safely</th>
     </tr>
     <tr>
       <td>
         <input data-dojo-attach-point="dapDiskEnc" type="checkbox" />
       </td>
-    </tr>
-    <tr>
-      <th>Initialize disks with random data</th>
-    </tr>
-    <tr>
       <td>
         <input data-dojo-attach-point="dapDiskEncIni" type="checkbox" />
       </td>
     </tr>
     <tr>
-      <td>
+      <td colspan="2">
         <fieldset>
           <legend>Available disks</legend>
           <div data-dojo-attach-point="dapDisks">
@@ -46,7 +42,7 @@
       </td>
     </tr>
     <tr>
-      <td>
+      <td colspan="2">
         <fieldset>
           <legend>Volume layout (Estimated capacity: <span data-dojo-attach-point="dapCapacity"></span>)</legend>
           <div data-dojo-attach-point="dapLayout">
