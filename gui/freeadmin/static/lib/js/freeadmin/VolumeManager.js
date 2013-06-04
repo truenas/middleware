@@ -183,18 +183,26 @@ define([
     });
 
     var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
-      templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span> drives)</div>',
+      templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
       postCreate: function() {
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
         }
+        this.dapSize.innerHTML = this.size;
         this.update();
       },
       update: function() {
-        this.dapSize.innerHTML = this.size;
-        this.dapNum.innerHTML = this.disks.length;
+        if(this.disks.length > 0) {
+          if(this.disks.length > 1) {
+            this.dapNum.innerHTML = sprintf("%d drives", this.disks.length);
+          } else {
+            this.dapNum.innerHTML = sprintf("%d drive", this.disks.length);
+          }
+        } else {
+          this.dapNum.innerHTML = "no more drives";
+        }
       }
     });
 
