@@ -73,6 +73,15 @@ define([
     var EMPTY_WIDTH = 6;
     var EMPTY_NODE = 19;
 
+    var SI_MAP = [
+      ['PB', 1000000000000000],
+      ['TB', 1000000000000],
+      ['GB', 1000000000],
+      ['MB', 1000000],
+      ['kB', 1000],
+      ['B', 1],
+    ];
+
     var IEC_MAP = [
       ['PiB', 1125899906842624],
       ['TiB', 1099511627776],
@@ -82,10 +91,17 @@ define([
       ['B', 1],
     ];
 
-    var humanizeSize = function(bytes) {
-      for(var i=0;i<IEC_MAP.length;i++) {
-        if(bytes > IEC_MAP[i][1]) {
-          return sprintf("%.2f %s", bytes / IEC_MAP[i][1], IEC_MAP[i][0]);
+    //TODO: move to another lib
+    var humanizeSize = function(bytes, mode) {
+      if(!mode) mode = "IEC";
+      var MAP;
+      if(mode == "IEC")
+        MAP = IEC_MAP;
+      else
+        MAP = SI_MAP;
+      for(var i=0;i<MAP.length;i++) {
+        if(bytes > MAP[i][1]) {
+          return sprintf("%.2f %s", bytes / MAP[i][1], MAP[i][0]);
         }
       }
       return bytes + ' B';
