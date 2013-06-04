@@ -207,8 +207,11 @@ define([
           }
           this._showNode = domConst.create("a", {innerHTML: "show"}, this.dapNum);
           var me = this;
-          on(this._showNode, "click", function() {
+          on(this._showNode, "mouseover", function() {
             me.show();
+          });
+          on(this._showNode, "mouseleave", function() {
+            me.hide();
           });
         } else {
           this.dapNum.innerHTML = "no more drives";
@@ -230,8 +233,13 @@ define([
         popup.open({
           popup: me._tpDialog,
           around: me._showNode,
-          //orient: ["after", "below-alt"]
+          orient: ["above", "after", "below-alt"]
         });
+      },
+      hide: function() {
+        if(this._tpDialog !== null) {
+          popup.close(this._tpDialog);
+        }
       }
     });
 
