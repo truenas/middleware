@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-06-02 23:43+0200\n"
+"PO-Revision-Date: 2013-06-03 15:49+0200\n"
 "Last-Translator: ioza1964 <ioannis.a.za@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -256,7 +256,7 @@ msgstr "Time Machine"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "No case folding"
+msgstr "Χωρίς αναδίπλωση κεφαλαιοποίησης"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -335,11 +335,11 @@ msgstr "Κληρονόμηση"
 
 #: choices.py:285
 msgid "On"
-msgstr "Στις"
+msgstr "Ανοικτό"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr "Off"
+msgstr "Κλειστό"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
@@ -389,11 +389,11 @@ msgstr "Κάθε επιλεγμένη ημέρα της εβδομάδας"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "μόνο για ανάγνωση"
+msgstr "Μόνο για ανάγνωση"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "μόνο για εγγραφή"
+msgstr "Μόνο για εγγραφή"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -452,15 +452,15 @@ msgstr "Σύντομο αυτοδιαγνωστικό"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Conveyance Self-Test (ΑΤΑ μόνο)"
+msgstr "Αυτο-διαγνωστικό τέστ μετάδοσης/μεταφοράς (ΑΤΑ  μόνο)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Offline άμεσο Test (ΑΤΑ μόνο)"
+msgstr "Άμεσος έλεγχος χωρίς σύνδεση (ΑΤΑ μόνο)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Μονάδα Rsync"
+msgstr "Άρθρωμα Rsync"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -559,7 +559,7 @@ msgstr "Βοηθητικές ομάδες"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
-msgstr "Ένας χρήστης με αυτό το αναγνωριστικό (uid) υπάρχει ήδη."
+msgstr "Ένας χρήστης με αυτό το αναγνωριστικό χρήστη υπάρχει ήδη."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -575,7 +575,7 @@ msgstr "Αυτό το πεδίο είναι υποχρεωτικό"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Οι κωδικοί δεν ταιριάζουν."
+msgstr "Τα δύο πεδία κωδικών πρόσβασης δεν ταιριάζουν."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -587,7 +587,7 @@ msgstr "Ένας χρήστης δέ μπορεί να ανήκει σε περ�
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Ο οικίος κατάλογος δεν είναι εγγράψιμος, αφήστε το κενό"
+msgstr "Ο αρχικός κατάλογος δεν είναι εγγράψιμος, αφήστε το κενό"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -601,7 +601,7 @@ msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Ο οικίος κατάλογος πρέπει να ξεκινάει με /mnt ή να είναι /nonexistent"
+msgstr "Ο αρχικός κατάλογος πρέπει να ξεκινάει με /mnt ή να είναι /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -642,20 +642,19 @@ msgstr ""
 "ξανά."
 
 #: account/forms.py:922
-#, fuzzy
 msgid "Do you want to delete all users with this primary group?"
-msgstr "Θέλετε να διαγράψετε όλους τους χρήστες σε αυτήν την ομάδα;"
+msgstr "Θέλετε να διαγράψετε όλους τους χρήστες σε αυτήν την κύρια ομάδα;"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "ID ομάδας"
+msgstr "Αναγνωριστικό ομάδας"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Όνομα Ομάδας"
+msgstr "Όνομα ομάδας"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -678,19 +677,19 @@ msgstr "Αναγνωριστικό χρήστη"
 
 #: account/models.py:87
 msgid "User &"
-msgstr "User &"
+msgstr "Χρήστης &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Hashed UNIX κωδικός πρόσβασης"
+msgstr "Κατακερματισμένος UNIX κωδικός πρόσβασης"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Hashed SMB κωδικός πρόσβασης"
+msgstr "Κατακερματισμένος SMB κωδικός πρόσβασης"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "ID πρωτοβάθμιας Ομάδας"
+msgstr "Αναγνωριστικό πρωτοβάθμιας Ομάδας"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -702,7 +701,7 @@ msgstr "Πλήρες όνομα"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "Ηλεκτρονικό ταχυδρομείο"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -726,7 +725,7 @@ msgstr "Λογαριασμός"
 
 #: account/nav.py:13 templates/account/index.html:2
 msgid "Admin Account"
-msgstr "Διαχειριστής"
+msgstr "Λογαριασμός διαχειριστή"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -737,7 +736,7 @@ msgstr "Αλλαγή κωδικού πρόσβασης"
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr "Αλλαγή χρήστη Admin"
+msgstr "Αλλαγή χρήστη διαχειριστή"
 
 #: account/views.py:95
 msgid "Password successfully updated."
@@ -786,7 +785,7 @@ msgstr "Προβολή %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
-msgstr "Εμφάνιση Διεργασιών Συστήματος"
+msgstr "Εμφάνιση διεργασιών συστήματος"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
@@ -827,7 +826,7 @@ msgstr "Η υπηρεσία απέτυχε να επανεκκινήσει."
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s διαγράφηκε(αν) με επιτυχία."
+msgstr "%s διαγράφηκε με επιτυχία."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -848,7 +847,7 @@ msgstr "Σφάλμα"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "NIC"
+msgstr "Κάρτα διεπαφής δικτύου"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
@@ -879,11 +878,14 @@ msgstr "Μπορείτε να επιλέξετε μεταξύ IPv4 ή IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr "Η διεύθυνση loopback δεν είναι έγκυρη για εξυπηρέτη ονομάτων"
+msgstr ""
+"Ο βρόχος επιστροφής δεν είναι ένας έγκυρος εξυπηρετητής ονομάτων δικτύου"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Οι μη ορισμένες διευθύνσεις δεν είναι έγκυρες ως διακομιστές ονομάτων"
+msgstr ""
+"Οι μη ορισμένες διευθύνσεις δεν είναι έγκυρες ως εξυπηρετητές ονομάτων "
+"δικτύου"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
@@ -896,7 +898,8 @@ msgstr "Το υποδίκτυο 169.254/16 δεν είναι έγκυρο για
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
 msgstr ""
-"Πρέπει να συμπληρώθει ο nameserver 2 πριν από τη συμπλήρωση του nameserver 3"
+"Πρέπει να συμπληρώθει ο εξυπηρετητής ονμάτων δικτύου 2 πριν από τη "
+"συμπλήρωση του εξυπηρετητή ονμάτων δικτύου 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
@@ -905,16 +908,18 @@ msgstr "Απαιτείται όταν χρησιμοποιείτε nameserver 3"
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
 msgstr ""
-"Πρέπει να συμπληρώθει ο nameserver 1 πριν από τη συμπλήρωση του nameserver 3"
+"Πρέπει να συμπληρώθει ο εξυπηρετητής ονμάτων δικτύου 1 πριν από τη "
+"συμπλήρωση του εξυπηρετητή ονμάτων δικτύου 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr ""
-"Πρέπει να συμπληρώθεί ο nameserver 1 πριν από τη συμπλήρωση του nameserver 2"
+"Πρέπει να συμπληρώθει ο εξυπηρετητής ονμάτων δικτύου 1 πριν από τη "
+"συμπλήρωση του εξυπηρετητή ονμάτων δικτύου 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr "Parent Interface"
+msgstr "Γονική διεπαφή"
 
 #: network/forms.py:245
 msgid "The name must be vlanXX where XX is an integer"
@@ -965,11 +970,11 @@ msgstr ""
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Hostname"
+msgstr "Όνομα υπολογιστή"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "Domain"
+msgstr "Τομέας"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
@@ -981,32 +986,32 @@ msgstr "IPv6 προεπιλεγμένη πύλη"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Nameserver 1"
+msgstr "Εξυπηρετητής ονομάτων δικτύου 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Nameserver 2"
+msgstr "Εξυπηρετητής ονομάτων δικτύου 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Nameserver 3"
+msgstr "Εξυπηρετητής ονομάτων δικτύου 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
 msgid "Global Configuration"
-msgstr "Global Configuration"
+msgstr "Καθολική ρύθμιση"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Διαλέξτε NIC σας"
+msgstr "Διαλέξτε την κάρτα διεπαφής δικτύου σας"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr "Ονομα Διεπαφής"
+msgstr "Ονομα διεπαφής"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Όνομα NIC σας."
+msgstr "Δώστε όνομα στην κάρτα διεπαφής δικτύου σας."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1022,11 +1027,11 @@ msgstr ""
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4 Διεύθυνση"
+msgstr "IPv4 διεύθυνση"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
-msgstr "IPv4 Netmask"
+msgstr "IPv4 μάσκα δικτύου"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
@@ -1054,11 +1059,11 @@ msgstr "Επιλογές"
 #: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr "Διασύνδεση"
+msgstr "Διεπαφή"
 
 #: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
-msgstr "Διασυνδέσεις"
+msgstr "Διεπαφές"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
@@ -1071,7 +1076,7 @@ msgstr "Ψευδώνυμα"
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr "Εικονική Διασύνδεση"
+msgstr "Εικονική διεπαφή"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
@@ -1082,7 +1087,7 @@ msgstr ""
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
 msgid "Physical Interface"
-msgstr "Φυσική διασύνδεση"
+msgstr "Φυσική διεπαφή"
 
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
@@ -1106,19 +1111,19 @@ msgstr "VLANs"
 
 #: network/models.py:314
 msgid "Protocol Type"
-msgstr "Τύπος Πρωτοκόλλου"
+msgstr "Τύπος πρωτοκόλλου"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "Συνάθροιση Link"
+msgstr "Ομαδοποιήση συνδέσεων"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "Συναθροίσεις συνδέσεων"
+msgstr "Ομαδοποιήσεις συνδέσεων"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr "Ομάδα διασύνδεσης LAGG"
+msgstr "Ομάδα διεπαφής LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1126,7 +1131,7 @@ msgstr "Αριθμός προτεραιότητας LAGG"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr "Φυσική NIC"
+msgstr "Φυσική καρτα διεπαφής δικτύου"
 
 #: network/models.py:384
 msgid "Destination network"
@@ -6880,10 +6885,10 @@ msgid "There are no active volumes."
 msgstr "Δεν υπάρχουν ενεργοί τόμοι."
 
 msgid "%s successfully added."
-msgstr "%s προστέθηκε(αν) με επιτυχία."
+msgstr "%s προστέθηκε με επιτυχία."
 
 msgid "IPv6 Netmask"
-msgstr "IPv6 Netmask"
+msgstr "IPv6 μάσκα δικτύου"
 
 msgid "This value must be between 0 and 10000, inclusive."
 msgstr ""
@@ -7026,10 +7031,10 @@ msgid "Level"
 msgstr "Επίπεδο"
 
 msgid "Add Link Aggregation"
-msgstr "Προσθήκη συνάθροισης συνδέσεων"
+msgstr "Προσθήκη ομαδοποιήσης συνδέσεων"
 
 msgid "View All Interfaces"
-msgstr "Δείτε όλες τις διασυνδέσεις"
+msgstr "Δείτε όλες τις διεπαφές"
 
 msgid "View All VLANs"
 msgstr "Δείτε όλα τα VLANs"
