@@ -351,6 +351,7 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
     dedup = forms.ChoiceField(
         choices=choices.ZFS_DEDUP,
         initial="off",
+        required=False,
     )
 
     def clean(self):
