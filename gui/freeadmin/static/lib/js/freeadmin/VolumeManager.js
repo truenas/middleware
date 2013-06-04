@@ -68,7 +68,7 @@ define([
   diskGroupTemplate) {
 
     var PER_NODE_WIDTH = 49;
-    var PER_NODE_HEIGHT = 26;
+    var PER_NODE_HEIGHT = 27;
     var HEADER_HEIGHT = 14;
     var EMPTY_WIDTH = 6;
     var EMPTY_NODE = 19;
@@ -196,7 +196,10 @@ define([
         this.update();
       },
       getChildren: function() {
-        return [this._tpDialog];
+        if(this._tpDialog !== null) {
+          return [this._tpDialog];
+        }
+        return [];
       },
       update: function() {
         if(this.disks.length > 0) {
