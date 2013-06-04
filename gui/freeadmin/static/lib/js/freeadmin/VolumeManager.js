@@ -186,6 +186,8 @@ define([
       templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
+      _showNode: null,
+      _tpDialog: null,
       postCreate: function() {
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
@@ -193,16 +195,43 @@ define([
         this.dapSize.innerHTML = this.size;
         this.update();
       },
+      getChildren: function() {
+        return [this._tpDialog];
+      },
       update: function() {
         if(this.disks.length > 0) {
           if(this.disks.length > 1) {
-            this.dapNum.innerHTML = sprintf("%d drives", this.disks.length);
+            this.dapNum.innerHTML = sprintf("%d drives, ", this.disks.length);
           } else {
-            this.dapNum.innerHTML = sprintf("%d drive", this.disks.length);
+            this.dapNum.innerHTML = sprintf("%d drive, ", this.disks.length);
           }
+          this._showNode = domConst.create("a", {innerHTML: "show"}, this.dapNum);
+          var me = this;
+          on(this._showNode, "click", function() {
+            me.show();
+          });
         } else {
           this.dapNum.innerHTML = "no more drives";
         }
+      },
+      show: function() {
+        var me = this;
+        var table = domConst.create("table");
+        for(var i=0;i<this.disks.length;i++) {
+          domConst.place(sprintf("<tr><td>%s</td></tr>", this.disks[i].name), table);
+        }
+        this._tpDialog = new TooltipDialog({
+          content: table,
+          onMouseLeave: function() {
+            popup.close(me._tpDialog);
+            me._tpDialog.destroyRecursive();
+          }
+        });
+        popup.open({
+          popup: me._tpDialog,
+          around: me._showNode,
+          //orient: ["after", "below-alt"]
+        });
       }
     });
 
