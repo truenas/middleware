@@ -272,6 +272,7 @@ define([
       _currentAvail: null,
       _disksSwitch: null,
       _dragTooltip: null,
+      _draggedOnce: false,
       _formVdevs: {},
       validate: function(disk) {
         var valid = true;
@@ -568,6 +569,7 @@ define([
                   this._resizingCols = floor;
                   this.lastH = newH;
                   this.lastW = newW;
+                  me._draggedOnce = true;
                   me.manager._disksCheck(me, false, floor, floorR);
                   me.manager.updateCapacity(); // FIXME: double call with _disksCheck
                   me.manager.updateSwitch();
@@ -677,7 +679,15 @@ define([
 
         this._dragTooltip = Tooltip({
           connectId: [this.resize.domNode],
-          label: "Drag and drop this to resize"
+          label: "Drag and drop this to resize",
+          onHide: function() {
+            var checkDragTooltip = function() {
+              if(!me._draggedOnce) {
+                me._dragTooltip.open(me.resize.domNode);
+              }
+            }
+            setTimeout(checkDragTooltip, 5000);
+          }
         })
         //on.once(me.resize.domNode, mouse.enter, function() {
         //  Tooltip.hide(me.resize.domNode);
