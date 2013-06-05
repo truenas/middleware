@@ -208,8 +208,13 @@ define([
         this.dapSize.innerHTML = this.size;
         this.update();
         on(this.dapRow, "click", function() {
+          var can_delete = true;
+          if(me.manager._layout[0].disks.length == 0) {
+            me.manager._layout[0].remove();
+            can_delete = false;
+          }
           me.manager.addVdev({
-            can_delete: true,
+            can_delete: can_delete,
             initialDisks: me.disks
           });
         });
@@ -645,13 +650,7 @@ define([
         }, this.dapDelete);
         if(this.can_delete === true) {
 
-          on(this.dapDelete, "click", function() {
-            while(true) {
-              if(me.disks.length == 0) break;
-              me.disks[0].remove();
-            }
-            me.destroyRecursive();
-          });
+          on(this.dapDelete, "click", this.remove);
 
         } else {
           this.dapDelete.set('disabled', true);
@@ -678,8 +677,17 @@ define([
         }
 
         if(this.initialDisks.length > 0) {
-          for(var i=0,len=this.initialDisks.length;i<len;i++) {
-            this.initialDisks[0].addToRow(this, 0, i);
+
+          if(this.initialDisks.length == 4 || this.initialDisks.length == 8) {
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, Math.floor(i / (len / 2)), i % (len / 2));
+            }
+            this.rows = 2;
+          } else if(this.initialDisks.length < 12) {
+
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, 0, i);
+            }
           }
           this.manager._disksCheck(me);
           this.manager.updateCapacity();
@@ -687,7 +695,8 @@ define([
           this.manager.updateSwitch();
         }
 
-        domStyle.set(this.resize.domNode.parentNode, "width", this.disks.length * PER_NODE_WIDTH + "px");
+        domStyle.set(this.resize.domNode.parentNode, "width", (EMPTY_WIDTH + (this.disks.length / this.rows) * PER_NODE_WIDTH) + "px");
+        domStyle.set(this.resize.domNode.parentNode, "height", (HEADER_HEIGHT + this.rows * PER_NODE_HEIGHT) + "px");
 
         this._dragTooltip = Tooltip({
           connectId: [this.resize.domNode],
@@ -710,6 +719,14 @@ define([
           me._dragTooltip.open(me.resize.domNode);
         }, 100);
 
+      },
+      remove: function() {
+        while(this.disks.length != 0) {
+          this.disks[0].remove();
+        }
+        var iof = this.manager._layout.indexOf(this);
+        delete this.manager._layout[iof];
+        this.destroyRecursive();
       }
     });
 
