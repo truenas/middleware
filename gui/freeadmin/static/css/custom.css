@@ -1246,6 +1246,18 @@ table.layoutTable {
     border-left: 1px solid #aaa;
 }
 
+.groupDisksTable th.optimal {
+    color: #000;
+    background-color: #70D0FF;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable th.nonoptimal {
+    color: #000;
+    background-color: #DF7F7F;
+    border-left: 1px solid #aaa;
+}
+
 .groupDisksTable td {
     background-color: #efefef;
     padding: 0;
@@ -1257,6 +1269,20 @@ table.layoutTable {
 .groupDisksTable td.active {
     color: #000;
     background-color: #ddd;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+.groupDisksTable td.optimal {
+    color: #000;
+    background-color: #B5E7FF;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+.groupDisksTable td.nonoptimal {
+    color: #000;
+    background-color: #DCC3C3;
     border-left: 1px solid #aaa;
     border-bottom: 1px solid #aaa;
 }

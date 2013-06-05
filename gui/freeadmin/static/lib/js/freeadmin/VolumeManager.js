@@ -268,6 +268,7 @@ define([
       vdev: null,
       rows: 1,
       manager: null,
+      _isOptimal: null,
       _currentAvail: null,
       _disksSwitch: null,
       _dragTooltip: null,
@@ -359,21 +360,31 @@ define([
       colorActive: function() {
 
         var cols = this.disks.length / this.rows;
+        var cssclass;
+        if(this._isOptimal == true) {
+          cssclass = "optimal";
+        } else if(this._isOptimal == false) {
+          cssclass = "nonoptimal";
+        } else {
+          cssclass = "active";
+        }
         query("tr", this.dapTable).forEach(function(item, idx) {
           if(idx == 0) return;
           query("td", item).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
             } else {
-              domClass.add(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.add(item, cssclass);
             }
           });
         });
         query("th", this.dapTable).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
             } else {
-              domClass.add(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.add(item, cssclass);
             }
         });
 
@@ -639,6 +650,7 @@ define([
         on(this.vdevtype, "change", function() {
           if(this._stopEvent !== true) {
             me.manager._disksCheck(me, true);
+            me.colorActive();
           } else {
             this._stopEvent = false;
           }
@@ -978,7 +990,8 @@ define([
       },
       _disksCheck: function(vdev, manual, cols, rows) {
 
-        var found = false, has_check = false, numdisks;
+        var numdisks;
+        vdev._isOptimal = null;
         if(cols !== undefined) {
           numdisks = cols;
         } else {
@@ -991,21 +1004,21 @@ define([
               // .set will trigger onChange, ignore it once
               vdev.vdevtype._stopEvent = true;
               vdev.vdevtype.set('value', key);
-              found = true;
-              has_check = true;
+              vdev._isOptimal = true;
               break;
             }
           }
-          if(found == false) {
+          if(vdev._isOptimal !== true) {
             var vdevtype = vdev.vdevtype.get("value");
-            has_check = this._optimalCheck[vdevtype] !== undefined;
+            if(this._optimalCheck[vdevtype] !== undefined) {
+              vdev._isOptimal = false;
+            }
           }
         } else {
           var vdevtype = vdev.vdevtype.get("value");
           var optimalf = this._optimalCheck[vdevtype];
           if(optimalf !== undefined) {
-            found = optimalf(numdisks);
-            has_check = true;
+            vdev._isOptimal = optimalf(numdisks);
           }
         }
 
@@ -1020,8 +1033,8 @@ define([
         } else {
           diskSize = '0 B';
         }
-        if(has_check) {
-          if(found) {
+        if(vdev._isOptimal !== null) {
+          if(vdev._isOptimal) {
             vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
           } else {
             vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
