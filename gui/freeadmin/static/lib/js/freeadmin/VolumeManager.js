@@ -273,7 +273,7 @@ define([
       _disksSwitch: null,
       _dragTooltip: null,
       _draggedOnce: false,
-      _formVdevs: {},
+      _formVdevs: null,
       validate: function(disk) {
         var valid = true;
         for(var key in this.disks) {
@@ -1066,10 +1066,10 @@ define([
             for(var d=perRow*j;d<perRow*(j+1);d++) {
               disks.push(vdev.disks[d].get("name"));
             }
-            vdev._formVdevs[k][0].set('name', 'layout-' + k + '-vdevtype');
-            vdev._formVdevs[k][0].set('value', 'layout-' + k + '-vdevtype');
-            vdev._formVdevs[k][1].set('name', 'layout-' + k + '-disks');
-            vdev._formVdevs[k][1].set('value', disks);
+            vdev._formVdevs[j][0].set('name', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[j][0].set('value', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[j][1].set('name', 'layout-' + k + '-disks');
+            vdev._formVdevs[j][1].set('value', disks);
           }
         }
         this._total_vdevs.set('value', k);
