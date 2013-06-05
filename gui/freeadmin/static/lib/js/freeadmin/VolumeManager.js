@@ -190,16 +190,19 @@ define([
     });
 
     var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
-      templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
+      templateString: '<div><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
       sizeBytes: 0,
+      index: 0,
+      availDisks: null,
       _showNode: null,
       _tpDialog: null,
       postCreate: function() {
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
         }
+        this.dapIndex.innerHTML = this.index + 1;
         this.dapSize.innerHTML = this.size;
         this.update();
       },
@@ -410,16 +413,16 @@ define([
 
           this._store.add({
             id: this._currentAvail,
-            name: aDisks[this._currentAvail].size
+            name: sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size)
           });
-          this._vdevDiskType.set('value', aDisks[this._currentAvail].size);
+          this._vdevDiskType.set('value', sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size));
 
           for(var i in this._disksSwitch) {
             var idx = this._disksSwitch[i];
             var obj = this._store.get(idx);
             this._store.add({
               id: idx,
-              name: aDisks[idx].size
+              name: sprintf("%d - %s", aDisks[idx].index + 1, aDisks[idx].size)
             });
           }
         } else {
@@ -428,7 +431,7 @@ define([
       },
       _doSwitch: function(widget, value) {
         if(value === false) return;
-        var idx = widget.get("value");
+        var idx = widget.get("value").split(" - ")[1];
         // Hack because of ComboBox (Select doesn't work, dojo bug)
         for(var i=0;i<this.manager._avail_disks.length;i++) {
           if(this.manager._avail_disks[i].size == idx) {
@@ -473,7 +476,7 @@ define([
         this._vdevDiskType = null;
         this._vdevDiskType = new ComboBox({
           store: this._store,
-          style: {width: "70px", marginRight: "0px", display: "none"},
+          style: {width: "85px", marginRight: "0px", display: "none"},
           onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
         }, this.dapVdevDiskType);
 
@@ -693,7 +696,7 @@ define([
       drawAvailDisks: function() {
         for(var i in this._avail_disks) {
           var dAvail = this._avail_disks[i];
-          this.dapDisksTable.appendChild(dAvail.domNode);
+          this.dapDisks.appendChild(dAvail.domNode);
         }
       },
       getAvailDisksNum: function() {
@@ -797,7 +800,17 @@ define([
         });
 
         this._avail_disks = [];
-        for(var size in this.disks) {
+
+        var sortKeys = [];
+        for(var key in this.disks) {
+          sortKeys.push([key, this.disks[key][0]['size']]);
+        }
+        sortKeys.sort(function(a, b) {
+          return b[1] - a[1];
+        });
+
+        for(var i=0;i<sortKeys.length;i++) {
+          var size = sortKeys[i][0];
           var disks = this.disks[size];
           var avail_disks = [];
           for(var key in disks) {
@@ -812,13 +825,12 @@ define([
           var dAvail = new DisksAvail({
             disks: avail_disks,
             size: size,
-            sizeBytes: avail_disks[0].sizeBytes
+            sizeBytes: avail_disks[0].sizeBytes,
+            availDisks: this._avail_disks,
+            index: i,
           });
           this._avail_disks.push(dAvail);
         }
-        this._avail_disks.sort(function(a, b) {
-          return b.sizeBytes - a.sizeBytes;
-        });
 
         lang.hitch(this, this.drawAvailDisks)();
 
