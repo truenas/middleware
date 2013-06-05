@@ -838,7 +838,7 @@ define([
          * Add extra row for the layout
          */
         var add_extra = new Button({
-          label: "Add Extra Row"
+          label: "Add Extra Device"
         }, this.dapLayoutAdd);
         on(add_extra, "click", function(evt) {
           lang.hitch(me, me.addVdev)({can_delete: true});
