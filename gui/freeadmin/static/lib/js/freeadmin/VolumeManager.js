@@ -193,6 +193,7 @@ define([
       templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
+      sizeBytes: 0,
       _showNode: null,
       _tpDialog: null,
       postCreate: function() {
@@ -811,9 +812,13 @@ define([
           var dAvail = new DisksAvail({
             disks: avail_disks,
             size: size,
+            sizeBytes: avail_disks[0].sizeBytes
           });
           this._avail_disks.push(dAvail);
         }
+        this._avail_disks.sort(function(a, b) {
+          return b.sizeBytes - a.sizeBytes;
+        });
 
         lang.hitch(this, this.drawAvailDisks)();
 
