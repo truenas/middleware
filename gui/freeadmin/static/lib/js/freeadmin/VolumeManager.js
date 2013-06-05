@@ -997,14 +997,20 @@ define([
         } else {
           rows = '';
         }
+        var diskSize;
+        if(vdev.disks.length > 0) {
+          diskSize = vdev.disks[0].size;
+        } else {
+          diskSize = '0 B';
+        }
         if(has_check) {
           if(found) {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
           } else {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
           }
         } else {
-          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
         }
       },
       submit: function() {
