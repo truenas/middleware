@@ -190,21 +190,29 @@ define([
     });
 
     var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
-      templateString: '<div><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
+      templateString: '<div data-dojo-attach-point="dapRow"><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
       sizeBytes: 0,
       index: 0,
+      manager: null,
       availDisks: null,
       _showNode: null,
       _tpDialog: null,
       postCreate: function() {
+        var me = this;
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
         }
         this.dapIndex.innerHTML = this.index + 1;
         this.dapSize.innerHTML = this.size;
         this.update();
+        on(this.dapRow, "click", function() {
+          me.manager.addVdev({
+            can_delete: true,
+            initialDisks: me.disks
+          });
+        });
       },
       getChildren: function() {
         if(this._tpDialog !== null) {
@@ -268,12 +276,12 @@ define([
       vdev: null,
       rows: 1,
       manager: null,
-      _isOptimal: null,
       _currentAvail: null,
       _disksSwitch: null,
       _dragTooltip: null,
       _draggedOnce: false,
       _formVdevs: null,
+      _isOptimal: null,
       validate: function(disk) {
         var valid = true;
         for(var key in this.disks) {
@@ -670,9 +678,13 @@ define([
         }
 
         if(this.initialDisks.length > 0) {
-          for(var i in this.initialDisks) {
-            this.initialDisks[i].addToRow(this);
+          for(var i=0,len=this.initialDisks.length;i<len;i++) {
+            this.initialDisks[0].addToRow(this, 0, i);
           }
+          this.manager._disksCheck(me);
+          this.manager.updateCapacity();
+          this.colorActive();
+          this.manager.updateSwitch();
         }
 
         domStyle.set(this.resize.domNode.parentNode, "width", this.disks.length * PER_NODE_WIDTH + "px");
@@ -849,7 +861,8 @@ define([
             size: size,
             sizeBytes: avail_disks[0].sizeBytes,
             availDisks: this._avail_disks,
-            index: i,
+            manager: this,
+            index: i
           });
           this._avail_disks.push(dAvail);
         }
