@@ -11,6 +11,8 @@ define([
   "dojo/mouse",
   "dojo/on",
   "dojo/query",
+  "dojo/store/Memory",
+  "dojo/store/Observable",
   "dojo/topic",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
@@ -19,6 +21,7 @@ define([
   "dijit/TooltipDialog",
   "dijit/form/Button",
   "dijit/form/CheckBox",
+  "dijit/form/ComboBox",
   "dijit/form/Form",
   "dijit/form/RadioButton",
   "dijit/form/Select",
@@ -45,6 +48,8 @@ define([
   mouse,
   on,
   query,
+  Memory,
+  Observable,
   topic,
   _Widget,
   _Templated,
@@ -53,6 +58,7 @@ define([
   TooltipDialog,
   Button,
   CheckBox,
+  ComboBox,
   Form,
   RadioButton,
   Select,
@@ -258,6 +264,8 @@ define([
       vdev: null,
       rows: 1,
       manager: null,
+      _currentAvail: null,
+      _disksSwitch: null,
       _dragTooltip: null,
       _formVdevs: {},
       validate: function(disk) {
@@ -371,9 +379,76 @@ define([
         // For some reason chidlren are not retrieved automatically
         return [this.vdevtype, this.resize, this._dragTooltip];
       },
+      _updateSwitch: function() {
+        /*
+         * From now on we will be dealing with switching the type of disks
+         * pre-selected for this group.
+         *
+         * e.g. Disks of 1TB ha been selected for this group, it will ask
+         * if you want to switch for 2TB, whenever possible
+         *
+         * FIXME: Code is a mess! :)
+         */
+        var me = this, aDisks = this.manager._avail_disks;
+        this._disksSwitch = [];
+        for(var i=0;i<aDisks.length;i++) {
+          if(this.disks.length > 0) {
+            if(aDisks[i].size != this.disks[0].size && aDisks[i].disks.length >= this.disks.length) {
+              this._disksSwitch.push(i);
+            } else if(aDisks[i].size == me.disks[0].size) {
+              this._currentAvail = i;
+            }
+          }
+        }
+
+        if(this._disksSwitch.length > 0) {
+          domStyle.set(this._vdevDiskType.domNode, "display", "");
+          this._store.query({}).forEach(function(item, indexx) {
+            me._store.remove(item.id);
+          });
+
+          this._store.add({
+            id: this._currentAvail,
+            name: aDisks[this._currentAvail].size
+          });
+          this._vdevDiskType.set('value', aDisks[this._currentAvail].size);
+
+          for(var i in this._disksSwitch) {
+            var idx = this._disksSwitch[i];
+            var obj = this._store.get(idx);
+            this._store.add({
+              id: idx,
+              name: aDisks[idx].size
+            });
+          }
+        } else {
+          domStyle.set(this._vdevDiskType.domNode, "display", "none");
+        }
+      },
+      _doSwitch: function(widget, value) {
+        if(value === false) return;
+        var idx = widget.get("value");
+        // Hack because of ComboBox (Select doesn't work, dojo bug)
+        for(var i=0;i<this.manager._avail_disks.length;i++) {
+          if(this.manager._avail_disks[i].size == idx) {
+            idx = i;
+            break;
+          }
+        }
+        var num = this.disks.length;
+        var rows = this.rows;
+        while(this.disks.length > 0) {
+          this.disks[0].remove();
+        }
+        for(var i=0;i<num/rows;i++) {
+          for(var j=0;j<rows;j++) {
+            this.manager._avail_disks[idx].disks[0].addToRow(this, j, i);
+          }
+        }
+        this.manager.updateSwitch(this);
+      },
       _addFormVdev: function(row) {
         if(!this._formVdevs[row]) {
-          console.log("add", row);
           var vtype = new _Widget();
           this.manager._form.domNode.appendChild(vtype.domNode);
           var vdisks = new _Widget();
@@ -385,8 +460,21 @@ define([
         var me = this;
         this.disks = [];
 
+        this._disksSwitch = [];
+
         this._formVdevs = {};
         this._addFormVdev(0);
+
+        this._store = new Observable(new Memory({
+          data: []
+        }));
+
+        this._vdevDiskType = null;
+        this._vdevDiskType = new ComboBox({
+          store: this._store,
+          style: {width: "70px", marginRight: "0px", display: "none"},
+          onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
+        }, this.dapVdevDiskType);
 
         this.vdevtype = new Select({
           options: [
@@ -398,7 +486,7 @@ define([
             { label: "Log (ZIL)", value: "log" },
             { label: "Cache (L2ARC)", value: "cache" }
           ],
-        }).placeAt(this.dapVdevType, 0);
+        }, this.dapVdevType);
         if(this.type) {
           this.vdevtype.set('value', this.type);
         }
@@ -467,6 +555,7 @@ define([
                   this.lastW = newW;
                   me.manager._disksCheck(me, false, floor, floorR);
                   me.manager.updateCapacity(); // FIXME: double call with _disksCheck
+                  me.manager.updateSwitch();
                 }
               }
 
@@ -519,76 +608,8 @@ define([
               me.manager._disksCheck(me);
               me.manager.updateCapacity();
               me.colorActive();
+              me.manager.updateSwitch();
 
-              /*
-               * From now on we will be dealing with switching the type of disks
-               * pre-selected for this group.
-               *
-               * e.g. Disks of 1TB ha been selected for this group, it will ask
-               * if you want to switch for 2TB, whenever possible
-               *
-               * FIXME: Code is a mess! :)
-               */
-              var canswitch = [];
-              var currentslot;
-              var aDisks = me.manager._avail_disks;
-              for(var i=0;i<aDisks.length;i++) {
-                if(me.disks.length > 0) {
-                  if(aDisks[i].size != me.disks[0].size && aDisks[i].disks.length >= me.disks.length) {
-                    canswitch.push(i);
-                  } else if(aDisks[i].size == me.disks[0].size) {
-                    currentslot = i;
-                  }
-                }
-              }
-
-              if(canswitch.length > 0 && currentslot !== undefined) {
-
-                var onChangeFnc = function(value) {
-                  if(value === false) return;
-                  var idx = this.get("value");
-                  var num = me.disks.length;
-                  var rows = me.rows;
-                  while(me.disks.length > 0) {
-                    me.disks[0].remove();
-                  }
-                  for(var i=0;i<num/rows;i++) {
-                    for(var j=0;j<rows;j++) {
-                      aDisks[idx].disks[0].addToRow(me, j, i);
-                    }
-                  }
-                };
-                var div = domConst.create("div");
-                var divh = domConst.create("div", null, div);
-                var rb = new RadioButton({
-                  name: "size",
-                  value: currentslot,
-                  checked: true,
-                }).placeAt(divh);
-                domConst.create("label", {innerHTML: aDisks[currentslot].size}, divh);
-                on(rb, "change", onChangeFnc);
-
-                for(var i in canswitch) {
-                  var divh = domConst.create("div", null, div);
-                  var rb = new RadioButton({
-                    name: "size",
-                    value: canswitch[i]
-                  }).placeAt(divh);
-                  domConst.create("label", {innerHTML: aDisks[canswitch[i]].size}, divh);
-                  on(rb, "change", onChangeFnc);
-                }
-                var td = new TooltipDialog({
-                  content: div,
-                  onMouseLeave: function() {
-                    popup.close(td);
-                    td.destroyRecursive();
-                  }
-                });
-                popup.open({
-                  popup: td,
-                  around: me.resize.domNode
-                });
-              }
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
@@ -876,6 +897,13 @@ define([
         this.dapCapacity.innerHTML = humanizeSize(capacity);
         return capacity;
       },
+      updateSwitch: function(exclude) {
+        for(var key in this._layout) {
+          var diskg = this._layout[key];
+          if(exclude == diskg) continue;
+          diskg._updateSwitch();
+        }
+      },
       _disksForVdev: function(vdev, slots, rows) {
 
         var disksrows = null;
@@ -992,7 +1020,6 @@ define([
             for(var d=perRow*j;d<perRow*(j+1);d++) {
               disks.push(vdev.disks[d].get("name"));
             }
-            console.log(vdev._formVdevs[k]);
             vdev._formVdevs[k][0].set('name', 'layout-' + k + '-vdevtype');
             vdev._formVdevs[k][0].set('value', 'layout-' + k + '-vdevtype');
             vdev._formVdevs[k][1].set('name', 'layout-' + k + '-disks');
