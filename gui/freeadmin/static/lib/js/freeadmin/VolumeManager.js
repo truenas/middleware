@@ -21,7 +21,6 @@ define([
   "dijit/TooltipDialog",
   "dijit/form/Button",
   "dijit/form/CheckBox",
-  "dijit/form/ComboBox",
   "dijit/form/FilteringSelect",
   "dijit/form/Form",
   "dijit/form/RadioButton",
@@ -59,7 +58,6 @@ define([
   TooltipDialog,
   Button,
   CheckBox,
-  ComboBox,
   FilteringSelect,
   Form,
   RadioButton,
@@ -485,7 +483,7 @@ define([
             id: this._currentAvail,
             name: sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size)
           });
-          this._vdevDiskType.set('value', sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size));
+          this._vdevDiskType.set('value', this._currentAvail);
 
           for(var i in this._disksSwitch) {
             var idx = this._disksSwitch[i];
@@ -501,14 +499,7 @@ define([
       },
       _doSwitch: function(widget, value) {
         if(value === false) return;
-        var idx = widget.get("value").split(" - ")[1];
-        // Hack because of ComboBox (Select doesn't work, dojo bug)
-        for(var i=0;i<this.manager._avail_disks.length;i++) {
-          if(this.manager._avail_disks[i].size == idx) {
-            idx = i;
-            break;
-          }
-        }
+        var idx = widget.get("value");
         var num = this.disks.length;
         var rows = this.rows;
         while(this.disks.length > 0) {
@@ -548,7 +539,7 @@ define([
         }));
 
         this._vdevDiskType = null;
-        this._vdevDiskType = new ComboBox({
+        this._vdevDiskType = new FilteringSelect({
           store: this._store,
           style: {width: "85px", marginRight: "0px", display: "none"},
           onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
@@ -558,7 +549,7 @@ define([
 
         this.vdevtype = new FilteringSelect({
           store: this._vdevstore,
-          style: {width: "70px"}
+          style: {width: "65px", marginRight: "0px"}
         }, this.dapVdevType);
         this.vdevtype.startup();
 
