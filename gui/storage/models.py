@@ -773,6 +773,10 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
+    repl_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Active"),
+    )
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
