@@ -190,7 +190,7 @@ define([
     });
 
     var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
-      templateString: '<div data-dojo-attach-point="dapRow"><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
+      templateString: '<div data-dojo-attach-point="dapRow"><div data-dojo-attach-point="dapAdd"></div><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
       sizeBytes: 0,
@@ -204,10 +204,13 @@ define([
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
         }
+        this.dapAdd = new Button({
+          label: "+"
+        }, this.dapAdd);
         this.dapIndex.innerHTML = this.index + 1;
         this.dapSize.innerHTML = this.size;
         this.update();
-        on(this.dapRow, "click", function() {
+        on(this.dapAdd, "click", function() {
           for(var i=0;i<me.manager._layout.length;i++) {
             var diskg = me.manager._layout[i];
             /*
@@ -259,6 +262,7 @@ define([
       },
       update: function() {
         if(this.disks.length > 0) {
+          this.dapAdd.set('disabled', false);
           if(this.disks.length > 1) {
             this.dapNum.innerHTML = sprintf("%d drives, ", this.disks.length);
           } else {
@@ -273,6 +277,7 @@ define([
             me.hide();
           });
         } else {
+          this.dapAdd.set('disabled', true);
           this.dapNum.innerHTML = "no more drives";
         }
       },
