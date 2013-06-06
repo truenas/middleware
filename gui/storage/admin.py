@@ -528,7 +528,7 @@ class TaskFAdmin(BaseFreeAdmin):
         })
         columns.insert(3, {
             'name': 'keepfor',
-            'label': _('Keep snapshot for'),
+            'label': _('Keep Snapshots For'),
             'sortable': False,
         })
         return columns
