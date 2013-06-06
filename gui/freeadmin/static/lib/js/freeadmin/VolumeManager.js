@@ -1206,7 +1206,7 @@ define([
               disks.push(vdev.disks[d].get("name"));
             }
             vdev._formVdevs[j][0].set('name', 'layout-' + k + '-vdevtype');
-            vdev._formVdevs[j][0].set('value', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[j][0].set('value', vdev.vdevtype.get("value"));
             vdev._formVdevs[j][1].set('name', 'layout-' + k + '-disks');
             vdev._formVdevs[j][1].set('value', disks);
           }
