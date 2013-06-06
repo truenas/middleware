@@ -227,6 +227,7 @@ define([
                 }
                 diskg.rows++;
               }
+              diskg._adjustSize();
               if(me.disks.length > 0) {
                 var diskgspare = me.manager.addVdev({
                   can_delete: true,
@@ -525,6 +526,10 @@ define([
           this._formVdevs[row] = [vtype, vdisks];
         }
       },
+      _adjustSize: function() {
+        domStyle.set(this.resize.domNode.parentNode, "width", (EMPTY_WIDTH + (this.disks.length / this.rows) * PER_NODE_WIDTH) + "px");
+        domStyle.set(this.resize.domNode.parentNode, "height", (HEADER_HEIGHT + this.rows * PER_NODE_HEIGHT) + "px");
+      },
       postCreate: function() {
         var me = this;
         this.disks = [];
@@ -798,8 +803,7 @@ define([
           this.vdevtype.set('value', this.type);
         }
 
-        domStyle.set(this.resize.domNode.parentNode, "width", (EMPTY_WIDTH + (this.disks.length / this.rows) * PER_NODE_WIDTH) + "px");
-        domStyle.set(this.resize.domNode.parentNode, "height", (HEADER_HEIGHT + this.rows * PER_NODE_HEIGHT) + "px");
+        this._adjustSize();
 
         this._dragTooltip = Tooltip({
           connectId: [this.resize.domNode],
