@@ -22,6 +22,7 @@ define([
   "dijit/form/Button",
   "dijit/form/CheckBox",
   "dijit/form/ComboBox",
+  "dijit/form/FilteringSelect",
   "dijit/form/Form",
   "dijit/form/RadioButton",
   "dijit/form/Select",
@@ -59,6 +60,7 @@ define([
   Button,
   CheckBox,
   ComboBox,
+  FilteringSelect,
   Form,
   RadioButton,
   Select,
@@ -552,17 +554,11 @@ define([
           onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
         }, this.dapVdevDiskType);
 
-        this.vdevtype = new Select({
-          options: [
-            { label: "RaidZ", value: "raidz" },
-            { label: "RaidZ2", value: "raidz2" },
-            { label: "RaidZ3", value: "raidz3" },
-            { label: "Mirror", value: "mirror" },
-            { label: "Stripe", value: "stripe" },
-            { label: "Log (ZIL)", value: "log" },
-            { label: "Cache (L2ARC)", value: "cache" },
-            { label: "Spare", value: "spare" }
-          ],
+        this._vdevstore = new Observable(new Memory());
+
+        this.vdevtype = new FilteringSelect({
+          store: this._vdevstore,
+          style: {width: "70px"}
         }, this.dapVdevType);
         this.vdevtype.startup();
 
@@ -1138,7 +1134,34 @@ define([
           return (Math.log(num - 3) / Math.LN2) % 1 == 0;
         }
       },
+      _vdevTypes: [
+        [3, "RaidZ", "raidz"],
+        [4, "RaidZ2", "raidz2"],
+        [5, "RaidZ3", "raidz3"],
+        [2, "Mirror", "mirror"],
+        [1, "Stripe", "stripe"],
+        [1, "Log (ZIL)", "log"],
+        [1, "Cache (L2ARC)", "cache"],
+        [1, "Spare", "spare"],
+      ],
       _disksCheck: function(vdev, manual, cols, rows) {
+
+        vdev._vdevstore.query({}).forEach(function(item, index) {
+          vdev._vdevstore.remove(item.id);
+        });
+
+        for(var i=0;i<this._vdevTypes.length;i++) {
+          if(vdev.getCurrentCols() >= this._vdevTypes[i][0]) {
+            vdev._vdevstore.add({
+              id: this._vdevTypes[i][2],
+              name: this._vdevTypes[i][1]
+            });
+
+          }
+        }
+        if(vdev.disks.length == 0) {
+          vdev.vdevtype.set('value', '');
+        }
 
         var numdisks;
         vdev._isOptimal = null;
