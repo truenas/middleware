@@ -60,63 +60,64 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 CDIR="${JDIR}/clones"
 
 warden_printf() {
-  if [ -n "${WARDEN_LOGFILE}" ] ; then
-    printf $* >> ${WARDEN_LOGFILE}
-  fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden $*
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    printf $* >> ${WARDEN_LOGFILE}
   fi
   printf $*
 };
 
 warden_cat() {
-  if [ -n "${WARDEN_LOGFILE}" ] ; then
-    cat "$*" >> ${WARDEN_LOGFILE}
-  fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     cat "$*" | logger -t warden
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    cat "$*" >> ${WARDEN_LOGFILE}
   fi
   cat "$*"
 };
 
 warden_pipe() {
-  while read val ; do
+  local val
+  while read val; do
+    if [ -n "${WARDEN_USESYSLOG}" ] ; then
+      logger -t warden "${val}"
+    fi
     if [ -n "${WARDEN_LOGFILE}" ] ; then
       echo ${val} >> ${WARDEN_LOGFILE}
-    fi
-    if [ -n "${WARDEN_USESYSLOG}" ] ; then
-      logger -t warden ${val}
     fi
     echo ${val}
   done
 };
 
 warden_print() {
-  if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo $* >> ${WARDEN_LOGFILE}
-  fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden $*
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo $* >> ${WARDEN_LOGFILE}
   fi
   echo "$*"
 };
 
 warden_error() {
-  if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo "ERROR: $*" >> ${WARDEN_LOGFILE}
-  fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden "ERROR: $*"
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo "ERROR: $*" >> ${WARDEN_LOGFILE}
   fi
   echo >&2 "ERROR: $*" 
 };
 
 warden_warn() {
-  if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo "WARN: $*" >> ${WARDEN_LOGFILE}
-  fi
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden "WARN: $*"
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo "WARN: $*" >> ${WARDEN_LOGFILE}
   fi
   echo >&2 "ERROR: $*" 
 };
@@ -148,23 +149,23 @@ downloadchroot() {
   warden_print "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
 
   if [ ! -e "$FBSD_TARBALL" ] ; then
-     trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9
+     trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9 15
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL}"
        warden_exit "Error while downloading the chroot."
      fi
-     trap 2 3 6 9
+     trap 2 3 6 9 15
   fi
 
   if [ ! -e "$FBSD_TARBALL_CKSUM" ] ; then
-     trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" 2 3 6 9
+     trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" 2 3 6 9 15
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL_CKSUM}"
        warden_exit "Error while downloading the chroot checksum."
      fi
-     trap 2 3 6 9
+     trap 2 3 6 9 15
   fi
 
   [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
@@ -173,7 +174,7 @@ downloadchroot() {
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
-    trap "rmchroot ${CHROOT}" 2 3 6 9
+    trap "rmchroot ${CHROOT}" 2 3 6 9 15
 
     local zfsp=`getZFSRelativePath "${CHROOT}"`
 
@@ -199,7 +200,7 @@ downloadchroot() {
     if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base snapshot"; fi
     rm ${FBSD_TARBALL}
 
-    trap 2 3 6 9
+    trap 2 3 6 9 15
 
   else
     # Save the chroot tarball
@@ -219,7 +220,7 @@ rmchroot()
     tank=`getZFSTank "${JDIR}"`
 
     warden_print "Destroying dataset ${tank}${zfsp}"
-    zfs destroy -R ${tank}${zfsp}
+    zfs destroy -fR ${tank}${zfsp}
     if [ $? -ne 0 ] ; then warden_error "Failed to destroy ZFS base dataset"; fi
 
     warden_print "Removing ${CHROOT}"
@@ -791,18 +792,26 @@ make_bootstrap_pkgng_file_standard()
 cat<<__EOF__>"${outfile}"
 #!/bin/sh
 
+ret=0
+
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
-trap "umount devfs; exit 3;" 2 3 6 9 
+trap "umount devfs; touch /FAIL; exit 3;" 2 3 6 9 15
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
+
 pkg install -y pcbsd-utils
-exit $?
+if [ "$?" != "0" ]
+then
+  touch /FAIL
+  ret=1
+fi
+exit ${ret}
 __EOF__
 }
 
@@ -823,22 +832,26 @@ make_bootstrap_pkgng_file_pluginjail()
 cat<<__EOF__>"${outfile}"
 #!/bin/sh
 
+ret=0
+
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
 mount -t devfs devfs /dev
 
-trap "umount devfs; exit 3;" 2 3 6 9 
+trap "umount devfs; touch /FAIL; exit 3;" 2 3 6 9 15
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
+
 pkg install -y pcbsd-utils
 if [ "$?" != "0" ]
 then
   umount devfs
+  touch /FAIL
   exit 1
 fi
 
@@ -853,6 +866,7 @@ do
   if [ "$?" != "0" ]
   then
       umount devfs
+      touch /FAIL
       exit 2
   fi
 
@@ -860,7 +874,12 @@ do
 done
 
 umount devfs
-exit $?
+if [ "$?" != "0" ]
+then
+  touch /FAIL
+  ret=1
+fi
+exit ${ret}
 ' >> "${outfile}"
 }
 
@@ -896,15 +915,17 @@ bootstrap_pkgng()
   get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
   if [ $? -eq 0 ] ; then
     warden_print chroot ${jaildir} /bootstrap-pkgng
+
     chroot ${jaildir} /bootstrap-pkgng | warden_pipe
-    if [ $? -eq 0 ] ; then
-      rm -f "${jaildir}/bootstrap-pkgng"
-      rm -f "${jaildir}/pluginjail-packages"
-      warden_print chroot ${jaildir} pc-extractoverlay server --sysinit
-      chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
-      return 0
+    if [ ! -e "${jaildir}/FAIL" ] ; then
+       rm -f "${jaildir}/bootstrap-pkgng"
+       rm -f "${jaildir}/pluginjail-packages"
+       warden_print chroot ${jaildir} pc-extractoverlay server --sysinit
+       chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
+       return 0
     fi
   fi
+  rm -f "${jaildir}/FAIL"
 
   warden_error "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
   rm -f "${jaildir}/bootstrap-pkgng"

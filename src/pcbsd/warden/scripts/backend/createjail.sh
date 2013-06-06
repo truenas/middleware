@@ -174,12 +174,12 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
     clean_exit()
     {
        cd /
-       zfs destroy -R "${tank}${clonep}"
+       zfs destroy -fR "${tank}${clonep}"
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "Failed to setup chroot"
     }
 
-    trap clean_exit 2 3 6 9
+    trap clean_exit 2 3 6 9 15
 
     warden_print zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
 
@@ -194,9 +194,9 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
 
     bootstrap_pkgng "${pjdir}" "pluginjail"
     if [ "$?" != "0" ] ; then
-       warden_print zfs destroy -R "${tank}${clonep}"
+       warden_print zfs destroy -fR "${tank}${clonep}"
 
-       zfs destroy -R "${tank}${clonep}"
+       zfs destroy -fR "${tank}${clonep}"
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "bootstrap_pkng for ${pjdir} failed"
     fi
@@ -205,14 +205,14 @@ if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
 
     zfs snapshot ${tank}${clonep}@clean
     if [ $? -ne 0 ] ; then
-       warden_print zfs destroy -R "${tank}${clonep}"
+       warden_print zfs destroy -fR "${tank}${clonep}"
 
-       zfs destroy -R "${tank}${clonep}"
+       zfs destroy -fR "${tank}${clonep}"
        rm -rf "${pjdir}" >/dev/null 2>&1
        warden_exit "Failed creating clean ZFS pluginjail snapshot"
     fi
 
-    trap 2 3 6 9
+    trap 2 3 6 9 15
 
   # We're on UFS :-(
   else

@@ -210,6 +210,10 @@ class JailCreateForm(ModelForm):
         except:
             pass
 
+        logfile = "%s/warden.log" % jc.jc_path
+        if os.path.exists(logfile):
+            os.unlink(logfile)
+
         #
         # Reserve the first 25 addresses
         #
@@ -303,13 +307,6 @@ class JailCreateForm(ModelForm):
 
         w = Warden() 
 
-        logfile = "%s/warden.log" % jc.jc_path
-        if os.access(logfile, os.F_OK):
-            os.unlink(logfile) 
-
-        w.logfile = logfile
-        w.syslog = True
-
 #        if self.cleaned_data['jail_32bit']:
 #            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
         if self.cleaned_data['jail_source']:
@@ -343,11 +340,33 @@ class JailCreateForm(ModelForm):
 
         jail_create_args['flags'] = jail_flags
 
+        logfile = "%s/warden.log" % jc.jc_path
+
+        w.logfile = logfile
+        w.syslog = True
+
+        createfile = "/var/tmp/.jailcreate"
         try:
+            cf = open(createfile, "a+")
+            cf.close()
+            if os.path.exists(logfile):
+                os.unlink(logfile) 
+            lf = open(logfile, "a+") 
+            lf.close()
             w.create(**jail_create_args)
+
         except Exception as e:
             self.errors['__all__'] = self.error_class([_(e.message)])
+            if os.path.exists(createfile):
+                os.unlink(createfile)
+            if os.path.exists(logfile):
+                os.unlink(logfile)
             return
+
+        if os.path.exists(createfile):
+            os.unlink(createfile)
+        if os.path.exists(logfile):
+            os.unlink(logfile)
 
         jail_set_args = { }
         jail_set_args['jail'] = jail_host
