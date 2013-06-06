@@ -835,6 +835,7 @@ define([
         }
         var iof = this.manager._layout.indexOf(this);
         this.manager._layout.splice(iof, 1);
+        this.manager.updateSwitch();
         this.destroyRecursive();
       }
     });
