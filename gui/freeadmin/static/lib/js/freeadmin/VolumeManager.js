@@ -767,7 +767,7 @@ define([
           this.disks[0].remove();
         }
         var iof = this.manager._layout.indexOf(this);
-        delete this.manager._layout[iof];
+        this.manager._layout.splice(iof, 1);
         this.destroyRecursive();
       }
     });
