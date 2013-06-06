@@ -221,11 +221,13 @@ define([
              * rest drives as spare row.
              */
             if(diskg.disks.length > 0 && diskg.disks[0].sizeBytes == me.sizeBytes) {
-              if(me.disks.length >= diskg.getDisksPerRow()) {
-                for(var i=0,len=diskg.getDisksPerRow(),row=diskg.rows;i<len;i++) {
-                  me.disks[0].addToRow(diskg, row, i);
+              var perRow = diskg.getDisksPerRow();
+              var newRows = Math.floor(me.disks.length / perRow);
+              if(newRows > 0) {
+                for(var i=0,len=newRows*perRow,row=diskg.rows;i<len;i++) {
+                  me.disks[0].addToRow(diskg, Math.floor(diskg.disks.length / perRow), diskg.disks.length % perRow);
                 }
-                diskg.rows++;
+                diskg.rows += newRows;
               }
               diskg._adjustSize();
               if(me.disks.length > 0) {
