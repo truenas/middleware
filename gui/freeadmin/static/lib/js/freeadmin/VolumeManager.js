@@ -208,6 +208,38 @@ define([
         this.dapSize.innerHTML = this.size;
         this.update();
         on(this.dapRow, "click", function() {
+          for(var i=0;i<me.manager._layout.length;i++) {
+            var diskg = me.manager._layout[i];
+            /*
+             * If we have a “peer group” (drives of the same type) already
+             * exists, and the largest row have more drives than X, add
+             * all disks in one row as spare; otherwise, add as many as
+             * possible disks to create rows for that row’s type, and use
+             * rest drives as spare row.
+             */
+            if(diskg.disks.length > 0 && diskg.disks[0].sizeBytes == me.sizeBytes) {
+              if(me.disks.length >= diskg.getDisksPerRow()) {
+                for(var i=0,len=diskg.getDisksPerRow(),row=diskg.rows;i<len;i++) {
+                  me.disks[0].addToRow(diskg, row, i);
+                }
+                diskg.rows++;
+              }
+              if(me.disks.length > 0) {
+                var diskgspare = me.manager.addVdev({
+                  can_delete: true,
+                  type: "spare",
+                  initialDisks: me.disks
+                });
+                me.manager._disksCheck(diskgspare, true);
+                diskgspare.colorActive();
+              }
+              me.manager._disksCheck(diskg);
+              me.manager.updateCapacity();
+              diskg.colorActive();
+              me.manager.updateSwitch();
+              return;
+            }
+          }
           var can_delete = true;
           if(me.manager._layout[0].disks.length == 0) {
             me.manager._layout[0].remove();
@@ -299,6 +331,9 @@ define([
         if(valid === false) {
           throw new Object({message: "Disk size mismatch"});
         }
+      },
+      getDisksPerRow: function() {
+        return this.disks.length / this.rows;
       },
       getCurrentCols: function() {
         /*
@@ -513,12 +548,10 @@ define([
             { label: "Mirror", value: "mirror" },
             { label: "Stripe", value: "stripe" },
             { label: "Log (ZIL)", value: "log" },
-            { label: "Cache (L2ARC)", value: "cache" }
+            { label: "Cache (L2ARC)", value: "cache" },
+            { label: "Spare", value: "spare" }
           ],
         }, this.dapVdevType);
-        if(this.type) {
-          this.vdevtype.set('value', this.type);
-        }
         this.vdevtype.startup();
 
         this.resize = new ResizeHandle({
@@ -650,7 +683,7 @@ define([
         }, this.dapDelete);
         if(this.can_delete === true) {
 
-          on(this.dapDelete, "click", this.remove);
+          on(this.dapDelete, "click", lang.hitch(this, this.remove));
 
         } else {
           this.dapDelete.set('disabled', true);
@@ -693,6 +726,10 @@ define([
           this.manager.updateCapacity();
           this.colorActive();
           this.manager.updateSwitch();
+        }
+
+        if(this.type) {
+          this.vdevtype.set('value', this.type);
         }
 
         domStyle.set(this.resize.domNode.parentNode, "width", (EMPTY_WIDTH + (this.disks.length / this.rows) * PER_NODE_WIDTH) + "px");
