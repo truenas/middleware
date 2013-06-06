@@ -726,6 +726,38 @@ define([
             for(var i=0,len=this.initialDisks.length;i<len;i++) {
               this.initialDisks[0].addToRow(this, 0, i);
             }
+          } else if(this.initialDisks.length < 99) {
+            // FIXME: for >= 12 < 18
+            var chosen;
+            var div9 = Math.floor(this.initialDisks.length / 9);
+            var div10 = Math.floor(this.initialDisks.length / 10);
+            var mod9 = this.initialDisks.length % 9;
+            var mod10 = this.initialDisks.length % 10;
+
+            if(mod9 >= 0.75 * div9 && mod10 >= 0.75 * div10) {
+              // raidz
+              chosen = 9;
+              this.rows = div9;
+            } else {
+              // raidz2
+              chosen = 10;
+              this.rows = div10;
+            }
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
+            }
+
+            // Remaining disks are spare
+            if(this.disks.length > 0) {
+              var diskgspare = this.manager.addVdev({
+                can_delete: true,
+                type: "spare",
+                initialDisks: this.disks
+              });
+              this.manager._disksCheck(diskgspare, true);
+              diskgspare.colorActive();
+            }
+
           }
           this.manager._disksCheck(me);
           this.manager.updateCapacity();
