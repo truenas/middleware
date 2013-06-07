@@ -876,40 +876,40 @@ define([
               diskgspare.colorActive();
             }
 
+          } else {
+            var chosen;
+            var num = Math.ceil((this.initialDisks.length / 11) * 0.75);
+            var mod9 = num % 9;
+            var mod10 = num % 10;
+            var mod11 = num % 11;
+            var min = Math.min(mod9, mod10, mod11);
+            if(min == mod11) {
+              chosen = 11;
+            } else if(min == mod10) {
+              chosen = 10;
+            } else if(min == mod9) {
+              chosen = 9;
+            }
+
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
+            }
+
+            // Remaining disks are spare
+            if(this.initialDisks.length > 0) {
+              var diskgspare = this.manager.addVdev({
+                can_delete: true,
+                type: "spare",
+                initialDisks: this.initialDisks
+              });
+              diskgspare._disksCheck(true);
+              diskgspare.colorActive();
+            }
           }
           me._disksCheck();
           this.manager.updateCapacity();
           this.colorActive();
           this.manager.updateSwitch();
-        } else {
-          var chosen;
-          var num = Math.ceil((this.initialDisks.length / 11) * 0.75);
-          var mod9 = num % 9;
-          var mod10 = num % 10;
-          var mod11 = num % 11;
-          var min = Math.min(mod9, mod10, mod11);
-          if(min == mod11) {
-            chosen = 11;
-          } else if(min == mod10) {
-            chosen = 10;
-          } else if(min == mod9) {
-            chosen = 9;
-          }
-
-          for(var i=0,len=this.initialDisks.length;i<len;i++) {
-            this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
-          }
-
-          // Remaining disks are spare
-          if(this.initialDisks.length > 0) {
-            var diskgspare = this.manager.addVdev({
-              can_delete: true,
-              type: "spare",
-              initialDisks: this.initialDisks
-            });
-            diskgspare._disksCheck(true);
-            diskgspare.colorActive();
-          }
         }
 
         if(this.type) {
