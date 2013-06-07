@@ -773,6 +773,10 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
+    repl_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Active"),
+    )
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
@@ -806,8 +810,8 @@ class Replication(Model):
     repl_resetonce = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Initialize remote side for once. (May cause data"
-            " loss on remote side!)"),
+            "Initialize remote side (once only)."
+            " Note: May cause data loss on remote side!"),
     )
     repl_limit = models.IntegerField(
         default=0,
@@ -848,6 +852,10 @@ class Replication(Model):
 
 
 class Task(Model):
+    task_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Active"),
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
