@@ -804,14 +804,14 @@ class Replication(Model):
     repl_userepl = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Recursively replicate "
+            "Recursively replicate and remove stale snapshot"
             "on remote side"),
     )
     repl_resetonce = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Initialize remote side "
-            " loss on remote side!)"),
+            "Initialize remote side (once only)."
+            " Note: May cause loss on remote side!"),
     )
     repl_limit = models.IntegerField(
         default=0,
