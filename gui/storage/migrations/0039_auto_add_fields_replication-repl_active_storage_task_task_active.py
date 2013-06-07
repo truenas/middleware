@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding field 'Replication.repl_active'
@@ -19,11 +19,11 @@ class Migration(DataMigration):
 
 
     def backwards(self, orm):
-        # Deleting field 'ReplRemote.ssh_remote_dedicateduser_enabled'
-        db.delete_column('storage_replremote', 'ssh_remote_dedicateduser_enabled')
+        # Deleting field 'replication.repl_active'
+        db.delete_column('storage_replication', 'repl_active')
 
-        # Deleting field 'ReplRemote.ssh_remote_dedicateduser'
-        db.delete_column('storage_replremote', 'ssh_remote_dedicateduser')
+        # Deleting field 'Task.task_active'
+        db.delete_column('storage_task', 'task_active')
 
 
     models = {
@@ -121,4 +121,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['storage']
-    symmetrical = True
