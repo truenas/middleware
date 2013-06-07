@@ -651,6 +651,20 @@ require([
 
     }
 
+    scrollToFirst = function() {
+        dojox.fx.smoothScroll({
+            node: dojo.query('#progress:first-child')[0],
+            win: dojo.byId('progress')
+        }).play();
+    };
+
+    scrollToLast = function() {
+        dojox.fx.smoothScroll({
+            node: dojo.query('#progress:last-child')[0],
+            win: dojo.byId('progress')
+        }).play();
+    };
+
     checkProgress = function(pbar, url, uuid, iter) {
         if(!iter) iter = 0;
         xhr.get(url, {
@@ -811,11 +825,13 @@ require([
 
         } else if (attrs.progressfunc != undefined) {
             pbar = new dijit.form.SimpleTextarea({
+                id: "progress",
                 title: "progress",
                 rows: "5",
                 cols: "80",
                 style: "width:auto;",
-                readOnly: true
+                readOnly: true,
+                onChange: scrollToLast
                 }).placeAt(attrs.form.domNode);
 
             rnode._size();

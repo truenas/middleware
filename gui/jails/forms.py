@@ -129,11 +129,11 @@ class JailCreateForm(ModelForm):
         initial=True
     )
 
-#    jail_32bit = forms.BooleanField(
-#        label=_("32 bit"),
-#        required=False,
-#        initial=False
-#    )
+    jail_32bit = forms.BooleanField(
+        label=_("32 bit"),
+        required=False,
+        initial=False
+    )
 
     jail_source = forms.BooleanField(
         label=_("source"),
@@ -173,6 +173,7 @@ class JailCreateForm(ModelForm):
     advanced_fields = [
         'jail_type',
         'jail_autostart',
+        'jail_32bit',
         'jail_source',
         'jail_ports',
         'jail_vanilla',
@@ -204,7 +205,7 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-#            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         )
 
         high_ipv4 = None
@@ -318,8 +319,8 @@ class JailCreateForm(ModelForm):
 
         w = Warden() 
 
-#        if self.cleaned_data['jail_32bit']:
-#            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
+        if self.cleaned_data['jail_32bit']:
+            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
         if self.cleaned_data['jail_source']:
             jail_flags |= WARDEN_CREATE_FLAGS_SRC
         if self.cleaned_data['jail_ports']:
@@ -406,7 +407,12 @@ class JailCreateForm(ModelForm):
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
-            jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+            if self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL and \
+                not self.cleaned_data['jail_32bit']:
+                jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+            else:
+                jail_flags |= WARDEN_SET_FLAGS_VNET_DISABLE
+
             jail_set_args['flags'] = jail_flags
             try:
                 w.set(**jail_set_args)
@@ -578,11 +584,14 @@ class JailsEditForm(ModelForm):
                     args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_vnet':
-                    if self.cleaned_data.get(cf): 
-                        flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+                    if self.cleaned_data.get(cf) and \
+                        self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL and \
+                            not self.cleaned_data['jail_32bit']:
+                            flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+                            args['vnet-enable'] = self.cleaned_data.get(cf)
                     else: 
                         flags |= WARDEN_SET_FLAGS_VNET_DISABLE
-                    args['vnet-enable'] = self.cleaned_data.get(cf)
+                        args['vnet-disable'] = self.cleaned_data.get(cf)
 
                 args['jail'] = jail_host
                 args['flags'] = flags

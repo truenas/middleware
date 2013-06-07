@@ -168,13 +168,56 @@ class ViewJailsConfiguration(TreeNode):
     order = 2
 
 
+class ViewLinuxJails(ViewJailsBase):
+
+    gname = 'Linux Jails'
+    name = _(u'Linux Jails')
+    icon = u'LinuxJailIcon'
+    skip = False
+    order = 3
+
+    def __init__(self, *args, **kwargs):
+        super(ViewLinuxJails, self).__init__(*args, **kwargs)
+
+        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_LINUXJAIL)
+        for jail in jails:
+            jail_node = self.new_jail_node(jail, u'TuxIcon')
+            self.append_child(jail_node)
+
+            jail_node_view = self.new_jail_node_view(jail)
+            jail_node_view.order = 1
+            jail_node.append_child(jail_node_view)
+
+            storage_node = self.new_storage_node(jail)
+            storage_node.order = 2
+            jail_node.append_child(storage_node)
+
+            storage_order = 1
+            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
+            for nmp in nmps:
+
+                storage_node_view = self.new_storage_node_view(nmp)
+                storage_node_view.order = storage_order
+                storage_node.append_child(storage_node_view)
+                storage_order += 1
+
+            storage_node_mkdir = self.new_storage_node_mkdir(jail)
+            storage_node_mkdir.order = storage_order
+            storage_node.append_child(storage_node_mkdir)
+            storage_order += 1
+
+            storage_node_add = self.new_storage_node_add(jail)
+            storage_node_add.order = storage_order
+            storage_node.append_child(storage_node_add)
+
+
 class ViewPluginJails(ViewJailsBase):
 
     gname = 'Plugin Jails'
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
     skip = False
-    order = 3
+    order = 4
 
     def __init__(self, *args, **kwargs):
         super(ViewPluginJails, self).__init__(*args, **kwargs)
@@ -296,7 +339,7 @@ class ViewPortJails(ViewJailsBase):
     name = _(u'Port Jails')
     icon = u'PortJailIcon'
     skip = False
-    order = 4
+    order = 5
 
     def __init__(self, *args, **kwargs):
         super(ViewPortJails, self).__init__(*args, **kwargs)
@@ -339,7 +382,7 @@ class ViewStandardJails(ViewJailsBase):
     name = _(u'Standard Jails')
     icon = u'StandardJailIcon'
     skip = False
-    order = 5
+    order = 6
 
     def __init__(self, *args, **kwargs):
         super(ViewStandardJails, self).__init__(*args, **kwargs)
@@ -374,46 +417,3 @@ class ViewStandardJails(ViewJailsBase):
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
             storage_node.append_child(storage_node_add)
-
-
-#class ViewLinuxJails(ViewJailsBase):
-#
-#    gname = 'Linux Jails'
-#    name = _(u'Linux Jails')
-#    icon = u'LinuxJailIcon'
-#    skip = False
-#    order = 5
-#
-#    def __init__(self, *args, **kwargs):
-#        super(ViewLinuxJails, self).__init__(*args, **kwargs)
-#
-#        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_LINUXJAIL)
-#        for jail in jails:
-#            jail_node = self.new_jail_node(jail, u'TuxIcon')
-#            self.append_child(jail_node)
-#
-#            jail_node_view = self.new_jail_node_view(jail)
-#            jail_node_view.order = 1
-#            jail_node.append_child(jail_node_view)
-#
-#            storage_node = self.new_storage_node(jail)
-#            storage_node.order = 2
-#            jail_node.append_child(storage_node)
-#
-#            storage_order = 1
-#            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
-#            for nmp in nmps:
-#
-#                storage_node_view = self.new_storage_node_view(nmp)
-#                storage_node_view.order = storage_order
-#                storage_node.append_child(storage_node_view)
-#                storage_order += 1
-#
-#            storage_node_mkdir = self.new_storage_node_mkdir(jail)
-#            storage_node_mkdir.order = storage_order
-#            storage_node.append_child(storage_node_mkdir)
-#            storage_order += 1
-#
-#            storage_node_add = self.new_storage_node_add(jail)
-#            storage_node_add.order = storage_order
-#            storage_node.append_child(storage_node_add)

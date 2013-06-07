@@ -171,23 +171,23 @@ downloadchroot() {
   warden_print "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
 
   if [ ! -e "$FBSD_TARBALL" ] ; then
-     trap "return 1; rm -f ${FBSD_TARBALL}" 2 3 6 9 15
+     trap "return 1; rm -f ${FBSD_TARBALL}" INT QUIT ABRT KILL TERM EXIT
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL}" "$FBSD_TARBALL" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL}"
        warden_exit "Error while downloading the chroot."
      fi
-     trap 2 3 6 9 15
+     trap INT QUIT ABRT KILL TERM EXIT
   fi
 
   if [ ! -e "$FBSD_TARBALL_CKSUM" ] ; then
-     trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" 2 3 6 9 15
+     trap "return 1; rm -f ${FBSD_TARBALL_CKSUM}" INT QUIT ABRT KILL TERM EXIT
      get_file "${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL_CKSUM}" "$FBSD_TARBALL_CKSUM" 3
      if [ $? -ne 0 ] ; then
        rm -f "${FBSD_TARBALL_CKSUM}"
        warden_exit "Error while downloading the chroot checksum."
      fi
-     trap 2 3 6 9 15
+     trap INT QUIT ABRT KILL TERM EXIT
   fi
 
   [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
@@ -196,7 +196,7 @@ downloadchroot() {
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
-    trap "rmchroot ${CHROOT}" 2 3 6 9 15
+    trap "rmchroot ${CHROOT}" INT QUIT ABRT KILL TERM EXIT
 
     local zfsp=`getZFSRelativePath "${CHROOT}"`
 
@@ -222,7 +222,7 @@ downloadchroot() {
     if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base snapshot"; fi
     rm ${FBSD_TARBALL}
 
-    trap 2 3 6 9 15
+    trap INT QUIT ABRT KILL TERM EXIT
 
   else
     # Save the chroot tarball
@@ -820,13 +820,16 @@ tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
-trap "umount devfs; touch /FAIL; exit 3;" 2 3 6 9 15
+trap "umount devfs; touch /FAIL; exit 3;" INT QUIT ABRT KILL TERM EXIT
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 
+__EOF__
+
+echo '
 pkg install -y pcbsd-utils
 if [ "$?" != "0" ]
 then
@@ -834,7 +837,7 @@ then
   ret=1
 fi
 exit ${ret}
-__EOF__
+' >> "${outfile}"
 }
 
 make_bootstrap_pkgng_file_pluginjail()
@@ -862,13 +865,16 @@ rm pkg.txz
 
 mount -t devfs devfs /dev
 
-trap "umount devfs; touch /FAIL; exit 3;" 2 3 6 9 15
+trap "umount devfs; touch /FAIL; exit 3;" INT QUIT ABRT KILL TERM EXIT
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 
+__EOF__
+
+echo '
 pkg install -y pcbsd-utils
 if [ "$?" != "0" ]
 then
@@ -877,9 +883,6 @@ then
   exit 1
 fi
 
-__EOF__
-
-echo '
 i=0
 count=`wc -l /pluginjail-packages| awk "{ print $1 }"`
 for p in `cat /pluginjail-packages`
