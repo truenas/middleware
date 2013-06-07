@@ -313,7 +313,6 @@ define([
     var Vdev = declare("freeadmin.Vdev", [ _Widget, _Templated ], {
       templateString: diskGroupTemplate,
       widgetsInTemplate: true,
-      numDisks: 0,
       type: "",
       disks: [],
       initialDisks: [],
@@ -328,6 +327,9 @@ define([
       _formVdevs: null,
       _isOptimal: null,
       validate: function(disk) {
+        /*
+         * Make sure all the disks in the disk group have the same size
+         */
         var valid = true;
         for(var key in this.disks) {
           var each = this.disks[key];
@@ -385,6 +387,13 @@ define([
         }
       },
       getCapacity: function() {
+        /*
+         * Compute the estimated capacity
+         * This takes into account the type of the disk group and
+         * the size set for the swap
+         *
+         * Returns: capacity in bytes
+         */
         var dataDisks, disks, rows, bytes;
         disks = this.getCurrentCols();
         if(disks == 0) return 0;
@@ -415,6 +424,13 @@ define([
         return bytes * dataDisks * rows;
       },
       _optimalCheck: {
+        /*
+         * Lookup table for disk group type as key
+         *
+         * Function receives the number of disks per row (vdev)
+         * and returns a boolean based on whether it is an
+         * optimal config (power of 2 data disks + parity) or not.
+         */
         'mirror': function(num) {
           return num == 2;
         },
@@ -432,6 +448,7 @@ define([
         }
       },
       _vdevTypes: [
+        // Minimum number of disks to show | Label name | Value
         [3, "RaidZ", "raidz"],
         [4, "RaidZ2", "raidz2"],
         [5, "RaidZ3", "raidz3"],
@@ -442,13 +459,19 @@ define([
         [1, "Spare", "spare"],
       ],
       _disksCheck: function(manual, cols, rows) {
-        var me = this;
+        var me = this, numDisksRow, diskSize;
+
+        numDisksRow = this.getCurrentCols();
+
+        // Empty the whole disk group type options
         this._vdevstore.query({}).forEach(function(item, index) {
           me._vdevstore.remove(item.id);
         });
 
+        // Fill the disk group type with valid choices
+        // based on number of disks per row
         for(var i=0;i<this._vdevTypes.length;i++) {
-          if(this.getCurrentCols() >= this._vdevTypes[i][0]) {
+          if(numDisksRow >= this._vdevTypes[i][0]) {
             this._vdevstore.add({
               id: this._vdevTypes[i][2],
               name: this._vdevTypes[i][1]
@@ -460,17 +483,10 @@ define([
           this.vdevtype.set('value', '');
         }
 
-        var numdisks;
         this._isOptimal = null;
-        if(cols !== undefined) {
-          numdisks = cols;
-        } else {
-          numdisks = this.disks.length / this.rows;
-        }
-
         if(manual !== true) {
           for(var key in this._optimalCheck) {
-            if(this._optimalCheck[key](numdisks)) {
+            if(this._optimalCheck[key](numDisksRow)) {
               // .set will trigger onChange, ignore it once
               this.vdevtype._stopEvent = true;
               this.vdevtype.set('value', key);
@@ -488,16 +504,10 @@ define([
           var vdevtype = this.vdevtype.get("value");
           var optimalf = this._optimalCheck[vdevtype];
           if(optimalf !== undefined) {
-            this._isOptimal = optimalf(numdisks);
+            this._isOptimal = optimalf(numDisksRow);
           }
         }
 
-        if(rows !== undefined && rows > 1) {
-          rows = rows +'x ';
-        } else {
-          rows = '';
-        }
-        var diskSize;
         if(this.disks.length > 0) {
           diskSize = this.disks[0].size;
         } else {
@@ -514,6 +524,13 @@ define([
         }
       },
       colorActive: function() {
+        /*
+         * Cosmetical function
+         *
+         * This is responsible to color the table based on selected
+         * disks and whether the selected disks combinated with the
+         * disk group type is a optimal config or not
+         */
 
         var cols = this.disks.length / this.rows;
         var cssclass;
@@ -574,16 +591,20 @@ define([
 
         if(this._disksSwitch.length > 0) {
           domStyle.set(this._vdevDiskType.domNode, "display", "");
+
+          // Remove all options from disk size choice
           this._store.query({}).forEach(function(item, indexx) {
             me._store.remove(item.id);
           });
 
+          // Add current selected disk size
           this._store.add({
             id: this._currentAvail,
             name: sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size)
           });
           this._vdevDiskType.set('value', this._currentAvail);
 
+          // Add all other available disk sizes
           for(var i in this._disksSwitch) {
             var idx = this._disksSwitch[i];
             var obj = this._store.get(idx);
@@ -593,10 +614,15 @@ define([
             });
           }
         } else {
+          // There are no other disk sizes available, hide it
           domStyle.set(this._vdevDiskType.domNode, "display", "none");
         }
       },
       _doSwitch: function(widget, value) {
+        /*
+         * Actually switch the current disk group with
+         * another disk sizes available
+         */
         if(value === false) return;
         var idx = widget.get("value");
         var num = this.disks.length;
@@ -626,18 +652,15 @@ define([
       },
       postCreate: function() {
         var me = this;
+
         this.disks = [];
-
         this._disksSwitch = [];
-
         this._formVdevs = {};
+
         this._addFormVdev(0);
 
-        this._store = new Observable(new Memory({
-          data: []
-        }));
+        this._store = new Observable(new Memory());
 
-        this._vdevDiskType = null;
         this._vdevDiskType = new FilteringSelect({
           store: this._store,
           style: {width: "85px", marginRight: "0px", display: "none"},
@@ -650,7 +673,6 @@ define([
           store: this._vdevstore,
           style: {width: "65px", marginRight: "0px"}
         }, this.dapVdevType);
-        this.vdevtype.startup();
 
         this.resize = new ResizeHandle({
             targetContainer: this.dapResMain,
@@ -667,6 +689,9 @@ define([
             _resizingCols: null,
             _checkConstraints: function(newW, newH){
               var availDisks = me.disks.length + me.manager.getAvailDisksNum();
+
+              // Subtract the header and the first null column of the table
+              // Number of disks is calculated based on size of the resizer
               newH -= HEADER_HEIGHT;
               newW -= EMPTY_WIDTH;
 
@@ -724,7 +749,7 @@ define([
             },
             getSlots: function() {
               var width = domStyle.get(this.domNode.parentNode, "width");
-              return Math.floor(width / PER_NODE_WIDTH);
+              return Math.floor((width - EMPTY_WIDTH) / PER_NODE_WIDTH);
             },
             onResize: function(e) {
               me.rows = this._resizingRows;
@@ -740,6 +765,10 @@ define([
                   me.disks[0].remove();
                 }
 
+                /*
+                 * Add again every disk automatically selected
+                 * to this disk group
+                 */
                 for(var i=0;i<this._disks.length;i++) {
                   for(var j=0;j<this._disks[i].length;j++) {
                     var disk = this._disks[i][j];
@@ -750,6 +779,11 @@ define([
                   }
                 }
 
+                /*
+                 * We need to maintain dumb structure for each row of the
+                 * disk group so the dijit form can query _Widget for the
+                 * group type and disks
+                 */
                 var extraRows = query("tr", me.dapTable).length - this._disks.length - 1;
                 for(var i=0;i<extraRows;i++) {
                   query("tr:nth-child("+(this._disks.length+2)+")", me.dapTable).forEach(domConst.destroy);
@@ -779,10 +813,9 @@ define([
         this.dapDelete = Button({
           label: "X"
         }, this.dapDelete);
+
         if(this.can_delete === true) {
-
           on(this.dapDelete, "click", lang.hitch(this, this.remove));
-
         } else {
           this.dapDelete.set('disabled', true);
         }
@@ -798,15 +831,7 @@ define([
         });
         this._disksCheck();
 
-        if(this.numDisks !== undefined) {
-          for(var i=0;i<this.numDisks;i++) {
-            var disk = this.manager.popAvailDisk();
-            if(disk) {
-              disk.addToRow(this);
-            }
-          }
-        }
-
+        // Pre-populate this diskgroup with given disks
         if(this.initialDisks.length > 0) {
 
           if(this.initialDisks.length == 4 || this.initialDisks.length == 8) {
@@ -916,6 +941,9 @@ define([
 
       },
       remove: function() {
+        /*
+         * Remove this disk group from the volume manager
+         */
         while(this.disks.length != 0) {
           this.disks[0].remove();
         }
