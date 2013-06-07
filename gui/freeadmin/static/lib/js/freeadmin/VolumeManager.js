@@ -154,7 +154,7 @@ define([
           vdev.disks.push(this);
           this.disksAvail.update();
           this.set('vdev', vdev);
-          this.manager._disksCheck(vdev);
+          vdev._disksCheck();
         } catch(e) {
           var me = this;
           connect.publish("volumeManager", {
@@ -170,7 +170,7 @@ define([
         this.domNode.parentNode.removeChild(this.domNode);
         this.vdev.disks.splice(this.vdev.disks.indexOf(this), 1);
         this.disksAvail.update();
-        this.manager._disksCheck(this.vdev);
+        this.vdev._disksCheck();
         this.set('vdev', null);
       },
       onClick: function() {
@@ -236,10 +236,10 @@ define([
                   type: "spare",
                   initialDisks: me.disks
                 });
-                me.manager._disksCheck(diskgspare, true);
+                diskgspare._disksCheck(true);
                 diskgspare.colorActive();
               }
-              me.manager._disksCheck(diskg);
+              diskg._disksCheck();
               me.manager.updateCapacity();
               diskg.colorActive();
               me.manager.updateSwitch();
@@ -413,6 +413,105 @@ define([
             break;
         }
         return bytes * dataDisks * rows;
+      },
+      _optimalCheck: {
+        'mirror': function(num) {
+          return num == 2;
+        },
+        'raidz': function(num) {
+          if(num < 3) return false;
+          return (Math.log(num - 1) / Math.LN2) % 1 == 0;
+        },
+        'raidz2': function(num) {
+          if(num < 4) return false;
+          return (Math.log(num - 2) / Math.LN2) % 1 == 0;
+        },
+        'raidz3': function(num) {
+          if(num < 5) return false;
+          return (Math.log(num - 3) / Math.LN2) % 1 == 0;
+        }
+      },
+      _vdevTypes: [
+        [3, "RaidZ", "raidz"],
+        [4, "RaidZ2", "raidz2"],
+        [5, "RaidZ3", "raidz3"],
+        [2, "Mirror", "mirror"],
+        [1, "Stripe", "stripe"],
+        [1, "Log (ZIL)", "log"],
+        [1, "Cache (L2ARC)", "cache"],
+        [1, "Spare", "spare"],
+      ],
+      _disksCheck: function(manual, cols, rows) {
+        var me = this;
+        this._vdevstore.query({}).forEach(function(item, index) {
+          me._vdevstore.remove(item.id);
+        });
+
+        for(var i=0;i<this._vdevTypes.length;i++) {
+          if(this.getCurrentCols() >= this._vdevTypes[i][0]) {
+            this._vdevstore.add({
+              id: this._vdevTypes[i][2],
+              name: this._vdevTypes[i][1]
+            });
+
+          }
+        }
+        if(this.disks.length == 0) {
+          this.vdevtype.set('value', '');
+        }
+
+        var numdisks;
+        this._isOptimal = null;
+        if(cols !== undefined) {
+          numdisks = cols;
+        } else {
+          numdisks = this.disks.length / this.rows;
+        }
+
+        if(manual !== true) {
+          for(var key in this._optimalCheck) {
+            if(this._optimalCheck[key](numdisks)) {
+              // .set will trigger onChange, ignore it once
+              this.vdevtype._stopEvent = true;
+              this.vdevtype.set('value', key);
+              this._isOptimal = true;
+              break;
+            }
+          }
+          if(this._isOptimal !== true) {
+            var vdevtype = this.vdevtype.get("value");
+            if(this._optimalCheck[vdevtype] !== undefined) {
+              this._isOptimal = false;
+            }
+          }
+        } else {
+          var vdevtype = this.vdevtype.get("value");
+          var optimalf = this._optimalCheck[vdevtype];
+          if(optimalf !== undefined) {
+            this._isOptimal = optimalf(numdisks);
+          }
+        }
+
+        if(rows !== undefined && rows > 1) {
+          rows = rows +'x ';
+        } else {
+          rows = '';
+        }
+        var diskSize;
+        if(this.disks.length > 0) {
+          diskSize = this.disks[0].size;
+        } else {
+          diskSize = '0 B';
+        }
+        if(this._isOptimal !== null) {
+          if(this._isOptimal) {
+            this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+          } else {
+            this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+          }
+        } else {
+          this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+        }
       },
       colorActive: function() {
 
@@ -615,7 +714,7 @@ define([
                   this.lastH = newH;
                   this.lastW = newW;
                   me._draggedOnce = true;
-                  me.manager._disksCheck(me, false, floor, floorR);
+                  me._disksCheck(false, floor, floorR);
                   me.manager.updateCapacity(); // FIXME: double call with _disksCheck
                   me.manager.updateSwitch();
                 }
@@ -667,7 +766,7 @@ define([
               // Set the new correct width after releasing mouse
               domStyle.set(this.targetDomNode, "width", (EMPTY_WIDTH + (me.disks.length / me.rows) * PER_NODE_WIDTH) + "px");
 
-              me.manager._disksCheck(me);
+              me._disksCheck();
               me.manager.updateCapacity();
               me.colorActive();
               me.manager.updateSwitch();
@@ -690,14 +789,14 @@ define([
 
         on(this.vdevtype, "change", function() {
           if(this._stopEvent !== true) {
-            me.manager._disksCheck(me, true);
+            me._disksCheck(true);
             me.colorActive();
           } else {
             this._stopEvent = false;
           }
           me.manager.updateCapacity();
         });
-        this.manager._disksCheck(this);
+        this._disksCheck();
 
         if(this.numDisks !== undefined) {
           for(var i=0;i<this.numDisks;i++) {
@@ -748,12 +847,12 @@ define([
                 type: "spare",
                 initialDisks: this.initialDisks
               });
-              this.manager._disksCheck(diskgspare, true);
+              diskgspare._disksCheck(true);
               diskgspare.colorActive();
             }
 
           }
-          this.manager._disksCheck(me);
+          me._disksCheck();
           this.manager.updateCapacity();
           this.colorActive();
           this.manager.updateSwitch();
@@ -783,7 +882,7 @@ define([
               type: "spare",
               initialDisks: this.initialDisks
             });
-            this.manager._disksCheck(diskgspare, true);
+            diskgspare._disksCheck(true);
             diskgspare.colorActive();
           }
         }
@@ -1108,105 +1207,6 @@ define([
 
         return disksrows;
 
-      },
-      _optimalCheck: {
-        'mirror': function(num) {
-          return num == 2;
-        },
-        'raidz': function(num) {
-          if(num < 3) return false;
-          return (Math.log(num - 1) / Math.LN2) % 1 == 0;
-        },
-        'raidz2': function(num) {
-          if(num < 4) return false;
-          return (Math.log(num - 2) / Math.LN2) % 1 == 0;
-        },
-        'raidz3': function(num) {
-          if(num < 5) return false;
-          return (Math.log(num - 3) / Math.LN2) % 1 == 0;
-        }
-      },
-      _vdevTypes: [
-        [3, "RaidZ", "raidz"],
-        [4, "RaidZ2", "raidz2"],
-        [5, "RaidZ3", "raidz3"],
-        [2, "Mirror", "mirror"],
-        [1, "Stripe", "stripe"],
-        [1, "Log (ZIL)", "log"],
-        [1, "Cache (L2ARC)", "cache"],
-        [1, "Spare", "spare"],
-      ],
-      _disksCheck: function(vdev, manual, cols, rows) {
-
-        vdev._vdevstore.query({}).forEach(function(item, index) {
-          vdev._vdevstore.remove(item.id);
-        });
-
-        for(var i=0;i<this._vdevTypes.length;i++) {
-          if(vdev.getCurrentCols() >= this._vdevTypes[i][0]) {
-            vdev._vdevstore.add({
-              id: this._vdevTypes[i][2],
-              name: this._vdevTypes[i][1]
-            });
-
-          }
-        }
-        if(vdev.disks.length == 0) {
-          vdev.vdevtype.set('value', '');
-        }
-
-        var numdisks;
-        vdev._isOptimal = null;
-        if(cols !== undefined) {
-          numdisks = cols;
-        } else {
-          numdisks = vdev.disks.length / vdev.rows;
-        }
-
-        if(manual !== true) {
-          for(var key in this._optimalCheck) {
-            if(this._optimalCheck[key](numdisks)) {
-              // .set will trigger onChange, ignore it once
-              vdev.vdevtype._stopEvent = true;
-              vdev.vdevtype.set('value', key);
-              vdev._isOptimal = true;
-              break;
-            }
-          }
-          if(vdev._isOptimal !== true) {
-            var vdevtype = vdev.vdevtype.get("value");
-            if(this._optimalCheck[vdevtype] !== undefined) {
-              vdev._isOptimal = false;
-            }
-          }
-        } else {
-          var vdevtype = vdev.vdevtype.get("value");
-          var optimalf = this._optimalCheck[vdevtype];
-          if(optimalf !== undefined) {
-            vdev._isOptimal = optimalf(numdisks);
-          }
-        }
-
-        if(rows !== undefined && rows > 1) {
-          rows = rows +'x ';
-        } else {
-          rows = '';
-        }
-        var diskSize;
-        if(vdev.disks.length > 0) {
-          diskSize = vdev.disks[0].size;
-        } else {
-          diskSize = '0 B';
-        }
-        if(vdev._isOptimal !== null) {
-          if(vdev._isOptimal) {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
-          } else {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
-          }
-        } else {
-          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
-        }
       },
       submit: function() {
         /*
