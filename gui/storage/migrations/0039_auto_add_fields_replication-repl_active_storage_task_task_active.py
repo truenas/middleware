@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'Task.task_active'
         db.add_column('storage_task', 'task_active',
-                      self.gf(''django.db.models.fields.BooleanField')(default=1,null=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=1,null=False),
                       keep_default=False)
 
 
