@@ -11,6 +11,8 @@ define([
   "dojo/mouse",
   "dojo/on",
   "dojo/query",
+  "dojo/store/Memory",
+  "dojo/store/Observable",
   "dojo/topic",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
@@ -19,6 +21,7 @@ define([
   "dijit/TooltipDialog",
   "dijit/form/Button",
   "dijit/form/CheckBox",
+  "dijit/form/FilteringSelect",
   "dijit/form/Form",
   "dijit/form/RadioButton",
   "dijit/form/Select",
@@ -45,6 +48,8 @@ define([
   mouse,
   on,
   query,
+  Memory,
+  Observable,
   topic,
   _Widget,
   _Templated,
@@ -53,6 +58,7 @@ define([
   TooltipDialog,
   Button,
   CheckBox,
+  FilteringSelect,
   Form,
   RadioButton,
   Select,
@@ -184,17 +190,72 @@ define([
     });
 
     var DisksAvail = declare("freeadmin.DisksAvail", [ _Widget, _Templated ], {
-      templateString: '<div><span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
+      templateString: '<div data-dojo-attach-point="dapRow"><div data-dojo-attach-point="dapAdd"></div><span data-dojo-attach-point="dapIndex"></span> - <span data-dojo-attach-point="dapSize"></span> (<span data-dojo-attach-point="dapNum"></span>)</div>',
       disks: [],
       size: "",
+      sizeBytes: 0,
+      index: 0,
+      manager: null,
+      availDisks: null,
       _showNode: null,
       _tpDialog: null,
       postCreate: function() {
+        var me = this;
         for(var i in this.disks) {
           this.disks[i].disksAvail = this;
         }
+        this.dapAdd = new Button({
+          label: "+"
+        }, this.dapAdd);
+        this.dapIndex.innerHTML = this.index + 1;
         this.dapSize.innerHTML = this.size;
         this.update();
+        on(this.dapAdd, "click", function() {
+          for(var i=0;i<me.manager._layout.length;i++) {
+            var diskg = me.manager._layout[i];
+            /*
+             * If we have a “peer group” (drives of the same type) already
+             * exists, and the largest row have more drives than X, add
+             * all disks in one row as spare; otherwise, add as many as
+             * possible disks to create rows for that row’s type, and use
+             * rest drives as spare row.
+             */
+            if(diskg.disks.length > 0 && diskg.disks[0].sizeBytes == me.sizeBytes) {
+              var perRow = diskg.getDisksPerRow();
+              var newRows = Math.floor(me.disks.length / perRow);
+              if(newRows > 0) {
+                for(var i=0,len=newRows*perRow,row=diskg.rows;i<len;i++) {
+                  me.disks[0].addToRow(diskg, Math.floor(diskg.disks.length / perRow), diskg.disks.length % perRow);
+                }
+                diskg.rows += newRows;
+              }
+              diskg._adjustSize();
+              if(me.disks.length > 0) {
+                var diskgspare = me.manager.addVdev({
+                  can_delete: true,
+                  type: "spare",
+                  initialDisks: me.disks
+                });
+                me.manager._disksCheck(diskgspare, true);
+                diskgspare.colorActive();
+              }
+              me.manager._disksCheck(diskg);
+              me.manager.updateCapacity();
+              diskg.colorActive();
+              me.manager.updateSwitch();
+              return;
+            }
+          }
+          var can_delete = true;
+          if(me.manager._layout[0].disks.length == 0) {
+            me.manager._layout[0].remove();
+            can_delete = false;
+          }
+          me.manager.addVdev({
+            can_delete: can_delete,
+            initialDisks: me.disks
+          });
+        });
       },
       getChildren: function() {
         if(this._tpDialog !== null) {
@@ -204,6 +265,7 @@ define([
       },
       update: function() {
         if(this.disks.length > 0) {
+          this.dapAdd.set('disabled', false);
           if(this.disks.length > 1) {
             this.dapNum.innerHTML = sprintf("%d drives, ", this.disks.length);
           } else {
@@ -218,6 +280,7 @@ define([
             me.hide();
           });
         } else {
+          this.dapAdd.set('disabled', true);
           this.dapNum.innerHTML = "no more drives";
         }
       },
@@ -258,8 +321,12 @@ define([
       vdev: null,
       rows: 1,
       manager: null,
+      _currentAvail: null,
+      _disksSwitch: null,
       _dragTooltip: null,
-      _formVdevs: {},
+      _draggedOnce: false,
+      _formVdevs: null,
+      _isOptimal: null,
       validate: function(disk) {
         var valid = true;
         for(var key in this.disks) {
@@ -272,6 +339,9 @@ define([
         if(valid === false) {
           throw new Object({message: "Disk size mismatch"});
         }
+      },
+      getDisksPerRow: function() {
+        return this.disks.length / this.rows;
       },
       getCurrentCols: function() {
         /*
@@ -347,21 +417,31 @@ define([
       colorActive: function() {
 
         var cols = this.disks.length / this.rows;
+        var cssclass;
+        if(this._isOptimal == true) {
+          cssclass = "optimal";
+        } else if(this._isOptimal == false) {
+          cssclass = "nonoptimal";
+        } else {
+          cssclass = "active";
+        }
         query("tr", this.dapTable).forEach(function(item, idx) {
           if(idx == 0) return;
           query("td", item).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
             } else {
-              domClass.add(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.add(item, cssclass);
             }
           });
         });
         query("th", this.dapTable).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
             } else {
-              domClass.add(item, "active");
+              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.add(item, cssclass);
             }
         });
 
@@ -371,9 +451,69 @@ define([
         // For some reason chidlren are not retrieved automatically
         return [this.vdevtype, this.resize, this._dragTooltip];
       },
+      _updateSwitch: function() {
+        /*
+         * From now on we will be dealing with switching the type of disks
+         * pre-selected for this group.
+         *
+         * e.g. Disks of 1TB ha been selected for this group, it will ask
+         * if you want to switch for 2TB, whenever possible
+         *
+         * FIXME: Code is a mess! :)
+         */
+        var me = this, aDisks = this.manager._avail_disks;
+        this._disksSwitch = [];
+        for(var i=0;i<aDisks.length;i++) {
+          if(this.disks.length > 0) {
+            if(aDisks[i].size != this.disks[0].size && aDisks[i].disks.length >= this.disks.length) {
+              this._disksSwitch.push(i);
+            } else if(aDisks[i].size == me.disks[0].size) {
+              this._currentAvail = i;
+            }
+          }
+        }
+
+        if(this._disksSwitch.length > 0) {
+          domStyle.set(this._vdevDiskType.domNode, "display", "");
+          this._store.query({}).forEach(function(item, indexx) {
+            me._store.remove(item.id);
+          });
+
+          this._store.add({
+            id: this._currentAvail,
+            name: sprintf("%d - %s", aDisks[this._currentAvail].index + 1, aDisks[this._currentAvail].size)
+          });
+          this._vdevDiskType.set('value', this._currentAvail);
+
+          for(var i in this._disksSwitch) {
+            var idx = this._disksSwitch[i];
+            var obj = this._store.get(idx);
+            this._store.add({
+              id: idx,
+              name: sprintf("%d - %s", aDisks[idx].index + 1, aDisks[idx].size)
+            });
+          }
+        } else {
+          domStyle.set(this._vdevDiskType.domNode, "display", "none");
+        }
+      },
+      _doSwitch: function(widget, value) {
+        if(value === false) return;
+        var idx = widget.get("value");
+        var num = this.disks.length;
+        var rows = this.rows;
+        while(this.disks.length > 0) {
+          this.disks[0].remove();
+        }
+        for(var i=0;i<num/rows;i++) {
+          for(var j=0;j<rows;j++) {
+            this.manager._avail_disks[idx].disks[0].addToRow(this, j, i);
+          }
+        }
+        this.manager.updateSwitch(this);
+      },
       _addFormVdev: function(row) {
         if(!this._formVdevs[row]) {
-          console.log("add", row);
           var vtype = new _Widget();
           this.manager._form.domNode.appendChild(vtype.domNode);
           var vdisks = new _Widget();
@@ -381,27 +521,36 @@ define([
           this._formVdevs[row] = [vtype, vdisks];
         }
       },
+      _adjustSize: function() {
+        domStyle.set(this.resize.domNode.parentNode, "width", (EMPTY_WIDTH + (this.disks.length / this.rows) * PER_NODE_WIDTH) + "px");
+        domStyle.set(this.resize.domNode.parentNode, "height", (HEADER_HEIGHT + this.rows * PER_NODE_HEIGHT) + "px");
+      },
       postCreate: function() {
         var me = this;
         this.disks = [];
 
+        this._disksSwitch = [];
+
         this._formVdevs = {};
         this._addFormVdev(0);
 
-        this.vdevtype = new Select({
-          options: [
-            { label: "RaidZ", value: "raidz" },
-            { label: "RaidZ2", value: "raidz2" },
-            { label: "RaidZ3", value: "raidz3" },
-            { label: "Mirror", value: "mirror" },
-            { label: "Stripe", value: "stripe" },
-            { label: "Log (ZIL)", value: "log" },
-            { label: "Cache (L2ARC)", value: "cache" }
-          ],
-        }).placeAt(this.dapVdevType, 0);
-        if(this.type) {
-          this.vdevtype.set('value', this.type);
-        }
+        this._store = new Observable(new Memory({
+          data: []
+        }));
+
+        this._vdevDiskType = null;
+        this._vdevDiskType = new FilteringSelect({
+          store: this._store,
+          style: {width: "85px", marginRight: "0px", display: "none"},
+          onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
+        }, this.dapVdevDiskType);
+
+        this._vdevstore = new Observable(new Memory());
+
+        this.vdevtype = new FilteringSelect({
+          store: this._vdevstore,
+          style: {width: "65px", marginRight: "0px"}
+        }, this.dapVdevType);
         this.vdevtype.startup();
 
         this.resize = new ResizeHandle({
@@ -465,8 +614,10 @@ define([
                   this._resizingCols = floor;
                   this.lastH = newH;
                   this.lastW = newW;
+                  me._draggedOnce = true;
                   me.manager._disksCheck(me, false, floor, floorR);
                   me.manager.updateCapacity(); // FIXME: double call with _disksCheck
+                  me.manager.updateSwitch();
                 }
               }
 
@@ -519,76 +670,8 @@ define([
               me.manager._disksCheck(me);
               me.manager.updateCapacity();
               me.colorActive();
+              me.manager.updateSwitch();
 
-              /*
-               * From now on we will be dealing with switching the type of disks
-               * pre-selected for this group.
-               *
-               * e.g. Disks of 1TB ha been selected for this group, it will ask
-               * if you want to switch for 2TB, whenever possible
-               *
-               * FIXME: Code is a mess! :)
-               */
-              var canswitch = [];
-              var currentslot;
-              var aDisks = me.manager._avail_disks;
-              for(var i=0;i<aDisks.length;i++) {
-                if(me.disks.length > 0) {
-                  if(aDisks[i].size != me.disks[0].size && aDisks[i].disks.length >= me.disks.length) {
-                    canswitch.push(i);
-                  } else if(aDisks[i].size == me.disks[0].size) {
-                    currentslot = i;
-                  }
-                }
-              }
-
-              if(canswitch.length > 0 && currentslot !== undefined) {
-
-                var onChangeFnc = function(value) {
-                  if(value === false) return;
-                  var idx = this.get("value");
-                  var num = me.disks.length;
-                  var rows = me.rows;
-                  while(me.disks.length > 0) {
-                    me.disks[0].remove();
-                  }
-                  for(var i=0;i<num/rows;i++) {
-                    for(var j=0;j<rows;j++) {
-                      aDisks[idx].disks[0].addToRow(me, j, i);
-                    }
-                  }
-                };
-                var div = domConst.create("div");
-                var divh = domConst.create("div", null, div);
-                var rb = new RadioButton({
-                  name: "size",
-                  value: currentslot,
-                  checked: true,
-                }).placeAt(divh);
-                domConst.create("label", {innerHTML: aDisks[currentslot].size}, divh);
-                on(rb, "change", onChangeFnc);
-
-                for(var i in canswitch) {
-                  var divh = domConst.create("div", null, div);
-                  var rb = new RadioButton({
-                    name: "size",
-                    value: canswitch[i]
-                  }).placeAt(divh);
-                  domConst.create("label", {innerHTML: aDisks[canswitch[i]].size}, divh);
-                  on(rb, "change", onChangeFnc);
-                }
-                var td = new TooltipDialog({
-                  content: div,
-                  onMouseLeave: function() {
-                    popup.close(td);
-                    td.destroyRecursive();
-                  }
-                });
-                popup.open({
-                  popup: td,
-                  around: me.resize.domNode
-                });
-              }
             }
         }, this.dapRes);
         domStyle.set(this.dapResMain, "height", (HEADER_HEIGHT + PER_NODE_HEIGHT) + "px");
@@ -599,13 +682,7 @@ define([
         }, this.dapDelete);
         if(this.can_delete === true) {
 
-          on(this.dapDelete, "click", function() {
-            while(true) {
-              if(me.disks.length == 0) break;
-              me.disks[0].remove();
-            }
-            me.destroyRecursive();
-          });
+          on(this.dapDelete, "click", lang.hitch(this, this.remove));
 
         } else {
           this.dapDelete.set('disabled', true);
@@ -614,6 +691,7 @@ define([
         on(this.vdevtype, "change", function() {
           if(this._stopEvent !== true) {
             me.manager._disksCheck(me, true);
+            me.colorActive();
           } else {
             this._stopEvent = false;
           }
@@ -631,16 +709,102 @@ define([
         }
 
         if(this.initialDisks.length > 0) {
-          for(var i in this.initialDisks) {
-            this.initialDisks[i].addToRow(this);
+
+          if(this.initialDisks.length == 4 || this.initialDisks.length == 8) {
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, Math.floor(i / (len / 2)), i % (len / 2));
+            }
+            this.rows = 2;
+          } else if(this.initialDisks.length < 12) {
+
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, 0, i);
+            }
+          } else if(this.initialDisks.length < 99) {
+            // FIXME: for >= 12 < 18
+            var chosen;
+            var div9 = Math.floor(this.initialDisks.length / 9);
+            var div10 = Math.floor(this.initialDisks.length / 10);
+            var mod9 = this.initialDisks.length % 9;
+            var mod10 = this.initialDisks.length % 10;
+
+            if(mod9 >= 0.75 * div9 && mod10 >= 0.75 * div10) {
+              // raidz
+              chosen = 9;
+              this.rows = div9;
+            } else {
+              // raidz2
+              chosen = 10;
+              this.rows = div10;
+            }
+            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+              this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
+            }
+
+            // Remaining disks are spare
+            if(this.initialDisks.length > 0) {
+              var diskgspare = this.manager.addVdev({
+                can_delete: true,
+                type: "spare",
+                initialDisks: this.initialDisks
+              });
+              this.manager._disksCheck(diskgspare, true);
+              diskgspare.colorActive();
+            }
+
+          }
+          this.manager._disksCheck(me);
+          this.manager.updateCapacity();
+          this.colorActive();
+          this.manager.updateSwitch();
+        } else {
+          var chosen;
+          var num = Math.ceil((this.initialDisks.length / 11) * 0.75);
+          var mod9 = num % 9;
+          var mod10 = num % 10;
+          var mod11 = num % 11;
+          var min = Math.min(mod9, mod10, mod11);
+          if(min == mod11) {
+            chosen = 11;
+          } else if(min == mod10) {
+            chosen = 10;
+          } else if(min == mod9) {
+            chosen = 9;
+          }
+
+          for(var i=0,len=this.initialDisks.length;i<len;i++) {
+            this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
+          }
+
+          // Remaining disks are spare
+          if(this.initialDisks.length > 0) {
+            var diskgspare = this.manager.addVdev({
+              can_delete: true,
+              type: "spare",
+              initialDisks: this.initialDisks
+            });
+            this.manager._disksCheck(diskgspare, true);
+            diskgspare.colorActive();
           }
         }
 
-        domStyle.set(this.resize.domNode.parentNode, "width", this.disks.length * PER_NODE_WIDTH + "px");
+        if(this.type) {
+          this.vdevtype.set('value', this.type);
+        }
+
+        this._adjustSize();
 
         this._dragTooltip = Tooltip({
           connectId: [this.resize.domNode],
-          label: "Drag and drop this to resize"
+          label: "Drag and drop this to resize",
+          onHide: function() {
+            var checkDragTooltip = function() {
+              if(!me._draggedOnce) {
+                me._dragTooltip.open(me.resize.domNode);
+              }
+            }
+            setTimeout(checkDragTooltip, 5000);
+          }
         })
         //on.once(me.resize.domNode, mouse.enter, function() {
         //  Tooltip.hide(me.resize.domNode);
@@ -651,6 +815,15 @@ define([
           me._dragTooltip.open(me.resize.domNode);
         }, 100);
 
+      },
+      remove: function() {
+        while(this.disks.length != 0) {
+          this.disks[0].remove();
+        }
+        var iof = this.manager._layout.indexOf(this);
+        this.manager._layout.splice(iof, 1);
+        this.manager.updateSwitch();
+        this.destroyRecursive();
       }
     });
 
@@ -671,7 +844,7 @@ define([
       drawAvailDisks: function() {
         for(var i in this._avail_disks) {
           var dAvail = this._avail_disks[i];
-          this.dapDisksTable.appendChild(dAvail.domNode);
+          this.dapDisks.appendChild(dAvail.domNode);
         }
       },
       getAvailDisksNum: function() {
@@ -775,7 +948,17 @@ define([
         });
 
         this._avail_disks = [];
-        for(var size in this.disks) {
+
+        var sortKeys = [];
+        for(var key in this.disks) {
+          sortKeys.push([key, this.disks[key][0]['size']]);
+        }
+        sortKeys.sort(function(a, b) {
+          return b[1] - a[1];
+        });
+
+        for(var i=0;i<sortKeys.length;i++) {
+          var size = sortKeys[i][0];
           var disks = this.disks[size];
           var avail_disks = [];
           for(var key in disks) {
@@ -790,6 +973,10 @@ define([
           var dAvail = new DisksAvail({
             disks: avail_disks,
             size: size,
+            sizeBytes: avail_disks[0].sizeBytes,
+            availDisks: this._avail_disks,
+            manager: this,
+            index: i
           });
           this._avail_disks.push(dAvail);
         }
@@ -800,7 +987,7 @@ define([
          * Add extra row for the layout
          */
         var add_extra = new Button({
-          label: "Add Extra Row"
+          label: "Add Extra Device"
         }, this.dapLayoutAdd);
         on(add_extra, "click", function(evt) {
           lang.hitch(me, me.addVdev)({can_delete: true});
@@ -876,6 +1063,13 @@ define([
         this.dapCapacity.innerHTML = humanizeSize(capacity);
         return capacity;
       },
+      updateSwitch: function(exclude) {
+        for(var key in this._layout) {
+          var diskg = this._layout[key];
+          if(exclude == diskg) continue;
+          diskg._updateSwitch();
+        }
+      },
       _disksForVdev: function(vdev, slots, rows) {
 
         var disksrows = null;
@@ -931,9 +1125,37 @@ define([
           return (Math.log(num - 3) / Math.LN2) % 1 == 0;
         }
       },
+      _vdevTypes: [
+        [3, "RaidZ", "raidz"],
+        [4, "RaidZ2", "raidz2"],
+        [5, "RaidZ3", "raidz3"],
+        [2, "Mirror", "mirror"],
+        [1, "Stripe", "stripe"],
+        [1, "Log (ZIL)", "log"],
+        [1, "Cache (L2ARC)", "cache"],
+        [1, "Spare", "spare"],
+      ],
       _disksCheck: function(vdev, manual, cols, rows) {
 
-        var found = false, has_check = false, numdisks;
+        vdev._vdevstore.query({}).forEach(function(item, index) {
+          vdev._vdevstore.remove(item.id);
+        });
+
+        for(var i=0;i<this._vdevTypes.length;i++) {
+          if(vdev.getCurrentCols() >= this._vdevTypes[i][0]) {
+            vdev._vdevstore.add({
+              id: this._vdevTypes[i][2],
+              name: this._vdevTypes[i][1]
+            });
+
+          }
+        }
+        if(vdev.disks.length == 0) {
+          vdev.vdevtype.set('value', '');
+        }
+
+        var numdisks;
+        vdev._isOptimal = null;
         if(cols !== undefined) {
           numdisks = cols;
         } else {
@@ -946,21 +1168,21 @@ define([
               // .set will trigger onChange, ignore it once
               vdev.vdevtype._stopEvent = true;
               vdev.vdevtype.set('value', key);
-              found = true;
-              has_check = true;
+              vdev._isOptimal = true;
               break;
             }
           }
-          if(found == false) {
+          if(vdev._isOptimal !== true) {
             var vdevtype = vdev.vdevtype.get("value");
-            has_check = this._optimalCheck[vdevtype] !== undefined;
+            if(this._optimalCheck[vdevtype] !== undefined) {
+              vdev._isOptimal = false;
+            }
           }
         } else {
           var vdevtype = vdev.vdevtype.get("value");
           var optimalf = this._optimalCheck[vdevtype];
           if(optimalf !== undefined) {
-            found = optimalf(numdisks);
-            has_check = true;
+            vdev._isOptimal = optimalf(numdisks);
           }
         }
 
@@ -969,14 +1191,20 @@ define([
         } else {
           rows = '';
         }
-        if(has_check) {
-          if(found) {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+        var diskSize;
+        if(vdev.disks.length > 0) {
+          diskSize = vdev.disks[0].size;
+        } else {
+          diskSize = '0 B';
+        }
+        if(vdev._isOptimal !== null) {
+          if(vdev._isOptimal) {
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
           } else {
-            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+            vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
           }
         } else {
-          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), humanizeSize(vdev.getCurrentDiskSize()), humanizeSize(vdev.getCapacity()));
+          vdev.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", vdev.getCurrentCols(), vdev.getCurrentRows(), diskSize, humanizeSize(vdev.getCapacity()));
         }
       },
       submit: function() {
@@ -992,11 +1220,10 @@ define([
             for(var d=perRow*j;d<perRow*(j+1);d++) {
               disks.push(vdev.disks[d].get("name"));
             }
-            console.log(vdev._formVdevs[k]);
-            vdev._formVdevs[k][0].set('name', 'layout-' + k + '-vdevtype');
-            vdev._formVdevs[k][0].set('value', 'layout-' + k + '-vdevtype');
-            vdev._formVdevs[k][1].set('name', 'layout-' + k + '-disks');
-            vdev._formVdevs[k][1].set('value', disks);
+            vdev._formVdevs[j][0].set('name', 'layout-' + k + '-vdevtype');
+            vdev._formVdevs[j][0].set('value', vdev.vdevtype.get("value"));
+            vdev._formVdevs[j][1].set('name', 'layout-' + k + '-disks');
+            vdev._formVdevs[j][1].set('value', disks);
           }
         }
         this._total_vdevs.set('value', k);

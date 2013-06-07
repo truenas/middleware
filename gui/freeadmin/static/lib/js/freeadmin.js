@@ -651,6 +651,23 @@ require([
 
     }
 
+    checkProgress = function(pbar, url, uuid, iter) {
+        if(!iter) iter = 0;
+        xhr.get(url, {
+            headers: {"X-Progress-ID": uuid}
+            }).then(function(data) {
+                var obj = JSON.parse(data);
+                if (obj.size > 0) {
+                    pbar.set('value', obj.data);
+                }
+                if (obj.state != 'done') {
+                    setTimeout(function() {
+                        checkProgress(pbar, url, uuid, iter + 1);
+                        }, 1000);
+                }
+            });
+    };
+
     checkProgressBar = function(pbar, url, uuid, iter) {
         var progress_url;
         if(typeof(url) == 'string') {
@@ -684,7 +701,6 @@ require([
     }
 
     doSubmit = function(attrs) {
-
         var pbar, uuid, multipart, rnode, newData;
 
         if(!attrs) {
@@ -793,6 +809,17 @@ require([
             rnode._size();
             rnode._position();
 
+        } else if (attrs.progressfunc != undefined) {
+            pbar = new dijit.form.SimpleTextarea({
+                title: "progress",
+                rows: "40",
+                cols: "80",
+                style: "width:auto;",
+                readOnly: true
+                }).placeAt(attrs.form.domNode);
+
+            rnode._size();
+            rnode._position();
         }
 
         if( multipart ) {
@@ -822,8 +849,10 @@ require([
 
         if (attrs.progressbar != undefined) {
             checkProgressBar(pbar, attrs.progressbar, uuid);
+        } else if(attrs.progressfunc != undefined &&
+            attrs.progressurl != undefined) {
+            checkProgress(pbar, attrs.progressurl, uuid);
         }
-
     }
 
     checkNumLog = function(unselected) {

@@ -25,6 +25,11 @@
 #
 #####################################################################
 import logging   
+import os
+import stat
+import string
+import threading
+import time
 
 from django.http import HttpResponse 
 from django.shortcuts import render
@@ -34,6 +39,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp   
 from freenasUI.middleware.notifier import notifier
 from freenasUI.jails import forms, models
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.warden import (
     Warden,
     WARDEN_STATUS_RUNNING,
@@ -235,6 +241,36 @@ def jail_export(request, id):
             time.strftime('%Y%m%d%H%M%S'))
 
     return response
+
+
+def jail_progress(request):
+    data = {
+        'size': 0,
+        'data': '',
+        'state': 'running'
+    }
+
+    jc = models.JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+
+    if os.path.exists(logfile):
+        f = open(logfile, "r") 
+        buf = f.readlines()
+        f.close()
+
+        size = len(buf)
+        if size > 0:
+            buf = string.join(buf)
+            size = len(buf)
+
+        data['size'] = size
+        data['data'] = buf
+
+        if not os.path.exists("/var/tmp/.jailcreate"):
+            data['state'] = 'done'
+
+    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
 
 def jail_import(request):
     log.debug("XXX: jail_import()")
