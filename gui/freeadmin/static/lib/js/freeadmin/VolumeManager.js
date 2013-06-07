@@ -998,6 +998,7 @@ define([
         var me = this, volume_name, volume_add, okbtn, enc, encini;
 
         this._layout = [];
+        this._avail_disks = [];
 
         this.disks = json.parse(this.disks);
         this.extend = json.parse(this.extend);
@@ -1075,8 +1076,9 @@ define([
           }
         });
 
-        this._avail_disks = [];
-
+        /*
+         * Sort disks by bytes DESC
+         */
         var sortKeys = [];
         for(var key in this.disks) {
           sortKeys.push([key, this.disks[key][0]['size']]);
@@ -1085,6 +1087,10 @@ define([
           return b[1] - a[1];
         });
 
+        /*
+         * Create the Disk objects for every disk based on the
+         * params provided and the available disks grouped by size
+         */
         for(var i=0;i<sortKeys.length;i++) {
           var size = sortKeys[i][0];
           var disks = this.disks[size];
@@ -1135,26 +1141,14 @@ define([
           }
         }, this.dapCancel);
 
-
-        /*
-        topic.subscribe("/dojo/resize/start", function(inst) {
-            console.log("here", inst);
-        });
-        topic.subscribe("/dojo/resize/stop", function(inst) {
-            console.log("here", inst);
-        });
-        */
-
         this._total_vdevs = new _Widget({
             name: "layout-TOTAL_FORMS",
             value: 0
-        });
+        }).placeAt(this._form.domNode);
         this._initial_vdevs = new _Widget({
             name: "layout-INITIAL_FORMS",
             value: 0
-        });
-        this._form.domNode.appendChild(this._total_vdevs.domNode);
-        this._form.domNode.appendChild(this._initial_vdevs.domNode);
+        }).placeAt(this._form.domNode);
 
         new Toaster({
           messageTopic: "volumeManager",
@@ -1166,13 +1160,18 @@ define([
         this.addVdev({can_delete: false});
         this.updateCapacity();
 
-        //this._supportingWidgets.push(slider);
-
         this.inherited(arguments);
 
       },
       addVdev: function(attrs) {
-
+        /*
+         * Add a new disk group to the volume layout
+         *
+         * Attributes:
+         * can_delete - Disk group is deletable (bool)
+         *
+         * Returns: disk group object
+         */
         var vdev;
         attrs['manager'] = this;
         vdev = new Vdev(attrs);
@@ -1183,6 +1182,9 @@ define([
 
       },
       updateCapacity: function() {
+        /*
+         * Update the estimated capacity for the whole volume layout
+         */
         var capacity = 0;
         for(var key in this._layout) {
           var diskg = this._layout[key];
