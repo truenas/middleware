@@ -804,13 +804,13 @@ class Replication(Model):
     repl_userepl = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Recursively replicate and remove stale snapshot "
+            "Recursively replicate "
             "on remote side"),
     )
     repl_resetonce = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Initialize remote side for once. (May cause data"
+            "Initialize remote side "
             " loss on remote side!)"),
     )
     repl_limit = models.IntegerField(
@@ -852,6 +852,10 @@ class Replication(Model):
 
 
 class Task(Model):
+    task_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Active"),
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
