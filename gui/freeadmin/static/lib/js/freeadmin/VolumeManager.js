@@ -273,10 +273,10 @@ define([
           }
           this._showNode = domConst.create("a", {innerHTML: "show"}, this.dapNum);
           var me = this;
-          on(this._showNode, "mouseover", function() {
+          on(this._showNode, mouse.enter, function() {
             me.show();
           });
-          on(this._showNode, "mouseleave", function() {
+          on(this._showNode, mouse.leave, function() {
             me.hide();
           });
         } else {
