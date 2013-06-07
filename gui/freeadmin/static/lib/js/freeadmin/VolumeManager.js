@@ -389,7 +389,7 @@ define([
         disks = this.getCurrentCols();
         if(disks == 0) return 0;
         rows = this.getCurrentRows();
-        bytes = this.getCurrentDiskSize();
+        bytes = this.getCurrentDiskSize() - this.manager.swapSize;
         switch(this.vdevtype.get('value')) {
           case 'raidz':
             dataDisks = disks - 1;
@@ -834,6 +834,7 @@ define([
       url_progress: "",
       dedup_warning: "",
       extend: "",
+      swapSize: 0,
       add_label: 'Add Volume<br/ ><span style="color: red;">Existing data will be cleared</span>',
       extend_label: "Extend Volume",
       _layout: [],
