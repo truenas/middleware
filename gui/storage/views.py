@@ -46,6 +46,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
@@ -174,10 +175,12 @@ def volumemanager(request):
     bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
     qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    swap = Advanced.objects.latest('id').adv_swapondrive
 
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
+        'swap_size': swap * 1024 * 1024 * 1024,
         'extend': json.dumps(
             [{'value': '', 'label': '-----'}] +
             [{'label': x.vol_name, 'value': x.vol_name} for x in qs]
