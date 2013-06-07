@@ -812,7 +812,7 @@ require([
         } else if (attrs.progressfunc != undefined) {
             pbar = new dijit.form.SimpleTextarea({
                 title: "progress",
-                rows: "40",
+                rows: "5",
                 cols: "80",
                 style: "width:auto;",
                 readOnly: true

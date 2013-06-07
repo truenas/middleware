@@ -86,21 +86,60 @@ case "${JAILTYPE}" in
   standard) ;;
 esac
 
-# Location of the chroot environment
-isDirZFS "${JDIR}"
-if [ $? -eq 0 ] ; then
-  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}"
-  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}"
+# See if we need to create a default template
+# If using a ARCHIVEFILE we can skip this step
+if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
+  DEFTEMPLATE="`uname -r | cut -d '-' -f 1-2`-${ARCH}"
+
+  # If on a plugin jail, lets change the nickname
+  if [ "${PLUGINJAIL}" = "YES"  ] ; then
+    DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
+  fi
+
+  # See if we need to create a new template for this system
+  isDirZFS "${JDIR}"
+  if [ $? -eq 0 ] ; then
+     TDIR="${JDIR}/.warden-template-$DEFTEMPLATE"
+  else
+     TDIR="${JDIR}/.warden-template-$DEFTEMPLATE.tbz"
+  fi
+
+  if [ ! -e "$TDIR" ] ; then
+      FLAGS="-arch $ARCH -nick $DEFTEMPLATE"
+
+      uname -r 2>&1 | grep -q "TRUEOS"
+      if [ $? -eq 0 ] ; then
+         FLAGS="-trueos `uname -r | cut -d '-' -f 1-2` $FLAGS" ; export FLAGS
+      else
+         FLAGS="-fbsd `uname -r | cut -d '-' -f 1-2` $FLAGS" ; export FLAGS
+      fi
+
+      if [ "${PLUGINJAIL}" = "YES" ] ; then
+         FLAGS="$FLAGS -pluginjail"
+      fi
+
+      ${PROGDIR}/scripts/backend/createtemplate.sh ${FLAGS}
+      if [ $? -ne 0 ] ; then
+        warden_exit "Failed create default template"
+      fi
+  fi
+  WORLDCHROOT="${TDIR}"
+
+elif [ -z "$ARCHIVEFILE" ] ; then
+
+  # Set WORLDCHROOT to the dir we will clone / file to extract
+  WORLDCHROOT="${JDIR}/.warden-template-$TEMPLATE"
+
+  isDirZFS "${JDIR}"
+  if [ $? -ne 0 ] ; then
+    WORLDCHROOT="${WORLDCHROOT}.tbz"
+  fi
+
 else
-  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}.tbz"
-  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}.tbz"
+
+   # See if we are overriding the default archive file
+   WORLDCHROOT="$ARCHIVEFILE"
 fi
-if [ "${PLUGINJAIL}" = "YES" ] ; then
-  WORLDCHROOT="${WORLDCHROOT_PLUGINJAIL}"
-else
-  WORLDCHROOT="${WORLDCHROOT_STANDARD}"
-fi
-export WORLDCHROOT WORLDCHROOT_PLUGINJAIL WORLDCHROOT_STANDARD
 
 if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
@@ -114,11 +153,6 @@ if [ "${IP6}" != "OFF" ] ; then
   IP6="${JIP}"
   MASK6="${JMASK}"
   if [ -z "$MASK6" ] ; then MASK6="64"; fi
-fi
-
-# See if we are overriding the default archive file
-if [ ! -z "$ARCHIVEFILE" ] ; then
-   WORLDCHROOT="$ARCHIVEFILE"
 fi
 
 if [ -z "$HOST" ] ; then
@@ -148,81 +182,6 @@ done
 # Get next unique ID
 META_ID="$(get_next_id "${JDIR}")"
 
-# Check if we need to download the chroot file
-
-#
-# If this is a pluginjail, we clone a regular freebsd chroot, then we
-# bootstrap pkgng, install the required packages that a pluginjail
-# needs, then snapshot it. Once this is done, creating a pluginjail is
-# as easy as doing a zfs clone.
-#
-if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
-  if [ ! -e "${WORLDCHROOT_STANDARD}" ] ; then
-    warden_print downloadchroot "${WORLDCHROOT_STANDARD}"
-    downloadchroot "${WORLDCHROOT_STANDARD}"
-  fi
-
-  isDirZFS "${JDIR}"
-  if [ $? -eq 0 ] ; then
-    tank=`getZFSTank "$JDIR"`
-    zfsp=`getZFSRelativePath "${WORLDCHROOT_STANDARD}"`
-    clonep="/$(basename ${WORLDCHROOT_PLUGINJAIL})"
-
-    mnt=`getZFSMountpoint ${tank}`
-    pjdir="${mnt}${clonep}"
-
-    clean_exit()
-    {
-       cd /
-       zfs destroy -fR "${tank}${clonep}"
-       rm -rf "${pjdir}" >/dev/null 2>&1
-       warden_exit "Failed to setup chroot"
-    }
-
-    trap clean_exit 2 3 6 9 15
-
-    warden_print zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
-
-    zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
-    if [ $? -ne 0 ] ; then
-       rm -rf "${pjdir}" >/dev/null 2>&1
-       warden_exit "Failed creating clean ZFS pluginjail clone"
-    fi
-    cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
-
-    warden_print bootstrap_pkgng "${pjdir}" "pluginjail"
-
-    bootstrap_pkgng "${pjdir}" "pluginjail"
-    if [ "$?" != "0" ] ; then
-       warden_print zfs destroy -fR "${tank}${clonep}"
-
-       zfs destroy -fR "${tank}${clonep}"
-       rm -rf "${pjdir}" >/dev/null 2>&1
-       warden_exit "bootstrap_pkng for ${pjdir} failed"
-    fi
-
-    warden_print zfs snapshot ${tank}${clonep}@clean
-
-    zfs snapshot ${tank}${clonep}@clean
-    if [ $? -ne 0 ] ; then
-       warden_print zfs destroy -fR "${tank}${clonep}"
-
-       zfs destroy -fR "${tank}${clonep}"
-       rm -rf "${pjdir}" >/dev/null 2>&1
-       warden_exit "Failed creating clean ZFS pluginjail snapshot"
-    fi
-
-    trap 2 3 6 9 15
-
-  # We're on UFS :-(
-  else
-    downloadchroot "${WORLDCHROOT_STANDARD}"
-
-  fi
-
-elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
-  downloadchroot "${WORLDCHROOT}"
-fi
 
 # If we are setting up a linux jail, lets do it now
 if [ "$LINUXJAIL" = "YES" ] ; then
@@ -373,8 +332,8 @@ if [ -e "/etc/localtime" ] ; then
    cp /etc/localtime ${JAILDIR}/etc/localtime
 fi
 
-# Setup PC-BSD PKGNG repo / utilities
-if [ "$VANILLA" != "YES" ] ; then
+# Setup TrueOS PKGNG repo / utilities only if on TRUEOS
+if [ "$VANILLA" != "YES" -a -e "${JAILDIR}/etc/rc.delay" ] ; then
   bootstrap_pkgng "${JAILDIR}"
   if [ $? -ne 0 ] ; then
      warden_print "You can manually re-try by running # warden bspkgng ${JAILNAME}"

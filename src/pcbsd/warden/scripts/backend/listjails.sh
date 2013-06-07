@@ -70,6 +70,11 @@ do
 
   ID="`cat ${i}/id 2>/dev/null`"
   HOST="`cat ${i}/host 2>/dev/null`"
+  if [ -e "${i}/vnet" ] ; then
+    VNET="Enabled"
+  else
+    VNET="Disabled"
+  fi
 
   #
   # IPv4 networking
@@ -160,6 +165,7 @@ bridge-ipv6: ${BRIDGEIP6}
 alias-bridge-ipv6: ${BRIDGEIPS6}
 defaultrouter-ipv6: ${GATEWAY6}
 autostart: ${AUTO}
+vnet: ${VNET}
 status: ${STATUS}
 type: ${TYPE}
 

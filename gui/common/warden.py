@@ -63,6 +63,7 @@ WARDEN_KEY_BRIDGEIP6      = "bridge_ipv6"
 WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ipv6"
 WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
 WARDEN_KEY_AUTOSTART      = "autostart"
+WARDEN_KEY_VNET           = "vnet"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
 
@@ -85,6 +86,12 @@ WARDEN_TYPE_LINUXJAIL  = "linuxjail"
 #
 WARDEN_AUTOSTART_ENABLED  = "Enabled"
 WARDEN_AUTOSTART_DISABLED = "Disabled"
+
+#
+# Warden jail vnet
+#
+WARDEN_VNET_ENABLED  = "Enabled"
+WARDEN_VNET_DISABLED = "Disabled"
 
 
 WARDEN_FLAGS_NONE = warden_arg(0x00000000, None)
@@ -115,9 +122,12 @@ WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000040, "--startauto")
 WARDEN_CREATE_FLAGS_PORTJAIL		= warden_arg(0x00000080, "--portjail")
 WARDEN_CREATE_FLAGS_PLUGINJAIL		= warden_arg(0x00000100, "--pluginjail")
 WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000200, "--linuxjail", True, "script")
-WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000400, "--archive", True, "tar")
-WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000800, "--linuxarchive", True, "tar")
-WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00001000, "--version", True, "string")
+WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000400, "--archive", True, "archive")
+WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000800, "--linuxarchive", True, "linuxarchive")
+WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00001000, "--version", True, "version")
+WARDEN_CREATE_FLAGS_TEMPLATE 		= warden_arg(0x00002000, "--template", True, "template")
+WARDEN_CREATE_FLAGS_SYSLOG		= warden_arg(0x00004000, "--syslog")
+WARDEN_CREATE_FLAGS_LOGFILE		= warden_arg(0x00008000, "--logfile", True, "logfile")
 WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_IPV4,
@@ -131,7 +141,10 @@ WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_LINUXJAIL,
     WARDEN_CREATE_FLAGS_ARCHIVE,
     WARDEN_CREATE_FLAGS_LINUXARCHIVE,
-    WARDEN_CREATE_FLAGS_VERSION
+    WARDEN_CREATE_FLAGS_VERSION,
+    WARDEN_CREATE_FLAGS_TEMPLATE,
+    WARDEN_CREATE_FLAGS_SYSLOG,
+    WARDEN_CREATE_FLAGS_LOGFILE
 ]
 
 WARDEN_DETALS = "details"
@@ -161,6 +174,7 @@ WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6")
 WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4")
 WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6")
 WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
+WARDEN_GET_FLAGS_VNET			= warden_arg(0x00000800, "vnet")
 WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_IPV4,
     WARDEN_GET_FLAGS_IPV6,
@@ -172,7 +186,8 @@ WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6,
     WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4,
     WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6,
-    WARDEN_GET_FLAGS_FLAGS
+    WARDEN_GET_FLAGS_FLAGS,
+    WARDEN_GET_FLAGS_VNET
 ]
 
 WARDEN_IMPORT = "import"
@@ -209,6 +224,8 @@ WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6",
 WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4", True, "defaultrouter-ipv4")
 WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6", True, "defaultrouter-ipv6")
 WARDEN_SET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags", True, "jflags")
+WARDEN_SET_FLAGS_VNET_ENABLE		= warden_arg(0x00000800, "vnet-enable" )
+WARDEN_SET_FLAGS_VNET_DISABLE		= warden_arg(0x00001000, "vnet-disable" )
 WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
@@ -220,7 +237,9 @@ WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6,
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4,
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
-    WARDEN_SET_FLAGS_FLAGS
+    WARDEN_SET_FLAGS_FLAGS,
+    WARDEN_SET_FLAGS_VNET_ENABLE,
+    WARDEN_SET_FLAGS_VNET_DISABLE
 ]
 
 WARDEN_START = "start"
@@ -240,6 +259,36 @@ WARDEN_TYPE_FLAGS = [
     WARDEN_TYPE_FLAGS_LINUXJAIL,
     WARDEN_TYPE_FLAGS_STANARD
 ]
+
+WARDEN_TEMPLATE = "template"
+WARDEN_TEMPLATE_FLAGS_CREATE	=  warden_arg(0x00000001, "create")
+WARDEN_TEMPLATE_FLAGS_DELETE	=  warden_arg(0x00000002, "delete")
+WARDEN_TEMPLATE_FLAGS_LIST	=  warden_arg(0x00000004, "list")
+WARDEN_TEMPLATE_FLAGS = [
+    WARDEN_TEMPLATE_FLAGS_CREATE,
+    WARDEN_TEMPLATE_FLAGS_DELETE,
+    WARDEN_TEMPLATE_FLAGS_LIST
+]
+
+WARDEN_TEMPLATE_CREATE = "create"
+WARDEN_TEMPLATE_CREATE_FLAGS_FBSD	= warden_arg(0x00000010, "-fbsd", True, "fbsd")
+WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS	= warden_arg(0x00000020, "-trueos", True, "trueos")
+WARDEN_TEMPLATE_CREATE_FLAGS_ARCH	= warden_arg(0x00000040, "-arch", True, "arch")
+WARDEN_TEMPLATE_CREATE_FLAGS_TAR	= warden_arg(0x00000080, "-tar", True, "tar")
+WARDEN_TEMPLATE_CREATE_FLAGS_NICK	= warden_arg(0x00000100, "-nick", True, "nick")
+WARDEN_TEMPLATE_CREATE_FLAGS = [
+    WARDEN_TEMPLATE_CREATE_FLAGS_FBSD,
+    WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS,
+    WARDEN_TEMPLATE_CREATE_FLAGS_ARCH,
+    WARDEN_TEMPLATE_CREATE_FLAGS_TAR,
+    WARDEN_TEMPLATE_CREATE_FLAGS_NICK
+]
+
+WARDEN_TEMPLATE_DELETE= "delete"
+WARDEN_TEMPLATE_DELETE_FLAGS = [ ]
+
+WARDEN_TEMPLATE_LIST = "list"
+WARDEN_TEMPLATE_LIST_FLAGS = [ ]
 
 WARDEN_ZFSMKSNAP = "zfsmksnap"
 WARDEN_ZFSMKSNAP_FLAGS = []
@@ -281,6 +330,7 @@ class WardenJail(object):
         self.alias_bridge_ipv6 = kwargs.get(WARDEN_KEY_ALIASBRIDGEIP6)
         self.defaultrouter_ipv6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
         self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
+        self.vnet = kwargs.get(WARDEN_KEY_VNET)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
 
@@ -560,6 +610,7 @@ class warden_list(warden_base):
             'alias-bridge-ipv6': WARDEN_KEY_ALIASBRIDGEIP6,
             'defaultrouter-ipv6': WARDEN_KEY_DEFAULTROUTER6,
             'autostart': WARDEN_KEY_AUTOSTART,
+            'vnet': WARDEN_KEY_VNET,
             'status': WARDEN_KEY_STATUS,
             'type': WARDEN_KEY_TYPE
         } 
@@ -620,7 +671,16 @@ class warden_set(warden_base):
         for wsf in WARDEN_SET_FLAGS:
             if flags & wsf:
                 flags &= ~wsf  
-                if kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
+
+                if wsf == WARDEN_SET_FLAGS_VNET_ENABLE:
+                    self.args = wsf.string
+                    break
+
+                elif wsf == WARDEN_SET_FLAGS_VNET_DISABLE:
+                    self.args = wsf.string
+                    break
+
+                elif kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
                     self.args = wsf.string
                     break
 
@@ -674,6 +734,29 @@ class warden_type(warden_base):
 
         super(warden_type, self).__init__(WARDEN_TYPE,
             WARDEN_TYPE_FLAGS, flags, **kwargs)
+
+
+class warden_template(warden_base):
+    def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        self.args = ""
+        self.jail = None
+
+        type = None
+        tflags = None
+
+        if flags & WARDEN_TEMPLATE_FLAGS_CREATE:
+            type = WARDEN_TEMPLATE_CREATE
+            tflags = WARDEN_TEMPLATE_CREATE_FLAGS
+        elif flags & WARDEN_TEMPLATE_FLAGS_DELETE:
+            type = WARDEN_TEMPLATE_DELETE
+            tflags = WARDEN_TEMPLATE_DELETE_FLAGS
+        elif flags & WARDEN_TEMPLATE_FLAGS_LIST:
+            type = WARDEN_TEMPLATE_LIST
+            tflags = WARDEN_TEMPLATE_LIST_FLAGS
+
+        cmd = "%s %s" % (WARDEN_TEMPLATE, type)
+        super(warden_template, self).__init__(cmd,
+            tflags, flags, **kwargs)
 
 
 class warden_zfsmksnap(warden_base):
@@ -917,6 +1000,9 @@ class Warden(warden_base):
             WARDEN_TYPE_LINUXJAIL
         ]
         return types
+
+    def template(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        return self.__call(warden_template(flags, **kwargs))
 
     def zfsmksnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_zfsmksnap(flags, **kwargs))

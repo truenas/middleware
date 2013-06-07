@@ -59,6 +59,8 @@ from freenasUI.common.warden import (
     WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_IPV4,
     WARDEN_CREATE_FLAGS_IPV6,
+    WARDEN_CREATE_FLAGS_SYSLOG,
+    WARDEN_CREATE_FLAGS_LOGFILE,
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
     WARDEN_SET_FLAGS_ALIAS_IPV4,
@@ -69,6 +71,8 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6,
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4,
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
+    WARDEN_SET_FLAGS_VNET_ENABLE,
+    WARDEN_SET_FLAGS_VNET_DISABLE,
     WARDEN_SET_FLAGS_FLAGS,
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL, 
@@ -155,6 +159,12 @@ class JailCreateForm(ModelForm):
         initial=False
     )
 
+    jail_vnet = forms.BooleanField(
+        label=_("vnet"),
+        required=False,
+        initial=True
+    )
+
 #    jail_script = forms.CharField(
 #        label=_("script"),
 #        required=False
@@ -171,7 +181,8 @@ class JailCreateForm(ModelForm):
         'jail_bridge_ipv4',
         'jail_ipv6',
         'jail_bridge_ipv6',
-        'jail_script'
+        'jail_script',
+        'jail_vnet'
     ]
 
     class Meta:
@@ -338,58 +349,70 @@ class JailCreateForm(ModelForm):
             jail_flags |= WARDEN_CREATE_FLAGS_IPV6
             jail_create_args['ipv6'] = jail_ipv6
 
-        jail_create_args['flags'] = jail_flags
+        jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
+        jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
 
         logfile = "%s/warden.log" % jc.jc_path
+        jail_create_args['logfile'] = logfile
 
-        w.logfile = logfile
-        w.syslog = True
+        jail_create_args['flags'] = jail_flags
 
         createfile = "/var/tmp/.jailcreate"
         try:
             cf = open(createfile, "a+")
             cf.close()
-            if os.path.exists(logfile):
-                os.unlink(logfile) 
-            lf = open(logfile, "a+") 
-            lf.close()
             w.create(**jail_create_args)
 
         except Exception as e:
             self.errors['__all__'] = self.error_class([_(e.message)])
             if os.path.exists(createfile):
                 os.unlink(createfile)
-            if os.path.exists(logfile):
-                os.unlink(logfile)
             return
 
         if os.path.exists(createfile):
             os.unlink(createfile)
-        if os.path.exists(logfile):
-            os.unlink(logfile)
+
+        jail_bridge_ipv4 = self.cleaned_data.get('jail_bridge_ipv4')
+        jail_bridge_ipv6 = self.cleaned_data.get('jail_bridge_ipv6')
+        jail_vnet = self.cleaned_data.get('jail_vnet')
 
         jail_set_args = { }
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
-
-        jail_bridge_ipv4 = self.cleaned_data.get('jail_bridge_ipv4')
-        jail_bridge_ipv6 = self.cleaned_data.get('jail_bridge_ipv6')
-
         if jail_bridge_ipv4:
             jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
             jail_set_args['bridge-ipv4'] = jail_bridge_ipv4
+            jail_set_args['flags'] = jail_flags
+            try:
+                w.set(**jail_set_args)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
+        jail_set_args = { }
+        jail_set_args['jail'] = jail_host
+        jail_flags = WARDEN_FLAGS_NONE
         if jail_bridge_ipv6:
             jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
             jail_set_args['bridge-ipv6'] = jail_bridge_ipv6
+            jail_set_args['flags'] = jail_flags
+            try:
+                w.set(**jail_set_args)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
-        jail_set_args['flags'] = jail_flags
-
-        try:
-            w.set(**jail_set_args)
-        except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
-            return
+        jail_set_args = { }
+        jail_set_args['jail'] = jail_host
+        jail_flags = WARDEN_FLAGS_NONE
+        if jail_vnet:
+            jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+            jail_set_args['flags'] = jail_flags
+            try:
+                w.set(**jail_set_args)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
         if self.cleaned_data['jail_autostart']:
             try:
@@ -426,6 +449,7 @@ class JailConfigureForm(ModelForm):
 class JailsEditForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
+    jail_vnet = forms.BooleanField(label=_("vnet"), required=False)
 
     def __set_ro(self, instance, key):
         if instance and instance.id:
@@ -487,7 +511,8 @@ class JailsEditForm(ModelForm):
             'jail_alias_ipv6',
             'jail_bridge_ipv6',
             'jail_alias_bridge_ipv6',
-            'jail_defaultrouter_ipv6'
+            'jail_defaultrouter_ipv6',
+            'jail_vnet' 
         ]
 
         instance = getattr(self, 'instance', None)
@@ -551,6 +576,13 @@ class JailsEditForm(ModelForm):
                 elif cf == 'jail_defaultrouter_ipv6':
                     flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
                     args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_vnet':
+                    if self.cleaned_data.get(cf): 
+                        flags |= WARDEN_SET_FLAGS_VNET_ENABLE
+                    else: 
+                        flags |= WARDEN_SET_FLAGS_VNET_DISABLE
+                    args['vnet-enable'] = self.cleaned_data.get(cf)
 
                 args['jail'] = jail_host
                 args['flags'] = flags

@@ -59,6 +59,15 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 # Clone directory
 CDIR="${JDIR}/clones"
 
+warden_log() {
+  if [ -n "${WARDEN_USESYSLOG}" ] ; then
+    logger -t warden $*
+  fi
+  if [ -n "${WARDEN_LOGFILE}" ] ; then
+    echo $* >> ${WARDEN_LOGFILE}
+  fi
+};
+
 warden_printf() {
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden $*
@@ -120,6 +129,19 @@ warden_warn() {
     echo "WARN: $*" >> ${WARDEN_LOGFILE}
   fi
   echo >&2 "ERROR: $*" 
+};
+
+warden_run() {
+  local args="$*"
+
+  if [ -n "${args}" ]
+  then
+    warden_print "${args}"
+    ${args}
+    return $?
+  fi
+
+  return 0
 };
 
 warden_exit() {
@@ -783,7 +805,7 @@ make_bootstrap_pkgng_file_standard()
   local jaildir="${1}"
   local outfile="${2}"
 
-  local release="$(uname -r)"
+  local release="$(uname -r | cut -d '-' -f 1-2)"
   local arch="$(uname -m)"
 
   get_mirror
@@ -821,7 +843,7 @@ make_bootstrap_pkgng_file_pluginjail()
   local jaildir="${1}"
   local outfile="${2}"
 
-  local release="$(uname -r)"
+  local release="$(uname -r | cut -d '-' -f 1-2)"
   local arch="$(uname -m)"
 
   get_mirror
@@ -891,7 +913,7 @@ bootstrap_pkgng()
   if [ -z "${jailtype}" ] ; then
     jailtype="standard"
   fi
-  local release="$(uname -r)"
+  local release="$(uname -r | cut -d '-' -f 1-2)"
   local arch="$(uname -m)"
 
   local ffunc="make_bootstrap_pkgng_file_standard"
@@ -1060,6 +1082,57 @@ get_ipfw_nat_priority()
    done
 
    return ${res}
+}
+
+list_templates()
+{
+   warden_print "Jail Templates:"
+   warden_print "------------------------------"
+   isDirZFS "${JDIR}"
+   if [ $? -eq 0 ] ; then
+     for i in `ls -d ${JDIR}/.warden-template* 2>/dev/null`
+     do
+        if [ ! -e "$i/bin/sh" ] ; then continue ; fi
+        NICK=`echo "$i" | sed "s|${JDIR}/.warden-template-||g"`
+        file "$i/bin/sh" 2>/dev/null | grep -q "64-bit"
+        if [ $? -eq 0 ] ; then
+           ARCH="amd64"
+        else
+           ARCH="i386"
+        fi
+        VER=`file "$i/bin/sh" | cut -d ',' -f 5 | awk '{print $3}'`
+        if [ -e "$i/etc/rc.delay" ] ; then
+           TYPE="TrueOS"
+        else
+           TYPE="FreeBSD"
+        fi
+        warden_print "${NICK} - $TYPE $VER ($ARCH)"
+     done
+   else
+     # UFS, no details for U!
+     ls ${JDIR}/.warden-template*.tbz | sed "s|${JDIR}/.warden-template-||g" | sed "s|.tbz||g"
+   fi
+   exit 0
+}
+
+delete_template()
+{
+   tDir="${JDIR}/.warden-template-${1}"
+   isDirZFS "${JDIR}"
+   if [ $? -eq 0 ] ; then
+     isDirZFS "${tDir}" "1"
+     if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${tDir}" ; fi
+     tank=`getZFSTank "$tDir"`
+     rp=`getZFSRelativePath "$tDir"`
+     zfs destroy -r $tank${rp}
+     rmdir ${tDir}
+   else
+     if [ ! -e "${tDir}.tbz" ] ; then
+       warden_exit "No such template: ${1}"
+     fi
+     rm ${tDir}.tbz
+   fi
+   exit 0
 }
 
 get_next_id()

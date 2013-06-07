@@ -22,7 +22,7 @@ PROGDIR="/usr/local/share/warden"
 # Source our variables
 . ${PROGDIR}/scripts/backend/functions.sh
 
-warden_print "warden $*"
+warden_log "warden $*"
 
 title()
 {
@@ -67,6 +67,7 @@ cat<<__EOF__>"${out}"
         start - Start a jail
          stop - Stops a jail
          type - Set the jail type (portjail|pluginjail|standard)
+     template - Manage jail templates
     zfsmksnap - Create a ZFS snapshot of a jail 
  zfslistclone - List clones of jail snapshots
   zfslistsnap - List snapshots of a jail
@@ -99,7 +100,8 @@ Available options:
  alias-bridge-ipv6: Lets you see additional vnet bridge IPv6 addresses for this jail
 defaultrouter-ipv4: Lets you see the default IPv4 router for this jail
 defaultrouter-ipv6: Lets you see the default IPv6 router for this jail
-        flags: Lets you see additional flags to pass to the 'jail' command at startup
+             flags: Lets you see additional flags to pass to the 'jail' command at startup
+              vnet: Lets you see if vnet support is enabled for this jail
 
 Usage:
 
@@ -124,17 +126,20 @@ Lets you set options for your jail
 
 Available options:
 
-              ipv4: Lets you set the IPv4 address for this jail
-              ipv6: Lets you set the IPv6 address for this jail
-        alias-ipv4: Lets you set additional IPv4 addresses for this jail
-        alias-ipv6: Lets you set additional IPv6 addresses for this jail
-       bridge-ipv4: Lets you set the vnet bridge IPv4 address for this jail
-       bridge-ipv6: Lets you set the vnet bridge IPv6 address for this jail
- alias-bridge-ipv4: Lets you set additional vnet bridge IPv4 addresses for this jail
- alias-bridge-ipv6: Lets you set additional vnet bridge IPv6 addresses for this jail
-defaultrouter-ipv4: Lets you set the default IPv4 router for this jail
-defaultrouter-ipv6: Lets you set the default IPv6 router for this jail
-        flags: Lets you set additional flags to pass to the 'jail' command at startup
+              ipv4: Set the IPv4 address for this jail
+              ipv6: Set the IPv6 address for this jail
+        alias-ipv4: Set additional IPv4 addresses for this jail
+        alias-ipv6: Set additional IPv6 addresses for this jail
+       bridge-ipv4: Set the vnet bridge IPv4 address for this jail
+       bridge-ipv6: Set the vnet bridge IPv6 address for this jail
+ alias-bridge-ipv4: Set additional vnet bridge IPv4 for this jail
+ alias-bridge-ipv6: Set additional vnet bridge IPv6 for this jail
+defaultrouter-ipv4: Set the default vnet IPv4 router for this jail
+defaultrouter-ipv6: Set the default vnet IPv6 router for this jail
+             flags: Set additional flags to pass to the 'jail' command
+       vnet-enable: Enables vnet support for the jail
+      vnet-disable: Disables vnet support for this jail
+
 
 Usage:
 
@@ -149,6 +154,8 @@ Example:
   warden set ipv6 myjail fe80::8e89:a5ff:fe52:ad19,fe80::8e89:a5ff:fe52:ad21
 
   warden set flags myjail allow.raw_sockets=true,allow.chflags=true
+
+  warden set vnet-enable myjail
 "
 };
 
@@ -333,6 +340,41 @@ Example:
 "
 };
 
+help_template()
+{
+ title
+ warden_print "Help template
+
+Manage the jail templates used to create new FreeBSD jails
+
+Required subcommands:
+
+  create - Create a new jail template
+  delete - Delete a jail template
+    list - List jail templates on system
+
+Flags:
+
+  create:
+     -fbsd <version>   - FreeBSD Version, 9.1-RELEASE, 9.0-RELEASE, etc
+     -trueos <version> - TrueOS Version, 9-TRUEOS, 10-TRUEOS, etc
+     -arch <arch type> - System architecture, i386/amd64
+     -tar <file>       - Use tar archive as template contents (Ignores -arch / -fbsd)
+     -nick <nickname>  - Template nickname for creating jails / deleting templates
+
+Usage:
+
+  warden template create <flags>
+   or
+  warden template delete <template nickname>
+   or
+  warden template list
+
+Example:
+
+  warden template create -fbsd 9.1-RELEASE -arch amd64 -nick 91amd64
+"
+};
 
 help_type()
 {
@@ -606,6 +648,9 @@ Available Flags:
   --archive <tar>              (Use specified tar file for BSD jail creation)
   --linuxarchive <tar>         (Use specified tar file for Linux jail creation)
   --version <string>           (Use this instead of /etc/version)
+  --template <string>          (Specify a jail template to build with)
+  --syslog                     (Log to syslog)
+  --logfile <file>             (Log to a file)
 
 Usage:
 
@@ -640,6 +685,7 @@ case "$1" in
            import) help_import ;;
            pkgs) help_pkgs ;;
            pbis) help_pbis ;;
+           template) help_template ;;
            type) help_type ;;
            get) help_get ;;
            set) help_set ;;
@@ -682,13 +728,22 @@ details) JAILNAME="${2}"
     fstab) JAILNAME="${2}"
          if [ -z "${JAILNAME}" ]; then warden_exit "No jail specified!"; fi
          if [ ! -e "${JDIR}/${JAILNAME}" ]; then warden_exit "No such jail!"; fi
-    set_warden_metadir
+         set_warden_metadir
          if [ ! -e "${JMETADIR}/fstab" ] ; then
              echo "# Device  Mountpoint  FStype          Options Dump Pass" > ${JMETADIR}/fstab
          fi
          if [ -z "$EDITOR" ]; then EDITOR="vi"; fi
              lockf "/var/tmp/.${JAILNAME}_fstab" $EDITOR ${JMETADIR}/fstab
          exit $?
+         ;;
+ template) require_root
+         OPT="$2"
+         case $OPT in
+           create) shift ; shift; ${PROGDIR}/scripts/backend/createtemplate.sh $* ;;
+           delete) delete_template $3 ;;
+             list) list_templates ;;
+                *) help_template ; exit 1 ;;
+        esac
          ;;
     get) require_root
 	 OPT="${2}"
@@ -709,6 +764,7 @@ details) JAILNAME="${2}"
  alias-bridge-ipv6) cat "${JMETADIR}/alias-bridge-ipv6" 2>/dev/null | sed 's| |,|g' ;;
 defaultrouter-ipv4) cat "${JMETADIR}/defaultrouter-ipv4" 2>/dev/null | sed 's| |,|g' ;;
 defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |,|g' ;;
+              vnet) if [ -e "${JMETADIR}/vnet" ] ; then echo 1 ; else echo 0 ; fi ;;
               *) warden_exit "Invalid option!" ;;
          esac
          ;;
@@ -782,6 +838,8 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           flags) EXTRAFLAGS="${4}"
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"
                 ;;
+    vnet-enable) touch "${JMETADIR}/vnet" ;;
+    vnet-disable) rm "${JMETADIR}/vnet" 2>/dev/null ;;
               *) warden_exit "Invalid option!" ;;
 	   esac
          ;;
@@ -1143,6 +1201,27 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 			  if [ -z "$1" ] ; then warden_exit "No version string specified!"; fi
                           VERSION="${1}"
                           ;;
+             --template) shift
+                         if [ -z "$1" ] ; then warden_exit "No template string specified!"; fi
+                         isDirZFS "${JDIR}"
+                         if [ $? -eq 0 ] ; then
+                            TDIR="${JDIR}/.warden-template-$1"
+                         else
+                            TDIR="${JDIR}/.warden-template-$1.tbz"
+                         fi
+                         if [ ! -e "$TDIR" ] ; then
+                            warden_exit"Invalid template specified: $1"
+                         fi
+                         TEMPLATE="${1}"
+                         ;;
+               --syslog) WARDEN_USESYSLOG=TRUE; export WARDEN_USESYSLOG
+                         ;;
+              --logfile) shift
+                         if [ -z "$1" ] ; then warden_exit "No logfile specified!"; fi
+                         WARDEN_LOGFILE="${1}"
+                         export WARDEN_LOGFILE
+                         : > "${WARDEN_LOGFILE}"
+                         ;;
            esac
            shift
          done
@@ -1163,6 +1242,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           export ARCHIVE_FILE
           export VERSION
           export VANILLA
+          export TEMPLATE
 
           # Passed all tests, create the jail now
           lockf "/var/tmp/.${JAILNAME}" \

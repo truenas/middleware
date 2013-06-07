@@ -62,7 +62,8 @@ class JailsFAdmin(BaseFreeAdmin):
         'jail_alias_ipv6',
         'jail_bridge_ipv6',
         'jail_alias_bridge_ipv6',
-        'jail_defaultrouter_ipv6'
+        'jail_defaultrouter_ipv6',
+        'jail_vnet'
     )
 
     def get_datagrid_columns(self):
