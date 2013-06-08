@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-01-25 18:05+0200\n"
-"Last-Translator: mav <mav@freebsd.org>\n"
+"PO-Revision-Date: 2013-06-07 16:38+0200\n"
+"Last-Translator: Evilupe <evilupe@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -262,7 +262,7 @@ msgstr "Машина Времени"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "Без учета регистра"
+msgstr "Без учёта регистра"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -3455,7 +3455,7 @@ msgid ""
 msgstr ""
 "Это опция разрешает выбранным пользователям и группам доступ к общему "
 "ресурсу. Пользователи и группы должны быть разделены запятыми. Группы "
-"обозначаются префиксом \"@\"."
+"обозначаются префиксом @."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -6240,7 +6240,7 @@ msgstr "Дополнительные опции ZFS"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Использование только одного диска журнала настоятельно не рекомендуется"
+msgstr "Использование только 1 диска журнала настоятельно не рекомендуется"
 
 #: templates/storage/wizard.html:116
 msgid "Log"
