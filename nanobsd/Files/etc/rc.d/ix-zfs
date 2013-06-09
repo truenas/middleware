@@ -30,7 +30,7 @@ import_zpools()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM storage_volume WHERE vol_fstype = 'ZFS' AND vol_encrypt < 2" | \
 	while eval read -r $f; do
 		if [ -n "${vol_guid}" ]; then
-			[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f ${vol_guid} || /sbin/zpool import -o cachefile=none -R /
+			[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f ${vol_guid} || /sbin/zpool import -o cachefile=none -R /mnt -f ${vol_guid}
 			rc=$?
 		fi
 		if [ ${rc} -ne 0 ]; then
