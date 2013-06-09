@@ -614,7 +614,7 @@ customize_cmd remove_patch_divots
 
 configure_mnt_md ( )
 {
-	mkdir -p ${NANO_WORLDDIR}/conf/base/mnt
+	mkdir -m 755 -p ${NANO_WORLDDIR}/conf/base/mnt
 	echo 2048 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
 }
 customize_cmd configure_mnt_md
