@@ -848,8 +848,27 @@ define([
             for(var i=0,len=this.initialDisks.length;i<len;i++) {
               this.initialDisks[0].addToRow(this, 0, i);
             }
+          } else if(this.initialDisks.length < 18) {
+            //FIXME: We need to handle disks == 16 in a better way
+            var div2 = Math.floor(this.initialDisks.length / 2);
+            var mod2 = this.initialDisks.length % 2;
+
+            for(var i=0,len=this.initialDisks.length - mod2;i<len;i++) {
+              this.initialDisks[0].addToRow(this, ath.floor(i / div2), i % div2);
+            }
+
+            // Remaining disks are spare
+            if(this.initialDisks.length > 0) {
+              var diskgspare = this.manager.addVdev({
+                can_delete: true,
+                type: "spare",
+                initialDisks: this.initialDisks
+              });
+              diskgspare._disksCheck(true);
+              diskgspare.colorActive();
+            }
+
           } else if(this.initialDisks.length < 99) {
-            // FIXME: for >= 12 < 18
             var chosen;
             var div9 = Math.floor(this.initialDisks.length / 9);
             var div10 = Math.floor(this.initialDisks.length / 10);
