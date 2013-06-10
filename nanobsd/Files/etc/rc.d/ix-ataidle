@@ -63,10 +63,10 @@ ataidle_start()
 			ataidle_args="${ataidle_args}-A ${disk_acousticlevel}"
 		fi
 		if [ -n "${ataidle_args}" ]; then
-			echo ${ataidle_args} ${disk_name} | xargs /usr/local/sbin/ataidle
+			echo ${ataidle_args} /dev/${disk_name} | xargs /usr/local/sbin/ataidle
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
-			(sleep 60; /usr/local/sbin/ataidle -I ${disk_hddstandby} ${disk_name}) > /dev/null 2>&1 &
+			(sleep 60; /usr/local/sbin/ataidle -I ${disk_hddstandby} /dev/${disk_name}) > /dev/null 2>&1 &
 		fi
 	done
 }
