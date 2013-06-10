@@ -174,14 +174,17 @@ class ExceptionReporter(debug.ExceptionReporter):
 
 def server_error(request, *args, **kwargs):
     try:
-        adv = Advanced.objects.all().order_by('-id')[0]
-        if adv.adv_traceback:
+        tb = Advanced.objects.all().latest('id').adv_traceback
+    except:
+        tb = True
+    try:
+        if tb:
             reporter = ExceptionReporter(request, *sys.exc_info())
             html = reporter.get_traceback_html()
             return HttpResponse(html, mimetype='text/html')
         else:
             raise
-    except:
+    except Exception, e:
         return debug.technical_500_response(request, *sys.exc_info())
 
 
