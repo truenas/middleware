@@ -1358,7 +1358,7 @@ class SSH(Model):
         advanced_fields = (
             'ssh_sftp_log_level',
             'ssh_sftp_log_facility',
-            'ssh_host_dsa_key',
+            'ssh_privatekey',
             'ssh_options',
         )
 
