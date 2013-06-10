@@ -1029,6 +1029,18 @@ class notifier:
 
         return ("/dev/%s.eli" % devname)
 
+    def geli_setkey(self, dev, key, passphrase=None, slot=0):
+        command = ["geli", "setkey", "-n", str(slot)]
+        if passphrase:
+            command.extend(["-J", passphrase])
+        else:
+            command.append("-P")
+        command.extend(["-K", key, dev])
+        proc = self.__pipeopen(' '.join(command))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+
     def geli_passphrase(self, volume, passphrase, rmrecovery=False):
         """
         Set a passphrase in a geli
