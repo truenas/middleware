@@ -183,7 +183,11 @@ def volumemanager(request):
         'swap_size': swap * 1024 * 1024 * 1024,
         'extend': json.dumps(
             [{'value': '', 'label': '-----'}] +
-            [{'label': x.vol_name, 'value': x.vol_name} for x in qs]
+            [{
+                'label': x.vol_name,
+                'value': x.vol_name,
+                'enc': x.vol_encrypt > 0
+            } for x in qs]
         ),
     })
 

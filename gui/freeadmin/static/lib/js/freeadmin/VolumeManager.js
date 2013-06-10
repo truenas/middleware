@@ -1064,11 +1064,18 @@ define([
               enc.set('disabled', true);
               encini.set('disabled', true);
               okbtn.set('label', me.extend_label);
+              var opt = this.getOptions(val);
+              if(opt.enc) {
+                domStyle.set(me.dapExtendEnc, "display", "");
+              } else {
+                domStyle.set(me.dapExtendEnc, "display", "none");
+              }
             } else {
               volume_name.set('disabled', false);
               enc.set('disabled', false);
               encini.set('disabled', false);
               okbtn.set('label', me.add_label);
+              domStyle.set(me.dapExtendEnc, "display", "none");
             }
           }
         }, this.dapExtend);
