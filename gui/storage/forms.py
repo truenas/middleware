@@ -651,8 +651,13 @@ class AutoImportWizard(SessionWizardView):
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
         passphrase = cdata.get("passphrase")
+        passfile = None
         if key and passphrase:
             encrypt = 2
+            passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
+            with open(passfile, 'w') as f:
+                f.write(passphrase)
         elif key:
             encrypt = 1
         else:
@@ -667,55 +672,67 @@ class AutoImportWizard(SessionWizardView):
         elif vol['type'] == 'zfs':
             volume_fstype = 'ZFS'
 
-        with transaction.commit_on_success():
-            volume = models.Volume(
-                vol_name=volume_name,
-                vol_fstype=volume_fstype,
-                vol_encrypt=encrypt)
-            volume.save()
-            if encrypt > 0:
-                if not os.path.exists(GELI_KEYPATH):
-                    os.mkdir(GELI_KEYPATH)
-                with open(volume.get_geli_keyfile(), 'wb') as f:
-                    f.write(key.read())
-            self.volume = volume
-
-            mp = models.MountPoint(
-                mp_volume=volume,
-                mp_path='/mnt/' + volume_name,
-                mp_options='rw')
-            mp.save()
-
-            if vol['type'] != 'zfs':
-                notifier().label_disk(
-                    volume_name,
-                    "%s/%s" % (group_type, volume_name),
-                    'UFS')
-            else:
-                volume.vol_guid = vol['id']
+        try:
+            with transaction.commit_on_success():
+                volume = models.Volume(
+                    vol_name=volume_name,
+                    vol_fstype=volume_fstype,
+                    vol_encrypt=encrypt)
                 volume.save()
-                models.Scrub.objects.create(scrub_volume=volume)
+                if encrypt > 0:
+                    if not os.path.exists(GELI_KEYPATH):
+                        os.mkdir(GELI_KEYPATH)
+                    key.seek(0)
+                    keydata = key.read()
+                    with open(volume.get_geli_keyfile(), 'wb') as f:
+                        f.write(keydata)
+                self.volume = volume
 
-            if vol['type'] == 'zfs' and not notifier().zfs_import(
-                    vol['label'], vol['id']):
-                raise MiddlewareError(_(
-                    'The volume "%s" failed to import, '
-                    'for futher details check pool status') % vol['label'])
-            for disk in enc_disks:
-                if disk.startswith("gptid"):
-                    diskname = notifier().identifier_to_device(
-                        "{uuid}%s" % disk.replace("gptid/", "")
-                    )
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options='rw')
+                mp.save()
+
+                if vol['type'] != 'zfs':
+                    notifier().label_disk(
+                        volume_name,
+                        "%s/%s" % (group_type, volume_name),
+                        'UFS')
                 else:
-                    diskname = disk
-                ed = models.EncryptedDisk()
-                ed.encrypted_volume = volume
-                ed.encrypted_disk = models.Disk.objects.filter(
-                    disk_name=diskname,
-                    disk_enabled=True
-                )[0]
-                ed.encrypted_provider = disk
-                ed.save()
+                    volume.vol_guid = vol['id']
+                    volume.save()
+                    models.Scrub.objects.create(scrub_volume=volume)
+
+                if vol['type'] == 'zfs' and not notifier().zfs_import(
+                        vol['label'], vol['id']):
+                    raise MiddlewareError(_(
+                        'The volume "%s" failed to import, '
+                        'for futher details check pool status') % vol['label'])
+                for disk in enc_disks:
+                    notifier().geli_setkey(
+                        "/dev/%s" % disk,
+                        volume.get_geli_keyfile(),
+                        passphrase=passfile
+                    )
+                    if disk.startswith("gptid"):
+                        diskname = notifier().identifier_to_device(
+                            "{uuid}%s" % disk.replace("gptid/", "")
+                        )
+                    else:
+                        diskname = disk
+                    ed = models.EncryptedDisk()
+                    ed.encrypted_volume = volume
+                    ed.encrypted_disk = models.Disk.objects.filter(
+                        disk_name=diskname,
+                        disk_enabled=True
+                    )[0]
+                    ed.encrypted_provider = disk
+                    ed.save()
+        except:
+            if passfile:
+                os.unlink(passfile)
+            raise
 
         notifier().reload("disk")
 
@@ -773,11 +790,13 @@ class AutoImportDecryptForm(forms.Form):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
             passphrase = passfile
 
         keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
+        os.chmod(keyfile, 600)
         with open(keyfile, 'wb') as f:
             f.write(key.read())
 
@@ -1606,6 +1625,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
                 _("Confirmation does not match passphrase")
             )
         passfile = tempfile.mktemp(dir='/tmp/')
+        os.chmod(passfile, 600)
         with open(passfile, 'w') as f:
             f.write(passphrase)
         if not notifier().geli_testkey(self.volume, passphrase=passfile):
@@ -1620,6 +1640,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         passphrase = self.cleaned_data.get("pass")
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
         else:
@@ -1922,6 +1943,7 @@ class CreatePassphraseForm(forms.Form):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
         else:
@@ -1999,6 +2021,7 @@ class ChangePassphraseForm(forms.Form):
 
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
         else:
@@ -2051,12 +2074,14 @@ class UnlockPassphraseForm(forms.Form):
         key = self.cleaned_data.get("key")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
             failed = notifier().geli_attach(volume, passphrase=passfile)
             os.unlink(passfile)
         elif key is not None:
             keyfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(keyfile, 600)
             with open(keyfile, 'wb') as f:
                 f.write(key.read())
             failed = notifier().geli_attach(
@@ -2122,6 +2147,7 @@ class ReKeyForm(KeyForm):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
+            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
                 f.write(passphrase)
             passphrase = passfile
