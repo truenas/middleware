@@ -290,7 +290,7 @@ fi
 
 # If not using a tarball, lets download our files
 if [ -z "$FBSDTAR" ] ; then
-#  download_template_files
+  download_template_files
 fi
 
 # Create the template now
