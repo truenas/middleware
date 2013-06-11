@@ -648,7 +648,7 @@ class SMARTTestForm(ModelForm):
         return w
 
     def clean(self):
-        disks = self.cleaned_data.get("smarttest_disks")
+        disks = self.cleaned_data.get("smarttest_disks", [])
         test = self.cleaned_data.get("smarttest_type")
         used_disks = []
         for disk in disks:
