@@ -834,6 +834,12 @@ i=0
 percent=0
 
 pkg update
+if [ "$?" != "0" ]
+then
+   umount devfs
+   touch /FAIL
+   exit 4
+fi
 
 total=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
 for p in `pkg rquery "%do" pcbsd-utils`
@@ -895,6 +901,12 @@ __EOF__
 
 echo '
 pkg update
+if [ "$?" != "0" ]
+then
+   umount devfs
+   touch /FAIL
+   exit 4
+fi
 
 count1=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
 count2=`cat /pluginjail-packages|wc -l|awk '"'{ print '"'$1'"' }'"'`
