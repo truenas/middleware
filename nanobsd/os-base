@@ -592,20 +592,6 @@ select_httpd ( )
 }
 customize_cmd select_httpd
 
-# Ths is required to be added in rescue image as it is no longer
-# in the freebsd patch
-static_dialog()
-{
-	make \
-		-C ${NANO_SRC}/gnu/usr.bin/dialog \
-		BINDIR=/rescue \
-		DESTDIR=${NANO_WORLDDIR} \
-		NO_SHARED= \
-		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
-		clean all install
-}
-customize_cmd static_dialog
-
 remove_patch_divots ( )
 {
 	find ${NANO_WORLDDIR} -name \*.orig -or -name \*.rej -delete
