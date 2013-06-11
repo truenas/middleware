@@ -3828,15 +3828,10 @@ class notifier:
             disk.disk_name = devname
             disk.disk_enabled = True
         else:
-            qs = Disk.objects.filter(disk_name=devname).order_by(
-                'disk_enabled')
-            if qs.exists():
-                disk = qs[0]
-                if qs.count() > 1:
-                    Disk.objects.filter(disk_name=devname).exclude(
-                        id=disk.id).delete()
-            else:
-                disk = Disk()
+            qs = Disk.objects.filter(disk_name=devname).update(
+                disk_enabled=False
+            )
+            disk = Disk()
             disk.disk_name = devname
             disk.disk_identifier = ident
             disk.disk_enabled = True
