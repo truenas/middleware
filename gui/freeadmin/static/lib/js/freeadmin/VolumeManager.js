@@ -517,14 +517,19 @@ define([
         } else {
           diskSize = '0 B';
         }
+        this.dapCapacity.innerHTML = humanizeSize(this.getCapacity());
+        this.dapNumCol.innerHTML = sprintf("%dx%dx%s", this.getCurrentCols(), this.getCurrentRows(), diskSize);
         if(this._isOptimal !== null) {
+          domStyle.set(this.dapOptimalRow, "display", "");
           if(this._isOptimal) {
-            this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />optimal<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+            this._optimalTooltip.set('content', "Your configuration is optimal!<br /><br />It means you'll have the best performance possible for this number of disks and type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
+            this.dapOptimal.innerHTML = 'optimal';
           } else {
-            this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />non-optimal<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+            this._optimalTooltip.set('content', "Your configuration is not optimal!<br /><br />It means this number of disks will not provide the best performance for that type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
+            this.dapOptimal.innerHTML = 'non-optimal';
           }
         } else {
-          this.dapNumCol.innerHTML = sprintf("%dx%dx%s<br />Capacity: %s", this.getCurrentCols(), this.getCurrentRows(), diskSize, humanizeSize(this.getCapacity()));
+          domStyle.set(this.dapOptimalRow, "display", "none");
         }
       },
       colorActive: function() {
@@ -817,6 +822,23 @@ define([
         this.dapDelete = Button({
           label: "X"
         }, this.dapDelete);
+
+        this._optimalTooltip = new TooltipDialog({
+          connectId: [this.dapOptimalHelp],
+          onMouseLeave: function() {
+            popup.close(me._optimalTooltip);
+            //me._tpDialog.destroyRecursive();
+          }
+        });
+
+        on(this.dapOptimalHelp, mouse.enter, function() {
+          popup.open({
+            popup: me._optimalTooltip,
+            around: me.dapOptimalHelp,
+            orient: ["above", "after", "below-alt"]
+          });
+        });
+
 
         if(this.can_delete === true) {
           on(this.dapDelete, "click", lang.hitch(this, this.remove));
