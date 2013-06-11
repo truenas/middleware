@@ -57,7 +57,7 @@ class CronMultiple(DojoWidgetMixin, Widget):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, name=name, **{'data-dojo-name': name})
         final_attrs['value'] = force_unicode(value)
         if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"

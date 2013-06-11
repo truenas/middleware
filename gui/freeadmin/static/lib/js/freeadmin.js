@@ -41,6 +41,7 @@ require([
     "dojo/dom-construct",
     "dojo/dom-style",
     "dojo/fx",
+    "dojo/fx/scroll",
     "dojo/html",
     "dojo/json",
     "dojo/mouse",
@@ -116,6 +117,7 @@ require([
     domConstruct,
     domStyle,
     fx,
+    scroll,
     html,
     JSON,
     mouse,
@@ -787,6 +789,7 @@ require([
 
     }
 
+<<<<<<< HEAD
     scrollToFirst = function() {
         dojox.fx.smoothScroll({
             node: dojo.query('#progress:first-child')[0],
@@ -806,6 +809,8 @@ require([
 */
     };
 
+=======
+>>>>>>> 1fccbc0019eecdfbf07e8f6495ef52db5d2548f3
     checkJailProgress = function(pbar, pdisplay, url, uuid, iter) {
         if(!iter) iter = 0;
         xhr.get(url, {
@@ -815,6 +820,10 @@ require([
                 if (obj.size > 0) {
                     pdisplay.set('value', obj.data);
                 }
+                scroll.smoothScroll({
+                    node: dojo.query(':last-child', pdisplay.domNode)[0],
+                    win: pdisplay.domNode
+                }).play();
 
                 pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 if (obj.state != 'done') {
@@ -987,6 +996,10 @@ require([
                 cols: "80",
                 style: "width:auto;",
                 readOnly: true
+<<<<<<< HEAD
+=======
+                //onChange: scrollToLast
+>>>>>>> 1fccbc0019eecdfbf07e8f6495ef52db5d2548f3
                 });
 
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
