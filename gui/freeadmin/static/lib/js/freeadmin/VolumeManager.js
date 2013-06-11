@@ -844,6 +844,7 @@ define([
           on(this.dapDelete, "click", lang.hitch(this, this.remove));
         } else {
           this.dapDelete.set('disabled', true);
+          domStyle.set(this.dapDelete.domNode, "display", "none");
         }
 
         on(this.vdevtype, "change", function() {
