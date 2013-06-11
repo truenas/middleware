@@ -13,7 +13,20 @@ define([
     "dijit/layout/ContentPane",
     "dojox/string/sprintf",
     "dojo/text!freeadmin/templates/chooser.html"
-    ], function(array, declare, query, _Widget, _Templated, registry, HorizontalSlider, HorizontalRule, HorizontalRuleLabels, ToggleButton, TabContainer, ContentPane, sprintf, template) {
+    ], function(array,
+    declare,
+    query,
+    _Widget,
+    _Templated,
+    registry,
+    HorizontalSlider,
+    HorizontalRule,
+    HorizontalRuleLabels,
+    ToggleButton,
+    TabContainer,
+    ContentPane,
+    sprintf,
+    template) {
 
     var Cron = declare("freeadmin.form.Cron", [ _Widget, _Templated ], {
         templateString: template,
@@ -39,7 +52,7 @@ define([
             setSelected = function() {
                  varr = [];
                  query(':checked', sel.containerNode).forEach(function(node, index, arr){
-                     varr.push(dijit.getEnclosingWidget(node).get('label'));
+                     varr.push(registry.getEnclosingWidget(node).get('label'));
                  });
                  cron.set('value', varr.join(','));
             }
@@ -49,7 +62,7 @@ define([
                  onShow: function(ev) {
                  varr = [];
                  query(':checked', sel.containerNode).forEach(function(node, index, arr){
-                     varr.push(dijit.getEnclosingWidget(node).get('label'));
+                     varr.push(registry.getEnclosingWidget(node).get('label'));
                  });
                  cron.set('value', varr.join(','));
                  },
@@ -114,9 +127,10 @@ define([
                 myvals = this.value.split(',');
             }
             for(var i=0;i<this.numChoices;i++) {
+                var checked = (array.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false;
                 var tg = new ToggleButton({
                     showLabel: true,
-                    checked: (array.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false,
+                    checked: checked,
                     baseClass: 'mytoggle',
                     onChange: function(val) {
                  varr = [];
@@ -127,6 +141,7 @@ define([
                     },
                     label: sprintf("%.2d", i+this.start),
                 });
+                tg.set('checked', checked);
                 sel.containerNode.appendChild(tg.domNode);
             }
 
