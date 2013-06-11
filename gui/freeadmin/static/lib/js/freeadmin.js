@@ -798,10 +798,12 @@ require([
                 if (obj.size > 0) {
                     pdisplay.set('value', obj.data);
                 }
+/*
                 scroll.smoothScroll({
                     node: dojo.query(':last-child', pdisplay.domNode)[0],
                     win: pdisplay.domNode
                 }).play();
+*/
 
                 pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 if (obj.state != 'done') {
