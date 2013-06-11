@@ -166,6 +166,11 @@ start_jail_vimage()
   fi
 
   #
+  # Configure route for localhost
+  #
+  jexec ${JID} route add lo0 127.0.0.1
+
+  #
   # Set ourself to be a jail router with NAT. Don't
   # use PF since it will panic the box when used
   # with VIMAGE.
