@@ -523,10 +523,17 @@ class TaskFAdmin(BaseFreeAdmin):
         columns = super(TaskFAdmin, self).get_datagrid_columns()
         columns.insert(2, {
             'name': 'how',
-            'label': _('How'),
+            'label': _('When'),
             'sortable': False,
         })
+
         columns.insert(3, {
+            'name': 'interv',
+            'label': _('Frequency'),
+            'sortable': False,
+        }) 
+
+        columns.insert(4, {
             'name': 'keepfor',
             'label': _('Keep snapshot for'),
             'sortable': False,
