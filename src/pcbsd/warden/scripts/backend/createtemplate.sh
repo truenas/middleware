@@ -11,6 +11,12 @@ PROGDIR="/usr/local/share/warden"
 ### Download the template files
 download_template_files() {
 
+  local i
+  local percent
+  local total 
+
+  total=`echo ${DFILES}|wc|awk '{ print $2 }'`
+
   # Create the download directory
   if [ -d "${JDIR}/.download" ] ; then rm -rf ${JDIR}/.download; fi
   mkdir ${JDIR}/.download
@@ -50,6 +56,7 @@ download_template_files() {
 	 return
      fi
 
+     i=0
      for f in $DFILES
      do
        warden_run fetch -o "${JDIR}/.download/$f" "ftp://ftp.freebsd.org/pub/FreeBSD/releases/${FBSDARCH}/${FBSDVER}/$f"
@@ -60,6 +67,11 @@ download_template_files() {
            warden_exit "Failed downloading: FreeBSD ${FBSDVER}"
 	 fi
        fi
+
+       : $(( i += 1 ))
+
+       percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+       warden_print "===== ${percent}% ====="
      done
   fi
 }

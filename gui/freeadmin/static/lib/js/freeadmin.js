@@ -790,15 +790,20 @@ require([
     scrollToFirst = function() {
         dojox.fx.smoothScroll({
             node: dojo.query('#progress:first-child')[0],
-            win: dojo.byId('progress')
+            win: dojo.byId('jail_display')
         }).play();
     };
 
     scrollToLast = function() {
         dojox.fx.smoothScroll({
-            node: dojo.query('#progress:last-child')[0],
-            win: dojo.byId('progress')
+            win: dojo.byId('jail_display')
         }).play();
+/*
+        dojox.fx.smoothScroll({
+            node: dojo.query('#progress:last-child')[0],
+            win: dojo.byId('jail_display')
+        }).play();
+*/
     };
 
     checkJailProgress = function(pbar, pdisplay, url, uuid, iter) {
@@ -970,18 +975,18 @@ require([
 
         } else if (attrs.progresstype == 'jail') {
             pbar = dijit.ProgressBar({
+                id: "jail_progress",
                 style: "width:auto",
                 indeterminate: true,
                 });
 
             pdisplay = new dijit.form.SimpleTextarea({
-                id: "progress",
+                id: "jail_display",
                 title: "progress",
                 rows: "5",
                 cols: "80",
                 style: "width:auto;",
-                readOnly: true,
-                onChange: scrollToLast
+                readOnly: true
                 });
 
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
