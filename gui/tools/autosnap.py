@@ -152,7 +152,7 @@ mp_to_task_map = {}
 # format, we just keep one task.
 TaskObjects = Task.objects.all()
 for task in TaskObjects:
-    if isMatchingTime(task, snaptime):
+    if isMatchingTime(task, snaptime) and task.task_enabled==True:
         fs = task.task_filesystem
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
@@ -231,7 +231,7 @@ for mpkey, tasklist in mp_to_task_map.items():
     snapname = '%s@auto-%s-%s' % (fs, snaptime_str, expire)
 
     # If there is associated replication task, mark the snapshots as 'NEW'.
-    if Replication.objects.filter(repl_filesystem=fs).count() > 0:
+    if Replication.objects.filter(repl_filesystem=fs).filter(repl_enabled=True).count() > 0:
         MNTLOCK.lock()
         snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s' % (rflag, snapname)
         proc = pipeopen(snapcmd, logger=log)
