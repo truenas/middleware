@@ -830,12 +830,29 @@ echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 __EOF__
 
 echo '
+i=0
+percent=0
+
+pkg update
+
+total=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
+for p in `pkg rquery "%do" pcbsd-utils`
+do
+  pkg install -y ${p}
+  if [ "$?" != "0" ]
+  then
+      umount devfs
+      touch /FAIL
+      exit 5
+  fi
+
+  : $(( i += 1 ))
+
+  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  echo "===== ${percent}% ====="
+done
 pkg install -y pcbsd-utils
-if [ "$?" != "0" ]
-then
-  touch /FAIL
-  ret=1
-fi
+
 exit ${ret}
 ' >> "${outfile}"
 }
@@ -857,7 +874,9 @@ make_bootstrap_pkgng_file_pluginjail()
 cat<<__EOF__>"${outfile}"
 #!/bin/sh
 
+i=0
 ret=0
+percent=0
 
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
@@ -875,16 +894,30 @@ echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
 __EOF__
 
 echo '
-pkg install -y pcbsd-utils
-if [ "$?" != "0" ]
-then
-  umount devfs
-  touch /FAIL
-  exit 1
-fi
+pkg update
 
-i=0
-count=`wc -l /pluginjail-packages| awk "{ print $1 }"`
+count1=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
+count2=`cat /pluginjail-packages|wc -l|awk '"'{ print '"'$1'"' }'"'`
+total=`echo "${count1} + ${count2}" | bc`
+
+for p in `pkg rquery "%do" pcbsd-utils`
+do
+  pkg install -y ${p}
+  if [ "$?" != "0" ]
+  then
+      umount devfs
+      touch /FAIL
+      exit 5
+  fi
+
+  : $(( i += 1 ))
+
+  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  echo "===== ${percent}% ====="
+done
+pkg install -y pcbsd-utils
+
+
 for p in `cat /pluginjail-packages`
 do
   pkg install -y ${p}
@@ -892,10 +925,13 @@ do
   then
       umount devfs
       touch /FAIL
-      exit 2
+      exit 6
   fi
 
   : $(( i += 1 ))
+
+  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  echo "===== ${percent}% ====="
 done
 
 umount devfs

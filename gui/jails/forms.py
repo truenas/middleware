@@ -208,6 +208,10 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         )
 
+        self.fields['jail_type'].widget.attrs['onChange'] = "jail_type_toggle();"
+        self.fields['jail_32bit'].widget.attrs['onChange'] = "jail_32bit_toggle();"
+        self.fields['jail_vnet'].widget.attrs['onChange'] = "jail_vnet_toggle();"
+
         high_ipv4 = None
         high_ipv6 = None
 

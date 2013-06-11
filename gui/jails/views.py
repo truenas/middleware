@@ -247,7 +247,8 @@ def jail_progress(request):
     data = {
         'size': 0,
         'data': '',
-        'state': 'running'
+        'state': 'running',
+        'percent': 0
     }
 
     jc = models.JailsConfiguration.objects.order_by("-id")[0]
@@ -260,6 +261,12 @@ def jail_progress(request):
 
         size = len(buf)
         if size > 0:
+            for line in buf:
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        data['percent'] = parts[1][:-1]
+
             buf = string.join(buf)
             size = len(buf)
 

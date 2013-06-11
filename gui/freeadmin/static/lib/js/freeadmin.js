@@ -74,6 +74,7 @@ require([
     "dijit/form/NumberTextBox",
     "dijit/form/Select",
     "dijit/form/Textarea",
+    "dijit/form/TextBox",
     "dijit/form/RadioButton",
     "dijit/form/TimeTextBox",
     "dijit/form/ValidationTextBox",
@@ -148,6 +149,7 @@ require([
     NumberTextBox,
     Select,
     Textarea,
+    TextBox,
     RadioButton,
     TimeTextBox,
     ValidationTextBox,
@@ -398,6 +400,140 @@ require([
             }
         }
 
+    }
+
+    jail_networking_save = function() {
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        var jail_ipv4 = ipv4.get("value");
+        var jail_ipv6 = ipv6.get("value");
+        var jail_bridge_ipv4 = bridge_ipv4.get("value");
+        var jail_bridge_ipv6 = bridge_ipv6.get("value");
+
+        var ipv4_save = registry.byId("id_jail_ipv4_save");
+        var ipv6_save = registry.byId("id_jail_ipv6_save");
+        var bridge_ipv4_save = registry.byId("id_jail_bridge_ipv4_save");
+        var bridge_ipv6_save = registry.byId("id_jail_bridge_ipv6_save");
+
+        if (ipv4_save == undefined) {
+            ipv4_save = new TextBox({
+                id: "id_jail_ipv4_save",
+                name: "jail_ipv4_save",
+                type: "hidden"
+            });
+        }
+        if (ipv6_save == undefined) {
+            ipv6_save = new TextBox({
+                id: "id_jail_ipv6_save",
+                name: "jail_ipv6_save",
+                type: "hidden"
+            });
+        }
+        if (bridge_ipv4_save == undefined) {
+            bridge_ipv4_save = new TextBox({
+                id: "id_jail_bridge_ipv4_save",
+                name: "jail_bridge_ipv4_save",
+                type: "hidden"
+            });
+        }
+        if (bridge_ipv6_save == undefined) {
+            bridge_ipv6_save = new TextBox({
+                id: "id_jail_bridge_ipv6_save",
+                name: "jail_bridge_ipv6_save",
+                type: "hidden"
+            });
+        }
+
+        ipv4_save.set("value", jail_ipv4);
+        ipv6_save.set("value", jail_ipv6);
+        bridge_ipv4_save.set("value", jail_bridge_ipv4);
+        bridge_ipv6_save.set("value", jail_bridge_ipv6);
+    }
+
+    jail_networking_restore = function() {
+        var ipv4_save = registry.byId("id_jail_ipv4_save");
+        var ipv6_save = registry.byId("id_jail_ipv6_save");
+        var bridge_ipv4_save = registry.byId("id_jail_bridge_ipv4_save");
+        var bridge_ipv6_save = registry.byId("id_jail_bridge_ipv6_save");
+
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        if (ipv4_save) {
+            ipv4.set("value", ipv4_save.get("value"));
+        }
+        if (ipv6_save) {
+            ipv6.set("value", ipv6_save.get("value"));
+        }
+        if (bridge_ipv4_save) {
+            bridge_ipv4.set("value", bridge_ipv4_save.get("value"));
+        }
+        if (bridge_ipv6_save) {
+            bridge_ipv6.set("value", bridge_ipv6_save.get("value"));
+        }
+    }
+
+    jail_networking_clear = function() {
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        ipv4.set("value", "");
+        ipv6.set("value", "");
+        bridge_ipv4.set("value", "");
+        bridge_ipv6.set("value", "");
+    }
+
+    jail_type_toggle = function() {
+        var type = registry.byId("id_jail_type");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_type = type.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if (jail_vnet == 'on' && jail_type == 'linuxjail') {
+            vnet.set("value", false);
+        }
+    }
+
+    jail_32bit_toggle = function() {
+        var arch = registry.byId("id_jail_32bit");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_32bit = arch.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if (jail_vnet == 'on' && jail_32bit == 'on') {
+            vnet.set("value", false);
+        }
+    }
+
+    jail_vnet_toggle = function() {
+        var type = registry.byId("id_jail_type");
+        var arch = registry.byId("id_jail_32bit");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_type = type.get("value");
+        var jail_32bit = arch.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if ((jail_vnet == 'on' && jail_32bit == 'on') ||
+            (jail_vnet == 'on' && jail_type == 'linuxjail')) {
+            vnet.set("value", false);
+        }
+
+        if (!jail_vnet) {
+            jail_networking_save();
+            jail_networking_clear(); 
+        } else {
+            jail_networking_restore();
+        }
     }
 
     mpAclChange = function(acl) {
@@ -665,18 +801,20 @@ require([
         }).play();
     };
 
-    checkProgress = function(pbar, url, uuid, iter) {
+    checkJailProgress = function(pbar, pdisplay, url, uuid, iter) {
         if(!iter) iter = 0;
         xhr.get(url, {
             headers: {"X-Progress-ID": uuid}
             }).then(function(data) {
                 var obj = JSON.parse(data);
                 if (obj.size > 0) {
-                    pbar.set('value', obj.data);
+                    pdisplay.set('value', obj.data);
                 }
+
+                pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 if (obj.state != 'done') {
                     setTimeout(function() {
-                        checkProgress(pbar, url, uuid, iter + 1);
+                        checkJailProgress(pbar, pdisplay, url, uuid, iter + 1);
                         }, 1000);
                 }
             });
@@ -715,7 +853,7 @@ require([
     }
 
     doSubmit = function(attrs) {
-        var pbar, uuid, multipart, rnode, newData;
+        var pbar, pdisplay, uuid, multipart, rnode, newData;
 
         if(!attrs) {
             attrs = {};
@@ -792,6 +930,13 @@ require([
                 rnode._size();
                 rnode._position();
             }
+            if(pdisplay) {
+                pdisplay.destroy();
+                domStyle.set(attrs.form.domNode, "display", "block");
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
+            }
             try {
                 json = JSON.parse(data);
                 if(json.error != true && json.error != false) throw "toJson error";
@@ -823,8 +968,13 @@ require([
             rnode._size();
             rnode._position();
 
-        } else if (attrs.progressfunc != undefined) {
-            pbar = new dijit.form.SimpleTextarea({
+        } else if (attrs.progresstype == 'jail') {
+            pbar = dijit.ProgressBar({
+                style: "width:auto",
+                indeterminate: true,
+                });
+
+            pdisplay = new dijit.form.SimpleTextarea({
                 id: "progress",
                 title: "progress",
                 rows: "5",
@@ -832,7 +982,12 @@ require([
                 style: "width:auto;",
                 readOnly: true,
                 onChange: scrollToLast
-                }).placeAt(attrs.form.domNode);
+                });
+
+            attrs.form.domNode.parentNode.appendChild(pbar.domNode);
+            attrs.form.domNode.parentNode.appendChild(pdisplay.domNode);
+
+            //domStyle.set(attrs.form.domNode, "display", "none");
 
             rnode._size();
             rnode._position();
@@ -865,9 +1020,10 @@ require([
 
         if (attrs.progressbar != undefined) {
             checkProgressBar(pbar, attrs.progressbar, uuid);
-        } else if(attrs.progressfunc != undefined &&
+
+        } else if(attrs.progresstype == 'jail' &&
             attrs.progressurl != undefined) {
-            checkProgress(pbar, attrs.progressurl, uuid);
+            checkJailProgress(pbar, pdisplay, attrs.progressurl, uuid);
         }
     }
 
