@@ -773,6 +773,10 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
+    repl_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    ) 
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
@@ -848,6 +852,10 @@ class Replication(Model):
 
 
 class Task(Model):
+    task_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    ) 
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
