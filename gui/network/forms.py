@@ -353,6 +353,10 @@ class LAGGInterfaceForm(ModelForm):
         self.fields['lagg_interfaces'].choices = list(
             choices.NICChoices(nolagg=True)
         )
+        # Remove empty option (e.g. -------)
+        self.fields['lagg_protocol'].choices = (
+            self.fields['lagg_protocol'].choices[1:]
+        )
 
     def save(self, *args, **kwargs):
 
