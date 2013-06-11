@@ -89,7 +89,6 @@ require([
     "dijit/ProgressBar",
     "dijit/Tooltip",
     "dojox/form/BusyButton",
-    "dojox/fx/scroll",
     "dojox/grid/EnhancedGrid",
     "dojox/grid/enhanced/plugins/DnD",
     "dojox/grid/enhanced/plugins/Menu",
@@ -165,7 +164,6 @@ require([
     ProgressBar,
     Tooltip,
     BusyButton,
-    scroll,
     EnhancedGrid,
     enhancedDnD,
     enhancedMenu,
@@ -797,13 +795,8 @@ require([
                 var obj = JSON.parse(data);
                 if (obj.size > 0) {
                     pdisplay.set('value', obj.data);
+                    pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
                 }
-/*
-                scroll.smoothScroll({
-                    node: dojo.query(':last-child', pdisplay.domNode)[0],
-                    win: pdisplay.domNode
-                }).play();
-*/
 
                 pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 if (obj.state != 'done') {
