@@ -789,28 +789,6 @@ require([
 
     }
 
-<<<<<<< HEAD
-    scrollToFirst = function() {
-        dojox.fx.smoothScroll({
-            node: dojo.query('#progress:first-child')[0],
-            win: dojo.byId('jail_display')
-        }).play();
-    };
-
-    scrollToLast = function() {
-        dojox.fx.smoothScroll({
-            win: dojo.byId('jail_display')
-        }).play();
-/*
-        dojox.fx.smoothScroll({
-            node: dojo.query('#progress:last-child')[0],
-            win: dojo.byId('jail_display')
-        }).play();
-*/
-    };
-
-=======
->>>>>>> 1fccbc0019eecdfbf07e8f6495ef52db5d2548f3
     checkJailProgress = function(pbar, pdisplay, url, uuid, iter) {
         if(!iter) iter = 0;
         xhr.get(url, {
@@ -996,10 +974,6 @@ require([
                 cols: "80",
                 style: "width:auto;",
                 readOnly: true
-<<<<<<< HEAD
-=======
-                //onChange: scrollToLast
->>>>>>> 1fccbc0019eecdfbf07e8f6495ef52db5d2548f3
                 });
 
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
