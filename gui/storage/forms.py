@@ -655,8 +655,8 @@ class AutoImportWizard(SessionWizardView):
         if key and passphrase:
             encrypt = 2
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         elif key:
             encrypt = 1
@@ -790,14 +790,14 @@ class AutoImportDecryptForm(forms.Form):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             passphrase = passfile
 
         keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
-        os.chmod(keyfile, 600)
         with open(keyfile, 'wb') as f:
+            os.chmod(keyfile, 600)
             f.write(key.read())
 
         _notifier = notifier()
@@ -1625,8 +1625,8 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
                 _("Confirmation does not match passphrase")
             )
         passfile = tempfile.mktemp(dir='/tmp/')
-        os.chmod(passfile, 600)
         with open(passfile, 'w') as f:
+            os.chmod(passfile, 600)
             f.write(passphrase)
         if not notifier().geli_testkey(self.volume, passphrase=passfile):
             self._errors['pass'] = self.error_class([
@@ -1640,8 +1640,8 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         passphrase = self.cleaned_data.get("pass")
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -1943,8 +1943,8 @@ class CreatePassphraseForm(forms.Form):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -2021,8 +2021,8 @@ class ChangePassphraseForm(forms.Form):
 
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -2074,15 +2074,15 @@ class UnlockPassphraseForm(forms.Form):
         key = self.cleaned_data.get("key")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             failed = notifier().geli_attach(volume, passphrase=passfile)
             os.unlink(passfile)
         elif key is not None:
             keyfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(keyfile, 600)
             with open(keyfile, 'wb') as f:
+                os.chmod(keyfile, 600)
                 f.write(key.read())
             failed = notifier().geli_attach(
                 volume,
@@ -2147,8 +2147,8 @@ class ReKeyForm(KeyForm):
         passphrase = self.cleaned_data.get("passphrase")
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
-            os.chmod(passfile, 600)
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             passphrase = passfile
         notifier().geli_rekey(self.volume, passphrase)

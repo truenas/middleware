@@ -3,36 +3,34 @@
   <input type="hidden" data-dojo-attach-point="dapAll" />
   <table>
     <tr>
-      <th colspan="2">Volume Name</th>
+      <th colspan="4">Volume Name</th>
     </tr>
     <tr>
-      <td colspan="2">
+      <td colspan="4">
         <input data-dojo-attach-point="dapName" type="text" />
       </td>
     </tr>
     <tr>
-      <th colspan="2">Volume to extend</th>
+      <th colspan="4">Volume to extend</th>
     </tr>
     <tr>
-      <td colspan="2">
+      <td colspan="4">
         <select data-dojo-attach-point="dapExtend"></select>
         <p data-dojo-attach-point="dapExtendEnc" style="display: none;">The passphrase and recovery key will be reseted!</p>
       </td>
     </tr>
     <tr>
       <th>Encryption</th>
-      <th>Initialize Safely</th>
-    </tr>
-    <tr>
       <td>
         <input data-dojo-attach-point="dapDiskEnc" type="checkbox" />
       </td>
+      <th>Initialize Safely</th>
       <td>
         <input data-dojo-attach-point="dapDiskEncIni" type="checkbox" />
       </td>
     </tr>
     <tr>
-      <td colspan="2">
+      <td colspan="4">
         <fieldset>
           <legend>Available disks</legend>
           <div data-dojo-attach-point="dapDisks">
@@ -41,7 +39,7 @@
       </td>
     </tr>
     <tr>
-      <td colspan="2">
+      <td colspan="4">
         <fieldset>
           <legend>Volume layout (Estimated capacity: <span data-dojo-attach-point="dapCapacity"></span>)</legend>
           <div data-dojo-attach-point="dapLayout">

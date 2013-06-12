@@ -1641,6 +1641,8 @@ class notifier:
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk offline failed: "%s"' % error)
+        if label.endswith(".eli"):
+            self.__system("/sbin/geli detach /dev/%s" % label)
 
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool

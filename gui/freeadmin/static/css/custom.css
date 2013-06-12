@@ -1214,6 +1214,20 @@ table.layoutTable {
     padding-left: 0;
 }
 
+table.layoutTable > tr {
+    padding-top: 3px;
+}
+
+table.layoutTable > tr > td {
+    border-top: 1px solid #ccc;
+    margin-top: 2px;
+    padding-top: 2px;
+}
+
+table.layoutTable > tr:first-child > td {
+    border-top: 0
+}
+
 .groupDisksTable {
     color: #cfcfcf;
     padding: 0;
