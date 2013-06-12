@@ -522,9 +522,13 @@ define([
         if(this._isOptimal !== null) {
           domStyle.set(this.dapOptimalRow, "display", "");
           if(this._isOptimal) {
+            domStyle.set(this.dapOptimal, "fontWeight", "");
+            domStyle.set(this.dapOptimal, "color", "");
             this._optimalTooltip.set('content', "Your configuration is optimal!<br /><br />It means you'll have the best performance possible for this number of disks and type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
             this.dapOptimal.innerHTML = 'optimal';
           } else {
+            domStyle.set(this.dapOptimal, "fontWeight", "bold");
+            domStyle.set(this.dapOptimal, "color", "red");
             this._optimalTooltip.set('content', "Your configuration is not optimal!<br /><br />It means this number of disks will not provide the best performance for that type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
             this.dapOptimal.innerHTML = 'non-optimal';
           }
