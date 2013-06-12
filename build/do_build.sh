@@ -92,6 +92,10 @@ usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [--
 		  issues with newly created files via patch -- use with
 		  caution).
 -x		- enable sh -x debugging
+-z		- End script before images are built.  This is useful for
+		  preloading a package build so you can do a full build after this
+		  and compress the resulting thin image.
+
 EOF
 	exit 1
 }
@@ -107,7 +111,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:ux' _optch
+	while getopts 'aBfj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -137,6 +141,9 @@ parse_cmdline()
 			;;
 		x)
 			TRACE="-x"
+			;;
+		z)
+			export PACKAGE_PREP_BUILD=1
 			;;
 		\?)
 			usage
