@@ -515,7 +515,11 @@ class Disk(Model):
 
 class EncryptedDisk(Model):
     encrypted_volume = models.ForeignKey(Volume)
-    encrypted_disk = models.ForeignKey(Disk)
+    encrypted_disk = models.ForeignKey(
+        Disk,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
     encrypted_provider = models.CharField(
             unique=True,
             max_length=120,
