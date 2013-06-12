@@ -820,7 +820,7 @@ tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
 rm pkg.txz
 
-trap "umount devfs; touch /FAIL; exit 3;" INT QUIT ABRT KILL TERM EXIT
+mount -t devfs devfs /dev
 
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
@@ -836,7 +836,7 @@ percent=0
 pkg update
 if [ "$?" != "0" ]
 then
-   umount devfs
+   umount -f devfs
    touch /FAIL
    exit 4
 fi
@@ -847,19 +847,23 @@ do
   pkg install -y ${p}
   if [ "$?" != "0" ]
   then
-      umount devfs
+      umount -f devfs
       touch /FAIL
       exit 5
   fi
 
-  : $(( i += 1 ))
-
-  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  if [ "${i}" -ge "0" ]
+  then  
+      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  fi
   echo "===== ${percent}% ====="
+
+  : $(( i += 1 ))
 done
 pkg install -y pcbsd-utils
 
-exit ${ret}
+umount -f devfs
+exit 0
 ' >> "${outfile}"
 }
 
@@ -890,8 +894,6 @@ rm pkg.txz
 
 mount -t devfs devfs /dev
 
-trap "umount devfs; touch /FAIL; exit 3;" INT QUIT ABRT KILL TERM EXIT
-
 echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
@@ -917,42 +919,42 @@ do
   pkg install -y ${p}
   if [ "$?" != "0" ]
   then
-      umount devfs
+      umount -f devfs
       touch /FAIL
       exit 5
   fi
 
-  : $(( i += 1 ))
-
-  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  if [ "${i}" -ge "0" ]
+  then  
+      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  fi
   echo "===== ${percent}% ====="
+
+  : $(( i += 1 ))
 done
 pkg install -y pcbsd-utils
-
 
 for p in `cat /pluginjail-packages`
 do
   pkg install -y ${p}
   if [ "$?" != "0" ]
   then
-      umount devfs
+      umount -f devfs
       touch /FAIL
       exit 6
   fi
 
-  : $(( i += 1 ))
-
-  percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  if [ "${i}" -ge "0" ]
+  then  
+      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+  fi
   echo "===== ${percent}% ====="
+
+  : $(( i += 1 ))
 done
 
-umount devfs
-if [ "$?" != "0" ]
-then
-  touch /FAIL
-  ret=1
-fi
-exit ${ret}
+umount -f devfs
+exit 0
 ' >> "${outfile}"
 }
 
