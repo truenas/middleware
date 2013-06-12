@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-05-11 13:44+0200\n"
-"Last-Translator: mystyk <valentinbriceag@gmail.com>\n"
+"PO-Revision-Date: 2013-06-11 13:46+0200\n"
+"Last-Translator: liviu <vasies.liviu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -447,7 +447,7 @@ msgstr "Test automat lung"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Test automat scurt"
+msgstr "autotestare scurtă"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
@@ -459,7 +459,7 @@ msgstr "Test imediat offline (Doar pentru ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Rsync modul"
+msgstr "Modul Rsync"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -471,7 +471,7 @@ msgstr "Apasă"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Trage"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -479,7 +479,7 @@ msgstr "Numele tău nu poate începe cu \"_\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "Caracterul $ nu este acceptat ca ultmiul caracter"
+msgstr "Caracterul $ este acceptat numai ca caracter ultim"
 
 #: account/forms.py:66
 #, python-format
@@ -501,7 +501,7 @@ msgstr "Nume utilizator"
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Obligatoriu. 16 caractere sau mai puţine. Doar litere, cifre şi ./-/_ only."
+"Obligatoriu. 16 caractere sau mai puţine. Numai litere, cifre şi ./-/_ ."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
@@ -530,7 +530,7 @@ msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr "Dezactivează logarea prin parolă"
+msgstr "Dezactivează logarea cu parolă"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -538,7 +538,7 @@ msgstr "Blochează utilizator"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Crează un nou grup primar pentru utilizător"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -549,9 +549,8 @@ msgid "SSH Public Key"
 msgstr "Cheie Publică SSH"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Director Home"
+msgstr "Modul Directorul Acasă"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -559,7 +558,7 @@ msgstr "Grupuri auxiliare"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
-msgstr "Un utilizator cu acelaşi uid există deja"
+msgstr "Un utilizator cu acest uid există deja"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -575,11 +574,11 @@ msgstr "Câmpul este obligatoriu"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Cele două parole nu sunt identice."
+msgstr "Cele două câmpuri parole nu sunt identice."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /nonexistent"
+msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /inexistent"
 
 #: account/forms.py:401 account/forms.py:828
 #, fuzzy
@@ -587,9 +586,8 @@ msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr "Un utilizator nu poate aparţine de mai mult de 64 de grupuri auxiliare"
 
 #: account/forms.py:416 account/forms.py:653
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Nu se poate scrie în directorul Home, lasă gol"
+msgstr "Directorul Acasă nu poate fi scris, lasă gol"
 
 #: account/forms.py:423
 #, fuzzy
@@ -600,12 +598,11 @@ msgstr "Parola este dezactivată, lasă gol"
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "Câmpul este obligatoriu."
+msgstr "Acest câmp este necesar."
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /nonexistent"
+msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /inexistent"
 
 #: account/forms.py:725
 #, fuzzy
@@ -634,7 +631,7 @@ msgstr "Confirmare parolă nouă"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Schimbă, deasemenea şi parola de root"
+msgstr "Schimbă deasemenea şi parola de root"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -642,11 +639,12 @@ msgstr "Parola veche"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Vechea parolă a fost tastată greşit. Încercaţi din nou."
+msgstr ""
+"Vechea parolă a fost introdusă greşit. Vă rugăm să o introduceți din nou."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Dorești să ștergi toți utilizatorii împreună cu acest grup primar?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
@@ -696,7 +694,7 @@ msgstr "ID grup primar"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "Director Home"
+msgstr "Director Acasă"
 
 #: account/models.py:119
 msgid "Full Name"
@@ -727,9 +725,8 @@ msgid "Account"
 msgstr "Cont"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Cont"
+msgstr "Cont Admin"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -743,24 +740,20 @@ msgid "Change Admin User"
 msgstr "Schimbare utilizator Admin"
 
 #: account/views.py:95
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s actualizat cu succes."
+msgstr "Parola actualizată cu succes."
 
 #: account/views.py:112
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s actualizat cu succes."
+msgstr "Utilizator Admin actualizat cu succes."
 
 #: account/views.py:125
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s actualizat cu succes."
+msgstr "Utilizatorii actualizați cu succes."
 
 #: account/views.py:138
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s actualizat cu succes."
+msgstr "Grupuri actualizate cu succes."
 
 #: freeadmin/forms.py:114
 #, python-format
@@ -780,9 +773,9 @@ msgstr ""
 "date"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Eroare"
+msgstr "Eroare %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -790,9 +783,9 @@ msgid "Add %s"
 msgstr "Adaugă %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Vezi toţi %s"
+msgstr "Arată %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -800,7 +793,7 @@ msgstr "Afişare procese sistem"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "Restart"
+msgstr "Repornire"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
@@ -832,12 +825,12 @@ msgstr "%s actualizat cu succes."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Serviciul a eșuat să repornescă."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s a fost şters."
+msgstr "%s a fost şters cu succes."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -920,9 +913,8 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Câmpul nameserver 1 trebuie completat înaintea câmpului nameserver 2"
 
 #: network/forms.py:229
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Ştergere interfaţă"
+msgstr "Interfaţa sursă"
 
 #: network/forms.py:245
 #, fuzzy
@@ -974,7 +966,7 @@ msgstr ""
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Nume"
+msgstr "Nume gazdă"
 
 #: network/models.py:46
 msgid "Domain"
@@ -1031,7 +1023,7 @@ msgstr ""
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "Adresa IPv4"
+msgstr "Adrese IPv4"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
