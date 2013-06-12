@@ -175,6 +175,7 @@ class ViewLinuxJails(ViewJailsBase):
     icon = u'LinuxJailIcon'
     skip = False
     order = 3
+    skip = True
 
     def __init__(self, *args, **kwargs):
         super(ViewLinuxJails, self).__init__(*args, **kwargs)

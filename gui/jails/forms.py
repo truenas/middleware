@@ -205,7 +205,7 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+#            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         )
 
         self.fields['jail_type'].widget.attrs['onChange'] = "jail_type_toggle();"
