@@ -107,19 +107,23 @@ class JailsFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
+                    if (row.data.jail_status == 'Running') {
+                        if (actionName == 'start') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none"); 
+                            });
+                        }
+                        break;
+                    } else if (row.data.jail_status == 'Stopped') {
+                        if (actionName == 'stop') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none"); 
+                            });
+                        }
                         break;
                     }
                 }
-            }""" % {
-            'hide': "false",
-            'hide_fs': "false",
-            'hide_enc': "false",
-            'hide_hasenc': "false",
-            }
+            }"""
 
         on_click = """function() {
                 var mybtn = this;
