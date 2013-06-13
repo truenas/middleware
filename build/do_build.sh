@@ -52,7 +52,7 @@ TRACE=""
 NANO_ARGS=""
 
 GIT_CACHE="file:///freenas-build/trueos.git"
-if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE}" ] ; then
+if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE##file://}" ] ; then
         GIT_REPO="${GIT_CACHE}"
 fi
 if [ -e "${GIT_REPO}" ]; then
@@ -62,7 +62,7 @@ else
         echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
 fi
 GIT_PORTS_CACHE="file:///freenas-build/ports.git"
-if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE" ] ;then
+if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE##file://" ] ;then
     GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
 fi
 if [ -e "${GIT_PORTS_REPO}" ]; then
