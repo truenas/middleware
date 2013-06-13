@@ -1043,6 +1043,7 @@ def volume_unlock(request, object_id):
             zimport = notifier().zfs_import(volume.vol_name,
                 id=volume.vol_guid)
             if zimport and volume.is_decrypted:
+                notifier().sync_encrypted(volume=volume)
                 return JsonResponse(
                     message=_("Volume unlocked")
                     )

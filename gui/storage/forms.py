@@ -1858,6 +1858,7 @@ class UnlockPassphraseForm(forms.Form):
             else:
                 msg = _("Volume could not be imported")
             raise MiddlewareError(msg)
+        notifier().sync_encrypted(volume=volume)
 
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
