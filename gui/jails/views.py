@@ -248,6 +248,7 @@ def jail_progress(request):
         'size': 0,
         'data': '',
         'state': 'running',
+        'eta': 0,
         'percent': 0
     }
 
@@ -259,17 +260,22 @@ def jail_progress(request):
         buf = f.readlines()
         f.close()
 
+        percent = 0
         size = len(buf)
         if size > 0:
             for line in buf:
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
-                        data['percent'] = parts[1][:-1]
+                        percent = parts[1][:-1]
 
             buf = string.join(buf)
             size = len(buf)
 
+        if not percent:
+            percent = 0
+
+        data['percent'] = percent
         data['size'] = size
         data['data'] = buf
 

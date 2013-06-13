@@ -166,9 +166,9 @@ start_jail_vimage()
   fi
 
   #
-  # Configure route for localhost
+  # Configure lo0 interface
   #
-  jexec ${JID} route add lo0 127.0.0.1
+  jexec ${JID} ifconfig lo0 up
 
   #
   # Set ourself to be a jail router with NAT. Don't

@@ -57,9 +57,11 @@ download_template_files() {
      fi
 
      i=0
+     pmax=10
      for f in $DFILES
      do
-       warden_run fetch -o "${JDIR}/.download/$f" "ftp://ftp.freebsd.org/pub/FreeBSD/releases/${FBSDARCH}/${FBSDVER}/$f"
+       warden_print get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
+       get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
        if [ $? -ne 0 ] ; then
 	 warden_print "Trying ftp-archive..."
          warden_run fetch -o "${JDIR}/.download/$f" "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${FBSDARCH}/${FBSDVER}/$f"
@@ -70,7 +72,7 @@ download_template_files() {
 
        : $(( i += 1 ))
 
-       percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+       percent=`echo "scale=2;(${i}/${total})*${pmax}"|bc|cut -f1 -d.`
        warden_print "===== ${percent}% ====="
      done
   fi

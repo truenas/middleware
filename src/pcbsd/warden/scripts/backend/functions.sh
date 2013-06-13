@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Functions / variables for warden
 ######################################################################
 # DO NOT EDIT 
@@ -822,7 +823,7 @@ rm pkg.txz
 
 mount -t devfs devfs /dev
 
-echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
+echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
@@ -831,7 +832,7 @@ __EOF__
 
 echo '
 i=0
-percent=0
+percent=10
 
 pkg update
 if [ "$?" != "0" ]
@@ -854,7 +855,7 @@ do
 
   if [ "${i}" -ge "0" ]
   then  
-      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
   fi
   echo "===== ${percent}% ====="
 
@@ -886,7 +887,7 @@ cat<<__EOF__>"${outfile}"
 
 i=0
 ret=0
-percent=0
+percent=10
 
 tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
 pkg add pkg.txz
@@ -894,7 +895,7 @@ rm pkg.txz
 
 mount -t devfs devfs /dev
 
-echo "packagesite: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
+echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
 echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
 echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
 echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
@@ -926,7 +927,7 @@ do
 
   if [ "${i}" -ge "0" ]
   then  
-      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
   fi
   echo "===== ${percent}% ====="
 
@@ -946,7 +947,7 @@ do
 
   if [ "${i}" -ge "0" ]
   then  
-      percent=`echo "scale=2;(${i}/${total})*100"|bc|cut -f1 -d.`
+      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
   fi
   echo "===== ${percent}% ====="
 
@@ -1205,4 +1206,70 @@ get_next_id()
 
    : $(( meta_id += 1 ))
    echo ${meta_id}
+}
+
+get_freebsd_mirrors()
+{
+   cat<<-__EOF__
+      ftp://ftp1.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp2.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp3.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp4.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp5.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp6.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp7.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp8.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp9.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp10.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp11.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp12.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp13.freebsd.org/pub/FreeBSD/releases
+      ftp://ftp14.freebsd.org/pub/FreeBSD/releases
+__EOF__
+}
+
+get_freebsd_mirror_list()
+{
+   local file="${1}"
+   local freebsd_mirrors="$(get_freebsd_mirrors)"
+
+   local mirrors=
+   for m in ${freebsd_mirrors}
+   do
+       mirrors="${mirrors} ${m}/${1}"
+   done
+
+   echo "${mirrors}"
+}
+
+get_freebsd_file()
+{
+   local _rf="${1}"
+   local _lf="${2}"
+
+   local aDir="$(dirname $_lf)"
+   local aFile="$(basename $_lf)"
+
+   local astatfile="${HOME}/.fbsd-aria-stat"
+   if [ -e "${astatfile}" ] ; then
+     local astat="--server-stat-of=${astatfile}
+        --server-stat-if=${astatfile}
+        --uri-selector=adaptive
+        --server-stat-timeout=864000"
+   else
+     local astat=" --server-stat-of=${astatfile} --uri-selector=adaptive "
+   fi
+   touch $astatfile
+
+   local mirrors="$(get_freebsd_mirror_list ${1})"
+
+   aria2c -k 5M \
+      ${astat} \
+      --check-certificate=false \
+      --file-allocation=none \
+      -d ${aDir} \
+      -o ${aFile} \
+      ${mirrors}
+
+   return $?
 }
