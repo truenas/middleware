@@ -494,14 +494,14 @@ class VdevFormSet(BaseFormSet):
             has_datavdev = False
             for i in range(0, self.total_form_count()):
                 form = self.forms[i]
-                vdevtype = form.cleaned_data['vdevtype']
+                vdevtype = form.cleaned_data.get('vdevtype')
                 if vdevtype in (
                     'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
                 ):
                     has_datavdev = True
                     break
             if not has_datavdev:
-                raise forms.ValidationError("You need a storage vdev")
+                raise forms.ValidationError(_("You need a data disk group"))
 
 
 class VolumeImportForm(forms.Form):
