@@ -758,6 +758,7 @@ def zpool_disk_replace(request, vname, label):
     return render(request, 'storage/zpool_disk_replace.html', {
         'form': form,
         'vname': vname,
+        'encrypted': volume.vol_encrypt > 0,
         'label': label,
         'disk': disk,
     })
