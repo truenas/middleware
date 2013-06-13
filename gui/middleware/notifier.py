@@ -1624,6 +1624,7 @@ class notifier:
         return ret
 
     def zfs_offline_disk(self, volume, label):
+        from freenasUI.storage.models import EncryptedDisk
 
         assert volume.vol_fstype == 'ZFS'
 
@@ -1643,6 +1644,10 @@ class notifier:
             raise MiddlewareError('Disk offline failed: "%s"' % error)
         if label.endswith(".eli"):
             self.__system("/sbin/geli detach /dev/%s" % label)
+            EncryptedDisk.objects.filter(
+                encrypted_volume=volume,
+                encrypted_provider=label[:-4]
+            ).delete()
 
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
