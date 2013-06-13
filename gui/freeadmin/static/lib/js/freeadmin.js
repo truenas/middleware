@@ -792,11 +792,7 @@ require([
         xhr.get(url, {
             headers: {"X-Progress-ID": uuid}
             }).then(function(data) {
-                var min = 0;
-                var sec = 0;
-                var eta = "00:00 ETA";
                 var obj = JSON.parse(data);
-
                 if (obj.size > 0) {
                     pdisplay.set('value', obj.data);
                     pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
@@ -809,24 +805,7 @@ require([
                         }, 1000);
                 }
 
-                if (obj.eta > 0) {
-                    min = obj.eta / 60;
-                    sec = obj.eta % 60;
-
-                    min = min.toFixed(0);
-                    sec = sec.toFixed(0);
-
-                    if (min.length < 2) {
-                        min = "0" + min;
-                    }
-                    if (sec.length < 2) {
-                        sec = "0" + sec;
-                    }
-
-                    eta = min + ":" + sec + " ETA";
-                }
-
-                pdiv.set("content", eta)
+                pdiv.set("content", obj.eta + " ETA");
             });
     };
 
