@@ -919,8 +919,10 @@ def volume_unlock(request, object_id):
             notifier().start("geli")
             zimport = notifier().zfs_import(
                 volume.vol_name,
-                id=volume.vol_guid)
+                id=volume.vol_guid
+            )
             if zimport and volume.is_decrypted:
+                notifier().sync_encrypted(volume=volume)
                 return JsonResp(
                     request,
                     message=_("Volume unlocked"))
@@ -928,8 +930,7 @@ def volume_unlock(request, object_id):
                 return JsonResp(
                     request,
                     message=_("Volume failed unlocked"))
-        return render(request, "storage/unlock.html", {
-        })
+        return render(request, "storage/unlock.html")
 
     if request.method == "POST":
         form = forms.UnlockPassphraseForm(request.POST, request.FILES)
