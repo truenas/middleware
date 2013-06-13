@@ -787,12 +787,16 @@ require([
 
     }
 
-    checkJailProgress = function(pbar, pdisplay, url, uuid, iter) {
+    checkJailProgress = function(pbar, pdisplay, pdiv, url, uuid, iter) {
         if(!iter) iter = 0;
         xhr.get(url, {
             headers: {"X-Progress-ID": uuid}
             }).then(function(data) {
+                var min = 0;
+                var sec = 0;
+                var eta = "00:00 ETA";
                 var obj = JSON.parse(data);
+
                 if (obj.size > 0) {
                     pdisplay.set('value', obj.data);
                     pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
@@ -801,9 +805,28 @@ require([
                 pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 if (obj.state != 'done') {
                     setTimeout(function() {
-                        checkJailProgress(pbar, pdisplay, url, uuid, iter + 1);
+                        checkJailProgress(pbar, pdisplay, pdiv, url, uuid, iter + 1);
                         }, 1000);
                 }
+
+                if (obj.eta > 0) {
+                    min = obj.eta / 60;
+                    sec = obj.eta % 60;
+
+                    min = min.toFixed(0);
+                    sec = sec.toFixed(0);
+
+                    if (min.length < 2) {
+                        min = "0" + min;
+                    }
+                    if (sec.length < 2) {
+                        sec = "0" + sec;
+                    }
+
+                    eta = min + ":" + sec + " ETA";
+                }
+
+                pdiv.set("content", eta)
             });
     };
 
@@ -840,7 +863,7 @@ require([
     }
 
     doSubmit = function(attrs) {
-        var pbar, pdisplay, uuid, multipart, rnode, newData;
+        var pdiv, pbar, pdisplay, uuid, multipart, rnode, newData;
 
         if(!attrs) {
             attrs = {};
@@ -924,6 +947,13 @@ require([
                 rnode._size();
                 rnode._position();
             }
+            if(pdiv) {
+                pdiv.destroy();
+                domStyle.set(attrs.form.domNode, "display", "block");
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
+            }
             try {
                 json = JSON.parse(data);
                 if(json.error != true && json.error != false) throw "toJson error";
@@ -958,7 +988,7 @@ require([
         } else if (attrs.progresstype == 'jail') {
             pbar = dijit.ProgressBar({
                 id: "jail_progress",
-                style: "width:auto",
+                style: "width:600px",
                 indeterminate: true,
                 });
 
@@ -967,12 +997,19 @@ require([
                 title: "progress",
                 rows: "5",
                 cols: "80",
-                style: "width:auto;",
+                style: "width:600px;",
                 readOnly: true
+                });
+
+            pdiv = new ContentPane({
+                id: "jail_eta",
+                border: "1",
+                style: "width:600px;"
                 });
 
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
             attrs.form.domNode.parentNode.appendChild(pdisplay.domNode);
+            attrs.form.domNode.parentNode.appendChild(pdiv.domNode);
 
             //domStyle.set(attrs.form.domNode, "display", "none");
 
@@ -1010,7 +1047,7 @@ require([
 
         } else if(attrs.progresstype == 'jail' &&
             attrs.progressurl != undefined) {
-            checkJailProgress(pbar, pdisplay, attrs.progressurl, uuid);
+            checkJailProgress(pbar, pdisplay, pdiv, attrs.progressurl, uuid);
         }
     }
 

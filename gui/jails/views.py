@@ -242,8 +242,13 @@ def jail_export(request, id):
 
     return response
 
+jail_progress_estimated_time = 1800
+jail_progress_start_time = 0
 
 def jail_progress(request):
+    global jail_progress_estimated_time
+    global jail_progress_start_time
+
     data = {
         'size': 0,
         'data': '',
@@ -275,12 +280,26 @@ def jail_progress(request):
         if not percent:
             percent = 0
 
+        curtime = int(time.time())
+
+        if jail_progress_start_time == 0:
+            jail_progress_start_time = curtime
+            eta = jail_progress_estimated_time
+            log.debug("XXXX: ETA = %d", eta)
+
+        else:
+            elapsed = curtime - jail_progress_start_time 
+            eta = jail_progress_estimated_time - elapsed
+            log.debug("XXXX: ETA = %d", eta)
+
+        data['eta'] = eta
         data['percent'] = percent
         data['size'] = size
         data['data'] = buf
 
         if not os.path.exists("/var/tmp/.jailcreate"):
             data['state'] = 'done'
+            jail_progress_start_time = 0
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
