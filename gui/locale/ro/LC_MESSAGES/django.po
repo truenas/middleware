@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-06-11 13:46+0200\n"
+"PO-Revision-Date: 2013-06-12 15:08+0200\n"
 "Last-Translator: liviu <vasies.liviu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -114,27 +114,29 @@ msgstr "Dezactivat"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivel 1 + Utilizare cu consum minim şi oprire (discurile se opresc)"
+msgstr "Nivel 1 + Utilizare cu consum minim cu mod în așteptare"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Nivel 64 - Utilizare cu consum mediu şi  oprire "
+msgstr "Nivel 64 - Utilizare cu consum mediu cu mod în așteptare"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Utilizare cu consum mediu şi oprire"
+msgstr "Nivel 127- -Utilizare consum mediu cu mod în așteptare"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Utilizare cu consum minim fără oprire (discurile nu se opresc)"
+msgstr ""
+"Nivel 128 - Utilizare cu consum minim fără așteptare (discurile nu se "
+"opresc)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Utilizare cu consum mediu fără oprire"
+msgstr "Nivel 192 - Utilizare cu consum mediu fără așteptare"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Performanţă maximă, consum maxim"
+msgstr "Nivel 254 - Performanţă maximă, consum de energie maxim"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -230,7 +232,7 @@ msgstr "Anonim"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "User local"
+msgstr "Utilizator local"
 
 #: choices.py:189
 msgid "Normal"
@@ -242,7 +244,7 @@ msgstr "Complet"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "Corectare"
+msgstr "Depanare"
 
 #: choices.py:195
 msgid "Default"
@@ -250,7 +252,7 @@ msgstr "Implicit"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Timp mașină"
 
 #: choices.py:199
 msgid "No case folding"
@@ -258,15 +260,15 @@ msgstr "Fără schimbarea cazului"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr "Denumiri cu minuscule în ambele direcţii"
+msgstr "Nume cu litere mici în ambele direcţii"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Clientul vede minuscule, serverul vede majuscule"
+msgstr "Clientul vede cu litere mici, serverul vede litere mari"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Clientul vede majuscule, serverul vede minuscule"
+msgstr "Clientul vede litere mari, serverul vede litere mici"
 
 #: choices.py:207
 msgid "File"
@@ -309,11 +311,11 @@ msgstr "CHAP reciproc"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "UPS-ul este descărcat"
+msgstr "UPS-ul ajunge la baterie scăzută"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "UPS-ul funcționează pe baterie"
+msgstr "UPS-ul merge pe baterie"
 
 #: choices.py:255
 msgid "Preferred"
@@ -325,11 +327,11 @@ msgstr "Tolerat"
 
 #: choices.py:257
 msgid "Required"
-msgstr "Obligatoriu"
+msgstr "Necesar"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr "Moştenire"
+msgstr "Moştenit"
 
 #: choices.py:285
 msgid "On"
@@ -430,32 +432,35 @@ msgstr ""
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Verifică dispozitivul doar dacă NU e în modul SLEEP"
+msgstr "Sleep - Verifică dispozitivul doar dacă NU e în modul DORM"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Standby - Verifică dispozitivul doar dacă NU e în modurile SLEEP sau STANDBY"
+"În așteptare - Verifică dispozitivul doar dacă NU e în modurile DORM sau ÎN "
+"AȘTEPTARE"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Inactiv - Verifică dispozitivul doar dacă nu e în modul DORM, ÎN AȘTEPTARE "
+"sau INACTIV"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Test automat lung"
+msgstr "Auto-Test lung"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "autotestare scurtă"
+msgstr "Auto-test scurt"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Auto-test de transmitere (numai ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Test imediat offline (Doar pentru ATA)"
+msgstr "Test imediat offline (Numai ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
@@ -463,7 +468,7 @@ msgstr "Modul Rsync"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr "Rsznc prin SSH"
+msgstr "Rsznc peste SSH"
 
 #: choices.py:567
 msgid "Push"
@@ -479,7 +484,7 @@ msgstr "Numele tău nu poate începe cu \"_\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "Caracterul $ este acceptat numai ca caracter ultim"
+msgstr "Caracterul $ este acceptat doar ca caracter ultim"
 
 #: account/forms.py:66
 #, python-format
@@ -500,8 +505,7 @@ msgstr "Nume utilizator"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"Obligatoriu. 16 caractere sau mai puţine. Numai litere, cifre şi ./-/_ ."
+msgstr "Necesar. 16 caractere sau mai puţine. Numai litere, cifre şi ./-/_ ."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
@@ -520,13 +524,13 @@ msgstr "Confirmare parolă"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr "Introduceţi parola încă o data, pentru verificare."
+msgstr "Introduceţi aceași parola ca și mai sus, pentru verificare."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "Shell"
+msgstr "Consolă"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -550,7 +554,7 @@ msgstr "Cheie Publică SSH"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "Modul Directorul Acasă"
+msgstr "Mod Directorul Acasă"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -574,7 +578,7 @@ msgstr "Câmpul este obligatoriu"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Cele două câmpuri parole nu sunt identice."
+msgstr "Cele două câmpuri de parole nu se potrivesc."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -602,7 +606,7 @@ msgstr "Acest câmp este necesar."
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /inexistent"
+msgstr "Directorul Acasă trebuie să înceapă cu /mnt/ sau să fie /inexistent"
 
 #: account/forms.py:725
 #, fuzzy
@@ -651,7 +655,7 @@ msgstr "Dorești să ștergi toți utilizatorii împreună cu acest grup primar?
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "ID grup"
+msgstr "ID Grup"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -902,7 +906,7 @@ msgstr "Câmpul nameserver 2 trebuie completat înaintea câmpului nameserver 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Obligatoriu atunci când se utilizează nameserver 3"
+msgstr "Necesar atunci când se utilizează nameserver 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -923,7 +927,7 @@ msgstr "Interfeţe virtuale trebuie să fie vlanXX unde XX este un număr"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Etichetele VLAN sunt de la 1 - 4095 inclusiv"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
@@ -6177,18 +6181,17 @@ msgid "No ZFS replication available"
 msgstr "Nu există nici o copie ZFS disponibilă"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
-msgstr "Nu există utilizatori definiţi"
+msgstr "Nu există sarcini de curățare definite"
 
 #: templates/storage/scrub.html:48
 msgid "Add ZFS Scrub Task"
-msgstr ""
+msgstr "Adaugă sarcină ZFS de curățare."
 
 #: templates/storage/scrub.html:50
 #, fuzzy
 msgid "Add ZFS Scrub"
-msgstr "Volum ZFS"
+msgstr "Adaugă ZFS de curățare"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6238,9 +6241,8 @@ msgid "Destroy"
 msgstr "Ştergere volum"
 
 #: templates/storage/snapshots.html:136
-#, fuzzy
 msgid "Delete snapshots"
-msgstr "Clonare punct restaurare"
+msgstr "Ștergere puncte de restaurare"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -6313,9 +6315,8 @@ msgid "Status"
 msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Detach Volume"
-msgstr "Creare volum"
+msgstr "Desprindere volum"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 #, fuzzy
@@ -6352,9 +6353,8 @@ msgid "No volumes defined"
 msgstr "Nu există volume create"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Calea către volum"
+msgstr "Volum de extindere"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6396,9 +6396,8 @@ msgid "Existing data will be cleared"
 msgstr "Datele existente vor fi șterse"
 
 #: templates/storage/zpool_disk_replace.html:2
-#, fuzzy
 msgid "Replace Disk"
-msgstr "Înlocuire disc"
+msgstr "reînlocuire disc"
 
 #: templates/storage/zvols.html:3
 #, fuzzy, python-format
@@ -6435,9 +6434,8 @@ msgstr "Actualizare firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
-msgstr "Ştergere interfaţă"
+msgstr "Importă plugin-uri Jail"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6479,19 +6477,16 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
-msgstr "Nu există nici un nameserver definit"
+msgstr "Nici un server NTP definit."
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
-msgstr "Server NTP 1"
+msgstr "Adaugă Server NTP"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
-msgstr "Server NTP 1"
+msgstr "Adaugă Server NTP "
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6505,14 +6500,12 @@ msgid ""
 msgstr "Sistemul <strong>VA REPORNI</strong>, sunteţi sigur?"
 
 #: templates/system/reporting.html:2
-#, fuzzy
 msgid "History"
-msgstr "Director"
+msgstr "Istoric"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
-msgstr "Master local"
+msgstr "Calea locală"
 
 #: templates/system/rsync.html:6
 #, fuzzy
@@ -6620,16 +6613,15 @@ msgstr "Medie sarcină"
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Conectate prin"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
-msgstr "Nu există utilizatori definiţi"
+msgstr "Nu există setări predefinite."
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
-msgstr ""
+msgstr "Adaugă setări predefinite"
 
 #: templates/system/tunable.html:42
 #, fuzzy
@@ -6654,23 +6646,25 @@ msgstr ""
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr ""
+msgstr "Starea Volumului %(volume)s este %(status)sȘ %(message)s"
 
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "Starea volumului %(volume) este %(status)s."
 
 #: tools/alert.py:125
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
 msgstr ""
+"Trebuie să schimbi parola a utilizatorului admin (momentan nici o parolă "
+"este necesară pentru autentificare."
 
 #: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "Adresa WebGUI nu a putut fi legată la %s folosind wildcard."
 
 #: tools/alert.py:147
 #, python-format
@@ -6678,10 +6672,12 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Următoarele IP-uri sunt legate la Portalul iSCSI dar nu au fost găsite în "
+"sistem: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr ""
+msgstr "Alerte Critice"
 
 msgid "Selected"
 msgstr "Selectat"
@@ -6999,7 +6995,7 @@ msgid "%s successfully update."
 msgstr "%s actualizat cu succes."
 
 msgid "Admin user"
-msgstr "Utilizator administrator"
+msgstr "Utilizator Admin"
 
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
