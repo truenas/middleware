@@ -3573,16 +3573,10 @@ class notifier:
         for disk in Disk.objects.all():
 
             dskname = self.identifier_to_device(disk.disk_identifier)
-            if not dskname:
-                dskname = disk.disk_name
-                disk.disk_identifier = self.device_to_identifier(dskname)
-                if not disk.disk_identifier:
-                    disk.disk_enabled = False
-                else:
-                    disk.disk_enabled = True
-                    disk.disk_serial = self.serial_from_device(dskname) or ''
-            elif dskname in in_disks:
-                # We are probably dealing with with multipath here
+            if not dskname or dskname in in_disks:
+                # If we cant translate the indentifier to a device, give up
+                # If dskname has already been seen once then we are probably
+                # dealing with with multipath here
                 disk.delete()
                 continue
             else:
