@@ -54,6 +54,20 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
+# Set up the package and distfile caches
+if [ -n ${DISTCACHE} -a ! -d ${DISTCACHE} ]; then
+	if [ -e ${DISTCACHE} ]; then
+		rm -rf ${DISTCACHE}
+	fi
+	mkdir -p ${DISTCACHE}
+fi
+if [ -n ${PKGCACHE} -a ! -d ${PKGCACHE} ]; then
+	if [ -e ${PKGCACHE} ]; then
+		rm -rf ${PKGCACHE}
+	fi
+	mkdir -p ${PKGCACHE}
+fi
+
 GIT_CACHE="file:///freenas-build/trueos.git"
 if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE##file://}" ] ; then
         GIT_REPO="${GIT_CACHE}"

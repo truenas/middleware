@@ -157,6 +157,11 @@ WITHOUT_SHAREDOCS=true
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+if [ -n ${PKGCACHE} ]; then
+    mount -t nullfs -o noatime ${PKGCACHE} \
+        ${NANO_WORLDDIR}/usr/ports/packages
+fi
+
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lzo2
@@ -334,6 +339,8 @@ if [ "${DEBUG}" = 1 ]; then
 			OPTIONS_FILE_UNSET+=PERL
 	add_port devel/ctags
 fi
+
+umount ${NANO_WORLDDIR}/usr/ports/packages
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
