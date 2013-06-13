@@ -55,7 +55,7 @@ GIT_CACHE="file:///freenas-build/trueos.git"
 if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE##file://}" ] ; then
         GIT_REPO="${GIT_CACHE}"
 fi
-if [ -e "${GIT_REPO}" ]; then
+if [ -e "${GIT_REPO##file://}" ]; then
         echo "Using local mirror in $GIT_REPO"
 else
         echo "no local mirror, to speed up builds we suggest doing"
@@ -65,7 +65,7 @@ GIT_PORTS_CACHE="file:///freenas-build/ports.git"
 if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE##file://" ] ;then
     GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
 fi
-if [ -e "${GIT_PORTS_REPO}" ]; then
+if [ -e "${GIT_PORTS_REPO##file://}" ]; then
     echo "Using local git ports mirror in $GIT_PORTS_REPO"
 else
     echo "no local mirror, to speed up builds we suggest doing"
