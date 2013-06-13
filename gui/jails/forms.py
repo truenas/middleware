@@ -153,11 +153,11 @@ class JailCreateForm(ModelForm):
         initial=True
     )
 
-    jail_archive = forms.BooleanField(
-        label=_("archive"),
-        required=False,
-        initial=False
-    )
+#    jail_archive = forms.BooleanField(
+#        label=_("archive"),
+#        required=False,
+#        initial=False
+#    )
 
     jail_vnet = forms.BooleanField(
         label=_("vnet"),
@@ -177,7 +177,7 @@ class JailCreateForm(ModelForm):
         'jail_source',
         'jail_ports',
         'jail_vanilla',
-        'jail_archive',
+#        'jail_archive',
         'jail_ipv4',
         'jail_bridge_ipv4',
         'jail_ipv6',
@@ -340,11 +340,11 @@ class JailCreateForm(ModelForm):
             jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
             jail_create_args['script'] = LINUXSCRIPT
 
-        if self.cleaned_data['jail_archive']:
-            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
-                jail_flags |= WARDEN_CREATE_FLAGS_LINUXARCHIVE
-            else:
-                jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
+#        if self.cleaned_data['jail_archive']:
+#            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
+#                jail_flags |= WARDEN_CREATE_FLAGS_LINUXARCHIVE
+#            else:
+#                jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
 
         if jail_ipv4:
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
