@@ -3612,6 +3612,45 @@ class notifier:
                         serials.append(d.disk_serial)
                 d.save()
 
+    def sync_encrypted(self, volume=None):
+        """
+        This syncs the EncryptedDisk table with the current state
+        of a volume
+        """
+        from freenasUI.storage.models import EncryptedDisk, Volume
+        if volume is not None:
+            volumes = [volume]
+        else:
+            volumes = Volume.objects.filter(vol_encrypt__gt=0)
+
+        for vol in volumes:
+            """
+            Parse zpool status to get encrypted providers
+            """
+            zpool = self.zpool_parse(vol.vol_name)
+            provs = []
+            for dev in zpool.get_devs():
+                if not dev.name.endswith(".eli"):
+                    continue
+                prov = dev.name[:-4]
+                qs = EncryptedDisk.objects.filter(encrypted_provider=prov)
+                if not qs.exists():
+                    ed = EncryptedDisk()
+                    ed.encrypted_volume = vol
+                    ed.encrypted_provider = dev[:-4]
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    if disk.exists():
+                        disk = disk[0]
+                    else:
+                        log.error("Could not find Disk entry for %s", dev.disk)
+                        disk = None
+                    ed.encrypted_disk = None
+                    ed.save()
+                provs.append(prov)
+            for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
+                if ed.encrypted_provider not in provs:
+                    ed.delete()
+
     def geom_disks_dump(self, volume):
         """
         Raises:
