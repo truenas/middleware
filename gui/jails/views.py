@@ -24,31 +24,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging   
+import logging
 import os
-import stat
 import string
-import threading
 import time
 
-from django.http import HttpResponse 
+from django.core.servers.basehttp import FileWrapper
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.views import JsonResp   
-from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.warden import (
     Warden,
-    WARDEN_STATUS_RUNNING,
-    WARDEN_STATUS_STOPPED,
     WARDEN_DELETE_FLAGS_CONFIRM,
     WARDEN_EXPORT_FLAGS_DIR
 )
 
 log = logging.getLogger("jails.views")
+
 
 def jails_home(request):
 
@@ -85,13 +81,15 @@ def jail_edit(request, id):
     if request.method == 'POST':
         form = forms.JailsEditForm(request.POST, instance=jail)
         if form.is_valid():
-            form.save() 
-            return JsonResp(request,
-                message=_("Jail successfully edited."))
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail successfully edited.")
+            )
     else:
         form = forms.JailsEditForm(instance=jail)
 
-    return render(request, 'jails/edit.html', { 
+    return render(request, 'jails/edit.html', {
         'form': form
     })
 
@@ -104,15 +102,17 @@ def jail_mkdir(request, id):
         form = forms.MkdirForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Directory successfully created."))
-    else: 
+            return JsonResp(
+                request,
+                message=_("Directory successfully created.")
+            )
+    else:
         form = forms.MkdirForm(jail=jail)
 
     return render(request, 'jails/mkdir.html', {
         'form': form,
-    }) 
-   
+    })
+
 
 def jail_storage_add(request, jail_id):
 
@@ -122,14 +122,17 @@ def jail_storage_add(request, jail_id):
         form = forms.NullMountPointForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Storage successfully added."))
+            return JsonResp(
+                request,
+                message=_("Storage successfully added.")
+            )
     else:
         form = forms.NullMountPointForm(jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
-    }) 
+    })
+
 
 def jail_storage_view(request, id):
 
@@ -140,15 +143,17 @@ def jail_storage_view(request, id):
         form = forms.NullMountPointForm(request.POST, instance=nmp, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Storage successfully added."))
+            return JsonResp(
+                request,
+                message=_("Storage successfully added.")
+            )
     else:
         form = forms.NullMountPointForm(instance=nmp, jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
-    }) 
-    
+    })
+
 
 def jail_start(request, id):
 
@@ -200,7 +205,9 @@ def jail_delete(request, id):
 
     if request.method == 'POST':
         try:
-            Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+            Warden().delete(
+                jail=jail.jail_host,
+                flags=WARDEN_DELETE_FLAGS_CONFIRM)
             return JsonResp(
                 request,
                 message=_("Jail successfully deleted.")
@@ -214,6 +221,7 @@ def jail_delete(request, id):
             'name': jail.jail_host
         })
 
+
 def jail_export(request, id):
 
     jail = models.Jails.objects.get(id=id)
@@ -222,14 +230,19 @@ def jail_export(request, id):
     dir = jailsconf.jc_path
     filename = "%s/%s.wdn" % (dir, jail.jail_host)
 
-    Warden().export(jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR)
+    Warden().export(
+        jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR
+    )
 
     freenas_build = "UNKNOWN"
+    #FIXME
+    """
     try:
         with open(VERSION_FILE) as d:
             freenas_build = d.read().strip()
     except:
         pass
+    """
 
     wrapper = FileWrapper(file(filename))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
