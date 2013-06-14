@@ -229,6 +229,7 @@ class JailCreateForm(ModelForm):
         st_ipv4_network = None
         st_ipv6_network = None
 
+        jc = None
         try:
             jc = JailsConfiguration.objects.order_by("-id")[0]
             st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
@@ -237,9 +238,10 @@ class JailCreateForm(ModelForm):
         except:
             pass
 
-        logfile = "%s/warden.log" % jc.jc_path
-        if os.path.exists(logfile):
-            os.unlink(logfile)
+        if jc and jc.jc_path:
+            logfile = "%s/warden.log" % jc.jc_path
+            if os.path.exists(logfile):
+                os.unlink(logfile)
 
         #
         # Reserve the first 25 addresses
