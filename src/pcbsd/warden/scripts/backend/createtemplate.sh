@@ -34,6 +34,8 @@ download_template_files() {
   if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
   cd ${JDIR}
 
+  if [ ! -d "${FDIR}" ] ; then mkdir -p "${FDIR}" ; fi
+
   warden_print "Fetching jail environment. This may take a while..."
   if [ -n "$TRUEOSVER" ] ; then
      for f in $DFILES
@@ -70,13 +72,16 @@ download_template_files() {
      for f in $DFILES
      do
        warden_print get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
-       get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
-       if [ $? -ne 0 ] ; then
-	 warden_print "Trying ftp-archive..."
-         warden_run fetch -o "${JDIR}/.download/$f" "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${FBSDARCH}/${FBSDVER}/$f"
+       if [ ! -f "${FDIR}/${f}" ] ; then
+         get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
          if [ $? -ne 0 ] ; then
-           warden_exit "Failed downloading: FreeBSD ${FBSDVER}"
-	 fi
+	   warden_print "Trying ftp-archive..."
+           warden_run fetch -o "${JDIR}/.download/$f" "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${FBSDARCH}/${FBSDVER}/$f"
+           if [ $? -ne 0 ] ; then
+             warden_exit "Failed downloading: FreeBSD ${FBSDVER}"
+	   fi
+         fi
+         mv "${JDIR}/.download/${f}" "${FDIR}/${f}"
        fi
 
        : $(( i += 1 ))
@@ -139,13 +144,13 @@ create_template()
       # Extract the dist files
       for f in $DFILES
       do
-        tar xvpf ${JDIR}/.download/$f -C ${TDIR} 2>/dev/null
+        tar xvpf ${FDIR}/$f -C ${TDIR} 2>/dev/null
         if [ $? -ne 0 ] ; then
           zfs destroy -fr "${tank}${zfsp}"
           rm -rf "${tdir}" >/dev/null 2>&1
           warden_exit "Failed extracting ZFS template environment"
         fi
-        rm ${JDIR}/.download/${f}
+        rm -f ${JDIR}/.download/${f}
       done
     fi
 
@@ -199,12 +204,12 @@ create_template()
       mkdir ${JDIR}/.templatedir
       for f in $DFILES
       do
-        tar xvpf ${JDIR}/.download/$f -C ${JDIR}/.templatedir 2>/dev/null
+        tar xvpf ${FDIR}/$f -C ${JDIR}/.templatedir 2>/dev/null
         if [ $? -ne 0 ] ; then 
            rm -rf ${JDIR}/.templatedir
            warden_exit "Failed extracting ZFS template environment"
         fi
-        rm ${JDIR}/.download/${f}
+        rm -f ${JDIR}/.download/${f}
       done
 
       # Creating a plugin jail?
@@ -277,6 +282,7 @@ fi
 
 # Set the template directory
 TDIR="${JDIR}/.warden-template-$TNICK"
+FDIR="${JDIR}/.warden-files-${FBSDVER}-${FBSDARCH}"
 
 # Set the name based upon if using ZFS or UFS
 isDirZFS "${JDIR}"
