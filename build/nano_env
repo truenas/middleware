@@ -168,4 +168,7 @@ else
 fi
 export NANO_XZ
 
+PKGCACHE=${FREENAS_PKGCACHE="/freenas-build/freenas-packages"}
+DISTCACHE=${FREENAS_DISTCACHE="/freenas-build/freenas-distfiles"}
+
 # vim: syntax=sh
