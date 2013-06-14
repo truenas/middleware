@@ -301,8 +301,6 @@ def jail_progress(request):
 
             jail_progress_estimated_time = estimated_time
 
-            log.debug("XXXX: ESTIMATED TIME = %d, ETA  = %d", estimated_time, eta)
-
         if eta > 3600:
             data['eta'] = "%02d:%02d:%02d" % (eta/3600, eta/60, eta%60)
         elif eta > 0:
