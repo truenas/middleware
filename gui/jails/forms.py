@@ -25,7 +25,6 @@
 #
 #####################################################################
 import os
-import sys
 import stat
 import logging
 
@@ -33,11 +32,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 
-from freenasUI import choices
-from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.forms import ModelForm
 from freenasUI.common.sipcalc import sipcalc_type
-from freenasUI.common.warden import WardenJail, Warden
-from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import (
     JailsConfiguration,
     Jails,
@@ -46,17 +42,18 @@ from freenasUI.jails.models import (
 )
 from freenasUI.common.warden import (
     Warden,
+    WardenJail,
     WARDEN_FLAGS_NONE,
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_SRC,
     WARDEN_CREATE_FLAGS_PORTS,
     WARDEN_CREATE_FLAGS_VANILLA,
-    WARDEN_CREATE_FLAGS_STARTAUTO,
+    #WARDEN_CREATE_FLAGS_STARTAUTO,
     WARDEN_CREATE_FLAGS_PORTJAIL,
     WARDEN_CREATE_FLAGS_PLUGINJAIL,
     WARDEN_CREATE_FLAGS_LINUXJAIL,
-    WARDEN_CREATE_FLAGS_ARCHIVE,
-    WARDEN_CREATE_FLAGS_LINUXARCHIVE,
+    #WARDEN_CREATE_FLAGS_ARCHIVE,
+    #WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_IPV4,
     WARDEN_CREATE_FLAGS_IPV6,
     WARDEN_CREATE_FLAGS_SYSLOG,
@@ -75,9 +72,9 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_VNET_DISABLE,
     WARDEN_SET_FLAGS_NAT_ENABLE,
     WARDEN_SET_FLAGS_NAT_DISABLE,
-    WARDEN_SET_FLAGS_FLAGS,
+    #WARDEN_SET_FLAGS_FLAGS,
     WARDEN_TYPE_STANDARD,
-    WARDEN_TYPE_PLUGINJAIL, 
+    WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
     WARDEN_TYPE_LINUXJAIL,
     WARDEN_KEY_HOST,
@@ -86,7 +83,7 @@ from freenasUI.common.warden import (
 )
 
 from freenasUI.system.forms import (
-    clean_path_execbit, clean_path_locked, FileWizard
+    clean_path_execbit
 )
 
 
@@ -101,7 +98,7 @@ def setflags(keys):
         if k == 'jail_ipv4':
             flags |= WARDEN_SET_FLAGS_IPV4
         elif k == 'jail_ipv6':
-            flags |= WARDEN_SET_FLAGS_IPV6 
+            flags |= WARDEN_SET_FLAGS_IPV6
         elif k == 'jail_alias_ipv4':
             flags |= WARDEN_SET_FLAGS_ALIAS_IPV4
         elif k == 'jail_alias_ipv6':
@@ -119,6 +116,7 @@ def setflags(keys):
         elif k == 'jail_defaultrouter_ipv6':
             flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
     return flags
+
 
 class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(
@@ -185,7 +183,7 @@ class JailCreateForm(ModelForm):
         'jail_source',
         'jail_ports',
         'jail_vanilla',
-#        'jail_archive',
+        #'jail_archive',
         'jail_ipv4',
         'jail_bridge_ipv4',
         'jail_ipv6',
@@ -217,9 +215,15 @@ class JailCreateForm(ModelForm):
 #            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         )
 
-        self.fields['jail_type'].widget.attrs['onChange'] = "jail_type_toggle();"
-        self.fields['jail_32bit'].widget.attrs['onChange'] = "jail_32bit_toggle();"
-        self.fields['jail_vnet'].widget.attrs['onChange'] = "jail_vnet_toggle();"
+        self.fields['jail_type'].widget.attrs['onChange'] = (
+            "jail_type_toggle();"
+        )
+        self.fields['jail_32bit'].widget.attrs['onChange'] = (
+            "jail_32bit_toggle();"
+        )
+        self.fields['jail_vnet'].widget.attrs['onChange'] = (
+            "jail_vnet_toggle();"
+        )
 
         high_ipv4 = None
         high_ipv6 = None
@@ -242,15 +246,19 @@ class JailCreateForm(ModelForm):
         #
         # Reserve the first 25 addresses
         #
-        if st_ipv4_network is not None: 
-            high_ipv4 = sipcalc_type("%s/%d" % (st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits))
-            high_ipv4 += 25 
+        if st_ipv4_network is not None:
+            high_ipv4 = sipcalc_type("%s/%d" % (
+                st_ipv4_network.usable_range[0],
+                st_ipv4_network.network_mask_bits,
+            ))
+            high_ipv4 += 25
 
-        if st_ipv6_network is not None: 
-            high_ipv6 = sipcalc_type("%s/%d" % (st_ipv6_network .network_range[0],
-                st_ipv6_network.prefix_length))
-            high_ipv6 += 25 
+        if st_ipv6_network is not None:
+            high_ipv6 = sipcalc_type("%s/%d" % (
+                st_ipv6_network .network_range[0],
+                st_ipv6_network.prefix_length,
+            ))
+            high_ipv6 += 25
 
         try:
             wlist = Warden().list()
@@ -267,7 +275,7 @@ class JailCreateForm(ModelForm):
                 st_ipv4 = sipcalc_type(wo.ipv4)
             if wo.ipv6:
                 st_ipv6 = sipcalc_type(wo.ipv6)
-            
+
             if st_ipv4 and st_ipv4_network is not None:
                 if st_ipv4_network.in_network(st_ipv4):
                     if st_ipv4 > high_ipv4:
@@ -279,22 +287,26 @@ class JailCreateForm(ModelForm):
                         high_ipv6 = st_ipv6
 
         if high_ipv4 is None and st_ipv4_network is not None:
-            high_ipv4 = sipcalc_type("%s/%d" % (st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits))
+            high_ipv4 = sipcalc_type("%s/%d" % (
+                st_ipv4_network.usable_range[0],
+                st_ipv4_network.network_mask_bits,
+            ))
 
         elif high_ipv4 is not None and st_ipv4_network is not None:
             high_ipv4 += 1
             if not st_ipv4_network.in_network(high_ipv4):
-                high_ipv4 = None 
+                high_ipv4 = None
 
         if high_ipv6 is None and st_ipv6_network is not None:
-            high_ipv6 = sipcalc_type("%s/%d" % (st_ipv6_network.network_range[0],
-                st_ipv6_network.prefix_length))
+            high_ipv6 = sipcalc_type("%s/%d" % (
+                st_ipv6_network.network_range[0],
+                st_ipv6_network.prefix_length,
+            ))
 
         elif high_ipv6 is not None and st_ipv6_network is not None:
             high_ipv6 += 1
             if not st_ipv6_network.in_network(high_ipv6):
-                high_ipv6 = None 
+                high_ipv6 = None
 
         if high_ipv6 is not None:
             self.fields['jail_ipv6'].initial = high_ipv6
@@ -302,13 +314,17 @@ class JailCreateForm(ModelForm):
             self.fields['jail_ipv4'].initial = high_ipv4
 
         if st_ipv4_network is not None:
-            bridge_ipv4 = sipcalc_type("%s/%d" % (st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits))
+            bridge_ipv4 = sipcalc_type("%s/%d" % (
+                st_ipv4_network.usable_range[0],
+                st_ipv4_network.network_mask_bits,
+            ))
             self.fields['jail_bridge_ipv4'].initial = bridge_ipv4
 
         if st_ipv6_network is not None:
-            bridge_ipv6 = sipcalc_type("%s/%d" % (st_ipv6_network.network_range[0],
-                st_ipv6_network.prefix_length))
+            bridge_ipv6 = sipcalc_type("%s/%d" % (
+                st_ipv6_network.network_range[0],
+                st_ipv6_network.prefix_length,
+            ))
             self.fields['jail_bridge_ipv6'].initial = bridge_ipv6
 
     def save(self):
@@ -319,18 +335,20 @@ class JailCreateForm(ModelForm):
             return
 
         if not jc.jc_path:
-           self.errors['__all__'] = self.error_class(["No jail root configured."])
-           return
+            self.errors['__all__'] = self.error_class(
+                ["No jail root configured."]
+            )
+            return
 
         jail_host = self.cleaned_data.get('jail_host')
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
         jail_ipv6 = self.cleaned_data.get('jail_ipv6')
 
         jail_flags = WARDEN_FLAGS_NONE
-        jail_create_args = { }
+        jail_create_args = {}
         jail_create_args['jail'] = jail_host
 
-        w = Warden() 
+        w = Warden()
 
         if self.cleaned_data['jail_32bit']:
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
@@ -391,7 +409,7 @@ class JailCreateForm(ModelForm):
         jail_vnet = self.cleaned_data.get('jail_vnet')
         jail_nat = self.cleaned_data.get('jail_nat')
 
-        jail_set_args = { }
+        jail_set_args = {}
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_bridge_ipv4:
@@ -404,7 +422,7 @@ class JailCreateForm(ModelForm):
                 self.errors['__all__'] = self.error_class([_(e.message)])
                 return
 
-        jail_set_args = { }
+        jail_set_args = {}
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_bridge_ipv6:
@@ -417,12 +435,12 @@ class JailCreateForm(ModelForm):
                 self.errors['__all__'] = self.error_class([_(e.message)])
                 return
 
-        jail_set_args = { }
+        jail_set_args = {}
         jail_set_args['jail'] = jail_nat
         jail_flags = WARDEN_FLAGS_NONE
         if jail_nat:
             jail_flags |= WARDEN_SET_FLAGS_NAT_ENABLE
-        else: 
+        else:
             jail_flags |= WARDEN_SET_FLAGS_NAT_DISABLE
 
         jail_set_args['flags'] = jail_flags
@@ -432,12 +450,15 @@ class JailCreateForm(ModelForm):
             self.errors['__all__'] = self.error_class([_(e.message)])
             return
 
-        jail_set_args = { }
+        jail_set_args = {}
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
-            if self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL and \
-                not self.cleaned_data['jail_32bit']:
+            if (
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL
+                and
+                not self.cleaned_data['jail_32bit']
+            ):
                 jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
             else:
                 jail_flags |= WARDEN_SET_FLAGS_VNET_DISABLE
@@ -462,6 +483,7 @@ class JailCreateForm(ModelForm):
             self.errors['__all__'] = self.error_class([_(e.message)])
             return
 
+
 class JailsConfigurationForm(ModelForm):
 
     class Meta:
@@ -469,8 +491,9 @@ class JailsConfigurationForm(ModelForm):
         widgets = {
             'jc_path': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
-                }),
+            }),
         }
+
 
 class JailConfigureForm(ModelForm):
 
@@ -480,6 +503,7 @@ class JailConfigureForm(ModelForm):
 
     class Meta:
         model = Jails
+
 
 class JailsEditForm(ModelForm):
 
@@ -549,7 +573,7 @@ class JailsEditForm(ModelForm):
             'jail_alias_bridge_ipv6',
             'jail_defaultrouter_ipv6',
             'jail_vnet',
-            'jail_nat' 
+            'jail_nat',
         ]
 
         instance = getattr(self, 'instance', None)
@@ -564,22 +588,22 @@ class JailsEditForm(ModelForm):
 
         instance = getattr(self, 'instance', None)
         if self.__instance_diff(instance, self.__myfields):
-            keys = self.__instance_changed_fields(instance, self.__myfields)
+            self.__instance_changed_fields(instance, self.__myfields)
 
         changed_fields = self.__instance_changed_fields(instance, self.__myfields)
-        for cf in changed_fields: 
+        for cf in changed_fields:
             if cf == 'jail_autostart':
                 Warden().auto(jail=jail_host)
             else:
                 args = {}
-                flags = WARDEN_FLAGS_NONE 
+                flags = WARDEN_FLAGS_NONE
 
                 if cf == 'jail_ipv4':
                     flags |= WARDEN_SET_FLAGS_IPV4
                     args['ipv4'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_ipv6':
-                    flags |= WARDEN_SET_FLAGS_IPV6 
+                    flags |= WARDEN_SET_FLAGS_IPV6
                     args['ipv6'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_alias_ipv4':
@@ -615,12 +639,16 @@ class JailsEditForm(ModelForm):
                     args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_vnet':
-                    if self.cleaned_data.get(cf) and \
-                        self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL and \
-                            not self.cleaned_data['jail_32bit']:
+                    if (
+                        self.cleaned_data.get(cf)
+                        and
+                        self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL
+                        and
+                        not self.cleaned_data['jail_32bit']
+                    ):
                             flags |= WARDEN_SET_FLAGS_VNET_ENABLE
                             args['vnet-enable'] = self.cleaned_data.get(cf)
-                    else: 
+                    else:
                         flags |= WARDEN_SET_FLAGS_VNET_DISABLE
                         args['vnet-disable'] = self.cleaned_data.get(cf)
 
@@ -647,17 +675,17 @@ class NullMountPointForm(ModelForm):
         label=_("Mounted?"),
         required=False,
         initial=True,
-        )
+    )
 
     class Meta:
         model = NullMountPoint
         widgets = {
             'source': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
-                }),
+            }),
             'destination': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
-                }),
+            }),
         }
 
     def clean_source(self):
@@ -674,18 +702,18 @@ class NullMountPointForm(ModelForm):
         if len(full) > 88:
             raise forms.ValidationError(
                 _("The full path cannot exceed 88 characters")
-                )
+            )
         return dest
 
     def __init__(self, *args, **kwargs):
         self.jail = None
-        if kwargs and kwargs.has_key('jail'):
-            self.jail = kwargs.pop('jail') 
+        if kwargs and 'jail' in kwargs:
+            self.jail = kwargs.pop('jail')
 
         super(NullMountPointForm, self).__init__(*args, **kwargs)
 
-        if kwargs and kwargs.has_key('instance'):
-            self.instance = kwargs.pop('instance') 
+        if kwargs and 'instance' in kwargs:
+            self.instance = kwargs.pop('instance')
 
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
@@ -693,7 +721,7 @@ class NullMountPointForm(ModelForm):
                 'readonly': True,
                 'class': (
                     'dijitDisabled dijitTextBoxDisabled'
-                    'dijitValidationTextBoxDisabled' 
+                    'dijitValidationTextBoxDisabled'
                 ),
             }
 
@@ -725,14 +753,12 @@ class NullMountPointForm(ModelForm):
                 if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
                     pjlist.append(wj[WARDEN_KEY_HOST])
 
-            self.fields['jail'].choices = [(pj, pj) for pj in pjlist ]
+            self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
 
         if self.instance.id:
             self.fields['mounted'].initial = self.instance.mounted
         else:
             self.fields['mounted'].widget = forms.widgets.HiddenInput()
-
-
 
     def save(self, *args, **kwargs):
         obj = super(NullMountPointForm, self).save(*args, **kwargs)
@@ -743,12 +769,12 @@ class NullMountPointForm(ModelForm):
             #FIXME better error handling, show the user why
             raise MiddlewareError(_("The path could not be mounted %s") % (
                 obj.source,
-                ))
+            ))
         if not mounted and not obj.umount():
             #FIXME better error handling, show the user why
             raise MiddlewareError(_("The path could not be umounted %s") % (
                 obj.source,
-                ))
+            ))
 
         return obj
 
@@ -756,20 +782,20 @@ class NullMountPointForm(ModelForm):
 class MkdirForm(ModelForm):
 
     class Meta:
-       model = Mkdir
-       widgets = {
+        model = Mkdir
+        widgets = {
             'path': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
-                }),
+            }),
             'directory': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
-                }),
+            }),
         }
 
     def __init__(self, *args, **kwargs):
         self.jail = None
-        if kwargs and kwargs.has_key('jail'):
-            self.jail = kwargs.pop('jail') 
+        if kwargs and 'jail' in kwargs:
+            self.jail = kwargs.pop('jail')
 
         super(MkdirForm, self).__init__(*args, **kwargs)
 
@@ -783,7 +809,7 @@ class MkdirForm(ModelForm):
                 'readonly': True,
                 'class': (
                     'dijitDisabled dijitTextBoxDisabled'
-                    'dijitValidationTextBoxDisabled' 
+                    'dijitValidationTextBoxDisabled'
                 ),
             }
 
@@ -804,7 +830,7 @@ class MkdirForm(ModelForm):
                 if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
                     pjlist.append(wj[WARDEN_KEY_HOST])
 
-            self.fields['jail'].choices = [(pj, pj) for pj in pjlist ]
+            self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
 
     def clean_jail(self):
         jail = self.cleaned_data.get('jail')
