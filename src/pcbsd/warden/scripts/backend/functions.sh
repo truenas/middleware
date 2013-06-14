@@ -832,7 +832,7 @@ __EOF__
 
 echo '
 i=0
-percent=10
+percent=30
 
 pkg update
 if [ "$?" != "0" ]
@@ -855,7 +855,7 @@ do
 
   if [ "${i}" -ge "0" ]
   then  
-      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
+      percent=`echo "scale=2;((${i}/${total})*70)+30"|bc|cut -f1 -d.`
   fi
   echo "===== ${percent}% ====="
 

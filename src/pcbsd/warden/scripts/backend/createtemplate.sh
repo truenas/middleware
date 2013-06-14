@@ -14,8 +14,18 @@ download_template_files() {
   local i
   local percent
   local total 
+  local pmax
 
   total=`echo ${DFILES}|wc|awk '{ print $2 }'`
+
+  if [ "${TPLUGJAIL}" = "YES" ] ; then
+      pmax=10 
+  elif [ "${VANILLA}" = "YES" ] ; then
+      pmax=100
+  else
+      pmax=30
+  fi
+
 
   # Create the download directory
   if [ -d "${JDIR}/.download" ] ; then rm -rf ${JDIR}/.download; fi
@@ -57,7 +67,6 @@ download_template_files() {
      fi
 
      i=0
-     pmax=10
      for f in $DFILES
      do
        warden_print get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
