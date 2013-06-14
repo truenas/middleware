@@ -81,10 +81,8 @@ from freenasUI.common.warden import (
     WARDEN_KEY_STATUS,
     WARDEN_STATUS_RUNNING
 )
-
-from freenasUI.system.forms import (
-    clean_path_execbit
-)
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.system.forms import clean_path_execbit
 
 
 LINUXSCRIPT = "/usr/local/share/warden/linux-installs/gentoo-stage3-i486"
