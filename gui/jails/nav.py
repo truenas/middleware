@@ -32,26 +32,18 @@ from eventlet.green import urllib2
 from django.utils.translation import ugettext_lazy as _
 from django.utils import simplejson
 
-from freenasUI.middleware.notifier import notifier
-from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.freeadmin.tree import TreeNode, unserialize_tree
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
-
-from freenasUI.jails.models import (
-    Jails, JailsConfiguration, NullMountPoint
-)
-
+from freenasUI.jails.models import Jails, NullMountPoint
 from freenasUI.common.warden import (
-    Warden,
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
     WARDEN_TYPE_LINUXJAIL
 )
 
-from freenasUI.freeadmin.tree import (
-    tree_roots, TreeRoot, TreeNode, unserialize_tree
-)
+log = logging.getLogger('jails.nav')
 
 NAME = _('Jails')
 ICON = u'JailIcon'
@@ -64,14 +56,11 @@ BLACKLIST = [
     'Mkdir'
 ]
 
-import logging
-log = logging.getLogger('jails.nav')
-
 
 class ViewJailsBase(TreeNode):
 
     gname = 'Base'
-    name  = _(u'Base')
+    name = _(u'Base')
     icon = u'JailIcon'
     order = -1
     skip = True
@@ -94,10 +83,10 @@ class ViewJailsBase(TreeNode):
         jail_node_view.name = _('Edit')
         jail_node_view.type = 'editobject'
         jail_node_view.view = 'jail_edit'
-        jail_node_view.kwargs = { 'id': jail.id }
+        jail_node_view.kwargs = {'id': jail.id}
         jail_node_view.model = 'Jails'
         jail_node_view.icon = u'SettingsIcon'
-        jail_node_view.app_name = 'jails' 
+        jail_node_view.app_name = 'jails'
 
         return jail_node_view
 
@@ -116,10 +105,10 @@ class ViewJailsBase(TreeNode):
         storage_node_view.name = _('%s' % nmp.destination)
         storage_node_view.type = 'editobject'
         storage_node_view.view = 'jail_storage_view'
-        storage_node_view.kwargs = { 'id': nmp.id }
+        storage_node_view.kwargs = {'id': nmp.id}
         storage_node_view.model = 'NullMountPoint'
         storage_node_view.icon = u'SettingsIcon'
-        storage_node_view.app_name = 'jails' 
+        storage_node_view.app_name = 'jails'
 
         return storage_node_view
 
@@ -129,12 +118,12 @@ class ViewJailsBase(TreeNode):
         storage_node_add.name = _('Add Storage')
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_storage_add'
-        storage_node_add.kwargs = { 'jail_id': jail.id }
+        storage_node_add.kwargs = {'jail_id': jail.id}
         storage_node_add.model = 'NullMountPoint'
         storage_node_add.icon = u'JailStorageIcon'
-        storage_node_add.app_name = 'jails' 
+        storage_node_add.app_name = 'jails'
 
-        return storage_node_add 
+        return storage_node_add
 
     def new_storage_node_mkdir(self, jail):
         storage_node_add = TreeNode()
@@ -142,11 +131,11 @@ class ViewJailsBase(TreeNode):
         storage_node_add.name = _('Make Directory')
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_mkdir'
-        storage_node_add.kwargs = { 'id': jail.id }
+        storage_node_add.kwargs = {'id': jail.id}
         storage_node_add.icon = u'JailMkdirIcon'
-        storage_node_add.app_name = 'jails' 
+        storage_node_add.app_name = 'jails'
 
-        return storage_node_add 
+        return storage_node_add
 
 
 class AddJail(TreeNode):
@@ -161,8 +150,8 @@ class AddJail(TreeNode):
 
 class ViewJailsConfiguration(TreeNode):
 
-    gname  = 'Configuration'
-    name  = _(u'Configuration')
+    gname = 'Configuration'
+    name = _(u'Configuration')
     icon = u'SettingsIcon'
     type = 'openjails'
     order = 2
@@ -263,7 +252,11 @@ class ViewPluginJails(ViewJailsBase):
 
             args = map(
                 lambda y: (y, host, request),
-                Plugins.objects.filter(plugin_enabled=True, plugin_jail=jail.jail_host))
+                Plugins.objects.filter(
+                    plugin_enabled=True,
+                    plugin_jail=jail.jail_host
+                )
+            )
 
             plugin_order = 1
             pool = eventlet.GreenPool(20)
@@ -275,13 +268,13 @@ class ViewPluginJails(ViewJailsBase):
                     data = simplejson.loads(data)
                     nodes = unserialize_tree(data)
                     for node in nodes:
-                        node.order = plugin_order 
-                        plugin_node.append_child(node) 
+                        node.order = plugin_order
+                        plugin_node.append_child(node)
                         plugin_order += 1
 
                 except Exception, e:
                     log.warn(_(
-                         "An error occurred while unserializing from "
+                        "An error occurred while unserializing from "
                         "%(url)s: %(error)s") % {'url': url, 'error': e})
                     log.debug(_(
                         "Error unserializing %(url)s (%(error)s), data "
@@ -298,10 +291,10 @@ class ViewPluginJails(ViewJailsBase):
             plugin_node_add.name = _('Install Plugin')
             plugin_node_add.type = 'editobject'
             plugin_node_add.view = 'plugin_install'
-            plugin_node_add.kwargs = {'jail_id': jail.id }
+            plugin_node_add.kwargs = {'jail_id': jail.id}
             plugin_node_add.model = 'Plugins'
             plugin_node_add.icon = u'PluginInstallIcon'
-            plugin_node_add.app_name = 'jails' 
+            plugin_node_add.app_name = 'jails'
             plugin_node_add.order = plugin_order
 
             plugin_node.append_child(plugin_node_add)
@@ -311,7 +304,11 @@ class ViewPluginJails(ViewJailsBase):
     def plugin_fetch(self, args):
         plugin, host, request = args
         data = None
-        url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
+        url = "%s/plugins/%s/%d/_s/treemenu" % (
+            host,
+            plugin.plugin_name,
+            plugin.id
+        )
         try:
             opener = urllib2.build_opener()
             opener.addheaders = [(
