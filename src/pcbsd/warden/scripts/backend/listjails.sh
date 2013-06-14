@@ -76,6 +76,12 @@ do
     VNET="Disabled"
   fi
 
+  if [ -e "${i}/nat" ] ; then
+    NAT="Enabled"
+  else
+    NAT="Disabled"
+  fi
+
   #
   # IPv4 networking
   # 
@@ -166,6 +172,7 @@ alias-bridge-ipv6: ${BRIDGEIPS6}
 defaultrouter-ipv6: ${GATEWAY6}
 autostart: ${AUTO}
 vnet: ${VNET}
+nat: ${NAT}
 status: ${STATUS}
 type: ${TYPE}
 

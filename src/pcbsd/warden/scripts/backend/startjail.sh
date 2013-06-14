@@ -171,6 +171,13 @@ start_jail_vimage()
   jexec ${JID} ifconfig lo0 up
 
   #
+  # If NAT is not enabled, return now
+  #
+  if [ "${NATENABLE}" = "NO" ] ; then
+      return 0
+  fi
+
+  #
   # Set ourself to be a jail router with NAT. Don't
   # use PF since it will panic the box when used
   # with VIMAGE.
@@ -349,6 +356,12 @@ fi
 VIMAGEENABLE="NO"
 if [ -e "${JMETADIR}/vnet" ] ; then
   VIMAGEENABLE="YES"
+fi
+
+# Check if we need to enable NAT
+NATENABLE="NO"
+if [ -e "${JMETADIR}/nat" ] ; then
+  NATENABLE="YES"
 fi
 
 set_warden_metadir

@@ -34,6 +34,7 @@ from freenasUI.common.warden import (
     Warden,
     WARDEN_AUTOSTART_ENABLED,
     WARDEN_VNET_ENABLED,
+    WARDEN_NAT_ENABLED,
     WARDEN_DELETE_FLAGS_CONFIRM
 )
 from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
@@ -142,7 +143,13 @@ class Jails(Model):
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("vnet")
+            verbose_name=_("VIMAGE")
+            )
+    jail_nat = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True,
+            verbose_name=_("NAT")
             )
 
     def __str__(self):
@@ -161,6 +168,10 @@ class Jails(Model):
             self.jail_vnet = True
         else:
             self.jail_vnet = False
+        if self.jail_nat == WARDEN_NAT_ENABLED:
+            self.jail_nat = True
+        else:
+            self.jail_nat = False
 
     def delete(self):
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)

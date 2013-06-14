@@ -73,6 +73,8 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_SET_FLAGS_VNET_ENABLE,
     WARDEN_SET_FLAGS_VNET_DISABLE,
+    WARDEN_SET_FLAGS_NAT_ENABLE,
+    WARDEN_SET_FLAGS_NAT_DISABLE,
     WARDEN_SET_FLAGS_FLAGS,
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL, 
@@ -160,7 +162,13 @@ class JailCreateForm(ModelForm):
 #    )
 
     jail_vnet = forms.BooleanField(
-        label=_("vnet"),
+        label=_("VIMAGE"),
+        required=False,
+        initial=True
+    )
+
+    jail_nat = forms.BooleanField(
+        label=_("NAT"),
         required=False,
         initial=True
     )
@@ -183,7 +191,8 @@ class JailCreateForm(ModelForm):
         'jail_ipv6',
         'jail_bridge_ipv6',
         'jail_script',
-        'jail_vnet'
+        'jail_vnet',
+        'jail_nat'
     ]
 
     class Meta:
@@ -380,6 +389,7 @@ class JailCreateForm(ModelForm):
         jail_bridge_ipv4 = self.cleaned_data.get('jail_bridge_ipv4')
         jail_bridge_ipv6 = self.cleaned_data.get('jail_bridge_ipv6')
         jail_vnet = self.cleaned_data.get('jail_vnet')
+        jail_nat = self.cleaned_data.get('jail_nat')
 
         jail_set_args = { }
         jail_set_args['jail'] = jail_host
@@ -406,6 +416,21 @@ class JailCreateForm(ModelForm):
             except Exception as e:
                 self.errors['__all__'] = self.error_class([_(e.message)])
                 return
+
+        jail_set_args = { }
+        jail_set_args['jail'] = jail_nat
+        jail_flags = WARDEN_FLAGS_NONE
+        if jail_nat:
+            jail_flags |= WARDEN_SET_FLAGS_NAT_ENABLE
+        else: 
+            jail_flags |= WARDEN_SET_FLAGS_NAT_DISABLE
+
+        jail_set_args['flags'] = jail_flags
+        try:
+            w.set(**jail_set_args)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            return
 
         jail_set_args = { }
         jail_set_args['jail'] = jail_host
@@ -459,7 +484,8 @@ class JailConfigureForm(ModelForm):
 class JailsEditForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
-    jail_vnet = forms.BooleanField(label=_("vnet"), required=False)
+    jail_vnet = forms.BooleanField(label=_("VIMAGE"), required=False)
+    jail_nat = forms.BooleanField(label=_("NAT"), required=False)
 
     def __set_ro(self, instance, key):
         if instance and instance.id:
@@ -522,7 +548,8 @@ class JailsEditForm(ModelForm):
             'jail_bridge_ipv6',
             'jail_alias_bridge_ipv6',
             'jail_defaultrouter_ipv6',
-            'jail_vnet' 
+            'jail_vnet',
+            'jail_nat' 
         ]
 
         instance = getattr(self, 'instance', None)
@@ -596,6 +623,14 @@ class JailsEditForm(ModelForm):
                     else: 
                         flags |= WARDEN_SET_FLAGS_VNET_DISABLE
                         args['vnet-disable'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_nat':
+                    if self.cleaned_data.get(cf):
+                        flags |= WARDEN_SET_FLAGS_NAT_ENABLE
+                        args['nat-enable'] = self.cleaned_data.get(cf)
+                    else:
+                        flags |= WARDEN_SET_FLAGS_NAT_DISABLE
+                        args['nat-disable'] = self.cleaned_data.get(cf)
 
                 args['jail'] = jail_host
                 args['flags'] = flags

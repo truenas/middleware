@@ -102,6 +102,7 @@ defaultrouter-ipv4: Lets you see the default IPv4 router for this jail
 defaultrouter-ipv6: Lets you see the default IPv6 router for this jail
              flags: Lets you see additional flags to pass to the 'jail' command at startup
               vnet: Lets you see if vnet support is enabled for this jail
+               nat: Lets you see if nat support is enabled for this jail
 
 Usage:
 
@@ -139,6 +140,8 @@ defaultrouter-ipv6: Set the default vnet IPv6 router for this jail
              flags: Set additional flags to pass to the 'jail' command
        vnet-enable: Enables vnet support for the jail
       vnet-disable: Disables vnet support for this jail
+        nat-enable: Enables nat support for the jail
+       nat-disable: Disables nat support for this jail
 
 
 Usage:
@@ -765,6 +768,7 @@ details) JAILNAME="${2}"
 defaultrouter-ipv4) cat "${JMETADIR}/defaultrouter-ipv4" 2>/dev/null | sed 's| |,|g' ;;
 defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |,|g' ;;
               vnet) if [ -e "${JMETADIR}/vnet" ] ; then echo 1 ; else echo 0 ; fi ;;
+               nat) if [ -e "${JMETADIR}/nat" ] ; then echo 1 ; else echo 0 ; fi ;;
               *) warden_exit "Invalid option!" ;;
          esac
          ;;
@@ -838,8 +842,10 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           flags) EXTRAFLAGS="${4}"
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"
                 ;;
-    vnet-enable) touch "${JMETADIR}/vnet" ;;
+     vnet-enable) touch "${JMETADIR}/vnet" ;;
     vnet-disable) rm "${JMETADIR}/vnet" 2>/dev/null ;;
+      nat-enable) touch "${JMETADIR}/nat" ;;
+     nat-disable) rm "${JMETADIR}/nat" 2>/dev/null ;;
               *) warden_exit "Invalid option!" ;;
 	   esac
          ;;

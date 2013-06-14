@@ -64,6 +64,7 @@ WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ipv6"
 WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
 WARDEN_KEY_AUTOSTART      = "autostart"
 WARDEN_KEY_VNET           = "vnet"
+WARDEN_KEY_NAT            = "nat"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
 
@@ -92,6 +93,12 @@ WARDEN_AUTOSTART_DISABLED = "Disabled"
 #
 WARDEN_VNET_ENABLED  = "Enabled"
 WARDEN_VNET_DISABLED = "Disabled"
+
+#
+# Warden jail nat
+#
+WARDEN_NAT_ENABLED  = "Enabled"
+WARDEN_NAT_DISABLED = "Disabled"
 
 
 WARDEN_FLAGS_NONE = warden_arg(0x00000000, None)
@@ -175,6 +182,7 @@ WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4
 WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6")
 WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
 WARDEN_GET_FLAGS_VNET			= warden_arg(0x00000800, "vnet")
+WARDEN_GET_FLAGS_NAT			= warden_arg(0x00001000, "nat")
 WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_IPV4,
     WARDEN_GET_FLAGS_IPV6,
@@ -187,7 +195,8 @@ WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4,
     WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_GET_FLAGS_FLAGS,
-    WARDEN_GET_FLAGS_VNET
+    WARDEN_GET_FLAGS_VNET,
+    WARDEN_GET_FLAGS_NAT
 ]
 
 WARDEN_IMPORT = "import"
@@ -226,6 +235,8 @@ WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6
 WARDEN_SET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags", True, "jflags")
 WARDEN_SET_FLAGS_VNET_ENABLE		= warden_arg(0x00000800, "vnet-enable" )
 WARDEN_SET_FLAGS_VNET_DISABLE		= warden_arg(0x00001000, "vnet-disable" )
+WARDEN_SET_FLAGS_NAT_ENABLE		= warden_arg(0x00002000, "nat-enable" )
+WARDEN_SET_FLAGS_NAT_DISABLE		= warden_arg(0x00004000, "nat-disable" )
 WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
@@ -239,7 +250,9 @@ WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_SET_FLAGS_FLAGS,
     WARDEN_SET_FLAGS_VNET_ENABLE,
-    WARDEN_SET_FLAGS_VNET_DISABLE
+    WARDEN_SET_FLAGS_VNET_DISABLE,
+    WARDEN_SET_FLAGS_NAT_ENABLE,
+    WARDEN_SET_FLAGS_NAT_DISABLE
 ]
 
 WARDEN_START = "start"
@@ -331,6 +344,7 @@ class WardenJail(object):
         self.defaultrouter_ipv6 = kwargs.get(WARDEN_KEY_DEFAULTROUTER6)
         self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
         self.vnet = kwargs.get(WARDEN_KEY_VNET)
+        self.nat = kwargs.get(WARDEN_KEY_NAT)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
 
@@ -611,6 +625,7 @@ class warden_list(warden_base):
             'defaultrouter-ipv6': WARDEN_KEY_DEFAULTROUTER6,
             'autostart': WARDEN_KEY_AUTOSTART,
             'vnet': WARDEN_KEY_VNET,
+            'nat': WARDEN_KEY_NAT,
             'status': WARDEN_KEY_STATUS,
             'type': WARDEN_KEY_TYPE
         } 
@@ -672,11 +687,8 @@ class warden_set(warden_base):
             if flags & wsf:
                 flags &= ~wsf  
 
-                if wsf == WARDEN_SET_FLAGS_VNET_ENABLE:
-                    self.args = wsf.string
-                    break
-
-                elif wsf == WARDEN_SET_FLAGS_VNET_DISABLE:
+                if wsf in (WARDEN_SET_FLAGS_VNET_ENABLE, WARDEN_SET_FLAGS_VNET_DISABLE,
+                    WARDEN_SET_FLAGS_NAT_ENABLE, WARDEN_SET_FLAGS_NAT_DISABLE): 
                     self.args = wsf.string
                     break
 
