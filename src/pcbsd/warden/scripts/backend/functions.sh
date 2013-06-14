@@ -1106,6 +1106,15 @@ get_ipfw_nat_instance()
    return ${res}
 }
 
+get_ipfw_nat_next_priority()
+{
+   local priority="${1}"
+
+   priority=`echo "${priority}" + 1|bc`
+   printf "%05d\n" "${priority}"
+   return 0
+}
+
 get_ipfw_nat_priority()
 {
    local iface="${1}"

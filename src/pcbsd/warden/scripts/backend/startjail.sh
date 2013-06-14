@@ -214,14 +214,53 @@ __EOF__
      /etc/rc.d/ipfw forcerestart
   fi
 
+  prioroty=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
   if [ -z "${instance}" ] ; then
      priority=`get_ipfw_nat_priority`
      instance=`get_ipfw_nat_instance`
-
-     ipfw "${priority}" add nat "${instance}" all from any to any
-     ipfw nat "${instance}" config if "${IFACE}" reset
+  else  
+     priority=`get_ipfw_nat_priority "${IFACE}"`
+     instance=`get_ipfw_nat_instance "${IFACE}"`
   fi
+
+  ext_ip4=`get_interface_ipv4_address "${IFACE}"`
+  ext_ip6=`get_interface_ipv6_address "${IFACE}"`
+
+  warden_run ipfw "${priority}" nat config if "${IFACE}" reset
+  if [ -n "${IP4}" ] ; then
+     get_ip_and_netmask "${IP4}"
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from ${JIP} to any out xmit ${IFACE}
+  fi
+  for ip4 in ${IPS4}
+  do
+     get_ip_and_netmask "${ip4}"
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from ${JIP} to any out xmit ${IFACE}
+  done
+
+  if [ -n "${IP6}" ] ; then
+     get_ip_and_netmask "${IP6}"
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from ${JIP} to any out xmit ${IFACE}
+  fi
+  for ip6 in ${IPS6}
+  do
+     get_ip_and_netmask "${ip6}"
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from ${JIP} to any out xmit ${IFACE}
+  done
+
+  if [ -n "${ext_ip4}" ] ; then
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from any to ${ext_ip4} in recv ${IFACE}
+  fi
+  if [ -n "${ext_ip6}" ] ; then
+     warden_run ipfw "${priority}" add nat "${instance}" \
+        all from any to ${ext_ip6} in recv ${IFACE}
+  fi
+
 # End of jail VIMAGE startup function
 }
 
