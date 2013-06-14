@@ -243,7 +243,7 @@ rmchroot()
     tank=`getZFSTank "${JDIR}"`
 
     warden_print "Destroying dataset ${tank}${zfsp}"
-    zfs destroy -fR ${tank}${zfsp}
+    zfs destroy -fr ${tank}${zfsp}
     if [ $? -ne 0 ] ; then warden_error "Failed to destroy ZFS base dataset"; fi
 
     warden_print "Removing ${CHROOT}"
@@ -1187,7 +1187,7 @@ delete_template()
      if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${tDir}" ; fi
      tank=`getZFSTank "$tDir"`
      rp=`getZFSRelativePath "$tDir"`
-     zfs destroy -r $tank${rp}
+     zfs destroy -fr $tank${rp}
      rmdir ${tDir}
    else
      if [ ! -e "${tDir}.tbz" ] ; then

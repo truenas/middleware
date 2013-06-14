@@ -103,7 +103,7 @@ create_template()
     clean_exit()
     {
        cd /
-       zfs destroy -fR "${tank}${zfsp}"
+       zfs destroy -fr "${tank}${zfsp}"
        rm -rf "${tdir}" >/dev/null 2>&1
        warden_exit "Failed to create ZFS base dataset"
     }
@@ -115,7 +115,7 @@ create_template()
        warden_print "Creating ZFS ${TDIR} dataset..."
        warden_run zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
        if [ $? -ne 0 ] ; then
-         zfs destroy -fR "${tank}${zfsp}" >/dev/null 2>&1
+         zfs destroy -fr "${tank}${zfsp}" >/dev/null 2>&1
          rm -rf "${tdir}" >/dev/null 2>&1
          warden_exit "Failed creating ZFS base dataset"
        fi
@@ -125,7 +125,7 @@ create_template()
     if [ -n "$FBSDTAR" ] ; then
       tar xvpf $FBSDTAR -C ${TDIR} 2>/dev/null
       if [ $? -ne 0 ] ; then
-        zfs destroy -fR "${tank}${zfsp}"
+        zfs destroy -fr "${tank}${zfsp}"
         rm -rf "${tdir}" >/dev/null 2>&1
         warden_exit "Failed extracting: $FBSDTAR"
       fi
@@ -141,7 +141,7 @@ create_template()
       do
         tar xvpf ${JDIR}/.download/$f -C ${TDIR} 2>/dev/null
         if [ $? -ne 0 ] ; then
-          zfs destroy -fR "${tank}${zfsp}"
+          zfs destroy -fr "${tank}${zfsp}"
           rm -rf "${tdir}" >/dev/null 2>&1
           warden_exit "Failed extracting ZFS template environment"
         fi
@@ -156,7 +156,7 @@ create_template()
       warden_print bootstrap_pkgng "${TDIR}" "pluginjail"
       bootstrap_pkgng "${TDIR}" "pluginjail"
       if [ $? -ne 0 ] ; then
-        zfs destroy -fR "${tank}${zfsp}"
+        zfs destroy -fr "${tank}${zfsp}"
         rm -rf "${tdir}" >/dev/null 2>&1
         warden_exit "Failed extracting ZFS template environment"
       fi

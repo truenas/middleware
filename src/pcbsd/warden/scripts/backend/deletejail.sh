@@ -61,7 +61,7 @@ if [ $? -eq 0 ] ; then
   # Create ZFS mount
   tank=`getZFSTank "$JDIR"`
   jailp=`getZFSRelativePath "${JAILDIR}"`
-  zfs destroy -r ${tank}${jailp}
+  zfs destroy -fr ${tank}${jailp}
   rmdir ${JAILDIR} 2>/dev/null
 else
   chflags -R noschg "${JAILDIR}"
