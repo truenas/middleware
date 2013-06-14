@@ -35,7 +35,11 @@ from django.utils import simplejson
 from freenasUI.freeadmin.tree import TreeNode, unserialize_tree
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
-from freenasUI.jails.models import Jails, NullMountPoint
+from freenasUI.jails.models import (
+    Jails,
+    JailsConfiguration,
+    NullMountPoint
+)
 from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
@@ -143,9 +147,21 @@ class AddJail(TreeNode):
     gname = 'Add Jails'
     name = _(u'Add Jails')
     icon = u'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jails_add'
     order = 1
+
+    jc = None
+    try:
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+
+    except:
+       pass
+
+    if jc and jc.jc_path:
+        type = 'object'
+        view = 'freeadmin_jails_jails_add'
+
+    else:
+        type = 'openjails'
 
 
 class ViewJailsConfiguration(TreeNode):
