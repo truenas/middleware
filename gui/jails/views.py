@@ -282,6 +282,7 @@ def jail_progress(request):
         if not percent:
             percent = 0
 
+        elapsed = 1
         curtime = int(time.time())
 
         if jail_progress_start_time == 0:
