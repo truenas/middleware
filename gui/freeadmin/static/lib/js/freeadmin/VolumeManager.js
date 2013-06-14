@@ -627,8 +627,12 @@ define([
             });
           }
         } else {
-          // There are no other disk sizes available, hide it
-          domStyle.set(this._vdevDiskType.domNode, "display", "none");
+          if(this.disks.length == 0) {
+            domStyle.set(this._vdevDiskType.domNode, "display", "");
+          } else {
+            // There are no other disk sizes available, hide it
+            domStyle.set(this._vdevDiskType.domNode, "display", "none");
+          }
         }
       },
       _doSwitch: function(widget, value) {
@@ -676,7 +680,7 @@ define([
 
         this._vdevDiskType = new FilteringSelect({
           store: this._store,
-          style: {width: "85px", marginRight: "0px", display: "none"},
+          style: {width: "85px", marginRight: "0px"},
           onChange: function(value) { lang.hitch(me, me._doSwitch)(this, value); }
         }, this.dapVdevDiskType);
 
