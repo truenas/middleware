@@ -436,7 +436,7 @@ class JailCreateForm(ModelForm):
                 return
 
         jail_set_args = {}
-        jail_set_args['jail'] = jail_nat
+        jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_nat:
             jail_flags |= WARDEN_SET_FLAGS_NAT_ENABLE
@@ -643,8 +643,6 @@ class JailsEditForm(ModelForm):
                         self.cleaned_data.get(cf)
                         and
                         self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL
-                        and
-                        not self.cleaned_data['jail_32bit']
                     ):
                             flags |= WARDEN_SET_FLAGS_VNET_ENABLE
                             args['vnet-enable'] = self.cleaned_data.get(cf)

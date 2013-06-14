@@ -214,6 +214,8 @@ __EOF__
      /etc/rc.d/ipfw forcerestart
   fi
 
+  warden_run ipfw 100 add allow ip from any to any
+
   prioroty=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
   if [ -z "${instance}" ] ; then
